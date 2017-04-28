@@ -1,8 +1,10 @@
-﻿/*
+/*
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
+    Copyright (C) 2017  COBOLParser: Simon Sobisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,12 +22,11 @@
 
 package lu.fisch.structorizer.parsers;
 
-/**
- ******************************************************************************************************
+/******************************************************************************************************
  *
- *      Author:         Kay Gürtzig
+ *      Author:         Simon Sobisch
  *
- *      Description:    Class to parse an COBOL 85 file and build structograms from the reduction tree.
+ *      Description:    Class to parse a COBOL file and build structograms from the reduction tree.
  *
  ******************************************************************************************************
  *
@@ -33,7 +34,16 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.10      First Issue (automatically generated with GOLDprog.exe)
+ *      Kay Gürtzig     2017.03.10      First Issue (automatically generated with GOLDprog.exe,
+ *                                      constants for COBOL-85.grm downloaded from URL
+ *                                      http://www.goldparser.org/grammars/files/COBOL-85.zip)
+ *      Simon Sobisch   2017.03.22      COBOL preparser for **valid** COBOL sources: reference-format
+ *                                      free-form and fixed-form (with continuation + debugging lines),
+ *                                      minimal subset of compiler directives, passes NIST EXEC85.cob
+ *                                      and DB201A.CBL (with manual source changes because of
+ *                                      insufficent COBOL-85.grm)
+ *      Kay Gürtzig     2017.03.26      Fix #384: New temp file mechanism for the prepared text file
+ *      Simon Sobisch   2017.04.24      Moved from COBOL-85.grm (NOT being COBOL 85!!!) to GnuCOBOL.grm
  *
  ******************************************************************************************************
  *
@@ -43,9 +53,11 @@ package lu.fisch.structorizer.parsers;
  *     Modifications to this code are allowed as it is a helper class to use the engine.<br>
  *     Template File:  StructorizerParserTemplate.pgt (with elements of both<br>
  *                     Java-MatthewHawkins.pgt and Java-IdenEngine.pgt)<br>
- *     Authors:        Ralph Iden, Matthew Hawkins, Bob Fisch, Kay Gürtzig<br>
- *     Description:    A Sample class, takes in a file and runs the GOLDParser engine on it.<br>
+ *     Authors:        Ralph Iden, Matthew Hawkins, Bob Fisch, Kay Gürtzig, Simon Sobisch<br>
  *
+ *     Note:
+ *     Process the grammar to get a ".skel" file to merge changes in the grammar:
+ *     GOLDbuild.exe GnuCOBOL.grm && GOLDprog.exe GnuCOBOL.egt StructorizerParserTemplate.pgt COBOLParser.java.skel && dos2unix COBOLParser.java.skel
  ******************************************************************************************************/
 
 import java.io.*;
@@ -79,7 +91,7 @@ import com.creativewidgetworks.goldparser.engine.ParserException;
 import com.creativewidgetworks.goldparser.parser.GOLDParser;
 
 /**
- * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the COBOL 85 language.
+ * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the GnuCOBOL language.
  * This file contains grammar-specific constants and individual routines to build
  * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
  * @author Kay Gürtzig
@@ -92,13 +104,13 @@ public class COBOLParser extends CodeParser
 	@Override
 	protected final String getCompiledGrammar()
 	{
-		return "COBOL-85.egt";
+		return "GnuCOBOL.egt";
 	}
 	
 	@Override
 	protected final String getGrammarTableName()
 	{
-		return "COBOL 85";
+		return "GnuCOBOL";
 	}
 
 	/**
@@ -107,2077 +119,3882 @@ public class COBOLParser extends CodeParser
 	 */
 	private boolean optionUpperCaseProgName = false;
 
-	//---------------------------- Constructor ---------------------------
+	//------------------------------ Constructor -----------------------------
 
 	/**
-	 * Constructs a parser for language COBOL 85, loads the grammar as resource and
+	 * Constructs a parser for language GnuCOBOL, loads the grammar as resource and
 	 * specifies whether to generate the parse tree as string
 	 */
 	public COBOLParser() {
 	}
 
-	//---------------------- File Filter configuration ---------------------------
+	//---------------------- File Filter configuration -----------------------
 	
 	@Override
 	public String getDialogTitle() {
-		return "COBOL 85";
+		return "COBOL";
 	}
 
 	@Override
 	protected String getFileDescription() {
-		return "COBOL 85 Source Files";
+		return "COBOL Source Files";
 	}
 
  	@Override
 	public String[] getFileExtensions() {
-		// TODO specify here the usual file name extensions for COBOL 85 source files!";
-		final String[] exts = { "COB", "CBL" };
+		final String[] exts = { "COB", "CBL", "CPY" };
 		return exts;
 	}
 
-	//---------------------- Grammar table constants ---------------------------
+	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 
+	@SuppressWarnings("unused")
 	private interface SymbolConstants 
 	{
-       final int SYM_EOF                        =   0;  // (EOF)
-       final int SYM_ERROR                      =   1;  // (Error)
-       final int SYM_WHITESPACE                 =   2;  // Whitespace
-       final int SYM_LPAREN                     =   3;  // '('
-       final int SYM_RPAREN                     =   4;  // ')'
-       final int SYM_TIMES                      =   5;  // '*'
-       final int SYM_PLUS                       =   6;  // '+'
-       final int SYM_COMMA                      =   7;  // ','
-       final int SYM_MINUS                      =   8;  // '-'
-       final int SYM_DOT                        =   9;  // '.'
-       final int SYM_DIV                        =  10;  // '/'
-       final int SYM_66                         =  11;  // '66'
-       final int SYM_77                         =  12;  // '77'
-       final int SYM_88                         =  13;  // '88'
-       final int SYM_COLON                      =  14;  // ':'
-       final int SYM_LT                         =  15;  // '<'
-       final int SYM_LTEQ                       =  16;  // '<='
-       final int SYM_EQ                         =  17;  // '='
-       final int SYM_GT                         =  18;  // '>'
-       final int SYM_GTEQ                       =  19;  // '>='
-       final int SYM_ACCEPT                     =  20;  // ACCEPT
-       final int SYM_ACCESS                     =  21;  // ACCESS
-       final int SYM_ADD                        =  22;  // ADD
-       final int SYM_ADVANCING                  =  23;  // ADVANCING
-       final int SYM_AFTER                      =  24;  // AFTER
-       final int SYM_ALL                        =  25;  // ALL
-       final int SYM_ALPHABET                   =  26;  // ALPHABET
-       final int SYM_ALPHABETIC                 =  27;  // ALPHABETIC
-       final int SYM_ALPHABETICMINUSLOWER       =  28;  // 'ALPHABETIC-LOWER'
-       final int SYM_ALPHABETICMINUSUPPER       =  29;  // 'ALPHABETIC-UPPER'
-       final int SYM_ALPHANUMERIC               =  30;  // ALPHANUMERIC
-       final int SYM_ALPHANUMERICMINUSEDITED    =  31;  // 'ALPHANUMERIC-EDITED'
-       final int SYM_ALSO                       =  32;  // ALSO
-       final int SYM_ALTER                      =  33;  // ALTER
-       final int SYM_ALTERNATIVE                =  34;  // ALTERNATIVE
-       final int SYM_AND                        =  35;  // And
-       final int SYM_ANY                        =  36;  // ANY
-       final int SYM_ARE                        =  37;  // ARE
-       final int SYM_AREA                       =  38;  // AREA
-       final int SYM_AREAS                      =  39;  // AREAS
-       final int SYM_ASCENDING                  =  40;  // ASCENDING
-       final int SYM_ASSIGN                     =  41;  // ASSIGN
-       final int SYM_AT                         =  42;  // AT
-       final int SYM_AUTHOR                     =  43;  // AUTHOR
-       final int SYM_BACKGROUNDMINUSCOLOR       =  44;  // 'BACKGROUND-COLOR'
-       final int SYM_BEFORE                     =  45;  // BEFORE
-       final int SYM_BINARY                     =  46;  // BINARY
-       final int SYM_BLANK                      =  47;  // BLANK
-       final int SYM_BLINK                      =  48;  // BLINK
-       final int SYM_BLOCK                      =  49;  // BLOCK
-       final int SYM_BOTTOM                     =  50;  // BOTTOM
-       final int SYM_BY                         =  51;  // BY
-       final int SYM_CALL                       =  52;  // CALL
-       final int SYM_CANCEL                     =  53;  // CANCEL
-       final int SYM_CD                         =  54;  // CD
-       final int SYM_CF                         =  55;  // CF
-       final int SYM_CH                         =  56;  // CH
-       final int SYM_CHARACTER                  =  57;  // CHARACTER
-       final int SYM_CHARACTERS                 =  58;  // CHARACTERS
-       final int SYM_CLASS                      =  59;  // CLASS
-       final int SYM_CLOCKMINUSUNITS            =  60;  // 'CLOCK-UNITS'
-       final int SYM_CLOSE                      =  61;  // CLOSE
-       final int SYM_CODE                       =  62;  // CODE
-       final int SYM_CODEMINUSSET               =  63;  // 'CODE-SET'
-       final int SYM_COLLATING                  =  64;  // COLLATING
-       final int SYM_COLUMN                     =  65;  // COLUMN
-       final int SYM_COMMA2                     =  66;  // COMMA
-       final int SYM_COMMON                     =  67;  // COMMON
-       final int SYM_COMMUNICATION              =  68;  // COMMUNICATION
-       final int SYM_COMP                       =  69;  // COMP
-       final int SYM_COMPUTATIONAL              =  70;  // COMPUTATIONAL
-       final int SYM_COMPUTE                    =  71;  // COMPUTE
-       final int SYM_CONFIGURATION              =  72;  // CONFIGURATION
-       final int SYM_CONSOLE                    =  73;  // CONSOLE
-       final int SYM_CONTAINS                   =  74;  // CONTAINS
-       final int SYM_CONTENT                    =  75;  // CONTENT
-       final int SYM_CONTINUE                   =  76;  // CONTINUE
-       final int SYM_CONTROL                    =  77;  // CONTROL
-       final int SYM_CONTROLS                   =  78;  // CONTROLS
-       final int SYM_CONVERTING                 =  79;  // CONVERTING
-       final int SYM_CORR                       =  80;  // CORR
-       final int SYM_CORRESPONDING              =  81;  // CORRESPONDING
-       final int SYM_COUNT                      =  82;  // COUNT
-       final int SYM_CURRENCY                   =  83;  // CURRENCY
-       final int SYM_DATA                       =  84;  // DATA
-       final int SYM_DATE                       =  85;  // DATE
-       final int SYM_DATEMINUSCOMPILED          =  86;  // 'DATE-COMPILED'
-       final int SYM_DATEMINUSWRITTEN           =  87;  // 'DATE-WRITTEN'
-       final int SYM_DAY                        =  88;  // DAY
-       final int SYM_DAYMINUSOFMINUSWEEK        =  89;  // 'DAY-OF-WEEK'
-       final int SYM_DE                         =  90;  // DE
-       final int SYM_DEBUGGING                  =  91;  // DEBUGGING
-       final int SYM_DECIMALMINUSPOINT          =  92;  // 'DECIMAL-POINT'
-       final int SYM_DECLARATIVES               =  93;  // DECLARATIVES
-       final int SYM_DELETE                     =  94;  // DELETE
-       final int SYM_DELIMITED                  =  95;  // DELIMITED
-       final int SYM_DELIMITER                  =  96;  // DELIMITER
-       final int SYM_DEPENDING                  =  97;  // DEPENDING
-       final int SYM_DESCENDING                 =  98;  // DESCENDING
-       final int SYM_DESTINATION                =  99;  // DESTINATION
-       final int SYM_DETAIL                     = 100;  // DETAIL
-       final int SYM_DISABLE                    = 101;  // DISABLE
-       final int SYM_DISPLAY                    = 102;  // DISPLAY
-       final int SYM_DIVIDE                     = 103;  // DIVIDE
-       final int SYM_DIVISION                   = 104;  // DIVISION
-       final int SYM_DOWN                       = 105;  // DOWN
-       final int SYM_DUPLICATES                 = 106;  // DUPLICATES
-       final int SYM_DYNAMIC                    = 107;  // DYNAMIC
-       final int SYM_EGI                        = 108;  // EGI
-       final int SYM_ELSE                       = 109;  // ELSE
-       final int SYM_EMI                        = 110;  // EMI
-       final int SYM_ENABLE                     = 111;  // ENABLE
-       final int SYM_END                        = 112;  // END
-       final int SYM_ENDMINUSADD                = 113;  // 'END-ADD'
-       final int SYM_ENDMINUSCALL               = 114;  // 'END-CALL'
-       final int SYM_ENDMINUSCOMPUTE            = 115;  // 'END-COMPUTE'
-       final int SYM_ENDMINUSDELETE             = 116;  // 'END-DELETE'
-       final int SYM_ENDMINUSDIVIDE             = 117;  // 'END-DIVIDE'
-       final int SYM_ENDMINUSEVALUATE           = 118;  // 'END-EVALUATE'
-       final int SYM_ENDMINUSIF                 = 119;  // 'END-IF'
-       final int SYM_ENDMINUSMOVE               = 120;  // 'END-MOVE'
-       final int SYM_ENDMINUSMULTIPLY           = 121;  // 'END-MULTIPLY'
-       final int SYM_ENDMINUSOFMINUSPAGE        = 122;  // 'END-OF-PAGE'
-       final int SYM_ENDMINUSPERFORM            = 123;  // 'END-PERFORM'
-       final int SYM_ENDMINUSREAD               = 124;  // 'END-READ'
-       final int SYM_ENDMINUSREWRITE            = 125;  // 'END-REWRITE'
-       final int SYM_ENDMINUSSEARCH             = 126;  // 'END-SEARCH'
-       final int SYM_ENDMINUSSTART              = 127;  // 'END-START'
-       final int SYM_ENDMINUSSTRING             = 128;  // 'END-STRING'
-       final int SYM_ENDMINUSSUBTRACT           = 129;  // 'END-SUBTRACT'
-       final int SYM_ENDMINUSUNSTRING           = 130;  // 'END-UNSTRING'
-       final int SYM_ENDMINUSWRITE              = 131;  // 'END-WRITE'
-       final int SYM_ENVIRONMENT                = 132;  // ENVIRONMENT
-       final int SYM_EOP                        = 133;  // EOP
-       final int SYM_EQUAL                      = 134;  // EQUAL
-       final int SYM_ERROR2                     = 135;  // ERROR
-       final int SYM_ESI                        = 136;  // ESI
-       final int SYM_EVALUATE                   = 137;  // EVALUATE
-       final int SYM_EVERY                      = 138;  // EVERY
-       final int SYM_EXCEPTION                  = 139;  // EXCEPTION
-       final int SYM_EXIT                       = 140;  // EXIT
-       final int SYM_EXTEND                     = 141;  // EXTEND
-       final int SYM_EXTERNAL                   = 142;  // EXTERNAL
-       final int SYM_FD                         = 143;  // FD
-       final int SYM_FILE                       = 144;  // FILE
-       final int SYM_FILEMINUSCONTROL           = 145;  // 'FILE-CONTROL'
-       final int SYM_FILLER                     = 146;  // FILLER
-       final int SYM_FINAL                      = 147;  // FINAL
-       final int SYM_FIRST                      = 148;  // FIRST
-       final int SYM_FLOATLITERAL               = 149;  // FloatLiteral
-       final int SYM_FOOTING                    = 150;  // FOOTING
-       final int SYM_FOR                        = 151;  // FOR
-       final int SYM_FOREGROUNDMINUSCOLOR       = 152;  // 'FOREGROUND-COLOR'
-       final int SYM_FROM                       = 153;  // FROM
-       final int SYM_GENERATE                   = 154;  // GENERATE
-       final int SYM_GIVING                     = 155;  // GIVING
-       final int SYM_GLOBAL                     = 156;  // GLOBAL
-       final int SYM_GO                         = 157;  // GO
-       final int SYM_GREATER                    = 158;  // GREATER
-       final int SYM_GROUP                      = 159;  // GROUP
-       final int SYM_HEADING                    = 160;  // HEADING
-       final int SYM_HIGHMINUSVALUE             = 161;  // 'HIGH-VALUE'
-       final int SYM_HIGHMINUSVALUES            = 162;  // 'HIGH-VALUES'
-       final int SYM_HIGHLIGHT                  = 163;  // HIGHLIGHT
-       final int SYM_IMINUSO                    = 164;  // 'I-O'
-       final int SYM_IMINUSOMINUSCONTROL        = 165;  // 'I-O-CONTROL'
-       final int SYM_IDENTIFICATION             = 166;  // IDENTIFICATION
-       final int SYM_IDENTIFIER                 = 167;  // Identifier
-       final int SYM_IF                         = 168;  // IF
-       final int SYM_IN                         = 169;  // IN
-       final int SYM_INDEX                      = 170;  // INDEX
-       final int SYM_INDEXED                    = 171;  // INDEXED
-       final int SYM_INDICATE                   = 172;  // INDICATE
-       final int SYM_INITIAL                    = 173;  // INITIAL
-       final int SYM_INITIALIZE                 = 174;  // INITIALIZE
-       final int SYM_INITIATE                   = 175;  // INITIATE
-       final int SYM_INPUT                      = 176;  // INPUT
-       final int SYM_INPUTMINUSOUTPUT           = 177;  // 'INPUT-OUTPUT'
-       final int SYM_INSPECT                    = 178;  // INSPECT
-       final int SYM_INSTALLATION               = 179;  // INSTALLATION
-       final int SYM_INTERNAL                   = 180;  // INTERNAL
-       final int SYM_INTLITERAL                 = 181;  // IntLiteral
-       final int SYM_INTO                       = 182;  // INTO
-       final int SYM_INVALID                    = 183;  // INVALID
-       final int SYM_IS                         = 184;  // IS
-       final int SYM_JUST                       = 185;  // JUST
-       final int SYM_JUSTIFIED                  = 186;  // JUSTIFIED
-       final int SYM_KEY                        = 187;  // KEY
-       final int SYM_LABEL                      = 188;  // LABEL
-       final int SYM_LEADING                    = 189;  // LEADING
-       final int SYM_LEFT                       = 190;  // LEFT
-       final int SYM_LENGTH                     = 191;  // LENGTH
-       final int SYM_LESS                       = 192;  // LESS
-       final int SYM_LIMIT                      = 193;  // LIMIT
-       final int SYM_LIMITS                     = 194;  // LIMITS
-       final int SYM_LINAGE                     = 195;  // LINAGE
-       final int SYM_LINE                       = 196;  // LINE
-       final int SYM_LINES                      = 197;  // LINES
-       final int SYM_LINKAGE                    = 198;  // LINKAGE
-       final int SYM_LOCK                       = 199;  // LOCK
-       final int SYM_LOWMINUSVALUE              = 200;  // 'LOW-VALUE'
-       final int SYM_LOWMINUSVALUES             = 201;  // 'LOW-VALUES'
-       final int SYM_MERGE                      = 202;  // MERGE
-       final int SYM_MESSAGE                    = 203;  // MESSAGE
-       final int SYM_MODE                       = 204;  // MODE
-       final int SYM_MOVE                       = 205;  // MOVE
-       final int SYM_MULTIPLE                   = 206;  // MULTIPLE
-       final int SYM_MULTIPLY                   = 207;  // MULTIPLY
-       final int SYM_NATIVE                     = 208;  // NATIVE
-       final int SYM_NEXT                       = 209;  // NEXT
-       final int SYM_NO                         = 210;  // NO
-       final int SYM_NOT                        = 211;  // NOT
-       final int SYM_NULL                       = 212;  // NULL
-       final int SYM_NULLS                      = 213;  // NULLS
-       final int SYM_NUMBER                     = 214;  // NUMBER
-       final int SYM_NUMERIC                    = 215;  // NUMERIC
-       final int SYM_NUMERICMINUSEDITED         = 216;  // 'NUMERIC-EDITED'
-       final int SYM_OBJECTMINUSCOMPUTER        = 217;  // 'OBJECT-COMPUTER'
-       final int SYM_OCCURS                     = 218;  // OCCURS
-       final int SYM_OF                         = 219;  // OF
-       final int SYM_OFF                        = 220;  // OFF
-       final int SYM_OMITTED                    = 221;  // OMITTED
-       final int SYM_ON                         = 222;  // ON
-       final int SYM_OPEN                       = 223;  // OPEN
-       final int SYM_OPTIONAL                   = 224;  // OPTIONAL
-       final int SYM_OR                         = 225;  // OR
-       final int SYM_ORDER                      = 226;  // ORDER
-       final int SYM_ORGANIZATION               = 227;  // ORGANIZATION
-       final int SYM_OTHER                      = 228;  // OTHER
-       final int SYM_OUTPUT                     = 229;  // OUTPUT
-       final int SYM_OVERFLOW                   = 230;  // OVERFLOW
-       final int SYM_PACKEDMINUSDECIMAL         = 231;  // 'PACKED-DECIMAL'
-       final int SYM_PADDING                    = 232;  // PADDING
-       final int SYM_PAGE                       = 233;  // PAGE
-       final int SYM_PERFORM                    = 234;  // PERFORM
-       final int SYM_PF                         = 235;  // PF
-       final int SYM_PH                         = 236;  // PH
-       final int SYM_PICSTRING                  = 237;  // PicString
-       final int SYM_PLUS2                      = 238;  // PLUS
-       final int SYM_POINTER                    = 239;  // POINTER
-       final int SYM_POSITION                   = 240;  // POSITION
-       final int SYM_PRINTING                   = 241;  // PRINTING
-       final int SYM_PROCEDURE                  = 242;  // PROCEDURE
-       final int SYM_PROCEDURES                 = 243;  // PROCEDURES
-       final int SYM_PROCEED                    = 244;  // PROCEED
-       final int SYM_PROGRAM                    = 245;  // PROGRAM
-       final int SYM_PROGRAMMINUSID             = 246;  // 'PROGRAM-ID'
-       final int SYM_QUEUE                      = 247;  // QUEUE
-       final int SYM_QUOTE                      = 248;  // QUOTE
-       final int SYM_QUOTES                     = 249;  // QUOTES
-       final int SYM_RANDOM                     = 250;  // RANDOM
-       final int SYM_RD                         = 251;  // RD
-       final int SYM_READ                       = 252;  // READ
-       final int SYM_RECORD                     = 253;  // RECORD
-       final int SYM_RECORDS                    = 254;  // RECORDS
-       final int SYM_REDEFINES                  = 255;  // REDEFINES
-       final int SYM_REEL                       = 256;  // REEL
-       final int SYM_REFERENCE                  = 257;  // REFERENCE
-       final int SYM_REFERENCES                 = 258;  // REFERENCES
-       final int SYM_RELATIVE                   = 259;  // RELATIVE
-       final int SYM_RELEASE                    = 260;  // RELEASE
-       final int SYM_REMAINDER                  = 261;  // REMAINDER
-       final int SYM_REMOVAL                    = 262;  // REMOVAL
-       final int SYM_RENAMES                    = 263;  // RENAMES
-       final int SYM_REPLACING                  = 264;  // REPLACING
-       final int SYM_REPORT                     = 265;  // REPORT
-       final int SYM_REPORTING                  = 266;  // REPORTING
-       final int SYM_RERUN                      = 267;  // RERUN
-       final int SYM_RESERVE                    = 268;  // RESERVE
-       final int SYM_RESET                      = 269;  // RESET
-       final int SYM_RETURN                     = 270;  // RETURN
-       final int SYM_REVERSEMINUSVIDEO          = 271;  // 'REVERSE-VIDEO'
-       final int SYM_REWIND                     = 272;  // REWIND
-       final int SYM_REWRITE                    = 273;  // REWRITE
-       final int SYM_RF                         = 274;  // RF
-       final int SYM_RH                         = 275;  // RH
-       final int SYM_RIGHT                      = 276;  // RIGHT
-       final int SYM_ROUNDED                    = 277;  // ROUNDED
-       final int SYM_RUN                        = 278;  // RUN
-       final int SYM_SAME                       = 279;  // SAME
-       final int SYM_SCREEN                     = 280;  // SCREEN
-       final int SYM_SD                         = 281;  // SD
-       final int SYM_SEARCH                     = 282;  // SEARCH
-       final int SYM_SECTION                    = 283;  // SECTION
-       final int SYM_SECURITY                   = 284;  // SECURITY
-       final int SYM_SEGMENTMINUSLIMIT          = 285;  // 'SEGMENT-LIMIT'
-       final int SYM_SELECT                     = 286;  // SELECT
-       final int SYM_SEND                       = 287;  // SEND
-       final int SYM_SENTENCE                   = 288;  // SENTENCE
-       final int SYM_SEPARATE                   = 289;  // SEPARATE
-       final int SYM_SEQUENCE                   = 290;  // SEQUENCE
-       final int SYM_SEQUENTIAL                 = 291;  // SEQUENTIAL
-       final int SYM_SET                        = 292;  // SET
-       final int SYM_SIGN                       = 293;  // SIGN
-       final int SYM_SIZE                       = 294;  // SIZE
-       final int SYM_SORT                       = 295;  // SORT
-       final int SYM_SORTMINUSMERGE             = 296;  // 'SORT-MERGE'
-       final int SYM_SOURCE                     = 297;  // SOURCE
-       final int SYM_SOURCEMINUSCOMPUTER        = 298;  // 'SOURCE-COMPUTER'
-       final int SYM_SPACE                      = 299;  // SPACE
-       final int SYM_SPACES                     = 300;  // SPACES
-       final int SYM_SPECIALMINUSNAMES          = 301;  // 'SPECIAL-NAMES'
-       final int SYM_STANDARD                   = 302;  // STANDARD
-       final int SYM_STANDARDMINUS1             = 303;  // 'STANDARD-1'
-       final int SYM_STANDARDMINUS2             = 304;  // 'STANDARD-2'
-       final int SYM_START                      = 305;  // START
-       final int SYM_STATUS                     = 306;  // STATUS
-       final int SYM_STOP                       = 307;  // STOP
-       final int SYM_STRING                     = 308;  // STRING
-       final int SYM_STRINGLITERAL              = 309;  // StringLiteral
-       final int SYM_SUBMINUSQUEUEMINUS1        = 310;  // 'SUB-QUEUE-1'
-       final int SYM_SUBMINUSQUEUEMINUS2        = 311;  // 'SUB-QUEUE-2'
-       final int SYM_SUBMINUSQUEUEMINUS3        = 312;  // 'SUB-QUEUE-3'
-       final int SYM_SUBTRACT                   = 313;  // SUBTRACT
-       final int SYM_SUM                        = 314;  // SUM
-       final int SYM_SUPPRESS                   = 315;  // SUPPRESS
-       final int SYM_SYMBOLIC                   = 316;  // SYMBOLIC
-       final int SYM_SYNC                       = 317;  // SYNC
-       final int SYM_SYNCHRONIZED               = 318;  // SYNCHRONIZED
-       final int SYM_TABLES                     = 319;  // TABLES
-       final int SYM_TALLYING                   = 320;  // TALLYING
-       final int SYM_TAPE                       = 321;  // TAPE
-       final int SYM_TERMINAL                   = 322;  // TERMINAL
-       final int SYM_TERMINATE                  = 323;  // TERMINATE
-       final int SYM_TEST                       = 324;  // TEST
-       final int SYM_TEXT                       = 325;  // TEXT
-       final int SYM_THAN                       = 326;  // THAN
-       final int SYM_THEN                       = 327;  // THEN
-       final int SYM_THROUGH                    = 328;  // THROUGH
-       final int SYM_THRU                       = 329;  // THRU
-       final int SYM_TIME                       = 330;  // TIME
-       final int SYM_TIMES2                     = 331;  // TIMES
-       final int SYM_TO                         = 332;  // TO
-       final int SYM_TOP                        = 333;  // TOP
-       final int SYM_TRAILING                   = 334;  // TRAILING
-       final int SYM_TRUE                       = 335;  // TRUE
-       final int SYM_TYPE                       = 336;  // TYPE
-       final int SYM_UNDERLINE                  = 337;  // UNDERLINE
-       final int SYM_UNIT                       = 338;  // UNIT
-       final int SYM_UNSTRING                   = 339;  // UNSTRING
-       final int SYM_UNTIL                      = 340;  // UNTIL
-       final int SYM_UP                         = 341;  // UP
-       final int SYM_UPON                       = 342;  // UPON
-       final int SYM_USAGE                      = 343;  // USAGE
-       final int SYM_USE                        = 344;  // USE
-       final int SYM_USING                      = 345;  // USING
-       final int SYM_VALUE                      = 346;  // VALUE
-       final int SYM_VALUES                     = 347;  // VALUES
-       final int SYM_VARYING                    = 348;  // VARYING
-       final int SYM_WHEN                       = 349;  // WHEN
-       final int SYM_WITH                       = 350;  // WITH
-       final int SYM_WORKINGMINUSSTORAGE        = 351;  // 'WORKING-STORAGE'
-       final int SYM_WRITE                      = 352;  // WRITE
-       final int SYM_ZERO                       = 353;  // ZERO
-       final int SYM_ZEROES                     = 354;  // ZEROES
-       final int SYM_ZEROS                      = 355;  // ZEROS
-       final int SYM_ACCEPTEMBED                = 356;  // <Accept Embed>
-       final int SYM_ACCEPTFROMARG              = 357;  // <Accept From Arg>
-       final int SYM_ACCEPTIMP                  = 358;  // <Accept Imp>
-       final int SYM_ACCEPTSENT                 = 359;  // <Accept Sent>
-       final int SYM_ACCEPTSTM                  = 360;  // <Accept Stm>
-       final int SYM_ACCESSMODE                 = 361;  // <Access Mode>
-       final int SYM_ADDEMBED                   = 362;  // <Add Embed>
-       final int SYM_ADDIMP                     = 363;  // <Add Imp>
-       final int SYM_ADDITEM                    = 364;  // <Add Item>
-       final int SYM_ADDITEMS                   = 365;  // <Add Items>
-       final int SYM_ADDSENT                    = 366;  // <Add Sent>
-       final int SYM_ADDSTM                     = 367;  // <Add Stm>
-       final int SYM_ADVANCINGCLAUSE            = 368;  // <Advancing Clause>
-       final int SYM_ADVANCINGOPT               = 369;  // <ADVANCING Opt>
-       final int SYM_ALLOPT                     = 370;  // <ALL Opt>
-       final int SYM_ALPHABETITEM               = 371;  // <Alphabet Item>
-       final int SYM_ALTEREMBED                 = 372;  // <Alter Embed>
-       final int SYM_ALTERIMP                   = 373;  // <Alter Imp>
-       final int SYM_ALTERSENT                  = 374;  // <Alter Sent>
-       final int SYM_ALTERSTM                   = 375;  // <Alter Stm>
-       final int SYM_ANDEXP                     = 376;  // <And Exp>
-       final int SYM_AREOPT                     = 377;  // <ARE Opt>
-       final int SYM_AREAOPT                    = 378;  // <AREA Opt>
-       final int SYM_ATENDCLAUSE                = 379;  // <At End Clause>
-       final int SYM_ATENDCLAUSES               = 380;  // <At End Clauses>
-       final int SYM_ATEOPCLAUSE                = 381;  // <AT EOP Clause>
-       final int SYM_ATEOPCLAUSES               = 382;  // <AT EOP Clauses>
-       final int SYM_ATOPT                      = 383;  // <AT Opt>
-       final int SYM_BEFOREAFTER                = 384;  // <BEFORE AFTER>
-       final int SYM_BOOLEANEXP                 = 385;  // <Boolean Exp>
-       final int SYM_BYOPT                      = 386;  // <BY Opt>
-       final int SYM_CALLEMBED                  = 387;  // <Call Embed>
-       final int SYM_CALLIMP                    = 388;  // <Call Imp>
-       final int SYM_CALLITEM                   = 389;  // <Call Item>
-       final int SYM_CALLITEMS                  = 390;  // <Call Items>
-       final int SYM_CALLSENT                   = 391;  // <Call Sent>
-       final int SYM_CALLSTM                    = 392;  // <Call Stm>
-       final int SYM_CANCELEMBED                = 393;  // <Cancel Embed>
-       final int SYM_CANCELIMP                  = 394;  // <Cancel Imp>
-       final int SYM_CANCELSENT                 = 395;  // <Cancel Sent>
-       final int SYM_CANCELSTM                  = 396;  // <Cancel Stm>
-       final int SYM_CHARACTEROPT               = 397;  // <Character Opt>
-       final int SYM_CHARACTERSOPT              = 398;  // <CHARACTERS Opt>
-       final int SYM_CLOSEEMBED                 = 399;  // <Close Embed>
-       final int SYM_CLOSEIMP                   = 400;  // <Close Imp>
-       final int SYM_CLOSEITEM                  = 401;  // <Close Item>
-       final int SYM_CLOSEITEMS                 = 402;  // <Close Items>
-       final int SYM_CLOSEMETHOD                = 403;  // <Close Method>
-       final int SYM_CLOSEOPTIONS               = 404;  // <Close Options>
-       final int SYM_CLOSESENT                  = 405;  // <Close Sent>
-       final int SYM_CLOSESTM                   = 406;  // <Close Stm>
-       final int SYM_COLLATINGCLAUSE            = 407;  // <Collating Clause>
-       final int SYM_COLLATINGOPT               = 408;  // <COLLATING Opt>
-       final int SYM_COMMDESC                   = 409;  // <Comm Desc>
-       final int SYM_COMMDESCLIST               = 410;  // <Comm Desc List>
-       final int SYM_COMMIMINUSOBODY            = 411;  // <Comm I-O Body>
-       final int SYM_COMMIMINUSOOPTION          = 412;  // <Comm I-O Option>
-       final int SYM_COMMIMINUSOOPTIONS         = 413;  // <Comm I-O Options>
-       final int SYM_COMMINPUTBODY              = 414;  // <Comm Input Body>
-       final int SYM_COMMINPUTOPTION            = 415;  // <Comm Input Option>
-       final int SYM_COMMINPUTOPTIONS           = 416;  // <Comm Input Options>
-       final int SYM_COMMOUTPUTOPTION           = 417;  // <Comm Output Option>
-       final int SYM_COMMOUTPUTOPTIONS          = 418;  // <Comm Output Options>
-       final int SYM_COMMONINITIAL              = 419;  // <Common Initial>
-       final int SYM_COMMUNICATIONSECTION       = 420;  // <Communication Section>
-       final int SYM_COMPAREEXP                 = 421;  // <Compare Exp>
-       final int SYM_COMPAREOP                  = 422;  // <Compare Op>
-       final int SYM_COMPUTEEMBED               = 423;  // <Compute Embed>
-       final int SYM_COMPUTEIMP                 = 424;  // <Compute Imp>
-       final int SYM_COMPUTESENT                = 425;  // <Compute Sent>
-       final int SYM_COMPUTESTM                 = 426;  // <Compute Stm>
-       final int SYM_CONFIGSECTION              = 427;  // <Config Section>
-       final int SYM_CONFIGSECTIONITEM          = 428;  // <Config Section Item>
-       final int SYM_CONFIGSECTIONITEMS         = 429;  // <Config Section Items>
-       final int SYM_CONTAINITEM                = 430;  // <Contain Item>
-       final int SYM_CONTAINLIST                = 431;  // <Contain List>
-       final int SYM_CONTAINSOPT                = 432;  // <CONTAINS Opt>
-       final int SYM_CONTINUEEMBED              = 433;  // <Continue Embed>
-       final int SYM_CONTINUEIMP                = 434;  // <Continue Imp>
-       final int SYM_CONTINUESENT               = 435;  // <Continue Sent>
-       final int SYM_CONTINUESTM                = 436;  // <Continue Stm>
-       final int SYM_CONTROLIS                  = 437;  // <CONTROL IS>
-       final int SYM_CORRESPONDING2             = 438;  // <CORRESPONDING>
-       final int SYM_DATADIVISION               = 439;  // <Data Division>
-       final int SYM_DATAOPT                    = 440;  // <DATA Opt>
-       final int SYM_DATASECTIONENTRY           = 441;  // <Data Section Entry>
-       final int SYM_DATASECTIONLIST            = 442;  // <Data Section List>
-       final int SYM_DECLARATIVEBLOCK           = 443;  // <Declarative Block>
-       final int SYM_DECLARATIVESECTION         = 444;  // <Declarative Section>
-       final int SYM_DECLARATIVESECTIONS        = 445;  // <Declarative Sections>
-       final int SYM_DELETEEMBED                = 446;  // <Delete Embed>
-       final int SYM_DELETEIMP                  = 447;  // <Delete Imp>
-       final int SYM_DELETESENT                 = 448;  // <Delete Sent>
-       final int SYM_DELETESTM                  = 449;  // <Delete Stm>
-       final int SYM_DELIMITERCLAUSE            = 450;  // <Delimiter Clause>
-       final int SYM_DISABLEEMBED               = 451;  // <Disable Embed>
-       final int SYM_DISABLEIMP                 = 452;  // <Disable Imp>
-       final int SYM_DISABLESENT                = 453;  // <Disable Sent>
-       final int SYM_DISABLESTM                 = 454;  // <Disable Stm>
-       final int SYM_DISPLAYEMBED               = 455;  // <Display Embed>
-       final int SYM_DISPLAYIMP                 = 456;  // <Display Imp>
-       final int SYM_DISPLAYSENT                = 457;  // <Display Sent>
-       final int SYM_DISPLAYSTM                 = 458;  // <Display Stm>
-       final int SYM_DISPLAYTARGET              = 459;  // <Display Target>
-       final int SYM_DIVIDEEMBED                = 460;  // <Divide Embed>
-       final int SYM_DIVIDEIMP                  = 461;  // <Divide Imp>
-       final int SYM_DIVIDESENT                 = 462;  // <Divide Sent>
-       final int SYM_DIVIDESTM                  = 463;  // <Divide Stm>
-       final int SYM_DUPLICATESCLAUSEOPT        = 464;  // <Duplicates Clause Opt>
-       final int SYM_EMBEDSTM                   = 465;  // <Embed Stm>
-       final int SYM_EMBEDSTMS                  = 466;  // <Embed Stms>
-       final int SYM_ENABLEDISABLEKEY           = 467;  // <Enable Disable Key>
-       final int SYM_ENABLEEMBED                = 468;  // <Enable Embed>
-       final int SYM_ENABLEIMP                  = 469;  // <Enable Imp>
-       final int SYM_ENABLESENT                 = 470;  // <Enable Sent>
-       final int SYM_ENABLESTM                  = 471;  // <Enable Stm>
-       final int SYM_ENABLEDDISABLEMODE         = 472;  // <Enabled Disable Mode>
-       final int SYM_ENDOFOPT                   = 473;  // <End Of Opt>
-       final int SYM_ENDOFPAGE                  = 474;  // <End of Page>
-       final int SYM_ENDMINUSADDOPT             = 475;  // <END-ADD Opt>
-       final int SYM_ENDMINUSCALLOPT            = 476;  // <END-CALL Opt>
-       final int SYM_ENDMINUSCOMPUTEOPT         = 477;  // <END-COMPUTE Opt>
-       final int SYM_ENDMINUSDELETEOPT          = 478;  // <END-DELETE Opt>
-       final int SYM_ENDMINUSDIVIDEOPT          = 479;  // <END-DIVIDE Opt>
-       final int SYM_ENDMINUSEVALUATEOPT        = 480;  // <END-EVALUATE Opt>
-       final int SYM_ENDMINUSIFOPT              = 481;  // <END-IF Opt>
-       final int SYM_ENDMINUSMOVEOPT            = 482;  // <END-MOVE Opt>
-       final int SYM_ENDMINUSMULTIPLYOPT        = 483;  // <END-MULTIPLY Opt>
-       final int SYM_ENDMINUSPERFORMOPT         = 484;  // <END-PERFORM Opt>
-       final int SYM_ENDMINUSREADOPT            = 485;  // <END-READ Opt>
-       final int SYM_ENDMINUSREWRITEOPT         = 486;  // <END-REWRITE Opt>
-       final int SYM_ENDMINUSSEARCHOPT          = 487;  // <END-SEARCH Opt>
-       final int SYM_ENDMINUSSTARTOPT           = 488;  // <END-START Opt>
-       final int SYM_ENDMINUSSTRINGOPT          = 489;  // <END-STRING Opt>
-       final int SYM_ENDMINUSSUBTRACTOPT        = 490;  // <END-SUBTRACT Opt>
-       final int SYM_ENDMINUSUNSTRINGOPT        = 491;  // <END-UNSTRING Opt>
-       final int SYM_ENDMINUSWRITEOPT           = 492;  // <END-WRITE Opt>
-       final int SYM_ENVIRONMENTDIVISION        = 493;  // <Environment Division>
-       final int SYM_EQUALOP                    = 494;  // <Equal Op>
-       final int SYM_ERRORCAUSE                 = 495;  // <Error Cause>
-       final int SYM_EVALUATEEMBED              = 496;  // <Evaluate Embed>
-       final int SYM_EVALUATEIMP                = 497;  // <Evaluate Imp>
-       final int SYM_EVALUATESENT               = 498;  // <Evaluate Sent>
-       final int SYM_EVALUATESTM                = 499;  // <Evaluate Stm>
-       final int SYM_EVERYCLAUSE                = 500;  // <Every Clause>
-       final int SYM_EVERYENDTARGET             = 501;  // <Every End Target>
-       final int SYM_EVERYOPT                   = 502;  // <EVERY Opt>
-       final int SYM_EXCEPTIONCLAUSE            = 503;  // <Exception Clause>
-       final int SYM_EXCEPTIONCLAUSES           = 504;  // <Exception Clauses>
-       final int SYM_EXITEMBED                  = 505;  // <Exit Embed>
-       final int SYM_EXITIMP                    = 506;  // <Exit Imp>
-       final int SYM_EXITSENT                   = 507;  // <Exit Sent>
-       final int SYM_EXITSTM                    = 508;  // <Exit Stm>
-       final int SYM_FIELDDEFITEM               = 509;  // <Field Def Item>
-       final int SYM_FIELDDEFLIST               = 510;  // <Field Def List>
-       final int SYM_FIELDNAMEOPT               = 511;  // <Field Name opt>
-       final int SYM_FIGURATIVE                 = 512;  // <Figurative>
-       final int SYM_FILEBLOCKOPTION            = 513;  // <File Block Option>
-       final int SYM_FILEBLOCKUNITS             = 514;  // <File Block Units>
-       final int SYM_FILECODEMINUSSETOPTION     = 515;  // <File Code-Set Option>
-       final int SYM_FILEDATAOPTION             = 516;  // <File Data Option>
-       final int SYM_FILEDESCBLOCK              = 517;  // <File Desc Block>
-       final int SYM_FILEDESCENTRY              = 518;  // <File Desc Entry>
-       final int SYM_FILEISOPTION               = 519;  // <File Is Option>
-       final int SYM_FILELABELOPTION            = 520;  // <File Label Option>
-       final int SYM_FILELABELTYPE              = 521;  // <File Label Type>
-       final int SYM_FILELINAGEBOTTOM           = 522;  // <File Linage Bottom>
-       final int SYM_FILELINAGEFOOTING          = 523;  // <File Linage Footing>
-       final int SYM_FILELINAGEOPTION           = 524;  // <File Linage Option>
-       final int SYM_FILELINAGETOP              = 525;  // <File Linage Top>
-       final int SYM_FILENAME                   = 526;  // <File Name>
-       final int SYM_FILENAMELIST               = 527;  // <File Name List>
-       final int SYM_FILEOPT                    = 528;  // <FILE Opt>
-       final int SYM_FILEOPTION                 = 529;  // <File Option>
-       final int SYM_FILEOPTIONLIST             = 530;  // <File Option List>
-       final int SYM_FILERECORDDEPENDINGCLAUSE  = 531;  // <File Record Depending Clause>
-       final int SYM_FILERECORDOPTION           = 532;  // <File Record Option>
-       final int SYM_FILERECORDSIZECLAUSE       = 533;  // <File Record Size Clause>
-       final int SYM_FILESECTION                = 534;  // <File Section>
-       final int SYM_FILEVALUEITEM              = 535;  // <File Value Item>
-       final int SYM_FILEVALUELIST              = 536;  // <File Value List>
-       final int SYM_FILEVALUEOPTION            = 537;  // <File Value Option>
-       final int SYM_FILEMINUSCONTROL2          = 538;  // <File-Control>
-       final int SYM_FINALOPT                   = 539;  // <FINAL Opt>
-       final int SYM_FOROPT                     = 540;  // <FOR Opt>
-       final int SYM_GENERATEEMBED              = 541;  // <Generate Embed>
-       final int SYM_GENERATEIMP                = 542;  // <Generate Imp>
-       final int SYM_GENERATESENT               = 543;  // <Generate Sent>
-       final int SYM_GENERATESTM                = 544;  // <Generate Stm>
-       final int SYM_GIVINGCLAUSE               = 545;  // <Giving Clause>
-       final int SYM_GIVINGCLAUSEOPT            = 546;  // <Giving Clause Opt>
-       final int SYM_GLOBALOPT                  = 547;  // <GLOBAL Opt>
-       final int SYM_GOTOEMBED                  = 548;  // <Go To Embed>
-       final int SYM_GOTOIMP                    = 549;  // <Go To Imp>
-       final int SYM_GOTOSENT                   = 550;  // <Go To Sent>
-       final int SYM_GOTOSTM                    = 551;  // <Go To Stm>
-       final int SYM_GREATEREQOP                = 552;  // <Greater Eq Op>
-       final int SYM_GREATEROP                  = 553;  // <Greater Op>
-       final int SYM_IMINUSOMINUSCONTROL2       = 554;  // <I-O-Control>
-       final int SYM_IDENTIFICATIONDIVISION     = 555;  // <Identification Division>
-       final int SYM_IDENTIFIERRANGE            = 556;  // <Identifier Range>
-       final int SYM_IDENTIFIERS                = 557;  // <Identifiers>
-       final int SYM_IFEMBED                    = 558;  // <If Embed>
-       final int SYM_IFIMP                      = 559;  // <If Imp>
-       final int SYM_IFSENT                     = 560;  // <If Sent>
-       final int SYM_IFSTM                      = 561;  // <If Stm>
-       final int SYM_IMPERATIVESTM              = 562;  // <Imperative Stm>
-       final int SYM_IMPERATIVESTMS             = 563;  // <Imperative Stms>
-       final int SYM_INOPT                      = 564;  // <IN Opt>
-       final int SYM_INDEXCLAUSE                = 565;  // <Index Clause>
-       final int SYM_INDICATEOPT                = 566;  // <INDICATE Opt>
-       final int SYM_INITIALOPT                 = 567;  // <INITIAL Opt>
-       final int SYM_INITIALIZEEMBED            = 568;  // <Initialize Embed>
-       final int SYM_INITIALIZEIMP              = 569;  // <Initialize Imp>
-       final int SYM_INITIALIZESENT             = 570;  // <Initialize Sent>
-       final int SYM_INITIALIZESTM              = 571;  // <Initialize Stm>
-       final int SYM_INITIATEEMBED              = 572;  // <Initiate Embed>
-       final int SYM_INITIATEIMP                = 573;  // <Initiate Imp>
-       final int SYM_INITIATESENT               = 574;  // <Initiate Sent>
-       final int SYM_INITIATESTM                = 575;  // <Initiate Stm>
-       final int SYM_INPUTMINUSOUTPUTSECTION    = 576;  // <Input-Output Section>
-       final int SYM_INSPECTEMBED               = 577;  // <Inspect Embed>
-       final int SYM_INSPECTIMP                 = 578;  // <Inspect Imp>
-       final int SYM_INSPECTSENT                = 579;  // <Inspect Sent>
-       final int SYM_INSPECTSPEC                = 580;  // <Inspect Spec>
-       final int SYM_INSPECTSPECS               = 581;  // <Inspect Specs>
-       final int SYM_INSPECTSTM                 = 582;  // <Inspect Stm>
-       final int SYM_INTCONSTANT                = 583;  // <Int Constant>
-       final int SYM_INTEGER                    = 584;  // <Integer>
-       final int SYM_INVALIDKEYCLAUSE           = 585;  // <Invalid Key Clause>
-       final int SYM_INVALIDKEYCLAUSES          = 586;  // <Invalid Key Clauses>
-       final int SYM_ISAREOPT                   = 587;  // <IS ARE Opt>
-       final int SYM_ISOPT                      = 588;  // <IS Opt>
-       final int SYM_KEYCLAUSE                  = 589;  // <Key Clause>
-       final int SYM_KEYOPT                     = 590;  // <KEY Opt>
-       final int SYM_LEFTRIGHTOPT               = 591;  // <Left Right Opt>
-       final int SYM_LESSEQOP                   = 592;  // <Less Eq Op>
-       final int SYM_LESSOP                     = 593;  // <Less Op>
-       final int SYM_LEVELNAME                  = 594;  // <Level Name>
-       final int SYM_LIMITSISOPT                = 595;  // <LIMITS IS Opt>
-       final int SYM_LINEOPT                    = 596;  // <LINE Opt>
-       final int SYM_LINESOPT                   = 597;  // <LINES Opt>
-       final int SYM_LINKAGESECTION             = 598;  // <Linkage Section>
-       final int SYM_LITERAL                    = 599;  // <Literal>
-       final int SYM_MATHEXP                    = 600;  // <Math Exp>
-       final int SYM_MERGEEMBED                 = 601;  // <Merge Embed>
-       final int SYM_MERGEIMP                   = 602;  // <Merge Imp>
-       final int SYM_MERGESENT                  = 603;  // <Merge Sent>
-       final int SYM_MERGESTM                   = 604;  // <Merge Stm>
-       final int SYM_MESSAGEOPT                 = 605;  // <MESSAGE opt>
-       final int SYM_MODEOPT                    = 606;  // <MODE Opt>
-       final int SYM_MOVEEMBED                  = 607;  // <Move Embed>
-       final int SYM_MOVEIMP                    = 608;  // <Move Imp>
-       final int SYM_MOVESENT                   = 609;  // <Move Sent>
-       final int SYM_MOVESTM                    = 610;  // <Move Stm>
-       final int SYM_MULTEXP                    = 611;  // <Mult Exp>
-       final int SYM_MULTIPLEITEM               = 612;  // <Multiple Item>
-       final int SYM_MULTIPLELIST               = 613;  // <Multiple List>
-       final int SYM_MULTIPLYEMBED              = 614;  // <Multiply Embed>
-       final int SYM_MULTIPLYIMP                = 615;  // <Multiply Imp>
-       final int SYM_MULTIPLYITEM               = 616;  // <Multiply Item>
-       final int SYM_MULTIPLYITEMS              = 617;  // <Multiply Items>
-       final int SYM_MULTIPLYSENT               = 618;  // <Multiply Sent>
-       final int SYM_MULTIPLYSTM                = 619;  // <Multiply Stm>
-       final int SYM_NAMESTATUSITEM             = 620;  // <Name Status Item>
-       final int SYM_NAMESTATUSITEMS            = 621;  // <Name Status Items>
-       final int SYM_NEGATEEXP                  = 622;  // <Negate Exp>
-       final int SYM_NEGATIONEXP                = 623;  // <Negation Exp>
-       final int SYM_NEXTOPT                    = 624;  // <NEXT Opt>
-       final int SYM_NUMBEROPT                  = 625;  // <NUMBER Opt>
-       final int SYM_NUMERIC2                   = 626;  // <Numeric>
-       final int SYM_OBJECTCLAUSE               = 627;  // <Object Clause>
-       final int SYM_OBJECTCLAUSES              = 628;  // <Object Clauses>
-       final int SYM_OBJECTCOMPUTER             = 629;  // <Object Computer>
-       final int SYM_OBJECTCOMPUTERCLAUSEOPT    = 630;  // <Object Computer Clause Opt>
-       final int SYM_OFOPT                      = 631;  // <OF Opt>
-       final int SYM_ONOPT                      = 632;  // <ON Opt>
-       final int SYM_OPENEMBED                  = 633;  // <Open Embed>
-       final int SYM_OPENENTRY                  = 634;  // <Open Entry>
-       final int SYM_OPENIMP                    = 635;  // <Open Imp>
-       final int SYM_OPENLIST                   = 636;  // <Open List>
-       final int SYM_OPENNOREWIND               = 637;  // <Open No Rewind>
-       final int SYM_OPENSENT                   = 638;  // <Open Sent>
-       final int SYM_OPENSTM                    = 639;  // <Open Stm>
-       final int SYM_OPTIONALOPT                = 640;  // <Optional Opt>
-       final int SYM_ORDEROPT                   = 641;  // <ORDER opt>
-       final int SYM_ORGANIZATIONKIND           = 642;  // <Organization Kind>
-       final int SYM_OVERFLOWCLAUSE             = 643;  // <Overflow Clause>
-       final int SYM_OVERFLOWCLAUSES            = 644;  // <Overflow Clauses>
-       final int SYM_PADDINGKIND                = 645;  // <Padding Kind>
-       final int SYM_PARAGRAPH                  = 646;  // <Paragraph>
-       final int SYM_PARAGRAPHS                 = 647;  // <Paragraphs>
-       final int SYM_PERFORMBLOCK               = 648;  // <Perform Block>
-       final int SYM_PERFORMEMBED               = 649;  // <Perform Embed>
-       final int SYM_PERFORMFORLIST             = 650;  // <Perform For List>
-       final int SYM_PERFORMFORRANGE            = 651;  // <Perform For Range>
-       final int SYM_PERFORMIMP                 = 652;  // <Perform Imp>
-       final int SYM_PERFORMLOOP                = 653;  // <Perform Loop>
-       final int SYM_PERFORMSENT                = 654;  // <Perform Sent>
-       final int SYM_PERFORMSTM                 = 655;  // <Perform Stm>
-       final int SYM_PHRASE                     = 656;  // <Phrase>
-       final int SYM_PHRASES                    = 657;  // <Phrases>
-       final int SYM_PICTURE                    = 658;  // <Picture>
-       final int SYM_POINTERCLAUSE              = 659;  // <Pointer Clause>
-       final int SYM_PRINTINGOPT                = 660;  // <PRINTING Opt>
-       final int SYM_PROCEDUREDIVISION          = 661;  // <Procedure Division>
-       final int SYM_PROGID                     = 662;  // <Prog ID>
-       final int SYM_PROGNAMEOPT                = 663;  // <Prog Name Opt>
-       final int SYM_PROGRAM2                   = 664;  // <Program>
-       final int SYM_PROGRAMINFOITEM            = 665;  // <Program Info Item>
-       final int SYM_PROGRAMINFOITEMS           = 666;  // <Program Info Items>
-       final int SYM_PROGRAMOPT                 = 667;  // <Program Opt>
-       final int SYM_READEMBED                  = 668;  // <Read Embed>
-       final int SYM_READIMP                    = 669;  // <Read Imp>
-       final int SYM_READKEYOPT                 = 670;  // <Read Key Opt>
-       final int SYM_READMSGCLAUSES             = 671;  // <Read Msg Clauses>
-       final int SYM_READSENT                   = 672;  // <Read Sent>
-       final int SYM_READSTM                    = 673;  // <Read Stm>
-       final int SYM_RECORDDELIMITERKIND        = 674;  // <Record Delimiter Kind>
-       final int SYM_RECORDENTRY                = 675;  // <Record Entry>
-       final int SYM_RECORDENTRYBLOCK           = 676;  // <Record Entry Block>
-       final int SYM_RECORDOPT                  = 677;  // <RECORD Opt>
-       final int SYM_RECORDOPTION               = 678;  // <Record Option>
-       final int SYM_RECORDOPTIONLIST           = 679;  // <Record Option List>
-       final int SYM_REFERENCESOPT              = 680;  // <REFERENCES Opt>
-       final int SYM_RELATIVEKEYOPT             = 681;  // <Relative Key Opt>
-       final int SYM_RELEASEEMBED               = 682;  // <Release Embed>
-       final int SYM_RELEASEIMP                 = 683;  // <Release Imp>
-       final int SYM_RELEASESENT                = 684;  // <Release Sent>
-       final int SYM_RELEASESTM                 = 685;  // <Release Stm>
-       final int SYM_REMAINDEROPT               = 686;  // <Remainder Opt>
-       final int SYM_REPLACECHAR                = 687;  // <Replace Char>
-       final int SYM_REPLACECHARS               = 688;  // <Replace Chars>
-       final int SYM_REPLACEITEM                = 689;  // <Replace Item>
-       final int SYM_REPLACEITEMS               = 690;  // <Replace Items>
-       final int SYM_REPLACINGITEM              = 691;  // <Replacing Item>
-       final int SYM_REPLACINGITEMS             = 692;  // <Replacing Items>
-       final int SYM_REPLACINGOPT               = 693;  // <Replacing Opt>
-       final int SYM_REPLACINGTYPE              = 694;  // <Replacing Type>
-       final int SYM_REPORTDESC                 = 695;  // <Report Desc>
-       final int SYM_REPORTDESCLIST             = 696;  // <Report Desc List>
-       final int SYM_REPORTENTRY                = 697;  // <Report Entry>
-       final int SYM_REPORTENTRYBLOCK           = 698;  // <Report Entry Block>
-       final int SYM_REPORTENTRYNEXTGROUP       = 699;  // <Report Entry Next Group>
-       final int SYM_REPORTENTRYOPTION          = 700;  // <Report Entry Option>
-       final int SYM_REPORTENTRYOPTIONS         = 701;  // <Report Entry Options>
-       final int SYM_REPORTENTRYRESULTCLAUSE    = 702;  // <Report Entry Result Clause>
-       final int SYM_REPORTENTRYTYPE            = 703;  // <Report Entry Type>
-       final int SYM_REPORTHEADINGOPT           = 704;  // <Report Heading Opt>
-       final int SYM_REPORTOPTION               = 705;  // <Report Option>
-       final int SYM_REPORTOPTIONS              = 706;  // <Report Options>
-       final int SYM_REPORTSECTION              = 707;  // <Report Section>
-       final int SYM_RERUNCLAUSEOPT             = 708;  // <Rerun Clause Opt>
-       final int SYM_RERUNITEM                  = 709;  // <Rerun Item>
-       final int SYM_RERUNLIST                  = 710;  // <Rerun List>
-       final int SYM_RETURNEMBED                = 711;  // <Return Embed>
-       final int SYM_RETURNIMP                  = 712;  // <Return Imp>
-       final int SYM_RETURNSENT                 = 713;  // <Return Sent>
-       final int SYM_RETURNSTM                  = 714;  // <Return Stm>
-       final int SYM_REWRITEEMBED               = 715;  // <Rewrite Embed>
-       final int SYM_REWRITEIMP                 = 716;  // <Rewrite Imp>
-       final int SYM_REWRITESENT                = 717;  // <Rewrite Sent>
-       final int SYM_REWRITESTM                 = 718;  // <Rewrite Stm>
-       final int SYM_RIGHTOPT                   = 719;  // <RIGHT Opt>
-       final int SYM_ROUNDEDOPT                 = 720;  // <ROUNDED Opt>
-       final int SYM_SAMEITEM                   = 721;  // <Same Item>
-       final int SYM_SAMELIST                   = 722;  // <Same List>
-       final int SYM_SAMESOURCE                 = 723;  // <Same Source>
-       final int SYM_SCREENFIELD                = 724;  // <Screen Field>
-       final int SYM_SCREENFIELDLIST            = 725;  // <Screen Field List>
-       final int SYM_SCREENSECTION              = 726;  // <Screen Section>
-       final int SYM_SEARCHEMBED                = 727;  // <Search Embed>
-       final int SYM_SEARCHIMP                  = 728;  // <Search Imp>
-       final int SYM_SEARCHSENT                 = 729;  // <Search Sent>
-       final int SYM_SEARCHSTM                  = 730;  // <Search Stm>
-       final int SYM_SELECTBLOCK                = 731;  // <Select Block>
-       final int SYM_SELECTOPTLIST              = 732;  // <Select Opt List>
-       final int SYM_SELECTOPTION               = 733;  // <Select Option>
-       final int SYM_SELECTPARAGRAPH            = 734;  // <Select Paragraph>
-       final int SYM_SENDADVANCE                = 735;  // <Send Advance>
-       final int SYM_SENDEMBED                  = 736;  // <Send Embed>
-       final int SYM_SENDIMP                    = 737;  // <Send Imp>
-       final int SYM_SENDREPLACINGOPT           = 738;  // <Send Replacing Opt>
-       final int SYM_SENDSENT                   = 739;  // <Send Sent>
-       final int SYM_SENDSPEC                   = 740;  // <Send Spec>
-       final int SYM_SENDSTM                    = 741;  // <Send Stm>
-       final int SYM_SENDWITH                   = 742;  // <Send With>
-       final int SYM_SENTSTM                    = 743;  // <Sent Stm>
-       final int SYM_SENTENCE2                  = 744;  // <Sentence>
-       final int SYM_SENTENCES                  = 745;  // <Sentences>
-       final int SYM_SEPCHAROPTION              = 746;  // <Sep Char Option>
-       final int SYM_SETEMBED                   = 747;  // <Set Embed>
-       final int SYM_SETIMP                     = 748;  // <Set Imp>
-       final int SYM_SETSENT                    = 749;  // <Set Sent>
-       final int SYM_SETSTM                     = 750;  // <Set Stm>
-       final int SYM_SETVALUE                   = 751;  // <Set Value>
-       final int SYM_SIGNARGS                   = 752;  // <Sign Args>
-       final int SYM_SIGNOPT                    = 753;  // <SIGN Opt>
-       final int SYM_SIZECLAUSE                 = 754;  // <Size Clause>
-       final int SYM_SIZECLAUSES                = 755;  // <Size Clauses>
-       final int SYM_SIZEOPT                    = 756;  // <SIZE Opt>
-       final int SYM_SORTDUPLICATESOPT          = 757;  // <Sort Duplicates Opt>
-       final int SYM_SORTEMBED                  = 758;  // <Sort Embed>
-       final int SYM_SORTIMP                    = 759;  // <Sort Imp>
-       final int SYM_SORTKEY                    = 760;  // <Sort Key>
-       final int SYM_SORTKEYS                   = 761;  // <Sort Keys>
-       final int SYM_SORTSENT                   = 762;  // <Sort Sent>
-       final int SYM_SORTSOURCE                 = 763;  // <Sort Source>
-       final int SYM_SORTSTM                    = 764;  // <Sort Stm>
-       final int SYM_SORTTARGET                 = 765;  // <Sort Target>
-       final int SYM_SOURCECOMPUTER             = 766;  // <Source Computer>
-       final int SYM_SOURCECOMPUTERCLAUSEOPT    = 767;  // <Source Computer Clause Opt>
-       final int SYM_SOURCEDEBUGOPT             = 768;  // <Source Debug Opt>
-       final int SYM_SPECIALNAMELIST            = 769;  // <Special Name List>
-       final int SYM_SPECIALNAMES               = 770;  // <Special Names>
-       final int SYM_SPECIALNAMESITEM           = 771;  // <Special Names Item>
-       final int SYM_SPECIALRANGE               = 772;  // <Special Range>
-       final int SYM_SPECIALRANGES              = 773;  // <Special Ranges>
-       final int SYM_STANDARDOPT                = 774;  // <STANDARD Opt>
-       final int SYM_STARTEMBED                 = 775;  // <Start Embed>
-       final int SYM_STARTIMP                   = 776;  // <Start Imp>
-       final int SYM_STARTKEYOPT                = 777;  // <Start Key Opt>
-       final int SYM_STARTSENT                  = 778;  // <Start Sent>
-       final int SYM_STARTSTM                   = 779;  // <Start Stm>
-       final int SYM_STATUSOPT                  = 780;  // <STATUS Opt>
-       final int SYM_STOPEMBED                  = 781;  // <Stop Embed>
-       final int SYM_STOPIMP                    = 782;  // <Stop Imp>
-       final int SYM_STOPSENT                   = 783;  // <Stop Sent>
-       final int SYM_STOPSTM                    = 784;  // <Stop Stm>
-       final int SYM_STRINGEMBED                = 785;  // <String Embed>
-       final int SYM_STRINGIMP                  = 786;  // <String Imp>
-       final int SYM_STRINGITEM                 = 787;  // <String Item>
-       final int SYM_STRINGITEMS                = 788;  // <String Items>
-       final int SYM_STRINGSENT                 = 789;  // <String Sent>
-       final int SYM_STRINGSTM                  = 790;  // <String Stm>
-       final int SYM_SUBJECT                    = 791;  // <Subject>
-       final int SYM_SUBJECTS                   = 792;  // <Subjects>
-       final int SYM_SUBSETS                    = 793;  // <Subsets>
-       final int SYM_SUBTRACTEMBED              = 794;  // <Subtract Embed>
-       final int SYM_SUBTRACTIMP                = 795;  // <Subtract Imp>
-       final int SYM_SUBTRACTSENT               = 796;  // <Subtract Sent>
-       final int SYM_SUBTRACTSTM                = 797;  // <Subtract Stm>
-       final int SYM_SUPPRESSEMBED              = 798;  // <Suppress Embed>
-       final int SYM_SUPPRESSIMP                = 799;  // <Suppress Imp>
-       final int SYM_SUPPRESSSENT               = 800;  // <Suppress Sent>
-       final int SYM_SUPPRESSSTM                = 801;  // <Suppress Stm>
-       final int SYM_SYMBOLICCHARLIST           = 802;  // <Symbolic Char List>
-       final int SYM_SYMBOLICCHARACTER          = 803;  // <Symbolic Character>
-       final int SYM_SYMBOLICCHARACTERS         = 804;  // <Symbolic Characters>
-       final int SYM_SYMBOLICOPT                = 805;  // <SYMBOLIC Opt>
-       final int SYM_SYMBOLICVALUE              = 806;  // <Symbolic Value>
-       final int SYM_TALLYITEM                  = 807;  // <Tally Item>
-       final int SYM_TALLYITEMS                 = 808;  // <Tally Items>
-       final int SYM_TALLYVARIABLE              = 809;  // <Tally Variable>
-       final int SYM_TALLYVARIABLES             = 810;  // <Tally Variables>
-       final int SYM_TAPEOPT                    = 811;  // <TAPE Opt>
-       final int SYM_TERMINATEEMBED             = 812;  // <Terminate Embed>
-       final int SYM_TERMINATEIMP               = 813;  // <Terminate Imp>
-       final int SYM_TERMINATESENT              = 814;  // <Terminate Sent>
-       final int SYM_TERMINATESTM               = 815;  // <Terminate Stm>
-       final int SYM_THANOPT                    = 816;  // <THAN Opt>
-       final int SYM_THENOPT                    = 817;  // <THEN Opt>
-       final int SYM_THRU2                      = 818;  // <THRU>
-       final int SYM_TIMESOPT                   = 819;  // <Times Opt>
-       final int SYM_TOOPT                      = 820;  // <TO Opt>
-       final int SYM_UNSTRINGDELIMITER          = 821;  // <Unstring Delimiter>
-       final int SYM_UNSTRINGDELIMITERLIST      = 822;  // <Unstring Delimiter List>
-       final int SYM_UNSTRINGEMBED              = 823;  // <Unstring Embed>
-       final int SYM_UNSTRINGIMP                = 824;  // <Unstring Imp>
-       final int SYM_UNSTRINGOPTION             = 825;  // <Unstring Option>
-       final int SYM_UNSTRINGOPTIONS            = 826;  // <Unstring Options>
-       final int SYM_UNSTRINGSENT               = 827;  // <Unstring Sent>
-       final int SYM_UNSTRINGSTM                = 828;  // <Unstring Stm>
-       final int SYM_USAGEARGS                  = 829;  // <Usage Args>
-       final int SYM_USEACCESS                  = 830;  // <Use Access>
-       final int SYM_USEDEBUG                   = 831;  // <Use Debug>
-       final int SYM_USEEMBED                   = 832;  // <Use Embed>
-       final int SYM_USEIMP                     = 833;  // <Use Imp>
-       final int SYM_USEPROCTYPE                = 834;  // <Use Proc Type>
-       final int SYM_USESENT                    = 835;  // <Use Sent>
-       final int SYM_USESTM                     = 836;  // <Use Stm>
-       final int SYM_USINGCLAUSEOPT             = 837;  // <Using Clause Opt>
-       final int SYM_VALUE2                     = 838;  // <Value>
-       final int SYM_VALUES2                    = 839;  // <Values>
-       final int SYM_VARIABLE                   = 840;  // <Variable>
-       final int SYM_VARIABLES                  = 841;  // <Variables>
-       final int SYM_VARYINGOPT                 = 842;  // <Varying Opt>
-       final int SYM_WHENCLAUSE                 = 843;  // <When Clause>
-       final int SYM_WHENCLAUSES                = 844;  // <When Clauses>
-       final int SYM_WHENOPT                    = 845;  // <WHEN Opt>
-       final int SYM_WITHOPT                    = 846;  // <WITH Opt>
-       final int SYM_WITHTEST                   = 847;  // <With Test>
-       final int SYM_WORDITEM                   = 848;  // <Word Item>
-       final int SYM_WORDLIST                   = 849;  // <Word List>
-       final int SYM_WORKINGMINUSSTORAGESECTION = 850;  // <Working-Storage Section>
-       final int SYM_WRITEADVANCE               = 851;  // <Write Advance>
-       final int SYM_WRITEEMBED                 = 852;  // <Write Embed>
-       final int SYM_WRITEIMP                   = 853;  // <Write Imp>
-       final int SYM_WRITEOPTIONS               = 854;  // <Write Options>
-       final int SYM_WRITESENT                  = 855;  // <Write Sent>
-       final int SYM_WRITESTM                   = 856;  // <Write Stm>
-	}
+		final int SYM_EOF                                        =    0;  // (EOF)
+		final int SYM_ERROR                                      =    1;  // (Error)
+		final int SYM_COMMENT                                    =    2;  // Comment
+		final int SYM_NEWLINE                                    =    3;  // NewLine
+		final int SYM_WHITESPACE                                 =    4;  // Whitespace
+		final int SYM_TIMESGT                                    =    5;  // '*>'
+		final int SYM_ABS                                        =    6;  // ABS
+		final int SYM_ACCEPT                                     =    7;  // ACCEPT
+		final int SYM_ACCESS                                     =    8;  // ACCESS
+		final int SYM_ACOS                                       =    9;  // ACOS
+		final int SYM_ACUBINNUMLITERAL                           =   10;  // AcuBinNumLiteral
+		final int SYM_ACUHEXNUMLITERAL                           =   11;  // AcuHexNumLiteral
+		final int SYM_ACUOCTNUMLITERAL                           =   12;  // AcuOctNumLiteral
+		final int SYM_ADD                                        =   13;  // ADD
+		final int SYM_ADDRESS                                    =   14;  // ADDRESS
+		final int SYM_ADVANCING                                  =   15;  // ADVANCING
+		final int SYM_AFTER                                      =   16;  // AFTER
+		final int SYM_ALL                                        =   17;  // ALL
+		final int SYM_ALLOCATE                                   =   18;  // ALLOCATE
+		final int SYM_ALPHABET                                   =   19;  // ALPHABET
+		final int SYM_ALPHABETIC                                 =   20;  // ALPHABETIC
+		final int SYM_ALPHABETIC_LOWER                           =   21;  // 'ALPHABETIC_LOWER'
+		final int SYM_ALPHABETIC_UPPER                           =   22;  // 'ALPHABETIC_UPPER'
+		final int SYM_ALPHANUMERIC                               =   23;  // ALPHANUMERIC
+		final int SYM_ALPHANUMERIC_EDITED                        =   24;  // 'ALPHANUMERIC_EDITED'
+		final int SYM_ALSO                                       =   25;  // ALSO
+		final int SYM_ALTER                                      =   26;  // ALTER
+		final int SYM_ALTERNATE                                  =   27;  // ALTERNATE
+		final int SYM_AND                                        =   28;  // AND
+		final int SYM_ANNUITY                                    =   29;  // ANNUITY
+		final int SYM_ANY                                        =   30;  // ANY
+		final int SYM_ARE                                        =   31;  // ARE
+		final int SYM_AREA                                       =   32;  // AREA
+		final int SYM_AREAS                                      =   33;  // AREAS
+		final int SYM_ARGUMENT_NUMBER                            =   34;  // 'ARGUMENT_NUMBER'
+		final int SYM_ARGUMENT_VALUE                             =   35;  // 'ARGUMENT_VALUE'
+		final int SYM_AS                                         =   36;  // AS
+		final int SYM_ASCENDING                                  =   37;  // ASCENDING
+		final int SYM_ASCII                                      =   38;  // ASCII
+		final int SYM_ASIN                                       =   39;  // ASIN
+		final int SYM_ASSIGN                                     =   40;  // ASSIGN
+		final int SYM_AT                                         =   41;  // AT
+		final int SYM_ATAN                                       =   42;  // ATAN
+		final int SYM_ATTRIBUTE                                  =   43;  // ATTRIBUTE
+		final int SYM_AUTHOR                                     =   44;  // AUTHOR
+		final int SYM_AUTO                                       =   45;  // AUTO
+		final int SYM_AUTOMATIC                                  =   46;  // AUTOMATIC
+		final int SYM_AWAY_FROM_ZERO                             =   47;  // 'AWAY_FROM_ZERO'
+		final int SYM_BACKGROUND_COLOR                           =   48;  // 'BACKGROUND_COLOR'
+		final int SYM_BASED                                      =   49;  // BASED
+		final int SYM_BEFORE                                     =   50;  // BEFORE
+		final int SYM_BELL                                       =   51;  // BELL
+		final int SYM_BINARY                                     =   52;  // BINARY
+		final int SYM_BINARY_CHAR                                =   53;  // 'BINARY_CHAR'
+		final int SYM_BINARY_C_LONG                              =   54;  // 'BINARY_C_LONG'
+		final int SYM_BINARY_DOUBLE                              =   55;  // 'BINARY_DOUBLE'
+		final int SYM_BINARY_LONG                                =   56;  // 'BINARY_LONG'
+		final int SYM_BINARY_SHORT                               =   57;  // 'BINARY_SHORT'
+		final int SYM_BLANK                                      =   58;  // BLANK
+		final int SYM_BLINK                                      =   59;  // BLINK
+		final int SYM_BLOCK                                      =   60;  // BLOCK
+		final int SYM_BOOLEANHEXLITERAL                          =   61;  // BooleanHexLiteral
+		final int SYM_BOOLEANLITERAL                             =   62;  // BooleanLiteral
+		final int SYM_BOOLEAN_OF_INTEGER                         =   63;  // 'BOOLEAN_OF_INTEGER'
+		final int SYM_BOTTOM                                     =   64;  // BOTTOM
+		final int SYM_BY                                         =   65;  // BY
+		final int SYM_BYTE_LENGTH                                =   66;  // 'BYTE_LENGTH'
+		final int SYM_CALL                                       =   67;  // CALL
+		final int SYM_CANCEL                                     =   68;  // CANCEL
+		final int SYM_CAPACITY                                   =   69;  // CAPACITY
+		final int SYM_CARD_PUNCH                                 =   70;  // 'CARD_PUNCH'
+		final int SYM_CARD_READER                                =   71;  // 'CARD_READER'
+		final int SYM_CASSETTE                                   =   72;  // CASSETTE
+		final int SYM_CD                                         =   73;  // CD
+		final int SYM_CF                                         =   74;  // CF
+		final int SYM_CH                                         =   75;  // CH
+		final int SYM_CHAINING                                   =   76;  // CHAINING
+		final int SYM_CHAR                                       =   77;  // CHAR
+		final int SYM_CHARACTER                                  =   78;  // CHARACTER
+		final int SYM_CHARACTERS                                 =   79;  // CHARACTERS
+		final int SYM_CHAR_NATIONAL                              =   80;  // 'CHAR_NATIONAL'
+		final int SYM_CLASS                                      =   81;  // CLASS
+		final int SYM_CLASSIFICATION                             =   82;  // CLASSIFICATION
+		final int SYM_CLOSE                                      =   83;  // CLOSE
+		final int SYM_COBOL                                      =   84;  // COBOL
+		final int SYM_COBOLWORD                                  =   85;  // COBOLWord
+		final int SYM_CODE                                       =   86;  // CODE
+		final int SYM_CODE_SET                                   =   87;  // 'CODE_SET'
+		final int SYM_COL                                        =   88;  // COL
+		final int SYM_COLLATING                                  =   89;  // COLLATING
+		final int SYM_COLS                                       =   90;  // COLS
+		final int SYM_COLUMN                                     =   91;  // COLUMN
+		final int SYM_COLUMNS                                    =   92;  // COLUMNS
+		final int SYM_COMBINED_DATETIME                          =   93;  // 'COMBINED_DATETIME'
+		final int SYM_COMMA                                      =   94;  // COMMA
+		final int SYM_COMMAND_LINE                               =   95;  // 'COMMAND_LINE'
+		final int SYM_COMMA_DELIM                                =   96;  // 'COMMA_DELIM'
+		final int SYM_COMMIT                                     =   97;  // COMMIT
+		final int SYM_COMMON                                     =   98;  // COMMON
+		final int SYM_COMMUNICATION                              =   99;  // COMMUNICATION
+		final int SYM_COMP                                       =  100;  // COMP
+		final int SYM_COMPUTE                                    =  101;  // COMPUTE
+		final int SYM_COMP_1                                     =  102;  // 'COMP_1'
+		final int SYM_COMP_2                                     =  103;  // 'COMP_2'
+		final int SYM_COMP_3                                     =  104;  // 'COMP_3'
+		final int SYM_COMP_4                                     =  105;  // 'COMP_4'
+		final int SYM_COMP_5                                     =  106;  // 'COMP_5'
+		final int SYM_COMP_6                                     =  107;  // 'COMP_6'
+		final int SYM_COMP_X                                     =  108;  // 'COMP_X'
+		final int SYM_CONCATENATE                                =  109;  // CONCATENATE
+		final int SYM_CONFIGURATION                              =  110;  // CONFIGURATION
+		final int SYM_CONSTANT                                   =  111;  // CONSTANT
+		final int SYM_CONTAINS                                   =  112;  // CONTAINS
+		final int SYM_CONTENT                                    =  113;  // CONTENT
+		final int SYM_CONTINUE                                   =  114;  // CONTINUE
+		final int SYM_CONTROL                                    =  115;  // CONTROL
+		final int SYM_CONTROLS                                   =  116;  // CONTROLS
+		final int SYM_CONVERSION                                 =  117;  // CONVERSION
+		final int SYM_CONVERTING                                 =  118;  // CONVERTING
+		final int SYM_CORRESPONDING                              =  119;  // CORRESPONDING
+		final int SYM_COS                                        =  120;  // COS
+		final int SYM_COUNT                                      =  121;  // COUNT
+		final int SYM_CRT                                        =  122;  // CRT
+		final int SYM_CRT_UNDER                                  =  123;  // 'CRT_UNDER'
+		final int SYM_CURRENCY                                   =  124;  // CURRENCY
+		final int SYM_CURRENCY_SYMBOL                            =  125;  // 'CURRENCY_SYMBOL'
+		final int SYM_CURRENT_DATE                               =  126;  // 'CURRENT_DATE'
+		final int SYM_CURSOR                                     =  127;  // CURSOR
+		final int SYM_CYCLE                                      =  128;  // CYCLE
+		final int SYM_DATA                                       =  129;  // DATA
+		final int SYM_DATE                                       =  130;  // DATE
+		final int SYM_DATE_COMPILED                              =  131;  // 'DATE_COMPILED'
+		final int SYM_DATE_OF_INTEGER                            =  132;  // 'DATE_OF_INTEGER'
+		final int SYM_DATE_TO_YYYYMMDD                           =  133;  // 'DATE_TO_YYYYMMDD'
+		final int SYM_DATE_WRITTEN                               =  134;  // 'DATE_WRITTEN'
+		final int SYM_DAY                                        =  135;  // DAY
+		final int SYM_DAY_OF_INTEGER                             =  136;  // 'DAY_OF_INTEGER'
+		final int SYM_DAY_OF_WEEK                                =  137;  // 'DAY_OF_WEEK'
+		final int SYM_DAY_TO_YYYYDDD                             =  138;  // 'DAY_TO_YYYYDDD'
+		final int SYM_DE                                         =  139;  // DE
+		final int SYM_DEBUGGING                                  =  140;  // DEBUGGING
+		final int SYM_DECIMALLITERAL                             =  141;  // DecimalLiteral
+		final int SYM_DECIMAL_POINT                              =  142;  // 'DECIMAL_POINT'
+		final int SYM_DECLARATIVES                               =  143;  // DECLARATIVES
+		final int SYM_DEFAULT                                    =  144;  // DEFAULT
+		final int SYM_DELETE                                     =  145;  // DELETE
+		final int SYM_DELIMITED                                  =  146;  // DELIMITED
+		final int SYM_DELIMITER                                  =  147;  // DELIMITER
+		final int SYM_DEPENDING                                  =  148;  // DEPENDING
+		final int SYM_DESCENDING                                 =  149;  // DESCENDING
+		final int SYM_DESTINATION                                =  150;  // DESTINATION
+		final int SYM_DETAIL                                     =  151;  // DETAIL
+		final int SYM_DISABLE                                    =  152;  // DISABLE
+		final int SYM_DISC                                       =  153;  // DISC
+		final int SYM_DISK                                       =  154;  // DISK
+		final int SYM_DISPLAY                                    =  155;  // DISPLAY
+		final int SYM_DISPLAY_OF                                 =  156;  // 'DISPLAY_OF'
+		final int SYM_DIVIDE                                     =  157;  // DIVIDE
+		final int SYM_DIVISION                                   =  158;  // DIVISION
+		final int SYM_DOWN                                       =  159;  // DOWN
+		final int SYM_DUPLICATES                                 =  160;  // DUPLICATES
+		final int SYM_DYNAMIC                                    =  161;  // DYNAMIC
+		final int SYM_E                                          =  162;  // E
+		final int SYM_EBCDIC                                     =  163;  // EBCDIC
+		final int SYM_EC                                         =  164;  // EC
+		final int SYM_ECHO                                       =  165;  // ECHO
+		final int SYM_EGI                                        =  166;  // EGI
+		final int SYM_EIGHTY_EIGHT                               =  167;  // 'EIGHTY_EIGHT'
+		final int SYM_ELSE                                       =  168;  // ELSE
+		final int SYM_EMI                                        =  169;  // EMI
+		final int SYM_ENABLE                                     =  170;  // ENABLE
+		final int SYM_END                                        =  171;  // END
+		final int SYM_END_ACCEPT                                 =  172;  // 'END_ACCEPT'
+		final int SYM_END_ADD                                    =  173;  // 'END_ADD'
+		final int SYM_END_CALL                                   =  174;  // 'END_CALL'
+		final int SYM_END_COMPUTE                                =  175;  // 'END_COMPUTE'
+		final int SYM_END_DELETE                                 =  176;  // 'END_DELETE'
+		final int SYM_END_DISPLAY                                =  177;  // 'END_DISPLAY'
+		final int SYM_END_DIVIDE                                 =  178;  // 'END_DIVIDE'
+		final int SYM_END_EVALUATE                               =  179;  // 'END_EVALUATE'
+		final int SYM_END_FUNCTION                               =  180;  // 'END_FUNCTION'
+		final int SYM_END_IF                                     =  181;  // 'END_IF'
+		final int SYM_END_MULTIPLY                               =  182;  // 'END_MULTIPLY'
+		final int SYM_END_PERFORM                                =  183;  // 'END_PERFORM'
+		final int SYM_END_PROGRAM                                =  184;  // 'END_PROGRAM'
+		final int SYM_END_READ                                   =  185;  // 'END_READ'
+		final int SYM_END_RECEIVE                                =  186;  // 'END_RECEIVE'
+		final int SYM_END_RETURN                                 =  187;  // 'END_RETURN'
+		final int SYM_END_REWRITE                                =  188;  // 'END_REWRITE'
+		final int SYM_END_SEARCH                                 =  189;  // 'END_SEARCH'
+		final int SYM_END_START                                  =  190;  // 'END_START'
+		final int SYM_END_STRING                                 =  191;  // 'END_STRING'
+		final int SYM_END_SUBTRACT                               =  192;  // 'END_SUBTRACT'
+		final int SYM_END_UNSTRING                               =  193;  // 'END_UNSTRING'
+		final int SYM_END_WRITE                                  =  194;  // 'END_WRITE'
+		final int SYM_ENTRY                                      =  195;  // ENTRY
+		final int SYM_ENTRY_CONVENTION                           =  196;  // 'ENTRY_CONVENTION'
+		final int SYM_ENVIRONMENT                                =  197;  // ENVIRONMENT
+		final int SYM_ENVIRONMENT_VALUE                          =  198;  // 'ENVIRONMENT_VALUE'
+		final int SYM_EOL                                        =  199;  // EOL
+		final int SYM_EOP                                        =  200;  // EOP
+		final int SYM_EOS                                        =  201;  // EOS
+		final int SYM_EQUAL                                      =  202;  // EQUAL
+		final int SYM_ERASE                                      =  203;  // ERASE
+		final int SYM_ERROR2                                     =  204;  // ERROR
+		final int SYM_ESCAPE                                     =  205;  // ESCAPE
+		final int SYM_ESI                                        =  206;  // ESI
+		final int SYM_EVALUATE                                   =  207;  // EVALUATE
+		final int SYM_EVENT_STATUS                               =  208;  // 'EVENT_STATUS'
+		final int SYM_EXCEPTION                                  =  209;  // EXCEPTION
+		final int SYM_EXCEPTION_CONDITION                        =  210;  // 'EXCEPTION_CONDITION'
+		final int SYM_EXCEPTION_FILE                             =  211;  // 'EXCEPTION_FILE'
+		final int SYM_EXCEPTION_FILE_N                           =  212;  // 'EXCEPTION_FILE_N'
+		final int SYM_EXCEPTION_LOCATION                         =  213;  // 'EXCEPTION_LOCATION'
+		final int SYM_EXCEPTION_LOCATION_N                       =  214;  // 'EXCEPTION_LOCATION_N'
+		final int SYM_EXCEPTION_STATEMENT                        =  215;  // 'EXCEPTION_STATEMENT'
+		final int SYM_EXCEPTION_STATUS                           =  216;  // 'EXCEPTION_STATUS'
+		final int SYM_EXCLUSIVE                                  =  217;  // EXCLUSIVE
+		final int SYM_EXIT                                       =  218;  // EXIT
+		final int SYM_EXP                                        =  219;  // EXP
+		final int SYM_EXPONENTIATION                             =  220;  // EXPONENTIATION
+		final int SYM_EXTEND                                     =  221;  // EXTEND
+		final int SYM_EXTERNAL                                   =  222;  // EXTERNAL
+		final int SYM_F                                          =  223;  // F
+		final int SYM_FACTORIAL                                  =  224;  // FACTORIAL
+		final int SYM_FD                                         =  225;  // FD
+		final int SYM_FILE_CONTROL                               =  226;  // 'FILE_CONTROL'
+		final int SYM_FILE_ID                                    =  227;  // 'FILE_ID'
+		final int SYM_FILLER                                     =  228;  // FILLER
+		final int SYM_FINAL                                      =  229;  // FINAL
+		final int SYM_FIRST                                      =  230;  // FIRST
+		final int SYM_FIXED                                      =  231;  // FIXED
+		final int SYM_FLOATLITERAL                               =  232;  // FloatLiteral
+		final int SYM_FLOAT_BINARY_128                           =  233;  // 'FLOAT_BINARY_128'
+		final int SYM_FLOAT_BINARY_32                            =  234;  // 'FLOAT_BINARY_32'
+		final int SYM_FLOAT_BINARY_64                            =  235;  // 'FLOAT_BINARY_64'
+		final int SYM_FLOAT_DECIMAL_16                           =  236;  // 'FLOAT_DECIMAL_16'
+		final int SYM_FLOAT_DECIMAL_34                           =  237;  // 'FLOAT_DECIMAL_34'
+		final int SYM_FLOAT_DECIMAL_7                            =  238;  // 'FLOAT_DECIMAL_7'
+		final int SYM_FLOAT_EXTENDED                             =  239;  // 'FLOAT_EXTENDED'
+		final int SYM_FLOAT_LONG                                 =  240;  // 'FLOAT_LONG'
+		final int SYM_FLOAT_SHORT                                =  241;  // 'FLOAT_SHORT'
+		final int SYM_FOOTING                                    =  242;  // FOOTING
+		final int SYM_FOR                                        =  243;  // FOR
+		final int SYM_FOREGROUND_COLOR                           =  244;  // 'FOREGROUND_COLOR'
+		final int SYM_FOREVER                                    =  245;  // FOREVER
+		final int SYM_FORMATTED_CURRENT_DATE                     =  246;  // 'FORMATTED_CURRENT_DATE'
+		final int SYM_FORMATTED_DATE                             =  247;  // 'FORMATTED_DATE'
+		final int SYM_FORMATTED_DATETIME                         =  248;  // 'FORMATTED_DATETIME'
+		final int SYM_FORMATTED_TIME                             =  249;  // 'FORMATTED_TIME'
+		final int SYM_FRACTION_PART                              =  250;  // 'FRACTION_PART'
+		final int SYM_FREE                                       =  251;  // FREE
+		final int SYM_FROM                                       =  252;  // FROM
+		final int SYM_FROM_CRT                                   =  253;  // 'FROM_CRT'
+		final int SYM_FULL                                       =  254;  // FULL
+		final int SYM_FUNCTION                                   =  255;  // FUNCTION
+		final int SYM_FUNCTION_ID                                =  256;  // 'FUNCTION_ID'
+		final int SYM_GENERATE                                   =  257;  // GENERATE
+		final int SYM_GIVING                                     =  258;  // GIVING
+		final int SYM_GLOBAL                                     =  259;  // GLOBAL
+		final int SYM_GO                                         =  260;  // GO
+		final int SYM_GOBACK                                     =  261;  // GOBACK
+		final int SYM_GREATER                                    =  262;  // GREATER
+		final int SYM_GREATER_OR_EQUAL                           =  263;  // 'GREATER_OR_EQUAL'
+		final int SYM_GRID                                       =  264;  // GRID
+		final int SYM_GROUP                                      =  265;  // GROUP
+		final int SYM_HEADING                                    =  266;  // HEADING
+		final int SYM_HEXLITERAL                                 =  267;  // HexLiteral
+		final int SYM_HIGHEST_ALGEBRAIC                          =  268;  // 'HIGHEST_ALGEBRAIC'
+		final int SYM_HIGHLIGHT                                  =  269;  // HIGHLIGHT
+		final int SYM_HIGH_VALUE                                 =  270;  // 'HIGH_VALUE'
+		final int SYM_ID                                         =  271;  // ID
+		final int SYM_IDENTIFICATION                             =  272;  // IDENTIFICATION
+		final int SYM_IF                                         =  273;  // IF
+		final int SYM_IGNORE                                     =  274;  // IGNORE
+		final int SYM_IGNORING                                   =  275;  // IGNORING
+		final int SYM_IN                                         =  276;  // IN
+		final int SYM_INDEX                                      =  277;  // INDEX
+		final int SYM_INDEXED                                    =  278;  // INDEXED
+		final int SYM_INDICATE                                   =  279;  // INDICATE
+		final int SYM_INITIALIZE                                 =  280;  // INITIALIZE
+		final int SYM_INITIALIZED                                =  281;  // INITIALIZED
+		final int SYM_INITIATE                                   =  282;  // INITIATE
+		final int SYM_INPUT                                      =  283;  // INPUT
+		final int SYM_INPUT_OUTPUT                               =  284;  // 'INPUT_OUTPUT'
+		final int SYM_INSPECT                                    =  285;  // INSPECT
+		final int SYM_INSTALLATION                               =  286;  // INSTALLATION
+		final int SYM_INTEGER                                    =  287;  // INTEGER
+		final int SYM_INTEGER_OF_BOOLEAN                         =  288;  // 'INTEGER_OF_BOOLEAN'
+		final int SYM_INTEGER_OF_DATE                            =  289;  // 'INTEGER_OF_DATE'
+		final int SYM_INTEGER_OF_DAY                             =  290;  // 'INTEGER_OF_DAY'
+		final int SYM_INTEGER_OF_FORMATTED_DATE                  =  291;  // 'INTEGER_OF_FORMATTED_DATE'
+		final int SYM_INTEGER_PART                               =  292;  // 'INTEGER_PART'
+		final int SYM_INTERMEDIATE                               =  293;  // INTERMEDIATE
+		final int SYM_INTLITERAL                                 =  294;  // IntLiteral
+		final int SYM_INTO                                       =  295;  // INTO
+		final int SYM_INTRINSIC                                  =  296;  // INTRINSIC
+		final int SYM_INVALID_KEY                                =  297;  // 'INVALID_KEY'
+		final int SYM_IS                                         =  298;  // IS
+		final int SYM_I_O                                        =  299;  // 'I_O'
+		final int SYM_I_O_CONTROL                                =  300;  // 'I_O_CONTROL'
+		final int SYM_JUSTIFIED                                  =  301;  // JUSTIFIED
+		final int SYM_KEPT                                       =  302;  // KEPT
+		final int SYM_KEY                                        =  303;  // KEY
+		final int SYM_KEYBOARD                                   =  304;  // KEYBOARD
+		final int SYM_LABEL                                      =  305;  // LABEL
+		final int SYM_LAST                                       =  306;  // LAST
+		final int SYM_LEADING                                    =  307;  // LEADING
+		final int SYM_LEFT                                       =  308;  // LEFT
+		final int SYM_LEFTLINE                                   =  309;  // LEFTLINE
+		final int SYM_LENGTH                                     =  310;  // LENGTH
+		final int SYM_LENGTH_OF                                  =  311;  // 'LENGTH_OF'
+		final int SYM_LESS                                       =  312;  // LESS
+		final int SYM_LESS_OR_EQUAL                              =  313;  // 'LESS_OR_EQUAL'
+		final int SYM_LIMIT                                      =  314;  // LIMIT
+		final int SYM_LIMITS                                     =  315;  // LIMITS
+		final int SYM_LINAGE                                     =  316;  // LINAGE
+		final int SYM_LINAGE_COUNTER                             =  317;  // 'LINAGE_COUNTER'
+		final int SYM_LINE                                       =  318;  // LINE
+		final int SYM_LINES                                      =  319;  // LINES
+		final int SYM_LINE_COUNTER                               =  320;  // 'LINE_COUNTER'
+		final int SYM_LINKAGE                                    =  321;  // LINKAGE
+		final int SYM_LOCALE                                     =  322;  // LOCALE
+		final int SYM_LOCALE_COMPARE                             =  323;  // 'LOCALE_COMPARE'
+		final int SYM_LOCALE_DATE                                =  324;  // 'LOCALE_DATE'
+		final int SYM_LOCALE_TIME                                =  325;  // 'LOCALE_TIME'
+		final int SYM_LOCALE_TIME_FROM_SECONDS                   =  326;  // 'LOCALE_TIME_FROM_SECONDS'
+		final int SYM_LOCAL_STORAGE                              =  327;  // 'LOCAL_STORAGE'
+		final int SYM_LOCK                                       =  328;  // LOCK
+		final int SYM_LOG                                        =  329;  // LOG
+		final int SYM_LOWER                                      =  330;  // LOWER
+		final int SYM_LOWER_CASE                                 =  331;  // 'LOWER_CASE'
+		final int SYM_LOWEST_ALGEBRAIC                           =  332;  // 'LOWEST_ALGEBRAIC'
+		final int SYM_LOWLIGHT                                   =  333;  // LOWLIGHT
+		final int SYM_LOW_VALUE                                  =  334;  // 'LOW_VALUE'
+		final int SYM_MAGNETIC_TAPE                              =  335;  // 'MAGNETIC_TAPE'
+		final int SYM_MANUAL                                     =  336;  // MANUAL
+		final int SYM_MAX                                        =  337;  // MAX
+		final int SYM_MEAN                                       =  338;  // MEAN
+		final int SYM_MEDIAN                                     =  339;  // MEDIAN
+		final int SYM_MEMORY                                     =  340;  // MEMORY
+		final int SYM_MERGE                                      =  341;  // MERGE
+		final int SYM_MESSAGE                                    =  342;  // MESSAGE
+		final int SYM_MIDRANGE                                   =  343;  // MIDRANGE
+		final int SYM_MIN                                        =  344;  // MIN
+		final int SYM_MINUS                                      =  345;  // MINUS
+		final int SYM_MNEMONIC_NAME                              =  346;  // 'MNEMONIC_NAME'
+		final int SYM_MOD                                        =  347;  // MOD
+		final int SYM_MODE                                       =  348;  // MODE
+		final int SYM_MODULE_CALLER_ID                           =  349;  // 'MODULE_CALLER_ID'
+		final int SYM_MODULE_DATE                                =  350;  // 'MODULE_DATE'
+		final int SYM_MODULE_FORMATTED_DATE                      =  351;  // 'MODULE_FORMATTED_DATE'
+		final int SYM_MODULE_ID                                  =  352;  // 'MODULE_ID'
+		final int SYM_MODULE_PATH                                =  353;  // 'MODULE_PATH'
+		final int SYM_MODULE_SOURCE                              =  354;  // 'MODULE_SOURCE'
+		final int SYM_MODULE_TIME                                =  355;  // 'MODULE_TIME'
+		final int SYM_MONETARY_DECIMAL_POINT                     =  356;  // 'MONETARY_DECIMAL_POINT'
+		final int SYM_MONETARY_THOUSANDS_SEPARATOR               =  357;  // 'MONETARY_THOUSANDS_SEPARATOR'
+		final int SYM_MOVE                                       =  358;  // MOVE
+		final int SYM_MULTIPLE                                   =  359;  // MULTIPLE
+		final int SYM_MULTIPLY                                   =  360;  // MULTIPLY
+		final int SYM_NAME                                       =  361;  // NAME
+		final int SYM_NATIONAL                                   =  362;  // NATIONAL
+		final int SYM_NATIONALHEXLITERAL                         =  363;  // NationalHexLiteral
+		final int SYM_NATIONALLITERAL                            =  364;  // NationalLiteral
+		final int SYM_NATIONAL_EDITED                            =  365;  // 'NATIONAL_EDITED'
+		final int SYM_NATIONAL_OF                                =  366;  // 'NATIONAL_OF'
+		final int SYM_NATIVE                                     =  367;  // NATIVE
+		final int SYM_NEAREST_AWAY_FROM_ZERO                     =  368;  // 'NEAREST_AWAY_FROM_ZERO'
+		final int SYM_NEAREST_EVEN                               =  369;  // 'NEAREST_EVEN'
+		final int SYM_NEAREST_TOWARD_ZERO                        =  370;  // 'NEAREST_TOWARD_ZERO'
+		final int SYM_NEGATIVE                                   =  371;  // NEGATIVE
+		final int SYM_NESTED                                     =  372;  // NESTED
+		final int SYM_NEXT                                       =  373;  // NEXT
+		final int SYM_NEXT_PAGE                                  =  374;  // 'NEXT_PAGE'
+		final int SYM_NO                                         =  375;  // NO
+		final int SYM_NORMAL                                     =  376;  // NORMAL
+		final int SYM_NOT                                        =  377;  // NOT
+		final int SYM_NOTHING                                    =  378;  // NOTHING
+		final int SYM_NOT_END                                    =  379;  // 'NOT_END'
+		final int SYM_NOT_EOP                                    =  380;  // 'NOT_EOP'
+		final int SYM_NOT_EQUAL                                  =  381;  // 'NOT_EQUAL'
+		final int SYM_NOT_ESCAPE                                 =  382;  // 'NOT_ESCAPE'
+		final int SYM_NOT_EXCEPTION                              =  383;  // 'NOT_EXCEPTION'
+		final int SYM_NOT_INVALID_KEY                            =  384;  // 'NOT_INVALID_KEY'
+		final int SYM_NOT_OVERFLOW                               =  385;  // 'NOT_OVERFLOW'
+		final int SYM_NOT_SIZE_ERROR                             =  386;  // 'NOT_SIZE_ERROR'
+		final int SYM_NO_ADVANCING                               =  387;  // 'NO_ADVANCING'
+		final int SYM_NO_DATA                                    =  388;  // 'NO_DATA'
+		final int SYM_NO_ECHO                                    =  389;  // 'NO_ECHO'
+		final int SYM_NUMBER                                     =  390;  // NUMBER
+		final int SYM_NUMBERS                                    =  391;  // NUMBERS
+		final int SYM_NUMERIC                                    =  392;  // NUMERIC
+		final int SYM_NUMERIC_DECIMAL_POINT                      =  393;  // 'NUMERIC_DECIMAL_POINT'
+		final int SYM_NUMERIC_EDITED                             =  394;  // 'NUMERIC_EDITED'
+		final int SYM_NUMERIC_THOUSANDS_SEPARATOR                =  395;  // 'NUMERIC_THOUSANDS_SEPARATOR'
+		final int SYM_NUMVAL                                     =  396;  // NUMVAL
+		final int SYM_NUMVAL_C                                   =  397;  // 'NUMVAL_C'
+		final int SYM_NUMVAL_F                                   =  398;  // 'NUMVAL_F'
+		final int SYM_OBJECT_COMPUTER                            =  399;  // 'OBJECT_COMPUTER'
+		final int SYM_OCCURS                                     =  400;  // OCCURS
+		final int SYM_OF                                         =  401;  // OF
+		final int SYM_OFF                                        =  402;  // OFF
+		final int SYM_OMITTED                                    =  403;  // OMITTED
+		final int SYM_ON                                         =  404;  // ON
+		final int SYM_ONLY                                       =  405;  // ONLY
+		final int SYM_OPEN                                       =  406;  // OPEN
+		final int SYM_OPTIONAL                                   =  407;  // OPTIONAL
+		final int SYM_OPTIONS                                    =  408;  // OPTIONS
+		final int SYM_OR                                         =  409;  // OR
+		final int SYM_ORD                                        =  410;  // ORD
+		final int SYM_ORDER                                      =  411;  // ORDER
+		final int SYM_ORD_MAX                                    =  412;  // 'ORD_MAX'
+		final int SYM_ORD_MIN                                    =  413;  // 'ORD_MIN'
+		final int SYM_ORGANIZATION                               =  414;  // ORGANIZATION
+		final int SYM_OTHER                                      =  415;  // OTHER
+		final int SYM_OUTPUT                                     =  416;  // OUTPUT
+		final int SYM_OVERLINE                                   =  417;  // OVERLINE
+		final int SYM_PACKED_DECIMAL                             =  418;  // 'PACKED_DECIMAL'
+		final int SYM_PADDING                                    =  419;  // PADDING
+		final int SYM_PAGE                                       =  420;  // PAGE
+		final int SYM_PAGE_COUNTER                               =  421;  // 'PAGE_COUNTER'
+		final int SYM_PARAGRAPH                                  =  422;  // PARAGRAPH
+		final int SYM_PERFORM                                    =  423;  // PERFORM
+		final int SYM_PF                                         =  424;  // PF
+		final int SYM_PH                                         =  425;  // PH
+		final int SYM_PI                                         =  426;  // PI
+		final int SYM_PICTURE_DEF                                =  427;  // 'Picture_Def'
+		final int SYM_PICTURE_SYMBOL                             =  428;  // 'PICTURE_SYMBOL'
+		final int SYM_PLUS                                       =  429;  // PLUS
+		final int SYM_POINTER                                    =  430;  // POINTER
+		final int SYM_POSITION                                   =  431;  // POSITION
+		final int SYM_POSITIVE                                   =  432;  // POSITIVE
+		final int SYM_PRESENT                                    =  433;  // PRESENT
+		final int SYM_PRESENT_VALUE                              =  434;  // 'PRESENT_VALUE'
+		final int SYM_PREVIOUS                                   =  435;  // PREVIOUS
+		final int SYM_PRINT                                      =  436;  // PRINT
+		final int SYM_PRINTER                                    =  437;  // PRINTER
+		final int SYM_PRINTER_1                                  =  438;  // 'PRINTER_1'
+		final int SYM_PRINTING                                   =  439;  // PRINTING
+		final int SYM_PROCEDURE                                  =  440;  // PROCEDURE
+		final int SYM_PROCEDURES                                 =  441;  // PROCEDURES
+		final int SYM_PROCEED                                    =  442;  // PROCEED
+		final int SYM_PROGRAM                                    =  443;  // PROGRAM
+		final int SYM_PROGRAM_ID                                 =  444;  // 'PROGRAM_ID'
+		final int SYM_PROGRAM_POINTER                            =  445;  // 'PROGRAM_POINTER'
+		final int SYM_PROHIBITED                                 =  446;  // PROHIBITED
+		final int SYM_PROMPT                                     =  447;  // PROMPT
+		final int SYM_PROTECTED                                  =  448;  // PROTECTED
+		final int SYM_PURGE                                      =  449;  // PURGE
+		final int SYM_QUEUE                                      =  450;  // QUEUE
+		final int SYM_QUOTE                                      =  451;  // QUOTE
+		final int SYM_RANDOM                                     =  452;  // RANDOM
+		final int SYM_RANGE                                      =  453;  // RANGE
+		final int SYM_RD                                         =  454;  // RD
+		final int SYM_READ                                       =  455;  // READ
+		final int SYM_READY_TRACE                                =  456;  // 'READY_TRACE'
+		final int SYM_RECEIVE                                    =  457;  // RECEIVE
+		final int SYM_RECORD                                     =  458;  // RECORD
+		final int SYM_RECORDING                                  =  459;  // RECORDING
+		final int SYM_RECORDS                                    =  460;  // RECORDS
+		final int SYM_RECURSIVE                                  =  461;  // RECURSIVE
+		final int SYM_REDEFINES                                  =  462;  // REDEFINES
+		final int SYM_REEL                                       =  463;  // REEL
+		final int SYM_REFERENCE                                  =  464;  // REFERENCE
+		final int SYM_REFERENCES                                 =  465;  // REFERENCES
+		final int SYM_RELATIVE                                   =  466;  // RELATIVE
+		final int SYM_RELEASE                                    =  467;  // RELEASE
+		final int SYM_REM                                        =  468;  // REM
+		final int SYM_REMAINDER                                  =  469;  // REMAINDER
+		final int SYM_REMOVAL                                    =  470;  // REMOVAL
+		final int SYM_RENAMES                                    =  471;  // RENAMES
+		final int SYM_REPLACING                                  =  472;  // REPLACING
+		final int SYM_REPORT                                     =  473;  // REPORT
+		final int SYM_REPORTING                                  =  474;  // REPORTING
+		final int SYM_REPORTS                                    =  475;  // REPORTS
+		final int SYM_REPOSITORY                                 =  476;  // REPOSITORY
+		final int SYM_REQUIRED                                   =  477;  // REQUIRED
+		final int SYM_RESERVE                                    =  478;  // RESERVE
+		final int SYM_RESET                                      =  479;  // RESET
+		final int SYM_RESET_TRACE                                =  480;  // 'RESET_TRACE'
+		final int SYM_RETRY                                      =  481;  // RETRY
+		final int SYM_RETURN                                     =  482;  // RETURN
+		final int SYM_RETURNING                                  =  483;  // RETURNING
+		final int SYM_REVERSE                                    =  484;  // REVERSE
+		final int SYM_REVERSED                                   =  485;  // REVERSED
+		final int SYM_REVERSE_VIDEO                              =  486;  // 'REVERSE_VIDEO'
+		final int SYM_REWIND                                     =  487;  // REWIND
+		final int SYM_REWRITE                                    =  488;  // REWRITE
+		final int SYM_RF                                         =  489;  // RF
+		final int SYM_RH                                         =  490;  // RH
+		final int SYM_RIGHT                                      =  491;  // RIGHT
+		final int SYM_ROLLBACK                                   =  492;  // ROLLBACK
+		final int SYM_ROUNDED                                    =  493;  // ROUNDED
+		final int SYM_ROUNDING                                   =  494;  // ROUNDING
+		final int SYM_RUN                                        =  495;  // RUN
+		final int SYM_S                                          =  496;  // S
+		final int SYM_SAME                                       =  497;  // SAME
+		final int SYM_SCREEN                                     =  498;  // SCREEN
+		final int SYM_SCREEN_CONTROL                             =  499;  // 'SCREEN_CONTROL'
+		final int SYM_SCROLL                                     =  500;  // SCROLL
+		final int SYM_SD                                         =  501;  // SD
+		final int SYM_SEARCH                                     =  502;  // SEARCH
+		final int SYM_SECONDS                                    =  503;  // SECONDS
+		final int SYM_SECONDS_FROM_FORMATTED_TIME                =  504;  // 'SECONDS_FROM_FORMATTED_TIME'
+		final int SYM_SECONDS_PAST_MIDNIGHT                      =  505;  // 'SECONDS_PAST_MIDNIGHT'
+		final int SYM_SECTION                                    =  506;  // SECTION
+		final int SYM_SECURE                                     =  507;  // SECURE
+		final int SYM_SECURITY                                   =  508;  // SECURITY
+		final int SYM_SEGMENT                                    =  509;  // SEGMENT
+		final int SYM_SEGMENT_LIMIT                              =  510;  // 'SEGMENT_LIMIT'
+		final int SYM_SELECT                                     =  511;  // SELECT
+		final int SYM_SEMI_COLON                                 =  512;  // 'SEMI_COLON'
+		final int SYM_SEND                                       =  513;  // SEND
+		final int SYM_SENTENCE                                   =  514;  // SENTENCE
+		final int SYM_SEPARATE                                   =  515;  // SEPARATE
+		final int SYM_SEQUENCE                                   =  516;  // SEQUENCE
+		final int SYM_SEQUENTIAL                                 =  517;  // SEQUENTIAL
+		final int SYM_SET                                        =  518;  // SET
+		final int SYM_SEVENTY_EIGHT                              =  519;  // 'SEVENTY_EIGHT'
+		final int SYM_SHARING                                    =  520;  // SHARING
+		final int SYM_SIGN                                       =  521;  // SIGN
+		final int SYM_SIGNED                                     =  522;  // SIGNED
+		final int SYM_SIGNED_INT                                 =  523;  // 'SIGNED_INT'
+		final int SYM_SIGNED_LONG                                =  524;  // 'SIGNED_LONG'
+		final int SYM_SIGNED_SHORT                               =  525;  // 'SIGNED_SHORT'
+		final int SYM_SIN                                        =  526;  // SIN
+		final int SYM_SIXTY_SIX                                  =  527;  // 'SIXTY_SIX'
+		final int SYM_SIZE                                       =  528;  // SIZE
+		final int SYM_SIZE_ERROR                                 =  529;  // 'SIZE_ERROR'
+		final int SYM_SORT                                       =  530;  // SORT
+		final int SYM_SORT_MERGE                                 =  531;  // 'SORT_MERGE'
+		final int SYM_SOURCE                                     =  532;  // SOURCE
+		final int SYM_SOURCE_COMPUTER                            =  533;  // 'SOURCE_COMPUTER'
+		final int SYM_SPACE                                      =  534;  // SPACE
+		final int SYM_SPECIAL_NAMES                              =  535;  // 'SPECIAL_NAMES'
+		final int SYM_SQRT                                       =  536;  // SQRT
+		final int SYM_STANDARD                                   =  537;  // STANDARD
+		final int SYM_STANDARD_1                                 =  538;  // 'STANDARD_1'
+		final int SYM_STANDARD_2                                 =  539;  // 'STANDARD_2'
+		final int SYM_STANDARD_COMPARE                           =  540;  // 'STANDARD_COMPARE'
+		final int SYM_STANDARD_DEVIATION                         =  541;  // 'STANDARD_DEVIATION'
+		final int SYM_START                                      =  542;  // START
+		final int SYM_STATIC                                     =  543;  // STATIC
+		final int SYM_STATUS                                     =  544;  // STATUS
+		final int SYM_STDCALL                                    =  545;  // STDCALL
+		final int SYM_STEP                                       =  546;  // STEP
+		final int SYM_STOP                                       =  547;  // STOP
+		final int SYM_STORED_CHAR_LENGTH                         =  548;  // 'STORED_CHAR_LENGTH'
+		final int SYM_STRING                                     =  549;  // STRING
+		final int SYM_STRINGLITERAL                              =  550;  // StringLiteral
+		final int SYM_SUBSTITUTE                                 =  551;  // SUBSTITUTE
+		final int SYM_SUBSTITUTE_CASE                            =  552;  // 'SUBSTITUTE_CASE'
+		final int SYM_SUBTRACT                                   =  553;  // SUBTRACT
+		final int SYM_SUB_QUEUE_1                                =  554;  // 'SUB_QUEUE_1'
+		final int SYM_SUB_QUEUE_2                                =  555;  // 'SUB_QUEUE_2'
+		final int SYM_SUB_QUEUE_3                                =  556;  // 'SUB_QUEUE_3'
+		final int SYM_SUM                                        =  557;  // SUM
+		final int SYM_SUPPRESS                                   =  558;  // SUPPRESS
+		final int SYM_SYMBOLIC                                   =  559;  // SYMBOLIC
+		final int SYM_SYNCHRONIZED                               =  560;  // SYNCHRONIZED
+		final int SYM_SYSTEM_DEFAULT                             =  561;  // 'SYSTEM_DEFAULT'
+		final int SYM_SYSTEM_OFFSET                              =  562;  // 'SYSTEM_OFFSET'
+		final int SYM_TAB                                        =  563;  // TAB
+		final int SYM_TABLE                                      =  564;  // TABLE
+		final int SYM_TALLYING                                   =  565;  // TALLYING
+		final int SYM_TAN                                        =  566;  // TAN
+		final int SYM_TAPE                                       =  567;  // TAPE
+		final int SYM_TERMINAL                                   =  568;  // TERMINAL
+		final int SYM_TERMINATE                                  =  569;  // TERMINATE
+		final int SYM_TEST                                       =  570;  // TEST
+		final int SYM_TEST_DATE_YYYYMMDD                         =  571;  // 'TEST_DATE_YYYYMMDD'
+		final int SYM_TEST_DAY_YYYYDDD                           =  572;  // 'TEST_DAY_YYYYDDD'
+		final int SYM_TEST_FORMATTED_DATETIME                    =  573;  // 'TEST_FORMATTED_DATETIME'
+		final int SYM_TEST_NUMVAL                                =  574;  // 'TEST_NUMVAL'
+		final int SYM_TEST_NUMVAL_F                              =  575;  // 'TEST_NUMVAL_F'
+		final int SYM_TEXT                                       =  576;  // TEXT
+		final int SYM_THEN                                       =  577;  // THEN
+		final int SYM_THRU                                       =  578;  // THRU
+		final int SYM_TIME                                       =  579;  // TIME
+		final int SYM_TIMES                                      =  580;  // TIMES
+		final int SYM_TIME_OUT                                   =  581;  // 'TIME_OUT'
+		final int SYM_TO                                         =  582;  // TO
+		final int SYM_TOK_AMPER                                  =  583;  // 'TOK_AMPER'
+		final int SYM_TOK_CLOSE_PAREN                            =  584;  // 'TOK_CLOSE_PAREN'
+		final int SYM_TOK_COLON                                  =  585;  // 'TOK_COLON'
+		final int SYM_TOK_DIV                                    =  586;  // 'TOK_DIV'
+		final int SYM_TOK_DOT                                    =  587;  // 'TOK_DOT'
+		final int SYM_TOK_EQUAL                                  =  588;  // 'TOK_EQUAL'
+		final int SYM_TOK_EXTERN                                 =  589;  // 'TOK_EXTERN'
+		final int SYM_TOK_FALSE                                  =  590;  // 'TOK_FALSE'
+		final int SYM_TOK_FILE                                   =  591;  // 'TOK_FILE'
+		final int SYM_TOK_GREATER                                =  592;  // 'TOK_GREATER'
+		final int SYM_TOK_INITIAL                                =  593;  // 'TOK_INITIAL'
+		final int SYM_TOK_LESS                                   =  594;  // 'TOK_LESS'
+		final int SYM_TOK_MINUS                                  =  595;  // 'TOK_MINUS'
+		final int SYM_TOK_MUL                                    =  596;  // 'TOK_MUL'
+		final int SYM_TOK_NULL                                   =  597;  // 'TOK_NULL'
+		final int SYM_TOK_OPEN_PAREN                             =  598;  // 'TOK_OPEN_PAREN'
+		final int SYM_TOK_OVERFLOW                               =  599;  // 'TOK_OVERFLOW'
+		final int SYM_TOK_PLUS                                   =  600;  // 'TOK_PLUS'
+		final int SYM_TOK_TRUE                                   =  601;  // 'TOK_TRUE'
+		final int SYM_TOP                                        =  602;  // TOP
+		final int SYM_TOWARD_GREATER                             =  603;  // 'TOWARD_GREATER'
+		final int SYM_TOWARD_LESSER                              =  604;  // 'TOWARD_LESSER'
+		final int SYM_TRAILING                                   =  605;  // TRAILING
+		final int SYM_TRANSFORM                                  =  606;  // TRANSFORM
+		final int SYM_TRIM                                       =  607;  // TRIM
+		final int SYM_TRUNCATION                                 =  608;  // TRUNCATION
+		final int SYM_TYPE                                       =  609;  // TYPE
+		final int SYM_U                                          =  610;  // U
+		final int SYM_UNBOUNDED                                  =  611;  // UNBOUNDED
+		final int SYM_UNDERLINE                                  =  612;  // UNDERLINE
+		final int SYM_UNIT                                       =  613;  // UNIT
+		final int SYM_UNLOCK                                     =  614;  // UNLOCK
+		final int SYM_UNSIGNED                                   =  615;  // UNSIGNED
+		final int SYM_UNSIGNED_INT                               =  616;  // 'UNSIGNED_INT'
+		final int SYM_UNSIGNED_LONG                              =  617;  // 'UNSIGNED_LONG'
+		final int SYM_UNSIGNED_SHORT                             =  618;  // 'UNSIGNED_SHORT'
+		final int SYM_UNSTRING                                   =  619;  // UNSTRING
+		final int SYM_UNTIL                                      =  620;  // UNTIL
+		final int SYM_UP                                         =  621;  // UP
+		final int SYM_UPDATE                                     =  622;  // UPDATE
+		final int SYM_UPON                                       =  623;  // UPON
+		final int SYM_UPON_ARGUMENT_NUMBER                       =  624;  // 'UPON_ARGUMENT_NUMBER'
+		final int SYM_UPON_COMMAND_LINE                          =  625;  // 'UPON_COMMAND_LINE'
+		final int SYM_UPON_ENVIRONMENT_NAME                      =  626;  // 'UPON_ENVIRONMENT_NAME'
+		final int SYM_UPON_ENVIRONMENT_VALUE                     =  627;  // 'UPON_ENVIRONMENT_VALUE'
+		final int SYM_UPPER                                      =  628;  // UPPER
+		final int SYM_UPPER_CASE                                 =  629;  // 'UPPER_CASE'
+		final int SYM_USAGE                                      =  630;  // USAGE
+		final int SYM_USE                                        =  631;  // USE
+		final int SYM_USER                                       =  632;  // USER
+		final int SYM_USER_DEFAULT                               =  633;  // 'USER_DEFAULT'
+		final int SYM_USING                                      =  634;  // USING
+		final int SYM_V                                          =  635;  // V
+		final int SYM_VALUE                                      =  636;  // VALUE
+		final int SYM_VARIABLE                                   =  637;  // VARIABLE
+		final int SYM_VARIANCE                                   =  638;  // VARIANCE
+		final int SYM_VARYING                                    =  639;  // VARYING
+		final int SYM_WAIT                                       =  640;  // WAIT
+		final int SYM_WHEN                                       =  641;  // WHEN
+		final int SYM_WHEN_COMPILED                              =  642;  // 'WHEN_COMPILED'
+		final int SYM_WITH                                       =  643;  // WITH
+		final int SYM_WITH_DATA                                  =  644;  // 'WITH_DATA'
+		final int SYM_WORDS                                      =  645;  // WORDS
+		final int SYM_WORKING_STORAGE                            =  646;  // 'WORKING_STORAGE'
+		final int SYM_WRITE                                      =  647;  // WRITE
+		final int SYM_YEAR_TO_YYYY                               =  648;  // 'YEAR_TO_YYYY'
+		final int SYM_YYYYDDD                                    =  649;  // YYYYDDD
+		final int SYM_YYYYMMDD                                   =  650;  // YYYYMMDD
+		final int SYM_ZERO                                       =  651;  // ZERO
+		final int SYM_ZLITERAL                                   =  652;  // ZLiteral
+		final int SYM_ACCEPT_BODY                                =  653;  // <accept_body>
+		final int SYM_ACCEPT_CLAUSE                              =  654;  // <accept_clause>
+		final int SYM_ACCEPT_CLAUSES                             =  655;  // <accept_clauses>
+		final int SYM_ACCEPT_STATEMENT                           =  656;  // <accept_statement>
+		final int SYM_ACCESS_MODE                                =  657;  // <access_mode>
+		final int SYM_ACCESS_MODE_CLAUSE                         =  658;  // <access_mode_clause>
+		final int SYM_ACCP_ATTR                                  =  659;  // <accp_attr>
+		final int SYM_ACCP_IDENTIFIER                            =  660;  // <accp_identifier>
+		final int SYM_ACCP_NOT_ON_EXCEPTION                      =  661;  // <accp_not_on_exception>
+		final int SYM_ACCP_ON_EXCEPTION                          =  662;  // <accp_on_exception>
+		final int SYM_ADD_BODY                                   =  663;  // <add_body>
+		final int SYM_ADD_STATEMENT                              =  664;  // <add_statement>
+		final int SYM_ADVANCING_LOCK_OR_RETRY                    =  665;  // <advancing_lock_or_retry>
+		final int SYM_ALLOCATE_BODY                              =  666;  // <allocate_body>
+		final int SYM_ALLOCATE_RETURNING                         =  667;  // <allocate_returning>
+		final int SYM_ALLOCATE_STATEMENT                         =  668;  // <allocate_statement>
+		final int SYM_ALNUM_OR_ID                                =  669;  // <alnum_or_id>
+		final int SYM_ALPHABET_ALSO_SEQUENCE                     =  670;  // <alphabet_also_sequence>
+		final int SYM_ALPHABET_DEFINITION                        =  671;  // <alphabet_definition>
+		final int SYM_ALPHABET_LITERAL                           =  672;  // <alphabet_literal>
+		final int SYM_ALPHABET_LITERAL_LIST                      =  673;  // <alphabet_literal_list>
+		final int SYM_ALPHABET_LITS                              =  674;  // <alphabet_lits>
+		final int SYM_ALPHABET_NAME                              =  675;  // <alphabet_name>
+		final int SYM_ALPHABET_NAME_CLAUSE                       =  676;  // <alphabet_name_clause>
+		final int SYM_ALTERNATIVE_RECORD_KEY_CLAUSE              =  677;  // <alternative_record_key_clause>
+		final int SYM_ALTER_BODY                                 =  678;  // <alter_body>
+		final int SYM_ALTER_ENTRY                                =  679;  // <alter_entry>
+		final int SYM_ALTER_STATEMENT                            =  680;  // <alter_statement>
+		final int SYM_ANY_LENGTH_CLAUSE                          =  681;  // <any_length_clause>
+		final int SYM_ARITHMETIC_X                               =  682;  // <arithmetic_x>
+		final int SYM_ARITHMETIC_X_LIST                          =  683;  // <arithmetic_x_list>
+		final int SYM_ARITH_X                                    =  684;  // <arith_x>
+		final int SYM_ASCENDING_OR_DESCENDING                    =  685;  // <ascending_or_descending>
+		final int SYM_ASSIGNMENT_NAME                            =  686;  // <assignment_name>
+		final int SYM_ASSIGN_CLAUSE                              =  687;  // <assign_clause>
+		final int SYM_AT_END                                     =  688;  // <at_end>
+		final int SYM_AT_END_CLAUSE                              =  689;  // <at_end_clause>
+		final int SYM_AT_EOP_CLAUSE                              =  690;  // <at_eop_clause>
+		final int SYM_AT_EOP_CLAUSES                             =  691;  // <at_eop_clauses>
+		final int SYM_AT_LINE_COLUMN                             =  692;  // <at_line_column>
+		final int SYM_BASED_CLAUSE                               =  693;  // <based_clause>
+		final int SYM_BASIC_LITERAL                              =  694;  // <basic_literal>
+		final int SYM_BASIC_VALUE                                =  695;  // <basic_value>
+		final int SYM_BEFORE_OR_AFTER                            =  696;  // <before_or_after>
+		final int SYM_BLANK_CLAUSE                               =  697;  // <blank_clause>
+		final int SYM_BLOCK_CONTAINS_CLAUSE                      =  698;  // <block_contains_clause>
+		final int SYM_CALL_BODY                                  =  699;  // <call_body>
+		final int SYM_CALL_EXCEPTION_PHRASES                     =  700;  // <call_exception_phrases>
+		final int SYM_CALL_NOT_ON_EXCEPTION                      =  701;  // <call_not_on_exception>
+		final int SYM_CALL_ON_EXCEPTION                          =  702;  // <call_on_exception>
+		final int SYM_CALL_PARAM                                 =  703;  // <call_param>
+		final int SYM_CALL_PARAM_LIST                            =  704;  // <call_param_list>
+		final int SYM_CALL_RETURNING                             =  705;  // <call_returning>
+		final int SYM_CALL_STATEMENT                             =  706;  // <call_statement>
+		final int SYM_CALL_TYPE                                  =  707;  // <call_type>
+		final int SYM_CALL_USING                                 =  708;  // <call_using>
+		final int SYM_CALL_X                                     =  709;  // <call_x>
+		final int SYM_CANCEL_BODY                                =  710;  // <cancel_body>
+		final int SYM_CANCEL_STATEMENT                           =  711;  // <cancel_statement>
+		final int SYM_CD_NAME                                    =  712;  // <cd_name>
+		final int SYM_CF_KEYWORD                                 =  713;  // <cf_keyword>
+		final int SYM_CHAR_LIST                                  =  714;  // <char_list>
+		final int SYM_CH_KEYWORD                                 =  715;  // <ch_keyword>
+		final int SYM_CLASS_ITEM                                 =  716;  // <class_item>
+		final int SYM_CLASS_ITEM_LIST                            =  717;  // <class_item_list>
+		final int SYM_CLASS_NAME                                 =  718;  // <CLASS_NAME>
+		final int SYM_CLASS_NAME_CLAUSE                          =  719;  // <class_name_clause>
+		final int SYM_CLASS_VALUE                                =  720;  // <class_value>
+		final int SYM_CLOSE_BODY                                 =  721;  // <close_body>
+		final int SYM_CLOSE_OPTION                               =  722;  // <close_option>
+		final int SYM_CLOSE_STATEMENT                            =  723;  // <close_statement>
+		final int SYM_CODE_SET_CLAUSE                            =  724;  // <code_set_clause>
+		final int SYM_COLLATING_SEQUENCE_CLAUSE                  =  725;  // <collating_sequence_clause>
+		final int SYM_COLL_SEQUENCE                              =  726;  // <coll_sequence>
+		final int SYM_COLUMNS_OR_COLS                            =  727;  // <columns_or_cols>
+		final int SYM_COLUMN_CLAUSE                              =  728;  // <column_clause>
+		final int SYM_COLUMN_NUMBER                              =  729;  // <column_number>
+		final int SYM_COLUMN_OR_COL                              =  730;  // <column_or_col>
+		final int SYM_COL_KEYWORD_CLAUSE                         =  731;  // <col_keyword_clause>
+		final int SYM_COL_OR_PLUS                                =  732;  // <col_or_plus>
+		final int SYM_COMMENTITEM                                =  733;  // <Comment Item>
+		final int SYM_COMMIT_STATEMENT                           =  734;  // <commit_statement>
+		final int SYM_COMMON_FUNCTION                            =  735;  // <COMMON_FUNCTION>
+		final int SYM_COMMUNICATION_DESCRIPTION                  =  736;  // <communication_description>
+		final int SYM_COMMUNICATION_DESCRIPTION_CLAUSE           =  737;  // <communication_description_clause>
+		final int SYM_COMMUNICATION_DESCRIPTION_ENTRY            =  738;  // <communication_description_entry>
+		final int SYM_COMMUNICATION_MODE                         =  739;  // <communication_mode>
+		final int SYM_COMPILATION_GROUP                          =  740;  // <compilation_group>
+		final int SYM_COMPUTER_WORDS                             =  741;  // <computer_words>
+		final int SYM_COMPUTE_BODY                               =  742;  // <compute_body>
+		final int SYM_COMPUTE_STATEMENT                          =  743;  // <compute_statement>
+		final int SYM_COMP_EQUAL                                 =  744;  // <comp_equal>
+		final int SYM_CONCATENATE_FUNC                           =  745;  // <CONCATENATE_FUNC>
+		final int SYM_CONDITION                                  =  746;  // <condition>
+		final int SYM_CONDITION_NAME_ENTRY                       =  747;  // <condition_name_entry>
+		final int SYM_CONDITION_OP                               =  748;  // <condition_op>
+		final int SYM_CONDITION_OR_CLASS                         =  749;  // <condition_or_class>
+		final int SYM_COND_OR_EXIT                               =  750;  // <cond_or_exit>
+		final int SYM_CONSTANT_ENTRY                             =  751;  // <constant_entry>
+		final int SYM_CONSTANT_SOURCE                            =  752;  // <constant_source>
+		final int SYM_CONST_GLOBAL                               =  753;  // <const_global>
+		final int SYM_CONTINUE_STATEMENT                         =  754;  // <continue_statement>
+		final int SYM_CONTROL_CLAUSE                             =  755;  // <control_clause>
+		final int SYM_CONTROL_FIELD_LIST                         =  756;  // <control_field_list>
+		final int SYM_CONTROL_KEYWORD                            =  757;  // <control_keyword>
+		final int SYM_CONVENTION_TYPE                            =  758;  // <convention_type>
+		final int SYM_CON_IDENTIFIER                             =  759;  // <con_identifier>
+		final int SYM_CRT_STATUS_CLAUSE                          =  760;  // <crt_status_clause>
+		final int SYM_CRT_UNDER2                                 =  761;  // <crt_under>
+		final int SYM_CURRENCY_SIGN_CLAUSE                       =  762;  // <currency_sign_clause>
+		final int SYM_CURRENT_DATE_FUNC                          =  763;  // <CURRENT_DATE_FUNC>
+		final int SYM_CURSOR_CLAUSE                              =  764;  // <cursor_clause>
+		final int SYM_DATA_DESCRIPTION                           =  765;  // <data_description>
+		final int SYM_DATA_DESCRIPTION_CLAUSE                    =  766;  // <data_description_clause>
+		final int SYM_DATA_OR_FINAL                              =  767;  // <data_or_final>
+		final int SYM_DATA_RECORDS_CLAUSE                        =  768;  // <data_records_clause>
+		final int SYM_DEBUGGING_LIST                             =  769;  // <debugging_list>
+		final int SYM_DEBUGGING_TARGET                           =  770;  // <debugging_target>
+		final int SYM_DECIMAL_POINT_CLAUSE                       =  771;  // <decimal_point_clause>
+		final int SYM_DELETE_BODY                                =  772;  // <delete_body>
+		final int SYM_DELETE_FILE_LIST                           =  773;  // <delete_file_list>
+		final int SYM_DELETE_STATEMENT                           =  774;  // <delete_statement>
+		final int SYM_DETAIL_KEYWORD                             =  775;  // <detail_keyword>
+		final int SYM_DISABLE_STATEMENT                          =  776;  // <disable_statement>
+		final int SYM_DISALLOWED_OP                              =  777;  // <disallowed_op>
+		final int SYM_DISPLAY_ATOM                               =  778;  // <display_atom>
+		final int SYM_DISPLAY_BODY                               =  779;  // <display_body>
+		final int SYM_DISPLAY_CLAUSE                             =  780;  // <display_clause>
+		final int SYM_DISPLAY_CLAUSES                            =  781;  // <display_clauses>
+		final int SYM_DISPLAY_IDENTIFIER                         =  782;  // <display_identifier>
+		final int SYM_DISPLAY_LIST                               =  783;  // <display_list>
+		final int SYM_DISPLAY_OF_FUNC                            =  784;  // <DISPLAY_OF_FUNC>
+		final int SYM_DISPLAY_STATEMENT                          =  785;  // <display_statement>
+		final int SYM_DISPLAY_UPON                               =  786;  // <display_upon>
+		final int SYM_DISP_ATTR                                  =  787;  // <disp_attr>
+		final int SYM_DISP_LIST                                  =  788;  // <disp_list>
+		final int SYM_DISP_NOT_ON_EXCEPTION                      =  789;  // <disp_not_on_exception>
+		final int SYM_DISP_ON_EXCEPTION                          =  790;  // <disp_on_exception>
+		final int SYM_DIVIDE_BODY                                =  791;  // <divide_body>
+		final int SYM_DIVIDE_STATEMENT                           =  792;  // <divide_statement>
+		final int SYM_DOUBLE_USAGE                               =  793;  // <double_usage>
+		final int SYM_ENABLE_DISABLE_HANDLING                    =  794;  // <enable_disable_handling>
+		final int SYM_ENABLE_STATEMENT                           =  795;  // <enable_statement>
+		final int SYM_END_ACCEPT2                                =  796;  // <end_accept>
+		final int SYM_END_ADD2                                   =  797;  // <end_add>
+		final int SYM_END_CALL2                                  =  798;  // <end_call>
+		final int SYM_END_COMPUTE2                               =  799;  // <end_compute>
+		final int SYM_END_DELETE2                                =  800;  // <end_delete>
+		final int SYM_END_DISPLAY2                               =  801;  // <end_display>
+		final int SYM_END_DIVIDE2                                =  802;  // <end_divide>
+		final int SYM_END_EVALUATE2                              =  803;  // <end_evaluate>
+		final int SYM_END_FUNCTION2                              =  804;  // <end_function>
+		final int SYM_END_IF2                                    =  805;  // <end_if>
+		final int SYM_END_MULTIPLY2                              =  806;  // <end_multiply>
+		final int SYM_END_PERFORM2                               =  807;  // <end_perform>
+		final int SYM_END_PROGRAM2                               =  808;  // <end_program>
+		final int SYM_END_PROGRAM_LIST                           =  809;  // <end_program_list>
+		final int SYM_END_PROGRAM_NAME                           =  810;  // <end_program_name>
+		final int SYM_END_READ2                                  =  811;  // <end_read>
+		final int SYM_END_RECEIVE2                               =  812;  // <end_receive>
+		final int SYM_END_RETURN2                                =  813;  // <end_return>
+		final int SYM_END_REWRITE2                               =  814;  // <end_rewrite>
+		final int SYM_END_SEARCH2                                =  815;  // <end_search>
+		final int SYM_END_START2                                 =  816;  // <end_start>
+		final int SYM_END_STRING2                                =  817;  // <end_string>
+		final int SYM_END_SUBTRACT2                              =  818;  // <end_subtract>
+		final int SYM_END_UNSTRING2                              =  819;  // <end_unstring>
+		final int SYM_END_WRITE2                                 =  820;  // <end_write>
+		final int SYM_ENTRY_BODY                                 =  821;  // <entry_body>
+		final int SYM_ENTRY_STATEMENT                            =  822;  // <entry_statement>
+		final int SYM_EOL2                                       =  823;  // <eol>
+		final int SYM_EOS2                                       =  824;  // <eos>
+		final int SYM_EQ                                         =  825;  // <eq>
+		final int SYM_ERROR_STMT_RECOVER                         =  826;  // <error_stmt_recover>
+		final int SYM_ESCAPE_OR_EXCEPTION                        =  827;  // <escape_or_exception>
+		final int SYM_EVALUATE_BODY                              =  828;  // <evaluate_body>
+		final int SYM_EVALUATE_CASE                              =  829;  // <evaluate_case>
+		final int SYM_EVALUATE_CASE_LIST                         =  830;  // <evaluate_case_list>
+		final int SYM_EVALUATE_CONDITION_LIST                    =  831;  // <evaluate_condition_list>
+		final int SYM_EVALUATE_OBJECT                            =  832;  // <evaluate_object>
+		final int SYM_EVALUATE_OBJECT_LIST                       =  833;  // <evaluate_object_list>
+		final int SYM_EVALUATE_OTHER                             =  834;  // <evaluate_other>
+		final int SYM_EVALUATE_STATEMENT                         =  835;  // <evaluate_statement>
+		final int SYM_EVALUATE_SUBJECT                           =  836;  // <evaluate_subject>
+		final int SYM_EVALUATE_SUBJECT_LIST                      =  837;  // <evaluate_subject_list>
+		final int SYM_EVALUATE_WHEN_LIST                         =  838;  // <evaluate_when_list>
+		final int SYM_EVENT_STATUS2                              =  839;  // <event_status>
+		final int SYM_EXCEPTION_OR_ERROR                         =  840;  // <exception_or_error>
+		final int SYM_EXIT_BODY                                  =  841;  // <exit_body>
+		final int SYM_EXIT_PROGRAM_RETURNING                     =  842;  // <exit_program_returning>
+		final int SYM_EXIT_STATEMENT                             =  843;  // <exit_statement>
+		final int SYM_EXP2                                       =  844;  // <exp>
+		final int SYM_EXPR                                       =  845;  // <expr>
+		final int SYM_EXPR_TOKEN                                 =  846;  // <expr_token>
+		final int SYM_EXPR_TOKENS                                =  847;  // <expr_tokens>
+		final int SYM_EXPR_X                                     =  848;  // <expr_x>
+		final int SYM_EXP_ATOM                                   =  849;  // <exp_atom>
+		final int SYM_EXP_FACTOR                                 =  850;  // <exp_factor>
+		final int SYM_EXP_LIST                                   =  851;  // <exp_list>
+		final int SYM_EXP_TERM                                   =  852;  // <exp_term>
+		final int SYM_EXP_UNARY                                  =  853;  // <exp_unary>
+		final int SYM_EXTENDED_WITH_LOCK                         =  854;  // <extended_with_lock>
+		final int SYM_EXTERNAL_CLAUSE                            =  855;  // <external_clause>
+		final int SYM_FILE_CONTROL_ENTRY                         =  856;  // <file_control_entry>
+		final int SYM_FILE_DESCRIPTION                           =  857;  // <file_description>
+		final int SYM_FILE_DESCRIPTION_CLAUSE                    =  858;  // <file_description_clause>
+		final int SYM_FILE_DESCRIPTION_ENTRY                     =  859;  // <file_description_entry>
+		final int SYM_FILE_ID2                                   =  860;  // <file_id>
+		final int SYM_FILE_NAME                                  =  861;  // <file_name>
+		final int SYM_FILE_NAME_LIST                             =  862;  // <file_name_list>
+		final int SYM_FILE_OR_RECORD_NAME                        =  863;  // <file_or_record_name>
+		final int SYM_FILE_STATUS_CLAUSE                         =  864;  // <file_status_clause>
+		final int SYM_FILE_TYPE                                  =  865;  // <file_type>
+		final int SYM_FIRST_DETAIL                               =  866;  // <first_detail>
+		final int SYM_FLAG_ALL                                   =  867;  // <flag_all>
+		final int SYM_FLAG_DUPLICATES                            =  868;  // <flag_duplicates>
+		final int SYM_FLAG_INITIALIZED                           =  869;  // <flag_initialized>
+		final int SYM_FLAG_INITIALIZED_TO                        =  870;  // <flag_initialized_to>
+		final int SYM_FLAG_OPTIONAL                              =  871;  // <flag_optional>
+		final int SYM_FLAG_ROUNDED                               =  872;  // <flag_rounded>
+		final int SYM_FLAG_SEPARATE                              =  873;  // <flag_separate>
+		final int SYM_FLOAT_USAGE                                =  874;  // <float_usage>
+		final int SYM_FOOTING_CLAUSE                             =  875;  // <footing_clause>
+		final int SYM_FORMATTED_DATETIME_ARGS                    =  876;  // <formatted_datetime_args>
+		final int SYM_FORMATTED_DATETIME_FUNC                    =  877;  // <FORMATTED_DATETIME_FUNC>
+		final int SYM_FORMATTED_DATE_FUNC                        =  878;  // <FORMATTED_DATE_FUNC>
+		final int SYM_FORMATTED_TIME_ARGS                        =  879;  // <formatted_time_args>
+		final int SYM_FORMATTED_TIME_FUNC                        =  880;  // <FORMATTED_TIME_FUNC>
+		final int SYM_FP128_USAGE                                =  881;  // <fp128_usage>
+		final int SYM_FP32_USAGE                                 =  882;  // <fp32_usage>
+		final int SYM_FP64_USAGE                                 =  883;  // <fp64_usage>
+		final int SYM_FREE_BODY                                  =  884;  // <free_body>
+		final int SYM_FREE_STATEMENT                             =  885;  // <free_statement>
+		final int SYM_FROM_IDENTIFIER                            =  886;  // <from_identifier>
+		final int SYM_FROM_OPTION                                =  887;  // <from_option>
+		final int SYM_FROM_PARAMETER                             =  888;  // <from_parameter>
+		final int SYM_FUNCTION2                                  =  889;  // <function>
+		final int SYM_FUNCTION_DEFINITION                        =  890;  // <function_definition>
+		final int SYM_FUNCTION_ID_PARAGRAPH                      =  891;  // <function_id_paragraph>
+		final int SYM_FUNCTION_NAME                              =  892;  // <FUNCTION_NAME>
+		final int SYM_FUNC_ARGS                                  =  893;  // <func_args>
+		final int SYM_FUNC_MULTI_PARM                            =  894;  // <func_multi_parm>
+		final int SYM_FUNC_NO_PARM                               =  895;  // <func_no_parm>
+		final int SYM_FUNC_ONE_PARM                              =  896;  // <func_one_parm>
+		final int SYM_FUNC_REFMOD                                =  897;  // <func_refmod>
+		final int SYM_GE                                         =  898;  // <ge>
+		final int SYM_GENERAL_DEVICE_NAME                        =  899;  // <general_device_name>
+		final int SYM_GENERATE_BODY                              =  900;  // <generate_body>
+		final int SYM_GENERATE_STATEMENT                         =  901;  // <generate_statement>
+		final int SYM_GLOBAL_CLAUSE                              =  902;  // <global_clause>
+		final int SYM_GOBACK_STATEMENT                           =  903;  // <goback_statement>
+		final int SYM_GOTO_DEPENDING                             =  904;  // <goto_depending>
+		final int SYM_GOTO_STATEMENT                             =  905;  // <goto_statement>
+		final int SYM_GO_BODY                                    =  906;  // <go_body>
+		final int SYM_GROUP_INDICATE_CLAUSE                      =  907;  // <group_indicate_clause>
+		final int SYM_GT                                         =  908;  // <gt>
+		final int SYM_HEADING_CLAUSE                             =  909;  // <heading_clause>
+		final int SYM_IDENTIFICATION_OR_ID                       =  910;  // <identification_or_id>
+		final int SYM_IDENTIFIER                                 =  911;  // <identifier>
+		final int SYM_IDENTIFIER_1                               =  912;  // <identifier_1>
+		final int SYM_IDENTIFIER_LIST                            =  913;  // <identifier_list>
+		final int SYM_IDENTIFIER_OR_FILE_NAME                    =  914;  // <identifier_or_file_name>
+		final int SYM_ID_OR_LIT                                  =  915;  // <id_or_lit>
+		final int SYM_ID_OR_LIT_OR_FUNC                          =  916;  // <id_or_lit_or_func>
+		final int SYM_ID_OR_LIT_OR_FUNC_AS                       =  917;  // <id_or_lit_or_func_as>
+		final int SYM_ID_OR_LIT_OR_LENGTH_OR_FUNC                =  918;  // <id_or_lit_or_length_or_func>
+		final int SYM_ID_OR_LIT_OR_PROGRAM_NAME                  =  919;  // <id_or_lit_or_program_name>
+		final int SYM_IF_ELSE_STATEMENTS                         =  920;  // <if_else_statements>
+		final int SYM_IF_STATEMENT                               =  921;  // <if_statement>
+		final int SYM_IGNORING_LOCK                              =  922;  // <ignoring_lock>
+		final int SYM_INITIALIZE_BODY                            =  923;  // <initialize_body>
+		final int SYM_INITIALIZE_CATEGORY                        =  924;  // <initialize_category>
+		final int SYM_INITIALIZE_REPLACING_ITEM                  =  925;  // <initialize_replacing_item>
+		final int SYM_INITIALIZE_REPLACING_LIST                  =  926;  // <initialize_replacing_list>
+		final int SYM_INITIALIZE_STATEMENT                       =  927;  // <initialize_statement>
+		final int SYM_INITIATE_BODY                              =  928;  // <initiate_body>
+		final int SYM_INITIATE_STATEMENT                         =  929;  // <initiate_statement>
+		final int SYM_INIT_OR_RECURSE                            =  930;  // <init_or_recurse>
+		final int SYM_INIT_OR_RECURSE_AND_COMMON                 =  931;  // <init_or_recurse_and_common>
+		final int SYM_INSPECT_AFTER                              =  932;  // <inspect_after>
+		final int SYM_INSPECT_BEFORE                             =  933;  // <inspect_before>
+		final int SYM_INSPECT_BODY                               =  934;  // <inspect_body>
+		final int SYM_INSPECT_CONVERTING                         =  935;  // <inspect_converting>
+		final int SYM_INSPECT_LIST                               =  936;  // <inspect_list>
+		final int SYM_INSPECT_REGION                             =  937;  // <inspect_region>
+		final int SYM_INSPECT_REPLACING                          =  938;  // <inspect_replacing>
+		final int SYM_INSPECT_STATEMENT                          =  939;  // <inspect_statement>
+		final int SYM_INSPECT_TALLYING                           =  940;  // <inspect_tallying>
+		final int SYM_INTEGER2                                   =  941;  // <integer>
+		final int SYM_INTEGER_LABEL                              =  942;  // <integer_label>
+		final int SYM_INTEGER_LIST                               =  943;  // <integer_list>
+		final int SYM_INTEGER_OR_WORD                            =  944;  // <integer_or_word>
+		final int SYM_INTERMEDIATE_ROUNDING_CHOICE               =  945;  // <intermediate_rounding_choice>
+		final int SYM_INTLITERALORWORD                           =  946;  // <IntLiteral or WORD>
+		final int SYM_INVALID_KEY_PHRASES                        =  947;  // <invalid_key_phrases>
+		final int SYM_INVALID_KEY_SENTENCE                       =  948;  // <invalid_key_sentence>
+		final int SYM_IN_OF                                      =  949;  // <in_of>
+		final int SYM_I_O_CONTROL_CLAUSE                         =  950;  // <i_o_control_clause>
+		final int SYM_I_O_CONTROL_LIST                           =  951;  // <i_o_control_list>
+		final int SYM_JUSTIFIED_CLAUSE                           =  952;  // <justified_clause>
+		final int SYM_KEY_OR_SPLIT_KEYS                          =  953;  // <key_or_split_keys>
+		final int SYM_LABEL2                                     =  954;  // <label>
+		final int SYM_LABEL_OPTION                               =  955;  // <label_option>
+		final int SYM_LABEL_RECORDS_CLAUSE                       =  956;  // <label_records_clause>
+		final int SYM_LAST_DETAIL                                =  957;  // <last_detail>
+		final int SYM_LAST_HEADING                               =  958;  // <last_heading>
+		final int SYM_LE                                         =  959;  // <le>
+		final int SYM_LENGTH_ARG                                 =  960;  // <length_arg>
+		final int SYM_LENGTH_FUNC                                =  961;  // <LENGTH_FUNC>
+		final int SYM_LEVEL_NUMBER                               =  962;  // <level_number>
+		final int SYM_LINAGE_BOTTOM                              =  963;  // <linage_bottom>
+		final int SYM_LINAGE_CLAUSE                              =  964;  // <linage_clause>
+		final int SYM_LINAGE_FOOTING                             =  965;  // <linage_footing>
+		final int SYM_LINAGE_LINES                               =  966;  // <linage_lines>
+		final int SYM_LINAGE_TOP                                 =  967;  // <linage_top>
+		final int SYM_LINES_OR_NUMBER                            =  968;  // <lines_or_number>
+		final int SYM_LINE_CLAUSE                                =  969;  // <line_clause>
+		final int SYM_LINE_KEYWORD_CLAUSE                        =  970;  // <line_keyword_clause>
+		final int SYM_LINE_LINAGE_PAGE_COUNTER                   =  971;  // <line_linage_page_counter>
+		final int SYM_LINE_NUMBER                                =  972;  // <line_number>
+		final int SYM_LINE_OR_LINES                              =  973;  // <line_or_lines>
+		final int SYM_LINE_OR_PLUS                               =  974;  // <line_or_plus>
+		final int SYM_LINE_SEQ_DEVICE_NAME                       =  975;  // <line_seq_device_name>
+		final int SYM_LITERAL                                    =  976;  // <literal>
+		final int SYM_LITERAL_TOK                                =  977;  // <LITERAL_TOK>
+		final int SYM_LIT_OR_LENGTH                              =  978;  // <lit_or_length>
+		final int SYM_LOCALE_CLASS                               =  979;  // <locale_class>
+		final int SYM_LOCALE_CLAUSE                              =  980;  // <locale_clause>
+		final int SYM_LOCALE_DATE_FUNC                           =  981;  // <LOCALE_DATE_FUNC>
+		final int SYM_LOCALE_DT_ARGS                             =  982;  // <locale_dt_args>
+		final int SYM_LOCALE_TIME_FROM_FUNC                      =  983;  // <LOCALE_TIME_FROM_FUNC>
+		final int SYM_LOCALE_TIME_FUNC                           =  984;  // <LOCALE_TIME_FUNC>
+		final int SYM_LOCK_MODE                                  =  985;  // <lock_mode>
+		final int SYM_LOCK_MODE_CLAUSE                           =  986;  // <lock_mode_clause>
+		final int SYM_LOCK_PHRASES                               =  987;  // <lock_phrases>
+		final int SYM_LOCK_RECORDS                               =  988;  // <lock_records>
+		final int SYM_LOWER_CASE_FUNC                            =  989;  // <LOWER_CASE_FUNC>
+		final int SYM_LT                                         =  990;  // <lt>
+		final int SYM_MERGE_STATEMENT                            =  991;  // <merge_statement>
+		final int SYM_MESSAGE_OR_SEGMENT                         =  992;  // <message_or_segment>
+		final int SYM_MINUS_MINUS                                =  993;  // <minus_minus>
+		final int SYM_MNEMONIC_CHOICES                           =  994;  // <mnemonic_choices>
+		final int SYM_MNEMONIC_NAME2                             =  995;  // <mnemonic_name>
+		final int SYM_MNEMONIC_NAME_CLAUSE                       =  996;  // <mnemonic_name_clause>
+		final int SYM_MNEMONIC_NAME_LIST                         =  997;  // <mnemonic_name_list>
+		final int SYM_MNEMONIC_NAME_TOK                          =  998;  // <MNEMONIC_NAME_TOK>
+		final int SYM_MODE_IS_BLOCK                              =  999;  // <mode_is_block>
+		final int SYM_MOVE_BODY                                  = 1000;  // <move_body>
+		final int SYM_MOVE_STATEMENT                             = 1001;  // <move_statement>
+		final int SYM_MULTIPLE_FILE                              = 1002;  // <multiple_file>
+		final int SYM_MULTIPLE_FILE_LIST                         = 1003;  // <multiple_file_list>
+		final int SYM_MULTIPLE_FILE_TAPE_CLAUSE                  = 1004;  // <multiple_file_tape_clause>
+		final int SYM_MULTIPLY_BODY                              = 1005;  // <multiply_body>
+		final int SYM_MULTIPLY_STATEMENT                         = 1006;  // <multiply_statement>
+		final int SYM_NAMED_INPUT_CD_CLAUSE                      = 1007;  // <named_input_cd_clause>
+		final int SYM_NAMED_INPUT_CD_CLAUSES                     = 1008;  // <named_input_cd_clauses>
+		final int SYM_NAMED_I_O_CD_CLAUSE                        = 1009;  // <named_i_o_cd_clause>
+		final int SYM_NAMED_I_O_CD_CLAUSES                       = 1010;  // <named_i_o_cd_clauses>
+		final int SYM_NATIONAL_OF_FUNC                           = 1011;  // <NATIONAL_OF_FUNC>
+		final int SYM_NESTED_LIST                                = 1012;  // <nested_list>
+		final int SYM_NEXT_GROUP_CLAUSE                          = 1013;  // <next_group_clause>
+		final int SYM_NOISE                                      = 1014;  // <Noise>
+		final int SYM_NOISELIST                                  = 1015;  // <NoiseList>
+		final int SYM_NOT2                                       = 1016;  // <not>
+		final int SYM_NOT_AT_END_CLAUSE                          = 1017;  // <not_at_end_clause>
+		final int SYM_NOT_AT_EOP_CLAUSE                          = 1018;  // <not_at_eop_clause>
+		final int SYM_NOT_EQUAL_OP                               = 1019;  // <not_equal_op>
+		final int SYM_NOT_ESCAPE_OR_NOT_EXCEPTION                = 1020;  // <not_escape_or_not_exception>
+		final int SYM_NOT_INVALID_KEY_SENTENCE                   = 1021;  // <not_invalid_key_sentence>
+		final int SYM_NOT_ON_OVERFLOW                            = 1022;  // <not_on_overflow>
+		final int SYM_NOT_ON_SIZE_ERROR                          = 1023;  // <not_on_size_error>
+		final int SYM_NO_DATA_SENTENCE                           = 1024;  // <no_data_sentence>
+		final int SYM_NO_ECHO2                                   = 1025;  // <no_echo>
+		final int SYM_NO_OR_INTEGER                              = 1026;  // <no_or_integer>
+		final int SYM_NULL_OR_OMITTED                            = 1027;  // <null_or_omitted>
+		final int SYM_NUMERIC_IDENTIFIER                         = 1028;  // <numeric_identifier>
+		final int SYM_NUMERIC_SIGN_CLAUSE                        = 1029;  // <numeric_sign_clause>
+		final int SYM_NUMVALC_ARGS                               = 1030;  // <numvalc_args>
+		final int SYM_NUMVALC_FUNC                               = 1031;  // <NUMVALC_FUNC>
+		final int SYM_NUM_ID_OR_LIT                              = 1032;  // <num_id_or_lit>
+		final int SYM_OBJECT_CHAR_OR_WORD                        = 1033;  // <object_char_or_word>
+		final int SYM_OBJECT_CLAUSES                             = 1034;  // <object_clauses>
+		final int SYM_OBJECT_CLAUSES_LIST                        = 1035;  // <object_clauses_list>
+		final int SYM_OBJECT_COMPUTER_CLASS                      = 1036;  // <object_computer_class>
+		final int SYM_OBJECT_COMPUTER_MEMORY                     = 1037;  // <object_computer_memory>
+		final int SYM_OBJECT_COMPUTER_PARAGRAPH                  = 1038;  // <object_computer_paragraph>
+		final int SYM_OBJECT_COMPUTER_SEGMENT                    = 1039;  // <object_computer_segment>
+		final int SYM_OBJECT_COMPUTER_SEQUENCE                   = 1040;  // <object_computer_sequence>
+		final int SYM_OCCURS_CLAUSE                              = 1041;  // <occurs_clause>
+		final int SYM_OCCURS_INDEX                               = 1042;  // <occurs_index>
+		final int SYM_OCCURS_INDEXED                             = 1043;  // <occurs_indexed>
+		final int SYM_OCCURS_INDEX_LIST                          = 1044;  // <occurs_index_list>
+		final int SYM_OCCURS_KEYS                                = 1045;  // <occurs_keys>
+		final int SYM_OCCURS_KEY_FIELD                           = 1046;  // <occurs_key_field>
+		final int SYM_OCCURS_KEY_LIST                            = 1047;  // <occurs_key_list>
+		final int SYM_ON_OFF_CLAUSES                             = 1048;  // <on_off_clauses>
+		final int SYM_ON_OFF_CLAUSES_1                           = 1049;  // <on_off_clauses_1>
+		final int SYM_ON_OR_OFF                                  = 1050;  // <on_or_off>
+		final int SYM_ON_OVERFLOW                                = 1051;  // <on_overflow>
+		final int SYM_ON_SIZE_ERROR                              = 1052;  // <on_size_error>
+		final int SYM_ON_SIZE_ERROR_PHRASES                      = 1053;  // <on_size_error_phrases>
+		final int SYM_OPEN_BODY                                  = 1054;  // <open_body>
+		final int SYM_OPEN_FILE_ENTRY                            = 1055;  // <open_file_entry>
+		final int SYM_OPEN_MODE                                  = 1056;  // <open_mode>
+		final int SYM_OPEN_OPTION                                = 1057;  // <open_option>
+		final int SYM_OPEN_SHARING                               = 1058;  // <open_sharing>
+		final int SYM_OPEN_STATEMENT                             = 1059;  // <open_statement>
+		final int SYM_OPTIONAL_REFERENCE                         = 1060;  // <optional_reference>
+		final int SYM_OPTIONAL_REFERENCE_LIST                    = 1061;  // <optional_reference_list>
+		final int SYM_ORGANIZATION2                              = 1062;  // <organization>
+		final int SYM_ORGANIZATION_CLAUSE                        = 1063;  // <organization_clause>
+		final int SYM_OUTPUT_CD_CLAUSE                           = 1064;  // <output_cd_clause>
+		final int SYM_OUTPUT_CD_CLAUSES                          = 1065;  // <output_cd_clauses>
+		final int SYM_PADDING_CHARACTER_CLAUSE                   = 1066;  // <padding_character_clause>
+		final int SYM_PAGE_DETAIL                                = 1067;  // <page_detail>
+		final int SYM_PAGE_LIMIT_CLAUSE                          = 1068;  // <page_limit_clause>
+		final int SYM_PAGE_LINE_COLUMN                           = 1069;  // <page_line_column>
+		final int SYM_PARAGRAPH_HEADER                           = 1070;  // <paragraph_header>
+		final int SYM_PARTIAL_EXPR                               = 1071;  // <partial_expr>
+		final int SYM_PERFORM_BODY                               = 1072;  // <perform_body>
+		final int SYM_PERFORM_OPTION                             = 1073;  // <perform_option>
+		final int SYM_PERFORM_PROCEDURE                          = 1074;  // <perform_procedure>
+		final int SYM_PERFORM_STATEMENT                          = 1075;  // <perform_statement>
+		final int SYM_PERFORM_TEST                               = 1076;  // <perform_test>
+		final int SYM_PERFORM_VARYING                            = 1077;  // <perform_varying>
+		final int SYM_PERFORM_VARYING_LIST                       = 1078;  // <perform_varying_list>
+		final int SYM_PF_KEYWORD                                 = 1079;  // <pf_keyword>
+		final int SYM_PH_KEYWORD                                 = 1080;  // <ph_keyword>
+		final int SYM_PICTURE_CLAUSE                             = 1081;  // <picture_clause>
+		final int SYM_PLUS_PLUS                                  = 1082;  // <plus_plus>
+		final int SYM_POINTER_LEN                                = 1083;  // <pointer_len>
+		final int SYM_POSITIVE_ID_OR_LIT                         = 1084;  // <positive_id_or_lit>
+		final int SYM_POS_NUM_ID_OR_LIT                          = 1085;  // <pos_num_id_or_lit>
+		final int SYM_PRESENT_WHEN_CONDITION                     = 1086;  // <present_when_condition>
+		final int SYM_PRINTER_NAME                               = 1087;  // <printer_name>
+		final int SYM_PROCEDURE2                                 = 1088;  // <procedure>
+		final int SYM_PROCEDURE_NAME                             = 1089;  // <procedure_name>
+		final int SYM_PROCEDURE_NAME_LIST                        = 1090;  // <procedure_name_list>
+		final int SYM_PROCEDURE_PARAM                            = 1091;  // <procedure_param>
+		final int SYM_PROCEDURE_PARAM_LIST                       = 1092;  // <procedure_param_list>
+		final int SYM_PROGRAM_DEFINITION                         = 1093;  // <program_definition>
+		final int SYM_PROGRAM_ID_NAME                            = 1094;  // <program_id_name>
+		final int SYM_PROGRAM_ID_PARAGRAPH                       = 1095;  // <program_id_paragraph>
+		final int SYM_PROGRAM_NAME                               = 1096;  // <PROGRAM_NAME>
+		final int SYM_PROGRAM_OR_PROTOTYPE                       = 1097;  // <program_or_prototype>
+		final int SYM_PROGRAM_START_END                          = 1098;  // <program_start_end>
+		final int SYM_PROGRAM_TYPE_CLAUSE                        = 1099;  // <program_type_clause>
+		final int SYM_PROG_COLL_SEQUENCE                         = 1100;  // <prog_coll_sequence>
+		final int SYM_PROG_OR_ENTRY                              = 1101;  // <prog_or_entry>
+		final int SYM_PURGE_STATEMENT                            = 1102;  // <purge_statement>
+		final int SYM_QUALIFIED_WORD                             = 1103;  // <qualified_word>
+		final int SYM_READY_STATEMENT                            = 1104;  // <ready_statement>
+		final int SYM_READ_BODY                                  = 1105;  // <read_body>
+		final int SYM_READ_HANDLER                               = 1106;  // <read_handler>
+		final int SYM_READ_INTO                                  = 1107;  // <read_into>
+		final int SYM_READ_KEY                                   = 1108;  // <read_key>
+		final int SYM_READ_STATEMENT                             = 1109;  // <read_statement>
+		final int SYM_RECEIVE_BODY                               = 1110;  // <receive_body>
+		final int SYM_RECEIVE_STATEMENT                          = 1111;  // <receive_statement>
+		final int SYM_RECORDING_MODE                             = 1112;  // <recording_mode>
+		final int SYM_RECORDING_MODE_CLAUSE                      = 1113;  // <recording_mode_clause>
+		final int SYM_RECORDS2                                   = 1114;  // <records>
+		final int SYM_RECORD_CLAUSE                              = 1115;  // <record_clause>
+		final int SYM_RECORD_DELIMITER_CLAUSE                    = 1116;  // <record_delimiter_clause>
+		final int SYM_RECORD_DESCRIPTION_LIST                    = 1117;  // <record_description_list>
+		final int SYM_RECORD_KEY_CLAUSE                          = 1118;  // <record_key_clause>
+		final int SYM_RECORD_NAME                                = 1119;  // <record_name>
+		final int SYM_REDEFINES_CLAUSE                           = 1120;  // <redefines_clause>
+		final int SYM_REEL_OR_UNIT                               = 1121;  // <reel_or_unit>
+		final int SYM_REFERENCE2                                 = 1122;  // <reference>
+		final int SYM_REFERENCE_LIST                             = 1123;  // <reference_list>
+		final int SYM_REFERENCE_OR_LITERAL                       = 1124;  // <reference_or_literal>
+		final int SYM_REFMOD                                     = 1125;  // <refmod>
+		final int SYM_RELATIVE_KEY_CLAUSE                        = 1126;  // <relative_key_clause>
+		final int SYM_RELEASE_BODY                               = 1127;  // <release_body>
+		final int SYM_RELEASE_STATEMENT                          = 1128;  // <release_statement>
+		final int SYM_RENAMES_ENTRY                              = 1129;  // <renames_entry>
+		final int SYM_REPLACING_ITEM                             = 1130;  // <replacing_item>
+		final int SYM_REPLACING_LIST                             = 1131;  // <replacing_list>
+		final int SYM_REPLACING_REGION                           = 1132;  // <replacing_region>
+		final int SYM_REPORT_CLAUSE                              = 1133;  // <report_clause>
+		final int SYM_REPORT_COL_INTEGER_LIST                    = 1134;  // <report_col_integer_list>
+		final int SYM_REPORT_DESCRIPTION                         = 1135;  // <report_description>
+		final int SYM_REPORT_DESCRIPTION_OPTION                  = 1136;  // <report_description_option>
+		final int SYM_REPORT_GROUP_DESCRIPTION_ENTRY             = 1137;  // <report_group_description_entry>
+		final int SYM_REPORT_GROUP_OPTION                        = 1138;  // <report_group_option>
+		final int SYM_REPORT_INTEGER                             = 1139;  // <report_integer>
+		final int SYM_REPORT_KEYWORD                             = 1140;  // <report_keyword>
+		final int SYM_REPORT_LINE_INTEGER_LIST                   = 1141;  // <report_line_integer_list>
+		final int SYM_REPORT_NAME                                = 1142;  // <report_name>
+		final int SYM_REPORT_OCCURS_CLAUSE                       = 1143;  // <report_occurs_clause>
+		final int SYM_REPORT_USAGE_CLAUSE                        = 1144;  // <report_usage_clause>
+		final int SYM_REPORT_X_LIST                              = 1145;  // <report_x_list>
+		final int SYM_REPOSITORY_LIST                            = 1146;  // <repository_list>
+		final int SYM_REPOSITORY_NAME                            = 1147;  // <repository_name>
+		final int SYM_REPOSITORY_NAME_LIST                       = 1148;  // <repository_name_list>
+		final int SYM_REP_KEYWORD                                = 1149;  // <rep_keyword>
+		final int SYM_REP_NAME_LIST                              = 1150;  // <rep_name_list>
+		final int SYM_RESERVE_CLAUSE                             = 1151;  // <reserve_clause>
+		final int SYM_RESET_STATEMENT                            = 1152;  // <reset_statement>
+		final int SYM_RETRY_OPTIONS                              = 1153;  // <retry_options>
+		final int SYM_RETRY_PHRASE                               = 1154;  // <retry_phrase>
+		final int SYM_RETURN_AT_END                              = 1155;  // <return_at_end>
+		final int SYM_RETURN_BODY                                = 1156;  // <return_body>
+		final int SYM_RETURN_GIVE                                = 1157;  // <return_give>
+		final int SYM_RETURN_STATEMENT                           = 1158;  // <return_statement>
+		final int SYM_REVERSE_FUNC                               = 1159;  // <REVERSE_FUNC>
+		final int SYM_REVERSE_VIDEO2                             = 1160;  // <reverse_video>
+		final int SYM_REWRITE_BODY                               = 1161;  // <rewrite_body>
+		final int SYM_REWRITE_STATEMENT                          = 1162;  // <rewrite_statement>
+		final int SYM_RF_KEYWORD                                 = 1163;  // <rf_keyword>
+		final int SYM_RH_KEYWORD                                 = 1164;  // <rh_keyword>
+		final int SYM_ROLLBACK_STATEMENT                         = 1165;  // <rollback_statement>
+		final int SYM_ROUND_CHOICE                               = 1166;  // <round_choice>
+		final int SYM_ROUND_MODE                                 = 1167;  // <round_mode>
+		final int SYM_SAME_CLAUSE                                = 1168;  // <same_clause>
+		final int SYM_SCOPE_TERMINATOR                           = 1169;  // <scope_terminator>
+		final int SYM_SCREEN_COL_NUMBER                          = 1170;  // <screen_col_number>
+		final int SYM_SCREEN_CONTROL2                            = 1171;  // <screen_control>
+		final int SYM_SCREEN_DESCRIPTION                         = 1172;  // <screen_description>
+		final int SYM_SCREEN_DESCRIPTION_LIST                    = 1173;  // <screen_description_list>
+		final int SYM_SCREEN_GLOBAL_CLAUSE                       = 1174;  // <screen_global_clause>
+		final int SYM_SCREEN_LINE_NUMBER                         = 1175;  // <screen_line_number>
+		final int SYM_SCREEN_OCCURS_CLAUSE                       = 1176;  // <screen_occurs_clause>
+		final int SYM_SCREEN_OPTION                              = 1177;  // <screen_option>
+		final int SYM_SCREEN_OR_DEVICE_DISPLAY                   = 1178;  // <screen_or_device_display>
+		final int SYM_SCROLL_LINE_OR_LINES                       = 1179;  // <scroll_line_or_lines>
+		final int SYM_SEARCH_AT_END                              = 1180;  // <search_at_end>
+		final int SYM_SEARCH_BODY                                = 1181;  // <search_body>
+		final int SYM_SEARCH_STATEMENT                           = 1182;  // <search_statement>
+		final int SYM_SEARCH_VARYING                             = 1183;  // <search_varying>
+		final int SYM_SEARCH_WHEN                                = 1184;  // <search_when>
+		final int SYM_SEARCH_WHENS                               = 1185;  // <search_whens>
+		final int SYM_SECTION_HEADER                             = 1186;  // <section_header>
+		final int SYM_SELECT_CLAUSE                              = 1187;  // <select_clause>
+		final int SYM_SEND_BODY                                  = 1188;  // <send_body>
+		final int SYM_SEND_IDENTIFIER                            = 1189;  // <send_identifier>
+		final int SYM_SEND_STATEMENT                             = 1190;  // <send_statement>
+		final int SYM_SET_ATTR                                   = 1191;  // <set_attr>
+		final int SYM_SET_ATTR_CLAUSE                            = 1192;  // <set_attr_clause>
+		final int SYM_SET_ATTR_ONE                               = 1193;  // <set_attr_one>
+		final int SYM_SET_BODY                                   = 1194;  // <set_body>
+		final int SYM_SET_ENVIRONMENT                            = 1195;  // <set_environment>
+		final int SYM_SET_LAST_EXCEPTION_TO_OFF                  = 1196;  // <set_last_exception_to_off>
+		final int SYM_SET_STATEMENT                              = 1197;  // <set_statement>
+		final int SYM_SET_TO                                     = 1198;  // <set_to>
+		final int SYM_SET_TO_ON_OFF                              = 1199;  // <set_to_on_off>
+		final int SYM_SET_TO_ON_OFF_SEQUENCE                     = 1200;  // <set_to_on_off_sequence>
+		final int SYM_SET_TO_TRUE_FALSE                          = 1201;  // <set_to_true_false>
+		final int SYM_SET_TO_TRUE_FALSE_SEQUENCE                 = 1202;  // <set_to_true_false_sequence>
+		final int SYM_SET_UP_DOWN                                = 1203;  // <set_up_down>
+		final int SYM_SHARING_CLAUSE                             = 1204;  // <sharing_clause>
+		final int SYM_SHARING_OPTION                             = 1205;  // <sharing_option>
+		final int SYM_SIGN_CLAUSE                                = 1206;  // <sign_clause>
+		final int SYM_SIMPLE_ALL_VALUE                           = 1207;  // <simple_all_value>
+		final int SYM_SIMPLE_DISPLAY_ALL_VALUE                   = 1208;  // <simple_display_all_value>
+		final int SYM_SIMPLE_DISPLAY_VALUE                       = 1209;  // <simple_display_value>
+		final int SYM_SIMPLE_PROG                                = 1210;  // <simple_prog>
+		final int SYM_SIMPLE_VALUE                               = 1211;  // <simple_value>
+		final int SYM_SINGLE_REFERENCE                           = 1212;  // <single_reference>
+		final int SYM_SIZELEN_CLAUSE                             = 1213;  // <sizelen_clause>
+		final int SYM_SIZE_IS_INTEGER                            = 1214;  // <size_is_integer>
+		final int SYM_SIZE_OR_LENGTH                             = 1215;  // <size_or_length>
+		final int SYM_SORT_BODY                                  = 1216;  // <sort_body>
+		final int SYM_SORT_COLLATING                             = 1217;  // <sort_collating>
+		final int SYM_SORT_INPUT                                 = 1218;  // <sort_input>
+		final int SYM_SORT_KEY_LIST                              = 1219;  // <sort_key_list>
+		final int SYM_SORT_OUTPUT                                = 1220;  // <sort_output>
+		final int SYM_SORT_STATEMENT                             = 1221;  // <sort_statement>
+		final int SYM_SOURCE_CLAUSE                              = 1222;  // <source_clause>
+		final int SYM_SOURCE_COMPUTER_PARAGRAPH                  = 1223;  // <source_computer_paragraph>
+		final int SYM_SOURCE_ELEMENT                             = 1224;  // <source_element>
+		final int SYM_SOURCE_ELEMENT_LIST                        = 1225;  // <source_element_list>
+		final int SYM_SPACE_OR_ZERO                              = 1226;  // <space_or_zero>
+		final int SYM_SPECIAL_NAME                               = 1227;  // <special_name>
+		final int SYM_SPECIAL_NAMES_SENTENCE_LIST                = 1228;  // <special_names_sentence_list>
+		final int SYM_SPECIAL_NAME_LIST                          = 1229;  // <special_name_list>
+		final int SYM_START2                                     = 1230;  // <start>
+		final int SYM_START_BODY                                 = 1231;  // <start_body>
+		final int SYM_START_KEY                                  = 1232;  // <start_key>
+		final int SYM_START_OP                                   = 1233;  // <start_op>
+		final int SYM_START_STATEMENT                            = 1234;  // <start_statement>
+		final int SYM_STATEMENT                                  = 1235;  // <statement>
+		final int SYM_STATEMENTS                                 = 1236;  // <statements>
+		final int SYM_STATEMENT_LIST                             = 1237;  // <statement_list>
+		final int SYM_STOP_LITERAL                               = 1238;  // <stop_literal>
+		final int SYM_STOP_RETURNING                             = 1239;  // <stop_returning>
+		final int SYM_STOP_STATEMENT                             = 1240;  // <stop_statement>
+		final int SYM_STRING_BODY                                = 1241;  // <string_body>
+		final int SYM_STRING_DELIMITER                           = 1242;  // <string_delimiter>
+		final int SYM_STRING_ITEM                                = 1243;  // <string_item>
+		final int SYM_STRING_ITEM_LIST                           = 1244;  // <string_item_list>
+		final int SYM_STRING_STATEMENT                           = 1245;  // <string_statement>
+		final int SYM_SUBREF                                     = 1246;  // <subref>
+		final int SYM_SUBSTITUTE_CASE_FUNC                       = 1247;  // <SUBSTITUTE_CASE_FUNC>
+		final int SYM_SUBSTITUTE_FUNC                            = 1248;  // <SUBSTITUTE_FUNC>
+		final int SYM_SUBTRACT_BODY                              = 1249;  // <subtract_body>
+		final int SYM_SUBTRACT_STATEMENT                         = 1250;  // <subtract_statement>
+		final int SYM_SUB_IDENTIFIER                             = 1251;  // <sub_identifier>
+		final int SYM_SUB_IDENTIFIER_1                           = 1252;  // <sub_identifier_1>
+		final int SYM_SUM_CLAUSE_LIST                            = 1253;  // <sum_clause_list>
+		final int SYM_SUPPRESS_STATEMENT                         = 1254;  // <suppress_statement>
+		final int SYM_SYMBOLIC_CHARACTERS_CLAUSE                 = 1255;  // <symbolic_characters_clause>
+		final int SYM_SYMBOLIC_CHARS_LIST                        = 1256;  // <symbolic_chars_list>
+		final int SYM_SYMBOLIC_CHARS_PHRASE                      = 1257;  // <symbolic_chars_phrase>
+		final int SYM_SYMBOLIC_COLLECTION                        = 1258;  // <symbolic_collection>
+		final int SYM_SYMBOLIC_INTEGER                           = 1259;  // <symbolic_integer>
+		final int SYM_SYNCHRONIZED_CLAUSE                        = 1260;  // <synchronized_clause>
+		final int SYM_TABLE_IDENTIFIER                           = 1261;  // <table_identifier>
+		final int SYM_TABLE_NAME                                 = 1262;  // <table_name>
+		final int SYM_TALLYING_ITEM                              = 1263;  // <tallying_item>
+		final int SYM_TALLYING_LIST                              = 1264;  // <tallying_list>
+		final int SYM_TARGET_IDENTIFIER                          = 1265;  // <target_identifier>
+		final int SYM_TARGET_IDENTIFIER_1                        = 1266;  // <target_identifier_1>
+		final int SYM_TARGET_X                                   = 1267;  // <target_x>
+		final int SYM_TARGET_X_LIST                              = 1268;  // <target_x_list>
+		final int SYM_TERMINATE_BODY                             = 1269;  // <terminate_body>
+		final int SYM_TERMINATE_STATEMENT                        = 1270;  // <terminate_statement>
+		final int SYM_TERM_OR_DOT                                = 1271;  // <term_or_dot>
+		final int SYM_TO_INIT_VAL                                = 1272;  // <to_init_val>
+		final int SYM_TRANSFORM_BODY                             = 1273;  // <transform_body>
+		final int SYM_TRANSFORM_STATEMENT                        = 1274;  // <transform_statement>
+		final int SYM_TRIM_ARGS                                  = 1275;  // <trim_args>
+		final int SYM_TRIM_FUNC                                  = 1276;  // <TRIM_FUNC>
+		final int SYM_TYPE_CLAUSE                                = 1277;  // <type_clause>
+		final int SYM_TYPE_OPTION                                = 1278;  // <type_option>
+		final int SYM_UNDEFINED_WORD                             = 1279;  // <undefined_word>
+		final int SYM_UNIQUE_WORD                                = 1280;  // <unique_word>
+		final int SYM_UNLOCK_BODY                                = 1281;  // <unlock_body>
+		final int SYM_UNLOCK_STATEMENT                           = 1282;  // <unlock_statement>
+		final int SYM_UNNAMED_INPUT_CD_CLAUSES                   = 1283;  // <unnamed_input_cd_clauses>
+		final int SYM_UNNAMED_I_O_CD_CLAUSES                     = 1284;  // <unnamed_i_o_cd_clauses>
+		final int SYM_UNSTRING_BODY                              = 1285;  // <unstring_body>
+		final int SYM_UNSTRING_DELIMITED_ITEM                    = 1286;  // <unstring_delimited_item>
+		final int SYM_UNSTRING_DELIMITED_LIST                    = 1287;  // <unstring_delimited_list>
+		final int SYM_UNSTRING_INTO                              = 1288;  // <unstring_into>
+		final int SYM_UNSTRING_INTO_ITEM                         = 1289;  // <unstring_into_item>
+		final int SYM_UNSTRING_STATEMENT                         = 1290;  // <unstring_statement>
+		final int SYM_UPDATE_DEFAULT                             = 1291;  // <update_default>
+		final int SYM_UPPER_CASE_FUNC                            = 1292;  // <UPPER_CASE_FUNC>
+		final int SYM_UP_OR_DOWN                                 = 1293;  // <up_or_down>
+		final int SYM_USAGE2                                     = 1294;  // <usage>
+		final int SYM_USAGE_CLAUSE                               = 1295;  // <usage_clause>
+		final int SYM_USER_ENTRY_NAME                            = 1296;  // <user_entry_name>
+		final int SYM_USER_FUNCTION_NAME                         = 1297;  // <USER_FUNCTION_NAME>
+		final int SYM_USE_DEBUGGING                              = 1298;  // <use_debugging>
+		final int SYM_USE_EXCEPTION                              = 1299;  // <use_exception>
+		final int SYM_USE_EX_KEYW                                = 1300;  // <use_ex_keyw>
+		final int SYM_USE_FILE_EXCEPTION                         = 1301;  // <use_file_exception>
+		final int SYM_USE_FILE_EXCEPTION_TARGET                  = 1302;  // <use_file_exception_target>
+		final int SYM_USE_GLOBAL                                 = 1303;  // <use_global>
+		final int SYM_USE_PHRASE                                 = 1304;  // <use_phrase>
+		final int SYM_USE_REPORTING                              = 1305;  // <use_reporting>
+		final int SYM_USE_START_END                              = 1306;  // <use_start_end>
+		final int SYM_USE_STATEMENT                              = 1307;  // <use_statement>
+		final int SYM_U_OR_S                                     = 1308;  // <u_or_s>
+		final int SYM_VALUEOF_NAME                               = 1309;  // <valueof_name>
+		final int SYM_VALUE_CLAUSE                               = 1310;  // <value_clause>
+		final int SYM_VALUE_ITEM                                 = 1311;  // <value_item>
+		final int SYM_VALUE_ITEM_LIST                            = 1312;  // <value_item_list>
+		final int SYM_VALUE_OF_CLAUSE                            = 1313;  // <value_of_clause>
+		final int SYM_VARYING_CLAUSE                             = 1314;  // <varying_clause>
+		final int SYM_VERB                                       = 1315;  // <verb>
+		final int SYM_WHEN_COMPILED_FUNC                         = 1316;  // <WHEN_COMPILED_FUNC>
+		final int SYM_WITH_DATA_SENTENCE                         = 1317;  // <with_data_sentence>
+		final int SYM_WITH_DUPS                                  = 1318;  // <with_dups>
+		final int SYM_WITH_INDICATOR                             = 1319;  // <with_indicator>
+		final int SYM_WITH_LOCK                                  = 1320;  // <with_lock>
+		final int SYM_WORD                                       = 1321;  // <WORD>
+		final int SYM_WRITE_BODY                                 = 1322;  // <write_body>
+		final int SYM_WRITE_HANDLER                              = 1323;  // <write_handler>
+		final int SYM_WRITE_OPTION                               = 1324;  // <write_option>
+		final int SYM_WRITE_STATEMENT                            = 1325;  // <write_statement>
+		final int SYM_X                                          = 1326;  // <x>
+		final int SYM_X_COMMON                                   = 1327;  // <x_common>
+		final int SYM_X_LIST                                     = 1328;  // <x_list>
+		final int SYM__ACCEPT_CLAUSES                            = 1329;  // <_accept_clauses>
+		final int SYM__ACCEPT_EXCEPTION_PHRASES                  = 1330;  // <_accept_exception_phrases>
+		final int SYM__ACCP_NOT_ON_EXCEPTION                     = 1331;  // <_accp_not_on_exception>
+		final int SYM__ACCP_ON_EXCEPTION                         = 1332;  // <_accp_on_exception>
+		final int SYM__ADD_TO                                    = 1333;  // <_add_to>
+		final int SYM__ADVANCING                                 = 1334;  // <_advancing>
+		final int SYM__AFTER                                     = 1335;  // <_after>
+		final int SYM__ALL_REFS                                  = 1336;  // <_all_refs>
+		final int SYM__ARE                                       = 1337;  // <_are>
+		final int SYM__AREA                                      = 1338;  // <_area>
+		final int SYM__AREAS                                     = 1339;  // <_areas>
+		final int SYM__AS                                        = 1340;  // <_as>
+		final int SYM__ASSIGNMENT_NAME                           = 1341;  // <_assignment_name>
+		final int SYM__AS_EXTNAME                                = 1342;  // <_as_extname>
+		final int SYM__AS_LITERAL                                = 1343;  // <_as_literal>
+		final int SYM__AT                                        = 1344;  // <_at>
+		final int SYM__AT_END_CLAUSE                             = 1345;  // <_at_end_clause>
+		final int SYM__AT_EOP_CLAUSE                             = 1346;  // <_at_eop_clause>
+		final int SYM__BEFORE                                    = 1347;  // <_before>
+		final int SYM__BINARY                                    = 1348;  // <_binary>
+		final int SYM__BY                                        = 1349;  // <_by>
+		final int SYM__CALL_NOT_ON_EXCEPTION                     = 1350;  // <_call_not_on_exception>
+		final int SYM__CALL_ON_EXCEPTION                         = 1351;  // <_call_on_exception>
+		final int SYM__CAPACITY_IN                               = 1352;  // <_capacity_in>
+		final int SYM__CHARACTER                                 = 1353;  // <_character>
+		final int SYM__CHARACTERS                                = 1354;  // <_characters>
+		final int SYM__COMMENTITEMS                              = 1355;  // <_Comment Items>
+		final int SYM__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE = 1356;  // <_communication_description_clause_sequence>
+		final int SYM__COMMUNICATION_DESCRIPTION_SEQUENCE        = 1357;  // <_communication_description_sequence>
+		final int SYM__COMMUNICATION_SECTION                     = 1358;  // <_communication_section>
+		final int SYM__CONFIGURATION_HEADER                      = 1359;  // <_configuration_header>
+		final int SYM__CONFIGURATION_SECTION                     = 1360;  // <_configuration_section>
+		final int SYM__CONTAINS                                  = 1361;  // <_contains>
+		final int SYM__CONTROL_FINAL                             = 1362;  // <_control_final>
+		final int SYM__DATA                                      = 1363;  // <_data>
+		final int SYM__DATA_DESCRIPTION_CLAUSE_SEQUENCE          = 1364;  // <_data_description_clause_sequence>
+		final int SYM__DATA_DIVISION                             = 1365;  // <_data_division>
+		final int SYM__DATA_DIVISION_HEADER                      = 1366;  // <_data_division_header>
+		final int SYM__DATA_SENTENCE_PHRASES                     = 1367;  // <_data_sentence_phrases>
+		final int SYM__DEFAULT_ROUNDED_CLAUSE                    = 1368;  // <_default_rounded_clause>
+		final int SYM__DEST_INDEX                                = 1369;  // <_dest_index>
+		final int SYM__DISPLAY_EXCEPTION_PHRASES                 = 1370;  // <_display_exception_phrases>
+		final int SYM__DISP_NOT_ON_EXCEPTION                     = 1371;  // <_disp_not_on_exception>
+		final int SYM__DISP_ON_EXCEPTION                         = 1372;  // <_disp_on_exception>
+		final int SYM__ENABLE_DISABLE_KEY                        = 1373;  // <_enable_disable_key>
+		final int SYM__END_OF                                    = 1374;  // <_end_of>
+		final int SYM__END_PROGRAM_LIST                          = 1375;  // <_end_program_list>
+		final int SYM__ENTRY_CONVENTION_CLAUSE                   = 1376;  // <_entry_convention_clause>
+		final int SYM__ENTRY_NAME                                = 1377;  // <_entry_name>
+		final int SYM__ENVIRONMENT_DIVISION                      = 1378;  // <_environment_division>
+		final int SYM__ENVIRONMENT_HEADER                        = 1379;  // <_environment_header>
+		final int SYM__EVALUATE_THRU_EXPR                        = 1380;  // <_evaluate_thru_expr>
+		final int SYM__EXTENDED_WITH_LOCK                        = 1381;  // <_extended_with_lock>
+		final int SYM__EXT_CLAUSE                                = 1382;  // <_ext_clause>
+		final int SYM__E_SEP                                     = 1383;  // <_e_sep>
+		final int SYM__FALSE_IS                                  = 1384;  // <_false_is>
+		final int SYM__FILE                                      = 1385;  // <_file>
+		final int SYM__FILE_CONTROL_HEADER                       = 1386;  // <_file_control_header>
+		final int SYM__FILE_CONTROL_SEQUENCE                     = 1387;  // <_file_control_sequence>
+		final int SYM__FILE_DESCRIPTION_CLAUSE_SEQUENCE          = 1388;  // <_file_description_clause_sequence>
+		final int SYM__FILE_DESCRIPTION_SEQUENCE                 = 1389;  // <_file_description_sequence>
+		final int SYM__FILE_OR_SORT                              = 1390;  // <_file_or_sort>
+		final int SYM__FILE_SECTION_HEADER                       = 1391;  // <_file_section_header>
+		final int SYM__FILLER                                    = 1392;  // <_filler>
+		final int SYM__FINAL                                     = 1393;  // <_final>
+		final int SYM__FLAG_NEXT                                 = 1394;  // <_flag_next>
+		final int SYM__FLAG_NOT                                  = 1395;  // <_flag_not>
+		final int SYM__FOR                                       = 1396;  // <_for>
+		final int SYM__FOR_SUB_RECORDS_CLAUSE                    = 1397;  // <_for_sub_records_clause>
+		final int SYM__FROM                                      = 1398;  // <_from>
+		final int SYM__FROM_IDENTIFIER                           = 1399;  // <_from_identifier>
+		final int SYM__FROM_IDX_TO_IDX                           = 1400;  // <_from_idx_to_idx>
+		final int SYM__FROM_INTEGER                              = 1401;  // <_from_integer>
+		final int SYM__GLOBAL_CLAUSE                             = 1402;  // <_global_clause>
+		final int SYM__IDENTIFICATION_HEADER                     = 1403;  // <_identification_header>
+		final int SYM__IN                                        = 1404;  // <_in>
+		final int SYM__INDEX                                     = 1405;  // <_index>
+		final int SYM__INDICATE                                  = 1406;  // <_indicate>
+		final int SYM__INITIAL                                   = 1407;  // <_initial>
+		final int SYM__INITIALIZE_DEFAULT                        = 1408;  // <_initialize_default>
+		final int SYM__INITIALIZE_FILLER                         = 1409;  // <_initialize_filler>
+		final int SYM__INITIALIZE_REPLACING                      = 1410;  // <_initialize_replacing>
+		final int SYM__INITIALIZE_VALUE                          = 1411;  // <_initialize_value>
+		final int SYM__INPUT_CD_CLAUSES                          = 1412;  // <_input_cd_clauses>
+		final int SYM__INPUT_OUTPUT_HEADER                       = 1413;  // <_input_output_header>
+		final int SYM__INPUT_OUTPUT_SECTION                      = 1414;  // <_input_output_section>
+		final int SYM__INTERMEDIATE_ROUNDING_CLAUSE              = 1415;  // <_intermediate_rounding_clause>
+		final int SYM__INTO                                      = 1416;  // <_into>
+		final int SYM__INVALID_KEY_PHRASES                       = 1417;  // <_invalid_key_phrases>
+		final int SYM__INVALID_KEY_SENTENCE                      = 1418;  // <_invalid_key_sentence>
+		final int SYM__IN_ORDER                                  = 1419;  // <_in_order>
+		final int SYM__IS                                        = 1420;  // <_is>
+		final int SYM__IS_ARE                                    = 1421;  // <_is_are>
+		final int SYM__I_O_CD_CLAUSES                            = 1422;  // <_i_o_cd_clauses>
+		final int SYM__I_O_CONTROL                               = 1423;  // <_i_o_control>
+		final int SYM__I_O_CONTROL_HEADER                        = 1424;  // <_i_o_control_header>
+		final int SYM__KEY                                       = 1425;  // <_key>
+		final int SYM__KEY_LIST                                  = 1426;  // <_key_list>
+		final int SYM__LEFT_OR_RIGHT                             = 1427;  // <_left_or_right>
+		final int SYM__LIMITS                                    = 1428;  // <_limits>
+		final int SYM__LINAGE_SEQUENCE                           = 1429;  // <_linage_sequence>
+		final int SYM__LINE                                      = 1430;  // <_line>
+		final int SYM__LINES                                     = 1431;  // <_lines>
+		final int SYM__LINE_ADV_FILE                             = 1432;  // <_line_adv_file>
+		final int SYM__LINE_OR_LINES                             = 1433;  // <_line_or_lines>
+		final int SYM__LINKAGE_SECTION                           = 1434;  // <_linkage_section>
+		final int SYM__LOCAL_STORAGE_SECTION                     = 1435;  // <_local_storage_section>
+		final int SYM__LOCK_WITH                                 = 1436;  // <_lock_with>
+		final int SYM__MESSAGE                                   = 1437;  // <_message>
+		final int SYM__MNEMONIC_CONV                             = 1438;  // <_mnemonic_conv>
+		final int SYM__MODE                                      = 1439;  // <_mode>
+		final int SYM__MULTIPLE_FILE_POSITION                    = 1440;  // <_multiple_file_position>
+		final int SYM__NOT                                       = 1441;  // <_not>
+		final int SYM__NOT_AT_END_CLAUSE                         = 1442;  // <_not_at_end_clause>
+		final int SYM__NOT_AT_EOP_CLAUSE                         = 1443;  // <_not_at_eop_clause>
+		final int SYM__NOT_INVALID_KEY_SENTENCE                  = 1444;  // <_not_invalid_key_sentence>
+		final int SYM__NOT_ON_OVERFLOW                           = 1445;  // <_not_on_overflow>
+		final int SYM__NOT_ON_SIZE_ERROR                         = 1446;  // <_not_on_size_error>
+		final int SYM__NO_DATA_SENTENCE                          = 1447;  // <_no_data_sentence>
+		final int SYM__NUMBER                                    = 1448;  // <_number>
+		final int SYM__NUMBERS                                   = 1449;  // <_numbers>
+		final int SYM__OBJECT_COMPUTER_ENTRY                     = 1450;  // <_object_computer_entry>
+		final int SYM__OCCURS_DEPENDING                          = 1451;  // <_occurs_depending>
+		final int SYM__OCCURS_FROM_INTEGER                       = 1452;  // <_occurs_from_integer>
+		final int SYM__OCCURS_INDEXED                            = 1453;  // <_occurs_indexed>
+		final int SYM__OCCURS_INITIALIZED                        = 1454;  // <_occurs_initialized>
+		final int SYM__OCCURS_INTEGER_TO                         = 1455;  // <_occurs_integer_to>
+		final int SYM__OCCURS_KEYS_AND_INDEXED                   = 1456;  // <_occurs_keys_and_indexed>
+		final int SYM__OCCURS_STEP                               = 1457;  // <_occurs_step>
+		final int SYM__OCCURS_TO_INTEGER                         = 1458;  // <_occurs_to_integer>
+		final int SYM__OF                                        = 1459;  // <_of>
+		final int SYM__ON                                        = 1460;  // <_on>
+		final int SYM__ONOFF_STATUS                              = 1461;  // <_onoff_status>
+		final int SYM__ON_OVERFLOW                               = 1462;  // <_on_overflow>
+		final int SYM__ON_OVERFLOW_PHRASES                       = 1463;  // <_on_overflow_phrases>
+		final int SYM__ON_SIZE_ERROR                             = 1464;  // <_on_size_error>
+		final int SYM__OPTIONS_CLAUSES                           = 1465;  // <_options_clauses>
+		final int SYM__OPTIONS_PARAGRAPH                         = 1466;  // <_options_paragraph>
+		final int SYM__OR_PAGE                                   = 1467;  // <_or_page>
+		final int SYM__OTHER                                     = 1468;  // <_other>
+		final int SYM__OUTPUT_CD_CLAUSES                         = 1469;  // <_output_cd_clauses>
+		final int SYM__PAGE_HEADING_LIST                         = 1470;  // <_page_heading_list>
+		final int SYM__PRINTING                                  = 1471;  // <_printing>
+		final int SYM__PROCEDURE                                 = 1472;  // <_procedure>
+		final int SYM__PROCEDURE_DECLARATIVES                    = 1473;  // <_procedure_declaratives>
+		final int SYM__PROCEDURE_DIVISION                        = 1474;  // <_procedure_division>
+		final int SYM__PROCEDURE_LIST                            = 1475;  // <_procedure_list>
+		final int SYM__PROCEDURE_OPTIONAL                        = 1476;  // <_procedure_optional>
+		final int SYM__PROCEDURE_RETURNING                       = 1477;  // <_procedure_returning>
+		final int SYM__PROCEDURE_TYPE                            = 1478;  // <_procedure_type>
+		final int SYM__PROCEDURE_USING_CHAINING                  = 1479;  // <_procedure_using_chaining>
+		final int SYM__PROCEED_TO                                = 1480;  // <_proceed_to>
+		final int SYM__PROGRAM                                   = 1481;  // <_program>
+		final int SYM__PROGRAM_BODY                              = 1482;  // <_program_body>
+		final int SYM__PROGRAM_TYPE                              = 1483;  // <_program_type>
+		final int SYM__RECORD                                    = 1484;  // <_record>
+		final int SYM__RECORDS                                   = 1485;  // <_records>
+		final int SYM__RECORDS_OR_CHARACTERS                     = 1486;  // <_records_or_characters>
+		final int SYM__RECORD_DEPENDING                          = 1487;  // <_record_depending>
+		final int SYM__RECORD_DESCRIPTION_LIST                   = 1488;  // <_record_description_list>
+		final int SYM__RENAMES_THRU                              = 1489;  // <_renames_thru>
+		final int SYM__REPLACING_LINE                            = 1490;  // <_replacing_line>
+		final int SYM__REPORT_DESCRIPTION_OPTIONS                = 1491;  // <_report_description_options>
+		final int SYM__REPORT_DESCRIPTION_SEQUENCE               = 1492;  // <_report_description_sequence>
+		final int SYM__REPORT_GROUP_DESCRIPTION_LIST             = 1493;  // <_report_group_description_list>
+		final int SYM__REPORT_GROUP_OPTIONS                      = 1494;  // <_report_group_options>
+		final int SYM__REPORT_SECTION                            = 1495;  // <_report_section>
+		final int SYM__REPOSITORY_ENTRY                          = 1496;  // <_repository_entry>
+		final int SYM__REPOSITORY_PARAGRAPH                      = 1497;  // <_repository_paragraph>
+		final int SYM__RESET_CLAUSE                              = 1498;  // <_reset_clause>
+		final int SYM__RETRY_PHRASE                              = 1499;  // <_retry_phrase>
+		final int SYM__RIGHT                                     = 1500;  // <_right>
+		final int SYM__SAME_OPTION                               = 1501;  // <_same_option>
+		final int SYM__SCREEN_COL_PLUS_MINUS                     = 1502;  // <_screen_col_plus_minus>
+		final int SYM__SCREEN_DESCRIPTION_LIST                   = 1503;  // <_screen_description_list>
+		final int SYM__SCREEN_LINE_PLUS_MINUS                    = 1504;  // <_screen_line_plus_minus>
+		final int SYM__SCREEN_OPTIONS                            = 1505;  // <_screen_options>
+		final int SYM__SCREEN_SECTION                            = 1506;  // <_screen_section>
+		final int SYM__SCROLL_LINES                              = 1507;  // <_scroll_lines>
+		final int SYM__SEGMENT                                   = 1508;  // <_segment>
+		final int SYM__SELECT_CLAUSES_OR_ERROR                   = 1509;  // <_select_clauses_or_error>
+		final int SYM__SELECT_CLAUSE_SEQUENCE                    = 1510;  // <_select_clause_sequence>
+		final int SYM__SIGN                                      = 1511;  // <_sign>
+		final int SYM__SIGNED                                    = 1512;  // <_signed>
+		final int SYM__SIGN_IS                                   = 1513;  // <_sign_is>
+		final int SYM__SIZE                                      = 1514;  // <_size>
+		final int SYM__SIZE_OPTIONAL                             = 1515;  // <_size_optional>
+		final int SYM__SORT_DUPLICATES                           = 1516;  // <_sort_duplicates>
+		final int SYM__SOURCE_COMPUTER_ENTRY                     = 1517;  // <_source_computer_entry>
+		final int SYM__SOURCE_OBJECT_COMPUTER_PARAGRAPHS         = 1518;  // <_source_object_computer_paragraphs>
+		final int SYM__SPECIAL_NAMES_PARAGRAPH                   = 1519;  // <_special_names_paragraph>
+		final int SYM__SPECIAL_NAMES_SENTENCE_LIST               = 1520;  // <_special_names_sentence_list>
+		final int SYM__SPECIAL_NAME_MNEMONIC_ON_OFF              = 1521;  // <_special_name_mnemonic_on_off>
+		final int SYM__STANDARD                                  = 1522;  // <_standard>
+		final int SYM__STATUS                                    = 1523;  // <_status>
+		final int SYM__STATUS_X                                  = 1524;  // <_status_x>
+		final int SYM__STRING_DELIMITED                          = 1525;  // <_string_delimited>
+		final int SYM__SUPPRESS_CLAUSE                           = 1526;  // <_suppress_clause>
+		final int SYM__SYMBOLIC                                  = 1527;  // <_symbolic>
+		final int SYM__SYM_IN_WORD                               = 1528;  // <_sym_in_word>
+		final int SYM__TAPE                                      = 1529;  // <_tape>
+		final int SYM__TERMINAL                                  = 1530;  // <_terminal>
+		final int SYM__THEN                                      = 1531;  // <_then>
+		final int SYM__TIMES                                     = 1532;  // <_times>
+		final int SYM__TO                                        = 1533;  // <_to>
+		final int SYM__TO_INTEGER                                = 1534;  // <_to_integer>
+		final int SYM__TO_USING                                  = 1535;  // <_to_using>
+		final int SYM__UNSTRING_DELIMITED                        = 1536;  // <_unstring_delimited>
+		final int SYM__UNSTRING_INTO_COUNT                       = 1537;  // <_unstring_into_count>
+		final int SYM__UNSTRING_INTO_DELIMITER                   = 1538;  // <_unstring_into_delimiter>
+		final int SYM__UNSTRING_TALLYING                         = 1539;  // <_unstring_tallying>
+		final int SYM__USE_STATEMENT                             = 1540;  // <_use_statement>
+		final int SYM__WHEN                                      = 1541;  // <_when>
+		final int SYM__WHEN_SET_TO                               = 1542;  // <_when_set_to>
+		final int SYM__WITH                                      = 1543;  // <_with>
+		final int SYM__WITH_DATA_SENTENCE                        = 1544;  // <_with_data_sentence>
+		final int SYM__WITH_DEBUGGING_MODE                       = 1545;  // <_with_debugging_mode>
+		final int SYM__WITH_LOCK                                 = 1546;  // <_with_lock>
+		final int SYM__WITH_PIC_SYMBOL                           = 1547;  // <_with_pic_symbol>
+		final int SYM__WITH_POINTER                              = 1548;  // <_with_pointer>
+		final int SYM__WORKING_STORAGE_SECTION                   = 1549;  // <_working_storage_section>
+		final int SYM__X_LIST                                    = 1550;  // <_x_list>
+	};
 
 	// Symbolic constants naming the table indices of the grammar rules
-    private interface RuleConstants
-    {
-       final int PROD_PROGRAM                                                              =   0;  // <Program> ::= <Identification Division> <Environment Division> <Data Division> <Procedure Division>
-       final int PROD_ADVANCINGOPT_ADVANCING                                               =   1;  // <ADVANCING Opt> ::= ADVANCING
-       final int PROD_ADVANCINGOPT                                                         =   2;  // <ADVANCING Opt> ::= 
-       final int PROD_ALLOPT_ALL                                                           =   3;  // <ALL Opt> ::= ALL
-       final int PROD_ALLOPT                                                               =   4;  // <ALL Opt> ::= 
-       final int PROD_AREOPT_ARE                                                           =   5;  // <ARE Opt> ::= ARE
-       final int PROD_AREOPT                                                               =   6;  // <ARE Opt> ::= 
-       final int PROD_AREAOPT_AREA                                                         =   7;  // <AREA Opt> ::= AREA
-       final int PROD_AREAOPT_AREAS                                                        =   8;  // <AREA Opt> ::= AREAS
-       final int PROD_AREAOPT                                                              =   9;  // <AREA Opt> ::= 
-       final int PROD_ATOPT_AT                                                             =  10;  // <AT Opt> ::= AT
-       final int PROD_ATOPT                                                                =  11;  // <AT Opt> ::= 
-       final int PROD_BYOPT_BY                                                             =  12;  // <BY Opt> ::= BY
-       final int PROD_BYOPT                                                                =  13;  // <BY Opt> ::= 
-       final int PROD_CHARACTERSOPT_CHARACTERS                                             =  14;  // <CHARACTERS Opt> ::= CHARACTERS
-       final int PROD_CHARACTERSOPT                                                        =  15;  // <CHARACTERS Opt> ::= 
-       final int PROD_COLLATINGOPT_COLLATING                                               =  16;  // <COLLATING Opt> ::= COLLATING
-       final int PROD_COLLATINGOPT                                                         =  17;  // <COLLATING Opt> ::= 
-       final int PROD_CONTAINSOPT_CONTAINS                                                 =  18;  // <CONTAINS Opt> ::= CONTAINS
-       final int PROD_CONTAINSOPT                                                          =  19;  // <CONTAINS Opt> ::= 
-       final int PROD_DATAOPT_DATA                                                         =  20;  // <DATA Opt> ::= DATA
-       final int PROD_DATAOPT                                                              =  21;  // <DATA Opt> ::= 
-       final int PROD_EVERYOPT_EVERY                                                       =  22;  // <EVERY Opt> ::= EVERY
-       final int PROD_EVERYOPT                                                             =  23;  // <EVERY Opt> ::= 
-       final int PROD_FILEOPT_FILE                                                         =  24;  // <FILE Opt> ::= FILE
-       final int PROD_FILEOPT                                                              =  25;  // <FILE Opt> ::= 
-       final int PROD_FINALOPT_FINAL                                                       =  26;  // <FINAL Opt> ::= FINAL
-       final int PROD_FINALOPT                                                             =  27;  // <FINAL Opt> ::= 
-       final int PROD_FOROPT_FOR                                                           =  28;  // <FOR Opt> ::= FOR
-       final int PROD_FOROPT                                                               =  29;  // <FOR Opt> ::= 
-       final int PROD_GLOBALOPT_GLOBAL                                                     =  30;  // <GLOBAL Opt> ::= GLOBAL
-       final int PROD_GLOBALOPT                                                            =  31;  // <GLOBAL Opt> ::= 
-       final int PROD_INOPT_IN                                                             =  32;  // <IN Opt> ::= IN
-       final int PROD_INOPT                                                                =  33;  // <IN Opt> ::= 
-       final int PROD_INDICATEOPT_INDICATE                                                 =  34;  // <INDICATE Opt> ::= INDICATE
-       final int PROD_INDICATEOPT                                                          =  35;  // <INDICATE Opt> ::= 
-       final int PROD_INITIALOPT_INITIAL                                                   =  36;  // <INITIAL Opt> ::= INITIAL
-       final int PROD_INITIALOPT                                                           =  37;  // <INITIAL Opt> ::= 
-       final int PROD_ISOPT_IS                                                             =  38;  // <IS Opt> ::= IS
-       final int PROD_ISOPT                                                                =  39;  // <IS Opt> ::= 
-       final int PROD_KEYOPT_KEY                                                           =  40;  // <KEY Opt> ::= KEY
-       final int PROD_KEYOPT                                                               =  41;  // <KEY Opt> ::= 
-       final int PROD_LINEOPT_LINE                                                         =  42;  // <LINE Opt> ::= LINE
-       final int PROD_LINEOPT                                                              =  43;  // <LINE Opt> ::= 
-       final int PROD_LINESOPT_LINE                                                        =  44;  // <LINES Opt> ::= LINE
-       final int PROD_LINESOPT_LINES                                                       =  45;  // <LINES Opt> ::= LINES
-       final int PROD_LINESOPT                                                             =  46;  // <LINES Opt> ::= 
-       final int PROD_MESSAGEOPT_MESSAGE                                                   =  47;  // <MESSAGE opt> ::= MESSAGE
-       final int PROD_MESSAGEOPT                                                           =  48;  // <MESSAGE opt> ::= 
-       final int PROD_MODEOPT_MODE                                                         =  49;  // <MODE Opt> ::= MODE
-       final int PROD_MODEOPT                                                              =  50;  // <MODE Opt> ::= 
-       final int PROD_NEXTOPT_NEXT                                                         =  51;  // <NEXT Opt> ::= NEXT
-       final int PROD_NEXTOPT                                                              =  52;  // <NEXT Opt> ::= 
-       final int PROD_NUMBEROPT_NUMBER                                                     =  53;  // <NUMBER Opt> ::= NUMBER
-       final int PROD_NUMBEROPT                                                            =  54;  // <NUMBER Opt> ::= 
-       final int PROD_OFOPT_OF                                                             =  55;  // <OF Opt> ::= OF
-       final int PROD_OFOPT                                                                =  56;  // <OF Opt> ::= 
-       final int PROD_ONOPT_ON                                                             =  57;  // <ON Opt> ::= ON
-       final int PROD_ONOPT                                                                =  58;  // <ON Opt> ::= 
-       final int PROD_ORDEROPT_ORDER                                                       =  59;  // <ORDER opt> ::= ORDER
-       final int PROD_ORDEROPT                                                             =  60;  // <ORDER opt> ::= 
-       final int PROD_PRINTINGOPT_PRINTING                                                 =  61;  // <PRINTING Opt> ::= PRINTING
-       final int PROD_PRINTINGOPT                                                          =  62;  // <PRINTING Opt> ::= 
-       final int PROD_RECORDOPT_RECORD                                                     =  63;  // <RECORD Opt> ::= RECORD
-       final int PROD_RECORDOPT                                                            =  64;  // <RECORD Opt> ::= 
-       final int PROD_REFERENCESOPT_REFERENCES                                             =  65;  // <REFERENCES Opt> ::= REFERENCES
-       final int PROD_REFERENCESOPT                                                        =  66;  // <REFERENCES Opt> ::= 
-       final int PROD_RIGHTOPT_RIGHT                                                       =  67;  // <RIGHT Opt> ::= RIGHT
-       final int PROD_RIGHTOPT                                                             =  68;  // <RIGHT Opt> ::= 
-       final int PROD_ROUNDEDOPT_ROUNDED                                                   =  69;  // <ROUNDED Opt> ::= ROUNDED
-       final int PROD_ROUNDEDOPT                                                           =  70;  // <ROUNDED Opt> ::= 
-       final int PROD_STANDARDOPT_STANDARD                                                 =  71;  // <STANDARD Opt> ::= STANDARD
-       final int PROD_STANDARDOPT                                                          =  72;  // <STANDARD Opt> ::= 
-       final int PROD_SIGNOPT_SIGN                                                         =  73;  // <SIGN Opt> ::= SIGN
-       final int PROD_SIGNOPT                                                              =  74;  // <SIGN Opt> ::= 
-       final int PROD_SIZEOPT_SIZE                                                         =  75;  // <SIZE Opt> ::= SIZE
-       final int PROD_SIZEOPT                                                              =  76;  // <SIZE Opt> ::= 
-       final int PROD_STATUSOPT_STATUS                                                     =  77;  // <STATUS Opt> ::= STATUS
-       final int PROD_STATUSOPT                                                            =  78;  // <STATUS Opt> ::= 
-       final int PROD_SYMBOLICOPT_SYMBOLIC                                                 =  79;  // <SYMBOLIC Opt> ::= SYMBOLIC
-       final int PROD_SYMBOLICOPT                                                          =  80;  // <SYMBOLIC Opt> ::= 
-       final int PROD_TAPEOPT_TAPE                                                         =  81;  // <TAPE Opt> ::= TAPE
-       final int PROD_TAPEOPT                                                              =  82;  // <TAPE Opt> ::= 
-       final int PROD_THENOPT_THEN                                                         =  83;  // <THEN Opt> ::= THEN
-       final int PROD_THENOPT                                                              =  84;  // <THEN Opt> ::= 
-       final int PROD_THANOPT_THAN                                                         =  85;  // <THAN Opt> ::= THAN
-       final int PROD_THANOPT                                                              =  86;  // <THAN Opt> ::= 
-       final int PROD_TOOPT_TO                                                             =  87;  // <TO Opt> ::= TO
-       final int PROD_TOOPT                                                                =  88;  // <TO Opt> ::= 
-       final int PROD_WHENOPT_WHEN                                                         =  89;  // <WHEN Opt> ::= WHEN
-       final int PROD_WHENOPT                                                              =  90;  // <WHEN Opt> ::= 
-       final int PROD_WITHOPT_WITH                                                         =  91;  // <WITH Opt> ::= WITH
-       final int PROD_WITHOPT                                                              =  92;  // <WITH Opt> ::= 
-       final int PROD_THRU_THRU                                                            =  93;  // <THRU> ::= THRU
-       final int PROD_THRU_THROUGH                                                         =  94;  // <THRU> ::= THROUGH
-       final int PROD_ISAREOPT_IS                                                          =  95;  // <IS ARE Opt> ::= IS
-       final int PROD_ISAREOPT_ARE                                                         =  96;  // <IS ARE Opt> ::= ARE
-       final int PROD_ISAREOPT                                                             =  97;  // <IS ARE Opt> ::= 
-       final int PROD_CORRESPONDING_CORRESPONDING                                          =  98;  // <CORRESPONDING> ::= CORRESPONDING
-       final int PROD_CORRESPONDING_CORR                                                   =  99;  // <CORRESPONDING> ::= CORR
-       final int PROD_GIVINGCLAUSEOPT_GIVING_IDENTIFIER                                    = 100;  // <Giving Clause Opt> ::= GIVING Identifier
-       final int PROD_GIVINGCLAUSEOPT                                                      = 101;  // <Giving Clause Opt> ::= 
-       final int PROD_POINTERCLAUSE_POINTER                                                = 102;  // <Pointer Clause> ::= <WITH Opt> POINTER <Variable>
-       final int PROD_POINTERCLAUSE                                                        = 103;  // <Pointer Clause> ::= 
-       final int PROD_FILENAME_IDENTIFIER                                                  = 104;  // <File Name> ::= Identifier
-       final int PROD_FILENAME_STRINGLITERAL                                               = 105;  // <File Name> ::= StringLiteral
-       final int PROD_FILENAMELIST                                                         = 106;  // <File Name List> ::= <File Name List> <File Name>
-       final int PROD_FILENAMELIST2                                                        = 107;  // <File Name List> ::= <File Name>
-       final int PROD_INTCONSTANT_IDENTIFIER                                               = 108;  // <Int Constant> ::= Identifier
-       final int PROD_INTCONSTANT                                                          = 109;  // <Int Constant> ::= <Integer>
-       final int PROD_INDEXCLAUSE_INDEXED_IDENTIFIER                                       = 110;  // <Index Clause> ::= INDEXED <BY Opt> Identifier
-       final int PROD_INDEXCLAUSE                                                          = 111;  // <Index Clause> ::= 
-       final int PROD_BEFOREAFTER_BEFORE                                                   = 112;  // <BEFORE AFTER> ::= BEFORE
-       final int PROD_BEFOREAFTER_AFTER                                                    = 113;  // <BEFORE AFTER> ::= AFTER
-       final int PROD_SYMBOLICVALUE                                                        = 114;  // <Symbolic Value> ::= <Literal>
-       final int PROD_SYMBOLICVALUE2                                                       = 115;  // <Symbolic Value> ::= <Variable>
-       final int PROD_SYMBOLICVALUE3                                                       = 116;  // <Symbolic Value> ::= <Figurative>
-       final int PROD_VALUES                                                               = 117;  // <Values> ::= <Values> <Value>
-       final int PROD_VALUES2                                                              = 118;  // <Values> ::= <Value>
-       final int PROD_VALUE                                                                = 119;  // <Value> ::= <Literal>
-       final int PROD_VALUE2                                                               = 120;  // <Value> ::= <Variable>
-       final int PROD_NUMERIC                                                              = 121;  // <Numeric> ::= <Integer>
-       final int PROD_NUMERIC_IDENTIFIER                                                   = 122;  // <Numeric> ::= Identifier
-       final int PROD_LITERAL                                                              = 123;  // <Literal> ::= <Integer>
-       final int PROD_LITERAL_FLOATLITERAL                                                 = 124;  // <Literal> ::= FloatLiteral
-       final int PROD_LITERAL_STRINGLITERAL                                                = 125;  // <Literal> ::= StringLiteral
-       final int PROD_LITERAL_QUOTE                                                        = 126;  // <Literal> ::= QUOTE
-       final int PROD_LITERAL_QUOTES                                                       = 127;  // <Literal> ::= QUOTES
-       final int PROD_INTEGER_INTLITERAL                                                   = 128;  // <Integer> ::= IntLiteral
-       final int PROD_INTEGER_66                                                           = 129;  // <Integer> ::= '66'
-       final int PROD_INTEGER_77                                                           = 130;  // <Integer> ::= '77'
-       final int PROD_INTEGER_88                                                           = 131;  // <Integer> ::= '88'
-       final int PROD_FIGURATIVE_ZERO                                                      = 132;  // <Figurative> ::= ZERO
-       final int PROD_FIGURATIVE_ZEROS                                                     = 133;  // <Figurative> ::= ZEROS
-       final int PROD_FIGURATIVE_ZEROES                                                    = 134;  // <Figurative> ::= ZEROES
-       final int PROD_FIGURATIVE_SPACE                                                     = 135;  // <Figurative> ::= SPACE
-       final int PROD_FIGURATIVE_SPACES                                                    = 136;  // <Figurative> ::= SPACES
-       final int PROD_FIGURATIVE_HIGHMINUSVALUE                                            = 137;  // <Figurative> ::= 'HIGH-VALUE'
-       final int PROD_FIGURATIVE_HIGHMINUSVALUES                                           = 138;  // <Figurative> ::= 'HIGH-VALUES'
-       final int PROD_FIGURATIVE_LOWMINUSVALUE                                             = 139;  // <Figurative> ::= 'LOW-VALUE'
-       final int PROD_FIGURATIVE_LOWMINUSVALUES                                            = 140;  // <Figurative> ::= 'LOW-VALUES'
-       final int PROD_FIGURATIVE_ALL_STRINGLITERAL                                         = 141;  // <Figurative> ::= ALL StringLiteral
-       final int PROD_FIGURATIVE_NULL                                                      = 142;  // <Figurative> ::= NULL
-       final int PROD_FIGURATIVE_NULLS                                                     = 143;  // <Figurative> ::= NULLS
-       final int PROD_IDENTIFIERS_IDENTIFIER                                               = 144;  // <Identifiers> ::= <Identifiers> Identifier
-       final int PROD_IDENTIFIERS_IDENTIFIER2                                              = 145;  // <Identifiers> ::= Identifier
-       final int PROD_VARIABLES_IDENTIFIER                                                 = 146;  // <Variables> ::= <Variables> Identifier
-       final int PROD_VARIABLES_IDENTIFIER2                                                = 147;  // <Variables> ::= Identifier
-       final int PROD_VARIABLE_IDENTIFIER                                                  = 148;  // <Variable> ::= Identifier
-       final int PROD_VARIABLE_IDENTIFIER_LPAREN_RPAREN                                    = 149;  // <Variable> ::= Identifier '(' <Subsets> ')'
-       final int PROD_SUBSETS_COLON                                                        = 150;  // <Subsets> ::= <Subsets> ':' <Numeric>
-       final int PROD_SUBSETS                                                              = 151;  // <Subsets> ::= <Numeric>
-       final int PROD_IDENTIFICATIONDIVISION_IDENTIFICATION_DIVISION_DOT                   = 152;  // <Identification Division> ::= IDENTIFICATION DIVISION '.' <Prog ID> <Program Info Items>
-       final int PROD_PROGID_PROGRAMMINUSID_DOT_DOT                                        = 153;  // <Prog ID> ::= 'PROGRAM-ID' '.' <Word List> <Prog Name Opt> '.'
-       final int PROD_PROGRAMINFOITEMS                                                     = 154;  // <Program Info Items> ::= <Program Info Items> <Program Info Item>
-       final int PROD_PROGRAMINFOITEMS2                                                    = 155;  // <Program Info Items> ::= 
-       final int PROD_PROGRAMINFOITEM_AUTHOR_DOT_DOT                                       = 156;  // <Program Info Item> ::= AUTHOR '.' <Word List> '.'
-       final int PROD_PROGRAMINFOITEM_INSTALLATION_DOT_DOT                                 = 157;  // <Program Info Item> ::= INSTALLATION '.' <Word List> '.'
-       final int PROD_PROGRAMINFOITEM_DATEMINUSWRITTEN_DOT_DOT                             = 158;  // <Program Info Item> ::= 'DATE-WRITTEN' '.' <Word List> '.'
-       final int PROD_PROGRAMINFOITEM_DATEMINUSCOMPILED_DOT_DOT                            = 159;  // <Program Info Item> ::= 'DATE-COMPILED' '.' <Word List> '.'
-       final int PROD_PROGRAMINFOITEM_SECURITY_DOT_DOT                                     = 160;  // <Program Info Item> ::= SECURITY '.' <Word List> '.'
-       final int PROD_WORDLIST                                                             = 161;  // <Word List> ::= <Word List> <Word Item>
-       final int PROD_WORDLIST2                                                            = 162;  // <Word List> ::= <Word Item>
-       final int PROD_WORDITEM_IDENTIFIER                                                  = 163;  // <Word Item> ::= Identifier
-       final int PROD_WORDITEM                                                             = 164;  // <Word Item> ::= <Integer>
-       final int PROD_WORDITEM_FLOATLITERAL                                                = 165;  // <Word Item> ::= FloatLiteral
-       final int PROD_WORDITEM_STRINGLITERAL                                               = 166;  // <Word Item> ::= StringLiteral
-       final int PROD_WORDITEM_DIV                                                         = 167;  // <Word Item> ::= '/'
-       final int PROD_WORDITEM_COMMA                                                       = 168;  // <Word Item> ::= ','
-       final int PROD_PROGNAMEOPT                                                          = 169;  // <Prog Name Opt> ::= <IS Opt> <Common Initial> <Program Opt>
-       final int PROD_PROGNAMEOPT2                                                         = 170;  // <Prog Name Opt> ::= 
-       final int PROD_COMMONINITIAL_COMMON                                                 = 171;  // <Common Initial> ::= COMMON
-       final int PROD_COMMONINITIAL_INITIAL                                                = 172;  // <Common Initial> ::= INITIAL
-       final int PROD_PROGRAMOPT_PROGRAM                                                   = 173;  // <Program Opt> ::= PROGRAM
-       final int PROD_PROGRAMOPT                                                           = 174;  // <Program Opt> ::= 
-       final int PROD_ENVIRONMENTDIVISION_ENVIRONMENT_DIVISION_DOT                         = 175;  // <Environment Division> ::= ENVIRONMENT DIVISION '.' <Config Section> <Input-Output Section>
-       final int PROD_ENVIRONMENTDIVISION                                                  = 176;  // <Environment Division> ::= 
-       final int PROD_CONFIGSECTION_CONFIGURATION_SECTION_DOT                              = 177;  // <Config Section> ::= CONFIGURATION SECTION '.' <Config Section Items>
-       final int PROD_CONFIGSECTION                                                        = 178;  // <Config Section> ::= 
-       final int PROD_CONFIGSECTIONITEMS                                                   = 179;  // <Config Section Items> ::= <Config Section Items> <Config Section Item>
-       final int PROD_CONFIGSECTIONITEMS2                                                  = 180;  // <Config Section Items> ::= 
-       final int PROD_CONFIGSECTIONITEM                                                    = 181;  // <Config Section Item> ::= <Source Computer>
-       final int PROD_CONFIGSECTIONITEM2                                                   = 182;  // <Config Section Item> ::= <Object Computer>
-       final int PROD_CONFIGSECTIONITEM3                                                   = 183;  // <Config Section Item> ::= <Special Names>
-       final int PROD_SOURCECOMPUTER_SOURCEMINUSCOMPUTER_DOT                               = 184;  // <Source Computer> ::= 'SOURCE-COMPUTER' '.' <Source Computer Clause Opt>
-       final int PROD_SOURCECOMPUTERCLAUSEOPT_IDENTIFIER_DOT                               = 185;  // <Source Computer Clause Opt> ::= Identifier <Source Debug Opt> '.'
-       final int PROD_SOURCECOMPUTERCLAUSEOPT                                              = 186;  // <Source Computer Clause Opt> ::= 
-       final int PROD_SOURCEDEBUGOPT_DEBUGGING_MODE                                        = 187;  // <Source Debug Opt> ::= <WITH Opt> DEBUGGING MODE
-       final int PROD_OBJECTCOMPUTER_OBJECTMINUSCOMPUTER_DOT                               = 188;  // <Object Computer> ::= 'OBJECT-COMPUTER' '.' <Object Computer Clause Opt>
-       final int PROD_OBJECTCOMPUTERCLAUSEOPT_IDENTIFIER_DOT                               = 189;  // <Object Computer Clause Opt> ::= Identifier <Object Clauses> '.'
-       final int PROD_OBJECTCOMPUTERCLAUSEOPT                                              = 190;  // <Object Computer Clause Opt> ::= 
-       final int PROD_OBJECTCLAUSES                                                        = 191;  // <Object Clauses> ::= <Object Clause> <Object Clauses>
-       final int PROD_OBJECTCLAUSES2                                                       = 192;  // <Object Clauses> ::= 
-       final int PROD_OBJECTCLAUSE_SEQUENCE_IDENTIFIER                                     = 193;  // <Object Clause> ::= <Program Opt> <COLLATING Opt> SEQUENCE <IS Opt> Identifier
-       final int PROD_OBJECTCLAUSE_SEGMENTMINUSLIMIT                                       = 194;  // <Object Clause> ::= 'SEGMENT-LIMIT' <IS Opt> <Integer>
-       final int PROD_SPECIALNAMES_SPECIALMINUSNAMES_DOT                                   = 195;  // <Special Names> ::= 'SPECIAL-NAMES' '.' <Special Name List>
-       final int PROD_SPECIALNAMELIST                                                      = 196;  // <Special Name List> ::= <Special Name List> <Special Names Item>
-       final int PROD_SPECIALNAMELIST2                                                     = 197;  // <Special Name List> ::= 
-       final int PROD_SPECIALNAMESITEM_IDENTIFIER_IDENTIFIER_DOT                           = 198;  // <Special Names Item> ::= Identifier <IS Opt> Identifier <Name Status Items> '.'
-       final int PROD_SPECIALNAMESITEM_IDENTIFIER_DOT                                      = 199;  // <Special Names Item> ::= Identifier <Name Status Items> '.'
-       final int PROD_SPECIALNAMESITEM_SYMBOLIC_DOT                                        = 200;  // <Special Names Item> ::= SYMBOLIC <CHARACTERS Opt> <Symbolic Char List> '.'
-       final int PROD_SPECIALNAMESITEM_ALPHABET_IDENTIFIER_DOT                             = 201;  // <Special Names Item> ::= ALPHABET Identifier <IS Opt> <Alphabet Item> '.'
-       final int PROD_SPECIALNAMESITEM_CLASS_IDENTIFIER_DOT                                = 202;  // <Special Names Item> ::= CLASS Identifier <IS Opt> <Special Ranges> '.'
-       final int PROD_SPECIALNAMESITEM_CURRENCY_DOT                                        = 203;  // <Special Names Item> ::= CURRENCY <SIGN Opt> <IS Opt> <Literal> '.'
-       final int PROD_SPECIALNAMESITEM_DECIMALMINUSPOINT_COMMA_DOT                         = 204;  // <Special Names Item> ::= 'DECIMAL-POINT' <IS Opt> COMMA '.'
-       final int PROD_NAMESTATUSITEMS                                                      = 205;  // <Name Status Items> ::= <Name Status Items> <Name Status Item>
-       final int PROD_NAMESTATUSITEMS2                                                     = 206;  // <Name Status Items> ::= 
-       final int PROD_NAMESTATUSITEM_ON_IDENTIFIER                                         = 207;  // <Name Status Item> ::= ON <STATUS Opt> <IS Opt> Identifier
-       final int PROD_NAMESTATUSITEM_OFF_IDENTIFIER                                        = 208;  // <Name Status Item> ::= OFF <STATUS Opt> <IS Opt> Identifier
-       final int PROD_ALPHABETITEM_STANDARDMINUS1                                          = 209;  // <Alphabet Item> ::= 'STANDARD-1'
-       final int PROD_ALPHABETITEM_STANDARDMINUS2                                          = 210;  // <Alphabet Item> ::= 'STANDARD-2'
-       final int PROD_ALPHABETITEM_NATIVE                                                  = 211;  // <Alphabet Item> ::= NATIVE
-       final int PROD_ALPHABETITEM_IDENTIFIER                                              = 212;  // <Alphabet Item> ::= Identifier
-       final int PROD_ALPHABETITEM                                                         = 213;  // <Alphabet Item> ::= <Special Ranges>
-       final int PROD_SPECIALRANGES_ALSO                                                   = 214;  // <Special Ranges> ::= <Special Ranges> ALSO <Special Range>
-       final int PROD_SPECIALRANGES                                                        = 215;  // <Special Ranges> ::= <Special Range>
-       final int PROD_SPECIALRANGE                                                         = 216;  // <Special Range> ::= <Literal> <THRU> <Literal>
-       final int PROD_SYMBOLICCHARLIST                                                     = 217;  // <Symbolic Char List> ::= <Symbolic Characters>
-       final int PROD_SYMBOLICCHARLIST_IN_IDENTIFIER                                       = 218;  // <Symbolic Char List> ::= <Symbolic Characters> IN Identifier
-       final int PROD_SYMBOLICCHARACTERS                                                   = 219;  // <Symbolic Characters> ::= <Symbolic Character> <Symbolic Value>
-       final int PROD_SYMBOLICCHARACTERS2                                                  = 220;  // <Symbolic Characters> ::= <Symbolic Character>
-       final int PROD_SYMBOLICCHARACTER_IDENTIFIER                                         = 221;  // <Symbolic Character> ::= Identifier <IS ARE Opt> <Literal>
-       final int PROD_INPUTOUTPUTSECTION_INPUTMINUSOUTPUT_SECTION_DOT                      = 222;  // <Input-Output Section> ::= 'INPUT-OUTPUT' SECTION '.' <File-Control> <I-O-Control>
-       final int PROD_INPUTOUTPUTSECTION                                                   = 223;  // <Input-Output Section> ::= 
-       final int PROD_FILECONTROL_FILEMINUSCONTROL_DOT                                     = 224;  // <File-Control> ::= 'FILE-CONTROL' '.' <Select Block>
-       final int PROD_FILECONTROL                                                          = 225;  // <File-Control> ::= 
-       final int PROD_SELECTBLOCK                                                          = 226;  // <Select Block> ::= <Select Block> <Select Paragraph>
-       final int PROD_SELECTBLOCK2                                                         = 227;  // <Select Block> ::= 
-       final int PROD_SELECTPARAGRAPH_SELECT_IDENTIFIER_ASSIGN_IDENTIFIER_DOT              = 228;  // <Select Paragraph> ::= SELECT <Optional Opt> Identifier ASSIGN <TO Opt> Identifier <Select Opt List> '.'
-       final int PROD_OPTIONALOPT_OPTIONAL                                                 = 229;  // <Optional Opt> ::= OPTIONAL
-       final int PROD_OPTIONALOPT                                                          = 230;  // <Optional Opt> ::= 
-       final int PROD_SELECTOPTLIST                                                        = 231;  // <Select Opt List> ::= <Select Option> <Select Opt List>
-       final int PROD_SELECTOPTLIST2                                                       = 232;  // <Select Opt List> ::= 
-       final int PROD_SELECTOPTION_RESERVE                                                 = 233;  // <Select Option> ::= RESERVE <Integer> <AREA Opt>
-       final int PROD_SELECTOPTION_ORGANIZATION                                            = 234;  // <Select Option> ::= ORGANIZATION <IS Opt> <Organization Kind>
-       final int PROD_SELECTOPTION                                                         = 235;  // <Select Option> ::= <Organization Kind>
-       final int PROD_SELECTOPTION_PADDING                                                 = 236;  // <Select Option> ::= PADDING <Character Opt> <IS Opt> <Padding Kind>
-       final int PROD_SELECTOPTION_RECORD_DELIMITER                                        = 237;  // <Select Option> ::= RECORD DELIMITER <IS Opt> <Record Delimiter Kind>
-       final int PROD_SELECTOPTION_RECORD_IDENTIFIER                                       = 238;  // <Select Option> ::= RECORD <KEY Opt> <IS Opt> Identifier
-       final int PROD_SELECTOPTION_ALTERNATIVE_RECORD_IDENTIFIER                           = 239;  // <Select Option> ::= ALTERNATIVE RECORD <KEY Opt> <IS Opt> Identifier <Duplicates Clause Opt>
-       final int PROD_SELECTOPTION_ACCESS                                                  = 240;  // <Select Option> ::= ACCESS <MODE Opt> <IS Opt> <Access Mode>
-       final int PROD_SELECTOPTION_STATUS_IDENTIFIER                                       = 241;  // <Select Option> ::= <FILE Opt> STATUS <IS Opt> Identifier
-       final int PROD_ACCESSMODE_SEQUENTIAL                                                = 242;  // <Access Mode> ::= SEQUENTIAL
-       final int PROD_ACCESSMODE_RANDOM                                                    = 243;  // <Access Mode> ::= RANDOM
-       final int PROD_ACCESSMODE_DYNAMIC                                                   = 244;  // <Access Mode> ::= DYNAMIC
-       final int PROD_ORGANIZATIONKIND_SEQUENTIAL                                          = 245;  // <Organization Kind> ::= SEQUENTIAL
-       final int PROD_ORGANIZATIONKIND_LINE_SEQUENTIAL                                     = 246;  // <Organization Kind> ::= LINE SEQUENTIAL
-       final int PROD_ORGANIZATIONKIND_RELATIVE                                            = 247;  // <Organization Kind> ::= RELATIVE <Relative Key Opt>
-       final int PROD_ORGANIZATIONKIND_INDEXED                                             = 248;  // <Organization Kind> ::= INDEXED
-       final int PROD_RELATIVEKEYOPT_IDENTIFIER                                            = 249;  // <Relative Key Opt> ::= <KEY Opt> <IS Opt> Identifier
-       final int PROD_RELATIVEKEYOPT                                                       = 250;  // <Relative Key Opt> ::= 
-       final int PROD_RECORDDELIMITERKIND_STANDARDMINUS1                                   = 251;  // <Record Delimiter Kind> ::= 'STANDARD-1'
-       final int PROD_RECORDDELIMITERKIND_IDENTIFIER                                       = 252;  // <Record Delimiter Kind> ::= Identifier
-       final int PROD_PADDINGKIND_IDENTIFIER                                               = 253;  // <Padding Kind> ::= Identifier
-       final int PROD_PADDINGKIND                                                          = 254;  // <Padding Kind> ::= <Literal>
-       final int PROD_DUPLICATESCLAUSEOPT_DUPLICATES                                       = 255;  // <Duplicates Clause Opt> ::= <WITH Opt> DUPLICATES
-       final int PROD_DUPLICATESCLAUSEOPT                                                  = 256;  // <Duplicates Clause Opt> ::= 
-       final int PROD_IOCONTROL_IMINUSOMINUSCONTROL_DOT_DOT                                = 257;  // <I-O-Control> ::= 'I-O-CONTROL' '.' <Rerun List> <Same List> <Multiple List> '.'
-       final int PROD_RERUNLIST                                                            = 258;  // <Rerun List> ::= <Rerun List> <Rerun Item>
-       final int PROD_RERUNLIST2                                                           = 259;  // <Rerun List> ::= 
-       final int PROD_RERUNITEM_RERUN                                                      = 260;  // <Rerun Item> ::= RERUN <Rerun Clause Opt> <EVERY Opt> <Every Clause>
-       final int PROD_RERUNCLAUSEOPT_ON                                                    = 261;  // <Rerun Clause Opt> ::= ON <File Name>
-       final int PROD_RERUNCLAUSEOPT                                                       = 262;  // <Rerun Clause Opt> ::= 
-       final int PROD_EVERYCLAUSE                                                          = 263;  // <Every Clause> ::= <End Of Opt> <Every End Target> <OF Opt> <File Name>
-       final int PROD_EVERYCLAUSE_RECORDS                                                  = 264;  // <Every Clause> ::= <Integer> RECORDS
-       final int PROD_EVERYCLAUSE_CLOCKMINUSUNITS                                          = 265;  // <Every Clause> ::= <Integer> 'CLOCK-UNITS'
-       final int PROD_EVERYCLAUSE_IDENTIFIER                                               = 266;  // <Every Clause> ::= Identifier
-       final int PROD_ENDOFOPT_END                                                         = 267;  // <End Of Opt> ::= END <OF Opt>
-       final int PROD_ENDOFOPT                                                             = 268;  // <End Of Opt> ::= 
-       final int PROD_EVERYENDTARGET_REEL                                                  = 269;  // <Every End Target> ::= REEL
-       final int PROD_EVERYENDTARGET_UNIT                                                  = 270;  // <Every End Target> ::= UNIT
-       final int PROD_SAMELIST                                                             = 271;  // <Same List> ::= <Same List> <Same Item>
-       final int PROD_SAMELIST2                                                            = 272;  // <Same List> ::= 
-       final int PROD_SAMEITEM_SAME                                                        = 273;  // <Same Item> ::= SAME <Same Source> <AREA Opt> <File Name> <File Name List>
-       final int PROD_SAMESOURCE_RECORD                                                    = 274;  // <Same Source> ::= RECORD
-       final int PROD_SAMESOURCE_SORT                                                      = 275;  // <Same Source> ::= SORT
-       final int PROD_SAMESOURCE_SORTMINUSMERGE                                            = 276;  // <Same Source> ::= 'SORT-MERGE'
-       final int PROD_MULTIPLELIST                                                         = 277;  // <Multiple List> ::= <Multiple List> <Multiple Item>
-       final int PROD_MULTIPLELIST2                                                        = 278;  // <Multiple List> ::= 
-       final int PROD_MULTIPLEITEM_MULTIPLE_FILE                                           = 279;  // <Multiple Item> ::= MULTIPLE FILE <TAPE Opt> <CONTAINS Opt> <Contain List>
-       final int PROD_CONTAINLIST                                                          = 280;  // <Contain List> ::= <Contain List> <Contain Item>
-       final int PROD_CONTAINLIST2                                                         = 281;  // <Contain List> ::= <Contain Item>
-       final int PROD_CONTAINITEM_POSITION                                                 = 282;  // <Contain Item> ::= <File Name> POSITION <IS Opt> <Integer>
-       final int PROD_CONTAINITEM                                                          = 283;  // <Contain Item> ::= <File Name>
-       final int PROD_DATADIVISION_DATA_DIVISION_DOT                                       = 284;  // <Data Division> ::= DATA DIVISION '.' <Data Section List>
-       final int PROD_DATASECTIONLIST                                                      = 285;  // <Data Section List> ::= <Data Section Entry> <Data Section List>
-       final int PROD_DATASECTIONLIST2                                                     = 286;  // <Data Section List> ::= 
-       final int PROD_DATASECTIONENTRY                                                     = 287;  // <Data Section Entry> ::= <File Section>
-       final int PROD_DATASECTIONENTRY2                                                    = 288;  // <Data Section Entry> ::= <Working-Storage Section>
-       final int PROD_DATASECTIONENTRY3                                                    = 289;  // <Data Section Entry> ::= <Linkage Section>
-       final int PROD_DATASECTIONENTRY4                                                    = 290;  // <Data Section Entry> ::= <Screen Section>
-       final int PROD_DATASECTIONENTRY5                                                    = 291;  // <Data Section Entry> ::= <Communication Section>
-       final int PROD_DATASECTIONENTRY6                                                    = 292;  // <Data Section Entry> ::= <Report Section>
-       final int PROD_RECORDENTRYBLOCK                                                     = 293;  // <Record Entry Block> ::= <Record Entry Block> <Record Entry>
-       final int PROD_RECORDENTRYBLOCK2                                                    = 294;  // <Record Entry Block> ::= 
-       final int PROD_RECORDENTRY_INTLITERAL_DOT                                           = 295;  // <Record Entry> ::= IntLiteral <Level Name> <Record Option List> '.'
-       final int PROD_RECORDENTRY_66_RENAMES_DOT                                           = 296;  // <Record Entry> ::= '66' <Level Name> RENAMES <Identifier Range> '.'
-       final int PROD_RECORDENTRY_77_DOT                                                   = 297;  // <Record Entry> ::= '77' <Level Name> <Record Option List> '.'
-       final int PROD_RECORDENTRY_88_VALUES_DOT                                            = 298;  // <Record Entry> ::= '88' <Level Name> VALUES <IS ARE Opt> <Values> '.'
-       final int PROD_LEVELNAME_IDENTIFIER                                                 = 299;  // <Level Name> ::= Identifier
-       final int PROD_LEVELNAME_FILLER                                                     = 300;  // <Level Name> ::= FILLER
-       final int PROD_TIMESOPT_TIMES                                                       = 301;  // <Times Opt> ::= TIMES
-       final int PROD_TIMESOPT                                                             = 302;  // <Times Opt> ::= 
-       final int PROD_RECORDOPTIONLIST                                                     = 303;  // <Record Option List> ::= <Record Option List> <Record Option>
-       final int PROD_RECORDOPTIONLIST2                                                    = 304;  // <Record Option List> ::= 
-       final int PROD_RECORDOPTION_REDEFINES_IDENTIFIER                                    = 305;  // <Record Option> ::= REDEFINES Identifier
-       final int PROD_RECORDOPTION_EXTERNAL                                                = 306;  // <Record Option> ::= <IS Opt> EXTERNAL
-       final int PROD_RECORDOPTION_INTERNAL                                                = 307;  // <Record Option> ::= <IS Opt> INTERNAL
-       final int PROD_RECORDOPTION                                                         = 308;  // <Record Option> ::= <Picture>
-       final int PROD_RECORDOPTION_USAGE                                                   = 309;  // <Record Option> ::= USAGE <IS Opt> <Usage Args>
-       final int PROD_RECORDOPTION2                                                        = 310;  // <Record Option> ::= <Usage Args>
-       final int PROD_RECORDOPTION_SIGN                                                    = 311;  // <Record Option> ::= SIGN <IS Opt> <Sign Args> <Sep Char Option>
-       final int PROD_RECORDOPTION_OCCURS                                                  = 312;  // <Record Option> ::= OCCURS <Numeric> <Times Opt> <Key Clause> <Index Clause>
-       final int PROD_RECORDOPTION_OCCURS_TO_DEPENDING_IDENTIFIER                          = 313;  // <Record Option> ::= OCCURS <Numeric> TO <Numeric> <Times Opt> DEPENDING <ON Opt> Identifier <Key Clause> <Index Clause>
-       final int PROD_RECORDOPTION_SYNCHRONIZED                                            = 314;  // <Record Option> ::= SYNCHRONIZED <Left Right Opt>
-       final int PROD_RECORDOPTION_SYNC                                                    = 315;  // <Record Option> ::= SYNC <Left Right Opt>
-       final int PROD_RECORDOPTION_JUSTIFIED                                               = 316;  // <Record Option> ::= JUSTIFIED <RIGHT Opt>
-       final int PROD_RECORDOPTION_JUST                                                    = 317;  // <Record Option> ::= JUST <RIGHT Opt>
-       final int PROD_RECORDOPTION_BLANK_ZERO                                              = 318;  // <Record Option> ::= BLANK <WHEN Opt> ZERO
-       final int PROD_RECORDOPTION_VALUE                                                   = 319;  // <Record Option> ::= VALUE <IS Opt> <Symbolic Value>
-       final int PROD_PICTURE_PICSTRING                                                    = 320;  // <Picture> ::= PicString
-       final int PROD_KEYCLAUSE_ASCENDING                                                  = 321;  // <Key Clause> ::= ASCENDING <KEY Opt> <IS Opt> <Identifiers>
-       final int PROD_KEYCLAUSE_DESCENDING                                                 = 322;  // <Key Clause> ::= DESCENDING <KEY Opt> <IS Opt> <Identifiers>
-       final int PROD_KEYCLAUSE                                                            = 323;  // <Key Clause> ::= 
-       final int PROD_USAGEARGS_BINARY                                                     = 324;  // <Usage Args> ::= BINARY
-       final int PROD_USAGEARGS_COMPUTATIONAL                                              = 325;  // <Usage Args> ::= COMPUTATIONAL
-       final int PROD_USAGEARGS_COMP                                                       = 326;  // <Usage Args> ::= COMP
-       final int PROD_USAGEARGS_DISPLAY                                                    = 327;  // <Usage Args> ::= DISPLAY
-       final int PROD_USAGEARGS_INDEX                                                      = 328;  // <Usage Args> ::= INDEX
-       final int PROD_USAGEARGS_PACKEDMINUSDECIMAL                                         = 329;  // <Usage Args> ::= 'PACKED-DECIMAL'
-       final int PROD_SIGNARGS_LEADING                                                     = 330;  // <Sign Args> ::= LEADING
-       final int PROD_SIGNARGS_TRAILING                                                    = 331;  // <Sign Args> ::= TRAILING
-       final int PROD_SEPCHAROPTION_SEPARATE                                               = 332;  // <Sep Char Option> ::= SEPARATE <Character Opt>
-       final int PROD_SEPCHAROPTION                                                        = 333;  // <Sep Char Option> ::= 
-       final int PROD_CHARACTEROPT_CHARACTER                                               = 334;  // <Character Opt> ::= CHARACTER
-       final int PROD_CHARACTEROPT                                                         = 335;  // <Character Opt> ::= 
-       final int PROD_LEFTRIGHTOPT_LEFT                                                    = 336;  // <Left Right Opt> ::= LEFT
-       final int PROD_LEFTRIGHTOPT_RIGHT                                                   = 337;  // <Left Right Opt> ::= RIGHT
-       final int PROD_LEFTRIGHTOPT                                                         = 338;  // <Left Right Opt> ::= 
-       final int PROD_FILESECTION_FILE_SECTION_DOT                                         = 339;  // <File Section> ::= FILE SECTION '.' <File Desc Block>
-       final int PROD_FILEDESCBLOCK                                                        = 340;  // <File Desc Block> ::= <File Desc Entry> <File Desc Block>
-       final int PROD_FILEDESCBLOCK2                                                       = 341;  // <File Desc Block> ::= 
-       final int PROD_FILEDESCENTRY_FD_IDENTIFIER_DOT                                      = 342;  // <File Desc Entry> ::= FD Identifier <File Option List> '.' <Record Entry Block>
-       final int PROD_FILEDESCENTRY_SD_IDENTIFIER_DOT                                      = 343;  // <File Desc Entry> ::= SD Identifier <File Option List> '.' <Record Entry Block>
-       final int PROD_FILEOPTIONLIST                                                       = 344;  // <File Option List> ::= <File Option List> <File Option>
-       final int PROD_FILEOPTIONLIST2                                                      = 345;  // <File Option List> ::= 
-       final int PROD_FILEOPTION                                                           = 346;  // <File Option> ::= <File Is Option>
-       final int PROD_FILEOPTION2                                                          = 347;  // <File Option> ::= <File Block Option>
-       final int PROD_FILEOPTION3                                                          = 348;  // <File Option> ::= <File Record Option>
-       final int PROD_FILEOPTION4                                                          = 349;  // <File Option> ::= <File Label Option>
-       final int PROD_FILEOPTION5                                                          = 350;  // <File Option> ::= <File Value Option>
-       final int PROD_FILEOPTION6                                                          = 351;  // <File Option> ::= <File Data Option>
-       final int PROD_FILEOPTION7                                                          = 352;  // <File Option> ::= <File Linage Option>
-       final int PROD_FILEOPTION8                                                          = 353;  // <File Option> ::= <File Code-Set Option>
-       final int PROD_FILEISOPTION_EXTERNAL                                                = 354;  // <File Is Option> ::= <IS Opt> EXTERNAL
-       final int PROD_FILEISOPTION_INTERNAL                                                = 355;  // <File Is Option> ::= <IS Opt> INTERNAL
-       final int PROD_FILEBLOCKOPTION_BLOCK                                                = 356;  // <File Block Option> ::= BLOCK <CONTAINS Opt> <Numeric> <File Block Units>
-       final int PROD_FILEBLOCKOPTION_BLOCK_TO                                             = 357;  // <File Block Option> ::= BLOCK <CONTAINS Opt> <Numeric> TO <Numeric> <File Block Units>
-       final int PROD_FILEBLOCKUNITS_RECORDS                                               = 358;  // <File Block Units> ::= RECORDS
-       final int PROD_FILEBLOCKUNITS_CHARACTERS                                            = 359;  // <File Block Units> ::= CHARACTERS
-       final int PROD_FILEBLOCKUNITS                                                       = 360;  // <File Block Units> ::= 
-       final int PROD_FILERECORDOPTION_RECORD                                              = 361;  // <File Record Option> ::= RECORD <CONTAINS Opt> <Numeric> <CHARACTERS Opt>
-       final int PROD_FILERECORDOPTION_RECORD_TO                                           = 362;  // <File Record Option> ::= RECORD <CONTAINS Opt> <Numeric> TO <Numeric> <CHARACTERS Opt>
-       final int PROD_FILERECORDOPTION_RECORD_VARYING                                      = 363;  // <File Record Option> ::= RECORD <IS Opt> VARYING <IN Opt> <SIZE Opt> <File Record Size Clause> <File Record Depending Clause>
-       final int PROD_FILERECORDSIZECLAUSE_FROM                                            = 364;  // <File Record Size Clause> ::= FROM <Numeric> <CHARACTERS Opt>
-       final int PROD_FILERECORDSIZECLAUSE_TO                                              = 365;  // <File Record Size Clause> ::= TO <Numeric> <CHARACTERS Opt>
-       final int PROD_FILERECORDSIZECLAUSE_FROM_TO                                         = 366;  // <File Record Size Clause> ::= FROM <Numeric> TO <Numeric> <CHARACTERS Opt>
-       final int PROD_FILERECORDSIZECLAUSE                                                 = 367;  // <File Record Size Clause> ::= 
-       final int PROD_FILERECORDDEPENDINGCLAUSE_DEPENDING_IDENTIFIER                       = 368;  // <File Record Depending Clause> ::= DEPENDING <ON Opt> Identifier
-       final int PROD_FILERECORDDEPENDINGCLAUSE                                            = 369;  // <File Record Depending Clause> ::= 
-       final int PROD_FILELABELOPTION_LABEL_RECORD                                         = 370;  // <File Label Option> ::= LABEL RECORD <IS Opt> <File Label Type>
-       final int PROD_FILELABELOPTION_LABEL_RECORDS                                        = 371;  // <File Label Option> ::= LABEL RECORDS <IS Opt> <File Label Type>
-       final int PROD_FILELABELTYPE_STANDARD                                               = 372;  // <File Label Type> ::= STANDARD
-       final int PROD_FILELABELTYPE_OMITTED                                                = 373;  // <File Label Type> ::= OMITTED
-       final int PROD_FILEVALUEOPTION_VALUE_OF                                             = 374;  // <File Value Option> ::= VALUE OF <File Value List>
-       final int PROD_FILEVALUELIST                                                        = 375;  // <File Value List> ::= <File Value List> <File Value Item>
-       final int PROD_FILEVALUELIST2                                                       = 376;  // <File Value List> ::= <File Value Item>
-       final int PROD_FILEVALUEITEM_IDENTIFIER_IDENTIFIER                                  = 377;  // <File Value Item> ::= Identifier <IS Opt> Identifier
-       final int PROD_FILEVALUEITEM_IDENTIFIER                                             = 378;  // <File Value Item> ::= Identifier <IS Opt> <Literal>
-       final int PROD_FILEDATAOPTION_DATA_RECORD                                           = 379;  // <File Data Option> ::= DATA RECORD <IS Opt> <Identifiers>
-       final int PROD_FILEDATAOPTION_DATA_RECORDS                                          = 380;  // <File Data Option> ::= DATA RECORDS <ARE Opt> <Identifiers>
-       final int PROD_FILELINAGEOPTION_LINAGE                                              = 381;  // <File Linage Option> ::= LINAGE <IS Opt> <Int Constant> <LINES Opt> <File Linage Footing> <File Linage Top> <File Linage Bottom>
-       final int PROD_FILELINAGEFOOTING_FOOTING                                            = 382;  // <File Linage Footing> ::= <WITH Opt> FOOTING <AT Opt> <Int Constant>
-       final int PROD_FILELINAGETOP_TOP                                                    = 383;  // <File Linage Top> ::= <LINES Opt> <AT Opt> TOP <Int Constant>
-       final int PROD_FILELINAGEBOTTOM_BOTTOM                                              = 384;  // <File Linage Bottom> ::= <LINES Opt> <AT Opt> BOTTOM <Int Constant>
-       final int PROD_FILECODESETOPTION_CODEMINUSSET_IDENTIFIER                            = 385;  // <File Code-Set Option> ::= 'CODE-SET' <IS Opt> Identifier
-       final int PROD_WORKINGSTORAGESECTION_WORKINGMINUSSTORAGE_SECTION_DOT                = 386;  // <Working-Storage Section> ::= 'WORKING-STORAGE' SECTION '.' <Record Entry Block>
-       final int PROD_LINKAGESECTION_LINKAGE_SECTION_DOT                                   = 387;  // <Linkage Section> ::= LINKAGE SECTION '.' <Record Entry Block>
-       final int PROD_SCREENSECTION_SCREEN_SECTION_DOT                                     = 388;  // <Screen Section> ::= SCREEN SECTION '.' <Screen Field List>
-       final int PROD_SCREENFIELDLIST                                                      = 389;  // <Screen Field List> ::= <Screen Field> <Screen Field List>
-       final int PROD_SCREENFIELDLIST2                                                     = 390;  // <Screen Field List> ::= <Screen Field>
-       final int PROD_SCREENFIELD_DOT                                                      = 391;  // <Screen Field> ::= <Integer> <Field Name opt> <Field Def List> '.'
-       final int PROD_FIELDNAMEOPT_IDENTIFIER                                              = 392;  // <Field Name opt> ::= Identifier
-       final int PROD_FIELDNAMEOPT                                                         = 393;  // <Field Name opt> ::= 
-       final int PROD_FIELDDEFLIST                                                         = 394;  // <Field Def List> ::= <Field Def List> <Field Def Item>
-       final int PROD_FIELDDEFLIST2                                                        = 395;  // <Field Def List> ::= 
-       final int PROD_FIELDDEFITEM_LINE                                                    = 396;  // <Field Def Item> ::= LINE <Numeric>
-       final int PROD_FIELDDEFITEM_COLUMN                                                  = 397;  // <Field Def Item> ::= COLUMN <Numeric>
-       final int PROD_FIELDDEFITEM_FOREGROUNDMINUSCOLOR                                    = 398;  // <Field Def Item> ::= 'FOREGROUND-COLOR' <Numeric>
-       final int PROD_FIELDDEFITEM_BACKGROUNDMINUSCOLOR                                    = 399;  // <Field Def Item> ::= 'BACKGROUND-COLOR' <Numeric>
-       final int PROD_FIELDDEFITEM_VALUE                                                   = 400;  // <Field Def Item> ::= VALUE <IS Opt> <Symbolic Value>
-       final int PROD_FIELDDEFITEM                                                         = 401;  // <Field Def Item> ::= <Picture>
-       final int PROD_FIELDDEFITEM_FROM_IDENTIFIER                                         = 402;  // <Field Def Item> ::= FROM Identifier
-       final int PROD_FIELDDEFITEM_USING_IDENTIFIER                                        = 403;  // <Field Def Item> ::= USING Identifier
-       final int PROD_FIELDDEFITEM_HIGHLIGHT                                               = 404;  // <Field Def Item> ::= HIGHLIGHT
-       final int PROD_FIELDDEFITEM_REVERSEMINUSVIDEO                                       = 405;  // <Field Def Item> ::= 'REVERSE-VIDEO'
-       final int PROD_FIELDDEFITEM_BLINK                                                   = 406;  // <Field Def Item> ::= BLINK
-       final int PROD_FIELDDEFITEM_UNDERLINE                                               = 407;  // <Field Def Item> ::= UNDERLINE
-       final int PROD_FIELDDEFITEM_BLANK_SCREEN                                            = 408;  // <Field Def Item> ::= BLANK SCREEN
-       final int PROD_COMMUNICATIONSECTION_COMMUNICATION_SECTION_DOT                       = 409;  // <Communication Section> ::= COMMUNICATION SECTION '.' <Comm Desc List>
-       final int PROD_COMMDESCLIST                                                         = 410;  // <Comm Desc List> ::= <Comm Desc List> <Comm Desc>
-       final int PROD_COMMDESCLIST2                                                        = 411;  // <Comm Desc List> ::= 
-       final int PROD_COMMDESC_CD_IDENTIFIER_INPUT_DOT                                     = 412;  // <Comm Desc> ::= CD Identifier <FOR Opt> <INITIAL Opt> INPUT <Comm Input Body> '.' <Record Entry Block>
-       final int PROD_COMMDESC_CD_IDENTIFIER_OUTPUT_DOT                                    = 413;  // <Comm Desc> ::= CD Identifier <FOR Opt> OUTPUT <Comm Output Options> '.' <Record Entry Block>
-       final int PROD_COMMDESC_CD_IDENTIFIER_IMINUSO_DOT                                   = 414;  // <Comm Desc> ::= CD Identifier <FOR Opt> <INITIAL Opt> 'I-O' <Comm I-O Body> '.' <Record Entry Block>
-       final int PROD_COMMINPUTBODY                                                        = 415;  // <Comm Input Body> ::= <Identifiers>
-       final int PROD_COMMINPUTBODY2                                                       = 416;  // <Comm Input Body> ::= <Comm Input Options>
-       final int PROD_COMMINPUTOPTIONS                                                     = 417;  // <Comm Input Options> ::= <Comm Input Options> <Comm Input Option>
-       final int PROD_COMMINPUTOPTIONS2                                                    = 418;  // <Comm Input Options> ::= 
-       final int PROD_COMMINPUTOPTION_QUEUE_IDENTIFIER                                     = 419;  // <Comm Input Option> ::= <SYMBOLIC Opt> QUEUE <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_SUBMINUSQUEUEMINUS1_IDENTIFIER                       = 420;  // <Comm Input Option> ::= <SYMBOLIC Opt> 'SUB-QUEUE-1' <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_SUBMINUSQUEUEMINUS2_IDENTIFIER                       = 421;  // <Comm Input Option> ::= <SYMBOLIC Opt> 'SUB-QUEUE-2' <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_SUBMINUSQUEUEMINUS3_IDENTIFIER                       = 422;  // <Comm Input Option> ::= <SYMBOLIC Opt> 'SUB-QUEUE-3' <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_MESSAGE_DATE_IDENTIFIER                              = 423;  // <Comm Input Option> ::= MESSAGE DATE <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_MESSAGE_TIME_IDENTIFIER                              = 424;  // <Comm Input Option> ::= MESSAGE TIME <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_SOURCE_IDENTIFIER                                    = 425;  // <Comm Input Option> ::= <SYMBOLIC Opt> SOURCE <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_TEXT_LENGTH                                          = 426;  // <Comm Input Option> ::= TEXT LENGTH <IS Opt> <Numeric>
-       final int PROD_COMMINPUTOPTION_END_KEY_IDENTIFIER                                   = 427;  // <Comm Input Option> ::= END KEY <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_STATUS_KEY_IDENTIFIER                                = 428;  // <Comm Input Option> ::= STATUS KEY <IS Opt> Identifier
-       final int PROD_COMMINPUTOPTION_MESSAGE_COUNT_IDENTIFIER                             = 429;  // <Comm Input Option> ::= MESSAGE COUNT <IS Opt> Identifier
-       final int PROD_COMMOUTPUTOPTIONS                                                    = 430;  // <Comm Output Options> ::= <Comm Output Options> <Comm Output Option>
-       final int PROD_COMMOUTPUTOPTIONS2                                                   = 431;  // <Comm Output Options> ::= 
-       final int PROD_COMMOUTPUTOPTION_DESTINATION_TABLES_OCCURS                           = 432;  // <Comm Output Option> ::= DESTINATION TABLES OCCURS <Numeric> <Times Opt> <Index Clause>
-       final int PROD_COMMOUTPUTOPTION_DESTINATION_COUNT_IDENTIFIER                        = 433;  // <Comm Output Option> ::= DESTINATION COUNT <IS Opt> Identifier
-       final int PROD_COMMOUTPUTOPTION_TEXT_LENGTH_IDENTIFIER                              = 434;  // <Comm Output Option> ::= TEXT LENGTH <IS Opt> Identifier
-       final int PROD_COMMOUTPUTOPTION_STATUS_KEY_IDENTIFIER                               = 435;  // <Comm Output Option> ::= STATUS KEY <IS Opt> Identifier
-       final int PROD_COMMOUTPUTOPTION_ERROR_KEY_IDENTIFIER                                = 436;  // <Comm Output Option> ::= ERROR KEY <IS Opt> Identifier
-       final int PROD_COMMOUTPUTOPTION_SYMBOLIC_DESTINATION_IDENTIFIER                     = 437;  // <Comm Output Option> ::= SYMBOLIC DESTINATION <IS Opt> Identifier
-       final int PROD_COMMOUTPUTOPTION_DESTINATION_IDENTIFIER                              = 438;  // <Comm Output Option> ::= DESTINATION <IS Opt> Identifier
-       final int PROD_COMMIOBODY                                                           = 439;  // <Comm I-O Body> ::= <Identifiers>
-       final int PROD_COMMIOBODY2                                                          = 440;  // <Comm I-O Body> ::= <Comm I-O Options>
-       final int PROD_COMMIOOPTIONS                                                        = 441;  // <Comm I-O Options> ::= <Comm I-O Options> <Comm I-O Option>
-       final int PROD_COMMIOOPTIONS2                                                       = 442;  // <Comm I-O Options> ::= 
-       final int PROD_COMMIOOPTION_MESSAGE_DATE_IDENTIFIER                                 = 443;  // <Comm I-O Option> ::= MESSAGE DATE <IS Opt> Identifier
-       final int PROD_COMMIOOPTION_MESSAGE_TIME_IDENTIFIER                                 = 444;  // <Comm I-O Option> ::= MESSAGE TIME <IS Opt> Identifier
-       final int PROD_COMMIOOPTION_TERMINAL_IDENTIFIER                                     = 445;  // <Comm I-O Option> ::= <SYMBOLIC Opt> TERMINAL <IS Opt> Identifier
-       final int PROD_COMMIOOPTION_TEXT_LENGTH                                             = 446;  // <Comm I-O Option> ::= TEXT LENGTH <IS Opt> <Numeric>
-       final int PROD_COMMIOOPTION_END_KEY_IDENTIFIER                                      = 447;  // <Comm I-O Option> ::= END KEY <IS Opt> Identifier
-       final int PROD_COMMIOOPTION_STATUS_KEY_IDENTIFIER                                   = 448;  // <Comm I-O Option> ::= STATUS KEY <IS Opt> Identifier
-       final int PROD_REPORTSECTION_REPORT_SECTION_DOT                                     = 449;  // <Report Section> ::= REPORT SECTION '.' <Report Desc List>
-       final int PROD_REPORTDESCLIST                                                       = 450;  // <Report Desc List> ::= <Report Desc List> <Report Desc>
-       final int PROD_REPORTDESCLIST2                                                      = 451;  // <Report Desc List> ::= 
-       final int PROD_REPORTDESC_RD_IDENTIFIER                                             = 452;  // <Report Desc> ::= RD Identifier <Report Options> <Report Entry Block>
-       final int PROD_REPORTOPTIONS                                                        = 453;  // <Report Options> ::= <Report Options> <Report Option>
-       final int PROD_REPORTOPTIONS2                                                       = 454;  // <Report Options> ::= 
-       final int PROD_REPORTOPTION_GLOBAL                                                  = 455;  // <Report Option> ::= <IS Opt> GLOBAL
-       final int PROD_REPORTOPTION_CODE                                                    = 456;  // <Report Option> ::= CODE <Literal>
-       final int PROD_REPORTOPTION                                                         = 457;  // <Report Option> ::= <CONTROL IS> <FINAL Opt> <Identifiers>
-       final int PROD_REPORTOPTION_PAGE                                                    = 458;  // <Report Option> ::= PAGE <LIMITS IS Opt> <Numeric> <LINES Opt> <Report Heading Opt>
-       final int PROD_CONTROLIS_CONTROL_IS                                                 = 459;  // <CONTROL IS> ::= CONTROL IS
-       final int PROD_CONTROLIS_CONTROLS_ARE                                               = 460;  // <CONTROL IS> ::= CONTROLS ARE
-       final int PROD_LIMITSISOPT_LIMIT_IS                                                 = 461;  // <LIMITS IS Opt> ::= LIMIT IS
-       final int PROD_LIMITSISOPT_LIMITS_ARE                                               = 462;  // <LIMITS IS Opt> ::= LIMITS ARE
-       final int PROD_LIMITSISOPT                                                          = 463;  // <LIMITS IS Opt> ::= 
-       final int PROD_REPORTHEADINGOPT_HEADING                                             = 464;  // <Report Heading Opt> ::= HEADING <Integer>
-       final int PROD_REPORTHEADINGOPT                                                     = 465;  // <Report Heading Opt> ::= 
-       final int PROD_REPORTENTRYBLOCK                                                     = 466;  // <Report Entry Block> ::= <Report Entry Block> <Report Entry>
-       final int PROD_REPORTENTRYBLOCK2                                                    = 467;  // <Report Entry Block> ::= 
-       final int PROD_REPORTENTRY_IDENTIFIER_DOT                                           = 468;  // <Report Entry> ::= <Integer> Identifier <Report Entry Options> '.'
-       final int PROD_REPORTENTRYOPTIONS                                                   = 469;  // <Report Entry Options> ::= <Report Entry Option> <Report Entry Options>
-       final int PROD_REPORTENTRYOPTIONS2                                                  = 470;  // <Report Entry Options> ::= 
-       final int PROD_REPORTENTRYOPTION_LINE                                               = 471;  // <Report Entry Option> ::= LINE <NUMBER Opt> <IS Opt> <Numeric>
-       final int PROD_REPORTENTRYOPTION_LINE_ON_NEXT_PAGE                                  = 472;  // <Report Entry Option> ::= LINE <NUMBER Opt> <IS Opt> <Numeric> ON NEXT PAGE
-       final int PROD_REPORTENTRYOPTION_LINE_PLUS                                          = 473;  // <Report Entry Option> ::= LINE <NUMBER Opt> <IS Opt> PLUS <Numeric>
-       final int PROD_REPORTENTRYOPTION_NEXT_GROUP                                         = 474;  // <Report Entry Option> ::= NEXT GROUP <IS Opt> <Report Entry Next Group>
-       final int PROD_REPORTENTRYOPTION_TYPE                                               = 475;  // <Report Entry Option> ::= TYPE <IS Opt> <Report Entry Type>
-       final int PROD_REPORTENTRYOPTION_USAGE_DISPLAY                                      = 476;  // <Report Entry Option> ::= USAGE <IS Opt> DISPLAY
-       final int PROD_REPORTENTRYOPTION_DISPLAY                                            = 477;  // <Report Entry Option> ::= DISPLAY
-       final int PROD_REPORTENTRYOPTION                                                    = 478;  // <Report Entry Option> ::= <Picture>
-       final int PROD_REPORTENTRYOPTION_SIGN                                               = 479;  // <Report Entry Option> ::= SIGN <IS Opt> <Sign Args> <Sep Char Option>
-       final int PROD_REPORTENTRYOPTION_JUSTIFIED                                          = 480;  // <Report Entry Option> ::= JUSTIFIED <RIGHT Opt>
-       final int PROD_REPORTENTRYOPTION_JUST                                               = 481;  // <Report Entry Option> ::= JUST <RIGHT Opt>
-       final int PROD_REPORTENTRYOPTION_BLANK_ZERO                                         = 482;  // <Report Entry Option> ::= BLANK <WHEN Opt> ZERO
-       final int PROD_REPORTENTRYOPTION_COLUMN                                             = 483;  // <Report Entry Option> ::= COLUMN <NUMBER Opt> <IS Opt> <Numeric>
-       final int PROD_REPORTENTRYOPTION_SOURCE                                             = 484;  // <Report Entry Option> ::= SOURCE <IS Opt> <Numeric>
-       final int PROD_REPORTENTRYOPTION_VALUE                                              = 485;  // <Report Entry Option> ::= VALUE <IS Opt> <Symbolic Value>
-       final int PROD_REPORTENTRYOPTION_SUM                                                = 486;  // <Report Entry Option> ::= SUM <Identifiers>
-       final int PROD_REPORTENTRYOPTION_SUM_UPON                                           = 487;  // <Report Entry Option> ::= SUM <Identifiers> UPON <Identifiers> <Report Entry Result Clause>
-       final int PROD_REPORTENTRYOPTION_GROUP                                              = 488;  // <Report Entry Option> ::= GROUP <INDICATE Opt>
-       final int PROD_REPORTENTRYNEXTGROUP                                                 = 489;  // <Report Entry Next Group> ::= <Numeric>
-       final int PROD_REPORTENTRYNEXTGROUP_PLUS                                            = 490;  // <Report Entry Next Group> ::= PLUS <Numeric>
-       final int PROD_REPORTENTRYNEXTGROUP_NEXT_PAGE                                       = 491;  // <Report Entry Next Group> ::= NEXT PAGE
-       final int PROD_REPORTENTRYTYPE_REPORT_HEADING                                       = 492;  // <Report Entry Type> ::= REPORT HEADING
-       final int PROD_REPORTENTRYTYPE_RH                                                   = 493;  // <Report Entry Type> ::= RH
-       final int PROD_REPORTENTRYTYPE_PAGE_HEADING                                         = 494;  // <Report Entry Type> ::= PAGE HEADING
-       final int PROD_REPORTENTRYTYPE_PH                                                   = 495;  // <Report Entry Type> ::= PH
-       final int PROD_REPORTENTRYTYPE_CONTROL_HEADING                                      = 496;  // <Report Entry Type> ::= CONTROL HEADING
-       final int PROD_REPORTENTRYTYPE_CH                                                   = 497;  // <Report Entry Type> ::= CH
-       final int PROD_REPORTENTRYTYPE_DETAIL                                               = 498;  // <Report Entry Type> ::= DETAIL
-       final int PROD_REPORTENTRYTYPE_DE                                                   = 499;  // <Report Entry Type> ::= DE
-       final int PROD_REPORTENTRYTYPE_CONTROL_FOOTING                                      = 500;  // <Report Entry Type> ::= CONTROL FOOTING
-       final int PROD_REPORTENTRYTYPE_CF                                                   = 501;  // <Report Entry Type> ::= CF
-       final int PROD_REPORTENTRYTYPE_PAGE_FOOTING                                         = 502;  // <Report Entry Type> ::= PAGE FOOTING
-       final int PROD_REPORTENTRYTYPE_PF                                                   = 503;  // <Report Entry Type> ::= PF
-       final int PROD_REPORTENTRYTYPE_REPORT_FOOTING                                       = 504;  // <Report Entry Type> ::= REPORT FOOTING
-       final int PROD_REPORTENTRYTYPE_RF                                                   = 505;  // <Report Entry Type> ::= RF
-       final int PROD_REPORTENTRYRESULTCLAUSE_RESET_IDENTIFIER                             = 506;  // <Report Entry Result Clause> ::= RESET <ON Opt> Identifier
-       final int PROD_REPORTENTRYRESULTCLAUSE_RESET_FINAL                                  = 507;  // <Report Entry Result Clause> ::= RESET <ON Opt> FINAL
-       final int PROD_REPORTENTRYRESULTCLAUSE                                              = 508;  // <Report Entry Result Clause> ::= 
-       final int PROD_PROCEDUREDIVISION_PROCEDURE_DIVISION_DOT                             = 509;  // <Procedure Division> ::= PROCEDURE DIVISION <Using Clause Opt> <Declarative Block> '.' <Paragraphs>
-       final int PROD_USINGCLAUSEOPT_USING                                                 = 510;  // <Using Clause Opt> ::= USING <Identifiers>
-       final int PROD_USINGCLAUSEOPT                                                       = 511;  // <Using Clause Opt> ::= 
-       final int PROD_PARAGRAPHS                                                           = 512;  // <Paragraphs> ::= <Paragraphs> <Paragraph>
-       final int PROD_PARAGRAPHS2                                                          = 513;  // <Paragraphs> ::= 
-       final int PROD_PARAGRAPH_IDENTIFIER_SECTION_DOT_IDENTIFIER_DOT                      = 514;  // <Paragraph> ::= Identifier SECTION '.' Identifier '.' <Sentences>
-       final int PROD_PARAGRAPH_IDENTIFIER_DOT                                             = 515;  // <Paragraph> ::= Identifier '.' <Sentences>
-       final int PROD_DECLARATIVEBLOCK_DECLARATIVES_DOT_END_DECLARATIVES_DOT               = 516;  // <Declarative Block> ::= DECLARATIVES '.' <Declarative Sections> END DECLARATIVES '.'
-       final int PROD_DECLARATIVEBLOCK                                                     = 517;  // <Declarative Block> ::= 
-       final int PROD_DECLARATIVESECTIONS                                                  = 518;  // <Declarative Sections> ::= <Declarative Sections> <Declarative Section>
-       final int PROD_DECLARATIVESECTIONS2                                                 = 519;  // <Declarative Sections> ::= 
-       final int PROD_DECLARATIVESECTION_IDENTIFIER_SECTION_DOT_USE_ERROR_PROCEDURE_ON_DOT = 520;  // <Declarative Section> ::= Identifier SECTION '.' USE <BEFORE AFTER> <STANDARD Opt> ERROR PROCEDURE ON <Error Cause> '.' <Sentences>
-       final int PROD_DECLARATIVESECTION_IDENTIFIER_DOT                                    = 521;  // <Declarative Section> ::= Identifier '.' <Sentences>
-       final int PROD_ERRORCAUSE_IDENTIFIER                                                = 522;  // <Error Cause> ::= Identifier
-       final int PROD_ERRORCAUSE_INPUT                                                     = 523;  // <Error Cause> ::= INPUT
-       final int PROD_ERRORCAUSE_OUTPUT                                                    = 524;  // <Error Cause> ::= OUTPUT
-       final int PROD_ERRORCAUSE_IMINUSO                                                   = 525;  // <Error Cause> ::= 'I-O'
-       final int PROD_ERRORCAUSE_EXTEND                                                    = 526;  // <Error Cause> ::= EXTEND
-       final int PROD_SORTKEYS                                                             = 527;  // <Sort Keys> ::= <Sort Keys> <Sort Key>
-       final int PROD_SORTKEYS2                                                            = 528;  // <Sort Keys> ::= <Sort Key>
-       final int PROD_SORTKEY_ASCENDING_IDENTIFIER                                         = 529;  // <Sort Key> ::= <ON Opt> ASCENDING <KEY Opt> Identifier
-       final int PROD_SORTKEY_DESCENDING_IDENTIFIER                                        = 530;  // <Sort Key> ::= <ON Opt> DESCENDING <KEY Opt> Identifier
-       final int PROD_COLLATINGCLAUSE_SEQUENCE_IDENTIFIER                                  = 531;  // <Collating Clause> ::= <COLLATING Opt> SEQUENCE <IS Opt> Identifier
-       final int PROD_COLLATINGCLAUSE                                                      = 532;  // <Collating Clause> ::= 
-       final int PROD_SORTSOURCE_INPUT_PROCEDURE                                           = 533;  // <Sort Source> ::= INPUT PROCEDURE <IS Opt> <Identifier Range>
-       final int PROD_SORTSOURCE_USING                                                     = 534;  // <Sort Source> ::= USING <Values>
-       final int PROD_SORTTARGET_OUTPUT_PROCEDURE                                          = 535;  // <Sort Target> ::= OUTPUT PROCEDURE <IS Opt> <Identifier Range>
-       final int PROD_SORTTARGET_GIVING                                                    = 536;  // <Sort Target> ::= GIVING <Values>
-       final int PROD_IDENTIFIERRANGE_IDENTIFIER                                           = 537;  // <Identifier Range> ::= Identifier
-       final int PROD_IDENTIFIERRANGE_IDENTIFIER_THRU_IDENTIFIER                           = 538;  // <Identifier Range> ::= Identifier THRU Identifier
-       final int PROD_IDENTIFIERRANGE_IDENTIFIER_THROUGH_IDENTIFIER                        = 539;  // <Identifier Range> ::= Identifier THROUGH Identifier
-       final int PROD_ENABLEDDISABLEMODE_INPUT                                             = 540;  // <Enabled Disable Mode> ::= INPUT
-       final int PROD_ENABLEDDISABLEMODE_INPUT_TERMINAL                                    = 541;  // <Enabled Disable Mode> ::= INPUT TERMINAL
-       final int PROD_ENABLEDDISABLEMODE_IMINUSO_TERMINAL                                  = 542;  // <Enabled Disable Mode> ::= 'I-O' TERMINAL
-       final int PROD_ENABLEDDISABLEMODE_OUTPUT                                            = 543;  // <Enabled Disable Mode> ::= OUTPUT
-       final int PROD_ENABLEDISABLEKEY_KEY                                                 = 544;  // <Enable Disable Key> ::= <WITH Opt> KEY <Value>
-       final int PROD_ENABLEDISABLEKEY                                                     = 545;  // <Enable Disable Key> ::= 
-       final int PROD_BOOLEANEXP_OR                                                        = 546;  // <Boolean Exp> ::= <Boolean Exp> OR <And Exp>
-       final int PROD_BOOLEANEXP                                                           = 547;  // <Boolean Exp> ::= <And Exp>
-       final int PROD_ANDEXP_AND                                                           = 548;  // <And Exp> ::= <Negation Exp> And <And Exp>
-       final int PROD_ANDEXP                                                               = 549;  // <And Exp> ::= <Negation Exp>
-       final int PROD_NEGATIONEXP                                                          = 550;  // <Negation Exp> ::= <Compare Exp>
-       final int PROD_NEGATIONEXP_NOT                                                      = 551;  // <Negation Exp> ::= NOT <Compare Exp>
-       final int PROD_COMPAREEXP                                                           = 552;  // <Compare Exp> ::= <Symbolic Value> <Compare Op> <Symbolic Value>
-       final int PROD_COMPAREEXP_IS_ALPHABETIC                                             = 553;  // <Compare Exp> ::= <Symbolic Value> IS ALPHABETIC
-       final int PROD_COMPAREEXP_IS_ALPHABETICMINUSUPPER                                   = 554;  // <Compare Exp> ::= <Symbolic Value> IS 'ALPHABETIC-UPPER'
-       final int PROD_COMPAREEXP_IS_ALPHABETICMINUSLOWER                                   = 555;  // <Compare Exp> ::= <Symbolic Value> IS 'ALPHABETIC-LOWER'
-       final int PROD_COMPAREEXP_LPAREN_RPAREN                                             = 556;  // <Compare Exp> ::= '(' <Boolean Exp> ')'
-       final int PROD_COMPAREEXP2                                                          = 557;  // <Compare Exp> ::= <Symbolic Value>
-       final int PROD_COMPAREOP                                                            = 558;  // <Compare Op> ::= <IS ARE Opt> <Greater Op>
-       final int PROD_COMPAREOP_NOT                                                        = 559;  // <Compare Op> ::= <IS ARE Opt> NOT <Greater Op>
-       final int PROD_COMPAREOP2                                                           = 560;  // <Compare Op> ::= <IS ARE Opt> <Greater Eq Op>
-       final int PROD_COMPAREOP_NOT2                                                       = 561;  // <Compare Op> ::= <IS ARE Opt> NOT <Greater Eq Op>
-       final int PROD_COMPAREOP3                                                           = 562;  // <Compare Op> ::= <IS ARE Opt> <Less Op>
-       final int PROD_COMPAREOP_NOT3                                                       = 563;  // <Compare Op> ::= <IS ARE Opt> NOT <Less Op>
-       final int PROD_COMPAREOP4                                                           = 564;  // <Compare Op> ::= <IS ARE Opt> <Less Eq Op>
-       final int PROD_COMPAREOP_NOT4                                                       = 565;  // <Compare Op> ::= <IS ARE Opt> NOT <Less Eq Op>
-       final int PROD_COMPAREOP5                                                           = 566;  // <Compare Op> ::= <IS ARE Opt> <Equal Op>
-       final int PROD_COMPAREOP_NOT5                                                       = 567;  // <Compare Op> ::= <IS ARE Opt> NOT <Equal Op>
-       final int PROD_GREATEROP_GREATER                                                    = 568;  // <Greater Op> ::= GREATER <THAN Opt>
-       final int PROD_GREATEROP_GT                                                         = 569;  // <Greater Op> ::= '>'
-       final int PROD_GREATEREQOP_GREATER_OR_EQUAL                                         = 570;  // <Greater Eq Op> ::= GREATER <THAN Opt> OR EQUAL <TO Opt>
-       final int PROD_GREATEREQOP_GTEQ                                                     = 571;  // <Greater Eq Op> ::= '>='
-       final int PROD_LESSOP_LESS                                                          = 572;  // <Less Op> ::= LESS <THAN Opt>
-       final int PROD_LESSOP_LT                                                            = 573;  // <Less Op> ::= '<'
-       final int PROD_LESSEQOP_LESS_OR_EQUAL                                               = 574;  // <Less Eq Op> ::= LESS <THAN Opt> OR EQUAL <TO Opt>
-       final int PROD_LESSEQOP_LTEQ                                                        = 575;  // <Less Eq Op> ::= '<='
-       final int PROD_EQUALOP_EQUAL                                                        = 576;  // <Equal Op> ::= EQUAL <TO Opt>
-       final int PROD_EQUALOP_EQ                                                           = 577;  // <Equal Op> ::= '='
-       final int PROD_SENTENCES                                                            = 578;  // <Sentences> ::= <Sentence> <Sentences>
-       final int PROD_SENTENCES2                                                           = 579;  // <Sentences> ::= 
-       final int PROD_SENTENCE_DOT                                                         = 580;  // <Sentence> ::= <Sent Stm> '.'
-       final int PROD_SENTSTM                                                              = 581;  // <Sent Stm> ::= <Accept Sent>
-       final int PROD_SENTSTM2                                                             = 582;  // <Sent Stm> ::= <Add Sent>
-       final int PROD_SENTSTM3                                                             = 583;  // <Sent Stm> ::= <Alter Sent>
-       final int PROD_SENTSTM4                                                             = 584;  // <Sent Stm> ::= <Call Sent>
-       final int PROD_SENTSTM5                                                             = 585;  // <Sent Stm> ::= <Cancel Sent>
-       final int PROD_SENTSTM6                                                             = 586;  // <Sent Stm> ::= <Close Sent>
-       final int PROD_SENTSTM7                                                             = 587;  // <Sent Stm> ::= <Compute Sent>
-       final int PROD_SENTSTM8                                                             = 588;  // <Sent Stm> ::= <Continue Sent>
-       final int PROD_SENTSTM9                                                             = 589;  // <Sent Stm> ::= <Delete Sent>
-       final int PROD_SENTSTM10                                                            = 590;  // <Sent Stm> ::= <Disable Sent>
-       final int PROD_SENTSTM11                                                            = 591;  // <Sent Stm> ::= <Display Sent>
-       final int PROD_SENTSTM12                                                            = 592;  // <Sent Stm> ::= <Divide Sent>
-       final int PROD_SENTSTM13                                                            = 593;  // <Sent Stm> ::= <Enable Sent>
-       final int PROD_SENTSTM14                                                            = 594;  // <Sent Stm> ::= <Evaluate Sent>
-       final int PROD_SENTSTM15                                                            = 595;  // <Sent Stm> ::= <Exit Sent>
-       final int PROD_SENTSTM16                                                            = 596;  // <Sent Stm> ::= <Generate Sent>
-       final int PROD_SENTSTM17                                                            = 597;  // <Sent Stm> ::= <Go To Sent>
-       final int PROD_SENTSTM18                                                            = 598;  // <Sent Stm> ::= <If Sent>
-       final int PROD_SENTSTM19                                                            = 599;  // <Sent Stm> ::= <Initialize Sent>
-       final int PROD_SENTSTM20                                                            = 600;  // <Sent Stm> ::= <Initiate Sent>
-       final int PROD_SENTSTM21                                                            = 601;  // <Sent Stm> ::= <Inspect Sent>
-       final int PROD_SENTSTM22                                                            = 602;  // <Sent Stm> ::= <Merge Sent>
-       final int PROD_SENTSTM23                                                            = 603;  // <Sent Stm> ::= <Move Sent>
-       final int PROD_SENTSTM24                                                            = 604;  // <Sent Stm> ::= <Multiply Sent>
-       final int PROD_SENTSTM25                                                            = 605;  // <Sent Stm> ::= <Open Sent>
-       final int PROD_SENTSTM26                                                            = 606;  // <Sent Stm> ::= <Perform Sent>
-       final int PROD_SENTSTM27                                                            = 607;  // <Sent Stm> ::= <Read Sent>
-       final int PROD_SENTSTM28                                                            = 608;  // <Sent Stm> ::= <Release Sent>
-       final int PROD_SENTSTM29                                                            = 609;  // <Sent Stm> ::= <Return Sent>
-       final int PROD_SENTSTM30                                                            = 610;  // <Sent Stm> ::= <Rewrite Sent>
-       final int PROD_SENTSTM31                                                            = 611;  // <Sent Stm> ::= <Search Sent>
-       final int PROD_SENTSTM32                                                            = 612;  // <Sent Stm> ::= <Send Sent>
-       final int PROD_SENTSTM33                                                            = 613;  // <Sent Stm> ::= <Set Sent>
-       final int PROD_SENTSTM34                                                            = 614;  // <Sent Stm> ::= <Sort Sent>
-       final int PROD_SENTSTM35                                                            = 615;  // <Sent Stm> ::= <Start Sent>
-       final int PROD_SENTSTM36                                                            = 616;  // <Sent Stm> ::= <Stop Sent>
-       final int PROD_SENTSTM37                                                            = 617;  // <Sent Stm> ::= <String Sent>
-       final int PROD_SENTSTM38                                                            = 618;  // <Sent Stm> ::= <Subtract Sent>
-       final int PROD_SENTSTM39                                                            = 619;  // <Sent Stm> ::= <Suppress Sent>
-       final int PROD_SENTSTM40                                                            = 620;  // <Sent Stm> ::= <Terminate Sent>
-       final int PROD_SENTSTM41                                                            = 621;  // <Sent Stm> ::= <Unstring Sent>
-       final int PROD_SENTSTM42                                                            = 622;  // <Sent Stm> ::= <Use Sent>
-       final int PROD_SENTSTM43                                                            = 623;  // <Sent Stm> ::= <Write Sent>
-       final int PROD_EMBEDSTMS                                                            = 624;  // <Embed Stms> ::= <Embed Stms> <Embed Stm>
-       final int PROD_EMBEDSTMS2                                                           = 625;  // <Embed Stms> ::= <Embed Stm>
-       final int PROD_EMBEDSTM                                                             = 626;  // <Embed Stm> ::= <Accept Embed>
-       final int PROD_EMBEDSTM2                                                            = 627;  // <Embed Stm> ::= <Add Embed>
-       final int PROD_EMBEDSTM3                                                            = 628;  // <Embed Stm> ::= <Alter Embed>
-       final int PROD_EMBEDSTM4                                                            = 629;  // <Embed Stm> ::= <Call Embed>
-       final int PROD_EMBEDSTM5                                                            = 630;  // <Embed Stm> ::= <Cancel Embed>
-       final int PROD_EMBEDSTM6                                                            = 631;  // <Embed Stm> ::= <Close Embed>
-       final int PROD_EMBEDSTM7                                                            = 632;  // <Embed Stm> ::= <Compute Embed>
-       final int PROD_EMBEDSTM8                                                            = 633;  // <Embed Stm> ::= <Continue Embed>
-       final int PROD_EMBEDSTM9                                                            = 634;  // <Embed Stm> ::= <Delete Embed>
-       final int PROD_EMBEDSTM10                                                           = 635;  // <Embed Stm> ::= <Disable Embed>
-       final int PROD_EMBEDSTM11                                                           = 636;  // <Embed Stm> ::= <Display Embed>
-       final int PROD_EMBEDSTM12                                                           = 637;  // <Embed Stm> ::= <Divide Embed>
-       final int PROD_EMBEDSTM13                                                           = 638;  // <Embed Stm> ::= <Enable Embed>
-       final int PROD_EMBEDSTM14                                                           = 639;  // <Embed Stm> ::= <Evaluate Embed>
-       final int PROD_EMBEDSTM15                                                           = 640;  // <Embed Stm> ::= <Exit Embed>
-       final int PROD_EMBEDSTM16                                                           = 641;  // <Embed Stm> ::= <Generate Embed>
-       final int PROD_EMBEDSTM17                                                           = 642;  // <Embed Stm> ::= <Go To Embed>
-       final int PROD_EMBEDSTM18                                                           = 643;  // <Embed Stm> ::= <If Embed>
-       final int PROD_EMBEDSTM19                                                           = 644;  // <Embed Stm> ::= <Initialize Embed>
-       final int PROD_EMBEDSTM20                                                           = 645;  // <Embed Stm> ::= <Initiate Embed>
-       final int PROD_EMBEDSTM21                                                           = 646;  // <Embed Stm> ::= <Inspect Embed>
-       final int PROD_EMBEDSTM22                                                           = 647;  // <Embed Stm> ::= <Merge Embed>
-       final int PROD_EMBEDSTM23                                                           = 648;  // <Embed Stm> ::= <Move Embed>
-       final int PROD_EMBEDSTM24                                                           = 649;  // <Embed Stm> ::= <Multiply Embed>
-       final int PROD_EMBEDSTM25                                                           = 650;  // <Embed Stm> ::= <Open Embed>
-       final int PROD_EMBEDSTM26                                                           = 651;  // <Embed Stm> ::= <Perform Embed>
-       final int PROD_EMBEDSTM27                                                           = 652;  // <Embed Stm> ::= <Read Embed>
-       final int PROD_EMBEDSTM28                                                           = 653;  // <Embed Stm> ::= <Release Embed>
-       final int PROD_EMBEDSTM29                                                           = 654;  // <Embed Stm> ::= <Return Embed>
-       final int PROD_EMBEDSTM30                                                           = 655;  // <Embed Stm> ::= <Rewrite Embed>
-       final int PROD_EMBEDSTM31                                                           = 656;  // <Embed Stm> ::= <Search Embed>
-       final int PROD_EMBEDSTM32                                                           = 657;  // <Embed Stm> ::= <Send Embed>
-       final int PROD_EMBEDSTM33                                                           = 658;  // <Embed Stm> ::= <Set Embed>
-       final int PROD_EMBEDSTM34                                                           = 659;  // <Embed Stm> ::= <Sort Embed>
-       final int PROD_EMBEDSTM35                                                           = 660;  // <Embed Stm> ::= <Start Embed>
-       final int PROD_EMBEDSTM36                                                           = 661;  // <Embed Stm> ::= <Stop Embed>
-       final int PROD_EMBEDSTM37                                                           = 662;  // <Embed Stm> ::= <String Embed>
-       final int PROD_EMBEDSTM38                                                           = 663;  // <Embed Stm> ::= <Subtract Embed>
-       final int PROD_EMBEDSTM39                                                           = 664;  // <Embed Stm> ::= <Suppress Embed>
-       final int PROD_EMBEDSTM40                                                           = 665;  // <Embed Stm> ::= <Terminate Embed>
-       final int PROD_EMBEDSTM41                                                           = 666;  // <Embed Stm> ::= <Unstring Embed>
-       final int PROD_EMBEDSTM42                                                           = 667;  // <Embed Stm> ::= <Use Embed>
-       final int PROD_EMBEDSTM43                                                           = 668;  // <Embed Stm> ::= <Write Embed>
-       final int PROD_IMPERATIVESTMS                                                       = 669;  // <Imperative Stms> ::= <Imperative Stms> <Imperative Stm>
-       final int PROD_IMPERATIVESTMS2                                                      = 670;  // <Imperative Stms> ::= <Imperative Stm>
-       final int PROD_IMPERATIVESTM                                                        = 671;  // <Imperative Stm> ::= <Accept Imp>
-       final int PROD_IMPERATIVESTM2                                                       = 672;  // <Imperative Stm> ::= <Add Imp>
-       final int PROD_IMPERATIVESTM3                                                       = 673;  // <Imperative Stm> ::= <Alter Imp>
-       final int PROD_IMPERATIVESTM4                                                       = 674;  // <Imperative Stm> ::= <Call Imp>
-       final int PROD_IMPERATIVESTM5                                                       = 675;  // <Imperative Stm> ::= <Cancel Imp>
-       final int PROD_IMPERATIVESTM6                                                       = 676;  // <Imperative Stm> ::= <Close Imp>
-       final int PROD_IMPERATIVESTM7                                                       = 677;  // <Imperative Stm> ::= <Compute Imp>
-       final int PROD_IMPERATIVESTM8                                                       = 678;  // <Imperative Stm> ::= <Continue Imp>
-       final int PROD_IMPERATIVESTM9                                                       = 679;  // <Imperative Stm> ::= <Delete Imp>
-       final int PROD_IMPERATIVESTM10                                                      = 680;  // <Imperative Stm> ::= <Disable Imp>
-       final int PROD_IMPERATIVESTM11                                                      = 681;  // <Imperative Stm> ::= <Display Imp>
-       final int PROD_IMPERATIVESTM12                                                      = 682;  // <Imperative Stm> ::= <Divide Imp>
-       final int PROD_IMPERATIVESTM13                                                      = 683;  // <Imperative Stm> ::= <Enable Imp>
-       final int PROD_IMPERATIVESTM14                                                      = 684;  // <Imperative Stm> ::= <Evaluate Imp>
-       final int PROD_IMPERATIVESTM15                                                      = 685;  // <Imperative Stm> ::= <Exit Imp>
-       final int PROD_IMPERATIVESTM16                                                      = 686;  // <Imperative Stm> ::= <Generate Imp>
-       final int PROD_IMPERATIVESTM17                                                      = 687;  // <Imperative Stm> ::= <Go To Imp>
-       final int PROD_IMPERATIVESTM18                                                      = 688;  // <Imperative Stm> ::= <If Imp>
-       final int PROD_IMPERATIVESTM19                                                      = 689;  // <Imperative Stm> ::= <Initialize Imp>
-       final int PROD_IMPERATIVESTM20                                                      = 690;  // <Imperative Stm> ::= <Initiate Imp>
-       final int PROD_IMPERATIVESTM21                                                      = 691;  // <Imperative Stm> ::= <Inspect Imp>
-       final int PROD_IMPERATIVESTM22                                                      = 692;  // <Imperative Stm> ::= <Merge Imp>
-       final int PROD_IMPERATIVESTM23                                                      = 693;  // <Imperative Stm> ::= <Move Imp>
-       final int PROD_IMPERATIVESTM24                                                      = 694;  // <Imperative Stm> ::= <Multiply Imp>
-       final int PROD_IMPERATIVESTM25                                                      = 695;  // <Imperative Stm> ::= <Open Imp>
-       final int PROD_IMPERATIVESTM26                                                      = 696;  // <Imperative Stm> ::= <Perform Imp>
-       final int PROD_IMPERATIVESTM27                                                      = 697;  // <Imperative Stm> ::= <Read Imp>
-       final int PROD_IMPERATIVESTM28                                                      = 698;  // <Imperative Stm> ::= <Release Imp>
-       final int PROD_IMPERATIVESTM29                                                      = 699;  // <Imperative Stm> ::= <Return Imp>
-       final int PROD_IMPERATIVESTM30                                                      = 700;  // <Imperative Stm> ::= <Rewrite Imp>
-       final int PROD_IMPERATIVESTM31                                                      = 701;  // <Imperative Stm> ::= <Search Imp>
-       final int PROD_IMPERATIVESTM32                                                      = 702;  // <Imperative Stm> ::= <Send Imp>
-       final int PROD_IMPERATIVESTM33                                                      = 703;  // <Imperative Stm> ::= <Set Imp>
-       final int PROD_IMPERATIVESTM34                                                      = 704;  // <Imperative Stm> ::= <Sort Imp>
-       final int PROD_IMPERATIVESTM35                                                      = 705;  // <Imperative Stm> ::= <Start Imp>
-       final int PROD_IMPERATIVESTM36                                                      = 706;  // <Imperative Stm> ::= <Stop Imp>
-       final int PROD_IMPERATIVESTM37                                                      = 707;  // <Imperative Stm> ::= <String Imp>
-       final int PROD_IMPERATIVESTM38                                                      = 708;  // <Imperative Stm> ::= <Subtract Imp>
-       final int PROD_IMPERATIVESTM39                                                      = 709;  // <Imperative Stm> ::= <Suppress Imp>
-       final int PROD_IMPERATIVESTM40                                                      = 710;  // <Imperative Stm> ::= <Terminate Imp>
-       final int PROD_IMPERATIVESTM41                                                      = 711;  // <Imperative Stm> ::= <Unstring Imp>
-       final int PROD_IMPERATIVESTM42                                                      = 712;  // <Imperative Stm> ::= <Use Imp>
-       final int PROD_IMPERATIVESTM43                                                      = 713;  // <Imperative Stm> ::= <Write Imp>
-       final int PROD_SIZECLAUSES                                                          = 714;  // <Size Clauses> ::= <Size Clauses> <Size Clause>
-       final int PROD_SIZECLAUSES2                                                         = 715;  // <Size Clauses> ::= <Size Clause>
-       final int PROD_SIZECLAUSE_SIZE_ERROR                                                = 716;  // <Size Clause> ::= <ON Opt> SIZE ERROR <Imperative Stms>
-       final int PROD_SIZECLAUSE_NOT_SIZE_ERROR                                            = 717;  // <Size Clause> ::= NOT <ON Opt> SIZE ERROR <Imperative Stms>
-       final int PROD_INVALIDKEYCLAUSES                                                    = 718;  // <Invalid Key Clauses> ::= <Invalid Key Clauses> <Invalid Key Clause>
-       final int PROD_INVALIDKEYCLAUSES2                                                   = 719;  // <Invalid Key Clauses> ::= <Invalid Key Clause>
-       final int PROD_INVALIDKEYCLAUSE_INVALID                                             = 720;  // <Invalid Key Clause> ::= INVALID <KEY Opt> <Imperative Stms>
-       final int PROD_INVALIDKEYCLAUSE_NOT_INVALID                                         = 721;  // <Invalid Key Clause> ::= NOT INVALID <KEY Opt> <Imperative Stms>
-       final int PROD_EXCEPTIONCLAUSES                                                     = 722;  // <Exception Clauses> ::= <Exception Clauses> <Exception Clause>
-       final int PROD_EXCEPTIONCLAUSES2                                                    = 723;  // <Exception Clauses> ::= <Exception Clause>
-       final int PROD_EXCEPTIONCLAUSE_EXCEPTION                                            = 724;  // <Exception Clause> ::= <ON Opt> EXCEPTION <Imperative Stms>
-       final int PROD_EXCEPTIONCLAUSE_NOT_EXCEPTION                                        = 725;  // <Exception Clause> ::= NOT <ON Opt> EXCEPTION <Imperative Stms>
-       final int PROD_OVERFLOWCLAUSES                                                      = 726;  // <Overflow Clauses> ::= <Overflow Clauses> <Overflow Clause>
-       final int PROD_OVERFLOWCLAUSES2                                                     = 727;  // <Overflow Clauses> ::= <Overflow Clause>
-       final int PROD_OVERFLOWCLAUSE_OVERFLOW                                              = 728;  // <Overflow Clause> ::= <ON Opt> OVERFLOW <Imperative Stms>
-       final int PROD_OVERFLOWCLAUSE_NOT_OVERFLOW                                          = 729;  // <Overflow Clause> ::= NOT <ON Opt> OVERFLOW <Imperative Stms>
-       final int PROD_ATENDCLAUSES                                                         = 730;  // <At End Clauses> ::= <At End Clauses> <At End Clause>
-       final int PROD_ATENDCLAUSES2                                                        = 731;  // <At End Clauses> ::= <At End Clause>
-       final int PROD_ATENDCLAUSE_AT_END                                                   = 732;  // <At End Clause> ::= AT END <Imperative Stms>
-       final int PROD_ATENDCLAUSE_NOT_AT_END                                               = 733;  // <At End Clause> ::= NOT AT END <Imperative Stms>
-       final int PROD_ATEOPCLAUSES                                                         = 734;  // <AT EOP Clauses> ::= <AT EOP Clauses> <AT EOP Clause>
-       final int PROD_ATEOPCLAUSES2                                                        = 735;  // <AT EOP Clauses> ::= <AT EOP Clause>
-       final int PROD_ATEOPCLAUSE_AT                                                       = 736;  // <AT EOP Clause> ::= AT <End of Page> <Imperative Stms>
-       final int PROD_ATEOPCLAUSE_NOT_AT                                                   = 737;  // <AT EOP Clause> ::= NOT AT <End of Page> <Imperative Stms>
-       final int PROD_ENDOFPAGE_ENDMINUSOFMINUSPAGE                                        = 738;  // <End of Page> ::= 'END-OF-PAGE'
-       final int PROD_ENDOFPAGE_EOP                                                        = 739;  // <End of Page> ::= EOP
-       final int PROD_ACCEPTSENT                                                           = 740;  // <Accept Sent> ::= <Accept Stm>
-       final int PROD_ACCEPTEMBED                                                          = 741;  // <Accept Embed> ::= <Accept Stm>
-       final int PROD_ACCEPTIMP                                                            = 742;  // <Accept Imp> ::= <Accept Stm>
-       final int PROD_ACCEPTSTM_ACCEPT_IDENTIFIER                                          = 743;  // <Accept Stm> ::= ACCEPT Identifier
-       final int PROD_ACCEPTSTM_ACCEPT_IDENTIFIER_FROM                                     = 744;  // <Accept Stm> ::= ACCEPT Identifier FROM <Accept From Arg>
-       final int PROD_ACCEPTSTM_ACCEPT_IDENTIFIER_COUNT                                    = 745;  // <Accept Stm> ::= ACCEPT Identifier <MESSAGE opt> COUNT
-       final int PROD_ACCEPTFROMARG_FROM_DATE                                              = 746;  // <Accept From Arg> ::= FROM DATE
-       final int PROD_ACCEPTFROMARG_FROM_DAY                                               = 747;  // <Accept From Arg> ::= FROM DAY
-       final int PROD_ACCEPTFROMARG_FROM_DAYMINUSOFMINUSWEEK                               = 748;  // <Accept From Arg> ::= FROM 'DAY-OF-WEEK'
-       final int PROD_ACCEPTFROMARG_FROM_TIME                                              = 749;  // <Accept From Arg> ::= FROM TIME
-       final int PROD_ACCEPTFROMARG_FROM_CONSOLE                                           = 750;  // <Accept From Arg> ::= FROM CONSOLE
-       final int PROD_ACCEPTFROMARG_FROM_IDENTIFIER                                        = 751;  // <Accept From Arg> ::= FROM Identifier
-       final int PROD_ACCEPTFROMARG                                                        = 752;  // <Accept From Arg> ::= 
-       final int PROD_ADDSENT                                                              = 753;  // <Add Sent> ::= <Add Stm> <Size Clauses> <END-ADD Opt>
-       final int PROD_ADDSENT2                                                             = 754;  // <Add Sent> ::= <Add Stm>
-       final int PROD_ADDEMBED_ENDMINUSADD                                                 = 755;  // <Add Embed> ::= <Add Stm> <Size Clauses> 'END-ADD'
-       final int PROD_ADDEMBED                                                             = 756;  // <Add Embed> ::= <Add Stm>
-       final int PROD_ADDIMP                                                               = 757;  // <Add Imp> ::= <Add Stm>
-       final int PROD_ADDSTM_ADD_TO                                                        = 758;  // <Add Stm> ::= ADD <Values> TO <Add Items> <Giving Clause>
-       final int PROD_ADDSTM_ADD_IDENTIFIER_TO_IDENTIFIER                                  = 759;  // <Add Stm> ::= ADD <CORRESPONDING> Identifier TO Identifier <ROUNDED Opt>
-       final int PROD_GIVINGCLAUSE_GIVING                                                  = 760;  // <Giving Clause> ::= GIVING <Add Item>
-       final int PROD_GIVINGCLAUSE                                                         = 761;  // <Giving Clause> ::= 
-       final int PROD_ADDITEMS                                                             = 762;  // <Add Items> ::= <Add Items> <Add Item>
-       final int PROD_ADDITEMS2                                                            = 763;  // <Add Items> ::= <Add Item>
-       final int PROD_ADDITEM                                                              = 764;  // <Add Item> ::= <Variable> <ROUNDED Opt>
-       final int PROD_ENDADDOPT_ENDMINUSADD                                                = 765;  // <END-ADD Opt> ::= 'END-ADD'
-       final int PROD_ENDADDOPT                                                            = 766;  // <END-ADD Opt> ::= 
-       final int PROD_ALTERSENT                                                            = 767;  // <Alter Sent> ::= <Alter Stm>
-       final int PROD_ALTEREMBED                                                           = 768;  // <Alter Embed> ::= <Alter Stm>
-       final int PROD_ALTERIMP                                                             = 769;  // <Alter Imp> ::= <Alter Stm>
-       final int PROD_ALTERSTM_ALTER_IDENTIFIER_TO_IDENTIFIER                              = 770;  // <Alter Stm> ::= ALTER Identifier TO Identifier
-       final int PROD_ALTERSTM_ALTER_IDENTIFIER_TO_PROCEED_TO_IDENTIFIER                   = 771;  // <Alter Stm> ::= ALTER Identifier TO PROCEED TO Identifier
-       final int PROD_CALLSENT                                                             = 772;  // <Call Sent> ::= <Call Stm> <Exception Clauses> <END-CALL Opt>
-       final int PROD_CALLSENT2                                                            = 773;  // <Call Sent> ::= <Call Stm> <Overflow Clauses> <END-CALL Opt>
-       final int PROD_CALLSENT3                                                            = 774;  // <Call Sent> ::= <Call Stm>
-       final int PROD_CALLEMBED_ENDMINUSCALL                                               = 775;  // <Call Embed> ::= <Call Stm> <Exception Clauses> 'END-CALL'
-       final int PROD_CALLEMBED_ENDMINUSCALL2                                              = 776;  // <Call Embed> ::= <Call Stm> <Overflow Clauses> 'END-CALL'
-       final int PROD_CALLEMBED                                                            = 777;  // <Call Embed> ::= <Call Stm>
-       final int PROD_CALLIMP                                                              = 778;  // <Call Imp> ::= <Call Stm>
-       final int PROD_CALLSTM_CALL                                                         = 779;  // <Call Stm> ::= CALL <Value>
-       final int PROD_CALLSTM_CALL_USING                                                   = 780;  // <Call Stm> ::= CALL <Value> USING <Call Items>
-       final int PROD_CALLITEMS                                                            = 781;  // <Call Items> ::= <Call Items> <Call Item>
-       final int PROD_CALLITEMS2                                                           = 782;  // <Call Items> ::= <Call Item>
-       final int PROD_CALLITEM                                                             = 783;  // <Call Item> ::= <Variable>
-       final int PROD_CALLITEM_REFERENCE                                                   = 784;  // <Call Item> ::= <BY Opt> REFERENCE <Variable>
-       final int PROD_CALLITEM_CONTENT                                                     = 785;  // <Call Item> ::= <BY Opt> CONTENT <Variable>
-       final int PROD_ENDCALLOPT_ENDMINUSCALL                                              = 786;  // <END-CALL Opt> ::= 'END-CALL'
-       final int PROD_ENDCALLOPT                                                           = 787;  // <END-CALL Opt> ::= 
-       final int PROD_CANCELSENT                                                           = 788;  // <Cancel Sent> ::= <Cancel Stm>
-       final int PROD_CANCELEMBED                                                          = 789;  // <Cancel Embed> ::= <Cancel Stm>
-       final int PROD_CANCELIMP                                                            = 790;  // <Cancel Imp> ::= <Cancel Stm>
-       final int PROD_CANCELSTM_CANCEL                                                     = 791;  // <Cancel Stm> ::= CANCEL <Values>
-       final int PROD_CLOSESENT                                                            = 792;  // <Close Sent> ::= <Close Stm>
-       final int PROD_CLOSEEMBED                                                           = 793;  // <Close Embed> ::= <Close Stm>
-       final int PROD_CLOSEIMP                                                             = 794;  // <Close Imp> ::= <Close Stm>
-       final int PROD_CLOSESTM_CLOSE                                                       = 795;  // <Close Stm> ::= CLOSE <Close Items>
-       final int PROD_CLOSEITEMS                                                           = 796;  // <Close Items> ::= <Close Items> <Close Item>
-       final int PROD_CLOSEITEMS2                                                          = 797;  // <Close Items> ::= <Close Item>
-       final int PROD_CLOSEITEM_IDENTIFIER                                                 = 798;  // <Close Item> ::= Identifier <Close Options>
-       final int PROD_CLOSEOPTIONS_UNIT                                                    = 799;  // <Close Options> ::= UNIT <Close Method>
-       final int PROD_CLOSEOPTIONS_REEL                                                    = 800;  // <Close Options> ::= REEL <Close Method>
-       final int PROD_CLOSEOPTIONS_LOCK                                                    = 801;  // <Close Options> ::= <WITH Opt> LOCK
-       final int PROD_CLOSEOPTIONS_NO_REWIND                                               = 802;  // <Close Options> ::= <WITH Opt> NO REWIND
-       final int PROD_CLOSEOPTIONS                                                         = 803;  // <Close Options> ::= 
-       final int PROD_CLOSEMETHOD_REMOVAL                                                  = 804;  // <Close Method> ::= <FOR Opt> REMOVAL
-       final int PROD_CLOSEMETHOD                                                          = 805;  // <Close Method> ::= 
-       final int PROD_COMPUTESENT                                                          = 806;  // <Compute Sent> ::= <Compute Stm> <Size Clauses> <END-COMPUTE Opt>
-       final int PROD_COMPUTESENT2                                                         = 807;  // <Compute Sent> ::= <Compute Stm>
-       final int PROD_COMPUTEEMBED_ENDMINUSCOMPUTE                                         = 808;  // <Compute Embed> ::= <Compute Stm> <Size Clauses> 'END-COMPUTE'
-       final int PROD_COMPUTEEMBED                                                         = 809;  // <Compute Embed> ::= <Compute Stm>
-       final int PROD_COMPUTEIMP                                                           = 810;  // <Compute Imp> ::= <Compute Stm>
-       final int PROD_COMPUTESTM_COMPUTE_IDENTIFIER                                        = 811;  // <Compute Stm> ::= COMPUTE Identifier <ROUNDED Opt> <Equal Op> <Math Exp>
-       final int PROD_MATHEXP_PLUS                                                         = 812;  // <Math Exp> ::= <Math Exp> '+' <Mult Exp>
-       final int PROD_MATHEXP_MINUS                                                        = 813;  // <Math Exp> ::= <Math Exp> '-' <Mult Exp>
-       final int PROD_MATHEXP                                                              = 814;  // <Math Exp> ::= <Mult Exp>
-       final int PROD_MULTEXP_TIMES                                                        = 815;  // <Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
-       final int PROD_MULTEXP_DIV                                                          = 816;  // <Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
-       final int PROD_MULTEXP                                                              = 817;  // <Mult Exp> ::= <Negate Exp>
-       final int PROD_NEGATEEXP_MINUS                                                      = 818;  // <Negate Exp> ::= '-' <Value>
-       final int PROD_NEGATEEXP                                                            = 819;  // <Negate Exp> ::= <Value>
-       final int PROD_NEGATEEXP_LPAREN_RPAREN                                              = 820;  // <Negate Exp> ::= '(' <Math Exp> ')'
-       final int PROD_ENDCOMPUTEOPT_ENDMINUSCOMPUTE                                        = 821;  // <END-COMPUTE Opt> ::= 'END-COMPUTE'
-       final int PROD_ENDCOMPUTEOPT                                                        = 822;  // <END-COMPUTE Opt> ::= 
-       final int PROD_CONTINUESENT                                                         = 823;  // <Continue Sent> ::= <Continue Stm>
-       final int PROD_CONTINUEEMBED                                                        = 824;  // <Continue Embed> ::= <Continue Stm>
-       final int PROD_CONTINUEIMP                                                          = 825;  // <Continue Imp> ::= <Continue Stm>
-       final int PROD_CONTINUESTM_CONTINUE                                                 = 826;  // <Continue Stm> ::= CONTINUE
-       final int PROD_DELETESENT                                                           = 827;  // <Delete Sent> ::= <Delete Stm> <Invalid Key Clauses> <END-DELETE Opt>
-       final int PROD_DELETESENT2                                                          = 828;  // <Delete Sent> ::= <Delete Stm>
-       final int PROD_DELETEEMBED_ENDMINUSDELETE                                           = 829;  // <Delete Embed> ::= <Delete Stm> <Invalid Key Clauses> 'END-DELETE'
-       final int PROD_DELETEEMBED                                                          = 830;  // <Delete Embed> ::= <Delete Stm>
-       final int PROD_DELETEIMP                                                            = 831;  // <Delete Imp> ::= <Delete Stm>
-       final int PROD_DELETESTM_DELETE_IDENTIFIER                                          = 832;  // <Delete Stm> ::= DELETE Identifier <RECORD Opt>
-       final int PROD_ENDDELETEOPT_ENDMINUSDELETE                                          = 833;  // <END-DELETE Opt> ::= 'END-DELETE'
-       final int PROD_ENDDELETEOPT                                                         = 834;  // <END-DELETE Opt> ::= 
-       final int PROD_DISABLESENT                                                          = 835;  // <Disable Sent> ::= <Disable Stm>
-       final int PROD_DISABLEEMBED                                                         = 836;  // <Disable Embed> ::= <Disable Stm>
-       final int PROD_DISABLEIMP                                                           = 837;  // <Disable Imp> ::= <Disable Stm>
-       final int PROD_DISABLESTM_DISABLE_IDENTIFIER                                        = 838;  // <Disable Stm> ::= DISABLE <Enabled Disable Mode> Identifier <Enable Disable Key>
-       final int PROD_DISPLAYSENT                                                          = 839;  // <Display Sent> ::= <Display Stm>
-       final int PROD_DISPLAYEMBED                                                         = 840;  // <Display Embed> ::= <Display Stm>
-       final int PROD_DISPLAYIMP                                                           = 841;  // <Display Imp> ::= <Display Stm>
-       final int PROD_DISPLAYSTM_DISPLAY                                                   = 842;  // <Display Stm> ::= DISPLAY <Values> <Display Target> <Advancing Clause>
-       final int PROD_DISPLAYTARGET_UPON_IDENTIFIER                                        = 843;  // <Display Target> ::= UPON Identifier
-       final int PROD_DISPLAYTARGET                                                        = 844;  // <Display Target> ::= 
-       final int PROD_ADVANCINGCLAUSE_NO_ADVANCING                                         = 845;  // <Advancing Clause> ::= <WITH Opt> NO ADVANCING
-       final int PROD_ADVANCINGCLAUSE                                                      = 846;  // <Advancing Clause> ::= 
-       final int PROD_DIVIDESENT                                                           = 847;  // <Divide Sent> ::= <Divide Stm> <Size Clauses> <END-DIVIDE Opt>
-       final int PROD_DIVIDESENT2                                                          = 848;  // <Divide Sent> ::= <Divide Stm>
-       final int PROD_DIVIDEEMBED_ENDMINUSDIVIDE                                           = 849;  // <Divide Embed> ::= <Divide Stm> <Size Clauses> 'END-DIVIDE'
-       final int PROD_DIVIDEEMBED                                                          = 850;  // <Divide Embed> ::= <Divide Stm>
-       final int PROD_DIVIDEIMP                                                            = 851;  // <Divide Imp> ::= <Divide Stm>
-       final int PROD_DIVIDESTM_DIVIDE_BY                                                  = 852;  // <Divide Stm> ::= DIVIDE <Values> BY <Values>
-       final int PROD_DIVIDESTM_DIVIDE_BY_GIVING                                           = 853;  // <Divide Stm> ::= DIVIDE <Values> BY <Values> GIVING <Variable> <ROUNDED Opt>
-       final int PROD_DIVIDESTM_DIVIDE_INTO                                                = 854;  // <Divide Stm> ::= DIVIDE <Values> INTO <Values>
-       final int PROD_DIVIDESTM_DIVIDE_INTO_GIVING                                         = 855;  // <Divide Stm> ::= DIVIDE <Values> INTO <Values> GIVING <Variable> <ROUNDED Opt> <Remainder Opt>
-       final int PROD_REMAINDEROPT_REMAINDER                                               = 856;  // <Remainder Opt> ::= REMAINDER <Variable>
-       final int PROD_REMAINDEROPT                                                         = 857;  // <Remainder Opt> ::= 
-       final int PROD_ENDDIVIDEOPT_ENDMINUSDIVIDE                                          = 858;  // <END-DIVIDE Opt> ::= 'END-DIVIDE'
-       final int PROD_ENDDIVIDEOPT                                                         = 859;  // <END-DIVIDE Opt> ::= 
-       final int PROD_ENABLESENT                                                           = 860;  // <Enable Sent> ::= <Enable Stm>
-       final int PROD_ENABLEEMBED                                                          = 861;  // <Enable Embed> ::= <Enable Stm>
-       final int PROD_ENABLEIMP                                                            = 862;  // <Enable Imp> ::= <Enable Stm>
-       final int PROD_ENABLESTM_ENABLE_IDENTIFIER                                          = 863;  // <Enable Stm> ::= ENABLE <Enabled Disable Mode> Identifier <Enable Disable Key>
-       final int PROD_EVALUATESENT                                                         = 864;  // <Evaluate Sent> ::= <Evaluate Stm> <END-EVALUATE Opt>
-       final int PROD_EVALUATEEMBED_ENDMINUSEVALUATE                                       = 865;  // <Evaluate Embed> ::= <Evaluate Stm> 'END-EVALUATE'
-       final int PROD_EVALUATEIMP_ENDMINUSEVALUATE                                         = 866;  // <Evaluate Imp> ::= <Evaluate Stm> 'END-EVALUATE'
-       final int PROD_EVALUATESTM_EVALUATE                                                 = 867;  // <Evaluate Stm> ::= EVALUATE <Subjects> <When Clauses>
-       final int PROD_SUBJECTS_ALSO                                                        = 868;  // <Subjects> ::= <Subjects> ALSO <Subject>
-       final int PROD_SUBJECTS                                                             = 869;  // <Subjects> ::= <Subject>
-       final int PROD_SUBJECT_TRUE                                                         = 870;  // <Subject> ::= TRUE
-       final int PROD_SUBJECT                                                              = 871;  // <Subject> ::= <Boolean Exp>
-       final int PROD_WHENCLAUSES                                                          = 872;  // <When Clauses> ::= <When Clauses> <When Clause>
-       final int PROD_WHENCLAUSES2                                                         = 873;  // <When Clauses> ::= <When Clause>
-       final int PROD_WHENCLAUSE_WHEN                                                      = 874;  // <When Clause> ::= WHEN <Phrases> <THEN Opt> <Embed Stms>
-       final int PROD_WHENCLAUSE_WHEN_OTHER                                                = 875;  // <When Clause> ::= WHEN OTHER <THEN Opt> <Embed Stms>
-       final int PROD_PHRASES_ALSO                                                         = 876;  // <Phrases> ::= <Phrases> ALSO <Phrase>
-       final int PROD_PHRASES                                                              = 877;  // <Phrases> ::= <Phrase>
-       final int PROD_PHRASE_ANY                                                           = 878;  // <Phrase> ::= ANY
-       final int PROD_PHRASE_THROUGH                                                       = 879;  // <Phrase> ::= <Symbolic Value> THROUGH <Symbolic Value>
-       final int PROD_PHRASE_THRU                                                          = 880;  // <Phrase> ::= <Symbolic Value> THRU <Symbolic Value>
-       final int PROD_PHRASE                                                               = 881;  // <Phrase> ::= <Symbolic Value>
-       final int PROD_ENDEVALUATEOPT_ENDMINUSEVALUATE                                      = 882;  // <END-EVALUATE Opt> ::= 'END-EVALUATE'
-       final int PROD_ENDEVALUATEOPT                                                       = 883;  // <END-EVALUATE Opt> ::= 
-       final int PROD_EXITSENT                                                             = 884;  // <Exit Sent> ::= <Exit Stm>
-       final int PROD_EXITEMBED                                                            = 885;  // <Exit Embed> ::= <Exit Stm>
-       final int PROD_EXITIMP                                                              = 886;  // <Exit Imp> ::= <Exit Stm>
-       final int PROD_EXITSTM_EXIT                                                         = 887;  // <Exit Stm> ::= EXIT
-       final int PROD_EXITSTM_EXIT_PROGRAM                                                 = 888;  // <Exit Stm> ::= EXIT PROGRAM
-       final int PROD_GENERATESENT                                                         = 889;  // <Generate Sent> ::= <Generate Stm>
-       final int PROD_GENERATEEMBED                                                        = 890;  // <Generate Embed> ::= <Generate Stm>
-       final int PROD_GENERATEIMP                                                          = 891;  // <Generate Imp> ::= <Generate Stm>
-       final int PROD_GENERATESTM_GENERATE_IDENTIFIER                                      = 892;  // <Generate Stm> ::= GENERATE Identifier
-       final int PROD_GOTOSENT                                                             = 893;  // <Go To Sent> ::= <Go To Stm>
-       final int PROD_GOTOEMBED                                                            = 894;  // <Go To Embed> ::= <Go To Stm>
-       final int PROD_GOTOIMP                                                              = 895;  // <Go To Imp> ::= <Go To Stm>
-       final int PROD_GOTOSTM_GO_TO_IDENTIFIER                                             = 896;  // <Go To Stm> ::= GO TO Identifier
-       final int PROD_GOTOSTM_GO_TO_DEPENDING_ON                                           = 897;  // <Go To Stm> ::= GO TO <Identifiers> DEPENDING ON <Variable>
-       final int PROD_IFSENT                                                               = 898;  // <If Sent> ::= <If Stm> <END-IF Opt>
-       final int PROD_IFEMBED_ENDMINUSIF                                                   = 899;  // <If Embed> ::= <If Stm> 'END-IF'
-       final int PROD_IFIMP_ENDMINUSIF                                                     = 900;  // <If Imp> ::= <If Stm> 'END-IF'
-       final int PROD_IFSTM_IF                                                             = 901;  // <If Stm> ::= IF <Boolean Exp> <THEN Opt> <Embed Stms>
-       final int PROD_IFSTM_IF_ELSE                                                        = 902;  // <If Stm> ::= IF <Boolean Exp> <THEN Opt> <Embed Stms> ELSE <THEN Opt> <Embed Stms>
-       final int PROD_IFSTM_IF_ELSE_NEXT_SENTENCE                                          = 903;  // <If Stm> ::= IF <Boolean Exp> <THEN Opt> <Embed Stms> ELSE NEXT SENTENCE
-       final int PROD_ENDIFOPT_ENDMINUSIF                                                  = 904;  // <END-IF Opt> ::= 'END-IF'
-       final int PROD_ENDIFOPT                                                             = 905;  // <END-IF Opt> ::= 
-       final int PROD_INITIALIZESENT                                                       = 906;  // <Initialize Sent> ::= <Initialize Stm>
-       final int PROD_INITIALIZEEMBED                                                      = 907;  // <Initialize Embed> ::= <Initialize Stm>
-       final int PROD_INITIALIZEIMP                                                        = 908;  // <Initialize Imp> ::= <Initialize Stm>
-       final int PROD_INITIALIZESTM_INITIALIZE                                             = 909;  // <Initialize Stm> ::= INITIALIZE <Variables> <Replacing Opt>
-       final int PROD_REPLACINGOPT_REPLACING                                               = 910;  // <Replacing Opt> ::= REPLACING <Replacing Items>
-       final int PROD_REPLACINGITEMS                                                       = 911;  // <Replacing Items> ::= <Replacing Items> <Replacing Item>
-       final int PROD_REPLACINGITEMS2                                                      = 912;  // <Replacing Items> ::= <Replacing Item>
-       final int PROD_REPLACINGITEM                                                        = 913;  // <Replacing Item> ::= <Replacing Type> <DATA Opt> <Value>
-       final int PROD_REPLACINGTYPE_ALPHABETIC                                             = 914;  // <Replacing Type> ::= ALPHABETIC
-       final int PROD_REPLACINGTYPE_ALPHANUMERIC                                           = 915;  // <Replacing Type> ::= ALPHANUMERIC
-       final int PROD_REPLACINGTYPE_NUMERIC                                                = 916;  // <Replacing Type> ::= NUMERIC
-       final int PROD_REPLACINGTYPE_ALPHANUMERICMINUSEDITED                                = 917;  // <Replacing Type> ::= 'ALPHANUMERIC-EDITED'
-       final int PROD_REPLACINGTYPE_NUMERICMINUSEDITED                                     = 918;  // <Replacing Type> ::= 'NUMERIC-EDITED'
-       final int PROD_INITIATESENT                                                         = 919;  // <Initiate Sent> ::= <Initiate Stm>
-       final int PROD_INITIATEEMBED                                                        = 920;  // <Initiate Embed> ::= <Initiate Stm>
-       final int PROD_INITIATEIMP                                                          = 921;  // <Initiate Imp> ::= <Initiate Stm>
-       final int PROD_INITIATESTM_INITIATE                                                 = 922;  // <Initiate Stm> ::= INITIATE <Identifiers>
-       final int PROD_INSPECTSENT                                                          = 923;  // <Inspect Sent> ::= <Inspect Stm>
-       final int PROD_INSPECTEMBED                                                         = 924;  // <Inspect Embed> ::= <Inspect Stm>
-       final int PROD_INSPECTIMP                                                           = 925;  // <Inspect Imp> ::= <Inspect Stm>
-       final int PROD_INSPECTSTM_INSPECT_TALLYING                                          = 926;  // <Inspect Stm> ::= INSPECT <Variable> TALLYING <Tally Variables>
-       final int PROD_INSPECTSTM_INSPECT_TALLYING_REPLACING                                = 927;  // <Inspect Stm> ::= INSPECT <Variable> TALLYING <Tally Variables> REPLACING <Replace Chars>
-       final int PROD_INSPECTSTM_INSPECT_REPLACING                                         = 928;  // <Inspect Stm> ::= INSPECT <Variable> REPLACING <Replace Chars>
-       final int PROD_INSPECTSTM_INSPECT_CONVERTING_TO                                     = 929;  // <Inspect Stm> ::= INSPECT <Variable> CONVERTING <Value> TO <Value> <Inspect Specs>
-       final int PROD_TALLYVARIABLES                                                       = 930;  // <Tally Variables> ::= <Tally Variables> <Tally Variable>
-       final int PROD_TALLYVARIABLES2                                                      = 931;  // <Tally Variables> ::= <Tally Variable>
-       final int PROD_TALLYVARIABLE_FOR                                                    = 932;  // <Tally Variable> ::= <Variable> FOR <Tally Items>
-       final int PROD_TALLYITEMS                                                           = 933;  // <Tally Items> ::= <Tally Items> <Tally Item>
-       final int PROD_TALLYITEMS2                                                          = 934;  // <Tally Items> ::= <Tally Item>
-       final int PROD_TALLYITEM_CHARACTERS                                                 = 935;  // <Tally Item> ::= CHARACTERS <Inspect Specs>
-       final int PROD_TALLYITEM_ALL                                                        = 936;  // <Tally Item> ::= ALL <Value> <Inspect Specs>
-       final int PROD_TALLYITEM_LEADING                                                    = 937;  // <Tally Item> ::= LEADING <Value> <Inspect Specs>
-       final int PROD_REPLACECHARS                                                         = 938;  // <Replace Chars> ::= <Replace Chars> <Replace Char>
-       final int PROD_REPLACECHARS2                                                        = 939;  // <Replace Chars> ::= <Replace Char>
-       final int PROD_REPLACECHAR_CHARACTERS_BY                                            = 940;  // <Replace Char> ::= CHARACTERS BY <Value> <Inspect Specs>
-       final int PROD_REPLACECHAR_ALL                                                      = 941;  // <Replace Char> ::= ALL <Replace Items>
-       final int PROD_REPLACECHAR_LEADING                                                  = 942;  // <Replace Char> ::= LEADING <Replace Items>
-       final int PROD_REPLACECHAR_FIRST                                                    = 943;  // <Replace Char> ::= FIRST <Replace Items>
-       final int PROD_REPLACEITEMS                                                         = 944;  // <Replace Items> ::= <Replace Items> <Replace Item>
-       final int PROD_REPLACEITEMS2                                                        = 945;  // <Replace Items> ::= <Replace Item>
-       final int PROD_REPLACEITEM_BY                                                       = 946;  // <Replace Item> ::= <Value> BY <Value> <Inspect Specs>
-       final int PROD_INSPECTSPECS                                                         = 947;  // <Inspect Specs> ::= <Inspect Specs> <Inspect Spec>
-       final int PROD_INSPECTSPECS2                                                        = 948;  // <Inspect Specs> ::= 
-       final int PROD_INSPECTSPEC_INITIAL                                                  = 949;  // <Inspect Spec> ::= <BEFORE AFTER> INITIAL <Value>
-       final int PROD_MERGESENT                                                            = 950;  // <Merge Sent> ::= <Merge Stm>
-       final int PROD_MERGEEMBED                                                           = 951;  // <Merge Embed> ::= <Merge Stm>
-       final int PROD_MERGEIMP                                                             = 952;  // <Merge Imp> ::= <Merge Stm>
-       final int PROD_MERGESTM_MERGE_IDENTIFIER_USING                                      = 953;  // <Merge Stm> ::= MERGE Identifier <Sort Keys> <Collating Clause> USING <Identifiers> <Sort Target>
-       final int PROD_MOVESENT                                                             = 954;  // <Move Sent> ::= <Move Stm> <Size Clauses> <END-MOVE Opt>
-       final int PROD_MOVESENT2                                                            = 955;  // <Move Sent> ::= <Move Stm>
-       final int PROD_MOVEEMBED_ENDMINUSMOVE                                               = 956;  // <Move Embed> ::= <Move Stm> <Size Clauses> 'END-MOVE'
-       final int PROD_MOVEEMBED                                                            = 957;  // <Move Embed> ::= <Move Stm>
-       final int PROD_MOVEIMP                                                              = 958;  // <Move Imp> ::= <Move Stm>
-       final int PROD_MOVESTM_MOVE_TO                                                      = 959;  // <Move Stm> ::= MOVE <Symbolic Value> TO <Variables>
-       final int PROD_MOVESTM_MOVE_IDENTIFIER_TO_IDENTIFIER                                = 960;  // <Move Stm> ::= MOVE <CORRESPONDING> Identifier TO Identifier
-       final int PROD_ENDMOVEOPT_ENDMINUSMOVE                                              = 961;  // <END-MOVE Opt> ::= 'END-MOVE'
-       final int PROD_ENDMOVEOPT                                                           = 962;  // <END-MOVE Opt> ::= 
-       final int PROD_MULTIPLYSENT                                                         = 963;  // <Multiply Sent> ::= <Multiply Stm> <Size Clauses> <END-MULTIPLY Opt>
-       final int PROD_MULTIPLYSENT2                                                        = 964;  // <Multiply Sent> ::= <Multiply Stm>
-       final int PROD_MULTIPLYEMBED_ENDMINUSMULTIPLY                                       = 965;  // <Multiply Embed> ::= <Multiply Stm> <Size Clauses> 'END-MULTIPLY'
-       final int PROD_MULTIPLYEMBED                                                        = 966;  // <Multiply Embed> ::= <Multiply Stm>
-       final int PROD_MULTIPLYIMP                                                          = 967;  // <Multiply Imp> ::= <Multiply Stm>
-       final int PROD_MULTIPLYSTM_MULTIPLY_BY                                              = 968;  // <Multiply Stm> ::= MULTIPLY <Variables> BY <Multiply Items> <Giving Clause Opt>
-       final int PROD_MULTIPLYITEMS                                                        = 969;  // <Multiply Items> ::= <Multiply Items> <Multiply Item>
-       final int PROD_MULTIPLYITEMS2                                                       = 970;  // <Multiply Items> ::= <Multiply Item>
-       final int PROD_MULTIPLYITEM                                                         = 971;  // <Multiply Item> ::= <Value> <ROUNDED Opt>
-       final int PROD_ENDMULTIPLYOPT_ENDMINUSMULTIPLY                                      = 972;  // <END-MULTIPLY Opt> ::= 'END-MULTIPLY'
-       final int PROD_ENDMULTIPLYOPT                                                       = 973;  // <END-MULTIPLY Opt> ::= 
-       final int PROD_OPENSENT                                                             = 974;  // <Open Sent> ::= <Open Stm>
-       final int PROD_OPENEMBED                                                            = 975;  // <Open Embed> ::= <Open Stm>
-       final int PROD_OPENIMP                                                              = 976;  // <Open Imp> ::= <Open Stm>
-       final int PROD_OPENSTM_OPEN                                                         = 977;  // <Open Stm> ::= OPEN <Open List>
-       final int PROD_OPENLIST                                                             = 978;  // <Open List> ::= <Open List> <Open Entry>
-       final int PROD_OPENLIST2                                                            = 979;  // <Open List> ::= <Open Entry>
-       final int PROD_OPENENTRY_INPUT                                                      = 980;  // <Open Entry> ::= INPUT <Variables> <Open No Rewind>
-       final int PROD_OPENENTRY_OUTPUT                                                     = 981;  // <Open Entry> ::= OUTPUT <Variables> <Open No Rewind>
-       final int PROD_OPENENTRY_EXTEND                                                     = 982;  // <Open Entry> ::= EXTEND <Variables> <Open No Rewind>
-       final int PROD_OPENENTRY_IMINUSO                                                    = 983;  // <Open Entry> ::= 'I-O' <Variables> <Open No Rewind>
-       final int PROD_OPENNOREWIND_NO_REWIND                                               = 984;  // <Open No Rewind> ::= <WITH Opt> NO REWIND
-       final int PROD_OPENNOREWIND                                                         = 985;  // <Open No Rewind> ::= 
-       final int PROD_PERFORMSENT                                                          = 986;  // <Perform Sent> ::= <Perform Block> <END-PERFORM Opt>
-       final int PROD_PERFORMSENT2                                                         = 987;  // <Perform Sent> ::= <Perform Stm>
-       final int PROD_PERFORMSENT3                                                         = 988;  // <Perform Sent> ::= <Perform Loop>
-       final int PROD_PERFORMEMBED_ENDMINUSPERFORM                                         = 989;  // <Perform Embed> ::= <Perform Block> 'END-PERFORM'
-       final int PROD_PERFORMEMBED                                                         = 990;  // <Perform Embed> ::= <Perform Stm>
-       final int PROD_PERFORMEMBED2                                                        = 991;  // <Perform Embed> ::= <Perform Loop>
-       final int PROD_PERFORMIMP_ENDMINUSPERFORM                                           = 992;  // <Perform Imp> ::= <Perform Block> 'END-PERFORM'
-       final int PROD_PERFORMIMP                                                           = 993;  // <Perform Imp> ::= <Perform Stm>
-       final int PROD_PERFORMSTM_PERFORM                                                   = 994;  // <Perform Stm> ::= PERFORM <Identifier Range>
-       final int PROD_PERFORMSTM_PERFORM_TIMES                                             = 995;  // <Perform Stm> ::= PERFORM <Identifier Range> <Numeric> TIMES
-       final int PROD_PERFORMLOOP_PERFORM_UNTIL                                            = 996;  // <Perform Loop> ::= PERFORM <Identifier Range> <With Test> UNTIL <Boolean Exp>
-       final int PROD_PERFORMLOOP_PERFORM_VARYING                                          = 997;  // <Perform Loop> ::= PERFORM <Identifier Range> <With Test> VARYING <Perform For List>
-       final int PROD_PERFORMBLOCK_PERFORM_UNTIL                                           = 998;  // <Perform Block> ::= PERFORM <With Test> UNTIL <Boolean Exp> <Embed Stms>
-       final int PROD_PERFORMBLOCK_PERFORM_VARYING                                         = 999;  // <Perform Block> ::= PERFORM <With Test> VARYING <Perform For List> <Embed Stms>
-       final int PROD_PERFORMBLOCK_PERFORM_TIMES                                           = 1000;  // <Perform Block> ::= PERFORM <Numeric> TIMES <Embed Stms>
-       final int PROD_WITHTEST_TEST                                                        = 1001;  // <With Test> ::= <WITH Opt> TEST <BEFORE AFTER>
-       final int PROD_WITHTEST                                                             = 1002;  // <With Test> ::= 
-       final int PROD_PERFORMFORLIST_AFTER                                                 = 1003;  // <Perform For List> ::= <Perform For List> AFTER <Perform For Range>
-       final int PROD_PERFORMFORLIST                                                       = 1004;  // <Perform For List> ::= <Perform For Range>
-       final int PROD_PERFORMFORRANGE_FROM_BY_UNTIL                                        = 1005;  // <Perform For Range> ::= <Variable> FROM <Numeric> BY <Numeric> UNTIL <Boolean Exp>
-       final int PROD_ENDPERFORMOPT_ENDMINUSPERFORM                                        = 1006;  // <END-PERFORM Opt> ::= 'END-PERFORM'
-       final int PROD_ENDPERFORMOPT                                                        = 1007;  // <END-PERFORM Opt> ::= 
-       final int PROD_READSENT                                                             = 1008;  // <Read Sent> ::= <Read Stm> <Read Msg Clauses> <END-READ Opt>
-       final int PROD_READSENT2                                                            = 1009;  // <Read Sent> ::= <Read Stm>
-       final int PROD_READEMBED_ENDMINUSREAD                                               = 1010;  // <Read Embed> ::= <Read Stm> <Read Msg Clauses> 'END-READ'
-       final int PROD_READEMBED                                                            = 1011;  // <Read Embed> ::= <Read Stm>
-       final int PROD_READIMP                                                              = 1012;  // <Read Imp> ::= <Read Stm>
-       final int PROD_READSTM_READ_IDENTIFIER                                              = 1013;  // <Read Stm> ::= READ Identifier <NEXT Opt> <RECORD Opt>
-       final int PROD_READSTM_READ_IDENTIFIER_INTO                                         = 1014;  // <Read Stm> ::= READ Identifier <NEXT Opt> <RECORD Opt> INTO <Variable> <Read Key Opt>
-       final int PROD_READMSGCLAUSES                                                       = 1015;  // <Read Msg Clauses> ::= <At End Clauses>
-       final int PROD_READMSGCLAUSES2                                                      = 1016;  // <Read Msg Clauses> ::= <Invalid Key Clauses>
-       final int PROD_READKEYOPT_KEY_IDENTIFIER                                            = 1017;  // <Read Key Opt> ::= KEY <IS Opt> Identifier
-       final int PROD_READKEYOPT                                                           = 1018;  // <Read Key Opt> ::= 
-       final int PROD_ENDREADOPT_ENDMINUSREAD                                              = 1019;  // <END-READ Opt> ::= 'END-READ'
-       final int PROD_ENDREADOPT                                                           = 1020;  // <END-READ Opt> ::= 
-       final int PROD_RELEASESENT                                                          = 1021;  // <Release Sent> ::= <Release Stm>
-       final int PROD_RELEASEEMBED                                                         = 1022;  // <Release Embed> ::= <Release Stm>
-       final int PROD_RELEASEIMP                                                           = 1023;  // <Release Imp> ::= <Release Stm>
-       final int PROD_RELEASESTM_RELEASE_IDENTIFIER                                        = 1024;  // <Release Stm> ::= RELEASE Identifier
-       final int PROD_RELEASESTM_RELEASE_IDENTIFIER_FROM_IDENTIFIER                        = 1025;  // <Release Stm> ::= RELEASE Identifier FROM Identifier
-       final int PROD_RETURNSENT                                                           = 1026;  // <Return Sent> ::= <Return Stm>
-       final int PROD_RETURNEMBED                                                          = 1027;  // <Return Embed> ::= <Return Stm>
-       final int PROD_RETURNIMP                                                            = 1028;  // <Return Imp> ::= <Return Stm>
-       final int PROD_RETURNSTM_RETURN_IDENTIFIER                                          = 1029;  // <Return Stm> ::= RETURN Identifier <RECORD Opt>
-       final int PROD_RETURNSTM_RETURN_IDENTIFIER_INTO_IDENTIFIER                          = 1030;  // <Return Stm> ::= RETURN Identifier <RECORD Opt> INTO Identifier
-       final int PROD_REWRITESENT                                                          = 1031;  // <Rewrite Sent> ::= <Rewrite Stm> <Invalid Key Clauses> <END-REWRITE Opt>
-       final int PROD_REWRITESENT2                                                         = 1032;  // <Rewrite Sent> ::= <Rewrite Stm>
-       final int PROD_REWRITEEMBED_ENDMINUSREWRITE                                         = 1033;  // <Rewrite Embed> ::= <Rewrite Stm> <Invalid Key Clauses> 'END-REWRITE'
-       final int PROD_REWRITEEMBED                                                         = 1034;  // <Rewrite Embed> ::= <Rewrite Stm>
-       final int PROD_REWRITEIMP                                                           = 1035;  // <Rewrite Imp> ::= <Rewrite Stm>
-       final int PROD_REWRITESTM_REWRITE_IDENTIFIER                                        = 1036;  // <Rewrite Stm> ::= REWRITE Identifier
-       final int PROD_REWRITESTM_REWRITE_IDENTIFIER_FROM_IDENTIFIER                        = 1037;  // <Rewrite Stm> ::= REWRITE Identifier FROM Identifier
-       final int PROD_ENDREWRITEOPT_ENDMINUSREWRITE                                        = 1038;  // <END-REWRITE Opt> ::= 'END-REWRITE'
-       final int PROD_ENDREWRITEOPT                                                        = 1039;  // <END-REWRITE Opt> ::= 
-       final int PROD_SEARCHSENT                                                           = 1040;  // <Search Sent> ::= <Search Stm> <END-SEARCH Opt>
-       final int PROD_SEARCHEMBED_ENDMINUSSEARCH                                           = 1041;  // <Search Embed> ::= <Search Stm> 'END-SEARCH'
-       final int PROD_SEARCHIMP_ENDMINUSSEARCH                                             = 1042;  // <Search Imp> ::= <Search Stm> 'END-SEARCH'
-       final int PROD_SEARCHSTM_SEARCH_IDENTIFIER                                          = 1043;  // <Search Stm> ::= SEARCH Identifier <Varying Opt> <At End Clauses> <When Clauses>
-       final int PROD_SEARCHSTM_SEARCH_ALL_IDENTIFIER                                      = 1044;  // <Search Stm> ::= SEARCH ALL Identifier <At End Clauses> <When Clauses>
-       final int PROD_VARYINGOPT_VARYING                                                   = 1045;  // <Varying Opt> ::= VARYING <Value>
-       final int PROD_VARYINGOPT                                                           = 1046;  // <Varying Opt> ::= 
-       final int PROD_ENDSEARCHOPT_ENDMINUSSEARCH                                          = 1047;  // <END-SEARCH Opt> ::= 'END-SEARCH'
-       final int PROD_ENDSEARCHOPT                                                         = 1048;  // <END-SEARCH Opt> ::= 
-       final int PROD_SENDSENT                                                             = 1049;  // <Send Sent> ::= <Send Stm>
-       final int PROD_SENDEMBED                                                            = 1050;  // <Send Embed> ::= <Send Stm>
-       final int PROD_SENDIMP                                                              = 1051;  // <Send Imp> ::= <Send Stm>
-       final int PROD_SENDSTM_SEND_IDENTIFIER_FROM                                         = 1052;  // <Send Stm> ::= SEND Identifier FROM <Variable>
-       final int PROD_SENDSTM_SEND_IDENTIFIER_FROM2                                        = 1053;  // <Send Stm> ::= SEND Identifier FROM <Variable> <Send With> <Send Spec> <Send Replacing Opt>
-       final int PROD_SENDSTM_SEND_IDENTIFIER                                              = 1054;  // <Send Stm> ::= SEND Identifier <Send With> <Send Spec> <Send Replacing Opt>
-       final int PROD_SENDWITH_IDENTIFIER                                                  = 1055;  // <Send With> ::= <WITH Opt> Identifier
-       final int PROD_SENDWITH_ESI                                                         = 1056;  // <Send With> ::= <WITH Opt> ESI
-       final int PROD_SENDWITH_EMI                                                         = 1057;  // <Send With> ::= <WITH Opt> EMI
-       final int PROD_SENDWITH_EGI                                                         = 1058;  // <Send With> ::= <WITH Opt> EGI
-       final int PROD_SENDSPEC                                                             = 1059;  // <Send Spec> ::= <BEFORE AFTER> <ADVANCING Opt> <Send Advance>
-       final int PROD_SENDADVANCE                                                          = 1060;  // <Send Advance> ::= <Value> <LINES Opt>
-       final int PROD_SENDADVANCE_PAGE                                                     = 1061;  // <Send Advance> ::= PAGE
-       final int PROD_SENDREPLACINGOPT_REPLACING                                           = 1062;  // <Send Replacing Opt> ::= REPLACING <LINE Opt>
-       final int PROD_SETSENT                                                              = 1063;  // <Set Sent> ::= <Set Stm>
-       final int PROD_SETEMBED                                                             = 1064;  // <Set Embed> ::= <Set Stm>
-       final int PROD_SETIMP                                                               = 1065;  // <Set Imp> ::= <Set Stm>
-       final int PROD_SETSTM_SET_UP_BY                                                     = 1066;  // <Set Stm> ::= SET <Variables> UP BY <Value>
-       final int PROD_SETSTM_SET_DOWN_BY                                                   = 1067;  // <Set Stm> ::= SET <Variables> DOWN BY <Value>
-       final int PROD_SETSTM_SET_TO                                                        = 1068;  // <Set Stm> ::= SET <Variables> TO <Set Value>
-       final int PROD_SETVALUE_ON                                                          = 1069;  // <Set Value> ::= ON
-       final int PROD_SETVALUE_OFF                                                         = 1070;  // <Set Value> ::= OFF
-       final int PROD_SETVALUE_TRUE                                                        = 1071;  // <Set Value> ::= TRUE
-       final int PROD_SORTSENT                                                             = 1072;  // <Sort Sent> ::= <Sort Stm>
-       final int PROD_SORTEMBED                                                            = 1073;  // <Sort Embed> ::= <Sort Stm>
-       final int PROD_SORTIMP                                                              = 1074;  // <Sort Imp> ::= <Sort Stm>
-       final int PROD_SORTSTM_SORT                                                         = 1075;  // <Sort Stm> ::= SORT <Value> <Sort Keys> <Sort Duplicates Opt> <COLLATING Opt> <Sort Source> <Sort Target>
-       final int PROD_SORTDUPLICATESOPT_DUPLICATES                                         = 1076;  // <Sort Duplicates Opt> ::= <WITH Opt> DUPLICATES <IN Opt> <ORDER opt>
-       final int PROD_SORTDUPLICATESOPT                                                    = 1077;  // <Sort Duplicates Opt> ::= 
-       final int PROD_STARTSENT                                                            = 1078;  // <Start Sent> ::= <Start Stm> <Invalid Key Clauses> <END-START Opt>
-       final int PROD_STARTSENT2                                                           = 1079;  // <Start Sent> ::= <Start Stm>
-       final int PROD_STARTEMBED_ENDMINUSSTART                                             = 1080;  // <Start Embed> ::= <Start Stm> <Invalid Key Clauses> 'END-START'
-       final int PROD_STARTEMBED                                                           = 1081;  // <Start Embed> ::= <Start Stm>
-       final int PROD_STARTIMP                                                             = 1082;  // <Start Imp> ::= <Start Stm>
-       final int PROD_STARTSTM_START_IDENTIFIER                                            = 1083;  // <Start Stm> ::= START Identifier <Start Key Opt>
-       final int PROD_STARTKEYOPT_KEY_IDENTIFIER                                           = 1084;  // <Start Key Opt> ::= KEY <Compare Op> Identifier
-       final int PROD_STARTKEYOPT                                                          = 1085;  // <Start Key Opt> ::= 
-       final int PROD_ENDSTARTOPT_ENDMINUSSTART                                            = 1086;  // <END-START Opt> ::= 'END-START'
-       final int PROD_ENDSTARTOPT                                                          = 1087;  // <END-START Opt> ::= 
-       final int PROD_STOPSENT                                                             = 1088;  // <Stop Sent> ::= <Stop Stm>
-       final int PROD_STOPEMBED                                                            = 1089;  // <Stop Embed> ::= <Stop Stm>
-       final int PROD_STOPIMP                                                              = 1090;  // <Stop Imp> ::= <Stop Stm>
-       final int PROD_STOPSTM_STOP_RUN                                                     = 1091;  // <Stop Stm> ::= STOP RUN
-       final int PROD_STOPSTM_STOP                                                         = 1092;  // <Stop Stm> ::= STOP <Literal>
-       final int PROD_STRINGSENT                                                           = 1093;  // <String Sent> ::= <String Stm> <Overflow Clauses> <END-STRING Opt>
-       final int PROD_STRINGSENT2                                                          = 1094;  // <String Sent> ::= <String Stm>
-       final int PROD_STRINGEMBED_ENDMINUSSTRING                                           = 1095;  // <String Embed> ::= <String Stm> <Overflow Clauses> 'END-STRING'
-       final int PROD_STRINGEMBED                                                          = 1096;  // <String Embed> ::= <String Stm>
-       final int PROD_STRINGIMP                                                            = 1097;  // <String Imp> ::= <String Stm>
-       final int PROD_STRINGSTM_STRING_INTO                                                = 1098;  // <String Stm> ::= STRING <String Items> INTO <Variable> <Pointer Clause>
-       final int PROD_STRINGITEMS                                                          = 1099;  // <String Items> ::= <String Item> <String Items>
-       final int PROD_STRINGITEMS2                                                         = 1100;  // <String Items> ::= <String Item>
-       final int PROD_STRINGITEM_DELIMITED                                                 = 1101;  // <String Item> ::= <Values> DELIMITED <BY Opt> <Value>
-       final int PROD_ENDSTRINGOPT_ENDMINUSSTRING                                          = 1102;  // <END-STRING Opt> ::= 'END-STRING'
-       final int PROD_ENDSTRINGOPT                                                         = 1103;  // <END-STRING Opt> ::= 
-       final int PROD_SUBTRACTSENT                                                         = 1104;  // <Subtract Sent> ::= <Subtract Stm> <Size Clauses> <END-SUBTRACT Opt>
-       final int PROD_SUBTRACTSENT2                                                        = 1105;  // <Subtract Sent> ::= <Subtract Stm>
-       final int PROD_SUBTRACTEMBED_ENDMINUSSUBTRACT                                       = 1106;  // <Subtract Embed> ::= <Subtract Stm> <Size Clauses> 'END-SUBTRACT'
-       final int PROD_SUBTRACTEMBED                                                        = 1107;  // <Subtract Embed> ::= <Subtract Stm>
-       final int PROD_SUBTRACTIMP                                                          = 1108;  // <Subtract Imp> ::= <Subtract Stm>
-       final int PROD_SUBTRACTSTM_SUBTRACT_FROM                                            = 1109;  // <Subtract Stm> ::= SUBTRACT <Values> FROM <Variables> <Giving Clause Opt>
-       final int PROD_SUBTRACTSTM_SUBTRACT_FROM_IDENTIFIER                                 = 1110;  // <Subtract Stm> ::= SUBTRACT <CORRESPONDING> <Value> FROM Identifier
-       final int PROD_ENDSUBTRACTOPT_ENDMINUSSUBTRACT                                      = 1111;  // <END-SUBTRACT Opt> ::= 'END-SUBTRACT'
-       final int PROD_ENDSUBTRACTOPT                                                       = 1112;  // <END-SUBTRACT Opt> ::= 
-       final int PROD_SUPPRESSSENT                                                         = 1113;  // <Suppress Sent> ::= <Suppress Stm>
-       final int PROD_SUPPRESSEMBED                                                        = 1114;  // <Suppress Embed> ::= <Suppress Stm>
-       final int PROD_SUPPRESSIMP                                                          = 1115;  // <Suppress Imp> ::= <Suppress Stm>
-       final int PROD_SUPPRESSSTM_SUPPRESS                                                 = 1116;  // <Suppress Stm> ::= SUPPRESS <PRINTING Opt>
-       final int PROD_TERMINATESENT                                                        = 1117;  // <Terminate Sent> ::= <Terminate Stm>
-       final int PROD_TERMINATEEMBED                                                       = 1118;  // <Terminate Embed> ::= <Terminate Stm>
-       final int PROD_TERMINATEIMP                                                         = 1119;  // <Terminate Imp> ::= <Terminate Stm>
-       final int PROD_TERMINATESTM_TERMINATE                                               = 1120;  // <Terminate Stm> ::= TERMINATE <Identifiers>
-       final int PROD_UNSTRINGSENT                                                         = 1121;  // <Unstring Sent> ::= <Unstring Stm> <Overflow Clauses> <END-UNSTRING Opt>
-       final int PROD_UNSTRINGSENT2                                                        = 1122;  // <Unstring Sent> ::= <Unstring Stm>
-       final int PROD_UNSTRINGEMBED_ENDMINUSUNSTRING                                       = 1123;  // <Unstring Embed> ::= <Unstring Stm> <Overflow Clauses> 'END-UNSTRING'
-       final int PROD_UNSTRINGEMBED                                                        = 1124;  // <Unstring Embed> ::= <Unstring Stm>
-       final int PROD_UNSTRINGIMP                                                          = 1125;  // <Unstring Imp> ::= <Unstring Stm>
-       final int PROD_UNSTRINGSTM_UNSTRING_IDENTIFIER_INTO_IDENTIFIER                      = 1126;  // <Unstring Stm> ::= UNSTRING Identifier <Delimiter Clause> INTO Identifier <Unstring Options>
-       final int PROD_DELIMITERCLAUSE_DELIMITED                                            = 1127;  // <Delimiter Clause> ::= DELIMITED <BY Opt> <Unstring Delimiter List>
-       final int PROD_DELIMITERCLAUSE                                                      = 1128;  // <Delimiter Clause> ::= 
-       final int PROD_UNSTRINGDELIMITERLIST_OR                                             = 1129;  // <Unstring Delimiter List> ::= <Unstring Delimiter List> OR <Unstring Delimiter>
-       final int PROD_UNSTRINGDELIMITERLIST                                                = 1130;  // <Unstring Delimiter List> ::= <Unstring Delimiter>
-       final int PROD_UNSTRINGDELIMITER                                                    = 1131;  // <Unstring Delimiter> ::= <ALL Opt> <Value>
-       final int PROD_UNSTRINGOPTIONS                                                      = 1132;  // <Unstring Options> ::= <Unstring Options> <Unstring Option>
-       final int PROD_UNSTRINGOPTIONS2                                                     = 1133;  // <Unstring Options> ::= 
-       final int PROD_UNSTRINGOPTION_POINTER                                               = 1134;  // <Unstring Option> ::= <WITH Opt> POINTER <Variable>
-       final int PROD_UNSTRINGOPTION_TALLYING_IDENTIFIER                                   = 1135;  // <Unstring Option> ::= TALLYING <IN Opt> Identifier
-       final int PROD_ENDUNSTRINGOPT_ENDMINUSUNSTRING                                      = 1136;  // <END-UNSTRING Opt> ::= 'END-UNSTRING'
-       final int PROD_ENDUNSTRINGOPT                                                       = 1137;  // <END-UNSTRING Opt> ::= 
-       final int PROD_USESENT                                                              = 1138;  // <Use Sent> ::= <Use Stm>
-       final int PROD_USEEMBED                                                             = 1139;  // <Use Embed> ::= <Use Stm>
-       final int PROD_USEIMP                                                               = 1140;  // <Use Imp> ::= <Use Stm>
-       final int PROD_USESTM_USE_AFTER_STANDARD_PROCEDURE_ON                               = 1141;  // <Use Stm> ::= USE <GLOBAL Opt> AFTER STANDARD <Use Proc Type> PROCEDURE ON <Use Access>
-       final int PROD_USESTM_USE_BEFORE_REPORTING_IDENTIFIER                               = 1142;  // <Use Stm> ::= USE <GLOBAL Opt> BEFORE REPORTING Identifier
-       final int PROD_USESTM_USE_DEBUGGING                                                 = 1143;  // <Use Stm> ::= USE <FOR Opt> DEBUGGING <ON Opt> <Use Debug>
-       final int PROD_USEPROCTYPE_EXCEPTION                                                = 1144;  // <Use Proc Type> ::= EXCEPTION
-       final int PROD_USEPROCTYPE_ERROR                                                    = 1145;  // <Use Proc Type> ::= ERROR
-       final int PROD_USEACCESS_INPUT                                                      = 1146;  // <Use Access> ::= INPUT
-       final int PROD_USEACCESS_OUTPUT                                                     = 1147;  // <Use Access> ::= OUTPUT
-       final int PROD_USEACCESS_IMINUSO                                                    = 1148;  // <Use Access> ::= 'I-O'
-       final int PROD_USEACCESS_EXTEND                                                     = 1149;  // <Use Access> ::= EXTEND
-       final int PROD_USEACCESS                                                            = 1150;  // <Use Access> ::= <Value>
-       final int PROD_USEDEBUG_ALL_IDENTIFIER                                              = 1151;  // <Use Debug> ::= ALL <REFERENCES Opt> <OF Opt> Identifier
-       final int PROD_USEDEBUG_ALL_PROCEDURES                                              = 1152;  // <Use Debug> ::= ALL PROCEDURES
-       final int PROD_USEDEBUG                                                             = 1153;  // <Use Debug> ::= <Value>
-       final int PROD_WRITESENT                                                            = 1154;  // <Write Sent> ::= <Write Stm> <Invalid Key Clauses> <END-WRITE Opt>
-       final int PROD_WRITESENT2                                                           = 1155;  // <Write Sent> ::= <Write Stm> <AT EOP Clauses> <END-WRITE Opt>
-       final int PROD_WRITESENT3                                                           = 1156;  // <Write Sent> ::= <Write Stm>
-       final int PROD_WRITEEMBED_ENDMINUSWRITE                                             = 1157;  // <Write Embed> ::= <Write Stm> <Invalid Key Clauses> 'END-WRITE'
-       final int PROD_WRITEEMBED_ENDMINUSWRITE2                                            = 1158;  // <Write Embed> ::= <Write Stm> <AT EOP Clauses> 'END-WRITE'
-       final int PROD_WRITEEMBED                                                           = 1159;  // <Write Embed> ::= <Write Stm>
-       final int PROD_WRITEIMP                                                             = 1160;  // <Write Imp> ::= <Write Stm>
-       final int PROD_WRITESTM_WRITE_IDENTIFIER                                            = 1161;  // <Write Stm> ::= WRITE Identifier <Write Options>
-       final int PROD_WRITESTM_WRITE_IDENTIFIER_FROM_IDENTIFIER                            = 1162;  // <Write Stm> ::= WRITE Identifier FROM Identifier <Write Options>
-       final int PROD_WRITEOPTIONS                                                         = 1163;  // <Write Options> ::= <BEFORE AFTER> <ADVANCING Opt> <Write Advance>
-       final int PROD_WRITEADVANCE                                                         = 1164;  // <Write Advance> ::= <Value> <LINES Opt>
-       final int PROD_WRITEADVANCE_PAGE                                                    = 1165;  // <Write Advance> ::= PAGE
-       final int PROD_ENDWRITEOPT_ENDMINUSWRITE                                            = 1166;  // <END-WRITE Opt> ::= 'END-WRITE'
-       final int PROD_ENDWRITEOPT                                                          = 1167;  // <END-WRITE Opt> ::= 
-    };
+	@SuppressWarnings("unused")
+	private interface RuleConstants
+	{
+		final int PROD_CLASS_NAME_COBOLWORD                                                  =    0;  // <CLASS_NAME> ::= COBOLWord
+		final int PROD_FUNCTION_NAME_FUNCTION                                                =    1;  // <FUNCTION_NAME> ::= FUNCTION <COMMON_FUNCTION>
+		final int PROD_MNEMONIC_NAME_TOK_MNEMONIC_NAME                                       =    2;  // <MNEMONIC_NAME_TOK> ::= 'MNEMONIC_NAME'
+		final int PROD_PROGRAM_NAME_COBOLWORD                                                =    3;  // <PROGRAM_NAME> ::= COBOLWord
+		final int PROD_USER_FUNCTION_NAME_FUNCTION_COBOLWORD                                 =    4;  // <USER_FUNCTION_NAME> ::= FUNCTION COBOLWord
+		final int PROD_WORD_COBOLWORD                                                        =    5;  // <WORD> ::= COBOLWord
+		final int PROD_LITERAL_TOK_STRINGLITERAL                                             =    6;  // <LITERAL_TOK> ::= StringLiteral
+		final int PROD_LITERAL_TOK_HEXLITERAL                                                =    7;  // <LITERAL_TOK> ::= HexLiteral
+		final int PROD_LITERAL_TOK_ZLITERAL                                                  =    8;  // <LITERAL_TOK> ::= ZLiteral
+		final int PROD_LITERAL_TOK_BOOLEANLITERAL                                            =    9;  // <LITERAL_TOK> ::= BooleanLiteral
+		final int PROD_LITERAL_TOK_BOOLEANHEXLITERAL                                         =   10;  // <LITERAL_TOK> ::= BooleanHexLiteral
+		final int PROD_LITERAL_TOK_NATIONALLITERAL                                           =   11;  // <LITERAL_TOK> ::= NationalLiteral
+		final int PROD_LITERAL_TOK_NATIONALHEXLITERAL                                        =   12;  // <LITERAL_TOK> ::= NationalHexLiteral
+		final int PROD_LITERAL_TOK_ACUBINNUMLITERAL                                          =   13;  // <LITERAL_TOK> ::= AcuBinNumLiteral
+		final int PROD_LITERAL_TOK_ACUOCTNUMLITERAL                                          =   14;  // <LITERAL_TOK> ::= AcuOctNumLiteral
+		final int PROD_LITERAL_TOK_ACUHEXNUMLITERAL                                          =   15;  // <LITERAL_TOK> ::= AcuHexNumLiteral
+		final int PROD_LITERAL_TOK_INTLITERAL                                                =   16;  // <LITERAL_TOK> ::= IntLiteral
+		final int PROD_LITERAL_TOK_DECIMALLITERAL                                            =   17;  // <LITERAL_TOK> ::= DecimalLiteral
+		final int PROD_LITERAL_TOK_SIXTY_SIX                                                 =   18;  // <LITERAL_TOK> ::= 'SIXTY_SIX'
+		final int PROD_LITERAL_TOK_SEVENTY_EIGHT                                             =   19;  // <LITERAL_TOK> ::= 'SEVENTY_EIGHT'
+		final int PROD_LITERAL_TOK_EIGHTY_EIGHT                                              =   20;  // <LITERAL_TOK> ::= 'EIGHTY_EIGHT'
+		final int PROD_LITERAL_TOK_FLOATLITERAL                                              =   21;  // <LITERAL_TOK> ::= FloatLiteral
+		final int PROD_CONCATENATE_FUNC_FUNCTION_CONCATENATE                                 =   22;  // <CONCATENATE_FUNC> ::= FUNCTION CONCATENATE
+		final int PROD_CURRENT_DATE_FUNC_FUNCTION_CURRENT_DATE                               =   23;  // <CURRENT_DATE_FUNC> ::= FUNCTION 'CURRENT_DATE'
+		final int PROD_DISPLAY_OF_FUNC_FUNCTION_DISPLAY_OF                                   =   24;  // <DISPLAY_OF_FUNC> ::= FUNCTION 'DISPLAY_OF'
+		final int PROD_FORMATTED_DATE_FUNC_FUNCTION_FORMATTED_DATE                           =   25;  // <FORMATTED_DATE_FUNC> ::= FUNCTION 'FORMATTED_DATE'
+		final int PROD_FORMATTED_DATETIME_FUNC_FUNCTION_FORMATTED_DATETIME                   =   26;  // <FORMATTED_DATETIME_FUNC> ::= FUNCTION 'FORMATTED_DATETIME'
+		final int PROD_FORMATTED_TIME_FUNC_FUNCTION_FORMATTED_TIME                           =   27;  // <FORMATTED_TIME_FUNC> ::= FUNCTION 'FORMATTED_TIME'
+		final int PROD_LENGTH_FUNC_FUNCTION_LENGTH                                           =   28;  // <LENGTH_FUNC> ::= FUNCTION LENGTH
+		final int PROD_LENGTH_FUNC_FUNCTION_BYTE_LENGTH                                      =   29;  // <LENGTH_FUNC> ::= FUNCTION 'BYTE_LENGTH'
+		final int PROD_LOCALE_DATE_FUNC_FUNCTION_LOCALE_DATE                                 =   30;  // <LOCALE_DATE_FUNC> ::= FUNCTION 'LOCALE_DATE'
+		final int PROD_LOCALE_TIME_FUNC_FUNCTION_LOCALE_TIME                                 =   31;  // <LOCALE_TIME_FUNC> ::= FUNCTION 'LOCALE_TIME'
+		final int PROD_LOCALE_TIME_FROM_FUNC_FUNCTION_LOCALE_TIME_FROM_SECONDS               =   32;  // <LOCALE_TIME_FROM_FUNC> ::= FUNCTION 'LOCALE_TIME_FROM_SECONDS'
+		final int PROD_LOWER_CASE_FUNC_FUNCTION_LOWER_CASE                                   =   33;  // <LOWER_CASE_FUNC> ::= FUNCTION 'LOWER_CASE'
+		final int PROD_NATIONAL_OF_FUNC_FUNCTION_NATIONAL_OF                                 =   34;  // <NATIONAL_OF_FUNC> ::= FUNCTION 'NATIONAL_OF'
+		final int PROD_NUMVALC_FUNC_FUNCTION_NUMVAL_C                                        =   35;  // <NUMVALC_FUNC> ::= FUNCTION 'NUMVAL_C'
+		final int PROD_REVERSE_FUNC_FUNCTION_REVERSE                                         =   36;  // <REVERSE_FUNC> ::= FUNCTION REVERSE
+		final int PROD_SUBSTITUTE_FUNC_FUNCTION_SUBSTITUTE                                   =   37;  // <SUBSTITUTE_FUNC> ::= FUNCTION SUBSTITUTE
+		final int PROD_SUBSTITUTE_CASE_FUNC_FUNCTION_SUBSTITUTE_CASE                         =   38;  // <SUBSTITUTE_CASE_FUNC> ::= FUNCTION 'SUBSTITUTE_CASE'
+		final int PROD_TRIM_FUNC_FUNCTION_TRIM                                               =   39;  // <TRIM_FUNC> ::= FUNCTION TRIM
+		final int PROD_UPPER_CASE_FUNC_FUNCTION_UPPER_CASE                                   =   40;  // <UPPER_CASE_FUNC> ::= FUNCTION 'UPPER_CASE'
+		final int PROD_WHEN_COMPILED_FUNC_FUNCTION_WHEN_COMPILED                             =   41;  // <WHEN_COMPILED_FUNC> ::= FUNCTION 'WHEN_COMPILED'
+		final int PROD_COMMON_FUNCTION_ABS                                                   =   42;  // <COMMON_FUNCTION> ::= ABS
+		final int PROD_COMMON_FUNCTION_ACOS                                                  =   43;  // <COMMON_FUNCTION> ::= ACOS
+		final int PROD_COMMON_FUNCTION_ANNUITY                                               =   44;  // <COMMON_FUNCTION> ::= ANNUITY
+		final int PROD_COMMON_FUNCTION_ASIN                                                  =   45;  // <COMMON_FUNCTION> ::= ASIN
+		final int PROD_COMMON_FUNCTION_ATAN                                                  =   46;  // <COMMON_FUNCTION> ::= ATAN
+		final int PROD_COMMON_FUNCTION_BOOLEAN_OF_INTEGER                                    =   47;  // <COMMON_FUNCTION> ::= 'BOOLEAN_OF_INTEGER'
+		final int PROD_COMMON_FUNCTION_CHAR                                                  =   48;  // <COMMON_FUNCTION> ::= CHAR
+		final int PROD_COMMON_FUNCTION_CHAR_NATIONAL                                         =   49;  // <COMMON_FUNCTION> ::= 'CHAR_NATIONAL'
+		final int PROD_COMMON_FUNCTION_COMBINED_DATETIME                                     =   50;  // <COMMON_FUNCTION> ::= 'COMBINED_DATETIME'
+		final int PROD_COMMON_FUNCTION_COS                                                   =   51;  // <COMMON_FUNCTION> ::= COS
+		final int PROD_COMMON_FUNCTION_CURRENCY_SYMBOL                                       =   52;  // <COMMON_FUNCTION> ::= 'CURRENCY_SYMBOL'
+		final int PROD_COMMON_FUNCTION_DATE_OF_INTEGER                                       =   53;  // <COMMON_FUNCTION> ::= 'DATE_OF_INTEGER'
+		final int PROD_COMMON_FUNCTION_DATE_TO_YYYYMMDD                                      =   54;  // <COMMON_FUNCTION> ::= 'DATE_TO_YYYYMMDD'
+		final int PROD_COMMON_FUNCTION_DAY_OF_INTEGER                                        =   55;  // <COMMON_FUNCTION> ::= 'DAY_OF_INTEGER'
+		final int PROD_COMMON_FUNCTION_DAY_TO_YYYYDDD                                        =   56;  // <COMMON_FUNCTION> ::= 'DAY_TO_YYYYDDD'
+		final int PROD_COMMON_FUNCTION_E                                                     =   57;  // <COMMON_FUNCTION> ::= E
+		final int PROD_COMMON_FUNCTION_EXCEPTION_FILE                                        =   58;  // <COMMON_FUNCTION> ::= 'EXCEPTION_FILE'
+		final int PROD_COMMON_FUNCTION_EXCEPTION_FILE_N                                      =   59;  // <COMMON_FUNCTION> ::= 'EXCEPTION_FILE_N'
+		final int PROD_COMMON_FUNCTION_EXCEPTION_LOCATION                                    =   60;  // <COMMON_FUNCTION> ::= 'EXCEPTION_LOCATION'
+		final int PROD_COMMON_FUNCTION_EXCEPTION_LOCATION_N                                  =   61;  // <COMMON_FUNCTION> ::= 'EXCEPTION_LOCATION_N'
+		final int PROD_COMMON_FUNCTION_EXCEPTION_STATEMENT                                   =   62;  // <COMMON_FUNCTION> ::= 'EXCEPTION_STATEMENT'
+		final int PROD_COMMON_FUNCTION_EXCEPTION_STATUS                                      =   63;  // <COMMON_FUNCTION> ::= 'EXCEPTION_STATUS'
+		final int PROD_COMMON_FUNCTION_EXP                                                   =   64;  // <COMMON_FUNCTION> ::= EXP
+		final int PROD_COMMON_FUNCTION_FACTORIAL                                             =   65;  // <COMMON_FUNCTION> ::= FACTORIAL
+		final int PROD_COMMON_FUNCTION_FORMATTED_CURRENT_DATE                                =   66;  // <COMMON_FUNCTION> ::= 'FORMATTED_CURRENT_DATE'
+		final int PROD_COMMON_FUNCTION_FRACTION_PART                                         =   67;  // <COMMON_FUNCTION> ::= 'FRACTION_PART'
+		final int PROD_COMMON_FUNCTION_HIGHEST_ALGEBRAIC                                     =   68;  // <COMMON_FUNCTION> ::= 'HIGHEST_ALGEBRAIC'
+		final int PROD_COMMON_FUNCTION_INTEGER                                               =   69;  // <COMMON_FUNCTION> ::= INTEGER
+		final int PROD_COMMON_FUNCTION_INTEGER_OF_BOOLEAN                                    =   70;  // <COMMON_FUNCTION> ::= 'INTEGER_OF_BOOLEAN'
+		final int PROD_COMMON_FUNCTION_INTEGER_OF_DATE                                       =   71;  // <COMMON_FUNCTION> ::= 'INTEGER_OF_DATE'
+		final int PROD_COMMON_FUNCTION_INTEGER_OF_DAY                                        =   72;  // <COMMON_FUNCTION> ::= 'INTEGER_OF_DAY'
+		final int PROD_COMMON_FUNCTION_INTEGER_OF_FORMATTED_DATE                             =   73;  // <COMMON_FUNCTION> ::= 'INTEGER_OF_FORMATTED_DATE'
+		final int PROD_COMMON_FUNCTION_INTEGER_PART                                          =   74;  // <COMMON_FUNCTION> ::= 'INTEGER_PART'
+		final int PROD_COMMON_FUNCTION_LOCALE_COMPARE                                        =   75;  // <COMMON_FUNCTION> ::= 'LOCALE_COMPARE'
+		final int PROD_COMMON_FUNCTION_LOG                                                   =   76;  // <COMMON_FUNCTION> ::= LOG
+		final int PROD_COMMON_FUNCTION_LOWEST_ALGEBRAIC                                      =   77;  // <COMMON_FUNCTION> ::= 'LOWEST_ALGEBRAIC'
+		final int PROD_COMMON_FUNCTION_MAX                                                   =   78;  // <COMMON_FUNCTION> ::= MAX
+		final int PROD_COMMON_FUNCTION_MEAN                                                  =   79;  // <COMMON_FUNCTION> ::= MEAN
+		final int PROD_COMMON_FUNCTION_MEDIAN                                                =   80;  // <COMMON_FUNCTION> ::= MEDIAN
+		final int PROD_COMMON_FUNCTION_MIDRANGE                                              =   81;  // <COMMON_FUNCTION> ::= MIDRANGE
+		final int PROD_COMMON_FUNCTION_MIN                                                   =   82;  // <COMMON_FUNCTION> ::= MIN
+		final int PROD_COMMON_FUNCTION_MOD                                                   =   83;  // <COMMON_FUNCTION> ::= MOD
+		final int PROD_COMMON_FUNCTION_MODULE_CALLER_ID                                      =   84;  // <COMMON_FUNCTION> ::= 'MODULE_CALLER_ID'
+		final int PROD_COMMON_FUNCTION_MODULE_DATE                                           =   85;  // <COMMON_FUNCTION> ::= 'MODULE_DATE'
+		final int PROD_COMMON_FUNCTION_MODULE_FORMATTED_DATE                                 =   86;  // <COMMON_FUNCTION> ::= 'MODULE_FORMATTED_DATE'
+		final int PROD_COMMON_FUNCTION_MODULE_ID                                             =   87;  // <COMMON_FUNCTION> ::= 'MODULE_ID'
+		final int PROD_COMMON_FUNCTION_MODULE_PATH                                           =   88;  // <COMMON_FUNCTION> ::= 'MODULE_PATH'
+		final int PROD_COMMON_FUNCTION_MODULE_SOURCE                                         =   89;  // <COMMON_FUNCTION> ::= 'MODULE_SOURCE'
+		final int PROD_COMMON_FUNCTION_MODULE_TIME                                           =   90;  // <COMMON_FUNCTION> ::= 'MODULE_TIME'
+		final int PROD_COMMON_FUNCTION_MONETARY_DECIMAL_POINT                                =   91;  // <COMMON_FUNCTION> ::= 'MONETARY_DECIMAL_POINT'
+		final int PROD_COMMON_FUNCTION_MONETARY_THOUSANDS_SEPARATOR                          =   92;  // <COMMON_FUNCTION> ::= 'MONETARY_THOUSANDS_SEPARATOR'
+		final int PROD_COMMON_FUNCTION_NUMERIC_DECIMAL_POINT                                 =   93;  // <COMMON_FUNCTION> ::= 'NUMERIC_DECIMAL_POINT'
+		final int PROD_COMMON_FUNCTION_NUMERIC_THOUSANDS_SEPARATOR                           =   94;  // <COMMON_FUNCTION> ::= 'NUMERIC_THOUSANDS_SEPARATOR'
+		final int PROD_COMMON_FUNCTION_NUMVAL                                                =   95;  // <COMMON_FUNCTION> ::= NUMVAL
+		final int PROD_COMMON_FUNCTION_NUMVAL_F                                              =   96;  // <COMMON_FUNCTION> ::= 'NUMVAL_F'
+		final int PROD_COMMON_FUNCTION_ORD                                                   =   97;  // <COMMON_FUNCTION> ::= ORD
+		final int PROD_COMMON_FUNCTION_ORD_MAX                                               =   98;  // <COMMON_FUNCTION> ::= 'ORD_MAX'
+		final int PROD_COMMON_FUNCTION_ORD_MIN                                               =   99;  // <COMMON_FUNCTION> ::= 'ORD_MIN'
+		final int PROD_COMMON_FUNCTION_PI                                                    =  100;  // <COMMON_FUNCTION> ::= PI
+		final int PROD_COMMON_FUNCTION_PRESENT_VALUE                                         =  101;  // <COMMON_FUNCTION> ::= 'PRESENT_VALUE'
+		final int PROD_COMMON_FUNCTION_RANDOM                                                =  102;  // <COMMON_FUNCTION> ::= RANDOM
+		final int PROD_COMMON_FUNCTION_RANGE                                                 =  103;  // <COMMON_FUNCTION> ::= RANGE
+		final int PROD_COMMON_FUNCTION_REM                                                   =  104;  // <COMMON_FUNCTION> ::= REM
+		final int PROD_COMMON_FUNCTION_SECONDS_FROM_FORMATTED_TIME                           =  105;  // <COMMON_FUNCTION> ::= 'SECONDS_FROM_FORMATTED_TIME'
+		final int PROD_COMMON_FUNCTION_SECONDS_PAST_MIDNIGHT                                 =  106;  // <COMMON_FUNCTION> ::= 'SECONDS_PAST_MIDNIGHT'
+		final int PROD_COMMON_FUNCTION_SIGN                                                  =  107;  // <COMMON_FUNCTION> ::= SIGN
+		final int PROD_COMMON_FUNCTION_SIN                                                   =  108;  // <COMMON_FUNCTION> ::= SIN
+		final int PROD_COMMON_FUNCTION_SQRT                                                  =  109;  // <COMMON_FUNCTION> ::= SQRT
+		final int PROD_COMMON_FUNCTION_STANDARD_COMPARE                                      =  110;  // <COMMON_FUNCTION> ::= 'STANDARD_COMPARE'
+		final int PROD_COMMON_FUNCTION_STANDARD_DEVIATION                                    =  111;  // <COMMON_FUNCTION> ::= 'STANDARD_DEVIATION'
+		final int PROD_COMMON_FUNCTION_STORED_CHAR_LENGTH                                    =  112;  // <COMMON_FUNCTION> ::= 'STORED_CHAR_LENGTH'
+		final int PROD_COMMON_FUNCTION_SUM                                                   =  113;  // <COMMON_FUNCTION> ::= SUM
+		final int PROD_COMMON_FUNCTION_TAN                                                   =  114;  // <COMMON_FUNCTION> ::= TAN
+		final int PROD_COMMON_FUNCTION_TEST_DATE_YYYYMMDD                                    =  115;  // <COMMON_FUNCTION> ::= 'TEST_DATE_YYYYMMDD'
+		final int PROD_COMMON_FUNCTION_TEST_DAY_YYYYDDD                                      =  116;  // <COMMON_FUNCTION> ::= 'TEST_DAY_YYYYDDD'
+		final int PROD_COMMON_FUNCTION_TEST_FORMATTED_DATETIME                               =  117;  // <COMMON_FUNCTION> ::= 'TEST_FORMATTED_DATETIME'
+		final int PROD_COMMON_FUNCTION_TEST_NUMVAL                                           =  118;  // <COMMON_FUNCTION> ::= 'TEST_NUMVAL'
+		final int PROD_COMMON_FUNCTION_TEST_NUMVAL_F                                         =  119;  // <COMMON_FUNCTION> ::= 'TEST_NUMVAL_F'
+		final int PROD_COMMON_FUNCTION_VARIANCE                                              =  120;  // <COMMON_FUNCTION> ::= VARIANCE
+		final int PROD_COMMON_FUNCTION_YEAR_TO_YYYY                                          =  121;  // <COMMON_FUNCTION> ::= 'YEAR_TO_YYYY'
+		final int PROD_START                                                                 =  122;  // <start> ::= <compilation_group>
+		final int PROD_COMPILATION_GROUP                                                     =  123;  // <compilation_group> ::= <simple_prog>
+		final int PROD_COMPILATION_GROUP2                                                    =  124;  // <compilation_group> ::= <nested_list>
+		final int PROD_NESTED_LIST                                                           =  125;  // <nested_list> ::= <source_element_list>
+		final int PROD_SOURCE_ELEMENT_LIST                                                   =  126;  // <source_element_list> ::= <source_element>
+		final int PROD_SOURCE_ELEMENT_LIST2                                                  =  127;  // <source_element_list> ::= <source_element_list> <source_element>
+		final int PROD_SOURCE_ELEMENT                                                        =  128;  // <source_element> ::= <program_definition>
+		final int PROD_SOURCE_ELEMENT2                                                       =  129;  // <source_element> ::= <function_definition>
+		final int PROD_SIMPLE_PROG                                                           =  130;  // <simple_prog> ::= <_program_body>
+		final int PROD_PROGRAM_DEFINITION                                                    =  131;  // <program_definition> ::= <_identification_header> <program_id_paragraph> <_Comment Items> <_options_paragraph> <_program_body> <_end_program_list>
+		final int PROD_FUNCTION_DEFINITION                                                   =  132;  // <function_definition> ::= <_identification_header> <function_id_paragraph> <_Comment Items> <_options_paragraph> <_program_body> <end_function>
+		final int PROD__COMMENTITEMS                                                         =  133;  // <_Comment Items> ::= <_Comment Items> <Comment Item>
+		final int PROD__COMMENTITEMS2                                                        =  134;  // <_Comment Items> ::= 
+		final int PROD_COMMENTITEM_AUTHOR_TOK_DOT_TOK_DOT                                    =  135;  // <Comment Item> ::= AUTHOR 'TOK_DOT' <NoiseList> 'TOK_DOT'
+		final int PROD_COMMENTITEM_INSTALLATION_TOK_DOT_TOK_DOT                              =  136;  // <Comment Item> ::= INSTALLATION 'TOK_DOT' <NoiseList> 'TOK_DOT'
+		final int PROD_COMMENTITEM_DATE_WRITTEN_TOK_DOT_TOK_DOT                              =  137;  // <Comment Item> ::= 'DATE_WRITTEN' 'TOK_DOT' <NoiseList> 'TOK_DOT'
+		final int PROD_COMMENTITEM_DATE_COMPILED_TOK_DOT_TOK_DOT                             =  138;  // <Comment Item> ::= 'DATE_COMPILED' 'TOK_DOT' <NoiseList> 'TOK_DOT'
+		final int PROD_COMMENTITEM_SECURITY_TOK_DOT_TOK_DOT                                  =  139;  // <Comment Item> ::= SECURITY 'TOK_DOT' <NoiseList> 'TOK_DOT'
+		final int PROD_NOISELIST                                                             =  140;  // <NoiseList> ::= <NoiseList> <Noise>
+		final int PROD_NOISELIST2                                                            =  141;  // <NoiseList> ::= <Noise>
+		final int PROD_NOISE_STRINGLITERAL                                                   =  142;  // <Noise> ::= StringLiteral
+		final int PROD_NOISE_INTLITERAL                                                      =  143;  // <Noise> ::= IntLiteral
+		final int PROD_NOISE_DECIMALLITERAL                                                  =  144;  // <Noise> ::= DecimalLiteral
+		final int PROD_NOISE_COBOLWORD                                                       =  145;  // <Noise> ::= COBOLWord
+		final int PROD_NOISE_COMMA_DELIM                                                     =  146;  // <Noise> ::= 'COMMA_DELIM'
+		final int PROD__END_PROGRAM_LIST                                                     =  147;  // <_end_program_list> ::= 
+		final int PROD__END_PROGRAM_LIST2                                                    =  148;  // <_end_program_list> ::= <end_program_list>
+		final int PROD_END_PROGRAM_LIST                                                      =  149;  // <end_program_list> ::= <end_program>
+		final int PROD_END_PROGRAM_LIST2                                                     =  150;  // <end_program_list> ::= <end_program_list> <end_program>
+		final int PROD_END_PROGRAM_END_PROGRAM_TOK_DOT                                       =  151;  // <end_program> ::= 'END_PROGRAM' <end_program_name> 'TOK_DOT'
+		final int PROD_END_FUNCTION_END_FUNCTION_TOK_DOT                                     =  152;  // <end_function> ::= 'END_FUNCTION' <end_program_name> 'TOK_DOT'
+		final int PROD__PROGRAM_BODY                                                         =  153;  // <_program_body> ::= <_environment_division> <_data_division> <_procedure_division>
+		final int PROD__IDENTIFICATION_HEADER                                                =  154;  // <_identification_header> ::= 
+		final int PROD__IDENTIFICATION_HEADER_DIVISION_TOK_DOT                               =  155;  // <_identification_header> ::= <identification_or_id> DIVISION 'TOK_DOT'
+		final int PROD_IDENTIFICATION_OR_ID_IDENTIFICATION                                   =  156;  // <identification_or_id> ::= IDENTIFICATION
+		final int PROD_IDENTIFICATION_OR_ID_ID                                               =  157;  // <identification_or_id> ::= ID
+		final int PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT                       =  158;  // <program_id_paragraph> ::= 'PROGRAM_ID' 'TOK_DOT' <program_id_name> <_as_literal> <_program_type> 'TOK_DOT'
+		final int PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT                     =  159;  // <function_id_paragraph> ::= 'FUNCTION_ID' 'TOK_DOT' <program_id_name> <_as_literal> 'TOK_DOT'
+		final int PROD_PROGRAM_ID_NAME                                                       =  160;  // <program_id_name> ::= <PROGRAM_NAME>
+		final int PROD_PROGRAM_ID_NAME2                                                      =  161;  // <program_id_name> ::= <LITERAL_TOK>
+		final int PROD_END_PROGRAM_NAME                                                      =  162;  // <end_program_name> ::= <PROGRAM_NAME>
+		final int PROD_END_PROGRAM_NAME2                                                     =  163;  // <end_program_name> ::= <LITERAL_TOK>
+		final int PROD__AS_LITERAL                                                           =  164;  // <_as_literal> ::= 
+		final int PROD__AS_LITERAL_AS                                                        =  165;  // <_as_literal> ::= AS <LITERAL_TOK>
+		final int PROD__PROGRAM_TYPE                                                         =  166;  // <_program_type> ::= 
+		final int PROD__PROGRAM_TYPE2                                                        =  167;  // <_program_type> ::= <_is> <program_type_clause> <_program>
+		final int PROD_PROGRAM_TYPE_CLAUSE_COMMON                                            =  168;  // <program_type_clause> ::= COMMON
+		final int PROD_PROGRAM_TYPE_CLAUSE                                                   =  169;  // <program_type_clause> ::= <init_or_recurse_and_common>
+		final int PROD_PROGRAM_TYPE_CLAUSE2                                                  =  170;  // <program_type_clause> ::= <init_or_recurse>
+		final int PROD_PROGRAM_TYPE_CLAUSE_EXTERNAL                                          =  171;  // <program_type_clause> ::= EXTERNAL
+		final int PROD_INIT_OR_RECURSE_AND_COMMON_COMMON                                     =  172;  // <init_or_recurse_and_common> ::= <init_or_recurse> COMMON
+		final int PROD_INIT_OR_RECURSE_AND_COMMON_COMMON2                                    =  173;  // <init_or_recurse_and_common> ::= COMMON <init_or_recurse>
+		final int PROD_INIT_OR_RECURSE_TOK_INITIAL                                           =  174;  // <init_or_recurse> ::= 'TOK_INITIAL'
+		final int PROD_INIT_OR_RECURSE_RECURSIVE                                             =  175;  // <init_or_recurse> ::= RECURSIVE
+		final int PROD__OPTIONS_PARAGRAPH                                                    =  176;  // <_options_paragraph> ::= 
+		final int PROD__OPTIONS_PARAGRAPH_OPTIONS_TOK_DOT                                    =  177;  // <_options_paragraph> ::= OPTIONS 'TOK_DOT' <_options_clauses>
+		final int PROD__OPTIONS_CLAUSES_TOK_DOT                                              =  178;  // <_options_clauses> ::= <_default_rounded_clause> <_entry_convention_clause> <_intermediate_rounding_clause> 'TOK_DOT'
+		final int PROD__DEFAULT_ROUNDED_CLAUSE                                               =  179;  // <_default_rounded_clause> ::= 
+		final int PROD__DEFAULT_ROUNDED_CLAUSE_DEFAULT_ROUNDED                               =  180;  // <_default_rounded_clause> ::= DEFAULT ROUNDED <_mode> <_is> <round_choice>
+		final int PROD__ENTRY_CONVENTION_CLAUSE                                              =  181;  // <_entry_convention_clause> ::= 
+		final int PROD__ENTRY_CONVENTION_CLAUSE_ENTRY_CONVENTION                             =  182;  // <_entry_convention_clause> ::= 'ENTRY_CONVENTION' <_is> <convention_type>
+		final int PROD_CONVENTION_TYPE_COBOL                                                 =  183;  // <convention_type> ::= COBOL
+		final int PROD_CONVENTION_TYPE_TOK_EXTERN                                            =  184;  // <convention_type> ::= 'TOK_EXTERN'
+		final int PROD_CONVENTION_TYPE_STDCALL                                               =  185;  // <convention_type> ::= STDCALL
+		final int PROD__INTERMEDIATE_ROUNDING_CLAUSE                                         =  186;  // <_intermediate_rounding_clause> ::= 
+		final int PROD__INTERMEDIATE_ROUNDING_CLAUSE_INTERMEDIATE_ROUNDING                   =  187;  // <_intermediate_rounding_clause> ::= INTERMEDIATE ROUNDING <_is> <intermediate_rounding_choice>
+		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_NEAREST_AWAY_FROM_ZERO                   =  188;  // <intermediate_rounding_choice> ::= 'NEAREST_AWAY_FROM_ZERO'
+		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_NEAREST_EVEN                             =  189;  // <intermediate_rounding_choice> ::= 'NEAREST_EVEN'
+		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_PROHIBITED                               =  190;  // <intermediate_rounding_choice> ::= PROHIBITED
+		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_TRUNCATION                               =  191;  // <intermediate_rounding_choice> ::= TRUNCATION
+		final int PROD__ENVIRONMENT_DIVISION                                                 =  192;  // <_environment_division> ::= <_environment_header> <_configuration_section> <_input_output_section>
+		final int PROD__ENVIRONMENT_HEADER                                                   =  193;  // <_environment_header> ::= 
+		final int PROD__ENVIRONMENT_HEADER_ENVIRONMENT_DIVISION_TOK_DOT                      =  194;  // <_environment_header> ::= ENVIRONMENT DIVISION 'TOK_DOT'
+		final int PROD__CONFIGURATION_SECTION                                                =  195;  // <_configuration_section> ::= <_configuration_header> <_source_object_computer_paragraphs> <_special_names_paragraph> <_special_names_sentence_list> <_repository_paragraph>
+		final int PROD__CONFIGURATION_HEADER                                                 =  196;  // <_configuration_header> ::= 
+		final int PROD__CONFIGURATION_HEADER_CONFIGURATION_SECTION_TOK_DOT                   =  197;  // <_configuration_header> ::= CONFIGURATION SECTION 'TOK_DOT'
+		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS                                    =  198;  // <_source_object_computer_paragraphs> ::= 
+		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS2                                   =  199;  // <_source_object_computer_paragraphs> ::= <source_computer_paragraph>
+		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS3                                   =  200;  // <_source_object_computer_paragraphs> ::= <object_computer_paragraph>
+		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS4                                   =  201;  // <_source_object_computer_paragraphs> ::= <source_computer_paragraph> <object_computer_paragraph>
+		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS5                                   =  202;  // <_source_object_computer_paragraphs> ::= <object_computer_paragraph> <source_computer_paragraph>
+		final int PROD_SOURCE_COMPUTER_PARAGRAPH_SOURCE_COMPUTER_TOK_DOT                     =  203;  // <source_computer_paragraph> ::= 'SOURCE_COMPUTER' 'TOK_DOT' <_source_computer_entry>
+		final int PROD__SOURCE_COMPUTER_ENTRY                                                =  204;  // <_source_computer_entry> ::= 
+		final int PROD__SOURCE_COMPUTER_ENTRY_TOK_DOT                                        =  205;  // <_source_computer_entry> ::= <computer_words> <_with_debugging_mode> 'TOK_DOT'
+		final int PROD__WITH_DEBUGGING_MODE                                                  =  206;  // <_with_debugging_mode> ::= 
+		final int PROD__WITH_DEBUGGING_MODE_DEBUGGING_MODE                                   =  207;  // <_with_debugging_mode> ::= <_with> DEBUGGING MODE
+		final int PROD_OBJECT_COMPUTER_PARAGRAPH_OBJECT_COMPUTER_TOK_DOT                     =  208;  // <object_computer_paragraph> ::= 'OBJECT_COMPUTER' 'TOK_DOT' <_object_computer_entry>
+		final int PROD__OBJECT_COMPUTER_ENTRY                                                =  209;  // <_object_computer_entry> ::= 
+		final int PROD__OBJECT_COMPUTER_ENTRY_TOK_DOT                                        =  210;  // <_object_computer_entry> ::= <computer_words> 'TOK_DOT'
+		final int PROD__OBJECT_COMPUTER_ENTRY_TOK_DOT2                                       =  211;  // <_object_computer_entry> ::= <computer_words> <object_clauses_list> 'TOK_DOT'
+		final int PROD__OBJECT_COMPUTER_ENTRY_TOK_DOT3                                       =  212;  // <_object_computer_entry> ::= <object_clauses_list> 'TOK_DOT'
+		final int PROD_OBJECT_CLAUSES_LIST                                                   =  213;  // <object_clauses_list> ::= <object_clauses>
+		final int PROD_OBJECT_CLAUSES_LIST2                                                  =  214;  // <object_clauses_list> ::= <object_clauses_list> <object_clauses>
+		final int PROD_OBJECT_CLAUSES                                                        =  215;  // <object_clauses> ::= <object_computer_memory>
+		final int PROD_OBJECT_CLAUSES2                                                       =  216;  // <object_clauses> ::= <object_computer_sequence>
+		final int PROD_OBJECT_CLAUSES3                                                       =  217;  // <object_clauses> ::= <object_computer_segment>
+		final int PROD_OBJECT_CLAUSES4                                                       =  218;  // <object_clauses> ::= <object_computer_class>
+		final int PROD_OBJECT_COMPUTER_MEMORY_MEMORY_SIZE                                    =  219;  // <object_computer_memory> ::= MEMORY SIZE <_is> <integer> <object_char_or_word>
+		final int PROD_OBJECT_COMPUTER_SEQUENCE                                              =  220;  // <object_computer_sequence> ::= <prog_coll_sequence> <_is> <single_reference>
+		final int PROD_OBJECT_COMPUTER_SEGMENT_SEGMENT_LIMIT                                 =  221;  // <object_computer_segment> ::= 'SEGMENT_LIMIT' <_is> <integer>
+		final int PROD_OBJECT_COMPUTER_CLASS_CLASSIFICATION                                  =  222;  // <object_computer_class> ::= <_character> CLASSIFICATION <_is> <locale_class>
+		final int PROD_LOCALE_CLASS                                                          =  223;  // <locale_class> ::= <single_reference>
+		final int PROD_LOCALE_CLASS_LOCALE                                                   =  224;  // <locale_class> ::= LOCALE
+		final int PROD_LOCALE_CLASS_USER_DEFAULT                                             =  225;  // <locale_class> ::= 'USER_DEFAULT'
+		final int PROD_LOCALE_CLASS_SYSTEM_DEFAULT                                           =  226;  // <locale_class> ::= 'SYSTEM_DEFAULT'
+		final int PROD_COMPUTER_WORDS                                                        =  227;  // <computer_words> ::= <WORD>
+		final int PROD_COMPUTER_WORDS2                                                       =  228;  // <computer_words> ::= <computer_words> <WORD>
+		final int PROD__REPOSITORY_PARAGRAPH                                                 =  229;  // <_repository_paragraph> ::= 
+		final int PROD__REPOSITORY_PARAGRAPH_REPOSITORY_TOK_DOT                              =  230;  // <_repository_paragraph> ::= REPOSITORY 'TOK_DOT' <_repository_entry>
+		final int PROD__REPOSITORY_ENTRY                                                     =  231;  // <_repository_entry> ::= 
+		final int PROD__REPOSITORY_ENTRY_TOK_DOT                                             =  232;  // <_repository_entry> ::= <repository_list> 'TOK_DOT'
+		final int PROD_REPOSITORY_LIST                                                       =  233;  // <repository_list> ::= <repository_name>
+		final int PROD_REPOSITORY_LIST2                                                      =  234;  // <repository_list> ::= <repository_list> <repository_name>
+		final int PROD_REPOSITORY_NAME_FUNCTION_ALL_INTRINSIC                                =  235;  // <repository_name> ::= FUNCTION ALL INTRINSIC
+		final int PROD_REPOSITORY_NAME_FUNCTION                                              =  236;  // <repository_name> ::= FUNCTION <WORD> <_as_literal>
+		final int PROD_REPOSITORY_NAME_FUNCTION_INTRINSIC                                    =  237;  // <repository_name> ::= FUNCTION <repository_name_list> INTRINSIC
+		final int PROD_REPOSITORY_NAME_PROGRAM                                               =  238;  // <repository_name> ::= PROGRAM <WORD> <_as_literal>
+		final int PROD_REPOSITORY_NAME_LIST                                                  =  239;  // <repository_name_list> ::= <FUNCTION_NAME>
+		final int PROD_REPOSITORY_NAME_LIST2                                                 =  240;  // <repository_name_list> ::= <repository_name_list> <FUNCTION_NAME>
+		final int PROD__SPECIAL_NAMES_PARAGRAPH                                              =  241;  // <_special_names_paragraph> ::= 
+		final int PROD__SPECIAL_NAMES_PARAGRAPH_SPECIAL_NAMES_TOK_DOT                        =  242;  // <_special_names_paragraph> ::= 'SPECIAL_NAMES' 'TOK_DOT'
+		final int PROD__SPECIAL_NAMES_SENTENCE_LIST                                          =  243;  // <_special_names_sentence_list> ::= 
+		final int PROD__SPECIAL_NAMES_SENTENCE_LIST2                                         =  244;  // <_special_names_sentence_list> ::= <special_names_sentence_list>
+		final int PROD_SPECIAL_NAMES_SENTENCE_LIST_TOK_DOT                                   =  245;  // <special_names_sentence_list> ::= <special_name_list> 'TOK_DOT'
+		final int PROD_SPECIAL_NAMES_SENTENCE_LIST_TOK_DOT2                                  =  246;  // <special_names_sentence_list> ::= <special_names_sentence_list> <special_name_list> 'TOK_DOT'
+		final int PROD_SPECIAL_NAME_LIST                                                     =  247;  // <special_name_list> ::= <special_name>
+		final int PROD_SPECIAL_NAME_LIST2                                                    =  248;  // <special_name_list> ::= <special_name_list> <special_name>
+		final int PROD_SPECIAL_NAME                                                          =  249;  // <special_name> ::= <mnemonic_name_clause>
+		final int PROD_SPECIAL_NAME2                                                         =  250;  // <special_name> ::= <alphabet_name_clause>
+		final int PROD_SPECIAL_NAME3                                                         =  251;  // <special_name> ::= <symbolic_characters_clause>
+		final int PROD_SPECIAL_NAME4                                                         =  252;  // <special_name> ::= <locale_clause>
+		final int PROD_SPECIAL_NAME5                                                         =  253;  // <special_name> ::= <class_name_clause>
+		final int PROD_SPECIAL_NAME6                                                         =  254;  // <special_name> ::= <currency_sign_clause>
+		final int PROD_SPECIAL_NAME7                                                         =  255;  // <special_name> ::= <decimal_point_clause>
+		final int PROD_SPECIAL_NAME8                                                         =  256;  // <special_name> ::= <numeric_sign_clause>
+		final int PROD_SPECIAL_NAME9                                                         =  257;  // <special_name> ::= <cursor_clause>
+		final int PROD_SPECIAL_NAME10                                                        =  258;  // <special_name> ::= <crt_status_clause>
+		final int PROD_SPECIAL_NAME11                                                        =  259;  // <special_name> ::= <screen_control>
+		final int PROD_SPECIAL_NAME12                                                        =  260;  // <special_name> ::= <event_status>
+		final int PROD_SPECIAL_NAME_COMMA_DELIM                                              =  261;  // <special_name> ::= 'COMMA_DELIM'
+		final int PROD_MNEMONIC_NAME_CLAUSE                                                  =  262;  // <mnemonic_name_clause> ::= <WORD> <mnemonic_choices>
+		final int PROD_MNEMONIC_CHOICES_CRT                                                  =  263;  // <mnemonic_choices> ::= <_is> CRT
+		final int PROD_MNEMONIC_CHOICES                                                      =  264;  // <mnemonic_choices> ::= <integer> <_is> <undefined_word>
+		final int PROD_MNEMONIC_CHOICES2                                                     =  265;  // <mnemonic_choices> ::= <_is> <undefined_word> <_special_name_mnemonic_on_off>
+		final int PROD_MNEMONIC_CHOICES3                                                     =  266;  // <mnemonic_choices> ::= <on_off_clauses>
+		final int PROD__SPECIAL_NAME_MNEMONIC_ON_OFF                                         =  267;  // <_special_name_mnemonic_on_off> ::= 
+		final int PROD__SPECIAL_NAME_MNEMONIC_ON_OFF2                                        =  268;  // <_special_name_mnemonic_on_off> ::= <on_off_clauses>
+		final int PROD_ON_OFF_CLAUSES                                                        =  269;  // <on_off_clauses> ::= <on_off_clauses_1>
+		final int PROD_ON_OFF_CLAUSES_1                                                      =  270;  // <on_off_clauses_1> ::= <on_or_off> <_onoff_status> <undefined_word>
+		final int PROD_ON_OFF_CLAUSES_12                                                     =  271;  // <on_off_clauses_1> ::= <on_off_clauses_1> <on_or_off> <_onoff_status> <undefined_word>
+		final int PROD_ALPHABET_NAME_CLAUSE_ALPHABET                                         =  272;  // <alphabet_name_clause> ::= ALPHABET <undefined_word> <_is> <alphabet_definition>
+		final int PROD_ALPHABET_DEFINITION_NATIVE                                            =  273;  // <alphabet_definition> ::= NATIVE
+		final int PROD_ALPHABET_DEFINITION_STANDARD_1                                        =  274;  // <alphabet_definition> ::= 'STANDARD_1'
+		final int PROD_ALPHABET_DEFINITION_STANDARD_2                                        =  275;  // <alphabet_definition> ::= 'STANDARD_2'
+		final int PROD_ALPHABET_DEFINITION_EBCDIC                                            =  276;  // <alphabet_definition> ::= EBCDIC
+		final int PROD_ALPHABET_DEFINITION_ASCII                                             =  277;  // <alphabet_definition> ::= ASCII
+		final int PROD_ALPHABET_DEFINITION                                                   =  278;  // <alphabet_definition> ::= <alphabet_literal_list>
+		final int PROD_ALPHABET_LITERAL_LIST                                                 =  279;  // <alphabet_literal_list> ::= <alphabet_literal>
+		final int PROD_ALPHABET_LITERAL_LIST2                                                =  280;  // <alphabet_literal_list> ::= <alphabet_literal_list> <alphabet_literal>
+		final int PROD_ALPHABET_LITERAL                                                      =  281;  // <alphabet_literal> ::= <alphabet_lits>
+		final int PROD_ALPHABET_LITERAL_THRU                                                 =  282;  // <alphabet_literal> ::= <alphabet_lits> THRU <alphabet_lits>
+		final int PROD_ALPHABET_LITERAL_ALSO                                                 =  283;  // <alphabet_literal> ::= <alphabet_lits> ALSO <alphabet_also_sequence>
+		final int PROD_ALPHABET_ALSO_SEQUENCE                                                =  284;  // <alphabet_also_sequence> ::= <alphabet_lits>
+		final int PROD_ALPHABET_ALSO_SEQUENCE_ALSO                                           =  285;  // <alphabet_also_sequence> ::= <alphabet_also_sequence> ALSO <alphabet_lits>
+		final int PROD_ALPHABET_LITS                                                         =  286;  // <alphabet_lits> ::= <LITERAL_TOK>
+		final int PROD_ALPHABET_LITS_SPACE                                                   =  287;  // <alphabet_lits> ::= SPACE
+		final int PROD_ALPHABET_LITS_ZERO                                                    =  288;  // <alphabet_lits> ::= ZERO
+		final int PROD_ALPHABET_LITS_QUOTE                                                   =  289;  // <alphabet_lits> ::= QUOTE
+		final int PROD_ALPHABET_LITS_HIGH_VALUE                                              =  290;  // <alphabet_lits> ::= 'HIGH_VALUE'
+		final int PROD_ALPHABET_LITS_LOW_VALUE                                               =  291;  // <alphabet_lits> ::= 'LOW_VALUE'
+		final int PROD_SPACE_OR_ZERO_SPACE                                                   =  292;  // <space_or_zero> ::= SPACE
+		final int PROD_SPACE_OR_ZERO_ZERO                                                    =  293;  // <space_or_zero> ::= ZERO
+		final int PROD_SYMBOLIC_CHARACTERS_CLAUSE                                            =  294;  // <symbolic_characters_clause> ::= <symbolic_collection> <_sym_in_word>
+		final int PROD__SYM_IN_WORD                                                          =  295;  // <_sym_in_word> ::= 
+		final int PROD__SYM_IN_WORD_IN                                                       =  296;  // <_sym_in_word> ::= IN <WORD>
+		final int PROD_SYMBOLIC_COLLECTION_SYMBOLIC                                          =  297;  // <symbolic_collection> ::= SYMBOLIC <_characters> <symbolic_chars_list>
+		final int PROD_SYMBOLIC_CHARS_LIST                                                   =  298;  // <symbolic_chars_list> ::= <symbolic_chars_phrase>
+		final int PROD_SYMBOLIC_CHARS_LIST2                                                  =  299;  // <symbolic_chars_list> ::= <symbolic_chars_list> <symbolic_chars_phrase>
+		final int PROD_SYMBOLIC_CHARS_PHRASE                                                 =  300;  // <symbolic_chars_phrase> ::= <char_list> <_is_are> <integer_list>
+		final int PROD_CHAR_LIST                                                             =  301;  // <char_list> ::= <unique_word>
+		final int PROD_CHAR_LIST2                                                            =  302;  // <char_list> ::= <char_list> <unique_word>
+		final int PROD_INTEGER_LIST                                                          =  303;  // <integer_list> ::= <symbolic_integer>
+		final int PROD_INTEGER_LIST2                                                         =  304;  // <integer_list> ::= <integer_list> <symbolic_integer>
+		final int PROD_CLASS_NAME_CLAUSE_CLASS                                               =  305;  // <class_name_clause> ::= CLASS <undefined_word> <_is> <class_item_list>
+		final int PROD_CLASS_ITEM_LIST                                                       =  306;  // <class_item_list> ::= <class_item>
+		final int PROD_CLASS_ITEM_LIST2                                                      =  307;  // <class_item_list> ::= <class_item_list> <class_item>
+		final int PROD_CLASS_ITEM                                                            =  308;  // <class_item> ::= <class_value>
+		final int PROD_CLASS_ITEM_THRU                                                       =  309;  // <class_item> ::= <class_value> THRU <class_value>
+		final int PROD_LOCALE_CLAUSE_LOCALE                                                  =  310;  // <locale_clause> ::= LOCALE <undefined_word> <_is> <LITERAL_TOK>
+		final int PROD_CURRENCY_SIGN_CLAUSE_CURRENCY                                         =  311;  // <currency_sign_clause> ::= CURRENCY <_sign> <_is> <LITERAL_TOK> <_with_pic_symbol>
+		final int PROD__WITH_PIC_SYMBOL                                                      =  312;  // <_with_pic_symbol> ::= 
+		final int PROD__WITH_PIC_SYMBOL_PICTURE_SYMBOL                                       =  313;  // <_with_pic_symbol> ::= <_with> 'PICTURE_SYMBOL' <LITERAL_TOK>
+		final int PROD_DECIMAL_POINT_CLAUSE_DECIMAL_POINT_COMMA                              =  314;  // <decimal_point_clause> ::= 'DECIMAL_POINT' <_is> COMMA
+		final int PROD_NUMERIC_SIGN_CLAUSE_NUMERIC_SIGN_TRAILING_SEPARATE                    =  315;  // <numeric_sign_clause> ::= NUMERIC SIGN <_is> TRAILING SEPARATE
+		final int PROD_CURSOR_CLAUSE_CURSOR                                                  =  316;  // <cursor_clause> ::= CURSOR <_is> <reference>
+		final int PROD_CRT_STATUS_CLAUSE_CRT_STATUS                                          =  317;  // <crt_status_clause> ::= CRT STATUS <_is> <reference>
+		final int PROD_SCREEN_CONTROL_SCREEN_CONTROL                                         =  318;  // <screen_control> ::= 'SCREEN_CONTROL' <_is> <reference>
+		final int PROD_EVENT_STATUS_EVENT_STATUS                                             =  319;  // <event_status> ::= 'EVENT_STATUS' <_is> <reference>
+		final int PROD__INPUT_OUTPUT_SECTION                                                 =  320;  // <_input_output_section> ::= <_input_output_header> <_file_control_header> <_file_control_sequence> <_i_o_control_header> <_i_o_control>
+		final int PROD__INPUT_OUTPUT_HEADER                                                  =  321;  // <_input_output_header> ::= 
+		final int PROD__INPUT_OUTPUT_HEADER_INPUT_OUTPUT_SECTION_TOK_DOT                     =  322;  // <_input_output_header> ::= 'INPUT_OUTPUT' SECTION 'TOK_DOT'
+		final int PROD__FILE_CONTROL_HEADER                                                  =  323;  // <_file_control_header> ::= 
+		final int PROD__FILE_CONTROL_HEADER_FILE_CONTROL_TOK_DOT                             =  324;  // <_file_control_header> ::= 'FILE_CONTROL' 'TOK_DOT'
+		final int PROD__I_O_CONTROL_HEADER                                                   =  325;  // <_i_o_control_header> ::= 
+		final int PROD__I_O_CONTROL_HEADER_I_O_CONTROL_TOK_DOT                               =  326;  // <_i_o_control_header> ::= 'I_O_CONTROL' 'TOK_DOT'
+		final int PROD__FILE_CONTROL_SEQUENCE                                                =  327;  // <_file_control_sequence> ::= 
+		final int PROD__FILE_CONTROL_SEQUENCE2                                               =  328;  // <_file_control_sequence> ::= <_file_control_sequence> <file_control_entry>
+		final int PROD_FILE_CONTROL_ENTRY_SELECT                                             =  329;  // <file_control_entry> ::= SELECT <flag_optional> <undefined_word> <_select_clauses_or_error>
+		final int PROD__SELECT_CLAUSES_OR_ERROR_TOK_DOT                                      =  330;  // <_select_clauses_or_error> ::= <_select_clause_sequence> 'TOK_DOT'
+		final int PROD__SELECT_CLAUSE_SEQUENCE                                               =  331;  // <_select_clause_sequence> ::= 
+		final int PROD__SELECT_CLAUSE_SEQUENCE2                                              =  332;  // <_select_clause_sequence> ::= <_select_clause_sequence> <select_clause>
+		final int PROD_SELECT_CLAUSE                                                         =  333;  // <select_clause> ::= <assign_clause>
+		final int PROD_SELECT_CLAUSE2                                                        =  334;  // <select_clause> ::= <access_mode_clause>
+		final int PROD_SELECT_CLAUSE3                                                        =  335;  // <select_clause> ::= <alternative_record_key_clause>
+		final int PROD_SELECT_CLAUSE4                                                        =  336;  // <select_clause> ::= <collating_sequence_clause>
+		final int PROD_SELECT_CLAUSE5                                                        =  337;  // <select_clause> ::= <file_status_clause>
+		final int PROD_SELECT_CLAUSE6                                                        =  338;  // <select_clause> ::= <lock_mode_clause>
+		final int PROD_SELECT_CLAUSE7                                                        =  339;  // <select_clause> ::= <organization_clause>
+		final int PROD_SELECT_CLAUSE8                                                        =  340;  // <select_clause> ::= <padding_character_clause>
+		final int PROD_SELECT_CLAUSE9                                                        =  341;  // <select_clause> ::= <record_delimiter_clause>
+		final int PROD_SELECT_CLAUSE10                                                       =  342;  // <select_clause> ::= <record_key_clause>
+		final int PROD_SELECT_CLAUSE11                                                       =  343;  // <select_clause> ::= <relative_key_clause>
+		final int PROD_SELECT_CLAUSE12                                                       =  344;  // <select_clause> ::= <reserve_clause>
+		final int PROD_SELECT_CLAUSE13                                                       =  345;  // <select_clause> ::= <sharing_clause>
+		final int PROD_ASSIGN_CLAUSE_ASSIGN                                                  =  346;  // <assign_clause> ::= ASSIGN <_to_using> <_ext_clause> <_line_adv_file> <assignment_name>
+		final int PROD_ASSIGN_CLAUSE_ASSIGN2                                                 =  347;  // <assign_clause> ::= ASSIGN <_to_using> <_ext_clause> <general_device_name> <_assignment_name>
+		final int PROD_ASSIGN_CLAUSE_ASSIGN3                                                 =  348;  // <assign_clause> ::= ASSIGN <_to_using> <_ext_clause> <line_seq_device_name> <_assignment_name>
+		final int PROD_ASSIGN_CLAUSE_ASSIGN_DISPLAY                                          =  349;  // <assign_clause> ::= ASSIGN <_to_using> <_ext_clause> DISPLAY <_assignment_name>
+		final int PROD_ASSIGN_CLAUSE_ASSIGN_KEYBOARD                                         =  350;  // <assign_clause> ::= ASSIGN <_to_using> <_ext_clause> KEYBOARD <_assignment_name>
+		final int PROD_ASSIGN_CLAUSE_ASSIGN4                                                 =  351;  // <assign_clause> ::= ASSIGN <_to_using> <_ext_clause> <printer_name> <_assignment_name>
+		final int PROD_PRINTER_NAME_PRINTER                                                  =  352;  // <printer_name> ::= PRINTER
+		final int PROD_PRINTER_NAME_PRINTER_1                                                =  353;  // <printer_name> ::= 'PRINTER_1'
+		final int PROD_PRINTER_NAME_PRINT                                                    =  354;  // <printer_name> ::= PRINT
+		final int PROD_GENERAL_DEVICE_NAME_DISC                                              =  355;  // <general_device_name> ::= DISC
+		final int PROD_GENERAL_DEVICE_NAME_DISK                                              =  356;  // <general_device_name> ::= DISK
+		final int PROD_GENERAL_DEVICE_NAME_TAPE                                              =  357;  // <general_device_name> ::= TAPE
+		final int PROD_GENERAL_DEVICE_NAME_RANDOM                                            =  358;  // <general_device_name> ::= RANDOM
+		final int PROD_LINE_SEQ_DEVICE_NAME_CARD_PUNCH                                       =  359;  // <line_seq_device_name> ::= 'CARD_PUNCH'
+		final int PROD_LINE_SEQ_DEVICE_NAME_CARD_READER                                      =  360;  // <line_seq_device_name> ::= 'CARD_READER'
+		final int PROD_LINE_SEQ_DEVICE_NAME_CASSETTE                                         =  361;  // <line_seq_device_name> ::= CASSETTE
+		final int PROD_LINE_SEQ_DEVICE_NAME_INPUT                                            =  362;  // <line_seq_device_name> ::= INPUT
+		final int PROD_LINE_SEQ_DEVICE_NAME_INPUT_OUTPUT                                     =  363;  // <line_seq_device_name> ::= 'INPUT_OUTPUT'
+		final int PROD_LINE_SEQ_DEVICE_NAME_MAGNETIC_TAPE                                    =  364;  // <line_seq_device_name> ::= 'MAGNETIC_TAPE'
+		final int PROD_LINE_SEQ_DEVICE_NAME_OUTPUT                                           =  365;  // <line_seq_device_name> ::= OUTPUT
+		final int PROD__LINE_ADV_FILE                                                        =  366;  // <_line_adv_file> ::= 
+		final int PROD__LINE_ADV_FILE_LINE_ADVANCING                                         =  367;  // <_line_adv_file> ::= LINE ADVANCING <_file>
+		final int PROD__EXT_CLAUSE                                                           =  368;  // <_ext_clause> ::= 
+		final int PROD__EXT_CLAUSE_EXTERNAL                                                  =  369;  // <_ext_clause> ::= EXTERNAL
+		final int PROD__EXT_CLAUSE_DYNAMIC                                                   =  370;  // <_ext_clause> ::= DYNAMIC
+		final int PROD_ASSIGNMENT_NAME                                                       =  371;  // <assignment_name> ::= <LITERAL_TOK>
+		final int PROD_ASSIGNMENT_NAME2                                                      =  372;  // <assignment_name> ::= <qualified_word>
+		final int PROD__ASSIGNMENT_NAME                                                      =  373;  // <_assignment_name> ::= 
+		final int PROD__ASSIGNMENT_NAME2                                                     =  374;  // <_assignment_name> ::= <LITERAL_TOK>
+		final int PROD__ASSIGNMENT_NAME3                                                     =  375;  // <_assignment_name> ::= <qualified_word>
+		final int PROD_ACCESS_MODE_CLAUSE_ACCESS                                             =  376;  // <access_mode_clause> ::= ACCESS <_mode> <_is> <access_mode>
+		final int PROD_ACCESS_MODE_SEQUENTIAL                                                =  377;  // <access_mode> ::= SEQUENTIAL
+		final int PROD_ACCESS_MODE_DYNAMIC                                                   =  378;  // <access_mode> ::= DYNAMIC
+		final int PROD_ACCESS_MODE_RANDOM                                                    =  379;  // <access_mode> ::= RANDOM
+		final int PROD_ALTERNATIVE_RECORD_KEY_CLAUSE_ALTERNATE                               =  380;  // <alternative_record_key_clause> ::= ALTERNATE <_record> <_key> <_is> <key_or_split_keys> <flag_duplicates> <_suppress_clause>
+		final int PROD__SUPPRESS_CLAUSE                                                      =  381;  // <_suppress_clause> ::= 
+		final int PROD__SUPPRESS_CLAUSE_SUPPRESS_WHEN_ALL                                    =  382;  // <_suppress_clause> ::= SUPPRESS WHEN ALL <basic_value>
+		final int PROD__SUPPRESS_CLAUSE_SUPPRESS_WHEN                                        =  383;  // <_suppress_clause> ::= SUPPRESS WHEN <space_or_zero>
+		final int PROD_COLLATING_SEQUENCE_CLAUSE                                             =  384;  // <collating_sequence_clause> ::= <coll_sequence> <_is> <alphabet_name>
+		final int PROD_ALPHABET_NAME                                                         =  385;  // <alphabet_name> ::= <WORD>
+		final int PROD_FILE_STATUS_CLAUSE_STATUS                                             =  386;  // <file_status_clause> ::= <_file_or_sort> STATUS <_is> <reference>
+		final int PROD__FILE_OR_SORT                                                         =  387;  // <_file_or_sort> ::= 
+		final int PROD__FILE_OR_SORT_TOK_FILE                                                =  388;  // <_file_or_sort> ::= 'TOK_FILE'
+		final int PROD__FILE_OR_SORT_SORT                                                    =  389;  // <_file_or_sort> ::= SORT
+		final int PROD_LOCK_MODE_CLAUSE_LOCK                                                 =  390;  // <lock_mode_clause> ::= LOCK <_mode> <_is> <lock_mode>
+		final int PROD_LOCK_MODE_MANUAL                                                      =  391;  // <lock_mode> ::= MANUAL <_lock_with>
+		final int PROD_LOCK_MODE_AUTOMATIC                                                   =  392;  // <lock_mode> ::= AUTOMATIC <_lock_with>
+		final int PROD_LOCK_MODE_EXCLUSIVE                                                   =  393;  // <lock_mode> ::= EXCLUSIVE
+		final int PROD__LOCK_WITH                                                            =  394;  // <_lock_with> ::= 
+		final int PROD__LOCK_WITH_WITH_LOCK_ON                                               =  395;  // <_lock_with> ::= WITH LOCK ON <lock_records>
+		final int PROD__LOCK_WITH_WITH_LOCK_ON_MULTIPLE                                      =  396;  // <_lock_with> ::= WITH LOCK ON MULTIPLE <lock_records>
+		final int PROD__LOCK_WITH_WITH_ROLLBACK                                              =  397;  // <_lock_with> ::= WITH ROLLBACK
+		final int PROD_ORGANIZATION_CLAUSE_ORGANIZATION                                      =  398;  // <organization_clause> ::= ORGANIZATION <_is> <organization>
+		final int PROD_ORGANIZATION_CLAUSE                                                   =  399;  // <organization_clause> ::= <organization>
+		final int PROD_ORGANIZATION_INDEXED                                                  =  400;  // <organization> ::= INDEXED
+		final int PROD_ORGANIZATION_SEQUENTIAL                                               =  401;  // <organization> ::= <_record> <_binary> SEQUENTIAL
+		final int PROD_ORGANIZATION_RELATIVE                                                 =  402;  // <organization> ::= RELATIVE
+		final int PROD_ORGANIZATION_LINE_SEQUENTIAL                                          =  403;  // <organization> ::= LINE SEQUENTIAL
+		final int PROD_PADDING_CHARACTER_CLAUSE_PADDING                                      =  404;  // <padding_character_clause> ::= PADDING <_character> <_is> <reference_or_literal>
+		final int PROD_RECORD_DELIMITER_CLAUSE_RECORD_DELIMITER_STANDARD_1                   =  405;  // <record_delimiter_clause> ::= RECORD DELIMITER <_is> 'STANDARD_1'
+		final int PROD_RECORD_KEY_CLAUSE_RECORD                                              =  406;  // <record_key_clause> ::= RECORD <_key> <_is> <key_or_split_keys>
+		final int PROD_KEY_OR_SPLIT_KEYS                                                     =  407;  // <key_or_split_keys> ::= <reference>
+		final int PROD_KEY_OR_SPLIT_KEYS_TOK_EQUAL                                           =  408;  // <key_or_split_keys> ::= <reference> 'TOK_EQUAL' <reference_list>
+		final int PROD_KEY_OR_SPLIT_KEYS_SOURCE                                              =  409;  // <key_or_split_keys> ::= <reference> SOURCE <_is> <reference_list>
+		final int PROD_RELATIVE_KEY_CLAUSE_RELATIVE                                          =  410;  // <relative_key_clause> ::= RELATIVE <_key> <_is> <reference>
+		final int PROD_RESERVE_CLAUSE_RESERVE                                                =  411;  // <reserve_clause> ::= RESERVE <no_or_integer> <_areas>
+		final int PROD_NO_OR_INTEGER_NO                                                      =  412;  // <no_or_integer> ::= NO
+		final int PROD_NO_OR_INTEGER                                                         =  413;  // <no_or_integer> ::= <integer>
+		final int PROD_SHARING_CLAUSE_SHARING                                                =  414;  // <sharing_clause> ::= SHARING <_with> <sharing_option>
+		final int PROD_SHARING_OPTION_ALL                                                    =  415;  // <sharing_option> ::= ALL <_other>
+		final int PROD_SHARING_OPTION_NO                                                     =  416;  // <sharing_option> ::= NO <_other>
+		final int PROD_SHARING_OPTION_READ_ONLY                                              =  417;  // <sharing_option> ::= READ ONLY
+		final int PROD__I_O_CONTROL                                                          =  418;  // <_i_o_control> ::= 
+		final int PROD__I_O_CONTROL_TOK_DOT                                                  =  419;  // <_i_o_control> ::= <i_o_control_list> 'TOK_DOT'
+		final int PROD_I_O_CONTROL_LIST                                                      =  420;  // <i_o_control_list> ::= <i_o_control_clause>
+		final int PROD_I_O_CONTROL_LIST2                                                     =  421;  // <i_o_control_list> ::= <i_o_control_list> <i_o_control_clause>
+		final int PROD_I_O_CONTROL_CLAUSE                                                    =  422;  // <i_o_control_clause> ::= <same_clause>
+		final int PROD_I_O_CONTROL_CLAUSE2                                                   =  423;  // <i_o_control_clause> ::= <multiple_file_tape_clause>
+		final int PROD_SAME_CLAUSE_SAME                                                      =  424;  // <same_clause> ::= SAME <_same_option> <_area> <_for> <file_name_list>
+		final int PROD__SAME_OPTION                                                          =  425;  // <_same_option> ::= 
+		final int PROD__SAME_OPTION_RECORD                                                   =  426;  // <_same_option> ::= RECORD
+		final int PROD__SAME_OPTION_SORT                                                     =  427;  // <_same_option> ::= SORT
+		final int PROD__SAME_OPTION_SORT_MERGE                                               =  428;  // <_same_option> ::= 'SORT_MERGE'
+		final int PROD_MULTIPLE_FILE_TAPE_CLAUSE_MULTIPLE                                    =  429;  // <multiple_file_tape_clause> ::= MULTIPLE <_file> <_tape> <_contains> <multiple_file_list>
+		final int PROD_MULTIPLE_FILE_LIST                                                    =  430;  // <multiple_file_list> ::= <multiple_file>
+		final int PROD_MULTIPLE_FILE_LIST2                                                   =  431;  // <multiple_file_list> ::= <multiple_file_list> <multiple_file>
+		final int PROD_MULTIPLE_FILE                                                         =  432;  // <multiple_file> ::= <file_name> <_multiple_file_position>
+		final int PROD__MULTIPLE_FILE_POSITION                                               =  433;  // <_multiple_file_position> ::= 
+		final int PROD__MULTIPLE_FILE_POSITION_POSITION                                      =  434;  // <_multiple_file_position> ::= POSITION <integer>
+		final int PROD__DATA_DIVISION                                                        =  435;  // <_data_division> ::= <_data_division_header> <_file_section_header> <_file_description_sequence> <_working_storage_section> <_communication_section> <_local_storage_section> <_linkage_section> <_report_section> <_screen_section>
+		final int PROD__DATA_DIVISION_HEADER                                                 =  436;  // <_data_division_header> ::= 
+		final int PROD__DATA_DIVISION_HEADER_DATA_DIVISION_TOK_DOT                           =  437;  // <_data_division_header> ::= DATA DIVISION 'TOK_DOT'
+		final int PROD__FILE_SECTION_HEADER                                                  =  438;  // <_file_section_header> ::= 
+		final int PROD__FILE_SECTION_HEADER_TOK_FILE_SECTION_TOK_DOT                         =  439;  // <_file_section_header> ::= 'TOK_FILE' SECTION 'TOK_DOT'
+		final int PROD__FILE_DESCRIPTION_SEQUENCE                                            =  440;  // <_file_description_sequence> ::= 
+		final int PROD__FILE_DESCRIPTION_SEQUENCE2                                           =  441;  // <_file_description_sequence> ::= <_file_description_sequence> <file_description>
+		final int PROD_FILE_DESCRIPTION                                                      =  442;  // <file_description> ::= <file_description_entry> <_record_description_list>
+		final int PROD_FILE_DESCRIPTION_ENTRY_TOK_DOT                                        =  443;  // <file_description_entry> ::= <file_type> <file_name> <_file_description_clause_sequence> 'TOK_DOT'
+		final int PROD_FILE_TYPE_FD                                                          =  444;  // <file_type> ::= FD
+		final int PROD_FILE_TYPE_SD                                                          =  445;  // <file_type> ::= SD
+		final int PROD__FILE_DESCRIPTION_CLAUSE_SEQUENCE                                     =  446;  // <_file_description_clause_sequence> ::= 
+		final int PROD__FILE_DESCRIPTION_CLAUSE_SEQUENCE2                                    =  447;  // <_file_description_clause_sequence> ::= <_file_description_clause_sequence> <file_description_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE_EXTERNAL                                      =  448;  // <file_description_clause> ::= <_is> EXTERNAL
+		final int PROD_FILE_DESCRIPTION_CLAUSE_GLOBAL                                        =  449;  // <file_description_clause> ::= <_is> GLOBAL
+		final int PROD_FILE_DESCRIPTION_CLAUSE                                               =  450;  // <file_description_clause> ::= <block_contains_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE2                                              =  451;  // <file_description_clause> ::= <record_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE3                                              =  452;  // <file_description_clause> ::= <label_records_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE4                                              =  453;  // <file_description_clause> ::= <value_of_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE5                                              =  454;  // <file_description_clause> ::= <data_records_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE6                                              =  455;  // <file_description_clause> ::= <linage_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE7                                              =  456;  // <file_description_clause> ::= <recording_mode_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE8                                              =  457;  // <file_description_clause> ::= <code_set_clause>
+		final int PROD_FILE_DESCRIPTION_CLAUSE9                                              =  458;  // <file_description_clause> ::= <report_clause>
+		final int PROD_BLOCK_CONTAINS_CLAUSE_BLOCK                                           =  459;  // <block_contains_clause> ::= BLOCK <_contains> <integer> <_to_integer> <_records_or_characters>
+		final int PROD__RECORDS_OR_CHARACTERS                                                =  460;  // <_records_or_characters> ::= 
+		final int PROD__RECORDS_OR_CHARACTERS_RECORDS                                        =  461;  // <_records_or_characters> ::= RECORDS
+		final int PROD__RECORDS_OR_CHARACTERS_CHARACTERS                                     =  462;  // <_records_or_characters> ::= CHARACTERS
+		final int PROD_RECORD_CLAUSE_RECORD                                                  =  463;  // <record_clause> ::= RECORD <_contains> <integer> <_characters>
+		final int PROD_RECORD_CLAUSE_RECORD_TO                                               =  464;  // <record_clause> ::= RECORD <_contains> <integer> TO <integer> <_characters>
+		final int PROD_RECORD_CLAUSE_RECORD_VARYING                                          =  465;  // <record_clause> ::= RECORD <_is> VARYING <_in> <_size> <_from_integer> <_to_integer> <_characters> <_record_depending>
+		final int PROD__RECORD_DEPENDING                                                     =  466;  // <_record_depending> ::= 
+		final int PROD__RECORD_DEPENDING_DEPENDING                                           =  467;  // <_record_depending> ::= DEPENDING <_on> <reference>
+		final int PROD__FROM_INTEGER                                                         =  468;  // <_from_integer> ::= 
+		final int PROD__FROM_INTEGER2                                                        =  469;  // <_from_integer> ::= <_from> <integer>
+		final int PROD__TO_INTEGER                                                           =  470;  // <_to_integer> ::= 
+		final int PROD__TO_INTEGER_TO                                                        =  471;  // <_to_integer> ::= TO <integer>
+		final int PROD_LABEL_RECORDS_CLAUSE_LABEL                                            =  472;  // <label_records_clause> ::= LABEL <records> <label_option>
+		final int PROD_VALUE_OF_CLAUSE_VALUE_OF                                              =  473;  // <value_of_clause> ::= VALUE OF <file_id> <_is> <valueof_name>
+		final int PROD_VALUE_OF_CLAUSE_VALUE_OF_FILE_ID                                      =  474;  // <value_of_clause> ::= VALUE OF 'FILE_ID' <_is> <valueof_name>
+		final int PROD_FILE_ID                                                               =  475;  // <file_id> ::= <WORD>
+		final int PROD_FILE_ID_ID                                                            =  476;  // <file_id> ::= ID
+		final int PROD_VALUEOF_NAME                                                          =  477;  // <valueof_name> ::= <LITERAL_TOK>
+		final int PROD_VALUEOF_NAME2                                                         =  478;  // <valueof_name> ::= <qualified_word>
+		final int PROD_DATA_RECORDS_CLAUSE_DATA                                              =  479;  // <data_records_clause> ::= DATA <records> <optional_reference_list>
+		final int PROD_LINAGE_CLAUSE_LINAGE                                                  =  480;  // <linage_clause> ::= LINAGE <_is> <reference_or_literal> <_lines> <_linage_sequence>
+		final int PROD__LINAGE_SEQUENCE                                                      =  481;  // <_linage_sequence> ::= 
+		final int PROD__LINAGE_SEQUENCE2                                                     =  482;  // <_linage_sequence> ::= <_linage_sequence> <linage_lines>
+		final int PROD_LINAGE_LINES                                                          =  483;  // <linage_lines> ::= <linage_footing>
+		final int PROD_LINAGE_LINES2                                                         =  484;  // <linage_lines> ::= <linage_top>
+		final int PROD_LINAGE_LINES3                                                         =  485;  // <linage_lines> ::= <linage_bottom>
+		final int PROD_LINAGE_FOOTING_FOOTING                                                =  486;  // <linage_footing> ::= <_with> FOOTING <_at> <reference_or_literal>
+		final int PROD_LINAGE_TOP_TOP                                                        =  487;  // <linage_top> ::= TOP <reference_or_literal>
+		final int PROD_LINAGE_BOTTOM_BOTTOM                                                  =  488;  // <linage_bottom> ::= BOTTOM <reference_or_literal>
+		final int PROD_RECORDING_MODE_CLAUSE_RECORDING                                       =  489;  // <recording_mode_clause> ::= RECORDING <_mode> <_is> <recording_mode>
+		final int PROD_RECORDING_MODE_F                                                      =  490;  // <recording_mode> ::= F
+		final int PROD_RECORDING_MODE_V                                                      =  491;  // <recording_mode> ::= V
+		final int PROD_RECORDING_MODE_FIXED                                                  =  492;  // <recording_mode> ::= FIXED
+		final int PROD_RECORDING_MODE_VARIABLE                                               =  493;  // <recording_mode> ::= VARIABLE
+		final int PROD_RECORDING_MODE                                                        =  494;  // <recording_mode> ::= <u_or_s>
+		final int PROD_U_OR_S_U                                                              =  495;  // <u_or_s> ::= U
+		final int PROD_U_OR_S_S                                                              =  496;  // <u_or_s> ::= S
+		final int PROD_CODE_SET_CLAUSE_CODE_SET                                              =  497;  // <code_set_clause> ::= 'CODE_SET' <_is> <alphabet_name> <_for_sub_records_clause>
+		final int PROD__FOR_SUB_RECORDS_CLAUSE                                               =  498;  // <_for_sub_records_clause> ::= 
+		final int PROD__FOR_SUB_RECORDS_CLAUSE_FOR                                           =  499;  // <_for_sub_records_clause> ::= FOR <reference_list>
+		final int PROD_REPORT_CLAUSE                                                         =  500;  // <report_clause> ::= <report_keyword> <rep_name_list>
+		final int PROD_REPORT_KEYWORD_REPORT                                                 =  501;  // <report_keyword> ::= REPORT <_is>
+		final int PROD_REPORT_KEYWORD_REPORTS                                                =  502;  // <report_keyword> ::= REPORTS <_are>
+		final int PROD_REP_NAME_LIST                                                         =  503;  // <rep_name_list> ::= <undefined_word>
+		final int PROD_REP_NAME_LIST2                                                        =  504;  // <rep_name_list> ::= <rep_name_list> <undefined_word>
+		final int PROD__COMMUNICATION_SECTION                                                =  505;  // <_communication_section> ::= 
+		final int PROD__COMMUNICATION_SECTION_COMMUNICATION_SECTION_TOK_DOT                  =  506;  // <_communication_section> ::= COMMUNICATION SECTION 'TOK_DOT' <_communication_description_sequence>
+		final int PROD__COMMUNICATION_DESCRIPTION_SEQUENCE                                   =  507;  // <_communication_description_sequence> ::= 
+		final int PROD__COMMUNICATION_DESCRIPTION_SEQUENCE2                                  =  508;  // <_communication_description_sequence> ::= <_communication_description_sequence> <communication_description>
+		final int PROD_COMMUNICATION_DESCRIPTION                                             =  509;  // <communication_description> ::= <communication_description_entry> <_record_description_list>
+		final int PROD_COMMUNICATION_DESCRIPTION_ENTRY_CD_TOK_DOT                            =  510;  // <communication_description_entry> ::= CD <undefined_word> <_communication_description_clause_sequence> 'TOK_DOT'
+		final int PROD__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE                            =  511;  // <_communication_description_clause_sequence> ::= 
+		final int PROD__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE2                           =  512;  // <_communication_description_clause_sequence> ::= <_communication_description_clause_sequence> <communication_description_clause>
+		final int PROD_COMMUNICATION_DESCRIPTION_CLAUSE_INPUT                                =  513;  // <communication_description_clause> ::= <_for> <_initial> INPUT <_input_cd_clauses>
+		final int PROD_COMMUNICATION_DESCRIPTION_CLAUSE_OUTPUT                               =  514;  // <communication_description_clause> ::= <_for> OUTPUT <_output_cd_clauses>
+		final int PROD_COMMUNICATION_DESCRIPTION_CLAUSE_I_O                                  =  515;  // <communication_description_clause> ::= <_for> <_initial> 'I_O' <_i_o_cd_clauses>
+		final int PROD__INPUT_CD_CLAUSES                                                     =  516;  // <_input_cd_clauses> ::= 
+		final int PROD__INPUT_CD_CLAUSES2                                                    =  517;  // <_input_cd_clauses> ::= <named_input_cd_clauses>
+		final int PROD__INPUT_CD_CLAUSES3                                                    =  518;  // <_input_cd_clauses> ::= <unnamed_input_cd_clauses>
+		final int PROD_NAMED_INPUT_CD_CLAUSES                                                =  519;  // <named_input_cd_clauses> ::= <named_input_cd_clause>
+		final int PROD_NAMED_INPUT_CD_CLAUSES2                                               =  520;  // <named_input_cd_clauses> ::= <named_input_cd_clauses> <named_input_cd_clause>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_QUEUE                                           =  521;  // <named_input_cd_clause> ::= <_symbolic> QUEUE <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_SUB_QUEUE_1                                     =  522;  // <named_input_cd_clause> ::= <_symbolic> 'SUB_QUEUE_1' <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_SUB_QUEUE_2                                     =  523;  // <named_input_cd_clause> ::= <_symbolic> 'SUB_QUEUE_2' <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_SUB_QUEUE_3                                     =  524;  // <named_input_cd_clause> ::= <_symbolic> 'SUB_QUEUE_3' <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_MESSAGE_DATE                                    =  525;  // <named_input_cd_clause> ::= MESSAGE DATE <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_MESSAGE_TIME                                    =  526;  // <named_input_cd_clause> ::= MESSAGE TIME <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_SOURCE                                          =  527;  // <named_input_cd_clause> ::= <_symbolic> SOURCE <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_TEXT_LENGTH                                     =  528;  // <named_input_cd_clause> ::= TEXT LENGTH <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_END_KEY                                         =  529;  // <named_input_cd_clause> ::= END KEY <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_STATUS_KEY                                      =  530;  // <named_input_cd_clause> ::= STATUS KEY <_is> <identifier>
+		final int PROD_NAMED_INPUT_CD_CLAUSE_COUNT                                           =  531;  // <named_input_cd_clause> ::= <_message> COUNT <_is> <identifier>
+		final int PROD_UNNAMED_INPUT_CD_CLAUSES                                              =  532;  // <unnamed_input_cd_clauses> ::= <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier>
+		final int PROD__OUTPUT_CD_CLAUSES                                                    =  533;  // <_output_cd_clauses> ::= 
+		final int PROD__OUTPUT_CD_CLAUSES2                                                   =  534;  // <_output_cd_clauses> ::= <output_cd_clauses>
+		final int PROD_OUTPUT_CD_CLAUSES                                                     =  535;  // <output_cd_clauses> ::= <output_cd_clause>
+		final int PROD_OUTPUT_CD_CLAUSES2                                                    =  536;  // <output_cd_clauses> ::= <output_cd_clauses> <output_cd_clause>
+		final int PROD_OUTPUT_CD_CLAUSE_DESTINATION_COUNT                                    =  537;  // <output_cd_clause> ::= DESTINATION COUNT <_is> <identifier>
+		final int PROD_OUTPUT_CD_CLAUSE_TEXT_LENGTH                                          =  538;  // <output_cd_clause> ::= TEXT LENGTH <_is> <identifier>
+		final int PROD_OUTPUT_CD_CLAUSE_STATUS_KEY                                           =  539;  // <output_cd_clause> ::= STATUS KEY <_is> <identifier>
+		final int PROD_OUTPUT_CD_CLAUSE_DESTINATION_TABLE_OCCURS                             =  540;  // <output_cd_clause> ::= DESTINATION TABLE OCCURS <integer> <_times> <_occurs_indexed>
+		final int PROD_OUTPUT_CD_CLAUSE_ERROR_KEY                                            =  541;  // <output_cd_clause> ::= ERROR KEY <_is> <identifier>
+		final int PROD_OUTPUT_CD_CLAUSE_DESTINATION                                          =  542;  // <output_cd_clause> ::= DESTINATION <_is> <identifier>
+		final int PROD_OUTPUT_CD_CLAUSE_SYMBOLIC_DESTINATION                                 =  543;  // <output_cd_clause> ::= SYMBOLIC DESTINATION <_is> <identifier>
+		final int PROD__I_O_CD_CLAUSES                                                       =  544;  // <_i_o_cd_clauses> ::= 
+		final int PROD__I_O_CD_CLAUSES2                                                      =  545;  // <_i_o_cd_clauses> ::= <named_i_o_cd_clauses>
+		final int PROD__I_O_CD_CLAUSES3                                                      =  546;  // <_i_o_cd_clauses> ::= <unnamed_i_o_cd_clauses>
+		final int PROD_NAMED_I_O_CD_CLAUSES                                                  =  547;  // <named_i_o_cd_clauses> ::= <named_i_o_cd_clause>
+		final int PROD_NAMED_I_O_CD_CLAUSES2                                                 =  548;  // <named_i_o_cd_clauses> ::= <named_i_o_cd_clauses> <named_i_o_cd_clause>
+		final int PROD_NAMED_I_O_CD_CLAUSE_MESSAGE_DATE                                      =  549;  // <named_i_o_cd_clause> ::= MESSAGE DATE <_is> <identifier>
+		final int PROD_NAMED_I_O_CD_CLAUSE_MESSAGE_TIME                                      =  550;  // <named_i_o_cd_clause> ::= MESSAGE TIME <_is> <identifier>
+		final int PROD_NAMED_I_O_CD_CLAUSE_TERMINAL                                          =  551;  // <named_i_o_cd_clause> ::= <_symbolic> TERMINAL <_is> <identifier>
+		final int PROD_NAMED_I_O_CD_CLAUSE_TEXT_LENGTH                                       =  552;  // <named_i_o_cd_clause> ::= TEXT LENGTH <_is> <identifier>
+		final int PROD_NAMED_I_O_CD_CLAUSE_END_KEY                                           =  553;  // <named_i_o_cd_clause> ::= END KEY <_is> <identifier>
+		final int PROD_NAMED_I_O_CD_CLAUSE_STATUS_KEY                                        =  554;  // <named_i_o_cd_clause> ::= STATUS KEY <_is> <identifier>
+		final int PROD_UNNAMED_I_O_CD_CLAUSES                                                =  555;  // <unnamed_i_o_cd_clauses> ::= <identifier> <identifier> <identifier> <identifier> <identifier> <identifier>
+		final int PROD__WORKING_STORAGE_SECTION                                              =  556;  // <_working_storage_section> ::= 
+		final int PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT              =  557;  // <_working_storage_section> ::= 'WORKING_STORAGE' SECTION 'TOK_DOT' <_record_description_list>
+		final int PROD__RECORD_DESCRIPTION_LIST                                              =  558;  // <_record_description_list> ::= 
+		final int PROD__RECORD_DESCRIPTION_LIST2                                             =  559;  // <_record_description_list> ::= <record_description_list>
+		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT                                       =  560;  // <record_description_list> ::= <data_description> 'TOK_DOT'
+		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2                                      =  561;  // <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
+		final int PROD_DATA_DESCRIPTION                                                      =  562;  // <data_description> ::= <constant_entry>
+		final int PROD_DATA_DESCRIPTION2                                                     =  563;  // <data_description> ::= <renames_entry>
+		final int PROD_DATA_DESCRIPTION3                                                     =  564;  // <data_description> ::= <condition_name_entry>
+		final int PROD_DATA_DESCRIPTION4                                                     =  565;  // <data_description> ::= <level_number> <_entry_name> <_data_description_clause_sequence>
+		final int PROD_LEVEL_NUMBER_INTLITERAL                                               =  566;  // <level_number> ::= IntLiteral
+		final int PROD__FILLER                                                               =  567;  // <_filler> ::= 
+		final int PROD__FILLER_FILLER                                                        =  568;  // <_filler> ::= FILLER
+		final int PROD__ENTRY_NAME                                                           =  569;  // <_entry_name> ::= <_filler>
+		final int PROD__ENTRY_NAME2                                                          =  570;  // <_entry_name> ::= <user_entry_name>
+		final int PROD_USER_ENTRY_NAME                                                       =  571;  // <user_entry_name> ::= <WORD>
+		final int PROD_CONST_GLOBAL                                                          =  572;  // <const_global> ::= 
+		final int PROD_CONST_GLOBAL_GLOBAL                                                   =  573;  // <const_global> ::= <_is> GLOBAL
+		final int PROD_LIT_OR_LENGTH                                                         =  574;  // <lit_or_length> ::= <literal>
+		final int PROD_LIT_OR_LENGTH_LENGTH_OF                                               =  575;  // <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
+		final int PROD_LIT_OR_LENGTH_LENGTH                                                  =  576;  // <lit_or_length> ::= LENGTH <con_identifier>
+		final int PROD_LIT_OR_LENGTH_BYTE_LENGTH                                             =  577;  // <lit_or_length> ::= 'BYTE_LENGTH' <_of> <con_identifier>
+		final int PROD_CON_IDENTIFIER                                                        =  578;  // <con_identifier> ::= <identifier_1>
+		final int PROD_CON_IDENTIFIER_BINARY_CHAR                                            =  579;  // <con_identifier> ::= 'BINARY_CHAR'
+		final int PROD_CON_IDENTIFIER_BINARY_SHORT                                           =  580;  // <con_identifier> ::= 'BINARY_SHORT'
+		final int PROD_CON_IDENTIFIER_BINARY_LONG                                            =  581;  // <con_identifier> ::= 'BINARY_LONG'
+		final int PROD_CON_IDENTIFIER_BINARY_DOUBLE                                          =  582;  // <con_identifier> ::= 'BINARY_DOUBLE'
+		final int PROD_CON_IDENTIFIER_BINARY_C_LONG                                          =  583;  // <con_identifier> ::= 'BINARY_C_LONG'
+		final int PROD_CON_IDENTIFIER2                                                       =  584;  // <con_identifier> ::= <pointer_len>
+		final int PROD_CON_IDENTIFIER3                                                       =  585;  // <con_identifier> ::= <float_usage>
+		final int PROD_CON_IDENTIFIER4                                                       =  586;  // <con_identifier> ::= <double_usage>
+		final int PROD_CON_IDENTIFIER5                                                       =  587;  // <con_identifier> ::= <fp32_usage>
+		final int PROD_CON_IDENTIFIER6                                                       =  588;  // <con_identifier> ::= <fp64_usage>
+		final int PROD_CON_IDENTIFIER7                                                       =  589;  // <con_identifier> ::= <fp128_usage>
+		final int PROD_FP32_USAGE_FLOAT_BINARY_32                                            =  590;  // <fp32_usage> ::= 'FLOAT_BINARY_32'
+		final int PROD_FP32_USAGE_FLOAT_DECIMAL_7                                            =  591;  // <fp32_usage> ::= 'FLOAT_DECIMAL_7'
+		final int PROD_FP64_USAGE_FLOAT_BINARY_64                                            =  592;  // <fp64_usage> ::= 'FLOAT_BINARY_64'
+		final int PROD_FP64_USAGE_FLOAT_DECIMAL_16                                           =  593;  // <fp64_usage> ::= 'FLOAT_DECIMAL_16'
+		final int PROD_FP128_USAGE_FLOAT_BINARY_128                                          =  594;  // <fp128_usage> ::= 'FLOAT_BINARY_128'
+		final int PROD_FP128_USAGE_FLOAT_DECIMAL_34                                          =  595;  // <fp128_usage> ::= 'FLOAT_DECIMAL_34'
+		final int PROD_FP128_USAGE_FLOAT_EXTENDED                                            =  596;  // <fp128_usage> ::= 'FLOAT_EXTENDED'
+		final int PROD_POINTER_LEN_POINTER                                                   =  597;  // <pointer_len> ::= POINTER
+		final int PROD_POINTER_LEN_PROGRAM_POINTER                                           =  598;  // <pointer_len> ::= 'PROGRAM_POINTER'
+		final int PROD_RENAMES_ENTRY_SIXTY_SIX_RENAMES                                       =  599;  // <renames_entry> ::= 'SIXTY_SIX' <user_entry_name> RENAMES <qualified_word> <_renames_thru>
+		final int PROD__RENAMES_THRU                                                         =  600;  // <_renames_thru> ::= 
+		final int PROD__RENAMES_THRU_THRU                                                    =  601;  // <_renames_thru> ::= THRU <qualified_word>
+		final int PROD_CONDITION_NAME_ENTRY_EIGHTY_EIGHT                                     =  602;  // <condition_name_entry> ::= 'EIGHTY_EIGHT' <user_entry_name> <value_clause>
+		final int PROD_CONSTANT_ENTRY_CONSTANT                                               =  603;  // <constant_entry> ::= <level_number> <user_entry_name> CONSTANT <const_global> <constant_source>
+		final int PROD_CONSTANT_ENTRY_SEVENTY_EIGHT                                          =  604;  // <constant_entry> ::= 'SEVENTY_EIGHT' <user_entry_name> <_global_clause> <value_clause>
+		final int PROD_CONSTANT_SOURCE                                                       =  605;  // <constant_source> ::= <_as> <lit_or_length>
+		final int PROD_CONSTANT_SOURCE_FROM                                                  =  606;  // <constant_source> ::= FROM <WORD>
+		final int PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE                                     =  607;  // <_data_description_clause_sequence> ::= 
+		final int PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2                                    =  608;  // <_data_description_clause_sequence> ::= <_data_description_clause_sequence> <data_description_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE                                               =  609;  // <data_description_clause> ::= <redefines_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE2                                              =  610;  // <data_description_clause> ::= <external_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE3                                              =  611;  // <data_description_clause> ::= <global_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE4                                              =  612;  // <data_description_clause> ::= <picture_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE5                                              =  613;  // <data_description_clause> ::= <usage_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE6                                              =  614;  // <data_description_clause> ::= <sign_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE7                                              =  615;  // <data_description_clause> ::= <occurs_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE8                                              =  616;  // <data_description_clause> ::= <justified_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE9                                              =  617;  // <data_description_clause> ::= <synchronized_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE10                                             =  618;  // <data_description_clause> ::= <blank_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE11                                             =  619;  // <data_description_clause> ::= <based_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE12                                             =  620;  // <data_description_clause> ::= <value_clause>
+		final int PROD_DATA_DESCRIPTION_CLAUSE13                                             =  621;  // <data_description_clause> ::= <any_length_clause>
+		final int PROD_REDEFINES_CLAUSE_REDEFINES                                            =  622;  // <redefines_clause> ::= REDEFINES <identifier_1>
+		final int PROD_EXTERNAL_CLAUSE_EXTERNAL                                              =  623;  // <external_clause> ::= <_is> EXTERNAL <_as_extname>
+		final int PROD__AS_EXTNAME                                                           =  624;  // <_as_extname> ::= 
+		final int PROD__AS_EXTNAME_AS                                                        =  625;  // <_as_extname> ::= AS <LITERAL_TOK>
+		final int PROD__GLOBAL_CLAUSE                                                        =  626;  // <_global_clause> ::= 
+		final int PROD__GLOBAL_CLAUSE2                                                       =  627;  // <_global_clause> ::= <global_clause>
+		final int PROD_GLOBAL_CLAUSE_GLOBAL                                                  =  628;  // <global_clause> ::= <_is> GLOBAL
+		final int PROD_PICTURE_CLAUSE_PICTURE_DEF                                            =  629;  // <picture_clause> ::= 'Picture_Def'
+		final int PROD_USAGE_CLAUSE                                                          =  630;  // <usage_clause> ::= <usage>
+		final int PROD_USAGE_CLAUSE_USAGE                                                    =  631;  // <usage_clause> ::= USAGE <_is> <usage>
+		final int PROD_USAGE_BINARY                                                          =  632;  // <usage> ::= BINARY
+		final int PROD_USAGE_COMP                                                            =  633;  // <usage> ::= COMP
+		final int PROD_USAGE                                                                 =  634;  // <usage> ::= <float_usage>
+		final int PROD_USAGE2                                                                =  635;  // <usage> ::= <double_usage>
+		final int PROD_USAGE_COMP_3                                                          =  636;  // <usage> ::= 'COMP_3'
+		final int PROD_USAGE_COMP_4                                                          =  637;  // <usage> ::= 'COMP_4'
+		final int PROD_USAGE_COMP_5                                                          =  638;  // <usage> ::= 'COMP_5'
+		final int PROD_USAGE_COMP_6                                                          =  639;  // <usage> ::= 'COMP_6'
+		final int PROD_USAGE_COMP_X                                                          =  640;  // <usage> ::= 'COMP_X'
+		final int PROD_USAGE_DISPLAY                                                         =  641;  // <usage> ::= DISPLAY
+		final int PROD_USAGE_INDEX                                                           =  642;  // <usage> ::= INDEX
+		final int PROD_USAGE_PACKED_DECIMAL                                                  =  643;  // <usage> ::= 'PACKED_DECIMAL'
+		final int PROD_USAGE_POINTER                                                         =  644;  // <usage> ::= POINTER
+		final int PROD_USAGE_PROGRAM_POINTER                                                 =  645;  // <usage> ::= 'PROGRAM_POINTER'
+		final int PROD_USAGE_SIGNED_SHORT                                                    =  646;  // <usage> ::= 'SIGNED_SHORT'
+		final int PROD_USAGE_SIGNED_INT                                                      =  647;  // <usage> ::= 'SIGNED_INT'
+		final int PROD_USAGE_SIGNED_LONG                                                     =  648;  // <usage> ::= 'SIGNED_LONG'
+		final int PROD_USAGE_UNSIGNED_SHORT                                                  =  649;  // <usage> ::= 'UNSIGNED_SHORT'
+		final int PROD_USAGE_UNSIGNED_INT                                                    =  650;  // <usage> ::= 'UNSIGNED_INT'
+		final int PROD_USAGE_UNSIGNED_LONG                                                   =  651;  // <usage> ::= 'UNSIGNED_LONG'
+		final int PROD_USAGE_BINARY_CHAR                                                     =  652;  // <usage> ::= 'BINARY_CHAR' <_signed>
+		final int PROD_USAGE_BINARY_CHAR_UNSIGNED                                            =  653;  // <usage> ::= 'BINARY_CHAR' UNSIGNED
+		final int PROD_USAGE_BINARY_SHORT                                                    =  654;  // <usage> ::= 'BINARY_SHORT' <_signed>
+		final int PROD_USAGE_BINARY_SHORT_UNSIGNED                                           =  655;  // <usage> ::= 'BINARY_SHORT' UNSIGNED
+		final int PROD_USAGE_BINARY_LONG                                                     =  656;  // <usage> ::= 'BINARY_LONG' <_signed>
+		final int PROD_USAGE_BINARY_LONG_UNSIGNED                                            =  657;  // <usage> ::= 'BINARY_LONG' UNSIGNED
+		final int PROD_USAGE_BINARY_DOUBLE                                                   =  658;  // <usage> ::= 'BINARY_DOUBLE' <_signed>
+		final int PROD_USAGE_BINARY_DOUBLE_UNSIGNED                                          =  659;  // <usage> ::= 'BINARY_DOUBLE' UNSIGNED
+		final int PROD_USAGE_BINARY_C_LONG                                                   =  660;  // <usage> ::= 'BINARY_C_LONG' <_signed>
+		final int PROD_USAGE_BINARY_C_LONG_UNSIGNED                                          =  661;  // <usage> ::= 'BINARY_C_LONG' UNSIGNED
+		final int PROD_USAGE_FLOAT_BINARY_32                                                 =  662;  // <usage> ::= 'FLOAT_BINARY_32'
+		final int PROD_USAGE_FLOAT_BINARY_64                                                 =  663;  // <usage> ::= 'FLOAT_BINARY_64'
+		final int PROD_USAGE_FLOAT_BINARY_128                                                =  664;  // <usage> ::= 'FLOAT_BINARY_128'
+		final int PROD_USAGE_FLOAT_DECIMAL_16                                                =  665;  // <usage> ::= 'FLOAT_DECIMAL_16'
+		final int PROD_USAGE_FLOAT_DECIMAL_34                                                =  666;  // <usage> ::= 'FLOAT_DECIMAL_34'
+		final int PROD_USAGE_NATIONAL                                                        =  667;  // <usage> ::= NATIONAL
+		final int PROD_FLOAT_USAGE_COMP_1                                                    =  668;  // <float_usage> ::= 'COMP_1'
+		final int PROD_FLOAT_USAGE_FLOAT_SHORT                                               =  669;  // <float_usage> ::= 'FLOAT_SHORT'
+		final int PROD_DOUBLE_USAGE_COMP_2                                                   =  670;  // <double_usage> ::= 'COMP_2'
+		final int PROD_DOUBLE_USAGE_FLOAT_LONG                                               =  671;  // <double_usage> ::= 'FLOAT_LONG'
+		final int PROD_SIGN_CLAUSE_LEADING                                                   =  672;  // <sign_clause> ::= <_sign_is> LEADING <flag_separate>
+		final int PROD_SIGN_CLAUSE_TRAILING                                                  =  673;  // <sign_clause> ::= <_sign_is> TRAILING <flag_separate>
+		final int PROD_REPORT_OCCURS_CLAUSE_OCCURS                                           =  674;  // <report_occurs_clause> ::= OCCURS <integer_or_word> <_occurs_to_integer> <_times> <_occurs_depending> <_occurs_step>
+		final int PROD__OCCURS_STEP                                                          =  675;  // <_occurs_step> ::= 
+		final int PROD__OCCURS_STEP_STEP                                                     =  676;  // <_occurs_step> ::= STEP <integer_or_word>
+		final int PROD_OCCURS_CLAUSE_OCCURS                                                  =  677;  // <occurs_clause> ::= OCCURS <integer_or_word> <_occurs_to_integer> <_times> <_occurs_depending> <_occurs_keys_and_indexed>
+		final int PROD_OCCURS_CLAUSE_OCCURS_UNBOUNDED_DEPENDING                              =  678;  // <occurs_clause> ::= OCCURS <_occurs_integer_to> UNBOUNDED <_times> DEPENDING <_on> <reference> <_occurs_keys_and_indexed>
+		final int PROD_OCCURS_CLAUSE_OCCURS_DYNAMIC                                          =  679;  // <occurs_clause> ::= OCCURS DYNAMIC <_capacity_in> <_occurs_from_integer> <_occurs_to_integer> <_occurs_initialized> <_occurs_keys_and_indexed>
+		final int PROD__OCCURS_TO_INTEGER                                                    =  680;  // <_occurs_to_integer> ::= 
+		final int PROD__OCCURS_TO_INTEGER_TO                                                 =  681;  // <_occurs_to_integer> ::= TO <integer_or_word>
+		final int PROD__OCCURS_FROM_INTEGER                                                  =  682;  // <_occurs_from_integer> ::= 
+		final int PROD__OCCURS_FROM_INTEGER_FROM                                             =  683;  // <_occurs_from_integer> ::= FROM <integer_or_word>
+		final int PROD__OCCURS_INTEGER_TO                                                    =  684;  // <_occurs_integer_to> ::= 
+		final int PROD__OCCURS_INTEGER_TO_TO                                                 =  685;  // <_occurs_integer_to> ::= <integer_or_word> TO
+		final int PROD_INTEGER_OR_WORD                                                       =  686;  // <integer_or_word> ::= <integer>
+		final int PROD_INTEGER_OR_WORD_COBOLWORD                                             =  687;  // <integer_or_word> ::= COBOLWord
+		final int PROD__OCCURS_DEPENDING                                                     =  688;  // <_occurs_depending> ::= 
+		final int PROD__OCCURS_DEPENDING_DEPENDING                                           =  689;  // <_occurs_depending> ::= DEPENDING <_on> <reference>
+		final int PROD__CAPACITY_IN                                                          =  690;  // <_capacity_in> ::= 
+		final int PROD__CAPACITY_IN_CAPACITY                                                 =  691;  // <_capacity_in> ::= CAPACITY <_in> <WORD>
+		final int PROD__OCCURS_INITIALIZED                                                   =  692;  // <_occurs_initialized> ::= 
+		final int PROD__OCCURS_INITIALIZED_INITIALIZED                                       =  693;  // <_occurs_initialized> ::= INITIALIZED
+		final int PROD__OCCURS_KEYS_AND_INDEXED                                              =  694;  // <_occurs_keys_and_indexed> ::= 
+		final int PROD__OCCURS_KEYS_AND_INDEXED2                                             =  695;  // <_occurs_keys_and_indexed> ::= <occurs_keys> <occurs_indexed>
+		final int PROD__OCCURS_KEYS_AND_INDEXED3                                             =  696;  // <_occurs_keys_and_indexed> ::= <occurs_indexed> <occurs_keys>
+		final int PROD__OCCURS_KEYS_AND_INDEXED4                                             =  697;  // <_occurs_keys_and_indexed> ::= <occurs_indexed>
+		final int PROD__OCCURS_KEYS_AND_INDEXED5                                             =  698;  // <_occurs_keys_and_indexed> ::= <occurs_keys>
+		final int PROD_OCCURS_KEYS                                                           =  699;  // <occurs_keys> ::= <occurs_key_list>
+		final int PROD_OCCURS_KEY_LIST                                                       =  700;  // <occurs_key_list> ::= <occurs_key_field>
+		final int PROD_OCCURS_KEY_LIST2                                                      =  701;  // <occurs_key_list> ::= <occurs_key_field> <occurs_key_list>
+		final int PROD_OCCURS_KEY_FIELD                                                      =  702;  // <occurs_key_field> ::= <ascending_or_descending> <_key> <_is> <reference_list>
+		final int PROD_ASCENDING_OR_DESCENDING_ASCENDING                                     =  703;  // <ascending_or_descending> ::= ASCENDING
+		final int PROD_ASCENDING_OR_DESCENDING_DESCENDING                                    =  704;  // <ascending_or_descending> ::= DESCENDING
+		final int PROD__OCCURS_INDEXED                                                       =  705;  // <_occurs_indexed> ::= 
+		final int PROD__OCCURS_INDEXED2                                                      =  706;  // <_occurs_indexed> ::= <occurs_indexed>
+		final int PROD_OCCURS_INDEXED_INDEXED                                                =  707;  // <occurs_indexed> ::= INDEXED <_by> <occurs_index_list>
+		final int PROD_OCCURS_INDEX_LIST                                                     =  708;  // <occurs_index_list> ::= <occurs_index>
+		final int PROD_OCCURS_INDEX_LIST2                                                    =  709;  // <occurs_index_list> ::= <occurs_index_list> <occurs_index>
+		final int PROD_OCCURS_INDEX                                                          =  710;  // <occurs_index> ::= <WORD>
+		final int PROD_JUSTIFIED_CLAUSE_JUSTIFIED                                            =  711;  // <justified_clause> ::= JUSTIFIED <_right>
+		final int PROD_SYNCHRONIZED_CLAUSE_SYNCHRONIZED                                      =  712;  // <synchronized_clause> ::= SYNCHRONIZED <_left_or_right>
+		final int PROD_BLANK_CLAUSE_BLANK_ZERO                                               =  713;  // <blank_clause> ::= BLANK <_when> ZERO
+		final int PROD_BASED_CLAUSE_BASED                                                    =  714;  // <based_clause> ::= BASED
+		final int PROD_VALUE_CLAUSE_VALUE                                                    =  715;  // <value_clause> ::= VALUE <_is_are> <value_item_list> <_false_is>
+		final int PROD_VALUE_ITEM_LIST                                                       =  716;  // <value_item_list> ::= <value_item>
+		final int PROD_VALUE_ITEM_LIST2                                                      =  717;  // <value_item_list> ::= <value_item_list> <value_item>
+		final int PROD_VALUE_ITEM                                                            =  718;  // <value_item> ::= <lit_or_length>
+		final int PROD_VALUE_ITEM_THRU                                                       =  719;  // <value_item> ::= <lit_or_length> THRU <lit_or_length>
+		final int PROD_VALUE_ITEM_COMMA_DELIM                                                =  720;  // <value_item> ::= 'COMMA_DELIM'
+		final int PROD__FALSE_IS                                                             =  721;  // <_false_is> ::= 
+		final int PROD__FALSE_IS_TOK_FALSE                                                   =  722;  // <_false_is> ::= <_when_set_to> 'TOK_FALSE' <_is> <lit_or_length>
+		final int PROD_ANY_LENGTH_CLAUSE_ANY_LENGTH                                          =  723;  // <any_length_clause> ::= ANY LENGTH
+		final int PROD_ANY_LENGTH_CLAUSE_ANY_NUMERIC                                         =  724;  // <any_length_clause> ::= ANY NUMERIC
+		final int PROD__LOCAL_STORAGE_SECTION                                                =  725;  // <_local_storage_section> ::= 
+		final int PROD__LOCAL_STORAGE_SECTION_LOCAL_STORAGE_SECTION_TOK_DOT                  =  726;  // <_local_storage_section> ::= 'LOCAL_STORAGE' SECTION 'TOK_DOT' <_record_description_list>
+		final int PROD__LINKAGE_SECTION                                                      =  727;  // <_linkage_section> ::= 
+		final int PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT                              =  728;  // <_linkage_section> ::= LINKAGE SECTION 'TOK_DOT' <_record_description_list>
+		final int PROD__REPORT_SECTION                                                       =  729;  // <_report_section> ::= 
+		final int PROD__REPORT_SECTION_REPORT_SECTION_TOK_DOT                                =  730;  // <_report_section> ::= REPORT SECTION 'TOK_DOT' <_report_description_sequence>
+		final int PROD__REPORT_DESCRIPTION_SEQUENCE                                          =  731;  // <_report_description_sequence> ::= 
+		final int PROD__REPORT_DESCRIPTION_SEQUENCE2                                         =  732;  // <_report_description_sequence> ::= <_report_description_sequence> <report_description>
+		final int PROD_REPORT_DESCRIPTION_RD_TOK_DOT                                         =  733;  // <report_description> ::= RD <report_name> <_report_description_options> 'TOK_DOT' <_report_group_description_list>
+		final int PROD__REPORT_DESCRIPTION_OPTIONS                                           =  734;  // <_report_description_options> ::= 
+		final int PROD__REPORT_DESCRIPTION_OPTIONS2                                          =  735;  // <_report_description_options> ::= <_report_description_options> <report_description_option>
+		final int PROD_REPORT_DESCRIPTION_OPTION_GLOBAL                                      =  736;  // <report_description_option> ::= <_is> GLOBAL
+		final int PROD_REPORT_DESCRIPTION_OPTION_CODE                                        =  737;  // <report_description_option> ::= CODE <_is> <id_or_lit>
+		final int PROD_REPORT_DESCRIPTION_OPTION                                             =  738;  // <report_description_option> ::= <control_clause>
+		final int PROD_REPORT_DESCRIPTION_OPTION2                                            =  739;  // <report_description_option> ::= <page_limit_clause>
+		final int PROD_CONTROL_CLAUSE                                                        =  740;  // <control_clause> ::= <control_keyword> <control_field_list>
+		final int PROD_CONTROL_FIELD_LIST                                                    =  741;  // <control_field_list> ::= <_final> <identifier_list>
+		final int PROD_IDENTIFIER_LIST                                                       =  742;  // <identifier_list> ::= <identifier>
+		final int PROD_IDENTIFIER_LIST2                                                      =  743;  // <identifier_list> ::= <identifier_list> <identifier>
+		final int PROD_PAGE_LIMIT_CLAUSE_PAGE                                                =  744;  // <page_limit_clause> ::= PAGE <_limits> <page_line_column> <_page_heading_list>
+		final int PROD_PAGE_LINE_COLUMN                                                      =  745;  // <page_line_column> ::= <report_integer>
+		final int PROD_PAGE_LINE_COLUMN2                                                     =  746;  // <page_line_column> ::= <report_integer> <line_or_lines> <report_integer> <columns_or_cols>
+		final int PROD_PAGE_LINE_COLUMN3                                                     =  747;  // <page_line_column> ::= <report_integer> <line_or_lines>
+		final int PROD__PAGE_HEADING_LIST                                                    =  748;  // <_page_heading_list> ::= 
+		final int PROD__PAGE_HEADING_LIST2                                                   =  749;  // <_page_heading_list> ::= <_page_heading_list> <page_detail>
+		final int PROD_PAGE_DETAIL                                                           =  750;  // <page_detail> ::= <heading_clause>
+		final int PROD_PAGE_DETAIL2                                                          =  751;  // <page_detail> ::= <first_detail>
+		final int PROD_PAGE_DETAIL3                                                          =  752;  // <page_detail> ::= <last_heading>
+		final int PROD_PAGE_DETAIL4                                                          =  753;  // <page_detail> ::= <last_detail>
+		final int PROD_PAGE_DETAIL5                                                          =  754;  // <page_detail> ::= <footing_clause>
+		final int PROD_HEADING_CLAUSE_HEADING                                                =  755;  // <heading_clause> ::= HEADING <_is> <report_integer>
+		final int PROD_FIRST_DETAIL_FIRST                                                    =  756;  // <first_detail> ::= FIRST <detail_keyword> <_is> <report_integer>
+		final int PROD_LAST_HEADING_LAST                                                     =  757;  // <last_heading> ::= LAST <ch_keyword> <_is> <report_integer>
+		final int PROD_LAST_DETAIL_LAST                                                      =  758;  // <last_detail> ::= LAST <detail_keyword> <_is> <report_integer>
+		final int PROD_FOOTING_CLAUSE_FOOTING                                                =  759;  // <footing_clause> ::= FOOTING <_is> <report_integer>
+		final int PROD__REPORT_GROUP_DESCRIPTION_LIST                                        =  760;  // <_report_group_description_list> ::= 
+		final int PROD__REPORT_GROUP_DESCRIPTION_LIST2                                       =  761;  // <_report_group_description_list> ::= <_report_group_description_list> <report_group_description_entry>
+		final int PROD_REPORT_GROUP_DESCRIPTION_ENTRY_TOK_DOT                                =  762;  // <report_group_description_entry> ::= <level_number> <_entry_name> <_report_group_options> 'TOK_DOT'
+		final int PROD__REPORT_GROUP_OPTIONS                                                 =  763;  // <_report_group_options> ::= 
+		final int PROD__REPORT_GROUP_OPTIONS2                                                =  764;  // <_report_group_options> ::= <_report_group_options> <report_group_option>
+		final int PROD_REPORT_GROUP_OPTION                                                   =  765;  // <report_group_option> ::= <type_clause>
+		final int PROD_REPORT_GROUP_OPTION2                                                  =  766;  // <report_group_option> ::= <next_group_clause>
+		final int PROD_REPORT_GROUP_OPTION3                                                  =  767;  // <report_group_option> ::= <line_clause>
+		final int PROD_REPORT_GROUP_OPTION4                                                  =  768;  // <report_group_option> ::= <picture_clause>
+		final int PROD_REPORT_GROUP_OPTION5                                                  =  769;  // <report_group_option> ::= <report_usage_clause>
+		final int PROD_REPORT_GROUP_OPTION6                                                  =  770;  // <report_group_option> ::= <sign_clause>
+		final int PROD_REPORT_GROUP_OPTION7                                                  =  771;  // <report_group_option> ::= <justified_clause>
+		final int PROD_REPORT_GROUP_OPTION8                                                  =  772;  // <report_group_option> ::= <column_clause>
+		final int PROD_REPORT_GROUP_OPTION9                                                  =  773;  // <report_group_option> ::= <blank_clause>
+		final int PROD_REPORT_GROUP_OPTION10                                                 =  774;  // <report_group_option> ::= <source_clause>
+		final int PROD_REPORT_GROUP_OPTION11                                                 =  775;  // <report_group_option> ::= <sum_clause_list>
+		final int PROD_REPORT_GROUP_OPTION12                                                 =  776;  // <report_group_option> ::= <value_clause>
+		final int PROD_REPORT_GROUP_OPTION13                                                 =  777;  // <report_group_option> ::= <present_when_condition>
+		final int PROD_REPORT_GROUP_OPTION14                                                 =  778;  // <report_group_option> ::= <group_indicate_clause>
+		final int PROD_REPORT_GROUP_OPTION15                                                 =  779;  // <report_group_option> ::= <report_occurs_clause>
+		final int PROD_REPORT_GROUP_OPTION16                                                 =  780;  // <report_group_option> ::= <varying_clause>
+		final int PROD_TYPE_CLAUSE_TYPE                                                      =  781;  // <type_clause> ::= TYPE <_is> <type_option>
+		final int PROD_TYPE_OPTION                                                           =  782;  // <type_option> ::= <rh_keyword>
+		final int PROD_TYPE_OPTION2                                                          =  783;  // <type_option> ::= <ph_keyword>
+		final int PROD_TYPE_OPTION3                                                          =  784;  // <type_option> ::= <ch_keyword> <_control_final>
+		final int PROD_TYPE_OPTION4                                                          =  785;  // <type_option> ::= <detail_keyword>
+		final int PROD_TYPE_OPTION5                                                          =  786;  // <type_option> ::= <cf_keyword> <_control_final>
+		final int PROD_TYPE_OPTION6                                                          =  787;  // <type_option> ::= <pf_keyword>
+		final int PROD_TYPE_OPTION7                                                          =  788;  // <type_option> ::= <rf_keyword>
+		final int PROD__CONTROL_FINAL                                                        =  789;  // <_control_final> ::= 
+		final int PROD__CONTROL_FINAL2                                                       =  790;  // <_control_final> ::= <identifier> <_or_page>
+		final int PROD__CONTROL_FINAL_FINAL                                                  =  791;  // <_control_final> ::= FINAL <_or_page>
+		final int PROD__OR_PAGE                                                              =  792;  // <_or_page> ::= 
+		final int PROD__OR_PAGE_OR_PAGE                                                      =  793;  // <_or_page> ::= OR PAGE
+		final int PROD_NEXT_GROUP_CLAUSE_NEXT_GROUP                                          =  794;  // <next_group_clause> ::= NEXT GROUP <_is> <line_or_plus>
+		final int PROD_SUM_CLAUSE_LIST_SUM                                                   =  795;  // <sum_clause_list> ::= SUM <_of> <report_x_list> <_reset_clause>
+		final int PROD__RESET_CLAUSE                                                         =  796;  // <_reset_clause> ::= 
+		final int PROD__RESET_CLAUSE_RESET                                                   =  797;  // <_reset_clause> ::= RESET <_on> <data_or_final>
+		final int PROD_DATA_OR_FINAL                                                         =  798;  // <data_or_final> ::= <identifier>
+		final int PROD_DATA_OR_FINAL_FINAL                                                   =  799;  // <data_or_final> ::= FINAL
+		final int PROD_PRESENT_WHEN_CONDITION_PRESENT_WHEN                                   =  800;  // <present_when_condition> ::= PRESENT WHEN <condition>
+		final int PROD_VARYING_CLAUSE_VARYING_FROM_BY                                        =  801;  // <varying_clause> ::= VARYING <identifier> FROM <arith_x> BY <arith_x>
+		final int PROD_LINE_CLAUSE                                                           =  802;  // <line_clause> ::= <line_keyword_clause> <report_line_integer_list>
+		final int PROD_LINE_KEYWORD_CLAUSE_LINE                                              =  803;  // <line_keyword_clause> ::= LINE <_numbers> <_is_are>
+		final int PROD_LINE_KEYWORD_CLAUSE_LINES                                             =  804;  // <line_keyword_clause> ::= LINES <_are>
+		final int PROD_COLUMN_CLAUSE                                                         =  805;  // <column_clause> ::= <col_keyword_clause> <report_col_integer_list>
+		final int PROD_COL_KEYWORD_CLAUSE                                                    =  806;  // <col_keyword_clause> ::= <column_or_col> <_numbers> <_is_are>
+		final int PROD_COL_KEYWORD_CLAUSE2                                                   =  807;  // <col_keyword_clause> ::= <columns_or_cols> <_are>
+		final int PROD_REPORT_LINE_INTEGER_LIST                                              =  808;  // <report_line_integer_list> ::= <line_or_plus>
+		final int PROD_REPORT_LINE_INTEGER_LIST2                                             =  809;  // <report_line_integer_list> ::= <report_line_integer_list> <line_or_plus>
+		final int PROD_LINE_OR_PLUS_PLUS                                                     =  810;  // <line_or_plus> ::= PLUS <integer>
+		final int PROD_LINE_OR_PLUS                                                          =  811;  // <line_or_plus> ::= <report_integer>
+		final int PROD_LINE_OR_PLUS_NEXT_PAGE                                                =  812;  // <line_or_plus> ::= 'NEXT_PAGE'
+		final int PROD_REPORT_COL_INTEGER_LIST                                               =  813;  // <report_col_integer_list> ::= <col_or_plus>
+		final int PROD_REPORT_COL_INTEGER_LIST2                                              =  814;  // <report_col_integer_list> ::= <report_col_integer_list> <col_or_plus>
+		final int PROD_COL_OR_PLUS_PLUS                                                      =  815;  // <col_or_plus> ::= PLUS <integer>
+		final int PROD_COL_OR_PLUS                                                           =  816;  // <col_or_plus> ::= <report_integer>
+		final int PROD_SOURCE_CLAUSE_SOURCE                                                  =  817;  // <source_clause> ::= SOURCE <_is> <arith_x> <flag_rounded>
+		final int PROD_GROUP_INDICATE_CLAUSE_GROUP                                           =  818;  // <group_indicate_clause> ::= GROUP <_indicate>
+		final int PROD_REPORT_USAGE_CLAUSE_USAGE_DISPLAY                                     =  819;  // <report_usage_clause> ::= USAGE <_is> DISPLAY
+		final int PROD__SCREEN_SECTION                                                       =  820;  // <_screen_section> ::= 
+		final int PROD__SCREEN_SECTION_SCREEN_SECTION_TOK_DOT                                =  821;  // <_screen_section> ::= SCREEN SECTION 'TOK_DOT' <_screen_description_list>
+		final int PROD__SCREEN_DESCRIPTION_LIST                                              =  822;  // <_screen_description_list> ::= 
+		final int PROD__SCREEN_DESCRIPTION_LIST2                                             =  823;  // <_screen_description_list> ::= <screen_description_list>
+		final int PROD_SCREEN_DESCRIPTION_LIST_TOK_DOT                                       =  824;  // <screen_description_list> ::= <screen_description> 'TOK_DOT'
+		final int PROD_SCREEN_DESCRIPTION_LIST_TOK_DOT2                                      =  825;  // <screen_description_list> ::= <screen_description_list> <screen_description> 'TOK_DOT'
+		final int PROD_SCREEN_DESCRIPTION                                                    =  826;  // <screen_description> ::= <constant_entry>
+		final int PROD_SCREEN_DESCRIPTION2                                                   =  827;  // <screen_description> ::= <level_number> <_entry_name> <_screen_options>
+		final int PROD__SCREEN_OPTIONS                                                       =  828;  // <_screen_options> ::= 
+		final int PROD__SCREEN_OPTIONS2                                                      =  829;  // <_screen_options> ::= <_screen_options> <screen_option>
+		final int PROD_SCREEN_OPTION_BLANK_LINE                                              =  830;  // <screen_option> ::= BLANK LINE
+		final int PROD_SCREEN_OPTION_BLANK_SCREEN                                            =  831;  // <screen_option> ::= BLANK SCREEN
+		final int PROD_SCREEN_OPTION_BELL                                                    =  832;  // <screen_option> ::= BELL
+		final int PROD_SCREEN_OPTION_BLINK                                                   =  833;  // <screen_option> ::= BLINK
+		final int PROD_SCREEN_OPTION_ERASE                                                   =  834;  // <screen_option> ::= ERASE <eol>
+		final int PROD_SCREEN_OPTION_ERASE2                                                  =  835;  // <screen_option> ::= ERASE <eos>
+		final int PROD_SCREEN_OPTION_HIGHLIGHT                                               =  836;  // <screen_option> ::= HIGHLIGHT
+		final int PROD_SCREEN_OPTION_LOWLIGHT                                                =  837;  // <screen_option> ::= LOWLIGHT
+		final int PROD_SCREEN_OPTION                                                         =  838;  // <screen_option> ::= <reverse_video>
+		final int PROD_SCREEN_OPTION_UNDERLINE                                               =  839;  // <screen_option> ::= UNDERLINE
+		final int PROD_SCREEN_OPTION_OVERLINE                                                =  840;  // <screen_option> ::= OVERLINE
+		final int PROD_SCREEN_OPTION_GRID                                                    =  841;  // <screen_option> ::= GRID
+		final int PROD_SCREEN_OPTION_LEFTLINE                                                =  842;  // <screen_option> ::= LEFTLINE
+		final int PROD_SCREEN_OPTION_AUTO                                                    =  843;  // <screen_option> ::= AUTO
+		final int PROD_SCREEN_OPTION_TAB                                                     =  844;  // <screen_option> ::= TAB
+		final int PROD_SCREEN_OPTION_SECURE                                                  =  845;  // <screen_option> ::= SECURE
+		final int PROD_SCREEN_OPTION2                                                        =  846;  // <screen_option> ::= <no_echo>
+		final int PROD_SCREEN_OPTION_REQUIRED                                                =  847;  // <screen_option> ::= REQUIRED
+		final int PROD_SCREEN_OPTION_FULL                                                    =  848;  // <screen_option> ::= FULL
+		final int PROD_SCREEN_OPTION_PROMPT_CHARACTER                                        =  849;  // <screen_option> ::= PROMPT CHARACTER <_is> <id_or_lit>
+		final int PROD_SCREEN_OPTION_PROMPT                                                  =  850;  // <screen_option> ::= PROMPT
+		final int PROD_SCREEN_OPTION_TOK_INITIAL                                             =  851;  // <screen_option> ::= 'TOK_INITIAL'
+		final int PROD_SCREEN_OPTION_LINE                                                    =  852;  // <screen_option> ::= LINE <screen_line_number>
+		final int PROD_SCREEN_OPTION3                                                        =  853;  // <screen_option> ::= <column_or_col> <screen_col_number>
+		final int PROD_SCREEN_OPTION_FOREGROUND_COLOR                                        =  854;  // <screen_option> ::= 'FOREGROUND_COLOR' <_is> <num_id_or_lit>
+		final int PROD_SCREEN_OPTION_BACKGROUND_COLOR                                        =  855;  // <screen_option> ::= 'BACKGROUND_COLOR' <_is> <num_id_or_lit>
+		final int PROD_SCREEN_OPTION4                                                        =  856;  // <screen_option> ::= <usage_clause>
+		final int PROD_SCREEN_OPTION5                                                        =  857;  // <screen_option> ::= <blank_clause>
+		final int PROD_SCREEN_OPTION6                                                        =  858;  // <screen_option> ::= <screen_global_clause>
+		final int PROD_SCREEN_OPTION7                                                        =  859;  // <screen_option> ::= <justified_clause>
+		final int PROD_SCREEN_OPTION8                                                        =  860;  // <screen_option> ::= <sign_clause>
+		final int PROD_SCREEN_OPTION9                                                        =  861;  // <screen_option> ::= <value_clause>
+		final int PROD_SCREEN_OPTION10                                                       =  862;  // <screen_option> ::= <picture_clause>
+		final int PROD_SCREEN_OPTION11                                                       =  863;  // <screen_option> ::= <screen_occurs_clause>
+		final int PROD_SCREEN_OPTION_USING                                                   =  864;  // <screen_option> ::= USING <identifier>
+		final int PROD_SCREEN_OPTION_FROM                                                    =  865;  // <screen_option> ::= FROM <from_parameter>
+		final int PROD_SCREEN_OPTION_TO                                                      =  866;  // <screen_option> ::= TO <identifier>
+		final int PROD_EOL_EOL                                                               =  867;  // <eol> ::= EOL
+		final int PROD_EOL_LINE                                                              =  868;  // <eol> ::= <_end_of> LINE
+		final int PROD_EOS_EOS                                                               =  869;  // <eos> ::= EOS
+		final int PROD_EOS_SCREEN                                                            =  870;  // <eos> ::= <_end_of> SCREEN
+		final int PROD_PLUS_PLUS_PLUS                                                        =  871;  // <plus_plus> ::= PLUS
+		final int PROD_PLUS_PLUS_TOK_PLUS                                                    =  872;  // <plus_plus> ::= 'TOK_PLUS'
+		final int PROD_MINUS_MINUS_MINUS                                                     =  873;  // <minus_minus> ::= MINUS
+		final int PROD_MINUS_MINUS_TOK_MINUS                                                 =  874;  // <minus_minus> ::= 'TOK_MINUS'
+		final int PROD_SCREEN_LINE_NUMBER                                                    =  875;  // <screen_line_number> ::= <_number> <_is> <_screen_line_plus_minus> <num_id_or_lit>
+		final int PROD__SCREEN_LINE_PLUS_MINUS                                               =  876;  // <_screen_line_plus_minus> ::= 
+		final int PROD__SCREEN_LINE_PLUS_MINUS2                                              =  877;  // <_screen_line_plus_minus> ::= <plus_plus>
+		final int PROD__SCREEN_LINE_PLUS_MINUS3                                              =  878;  // <_screen_line_plus_minus> ::= <minus_minus>
+		final int PROD_SCREEN_COL_NUMBER                                                     =  879;  // <screen_col_number> ::= <_number> <_is> <_screen_col_plus_minus> <num_id_or_lit>
+		final int PROD__SCREEN_COL_PLUS_MINUS                                                =  880;  // <_screen_col_plus_minus> ::= 
+		final int PROD__SCREEN_COL_PLUS_MINUS2                                               =  881;  // <_screen_col_plus_minus> ::= <plus_plus>
+		final int PROD__SCREEN_COL_PLUS_MINUS3                                               =  882;  // <_screen_col_plus_minus> ::= <minus_minus>
+		final int PROD_SCREEN_OCCURS_CLAUSE_OCCURS                                           =  883;  // <screen_occurs_clause> ::= OCCURS <integer> <_times>
+		final int PROD_SCREEN_GLOBAL_CLAUSE_GLOBAL                                           =  884;  // <screen_global_clause> ::= <_is> GLOBAL
+		final int PROD__PROCEDURE_DIVISION                                                   =  885;  // <_procedure_division> ::= 
+		final int PROD__PROCEDURE_DIVISION_PROCEDURE_DIVISION_TOK_DOT                        =  886;  // <_procedure_division> ::= PROCEDURE DIVISION <_mnemonic_conv> <_procedure_using_chaining> <_procedure_returning> 'TOK_DOT' <_procedure_declaratives> <_procedure_list>
+		final int PROD__PROCEDURE_DIVISION_TOK_DOT                                           =  887;  // <_procedure_division> ::= <statements> 'TOK_DOT' <_procedure_list>
+		final int PROD__PROCEDURE_USING_CHAINING                                             =  888;  // <_procedure_using_chaining> ::= 
+		final int PROD__PROCEDURE_USING_CHAINING_USING                                       =  889;  // <_procedure_using_chaining> ::= USING <procedure_param_list>
+		final int PROD__PROCEDURE_USING_CHAINING_CHAINING                                    =  890;  // <_procedure_using_chaining> ::= CHAINING <procedure_param_list>
+		final int PROD_PROCEDURE_PARAM_LIST                                                  =  891;  // <procedure_param_list> ::= <procedure_param>
+		final int PROD_PROCEDURE_PARAM_LIST2                                                 =  892;  // <procedure_param_list> ::= <procedure_param_list> <procedure_param>
+		final int PROD_PROCEDURE_PARAM                                                       =  893;  // <procedure_param> ::= <_procedure_type> <_size_optional> <_procedure_optional> <WORD>
+		final int PROD_PROCEDURE_PARAM_COMMA_DELIM                                           =  894;  // <procedure_param> ::= 'COMMA_DELIM'
+		final int PROD__PROCEDURE_TYPE                                                       =  895;  // <_procedure_type> ::= 
+		final int PROD__PROCEDURE_TYPE_REFERENCE                                             =  896;  // <_procedure_type> ::= <_by> REFERENCE
+		final int PROD__PROCEDURE_TYPE_VALUE                                                 =  897;  // <_procedure_type> ::= <_by> VALUE
+		final int PROD__SIZE_OPTIONAL                                                        =  898;  // <_size_optional> ::= 
+		final int PROD__SIZE_OPTIONAL_SIZE_AUTO                                              =  899;  // <_size_optional> ::= SIZE <_is> AUTO
+		final int PROD__SIZE_OPTIONAL_SIZE_DEFAULT                                           =  900;  // <_size_optional> ::= SIZE <_is> DEFAULT
+		final int PROD__SIZE_OPTIONAL_UNSIGNED_SIZE_AUTO                                     =  901;  // <_size_optional> ::= UNSIGNED SIZE <_is> AUTO
+		final int PROD__SIZE_OPTIONAL_UNSIGNED                                               =  902;  // <_size_optional> ::= UNSIGNED <size_is_integer>
+		final int PROD__SIZE_OPTIONAL2                                                       =  903;  // <_size_optional> ::= <size_is_integer>
+		final int PROD_SIZE_IS_INTEGER_SIZE                                                  =  904;  // <size_is_integer> ::= SIZE <_is> <integer>
+		final int PROD__PROCEDURE_OPTIONAL                                                   =  905;  // <_procedure_optional> ::= 
+		final int PROD__PROCEDURE_OPTIONAL_OPTIONAL                                          =  906;  // <_procedure_optional> ::= OPTIONAL
+		final int PROD__PROCEDURE_RETURNING                                                  =  907;  // <_procedure_returning> ::= 
+		final int PROD__PROCEDURE_RETURNING_RETURNING_OMITTED                                =  908;  // <_procedure_returning> ::= RETURNING OMITTED
+		final int PROD__PROCEDURE_RETURNING_RETURNING                                        =  909;  // <_procedure_returning> ::= RETURNING <WORD>
+		final int PROD__PROCEDURE_DECLARATIVES                                               =  910;  // <_procedure_declaratives> ::= 
+		final int PROD__PROCEDURE_DECLARATIVES_DECLARATIVES_TOK_DOT_END_DECLARATIVES_TOK_DOT =  911;  // <_procedure_declaratives> ::= DECLARATIVES 'TOK_DOT' <_procedure_list> END DECLARATIVES 'TOK_DOT'
+		final int PROD__PROCEDURE_LIST                                                       =  912;  // <_procedure_list> ::= 
+		final int PROD__PROCEDURE_LIST2                                                      =  913;  // <_procedure_list> ::= <_procedure_list> <procedure>
+		final int PROD_PROCEDURE                                                             =  914;  // <procedure> ::= <section_header>
+		final int PROD_PROCEDURE2                                                            =  915;  // <procedure> ::= <paragraph_header>
+		final int PROD_PROCEDURE_TOK_DOT                                                     =  916;  // <procedure> ::= <statements> 'TOK_DOT'
+		final int PROD_PROCEDURE_TOK_DOT2                                                    =  917;  // <procedure> ::= 'TOK_DOT'
+		final int PROD_SECTION_HEADER_SECTION_TOK_DOT                                        =  918;  // <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
+		final int PROD__USE_STATEMENT                                                        =  919;  // <_use_statement> ::= 
+		final int PROD__USE_STATEMENT_TOK_DOT                                                =  920;  // <_use_statement> ::= <use_statement> 'TOK_DOT'
+		final int PROD_PARAGRAPH_HEADER_TOK_DOT                                              =  921;  // <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
+		final int PROD_INTLITERALORWORD_INTLITERAL                                           =  922;  // <IntLiteral or WORD> ::= IntLiteral
+		final int PROD_INTLITERALORWORD                                                      =  923;  // <IntLiteral or WORD> ::= <WORD>
+		final int PROD__SEGMENT                                                              =  924;  // <_segment> ::= 
+		final int PROD__SEGMENT2                                                             =  925;  // <_segment> ::= <integer>
+		final int PROD_STATEMENT_LIST                                                        =  926;  // <statement_list> ::= <statements>
+		final int PROD_STATEMENTS                                                            =  927;  // <statements> ::= <statement>
+		final int PROD_STATEMENTS2                                                           =  928;  // <statements> ::= <statements> <statement>
+		final int PROD_STATEMENT                                                             =  929;  // <statement> ::= <accept_statement>
+		final int PROD_STATEMENT2                                                            =  930;  // <statement> ::= <add_statement>
+		final int PROD_STATEMENT3                                                            =  931;  // <statement> ::= <allocate_statement>
+		final int PROD_STATEMENT4                                                            =  932;  // <statement> ::= <alter_statement>
+		final int PROD_STATEMENT5                                                            =  933;  // <statement> ::= <call_statement>
+		final int PROD_STATEMENT6                                                            =  934;  // <statement> ::= <cancel_statement>
+		final int PROD_STATEMENT7                                                            =  935;  // <statement> ::= <close_statement>
+		final int PROD_STATEMENT8                                                            =  936;  // <statement> ::= <commit_statement>
+		final int PROD_STATEMENT9                                                            =  937;  // <statement> ::= <compute_statement>
+		final int PROD_STATEMENT10                                                           =  938;  // <statement> ::= <continue_statement>
+		final int PROD_STATEMENT11                                                           =  939;  // <statement> ::= <delete_statement>
+		final int PROD_STATEMENT12                                                           =  940;  // <statement> ::= <disable_statement>
+		final int PROD_STATEMENT13                                                           =  941;  // <statement> ::= <display_statement>
+		final int PROD_STATEMENT14                                                           =  942;  // <statement> ::= <divide_statement>
+		final int PROD_STATEMENT15                                                           =  943;  // <statement> ::= <enable_statement>
+		final int PROD_STATEMENT16                                                           =  944;  // <statement> ::= <entry_statement>
+		final int PROD_STATEMENT17                                                           =  945;  // <statement> ::= <evaluate_statement>
+		final int PROD_STATEMENT18                                                           =  946;  // <statement> ::= <exit_statement>
+		final int PROD_STATEMENT19                                                           =  947;  // <statement> ::= <free_statement>
+		final int PROD_STATEMENT20                                                           =  948;  // <statement> ::= <generate_statement>
+		final int PROD_STATEMENT21                                                           =  949;  // <statement> ::= <goto_statement>
+		final int PROD_STATEMENT22                                                           =  950;  // <statement> ::= <goback_statement>
+		final int PROD_STATEMENT23                                                           =  951;  // <statement> ::= <if_statement>
+		final int PROD_STATEMENT24                                                           =  952;  // <statement> ::= <initialize_statement>
+		final int PROD_STATEMENT25                                                           =  953;  // <statement> ::= <initiate_statement>
+		final int PROD_STATEMENT26                                                           =  954;  // <statement> ::= <inspect_statement>
+		final int PROD_STATEMENT27                                                           =  955;  // <statement> ::= <merge_statement>
+		final int PROD_STATEMENT28                                                           =  956;  // <statement> ::= <move_statement>
+		final int PROD_STATEMENT29                                                           =  957;  // <statement> ::= <multiply_statement>
+		final int PROD_STATEMENT30                                                           =  958;  // <statement> ::= <open_statement>
+		final int PROD_STATEMENT31                                                           =  959;  // <statement> ::= <perform_statement>
+		final int PROD_STATEMENT32                                                           =  960;  // <statement> ::= <purge_statement>
+		final int PROD_STATEMENT33                                                           =  961;  // <statement> ::= <read_statement>
+		final int PROD_STATEMENT34                                                           =  962;  // <statement> ::= <ready_statement>
+		final int PROD_STATEMENT35                                                           =  963;  // <statement> ::= <receive_statement>
+		final int PROD_STATEMENT36                                                           =  964;  // <statement> ::= <release_statement>
+		final int PROD_STATEMENT37                                                           =  965;  // <statement> ::= <reset_statement>
+		final int PROD_STATEMENT38                                                           =  966;  // <statement> ::= <return_statement>
+		final int PROD_STATEMENT39                                                           =  967;  // <statement> ::= <rewrite_statement>
+		final int PROD_STATEMENT40                                                           =  968;  // <statement> ::= <rollback_statement>
+		final int PROD_STATEMENT41                                                           =  969;  // <statement> ::= <search_statement>
+		final int PROD_STATEMENT42                                                           =  970;  // <statement> ::= <send_statement>
+		final int PROD_STATEMENT43                                                           =  971;  // <statement> ::= <set_statement>
+		final int PROD_STATEMENT44                                                           =  972;  // <statement> ::= <sort_statement>
+		final int PROD_STATEMENT45                                                           =  973;  // <statement> ::= <start_statement>
+		final int PROD_STATEMENT46                                                           =  974;  // <statement> ::= <stop_statement>
+		final int PROD_STATEMENT47                                                           =  975;  // <statement> ::= <string_statement>
+		final int PROD_STATEMENT48                                                           =  976;  // <statement> ::= <subtract_statement>
+		final int PROD_STATEMENT49                                                           =  977;  // <statement> ::= <suppress_statement>
+		final int PROD_STATEMENT50                                                           =  978;  // <statement> ::= <terminate_statement>
+		final int PROD_STATEMENT51                                                           =  979;  // <statement> ::= <transform_statement>
+		final int PROD_STATEMENT52                                                           =  980;  // <statement> ::= <unlock_statement>
+		final int PROD_STATEMENT53                                                           =  981;  // <statement> ::= <unstring_statement>
+		final int PROD_STATEMENT54                                                           =  982;  // <statement> ::= <write_statement>
+		final int PROD_STATEMENT_NEXT_SENTENCE                                               =  983;  // <statement> ::= NEXT SENTENCE
+		final int PROD_ACCEPT_STATEMENT_ACCEPT                                               =  984;  // <accept_statement> ::= ACCEPT <accept_body> <end_accept>
+		final int PROD_ACCEPT_BODY                                                           =  985;  // <accept_body> ::= <accp_identifier> <_accept_clauses> <_accept_exception_phrases>
+		final int PROD_ACCEPT_BODY_FROM                                                      =  986;  // <accept_body> ::= <identifier> FROM <lines_or_number>
+		final int PROD_ACCEPT_BODY_FROM2                                                     =  987;  // <accept_body> ::= <identifier> FROM <columns_or_cols>
+		final int PROD_ACCEPT_BODY_FROM_DATE_YYYYMMDD                                        =  988;  // <accept_body> ::= <identifier> FROM DATE YYYYMMDD
+		final int PROD_ACCEPT_BODY_FROM_DATE                                                 =  989;  // <accept_body> ::= <identifier> FROM DATE
+		final int PROD_ACCEPT_BODY_FROM_DAY_YYYYDDD                                          =  990;  // <accept_body> ::= <identifier> FROM DAY YYYYDDD
+		final int PROD_ACCEPT_BODY_FROM_DAY                                                  =  991;  // <accept_body> ::= <identifier> FROM DAY
+		final int PROD_ACCEPT_BODY_FROM_DAY_OF_WEEK                                          =  992;  // <accept_body> ::= <identifier> FROM 'DAY_OF_WEEK'
+		final int PROD_ACCEPT_BODY_FROM_ESCAPE_KEY                                           =  993;  // <accept_body> ::= <identifier> FROM ESCAPE KEY
+		final int PROD_ACCEPT_BODY_FROM_EXCEPTION_STATUS                                     =  994;  // <accept_body> ::= <identifier> FROM EXCEPTION STATUS
+		final int PROD_ACCEPT_BODY_FROM_TIME                                                 =  995;  // <accept_body> ::= <identifier> FROM TIME
+		final int PROD_ACCEPT_BODY_FROM_USER_NAME                                            =  996;  // <accept_body> ::= <identifier> FROM USER NAME
+		final int PROD_ACCEPT_BODY_FROM_COMMAND_LINE                                         =  997;  // <accept_body> ::= <identifier> FROM 'COMMAND_LINE'
+		final int PROD_ACCEPT_BODY_FROM_ENVIRONMENT_VALUE                                    =  998;  // <accept_body> ::= <identifier> FROM 'ENVIRONMENT_VALUE' <_accept_exception_phrases>
+		final int PROD_ACCEPT_BODY_FROM_ENVIRONMENT                                          =  999;  // <accept_body> ::= <identifier> FROM ENVIRONMENT <simple_display_value> <_accept_exception_phrases>
+		final int PROD_ACCEPT_BODY_FROM_ARGUMENT_NUMBER                                      = 1000;  // <accept_body> ::= <identifier> FROM 'ARGUMENT_NUMBER'
+		final int PROD_ACCEPT_BODY_FROM_ARGUMENT_VALUE                                       = 1001;  // <accept_body> ::= <identifier> FROM 'ARGUMENT_VALUE' <_accept_exception_phrases>
+		final int PROD_ACCEPT_BODY_FROM3                                                     = 1002;  // <accept_body> ::= <identifier> FROM <mnemonic_name>
+		final int PROD_ACCEPT_BODY_FROM4                                                     = 1003;  // <accept_body> ::= <identifier> FROM <WORD>
+		final int PROD_ACCEPT_BODY_COUNT                                                     = 1004;  // <accept_body> ::= <cd_name> <_message> COUNT
+		final int PROD_ACCP_IDENTIFIER                                                       = 1005;  // <accp_identifier> ::= <identifier>
+		final int PROD_ACCP_IDENTIFIER_OMITTED                                               = 1006;  // <accp_identifier> ::= OMITTED
+		final int PROD__ACCEPT_CLAUSES                                                       = 1007;  // <_accept_clauses> ::= 
+		final int PROD__ACCEPT_CLAUSES2                                                      = 1008;  // <_accept_clauses> ::= <accept_clauses>
+		final int PROD_ACCEPT_CLAUSES                                                        = 1009;  // <accept_clauses> ::= <accept_clause>
+		final int PROD_ACCEPT_CLAUSES2                                                       = 1010;  // <accept_clauses> ::= <accept_clauses> <accept_clause>
+		final int PROD_ACCEPT_CLAUSE                                                         = 1011;  // <accept_clause> ::= <at_line_column>
+		final int PROD_ACCEPT_CLAUSE_FROM_CRT                                                = 1012;  // <accept_clause> ::= 'FROM_CRT'
+		final int PROD_ACCEPT_CLAUSE2                                                        = 1013;  // <accept_clause> ::= <mode_is_block>
+		final int PROD_ACCEPT_CLAUSE3                                                        = 1014;  // <accept_clause> ::= <_with> <accp_attr>
+		final int PROD_ACCEPT_CLAUSE_TIME                                                    = 1015;  // <accept_clause> ::= <_before> TIME <positive_id_or_lit>
+		final int PROD_LINES_OR_NUMBER_LINES                                                 = 1016;  // <lines_or_number> ::= LINES
+		final int PROD_LINES_OR_NUMBER_LINE_NUMBER                                           = 1017;  // <lines_or_number> ::= LINE NUMBER
+		final int PROD_AT_LINE_COLUMN                                                        = 1018;  // <at_line_column> ::= <_at> <line_number>
+		final int PROD_AT_LINE_COLUMN2                                                       = 1019;  // <at_line_column> ::= <_at> <column_number>
+		final int PROD_AT_LINE_COLUMN_AT                                                     = 1020;  // <at_line_column> ::= AT <num_id_or_lit>
+		final int PROD_LINE_NUMBER_LINE                                                      = 1021;  // <line_number> ::= LINE <_number> <num_id_or_lit>
+		final int PROD_COLUMN_NUMBER                                                         = 1022;  // <column_number> ::= <column_or_col> <_number> <num_id_or_lit>
+		final int PROD_COLUMN_NUMBER_POSITION                                                = 1023;  // <column_number> ::= POSITION <_number> <num_id_or_lit>
+		final int PROD_MODE_IS_BLOCK_MODE_BLOCK                                              = 1024;  // <mode_is_block> ::= MODE <_is> BLOCK
+		final int PROD_ACCP_ATTR_AUTO                                                        = 1025;  // <accp_attr> ::= AUTO
+		final int PROD_ACCP_ATTR_TAB                                                         = 1026;  // <accp_attr> ::= TAB
+		final int PROD_ACCP_ATTR_BELL                                                        = 1027;  // <accp_attr> ::= BELL
+		final int PROD_ACCP_ATTR_BLINK                                                       = 1028;  // <accp_attr> ::= BLINK
+		final int PROD_ACCP_ATTR_CONVERSION                                                  = 1029;  // <accp_attr> ::= CONVERSION
+		final int PROD_ACCP_ATTR_FULL                                                        = 1030;  // <accp_attr> ::= FULL
+		final int PROD_ACCP_ATTR_HIGHLIGHT                                                   = 1031;  // <accp_attr> ::= HIGHLIGHT
+		final int PROD_ACCP_ATTR_LEFTLINE                                                    = 1032;  // <accp_attr> ::= LEFTLINE
+		final int PROD_ACCP_ATTR_LOWER                                                       = 1033;  // <accp_attr> ::= LOWER
+		final int PROD_ACCP_ATTR_LOWLIGHT                                                    = 1034;  // <accp_attr> ::= LOWLIGHT
+		final int PROD_ACCP_ATTR                                                             = 1035;  // <accp_attr> ::= <no_echo>
+		final int PROD_ACCP_ATTR_OVERLINE                                                    = 1036;  // <accp_attr> ::= OVERLINE
+		final int PROD_ACCP_ATTR_PROMPT_CHARACTER                                            = 1037;  // <accp_attr> ::= PROMPT CHARACTER <_is> <id_or_lit>
+		final int PROD_ACCP_ATTR_PROMPT                                                      = 1038;  // <accp_attr> ::= PROMPT
+		final int PROD_ACCP_ATTR_REQUIRED                                                    = 1039;  // <accp_attr> ::= REQUIRED
+		final int PROD_ACCP_ATTR2                                                            = 1040;  // <accp_attr> ::= <reverse_video>
+		final int PROD_ACCP_ATTR_SECURE                                                      = 1041;  // <accp_attr> ::= SECURE
+		final int PROD_ACCP_ATTR_PROTECTED_SIZE                                              = 1042;  // <accp_attr> ::= PROTECTED SIZE <_is> <num_id_or_lit>
+		final int PROD_ACCP_ATTR_SIZE                                                        = 1043;  // <accp_attr> ::= SIZE <_is> <num_id_or_lit>
+		final int PROD_ACCP_ATTR_UNDERLINE                                                   = 1044;  // <accp_attr> ::= UNDERLINE
+		final int PROD_ACCP_ATTR_NO                                                          = 1045;  // <accp_attr> ::= NO <update_default>
+		final int PROD_ACCP_ATTR3                                                            = 1046;  // <accp_attr> ::= <update_default>
+		final int PROD_ACCP_ATTR_UPPER                                                       = 1047;  // <accp_attr> ::= UPPER
+		final int PROD_ACCP_ATTR_FOREGROUND_COLOR                                            = 1048;  // <accp_attr> ::= 'FOREGROUND_COLOR' <_is> <num_id_or_lit>
+		final int PROD_ACCP_ATTR_BACKGROUND_COLOR                                            = 1049;  // <accp_attr> ::= 'BACKGROUND_COLOR' <_is> <num_id_or_lit>
+		final int PROD_ACCP_ATTR_SCROLL_UP                                                   = 1050;  // <accp_attr> ::= SCROLL UP <_scroll_lines>
+		final int PROD_ACCP_ATTR_SCROLL_DOWN                                                 = 1051;  // <accp_attr> ::= SCROLL DOWN <_scroll_lines>
+		final int PROD_ACCP_ATTR_TIME_OUT                                                    = 1052;  // <accp_attr> ::= 'TIME_OUT' <_after> <positive_id_or_lit>
+		final int PROD_NO_ECHO_NO_ECHO                                                       = 1053;  // <no_echo> ::= NO ECHO
+		final int PROD_NO_ECHO_NO_ECHO2                                                      = 1054;  // <no_echo> ::= 'NO_ECHO'
+		final int PROD_NO_ECHO_OFF                                                           = 1055;  // <no_echo> ::= OFF
+		final int PROD_REVERSE_VIDEO_REVERSE_VIDEO                                           = 1056;  // <reverse_video> ::= 'REVERSE_VIDEO'
+		final int PROD_REVERSE_VIDEO_REVERSED                                                = 1057;  // <reverse_video> ::= REVERSED
+		final int PROD_REVERSE_VIDEO_REVERSE                                                 = 1058;  // <reverse_video> ::= REVERSE
+		final int PROD_UPDATE_DEFAULT_UPDATE                                                 = 1059;  // <update_default> ::= UPDATE
+		final int PROD_UPDATE_DEFAULT_DEFAULT                                                = 1060;  // <update_default> ::= DEFAULT
+		final int PROD_END_ACCEPT                                                            = 1061;  // <end_accept> ::= 
+		final int PROD_END_ACCEPT_END_ACCEPT                                                 = 1062;  // <end_accept> ::= 'END_ACCEPT'
+		final int PROD_ADD_STATEMENT_ADD                                                     = 1063;  // <add_statement> ::= ADD <add_body> <end_add>
+		final int PROD_ADD_BODY_TO                                                           = 1064;  // <add_body> ::= <x_list> TO <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_ADD_BODY_GIVING                                                       = 1065;  // <add_body> ::= <x_list> <_add_to> GIVING <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_ADD_BODY_CORRESPONDING_TO                                             = 1066;  // <add_body> ::= CORRESPONDING <identifier> TO <identifier> <flag_rounded> <on_size_error_phrases>
+		final int PROD_ADD_BODY_TABLE_TO                                                     = 1067;  // <add_body> ::= TABLE <table_identifier> TO <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
+		final int PROD__ADD_TO                                                               = 1068;  // <_add_to> ::= 
+		final int PROD__ADD_TO_TO                                                            = 1069;  // <_add_to> ::= TO <x>
+		final int PROD_END_ADD                                                               = 1070;  // <end_add> ::= 
+		final int PROD_END_ADD_END_ADD                                                       = 1071;  // <end_add> ::= 'END_ADD'
+		final int PROD_ALLOCATE_STATEMENT_ALLOCATE                                           = 1072;  // <allocate_statement> ::= ALLOCATE <allocate_body>
+		final int PROD_ALLOCATE_BODY                                                         = 1073;  // <allocate_body> ::= <identifier> <flag_initialized> <allocate_returning>
+		final int PROD_ALLOCATE_BODY_CHARACTERS                                              = 1074;  // <allocate_body> ::= <exp> CHARACTERS <flag_initialized_to> <allocate_returning>
+		final int PROD_ALLOCATE_RETURNING                                                    = 1075;  // <allocate_returning> ::= 
+		final int PROD_ALLOCATE_RETURNING_RETURNING                                          = 1076;  // <allocate_returning> ::= RETURNING <target_x>
+		final int PROD_ALTER_STATEMENT_ALTER                                                 = 1077;  // <alter_statement> ::= ALTER <alter_body>
+		final int PROD_ALTER_BODY                                                            = 1078;  // <alter_body> ::= <alter_entry>
+		final int PROD_ALTER_BODY2                                                           = 1079;  // <alter_body> ::= <alter_body> <alter_entry>
+		final int PROD_ALTER_ENTRY_TO                                                        = 1080;  // <alter_entry> ::= <procedure_name> TO <_proceed_to> <procedure_name>
+		final int PROD__PROCEED_TO                                                           = 1081;  // <_proceed_to> ::= 
+		final int PROD__PROCEED_TO_PROCEED_TO                                                = 1082;  // <_proceed_to> ::= PROCEED TO
+		final int PROD_CALL_STATEMENT_CALL                                                   = 1083;  // <call_statement> ::= CALL <call_body> <end_call>
+		final int PROD_CALL_BODY                                                             = 1084;  // <call_body> ::= <_mnemonic_conv> <program_or_prototype> <call_using> <call_returning> <call_exception_phrases>
+		final int PROD__MNEMONIC_CONV                                                        = 1085;  // <_mnemonic_conv> ::= 
+		final int PROD__MNEMONIC_CONV_STATIC                                                 = 1086;  // <_mnemonic_conv> ::= STATIC
+		final int PROD__MNEMONIC_CONV_STDCALL                                                = 1087;  // <_mnemonic_conv> ::= STDCALL
+		final int PROD__MNEMONIC_CONV_TOK_EXTERN                                             = 1088;  // <_mnemonic_conv> ::= 'TOK_EXTERN'
+		final int PROD__MNEMONIC_CONV2                                                       = 1089;  // <_mnemonic_conv> ::= <MNEMONIC_NAME_TOK>
+		final int PROD_PROGRAM_OR_PROTOTYPE                                                  = 1090;  // <program_or_prototype> ::= <id_or_lit_or_func>
+		final int PROD_PROGRAM_OR_PROTOTYPE2                                                 = 1091;  // <program_or_prototype> ::= <id_or_lit_or_func_as> <PROGRAM_NAME>
+		final int PROD_PROGRAM_OR_PROTOTYPE_AS_NESTED                                        = 1092;  // <program_or_prototype> ::= <LITERAL_TOK> AS NESTED
+		final int PROD_ID_OR_LIT_OR_FUNC_AS_AS                                               = 1093;  // <id_or_lit_or_func_as> ::= <id_or_lit_or_func> AS
+		final int PROD_CALL_USING                                                            = 1094;  // <call_using> ::= 
+		final int PROD_CALL_USING_USING                                                      = 1095;  // <call_using> ::= USING <call_param_list>
+		final int PROD_CALL_PARAM_LIST                                                       = 1096;  // <call_param_list> ::= <call_param>
+		final int PROD_CALL_PARAM_LIST2                                                      = 1097;  // <call_param_list> ::= <call_param_list> <call_param>
+		final int PROD_CALL_PARAM_OMITTED                                                    = 1098;  // <call_param> ::= <call_type> OMITTED
+		final int PROD_CALL_PARAM                                                            = 1099;  // <call_param> ::= <call_type> <_size_optional> <call_x>
+		final int PROD_CALL_PARAM_COMMA_DELIM                                                = 1100;  // <call_param> ::= 'COMMA_DELIM'
+		final int PROD_CALL_TYPE                                                             = 1101;  // <call_type> ::= 
+		final int PROD_CALL_TYPE_REFERENCE                                                   = 1102;  // <call_type> ::= <_by> REFERENCE
+		final int PROD_CALL_TYPE_CONTENT                                                     = 1103;  // <call_type> ::= <_by> CONTENT
+		final int PROD_CALL_TYPE_VALUE                                                       = 1104;  // <call_type> ::= <_by> VALUE
+		final int PROD_CALL_RETURNING                                                        = 1105;  // <call_returning> ::= 
+		final int PROD_CALL_RETURNING2                                                       = 1106;  // <call_returning> ::= <return_give> <_into> <identifier>
+		final int PROD_CALL_RETURNING3                                                       = 1107;  // <call_returning> ::= <return_give> <null_or_omitted>
+		final int PROD_CALL_RETURNING_NOTHING                                                = 1108;  // <call_returning> ::= <return_give> NOTHING
+		final int PROD_CALL_RETURNING_ADDRESS                                                = 1109;  // <call_returning> ::= <return_give> ADDRESS <_of> <identifier>
+		final int PROD_RETURN_GIVE_RETURNING                                                 = 1110;  // <return_give> ::= RETURNING
+		final int PROD_RETURN_GIVE_GIVING                                                    = 1111;  // <return_give> ::= GIVING
+		final int PROD_NULL_OR_OMITTED_TOK_NULL                                              = 1112;  // <null_or_omitted> ::= 'TOK_NULL'
+		final int PROD_NULL_OR_OMITTED_OMITTED                                               = 1113;  // <null_or_omitted> ::= OMITTED
+		final int PROD_CALL_EXCEPTION_PHRASES                                                = 1114;  // <call_exception_phrases> ::= 
+		final int PROD_CALL_EXCEPTION_PHRASES2                                               = 1115;  // <call_exception_phrases> ::= <call_on_exception> <_call_not_on_exception>
+		final int PROD_CALL_EXCEPTION_PHRASES3                                               = 1116;  // <call_exception_phrases> ::= <call_not_on_exception> <_call_on_exception>
+		final int PROD__CALL_ON_EXCEPTION                                                    = 1117;  // <_call_on_exception> ::= 
+		final int PROD__CALL_ON_EXCEPTION2                                                   = 1118;  // <_call_on_exception> ::= <call_on_exception>
+		final int PROD_CALL_ON_EXCEPTION_EXCEPTION                                           = 1119;  // <call_on_exception> ::= EXCEPTION <statement_list>
+		final int PROD_CALL_ON_EXCEPTION_TOK_OVERFLOW                                        = 1120;  // <call_on_exception> ::= 'TOK_OVERFLOW' <statement_list>
+		final int PROD__CALL_NOT_ON_EXCEPTION                                                = 1121;  // <_call_not_on_exception> ::= 
+		final int PROD__CALL_NOT_ON_EXCEPTION2                                               = 1122;  // <_call_not_on_exception> ::= <call_not_on_exception>
+		final int PROD_CALL_NOT_ON_EXCEPTION_NOT_EXCEPTION                                   = 1123;  // <call_not_on_exception> ::= 'NOT_EXCEPTION' <statement_list>
+		final int PROD_END_CALL                                                              = 1124;  // <end_call> ::= 
+		final int PROD_END_CALL_END_CALL                                                     = 1125;  // <end_call> ::= 'END_CALL'
+		final int PROD_CANCEL_STATEMENT_CANCEL                                               = 1126;  // <cancel_statement> ::= CANCEL <cancel_body>
+		final int PROD_CANCEL_BODY                                                           = 1127;  // <cancel_body> ::= <id_or_lit_or_program_name>
+		final int PROD_CANCEL_BODY2                                                          = 1128;  // <cancel_body> ::= <cancel_body> <id_or_lit_or_program_name>
+		final int PROD_ID_OR_LIT_OR_PROGRAM_NAME                                             = 1129;  // <id_or_lit_or_program_name> ::= <id_or_lit>
+		final int PROD_CLOSE_STATEMENT_CLOSE                                                 = 1130;  // <close_statement> ::= CLOSE <close_body>
+		final int PROD_CLOSE_BODY                                                            = 1131;  // <close_body> ::= <file_name> <close_option>
+		final int PROD_CLOSE_BODY2                                                           = 1132;  // <close_body> ::= <close_body> <file_name> <close_option>
+		final int PROD_CLOSE_OPTION                                                          = 1133;  // <close_option> ::= 
+		final int PROD_CLOSE_OPTION2                                                         = 1134;  // <close_option> ::= <reel_or_unit>
+		final int PROD_CLOSE_OPTION_REMOVAL                                                  = 1135;  // <close_option> ::= <reel_or_unit> <_for> REMOVAL
+		final int PROD_CLOSE_OPTION_NO_REWIND                                                = 1136;  // <close_option> ::= <_with> NO REWIND
+		final int PROD_CLOSE_OPTION_LOCK                                                     = 1137;  // <close_option> ::= <_with> LOCK
+		final int PROD_COMPUTE_STATEMENT_COMPUTE                                             = 1138;  // <compute_statement> ::= COMPUTE <compute_body> <end_compute>
+		final int PROD_COMPUTE_BODY                                                          = 1139;  // <compute_body> ::= <arithmetic_x_list> <comp_equal> <exp> <on_size_error_phrases>
+		final int PROD_END_COMPUTE                                                           = 1140;  // <end_compute> ::= 
+		final int PROD_END_COMPUTE_END_COMPUTE                                               = 1141;  // <end_compute> ::= 'END_COMPUTE'
+		final int PROD_COMMIT_STATEMENT_COMMIT                                               = 1142;  // <commit_statement> ::= COMMIT
+		final int PROD_CONTINUE_STATEMENT_CONTINUE                                           = 1143;  // <continue_statement> ::= CONTINUE
+		final int PROD_DELETE_STATEMENT_DELETE                                               = 1144;  // <delete_statement> ::= DELETE <delete_body> <end_delete>
+		final int PROD_DELETE_BODY                                                           = 1145;  // <delete_body> ::= <file_name> <_record> <_retry_phrase> <_invalid_key_phrases>
+		final int PROD_DELETE_BODY_TOK_FILE                                                  = 1146;  // <delete_body> ::= 'TOK_FILE' <delete_file_list>
+		final int PROD_DELETE_FILE_LIST                                                      = 1147;  // <delete_file_list> ::= <file_name>
+		final int PROD_DELETE_FILE_LIST2                                                     = 1148;  // <delete_file_list> ::= <delete_file_list> <file_name>
+		final int PROD_END_DELETE                                                            = 1149;  // <end_delete> ::= 
+		final int PROD_END_DELETE_END_DELETE                                                 = 1150;  // <end_delete> ::= 'END_DELETE'
+		final int PROD_DISABLE_STATEMENT_DISABLE                                             = 1151;  // <disable_statement> ::= DISABLE <enable_disable_handling>
+		final int PROD_ENABLE_DISABLE_HANDLING                                               = 1152;  // <enable_disable_handling> ::= <communication_mode> <cd_name> <_enable_disable_key>
+		final int PROD__ENABLE_DISABLE_KEY                                                   = 1153;  // <_enable_disable_key> ::= 
+		final int PROD__ENABLE_DISABLE_KEY_KEY                                               = 1154;  // <_enable_disable_key> ::= <_with> KEY <id_or_lit>
+		final int PROD_COMMUNICATION_MODE                                                    = 1155;  // <communication_mode> ::= 
+		final int PROD_COMMUNICATION_MODE_INPUT                                              = 1156;  // <communication_mode> ::= INPUT <_terminal>
+		final int PROD_COMMUNICATION_MODE_OUTPUT                                             = 1157;  // <communication_mode> ::= OUTPUT
+		final int PROD_COMMUNICATION_MODE_I_O_TERMINAL                                       = 1158;  // <communication_mode> ::= 'I_O' TERMINAL
+		final int PROD_COMMUNICATION_MODE_TERMINAL                                           = 1159;  // <communication_mode> ::= TERMINAL
+		final int PROD_DISPLAY_STATEMENT_DISPLAY                                             = 1160;  // <display_statement> ::= DISPLAY <display_body> <end_display>
+		final int PROD_DISPLAY_BODY_UPON_ENVIRONMENT_NAME                                    = 1161;  // <display_body> ::= <id_or_lit> 'UPON_ENVIRONMENT_NAME' <_display_exception_phrases>
+		final int PROD_DISPLAY_BODY_UPON_ENVIRONMENT_VALUE                                   = 1162;  // <display_body> ::= <id_or_lit> 'UPON_ENVIRONMENT_VALUE' <_display_exception_phrases>
+		final int PROD_DISPLAY_BODY_UPON_ARGUMENT_NUMBER                                     = 1163;  // <display_body> ::= <id_or_lit> 'UPON_ARGUMENT_NUMBER' <_display_exception_phrases>
+		final int PROD_DISPLAY_BODY_UPON_COMMAND_LINE                                        = 1164;  // <display_body> ::= <id_or_lit> 'UPON_COMMAND_LINE' <_display_exception_phrases>
+		final int PROD_DISPLAY_BODY                                                          = 1165;  // <display_body> ::= <screen_or_device_display> <_display_exception_phrases>
+		final int PROD_SCREEN_OR_DEVICE_DISPLAY                                              = 1166;  // <screen_or_device_display> ::= <display_list> <_x_list>
+		final int PROD_SCREEN_OR_DEVICE_DISPLAY2                                             = 1167;  // <screen_or_device_display> ::= <x_list>
+		final int PROD_DISPLAY_LIST                                                          = 1168;  // <display_list> ::= <display_atom>
+		final int PROD_DISPLAY_LIST2                                                         = 1169;  // <display_list> ::= <display_list> <display_atom>
+		final int PROD_DISPLAY_ATOM                                                          = 1170;  // <display_atom> ::= <disp_list> <display_clauses>
+		final int PROD_DISP_LIST                                                             = 1171;  // <disp_list> ::= <x_list>
+		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
+		final int PROD_DISPLAY_CLAUSES                                                       = 1173;  // <display_clauses> ::= <display_clause>
+		final int PROD_DISPLAY_CLAUSES2                                                      = 1174;  // <display_clauses> ::= <display_clauses> <display_clause>
+		final int PROD_DISPLAY_CLAUSE                                                        = 1175;  // <display_clause> ::= <display_upon>
+		final int PROD_DISPLAY_CLAUSE_NO_ADVANCING                                           = 1176;  // <display_clause> ::= <_with> 'NO_ADVANCING'
+		final int PROD_DISPLAY_CLAUSE2                                                       = 1177;  // <display_clause> ::= <mode_is_block>
+		final int PROD_DISPLAY_CLAUSE3                                                       = 1178;  // <display_clause> ::= <at_line_column>
+		final int PROD_DISPLAY_CLAUSE4                                                       = 1179;  // <display_clause> ::= <_with> <disp_attr>
+		final int PROD_DISPLAY_UPON_UPON                                                     = 1180;  // <display_upon> ::= UPON <mnemonic_name>
+		final int PROD_DISPLAY_UPON_UPON2                                                    = 1181;  // <display_upon> ::= UPON <WORD>
+		final int PROD_DISPLAY_UPON_UPON_PRINTER                                             = 1182;  // <display_upon> ::= UPON PRINTER
+		final int PROD_DISPLAY_UPON_UPON3                                                    = 1183;  // <display_upon> ::= UPON <crt_under>
+		final int PROD_CRT_UNDER_CRT                                                         = 1184;  // <crt_under> ::= CRT
+		final int PROD_CRT_UNDER_CRT_UNDER                                                   = 1185;  // <crt_under> ::= 'CRT_UNDER'
+		final int PROD_DISP_ATTR_BELL                                                        = 1186;  // <disp_attr> ::= BELL
+		final int PROD_DISP_ATTR_BLANK_LINE                                                  = 1187;  // <disp_attr> ::= BLANK LINE
+		final int PROD_DISP_ATTR_BLANK_SCREEN                                                = 1188;  // <disp_attr> ::= BLANK SCREEN
+		final int PROD_DISP_ATTR_BLINK                                                       = 1189;  // <disp_attr> ::= BLINK
+		final int PROD_DISP_ATTR_CONVERSION                                                  = 1190;  // <disp_attr> ::= CONVERSION
+		final int PROD_DISP_ATTR_ERASE                                                       = 1191;  // <disp_attr> ::= ERASE <eol>
+		final int PROD_DISP_ATTR_ERASE2                                                      = 1192;  // <disp_attr> ::= ERASE <eos>
+		final int PROD_DISP_ATTR_HIGHLIGHT                                                   = 1193;  // <disp_attr> ::= HIGHLIGHT
+		final int PROD_DISP_ATTR_LOWLIGHT                                                    = 1194;  // <disp_attr> ::= LOWLIGHT
+		final int PROD_DISP_ATTR_OVERLINE                                                    = 1195;  // <disp_attr> ::= OVERLINE
+		final int PROD_DISP_ATTR                                                             = 1196;  // <disp_attr> ::= <reverse_video>
+		final int PROD_DISP_ATTR_SIZE                                                        = 1197;  // <disp_attr> ::= SIZE <_is> <num_id_or_lit>
+		final int PROD_DISP_ATTR_UNDERLINE                                                   = 1198;  // <disp_attr> ::= UNDERLINE
+		final int PROD_DISP_ATTR_FOREGROUND_COLOR                                            = 1199;  // <disp_attr> ::= 'FOREGROUND_COLOR' <_is> <num_id_or_lit>
+		final int PROD_DISP_ATTR_BACKGROUND_COLOR                                            = 1200;  // <disp_attr> ::= 'BACKGROUND_COLOR' <_is> <num_id_or_lit>
+		final int PROD_DISP_ATTR_SCROLL_UP                                                   = 1201;  // <disp_attr> ::= SCROLL UP <_scroll_lines>
+		final int PROD_DISP_ATTR_SCROLL_DOWN                                                 = 1202;  // <disp_attr> ::= SCROLL DOWN <_scroll_lines>
+		final int PROD_END_DISPLAY                                                           = 1203;  // <end_display> ::= 
+		final int PROD_END_DISPLAY_END_DISPLAY                                               = 1204;  // <end_display> ::= 'END_DISPLAY'
+		final int PROD_DIVIDE_STATEMENT_DIVIDE                                               = 1205;  // <divide_statement> ::= DIVIDE <divide_body> <end_divide>
+		final int PROD_DIVIDE_BODY_INTO                                                      = 1206;  // <divide_body> ::= <x> INTO <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_DIVIDE_BODY_INTO_GIVING                                               = 1207;  // <divide_body> ::= <x> INTO <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_DIVIDE_BODY_BY_GIVING                                                 = 1208;  // <divide_body> ::= <x> BY <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_DIVIDE_BODY_INTO_GIVING_REMAINDER                                     = 1209;  // <divide_body> ::= <x> INTO <x> GIVING <arithmetic_x> REMAINDER <arithmetic_x> <on_size_error_phrases>
+		final int PROD_DIVIDE_BODY_BY_GIVING_REMAINDER                                       = 1210;  // <divide_body> ::= <x> BY <x> GIVING <arithmetic_x> REMAINDER <arithmetic_x> <on_size_error_phrases>
+		final int PROD_END_DIVIDE                                                            = 1211;  // <end_divide> ::= 
+		final int PROD_END_DIVIDE_END_DIVIDE                                                 = 1212;  // <end_divide> ::= 'END_DIVIDE'
+		final int PROD_ENABLE_STATEMENT_ENABLE                                               = 1213;  // <enable_statement> ::= ENABLE <enable_disable_handling>
+		final int PROD_ENTRY_STATEMENT_ENTRY                                                 = 1214;  // <entry_statement> ::= ENTRY <entry_body>
+		final int PROD_ENTRY_BODY                                                            = 1215;  // <entry_body> ::= <_mnemonic_conv> <LITERAL_TOK> <call_using>
+		final int PROD_EVALUATE_STATEMENT_EVALUATE                                           = 1216;  // <evaluate_statement> ::= EVALUATE <evaluate_body> <end_evaluate>
+		final int PROD_EVALUATE_BODY                                                         = 1217;  // <evaluate_body> ::= <evaluate_subject_list> <evaluate_condition_list>
+		final int PROD_EVALUATE_SUBJECT_LIST                                                 = 1218;  // <evaluate_subject_list> ::= <evaluate_subject>
+		final int PROD_EVALUATE_SUBJECT_LIST_ALSO                                            = 1219;  // <evaluate_subject_list> ::= <evaluate_subject_list> ALSO <evaluate_subject>
+		final int PROD_EVALUATE_SUBJECT                                                      = 1220;  // <evaluate_subject> ::= <expr>
+		final int PROD_EVALUATE_SUBJECT_TOK_TRUE                                             = 1221;  // <evaluate_subject> ::= 'TOK_TRUE'
+		final int PROD_EVALUATE_SUBJECT_TOK_FALSE                                            = 1222;  // <evaluate_subject> ::= 'TOK_FALSE'
+		final int PROD_EVALUATE_CONDITION_LIST                                               = 1223;  // <evaluate_condition_list> ::= <evaluate_case_list> <evaluate_other>
+		final int PROD_EVALUATE_CONDITION_LIST2                                              = 1224;  // <evaluate_condition_list> ::= <evaluate_case_list>
+		final int PROD_EVALUATE_CASE_LIST                                                    = 1225;  // <evaluate_case_list> ::= <evaluate_case>
+		final int PROD_EVALUATE_CASE_LIST2                                                   = 1226;  // <evaluate_case_list> ::= <evaluate_case_list> <evaluate_case>
+		final int PROD_EVALUATE_CASE                                                         = 1227;  // <evaluate_case> ::= <evaluate_when_list> <statement_list>
+		final int PROD_EVALUATE_OTHER_WHEN_OTHER                                             = 1228;  // <evaluate_other> ::= WHEN OTHER <statement_list>
+		final int PROD_EVALUATE_WHEN_LIST_WHEN                                               = 1229;  // <evaluate_when_list> ::= WHEN <evaluate_object_list>
+		final int PROD_EVALUATE_WHEN_LIST_WHEN2                                              = 1230;  // <evaluate_when_list> ::= <evaluate_when_list> WHEN <evaluate_object_list>
+		final int PROD_EVALUATE_OBJECT_LIST                                                  = 1231;  // <evaluate_object_list> ::= <evaluate_object>
+		final int PROD_EVALUATE_OBJECT_LIST_ALSO                                             = 1232;  // <evaluate_object_list> ::= <evaluate_object_list> ALSO <evaluate_object>
+		final int PROD_EVALUATE_OBJECT                                                       = 1233;  // <evaluate_object> ::= <partial_expr> <_evaluate_thru_expr>
+		final int PROD_EVALUATE_OBJECT_ANY                                                   = 1234;  // <evaluate_object> ::= ANY
+		final int PROD_EVALUATE_OBJECT_TOK_TRUE                                              = 1235;  // <evaluate_object> ::= 'TOK_TRUE'
+		final int PROD_EVALUATE_OBJECT_TOK_FALSE                                             = 1236;  // <evaluate_object> ::= 'TOK_FALSE'
+		final int PROD__EVALUATE_THRU_EXPR                                                   = 1237;  // <_evaluate_thru_expr> ::= 
+		final int PROD__EVALUATE_THRU_EXPR_THRU                                              = 1238;  // <_evaluate_thru_expr> ::= THRU <expr>
+		final int PROD_END_EVALUATE                                                          = 1239;  // <end_evaluate> ::= 
+		final int PROD_END_EVALUATE_END_EVALUATE                                             = 1240;  // <end_evaluate> ::= 'END_EVALUATE'
+		final int PROD_EXIT_STATEMENT_EXIT                                                   = 1241;  // <exit_statement> ::= EXIT <exit_body>
+		final int PROD_EXIT_BODY                                                             = 1242;  // <exit_body> ::= 
+		final int PROD_EXIT_BODY_PROGRAM                                                     = 1243;  // <exit_body> ::= PROGRAM <exit_program_returning>
+		final int PROD_EXIT_BODY_FUNCTION                                                    = 1244;  // <exit_body> ::= FUNCTION
+		final int PROD_EXIT_BODY_PERFORM_CYCLE                                               = 1245;  // <exit_body> ::= PERFORM CYCLE
+		final int PROD_EXIT_BODY_PERFORM                                                     = 1246;  // <exit_body> ::= PERFORM
+		final int PROD_EXIT_BODY_SECTION                                                     = 1247;  // <exit_body> ::= SECTION
+		final int PROD_EXIT_BODY_PARAGRAPH                                                   = 1248;  // <exit_body> ::= PARAGRAPH
+		final int PROD_EXIT_PROGRAM_RETURNING                                                = 1249;  // <exit_program_returning> ::= 
+		final int PROD_EXIT_PROGRAM_RETURNING2                                               = 1250;  // <exit_program_returning> ::= <return_give> <x>
+		final int PROD_FREE_STATEMENT_FREE                                                   = 1251;  // <free_statement> ::= FREE <free_body>
+		final int PROD_FREE_BODY                                                             = 1252;  // <free_body> ::= <target_x_list>
+		final int PROD_GENERATE_STATEMENT_GENERATE                                           = 1253;  // <generate_statement> ::= GENERATE <generate_body>
+		final int PROD_GENERATE_BODY                                                         = 1254;  // <generate_body> ::= <qualified_word>
+		final int PROD_GOTO_STATEMENT_GO                                                     = 1255;  // <goto_statement> ::= GO <go_body>
+		final int PROD_GO_BODY                                                               = 1256;  // <go_body> ::= <_to> <procedure_name_list> <goto_depending>
+		final int PROD_GOTO_DEPENDING                                                        = 1257;  // <goto_depending> ::= 
+		final int PROD_GOTO_DEPENDING_DEPENDING                                              = 1258;  // <goto_depending> ::= DEPENDING <_on> <identifier>
+		final int PROD_GOBACK_STATEMENT_GOBACK                                               = 1259;  // <goback_statement> ::= GOBACK <exit_program_returning>
+		final int PROD_IF_STATEMENT_IF                                                       = 1260;  // <if_statement> ::= IF <condition> <_then> <if_else_statements> <end_if>
+		final int PROD_IF_ELSE_STATEMENTS_ELSE                                               = 1261;  // <if_else_statements> ::= <statement_list> ELSE <statement_list>
+		final int PROD_IF_ELSE_STATEMENTS_ELSE2                                              = 1262;  // <if_else_statements> ::= ELSE <statement_list>
+		final int PROD_IF_ELSE_STATEMENTS                                                    = 1263;  // <if_else_statements> ::= <statement_list>
+		final int PROD_END_IF                                                                = 1264;  // <end_if> ::= 
+		final int PROD_END_IF_END_IF                                                         = 1265;  // <end_if> ::= 'END_IF'
+		final int PROD_INITIALIZE_STATEMENT_INITIALIZE                                       = 1266;  // <initialize_statement> ::= INITIALIZE <initialize_body>
+		final int PROD_INITIALIZE_BODY                                                       = 1267;  // <initialize_body> ::= <target_x_list> <_initialize_filler> <_initialize_value> <_initialize_replacing> <_initialize_default>
+		final int PROD__INITIALIZE_FILLER                                                    = 1268;  // <_initialize_filler> ::= 
+		final int PROD__INITIALIZE_FILLER_FILLER                                             = 1269;  // <_initialize_filler> ::= <_with> FILLER
+		final int PROD__INITIALIZE_VALUE                                                     = 1270;  // <_initialize_value> ::= 
+		final int PROD__INITIALIZE_VALUE_ALL_VALUE                                           = 1271;  // <_initialize_value> ::= ALL <_to> VALUE
+		final int PROD__INITIALIZE_VALUE_VALUE                                               = 1272;  // <_initialize_value> ::= <initialize_category> <_to> VALUE
+		final int PROD__INITIALIZE_REPLACING                                                 = 1273;  // <_initialize_replacing> ::= 
+		final int PROD__INITIALIZE_REPLACING_REPLACING                                       = 1274;  // <_initialize_replacing> ::= <_then> REPLACING <initialize_replacing_list>
+		final int PROD_INITIALIZE_REPLACING_LIST                                             = 1275;  // <initialize_replacing_list> ::= <initialize_replacing_item>
+		final int PROD_INITIALIZE_REPLACING_LIST2                                            = 1276;  // <initialize_replacing_list> ::= <initialize_replacing_list> <initialize_replacing_item>
+		final int PROD_INITIALIZE_REPLACING_ITEM_BY                                          = 1277;  // <initialize_replacing_item> ::= <initialize_category> <_data> BY <x>
+		final int PROD_INITIALIZE_CATEGORY_ALPHABETIC                                        = 1278;  // <initialize_category> ::= ALPHABETIC
+		final int PROD_INITIALIZE_CATEGORY_ALPHANUMERIC                                      = 1279;  // <initialize_category> ::= ALPHANUMERIC
+		final int PROD_INITIALIZE_CATEGORY_NUMERIC                                           = 1280;  // <initialize_category> ::= NUMERIC
+		final int PROD_INITIALIZE_CATEGORY_ALPHANUMERIC_EDITED                               = 1281;  // <initialize_category> ::= 'ALPHANUMERIC_EDITED'
+		final int PROD_INITIALIZE_CATEGORY_NUMERIC_EDITED                                    = 1282;  // <initialize_category> ::= 'NUMERIC_EDITED'
+		final int PROD_INITIALIZE_CATEGORY_NATIONAL                                          = 1283;  // <initialize_category> ::= NATIONAL
+		final int PROD_INITIALIZE_CATEGORY_NATIONAL_EDITED                                   = 1284;  // <initialize_category> ::= 'NATIONAL_EDITED'
+		final int PROD__INITIALIZE_DEFAULT                                                   = 1285;  // <_initialize_default> ::= 
+		final int PROD__INITIALIZE_DEFAULT_DEFAULT                                           = 1286;  // <_initialize_default> ::= <_then> <_to> DEFAULT
+		final int PROD_INITIATE_STATEMENT_INITIATE                                           = 1287;  // <initiate_statement> ::= INITIATE <initiate_body>
+		final int PROD_INITIATE_BODY                                                         = 1288;  // <initiate_body> ::= <report_name>
+		final int PROD_INITIATE_BODY2                                                        = 1289;  // <initiate_body> ::= <initiate_body> <report_name>
+		final int PROD_INSPECT_STATEMENT_INSPECT                                             = 1290;  // <inspect_statement> ::= INSPECT <inspect_body>
+		final int PROD_INSPECT_BODY                                                          = 1291;  // <inspect_body> ::= <send_identifier> <inspect_list>
+		final int PROD_SEND_IDENTIFIER                                                       = 1292;  // <send_identifier> ::= <identifier>
+		final int PROD_SEND_IDENTIFIER2                                                      = 1293;  // <send_identifier> ::= <literal>
+		final int PROD_SEND_IDENTIFIER3                                                      = 1294;  // <send_identifier> ::= <function>
+		final int PROD_INSPECT_LIST                                                          = 1295;  // <inspect_list> ::= <inspect_tallying> <inspect_replacing>
+		final int PROD_INSPECT_LIST2                                                         = 1296;  // <inspect_list> ::= <inspect_tallying>
+		final int PROD_INSPECT_LIST3                                                         = 1297;  // <inspect_list> ::= <inspect_replacing>
+		final int PROD_INSPECT_LIST4                                                         = 1298;  // <inspect_list> ::= <inspect_converting>
+		final int PROD_INSPECT_TALLYING_TALLYING                                             = 1299;  // <inspect_tallying> ::= TALLYING <tallying_list>
+		final int PROD_INSPECT_REPLACING_REPLACING                                           = 1300;  // <inspect_replacing> ::= REPLACING <replacing_list>
+		final int PROD_INSPECT_CONVERTING_CONVERTING_TO                                      = 1301;  // <inspect_converting> ::= CONVERTING <simple_display_value> TO <simple_display_all_value> <inspect_region>
+		final int PROD_TALLYING_LIST                                                         = 1302;  // <tallying_list> ::= <tallying_item>
+		final int PROD_TALLYING_LIST2                                                        = 1303;  // <tallying_list> ::= <tallying_list> <tallying_item>
+		final int PROD_TALLYING_ITEM_FOR                                                     = 1304;  // <tallying_item> ::= <numeric_identifier> FOR
+		final int PROD_TALLYING_ITEM_CHARACTERS                                              = 1305;  // <tallying_item> ::= CHARACTERS <inspect_region>
+		final int PROD_TALLYING_ITEM_ALL                                                     = 1306;  // <tallying_item> ::= ALL
+		final int PROD_TALLYING_ITEM_LEADING                                                 = 1307;  // <tallying_item> ::= LEADING
+		final int PROD_TALLYING_ITEM_TRAILING                                                = 1308;  // <tallying_item> ::= TRAILING
+		final int PROD_TALLYING_ITEM                                                         = 1309;  // <tallying_item> ::= <simple_display_value> <inspect_region>
+		final int PROD_REPLACING_LIST                                                        = 1310;  // <replacing_list> ::= <replacing_item>
+		final int PROD_REPLACING_LIST2                                                       = 1311;  // <replacing_list> ::= <replacing_list> <replacing_item>
+		final int PROD_REPLACING_ITEM_CHARACTERS_BY                                          = 1312;  // <replacing_item> ::= CHARACTERS BY <simple_display_value> <inspect_region>
+		final int PROD_REPLACING_ITEM                                                        = 1313;  // <replacing_item> ::= <rep_keyword> <replacing_region>
+		final int PROD_REP_KEYWORD                                                           = 1314;  // <rep_keyword> ::= 
+		final int PROD_REP_KEYWORD_ALL                                                       = 1315;  // <rep_keyword> ::= ALL
+		final int PROD_REP_KEYWORD_LEADING                                                   = 1316;  // <rep_keyword> ::= LEADING
+		final int PROD_REP_KEYWORD_FIRST                                                     = 1317;  // <rep_keyword> ::= FIRST
+		final int PROD_REP_KEYWORD_TRAILING                                                  = 1318;  // <rep_keyword> ::= TRAILING
+		final int PROD_REPLACING_REGION_BY                                                   = 1319;  // <replacing_region> ::= <simple_display_value> BY <simple_display_all_value> <inspect_region>
+		final int PROD_INSPECT_REGION                                                        = 1320;  // <inspect_region> ::= 
+		final int PROD_INSPECT_REGION2                                                       = 1321;  // <inspect_region> ::= <inspect_before>
+		final int PROD_INSPECT_REGION3                                                       = 1322;  // <inspect_region> ::= <inspect_after>
+		final int PROD_INSPECT_REGION4                                                       = 1323;  // <inspect_region> ::= <inspect_before> <inspect_after>
+		final int PROD_INSPECT_REGION5                                                       = 1324;  // <inspect_region> ::= <inspect_after> <inspect_before>
+		final int PROD_INSPECT_BEFORE_BEFORE                                                 = 1325;  // <inspect_before> ::= BEFORE <_initial> <x>
+		final int PROD_INSPECT_AFTER_AFTER                                                   = 1326;  // <inspect_after> ::= AFTER <_initial> <x>
+		final int PROD_MERGE_STATEMENT_MERGE                                                 = 1327;  // <merge_statement> ::= MERGE <sort_body>
+		final int PROD_MOVE_STATEMENT_MOVE                                                   = 1328;  // <move_statement> ::= MOVE <move_body>
+		final int PROD_MOVE_BODY_TO                                                          = 1329;  // <move_body> ::= <x> TO <target_x_list>
+		final int PROD_MOVE_BODY_CORRESPONDING_TO                                            = 1330;  // <move_body> ::= CORRESPONDING <x> TO <target_x_list>
+		final int PROD_MULTIPLY_STATEMENT_MULTIPLY                                           = 1331;  // <multiply_statement> ::= MULTIPLY <multiply_body> <end_multiply>
+		final int PROD_MULTIPLY_BODY_BY                                                      = 1332;  // <multiply_body> ::= <x> BY <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_MULTIPLY_BODY_BY_GIVING                                               = 1333;  // <multiply_body> ::= <x> BY <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_END_MULTIPLY                                                          = 1334;  // <end_multiply> ::= 
+		final int PROD_END_MULTIPLY_END_MULTIPLY                                             = 1335;  // <end_multiply> ::= 'END_MULTIPLY'
+		final int PROD_OPEN_STATEMENT_OPEN                                                   = 1336;  // <open_statement> ::= OPEN <open_body>
+		final int PROD_OPEN_BODY                                                             = 1337;  // <open_body> ::= <open_file_entry>
+		final int PROD_OPEN_BODY2                                                            = 1338;  // <open_body> ::= <open_body> <open_file_entry>
+		final int PROD_OPEN_FILE_ENTRY                                                       = 1339;  // <open_file_entry> ::= <open_mode> <open_sharing> <_retry_phrase> <file_name_list> <open_option>
+		final int PROD_OPEN_MODE_INPUT                                                       = 1340;  // <open_mode> ::= INPUT
+		final int PROD_OPEN_MODE_OUTPUT                                                      = 1341;  // <open_mode> ::= OUTPUT
+		final int PROD_OPEN_MODE_I_O                                                         = 1342;  // <open_mode> ::= 'I_O'
+		final int PROD_OPEN_MODE_EXTEND                                                      = 1343;  // <open_mode> ::= EXTEND
+		final int PROD_OPEN_SHARING                                                          = 1344;  // <open_sharing> ::= 
+		final int PROD_OPEN_SHARING_SHARING                                                  = 1345;  // <open_sharing> ::= SHARING <_with> <sharing_option>
+		final int PROD_OPEN_OPTION                                                           = 1346;  // <open_option> ::= 
+		final int PROD_OPEN_OPTION_NO_REWIND                                                 = 1347;  // <open_option> ::= <_with> NO REWIND
+		final int PROD_OPEN_OPTION_LOCK                                                      = 1348;  // <open_option> ::= <_with> LOCK
+		final int PROD_OPEN_OPTION_REVERSED                                                  = 1349;  // <open_option> ::= REVERSED
+		final int PROD_PERFORM_STATEMENT_PERFORM                                             = 1350;  // <perform_statement> ::= PERFORM <perform_body>
+		final int PROD_PERFORM_BODY                                                          = 1351;  // <perform_body> ::= <perform_procedure> <perform_option>
+		final int PROD_PERFORM_BODY2                                                         = 1352;  // <perform_body> ::= <perform_option> <statement_list> <end_perform>
+		final int PROD_PERFORM_BODY3                                                         = 1353;  // <perform_body> ::= <perform_option> <term_or_dot>
+		final int PROD_END_PERFORM                                                           = 1354;  // <end_perform> ::= 
+		final int PROD_END_PERFORM_END_PERFORM                                               = 1355;  // <end_perform> ::= 'END_PERFORM'
+		final int PROD_TERM_OR_DOT_END_PERFORM                                               = 1356;  // <term_or_dot> ::= 'END_PERFORM'
+		final int PROD_TERM_OR_DOT_TOK_DOT                                                   = 1357;  // <term_or_dot> ::= 'TOK_DOT'
+		final int PROD_PERFORM_PROCEDURE                                                     = 1358;  // <perform_procedure> ::= <procedure_name>
+		final int PROD_PERFORM_PROCEDURE_THRU                                                = 1359;  // <perform_procedure> ::= <procedure_name> THRU <procedure_name>
+		final int PROD_PERFORM_OPTION                                                        = 1360;  // <perform_option> ::= 
+		final int PROD_PERFORM_OPTION_TIMES                                                  = 1361;  // <perform_option> ::= <id_or_lit_or_length_or_func> TIMES
+		final int PROD_PERFORM_OPTION_FOREVER                                                = 1362;  // <perform_option> ::= FOREVER
+		final int PROD_PERFORM_OPTION_UNTIL                                                  = 1363;  // <perform_option> ::= <perform_test> UNTIL <cond_or_exit>
+		final int PROD_PERFORM_OPTION_VARYING                                                = 1364;  // <perform_option> ::= <perform_test> VARYING <perform_varying_list>
+		final int PROD_PERFORM_TEST                                                          = 1365;  // <perform_test> ::= 
+		final int PROD_PERFORM_TEST_TEST                                                     = 1366;  // <perform_test> ::= <_with> TEST <before_or_after>
+		final int PROD_COND_OR_EXIT_EXIT                                                     = 1367;  // <cond_or_exit> ::= EXIT
+		final int PROD_COND_OR_EXIT                                                          = 1368;  // <cond_or_exit> ::= <condition>
+		final int PROD_PERFORM_VARYING_LIST                                                  = 1369;  // <perform_varying_list> ::= <perform_varying>
+		final int PROD_PERFORM_VARYING_LIST_AFTER                                            = 1370;  // <perform_varying_list> ::= <perform_varying_list> AFTER <perform_varying>
+		final int PROD_PERFORM_VARYING_FROM_BY_UNTIL                                         = 1371;  // <perform_varying> ::= <identifier> FROM <x> BY <x> UNTIL <condition>
+		final int PROD_PURGE_STATEMENT_PURGE                                                 = 1372;  // <purge_statement> ::= PURGE <cd_name>
+		final int PROD_READ_STATEMENT_READ                                                   = 1373;  // <read_statement> ::= READ <read_body> <end_read>
+		final int PROD_READ_BODY                                                             = 1374;  // <read_body> ::= <file_name> <_flag_next> <_record> <read_into> <lock_phrases> <read_key> <read_handler>
+		final int PROD_READ_INTO                                                             = 1375;  // <read_into> ::= 
+		final int PROD_READ_INTO_INTO                                                        = 1376;  // <read_into> ::= INTO <identifier>
+		final int PROD_LOCK_PHRASES                                                          = 1377;  // <lock_phrases> ::= 
+		final int PROD_LOCK_PHRASES2                                                         = 1378;  // <lock_phrases> ::= <ignoring_lock>
+		final int PROD_LOCK_PHRASES3                                                         = 1379;  // <lock_phrases> ::= <advancing_lock_or_retry> <_extended_with_lock>
+		final int PROD_LOCK_PHRASES4                                                         = 1380;  // <lock_phrases> ::= <extended_with_lock>
+		final int PROD_IGNORING_LOCK_IGNORING_LOCK                                           = 1381;  // <ignoring_lock> ::= IGNORING LOCK
+		final int PROD_IGNORING_LOCK_IGNORE_LOCK                                             = 1382;  // <ignoring_lock> ::= <_with> IGNORE LOCK
+		final int PROD_ADVANCING_LOCK_OR_RETRY_ADVANCING_LOCK                                = 1383;  // <advancing_lock_or_retry> ::= ADVANCING <_on> LOCK
+		final int PROD_ADVANCING_LOCK_OR_RETRY                                               = 1384;  // <advancing_lock_or_retry> ::= <retry_phrase>
+		final int PROD__RETRY_PHRASE                                                         = 1385;  // <_retry_phrase> ::= 
+		final int PROD__RETRY_PHRASE2                                                        = 1386;  // <_retry_phrase> ::= <retry_phrase>
+		final int PROD_RETRY_PHRASE                                                          = 1387;  // <retry_phrase> ::= <retry_options>
+		final int PROD_RETRY_OPTIONS_RETRY_TIMES                                             = 1388;  // <retry_options> ::= RETRY <_for> <exp> TIMES
+		final int PROD_RETRY_OPTIONS_RETRY_SECONDS                                           = 1389;  // <retry_options> ::= RETRY <_for> <exp> SECONDS
+		final int PROD_RETRY_OPTIONS_RETRY_FOREVER                                           = 1390;  // <retry_options> ::= RETRY FOREVER
+		final int PROD__EXTENDED_WITH_LOCK                                                   = 1391;  // <_extended_with_lock> ::= 
+		final int PROD__EXTENDED_WITH_LOCK2                                                  = 1392;  // <_extended_with_lock> ::= <extended_with_lock>
+		final int PROD_EXTENDED_WITH_LOCK                                                    = 1393;  // <extended_with_lock> ::= <with_lock>
+		final int PROD_EXTENDED_WITH_LOCK_KEPT_LOCK                                          = 1394;  // <extended_with_lock> ::= <_with> KEPT LOCK
+		final int PROD_EXTENDED_WITH_LOCK_WAIT                                               = 1395;  // <extended_with_lock> ::= <_with> WAIT
+		final int PROD_READ_KEY                                                              = 1396;  // <read_key> ::= 
+		final int PROD_READ_KEY_KEY                                                          = 1397;  // <read_key> ::= KEY <_is> <identifier>
+		final int PROD_READ_HANDLER                                                          = 1398;  // <read_handler> ::= <_invalid_key_phrases>
+		final int PROD_READ_HANDLER2                                                         = 1399;  // <read_handler> ::= <at_end>
+		final int PROD_END_READ                                                              = 1400;  // <end_read> ::= 
+		final int PROD_END_READ_END_READ                                                     = 1401;  // <end_read> ::= 'END_READ'
+		final int PROD_READY_STATEMENT_READY_TRACE                                           = 1402;  // <ready_statement> ::= 'READY_TRACE'
+		final int PROD_RECEIVE_STATEMENT_RECEIVE                                             = 1403;  // <receive_statement> ::= RECEIVE <receive_body> <end_receive>
+		final int PROD_RECEIVE_BODY_INTO                                                     = 1404;  // <receive_body> ::= <cd_name> <message_or_segment> INTO <identifier> <_data_sentence_phrases>
+		final int PROD_MESSAGE_OR_SEGMENT_MESSAGE                                            = 1405;  // <message_or_segment> ::= MESSAGE
+		final int PROD_MESSAGE_OR_SEGMENT_SEGMENT                                            = 1406;  // <message_or_segment> ::= SEGMENT
+		final int PROD__DATA_SENTENCE_PHRASES                                                = 1407;  // <_data_sentence_phrases> ::= 
+		final int PROD__DATA_SENTENCE_PHRASES2                                               = 1408;  // <_data_sentence_phrases> ::= <no_data_sentence> <_with_data_sentence>
+		final int PROD__DATA_SENTENCE_PHRASES3                                               = 1409;  // <_data_sentence_phrases> ::= <with_data_sentence> <_no_data_sentence>
+		final int PROD__NO_DATA_SENTENCE                                                     = 1410;  // <_no_data_sentence> ::= 
+		final int PROD__NO_DATA_SENTENCE2                                                    = 1411;  // <_no_data_sentence> ::= <no_data_sentence>
+		final int PROD_NO_DATA_SENTENCE_NO_DATA                                              = 1412;  // <no_data_sentence> ::= 'NO_DATA' <statement_list>
+		final int PROD__WITH_DATA_SENTENCE                                                   = 1413;  // <_with_data_sentence> ::= 
+		final int PROD__WITH_DATA_SENTENCE2                                                  = 1414;  // <_with_data_sentence> ::= <with_data_sentence>
+		final int PROD_WITH_DATA_SENTENCE_WITH_DATA                                          = 1415;  // <with_data_sentence> ::= 'WITH_DATA' <statement_list>
+		final int PROD_END_RECEIVE                                                           = 1416;  // <end_receive> ::= 
+		final int PROD_END_RECEIVE_END_RECEIVE                                               = 1417;  // <end_receive> ::= 'END_RECEIVE'
+		final int PROD_RELEASE_STATEMENT_RELEASE                                             = 1418;  // <release_statement> ::= RELEASE <release_body>
+		final int PROD_RELEASE_BODY                                                          = 1419;  // <release_body> ::= <record_name> <from_option>
+		final int PROD_RESET_STATEMENT_RESET_TRACE                                           = 1420;  // <reset_statement> ::= 'RESET_TRACE'
+		final int PROD_RETURN_STATEMENT_RETURN                                               = 1421;  // <return_statement> ::= RETURN <return_body> <end_return>
+		final int PROD_RETURN_BODY                                                           = 1422;  // <return_body> ::= <file_name> <_record> <read_into> <return_at_end>
+		final int PROD_END_RETURN                                                            = 1423;  // <end_return> ::= 
+		final int PROD_END_RETURN_END_RETURN                                                 = 1424;  // <end_return> ::= 'END_RETURN'
+		final int PROD_REWRITE_STATEMENT_REWRITE                                             = 1425;  // <rewrite_statement> ::= REWRITE <rewrite_body> <end_rewrite>
+		final int PROD_REWRITE_BODY                                                          = 1426;  // <rewrite_body> ::= <file_or_record_name> <from_option> <_retry_phrase> <_with_lock> <_invalid_key_phrases>
+		final int PROD__WITH_LOCK                                                            = 1427;  // <_with_lock> ::= 
+		final int PROD__WITH_LOCK2                                                           = 1428;  // <_with_lock> ::= <with_lock>
+		final int PROD_WITH_LOCK_LOCK                                                        = 1429;  // <with_lock> ::= <_with> LOCK
+		final int PROD_WITH_LOCK_NO_LOCK                                                     = 1430;  // <with_lock> ::= <_with> NO LOCK
+		final int PROD_END_REWRITE                                                           = 1431;  // <end_rewrite> ::= 
+		final int PROD_END_REWRITE_END_REWRITE                                               = 1432;  // <end_rewrite> ::= 'END_REWRITE'
+		final int PROD_ROLLBACK_STATEMENT_ROLLBACK                                           = 1433;  // <rollback_statement> ::= ROLLBACK
+		final int PROD_SEARCH_STATEMENT_SEARCH                                               = 1434;  // <search_statement> ::= SEARCH <search_body> <end_search>
+		final int PROD_SEARCH_BODY                                                           = 1435;  // <search_body> ::= <table_name> <search_varying> <search_at_end> <search_whens>
+		final int PROD_SEARCH_BODY_ALL_WHEN                                                  = 1436;  // <search_body> ::= ALL <table_name> <search_at_end> WHEN <expr> <statement_list>
+		final int PROD_SEARCH_VARYING                                                        = 1437;  // <search_varying> ::= 
+		final int PROD_SEARCH_VARYING_VARYING                                                = 1438;  // <search_varying> ::= VARYING <identifier>
+		final int PROD_SEARCH_AT_END                                                         = 1439;  // <search_at_end> ::= 
+		final int PROD_SEARCH_AT_END_END                                                     = 1440;  // <search_at_end> ::= END <statement_list>
+		final int PROD_SEARCH_WHENS                                                          = 1441;  // <search_whens> ::= <search_when>
+		final int PROD_SEARCH_WHENS2                                                         = 1442;  // <search_whens> ::= <search_when> <search_whens>
+		final int PROD_SEARCH_WHEN_WHEN                                                      = 1443;  // <search_when> ::= WHEN <condition> <statement_list>
+		final int PROD_END_SEARCH                                                            = 1444;  // <end_search> ::= 
+		final int PROD_END_SEARCH_END_SEARCH                                                 = 1445;  // <end_search> ::= 'END_SEARCH'
+		final int PROD_SEND_STATEMENT_SEND                                                   = 1446;  // <send_statement> ::= SEND <send_body>
+		final int PROD_SEND_BODY                                                             = 1447;  // <send_body> ::= <cd_name> <from_identifier>
+		final int PROD_SEND_BODY2                                                            = 1448;  // <send_body> ::= <cd_name> <_from_identifier> <with_indicator> <write_option> <_replacing_line>
+		final int PROD__FROM_IDENTIFIER                                                      = 1449;  // <_from_identifier> ::= 
+		final int PROD__FROM_IDENTIFIER2                                                     = 1450;  // <_from_identifier> ::= <from_identifier>
+		final int PROD_FROM_IDENTIFIER_FROM                                                  = 1451;  // <from_identifier> ::= FROM <identifier>
+		final int PROD_WITH_INDICATOR                                                        = 1452;  // <with_indicator> ::= <_with> <identifier>
+		final int PROD_WITH_INDICATOR_ESI                                                    = 1453;  // <with_indicator> ::= <_with> ESI
+		final int PROD_WITH_INDICATOR_EMI                                                    = 1454;  // <with_indicator> ::= <_with> EMI
+		final int PROD_WITH_INDICATOR_EGI                                                    = 1455;  // <with_indicator> ::= <_with> EGI
+		final int PROD__REPLACING_LINE                                                       = 1456;  // <_replacing_line> ::= 
+		final int PROD__REPLACING_LINE_REPLACING                                             = 1457;  // <_replacing_line> ::= REPLACING <_line>
+		final int PROD_SET_STATEMENT_SET                                                     = 1458;  // <set_statement> ::= SET <set_body>
+		final int PROD_SET_BODY                                                              = 1459;  // <set_body> ::= <set_environment>
+		final int PROD_SET_BODY2                                                             = 1460;  // <set_body> ::= <set_attr>
+		final int PROD_SET_BODY3                                                             = 1461;  // <set_body> ::= <set_to>
+		final int PROD_SET_BODY4                                                             = 1462;  // <set_body> ::= <set_up_down>
+		final int PROD_SET_BODY5                                                             = 1463;  // <set_body> ::= <set_to_on_off_sequence>
+		final int PROD_SET_BODY6                                                             = 1464;  // <set_body> ::= <set_to_true_false_sequence>
+		final int PROD_SET_BODY7                                                             = 1465;  // <set_body> ::= <set_last_exception_to_off>
+		final int PROD_ON_OR_OFF_ON                                                          = 1466;  // <on_or_off> ::= ON
+		final int PROD_ON_OR_OFF_OFF                                                         = 1467;  // <on_or_off> ::= OFF
+		final int PROD_UP_OR_DOWN_UP                                                         = 1468;  // <up_or_down> ::= UP
+		final int PROD_UP_OR_DOWN_DOWN                                                       = 1469;  // <up_or_down> ::= DOWN
+		final int PROD_SET_ENVIRONMENT_ENVIRONMENT_TO                                        = 1470;  // <set_environment> ::= ENVIRONMENT <simple_display_value> TO <simple_display_value>
+		final int PROD_SET_ATTR_ATTRIBUTE                                                    = 1471;  // <set_attr> ::= <sub_identifier> ATTRIBUTE <set_attr_clause>
+		final int PROD_SET_ATTR_CLAUSE                                                       = 1472;  // <set_attr_clause> ::= <set_attr_one>
+		final int PROD_SET_ATTR_CLAUSE2                                                      = 1473;  // <set_attr_clause> ::= <set_attr_clause> <set_attr_one>
+		final int PROD_SET_ATTR_ONE_BELL                                                     = 1474;  // <set_attr_one> ::= BELL <on_or_off>
+		final int PROD_SET_ATTR_ONE_BLINK                                                    = 1475;  // <set_attr_one> ::= BLINK <on_or_off>
+		final int PROD_SET_ATTR_ONE_HIGHLIGHT                                                = 1476;  // <set_attr_one> ::= HIGHLIGHT <on_or_off>
+		final int PROD_SET_ATTR_ONE_LOWLIGHT                                                 = 1477;  // <set_attr_one> ::= LOWLIGHT <on_or_off>
+		final int PROD_SET_ATTR_ONE_REVERSE_VIDEO                                            = 1478;  // <set_attr_one> ::= 'REVERSE_VIDEO' <on_or_off>
+		final int PROD_SET_ATTR_ONE_UNDERLINE                                                = 1479;  // <set_attr_one> ::= UNDERLINE <on_or_off>
+		final int PROD_SET_ATTR_ONE_LEFTLINE                                                 = 1480;  // <set_attr_one> ::= LEFTLINE <on_or_off>
+		final int PROD_SET_ATTR_ONE_OVERLINE                                                 = 1481;  // <set_attr_one> ::= OVERLINE <on_or_off>
+		final int PROD_SET_TO_TO_ENTRY                                                       = 1482;  // <set_to> ::= <target_x_list> TO ENTRY <alnum_or_id>
+		final int PROD_SET_TO_TO                                                             = 1483;  // <set_to> ::= <target_x_list> TO <x>
+		final int PROD_SET_UP_DOWN_BY                                                        = 1484;  // <set_up_down> ::= <target_x_list> <up_or_down> BY <x>
+		final int PROD_SET_TO_ON_OFF_SEQUENCE                                                = 1485;  // <set_to_on_off_sequence> ::= <set_to_on_off>
+		final int PROD_SET_TO_ON_OFF_SEQUENCE2                                               = 1486;  // <set_to_on_off_sequence> ::= <set_to_on_off_sequence> <set_to_on_off>
+		final int PROD_SET_TO_ON_OFF_TO                                                      = 1487;  // <set_to_on_off> ::= <mnemonic_name_list> TO <on_or_off>
+		final int PROD_SET_TO_TRUE_FALSE_SEQUENCE                                            = 1488;  // <set_to_true_false_sequence> ::= <set_to_true_false>
+		final int PROD_SET_TO_TRUE_FALSE_SEQUENCE2                                           = 1489;  // <set_to_true_false_sequence> ::= <set_to_true_false_sequence> <set_to_true_false>
+		final int PROD_SET_TO_TRUE_FALSE_TO_TOK_TRUE                                         = 1490;  // <set_to_true_false> ::= <target_x_list> TO 'TOK_TRUE'
+		final int PROD_SET_TO_TRUE_FALSE_TO_TOK_FALSE                                        = 1491;  // <set_to_true_false> ::= <target_x_list> TO 'TOK_FALSE'
+		final int PROD_SET_LAST_EXCEPTION_TO_OFF_LAST_EXCEPTION_TO_OFF                       = 1492;  // <set_last_exception_to_off> ::= LAST EXCEPTION TO OFF
+		final int PROD_SORT_STATEMENT_SORT                                                   = 1493;  // <sort_statement> ::= SORT <sort_body>
+		final int PROD_SORT_BODY                                                             = 1494;  // <sort_body> ::= <table_identifier> <sort_key_list> <_sort_duplicates> <sort_collating> <sort_input> <sort_output>
+		final int PROD_SORT_KEY_LIST                                                         = 1495;  // <sort_key_list> ::= 
+		final int PROD_SORT_KEY_LIST2                                                        = 1496;  // <sort_key_list> ::= <sort_key_list> <_on> <ascending_or_descending> <_key> <_key_list>
+		final int PROD__KEY_LIST                                                             = 1497;  // <_key_list> ::= 
+		final int PROD__KEY_LIST2                                                            = 1498;  // <_key_list> ::= <_key_list> <qualified_word>
+		final int PROD__SORT_DUPLICATES                                                      = 1499;  // <_sort_duplicates> ::= 
+		final int PROD__SORT_DUPLICATES2                                                     = 1500;  // <_sort_duplicates> ::= <with_dups> <_in_order>
+		final int PROD_SORT_COLLATING                                                        = 1501;  // <sort_collating> ::= 
+		final int PROD_SORT_COLLATING2                                                       = 1502;  // <sort_collating> ::= <coll_sequence> <_is> <reference>
+		final int PROD_SORT_INPUT                                                            = 1503;  // <sort_input> ::= 
+		final int PROD_SORT_INPUT_USING                                                      = 1504;  // <sort_input> ::= USING <file_name_list>
+		final int PROD_SORT_INPUT_INPUT_PROCEDURE                                            = 1505;  // <sort_input> ::= INPUT PROCEDURE <_is> <perform_procedure>
+		final int PROD_SORT_OUTPUT                                                           = 1506;  // <sort_output> ::= 
+		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
+		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
+		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
+		final int PROD_START_BODY                                                            = 1510;  // <start_body> ::= <file_name> <start_key> <sizelen_clause> <_invalid_key_phrases>
+		final int PROD_SIZELEN_CLAUSE                                                        = 1511;  // <sizelen_clause> ::= 
+		final int PROD_SIZELEN_CLAUSE2                                                       = 1512;  // <sizelen_clause> ::= <_with> <size_or_length> <exp>
+		final int PROD_START_KEY                                                             = 1513;  // <start_key> ::= 
+		final int PROD_START_KEY_KEY                                                         = 1514;  // <start_key> ::= KEY <_is> <start_op> <identifier>
+		final int PROD_START_KEY_FIRST                                                       = 1515;  // <start_key> ::= FIRST
+		final int PROD_START_KEY_LAST                                                        = 1516;  // <start_key> ::= LAST
+		final int PROD_START_OP                                                              = 1517;  // <start_op> ::= <eq>
+		final int PROD_START_OP2                                                             = 1518;  // <start_op> ::= <_flag_not> <gt>
+		final int PROD_START_OP3                                                             = 1519;  // <start_op> ::= <_flag_not> <lt>
+		final int PROD_START_OP4                                                             = 1520;  // <start_op> ::= <_flag_not> <ge>
+		final int PROD_START_OP5                                                             = 1521;  // <start_op> ::= <_flag_not> <le>
+		final int PROD_START_OP6                                                             = 1522;  // <start_op> ::= <disallowed_op>
+		final int PROD_DISALLOWED_OP                                                         = 1523;  // <disallowed_op> ::= <not_equal_op>
+		final int PROD_NOT_EQUAL_OP_NOT                                                      = 1524;  // <not_equal_op> ::= NOT <eq>
+		final int PROD_NOT_EQUAL_OP_NOT_EQUAL                                                = 1525;  // <not_equal_op> ::= 'NOT_EQUAL'
+		final int PROD_END_START                                                             = 1526;  // <end_start> ::= 
+		final int PROD_END_START_END_START                                                   = 1527;  // <end_start> ::= 'END_START'
+		final int PROD_STOP_STATEMENT_STOP_RUN                                               = 1528;  // <stop_statement> ::= STOP RUN <stop_returning>
+		final int PROD_STOP_STATEMENT_STOP                                                   = 1529;  // <stop_statement> ::= STOP <stop_literal>
+		final int PROD_STOP_RETURNING                                                        = 1530;  // <stop_returning> ::= 
+		final int PROD_STOP_RETURNING2                                                       = 1531;  // <stop_returning> ::= <return_give> <x>
+		final int PROD_STOP_RETURNING3                                                       = 1532;  // <stop_returning> ::= <x>
+		final int PROD_STOP_RETURNING_ERROR                                                  = 1533;  // <stop_returning> ::= <_with> ERROR <_status> <_status_x>
+		final int PROD_STOP_RETURNING_NORMAL                                                 = 1534;  // <stop_returning> ::= <_with> NORMAL <_status> <_status_x>
+		final int PROD__STATUS_X                                                             = 1535;  // <_status_x> ::= 
+		final int PROD__STATUS_X2                                                            = 1536;  // <_status_x> ::= <x>
+		final int PROD_STOP_LITERAL                                                          = 1537;  // <stop_literal> ::= <LITERAL_TOK>
+		final int PROD_STOP_LITERAL_SPACE                                                    = 1538;  // <stop_literal> ::= SPACE
+		final int PROD_STOP_LITERAL_ZERO                                                     = 1539;  // <stop_literal> ::= ZERO
+		final int PROD_STOP_LITERAL_QUOTE                                                    = 1540;  // <stop_literal> ::= QUOTE
+		final int PROD_STRING_STATEMENT_STRING                                               = 1541;  // <string_statement> ::= STRING <string_body> <end_string>
+		final int PROD_STRING_BODY_INTO                                                      = 1542;  // <string_body> ::= <string_item_list> INTO <identifier> <_with_pointer> <_on_overflow_phrases>
+		final int PROD_STRING_ITEM_LIST                                                      = 1543;  // <string_item_list> ::= <string_item>
+		final int PROD_STRING_ITEM_LIST2                                                     = 1544;  // <string_item_list> ::= <string_item_list> <string_item>
+		final int PROD_STRING_ITEM                                                           = 1545;  // <string_item> ::= <x> <_string_delimited>
+		final int PROD__STRING_DELIMITED                                                     = 1546;  // <_string_delimited> ::= 
+		final int PROD__STRING_DELIMITED_DELIMITED                                           = 1547;  // <_string_delimited> ::= DELIMITED <_by> <string_delimiter>
+		final int PROD_STRING_DELIMITER_SIZE                                                 = 1548;  // <string_delimiter> ::= SIZE
+		final int PROD_STRING_DELIMITER                                                      = 1549;  // <string_delimiter> ::= <x>
+		final int PROD__WITH_POINTER                                                         = 1550;  // <_with_pointer> ::= 
+		final int PROD__WITH_POINTER_POINTER                                                 = 1551;  // <_with_pointer> ::= <_with> POINTER <_is> <identifier>
+		final int PROD_END_STRING                                                            = 1552;  // <end_string> ::= 
+		final int PROD_END_STRING_END_STRING                                                 = 1553;  // <end_string> ::= 'END_STRING'
+		final int PROD_SUBTRACT_STATEMENT_SUBTRACT                                           = 1554;  // <subtract_statement> ::= SUBTRACT <subtract_body> <end_subtract>
+		final int PROD_SUBTRACT_BODY_FROM                                                    = 1555;  // <subtract_body> ::= <x_list> FROM <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_SUBTRACT_BODY_FROM_GIVING                                             = 1556;  // <subtract_body> ::= <x_list> FROM <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
+		final int PROD_SUBTRACT_BODY_CORRESPONDING_FROM                                      = 1557;  // <subtract_body> ::= CORRESPONDING <identifier> FROM <identifier> <flag_rounded> <on_size_error_phrases>
+		final int PROD_SUBTRACT_BODY_TABLE_FROM                                              = 1558;  // <subtract_body> ::= TABLE <table_identifier> FROM <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
+		final int PROD_END_SUBTRACT                                                          = 1559;  // <end_subtract> ::= 
+		final int PROD_END_SUBTRACT_END_SUBTRACT                                             = 1560;  // <end_subtract> ::= 'END_SUBTRACT'
+		final int PROD_SUPPRESS_STATEMENT_SUPPRESS                                           = 1561;  // <suppress_statement> ::= SUPPRESS <_printing>
+		final int PROD__PRINTING                                                             = 1562;  // <_printing> ::= 
+		final int PROD__PRINTING_PRINTING                                                    = 1563;  // <_printing> ::= PRINTING
+		final int PROD_TERMINATE_STATEMENT_TERMINATE                                         = 1564;  // <terminate_statement> ::= TERMINATE <terminate_body>
+		final int PROD_TERMINATE_BODY                                                        = 1565;  // <terminate_body> ::= <report_name>
+		final int PROD_TERMINATE_BODY2                                                       = 1566;  // <terminate_body> ::= <terminate_body> <report_name>
+		final int PROD_TRANSFORM_STATEMENT_TRANSFORM                                         = 1567;  // <transform_statement> ::= TRANSFORM <transform_body>
+		final int PROD_TRANSFORM_BODY_FROM_TO                                                = 1568;  // <transform_body> ::= <display_identifier> FROM <simple_display_value> TO <simple_display_all_value>
+		final int PROD_UNLOCK_STATEMENT_UNLOCK                                               = 1569;  // <unlock_statement> ::= UNLOCK <unlock_body>
+		final int PROD_UNLOCK_BODY                                                           = 1570;  // <unlock_body> ::= <file_name> <_records>
+		final int PROD_UNSTRING_STATEMENT_UNSTRING                                           = 1571;  // <unstring_statement> ::= UNSTRING <unstring_body> <end_unstring>
+		final int PROD_UNSTRING_BODY                                                         = 1572;  // <unstring_body> ::= <identifier> <_unstring_delimited> <unstring_into> <_with_pointer> <_unstring_tallying> <_on_overflow_phrases>
+		final int PROD__UNSTRING_DELIMITED                                                   = 1573;  // <_unstring_delimited> ::= 
+		final int PROD__UNSTRING_DELIMITED_DELIMITED                                         = 1574;  // <_unstring_delimited> ::= DELIMITED <_by> <unstring_delimited_list>
+		final int PROD_UNSTRING_DELIMITED_LIST                                               = 1575;  // <unstring_delimited_list> ::= <unstring_delimited_item>
+		final int PROD_UNSTRING_DELIMITED_LIST_OR                                            = 1576;  // <unstring_delimited_list> ::= <unstring_delimited_list> OR <unstring_delimited_item>
+		final int PROD_UNSTRING_DELIMITED_ITEM                                               = 1577;  // <unstring_delimited_item> ::= <flag_all> <simple_display_value>
+		final int PROD_UNSTRING_INTO_INTO                                                    = 1578;  // <unstring_into> ::= INTO <unstring_into_item>
+		final int PROD_UNSTRING_INTO                                                         = 1579;  // <unstring_into> ::= <unstring_into> <unstring_into_item>
+		final int PROD_UNSTRING_INTO_ITEM                                                    = 1580;  // <unstring_into_item> ::= <identifier> <_unstring_into_delimiter> <_unstring_into_count>
+		final int PROD_UNSTRING_INTO_ITEM_COMMA_DELIM                                        = 1581;  // <unstring_into_item> ::= 'COMMA_DELIM'
+		final int PROD__UNSTRING_INTO_DELIMITER                                              = 1582;  // <_unstring_into_delimiter> ::= 
+		final int PROD__UNSTRING_INTO_DELIMITER_DELIMITER                                    = 1583;  // <_unstring_into_delimiter> ::= DELIMITER <_in> <identifier>
+		final int PROD__UNSTRING_INTO_COUNT                                                  = 1584;  // <_unstring_into_count> ::= 
+		final int PROD__UNSTRING_INTO_COUNT_COUNT                                            = 1585;  // <_unstring_into_count> ::= COUNT <_in> <identifier>
+		final int PROD__UNSTRING_TALLYING                                                    = 1586;  // <_unstring_tallying> ::= 
+		final int PROD__UNSTRING_TALLYING_TALLYING                                           = 1587;  // <_unstring_tallying> ::= TALLYING <_in> <identifier>
+		final int PROD_END_UNSTRING                                                          = 1588;  // <end_unstring> ::= 
+		final int PROD_END_UNSTRING_END_UNSTRING                                             = 1589;  // <end_unstring> ::= 'END_UNSTRING'
+		final int PROD_USE_STATEMENT_USE                                                     = 1590;  // <use_statement> ::= USE <use_phrase>
+		final int PROD_USE_PHRASE                                                            = 1591;  // <use_phrase> ::= <use_file_exception>
+		final int PROD_USE_PHRASE2                                                           = 1592;  // <use_phrase> ::= <use_debugging>
+		final int PROD_USE_PHRASE3                                                           = 1593;  // <use_phrase> ::= <use_start_end>
+		final int PROD_USE_PHRASE4                                                           = 1594;  // <use_phrase> ::= <use_reporting>
+		final int PROD_USE_PHRASE5                                                           = 1595;  // <use_phrase> ::= <use_exception>
+		final int PROD_USE_FILE_EXCEPTION                                                    = 1596;  // <use_file_exception> ::= <use_global> <_after> <_standard> <exception_or_error> <_procedure> <_on> <use_file_exception_target>
+		final int PROD_USE_GLOBAL                                                            = 1597;  // <use_global> ::= 
+		final int PROD_USE_GLOBAL_GLOBAL                                                     = 1598;  // <use_global> ::= GLOBAL
+		final int PROD_USE_FILE_EXCEPTION_TARGET                                             = 1599;  // <use_file_exception_target> ::= <file_name_list>
+		final int PROD_USE_FILE_EXCEPTION_TARGET_INPUT                                       = 1600;  // <use_file_exception_target> ::= INPUT
+		final int PROD_USE_FILE_EXCEPTION_TARGET_OUTPUT                                      = 1601;  // <use_file_exception_target> ::= OUTPUT
+		final int PROD_USE_FILE_EXCEPTION_TARGET_I_O                                         = 1602;  // <use_file_exception_target> ::= 'I_O'
+		final int PROD_USE_FILE_EXCEPTION_TARGET_EXTEND                                      = 1603;  // <use_file_exception_target> ::= EXTEND
+		final int PROD_USE_DEBUGGING_DEBUGGING                                               = 1604;  // <use_debugging> ::= <_for> DEBUGGING <_on> <debugging_list>
+		final int PROD_DEBUGGING_LIST                                                        = 1605;  // <debugging_list> ::= <debugging_target>
+		final int PROD_DEBUGGING_LIST2                                                       = 1606;  // <debugging_list> ::= <debugging_list> <debugging_target>
+		final int PROD_DEBUGGING_TARGET                                                      = 1607;  // <debugging_target> ::= <label>
+		final int PROD_DEBUGGING_TARGET_ALL_PROCEDURES                                       = 1608;  // <debugging_target> ::= ALL PROCEDURES
+		final int PROD_DEBUGGING_TARGET_ALL                                                  = 1609;  // <debugging_target> ::= ALL <_all_refs> <qualified_word>
+		final int PROD__ALL_REFS                                                             = 1610;  // <_all_refs> ::= 
+		final int PROD__ALL_REFS_REFERENCES                                                  = 1611;  // <_all_refs> ::= REFERENCES
+		final int PROD__ALL_REFS_REFERENCES_OF                                               = 1612;  // <_all_refs> ::= REFERENCES OF
+		final int PROD__ALL_REFS_OF                                                          = 1613;  // <_all_refs> ::= OF
+		final int PROD_USE_START_END_PROGRAM                                                 = 1614;  // <use_start_end> ::= <_at> PROGRAM <program_start_end>
+		final int PROD_PROGRAM_START_END_START                                               = 1615;  // <program_start_end> ::= START
+		final int PROD_PROGRAM_START_END_END                                                 = 1616;  // <program_start_end> ::= END
+		final int PROD_USE_REPORTING_BEFORE_REPORTING                                        = 1617;  // <use_reporting> ::= <use_global> BEFORE REPORTING <identifier>
+		final int PROD_USE_EXCEPTION                                                         = 1618;  // <use_exception> ::= <use_ex_keyw>
+		final int PROD_USE_EX_KEYW_EXCEPTION_CONDITION                                       = 1619;  // <use_ex_keyw> ::= 'EXCEPTION_CONDITION'
+		final int PROD_USE_EX_KEYW_EC                                                        = 1620;  // <use_ex_keyw> ::= EC
+		final int PROD_WRITE_STATEMENT_WRITE                                                 = 1621;  // <write_statement> ::= WRITE <write_body> <end_write>
+		final int PROD_WRITE_BODY                                                            = 1622;  // <write_body> ::= <file_or_record_name> <from_option> <write_option> <_retry_phrase> <_with_lock> <write_handler>
+		final int PROD_FROM_OPTION                                                           = 1623;  // <from_option> ::= 
+		final int PROD_FROM_OPTION_FROM                                                      = 1624;  // <from_option> ::= FROM <from_parameter>
+		final int PROD_WRITE_OPTION                                                          = 1625;  // <write_option> ::= 
+		final int PROD_WRITE_OPTION2                                                         = 1626;  // <write_option> ::= <before_or_after> <_advancing> <num_id_or_lit> <_line_or_lines>
+		final int PROD_WRITE_OPTION3                                                         = 1627;  // <write_option> ::= <before_or_after> <_advancing> <mnemonic_name>
+		final int PROD_WRITE_OPTION_PAGE                                                     = 1628;  // <write_option> ::= <before_or_after> <_advancing> PAGE
+		final int PROD_BEFORE_OR_AFTER_BEFORE                                                = 1629;  // <before_or_after> ::= BEFORE
+		final int PROD_BEFORE_OR_AFTER_AFTER                                                 = 1630;  // <before_or_after> ::= AFTER
+		final int PROD_WRITE_HANDLER                                                         = 1631;  // <write_handler> ::= 
+		final int PROD_WRITE_HANDLER2                                                        = 1632;  // <write_handler> ::= <invalid_key_phrases>
+		final int PROD_WRITE_HANDLER3                                                        = 1633;  // <write_handler> ::= <at_eop_clauses>
+		final int PROD_END_WRITE                                                             = 1634;  // <end_write> ::= 
+		final int PROD_END_WRITE_END_WRITE                                                   = 1635;  // <end_write> ::= 'END_WRITE'
+		final int PROD__ACCEPT_EXCEPTION_PHRASES                                             = 1636;  // <_accept_exception_phrases> ::= 
+		final int PROD__ACCEPT_EXCEPTION_PHRASES2                                            = 1637;  // <_accept_exception_phrases> ::= <accp_on_exception> <_accp_not_on_exception>
+		final int PROD__ACCEPT_EXCEPTION_PHRASES3                                            = 1638;  // <_accept_exception_phrases> ::= <accp_not_on_exception> <_accp_on_exception>
+		final int PROD__ACCP_ON_EXCEPTION                                                    = 1639;  // <_accp_on_exception> ::= 
+		final int PROD__ACCP_ON_EXCEPTION2                                                   = 1640;  // <_accp_on_exception> ::= <accp_on_exception>
+		final int PROD_ACCP_ON_EXCEPTION                                                     = 1641;  // <accp_on_exception> ::= <escape_or_exception> <statement_list>
+		final int PROD_ESCAPE_OR_EXCEPTION_ESCAPE                                            = 1642;  // <escape_or_exception> ::= ESCAPE
+		final int PROD_ESCAPE_OR_EXCEPTION_EXCEPTION                                         = 1643;  // <escape_or_exception> ::= EXCEPTION
+		final int PROD__ACCP_NOT_ON_EXCEPTION                                                = 1644;  // <_accp_not_on_exception> ::= 
+		final int PROD__ACCP_NOT_ON_EXCEPTION2                                               = 1645;  // <_accp_not_on_exception> ::= <accp_not_on_exception>
+		final int PROD_ACCP_NOT_ON_EXCEPTION                                                 = 1646;  // <accp_not_on_exception> ::= <not_escape_or_not_exception> <statement_list>
+		final int PROD_NOT_ESCAPE_OR_NOT_EXCEPTION_NOT_ESCAPE                                = 1647;  // <not_escape_or_not_exception> ::= 'NOT_ESCAPE'
+		final int PROD_NOT_ESCAPE_OR_NOT_EXCEPTION_NOT_EXCEPTION                             = 1648;  // <not_escape_or_not_exception> ::= 'NOT_EXCEPTION'
+		final int PROD__DISPLAY_EXCEPTION_PHRASES                                            = 1649;  // <_display_exception_phrases> ::= 
+		final int PROD__DISPLAY_EXCEPTION_PHRASES2                                           = 1650;  // <_display_exception_phrases> ::= <disp_on_exception> <_disp_not_on_exception>
+		final int PROD__DISPLAY_EXCEPTION_PHRASES3                                           = 1651;  // <_display_exception_phrases> ::= <disp_not_on_exception> <_disp_on_exception>
+		final int PROD__DISP_ON_EXCEPTION                                                    = 1652;  // <_disp_on_exception> ::= 
+		final int PROD__DISP_ON_EXCEPTION2                                                   = 1653;  // <_disp_on_exception> ::= <disp_on_exception>
+		final int PROD_DISP_ON_EXCEPTION_EXCEPTION                                           = 1654;  // <disp_on_exception> ::= EXCEPTION <statement_list>
+		final int PROD__DISP_NOT_ON_EXCEPTION                                                = 1655;  // <_disp_not_on_exception> ::= 
+		final int PROD__DISP_NOT_ON_EXCEPTION2                                               = 1656;  // <_disp_not_on_exception> ::= <disp_not_on_exception>
+		final int PROD_DISP_NOT_ON_EXCEPTION_NOT_EXCEPTION                                   = 1657;  // <disp_not_on_exception> ::= 'NOT_EXCEPTION' <statement_list>
+		final int PROD_ON_SIZE_ERROR_PHRASES                                                 = 1658;  // <on_size_error_phrases> ::= 
+		final int PROD_ON_SIZE_ERROR_PHRASES2                                                = 1659;  // <on_size_error_phrases> ::= <on_size_error> <_not_on_size_error>
+		final int PROD_ON_SIZE_ERROR_PHRASES3                                                = 1660;  // <on_size_error_phrases> ::= <not_on_size_error> <_on_size_error>
+		final int PROD__ON_SIZE_ERROR                                                        = 1661;  // <_on_size_error> ::= 
+		final int PROD__ON_SIZE_ERROR2                                                       = 1662;  // <_on_size_error> ::= <on_size_error>
+		final int PROD_ON_SIZE_ERROR_SIZE_ERROR                                              = 1663;  // <on_size_error> ::= 'SIZE_ERROR' <statement_list>
+		final int PROD__NOT_ON_SIZE_ERROR                                                    = 1664;  // <_not_on_size_error> ::= 
+		final int PROD__NOT_ON_SIZE_ERROR2                                                   = 1665;  // <_not_on_size_error> ::= <not_on_size_error>
+		final int PROD_NOT_ON_SIZE_ERROR_NOT_SIZE_ERROR                                      = 1666;  // <not_on_size_error> ::= 'NOT_SIZE_ERROR' <statement_list>
+		final int PROD__ON_OVERFLOW_PHRASES                                                  = 1667;  // <_on_overflow_phrases> ::= 
+		final int PROD__ON_OVERFLOW_PHRASES2                                                 = 1668;  // <_on_overflow_phrases> ::= <on_overflow> <_not_on_overflow>
+		final int PROD__ON_OVERFLOW_PHRASES3                                                 = 1669;  // <_on_overflow_phrases> ::= <not_on_overflow> <_on_overflow>
+		final int PROD__ON_OVERFLOW                                                          = 1670;  // <_on_overflow> ::= 
+		final int PROD__ON_OVERFLOW2                                                         = 1671;  // <_on_overflow> ::= <on_overflow>
+		final int PROD_ON_OVERFLOW_TOK_OVERFLOW                                              = 1672;  // <on_overflow> ::= 'TOK_OVERFLOW' <statement_list>
+		final int PROD__NOT_ON_OVERFLOW                                                      = 1673;  // <_not_on_overflow> ::= 
+		final int PROD__NOT_ON_OVERFLOW2                                                     = 1674;  // <_not_on_overflow> ::= <not_on_overflow>
+		final int PROD_NOT_ON_OVERFLOW_NOT_OVERFLOW                                          = 1675;  // <not_on_overflow> ::= 'NOT_OVERFLOW' <statement_list>
+		final int PROD_RETURN_AT_END                                                         = 1676;  // <return_at_end> ::= <at_end_clause> <_not_at_end_clause>
+		final int PROD_RETURN_AT_END2                                                        = 1677;  // <return_at_end> ::= <not_at_end_clause> <at_end_clause>
+		final int PROD_AT_END                                                                = 1678;  // <at_end> ::= <at_end_clause> <_not_at_end_clause>
+		final int PROD_AT_END2                                                               = 1679;  // <at_end> ::= <not_at_end_clause> <_at_end_clause>
+		final int PROD__AT_END_CLAUSE                                                        = 1680;  // <_at_end_clause> ::= 
+		final int PROD__AT_END_CLAUSE2                                                       = 1681;  // <_at_end_clause> ::= <at_end_clause>
+		final int PROD_AT_END_CLAUSE_END                                                     = 1682;  // <at_end_clause> ::= END <statement_list>
+		final int PROD__NOT_AT_END_CLAUSE                                                    = 1683;  // <_not_at_end_clause> ::= 
+		final int PROD__NOT_AT_END_CLAUSE2                                                   = 1684;  // <_not_at_end_clause> ::= <not_at_end_clause>
+		final int PROD_NOT_AT_END_CLAUSE_NOT_END                                             = 1685;  // <not_at_end_clause> ::= 'NOT_END' <statement_list>
+		final int PROD_AT_EOP_CLAUSES                                                        = 1686;  // <at_eop_clauses> ::= <at_eop_clause> <_not_at_eop_clause>
+		final int PROD_AT_EOP_CLAUSES2                                                       = 1687;  // <at_eop_clauses> ::= <not_at_eop_clause> <_at_eop_clause>
+		final int PROD__AT_EOP_CLAUSE                                                        = 1688;  // <_at_eop_clause> ::= 
+		final int PROD__AT_EOP_CLAUSE2                                                       = 1689;  // <_at_eop_clause> ::= <at_eop_clause>
+		final int PROD_AT_EOP_CLAUSE_EOP                                                     = 1690;  // <at_eop_clause> ::= EOP <statement_list>
+		final int PROD__NOT_AT_EOP_CLAUSE                                                    = 1691;  // <_not_at_eop_clause> ::= 
+		final int PROD__NOT_AT_EOP_CLAUSE2                                                   = 1692;  // <_not_at_eop_clause> ::= <not_at_eop_clause>
+		final int PROD_NOT_AT_EOP_CLAUSE_NOT_EOP                                             = 1693;  // <not_at_eop_clause> ::= 'NOT_EOP' <statement_list>
+		final int PROD__INVALID_KEY_PHRASES                                                  = 1694;  // <_invalid_key_phrases> ::= 
+		final int PROD__INVALID_KEY_PHRASES2                                                 = 1695;  // <_invalid_key_phrases> ::= <invalid_key_phrases>
+		final int PROD_INVALID_KEY_PHRASES                                                   = 1696;  // <invalid_key_phrases> ::= <invalid_key_sentence> <_not_invalid_key_sentence>
+		final int PROD_INVALID_KEY_PHRASES2                                                  = 1697;  // <invalid_key_phrases> ::= <not_invalid_key_sentence> <_invalid_key_sentence>
+		final int PROD__INVALID_KEY_SENTENCE                                                 = 1698;  // <_invalid_key_sentence> ::= 
+		final int PROD__INVALID_KEY_SENTENCE2                                                = 1699;  // <_invalid_key_sentence> ::= <invalid_key_sentence>
+		final int PROD_INVALID_KEY_SENTENCE_INVALID_KEY                                      = 1700;  // <invalid_key_sentence> ::= 'INVALID_KEY' <statement_list>
+		final int PROD__NOT_INVALID_KEY_SENTENCE                                             = 1701;  // <_not_invalid_key_sentence> ::= 
+		final int PROD__NOT_INVALID_KEY_SENTENCE2                                            = 1702;  // <_not_invalid_key_sentence> ::= <not_invalid_key_sentence>
+		final int PROD_NOT_INVALID_KEY_SENTENCE_NOT_INVALID_KEY                              = 1703;  // <not_invalid_key_sentence> ::= 'NOT_INVALID_KEY' <statement_list>
+		final int PROD__SCROLL_LINES                                                         = 1704;  // <_scroll_lines> ::= 
+		final int PROD__SCROLL_LINES2                                                        = 1705;  // <_scroll_lines> ::= <pos_num_id_or_lit> <scroll_line_or_lines>
+		final int PROD_CONDITION                                                             = 1706;  // <condition> ::= <expr>
+		final int PROD_EXPR                                                                  = 1707;  // <expr> ::= <partial_expr>
+		final int PROD_PARTIAL_EXPR                                                          = 1708;  // <partial_expr> ::= <expr_tokens>
+		final int PROD_EXPR_TOKENS                                                           = 1709;  // <expr_tokens> ::= <expr_token>
+		final int PROD_EXPR_TOKENS2                                                          = 1710;  // <expr_tokens> ::= <expr_tokens> <expr_token>
+		final int PROD_EXPR_TOKEN                                                            = 1711;  // <expr_token> ::= <x>
+		final int PROD_EXPR_TOKEN_IS                                                         = 1712;  // <expr_token> ::= IS <CLASS_NAME>
+		final int PROD_EXPR_TOKEN2                                                           = 1713;  // <expr_token> ::= <_is> <condition_op>
+		final int PROD_EXPR_TOKEN_IS2                                                        = 1714;  // <expr_token> ::= IS <not> <condition_or_class>
+		final int PROD_EXPR_TOKEN_IS_ZERO                                                    = 1715;  // <expr_token> ::= IS <_not> ZERO
+		final int PROD_EXPR_TOKEN_TOK_OPEN_PAREN                                             = 1716;  // <expr_token> ::= 'TOK_OPEN_PAREN'
+		final int PROD_EXPR_TOKEN_TOK_CLOSE_PAREN                                            = 1717;  // <expr_token> ::= 'TOK_CLOSE_PAREN'
+		final int PROD_EXPR_TOKEN_TOK_PLUS                                                   = 1718;  // <expr_token> ::= 'TOK_PLUS'
+		final int PROD_EXPR_TOKEN_TOK_MINUS                                                  = 1719;  // <expr_token> ::= 'TOK_MINUS'
+		final int PROD_EXPR_TOKEN_TOK_MUL                                                    = 1720;  // <expr_token> ::= 'TOK_MUL'
+		final int PROD_EXPR_TOKEN_TOK_DIV                                                    = 1721;  // <expr_token> ::= 'TOK_DIV'
+		final int PROD_EXPR_TOKEN_EXPONENTIATION                                             = 1722;  // <expr_token> ::= EXPONENTIATION
+		final int PROD_EXPR_TOKEN3                                                           = 1723;  // <expr_token> ::= <not>
+		final int PROD_EXPR_TOKEN_AND                                                        = 1724;  // <expr_token> ::= AND
+		final int PROD_EXPR_TOKEN_OR                                                         = 1725;  // <expr_token> ::= OR
+		final int PROD__NOT                                                                  = 1726;  // <_not> ::= 
+		final int PROD__NOT2                                                                 = 1727;  // <_not> ::= <not>
+		final int PROD_NOT_NOT                                                               = 1728;  // <not> ::= NOT
+		final int PROD_CONDITION_OR_CLASS                                                    = 1729;  // <condition_or_class> ::= <CLASS_NAME>
+		final int PROD_CONDITION_OR_CLASS2                                                   = 1730;  // <condition_or_class> ::= <condition_op>
+		final int PROD_CONDITION_OP                                                          = 1731;  // <condition_op> ::= <eq>
+		final int PROD_CONDITION_OP2                                                         = 1732;  // <condition_op> ::= <gt>
+		final int PROD_CONDITION_OP3                                                         = 1733;  // <condition_op> ::= <lt>
+		final int PROD_CONDITION_OP4                                                         = 1734;  // <condition_op> ::= <ge>
+		final int PROD_CONDITION_OP5                                                         = 1735;  // <condition_op> ::= <le>
+		final int PROD_CONDITION_OP_NOT_EQUAL                                                = 1736;  // <condition_op> ::= 'NOT_EQUAL'
+		final int PROD_CONDITION_OP_OMITTED                                                  = 1737;  // <condition_op> ::= OMITTED
+		final int PROD_CONDITION_OP_NUMERIC                                                  = 1738;  // <condition_op> ::= NUMERIC
+		final int PROD_CONDITION_OP_ALPHABETIC                                               = 1739;  // <condition_op> ::= ALPHABETIC
+		final int PROD_CONDITION_OP_ALPHABETIC_LOWER                                         = 1740;  // <condition_op> ::= 'ALPHABETIC_LOWER'
+		final int PROD_CONDITION_OP_ALPHABETIC_UPPER                                         = 1741;  // <condition_op> ::= 'ALPHABETIC_UPPER'
+		final int PROD_CONDITION_OP_POSITIVE                                                 = 1742;  // <condition_op> ::= POSITIVE
+		final int PROD_CONDITION_OP_NEGATIVE                                                 = 1743;  // <condition_op> ::= NEGATIVE
+		final int PROD_EQ_TOK_EQUAL                                                          = 1744;  // <eq> ::= 'TOK_EQUAL'
+		final int PROD_EQ_EQUAL                                                              = 1745;  // <eq> ::= EQUAL <_to>
+		final int PROD_GT_TOK_GREATER                                                        = 1746;  // <gt> ::= 'TOK_GREATER'
+		final int PROD_GT_GREATER                                                            = 1747;  // <gt> ::= GREATER
+		final int PROD_LT_TOK_LESS                                                           = 1748;  // <lt> ::= 'TOK_LESS'
+		final int PROD_LT_LESS                                                               = 1749;  // <lt> ::= LESS
+		final int PROD_GE_GREATER_OR_EQUAL                                                   = 1750;  // <ge> ::= 'GREATER_OR_EQUAL'
+		final int PROD_LE_LESS_OR_EQUAL                                                      = 1751;  // <le> ::= 'LESS_OR_EQUAL'
+		final int PROD_EXP_LIST                                                              = 1752;  // <exp_list> ::= <exp>
+		final int PROD_EXP_LIST2                                                             = 1753;  // <exp_list> ::= <exp_list> <_e_sep> <exp>
+		final int PROD__E_SEP                                                                = 1754;  // <_e_sep> ::= 
+		final int PROD__E_SEP_COMMA_DELIM                                                    = 1755;  // <_e_sep> ::= 'COMMA_DELIM'
+		final int PROD__E_SEP_SEMI_COLON                                                     = 1756;  // <_e_sep> ::= 'SEMI_COLON'
+		final int PROD_EXP_TOK_PLUS                                                          = 1757;  // <exp> ::= <exp> 'TOK_PLUS' <exp_term>
+		final int PROD_EXP_TOK_MINUS                                                         = 1758;  // <exp> ::= <exp> 'TOK_MINUS' <exp_term>
+		final int PROD_EXP                                                                   = 1759;  // <exp> ::= <exp_term>
+		final int PROD_EXP_TERM_TOK_MUL                                                      = 1760;  // <exp_term> ::= <exp_term> 'TOK_MUL' <exp_factor>
+		final int PROD_EXP_TERM_TOK_DIV                                                      = 1761;  // <exp_term> ::= <exp_term> 'TOK_DIV' <exp_factor>
+		final int PROD_EXP_TERM                                                              = 1762;  // <exp_term> ::= <exp_factor>
+		final int PROD_EXP_FACTOR_EXPONENTIATION                                             = 1763;  // <exp_factor> ::= <exp_unary> EXPONENTIATION <exp_factor>
+		final int PROD_EXP_FACTOR                                                            = 1764;  // <exp_factor> ::= <exp_unary>
+		final int PROD_EXP_UNARY_TOK_PLUS                                                    = 1765;  // <exp_unary> ::= 'TOK_PLUS' <exp_atom>
+		final int PROD_EXP_UNARY_TOK_MINUS                                                   = 1766;  // <exp_unary> ::= 'TOK_MINUS' <exp_atom>
+		final int PROD_EXP_UNARY                                                             = 1767;  // <exp_unary> ::= <exp_atom>
+		final int PROD_EXP_ATOM_TOK_OPEN_PAREN_TOK_CLOSE_PAREN                               = 1768;  // <exp_atom> ::= 'TOK_OPEN_PAREN' <exp> 'TOK_CLOSE_PAREN'
+		final int PROD_EXP_ATOM                                                              = 1769;  // <exp_atom> ::= <arith_x>
+		final int PROD_LINE_LINAGE_PAGE_COUNTER_LINAGE_COUNTER                               = 1770;  // <line_linage_page_counter> ::= 'LINAGE_COUNTER'
+		final int PROD_LINE_LINAGE_PAGE_COUNTER_LINAGE_COUNTER2                              = 1771;  // <line_linage_page_counter> ::= 'LINAGE_COUNTER' <in_of> <WORD>
+		final int PROD_LINE_LINAGE_PAGE_COUNTER_LINE_COUNTER                                 = 1772;  // <line_linage_page_counter> ::= 'LINE_COUNTER'
+		final int PROD_LINE_LINAGE_PAGE_COUNTER_LINE_COUNTER2                                = 1773;  // <line_linage_page_counter> ::= 'LINE_COUNTER' <in_of> <WORD>
+		final int PROD_LINE_LINAGE_PAGE_COUNTER_PAGE_COUNTER                                 = 1774;  // <line_linage_page_counter> ::= 'PAGE_COUNTER'
+		final int PROD_LINE_LINAGE_PAGE_COUNTER_PAGE_COUNTER2                                = 1775;  // <line_linage_page_counter> ::= 'PAGE_COUNTER' <in_of> <WORD>
+		final int PROD_ARITHMETIC_X_LIST                                                     = 1776;  // <arithmetic_x_list> ::= <arithmetic_x>
+		final int PROD_ARITHMETIC_X_LIST2                                                    = 1777;  // <arithmetic_x_list> ::= <arithmetic_x_list> <arithmetic_x>
+		final int PROD_ARITHMETIC_X                                                          = 1778;  // <arithmetic_x> ::= <target_x> <flag_rounded>
+		final int PROD_RECORD_NAME                                                           = 1779;  // <record_name> ::= <qualified_word>
+		final int PROD_FILE_OR_RECORD_NAME                                                   = 1780;  // <file_or_record_name> ::= <record_name>
+		final int PROD_FILE_OR_RECORD_NAME_TOK_FILE                                          = 1781;  // <file_or_record_name> ::= 'TOK_FILE' <WORD>
+		final int PROD_TABLE_NAME                                                            = 1782;  // <table_name> ::= <qualified_word>
+		final int PROD_FILE_NAME_LIST                                                        = 1783;  // <file_name_list> ::= <file_name>
+		final int PROD_FILE_NAME_LIST2                                                       = 1784;  // <file_name_list> ::= <file_name_list> <file_name>
+		final int PROD_FILE_NAME                                                             = 1785;  // <file_name> ::= <WORD>
+		final int PROD_CD_NAME                                                               = 1786;  // <cd_name> ::= <WORD>
+		final int PROD_REPORT_NAME                                                           = 1787;  // <report_name> ::= <WORD>
+		final int PROD_MNEMONIC_NAME_LIST                                                    = 1788;  // <mnemonic_name_list> ::= <mnemonic_name>
+		final int PROD_MNEMONIC_NAME_LIST2                                                   = 1789;  // <mnemonic_name_list> ::= <mnemonic_name_list> <mnemonic_name>
+		final int PROD_MNEMONIC_NAME                                                         = 1790;  // <mnemonic_name> ::= <MNEMONIC_NAME_TOK>
+		final int PROD_PROCEDURE_NAME_LIST                                                   = 1791;  // <procedure_name_list> ::= 
+		final int PROD_PROCEDURE_NAME_LIST2                                                  = 1792;  // <procedure_name_list> ::= <procedure_name_list> <procedure_name>
+		final int PROD_PROCEDURE_NAME                                                        = 1793;  // <procedure_name> ::= <label>
+		final int PROD_LABEL                                                                 = 1794;  // <label> ::= <qualified_word>
+		final int PROD_LABEL2                                                                = 1795;  // <label> ::= <integer_label>
+		final int PROD_LABEL3                                                                = 1796;  // <label> ::= <integer_label> <in_of> <integer_label>
+		final int PROD_INTEGER_LABEL                                                         = 1797;  // <integer_label> ::= <LITERAL_TOK>
+		final int PROD_REFERENCE_LIST                                                        = 1798;  // <reference_list> ::= <reference>
+		final int PROD_REFERENCE_LIST2                                                       = 1799;  // <reference_list> ::= <reference_list> <reference>
+		final int PROD_REFERENCE                                                             = 1800;  // <reference> ::= <qualified_word>
+		final int PROD_SINGLE_REFERENCE                                                      = 1801;  // <single_reference> ::= <WORD>
+		final int PROD_OPTIONAL_REFERENCE_LIST                                               = 1802;  // <optional_reference_list> ::= <optional_reference>
+		final int PROD_OPTIONAL_REFERENCE_LIST2                                              = 1803;  // <optional_reference_list> ::= <optional_reference_list> <optional_reference>
+		final int PROD_OPTIONAL_REFERENCE                                                    = 1804;  // <optional_reference> ::= <WORD>
+		final int PROD_REFERENCE_OR_LITERAL                                                  = 1805;  // <reference_or_literal> ::= <reference>
+		final int PROD_REFERENCE_OR_LITERAL2                                                 = 1806;  // <reference_or_literal> ::= <LITERAL_TOK>
+		final int PROD_UNDEFINED_WORD                                                        = 1807;  // <undefined_word> ::= <WORD>
+		final int PROD_UNIQUE_WORD                                                           = 1808;  // <unique_word> ::= <WORD>
+		final int PROD_TARGET_X_LIST                                                         = 1809;  // <target_x_list> ::= <target_x>
+		final int PROD_TARGET_X_LIST2                                                        = 1810;  // <target_x_list> ::= <target_x_list> <target_x>
+		final int PROD_TARGET_X                                                              = 1811;  // <target_x> ::= <target_identifier>
+		final int PROD_TARGET_X2                                                             = 1812;  // <target_x> ::= <basic_literal>
+		final int PROD_TARGET_X_ADDRESS                                                      = 1813;  // <target_x> ::= ADDRESS <_of> <identifier_1>
+		final int PROD_TARGET_X_COMMA_DELIM                                                  = 1814;  // <target_x> ::= 'COMMA_DELIM'
+		final int PROD__X_LIST                                                               = 1815;  // <_x_list> ::= 
+		final int PROD__X_LIST2                                                              = 1816;  // <_x_list> ::= <x_list>
+		final int PROD_X_LIST                                                                = 1817;  // <x_list> ::= <x>
+		final int PROD_X_LIST2                                                               = 1818;  // <x_list> ::= <x_list> <x>
+		final int PROD_X                                                                     = 1819;  // <x> ::= <identifier>
+		final int PROD_X2                                                                    = 1820;  // <x> ::= <x_common>
+		final int PROD_X_COMMA_DELIM                                                         = 1821;  // <x> ::= 'COMMA_DELIM'
+		final int PROD_CALL_X                                                                = 1822;  // <call_x> ::= <identifier_or_file_name>
+		final int PROD_CALL_X2                                                               = 1823;  // <call_x> ::= <x_common>
+		final int PROD_X_COMMON                                                              = 1824;  // <x_common> ::= <literal>
+		final int PROD_X_COMMON2                                                             = 1825;  // <x_common> ::= <function>
+		final int PROD_X_COMMON3                                                             = 1826;  // <x_common> ::= <line_linage_page_counter>
+		final int PROD_X_COMMON_LENGTH_OF                                                    = 1827;  // <x_common> ::= 'LENGTH_OF' <identifier_1>
+		final int PROD_X_COMMON_LENGTH_OF2                                                   = 1828;  // <x_common> ::= 'LENGTH_OF' <basic_literal>
+		final int PROD_X_COMMON_LENGTH_OF3                                                   = 1829;  // <x_common> ::= 'LENGTH_OF' <function>
+		final int PROD_X_COMMON_ADDRESS                                                      = 1830;  // <x_common> ::= ADDRESS <_of> <prog_or_entry> <alnum_or_id>
+		final int PROD_X_COMMON_ADDRESS2                                                     = 1831;  // <x_common> ::= ADDRESS <_of> <identifier_1>
+		final int PROD_X_COMMON4                                                             = 1832;  // <x_common> ::= <MNEMONIC_NAME_TOK>
+		final int PROD_REPORT_X_LIST                                                         = 1833;  // <report_x_list> ::= <arith_x>
+		final int PROD_REPORT_X_LIST2                                                        = 1834;  // <report_x_list> ::= <report_x_list> <arith_x>
+		final int PROD_EXPR_X                                                                = 1835;  // <expr_x> ::= <identifier>
+		final int PROD_EXPR_X2                                                               = 1836;  // <expr_x> ::= <basic_literal>
+		final int PROD_EXPR_X3                                                               = 1837;  // <expr_x> ::= <function>
+		final int PROD_ARITH_X                                                               = 1838;  // <arith_x> ::= <identifier>
+		final int PROD_ARITH_X2                                                              = 1839;  // <arith_x> ::= <basic_literal>
+		final int PROD_ARITH_X3                                                              = 1840;  // <arith_x> ::= <function>
+		final int PROD_ARITH_X4                                                              = 1841;  // <arith_x> ::= <line_linage_page_counter>
+		final int PROD_ARITH_X_LENGTH_OF                                                     = 1842;  // <arith_x> ::= 'LENGTH_OF' <identifier_1>
+		final int PROD_ARITH_X_LENGTH_OF2                                                    = 1843;  // <arith_x> ::= 'LENGTH_OF' <basic_literal>
+		final int PROD_ARITH_X_LENGTH_OF3                                                    = 1844;  // <arith_x> ::= 'LENGTH_OF' <function>
+		final int PROD_PROG_OR_ENTRY_PROGRAM                                                 = 1845;  // <prog_or_entry> ::= PROGRAM
+		final int PROD_PROG_OR_ENTRY_ENTRY                                                   = 1846;  // <prog_or_entry> ::= ENTRY
+		final int PROD_ALNUM_OR_ID                                                           = 1847;  // <alnum_or_id> ::= <identifier_1>
+		final int PROD_ALNUM_OR_ID2                                                          = 1848;  // <alnum_or_id> ::= <LITERAL_TOK>
+		final int PROD_SIMPLE_DISPLAY_VALUE                                                  = 1849;  // <simple_display_value> ::= <simple_value>
+		final int PROD_SIMPLE_DISPLAY_ALL_VALUE                                              = 1850;  // <simple_display_all_value> ::= <simple_all_value>
+		final int PROD_SIMPLE_VALUE                                                          = 1851;  // <simple_value> ::= <identifier>
+		final int PROD_SIMPLE_VALUE2                                                         = 1852;  // <simple_value> ::= <basic_literal>
+		final int PROD_SIMPLE_VALUE3                                                         = 1853;  // <simple_value> ::= <function>
+		final int PROD_SIMPLE_ALL_VALUE                                                      = 1854;  // <simple_all_value> ::= <identifier>
+		final int PROD_SIMPLE_ALL_VALUE2                                                     = 1855;  // <simple_all_value> ::= <literal>
+		final int PROD_ID_OR_LIT                                                             = 1856;  // <id_or_lit> ::= <identifier>
+		final int PROD_ID_OR_LIT2                                                            = 1857;  // <id_or_lit> ::= <LITERAL_TOK>
+		final int PROD_ID_OR_LIT_OR_FUNC                                                     = 1858;  // <id_or_lit_or_func> ::= <identifier>
+		final int PROD_ID_OR_LIT_OR_FUNC2                                                    = 1859;  // <id_or_lit_or_func> ::= <LITERAL_TOK>
+		final int PROD_ID_OR_LIT_OR_FUNC3                                                    = 1860;  // <id_or_lit_or_func> ::= <function>
+		final int PROD_ID_OR_LIT_OR_LENGTH_OR_FUNC                                           = 1861;  // <id_or_lit_or_length_or_func> ::= <identifier>
+		final int PROD_ID_OR_LIT_OR_LENGTH_OR_FUNC2                                          = 1862;  // <id_or_lit_or_length_or_func> ::= <lit_or_length>
+		final int PROD_ID_OR_LIT_OR_LENGTH_OR_FUNC3                                          = 1863;  // <id_or_lit_or_length_or_func> ::= <function>
+		final int PROD_NUM_ID_OR_LIT                                                         = 1864;  // <num_id_or_lit> ::= <sub_identifier>
+		final int PROD_NUM_ID_OR_LIT2                                                        = 1865;  // <num_id_or_lit> ::= <integer>
+		final int PROD_NUM_ID_OR_LIT_ZERO                                                    = 1866;  // <num_id_or_lit> ::= ZERO
+		final int PROD_POSITIVE_ID_OR_LIT                                                    = 1867;  // <positive_id_or_lit> ::= <sub_identifier>
+		final int PROD_POSITIVE_ID_OR_LIT2                                                   = 1868;  // <positive_id_or_lit> ::= <report_integer>
+		final int PROD_POS_NUM_ID_OR_LIT                                                     = 1869;  // <pos_num_id_or_lit> ::= <sub_identifier>
+		final int PROD_POS_NUM_ID_OR_LIT2                                                    = 1870;  // <pos_num_id_or_lit> ::= <integer>
+		final int PROD_FROM_PARAMETER                                                        = 1871;  // <from_parameter> ::= <identifier>
+		final int PROD_FROM_PARAMETER2                                                       = 1872;  // <from_parameter> ::= <literal>
+		final int PROD_FROM_PARAMETER3                                                       = 1873;  // <from_parameter> ::= <function>
+		final int PROD_SUB_IDENTIFIER                                                        = 1874;  // <sub_identifier> ::= <sub_identifier_1>
+		final int PROD_TABLE_IDENTIFIER                                                      = 1875;  // <table_identifier> ::= <sub_identifier_1>
+		final int PROD_SUB_IDENTIFIER_1                                                      = 1876;  // <sub_identifier_1> ::= <qualified_word>
+		final int PROD_SUB_IDENTIFIER_12                                                     = 1877;  // <sub_identifier_1> ::= <qualified_word> <subref>
+		final int PROD_DISPLAY_IDENTIFIER                                                    = 1878;  // <display_identifier> ::= <identifier>
+		final int PROD_NUMERIC_IDENTIFIER                                                    = 1879;  // <numeric_identifier> ::= <identifier>
+		final int PROD_IDENTIFIER_OR_FILE_NAME                                               = 1880;  // <identifier_or_file_name> ::= <identifier_1>
+		final int PROD_IDENTIFIER                                                            = 1881;  // <identifier> ::= <identifier_1>
+		final int PROD_IDENTIFIER_1                                                          = 1882;  // <identifier_1> ::= <qualified_word> <subref> <refmod>
+		final int PROD_IDENTIFIER_12                                                         = 1883;  // <identifier_1> ::= <qualified_word> <subref>
+		final int PROD_IDENTIFIER_13                                                         = 1884;  // <identifier_1> ::= <qualified_word> <refmod>
+		final int PROD_IDENTIFIER_14                                                         = 1885;  // <identifier_1> ::= <qualified_word>
+		final int PROD_TARGET_IDENTIFIER                                                     = 1886;  // <target_identifier> ::= <target_identifier_1>
+		final int PROD_TARGET_IDENTIFIER_1                                                   = 1887;  // <target_identifier_1> ::= <qualified_word> <subref> <refmod>
+		final int PROD_TARGET_IDENTIFIER_12                                                  = 1888;  // <target_identifier_1> ::= <qualified_word> <subref>
+		final int PROD_TARGET_IDENTIFIER_13                                                  = 1889;  // <target_identifier_1> ::= <qualified_word> <refmod>
+		final int PROD_TARGET_IDENTIFIER_14                                                  = 1890;  // <target_identifier_1> ::= <qualified_word>
+		final int PROD_QUALIFIED_WORD                                                        = 1891;  // <qualified_word> ::= <WORD>
+		final int PROD_QUALIFIED_WORD2                                                       = 1892;  // <qualified_word> ::= <WORD> <in_of> <qualified_word>
+		final int PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN                                 = 1893;  // <subref> ::= 'TOK_OPEN_PAREN' <exp_list> 'TOK_CLOSE_PAREN'
+		final int PROD_REFMOD_TOK_OPEN_PAREN_TOK_COLON_TOK_CLOSE_PAREN                       = 1894;  // <refmod> ::= 'TOK_OPEN_PAREN' <exp> 'TOK_COLON' 'TOK_CLOSE_PAREN'
+		final int PROD_REFMOD_TOK_OPEN_PAREN_TOK_COLON_TOK_CLOSE_PAREN2                      = 1895;  // <refmod> ::= 'TOK_OPEN_PAREN' <exp> 'TOK_COLON' <exp> 'TOK_CLOSE_PAREN'
+		final int PROD_INTEGER_INTLITERAL                                                    = 1896;  // <integer> ::= IntLiteral
+		final int PROD_SYMBOLIC_INTEGER_INTLITERAL                                           = 1897;  // <symbolic_integer> ::= IntLiteral
+		final int PROD_REPORT_INTEGER_INTLITERAL                                             = 1898;  // <report_integer> ::= IntLiteral
+		final int PROD_CLASS_VALUE                                                           = 1899;  // <class_value> ::= <LITERAL_TOK>
+		final int PROD_CLASS_VALUE_SPACE                                                     = 1900;  // <class_value> ::= SPACE
+		final int PROD_CLASS_VALUE_ZERO                                                      = 1901;  // <class_value> ::= ZERO
+		final int PROD_CLASS_VALUE_QUOTE                                                     = 1902;  // <class_value> ::= QUOTE
+		final int PROD_CLASS_VALUE_HIGH_VALUE                                                = 1903;  // <class_value> ::= 'HIGH_VALUE'
+		final int PROD_CLASS_VALUE_LOW_VALUE                                                 = 1904;  // <class_value> ::= 'LOW_VALUE'
+		final int PROD_CLASS_VALUE_TOK_NULL                                                  = 1905;  // <class_value> ::= 'TOK_NULL'
+		final int PROD_LITERAL                                                               = 1906;  // <literal> ::= <basic_literal>
+		final int PROD_LITERAL_ALL                                                           = 1907;  // <literal> ::= ALL <basic_value>
+		final int PROD_BASIC_LITERAL                                                         = 1908;  // <basic_literal> ::= <basic_value>
+		final int PROD_BASIC_LITERAL_TOK_AMPER                                               = 1909;  // <basic_literal> ::= <basic_literal> 'TOK_AMPER' <basic_value>
+		final int PROD_BASIC_VALUE                                                           = 1910;  // <basic_value> ::= <LITERAL_TOK>
+		final int PROD_BASIC_VALUE_SPACE                                                     = 1911;  // <basic_value> ::= SPACE
+		final int PROD_BASIC_VALUE_ZERO                                                      = 1912;  // <basic_value> ::= ZERO
+		final int PROD_BASIC_VALUE_QUOTE                                                     = 1913;  // <basic_value> ::= QUOTE
+		final int PROD_BASIC_VALUE_HIGH_VALUE                                                = 1914;  // <basic_value> ::= 'HIGH_VALUE'
+		final int PROD_BASIC_VALUE_LOW_VALUE                                                 = 1915;  // <basic_value> ::= 'LOW_VALUE'
+		final int PROD_BASIC_VALUE_TOK_NULL                                                  = 1916;  // <basic_value> ::= 'TOK_NULL'
+		final int PROD_FUNCTION                                                              = 1917;  // <function> ::= <func_no_parm> <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN                               = 1918;  // <function> ::= <func_one_parm> 'TOK_OPEN_PAREN' <expr_x> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN2                              = 1919;  // <function> ::= <func_multi_parm> 'TOK_OPEN_PAREN' <exp_list> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN3                              = 1920;  // <function> ::= <TRIM_FUNC> 'TOK_OPEN_PAREN' <trim_args> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN4                              = 1921;  // <function> ::= <LENGTH_FUNC> 'TOK_OPEN_PAREN' <length_arg> 'TOK_CLOSE_PAREN'
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN5                              = 1922;  // <function> ::= <NUMVALC_FUNC> 'TOK_OPEN_PAREN' <numvalc_args> 'TOK_CLOSE_PAREN'
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN6                              = 1923;  // <function> ::= <LOCALE_DATE_FUNC> 'TOK_OPEN_PAREN' <locale_dt_args> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN7                              = 1924;  // <function> ::= <LOCALE_TIME_FUNC> 'TOK_OPEN_PAREN' <locale_dt_args> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN8                              = 1925;  // <function> ::= <LOCALE_TIME_FROM_FUNC> 'TOK_OPEN_PAREN' <locale_dt_args> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN9                              = 1926;  // <function> ::= <FORMATTED_DATETIME_FUNC> 'TOK_OPEN_PAREN' <formatted_datetime_args> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION_TOK_OPEN_PAREN_TOK_CLOSE_PAREN10                             = 1927;  // <function> ::= <FORMATTED_TIME_FUNC> 'TOK_OPEN_PAREN' <formatted_time_args> 'TOK_CLOSE_PAREN' <func_refmod>
+		final int PROD_FUNCTION2                                                             = 1928;  // <function> ::= <FUNCTION_NAME> <func_args>
+		final int PROD_FUNCTION3                                                             = 1929;  // <function> ::= <USER_FUNCTION_NAME> <func_args>
+		final int PROD_FUNCTION4                                                             = 1930;  // <function> ::= <DISPLAY_OF_FUNC> <func_args>
+		final int PROD_FUNCTION5                                                             = 1931;  // <function> ::= <NATIONAL_OF_FUNC> <func_args>
+		final int PROD_FUNC_NO_PARM                                                          = 1932;  // <func_no_parm> ::= <CURRENT_DATE_FUNC>
+		final int PROD_FUNC_NO_PARM2                                                         = 1933;  // <func_no_parm> ::= <WHEN_COMPILED_FUNC>
+		final int PROD_FUNC_ONE_PARM                                                         = 1934;  // <func_one_parm> ::= <UPPER_CASE_FUNC>
+		final int PROD_FUNC_ONE_PARM2                                                        = 1935;  // <func_one_parm> ::= <LOWER_CASE_FUNC>
+		final int PROD_FUNC_ONE_PARM3                                                        = 1936;  // <func_one_parm> ::= <REVERSE_FUNC>
+		final int PROD_FUNC_MULTI_PARM                                                       = 1937;  // <func_multi_parm> ::= <CONCATENATE_FUNC>
+		final int PROD_FUNC_MULTI_PARM2                                                      = 1938;  // <func_multi_parm> ::= <FORMATTED_DATE_FUNC>
+		final int PROD_FUNC_MULTI_PARM3                                                      = 1939;  // <func_multi_parm> ::= <SUBSTITUTE_FUNC>
+		final int PROD_FUNC_MULTI_PARM4                                                      = 1940;  // <func_multi_parm> ::= <SUBSTITUTE_CASE_FUNC>
+		final int PROD_FUNC_REFMOD                                                           = 1941;  // <func_refmod> ::= 
+		final int PROD_FUNC_REFMOD_TOK_OPEN_PAREN_TOK_COLON_TOK_CLOSE_PAREN                  = 1942;  // <func_refmod> ::= 'TOK_OPEN_PAREN' <exp> 'TOK_COLON' 'TOK_CLOSE_PAREN'
+		final int PROD_FUNC_REFMOD_TOK_OPEN_PAREN_TOK_COLON_TOK_CLOSE_PAREN2                 = 1943;  // <func_refmod> ::= 'TOK_OPEN_PAREN' <exp> 'TOK_COLON' <exp> 'TOK_CLOSE_PAREN'
+		final int PROD_FUNC_ARGS                                                             = 1944;  // <func_args> ::= 
+		final int PROD_FUNC_ARGS_TOK_OPEN_PAREN_TOK_CLOSE_PAREN                              = 1945;  // <func_args> ::= 'TOK_OPEN_PAREN' <exp_list> 'TOK_CLOSE_PAREN'
+		final int PROD_FUNC_ARGS_TOK_OPEN_PAREN_TOK_CLOSE_PAREN2                             = 1946;  // <func_args> ::= 'TOK_OPEN_PAREN' 'TOK_CLOSE_PAREN'
+		final int PROD_TRIM_ARGS                                                             = 1947;  // <trim_args> ::= <expr_x>
+		final int PROD_TRIM_ARGS_LEADING                                                     = 1948;  // <trim_args> ::= <expr_x> <_e_sep> LEADING
+		final int PROD_TRIM_ARGS_TRAILING                                                    = 1949;  // <trim_args> ::= <expr_x> <_e_sep> TRAILING
+		final int PROD_LENGTH_ARG                                                            = 1950;  // <length_arg> ::= <expr_x>
+		final int PROD_NUMVALC_ARGS                                                          = 1951;  // <numvalc_args> ::= <expr_x>
+		final int PROD_NUMVALC_ARGS2                                                         = 1952;  // <numvalc_args> ::= <expr_x> <_e_sep> <expr_x>
+		final int PROD_LOCALE_DT_ARGS                                                        = 1953;  // <locale_dt_args> ::= <exp>
+		final int PROD_LOCALE_DT_ARGS2                                                       = 1954;  // <locale_dt_args> ::= <exp> <_e_sep> <reference>
+		final int PROD_FORMATTED_DATETIME_ARGS                                               = 1955;  // <formatted_datetime_args> ::= <exp_list>
+		final int PROD_FORMATTED_DATETIME_ARGS_SYSTEM_OFFSET                                 = 1956;  // <formatted_datetime_args> ::= <exp_list> <_e_sep> 'SYSTEM_OFFSET'
+		final int PROD_FORMATTED_TIME_ARGS                                                   = 1957;  // <formatted_time_args> ::= <exp_list>
+		final int PROD_FORMATTED_TIME_ARGS_SYSTEM_OFFSET                                     = 1958;  // <formatted_time_args> ::= <exp_list> <_e_sep> 'SYSTEM_OFFSET'
+		final int PROD_FLAG_ALL                                                              = 1959;  // <flag_all> ::= 
+		final int PROD_FLAG_ALL_ALL                                                          = 1960;  // <flag_all> ::= ALL
+		final int PROD_FLAG_DUPLICATES                                                       = 1961;  // <flag_duplicates> ::= 
+		final int PROD_FLAG_DUPLICATES2                                                      = 1962;  // <flag_duplicates> ::= <with_dups>
+		final int PROD_FLAG_INITIALIZED                                                      = 1963;  // <flag_initialized> ::= 
+		final int PROD_FLAG_INITIALIZED_INITIALIZED                                          = 1964;  // <flag_initialized> ::= INITIALIZED
+		final int PROD_FLAG_INITIALIZED_TO                                                   = 1965;  // <flag_initialized_to> ::= 
+		final int PROD_FLAG_INITIALIZED_TO_INITIALIZED                                       = 1966;  // <flag_initialized_to> ::= INITIALIZED <to_init_val>
+		final int PROD_TO_INIT_VAL                                                           = 1967;  // <to_init_val> ::= 
+		final int PROD_TO_INIT_VAL_TO                                                        = 1968;  // <to_init_val> ::= TO <simple_all_value>
+		final int PROD__FLAG_NEXT                                                            = 1969;  // <_flag_next> ::= 
+		final int PROD__FLAG_NEXT_NEXT                                                       = 1970;  // <_flag_next> ::= NEXT
+		final int PROD__FLAG_NEXT_PREVIOUS                                                   = 1971;  // <_flag_next> ::= PREVIOUS
+		final int PROD__FLAG_NOT                                                             = 1972;  // <_flag_not> ::= 
+		final int PROD__FLAG_NOT_NOT                                                         = 1973;  // <_flag_not> ::= NOT
+		final int PROD_FLAG_OPTIONAL                                                         = 1974;  // <flag_optional> ::= 
+		final int PROD_FLAG_OPTIONAL_OPTIONAL                                                = 1975;  // <flag_optional> ::= OPTIONAL
+		final int PROD_FLAG_OPTIONAL_NOT_OPTIONAL                                            = 1976;  // <flag_optional> ::= NOT OPTIONAL
+		final int PROD_FLAG_ROUNDED                                                          = 1977;  // <flag_rounded> ::= 
+		final int PROD_FLAG_ROUNDED_ROUNDED                                                  = 1978;  // <flag_rounded> ::= ROUNDED <round_mode>
+		final int PROD_ROUND_MODE                                                            = 1979;  // <round_mode> ::= 
+		final int PROD_ROUND_MODE_MODE                                                       = 1980;  // <round_mode> ::= MODE <_is> <round_choice>
+		final int PROD_ROUND_CHOICE_AWAY_FROM_ZERO                                           = 1981;  // <round_choice> ::= 'AWAY_FROM_ZERO'
+		final int PROD_ROUND_CHOICE_NEAREST_AWAY_FROM_ZERO                                   = 1982;  // <round_choice> ::= 'NEAREST_AWAY_FROM_ZERO'
+		final int PROD_ROUND_CHOICE_NEAREST_EVEN                                             = 1983;  // <round_choice> ::= 'NEAREST_EVEN'
+		final int PROD_ROUND_CHOICE_NEAREST_TOWARD_ZERO                                      = 1984;  // <round_choice> ::= 'NEAREST_TOWARD_ZERO'
+		final int PROD_ROUND_CHOICE_PROHIBITED                                               = 1985;  // <round_choice> ::= PROHIBITED
+		final int PROD_ROUND_CHOICE_TOWARD_GREATER                                           = 1986;  // <round_choice> ::= 'TOWARD_GREATER'
+		final int PROD_ROUND_CHOICE_TOWARD_LESSER                                            = 1987;  // <round_choice> ::= 'TOWARD_LESSER'
+		final int PROD_ROUND_CHOICE_TRUNCATION                                               = 1988;  // <round_choice> ::= TRUNCATION
+		final int PROD_FLAG_SEPARATE                                                         = 1989;  // <flag_separate> ::= 
+		final int PROD_FLAG_SEPARATE_SEPARATE                                                = 1990;  // <flag_separate> ::= SEPARATE <_character>
+		final int PROD__FROM_IDX_TO_IDX                                                      = 1991;  // <_from_idx_to_idx> ::= 
+		final int PROD__FROM_IDX_TO_IDX_FROM_TO                                              = 1992;  // <_from_idx_to_idx> ::= FROM <_index> <pos_num_id_or_lit> TO <pos_num_id_or_lit>
+		final int PROD__DEST_INDEX                                                           = 1993;  // <_dest_index> ::= 
+		final int PROD__DEST_INDEX_DESTINATION                                               = 1994;  // <_dest_index> ::= DESTINATION <_index> <pos_num_id_or_lit>
+		final int PROD_ERROR_STMT_RECOVER_TOK_DOT                                            = 1995;  // <error_stmt_recover> ::= 'TOK_DOT'
+		final int PROD_ERROR_STMT_RECOVER                                                    = 1996;  // <error_stmt_recover> ::= <verb>
+		final int PROD_ERROR_STMT_RECOVER2                                                   = 1997;  // <error_stmt_recover> ::= <scope_terminator>
+		final int PROD_VERB_ACCEPT                                                           = 1998;  // <verb> ::= ACCEPT
+		final int PROD_VERB_ADD                                                              = 1999;  // <verb> ::= ADD
+		final int PROD_VERB_ALLOCATE                                                         = 2000;  // <verb> ::= ALLOCATE
+		final int PROD_VERB_ALTER                                                            = 2001;  // <verb> ::= ALTER
+		final int PROD_VERB_CALL                                                             = 2002;  // <verb> ::= CALL
+		final int PROD_VERB_CANCEL                                                           = 2003;  // <verb> ::= CANCEL
+		final int PROD_VERB_CLOSE                                                            = 2004;  // <verb> ::= CLOSE
+		final int PROD_VERB_COMMIT                                                           = 2005;  // <verb> ::= COMMIT
+		final int PROD_VERB_COMPUTE                                                          = 2006;  // <verb> ::= COMPUTE
+		final int PROD_VERB_CONTINUE                                                         = 2007;  // <verb> ::= CONTINUE
+		final int PROD_VERB_DELETE                                                           = 2008;  // <verb> ::= DELETE
+		final int PROD_VERB_DISPLAY                                                          = 2009;  // <verb> ::= DISPLAY
+		final int PROD_VERB_DIVIDE                                                           = 2010;  // <verb> ::= DIVIDE
+		final int PROD_VERB_ELSE                                                             = 2011;  // <verb> ::= ELSE
+		final int PROD_VERB_ENTRY                                                            = 2012;  // <verb> ::= ENTRY
+		final int PROD_VERB_EVALUATE                                                         = 2013;  // <verb> ::= EVALUATE
+		final int PROD_VERB_EXIT                                                             = 2014;  // <verb> ::= EXIT
+		final int PROD_VERB_FREE                                                             = 2015;  // <verb> ::= FREE
+		final int PROD_VERB_GENERATE                                                         = 2016;  // <verb> ::= GENERATE
+		final int PROD_VERB_GO                                                               = 2017;  // <verb> ::= GO
+		final int PROD_VERB_GOBACK                                                           = 2018;  // <verb> ::= GOBACK
+		final int PROD_VERB_IF                                                               = 2019;  // <verb> ::= IF
+		final int PROD_VERB_INITIALIZE                                                       = 2020;  // <verb> ::= INITIALIZE
+		final int PROD_VERB_INITIATE                                                         = 2021;  // <verb> ::= INITIATE
+		final int PROD_VERB_INSPECT                                                          = 2022;  // <verb> ::= INSPECT
+		final int PROD_VERB_MERGE                                                            = 2023;  // <verb> ::= MERGE
+		final int PROD_VERB_MOVE                                                             = 2024;  // <verb> ::= MOVE
+		final int PROD_VERB_MULTIPLY                                                         = 2025;  // <verb> ::= MULTIPLY
+		final int PROD_VERB_NEXT                                                             = 2026;  // <verb> ::= NEXT
+		final int PROD_VERB_OPEN                                                             = 2027;  // <verb> ::= OPEN
+		final int PROD_VERB_PERFORM                                                          = 2028;  // <verb> ::= PERFORM
+		final int PROD_VERB_READ                                                             = 2029;  // <verb> ::= READ
+		final int PROD_VERB_RELEASE                                                          = 2030;  // <verb> ::= RELEASE
+		final int PROD_VERB_RETURN                                                           = 2031;  // <verb> ::= RETURN
+		final int PROD_VERB_REWRITE                                                          = 2032;  // <verb> ::= REWRITE
+		final int PROD_VERB_ROLLBACK                                                         = 2033;  // <verb> ::= ROLLBACK
+		final int PROD_VERB_SEARCH                                                           = 2034;  // <verb> ::= SEARCH
+		final int PROD_VERB_SET                                                              = 2035;  // <verb> ::= SET
+		final int PROD_VERB_SORT                                                             = 2036;  // <verb> ::= SORT
+		final int PROD_VERB_START                                                            = 2037;  // <verb> ::= START
+		final int PROD_VERB_STOP                                                             = 2038;  // <verb> ::= STOP
+		final int PROD_VERB_STRING                                                           = 2039;  // <verb> ::= STRING
+		final int PROD_VERB_SUBTRACT                                                         = 2040;  // <verb> ::= SUBTRACT
+		final int PROD_VERB_SUPPRESS                                                         = 2041;  // <verb> ::= SUPPRESS
+		final int PROD_VERB_TERMINATE                                                        = 2042;  // <verb> ::= TERMINATE
+		final int PROD_VERB_TRANSFORM                                                        = 2043;  // <verb> ::= TRANSFORM
+		final int PROD_VERB_UNLOCK                                                           = 2044;  // <verb> ::= UNLOCK
+		final int PROD_VERB_UNSTRING                                                         = 2045;  // <verb> ::= UNSTRING
+		final int PROD_VERB_WRITE                                                            = 2046;  // <verb> ::= WRITE
+		final int PROD_SCOPE_TERMINATOR_END_ACCEPT                                           = 2047;  // <scope_terminator> ::= 'END_ACCEPT'
+		final int PROD_SCOPE_TERMINATOR_END_ADD                                              = 2048;  // <scope_terminator> ::= 'END_ADD'
+		final int PROD_SCOPE_TERMINATOR_END_CALL                                             = 2049;  // <scope_terminator> ::= 'END_CALL'
+		final int PROD_SCOPE_TERMINATOR_END_COMPUTE                                          = 2050;  // <scope_terminator> ::= 'END_COMPUTE'
+		final int PROD_SCOPE_TERMINATOR_END_DELETE                                           = 2051;  // <scope_terminator> ::= 'END_DELETE'
+		final int PROD_SCOPE_TERMINATOR_END_DISPLAY                                          = 2052;  // <scope_terminator> ::= 'END_DISPLAY'
+		final int PROD_SCOPE_TERMINATOR_END_DIVIDE                                           = 2053;  // <scope_terminator> ::= 'END_DIVIDE'
+		final int PROD_SCOPE_TERMINATOR_END_EVALUATE                                         = 2054;  // <scope_terminator> ::= 'END_EVALUATE'
+		final int PROD_SCOPE_TERMINATOR_END_IF                                               = 2055;  // <scope_terminator> ::= 'END_IF'
+		final int PROD_SCOPE_TERMINATOR_END_MULTIPLY                                         = 2056;  // <scope_terminator> ::= 'END_MULTIPLY'
+		final int PROD_SCOPE_TERMINATOR_END_PERFORM                                          = 2057;  // <scope_terminator> ::= 'END_PERFORM'
+		final int PROD_SCOPE_TERMINATOR_END_READ                                             = 2058;  // <scope_terminator> ::= 'END_READ'
+		final int PROD_SCOPE_TERMINATOR_END_RECEIVE                                          = 2059;  // <scope_terminator> ::= 'END_RECEIVE'
+		final int PROD_SCOPE_TERMINATOR_END_RETURN                                           = 2060;  // <scope_terminator> ::= 'END_RETURN'
+		final int PROD_SCOPE_TERMINATOR_END_REWRITE                                          = 2061;  // <scope_terminator> ::= 'END_REWRITE'
+		final int PROD_SCOPE_TERMINATOR_END_SEARCH                                           = 2062;  // <scope_terminator> ::= 'END_SEARCH'
+		final int PROD_SCOPE_TERMINATOR_END_START                                            = 2063;  // <scope_terminator> ::= 'END_START'
+		final int PROD_SCOPE_TERMINATOR_END_STRING                                           = 2064;  // <scope_terminator> ::= 'END_STRING'
+		final int PROD_SCOPE_TERMINATOR_END_SUBTRACT                                         = 2065;  // <scope_terminator> ::= 'END_SUBTRACT'
+		final int PROD_SCOPE_TERMINATOR_END_UNSTRING                                         = 2066;  // <scope_terminator> ::= 'END_UNSTRING'
+		final int PROD_SCOPE_TERMINATOR_END_WRITE                                            = 2067;  // <scope_terminator> ::= 'END_WRITE'
+		final int PROD__ADVANCING                                                            = 2068;  // <_advancing> ::= 
+		final int PROD__ADVANCING_ADVANCING                                                  = 2069;  // <_advancing> ::= ADVANCING
+		final int PROD__AFTER                                                                = 2070;  // <_after> ::= 
+		final int PROD__AFTER_AFTER                                                          = 2071;  // <_after> ::= AFTER
+		final int PROD__ARE                                                                  = 2072;  // <_are> ::= 
+		final int PROD__ARE_ARE                                                              = 2073;  // <_are> ::= ARE
+		final int PROD__AREA                                                                 = 2074;  // <_area> ::= 
+		final int PROD__AREA_AREA                                                            = 2075;  // <_area> ::= AREA
+		final int PROD__AREAS                                                                = 2076;  // <_areas> ::= 
+		final int PROD__AREAS_AREA                                                           = 2077;  // <_areas> ::= AREA
+		final int PROD__AREAS_AREAS                                                          = 2078;  // <_areas> ::= AREAS
+		final int PROD__AS                                                                   = 2079;  // <_as> ::= 
+		final int PROD__AS_AS                                                                = 2080;  // <_as> ::= AS
+		final int PROD__AT                                                                   = 2081;  // <_at> ::= 
+		final int PROD__AT_AT                                                                = 2082;  // <_at> ::= AT
+		final int PROD__BEFORE                                                               = 2083;  // <_before> ::= 
+		final int PROD__BEFORE_BEFORE                                                        = 2084;  // <_before> ::= BEFORE
+		final int PROD__BINARY                                                               = 2085;  // <_binary> ::= 
+		final int PROD__BINARY_BINARY                                                        = 2086;  // <_binary> ::= BINARY
+		final int PROD__BY                                                                   = 2087;  // <_by> ::= 
+		final int PROD__BY_BY                                                                = 2088;  // <_by> ::= BY
+		final int PROD__CHARACTER                                                            = 2089;  // <_character> ::= 
+		final int PROD__CHARACTER_CHARACTER                                                  = 2090;  // <_character> ::= CHARACTER
+		final int PROD__CHARACTERS                                                           = 2091;  // <_characters> ::= 
+		final int PROD__CHARACTERS_CHARACTERS                                                = 2092;  // <_characters> ::= CHARACTERS
+		final int PROD__CONTAINS                                                             = 2093;  // <_contains> ::= 
+		final int PROD__CONTAINS_CONTAINS                                                    = 2094;  // <_contains> ::= CONTAINS
+		final int PROD__DATA                                                                 = 2095;  // <_data> ::= 
+		final int PROD__DATA_DATA                                                            = 2096;  // <_data> ::= DATA
+		final int PROD__END_OF                                                               = 2097;  // <_end_of> ::= 
+		final int PROD__END_OF_END                                                           = 2098;  // <_end_of> ::= END <_of>
+		final int PROD__FILE                                                                 = 2099;  // <_file> ::= 
+		final int PROD__FILE_TOK_FILE                                                        = 2100;  // <_file> ::= 'TOK_FILE'
+		final int PROD__FINAL                                                                = 2101;  // <_final> ::= 
+		final int PROD__FINAL_FINAL                                                          = 2102;  // <_final> ::= FINAL
+		final int PROD__FOR                                                                  = 2103;  // <_for> ::= 
+		final int PROD__FOR_FOR                                                              = 2104;  // <_for> ::= FOR
+		final int PROD__FROM                                                                 = 2105;  // <_from> ::= 
+		final int PROD__FROM_FROM                                                            = 2106;  // <_from> ::= FROM
+		final int PROD__IN                                                                   = 2107;  // <_in> ::= 
+		final int PROD__IN_IN                                                                = 2108;  // <_in> ::= IN
+		final int PROD__IN_ORDER                                                             = 2109;  // <_in_order> ::= 
+		final int PROD__IN_ORDER_ORDER                                                       = 2110;  // <_in_order> ::= ORDER
+		final int PROD__IN_ORDER_IN_ORDER                                                    = 2111;  // <_in_order> ::= IN ORDER
+		final int PROD__INDEX                                                                = 2112;  // <_index> ::= 
+		final int PROD__INDEX_INDEX                                                          = 2113;  // <_index> ::= INDEX
+		final int PROD__INDICATE                                                             = 2114;  // <_indicate> ::= 
+		final int PROD__INDICATE_INDICATE                                                    = 2115;  // <_indicate> ::= INDICATE
+		final int PROD__INITIAL                                                              = 2116;  // <_initial> ::= 
+		final int PROD__INITIAL_TOK_INITIAL                                                  = 2117;  // <_initial> ::= 'TOK_INITIAL'
+		final int PROD__INTO                                                                 = 2118;  // <_into> ::= 
+		final int PROD__INTO_INTO                                                            = 2119;  // <_into> ::= INTO
+		final int PROD__IS                                                                   = 2120;  // <_is> ::= 
+		final int PROD__IS_IS                                                                = 2121;  // <_is> ::= IS
+		final int PROD__IS_ARE                                                               = 2122;  // <_is_are> ::= 
+		final int PROD__IS_ARE_IS                                                            = 2123;  // <_is_are> ::= IS
+		final int PROD__IS_ARE_ARE                                                           = 2124;  // <_is_are> ::= ARE
+		final int PROD__KEY                                                                  = 2125;  // <_key> ::= 
+		final int PROD__KEY_KEY                                                              = 2126;  // <_key> ::= KEY
+		final int PROD__LEFT_OR_RIGHT                                                        = 2127;  // <_left_or_right> ::= 
+		final int PROD__LEFT_OR_RIGHT_LEFT                                                   = 2128;  // <_left_or_right> ::= LEFT
+		final int PROD__LEFT_OR_RIGHT_RIGHT                                                  = 2129;  // <_left_or_right> ::= RIGHT
+		final int PROD__LINE                                                                 = 2130;  // <_line> ::= 
+		final int PROD__LINE_LINE                                                            = 2131;  // <_line> ::= LINE
+		final int PROD__LINE_OR_LINES                                                        = 2132;  // <_line_or_lines> ::= 
+		final int PROD__LINE_OR_LINES_LINE                                                   = 2133;  // <_line_or_lines> ::= LINE
+		final int PROD__LINE_OR_LINES_LINES                                                  = 2134;  // <_line_or_lines> ::= LINES
+		final int PROD__LIMITS                                                               = 2135;  // <_limits> ::= 
+		final int PROD__LIMITS_LIMIT                                                         = 2136;  // <_limits> ::= LIMIT <_is>
+		final int PROD__LIMITS_LIMITS                                                        = 2137;  // <_limits> ::= LIMITS <_are>
+		final int PROD__LINES                                                                = 2138;  // <_lines> ::= 
+		final int PROD__LINES_LINES                                                          = 2139;  // <_lines> ::= LINES
+		final int PROD__MESSAGE                                                              = 2140;  // <_message> ::= 
+		final int PROD__MESSAGE_MESSAGE                                                      = 2141;  // <_message> ::= MESSAGE
+		final int PROD__MODE                                                                 = 2142;  // <_mode> ::= 
+		final int PROD__MODE_MODE                                                            = 2143;  // <_mode> ::= MODE
+		final int PROD__NUMBER                                                               = 2144;  // <_number> ::= 
+		final int PROD__NUMBER_NUMBER                                                        = 2145;  // <_number> ::= NUMBER
+		final int PROD__NUMBERS                                                              = 2146;  // <_numbers> ::= 
+		final int PROD__NUMBERS_NUMBER                                                       = 2147;  // <_numbers> ::= NUMBER
+		final int PROD__NUMBERS_NUMBERS                                                      = 2148;  // <_numbers> ::= NUMBERS
+		final int PROD__OF                                                                   = 2149;  // <_of> ::= 
+		final int PROD__OF_OF                                                                = 2150;  // <_of> ::= OF
+		final int PROD__ON                                                                   = 2151;  // <_on> ::= 
+		final int PROD__ON_ON                                                                = 2152;  // <_on> ::= ON
+		final int PROD__ONOFF_STATUS                                                         = 2153;  // <_onoff_status> ::= 
+		final int PROD__ONOFF_STATUS_STATUS_IS                                               = 2154;  // <_onoff_status> ::= STATUS IS
+		final int PROD__ONOFF_STATUS_STATUS                                                  = 2155;  // <_onoff_status> ::= STATUS
+		final int PROD__ONOFF_STATUS_IS                                                      = 2156;  // <_onoff_status> ::= IS
+		final int PROD__OTHER                                                                = 2157;  // <_other> ::= 
+		final int PROD__OTHER_OTHER                                                          = 2158;  // <_other> ::= OTHER
+		final int PROD__PROCEDURE                                                            = 2159;  // <_procedure> ::= 
+		final int PROD__PROCEDURE_PROCEDURE                                                  = 2160;  // <_procedure> ::= PROCEDURE
+		final int PROD__PROGRAM                                                              = 2161;  // <_program> ::= 
+		final int PROD__PROGRAM_PROGRAM                                                      = 2162;  // <_program> ::= PROGRAM
+		final int PROD__RECORD                                                               = 2163;  // <_record> ::= 
+		final int PROD__RECORD_RECORD                                                        = 2164;  // <_record> ::= RECORD
+		final int PROD__RECORDS                                                              = 2165;  // <_records> ::= 
+		final int PROD__RECORDS_RECORD                                                       = 2166;  // <_records> ::= RECORD
+		final int PROD__RECORDS_RECORDS                                                      = 2167;  // <_records> ::= RECORDS
+		final int PROD__RIGHT                                                                = 2168;  // <_right> ::= 
+		final int PROD__RIGHT_RIGHT                                                          = 2169;  // <_right> ::= RIGHT
+		final int PROD__SIGN                                                                 = 2170;  // <_sign> ::= 
+		final int PROD__SIGN_SIGN                                                            = 2171;  // <_sign> ::= SIGN
+		final int PROD__SIGNED                                                               = 2172;  // <_signed> ::= 
+		final int PROD__SIGNED_SIGNED                                                        = 2173;  // <_signed> ::= SIGNED
+		final int PROD__SIGN_IS                                                              = 2174;  // <_sign_is> ::= 
+		final int PROD__SIGN_IS_SIGN                                                         = 2175;  // <_sign_is> ::= SIGN
+		final int PROD__SIGN_IS_SIGN_IS                                                      = 2176;  // <_sign_is> ::= SIGN IS
+		final int PROD__SIZE                                                                 = 2177;  // <_size> ::= 
+		final int PROD__SIZE_SIZE                                                            = 2178;  // <_size> ::= SIZE
+		final int PROD__STANDARD                                                             = 2179;  // <_standard> ::= 
+		final int PROD__STANDARD_STANDARD                                                    = 2180;  // <_standard> ::= STANDARD
+		final int PROD__STATUS                                                               = 2181;  // <_status> ::= 
+		final int PROD__STATUS_STATUS                                                        = 2182;  // <_status> ::= STATUS
+		final int PROD__SYMBOLIC                                                             = 2183;  // <_symbolic> ::= 
+		final int PROD__SYMBOLIC_SYMBOLIC                                                    = 2184;  // <_symbolic> ::= SYMBOLIC
+		final int PROD__TAPE                                                                 = 2185;  // <_tape> ::= 
+		final int PROD__TAPE_TAPE                                                            = 2186;  // <_tape> ::= TAPE
+		final int PROD__TERMINAL                                                             = 2187;  // <_terminal> ::= 
+		final int PROD__TERMINAL_TERMINAL                                                    = 2188;  // <_terminal> ::= TERMINAL
+		final int PROD__THEN                                                                 = 2189;  // <_then> ::= 
+		final int PROD__THEN_THEN                                                            = 2190;  // <_then> ::= THEN
+		final int PROD__TIMES                                                                = 2191;  // <_times> ::= 
+		final int PROD__TIMES_TIMES                                                          = 2192;  // <_times> ::= TIMES
+		final int PROD__TO                                                                   = 2193;  // <_to> ::= 
+		final int PROD__TO_TO                                                                = 2194;  // <_to> ::= TO
+		final int PROD__TO_USING                                                             = 2195;  // <_to_using> ::= 
+		final int PROD__TO_USING_TO                                                          = 2196;  // <_to_using> ::= TO
+		final int PROD__TO_USING_USING                                                       = 2197;  // <_to_using> ::= USING
+		final int PROD__WHEN                                                                 = 2198;  // <_when> ::= 
+		final int PROD__WHEN_WHEN                                                            = 2199;  // <_when> ::= WHEN
+		final int PROD__WHEN_SET_TO                                                          = 2200;  // <_when_set_to> ::= 
+		final int PROD__WHEN_SET_TO_WHEN_SET_TO                                              = 2201;  // <_when_set_to> ::= WHEN SET TO
+		final int PROD__WITH                                                                 = 2202;  // <_with> ::= 
+		final int PROD__WITH_WITH                                                            = 2203;  // <_with> ::= WITH
+		final int PROD_COLL_SEQUENCE_COLLATING_SEQUENCE                                      = 2204;  // <coll_sequence> ::= COLLATING SEQUENCE
+		final int PROD_COLL_SEQUENCE_SEQUENCE                                                = 2205;  // <coll_sequence> ::= SEQUENCE
+		final int PROD_COLUMN_OR_COL_COLUMN                                                  = 2206;  // <column_or_col> ::= COLUMN
+		final int PROD_COLUMN_OR_COL_COL                                                     = 2207;  // <column_or_col> ::= COL
+		final int PROD_COLUMNS_OR_COLS_COLUMNS                                               = 2208;  // <columns_or_cols> ::= COLUMNS
+		final int PROD_COLUMNS_OR_COLS_COLS                                                  = 2209;  // <columns_or_cols> ::= COLS
+		final int PROD_COMP_EQUAL_TOK_EQUAL                                                  = 2210;  // <comp_equal> ::= 'TOK_EQUAL'
+		final int PROD_COMP_EQUAL_EQUAL                                                      = 2211;  // <comp_equal> ::= EQUAL
+		final int PROD_EXCEPTION_OR_ERROR_EXCEPTION                                          = 2212;  // <exception_or_error> ::= EXCEPTION
+		final int PROD_EXCEPTION_OR_ERROR_ERROR                                              = 2213;  // <exception_or_error> ::= ERROR
+		final int PROD_IN_OF_IN                                                              = 2214;  // <in_of> ::= IN
+		final int PROD_IN_OF_OF                                                              = 2215;  // <in_of> ::= OF
+		final int PROD_LABEL_OPTION_STANDARD                                                 = 2216;  // <label_option> ::= STANDARD
+		final int PROD_LABEL_OPTION_OMITTED                                                  = 2217;  // <label_option> ::= OMITTED
+		final int PROD_LINE_OR_LINES_LINE                                                    = 2218;  // <line_or_lines> ::= LINE
+		final int PROD_LINE_OR_LINES_LINES                                                   = 2219;  // <line_or_lines> ::= LINES
+		final int PROD_LOCK_RECORDS_RECORD                                                   = 2220;  // <lock_records> ::= RECORD
+		final int PROD_LOCK_RECORDS_RECORDS                                                  = 2221;  // <lock_records> ::= RECORDS
+		final int PROD_OBJECT_CHAR_OR_WORD_CHARACTERS                                        = 2222;  // <object_char_or_word> ::= CHARACTERS
+		final int PROD_OBJECT_CHAR_OR_WORD_WORDS                                             = 2223;  // <object_char_or_word> ::= WORDS
+		final int PROD_RECORDS_RECORD                                                        = 2224;  // <records> ::= RECORD <_is>
+		final int PROD_RECORDS_RECORDS                                                       = 2225;  // <records> ::= RECORDS <_are>
+		final int PROD_REEL_OR_UNIT_REEL                                                     = 2226;  // <reel_or_unit> ::= REEL
+		final int PROD_REEL_OR_UNIT_UNIT                                                     = 2227;  // <reel_or_unit> ::= UNIT
+		final int PROD_SCROLL_LINE_OR_LINES_LINE                                             = 2228;  // <scroll_line_or_lines> ::= LINE
+		final int PROD_SCROLL_LINE_OR_LINES_LINES                                            = 2229;  // <scroll_line_or_lines> ::= LINES
+		final int PROD_SIZE_OR_LENGTH_SIZE                                                   = 2230;  // <size_or_length> ::= SIZE
+		final int PROD_SIZE_OR_LENGTH_LENGTH                                                 = 2231;  // <size_or_length> ::= LENGTH
+		final int PROD_WITH_DUPS_WITH_DUPLICATES                                             = 2232;  // <with_dups> ::= WITH DUPLICATES
+		final int PROD_WITH_DUPS_DUPLICATES                                                  = 2233;  // <with_dups> ::= DUPLICATES
+		final int PROD_PROG_COLL_SEQUENCE_PROGRAM_COLLATING_SEQUENCE                         = 2234;  // <prog_coll_sequence> ::= PROGRAM COLLATING SEQUENCE
+		final int PROD_PROG_COLL_SEQUENCE_COLLATING_SEQUENCE                                 = 2235;  // <prog_coll_sequence> ::= COLLATING SEQUENCE
+		final int PROD_PROG_COLL_SEQUENCE_SEQUENCE                                           = 2236;  // <prog_coll_sequence> ::= SEQUENCE
+		final int PROD_DETAIL_KEYWORD_DETAIL                                                 = 2237;  // <detail_keyword> ::= DETAIL
+		final int PROD_DETAIL_KEYWORD_DE                                                     = 2238;  // <detail_keyword> ::= DE
+		final int PROD_CH_KEYWORD_CONTROL_HEADING                                            = 2239;  // <ch_keyword> ::= CONTROL HEADING
+		final int PROD_CH_KEYWORD_CH                                                         = 2240;  // <ch_keyword> ::= CH
+		final int PROD_CF_KEYWORD_CONTROL_FOOTING                                            = 2241;  // <cf_keyword> ::= CONTROL FOOTING
+		final int PROD_CF_KEYWORD_CF                                                         = 2242;  // <cf_keyword> ::= CF
+		final int PROD_PH_KEYWORD_PAGE_HEADING                                               = 2243;  // <ph_keyword> ::= PAGE HEADING
+		final int PROD_PH_KEYWORD_PH                                                         = 2244;  // <ph_keyword> ::= PH
+		final int PROD_PF_KEYWORD_PAGE_FOOTING                                               = 2245;  // <pf_keyword> ::= PAGE FOOTING
+		final int PROD_PF_KEYWORD_PF                                                         = 2246;  // <pf_keyword> ::= PF
+		final int PROD_RH_KEYWORD_REPORT_HEADING                                             = 2247;  // <rh_keyword> ::= REPORT HEADING
+		final int PROD_RH_KEYWORD_RH                                                         = 2248;  // <rh_keyword> ::= RH
+		final int PROD_RF_KEYWORD_REPORT_FOOTING                                             = 2249;  // <rf_keyword> ::= REPORT FOOTING
+		final int PROD_RF_KEYWORD_RF                                                         = 2250;  // <rf_keyword> ::= RF
+		final int PROD_CONTROL_KEYWORD_CONTROL                                               = 2251;  // <control_keyword> ::= CONTROL <_is>
+		final int PROD_CONTROL_KEYWORD_CONTROLS                                              = 2252;  // <control_keyword> ::= CONTROLS <_are>
+	};
 
-	//------------------------- Preprocessor ---------------------------
+	//----------------------- Local helper functions -------------------------
+
+	/**
+	 * replace a single character offset in string with another char 
+	 * @param oldString
+	 * @param newChar
+	 * @param pos
+	 * @return replaced String
+	 */
+	private String replaceCharPosInString(String oldString, char newChar, int pos) {
+		int strLen = oldString.length();
+		if (oldString == null || strLen < 2) {
+			return newChar + ""; // convert char to String
+		} else if (pos == 0) {
+			return newChar + oldString.substring(1);
+		} else if (pos == strLen - 1) {
+			return oldString.substring(0, pos) + newChar;
+		} else {
+			return oldString.substring(0, pos) + newChar + oldString.substring(pos + 1);			
+		}
+	}
+
+	//----------------------------- Preprocessor -----------------------------
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it and writes a new file _textToParse+".structorizer" to the
-	 * same directory, which is then actually parsed.
+	 * file, filters it and writes a new temporary file "Structorizer.COB", which is 
+	 * then actually parsed.
+	 * For the COBOL Parser e.g. the compiler directives must be removed and possibly
+	 * be executed (at least the [COPY] REPLACE, with >> IF it should be possible as
+	 * this is rarely used in COBOL).
 	 * The preprocessed file will always be saved with UTF-8 encoding.
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
@@ -2186,24 +4003,169 @@ public class COBOLParser extends CodeParser
 	@Override
 	protected File prepareTextfile(String _textToParse, String _encoding)
 	{
+        /* TODO for preparsing:
+         * minimal handling compiler directives, at least SOURCE-FORMAT [IS]
+         * for the start: remove compiler directives, later: more handling for them
+         * include comment-entries (AUTHOR, SECURITY, ...) as COBOL comments, the parser
+           cannot handle them 
+         * in fixed-form reference format:
+            * remove column 1-6 / 7 / 73+ [later: use a setting for this]
+            * hack debugging lines as comments [later: use a setting for including them]
+            * do word concatenation      VAR -IABLE ('-' in indicator area)
+            * hack literal continuation as string concatenation (end literal with '" &)
+         * if DECIMAL-POINT [IS] COMMA is active: change Digit,Digit to Digit.Digit
+         * remove ';' and ',' that are not part of a string/integer - cater also for ";;,,;"
+         *   
+      */
+		/* configuration settings */
+		boolean SettingFixedForm = true;
+		int SettingColumnIndicator = 7;
+		int SettingColumnText = 73;
+		
 		File interm = null;
 		try
 		{
 			File file = new File(_textToParse);
 			HashMap<String, String> defines = new LinkedHashMap<String, String>();
-			DataInputStream in = new DataInputStream(new FileInputStream(_textToParse));
+			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
 			// END KGU#193 2016-05-04
 			String strLine;
-			String srcCode = new String();
+			StringBuilder srcCode = new StringBuilder();
+			
+			boolean srcCodeDebugLines = false; // FIXME: get from setting/parsing
+			boolean decimalComma = false; // FIXME: get from setting/parsing
+			int SettingCodeLength = SettingColumnText - SettingColumnIndicator - 1;
+			
+			int srcCodeLastPos = 0;
+			int srcLastCodeLenght = SettingCodeLength;
+			
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the #define replacements (at least roughly...)
+			// do the [COPY] REPLACE replacements (at least roughly...)
 			while ((strLine = br.readLine()) != null)   
 			{
-				// TODO: Place preprocessing of strLine here if necessary
-				srcCode += strLine + "\n";
+				if (SettingFixedForm) {
+					
+					if (strLine.length() < SettingColumnIndicator) {
+						srcCode.append (strLine + "\n");
+						srcCodeLastPos += strLine.length() + 1;	
+						continue; // read next line
+					}
+					
+					String srcLineCode = strLine.substring(SettingColumnIndicator);
+					if (srcLineCode.length() > SettingCodeLength) {
+						// FIXME: Better check if the string contains *> already and is not part of a literal,
+						//        if yes don't cut the string; if not: insert "*> TEXT AREA" in   
+						srcLineCode = srcLineCode.substring(0, SettingCodeLength);
+					}
+					
+					char firstNonSpaceInLine;
+					if (srcLineCode.trim().length() == 0) {
+//						srcCode.append ("\n");
+//						srcCodeLastPos += 1;
+//						continue; // read next line
+						firstNonSpaceInLine = ' ';
+					} else if (srcLineCode.length() == 0) {
+						firstNonSpaceInLine = ' ';
+					} else {
+						firstNonSpaceInLine = srcLineCode.trim().charAt(0);
+					}
+
+					char srcLineIndicator = strLine.charAt(SettingColumnIndicator - 1);
+					if (srcLineIndicator == '*') {
+						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+							strLine = "*>";						
+						} else if (srcLineCode.charAt(0) == '>') {
+							strLine = "*>" + srcLineCode.substring(1);						
+						} else {
+							strLine = "*>" + srcLineCode;
+						}
+					} else if (srcLineIndicator == '/') {
+						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+							strLine = "*> page eject requested" + "\n" + "*>";
+						} else {
+							strLine = "*> page eject requested" + "\n" + "*>" + srcLineCode;
+						}
+					} else if (srcLineIndicator == 'D' && !srcCodeDebugLines) {
+						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+							strLine = "*> DEBUG: ";
+						} else {
+							strLine = "*> DEBUG: " + srcLineCode;
+						}
+					} else if (srcLineIndicator == '-') {
+						// word continuation
+						if (firstNonSpaceInLine != '\'' && firstNonSpaceInLine != '"') {
+							srcCode.insert (srcCodeLastPos - 1, srcLineCode);
+							srcCodeLastPos += srcLineCode.length();
+							continue; // read next line
+						}
+						// literal continuation
+						// FIXME hack: string concatenation backwards (will only work on "clean" sources)
+						//             and if the same literal symbol was used
+						if (srcCodeLastPos != 0) {
+							while (srcLastCodeLenght < SettingCodeLength) {
+								srcCode.insert(srcCodeLastPos - 1, " ");
+								srcCodeLastPos++;
+								srcLastCodeLenght++;								
+							}
+							srcCode.insert(srcCodeLastPos - 1, firstNonSpaceInLine + " &");
+							srcCodeLastPos += 3;
+						}
+						strLine = srcLineCode;
+						srcLastCodeLenght = strLine.length();
+						srcCodeLastPos += srcLastCodeLenght;
+					} else if (firstNonSpaceInLine == '$' || firstNonSpaceInLine == '>') {
+						// Directive --> added as comment
+						// FIXME directive handling is missing
+						strLine = "*> DIRECTIVE: " + srcLineCode;
+					} else {
+//						int i = 0;
+//						int im = srcLineCode.length();
+//						char lastLit = ' ';
+//						char lastChar = ' ';
+//						while (i <= im) {
+//							char currChar = srcLineCode.charAt(i);
+//							// not within a literal
+//							if (lastLit == ' ') {
+//								// check if new literal starts
+//								if (currChar == '"' || currChar == '\'') {
+//									lastLit = currChar; 
+//								}
+//								// check if we want to replace last separator comma/semicolon
+//								if (lastChar == ';' || (lastChar == ',' && !decimalComma)) {
+//									srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
+//								} else if (lastChar == ',') { // decimal comma is not active
+//									if (!decimalComma) {
+//										srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
+//									}
+//								}
+//							// within a literal --> only check if literal ends
+//							} else if (lastLit == currChar && currChar != lastChar) {								
+//								lastLit = ' ';
+//							}
+//							lastChar = currChar;
+//						}
+						if (srcLineCode.trim().length() != 0) {
+							strLine = srcLineCode;
+							srcLastCodeLenght = strLine.length();
+						} else {
+							strLine = "";
+							srcLastCodeLenght = 0;
+						}
+						srcCodeLastPos = srcCode.length() + srcLastCodeLenght;
+					}
+				} else {
+					char firstNonSpaceInLine = strLine.trim().charAt(0);
+					if (firstNonSpaceInLine == '$' || firstNonSpaceInLine == '>') {
+						// Directive --> added as comment
+						// FIXME directive handling is missing
+						strLine = "*> DIRECTIVE: " + strLine;
+					}
+				}
+				srcCodeLastPos += 1;
+				srcCode.append (strLine + "\n");
 			}
 			//Close the input stream
 			in.close();
@@ -2211,14 +4173,15 @@ public class COBOLParser extends CodeParser
 			//System.out.println(srcCode);
 
 			// trim and save as new file
-			interm = new File(_textToParse + ".structorizer");
+			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
-			ow.write(srcCode.trim()+"\n");
+			ow.write(srcCode.toString()+"\n");
 			ow.close();
 		}
 		catch (Exception e) 
 		{
-			System.out.println(e.getMessage());
+			System.err.println("COBOLParser.prepareTextfile() -> " + e.getMessage());
+			e.printStackTrace();	
 		}
 		return interm;
 	}
@@ -2250,18 +4213,18 @@ public class COBOLParser extends CodeParser
 			//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
 			/* -------- Begin code example for tree analysis and build -------- */
-			if (
-					// Assignment or procedure call?
-					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_DATE
-					||
-					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_DATE
-					||
-					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_DAY
-					||
-					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_CONSOLE
-					)
-			{
-//				// Simply convet it as text and create an instruction. In case of a call
+//			if (
+//					// Assignment or procedure call?
+//					ruleId == RuleConstants.PROD_OPASSIGN_EQ
+//					||
+//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
+//					||
+//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
+//					||
+//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
+//					)
+//			{
+//				// Simply convert it as text and create an instruction. In case of a call
 //				// we'll try to transmute it after all subroutines will have been parsed.
 //				String content = new String();
 //				content = getContent_R(_reduction, content).trim();
@@ -2274,10 +4237,10 @@ public class COBOLParser extends CodeParser
 //			}
 //			else if (ruleHead.equals("<Decls>") {
 //				...
-			}
-			/* -------- End code example for tree analysis and build -------- */
-			// Block...?
-			else
+//			}
+//			/* -------- End code example for tree analysis and build -------- */
+//			// Block...?
+//			else
 			{
 				if (_reduction.size()>0)
 				{

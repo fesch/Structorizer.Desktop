@@ -3,5 +3,6 @@
     
 	<plugin title="Pascal" 				class="lu.fisch.structorizer.parsers.D7Parser" icon="" />
 	<plugin title="ANSI-C" 				class="lu.fisch.structorizer.parsers.CParser" icon="" />
+	<plugin title="COBOL" 				class="lu.fisch.structorizer.parsers.COBOLParser" icon="" />
     
 </plugins>
