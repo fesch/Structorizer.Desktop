@@ -4473,6 +4473,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
 			File file = dlgOpen.getSelectedFile().getAbsoluteFile();
+			
+			if (!file.canRead()) {
+				JOptionPane.showMessageDialog(this, 
+						Menu.msgImportFileReadError.getText().replace("%", file.getPath()));
+				return;
+			}
 
 			// Identify a suited or the selected parser
 			javax.swing.filechooser.FileFilter filter = dlgOpen.getFileFilter();
