@@ -4246,14 +4246,14 @@ public class COBOLParser extends CodeParser
 		// check for COPY or REPLACE statements (rough check, only first token)
 		} else if (firstToken.equals("COPY")) {
 			// handleCopyStatement(strLine);
-			// just added as comment for now
-			resultLine = "*> COPY book included: " + codeLine;
-			// TODO log warning - no support for COPY statement
+			// removed because must be set as comment until next period (multiple lines):
+			// resultLine = "*> COPY book included: " + codeLine; 
+			// TODO log error - no support for COPY statement
 		} else if (firstToken.equals("REPLACE")) {
 			// TODO store the replacements and do them
-			// just added as comment for now
-			resultLine = "*> RPLACE: " + codeLine;
-			// TODO log warning - no support for REPLACE statement, NSD is likely wrong
+			// removed because must be set as comment until next period (multiple lines):
+			// resultLine = "*> REPLACE: " + codeLine;
+			// TODO log error - no support for REPLACE statement
 		}
 		
 		return resultLine;
