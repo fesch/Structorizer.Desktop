@@ -68,6 +68,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.parser.*;
@@ -3993,6 +3994,24 @@ public class COBOLParser extends CodeParser
 
 	//----------------------------- Preprocessor -----------------------------
 
+	// line length for source if source format is VARIABLE
+	private static final int TEXTCOLUMN_VARIABLE = 500;
+	
+	/* configuration settings */
+	// reference-format with column aware-parts
+	private boolean settingFixedForm;
+	private int settingFixedColumnIndicator;
+	private int settingFixedColumnText;
+	
+	// special columns-> only set via setColumns as this recalculates settingCodeLength
+	private int settingColumnIndicator;
+	private int settingColumnText;
+	
+	private boolean srcCodeDebugLines;
+	private boolean decimalComma;
+	
+	private int settingCodeLength = settingColumnText - settingColumnIndicator - 1;
+
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
 	 * file, filters it and writes a new temporary file "Structorizer.COB", which is 
@@ -4009,10 +4028,10 @@ public class COBOLParser extends CodeParser
 	protected File prepareTextfile(String _textToParse, String _encoding)
 	{
         /* TODO for preparsing:
-         * minimal handling compiler directives, at least SOURCE-FORMAT [IS]
+         * minimal handling compiler directives, at least SOURCE FORMAT [IS] FREE|FIXED
          * for the start: remove compiler directives, later: more handling for them
-         * include comment-entries (AUTHOR, SECURITY, ...) as COBOL comments, the parser
-           cannot handle them 
+         * include the content of comment-entries (AUTHOR, SECURITY, ...) as a string (maybe
+           remove the line breaks in them and provide a single string for easy parsing later)
          * in fixed-form reference format:
             * remove column 1-6 / 7 / 73+ [later: use a setting for this]
             * hack debugging lines as comments [later: use a setting for including them]
@@ -4020,70 +4039,68 @@ public class COBOLParser extends CodeParser
             * hack literal continuation as string concatenation (end literal with '" &)
          * if DECIMAL-POINT [IS] COMMA is active: change Digit,Digit to Digit.Digit
          * remove ';' and ',' that are not part of a string/integer - cater also for ";;,,;"
-         *   
+         * recognize and store constants (78 name value [is] literal | 01 name constant as literal)
+           and replace them by tokens (must be redone during parsing)
       */
-		/* configuration settings */
-		boolean SettingFixedForm = true;
-		int SettingColumnIndicator = 7;
-		int SettingColumnText = 73;
 		
 		File interm = null;
 		try
 		{
 			File file = new File(_textToParse);
-			HashMap<String, String> defines = new LinkedHashMap<String, String>();
 			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
 			// END KGU#193 2016-05-04
 			String strLine;
 			StringBuilder srcCode = new StringBuilder();
+
+			srcCodeDebugLines = false; // FIXME: get from setting/parsing
+			decimalComma = false; // FIXME: get from setting/parsing
+			settingFixedForm = true; // FIXME: get from setting/parsing
+			settingFixedColumnIndicator = 7;  // FIXME: get from setting/parsing
+			settingFixedColumnText = 72;  // FIXME: get from setting/parsing
 			
-			boolean srcCodeDebugLines = false; // FIXME: get from setting/parsing
-			boolean decimalComma = false; // FIXME: get from setting/parsing
-			int SettingCodeLength = SettingColumnText - SettingColumnIndicator - 1;
+			if (settingFixedForm) {
+				setColumns(settingFixedColumnIndicator, settingFixedColumnText);
+			}
 			
 			int srcCodeLastPos = 0;
-			int srcLastCodeLenght = SettingCodeLength;
+			int srcLastCodeLenght = settingCodeLength;
+			
+			// 
 			
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the [COPY] REPLACE replacements (at least roughly...)
 			while ((strLine = br.readLine()) != null)   
 			{
-				if (SettingFixedForm) {
+				if (settingFixedForm) { // fixed-form reference-format
 					
-					if (strLine.length() < SettingColumnIndicator) {
+					if (strLine.length() < settingColumnIndicator) {
 						srcCode.append (strLine + "\n");
 						srcCodeLastPos += strLine.length() + 1;	
 						continue; // read next line
 					}
 					
-					String srcLineCode = strLine.substring(SettingColumnIndicator);
-					if (srcLineCode.length() > SettingCodeLength) {
+					String srcLineCode = strLine.substring(settingColumnIndicator);
+					if (srcLineCode.length() > settingCodeLength) {
 						// FIXME: Better check if the string contains *> already and is not part of a literal,
 						//        if yes don't cut the string; if not: insert "*> TEXT AREA" in   
-						srcLineCode = srcLineCode.substring(0, SettingCodeLength);
+						srcLineCode = srcLineCode.substring(0, settingCodeLength);
 					}
 					
-					char firstNonSpaceInLine;
-					if (srcLineCode.trim().length() == 0) {
+//					if (srcLineCode.trim().length() == 0) {
 //						srcCode.append ("\n");
 //						srcCodeLastPos += 1;
 //						continue; // read next line
-						firstNonSpaceInLine = ' ';
-					} else if (srcLineCode.length() == 0) {
-						firstNonSpaceInLine = ' ';
-					} else {
-						firstNonSpaceInLine = srcLineCode.trim().charAt(0);
-					}
+//					}
 
-					char srcLineIndicator = strLine.charAt(SettingColumnIndicator - 1);
+					char srcLineIndicator = strLine.charAt(settingColumnIndicator - 1);
 					if (srcLineIndicator == '*') {
 						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
-							strLine = "*>";						
+							strLine = "*>";
 						} else if (srcLineCode.charAt(0) == '>') {
-							strLine = "*>" + srcLineCode.substring(1);						
+							strLine = "*>" + srcLineCode.substring(1);
 						} else {
 							strLine = "*>" + srcLineCode;
 						}
@@ -4100,20 +4117,22 @@ public class COBOLParser extends CodeParser
 							strLine = "*> DEBUG: " + srcLineCode;
 						}
 					} else if (srcLineIndicator == '-') {
+						char firstNonSpaceInLine = srcLineCode.trim().charAt(0);
 						// word continuation
 						if (firstNonSpaceInLine != '\'' && firstNonSpaceInLine != '"') {
-							srcCode.insert (srcCodeLastPos - 1, srcLineCode);
+							srcCode.insert(srcCodeLastPos - 1, srcLineCode);
 							srcCodeLastPos += srcLineCode.length();
 							continue; // read next line
 						}
 						// literal continuation
-						// FIXME hack: string concatenation backwards (will only work on "clean" sources)
-						//             and if the same literal symbol was used
+						// FIXME hack: string concatenation backwards (will only
+						// work on "clean" sources)
+						// and if the same literal symbol was used
 						if (srcCodeLastPos != 0) {
-							while (srcLastCodeLenght < SettingCodeLength) {
+							while (srcLastCodeLenght < settingCodeLength) {
 								srcCode.insert(srcCodeLastPos - 1, " ");
 								srcCodeLastPos++;
-								srcLastCodeLenght++;								
+								srcLastCodeLenght++;
 							}
 							srcCode.insert(srcCodeLastPos - 1, firstNonSpaceInLine + " &");
 							srcCodeLastPos += 3;
@@ -4121,55 +4140,65 @@ public class COBOLParser extends CodeParser
 						strLine = srcLineCode;
 						srcLastCodeLenght = strLine.length();
 						srcCodeLastPos += srcLastCodeLenght;
-					} else if (firstNonSpaceInLine == '$' || firstNonSpaceInLine == '>') {
-						// Directive --> added as comment
-						// FIXME directive handling is missing
-						strLine = "*> DIRECTIVE: " + srcLineCode;
 					} else {
-//						int i = 0;
-//						int im = srcLineCode.length();
-//						char lastLit = ' ';
-//						char lastChar = ' ';
-//						while (i <= im) {
-//							char currChar = srcLineCode.charAt(i);
-//							// not within a literal
-//							if (lastLit == ' ') {
-//								// check if new literal starts
-//								if (currChar == '"' || currChar == '\'') {
-//									lastLit = currChar; 
-//								}
-//								// check if we want to replace last separator comma/semicolon
-//								if (lastChar == ';' || (lastChar == ',' && !decimalComma)) {
-//									srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
-//								} else if (lastChar == ',') { // decimal comma is not active
-//									if (!decimalComma) {
-//										srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
-//									}
-//								}
-//							// within a literal --> only check if literal ends
-//							} else if (lastLit == currChar && currChar != lastChar) {								
-//								lastLit = ' ';
-//							}
-//							lastChar = currChar;
-//						}
-						if (srcLineCode.trim().length() != 0) {
-							strLine = srcLineCode;
-							srcLastCodeLenght = strLine.length();
+						String resultLine = checkForDirectives(srcLineCode);
+						if (resultLine != null) {
+							strLine = resultLine;
 						} else {
-							strLine = "";
-							srcLastCodeLenght = 0;
+//							int i = 0;
+//							int im = srcLineCode.length();
+//							char lastLit = ' ';
+//							char lastChar = ' ';
+//							while (i <= im) {
+//								char currChar = srcLineCode.charAt(i);
+//								// not within a literal
+//								if (lastLit == ' ') {
+//									// check if new literal starts
+//									if (currChar == '"' || currChar == '\'') {
+//										lastLit = currChar; 
+//									}
+//									// check if we want to replace last separator comma/semicolon
+//									if (lastChar == ';' || (lastChar == ',' && !decimalComma)) {
+//										srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
+//									} else if (lastChar == ',') { // decimal comma is not active
+//										if (!decimalComma) {
+//											srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
+//										}
+//									}
+//								// within a literal --> only check if literal ends
+//								} else if (lastLit == currChar && currChar != lastChar) {								
+//									lastLit = ' ';
+//								}
+//								lastChar = currChar;
+							// }
+							if (srcLineCode.trim().length() != 0) {
+								strLine = srcLineCode;
+								srcLastCodeLenght = strLine.length();
+							} else {
+								strLine = "";
+								srcLastCodeLenght = 0;
+							}
+							srcCodeLastPos = srcCode.length() + srcLastCodeLenght;
+							srcCodeLastPos += 1; // counting newline
 						}
-						srcCodeLastPos = srcCode.length() + srcLastCodeLenght;
 					}
-				} else {
-					char firstNonSpaceInLine = strLine.trim().charAt(0);
-					if (firstNonSpaceInLine == '$' || firstNonSpaceInLine == '>') {
-						// Directive --> added as comment
-						// FIXME directive handling is missing
-						strLine = "*> DIRECTIVE: " + strLine;
+
+				} else { // free-form reference-format
+
+					// skip empty lines
+					if (strLine.trim().length() == 0) {
+						srcCode.append ("\n");
+						//srcCodeLastPos += 1;   // really needed for free-form reference-format?
+						continue; // read next line
 					}
+
+					String resultLine = checkForDirectives(strLine);
+					if (resultLine != null) {
+						strLine = resultLine;
+					}
+
 				}
-				srcCodeLastPos += 1;
+				//srcCodeLastPos += 1;   // really needed for free-form reference-format?
 				srcCode.append (strLine + "\n");
 			}
 			//Close the input stream
@@ -4189,6 +4218,138 @@ public class COBOLParser extends CodeParser
 			e.printStackTrace();	
 		}
 		return interm;
+	}
+
+	/**
+	 * function for checking the line for compiler directives and handle them appropriate 
+	 * @param codeLine   String to check
+	 * @return true = directive found, line has not to be pre-parsed anymore
+	 */
+	private String checkForDirectives(String codeLine) {
+
+		String resultLine = null;
+
+		String[] tokenSeparator = codeLine.split("\\s", 2);
+		String firstToken = tokenSeparator[0];
+		
+		// check for GnuCOBOL extension floating debugging line
+		if (firstToken.startsWith(">>D")) {
+			if (!srcCodeDebugLines) {
+				if (codeLine.trim().length() == 0) {
+					resultLine  = "*> DEBUG: ";
+				} else {
+					resultLine = "*> DEBUG: " + codeLine;
+				}
+			}
+			
+		// check for "normal" directive
+		} else if (firstToken.startsWith(">>") || firstToken.startsWith("$")) {
+			handleDirective(codeLine);
+			// Directive --> added as comment
+			resultLine = "*> DIRECTIVE: " + codeLine;
+			
+		// check for COPY or REPLACE statements (rough check, only first token)
+		} else if (firstToken.equals("COPY")) {
+			// handleCopyStatement(strLine);
+			// removed because must be set as comment until next period (multiple lines):
+			// resultLine = "*> COPY book included: " + codeLine; 
+			// TODO log error - no support for COPY statement
+		} else if (firstToken.equals("REPLACE")) {
+			// TODO store the replacements and do them
+			// removed because must be set as comment until next period (multiple lines):
+			// resultLine = "*> REPLACE: " + codeLine;
+			// TODO log error - no support for REPLACE statement
+		}
+		
+		return resultLine;
+	}
+
+	private void setColumns(int settingColumnIndicator, int settingColumnText) {
+		this.settingColumnIndicator = settingColumnIndicator;
+		this.settingColumnText = settingColumnText;
+		this.settingCodeLength = settingColumnText - settingColumnIndicator - 1;
+	}
+
+	private void handleDirective(String strLine) {
+		// create an array of tokens from the uppercased version of strLine,
+		// make sure that >> directives have >> as a single token
+		String[] tokens = strLine.toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
+
+		if (tokens[0].equals(">>")) { // handling COBOL standard directives
+			int readToken = 1;
+
+			// handling >>SOURCE [FORMAT] [IS] format
+			if (tokens[readToken].equals("SOURCE")) {
+				readToken++;
+				
+				// skip optional FORMAT
+				if (tokens.length > readToken && tokens[readToken].equals("FORMAT")) {
+					readToken++;
+				}
+				// skip optional IS
+				if (tokens.length > readToken && tokens[readToken].equals("IS")) {
+					readToken++;
+				}
+				// only go on if the token length is correct
+				if (tokens.length == readToken + 1) {
+					if (!adjustSourceFormat(tokens[readToken])) {
+						// TODO: log invalid $SET SOURCEFORMAT value;
+					}
+				} else {
+					// TODO: log invalid SOURCE FORMAT value
+				}
+			} else {
+				// TODO: log unknown >> directive
+			}
+			
+			
+		} else { // handling MicroFocus $ directives
+			
+			// handling $SET directives
+			if (tokens[0].equals("$SET")) {
+				// handling $SET SOURCEFORMAT format
+				if (tokens[1].equals("SOURCEFORMAT")) {
+					// only go on if the token length is correct
+					if (tokens.length != 3) {
+						String sourceFormat = tokens[2];
+						// FIXME: convert "format" / 'format' --> format
+						// all three options are ok, we want to check only one per value
+						if (!adjustSourceFormat(sourceFormat)) {
+							// TODO: log invalid $SET SOURCEFORMAT value;
+						}
+					} else {
+						// TODO: log invalid $SET SOURCEFORMAT value
+					}
+				} else {
+					// TODO: log unknown $SET directive
+				}
+			} else {
+				// TODO: log unknown $ directive
+			}
+		}
+
+	}
+
+	/**
+	 * adjust the parameters for format (settingFixedForm, settingColumnIndicator, SettingColumnText)
+	 * for the given format 
+	 * @param sourceFormat as string: FIXED / FREE / VARIABLE are recognized
+	 * @return false if format wasn't recognized 
+	 */
+	private boolean adjustSourceFormat(String sourceFormat) {
+		if (sourceFormat.equals("FIXED")) {
+			settingFixedForm = true;
+			setColumns(settingFixedColumnIndicator, settingFixedColumnText);
+		} else if (sourceFormat.equals("FREE")) {
+			settingFixedForm = false;
+		} else if (sourceFormat.equals("VARIABLE")) {
+			settingFixedForm = true;
+			setColumns(1, TEXTCOLUMN_VARIABLE);
+		} else {
+			return false;
+		}
+		return true;
+		
 	}
 
 	//---------------------- Build methods for structograms ---------------------------
@@ -4597,41 +4758,6 @@ public class COBOLParser extends CodeParser
 	private String negateCondition(String condStr) {
 		// TODO try a more intelligent way to negate an alrady negated condition
 		return "not (" + condStr + ")";
-	}
-
-	/**
-	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
-	 * assembled string _content and adapt it to syntactical conventions of Structorizer. Finally return
-	 * the text phrase.
-	 * @param _content - A string already assembled, may be used as prefix, ignored or combined in another
-	 * way 
-	 * @return composed and translated text.
-	 */
-	private String translateContent(String _content)
-	{
-		String output = getKeyword("output");
-		String input = getKeyword("input");
-		_content = _content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+"$1");
-		_content = _content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+"$2");
-		
-		//System.out.println(_content);
-		
-		/*
-		 _content:=ReplaceEntities(_content);
-		*/
-		
-		// Convert the pseudo function back to array initializers
-//		int posIni = _content.indexOf(arrayIniFunc);
-//		if (posIni >= 0) {
-//			StringList items = Element.splitExpressionList(_content.substring(posIni + arrayIniFunc.length()), ",", true);
-//			_content = _content.substring(0, posIni) + "{" + items.subSequence(0, items.count()-1).concatenate(", ") +
-//					"}" + items.get(items.count()-1).substring(1);
-//		}
-		
-		//_content = BString.replace(_content, ":="," \u2190 ");
-		//_content = BString.replace(_content, " = "," <- "); already done by getContent_R()!
-
-		return _content.trim();
 	}
 	
 	@Override
