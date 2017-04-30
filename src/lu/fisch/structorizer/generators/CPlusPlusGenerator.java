@@ -65,10 +65,7 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Vector;
 
-import lu.fisch.structorizer.arranger.Arranger;
-import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.IElementVisitor;

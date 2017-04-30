@@ -400,6 +400,14 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 				}
 			}
 			error += exp;
+			// ************************************** log file
+			System.out.println("Parsing failed.");
+			if (logFile != null) {
+				try {
+					logFile.write("\n" + error + "\n\n");
+				} catch (IOException e) {}
+			}
+			// ************************************** end log
 		}
 		// END KGU#191 2016-04-30
 
@@ -452,6 +460,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		if (logFile != null) {
 			try {
 				logFile.write("\nBUILD PHASE COMPLETE.\n");
+				if (subRoots.size() >= 1 && subRoots.get(0).children.getSize() > 0) {
+					logFile.write(subRoots.size() + " diagram(s) built.");
+				}
+				else {
+					logFile.write("No diagrams built.");
+				}
 				logFile.close();
 				logFile = null;
 			} catch (IOException e) {

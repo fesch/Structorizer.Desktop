@@ -3,6 +3,7 @@
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2016  Kay Gürtzig
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -65,6 +66,9 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
     // START KGU#318 2017-01-07: Enh. #319: Better than text colouring for test-covered diagrams
     private final static ImageIcon subIconCovered = IconLoader.ico030;
     // END KGU#318 2017-01-07
+    // START KGU#318/KGU#376 2017-04-29: Enh. #319, #389: show coverage status of (imported) main diagrams
+    private final static ImageIcon mainIconCovered = IconLoader.ico070;
+    // END KGU#318/KGU#376 2017-04-29
     private final static Color selectedBackgroundNimbus = new Color(57,105,138);
 
     @Override
@@ -73,7 +77,15 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
         String s = root.getSignatureString(true);
         boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
         setText(s);
-        setIcon((root.isProgram) ? mainIcon : (covered ? subIconCovered : subIcon));
+        // START KGU#318/KGU#376 2017-04-29: Enh. #319, #389: show coverage status of (imported) main diagrams
+        //setIcon((root.isProgram) ? mainIcon : (covered ? subIconCovered : subIcon));
+        if (root.isProgram) {
+        	setIcon(covered ? mainIconCovered : mainIcon);
+        }
+        else {
+        	setIcon(covered ? subIconCovered : subIcon);
+        }
+        // END KGU#318/KGU#376 2017-04-29
         if (isSelected) {
             if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
             {

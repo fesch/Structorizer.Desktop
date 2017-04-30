@@ -145,8 +145,6 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.Vector;
-import java.util.Map.Entry;
-import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;

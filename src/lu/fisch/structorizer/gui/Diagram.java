@@ -1403,7 +1403,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			File f = new File(_filename);
 			//System.out.println(f.toURI().toString());
-			if(f.exists()==true)
+			if (f.exists()==true)
 			{
 				// save current diagram (only if something has been changed)
 				saveNSD(true);
