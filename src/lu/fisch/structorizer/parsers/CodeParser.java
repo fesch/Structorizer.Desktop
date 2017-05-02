@@ -320,7 +320,6 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 					logFile.write("\nParsing complete.\n\n");
 				}
 				// ************************************** end log
-            	buildNSD(parser.getCurrentReduction());
 				if (this.optionSaveParseTree()) {
 					try {
 					String tree = parser.getParseTree();
@@ -335,6 +334,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 						System.err.println(ex.getMessage());
 					}
 				}
+            	buildNSD(parser.getCurrentReduction());
             } else {
             	isSyntaxError = true;
                 error = parser.getErrorMessage() + " in file \"" + _textToParse + "\"";
