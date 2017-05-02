@@ -24,20 +24,33 @@
 !    17-04-26: Simon Sobisch
 !       * finished Terminals (conversion from GnuCOBOL reserved.c and 
 !         scanner.l, some manual addons like PicDef and <_Comment Items>)
+!    17-05-02: Simon Sobisch
+!       * fixed edited Picture_Def
+!       * updated "Known Issues"
 !
 ! -----------------------------------------------------------------------------
 !
 ! Known issues:
 ! * Only works on pre-parsed files (Structorizer has a minimal pre-parser for
-!   COBOL but doesn't handle COPY or REPLACE statements or compiler directives)
-! * As long as we don't find something like bisons %prec for telling the engine
-!   which shift to prefer we have many shift-reduce conflicts and therefore may
-!   parse wrong in these places
+!   COBOL but doesn't either handle COPY or REPLACE statements nor most compiler
+!   directives).
+! * GOLD parser has no option to tell the grammar-compiler which shift to prefer
+!   in case of conflicts (bison has %prec for this), see "Resolving Conglicts"
+!   in http://goldparser.org/about/future-work.htm - therefore we have many
+!   shift-reduce conflicts and may parse wrong in these places.
+! * GOLD parser has no option to define states / recognize terminals according
+!   to this. This results in terminals like Picture_Def (which should be a
+!   PICTURE token) and the impossibility to handle DECIMAL-POINT IS COMMA
+!   (which must be handled by the preparser).
+! * While the definition of COBOL constans via "CONSTANT AS" and level 78 is
+!   recognized it isn't resolved. They should either be replaced by its values
+!   (especially for Picture_Def) and/or by a special token that we check here
+!   instead of COBOLWord.
 ! * Lots of "FIXME" and "HACK" entries and stuff that we may have to place in a
 !   preparser, espacially "COMMA_DELIM" and replacing of constant values to a
-!   different token than COBOLWord
+!   different token than COBOLWord.
 ! * The C code that is part of the grammar should be investigated for parsing
-!   hints and removed afterwards
+!   hints and removed afterwards.
 !
 ! -----------------------------------------------------------------------------
 
@@ -166,9 +179,10 @@ COBOLWord          = {Number}* {COBOLLetter} ({COBOLCharsFull}*{COBOLChars}+)?
 !                    between IntLiteral, COBOLWord and PICTURE
 ! ===================================================================
 
-{Pic Ch}    = [anxz19*+-] + [pb0/,]
-!Picture_Def = PIC(TURE)? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({Pic Ch}+ ( '('{Number}+')' )?)+ ( [v.] ({Pic Ch}+ ( '('{Number}+')' )?)+ )? (CR|DB|[$s])?
-Picture_Def = 'PIC'('TURE')? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({Pic Ch}+ ( '('{COBOLCharsFull}+')' )?)+ ( [v.] ({Pic Ch}+ ( '('{COBOLCharsFull}+')' )?)+ ('E' '9'+ ( '('{COBOLCharsFull}+')' )?)?)? (CR|DB|[$s])?
+{PicChar}    = [anxz$19*+-] + [pb0/,]
+! "correct" defintion (not usable as we currently have to include CONSTANTs -> COBOLWords)
+!Picture_Def = 'PIC'('TURE')? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({PicChar}+ ( '('{Number}+')' )?)+ ( [v.] ({PicChar}+ ( '('{Number}+')' )?)+ (('E' '9'+ ( '('{Number}+')' )?)?) | (CR|DB|[$s]))?
+Picture_Def = 'PIC'('TURE')? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({PicChar}+ ( '('{COBOLCharsFull}+')' )?)+ ( [v.] ({PicChar}+ ( '('{COBOLCharsFull}+')' )?)+ (('E' '9'+ ( '('{COBOLCharsFull}+')' )?)?) | (CR|DB|[$s]))?
 
 ! ===================================================================
 
