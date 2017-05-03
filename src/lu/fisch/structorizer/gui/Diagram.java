@@ -450,23 +450,37 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								}
 								// END KGU#354 2017-04-27				
 								// load and parse source-code
-								List<Root> newRoots = parser.parse(filename, charSet, logPath);
-								if (parser.error.equals("")) {
-									boolean arrange = false;
-									for (Root rootNew: newRoots) {
-										if (arrange) {
-											arrangeNSD();
+								// START KGU#354 2017-05-03: Enh. #354 - we needed more safety here
+								String parserError = null;
+								try {
+								// END KGU#354 2017-05-03
+									List<Root> newRoots = parser.parse(filename, charSet, logPath);
+									if (parser.error.equals("")) {
+										boolean arrange = false;
+										for (Root rootNew: newRoots) {
+											if (arrange) {
+												arrangeNSD();
+											}
+											setRootIfNotRunning(rootNew);
+											currentDirectory = new File(filename);
+											arrange = true;
+											//System.out.println(root.getFullText().getText());
 										}
-										setRootIfNotRunning(rootNew);
-										currentDirectory = new File(filename);
-										arrange = true;
-										//System.out.println(root.getFullText().getText());
+										for (Root rootNew: newRoots) {
+											rootNew.setChanged();
+										}
 									}
-									for (Root rootNew: newRoots) {
-										rootNew.setChanged();
+									else {
+								// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
+									parserError = parser.error;
 									}
 								}
-								else
+								catch (Exception ex) {
+									parserError = ex.toString();
+									ex.printStackTrace();
+								}
+								if (parserError != null)
+								// END KGU#354 2017-05-03
 								{
 									// show error
 									// START KGU#364 2017-03-09: Allow to copy the content
@@ -479,7 +493,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 											Menu.lblCopyToClipBoard.getText()
 									};
 									int chosen = JOptionPane.showOptionDialog(null,
-											parser.error,
+											// START KGU#354 2017-05-03: Enh. #354 - Safety addition part 3
+											//parser.error,
+											parserError,
+											// END KGU#354 2017-05-03
 											Menu.msgTitleParserError.getText(),
 											JOptionPane.ERROR_MESSAGE,
 											JOptionPane.YES_NO_OPTION,
@@ -491,6 +508,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									}
 								}
 								redraw();
+						        // START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
+						        doButtons();
+						        // END KGU#354 2017-05-02
+
 								Container cont = getParent();
 								while (cont != null && !(cont instanceof JFrame)) {
 									cont = cont.getParent();
@@ -2951,28 +2972,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#357 2017-03-10: Enh. #367
 	private void swapBranches(Alternative _alt) {
 		String condition = _alt.getText().getText();
-		String negCondition = null;
-		StringList condTokens = Element.splitLexically(condition, true);
-		int length = condTokens.count();
-		String first = condTokens.get(0);
-		// Already explicitly negated?
-		if (first.equals("not") || first.equals("!")) {
-			int i = 1;
-			while (i < length && condTokens.get(i).matches("^\\s+$")) i++;
-			if (i == length-1) {
-				// Obviously a single negated token, so drop the operator
-				negCondition = condTokens.get(i); 
-			}
-			else if (i < length && Element.isParenthesized(condTokens.subSequence(i, length).concatenate())) {
-				negCondition = condTokens.subSequence(i+1, length-1).concatenate();
-			}
-		}
-		if (negCondition == null) {
-			if (!Element.isParenthesized(condition)) {
-				condition = "(" + condition + ")";
-			}
-			negCondition = "not " + condition;
-		}
+		String negCondition = Element.negateCondition(condition);
 		_alt.setText(negCondition);
 		Subqueue temp = _alt.qFalse;
 		_alt.qFalse = _alt.qTrue;

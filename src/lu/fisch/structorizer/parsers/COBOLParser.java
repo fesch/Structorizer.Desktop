@@ -76,6 +76,7 @@ import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -4229,7 +4230,10 @@ public class COBOLParser extends CodeParser
 
 		String resultLine = null;
 
-		String[] tokenSeparator = codeLine.split("\\s", 2);
+		// START KGU#354 2017-05-03: Splitting could fail if there were too many space characters
+		//String[] tokenSeparator = codeLine.split("\\s", 2);
+		String[] tokenSeparator = codeLine.trim().split("\\s", 2);
+		// END KGU#354 2017-05-03
 		String firstToken = tokenSeparator[0];
 		
 		// check for GnuCOBOL extension floating debugging line
@@ -4273,7 +4277,10 @@ public class COBOLParser extends CodeParser
 	private void handleDirective(String strLine) {
 		// create an array of tokens from the uppercased version of strLine,
 		// make sure that >> directives have >> as a single token
-		String[] tokens = strLine.toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
+		// START KGU#354 2017-05-03: Enh. #354: any additional blanks prevented an effective splitting
+		//String[] tokens = strLine.toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
+		String[] tokens = strLine.trim().toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
+		// END KGU#354 2017-05-03
 
 		if (tokens[0].equals(">>")) { // handling COBOL standard directives
 			int readToken = 1;
@@ -4455,8 +4462,145 @@ public class COBOLParser extends CodeParser
 					System.out.println("\tELSE branch...");
 					this.buildNSD_R(falseRed, alt.qFalse);					
 				}
+				if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
+					alt.qTrue = alt.qFalse;
+					alt.qFalse = new Subqueue();
+					alt.qFalse.parent = alt;
+					alt.setText(negateCondition(content));
+				}
 				_parentNode.addElement(alt);
 				System.out.println("\tEND_IF");
+			}
+			else if (ruleId == RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE)
+			{
+				System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
+				// Possibly a CASE instruction, may have to be decomposed to an IF chain.
+				Reduction secRed = _reduction.get(1).asReduction();	// <evaluate_body>
+				Reduction subjlRed = secRed.get(0).asReduction();	// <evaluate_subject_list>
+				Reduction condlRed = secRed.get(1).asReduction();		// <evaluate_condition_list>
+				int subjlRuleId = subjlRed.getParent().getTableIndex();
+				if (subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT) {
+					// Single discriminator expression - there might be a chance to convert this to a CASE element
+					System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
+					StringList caseText = StringList.getNew(this.getContent_R(subjlRed, ""));
+					Case ele = new Case();
+					// Now analyse the branches
+					Reduction otherRed = null;
+					if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
+						otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
+						Subqueue sq = new Subqueue();
+						buildNSD_R(otherRed.get(2).asReduction(), sq);
+						caseText.add("default");	// last line for default branch
+						condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
+						ele.qs.addElement(sq);
+					}
+					else {
+						caseText.add("%");	// suppress the default branch
+						ele.qs.addElement(new Subqueue());
+					}
+					// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
+					do {
+						String caseHead = condlRed.getParent().getHead().toString();
+						Reduction caseRed = condlRed;	// could be <evaluate_case>
+						if (caseHead.equals("<evaluate_case_list>")) {
+							caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
+						}
+						// Get the instruction part
+						Subqueue sq = new Subqueue();
+						buildNSD_R(caseRed.get(1).asReduction(), sq);	// <statement_list>
+						ele.qs.add(0, sq);
+						// Now collect the WHEN clauses and concoct the compound condition
+						Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
+						String selectors = "";
+						while (whenlRed != null) {
+							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
+								selectors = this.getContent_R(whenlRed.get(2).asReduction(), "") + ", " + selectors;
+								whenlRed = whenlRed.get(0).asReduction();
+							}
+							else {
+								selectors = this.getContent_R(whenlRed.get(1).asReduction(), "") + ", " + selectors;
+								whenlRed = null;
+							}
+						}
+						selectors = selectors.trim();
+						if (selectors.endsWith(",")) {
+							selectors = selectors.substring(0, selectors.length()-1);
+						}
+						caseText.insert(selectors, 1);
+						//}
+						condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
+					} while (condlRed != null);
+					ele.setText(caseText);
+					_parentNode.addElement(ele);
+				}
+				else if (
+						subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_TRUE
+						||
+						subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE
+						) {
+					// Independent conditions, will be converted to nested alternatives
+					boolean negate = subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE;
+					// Single discriminator expression - there might be a chance to convert this to a CASE element
+					System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_TOK_TRUE/FALSE");
+					Reduction otherRed = null;
+					Element elseBranch = null;
+					if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
+						otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
+						elseBranch = new Subqueue();
+						buildNSD_R(otherRed.get(2).asReduction(), (Subqueue)elseBranch);
+						condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
+					}
+					// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
+					do {
+						String caseHead = condlRed.getParent().getHead().toString();
+						Reduction caseRed = condlRed;	// could be <evaluate_case>
+						if (caseHead.equals("<evaluate_case_list>")) {
+							caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
+						}
+						// Get the condition(s)
+						Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
+						String conds = "";
+						while (whenlRed != null) {
+							String cond = "";
+							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
+								cond = this.transformCondition(whenlRed.get(2).asReduction());
+								whenlRed = whenlRed.get(0).asReduction();
+							}
+							else {
+								cond = this.transformCondition(whenlRed.get(1).asReduction());
+								whenlRed = null;
+							}
+							if (negate) {
+								cond = this.negateCondition(cond);
+							}
+							conds = cond + " or " + conds;
+						}
+						conds = conds.trim();
+						if (conds.endsWith(" or")) {
+							conds = conds.substring(0, conds.length()-" or".length());
+						}
+						Alternative alt = new Alternative(conds);
+						// Get the instruction part
+						if (elseBranch instanceof Subqueue) {
+							alt.qFalse = (Subqueue)elseBranch;
+							elseBranch.parent = alt;
+						}
+						else if (elseBranch != null) {
+							alt.qFalse.addElement(elseBranch);
+						}
+						buildNSD_R(caseRed.get(1).asReduction(), alt.qTrue);	// <statement_list>
+						elseBranch = alt;
+						condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
+					} while (condlRed != null);
+					if (elseBranch != null) {
+						// elseBranch should not be a Subqueue here!
+						_parentNode.addElement(elseBranch);
+					}	
+				}
+				else {
+					// This can only be represented by nested alternatives
+					System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
+				}
 			}
 			else if (ruleId == RuleConstants.PROD_PERFORM_STATEMENT_PERFORM)
 			{
@@ -4493,8 +4637,11 @@ public class COBOLParser extends CodeParser
 						boolean testAfter = testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST_TEST
 								&& testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_AFTER
 								|| controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER;
-						// Get actual for clause parameters
-						Reduction forRed = controlRed.get(controlRed.size()-1).asReduction();
+						// Get actual FOR clause parameters
+						Reduction forRed = controlRed;
+						if (controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER) {
+							forRed = controlRed.get(controlRed.size()-1).asReduction();
+						}
 						Reduction condRed = forRed.get(6).asReduction();
 						String varName = this.getContent_R(forRed.get(0).asReduction(), "").replaceAll("-", "_");
 						String from = this.getContent_R(forRed.get(2).asReduction(), "");
@@ -4521,6 +4668,9 @@ public class COBOLParser extends CodeParser
 								defective.disabled = true;
 							}
 						}
+//						else if (testAfter) {
+//							// TODO: We will have to convert the loop to a REPEAT loop
+//						}
 						else {
 							if (cond.matches(BString.breakup(varName) + "\\s* [<>] .*")) {
 								cond = cond.replaceAll(BString.breakup(varName) + "\\s* [<>] (.*)", "$1");
@@ -4529,6 +4679,10 @@ public class COBOLParser extends CodeParser
 								cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName), "$1");
 							}
 							loop = new For(varName, from, cond.trim(), step);
+							// FIXME: This should have become superfluous as soon as the conversion to a REPEAT loop above is implemented  
+							if (testAfter) {
+								((For)loop).setComment("WARNING: In the original code this loop was specified to do the test AFTER the body!");
+							}
 						}
 					}
 					break;
@@ -4554,6 +4708,12 @@ public class COBOLParser extends CodeParser
 					break;
 				default:
 					// Just a macro (block)	
+					{
+						Call dummyCall = new Call("call " + this.getContent_R(bodyRed.get(0).asReduction(), ""));
+						dummyCall.setColor(Color.RED);
+						dummyCall.setComment("Seems t be a call of an internal paragraph/macro, wich is still not supported");
+						_parentNode.addElement(dummyCall);
+					}
 				}
 				if (loop != null && bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
 					this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
@@ -4562,13 +4722,17 @@ public class COBOLParser extends CodeParser
 					// FIXME
 					System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
 				}
-				_parentNode.addElement((Element)loop);
+				if (loop != null) {
+					_parentNode.addElement((Element)loop);
+				}
 			}
 			else if (ruleId == RuleConstants.PROD_MOVE_STATEMENT_MOVE)
 			{
 				System.out.println("PROD_MOVE_STATEMENT_MOVE");
 				Reduction secRed = _reduction.get(1).asReduction();
 				String expr = this.getContent_R(secRed.get(0).asReduction(), "");
+				// FIXME: This doesn't work for array elements - we need an expression list splitter
+				// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
 				String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
 				String[] targets;
 				if (targetString.contains(",")) {
@@ -4743,6 +4907,16 @@ public class COBOLParser extends CodeParser
 				Instruction instr = new Instruction(content);
 				_parentNode.addElement(instr);
 			}
+			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE )
+			{
+				System.out.println("PROD_WRITE_STATEMENT_WRITE");
+				// FIXME: Find a sensible conversion!
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
 			else if (ruleId == RuleConstants.PROD_EXIT_STATEMENT_EXIT)
 			{
 				System.out.println("PROD_EXIT_STATEMENT_EXIT");
@@ -4753,6 +4927,7 @@ public class COBOLParser extends CodeParser
 				int secRuleId = secRed.getParent().getTableIndex();
 				switch (secRuleId) {
 				case RuleConstants.PROD_EXIT_BODY:	// (empty)
+					content = "(exit from paragraph)";
 					break;
 				case RuleConstants.PROD_EXIT_BODY_PROGRAM:	// <exit_body> ::= PROGRAM <exit_program_returning>
 				case RuleConstants.PROD_EXIT_BODY_FUNCTION:	// <exit_body> ::= FUNCTION
@@ -4809,6 +4984,18 @@ public class COBOLParser extends CodeParser
 				content = this.getContent_R(secRed, content + " ");
 				_parentNode.addElement(new Jump(content));
 			}
+			else if (ruleId == RuleConstants.PROD_GOTO_STATEMENT_GO)
+			{
+				System.out.println("PROD_GOTO_STATEMENT_GO");
+				String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+				if (content.toUpperCase().startsWith("TO ")) {
+					content = content.substring(3);
+				}
+				Jump jmp = new Jump("goto " + content);
+				jmp.setColor(Color.RED);
+				jmp.setComment("GO TO statements are not supported in structured programming!");
+				_parentNode.addElement(jmp);
+			}
 			else if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
 			{
 				System.out.println("PROD_DATA_DESCIPTION4");
@@ -4857,7 +5044,7 @@ public class COBOLParser extends CodeParser
 				}
 				if (!value.isEmpty()) {
 					// Add the assignment
-					if (value.equalsIgnoreCase("zero")) {
+					if (value.equalsIgnoreCase("zero")) {	// FIXME should no longer be ncessary here
 						value = "0";
 					}
 					_parentNode.addElement(new Instruction(varName + " <- " + value));
@@ -4898,6 +5085,11 @@ public class COBOLParser extends CodeParser
 		return this.getContent_R(_reduction, "");	// This is just an insufficient first default approach
 	}
 
+	private String negateCondition(String condStr) {
+		// TODO try a more intelligent way to negate an alrady negated condition
+		return Element.negateCondition(condStr);
+	}
+	
 	private String deriveTypeInfo(String picture) {
 		// TODO Auto-generated method stub
 		String type = "";
@@ -4944,11 +5136,6 @@ public class COBOLParser extends CodeParser
 		return type;
 	}
 
-	private String negateCondition(String condStr) {
-		// TODO try a more intelligent way to negate an alrady negated condition
-		return "not (" + condStr + ")";
-	}
-	
 	@Override
 	protected String getContent_R(Reduction _reduction, String _content)
 	{
@@ -5036,8 +5223,25 @@ public class COBOLParser extends CodeParser
 					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_OR) {
 						_content += " or ";
 					}
+					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS_ZERO) {
+						_content += " <> 0";
+					}
+					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS) {
+						_content += " isTypeOf(" + this.getContent_R(subRed.get(1).asReduction(), "") + ") ";
+					}
+					else if (subRuleId == RuleConstants.PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN) {
+						_content += "[" + this.getContent_R(subRed.get(1).asReduction(), "") + "] ";	// FIXME: spaces!?
+					}
 					else {
-						_content = getContent_R(token.asReduction(), _content + (i == 0 ? "" : _separator), _separator);
+						String sepa = "";
+						String toAdd = getContent_R(token.asReduction(), "", _separator);
+						if (i > 0 && !_separator.isEmpty()) {
+							sepa = _separator;
+						}
+						else if (_content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
+							sepa = " ";
+						}
+						_content += sepa + toAdd;
 					}
 				}
 				break;
@@ -5050,8 +5254,12 @@ public class COBOLParser extends CodeParser
 					else if (toAdd.equalsIgnoreCase("zero")) {
 						toAdd = "0";
 					}
-					// Keyword FUNCTION is to be suppressed
-					if (!token.toString().equals("FUNCTION")) {
+					else if (toAdd.equalsIgnoreCase("space") || toAdd.equalsIgnoreCase("spaces")) {
+						toAdd = "\' \'";
+					}
+					// Keywords FUNCTION and IS are to be suppressed
+					String tokenStr = token.toString(); 
+					if (!tokenStr.equalsIgnoreCase("FUNCTION") && !tokenStr.equalsIgnoreCase("IS")) {
 						_content += (i == 0 ? "" : _separator + " ") + toAdd;
 					}
 				}
