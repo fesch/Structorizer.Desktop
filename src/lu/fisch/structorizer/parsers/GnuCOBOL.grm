@@ -26,7 +26,7 @@
 !         scanner.l, some manual addons like PicDef and <_Comment Items>)
 !    17-05-02: Simon Sobisch
 !       * fixed edited Picture_Def
-!       * updated "Known Issues"
+!       * updated "Known Issues" entries
 !
 ! -----------------------------------------------------------------------------
 !
@@ -46,6 +46,11 @@
 !   recognized it isn't resolved. They should either be replaced by its values
 !   (especially for Picture_Def) and/or by a special token that we check here
 !   instead of COBOLWord.
+! * There is no option to define context-sensitive words which is needed in
+!   general or remove / add words from the token list which is needed as it
+!   includes a lot of extensions from different vendors that will break parsing
+!   of source that is valid with another vendor (an example for both is the
+!   extension TAB as screen option which breaks the otherwise normal COBOLWord).
 ! * Lots of "FIXME" and "HACK" entries and stuff that we may have to place in a
 !   preparser, espacially "COMMA_DELIM" and replacing of constant values to a
 !   different token than COBOLWord.
