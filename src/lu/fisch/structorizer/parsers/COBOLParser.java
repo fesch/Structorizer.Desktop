@@ -4059,7 +4059,7 @@ public class COBOLParser extends CodeParser
 			decimalComma = false; // FIXME: get from setting/parsing
 			settingFixedForm = true; // FIXME: get from setting/parsing
 			settingFixedColumnIndicator = 7;  // FIXME: get from setting/parsing
-			settingFixedColumnText = 72;  // FIXME: get from setting/parsing
+			settingFixedColumnText = 73;  // FIXME: get from setting/parsing
 			
 			if (settingFixedForm) {
 				setColumns(settingFixedColumnIndicator, settingFixedColumnText);
@@ -4230,13 +4230,10 @@ public class COBOLParser extends CodeParser
 
 		String resultLine = null;
 
-		// START KGU#354 2017-05-03: Splitting could fail if there were too many space characters
-		//String[] tokenSeparator = codeLine.split("\\s", 2);
-		String[] tokenSeparator = codeLine.trim().split("\\s", 2);
-		// END KGU#354 2017-05-03
-		String firstToken = tokenSeparator[0];
+		String[] tokenSeparator = codeLine.trim().split("\\s", 2); // we only want the first token here
+		String firstToken = tokenSeparator[0].toUpperCase();
 		
-		// check for GnuCOBOL extension floating debugging line
+		// check for GnuCOBOL extension floating debugging line, no space here
 		if (firstToken.startsWith(">>D")) {
 			if (!srcCodeDebugLines) {
 				if (codeLine.trim().length() == 0) {
@@ -4257,12 +4254,18 @@ public class COBOLParser extends CodeParser
 			// handleCopyStatement(strLine);
 			// removed because must be set as comment until next period (multiple lines):
 			// resultLine = "*> COPY book included: " + codeLine; 
-			// TODO log error - no support for COPY statement
+			// TODO log error - no support for COPY statement and present it to the user
+			// as a warning after the parsing is finished
+			// HACK for now: replace as comment if it looks like a one-line statement
+			if (codeLine.endsWith(".")) {
+				resultLine = "*> COPY statement: " + codeLine;
+			}
 		} else if (firstToken.equals("REPLACE")) {
 			// TODO store the replacements and do them
 			// removed because must be set as comment until next period (multiple lines):
 			// resultLine = "*> REPLACE: " + codeLine;
-			// TODO log error - no support for REPLACE statement
+			// TODO log error - no support for REPLACE statement and present it to the user
+			// as a warning after the parsing is finished
 		}
 		
 		return resultLine;
@@ -4277,10 +4280,7 @@ public class COBOLParser extends CodeParser
 	private void handleDirective(String strLine) {
 		// create an array of tokens from the uppercased version of strLine,
 		// make sure that >> directives have >> as a single token
-		// START KGU#354 2017-05-03: Enh. #354: any additional blanks prevented an effective splitting
-		//String[] tokens = strLine.toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
-		String[] tokens = strLine.trim().toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
-		// END KGU#354 2017-05-03
+		String[] tokens = strLine.toUpperCase().replaceFirst(">>", ">> ").split("\\s+", 6);
 
 		if (tokens[0].equals(">>")) { // handling COBOL standard directives
 			int readToken = 1;
@@ -4416,7 +4416,7 @@ public class COBOLParser extends CodeParser
 					buildNSD_R(_reduction.get(4).asReduction(), root.children);
 				}
 				// Restore the original root
-				root = prevRoot;				
+				root = prevRoot;
 			}
 //			else if (
 //					ruleId == RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT
@@ -4460,7 +4460,7 @@ public class COBOLParser extends CodeParser
 				}
 				if (falseRed != null) {
 					System.out.println("\tELSE branch...");
-					this.buildNSD_R(falseRed, alt.qFalse);					
+					this.buildNSD_R(falseRed, alt.qFalse);
 				}
 				if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
 					alt.qTrue = alt.qFalse;
@@ -4735,6 +4735,8 @@ public class COBOLParser extends CodeParser
 				// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
 				String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
 				String[] targets;
+				// FIXME: the unwanted "," should not be passed to the engine at all,
+				// we currently split "literal, with a comma in" into two targets
 				if (targetString.contains(",")) {
 					targets = targetString.split(",");
 				}
@@ -5002,52 +5004,69 @@ public class COBOLParser extends CodeParser
 				// Picture clause: Find variable initializations and declarations
 				// FIXME In a first approach we neglect records and delare all as plain variables
 				String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
-				Reduction seqRed = _reduction.get(2).asReduction();
-				String type = "";
-				String value = "";
-				String picture = "";
-				boolean isGlobal = false;
-				// We may not do anything with empty description
-				while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
-					Reduction descrRed = seqRed.get(1).asReduction();
-					int descrRuleId = descrRed.getParent().getTableIndex();
-					switch (descrRuleId) {
-					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
-						picture = descrRed.get(0).asReduction().get(0).asString();
-						break;
-					case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
-						picture = descrRed.get(0).asString();
-						break;
-					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
-						// FIXME: this is a quick and dirty hack
-						value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
-						break;
-					case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> --> initialisation
-						value = this.getContent_R(descrRed.get(2).asReduction(), "");
-						break;
-					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
-					case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:
-						// FIXME Is this to be put to a globals Root or is the current diagram serving as an import Root?
-						isGlobal = true;
-						break;
+				// as long as we don't use records there is no use in parsing FILLER items
+				if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {				
+					Reduction seqRed = _reduction.get(2).asReduction();
+					String type = "";
+					String value = "";
+					String picture = "";
+					boolean isGlobal = false;
+					// We may not do anything with empty description
+					while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
+						Reduction descrRed = seqRed.get(1).asReduction();
+						int descrRuleId = descrRed.getParent().getTableIndex();
+						switch (descrRuleId) {
+						case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
+							picture = descrRed.get(0).asReduction().get(0).asString();
+							break;
+						case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
+							picture = descrRed.get(0).asString();
+							break;
+						case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
+							// FIXME: this is a quick and dirty hack
+							value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
+							break;
+						case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> --> initialisation
+							value = this.getContent_R(descrRed.get(2).asReduction(), "");
+							break;
+						case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
+						case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:
+							// FIXME Is this to be put to a globals Root or is the current diagram serving as an import Root?
+							isGlobal = true;
+							break;
+						}
+						seqRed = seqRed.get(0).asReduction();
 					}
-					seqRed = seqRed.get(0).asReduction();
-				}
-				if (!picture.isEmpty()) {
-					type = deriveTypeInfo(picture);
-				}
-				if (!type.isEmpty() && this.optionImportVarDecl) {
-					// Add the declaration
-					Instruction decl = new Instruction("var " + varName + ": " + type);
-					decl.setComment(picture);
-					_parentNode.addElement(decl);
-				}
-				if (!value.isEmpty()) {
-					// Add the assignment
-					if (value.equalsIgnoreCase("zero")) {	// FIXME should no longer be ncessary here
-						value = "0";
+					if (!picture.isEmpty()) {
+						type = deriveTypeInfo(picture);
 					}
-					_parentNode.addElement(new Instruction(varName + " <- " + value));
+					if (!type.isEmpty() && this.optionImportVarDecl) {
+						// Add the declaration	
+						Instruction decl = new Instruction("var " + varName + ": " + type);
+						decl.setComment(picture);
+						_parentNode.addElement(decl);
+					}
+					if (!value.isEmpty()) {
+						// Add the assignment
+						//FIXME hexedecimal literals and other literal types must be converted (each literal tpye has its own
+						// terminal, otherwise the Executor doesn't know what x'09' is)
+						if (value.equalsIgnoreCase("zero")) {	// FIXME should no longer be necessary here
+							value = "0";
+						}
+						//FIXME: Hack for now to force the E	xecutor to use double data type for too big literals
+						// we should pass the datatype from deriveTypeInfo instead (and return "long" there)
+						if ((type.equals("long") || type.equals("integer"))
+								&& value.length() > 9) {
+							value = value + ".0";
+						}
+						_parentNode.addElement(new Instruction(varName + " <- " + value));
+					}
+					//TODO stash the variables without a value clause somewhere to add
+					// all definitions that are used as variables within the NSD later, otherwise
+					// the executor may use the wrong data type
+//					else {
+//						stashVariable(varName, type);
+//					}
 				}
 			}
 			else
@@ -5086,52 +5105,45 @@ public class COBOLParser extends CodeParser
 	}
 
 	private String negateCondition(String condStr) {
-		// TODO try a more intelligent way to negate an alrady negated condition
 		return Element.negateCondition(condStr);
 	}
 	
+	/**
+	 * get type from PICTURE clause
+	 * sample inputs:  "pic s9(5)v9(2)", "pIcTuRe    zzzz999.99", "pic x(5000)"
+	 * @param picture
+	 * @return one of the following: double, [long,] integer, string
+	 */
 	private String deriveTypeInfo(String picture) {
-		// TODO Auto-generated method stub
 		String type = "";
-		int startSpec = 0;
-		picture = picture.toUpperCase();
-		if (picture.startsWith("PIC ")) {
-			startSpec = 4;
-		}
-		else if (picture.startsWith("PICTURE ")) {
-			startSpec = 8;
-		}
-		picture = picture.substring(startSpec);
-		int posPar = picture.indexOf("(");
-		String spec = null;
-		if (posPar > 0) {
-			spec = picture.substring(0, posPar);
-		}
-		else {
-			String[] parts = picture.split(" ");
-			if (parts.length > 0) {
-				spec = parts[0];
-			}
-		}
-		if (spec != null) {
-			if (spec.startsWith("S")) {
-				// Skip the sign placeholder for now...
+		String[] tokens = picture.toUpperCase().split("\\s+", 3);
+		// assume the first token to be PIC or PICTURE and a second token to be available
+		// (otherwise the grammar has a defect)
+		String spec = tokens[1];
+		if (spec.startsWith("S")) {
+			// Skip the sign placeholder for now...
+			spec = spec.substring(1);
+		} else 
+			while (spec.startsWith("P")) {
 				spec = spec.substring(1);
-			} else 
-				while (spec.startsWith("P")) {
-					spec = spec.substring(1);
-				}
-			if (spec.startsWith("9")) {
-				if (spec.contains("V")) {
-					type = "double";
-				}
-				else {
-					type = "integer";
-				}
+			}
+		if (spec.startsWith("9")) {
+			if (spec.contains("V")) {
+				type = "double";
 			}
 			else {
-				type = "string";
+				// FIXME: count numbers of 9 and return long if necessary
+				// take care of    9(24) and 999999
+//				if (numberOfNine > 9) {
+//					type = "long";
+//				}
+//				else {
+					type = "integer";
+//				}
 			}
+		}
+		else {
+			type = "string";
 		}
 		return type;
 	}
