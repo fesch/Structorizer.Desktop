@@ -22,6 +22,8 @@
 
 package lu.fisch.structorizer.parsers;
 
+import java.awt.Color;
+
 /******************************************************************************************************
  *
  *      Author:         Simon Sobisch
@@ -74,8 +76,12 @@ import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
@@ -83,12 +89,12 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.BString;
+import lu.fisch.utils.StringList;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import com.creativewidgetworks.goldparser.engine.ParserException;
 import com.creativewidgetworks.goldparser.parser.GOLDParser;
 
 /**
@@ -4224,7 +4230,10 @@ public class COBOLParser extends CodeParser
 
 		String resultLine = null;
 
-		String[] tokenSeparator = codeLine.split("\\s", 2);
+		// START KGU#354 2017-05-03: Splitting could fail if there were too many space characters
+		//String[] tokenSeparator = codeLine.split("\\s", 2);
+		String[] tokenSeparator = codeLine.trim().split("\\s", 2);
+		// END KGU#354 2017-05-03
 		String firstToken = tokenSeparator[0];
 		
 		// check for GnuCOBOL extension floating debugging line
@@ -4268,7 +4277,10 @@ public class COBOLParser extends CodeParser
 	private void handleDirective(String strLine) {
 		// create an array of tokens from the uppercased version of strLine,
 		// make sure that >> directives have >> as a single token
-		String[] tokens = strLine.toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
+		// START KGU#354 2017-05-03: Enh. #354: any additional blanks prevented an effective splitting
+		//String[] tokens = strLine.toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
+		String[] tokens = strLine.trim().toUpperCase().replaceFirst(">>", ">> ").split("\\s", 6);
+		// END KGU#354 2017-05-03
 
 		if (tokens[0].equals(">>")) { // handling COBOL standard directives
 			int readToken = 1;
@@ -4365,43 +4377,680 @@ public class COBOLParser extends CodeParser
 	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
 	{
 		//String content = new String();
-	
+
 		if (_reduction.size() > 0)
 		{
 			String rule = _reduction.getParent().toString();
+			System.out.println(rule);
 			String ruleHead = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+			if (logFile != null) {
+				try {
+					logFile.write("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n");
+				} catch (IOException e) {
+					System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+				}
+			}
+			System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
-			/* -------- Begin code example for tree analysis and build -------- */
-//			if (
-//					// Assignment or procedure call?
-//					ruleId == RuleConstants.PROD_OPASSIGN_EQ
+			if (
+					ruleId == RuleConstants.PROD_PROGRAM_DEFINITION
+					||
+					ruleId == RuleConstants.PROD_FUNCTION_DEFINITION
+					)
+			{
+				System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
+				Root prevRoot = root;	// Cache the original root
+				root = new Root();	// Prepare a new root for the (sub)routine
+				subRoots.add(root);
+				Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
+				String content = this.getContent_R(secRed.get(2).asReduction(), "");
+				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT) {
+					this.root.isProgram = false;
+				}
+				// Arguments and return value will be fetched from a different rule
+				root.setText(content);
+
+				if (_reduction.get(4).getType() == SymbolType.NON_TERMINAL)
+				{
+					buildNSD_R(_reduction.get(4).asReduction(), root.children);
+				}
+				// Restore the original root
+				root = prevRoot;				
+			}
+//			else if (
+//					ruleId == RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT
 //					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
+//					ruleId == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT
 //					)
 //			{
-//				// Simply convert it as text and create an instruction. In case of a call
-//				// we'll try to transmute it after all subroutines will have been parsed.
-//				String content = new String();
-//				content = getContent_R(_reduction, content).trim();
-//				//System.out.println(ruleName + ": " + content);
-//				// In case of a variable declaration get rid of the trailing semicolon
-//				//if (content.endsWith(";")) {
-//				//	content = content.substring(0, content.length() - 1).trim();
-//				//}
-//				_parentNode.addElement(new Instruction(translateContent(content)));
 //			}
-//			else if (ruleHead.equals("<Decls>") {
-//				...
-//			}
-//			/* -------- End code example for tree analysis and build -------- */
-//			// Block...?
-//			else
+			else if (ruleId == RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING)
+			{
+				System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
+				String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+				root.setText(root.getText().getLongString() + "(" + arguments + ")");
+			}
+			else if (ruleId == RuleConstants.PROD_IF_STATEMENT_IF)
+			{
+				System.out.println("PROD_IF_STATEMENT_IF");
+				String content = this.transformCondition(_reduction.get(1).asReduction());
+				System.out.println("\tCondition: " + content);
+				Reduction secRed = _reduction.get(3).asReduction();
+				int secRuleId = secRed.getParent().getTableIndex();
+				Reduction trueRed = null;
+				Reduction falseRed = null;
+				switch (secRuleId) {
+				case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE:
+					trueRed = secRed.get(0).asReduction();
+					falseRed = secRed.get(2).asReduction();
+					break;
+				case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE2:
+					trueRed = secRed.get(1).asReduction();
+					content = negateCondition(content);
+					break;
+				default:
+					trueRed = secRed;
+					break;
+				}
+				Alternative alt = new Alternative(content);
+				if (trueRed != null) {
+					System.out.println("\tTHEN branch...");
+					this.buildNSD_R(trueRed, alt.qTrue);
+				}
+				if (falseRed != null) {
+					System.out.println("\tELSE branch...");
+					this.buildNSD_R(falseRed, alt.qFalse);					
+				}
+				if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
+					alt.qTrue = alt.qFalse;
+					alt.qFalse = new Subqueue();
+					alt.qFalse.parent = alt;
+					alt.setText(negateCondition(content));
+				}
+				_parentNode.addElement(alt);
+				System.out.println("\tEND_IF");
+			}
+			else if (ruleId == RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE)
+			{
+				System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
+				// Possibly a CASE instruction, may have to be decomposed to an IF chain.
+				Reduction secRed = _reduction.get(1).asReduction();	// <evaluate_body>
+				Reduction subjlRed = secRed.get(0).asReduction();	// <evaluate_subject_list>
+				Reduction condlRed = secRed.get(1).asReduction();		// <evaluate_condition_list>
+				int subjlRuleId = subjlRed.getParent().getTableIndex();
+				if (subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT) {
+					// Single discriminator expression - there might be a chance to convert this to a CASE element
+					System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
+					StringList caseText = StringList.getNew(this.getContent_R(subjlRed, ""));
+					Case ele = new Case();
+					// Now analyse the branches
+					Reduction otherRed = null;
+					if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
+						otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
+						Subqueue sq = new Subqueue();
+						buildNSD_R(otherRed.get(2).asReduction(), sq);
+						caseText.add("default");	// last line for default branch
+						condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
+						ele.qs.addElement(sq);
+					}
+					else {
+						caseText.add("%");	// suppress the default branch
+						ele.qs.addElement(new Subqueue());
+					}
+					// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
+					do {
+						String caseHead = condlRed.getParent().getHead().toString();
+						Reduction caseRed = condlRed;	// could be <evaluate_case>
+						if (caseHead.equals("<evaluate_case_list>")) {
+							caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
+						}
+						// Get the instruction part
+						Subqueue sq = new Subqueue();
+						buildNSD_R(caseRed.get(1).asReduction(), sq);	// <statement_list>
+						ele.qs.add(0, sq);
+						// Now collect the WHEN clauses and concoct the compound condition
+						Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
+						String selectors = "";
+						while (whenlRed != null) {
+							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
+								selectors = this.getContent_R(whenlRed.get(2).asReduction(), "") + ", " + selectors;
+								whenlRed = whenlRed.get(0).asReduction();
+							}
+							else {
+								selectors = this.getContent_R(whenlRed.get(1).asReduction(), "") + ", " + selectors;
+								whenlRed = null;
+							}
+						}
+						selectors = selectors.trim();
+						if (selectors.endsWith(",")) {
+							selectors = selectors.substring(0, selectors.length()-1);
+						}
+						caseText.insert(selectors, 1);
+						//}
+						condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
+					} while (condlRed != null);
+					ele.setText(caseText);
+					_parentNode.addElement(ele);
+				}
+				else if (
+						subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_TRUE
+						||
+						subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE
+						) {
+					// Independent conditions, will be converted to nested alternatives
+					boolean negate = subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE;
+					// Single discriminator expression - there might be a chance to convert this to a CASE element
+					System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_TOK_TRUE/FALSE");
+					Reduction otherRed = null;
+					Element elseBranch = null;
+					if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
+						otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
+						elseBranch = new Subqueue();
+						buildNSD_R(otherRed.get(2).asReduction(), (Subqueue)elseBranch);
+						condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
+					}
+					// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
+					do {
+						String caseHead = condlRed.getParent().getHead().toString();
+						Reduction caseRed = condlRed;	// could be <evaluate_case>
+						if (caseHead.equals("<evaluate_case_list>")) {
+							caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
+						}
+						// Get the condition(s)
+						Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
+						String conds = "";
+						while (whenlRed != null) {
+							String cond = "";
+							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
+								cond = this.transformCondition(whenlRed.get(2).asReduction());
+								whenlRed = whenlRed.get(0).asReduction();
+							}
+							else {
+								cond = this.transformCondition(whenlRed.get(1).asReduction());
+								whenlRed = null;
+							}
+							if (negate) {
+								cond = this.negateCondition(cond);
+							}
+							conds = cond + " or " + conds;
+						}
+						conds = conds.trim();
+						if (conds.endsWith(" or")) {
+							conds = conds.substring(0, conds.length()-" or".length());
+						}
+						Alternative alt = new Alternative(conds);
+						// Get the instruction part
+						if (elseBranch instanceof Subqueue) {
+							alt.qFalse = (Subqueue)elseBranch;
+							elseBranch.parent = alt;
+						}
+						else if (elseBranch != null) {
+							alt.qFalse.addElement(elseBranch);
+						}
+						buildNSD_R(caseRed.get(1).asReduction(), alt.qTrue);	// <statement_list>
+						elseBranch = alt;
+						condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
+					} while (condlRed != null);
+					if (elseBranch != null) {
+						// elseBranch should not be a Subqueue here!
+						_parentNode.addElement(elseBranch);
+					}	
+				}
+				else {
+					// This can only be represented by nested alternatives
+					System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
+				}
+			}
+			else if (ruleId == RuleConstants.PROD_PERFORM_STATEMENT_PERFORM)
+			{
+				System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
+				// We will have to find out what kind of loop this is.
+				// In the worst case the body is just a paragraph name (PROD_PERFORM_BODY), which
+				// forces us to find that paragraph and to copy its content into the body Subqueue.
+				// The best case would be PROD_PERFORM_BODY2 - then the body is just a statement list
+				// Then there is the case of an empty body (PROD_PERFORM_BODY3) - only an option is given
+				Reduction bodyRed = _reduction.get(1).asReduction();
+				int bodyRuleId = bodyRed.getParent().getTableIndex();
+				int optionIx = (bodyRuleId == RuleConstants.PROD_PERFORM_BODY) ? 1 : 0;
+				Reduction optRed = bodyRed.get(optionIx).asReduction();
+				String content = "";
+				ILoop loop = null;
+				System.out.println("\t" + optRed.getParent().toString());
+				switch (optRed.getParent().getTableIndex()) {
+				case RuleConstants.PROD_PERFORM_OPTION_TIMES:
+					// FOR loop
+					{
+						// Prepare a generic variable name
+						content = this.getContent_R(optRed.get(0).asReduction(), content);
+						loop = new For("varStructorizer", "1", content, 1);
+						content = ((For)loop).getText().getLongString();
+						((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
+					}
+					break;
+				case RuleConstants.PROD_PERFORM_OPTION_VARYING:
+					// FOR loop
+					{
+						// Classify the test position
+						Reduction testRed = optRed.get(0).asReduction();
+						Reduction controlRed = optRed.get(2).asReduction();
+						boolean testAfter = testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST_TEST
+								&& testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_AFTER
+								|| controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER;
+						// Get actual FOR clause parameters
+						Reduction forRed = controlRed;
+						if (controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER) {
+							forRed = controlRed.get(controlRed.size()-1).asReduction();
+						}
+						Reduction condRed = forRed.get(6).asReduction();
+						String varName = this.getContent_R(forRed.get(0).asReduction(), "").replaceAll("-", "_");
+						String from = this.getContent_R(forRed.get(2).asReduction(), "");
+						String by = this.getContent_R(forRed.get(4).asReduction(), "");
+						String cond = this.getContent_R(condRed, "").trim();
+						// FIXME this is just a quick hack
+						int step = 0;
+						try {
+							step = Integer.parseInt(by);
+						}
+						catch (NumberFormatException ex) {}
+						if (step == 0
+								|| step > 0 && !cond.matches(BString.breakup(varName) + "\\s* > .*") && !cond.matches(".* < \\s*" + BString.breakup(varName))
+								|| step < 0 && !cond.matches(BString.breakup(varName) + "\\s* < .*") && !cond.matches(".* > \\s*" + BString.breakup(varName))) {
+							_parentNode.addElement(new Instruction(varName + " <- " + from));
+							While wloop = new While(negateCondition(cond));
+							if (bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
+								this.buildNSD_R(bodyRed.get(1).asReduction(), wloop.getBody());
+								wloop.getBody().addElement(new Instruction(varName + " <- " + varName + " + (" + by + ")"));
+							}
+							else {
+								Instruction defective = new Instruction(this.getContent_R(_reduction, ""));
+								defective.setColor(Color.RED);
+								defective.disabled = true;
+							}
+						}
+//						else if (testAfter) {
+//							// TODO: We will have to convert the loop to a REPEAT loop
+//						}
+						else {
+							if (cond.matches(BString.breakup(varName) + "\\s* [<>] .*")) {
+								cond = cond.replaceAll(BString.breakup(varName) + "\\s* [<>] (.*)", "$1");
+							}
+							else {
+								cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName), "$1");
+							}
+							loop = new For(varName, from, cond.trim(), step);
+							// FIXME: This should have become superfluous as soon as the conversion to a REPEAT loop above is implemented  
+							if (testAfter) {
+								((For)loop).setComment("WARNING: In the original code this loop was specified to do the test AFTER the body!");
+							}
+						}
+					}
+					break;
+				case RuleConstants.PROD_PERFORM_OPTION_FOREVER:
+					// FOREVER loop
+					loop = new Forever();
+					break;
+				case RuleConstants.PROD_PERFORM_OPTION_UNTIL:
+					// WHILE or REPEAT loop
+					{
+						// Get the condition itself
+						content = this.getContent_R(optRed.get(2).asReduction(), "");
+						// Classify the test position
+						Reduction testRed = optRed.get(0).asReduction();
+						if (testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST
+								|| testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_BEFORE) {
+							loop = new While(negateCondition(content));
+						}
+						else {
+							loop = new Repeat(content);
+						}
+					}
+					break;
+				default:
+					// Just a macro (block)	
+					{
+						Call dummyCall = new Call("call " + this.getContent_R(bodyRed.get(0).asReduction(), ""));
+						dummyCall.setColor(Color.RED);
+						dummyCall.setComment("Seems t be a call of an internal paragraph/macro, wich is still not supported");
+						_parentNode.addElement(dummyCall);
+					}
+				}
+				if (loop != null && bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
+					this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
+				}
+				else {
+					// FIXME
+					System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+				}
+				if (loop != null) {
+					_parentNode.addElement((Element)loop);
+				}
+			}
+			else if (ruleId == RuleConstants.PROD_MOVE_STATEMENT_MOVE)
+			{
+				System.out.println("PROD_MOVE_STATEMENT_MOVE");
+				Reduction secRed = _reduction.get(1).asReduction();
+				String expr = this.getContent_R(secRed.get(0).asReduction(), "");
+				// FIXME: This doesn't work for array elements - we need an expression list splitter
+				// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
+				String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
+				String[] targets;
+				if (targetString.contains(",")) {
+					targets = targetString.split(",");
+				}
+				else {
+					targets = targetString.split(" ");
+				}
+				if (targets.length > 0) {
+					StringList content = StringList.getNew(targets[0] + " <- " + expr);
+					for (int i = 1; i < targets.length; i++) {
+						content.add(targets[i] + " <- " + targets[0]);
+					}
+					_parentNode.addElement(new Instruction(content));
+				}
+			}
+			else if (ruleId == RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE)
+			{
+				System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
+				Reduction secRed = _reduction.get(1).asReduction();
+				String[] targets = this.getContent_R(secRed.get(0).asReduction(), "", ",").split(",");
+				String expr = this.getContent_R(secRed.get(2).asReduction(), "");
+				if (targets.length > 0) {
+					StringList content = StringList.getNew(targets[0] + " <- " + expr);
+					for (int i = 1; i < targets.length; i++) {
+						content.add(targets[i] + " <- " + targets[0]);
+					}
+					_parentNode.addElement(new Instruction(content));
+				}				
+			}
+			// TODO handle the ADD statements in a similar way as MULTIPLY
+			else if (ruleId == RuleConstants.PROD_ADD_STATEMENT_ADD)
+			{
+				System.out.println("PROD_ADD_STATEMENT_ADD");
+				Reduction secRed = _reduction.get(1).asReduction();
+				int targetIx = -1;			// token index for the targets
+				String summands1 = null;
+				String summand2 = null;
+				int secRuleId = secRed.getParent().getTableIndex();
+				switch (secRuleId) {
+				case RuleConstants.PROD_ADD_BODY_GIVING:
+					summands1 = this.getContent_R(secRed.get(0).asReduction(), "", " + ");
+					if (secRed.get(1).asReduction().size() == 2) {
+						summand2 = this.getContent_R(secRed.get(1).asReduction().get(1).asReduction(), "");
+					}
+					targetIx = 3;
+					break;
+				case RuleConstants.PROD_ADD_BODY_TO:
+					summands1 = this.getContent_R(secRed.get(0).asReduction(), "", " + ");
+					targetIx = 2;
+					break;
+				}
+				// FIXME: Handle the <flag rounded>
+				String[] targets = null;
+				if (targetIx >= 0) {
+					targets = this.getContent_R(secRed.get(targetIx).asReduction(), "").split(" ");
+				}
+				if (targets != null && targets.length > 0) {
+					StringList content = StringList.getNew(targets[0] + " <- " + summands1 + " + " + (summand2 != null ? summand2 : targets[0]) );
+					for (int i = 1; i < targets.length; i++) {
+						if (summand2 == null) {
+							content.add(targets[i] + " <- " + summands1 + " + " + targets[i]);
+						}
+						else {
+							content.add(targets[i] + " <- " + targets[0]);
+						}
+					}
+					_parentNode.addElement(new Instruction(content));
+				}
+				else {
+					Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
+					defective.setColor(Color.RED);
+					defective.disabled = true;
+					defective.setComment("COBOL import still not implemented");
+					_parentNode.addElement(defective);
+				}
+			}
+			// TODO handle the SUBTRACT statements in a similar way as MULTIPLY
+			else if (ruleId == RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT)
+			{
+				System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
+				Reduction secRed = _reduction.get(1).asReduction();
+				int secRuleId = secRed.getParent().getTableIndex();
+				int targetIx = 2;
+				String summands1 = this.getContent_R(secRed.get(0).asReduction(), "", " + ");
+				String summand2 = null;
+				if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
+					targetIx = 4;
+					summand2 = this.getContent_R(secRed.get(2).asReduction(), "");
+				}
+				// FIXME: Handle the <flag rounded>
+				String[] targets = this.getContent_R(secRed.get(targetIx).asReduction(), "").split(" ");
+				if (targets.length > 0) {
+					StringList content = StringList.getNew(targets[0] + " <- " + (summand2 != null ? summand2 : targets[0]) + " - (" + summands1 + ")");
+					for (int i = 1; i < targets.length; i++) {
+						if (summand2 == null) {
+							content.add(targets[i] + " <- " + targets[i] + " - (" + summands1 + ")");
+						}
+						else {
+							content.add(targets[i] + " <- " + targets[0]);
+						}
+					}
+					_parentNode.addElement(new Instruction(content));
+				}
+				else {
+					Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
+					defective.setColor(Color.RED);
+					defective.disabled = true;
+					defective.setComment("COBOL import still not implemented");
+					_parentNode.addElement(defective);
+				}
+			}
+			else if (ruleId == RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY)
+			{
+				System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
+				Reduction secRed = _reduction.get(1).asReduction();
+				int secRuleId = secRed.getParent().getTableIndex();
+				int targetIx = 2;
+				String factors1 = this.getContent_R(secRed.get(0).asReduction(), "", " * ");
+				String factor2 = null;
+				if (secRuleId == RuleConstants.PROD_MULTIPLY_BODY_BY_GIVING) {
+					targetIx = 4;
+					factor2 = this.getContent_R(secRed.get(2).asReduction(), "");
+				}
+				// FIXME: Handle the <flag rounded>
+				String[] targets = this.getContent_R(secRed.get(targetIx).asReduction(), "").split(" ");
+				if (targets.length > 0) {
+					StringList content = StringList.getNew(targets[0] + " <- " + factors1 + " * " + (factor2 != null ? factor2 : targets[0]) );
+					for (int i = 1; i < targets.length; i++) {
+						if (factor2 == null) {
+							content.add(targets[i] + " <- " + factors1 + " * " + targets[i]);
+						}
+						else {
+							content.add(targets[i] + " <- " + targets[0]);
+						}
+					}
+					_parentNode.addElement(new Instruction(content));
+				}
+				else {
+					Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
+					defective.setColor(Color.RED);
+					defective.disabled = true;
+					defective.setComment("COBOL import still not implemented");
+					_parentNode.addElement(defective);
+				}
+			}
+			// TODO handle the DIVIDE statements in a similar way as MULTIPLY
+			else if (ruleId == RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE)
+			{
+				// FIXME
+				Instruction defective = new Instruction(this.getContent_R(_reduction, ""));
+				defective.setColor(Color.RED);
+				defective.disabled = true;
+				defective.setComment("COBOL import still not implemented");
+				_parentNode.addElement(defective);				
+			}
+			else if (ruleId == RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY )
+			{
+				System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
+				// TODO: Identify whether fileAPI s to be used.
+				Reduction secRed = _reduction.get(1).asReduction();	// display body
+				// TODO: Define a specific routine to extract the exressions
+				//String content = this.appendDisplayBody(secRed, "");
+				String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
+				if (content.startsWith(", ")) {
+					content = content.substring(2);
+				}
+				if (content.endsWith(", ")) {
+					content = content.substring(0,  content.length()-2);
+				}
+				content = CodeParser.getKeyword("output") + " " + content;				
+				Instruction instr = new Instruction(content);
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE )
+			{
+				System.out.println("PROD_WRITE_STATEMENT_WRITE");
+				// FIXME: Find a sensible conversion!
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_EXIT_STATEMENT_EXIT)
+			{
+				System.out.println("PROD_EXIT_STATEMENT_EXIT");
+				String content = "";
+				String comment = "";
+				Color color = null;
+				Reduction secRed = _reduction.get(1).asReduction();
+				int secRuleId = secRed.getParent().getTableIndex();
+				switch (secRuleId) {
+				case RuleConstants.PROD_EXIT_BODY:	// (empty)
+					content = "(exit from paragraph)";
+					break;
+				case RuleConstants.PROD_EXIT_BODY_PROGRAM:	// <exit_body> ::= PROGRAM <exit_program_returning>
+				case RuleConstants.PROD_EXIT_BODY_FUNCTION:	// <exit_body> ::= FUNCTION
+					{
+						content = CodeParser.getKeywordOrDefault("preReturn", "return");
+						if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
+							content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
+						}
+					}
+					break;
+				case RuleConstants.PROD_EXIT_BODY_PERFORM:	// <exit_body> ::= PERFORM
+					content = CodeParser.getKeywordOrDefault("preLeave", "leave");
+					break;
+				case RuleConstants.PROD_EXIT_BODY_PERFORM_CYCLE: // <exit_body> ::= PERFORM CYCLE
+				case RuleConstants.PROD_EXIT_BODY_SECTION:	// <exit_body> ::= SECTION
+				case RuleConstants.PROD_EXIT_BODY_PARAGRAPH:// <exit_body> ::= PARAGRAPH
+					content = this.getContent_R(_reduction, "");
+					color = Color.RED;
+					comment = "Unsupported kind of JUMP";
+					break;
+				}
+				if (content != null) {
+					Jump jmp = new Jump(content.trim());
+					if (!comment.isEmpty()) {
+						jmp.setComment(comment);
+					}
+					if (color != null) {
+						jmp.setColor(color);
+						jmp.disabled = true;
+					}
+					_parentNode.addElement(jmp);
+				}
+			}
+			else if (ruleId == RuleConstants.PROD_GOBACK_STATEMENT_GOBACK )
+			{
+				System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
+				Reduction secRed = _reduction.get(1).asReduction();
+				String content = CodeParser.getKeywordOrDefault("preReturn", "return");
+				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
+					content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
+				}
+				_parentNode.addElement(new Jump(content.trim()));
+			}
+			else if (
+					ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP
+					||
+					ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP_RUN
+					)
+			{
+				System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
+				int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
+				Reduction secRed = _reduction.get(contentIx).asReduction();
+				String content = CodeParser.getKeywordOrDefault("preExit", "exit");
+				content = this.getContent_R(secRed, content + " ");
+				_parentNode.addElement(new Jump(content));
+			}
+			else if (ruleId == RuleConstants.PROD_GOTO_STATEMENT_GO)
+			{
+				System.out.println("PROD_GOTO_STATEMENT_GO");
+				String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+				if (content.toUpperCase().startsWith("TO ")) {
+					content = content.substring(3);
+				}
+				Jump jmp = new Jump("goto " + content);
+				jmp.setColor(Color.RED);
+				jmp.setComment("GO TO statements are not supported in structured programming!");
+				_parentNode.addElement(jmp);
+			}
+			else if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
+			{
+				System.out.println("PROD_DATA_DESCIPTION4");
+				// Picture clause: Find variable initializations and declarations
+				// FIXME In a first approach we neglect records and delare all as plain variables
+				String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
+				Reduction seqRed = _reduction.get(2).asReduction();
+				String type = "";
+				String value = "";
+				String picture = "";
+				boolean isGlobal = false;
+				// We may not do anything with empty description
+				while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
+					Reduction descrRed = seqRed.get(1).asReduction();
+					int descrRuleId = descrRed.getParent().getTableIndex();
+					switch (descrRuleId) {
+					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
+						picture = descrRed.get(0).asReduction().get(0).asString();
+						break;
+					case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
+						picture = descrRed.get(0).asString();
+						break;
+					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
+						// FIXME: this is a quick and dirty hack
+						value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
+						break;
+					case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> --> initialisation
+						value = this.getContent_R(descrRed.get(2).asReduction(), "");
+						break;
+					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
+					case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:
+						// FIXME Is this to be put to a globals Root or is the current diagram serving as an import Root?
+						isGlobal = true;
+						break;
+					}
+					seqRed = seqRed.get(0).asReduction();
+				}
+				if (!picture.isEmpty()) {
+					type = deriveTypeInfo(picture);
+				}
+				if (!type.isEmpty() && this.optionImportVarDecl) {
+					// Add the declaration
+					Instruction decl = new Instruction("var " + varName + ": " + type);
+					decl.setComment(picture);
+					_parentNode.addElement(decl);
+				}
+				if (!value.isEmpty()) {
+					// Add the assignment
+					if (value.equalsIgnoreCase("zero")) {	// FIXME should no longer be ncessary here
+						value = "0";
+					}
+					_parentNode.addElement(new Instruction(varName + " <- " + value));
+				}
+			}
+			else
 			{
 				if (_reduction.size()>0)
 				{
@@ -4415,39 +5064,211 @@ public class COBOLParser extends CodeParser
 				}
 			}
 		}
+	}	
+
+//	private String appendDisplayBody(Reduction bodyRed, String content) {
+//		Reduction secRed = bodyRed.get(0).asReduction();
+//		switch (secRed.getParent().getTableIndex()) {
+//		case RuleConstants.PROD_ID_OR_LIT:
+//		case RuleConstants.PROD_ID_OR_LIT2:
+//			content = this.getContent_R(secRed, content + ", ");
+//			break;
+//		case RuleConstants.PROD_SCREEN_OR_DEVICE_DISPLAY:
+//		case RuleConstants.PROD_SCREEN_OR_DEVICE_DISPLAY2:
+//			break;
+//		}
+//		return content;
+//	}
+
+	private String transformCondition(Reduction _reduction) {
+		// TODO We must resolve expressions like "expr1 = expr2 or > expr3"
+		return this.getContent_R(_reduction, "");	// This is just an insufficient first default approach
+	}
+
+	private String negateCondition(String condStr) {
+		// TODO try a more intelligent way to negate an alrady negated condition
+		return Element.negateCondition(condStr);
 	}
 	
+	private String deriveTypeInfo(String picture) {
+		// TODO Auto-generated method stub
+		String type = "";
+		int startSpec = 0;
+		picture = picture.toUpperCase();
+		if (picture.startsWith("PIC ")) {
+			startSpec = 4;
+		}
+		else if (picture.startsWith("PICTURE ")) {
+			startSpec = 8;
+		}
+		picture = picture.substring(startSpec);
+		int posPar = picture.indexOf("(");
+		String spec = null;
+		if (posPar > 0) {
+			spec = picture.substring(0, posPar);
+		}
+		else {
+			String[] parts = picture.split(" ");
+			if (parts.length > 0) {
+				spec = parts[0];
+			}
+		}
+		if (spec != null) {
+			if (spec.startsWith("S")) {
+				// Skip the sign placeholder for now...
+				spec = spec.substring(1);
+			} else 
+				while (spec.startsWith("P")) {
+					spec = spec.substring(1);
+				}
+			if (spec.startsWith("9")) {
+				if (spec.contains("V")) {
+					type = "double";
+				}
+				else {
+					type = "integer";
+				}
+			}
+			else {
+				type = "string";
+			}
+		}
+		return type;
+	}
+
 	@Override
 	protected String getContent_R(Reduction _reduction, String _content)
 	{
-		for(int i=0; i<_reduction.size(); i++)
-		{
-			Token token = _reduction.get(i);
-			/* -------- Begin code example for text retrieval and translation -------- */
-			switch (token.getType()) 
-			{
-			case NON_TERMINAL:
-//				int ruleId = _reduction.getParent().getTableIndex();
-//				_content = getContent_R(token.asReduction(), _content);	
-				break;
-			case CONTENT:
-//				{
-//					String toAdd = "";
-//					int idx = token.getTableIndex();
-//					switch (idx) {
-//					case SymbolConstants.SYM_EXCLAM:
-//						_content += " not ";
-//						break;
-//					...
-//					}
-//				}
-				break;
-			default:
-				break;
+		return getContent_R(_reduction, _content, "");
+	}
+
+	protected String getContent_R(Reduction _reduction, String _content, String _separator)
+	{
+		int ruleId = _reduction.getParent().getTableIndex();
+		String ruleHead = _reduction.getParent().getHead().toString();
+		if (ruleHead.equals("<function>") && ruleId != RuleConstants.PROD_FUNCTION) {
+			String functionName = this.getContent_R(_reduction.get(0).asReduction(),"").toLowerCase().replaceAll("-", "_");
+			if (!functionName.equals("mod")) {
+				if (functionName.equals("char")) {
+					functionName = "chr";
+				}
+				String argList = "()";
+				if (_reduction.size() > 2) {
+					argList = getContent_R(_reduction.get(2).asReduction(), "(") + ")";
+				}
+				else {
+					// The second token is supposed to be <func_args> and already contains parentheses
+					argList = getContent_R(_reduction.get(1).asReduction(), "");
+				}
+				_content += (_content.matches(".*\\w") ? " " : "") + functionName + argList;
 			}
-			/* -------- End code example for text retrieval and translation -------- */
+			else {
+				// We must convert mod(arg1, arg2) to (arg1 mod arg2)
+				Reduction argRed = _reduction.get(1).asReduction().get(1).asReduction();
+				if (argRed.size() != 3) {
+					// Something is wrong here!
+					_content += this.getContent_R(argRed, _content + _separator +"mod");
+				}
+				String arg1 = this.getContent_R(argRed.get(0).asReduction(), "").trim();
+				String arg2 = this.getContent_R(argRed.get(2).asReduction(), "").trim();
+				// Id we knew the inner structure of the arguments then we could better decide whether
+				// parentheses are really necessary... So we just use a rough heuristics
+				if (arg1.contains(" ") || arg1.contains(",")) {
+					arg1 = "(" + arg1 + ")";
+				}
+				if (arg2.contains(" ") || arg2.contains(",")) {
+					arg2 = "(" + arg2 + ")";
+				}
+				_content += "(" + arg1 + " mod " + arg2 + ")";
+			}
 		}
-		
+		else {
+			for(int i=0; i<_reduction.size(); i++)
+			{
+				Token token = _reduction.get(i);
+				switch (token.getType()) 
+				{
+				case NON_TERMINAL:
+				{
+					Reduction subRed = token.asReduction();
+					int subRuleId = subRed.getParent().getTableIndex();
+					String subHead = subRed.getParent().getHead().toString();
+					if (subHead.equals("<COMMON_FUNCTION>")) {
+						_content += getContent_R(subRed, _content).toLowerCase().replace("-",  "_");
+					}
+					else if (subHead.equals("<eq>")) {
+						_content += " = ";
+					}
+					else if (subHead.equals("<lt>")) {
+						_content += " < ";
+					}
+					else if (subHead.equals("<gt>")) {
+						_content += " > ";
+					}
+					else if (subHead.equals("<le>")) {
+						_content += " <= ";
+					}
+					else if (subHead.equals("<ge>")) {
+						_content += " >= ";
+					}
+					else if (subRuleId == RuleConstants.PROD_CONDITION_OP_NOT_EQUAL) {
+						_content += " <> ";
+					}
+					else if (subHead.equals("<not>")) {
+						_content += " not ";
+					}
+					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_AND) {
+						_content += " and ";
+					}
+					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_OR) {
+						_content += " or ";
+					}
+					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS_ZERO) {
+						_content += " <> 0";
+					}
+					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS) {
+						_content += " isTypeOf(" + this.getContent_R(subRed.get(1).asReduction(), "") + ") ";
+					}
+					else if (subRuleId == RuleConstants.PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN) {
+						_content += "[" + this.getContent_R(subRed.get(1).asReduction(), "") + "] ";	// FIXME: spaces!?
+					}
+					else {
+						String sepa = "";
+						String toAdd = getContent_R(token.asReduction(), "", _separator);
+						if (i > 0 && !_separator.isEmpty()) {
+							sepa = _separator;
+						}
+						else if (_content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
+							sepa = " ";
+						}
+						_content += sepa + toAdd;
+					}
+				}
+				break;
+				case CONTENT:
+				{
+					String toAdd = token.asString();
+					if (token.toString().equals("COBOLWord")) {
+						toAdd = toAdd.replace("-", "_");
+					}
+					else if (toAdd.equalsIgnoreCase("zero")) {
+						toAdd = "0";
+					}
+					else if (toAdd.equalsIgnoreCase("space") || toAdd.equalsIgnoreCase("spaces")) {
+						toAdd = "\' \'";
+					}
+					// Keywords FUNCTION and IS are to be suppressed
+					String tokenStr = token.toString(); 
+					if (!tokenStr.equalsIgnoreCase("FUNCTION") && !tokenStr.equalsIgnoreCase("IS")) {
+						_content += (i == 0 ? "" : _separator + " ") + toAdd;
+					}
+				}
+				break;
+				default:
+					break;
+				}
+			}
+		}
 		return _content;
 	}
 

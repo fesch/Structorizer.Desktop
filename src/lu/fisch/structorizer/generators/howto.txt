@@ -9,7 +9,7 @@ This is just a little file that explains
 
 WRITE A NEW CODE GENERATOR FOR STRUCTORIZER
 ===========================================
-Author:      Kay Gürtzig
+Author:      Kay Gï¿½rtzig
 Last update: 2017-03-30
 
 There are two possible approaches to add a new generator to Structorizer:
@@ -91,7 +91,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		Specify whether an instruction to leave a loop (the innermost
 		enclosing loop) like "break;" in C is available in the target
 		language AND ALSO BREAKS CASE SELECTIONS (switch constructs).
-		Return true if yes and only if there is an instruction that does both.
+		Return true if and only if there is an instruction that does both.
 	2.12	String getIncludePattern()
 		Return a code line for an include / import / use directive where
 		a placeholder "%%" indicates that a comma-separated list of file

@@ -3998,6 +3998,15 @@ public class Executor implements Runnable
 							context.constants.put(constName, impInfo.interpreter.get(constName));
 						}
 					}
+					// START KGU#117 2017-04-29: Enh. #77
+					if (Element.E_COLLECTRUNTIMEDATA)
+					{
+						element.simplyCovered = true;
+						if (imp.isTestCovered(true)) {
+							element.deeplyCovered = true;
+						}
+					}
+					// END KGU#117 2017-04-29
 					try 
 					{
 						updateVariableDisplay();

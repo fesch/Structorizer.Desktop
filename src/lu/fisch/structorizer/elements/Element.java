@@ -2936,5 +2936,37 @@ public abstract class Element {
 			}
 		}				
 	}
+	
+	/**
+	 * Negates the given condition as intelligently as possible.
+	 * @param condition - a boolean expression (in Structorizer-conform syntax)
+	 * @return an expression reprsenting the logical opposite of {@code condition}
+	 */
+	public static String negateCondition(String condition)
+	{
+		String negCondition = null;
+		StringList condTokens = Element.splitLexically(condition, true);
+		int length = condTokens.count();
+		String first = condTokens.get(0);
+		// Already explicitly negated?
+		if (first.equals("not") || first.equals("!")) {
+			int i = 1;
+			while (i < length && condTokens.get(i).matches("^\\s+$")) i++;
+			if (i == length-1) {
+				// Obviously a single negated token, so drop the operator
+				negCondition = condTokens.get(i); 
+			}
+			else if (i < length && Element.isParenthesized(condTokens.subSequence(i, length).concatenate())) {
+				negCondition = condTokens.subSequence(i+1, length-1).concatenate();
+			}
+		}
+		if (negCondition == null) {
+			if (!Element.isParenthesized(condition)) {
+				condition = "(" + condition + ")";
+			}
+			negCondition = "not " + condition;
+		}
+		return negCondition;
+	}
 
 }

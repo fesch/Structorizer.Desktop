@@ -838,6 +838,7 @@ ImportOptionDialog.chkSaveParseTree.tooltip=After a successful import you may ob
 ImportOptionDialog.chkLogDir.text=Log to folder
 ImportOptionDialog.chkLogDir.tooltip=Enable saving a log file during import
 ImportOptionDialog.txtLogDir.tooltip=The empty path stands for the home directory of the source code file, "." for the current directory.
+ImportOptionDialog.btnLogDir.tooltip=Select a path via dialog.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
 

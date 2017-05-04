@@ -59,6 +59,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised
  *      Kay Gürtzig     2017.01.26      Enh. #259: Type retrieval support added (for counting loops)
  *      Kay Gürtzig     2017.04.14      Enh. #259: Approach to guess FOR-IN loop variable type too
+ *      Kay Gürtzig     2017.04.30      Enh. #354: New structured constructors
  *
  ******************************************************************************************************
  *
@@ -167,6 +168,36 @@ public class For extends Element implements ILoop {
 		q.parent=this;
 		setText(_strings);
 	}
+	
+	// START KGU#354 2017-04-30: Enh. #354 Further facilitation of import
+	/**
+	 * This is a high-level structured constructor version and produces a fully classified
+	 * counting loop. 
+	 * @param varName - the counter variable name
+	 * @param startValStr - the expression for the initial counting value
+	 * @param endValStr - the exression for the final counting value
+	 * @param stepVal - increment or decrement constant
+	 */
+	public For(String varName, String startValStr, String endValStr, int stepVal)
+	{
+		this(CodeParser.getKeywordOrDefault("preFor", "for") + " " + varName
+				+ " <- " + startValStr + " "
+				+ CodeParser.getKeywordOrDefault("postFor", "to") + " " + endValStr
+				+ (stepVal != 1 ? (CodeParser.getKeywordOrDefault("stepFor", " by ") + stepVal) : ""));
+	}
+	
+	/**
+	 * This is a high-level structured constructor version and produces a fully classified
+	 * traversing loop. 
+	 * @param varName - the loop variable name
+	 * @param startValStr - the expression representing the value list
+	 */
+	public For(String varName, String valueList)
+	{
+		this(CodeParser.getKeywordOrDefault("preForIn", "foreach") + " " + varName + " "
+				+ CodeParser.getKeywordOrDefault("postForIn", "in") + " " + valueList);
+	}
+	// END KGU#354 2017-04-30
 	
 //	// START KGU#64 2015-11-03: Is to improve drawing performance
 //	/**
