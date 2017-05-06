@@ -4361,6 +4361,8 @@ public class COBOLParser extends CodeParser
 
 	//---------------------- Build methods for structograms ---------------------------
 
+	private HashMap<Root, HashMap<String, String>> paramTypeMap = new HashMap<Root, HashMap<String, String>>();
+	
 //	/* (non-Javadoc)
 //	 * @see CodeParser#initializeBuildNSD()
 //	 */
@@ -4428,8 +4430,19 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING)
 			{
 				System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
-				String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
-				root.setText(root.getText().getLongString() + "(" + arguments + ")");
+				//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+				//root.setText(root.getText().getLongString() + "(" + arguments + ")");
+				StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
+				HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
+				if (paramTypes != null && paramTypes.size() > 0) {
+					for (int i = 0; i < arguments.count(); i++) {
+						String type = paramTypes.get(arguments.get(i));
+						if (type != null && !type.isEmpty() && !type.equals("???")) {
+							arguments.set(i, type + " " + arguments.get(i)) ;
+						}
+					}
+				}
+				root.setText(root.getText().getLongString() + "(" + arguments.concatenate(", ") + ")");
 			}
 			else if (ruleId == RuleConstants.PROD_IF_STATEMENT_IF)
 			{
@@ -4919,6 +4932,50 @@ public class COBOLParser extends CodeParser
 				instr.setComment("TODO: there is still no automatic conversion for this statement");
 				_parentNode.addElement(instr);
 			}
+			else if (ruleId == RuleConstants.PROD_CALL_STATEMENT_CALL)
+			{
+				Reduction secRed = _reduction.get(1).asReduction();	// call body
+				String name = this.getContent_R(secRed.get(1).asReduction(), "").trim();
+				// FIXME: This can be a lot of things, consider tokenizing it ...
+				String[] nameTokens = name.split("\\s+");
+				for (int i = 0; i < nameTokens.length; i++) {
+					// FIXME cut all from an "as" keyword on...
+				}
+				// Maybe the actual name is given as string literal rather than an identifier
+				if (name.matches("\\\".*?\\\"")) {
+					name = name.substring(1, name.length()-1).replace("-", "_");
+				}
+				StringList args = new StringList();
+				if (secRed.get(2).asReduction().size() > 0) {
+//					Reduction paramlRed = secRed.get(3).asReduction().get(1).asReduction();
+//					do {
+//						String paramHead = paramlRed.getParent().getHead().toString();
+//						Reduction paramRed = paramlRed;	// could be <call_param>
+//						if (paramHead.equals("<call_param_list>")) {
+//							paramRed = paramlRed.get(paramlRed.size()-1).asReduction();	// get the <evaluate_case>
+//						}
+//						int paramRuleId = paramRed.getParent().getTableIndex();
+//						if (paramRuleId == RuleConstants.PROD_CALL_PARAM) {
+//							args.add(this.getContent_R(paramRed.get(2).asReduction(), ""));
+//						}
+//						else if (paramRuleId == RuleConstants.PROD_CALL_PARAM_OMITTED) {
+//							// This is going to be something not supported
+//							args.add("null");
+//						}
+//						paramlRed = (paramHead.equals("<call_param_list>")) ? paramRed.get(0).asReduction() : null;
+//					} while (paramlRed != null);
+//					args = args.reverse();
+					args = this.getParameterList(secRed.get(2).asReduction().get(1).asReduction(), "<call_param_list>", RuleConstants.PROD_CALL_PARAM, 2);
+				}
+				String content = name + "(" + args.concatenate(", ") + ")"; 
+				Reduction retRed = secRed.get(3).asReduction();
+				if (retRed.getParent().getTableIndex() == RuleConstants.PROD_CALL_RETURNING2) {
+					content = this.getContent_R(retRed.get(2).asReduction(), "") + " <- " + content;
+				}
+				Call ele = new Call(content);
+				ele.setComment(this.getContent_R(_reduction, ""));
+				_parentNode.addElement(ele);
+			}
 			else if (ruleId == RuleConstants.PROD_EXIT_STATEMENT_EXIT)
 			{
 				System.out.println("PROD_EXIT_STATEMENT_EXIT");
@@ -4998,76 +5055,16 @@ public class COBOLParser extends CodeParser
 				jmp.setComment("GO TO statements are not supported in structured programming!");
 				_parentNode.addElement(jmp);
 			}
-			else if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
+			else if (ruleId == RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT)
 			{
-				System.out.println("PROD_DATA_DESCIPTION4");
-				// Picture clause: Find variable initializations and declarations
-				// FIXME In a first approach we neglect records and delare all as plain variables
-				String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
-				// as long as we don't use records there is no use in parsing FILLER items
-				if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {				
-					Reduction seqRed = _reduction.get(2).asReduction();
-					String type = "";
-					String value = "";
-					String picture = "";
-					boolean isGlobal = false;
-					// We may not do anything with empty description
-					while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
-						Reduction descrRed = seqRed.get(1).asReduction();
-						int descrRuleId = descrRed.getParent().getTableIndex();
-						switch (descrRuleId) {
-						case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
-							picture = descrRed.get(0).asReduction().get(0).asString();
-							break;
-						case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
-							picture = descrRed.get(0).asString();
-							break;
-						case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
-							// FIXME: this is a quick and dirty hack
-							value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
-							break;
-						case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> --> initialisation
-							value = this.getContent_R(descrRed.get(2).asReduction(), "");
-							break;
-						case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
-						case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:
-							// FIXME Is this to be put to a globals Root or is the current diagram serving as an import Root?
-							isGlobal = true;
-							break;
-						}
-						seqRed = seqRed.get(0).asReduction();
-					}
-					if (!picture.isEmpty()) {
-						type = deriveTypeInfo(picture);
-					}
-					if (!type.isEmpty() && this.optionImportVarDecl) {
-						// Add the declaration	
-						Instruction decl = new Instruction("var " + varName + ": " + type);
-						decl.setComment(picture);
-						_parentNode.addElement(decl);
-					}
-					if (!value.isEmpty()) {
-						// Add the assignment
-						//FIXME hexedecimal literals and other literal types must be converted (each literal tpye has its own
-						// terminal, otherwise the Executor doesn't know what x'09' is)
-						if (value.equalsIgnoreCase("zero")) {	// FIXME should no longer be necessary here
-							value = "0";
-						}
-						//FIXME: Hack for now to force the E	xecutor to use double data type for too big literals
-						// we should pass the datatype from deriveTypeInfo instead (and return "long" there)
-						if ((type.equals("long") || type.equals("integer"))
-								&& value.length() > 9) {
-							value = value + ".0";
-						}
-						_parentNode.addElement(new Instruction(varName + " <- " + value));
-					}
-					//TODO stash the variables without a value clause somewhere to add
-					// all definitions that are used as variables within the NSD later, otherwise
-					// the executor may use the wrong data type
-//					else {
-//						stashVariable(varName, type);
-//					}
+				this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+			}
+			else if (ruleId == RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT)
+			{
+				if (!this.paramTypeMap.containsKey(root)) {
+					this.paramTypeMap.put(root, new HashMap<String, String>());
 				}
+				this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
 			}
 			else
 			{
@@ -5098,6 +5095,177 @@ public class COBOLParser extends CodeParser
 //		}
 //		return content;
 //	}
+
+	private void processDataDescriptions(Reduction _reduction, Subqueue _parentNode, HashMap<String, String> _typeInfo)
+	{
+		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_DATA_DESCRIPTION4)
+		{
+			System.out.println("PROD_DATA_DESCIPTION4");
+			// Picture clause: Find variable initializations and declarations
+			// FIXME In a first approach we neglect records and delare all as plain variables
+			String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
+			// as long as we don't use records there is no use in parsing FILLER items
+			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {				
+				Reduction seqRed = _reduction.get(2).asReduction();
+				String type = "";
+				String value = "";
+				String picture = "";
+				boolean isGlobal = false;
+				// We may not do anything with empty description
+				while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
+					Reduction descrRed = seqRed.get(1).asReduction();
+					int descrRuleId = descrRed.getParent().getTableIndex();
+					switch (descrRuleId) {
+					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
+						picture = descrRed.get(0).asReduction().get(0).asString();
+						break;
+					case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
+						picture = descrRed.get(0).asString();
+						break;
+					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE5: // <usage_clause> --> type info
+						{
+							String usage = this.getContent_R(descrRed.get(1).asReduction(), "").toLowerCase();
+							final String[] binTypes = new String[]{"float", "double", "short", "int", "long"};
+							for (String typeKey: binTypes) {
+								if (usage.contains(typeKey)) {
+									type = typeKey;
+									break;
+								}
+							}
+						}
+						break;
+					case RuleConstants.PROD_USAGE:                             // <usage> ::= <float_usage>
+						type = "float";
+						break;							
+					case RuleConstants.PROD_USAGE2:                            // <usage> ::= <double_usage>
+						type = "double";
+						break;
+					case RuleConstants.PROD_USAGE_COMP_3:                      // <usage> ::= 'COMP_3'
+					case RuleConstants.PROD_USAGE_COMP_4:                      // <usage> ::= 'COMP_4'
+					case RuleConstants.PROD_USAGE_COMP_5:                      // <usage> ::= 'COMP_5'
+					case RuleConstants.PROD_USAGE_COMP_6:                      // <usage> ::= 'COMP_6'
+					case RuleConstants.PROD_USAGE_COMP_X:                      // <usage> ::= 'COMP_X'
+					case RuleConstants.PROD_USAGE_DISPLAY:                     // <usage> ::= DISPLAY
+					case RuleConstants.PROD_USAGE_INDEX:                       // <usage> ::= INDEX
+					case RuleConstants.PROD_USAGE_PACKED_DECIMAL:              // <usage> ::= 'PACKED_DECIMAL'
+					case RuleConstants.PROD_USAGE_POINTER:                     // <usage> ::= POINTER
+					case RuleConstants.PROD_USAGE_PROGRAM_POINTER:             // <usage> ::= 'PROGRAM_POINTER'
+					case RuleConstants.PROD_USAGE_BINARY_CHAR:                 // <usage> ::= 'BINARY_CHAR' <_signed>
+					case RuleConstants.PROD_USAGE_BINARY_CHAR_UNSIGNED:        // <usage> ::= 'BINARY_CHAR' UNSIGNED
+						type = "char";
+						break;
+					case RuleConstants.PROD_USAGE_SIGNED_SHORT:                // <usage> ::= 'SIGNED_SHORT'
+					case RuleConstants.PROD_USAGE_UNSIGNED_SHORT:              // <usage> ::= 'UNSIGNED_SHORT'
+					case RuleConstants.PROD_USAGE_BINARY_SHORT:                // <usage> ::= 'BINARY_SHORT' <_signed>
+					case RuleConstants.PROD_USAGE_BINARY_SHORT_UNSIGNED:       // <usage> ::= 'BINARY_SHORT' UNSIGNED
+						type = "short";
+						break;
+					case RuleConstants.PROD_USAGE_SIGNED_INT:                  // <usage> ::= 'SIGNED_INT'
+					case RuleConstants.PROD_USAGE_UNSIGNED_INT:                // <usage> ::= 'UNSIGNED_INT'
+						type = "integer";
+						break;
+					case RuleConstants.PROD_USAGE_SIGNED_LONG:                 // <usage> ::= 'SIGNED_LONG'
+					case RuleConstants.PROD_USAGE_UNSIGNED_LONG:               // <usage> ::= 'UNSIGNED_LONG'
+					case RuleConstants.PROD_USAGE_BINARY_LONG:                 // <usage> ::= 'BINARY_LONG' <_signed>
+					case RuleConstants.PROD_USAGE_BINARY_LONG_UNSIGNED:        // <usage> ::= 'BINARY_LONG' UNSIGNED
+					case RuleConstants.PROD_USAGE_BINARY_C_LONG:               // <usage> ::= 'BINARY_C_LONG' <_signed>
+					case RuleConstants.PROD_USAGE_BINARY_C_LONG_UNSIGNED:      // <usage> ::= 'BINARY_C_LONG' UNSIGNED
+						type = "long";
+						break;
+					case RuleConstants.PROD_USAGE_BINARY_DOUBLE:               // <usage> ::= 'BINARY_DOUBLE' <_signed>
+					case RuleConstants.PROD_USAGE_BINARY_DOUBLE_UNSIGNED:      // <usage> ::= 'BINARY_DOUBLE' UNSIGNED
+						type = "double";
+						break;
+					case RuleConstants.PROD_USAGE_FLOAT_BINARY_32:             // <usage> ::= 'FLOAT_BINARY_32'
+						type = "float";
+						break;
+					case RuleConstants.PROD_USAGE_FLOAT_BINARY_64:             // <usage> ::= 'FLOAT_BINARY_64'
+					case RuleConstants.PROD_USAGE_FLOAT_BINARY_128:            // <usage> ::= 'FLOAT_BINARY_128'
+					case RuleConstants.PROD_USAGE_FLOAT_DECIMAL_16:            // <usage> ::= 'FLOAT_DECIMAL_16'
+					case RuleConstants.PROD_USAGE_FLOAT_DECIMAL_34:            // <usage> ::= 'FLOAT_DECIMAL_34'
+						type = "double";
+						break;
+					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
+						// FIXME: this is a quick and dirty hack
+						value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
+						break;
+					case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> --> initialisation
+						value = this.getContent_R(descrRed.get(2).asReduction(), "");
+						break;
+					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
+					case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:
+						// FIXME Is this to be put to a globals Root or is the current diagram serving as an import Root?
+						isGlobal = true;
+						break;
+					}
+					seqRed = seqRed.get(0).asReduction();
+				}
+				if (!picture.isEmpty()) {
+					type = deriveTypeInfo(picture);
+				}
+				if (!type.isEmpty()) {
+					if (_parentNode != null && this.optionImportVarDecl) {
+					// Add the declaration	
+					Instruction decl = new Instruction("var " + varName + ": " + type);
+					decl.setComment(picture);
+					_parentNode.addElement(decl);
+					}
+					if (_typeInfo != null) {
+						_typeInfo.put(varName, type);
+					}
+				}
+				if (!value.isEmpty()) {
+					// Add the assignment
+					//FIXME hexedecimal literals and other literal types must be converted (each literal tpye has its own
+					// terminal, otherwise the Executor doesn't know what x'09' is)
+					if (value.equalsIgnoreCase("zero")) {	// FIXME should no longer be necessary here
+						value = "0";
+					}
+					//FIXME: Hack for now to force the E	xecutor to use double data type for too big literals
+					// we should pass the datatype from deriveTypeInfo instead (and return "long" there)
+					if ((type.equals("long") || type.equals("integer"))
+							&& value.length() > 9) {
+						value = value + ".0";
+					}
+					_parentNode.addElement(new Instruction(varName + " <- " + value));
+				}
+				//TODO stash the variables without a value clause somewhere to add
+				// all definitions that are used as variables within the NSD later, otherwise
+				// the executor may use the wrong data type
+//				else {
+//					stashVariable(varName, type);
+//				}
+			}
+		}
+		else {
+			for (int i = 0; i < _reduction.size(); i++) {
+				if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL) {
+					this.processDataDescriptions(_reduction.get(i).asReduction(), _parentNode, _typeInfo);
+				}
+			}
+		}
+	}
+
+	private StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) {
+		StringList args = new StringList();
+		do {
+			String paramHead = _paramlRed.getParent().getHead().toString();
+			Reduction paramRed = _paramlRed;	// could be <call_param>
+			if (paramHead.equals(_listHead)) {
+				paramRed = _paramlRed.get(_paramlRed.size()-1).asReduction();	// get the <evaluate_case>
+			}
+			int paramRuleId = paramRed.getParent().getTableIndex();
+			if (paramRuleId == _ruleId) {
+				args.add(this.getContent_R(paramRed.get(_nameIx).asReduction(), ""));
+			}
+			else if (paramRuleId == RuleConstants.PROD_CALL_PARAM_OMITTED) {
+				// This is going to be something not supported
+				args.add("null");
+			}
+			_paramlRed = (paramHead.equals(_listHead)) ? _paramlRed.get(0).asReduction() : null;
+		} while (_paramlRed != null);
+		return args.reverse();
+	}
 
 	private String transformCondition(Reduction _reduction) {
 		// TODO We must resolve expressions like "expr1 = expr2 or > expr3"
@@ -5284,34 +5452,28 @@ public class COBOLParser extends CodeParser
 		return _content;
 	}
 
-	@Override
-	protected void subclassUpdateRoot(Root root, String sourceFileName) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	//------------------------- Postprocessor ---------------------------
 
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
-//	 */
-//	@Override
-//	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
-//		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
-//		if (aRoot.getMethodName().equals("main")) {
-//			if (aRoot.getParameterNames().count() == 0) {
-//				String fileName = new File(textToParse).getName();
-//				if (fileName.contains(".")) {
-//					fileName = fileName.substring(0, fileName.indexOf('.'));
-//				}
-//				if (this.optionUpperCaseProgName) {
-//					fileName = fileName.toUpperCase();
-//				}
-//				aRoot.setText(fileName);
-//			}
-//			aRoot.isProgram = true;
-//		}
-//	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
+		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
+		if (aRoot.getMethodName().equals("???")) {
+			if (aRoot.getParameterNames().count() == 0) {
+				String fileName = new File(textToParse).getName();
+				if (fileName.contains(".")) {
+					fileName = fileName.substring(0, fileName.indexOf('.'));
+				}
+				if (this.optionUpperCaseProgName) {
+					fileName = fileName.toUpperCase();
+				}
+				aRoot.setText(fileName);
+				aRoot.isProgram = true;
+			}
+		}
+	}
 
 }
