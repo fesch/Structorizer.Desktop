@@ -122,6 +122,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
  *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
  *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
+ *      Kay Gürtzig     2017.05.07      New built-in functions sgn (int result) and signum (float resul)
  *
  ******************************************************************************************************
  *
@@ -561,6 +562,9 @@ public class Executor implements Runnable
 		// END KGU#285 2016-10-16
 		// Function names to be prefixed with "Math."
 		final String[] mathFunctions = {
+				// START KGU#354 2017-05-07: We needed a sign function for facilitating COBOL rounding import
+				"signum",
+				// END KGU#354 201-05-07
 				"cos", "sin", "tan", "acos", "asin", "atan", "toRadians", "toDegrees",
 				"abs", "round", "min", "max", "ceil", "floor", "exp", "log", "sqrt", "pow"
 				};
@@ -1714,6 +1718,12 @@ public class Executor implements Runnable
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public void randomize() {  }";
 			interpreter.eval(pascalFunction);
+			// START KGU#354 2017-05-07: Enh. #354 - we need a sign function to ease the rounding support for COBOL import
+			pascalFunction = "public int sgn(int i) { return (i == 0 ? 0 : (i > 0 ? 1 : -1)); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public int sgn(double d) { return (d == 0 ? 0 : (d > 0 ? 1 : -1)); }";
+			interpreter.eval(pascalFunction);
+			// END KGU#354 2017-05-07
 			// square
 			pascalFunction = "public double sqr(double d) { return d * d; }";
 			interpreter.eval(pascalFunction);
@@ -1737,7 +1747,7 @@ public class Executor implements Runnable
 			// delete a part of a string
 			pascalFunction = "public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1); }";
 			interpreter.eval(pascalFunction);
-			// insert a string into anoter one
+			// insert a string into another one
 			pascalFunction = "public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1); }";
 			interpreter.eval(pascalFunction);
 			// string transformation

@@ -82,6 +82,7 @@ Current development version: 3.26-06 (2017.05.05)
 - 06: Enh. #354: gnuCOBOL import (still incomplete) <Simon Sobisch, 2>
 - 06: Issue #354: Missing exception handling for code import added. <2>
 - 06: Issue #396: Bash export now encloses function calls in $(...) [Rolf Schmidt]2
+- 06: Bugfix #397: Wrong paste position with multiple selection as target <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

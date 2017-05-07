@@ -107,6 +107,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.13      Enh. #380: Method outsourceToSubroutine() improved
  *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
  *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
+ *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
  *
  ******************************************************************************************************
  *
@@ -848,7 +849,18 @@ public class Root extends Element {
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
-                            int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
+                    	    // START KGU#389 2017-05-06: Bugfix #397 - wrong placement if _ele was a SelectedSequence
+                            //int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
+                            Element target = _ele;
+                            if (_ele instanceof IElementSequence) {
+                            	int elIndex = 0;
+                            	if (_after) {
+                            		elIndex = ((IElementSequence)_ele).getSize()-1;
+                            	}
+                            	target = ((IElementSequence)_ele).getElement(elIndex);
+                            }
+                            int i = ((Subqueue) _ele.parent).getIndexOf(target);
+                            // END KGU#389 2017-05-06
                             if (_after) i++;
                             ((Subqueue) _ele.parent).insertElementAt(_new, i);
                             _ele.selected=false;
