@@ -66,6 +66,7 @@ import java.awt.Color;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -4359,6 +4360,11 @@ public class COBOLParser extends CodeParser
 	//---------------------- Build methods for structograms ---------------------------
 
 	private HashMap<Root, HashMap<String, String>> paramTypeMap = new HashMap<Root, HashMap<String, String>>();
+
+	/**
+	 * Associates the name of the result variable to the respective function Root
+	 */
+	private HashMap<Root, String> returnMap = new HashMap<Root, String>();
 	
 //	/* (non-Javadoc)
 //	 * @see CodeParser#initializeBuildNSD()
@@ -4444,10 +4450,24 @@ public class COBOLParser extends CodeParser
 					root.isProgram = false;
 				}
 			}
+			else if (ruleId == RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING)
+			{
+				String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
+				this.returnMap .put(root, resultVar);
+				StringList rootText = root.getText();
+				if (this.paramTypeMap.containsKey(root)) {
+					HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
+					if (paramTypes.containsKey(resultVar)
+						&& rootText.count() >= 1
+						&& rootText.getLongString().trim().endsWith(")")) {
+						rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
+					}
+				}
+			}
 			else if (ruleId == RuleConstants.PROD_IF_STATEMENT_IF)
 			{
 				System.out.println("PROD_IF_STATEMENT_IF");
-				String content = this.transformCondition(_reduction.get(1).asReduction());
+				String content = this.transformCondition(_reduction.get(1).asReduction(), "");
 				System.out.println("\tCondition: " + content);
 				Reduction secRed = _reduction.get(3).asReduction();
 				int secRuleId = secRed.getParent().getTableIndex();
@@ -4527,11 +4547,11 @@ public class COBOLParser extends CodeParser
 						String selectors = "";
 						while (whenlRed != null) {
 							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
-								selectors = this.getContent_R(whenlRed.get(2).asReduction(), "") + ", " + selectors;
+								selectors = this.getContent_R(whenlRed.get(2).asReduction(), caseText.get(0)) + ", " + selectors;
 								whenlRed = whenlRed.get(0).asReduction();
 							}
 							else {
-								selectors = this.getContent_R(whenlRed.get(1).asReduction(), "") + ", " + selectors;
+								selectors = this.getContent_R(whenlRed.get(1).asReduction(), caseText.get(0)) + ", " + selectors;
 								whenlRed = null;
 							}
 						}
@@ -4576,11 +4596,13 @@ public class COBOLParser extends CodeParser
 						while (whenlRed != null) {
 							String cond = "";
 							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
-								cond = this.transformCondition(whenlRed.get(2).asReduction());
+								// FIXME: provide the subject of the first condition (i.e. the discriminator...)
+								cond = this.transformCondition(whenlRed.get(2).asReduction(), "");
 								whenlRed = whenlRed.get(0).asReduction();
 							}
 							else {
-								cond = this.transformCondition(whenlRed.get(1).asReduction());
+								// FIXME: provide the subject of the first condition (i.e. the discriminator...)
+								cond = this.transformCondition(whenlRed.get(1).asReduction(), "");
 								whenlRed = null;
 							}
 							if (negate) {
@@ -4819,12 +4841,13 @@ public class COBOLParser extends CodeParser
 			{
 				System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
 				Reduction secRed = _reduction.get(1).asReduction();
-				String[] targets = this.getContent_R(secRed.get(0).asReduction(), "", ",").split(",");
+				StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 				String expr = this.getContent_R(secRed.get(2).asReduction(), "");
-				if (targets.length > 0) {
-					StringList content = StringList.getNew(targets[0] + " <- " + expr);
-					for (int i = 1; i < targets.length; i++) {
-						content.add(targets[i] + " <- " + targets[0]);
+				if (targets.count() > 0) {
+					StringList content = StringList.getNew(targets.get(0) + " <- " + expr);
+					for (int i = 1; i < targets.count(); i++) {
+						// FIXME Caution: target.get(0) might be a "reference modification"!
+						content.add(targets.get(i) + " <- " + targets.get(0));
 					}
 					_parentNode.addElement(new Instruction(content));
 				}				
@@ -4839,14 +4862,14 @@ public class COBOLParser extends CodeParser
 				int secRuleId = secRed.getParent().getTableIndex();
 				switch (secRuleId) {
 				case RuleConstants.PROD_ADD_BODY_GIVING:
-					summands1 = this.getContent_R(secRed.get(0).asReduction(), "", " + ");
+					summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
 					if (secRed.get(1).asReduction().size() == 2) {
 						summand2 = this.getContent_R(secRed.get(1).asReduction().get(1).asReduction(), "");
 					}
 					targetIx = 3;
 					break;
 				case RuleConstants.PROD_ADD_BODY_TO:
-					summands1 = this.getContent_R(secRed.get(0).asReduction(), "", " + ");
+					summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
 					targetIx = 2;
 					break;
 					// FIXME: There is no idea how to import the remaining ADD statement varieties
@@ -4881,7 +4904,7 @@ public class COBOLParser extends CodeParser
 				Reduction secRed = _reduction.get(1).asReduction();
 				int secRuleId = secRed.getParent().getTableIndex();
 				int targetIx = 2;
-				String summands1 = this.getContent_R(secRed.get(0).asReduction(), "", " + ");
+				String summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
 				String summand2 = null;
 				if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
 					targetIx = 4;
@@ -5002,8 +5025,34 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(defective);
 				}
 			}
+			else if (ruleId == RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT)
+			{
+				// Input instruction
+				System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
+				Reduction secRed = _reduction.get(1).asReduction();		// <accept_body>
+				int secRuleId = secRed.getParent().getTableIndex();
+				if (secRuleId == RuleConstants.PROD_ACCEPT_BODY || secRuleId == RuleConstants.PROD_ACCEPT_BODY_FROM3) {
+					// For these types we can offer a conversion
+					String content = getKeywordOrDefault("input", "input");
+					String varName = this.getContent_R(secRed.get(0).asReduction(), "");
+					if (varName.equalsIgnoreCase("OMITTED")) {
+						varName = "";
+					}
+					content += " " + varName;
+					_parentNode.addElement(new Instruction(content.trim()));
+				}
+				else {
+					Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
+					dummy.setComment(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
+							+ this.getOriginalText(_reduction, ""), "\n"));
+					dummy.setColor(Color.RED);
+					dummy.disabled = true;
+					_parentNode.addElement(dummy);
+				}
+			}
 			else if (ruleId == RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY )
 			{
+				// Output instruction
 				System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
 				// TODO: Identify whether fileAPI s to be used.
 				Reduction secRed = _reduction.get(1).asReduction();	// display body
@@ -5226,7 +5275,8 @@ public class COBOLParser extends CodeParser
 
 	private void processDataDescriptions(Reduction _reduction, Subqueue _parentNode, HashMap<String, String> _typeInfo)
 	{
-		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_DATA_DESCRIPTION4)
+		int ruleId = _reduction.getParent().getTableIndex();
+		if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
 		{
 			System.out.println("PROD_DATA_DESCIPTION4");
 			int level = 0;
@@ -5234,6 +5284,8 @@ public class COBOLParser extends CodeParser
 				level = Integer.parseInt(this.getContent_R(_reduction.get(0).asReduction(), ""));
 			}
 			catch (Exception ex) {}
+			// This constant detection is just a fallback unlikely ever to be used - there is a separate rule
+			// for SEVENTY-EIGHT constants below, which is supposed to catch respective cases.
 			boolean isConst = level == 78;
 			// Picture clause: Find variable initializations and declarations
 			// FIXME In a first approach we neglect records and delare all as plain variables
@@ -5245,7 +5297,7 @@ public class COBOLParser extends CodeParser
 				String value = "";
 				String picture = "";
 				boolean isGlobal = false;
-				// We may not do anything with empty description
+				// We may not do anything if description is empty
 				while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
 					Reduction descrRed = seqRed.get(1).asReduction();
 					int descrRuleId = descrRed.getParent().getTableIndex();
@@ -5342,13 +5394,14 @@ public class COBOLParser extends CodeParser
 					seqRed = seqRed.get(0).asReduction();
 				}
 				if (!picture.isEmpty()) {
-					type = deriveTypeInfo(picture);
+					type = deriveTypeInfoFromPic(picture);
 				}
 				if (!type.isEmpty() && !isConst) {
 					if (_parentNode != null && this.optionImportVarDecl) {
 					// Add the declaration	
 					Instruction decl = new Instruction("var " + varName + ": " + type);
 					decl.setComment(picture);
+					decl.setColor(colorDecl);
 					_parentNode.addElement(decl);
 					}
 					if (_typeInfo != null) {
@@ -5372,7 +5425,12 @@ public class COBOLParser extends CodeParser
 					if (isConst) {
 						content = "const " + content;
 					}
-					_parentNode.addElement(new Instruction(content));
+					Instruction def = new Instruction(content);
+					if (isConst) {
+						def.setColor(colorConst);
+					}
+					// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
+					_parentNode.addElement(def);
 				}
 				//TODO stash the variables without a value clause somewhere to add
 				// all definitions that are used as variables within the NSD later, otherwise
@@ -5380,6 +5438,41 @@ public class COBOLParser extends CodeParser
 //				else {
 //					stashVariable(varName, type);
 //				}
+			}
+		}
+		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_CONSTANT) {
+			boolean isGlobal = _reduction.get(3).asReduction().getParent().getTableIndex() == RuleConstants.PROD_CONST_GLOBAL_GLOBAL;
+			String constName = this.getContent_R(_reduction.get(1).asReduction(), "");
+			String value = this.getContent_R(_reduction.get(4).asReduction().get(1).asReduction(), "");
+			String type = Element.identifyExprType(null, value, true);
+			if (!type.isEmpty() && _typeInfo != null) {
+				_typeInfo.put(constName, type);
+			}
+			// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
+			if (_parentNode != null) {
+				Instruction def = new Instruction("const " + constName + " <- " + value);
+				def.setColor(colorConst);
+				_parentNode.addElement(def);
+			}
+		}
+		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_SEVENTY_EIGHT) {
+			boolean isGlobal = _reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL;
+			String constName = this.getContent_R(_reduction.get(1).asReduction(), "");
+			StringList values = this.getExpressionList(_reduction.get(3).asReduction(), "<value_item_list>", RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM);
+			String value = null;
+			String type = "";
+			if (values.count() == 1) {
+				value = values.get(0);
+				type = Element.identifyExprType(null, value, true);
+			}
+			else {
+				value = "{" + values.concatenate(", ") + "}";
+			}
+			if (_parentNode != null && value != null) {
+				// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
+				Instruction def = new Instruction("const " + constName + " <- " + value);
+				def.setColor(colorConst);
+				_parentNode.addElement(def);
 			}
 		}
 		else {
@@ -5429,9 +5522,78 @@ public class COBOLParser extends CodeParser
 		return exprs.reverse();
 	}
 
-	private String transformCondition(Reduction _reduction) {
-		// TODO We must resolve expressions like "expr1 = expr2 or > expr3"
-		return this.getContent_R(_reduction, "");	// This is just an insufficient first default approach
+	private String transformCondition(Reduction _reduction, String lastSubject) {
+		// TODO We must resolve expressions like "expr1 = expr2 or > expr3".
+		// Unfortunately the <condition> node is not defined as hierarchical expression
+		// tree dominated by operator nodes but as left-recursive "list".
+		// We should transform the left-recursive <expr_tokens> list into a linear
+		// list of <expr_token> we can analyse from left to right, such that we can
+		// identify the first token as comparison operator. (It seems rather simpler
+		// to inspect the prefix of the composed string.)
+		LinkedList<Token> expr_tokens = new LinkedList<Token>();
+		this.lineariseTokenList(expr_tokens, _reduction, "<expr_tokens>");
+		String cond = "";
+		//String cond = this.getContent_R(_reduction, "").trim();
+		// Test if cond starts with a comparison operator. In this case add lastSubject...
+		//if (cond.startsWith("<") || cond.startsWith("=") || cond.startsWith(">")) {
+		//	if (lastSubject != null) {
+		//		cond = (lastSubject + " " + cond).trim();
+		//	}
+		//}
+		int ruleId = -1;
+		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
+			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
+		}
+		if (lastSubject == null || lastSubject.isEmpty()) {
+			Token tok = expr_tokens.getFirst();
+			if (ruleId != RuleConstants.PROD_EXPR_TOKEN2 && ruleId != RuleConstants.PROD_EXPR_TOKEN_IS && ruleId != RuleConstants.PROD_EXPR_TOKEN_IS2) {
+				if (tok.getType() == SymbolType.CONTENT) {
+					lastSubject = tok.asString();
+					if (tok.getName().equals("COBOLWord")) {
+						lastSubject = lastSubject.replace("-", "_");
+					}
+				}
+				else {
+					lastSubject = this.getContent_R(tok.asReduction(), "");
+				}
+			}
+			else {
+				lastSubject = "";
+			}
+		}
+		boolean afterLogOpr = true;
+		for (Token tok: expr_tokens) {
+			String tokStr = "";
+			if (tok.getType() == SymbolType.NON_TERMINAL) {
+				ruleId = tok.asReduction().getParent().getTableIndex();
+				tokStr = this.getContent_R(tok.asReduction(), "");
+			}
+			else {
+				tokStr = tok.asString();
+				if (tok.getName().equals("COBOLWord")) {
+					tokStr = tokStr.replace("-", "_");
+				}
+			}
+			if (afterLogOpr && (ruleId == RuleConstants.PROD_EXPR_TOKEN2 || ruleId == RuleConstants.PROD_EXPR_TOKEN_IS || ruleId == RuleConstants.PROD_EXPR_TOKEN_IS2)) {
+				cond += " " + lastSubject;
+			}
+			afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
+			if (afterLogOpr) {
+				tokStr = tokStr.toLowerCase();
+			}
+			cond += " " + tokStr;
+		}
+		return cond.trim();	// This is just an insufficient first default approach
+	}
+
+	private void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead) {
+		if (_reduction.getParent().getHead().toString().equals(_listRuleHead) && _reduction.size() > 1) {
+			_tokens.add(0, _reduction.get(_reduction.size()-1));
+			lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
+		}
+		else if (_reduction.size() != 0) {
+			_tokens.add(0, _reduction.get(0));
+		}
 	}
 
 	private String negateCondition(String condStr) {
@@ -5444,7 +5606,7 @@ public class COBOLParser extends CodeParser
 	 * @param picture
 	 * @return one of the following: double, [long,] integer, string
 	 */
-	private String deriveTypeInfo(String picture) {
+	private String deriveTypeInfoFromPic(String picture) {
 		String type = "";
 		String[] tokens = picture.toUpperCase().split("\\s+", 3);
 		// assume the first token to be PIC or PICTURE and a second token to be available
@@ -5533,11 +5695,11 @@ public class COBOLParser extends CodeParser
 				}
 				String argList = "()";
 				if (_reduction.size() > 2) {
-					argList = getContent_R(_reduction.get(2).asReduction(), "(") + ")";
+					argList = getContent_R(_reduction.get(2).asReduction(), "(").trim() + ")";
 				}
 				else {
 					// The second token is supposed to be <func_args> and already contains parentheses
-					argList = getContent_R(_reduction.get(1).asReduction(), "");
+					argList = getContent_R(_reduction.get(1).asReduction(), "").trim();
 				}
 				_content += (_content.matches(".*\\w") ? " " : "") + functionName + argList;
 			}
@@ -5643,10 +5805,11 @@ public class COBOLParser extends CodeParser
 				case CONTENT:
 				{
 					String toAdd = token.asString();
-					if (token.toString().equals("COBOLWord")) {
+					String name = token.getName();
+					if (name.equals("COBOLWord")) {
 						toAdd = toAdd.replace("-", "_");
 					}
-					else if (token.toString().equals("HexLiteral")) {
+					else if (name.equals("HexLiteral")) {
 						String hexText = toAdd.replaceAll("[Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
 						toAdd = " \"";
 						for (int j = 0; j < hexText.length(); j += 2) {
@@ -5656,6 +5819,9 @@ public class COBOLParser extends CodeParser
 						}
 						toAdd += "\" ";
 					}
+					else if (name.equals("TOK_PLUS") || name.equals("TOK_MINUS")) {
+						toAdd = " " + toAdd + " ";
+					}
 					else if (toAdd.equalsIgnoreCase("zero") || toAdd.equalsIgnoreCase("zeroes")) {
 						toAdd = "0";
 					}
@@ -5663,9 +5829,12 @@ public class COBOLParser extends CodeParser
 						toAdd = "\' \'";
 					}
 					// Keywords FUNCTION and IS are to be suppressed
-					String tokenStr = token.toString(); 
-					if (!tokenStr.equalsIgnoreCase("FUNCTION") && !tokenStr.equalsIgnoreCase("IS")) {
-						_content += (i == 0 ? "" : _separator + " ") + toAdd;
+					if (!name.equalsIgnoreCase("FUNCTION") && !name.equalsIgnoreCase("IS")) {
+						String sepa = "";
+						if (i > 0 && !(_content + _separator).endsWith(" ") && !toAdd.startsWith(" ")) {
+							sepa = " ";
+						}
+						_content += (i == 0 ? "" : _separator + sepa) + toAdd;
 					}
 				}
 				break;
@@ -5697,6 +5866,15 @@ public class COBOLParser extends CodeParser
 				}
 				aRoot.setText(fileName);
 				aRoot.isProgram = true;
+			}
+		}
+		// Force returning of the specified result
+		if (this.returnMap.containsKey(aRoot)) {
+			String resultVar = this.returnMap.get(aRoot);
+			int nElements = aRoot.children.getSize();
+			if (!aRoot.getMethodName().equals(resultVar) && !resultVar.equalsIgnoreCase("RESULT")
+					&& (nElements == 0 || !(aRoot.children.getElement(nElements-1) instanceof Jump))) {
+				aRoot.children.addElement(new Instruction(getKeywordOrDefault("preReturn", "return") + " " + this.returnMap.get(aRoot)));
 			}
 		}
 	}

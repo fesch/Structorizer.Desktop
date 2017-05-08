@@ -136,7 +136,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	// END KGU#354 2017-04-27
 	
 	/**
-	 * Standard element colour for imported constant definitios
+	 * Standard element colour for imported constant definitions
 	 * @see #colorDecl
 	 * @see #colorGlobal
 	 * @see #colorMisc

@@ -122,6 +122,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
  *      Kay Gürtzig     2017.04.11/15   Enh. #389: Modifications in CALL transmutation and canTransmute()
  *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
+ *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
  *
  ******************************************************************************************************
  *
@@ -385,6 +386,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
 					if (!checkRunning()) return;	// Don't proceed if the root is being executed
 					// END KGU#157 2016-03-16
+					// START KGU#392 2017-05-07: Enh. #399
+					String unsuitedFiles = "";
+					// END KGU#392 2017-05-07
 					//boolean found = false;
 					for (int i = 0; i < files.length; i++)
 					{
@@ -520,10 +524,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									((JFrame)cont).toFront();
 								}
 							}
+							// START KGU#392 2017-05-07: Enh. #399: Gather unsuited files
+							else {
+								unsuitedFiles += "\n\u2022 " + filename;
+							}
+							// END KGU#392 2017-05-07
 
 						}
 						// END KGU#354 2017-03-08
+					} // for (int i = 0; i < files.length; i++)
+					// START KGU#392 2017-05-07: Enh. #399 Inform about unsuited files
+					if (!unsuitedFiles.isEmpty()) {
+						JOptionPane.showMessageDialog(null,
+								Menu.msgUnsupportedFileFormat.getText().replace("%", unsuitedFiles),
+								Menu.msgTitleLoadingError.getText(),
+								JOptionPane.INFORMATION_MESSAGE);
 					}
+					// END KGU#392 2017-05-07
 				}
 			}
 				);
@@ -4899,9 +4916,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 
 			} catch (MalformedURLException e) {
-				System.err.println("Diagram.retrievaLatestVersion: " + e.toString());
+				System.err.println("Diagram.retrieveLatestVersion(): " + e.toString());
 			} catch (IOException e) {
-				System.err.println("Diagram.retrievaLatestVersion: " + e.toString());
+				System.out.println("Diagram.retrieveLatestVersion(): " + e.toString());
 			}
 		}
 		return version;

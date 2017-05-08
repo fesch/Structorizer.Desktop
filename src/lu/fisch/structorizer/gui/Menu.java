@@ -481,6 +481,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgImportCancelled = new LangTextHolder("Code import for file \"%\" cancelled.");
 	public static final LangTextHolder msgImportFileReadError = new LangTextHolder("File \"%\" does not exist or cannot be read.");
 	// END KGU#354 2017-03-04
+	// START KGU#392 2017-05-07: Enh. #354, #399
+	public static final LangTextHolder msgUnsupportedFileFormat = new LangTextHolder("These files couldn't be loaded because their format is not known or not supported:\n%");
+	// END KGU#392 2017-05-07
 	// START KGU#365 2017-03-27: Enh. #380
 	public static final LangTextHolder msgSubroutineName = new LangTextHolder("Name of the subroutine");
 	public static final LangTextHolder msgJumpsOutwardsScope = new LangTextHolder(
