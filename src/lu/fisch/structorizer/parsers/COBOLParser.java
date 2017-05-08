@@ -4547,11 +4547,11 @@ public class COBOLParser extends CodeParser
 						String selectors = "";
 						while (whenlRed != null) {
 							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
-								selectors = this.getContent_R(whenlRed.get(2).asReduction(), caseText.get(0)) + ", " + selectors;
+								selectors = this.getContent_R(whenlRed.get(2).asReduction(), "") + ", " + selectors;
 								whenlRed = whenlRed.get(0).asReduction();
 							}
 							else {
-								selectors = this.getContent_R(whenlRed.get(1).asReduction(), caseText.get(0)) + ", " + selectors;
+								selectors = this.getContent_R(whenlRed.get(1).asReduction(), "") + ", " + selectors;
 								whenlRed = null;
 							}
 						}
