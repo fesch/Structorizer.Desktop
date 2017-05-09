@@ -108,6 +108,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
  *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
  *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
+ *      Kay Gürtzig     2017.05.09      Enh. #372: Statistic method supporting the AttributeInspector
  *
  ******************************************************************************************************
  *
@@ -4473,4 +4474,60 @@ public class Root extends Element {
 	}
 	// END KGU#365 2017-03-14
 
+	// START KGU#363 2017-05-08: Enh. #372 - some statistics
+	/**
+	 * Retrieves the counts of contained elements per category:<br/>
+	 * 0. Instructions<br/>
+	 * 1. Alternatives<br/>
+	 * 2. Selections<br/>
+	 * 3. Loops<br/>
+	 * 4. Calls<br/>
+	 * 5. Jumps<br/>
+	 * 6. Parallel sections<br/>
+	 * @return an integer array with element counts according to the index map above 
+	 */
+	public Integer[] getElementCounts()
+	{
+		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0};
+		
+		IElementVisitor counter = new IElementVisitor() {
+
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Call) {
+					counts[4]++;
+				}
+				else if (_ele instanceof Jump) {
+					counts[5]++;
+				}
+				else if (_ele instanceof Instruction) {
+					counts[0]++;
+				}
+				if (_ele instanceof Alternative) {
+					counts[1]++;
+				}
+				else if (_ele instanceof Case) {
+					counts[2]++;
+				}
+				else if (_ele instanceof ILoop) {
+					counts[3]++;
+				}
+				else if (_ele instanceof Parallel) {
+					counts[6]++;
+				}	
+				return true;
+			}
+
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+			
+		};
+		this.traverse(counter);
+		
+		return counts;
+	}
+	// END KGU#363 2017-05-08
+	
 }

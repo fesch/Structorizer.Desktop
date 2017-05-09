@@ -4389,13 +4389,7 @@ public class COBOLParser extends CodeParser
 			System.out.println(rule);
 			String ruleHead = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			if (logFile != null) {
-				try {
-					logFile.write("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n");
-				} catch (IOException e) {
-					System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
-				}
-			}
+			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 			System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
 			if (
