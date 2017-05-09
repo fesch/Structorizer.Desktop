@@ -19,6 +19,28 @@
  */
 package lu.fisch.structorizer.gui;
 
+/******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    This is GUI scale preview and preselect dialog.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2017.01.11      First Issue
+ *      Kay Gürtzig     2017.05.09      Issue #400: keyListener at all controls, initial focus to spinner 
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      
+ *
+ ******************************************************************************************************///
+
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Font;
@@ -52,27 +74,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import lu.fisch.structorizer.elements.Element;
-
-/******************************************************************************************************
- *
- *      Author:         Kay Gürtzig
- *
- *      Description:    This is GUI scale preview and preselect dialog.
- *
- ******************************************************************************************************
- *
- *      Revision List
- *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Kay Gürtzig     2017.01.11      First Issue
- *
- ******************************************************************************************************
- *
- *      Comment:
- *      
- *
- ******************************************************************************************************///
 
 import lu.fisch.structorizer.locales.LangDialog;
 
@@ -246,6 +247,10 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 			};
 			btnOK.addKeyListener(keyListener);
 			spnScale.addKeyListener(keyListener);
+			// START KGU#393 2017-05-09: Issue #400 - involve all controls
+			txtComment.addKeyListener(keyListener);
+			spnScale.requestFocusInWindow();
+			// END KGU#393 2017-05-09
 			
 			// add the ACTION-listeners
 			ActionListener actionListener = new ActionListener()

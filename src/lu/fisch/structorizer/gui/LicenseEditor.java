@@ -47,6 +47,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -105,6 +106,7 @@ import lu.fisch.structorizer.locales.LangDialog;
  *      6. Content of the license file in the pool, different text colour, not allowed to modify but to
  *         adopt as copy -> case 3; title like 4 but with root name in parentheses?
  */
+@SuppressWarnings("serial")
 public class LicenseEditor extends LangDialog implements ActionListener, UndoableEditListener {
 
 	static private final int MIN_FONT_SIZE = 6;
@@ -302,6 +304,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(menuFile);
+		menuFile.setMnemonic(KeyEvent.VK_F);
 		if (this.root != null) {
 			menuFile.add(menuFileCommit);
 		}
@@ -313,14 +316,18 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 			menuFile.add(menuFileDelete);
 		}
 		menuFile.add(menuFileQuit);
+		
 		menuBar.add(menuEdit);
+		menuEdit.setMnemonic(KeyEvent.VK_E);
 		menuEdit.add(menuEditUndo);
 		menuEdit.add(menuEditRedo);
 //		menuEdit.add(menuEditCut);
 //		menuEdit.add(menuEditCopy);
 //		menuEdit.add(menuEditPaste);
 		menuEdit.add(menuEditClear);
+		
 		menuBar.add(menuProp);
+		menuProp.setMnemonic(KeyEvent.VK_P);
 		menuProp.add(menuPropFont);
 		menuProp.add(menuPropFontUp);
 		menuProp.add(menuPropFontDown);
@@ -346,6 +353,29 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		textPane.setEditable(true);
 		// END KGU#279 2016-10-11
 		doc.addUndoableEditListener(this);
+		
+		// START KGU#393 2017-05-09: Issue #400
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent e) 
+			{
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					dispose();
+				}
+				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				{
+					dispose(true);
+				}
+			}
+			
+			public void keyReleased(KeyEvent ke) {} 
+			public void keyTyped(KeyEvent kevt) {}
+		};
+		textPane.addKeyListener(keyListener);
+		// END KGU#393 2017-05-09		
+
+		
 		panel.setLayout(new BorderLayout());
 		panel.add(scrText, BorderLayout.CENTER);
 		this.add(panel, null);
@@ -668,12 +698,19 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	
 	public void dispose()
 	{
+		dispose(false);
+	}
+	
+	public void dispose(boolean _saveAnyway)
+	{
 		// Ask whether to save
 		if (this.undoMan.canUndoOrRedo()) {
-			int answer = JOptionPane.showConfirmDialog(this, 
+			int answer = (_saveAnyway ? JOptionPane.OK_OPTION : JOptionPane.DEFAULT_OPTION);
+			if (!_saveAnyway) {
+				answer = JOptionPane.showConfirmDialog(this, 
 					msgPendingChanges.getText().replace("%", getLicenseName()),
 					this.licenseFile.getAbsolutePath(), JOptionPane.YES_NO_CANCEL_OPTION);
-			
+			}
 			if (answer == JOptionPane.OK_OPTION) {
 				if (this.root != null) {
 					this.update();

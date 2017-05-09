@@ -642,8 +642,11 @@ InputBoxRoot.msgLicenseLoadError.text=Error on loading license text for license 
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Structorizer License Editor: %
 LicenseEditor.menuFile.text=File
+LicenseEditor.menuFile.mnemonic=f
 LicenseEditor.menuEdit.text=Edit
+LicenseEditor.menuEdit.mnemonic=e
 LicenseEditor.menuProp.text=Properties
+LicenseEditor.menuProp.mnemonic=p
 LicenseEditor.menuFileCommit.text=Commit
 LicenseEditor.menuFileSave.text=Save (to pool)
 LicenseEditor.menuFileSaveAs.text=Save as ...

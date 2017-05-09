@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.11      Minimum font size 2 dropped from the sizes array.
  *      Kay Gürtzig     2016.11.02      Issue #81: Scaling Factor considered (DPI awareness workarond)
  *      Kay Güertig     2016.11.09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls 
  *
  ******************************************************************************************************
  *
@@ -76,6 +77,10 @@ import javax.swing.event.*;
 @SuppressWarnings("serial")
 public class FontChooser extends LangDialog
 {
+	// START KGU#393 2017-05-09: Issue #400 - indicate whether changes are committed
+	public boolean OK = false;
+	// END KGU#393 2017-05-09
+	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel pnlChooser;
@@ -260,6 +265,9 @@ public class FontChooser extends LangDialog
 				}
 				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
 				{
+					// START KGU#393 2017-05-09: Issue #400
+					OK = true;
+					// END KGU#393 2017-05-09		
 					setVisible(false);
 				}
 			}
@@ -276,6 +284,9 @@ public class FontChooser extends LangDialog
 		{
 			public void actionPerformed(ActionEvent event)
 			{
+				// START KGU#393 2017-05-09: Issue #400
+				OK = true;
+				// END KGU#393 2017-05-09		
 				setVisible(false);
 			}
 		};

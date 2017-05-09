@@ -123,6 +123,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.11/15   Enh. #389: Modifications in CALL transmutation and canTransmute()
  *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
  *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
+ *      Kay Gürtzig     2017.05.09      Issue #400: Proper check whether preference changes were committed
  *
  ******************************************************************************************************
  *
@@ -5000,22 +5001,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		colors.pack();
 		colors.setVisible(true);
 
-		// get fields
-		Element.color0=colors.color0.getBackground();
-		Element.color1=colors.color1.getBackground();
-		Element.color2=colors.color2.getBackground();
-		Element.color3=colors.color3.getBackground();
-		Element.color4=colors.color4.getBackground();
-		Element.color5=colors.color5.getBackground();
-		Element.color6=colors.color6.getBackground();
-		Element.color7=colors.color7.getBackground();
-		Element.color8=colors.color8.getBackground();
-		Element.color9=colors.color9.getBackground();
+		// START KGU#393 2017-05-09: Issue #400 - check whether changes were committed
+		if (colors.OK) {
+		// END KGU#393 2017-05-09		
+			// get fields
+			Element.color0=colors.color0.getBackground();
+			Element.color1=colors.color1.getBackground();
+			Element.color2=colors.color2.getBackground();
+			Element.color3=colors.color3.getBackground();
+			Element.color4=colors.color4.getBackground();
+			Element.color5=colors.color5.getBackground();
+			Element.color6=colors.color6.getBackground();
+			Element.color7=colors.color7.getBackground();
+			Element.color8=colors.color8.getBackground();
+			Element.color9=colors.color9.getBackground();
 
-		NSDControl.updateColors();
+			NSDControl.updateColors();
 
-		// save fields to ini-file
-		Element.saveToINI();
+			// save fields to ini-file
+			Element.saveToINI();
+		// START KGU#393 2017-05-09: Issue #400
+		}
+		// END KGU#393 2017-05-09		
 
 	}
 
@@ -5040,19 +5047,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		preferences.pack();
 		preferences.setVisible(true);
 
-		// get fields
-		Element.preAltT=preferences.edtAltT.getText();
-		Element.preAltF=preferences.edtAltF.getText();
-		Element.preAlt=preferences.edtAlt.getText();
-		Element.preCase=preferences.txtCase.getText();
-		Element.preFor=preferences.edtFor.getText();
-		Element.preWhile=preferences.edtWhile.getText();
-		Element.preRepeat=preferences.edtRepeat.getText();
-		Element.altPadRight=preferences.altPadRight.isSelected();
+		// START KGU#393 2017-05-09: Issue #400 - check whether changes were committed
+		if (preferences.OK) {
+		// END KGU#393 2017-05-09		
+			// get fields
+			Element.preAltT=preferences.edtAltT.getText();
+			Element.preAltF=preferences.edtAltF.getText();
+			Element.preAlt=preferences.edtAlt.getText();
+			Element.preCase=preferences.txtCase.getText();
+			Element.preFor=preferences.edtFor.getText();
+			Element.preWhile=preferences.edtWhile.getText();
+			Element.preRepeat=preferences.edtRepeat.getText();
+			Element.altPadRight=preferences.altPadRight.isSelected();
 
-		// save fields to ini-file
-		Element.saveToINI();
-                redraw();
+			// save fields to ini-file
+			Element.saveToINI();
+			redraw();
+		// START KGU#393 2017-05-09: Issue #400
+		}
+		// END KGU#393 2017-05-09		
 	}
 
 	public void parserNSD()
@@ -5489,19 +5502,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyserPreferences.setVisible(true);
 
 		// get fields
-		// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
-		for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
-		{
-			Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
+		// START KGU#393 2017-05-09: Issue #400 - check whether changes were actually committed
+		if (analyserPreferences.OK) {
+		// END KGU#393 2017-05-09		
+			// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
+			for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
+			{
+				Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
+			}
+			// END KGU#239 2016-08-12
+
+			// save fields to ini-file
+			Root.saveToINI();
+
+			// re-analyse
+			root.getVarNames();
+			analyse();
+		// START KGU#393 2017-05-09: Issue #400
 		}
-		// END KGU#239 2016-08-12
-
-		// save fields to ini-file
-		Root.saveToINI();
-
-		// re-analyse
-		root.getVarNames();
-		analyse();
+		// END KGU#393 2017-05-09		
 	}
 
     public void exportOptions()
@@ -5682,18 +5701,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		fontChooser.setFont(Element.getFont());
 		fontChooser.setVisible(true);
 
-		// get fields
-		Element.setFont(fontChooser.getCurrentFont());
+		// START KGU#393 2017-05-09: Issue #400 - make sure the changes were committed
+		if (fontChooser.OK) {
+		// END KGU#393 2017-05-09		
+			// get fields
+			Element.setFont(fontChooser.getCurrentFont());
 
-		// save fields to ini-file
-		Element.saveToINI();
-		
-		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		this.resetDrawingInfo(true);
-		// END KGU#136 2016-03-02
+			// save fields to ini-file
+			Element.saveToINI();
 
-		// redraw diagram
-		redraw();
+			// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
+			this.resetDrawingInfo(true);
+			// END KGU#136 2016-03-02
+
+			// redraw diagram
+			redraw();
+		// START KGU#393 2017-05-09: Issue #400
+		}
+		// END KGU#393 2017-05-09		
+
 	}
 
 	public void fontUpNSD()

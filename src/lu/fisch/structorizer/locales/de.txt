@@ -638,8 +638,11 @@ InputBoxRoot.msgLicenseLoadError.text=Fehler beim Laden des Lizenztexts für Liz
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Structorizer Lizenz-Editor: %
 LicenseEditor.menuFile.text=Datei
-LicenseEditor.menuEdit.text=Bearbeiten
+LicenseEditor.menuFile.mnemonic=d
+LLicenseEditor.menuEdit.text=Bearbeiten
+LicenseEditor.menuEdit.mnemonic=e
 LicenseEditor.menuProp.text=Eigenschaften
+LicenseEditor.menuProp.mnemonic=s
 LicenseEditor.menuFileCommit.text=Übernehmen
 LicenseEditor.menuFileSave.text=Speichern (im Pool)
 LicenseEditor.menuFileSaveAs.text=Speichern unter ...

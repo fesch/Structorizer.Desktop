@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes/radio buttons
  *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls 
  *
  ******************************************************************************************************
  *
@@ -64,7 +65,10 @@ import javax.swing.border.*;
 @SuppressWarnings("serial")
 public class Preferences extends LangDialog implements ActionListener, KeyListener
 {
-
+	// START KGU#393 2017-05-09: Issue #400 - indicate whether changes are committed
+	public boolean OK = false;
+	// END KGU#393 2017-05-09
+	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel dialogPane;
@@ -359,6 +363,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	// listen to actions
 	public void actionPerformed(ActionEvent event)
 	{
+		// START KGU#393 2017-05-09: Issue #400 - indicate that changes are committed
+		if (event.getSource() == btnOK) {
+			OK = true;
+		}
+		// END KGU#393 2017-05-09
 		setVisible(false);
 	}
 	
@@ -374,6 +383,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		}
 		else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
 		{
+			// START KGU#393 2017-05-09: Issue #400 - indicate that changes are committed
+			OK = true;
+			// END KGU#393 2017-05-09
 			setVisible(false);
 		}
     }
