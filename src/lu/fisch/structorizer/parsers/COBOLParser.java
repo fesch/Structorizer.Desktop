@@ -4033,16 +4033,16 @@ public class COBOLParser extends CodeParser
 		 * minimal handling compiler directives, at least SOURCE FORMAT [IS] FREE|FIXED
 		 * for the start: remove compiler directives, later: more handling for them
 		 * include the content of comment-entries (AUTHOR, SECURITY, ...) as a string (maybe
-           remove the line breaks in them and provide a single string for easy parsing later)
+		 * remove the line breaks in them and provide a single string for easy parsing later)
 		 * in fixed-form reference format:
-		 * remove column 1-6 / 7 / 73+ [later: use a setting for this]
-		 * hack debugging lines as comments [later: use a setting for including them]
-		 * do word concatenation      VAR -IABLE ('-' in indicator area)
-		 * hack literal continuation as string concatenation (end literal with '" &)
+		 *     remove column 1-6 / 7 / 73+ [later: use a setting for this]
+		 *     hack debugging lines as comments [later: use a setting for including them]
+		 *     do word concatenation      VAR -IABLE ('-' in indicator area)
+		 *     hack literal continuation as string concatenation (end literal with '" &)
 		 * if DECIMAL-POINT [IS] COMMA is active: change Digit,Digit to Digit.Digit
 		 * remove ';' and ',' that are not part of a string/integer - cater also for ";;,,;"
 		 * recognize and store constants (78 name value [is] literal | 01 name constant as literal)
-           and replace them by tokens (must be redone during parsing)
+		 * and replace them by tokens (must be redone during parsing)
 		 */
 		
 		File interm = null;
