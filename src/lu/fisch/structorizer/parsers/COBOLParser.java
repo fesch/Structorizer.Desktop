@@ -46,6 +46,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.04.24      Moved from COBOL-85.grm (NOT being COBOL 85!!!) to GnuCOBOL.grm
  *      Kay Gürtzig     2017.05.07      ADD/SUBTRACT/MULTIPLY/DIVIDE with ROUNDED mode implemented, SET
  *                                      statement and string manipulations (ref mod) realized.
+ *      Kay Gürtzig     2017.05.10      Further accomplishments for EVALUATE (ALSO included)
  *
  ******************************************************************************************************
  *
@@ -66,7 +67,9 @@ import java.awt.Color;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -4026,21 +4029,21 @@ public class COBOLParser extends CodeParser
 	@Override
 	protected File prepareTextfile(String _textToParse, String _encoding)
 	{
-        /* TODO for preparsing:
-         * minimal handling compiler directives, at least SOURCE FORMAT [IS] FREE|FIXED
-         * for the start: remove compiler directives, later: more handling for them
-         * include the content of comment-entries (AUTHOR, SECURITY, ...) as a string (maybe
+		/* TODO for preparsing:
+		 * minimal handling compiler directives, at least SOURCE FORMAT [IS] FREE|FIXED
+		 * for the start: remove compiler directives, later: more handling for them
+		 * include the content of comment-entries (AUTHOR, SECURITY, ...) as a string (maybe
            remove the line breaks in them and provide a single string for easy parsing later)
-         * in fixed-form reference format:
-            * remove column 1-6 / 7 / 73+ [later: use a setting for this]
-            * hack debugging lines as comments [later: use a setting for including them]
-            * do word concatenation      VAR -IABLE ('-' in indicator area)
-            * hack literal continuation as string concatenation (end literal with '" &)
-         * if DECIMAL-POINT [IS] COMMA is active: change Digit,Digit to Digit.Digit
-         * remove ';' and ',' that are not part of a string/integer - cater also for ";;,,;"
-         * recognize and store constants (78 name value [is] literal | 01 name constant as literal)
+		 * in fixed-form reference format:
+		 * remove column 1-6 / 7 / 73+ [later: use a setting for this]
+		 * hack debugging lines as comments [later: use a setting for including them]
+		 * do word concatenation      VAR -IABLE ('-' in indicator area)
+		 * hack literal continuation as string concatenation (end literal with '" &)
+		 * if DECIMAL-POINT [IS] COMMA is active: change Digit,Digit to Digit.Digit
+		 * remove ';' and ',' that are not part of a string/integer - cater also for ";;,,;"
+		 * recognize and store constants (78 name value [is] literal | 01 name constant as literal)
            and replace them by tokens (must be redone during parsing)
-      */
+		 */
 		
 		File interm = null;
 		try
@@ -4500,264 +4503,11 @@ public class COBOLParser extends CodeParser
 			}
 			else if (ruleId == RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE)
 			{
-				System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
-				// Possibly a CASE instruction, may have to be decomposed to an IF chain.
-				Reduction secRed = _reduction.get(1).asReduction();	// <evaluate_body>
-				Reduction subjlRed = secRed.get(0).asReduction();	// <evaluate_subject_list>
-				Reduction condlRed = secRed.get(1).asReduction();		// <evaluate_condition_list>
-				int subjlRuleId = subjlRed.getParent().getTableIndex();
-				if (subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT) {
-					// Single discriminator expression - there might be a chance to convert this to a CASE element
-					System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
-					StringList caseText = StringList.getNew(this.getContent_R(subjlRed, ""));
-					Case ele = new Case();
-					// Now analyse the branches
-					Reduction otherRed = null;
-					if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
-						otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
-						Subqueue sq = new Subqueue();
-						buildNSD_R(otherRed.get(2).asReduction(), sq);
-						caseText.add("default");	// last line for default branch
-						condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
-						ele.qs.addElement(sq);
-					}
-					else {
-						caseText.add("%");	// suppress the default branch
-						ele.qs.addElement(new Subqueue());
-					}
-					// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
-					do {
-						String caseHead = condlRed.getParent().getHead().toString();
-						Reduction caseRed = condlRed;	// could be <evaluate_case>
-						if (caseHead.equals("<evaluate_case_list>")) {
-							caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
-						}
-						// Get the instruction part
-						Subqueue sq = new Subqueue();
-						buildNSD_R(caseRed.get(1).asReduction(), sq);	// <statement_list>
-						ele.qs.add(0, sq);
-						// Now collect the WHEN clauses and concoct the compound condition
-						Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
-						String selectors = "";
-						while (whenlRed != null) {
-							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
-								selectors = this.getContent_R(whenlRed.get(2).asReduction(), "") + ", " + selectors;
-								whenlRed = whenlRed.get(0).asReduction();
-							}
-							else {
-								selectors = this.getContent_R(whenlRed.get(1).asReduction(), "") + ", " + selectors;
-								whenlRed = null;
-							}
-						}
-						selectors = selectors.trim();
-						if (selectors.endsWith(",")) {
-							selectors = selectors.substring(0, selectors.length()-1);
-						}
-						caseText.insert(selectors, 1);
-						//}
-						condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
-					} while (condlRed != null);
-					ele.setText(caseText);
-					_parentNode.addElement(ele);
-				}
-				else if (
-						subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_TRUE
-						||
-						subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE
-						) {
-					// Independent conditions, will be converted to nested alternatives
-					boolean negate = subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE;
-					// Single discriminator expression - there might be a chance to convert this to a CASE element
-					System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_TOK_TRUE/FALSE");
-					Reduction otherRed = null;
-					Element elseBranch = null;
-					if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
-						otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
-						elseBranch = new Subqueue();
-						buildNSD_R(otherRed.get(2).asReduction(), (Subqueue)elseBranch);
-						condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
-					}
-					// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
-					do {
-						String caseHead = condlRed.getParent().getHead().toString();
-						Reduction caseRed = condlRed;	// could be <evaluate_case>
-						if (caseHead.equals("<evaluate_case_list>")) {
-							caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
-						}
-						// Get the condition(s)
-						Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
-						String conds = "";
-						while (whenlRed != null) {
-							String cond = "";
-							if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
-								// FIXME: provide the subject of the first condition (i.e. the discriminator...)
-								cond = this.transformCondition(whenlRed.get(2).asReduction(), "");
-								whenlRed = whenlRed.get(0).asReduction();
-							}
-							else {
-								// FIXME: provide the subject of the first condition (i.e. the discriminator...)
-								cond = this.transformCondition(whenlRed.get(1).asReduction(), "");
-								whenlRed = null;
-							}
-							if (negate) {
-								cond = this.negateCondition(cond);
-							}
-							conds = cond + " or " + conds;
-						}
-						conds = conds.trim();
-						if (conds.endsWith(" or")) {
-							conds = conds.substring(0, conds.length()-" or".length());
-						}
-						Alternative alt = new Alternative(conds);
-						// Get the instruction part
-						if (elseBranch instanceof Subqueue) {
-							alt.qFalse = (Subqueue)elseBranch;
-							elseBranch.parent = alt;
-						}
-						else if (elseBranch != null) {
-							alt.qFalse.addElement(elseBranch);
-						}
-						buildNSD_R(caseRed.get(1).asReduction(), alt.qTrue);	// <statement_list>
-						elseBranch = alt;
-						condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
-					} while (condlRed != null);
-					if (elseBranch != null) {
-						// elseBranch should not be a Subqueue here!
-						_parentNode.addElement(elseBranch);
-					}	
-				}
-				else {
-					// This can only be represented by nested alternatives
-					System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
-				}
+				this.importEvaluate(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_PERFORM_STATEMENT_PERFORM)
 			{
-				System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
-				// We will have to find out what kind of loop this is.
-				// In the worst case the body is just a paragraph name (PROD_PERFORM_BODY), which
-				// forces us to find that paragraph and to copy its content into the body Subqueue.
-				// The best case would be PROD_PERFORM_BODY2 - then the body is just a statement list
-				// Then there is the case of an empty body (PROD_PERFORM_BODY3) - only an option is given
-				Reduction bodyRed = _reduction.get(1).asReduction();
-				int bodyRuleId = bodyRed.getParent().getTableIndex();
-				int optionIx = (bodyRuleId == RuleConstants.PROD_PERFORM_BODY) ? 1 : 0;
-				Reduction optRed = bodyRed.get(optionIx).asReduction();
-				String content = "";
-				ILoop loop = null;
-				System.out.println("\t" + optRed.getParent().toString());
-				switch (optRed.getParent().getTableIndex()) {
-				case RuleConstants.PROD_PERFORM_OPTION_TIMES:
-					// FOR loop
-					{
-						// Prepare a generic variable name
-						content = this.getContent_R(optRed.get(0).asReduction(), content);
-						loop = new For("varStructorizer", "1", content, 1);
-						content = ((For)loop).getText().getLongString();
-						((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
-					}
-					break;
-				case RuleConstants.PROD_PERFORM_OPTION_VARYING:
-					// FOR loop
-					{
-						// Classify the test position
-						Reduction testRed = optRed.get(0).asReduction();
-						Reduction controlRed = optRed.get(2).asReduction();
-						boolean testAfter = testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST_TEST
-								&& testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_AFTER
-								|| controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER;
-						// Get actual FOR clause parameters
-						Reduction forRed = controlRed;
-						if (controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER) {
-							forRed = controlRed.get(controlRed.size()-1).asReduction();
-						}
-						Reduction condRed = forRed.get(6).asReduction();
-						String varName = this.getContent_R(forRed.get(0).asReduction(), "").replaceAll("-", "_");
-						String from = this.getContent_R(forRed.get(2).asReduction(), "");
-						String by = this.getContent_R(forRed.get(4).asReduction(), "");
-						String cond = this.getContent_R(condRed, "").trim();
-						// FIXME this is just a quick hack
-						int step = 0;
-						try {
-							step = Integer.parseInt(by);
-						}
-						catch (NumberFormatException ex) {}
-						if (step == 0
-								|| step > 0 && !cond.matches(BString.breakup(varName) + "\\s* > .*") && !cond.matches(".* < \\s*" + BString.breakup(varName))
-								|| step < 0 && !cond.matches(BString.breakup(varName) + "\\s* < .*") && !cond.matches(".* > \\s*" + BString.breakup(varName))) {
-							_parentNode.addElement(new Instruction(varName + " <- " + from));
-							While wloop = new While(negateCondition(cond));
-							if (bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
-								this.buildNSD_R(bodyRed.get(1).asReduction(), wloop.getBody());
-								wloop.getBody().addElement(new Instruction(varName + " <- " + varName + " + (" + by + ")"));
-							}
-							else {
-								Instruction defective = new Instruction(this.getContent_R(_reduction, ""));
-								defective.setColor(Color.RED);
-								defective.disabled = true;
-							}
-						}
-//						else if (testAfter) {
-//							// TODO: We will have to convert the loop to a REPEAT loop
-//						}
-						else {
-							if (cond.matches(BString.breakup(varName) + "\\s* [<>] .*")) {
-								cond = cond.replaceAll(BString.breakup(varName) + "\\s* [<>] (.*)", "$1");
-							}
-							else {
-								cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName), "$1");
-							}
-							loop = new For(varName, from, cond.trim(), step);
-							// FIXME: This should have become superfluous as soon as the conversion to a REPEAT loop above is implemented  
-							if (testAfter) {
-								((For)loop).setComment("WARNING: In the original code this loop was specified to do the test AFTER the body!");
-							}
-						}
-					}
-					break;
-				case RuleConstants.PROD_PERFORM_OPTION_FOREVER:
-					// FOREVER loop
-					loop = new Forever();
-					break;
-				case RuleConstants.PROD_PERFORM_OPTION_UNTIL:
-					// WHILE or REPEAT loop
-					{
-						// Get the condition itself
-						content = this.getContent_R(optRed.get(2).asReduction(), "");
-						// Classify the test position
-						Reduction testRed = optRed.get(0).asReduction();
-						if (testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST
-								|| testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_BEFORE) {
-							loop = new While(negateCondition(content));
-						}
-						else {
-							loop = new Repeat(content);
-						}
-					}
-					break;
-				default:
-					// Just a macro (block)	
-					{
-						content = this.getContent_R(bodyRed.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
-						if (Character.isDigit(content.charAt(0))) {
-							content = "sub" + content;
-						}
-						Call dummyCall = new Call(content);
-						dummyCall.setColor(Color.RED);
-						dummyCall.setComment("Seems to be a call of an internal paragraph/macro, wich is still not supported");
-						_parentNode.addElement(dummyCall);
-					}
-				}
-				if (loop != null && bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
-					this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
-				}
-				else {
-					// FIXME
-					System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
-				}
-				if (loop != null) {
-					_parentNode.addElement((Element)loop);
-				}
+				this.importPerform(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_MOVE_STATEMENT_MOVE)
 			{
@@ -4849,175 +4599,22 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD_ADD_STATEMENT_ADD)
 			{
 				System.out.println("PROD_ADD_STATEMENT_ADD");
-				Reduction secRed = _reduction.get(1).asReduction();
-				int targetIx = -1;			// token index for the targets
-				String summands1 = null;
-				String summand2 = null;
-				int secRuleId = secRed.getParent().getTableIndex();
-				switch (secRuleId) {
-				case RuleConstants.PROD_ADD_BODY_GIVING:
-					summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
-					if (secRed.get(1).asReduction().size() == 2) {
-						summand2 = this.getContent_R(secRed.get(1).asReduction().get(1).asReduction(), "");
-					}
-					targetIx = 3;
-					break;
-				case RuleConstants.PROD_ADD_BODY_TO:
-					summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
-					targetIx = 2;
-					break;
-					// FIXME: There is no idea how to import the remaining ADD statement varieties
-				}
-				StringList targets = null;
-				if (targetIx >= 0) {
-					targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_X_COMMA_DELIM);
-				}
-				if (targets != null && targets.count() > 0) {
-					String lastResult = null;
-					StringList content = new StringList();
-					for (int i = 0; i < targets.count(); i++) {
-						String target = targets.get(i).trim();
-						lastResult = this.addArithmOperation(content, "+", target, (summand2 != null ? summand2 : target), summands1, lastResult);
-						if (summand2 == null) {
-							lastResult = null;
-						}
-					}
-					_parentNode.addElement(new Instruction(content));
-				}
-				else {
-					Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
-					defective.setColor(Color.RED);
-					defective.disabled = true;
-					defective.setComment("COBOL import still not implemented");
-					_parentNode.addElement(defective);
-				}
+				this .importAdd(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT)
 			{
 				System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
-				Reduction secRed = _reduction.get(1).asReduction();
-				int secRuleId = secRed.getParent().getTableIndex();
-				int targetIx = 2;
-				String summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
-				String summand2 = null;
-				if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
-					targetIx = 4;
-					summand2 = this.getContent_R(secRed.get(2).asReduction(), "");
-				}
-				StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-				if (targets.count() > 0) {
-					String lastResult = null;
-					StringList content = new StringList();
-					//StringList.getNew(targets[0] + " <- " + (summand2 != null ? summand2 : targets[0]) + " - (" + summands1 + ")");
-					for (int i = 0; i < targets.count(); i++) {
-						String target = targets.get(i).trim();
-						lastResult = this.addArithmOperation(content, "-", target, (summand2 != null ? summand2 : target), "(" + summands1 + ")", lastResult);
-						if (summand2 == null) {
-							// We may not re-use the result if the minuend changes
-							lastResult = null;
-						}
-					}
-					_parentNode.addElement(new Instruction(content));
-				}
-				else {
-					Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
-					defective.setColor(Color.RED);
-					defective.disabled = true;
-					defective.setComment("COBOL import still not implemented");
-					_parentNode.addElement(defective);
-				}
+				this.importSubtract(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY)
 			{
 				System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
-				Reduction secRed = _reduction.get(1).asReduction();
-				int secRuleId = secRed.getParent().getTableIndex();
-				int targetIx = 2;
-				String factor1 = this.getContent_R(secRed.get(0).asReduction(), "");
-				String factor2 = null;
-				if (secRuleId == RuleConstants.PROD_MULTIPLY_BODY_BY_GIVING) {
-					targetIx = 4;
-					factor2 = this.getContent_R(secRed.get(2).asReduction(), "");
-				}
-				// FIXME: Handle the <flag rounded>
-				StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-				//String[] targets = this.getContent_R(secRed.get(targetIx).asReduction(), "").split(" ");
-				//if (targets.length > 0) {
-				if (targets.count() > 0) {
-					String lastResult = null;
-					StringList content = new StringList();
-					for (int i = 0; i < targets.count(); i++) {
-						String target = targets.get(i).trim();
-						lastResult = this.addArithmOperation(content, "*", target, (factor2 != null ? factor2 : target), factor1, lastResult);
-						if (factor2 == null) {
-							// Don't reuse the former result if the 2nd operand changes
-							lastResult = null;
-						}
-					}
-					_parentNode.addElement(new Instruction(content));
-				}
-				else {
-					Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
-					defective.setColor(Color.RED);
-					defective.disabled = true;
-					defective.setComment("COBOL import still not implemented");
-					_parentNode.addElement(defective);
-				}
+				this.importMultiply(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE)
 			{
 				System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
-				Reduction secRed = _reduction.get(1).asReduction();
-				int secRuleId = secRed.getParent().getTableIndex();
-				int targetIx = 4;
-				String divisor = this.getContent_R(secRed.get(0).asReduction(), "");
-				String dividend = null;
-				String remainder = null;
-				if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_INTO) {
-					targetIx = 2;
-				}
-				else {
-					dividend = this.getContent_R(secRed.get(2).asReduction(), "");
-				}
-				if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING
-						|| secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING_REMAINDER) {
-					// In the BY statements the operand roles are swapped 
-					String tmp = dividend;
-					dividend = divisor;
-					divisor = tmp;
-				}
-				if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_INTO_GIVING_REMAINDER
-						|| secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING_REMAINDER) {
-					remainder = this.getContent_R(secRed.get(6).asReduction(), "");
-				}
-				StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(),
-						"<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-				
-				//else if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING || )
-				// FIXME: Handle the <flag rounded>
-				if (targets.count() > 0) {
-					StringList content = new StringList();
-					String lastResult = null;
-					for (int i = 0; i < targets.count(); i++) {
-						String target = targets.get(i).trim();
-						lastResult = this.addArithmOperation(content, "/", target, (dividend != null ? dividend : target), divisor, lastResult);
-						if (dividend == null) {
-							// Don't re-use the former result if the dividend changes
-							lastResult = null;
-						}
-					}
-					if (remainder != null) {
-						content.add(remainder + " <- " + dividend + " mod " + divisor);
-					}
-					_parentNode.addElement(new Instruction(content));
-				}
-				else {
-					Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
-					defective.setColor(Color.RED);
-					defective.disabled = true;
-					defective.setComment("COBOL import still not implemented");
-					_parentNode.addElement(defective);
-				}
+				this.importDivide(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT)
 			{
@@ -5102,46 +4699,7 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD_EXIT_STATEMENT_EXIT)
 			{
 				System.out.println("PROD_EXIT_STATEMENT_EXIT");
-				String content = "";
-				String comment = "";
-				Color color = null;
-				Reduction secRed = _reduction.get(1).asReduction();
-				int secRuleId = secRed.getParent().getTableIndex();
-				switch (secRuleId) {
-				case RuleConstants.PROD_EXIT_BODY:	// (empty)
-					content = "(exit from paragraph)";
-					break;
-				case RuleConstants.PROD_EXIT_BODY_PROGRAM:	// <exit_body> ::= PROGRAM <exit_program_returning>
-				case RuleConstants.PROD_EXIT_BODY_FUNCTION:	// <exit_body> ::= FUNCTION
-					{
-						content = CodeParser.getKeywordOrDefault("preReturn", "return");
-						if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
-							content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
-						}
-					}
-					break;
-				case RuleConstants.PROD_EXIT_BODY_PERFORM:	// <exit_body> ::= PERFORM
-					content = CodeParser.getKeywordOrDefault("preLeave", "leave");
-					break;
-				case RuleConstants.PROD_EXIT_BODY_PERFORM_CYCLE: // <exit_body> ::= PERFORM CYCLE
-				case RuleConstants.PROD_EXIT_BODY_SECTION:	// <exit_body> ::= SECTION
-				case RuleConstants.PROD_EXIT_BODY_PARAGRAPH:// <exit_body> ::= PARAGRAPH
-					content = this.getContent_R(_reduction, "");
-					color = Color.RED;
-					comment = "Unsupported kind of JUMP";
-					break;
-				}
-				if (content != null) {
-					Jump jmp = new Jump(content.trim());
-					if (!comment.isEmpty()) {
-						jmp.setComment(comment);
-					}
-					if (color != null) {
-						jmp.setColor(color);
-						jmp.disabled = true;
-					}
-					_parentNode.addElement(jmp);
-				}
+				this.importExit(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_GOBACK_STATEMENT_GOBACK )
 			{
@@ -5205,6 +4763,597 @@ public class COBOLParser extends CodeParser
 		}
 	}	
 
+	/**
+	 * Builds an approptiate Instruction element from the ADD statement represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed ADD statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private void importAdd(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		int targetIx = -1;			// token index for the targets
+		String summands1 = null;
+		String summand2 = null;
+		int secRuleId = secRed.getParent().getTableIndex();
+		switch (secRuleId) {
+		case RuleConstants.PROD_ADD_BODY_GIVING:
+			summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
+			if (secRed.get(1).asReduction().size() == 2) {
+				summand2 = this.getContent_R(secRed.get(1).asReduction().get(1).asReduction(), "");
+			}
+			targetIx = 3;
+			break;
+		case RuleConstants.PROD_ADD_BODY_TO:
+			summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
+			targetIx = 2;
+			break;
+			// FIXME: There is no idea how to import the remaining ADD statement varieties
+		}
+		StringList targets = null;
+		if (targetIx >= 0) {
+			targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_X_COMMA_DELIM);
+		}
+		if (targets != null && targets.count() > 0) {
+			String lastResult = null;
+			StringList content = new StringList();
+			for (int i = 0; i < targets.count(); i++) {
+				String target = targets.get(i).trim();
+				lastResult = this.addArithmOperation(content, "+", target, (summand2 != null ? summand2 : target), summands1, lastResult);
+				if (summand2 == null) {
+					lastResult = null;
+				}
+			}
+			_parentNode.addElement(new Instruction(content));
+		}
+		else {
+			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
+			defective.setColor(Color.RED);
+			defective.disabled = true;
+			defective.setComment("COBOL import still not implemented");
+			_parentNode.addElement(defective);
+		}
+	}
+
+	/**
+	 * Builds an approptiate Instruction element from the SUBTRACT statement represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed SUBTRACT statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void importSubtract(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		int secRuleId = secRed.getParent().getTableIndex();
+		int targetIx = 2;
+		String summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
+		String summand2 = null;
+		if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
+			targetIx = 4;
+			summand2 = this.getContent_R(secRed.get(2).asReduction(), "");
+		}
+		StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		if (targets.count() > 0) {
+			String lastResult = null;
+			StringList content = new StringList();
+			//StringList.getNew(targets[0] + " <- " + (summand2 != null ? summand2 : targets[0]) + " - (" + summands1 + ")");
+			for (int i = 0; i < targets.count(); i++) {
+				String target = targets.get(i).trim();
+				lastResult = this.addArithmOperation(content, "-", target, (summand2 != null ? summand2 : target), "(" + summands1 + ")", lastResult);
+				if (summand2 == null) {
+					// We may not re-use the result if the minuend changes
+					lastResult = null;
+				}
+			}
+			_parentNode.addElement(new Instruction(content));
+		}
+		else {
+			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
+			defective.setColor(Color.RED);
+			defective.disabled = true;
+			defective.setComment("COBOL import still not implemented");
+			_parentNode.addElement(defective);
+		}
+	}
+
+	/**
+	 * Builds an approptiate Instruction element from the MULTIPLY statement represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed MULTIPLY statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void importMultiply(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		int secRuleId = secRed.getParent().getTableIndex();
+		int targetIx = 2;
+		String factor1 = this.getContent_R(secRed.get(0).asReduction(), "");
+		String factor2 = null;
+		if (secRuleId == RuleConstants.PROD_MULTIPLY_BODY_BY_GIVING) {
+			targetIx = 4;
+			factor2 = this.getContent_R(secRed.get(2).asReduction(), "");
+		}
+		// FIXME: Handle the <flag rounded>
+		StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		//String[] targets = this.getContent_R(secRed.get(targetIx).asReduction(), "").split(" ");
+		//if (targets.length > 0) {
+		if (targets.count() > 0) {
+			String lastResult = null;
+			StringList content = new StringList();
+			for (int i = 0; i < targets.count(); i++) {
+				String target = targets.get(i).trim();
+				lastResult = this.addArithmOperation(content, "*", target, (factor2 != null ? factor2 : target), factor1, lastResult);
+				if (factor2 == null) {
+					// Don't reuse the former result if the 2nd operand changes
+					lastResult = null;
+				}
+			}
+			_parentNode.addElement(new Instruction(content));
+		}
+		else {
+			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
+			defective.setColor(Color.RED);
+			defective.disabled = true;
+			defective.setComment("COBOL import still not implemented");
+			_parentNode.addElement(defective);
+		}
+	}
+
+	/**
+	 * Builds an approptiate Instruction element from the DIVIDE statement represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed DIVIDE statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void importDivide(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		int secRuleId = secRed.getParent().getTableIndex();
+		int targetIx = 4;
+		String divisor = this.getContent_R(secRed.get(0).asReduction(), "");
+		String dividend = null;
+		String remainder = null;
+		if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_INTO) {
+			targetIx = 2;
+		}
+		else {
+			dividend = this.getContent_R(secRed.get(2).asReduction(), "");
+		}
+		if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING
+				|| secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING_REMAINDER) {
+			// In the BY statements the operand roles are swapped 
+			String tmp = dividend;
+			dividend = divisor;
+			divisor = tmp;
+		}
+		if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_INTO_GIVING_REMAINDER
+				|| secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING_REMAINDER) {
+			remainder = this.getContent_R(secRed.get(6).asReduction(), "");
+		}
+		StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(),
+				"<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		
+		//else if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING || )
+		// FIXME: Handle the <flag rounded>
+		if (targets.count() > 0) {
+			StringList content = new StringList();
+			String lastResult = null;
+			for (int i = 0; i < targets.count(); i++) {
+				String target = targets.get(i).trim();
+				lastResult = this.addArithmOperation(content, "/", target, (dividend != null ? dividend : target), divisor, lastResult);
+				if (dividend == null) {
+					// Don't re-use the former result if the dividend changes
+					lastResult = null;
+				}
+			}
+			if (remainder != null) {
+				content.add(remainder + " <- " + dividend + " mod " + divisor);
+			}
+			_parentNode.addElement(new Instruction(content));
+		}
+		else {
+			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
+			defective.setColor(Color.RED);
+			defective.disabled = true;
+			defective.setComment("COBOL import still not implemented");
+			_parentNode.addElement(defective);
+		}
+	}
+
+	/**
+	 * Builds an approptiate Jump element from the EXIT statement represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed EXIT statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void importExit(Reduction _reduction, Subqueue _parentNode) {
+		String content = "";
+		String comment = "";
+		Color color = null;
+		Reduction secRed = _reduction.get(1).asReduction();
+		int secRuleId = secRed.getParent().getTableIndex();
+		switch (secRuleId) {
+		case RuleConstants.PROD_EXIT_BODY:	// (empty)
+			content = "(exit from paragraph)";
+			break;
+		case RuleConstants.PROD_EXIT_BODY_PROGRAM:	// <exit_body> ::= PROGRAM <exit_program_returning>
+		case RuleConstants.PROD_EXIT_BODY_FUNCTION:	// <exit_body> ::= FUNCTION
+			{
+				content = CodeParser.getKeywordOrDefault("preReturn", "return");
+				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
+					content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
+				}
+			}
+			break;
+		case RuleConstants.PROD_EXIT_BODY_PERFORM:	// <exit_body> ::= PERFORM
+			content = CodeParser.getKeywordOrDefault("preLeave", "leave");
+			break;
+		case RuleConstants.PROD_EXIT_BODY_PERFORM_CYCLE: // <exit_body> ::= PERFORM CYCLE
+		case RuleConstants.PROD_EXIT_BODY_SECTION:	// <exit_body> ::= SECTION
+		case RuleConstants.PROD_EXIT_BODY_PARAGRAPH:// <exit_body> ::= PARAGRAPH
+			content = this.getContent_R(_reduction, "");
+			color = Color.RED;
+			comment = "Unsupported kind of JUMP";
+			break;
+		}
+		if (content != null) {
+			Jump jmp = new Jump(content.trim());
+			if (!comment.isEmpty()) {
+				jmp.setComment(comment);
+			}
+			if (color != null) {
+				jmp.setColor(color);
+				jmp.disabled = true;
+			}
+			_parentNode.addElement(jmp);
+		}
+	}
+
+	/**
+	 * Buildsa  loop or Call element from the PERFORM statement represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed PERFORM statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void importPerform(Reduction _reduction, Subqueue _parentNode) {
+		System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
+		// We will have to find out what kind of loop this is.
+		// In the worst case the body is just a paragraph name (PROD_PERFORM_BODY), which
+		// forces us to find that paragraph and to copy its content into the body Subqueue.
+		// The best case would be PROD_PERFORM_BODY2 - then the body is just a statement list
+		// Then there is the case of an empty body (PROD_PERFORM_BODY3) - only an option is given
+		Reduction bodyRed = _reduction.get(1).asReduction();
+		int bodyRuleId = bodyRed.getParent().getTableIndex();
+		int optionIx = (bodyRuleId == RuleConstants.PROD_PERFORM_BODY) ? 1 : 0;
+		Reduction optRed = bodyRed.get(optionIx).asReduction();
+		String content = "";
+		ILoop loop = null;
+		System.out.println("\t" + optRed.getParent().toString());
+		switch (optRed.getParent().getTableIndex()) {
+		case RuleConstants.PROD_PERFORM_OPTION_TIMES:
+			// FOR loop
+		{
+			// Prepare a generic variable name
+			content = this.getContent_R(optRed.get(0).asReduction(), content);
+			loop = new For("varStructorizer", "1", content, 1);
+			content = ((For)loop).getText().getLongString();
+			((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
+		}
+		break;
+		case RuleConstants.PROD_PERFORM_OPTION_VARYING:
+			// FOR loop
+			{
+				// Classify the test position
+				Reduction testRed = optRed.get(0).asReduction();
+				Reduction controlRed = optRed.get(2).asReduction();
+				boolean testAfter = testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST_TEST
+						&& testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_AFTER
+						|| controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER;
+				// Get actual FOR clause parameters
+				Reduction forRed = controlRed;
+				if (controlRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_VARYING_LIST_AFTER) {
+					forRed = controlRed.get(controlRed.size()-1).asReduction();
+				}
+				Reduction condRed = forRed.get(6).asReduction();
+				String varName = this.getContent_R(forRed.get(0).asReduction(), "").replaceAll("-", "_");
+				String from = this.getContent_R(forRed.get(2).asReduction(), "");
+				String by = this.getContent_R(forRed.get(4).asReduction(), "");
+				String cond = this.getContent_R(condRed, "").trim();
+				// FIXME this is just a quick hack
+				int step = 0;
+				try {
+					step = Integer.parseInt(by);
+				}
+				catch (NumberFormatException ex) {}
+				if (step == 0
+						|| step > 0 && !cond.matches(BString.breakup(varName) + "\\s* > .*") && !cond.matches(".* < \\s*" + BString.breakup(varName))
+						|| step < 0 && !cond.matches(BString.breakup(varName) + "\\s* < .*") && !cond.matches(".* > \\s*" + BString.breakup(varName))) {
+					_parentNode.addElement(new Instruction(varName + " <- " + from));
+					While wloop = new While(negateCondition(cond));
+					if (bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
+						this.buildNSD_R(bodyRed.get(1).asReduction(), wloop.getBody());
+						wloop.getBody().addElement(new Instruction(varName + " <- " + varName + " + (" + by + ")"));
+					}
+					else {
+						Instruction defective = new Instruction(this.getContent_R(_reduction, ""));
+						defective.setColor(Color.RED);
+						defective.disabled = true;
+					}
+				}
+//				else if (testAfter) {
+//					// TODO: We will have to convert the loop to a REPEAT loop
+//				}
+				else {
+					if (cond.matches(BString.breakup(varName) + "\\s* [<>] .*")) {
+						cond = cond.replaceAll(BString.breakup(varName) + "\\s* [<>] (.*)", "$1");
+					}
+					else {
+						cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName), "$1");
+					}
+					loop = new For(varName, from, cond.trim(), step);
+					// FIXME: This should have become superfluous as soon as the conversion to a REPEAT loop above is implemented  
+					if (testAfter) {
+						((For)loop).setComment("WARNING: In the original code this loop was specified to do the test AFTER the body!");
+					}
+				}
+			}
+			break;
+		case RuleConstants.PROD_PERFORM_OPTION_FOREVER:
+			// FOREVER loop
+			loop = new Forever();
+			break;
+		case RuleConstants.PROD_PERFORM_OPTION_UNTIL:
+			// WHILE or REPEAT loop
+			{
+				// Get the condition itself
+				content = this.getContent_R(optRed.get(2).asReduction(), "");
+				// Classify the test position
+				Reduction testRed = optRed.get(0).asReduction();
+				if (testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST
+						|| testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_BEFORE) {
+					loop = new While(negateCondition(content));
+				}
+				else {
+					loop = new Repeat(content);
+				}
+			}
+			break;
+		default:
+			// Just a macro (block)	
+			{
+				content = this.getContent_R(bodyRed.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
+				if (Character.isDigit(content.charAt(0))) {
+					content = "sub" + content;
+				}
+				Call dummyCall = new Call(content);
+				dummyCall.setColor(Color.RED);
+				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, wich is still not supported");
+				_parentNode.addElement(dummyCall);
+			}
+		}
+		if (loop != null && bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
+			this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
+		}
+		else {
+			// FIXME
+			System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+		}
+		if (loop != null) {
+			_parentNode.addElement((Element)loop);
+		}
+	}
+
+	/**
+	 * Builds Case elements or nested Alternatives from the EVALUATE statement
+	 * represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed EVALUATE statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) {
+		System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
+		// Possibly a CASE instruction, may have to be decomposed to an IF chain.
+		Reduction secRed = _reduction.get(1).asReduction();	// <evaluate_body>
+		Reduction subjlRed = secRed.get(0).asReduction();	// <evaluate_subject_list>
+		Reduction condlRed = secRed.get(1).asReduction();		// <evaluate_condition_list>
+		log(subjlRed.getParent().toString(), false);
+		log(condlRed.getParent().toString(), false);
+		int subjlRuleId = subjlRed.getParent().getTableIndex();
+		if (subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT) {
+			// Single discriminator expression - there might be a chance to convert this to a CASE element
+			System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
+			StringList caseText = StringList.getNew(this.getContent_R(subjlRed, ""));
+			Case ele = new Case();
+			// Now analyse the branches
+			Reduction otherRed = null;
+			if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
+				otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
+				Subqueue sq = new Subqueue();
+				buildNSD_R(otherRed.get(2).asReduction(), sq);
+				caseText.add("default");	// last line for default branch
+				condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
+				ele.qs.addElement(sq);
+			}
+			else {
+				caseText.add("%");	// suppress the default branch
+				ele.qs.addElement(new Subqueue());
+			}
+			// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
+			do {
+				String caseHead = condlRed.getParent().getHead().toString();
+				Reduction caseRed = condlRed;	// could be <evaluate_case>
+				if (caseHead.equals("<evaluate_case_list>")) {
+					caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
+				}
+				// Get the instruction part
+				Subqueue sq = new Subqueue();
+				buildNSD_R(caseRed.get(1).asReduction(), sq);	// <statement_list>
+				ele.qs.add(0, sq);
+				// Now collect the WHEN clauses and concoct the compound condition
+				Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
+				String selectors = "";
+				while (whenlRed != null) {
+					// FIXME: At this point we cannot handle incomplete expressions sensibly
+					// (as soon as we bump into an incomlete comparison expression or the like we
+					// would have had to convert the entire CASE element into a nested alternative tree.
+					// The trouble is that all kinds of selectors (literals, complete expressions, and
+					// incomplete expressions may occur among the listed selectors.
+					if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
+						selectors = this.getContent_R(whenlRed.get(2).asReduction(), "") + ", " + selectors;
+						whenlRed = whenlRed.get(0).asReduction();
+					}
+					else {
+						selectors = this.getContent_R(whenlRed.get(1).asReduction(), "") + ", " + selectors;
+						whenlRed = null;
+					}
+				}
+				selectors = selectors.trim();
+				if (selectors.endsWith(",")) {
+					selectors = selectors.substring(0, selectors.length()-1);
+				}
+				caseText.insert(selectors, 1);
+				//}
+				condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
+			} while (condlRed != null);
+			ele.setText(caseText);
+			_parentNode.addElement(ele);
+		}
+		else if (
+				subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_TRUE
+				||
+				subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE
+				) {
+			// Independent conditions, will be converted to nested alternatives
+			boolean negate = subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE;
+			System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_TOK_TRUE/FALSE");
+			Reduction otherRed = null;
+			Element elseBranch = null;
+			if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
+				otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
+				elseBranch = new Subqueue();
+				buildNSD_R(otherRed.get(2).asReduction(), (Subqueue)elseBranch);
+				condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
+			}
+			// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
+			do {
+				String caseHead = condlRed.getParent().getHead().toString();
+				Reduction caseRed = condlRed;	// could be <evaluate_case>
+				if (caseHead.equals("<evaluate_case_list>")) {
+					caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
+				}
+				// Get the condition(s)
+				Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
+				String conds = "";
+				while (whenlRed != null) {
+					String cond = "";
+					Reduction condRed = null;
+					if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
+						condRed = whenlRed.get(2).asReduction();
+						whenlRed = whenlRed.get(0).asReduction();
+					}
+					else {
+						condRed = whenlRed.get(1).asReduction();
+						whenlRed = null;
+					}
+					cond = this.transformCondition(condRed, "");
+					if (negate) {
+						cond = this.negateCondition(cond);
+					}
+					conds = cond + " or " + conds;
+				}
+				conds = conds.trim();
+				if (conds.endsWith(" or")) {
+					conds = conds.substring(0, conds.length()-" or".length());
+				}
+				Alternative alt = new Alternative(conds);
+				// Get the instruction part
+				if (elseBranch instanceof Subqueue) {
+					alt.qFalse = (Subqueue)elseBranch;
+					elseBranch.parent = alt;
+				}
+				else if (elseBranch != null) {
+					alt.qFalse.addElement(elseBranch);
+				}
+				buildNSD_R(caseRed.get(1).asReduction(), alt.qTrue);	// <statement_list>
+				elseBranch = alt;
+				condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
+			} while (condlRed != null);
+			if (elseBranch != null) {
+				// elseBranch should not be a Subqueue here!
+				_parentNode.addElement(elseBranch);
+			}	
+		}
+		else {
+			// TODO: merge this with the previous case!
+			// This can only be represented by nested alternatives
+			System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
+			StringList subjects = this.getExpressionList(subjlRed, "<evaluate_subject_list>", -1);
+			Reduction otherRed = null;
+			Element elseBranch = null;
+			if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
+				otherRed = condlRed.get(1).asReduction();	// <evaluate_other>
+				elseBranch = new Subqueue();
+				buildNSD_R(otherRed.get(2).asReduction(), (Subqueue)elseBranch);
+				condlRed = condlRed.get(0).asReduction();	// <evaluate_case_list>
+			}
+			// condlRed should be an "<evaluate_case_list>" (being either an <evaluate_case> or recursive)
+			do {
+				String caseHead = condlRed.getParent().getHead().toString();
+				Reduction caseRed = condlRed;	// could be <evaluate_case>
+				if (caseHead.equals("<evaluate_case_list>")) {
+					caseRed = condlRed.get(condlRed.size()-1).asReduction();	// get the <evaluate_case>
+				}
+				// Get the condition(s)
+				Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
+				String conds = "";
+				while (whenlRed != null) {
+					String cond = "";
+					Reduction condRed = null;
+					if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
+						condRed = whenlRed.get(2).asReduction();
+						whenlRed = whenlRed.get(0).asReduction();
+					}
+					else {
+						// FIXME: provide the subject of the first condition (i.e. the discriminator...)
+						condRed = whenlRed.get(1).asReduction();
+						whenlRed = null;
+					}
+					// FIXME: Set up a list of <evaluate_object> reductions to match against the subjects
+					LinkedList<Reduction> objReds = new LinkedList<Reduction>();
+					do {
+						Reduction objRed = condRed;
+						if (condRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_OBJECT_LIST_ALSO) {
+							objRed = condRed.get(2).asReduction();
+							condRed = condRed.get(0).asReduction();
+						}
+						else {
+							condRed = null;
+						}
+						objReds.addFirst(objRed);
+					} while (condRed != null);
+					int i = 0;
+					for (Reduction objRed: objReds) {
+						if (objRed.getParent().getTableIndex() != RuleConstants.PROD_EVALUATE_OBJECT_ANY) {
+							String partCond = this.transformCondition(objRed, subjects.get(i));
+							cond += (cond.trim().isEmpty() ? "" : " and ") + "(" + partCond + ")";
+						}
+						i++;
+					}
+					conds = "(" + cond + ") or " + conds;
+				}
+				conds = conds.trim();
+				if (conds.endsWith(" or")) {
+					conds = conds.substring(0, conds.length()-" or".length());
+				}
+				Alternative alt = new Alternative(conds);
+				// Get the instruction part
+				if (elseBranch instanceof Subqueue) {
+					alt.qFalse = (Subqueue)elseBranch;
+					elseBranch.parent = alt;
+				}
+				else if (elseBranch != null) {
+					alt.qFalse.addElement(elseBranch);
+				}
+				buildNSD_R(caseRed.get(1).asReduction(), alt.qTrue);	// <statement_list>
+				elseBranch = alt;
+				condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
+			} while (condlRed != null);
+			if (elseBranch != null) {
+				// elseBranch should not be a Subqueue here!
+				_parentNode.addElement(elseBranch);
+			}	
+		}
+	}
+
 //	private String appendDisplayBody(Reduction bodyRed, String content) {
 //		Reduction secRed = bodyRed.get(0).asReduction();
 //		switch (secRed.getParent().getTableIndex()) {
@@ -5219,7 +5368,19 @@ public class COBOLParser extends CodeParser
 //		return content;
 //	}
 
-	private String addArithmOperation(StringList content, String operator, String target, String operand1, String operand2, String prevResult) {
+	/**
+	 * Helper method for importing ADD, SUBTRACT, MULTIPLY, and DIVIDE statements, generates the text for the
+	 * arithmetic instruction series
+	 * @param content - the multi-line Instruction text to append the specified assignment to 
+	 * @param operator - the operator symbol t be used (one of "+", "-", "*", "/").
+	 * @param target - the variable (name) the expression result is to be assigned to (as string)
+	 * @param operand1 - first operand (as string)
+	 * @param operand2 - second operand (as string)
+	 * @param prevResult - the result of the previous operation (an expression, preferrably a variable name) 
+	 * @return a String representing the result of the assignment (to be used as prevResult in the next
+	 *  call of this routine)
+	 */
+	private final String addArithmOperation(StringList content, String operator, String target, String operand1, String operand2, String prevResult) {
 		final String rounded = " ROUNDED ";
 		String rounder = "%%%";
 		int posRounded = target.toUpperCase().indexOf(rounded);
@@ -5244,7 +5405,7 @@ public class COBOLParser extends CodeParser
 		return prevResult;
 	}
 
-	private String deriveRoundingFunction(String roundingClause) {
+	private final String deriveRoundingFunction(String roundingClause) {
 		String[] tokens = roundingClause.split("\\s+");
 		roundingClause = tokens[tokens.length-1];
 		String pattern = "%%%";
@@ -5255,7 +5416,8 @@ public class COBOLParser extends CodeParser
 			pattern = "sgn(%%%) * round(floor(abs(%%%)))";
 		}
 		else if (roundingClause.toUpperCase().startsWith("NEAREST-")) {
-			// FIXME This is to simple of course, but fine-tuning can be made later...
+			// FIXME This is too simple of course, but fine-tuning can be done later...
+			// a built-in function round_even in Structorizer would be helpful
 			pattern = "round(%%%)";
 		}
 		else if (roundingClause.equalsIgnoreCase("TOWARD-GREATER")) {
@@ -5524,6 +5686,14 @@ public class COBOLParser extends CodeParser
 		// list of <expr_token> we can analyse from left to right, such that we can
 		// identify the first token as comparison operator. (It seems rather simpler
 		// to inspect the prefix of the composed string.)
+		String thruExpr = "";
+		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_OBJECT) {
+			Reduction thruRed = _reduction.get(1).asReduction();
+			if (thruRed.getParent().getTableIndex() == RuleConstants.PROD__EVALUATE_THRU_EXPR_THRU) {
+				thruExpr = this.getContent_R(thruRed.get(1).asReduction(), " .. ");
+			}
+			_reduction = _reduction.get(0).asReduction();
+		}
 		LinkedList<Token> expr_tokens = new LinkedList<Token>();
 		this.lineariseTokenList(expr_tokens, _reduction, "<expr_tokens>");
 		String cond = "";
@@ -5540,7 +5710,7 @@ public class COBOLParser extends CodeParser
 		}
 		if (lastSubject == null || lastSubject.isEmpty()) {
 			Token tok = expr_tokens.getFirst();
-			if (ruleId != RuleConstants.PROD_EXPR_TOKEN2 && ruleId != RuleConstants.PROD_EXPR_TOKEN_IS && ruleId != RuleConstants.PROD_EXPR_TOKEN_IS2) {
+			if (!isComparisonOpRuleId(ruleId)) {
 				if (tok.getType() == SymbolType.CONTENT) {
 					lastSubject = tok.asString();
 					if (tok.getName().equals("COBOLWord")) {
@@ -5568,16 +5738,39 @@ public class COBOLParser extends CodeParser
 					tokStr = tokStr.replace("-", "_");
 				}
 			}
-			if (afterLogOpr && (ruleId == RuleConstants.PROD_EXPR_TOKEN2 || ruleId == RuleConstants.PROD_EXPR_TOKEN_IS || ruleId == RuleConstants.PROD_EXPR_TOKEN_IS2)) {
-				cond += " " + lastSubject;
+			if (!tokStr.trim().isEmpty()) {
+				if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
+					cond += " " + lastSubject;
+				}
+				afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
+				if (afterLogOpr) {
+					tokStr = tokStr.toLowerCase();
+				}
+				cond += " " + tokStr;
 			}
-			afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
-			if (afterLogOpr) {
-				tokStr = tokStr.toLowerCase();
-			}
-			cond += " " + tokStr;
 		}
+		cond += thruExpr;
 		return cond.trim();	// This is just an insufficient first default approach
+	}
+	
+	private final boolean isComparisonOpRuleId(int ruleId)
+	{
+		switch (ruleId) {
+		case RuleConstants.PROD_EQ_TOK_EQUAL:
+		case RuleConstants.PROD_EQ_EQUAL:
+		case RuleConstants.PROD_GT_TOK_GREATER:
+		case RuleConstants.PROD_GT_GREATER:
+		case RuleConstants.PROD_LT_TOK_LESS:
+		case RuleConstants.PROD_LT_LESS:
+		case RuleConstants.PROD_GE_GREATER_OR_EQUAL:
+		case RuleConstants.PROD_LE_LESS_OR_EQUAL:
+		case RuleConstants.PROD_EXPR_TOKEN2:
+		case RuleConstants.PROD_EXPR_TOKEN_IS:
+		case RuleConstants.PROD_EXPR_TOKEN_IS2:
+			return true;
+		default:
+			return false;	
+		}
 	}
 
 	private void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead) {
@@ -5585,8 +5778,10 @@ public class COBOLParser extends CodeParser
 			_tokens.add(0, _reduction.get(_reduction.size()-1));
 			lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
 		}
-		else if (_reduction.size() != 0) {
-			_tokens.add(0, _reduction.get(0));
+		else {
+			for (int i = 0; i < _reduction.size(); i++) {
+				_tokens.add(i, _reduction.get(i));
+			}
 		}
 	}
 
