@@ -40,6 +40,15 @@ package lu.fisch.structorizer.generators;
  *      
  ******************************************************************************************************///
 
+import java.util.HashMap;
+import java.util.HashSet;
+
+import lu.fisch.structorizer.elements.Call;
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.structorizer.executor.Function;
+
 import lu.fisch.utils.StringList;
 
 /**
@@ -77,6 +86,8 @@ public class COBOLGenerator extends Generator {
 	private int lineNumber = 10;
 	private int lineIncrement = 10;
 	private final String[] ext = { "cob", "cbl" };
+	private final HashMap<Root, HashSet<String>> subMap = new HashMap<Root, HashSet<String>>();
+	private HashMap<String, TypeMapEntry> typeMap; 
 
 	/**
 	 * get start for COBOL source or comment line with correct length depending
@@ -90,15 +101,11 @@ public class COBOLGenerator extends Generator {
 	protected String getLineStart(Boolean isCommentLine) {
 
 		String prefix;
-		// FIXME: using optionBlockBraceNextLine as a dirty workaround for
 		// switching the reference format between free-form and fixed-form
-		// optionBlockBraceNextLine = true --> free-form reference-format
-		// FIXME: optionBasicLineNumbering should be renamed in the
-		// superclass...
-		if (this.optionBlockBraceNextLine()) {
+		if (this.optionFreeSourceFormat()) {
 			prefix = this.getIndent();
 		} else {
-			if (this.optionBasicLineNumbering()) {
+			if (this.optionCodeLineNumbering()) {
 				prefix = String.format("%5d", this.lineNumber) + " ";
 				this.lineNumber += this.lineIncrement;
 			} else {
@@ -141,10 +148,8 @@ public class COBOLGenerator extends Generator {
 	 */
 	@Override
 	protected String getIndent() {
-		// FIXME: using optionBlockBraceNextLine as a dirty workaround for
 		// switching the reference format between free-form and fixed-form
-		// optionBlockBraceNextLine = true --> free-form reference-format
-		if (this.optionBlockBraceNextLine()) {
+		if (this.optionFreeSourceFormat()) {
 			return "\t";
 		} else {
 			// a tab "\t" would be better but cannot be counted for the line
@@ -269,8 +274,11 @@ public class COBOLGenerator extends Generator {
 	 */
 	@Override
 	protected String getInputReplacer(boolean withPrompt) {
-		// TODO Auto-generated method stub
-		return null;
+		if (withPrompt) {
+			return ("DISPLAY $1 ACCEPT $2");
+		} else {
+			return "ACCEPT $1";
+		}
 	}
 
 	/*
@@ -280,8 +288,7 @@ public class COBOLGenerator extends Generator {
 	 */
 	@Override
 	protected String getOutputReplacer() {
-		// TODO Auto-generated method stub
-		return null;
+		return "DISPLAY $1";
 	}
 
 	/*
@@ -354,6 +361,10 @@ public class COBOLGenerator extends Generator {
 			// Indentation is intentionally put inside the comment (comment
 			// encloses entire line)
 			insertComment(_indent + text, "");
+		// START KGU 2017-05-11 At least in free format we shouldn't ignore the indentation
+		} else if (this.optionFreeSourceFormat()) {
+			code.add(this.getLineStart(false) + _indent + text);			
+		// END KGU 2017-05-11
 		} else {
 			code.add(this.getLineStart(false) + text);
 		}
@@ -397,6 +408,283 @@ public class COBOLGenerator extends Generator {
 				code.set(i, this.getLineStart(true) + code.get(i).substring(_indent.length()-1));
 			}
 		}
+	}
+
+	/* (non-Javadoc)
+	 * Additionally maps the _caller to the name of the called routine
+	 * @see lu.fisch.structorizer.generators.Generator#registerCalled(lu.fisch.structorizer.elements.Call, lu.fisch.structorizer.elements.Root)
+	 */
+	@Override
+	protected Root registerCalled(Call _call, Root _caller)
+	{
+		Function _called = _call.getCalledRoutine();
+		if (_called != null && _called.isFunction()
+				&& !(_called.getName().equalsIgnoreCase(_caller.getMethodName()))) {
+			if (!this.subMap.containsKey(_caller)) {
+				this.subMap.put(_caller, new HashSet<String>());
+			}
+			this.subMap.get(_caller).add(_called.getName());
+		}
+		return super.registerCalled(_call, _caller);
+	}
+	
+	/**
+	 * If required by the respective export option, replaces underscores in the given
+	 * name by hyphens.
+	 * @param _identifier - the name to be transformed
+	 * @return transformed identifier
+	 */
+	private String transformName(String _identifier) {
+		if (this.optionUnderscores2Hyphens()) {
+			_identifier = _identifier.replace("_", "-");
+		}
+		return _identifier;
+	}
+
+	// START KGU#395 2017-05-11: Enh. #357 - source format option for COBOL export
+	/**
+	 * Returns the value of the export option whether free source file format may
+	 * be used.
+	 * @return true if free file format is to be used.
+	 */
+	private boolean optionFreeSourceFormat()
+	{
+		Object optionVal = this.getPluginOption("freeSourceFormat");
+		return optionVal instanceof Boolean && ((Boolean)optionVal).booleanValue();
+	}
+	
+	/**
+	 * Returns the value of the export option to replace undercores by
+	 * hyphens in identifiers.
+	 * @return true if free file format is to be used.
+	 */
+	private boolean optionUnderscores2Hyphens()
+	{
+		Object optionVal = this.getPluginOption("underscores2hyphens");
+		return !(optionVal instanceof Boolean) || ((Boolean)optionVal).booleanValue();
+	}
+	// END KGU#395 2017-05-11	
+	
+	/************ Code Generation **************/
+	
+	
+	/**
+	 * Composes the heading for the program or function according to the
+	 * COBOL language specification - this is actually the Identification DIVISION
+	 * @param _root - The diagram root
+	 * @param _indent - the initial indentation string
+	 * @param _procName - the procedure name
+	 * @param paramNames - list of the argument names
+	 * @param paramTypes - list of corresponding type names (possibly null) 
+	 * @param resultType - result type name (possibly null)
+	 * @return the default indentation string for the subsequent stuff
+	 */
+	@Override
+	protected String generateHeader(Root _root, String _indent, String _procName,
+			StringList _paramNames, StringList _paramTypes, String _resultType)
+	{
+		if (topLevel && this.optionFreeSourceFormat()) {
+			code.add("       >> SOURCE FORMAT IS FREE");
+		}
+		if (!topLevel) {
+			addCode("", _indent, false);
+		}
+		this.insertComment(_root.getText(), _indent);
+		this.insertComment(_root.getComment(), _indent);
+		if (topLevel) {
+			this.insertComment("", _indent);
+			this.insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+		}
+		if (this.optionExportLicenseInfo()) {
+			this.insertComment("", _indent);
+			this.insertComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
+			this.insertComment("License: " + _root.licenseName, _indent);
+			this.insertComment(StringList.explode(_root.licenseText, "\n"), _indent);
+		}
+		addCode("IDENTIFICATION DIVISION.", _indent, false);
+		addCode((_root.isProgram ? "PROGRAM-ID. " : "FUNCTION-ID. ") + this.transformName(_root.getMethodName()) + ".", _indent, false);
+		addCode("", _indent, false);
+
+		// If we had something to tell then here might be the ENVIRONMENT DIVISION
+		// (possibly for declaring the repository?)
+		if (this.subMap.containsKey(_root)) {
+			addCode("ENVIRONMENT DIVISION.", _indent, false);
+			addCode("CONFIGURATION SECTION.", _indent, false);
+			addCode("REPOSITORY.", _indent, false);
+			for (String subName: this.subMap.get(_root)) {
+				addCode("FUNCTION " + this.transformName(subName), _indent + this.getIndent(), false);
+			}
+			addCode(".", _indent + this.getIndent(), false);
+		}
+		this.subroutineInsertionLine = code.count();
+		return _indent;
+	}
+
+	/**
+	 * Generates some preamble (i.e. comments, language declaration section etc.)
+	 * and adds it to this.code.
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param varNames - list of variable names introduced inside the body
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	{
+		addCode("", _indent, false);
+		addCode("DATA DIVISION.", _indent, false);
+		addCode("WORKING-STORAGE SECTION.", _indent, false);
+		insertComment("TODO: Check and accomplish variable declarations:", _indent);
+		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo().clone();
+		// special treatment of constants
+		for (String constName: _root.constants.keySet()) {
+			insertDeclaration(_root, constName, _indent);			
+		}
+        // List the variables to be declared
+		for (int v = 0; v < varNames.count(); v++) {
+			//insertComment(varNames.get(v), _indent);
+			String varName = varNames.get(v);
+			if (!_root.constants.containsKey(varName)) {
+				insertDeclaration(_root, varName, _indent);
+			}
+		}
+		//generateIOComment(_root, _indent);
+		addCode("", _indent, false);
+		// Starts the PROCEDURE DIVISION
+		String procdiv = "PROCEDURE DIVISION";
+		StringList params = _root.getParameterNames();
+		if (!_root.isProgram || params.count() > 0) {
+			procdiv += " USING " + params.concatenate(" ");
+		}
+		if (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) {
+			// Now the good question is how to guess the name of the return variable and what to do
+			// if the diagram used return.
+			procdiv += " RETURNING result.";
+		}
+		addCode(procdiv, _indent, false);
+		
+		return _indent;
+	}
+	
+	// START KGU#375 2017-04-12: Enh. #388 common preparation of constants and variables
+	protected void insertDeclaration(Root _root, String _name, String _indent)
+	{
+
+		// FIXME
+		TypeMapEntry typeInfo = typeMap.get(_name); 
+		StringList types = null;
+		String constValue = _root.constants.get(_name);
+		String transfConst = transformType("const", "");
+		if (typeInfo != null) {
+			 types = getTransformedTypes(typeInfo);
+		}
+		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
+		else if (constValue != null) {
+			String type = Element.identifyExprType(typeMap, constValue, false);
+			if (!type.isEmpty()) {
+				types = StringList.getNew(transformType(type, "int"));
+				// We place a faked workaround entry
+				typeMap.put(_name, new TypeMapEntry(type, _root, 0, true, true));
+			}
+		}
+		// If the type is unambiguous and has no C-style declaration or may not be
+		// declared between instructions then add the declaration here
+		if (types != null && types.count() == 1 && typeInfo != null) {			
+			String decl = types.get(0).trim();
+			// START KGU#375 2017-04-12: Enh. #388
+			if (decl.equals(transfConst) && constValue != null) {
+				// The actual type spec is missing but we try to extract it from the value
+				decl += " VALUE " + Element.identifyExprType(typeMap, constValue, false);
+				decl = decl.trim();
+			}
+			// END KGU#375 2017-04-12
+			if (decl.startsWith("@")) {
+				decl = makeArrayDeclaration(decl, _name, typeInfo);
+			}
+			else {
+				decl = "01 " + _name + "\t" + decl;
+			}
+			if (_root.constants.containsKey(_name)) {
+				if (!decl.contains(transfConst + " ")) {
+					decl = transfConst + " " + decl;
+				}
+				if (constValue != null) {
+					decl += " " + transform(constValue);
+				}
+			}
+			// END KGU#375 2017-04-12
+			if (decl.contains("???")) {
+				insertComment(decl + ".", _indent);
+			}
+			else {
+				addCode(decl + ".", _indent, false);
+			}
+		}
+		// Add a comment if there is no type info
+		else if (types == null){
+			insertComment(_name, _indent);
+		}
+		// END KGU#261/KGU#332 2017-01-16
+	}
+	// END KGU#375 2017-04-12
+	
+	// START KGU#332 2017-01-30: Decomposition of geeratePreamble to ease sub-classing
+	private String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	{
+//		int nLevels = _elementType.lastIndexOf('@')+1;
+//		_elementType = (_elementType.substring(nLevels) + " " + _varName).trim();
+//		for (int i = 0; i < nLevels; i++) {
+//			int maxIndex = typeInfo.getMaxIndex(i);
+//			_elementType += "[" + (maxIndex >= 0 ? Integer.toString(maxIndex+1) : (i == 0 ? "" : "/*???*/") ) + "]";
+//		}
+		return _elementType;
+	}
+
+	/**
+	 * Creates the appropriate code for returning a required result and adds it
+	 * (after the algorithm code of the body) to this.code)
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param alwaysReturns - whether all paths of the body already force a return
+	 * @param varNames - names of all assigned variables
+	 */
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if (_root.isProgram && !alwaysReturns)
+		{
+//			code.add(_indent);
+//			code.add(_indent + "return 0;");
+		}
+		else if ((returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		{
+//			String result = "0";
+//			if (isFunctionNameSet)
+//			{
+//				result = _root.getMethodName();
+//			}
+//			else if (isResultSet)
+//			{
+//				int vx = varNames.indexOf("result", false);
+//				result = varNames.get(vx);
+//			}
+//			code.add(_indent);
+//			code.add(_indent + "return " + result + ";");
+		}
+		addCode(".", _indent, false);	// Ends the PROCEDURE DIVISION
+		return _indent;
+	}
+
+	/**
+	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
+	 * @param _root 
+	 * @param _indent
+	 */
+	@Override
+	protected void generateFooter(Root _root, String _indent)
+	{
+		addCode("END " + (_root.isProgram ? "PROGRAM " : "FUNCTION ") + this.transformName(_root.getMethodName()) + ".", _indent, false);		
+		this.subroutineInsertionLine = code.count();
 	}
 
 }

@@ -75,6 +75,8 @@ public class GENParser extends DefaultHandler {
 				plugin.reservedWords = attributes.getValue("reserved_words").split(",");
 			}
 			// END KGU#239 2017-04-23
+			// FIXME: The parsing of plugin-specific options is to be added as soon as the
+			// XML schema for it will finally be specified.
 			
 			plugins.add(plugin);
 		}

@@ -42,7 +42,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07   Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09   Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
  *      Kay Gürtzig     2017.02.27   Enh. #346: New tab for configuration of user-specific include directives
- *      Kay Gürtzig     2017.05.09   Issue #400: keyListener at all controls 
+ *      Kay Gürtzig     2017.05.09   Issue #400: keyListener at all controls
+ *      Kay Gürtzig     2017.05.11   Enh. #372: New option to export license attributes 
  *
  ******************************************************************************************************
  *
@@ -138,6 +139,9 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#178 2016-07-20: Enh. #160
         chkExportSubroutines = new javax.swing.JCheckBox();
         // END KGU#178 2016-07-20
+        // START KGU#363 2017-05-11: Enh. #372
+        chkExportLicenseInfo = new javax.swing.JCheckBox();
+        // END KGU#363 2017-05-11
         
         setTitle("Export options ...");
 
@@ -216,12 +220,23 @@ public class ExportOptionDialoge extends LangDialog
             }
         });
 
+        // START KGU#178 2016-07-20: Enh. #160
         chkExportSubroutines.setText("Involve called subroutines");
         chkExportSubroutines.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent evt) {
         		subroutinesCheckBoxActionPerformed(evt);
         	}
         });
+        // END KGU#178 2016-07-20
+        
+        // START KGU#363 2017-05-11: Enh. #372
+        chkExportLicenseInfo.setText("Export author and license attributes");
+        chkExportLicenseInfo.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt) {
+        		licenseInfoCheckBoxActionPerformed(evt);
+        	}
+        });
+        // END KGU#363 2017-05-11
         
         jButton1.setText("OK");
         jButton1.addActionListener(new ActionListener() {
@@ -242,15 +257,7 @@ public class ExportOptionDialoge extends LangDialog
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(bracesCheckBox)
-                            .add(lineNumbersCheckBox)
-                            // START KGU#178 2016-07-20: Enh. #160
-                            .add(chkExportSubroutines))
-                            // END KGU#178 2016-07-20
-                        /*.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)*/)
+                    .add(jLabel1)
                     // START KGU#168 2016-04-04: Enh. #149
                     .add(layout.createSequentialGroup()
                     		.add(lbVoid1)
@@ -268,20 +275,18 @@ public class ExportOptionDialoge extends LangDialog
                     		.addContainerGap()
                     		)
                     // END KGU#168 2016-04-04
-//                    // START KGU#171 2016-04-01: Enh. #144
-//                    .add(layout.createSequentialGroup()
-//                    		.add(lbVoid)
-//                    		.add(lbPrefGenerator)
-//                    		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                    		.add(cbPrefGenerator)
-//                    		.addContainerGap()
-//                    		)
-//                    // END KGU#171 2016-04-01
                     // START KGU#162 2016-03-31: Enh. #144
                     .add(noConversionCheckBox)
                     // END KGU#162 2016-03-31
                     .add(commentsCheckBox)
-                    .add(jLabel1)
+                    .add(bracesCheckBox)
+                    .add(lineNumbersCheckBox)
+                    // START KGU#178 2016-07-20: Enh. #160
+                    .add(chkExportSubroutines)
+                    // END KGU#178 2016-07-20
+                    // START KGU#363 2017-05-11: Enh. #372
+                    .add(chkExportLicenseInfo)
+                	// END KGU#363 2017-05-11: Enh. #372
                     /*.add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jButton1)
                         .addContainerGap())*/))
@@ -310,14 +315,6 @@ public class ExportOptionDialoge extends LangDialog
                 		)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 // END KGU#168/KGU#171 2016-04-04
-//                // START KGU#171 2016-04-01: Enh. #144 choice of preferred export lang.
-//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
-//        				.add(lbVoid)                		
-//                		.add(lbPrefGenerator)
-//                		.add(cbPrefGenerator)
-//                		)
-//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                // END KGU#170 2016-04-01
                 // START KGU#162 2016-03-31: Enh. #144
                 .add(noConversionCheckBox)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -331,6 +328,10 @@ public class ExportOptionDialoge extends LangDialog
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkExportSubroutines)
                 // END KGU#178 2016-07-20
+                // START KGU#363 2017-05-11: Enh. #372
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkExportLicenseInfo)
+            	// END KGU#363 2017-05-11: Enh. #372
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 /*.add(jButton1)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 8, Short.MAX_VALUE)
@@ -440,7 +441,12 @@ public class ExportOptionDialoge extends LangDialog
 //        // TODO add your handling code here:
 //    }//GEN-LAST:event_commentsCheckBoxActionPerformed
 
-    private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
+    protected void licenseInfoCheckBoxActionPerformed(ActionEvent evt) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
     {//GEN-HEADEREND:event_jButton1ActionPerformed
         goOn = true;
         this.setVisible(false);
@@ -608,5 +614,8 @@ public class ExportOptionDialoge extends LangDialog
     // START KGU#178 2016-07-20: Enh. #160
     public javax.swing.JCheckBox chkExportSubroutines;
     // END KGU#178 2016-07-20
+    // START KGU#363 2017-05-11: Enh. #372
+    public javax.swing.JCheckBox chkExportLicenseInfo;
+    // END KGU#363 2017-05-11
     // End of variables declaration//GEN-END:variables
 }
