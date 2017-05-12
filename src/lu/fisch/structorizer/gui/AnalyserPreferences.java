@@ -48,6 +48,7 @@ package lu.fisch.structorizer.gui;
  *                                      bugfix #330: Checkbox status visibility in "Nimbus" look & feel
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling stuff outsourced to GUIScaler
  *      Kay Gürtzig     2017.04.04      Enh. #388: New check for constant definitions (no. 22)
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls 
  *
  ******************************************************************************************************
  *
@@ -128,7 +129,11 @@ public class AnalyserPreferences extends LangDialog {
 		});
 	}
 	// END KGU#290 2016-11-10
-			
+	
+	// START KGU#393 2017-05-09: Issue #400 - indicate whether changes are committed
+	public boolean OK = false;
+	// END KGU#393 2017-05-09
+	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Bob Fisch
 	private JPanel dialogPane;
@@ -184,6 +189,27 @@ public class AnalyserPreferences extends LangDialog {
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
 
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent e) 
+			{
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					setVisible(false);
+				}
+				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				{
+					// START KGU#393 2017-05-09: Issue #400
+					OK = true;
+					// END KGU#393 2017-05-09		
+					setVisible(false);
+				}
+			}
+			
+			public void keyReleased(KeyEvent ke) {} 
+			public void keyTyped(KeyEvent kevt) {}
+		};
+
 		//======== dialogPane ========
 		{
 			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
@@ -220,6 +246,8 @@ public class AnalyserPreferences extends LangDialog {
 						}
 						else {
 							panel.add(checkboxes[checkIndex]);
+							// START KGU#
+							checkboxes[checkIndex].addKeyListener(keyListener);
 						}
 					}
 					wrapper.setLayout(new BorderLayout());
@@ -259,23 +287,6 @@ public class AnalyserPreferences extends LangDialog {
 		// Bob-thinks
 		// add the KEY-listeners
 		okButton.requestFocus(true);
-		KeyListener keyListener = new KeyListener()
-		{
-			public void keyPressed(KeyEvent e) 
-			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
-				{
-					setVisible(false);
-				}
-				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
-				{
-					setVisible(false);
-				}
-			}
-			
-			public void keyReleased(KeyEvent ke) {} 
-			public void keyTyped(KeyEvent kevt) {}
-		};
 		okButton.addKeyListener(keyListener);
 		
 		// add the ACTION-listeners
@@ -283,6 +294,9 @@ public class AnalyserPreferences extends LangDialog {
 		{
 			public void actionPerformed(ActionEvent event)
 			{
+				// START KGU#393 2017-05-09: Issue #400
+				OK = true;
+				// END KGU#393 2017-05-09		
 				setVisible(false);
 			}
 		};

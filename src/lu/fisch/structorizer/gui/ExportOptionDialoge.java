@@ -20,11 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -46,14 +42,16 @@ import java.awt.Container;
  *      Kay Gürtzig     2017.01.07   Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09   Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
  *      Kay Gürtzig     2017.02.27   Enh. #346: New tab for configuration of user-specific include directives
+ *      Kay Gürtzig     2017.05.09   Issue #400: keyListener at all controls 
  *
  ******************************************************************************************************
  *
  *      Comment:		I used JFormDesigner to design this window graphically.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
+import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -63,6 +61,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.BufferedInputStream;
 import java.nio.charset.Charset;
 import java.util.Set;
@@ -395,6 +395,39 @@ public class ExportOptionDialoge extends LangDialog
         contentPane.add(buttonBar, BorderLayout.SOUTH);
         // END KGU#351 2017-02-26
         
+        // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent e) 
+			{
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					setVisible(false);
+				}
+				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				{
+					goOn = true;
+					setVisible(false);
+				}
+			}
+			
+			public void keyReleased(KeyEvent ke) {} 
+			public void keyTyped(KeyEvent kevt) {}
+		};
+		jButton1.addKeyListener(keyListener);
+		cbCharset.addKeyListener(keyListener);
+		chkCharsetAll.addKeyListener(keyListener);
+		noConversionCheckBox.addKeyListener(keyListener);
+		commentsCheckBox.addKeyListener(keyListener);
+		bracesCheckBox.addKeyListener(keyListener);
+		lineNumbersCheckBox.addKeyListener(keyListener);
+		chkExportSubroutines.addKeyListener(keyListener);
+		for (int i = 0; i < this.includeLists.length; i++) {
+			this.includeLists[i].addKeyListener(keyListener);
+		}
+		tabbedPane.addKeyListener(keyListener);
+		// END KGU#393 2017-05-09		
+
         // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
         GUIScaler.rescaleComponents(this);
         // END KGU#287 2017-01-09

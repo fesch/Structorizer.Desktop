@@ -131,12 +131,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	// START KGU#354 2017-04-27
 	/**
 	 * An open log file for verbose parsing and building if not null
+	 * @see #log(String, boolean)
 	 */
-	protected OutputStreamWriter logFile = null;
+	private OutputStreamWriter logFile = null;
 	// END KGU#354 2017-04-27
 	
 	/**
-	 * Standard element colour for imported constant definitios
+	 * Standard element colour for imported constant definitions
 	 * @see #colorDecl
 	 * @see #colorGlobal
 	 * @see #colorMisc
@@ -224,6 +225,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param _encoding - name of the charset to be used for decoding
 	 * @param _logDir - null or a directory path to direct the parsing and building log to.
 	 * @return A list containing composed diagrams (if successful, otherwise field error will contain an error description)
+	 * @throws Exception 
 	 * @see #prepareTextfile(String, String)
 	 * @see #initializeBuildNSD()
 	 * @see #buildNSD_R(Reduction, Subqueue)
@@ -231,8 +233,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @see #subclassUpdateRoot(Root, String)
 	 * @see #subclassPostProcess(String) 
 	 */
-	public List<Root> parse(String _textToParse, String _encoding, String _logDir) {
-	
+	public List<Root> parse(String _textToParse, String _encoding, String _logDir)
+	{
 		if (_logDir != null) {
 			File logDir = new File(_logDir);
 			if (logDir.isDirectory()) {
@@ -316,9 +318,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
             if (parsedWithoutError) {
 				// ************************************** log file
 				System.out.println("Parsing complete.");
-				if (logFile != null) {
-					logFile.write("\nParsing complete.\n\n");
-				}
+				log("\nParsing complete.\n\n", false);
 				// ************************************** end log
 				if (this.optionSaveParseTree()) {
 					try {
@@ -349,6 +349,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
             error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
 			e1.printStackTrace();
 		}
+        catch (Exception e2) {
+        	error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
+        	e2.printStackTrace();
+        }
 
 		// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
 		if (isSyntaxError && intermediate != null)
@@ -402,11 +406,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			error += exp;
 			// ************************************** log file
 			System.out.println("Parsing failed.");
-			if (logFile != null) {
-				try {
-					logFile.write("\n" + error + "\n\n");
-				} catch (IOException e) {}
-			}
+			log("\n" + error + "\n\n", true);
 			// ************************************** end log
 		}
 		// END KGU#191 2016-04-30
@@ -457,15 +457,16 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			error = ":\n" + error;
 		}
 
+		log("\nBUILD PHASE COMPLETE.\n", true);
+		if (subRoots.size() >= 1 && subRoots.get(0).children.getSize() > 0) {
+			log(subRoots.size() + " diagram(s) built.\n", true);
+		}
+		else {
+			log("No diagrams built.\n", true);
+		}
+		
 		if (logFile != null) {
 			try {
-				logFile.write("\nBUILD PHASE COMPLETE.\n");
-				if (subRoots.size() >= 1 && subRoots.get(0).children.getSize() > 0) {
-					logFile.write(subRoots.size() + " diagram(s) built.");
-				}
-				else {
-					logFile.write("No diagrams built.");
-				}
 				logFile.close();
 				logFile = null;
 			} catch (IOException e) {
@@ -474,6 +475,28 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		}
 		
 		return subRoots;
+	}
+	
+	/**
+	 * Writes the given _logContent to the current opened file if there is one.
+	 * Oherwise and if {@code _toSystemOutInstead} is true the content will be
+	 * written to the console output.
+	 * @param _logContent - the message to be logged
+	 * @param _toSystemOutInstead - whether the message is to be reported to System.out
+	 */
+	protected void log(String _logContent, boolean _toSystemOutInstead)
+	{
+		boolean done = false;
+		if (logFile != null)
+		try {
+			logFile.write(_logContent);
+			done = true;
+		} catch (IOException e) {
+			System.err.println(this.getClass().getSimpleName() + ".log(): " + e.toString());
+		}
+		if (!done && _toSystemOutInstead) {
+			System.out.print(_logContent);
+		}
 	}
 
 	/**

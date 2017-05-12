@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.01.05      Enh. #314: File API TODO comments added  
  *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig         2017.04.18      Bugfix #386: Algorithmically empty Subqueues must produce a ':' line
+ *      Kay Gürtzig         2017.05.05      Issue #396: function calls should better be enclosed in $(...) than in back ticks
  *
  ******************************************************************************************************
  *
@@ -399,7 +400,10 @@ public class BASHGenerator extends Generator {
 			}
 			if (posAsgnOpr > 0)
 			{
-				expr = "`" + expr + "`";
+				// START KGU#390 2017-05-05: Issue #396
+				//expr = "`" + expr + "`";
+				expr = "$(" + expr + ")";
+				// END KGU#390 2017-05-05
 			}
 		}
 		else if (expr.startsWith("{") && expr.endsWith("}") && posAsgnOpr > 0)

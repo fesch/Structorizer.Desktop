@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.31      First Issue
  *      Kay Gürtzig     2017.01.11      Issue #81/#330. Scaling support
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced
  *
  ******************************************************************************************************
  *
@@ -59,6 +60,10 @@ import javax.swing.border.*;
  */
 @SuppressWarnings("serial")
 public class Colors extends LangDialog {
+	// START KGU#393 2017-05-09: Issue #400 - indicate whether changes are committed
+	public boolean OK = false;
+	// END KGU#393 2017-05-09
+	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel dialogPane;
@@ -87,7 +92,7 @@ public class Colors extends LangDialog {
 	protected JButton btnOK;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
 
-        private Frame frame = null;
+	private Frame frame = null;
 
 	/*public Colors()
 	{
@@ -321,6 +326,9 @@ public class Colors extends LangDialog {
 				}
 				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
 				{
+					// START KGU#393 2017-05-09: Issue #400
+					OK = true;
+					// END KGU#393 2017-05-09		
 					setVisible(false);
 				}
 			}
@@ -335,13 +343,18 @@ public class Colors extends LangDialog {
 		{
 			public void actionPerformed(ActionEvent event)
 			{
+				// START KGU#393 2017-05-09: Issue #400
+				if (event.getSource() == btnOK) {
+					OK = true;
+				}
+				// END KGU#393 2017-05-09		
 				setVisible(false);
 			}
 		};
 		btnOK.addActionListener(actionListener);
 
-                final Frame fframe = this.frame;
-                MouseListener mouseListener = new MouseListener()
+		final Frame fframe = this.frame;
+		MouseListener mouseListener = new MouseListener()
 		{
 			public void mouseClicked(MouseEvent e) 
 			{

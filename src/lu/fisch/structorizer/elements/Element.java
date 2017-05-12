@@ -2105,7 +2105,7 @@ public abstract class Element {
 	 * The returned type description (if not empty) will be structurally canonicalized (i.e. array
 	 * levels will be symbolized by a sequence of "@" prefixes, the element type names may also be
 	 * heuristically canonicalized to assumed Java equivalents.
-	 * @param typeMap - current mapping of variable names to statically concluded type information 
+	 * @param typeMap - current mapping of variable names to statically concluded type information (may be null)
 	 * @param expr - the expression to be categorized
 	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalized
 	 * (i.e. replaced by guessed Java equivalents) 
@@ -2115,7 +2115,10 @@ public abstract class Element {
 	{
 		String typeSpec = "";	// This means no info
 		// 1. Check whether its a known typed variable
-		TypeMapEntry typeEntry = typeMap.get(expr);
+		TypeMapEntry typeEntry = null;
+		if (typeMap != null) {
+			typeEntry = typeMap.get(expr);
+		}
 		if (typeEntry != null) {
 			StringList types = typeEntry.getTypes(canonicalizeTypeNames);
 			if (types.count() == 1) {

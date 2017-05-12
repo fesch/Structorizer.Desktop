@@ -48,6 +48,8 @@ import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -198,6 +200,34 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		{
 			System.err.println("SaveOptionDialog: " + e.getMessage());
 		}
+
+        // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent e) 
+			{
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					setVisible(false);
+				}
+				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				{
+					goOn = true;
+					setVisible(false);
+				}
+			}
+			
+			public void keyReleased(KeyEvent ke) {} 
+			public void keyTyped(KeyEvent kevt) {}
+		};
+		this.btnOk.addKeyListener(keyListener);
+		this.chkBackupFile.addKeyListener(keyListener);
+		this.chkAutoSaveClose.addKeyListener(keyListener);
+		this.chkAutoSaveExecute.addKeyListener(keyListener);
+		this.cbLicenseFile.addKeyListener(keyListener);
+		this.btnLicenseFile.addKeyListener(keyListener);
+		this.txtAuthorName.addKeyListener(keyListener);
+		// END KGU#393 2017-05-09		
 
 		pack();
 	    

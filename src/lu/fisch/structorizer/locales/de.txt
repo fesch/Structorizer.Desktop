@@ -328,6 +328,8 @@ Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
 Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es Aussprunganweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
 Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagrammdateien
+Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
+Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -636,8 +638,11 @@ InputBoxRoot.msgLicenseLoadError.text=Fehler beim Laden des Lizenztexts für Liz
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Structorizer Lizenz-Editor: %
 LicenseEditor.menuFile.text=Datei
-LicenseEditor.menuEdit.text=Bearbeiten
+LicenseEditor.menuFile.mnemonic=d
+LLicenseEditor.menuEdit.text=Bearbeiten
+LicenseEditor.menuEdit.mnemonic=e
 LicenseEditor.menuProp.text=Eigenschaften
+LicenseEditor.menuProp.mnemonic=s
 LicenseEditor.menuFileCommit.text=Übernehmen
 LicenseEditor.menuFileSave.text=Speichern (im Pool)
 LicenseEditor.menuFileSaveAs.text=Speichern unter ...
