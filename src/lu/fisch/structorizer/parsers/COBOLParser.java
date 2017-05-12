@@ -4660,9 +4660,58 @@ public class COBOLParser extends CodeParser
 				Instruction instr = new Instruction(content);
 				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE )
+			else if (ruleId == RuleConstants.PROD_OPEN_STATEMENT_OPEN)
+			{
+				System.out.println("PROD_OPEN_STATEMENT_OPEN");
+				// FIXME: Find a sensible conversion!
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_READ_STATEMENT_READ)
+			{
+				System.out.println("PROD_READ_STATEMENT_READ");
+				// FIXME: Find a sensible conversion!
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE)
 			{
 				System.out.println("PROD_WRITE_STATEMENT_WRITE");
+				// FIXME: Find a sensible conversion!
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE)
+			{
+				System.out.println("PROD_REWRITE_STATEMENT_REWRITE");
+				// FIXME: Find a sensible conversion!
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
+			{
+				System.out.println("PROD_DELETE_STATEMENT_DELETE");
+				// FIXME: Find a sensible conversion!
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_CLOSE_STATEMENT_CLOSE)
+			{
+				System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
 				// FIXME: Find a sensible conversion!
 				String content = this.getContent_R(_reduction, "");
 				Instruction instr = new Instruction(content);
