@@ -5166,7 +5166,7 @@ public class COBOLParser extends CodeParser
 				}
 				Call dummyCall = new Call(content);
 				dummyCall.setColor(Color.RED);
-				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, wich is still not supported");
+				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
 				_parentNode.addElement(dummyCall);
 			}
 		}
@@ -5496,6 +5496,8 @@ public class COBOLParser extends CodeParser
 			// FIXME In a first approach we neglect records and delare all as plain variables
 			String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
 			// as long as we don't use records there is no use in parsing FILLER items
+			// and as long as we do so group items that have no VALUE clause and only containing
+			// FILLER items which have a VALUE clause are not parsed correctly
 			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {				
 				Reduction seqRed = _reduction.get(2).asReduction();
 				String type = "";
@@ -5601,9 +5603,14 @@ public class COBOLParser extends CodeParser
 				if (!picture.isEmpty()) {
 					type = deriveTypeInfoFromPic(picture);
 				}
-				if (!type.isEmpty() && !isConst) {
+				// if we still have no type we're parsing a group item without usage
+				// --> this is always seen as COBOL alphanumeric (internal like a byte[]) -> set to string
+				if (type.isEmpty()) {
+					type = "string";
+				}
+				if (!isConst) {
 					if (_parentNode != null && this.optionImportVarDecl) {
-					// Add the declaration	
+					// Add the declaration
 					Instruction decl = new Instruction("var " + varName + ": " + type);
 					decl.setComment(picture);
 					decl.setColor(colorDecl);
@@ -5634,7 +5641,7 @@ public class COBOLParser extends CodeParser
 					if (isConst) {
 						def.setColor(colorConst);
 					}
-					// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
+					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 					_parentNode.addElement(def);
 				}
 				//TODO stash the variables without a value clause somewhere to add
@@ -5674,7 +5681,7 @@ public class COBOLParser extends CodeParser
 				value = "{" + values.concatenate(", ") + "}";
 			}
 			if (_parentNode != null && value != null) {
-				// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
+				// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 				Instruction def = new Instruction("const " + constName + " <- " + value);
 				def.setColor(colorConst);
 				_parentNode.addElement(def);
@@ -5874,6 +5881,11 @@ public class COBOLParser extends CodeParser
 					}
 					catch (Exception ex) {}
 				}
+				// FIXME: we currently need to manually derive constant values here, may not be needed later
+				//        if the preprocessor replace them (not sure yet if we want to do so in all places
+				//        as a const declaration in the NSD would likely lead to better results
+				//else {
+				//}
 				if (nDigits >= 9) {
 					type = "long";
 				}
