@@ -243,7 +243,7 @@ public class BasGenerator extends Generator
 		pos = -1;
 		while ((pos = tokens.indexOf("chr", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
 		{
-			if (this.optionBasicLineNumbering())
+			if (this.optionCodeLineNumbering())
 			{
 				tokens.set(pos, "Chr$");
 			}
@@ -253,14 +253,14 @@ public class BasGenerator extends Generator
 			}
 		}
 		// END KGU#150 2016-04-04
-		if (tokens.contains("<-") && this.optionBasicLineNumbering())
+		if (tokens.contains("<-") && this.optionCodeLineNumbering())
 		{
 			// Insert a "LET" keyword but ensure a separating blank between it and the variable name
 			if (!tokens.get(0).equals(" "))	tokens.insert(" ", 0);
 			tokens.insert("LET", 0);
 		}
 		// START KGU#100 2016-01-22: Enh #84 - Array initialisiation for Visual/modern BASIC
-		if (!this.optionBasicLineNumbering())
+		if (!this.optionCodeLineNumbering())
 		{
 			tokens.replaceAll("{", "Array(");
 			tokens.replaceAll("}", ")");
@@ -276,7 +276,7 @@ public class BasGenerator extends Generator
 	protected String getLineNumber()
 	{
 		String prefix = "";
-		if (this.optionBasicLineNumbering())
+		if (this.optionCodeLineNumbering())
 		{
 			prefix += this.lineNumber + " ";
 			this.lineNumber += this.lineIncrement;
@@ -288,7 +288,7 @@ public class BasGenerator extends Generator
 	{
         if (this.jumpTable.containsKey(_loop))
         {
-        	if (this.optionBasicLineNumbering())
+        	if (this.optionCodeLineNumbering())
         	{
         		// Associate label number with line number of the following dummy comment 
         		this.labelMap[this.jumpTable.get(_loop).intValue()] = this.lineNumber;
@@ -331,7 +331,7 @@ public class BasGenerator extends Generator
 		int oldSize = code.count();
 		super.insertBlockComment(_sl, _indent, _start, _cont, _end);
 		// Set the line numbers afterwards, the super method wouldn't have done it
-		if (this.optionBasicLineNumbering())
+		if (this.optionCodeLineNumbering())
 		{
 			for (int i = oldSize; i < code.count(); i++)
 			{
@@ -430,7 +430,7 @@ public class BasGenerator extends Generator
 				boolean isArrayInit = false;
 				// START KGU#171 2016-03-31: Enh. #144
 				//if (this.optionBasicLineNumbering())
-				if (!this.suppressTransformation && this.optionBasicLineNumbering())
+				if (!this.suppressTransformation && this.optionCodeLineNumbering())
 				// END KGU#171 2016-03-31
 				{
 					// The crux is: we don't know the index range!
@@ -1005,7 +1005,7 @@ public class BasGenerator extends Generator
         		
 			// Compose the function header
         	signature += "(";
-        	if (this.optionBasicLineNumbering())
+        	if (this.optionCodeLineNumbering())
         	{
         		insertComment("TODO: Add type-specific suffixes where necessary!", _indent);
         	}
@@ -1044,7 +1044,7 @@ public class BasGenerator extends Generator
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
 		// Old BASIC dialocts with line numbers usually don't support declarations
-		if (!this.optionBasicLineNumbering())
+		if (!this.optionCodeLineNumbering())
 		{
 			String indentPlusOne = _indent + this.getIndent();
 			insertComment("TODO: declare your variables here:", _indent );
@@ -1103,7 +1103,7 @@ public class BasGenerator extends Generator
         }
 		code.add(_indent + this.getLineNumber() + endPhrase);
 		
-		if (this.optionBasicLineNumbering())
+		if (this.optionCodeLineNumbering())
 		{
 			// Okay now, in line numbering mode, we will have to replace the generic labels by line numbers
 			for (int i = 0; i < code.count(); i++)

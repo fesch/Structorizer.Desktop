@@ -4745,6 +4745,8 @@ public class COBOLParser extends CodeParser
 				if (!this.paramTypeMap.containsKey(root)) {
 					this.paramTypeMap.put(root, new HashMap<String, String>());
 				}
+				// This is not to produce elements but to accomplish the type map, therefore we
+				// don't pass the _parentNode.
 				this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
 			}
 			else
@@ -5323,7 +5325,22 @@ public class COBOLParser extends CodeParser
 					int i = 0;
 					for (Reduction objRed: objReds) {
 						if (objRed.getParent().getTableIndex() != RuleConstants.PROD_EVALUATE_OBJECT_ANY) {
+							if (i >= subjects.count()) {
+								log(this.getOriginalText(_reduction, "Too many selection objects in the WHEN clause of: "), true); 
+								break;
+							}
+							boolean negated = false;
+							String subject = subjects.get(i).trim();
+							if (subject.equals("true")) {
+								subject = "";
+							} else if (subject.equals("false")) {
+								subject = "";
+								negated = true;
+							}
 							String partCond = this.transformCondition(objRed, subjects.get(i));
+							if (negated) {
+								partCond = this.negateCondition(partCond);
+							}
 							cond += (cond.trim().isEmpty() ? "" : " and ") + "(" + partCond + ")";
 						}
 						i++;
@@ -5429,7 +5446,7 @@ public class COBOLParser extends CodeParser
 		return pattern;
 	}
 
-	private void processDataDescriptions(Reduction _reduction, Subqueue _parentNode, HashMap<String, String> _typeInfo)
+	private final void processDataDescriptions(Reduction _reduction, Subqueue _parentNode, HashMap<String, String> _typeInfo)
 	{
 		int ruleId = _reduction.getParent().getTableIndex();
 		if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
@@ -5554,19 +5571,19 @@ public class COBOLParser extends CodeParser
 				}
 				if (!type.isEmpty() && !isConst) {
 					if (_parentNode != null && this.optionImportVarDecl) {
-					// Add the declaration	
-					Instruction decl = new Instruction("var " + varName + ": " + type);
-					decl.setComment(picture);
-					decl.setColor(colorDecl);
-					_parentNode.addElement(decl);
+						// Add the declaration	
+						Instruction decl = new Instruction("var " + varName + ": " + type);
+						decl.setComment(picture);
+						decl.setColor(colorDecl);
+						_parentNode.addElement(decl);
 					}
 					if (_typeInfo != null) {
 						_typeInfo.put(varName, type);
 					}
 				}
-				if (!value.isEmpty()) {
+				if (!value.isEmpty() && _parentNode != null) {
 					// Add the assignment
-					//FIXME hexedecimal literals and other literal types must be converted (each literal tpye has its own
+					//FIXME hexadecimal literals and other literal types must be converted (each literal tpye has its own
 					// terminal, otherwise the Executor doesn't know what x'09' is)
 					if (value.equalsIgnoreCase("zero") || value.equalsIgnoreCase("zeros")) {	// FIXME should no longer be necessary here
 						value = "0";
@@ -5640,7 +5657,7 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
-	private StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) {
+	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) {
 		StringList args = new StringList();
 		do {
 			String paramHead = _paramlRed.getParent().getHead().toString();
@@ -5661,7 +5678,7 @@ public class COBOLParser extends CodeParser
 		return args.reverse();
 	}
 
-	private StringList getExpressionList(Reduction _exprlRed, String _listHead, int _exclRuleId) {
+	private final StringList getExpressionList(Reduction _exprlRed, String _listHead, int _exclRuleId) {
 		StringList exprs = new StringList();
 		do {
 			String exprlHead = _exprlRed.getParent().getHead().toString();
@@ -5678,7 +5695,7 @@ public class COBOLParser extends CodeParser
 		return exprs.reverse();
 	}
 
-	private String transformCondition(Reduction _reduction, String lastSubject) {
+	private final String transformCondition(Reduction _reduction, String lastSubject) {
 		// TODO We must resolve expressions like "expr1 = expr2 or > expr3".
 		// Unfortunately the <condition> node is not defined as hierarchical expression
 		// tree dominated by operator nodes but as left-recursive "list".
@@ -5773,7 +5790,14 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
-	private void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead) {
+	/**
+	 * Converts the recursive token list representing the non-terminal {@code _listRuleHead} and held by Reduction
+	 * {@code _reduction} into a LinkedList, appending its item tokens to {@code _tokens}.  
+	 * @param _tokens - the list the tokens are to be appended to
+	 * @param _reduction - the reduction representing the recursive token list rule
+	 * @param _listRuleHead - the name of the non-terminal (e.g. "&lt;expr_tokens&gt;")
+	 */
+	private final void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead) {
 		if (_reduction.getParent().getHead().toString().equals(_listRuleHead) && _reduction.size() > 1) {
 			_tokens.add(0, _reduction.get(_reduction.size()-1));
 			lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
@@ -5785,7 +5809,7 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
-	private String negateCondition(String condStr) {
+	private final String negateCondition(String condStr) {
 		return Element.negateCondition(condStr);
 	}
 	
@@ -5927,7 +5951,12 @@ public class COBOLParser extends CodeParser
 				lengthStr = this.getContent_R(refModRed.get(3).asReduction(), "");
 			}
 			_content += " copy(" + qualName + indexStr + ", " + startStr +  ", " + lengthStr + ") ";
-		} 
+		}
+		else if (ruleId == RuleConstants.PROD_EXP_FACTOR_EXPONENTIATION)
+		{
+			_content += " pow(" + this.getContent_R(_reduction.get(0).asReduction(), "")
+			+ this.getContent_R(_reduction.get(2).asReduction(), ", ") + ")"; 
+		}
 		else {
 			for(int i=0; i<_reduction.size(); i++)
 			{
@@ -5970,10 +5999,35 @@ public class COBOLParser extends CodeParser
 						_content += " or ";
 					}
 					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS_ZERO) {
-						_content += " <> 0";
+						if (subRed.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD__NOT2) {
+							_content += " <> 0";
+						} else {
+							_content += " = 0";
+						}
 					}
 					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS) {
-						_content += " isTypeOf(" + this.getContent_R(subRed.get(1).asReduction(), "") + ") ";
+						// FIXME Now we get into trouble. We cannot replace the "IS <CLASS>" construct by a built-in
+						// function call (which would be ideal for Executor) because the left operand would have to
+						// be passed as argument, too, but unfortunately we are absolutely not sure about the left
+						// operand, since expressions (namely conditions) may just be a recursive list of tokens rather
+						// than a hierarchical tree and the left operand is already gone... We could only inspect
+						// _content (regarding parentheses, operator precedence etc.) but even this is vague - it might
+						// be incomplete.
+						// So we replace it by the Java instanceof operator, which comes nearest but will hardly identify
+						// COBOL classes and doesn't work for primitive types of course.
+						_content += " instanceof (" + this.getContent_R(subRed.get(1).asReduction(), "") + ") ";
+					}
+					else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS2) {
+						if (subRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_CONDITION_OR_CLASS) {
+							// FIXME: Now here we get into even deeper trouble: The negation has to be placed around the
+							// entire expression but again: the left operand cannot be identified (not part of this reduction,
+							// might even be a composed expression).
+							// We would have to analyse _content though we cannot even be sure that it's complete...
+							// So we place the not operator at this awkward position and leave the correction to the user. 
+							_content += " not instanceof (" + this.getContent_R(subRed.get(2).asReduction(), "") + ") ";
+						} else {
+							_content += " <> " + this.getContent_R(subRed.get(2).asReduction(), "");
+						}
 					}
 					else if (subRuleId == RuleConstants.PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN) {
 						_content += "[" + this.getContent_R(subRed.get(1).asReduction(), "") + "] ";	// FIXME: spaces!?
@@ -6016,6 +6070,9 @@ public class COBOLParser extends CodeParser
 					}
 					else if (toAdd.equalsIgnoreCase("space") || toAdd.equalsIgnoreCase("spaces")) {
 						toAdd = "\' \'";
+					}
+					else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
+						toAdd = toAdd.toLowerCase();
 					}
 					// Keywords FUNCTION and IS are to be suppressed
 					if (!name.equalsIgnoreCase("FUNCTION") && !name.equalsIgnoreCase("IS")) {

@@ -34,12 +34,15 @@ package lu.fisch.structorizer.helpers;
  *      ------			----            -----------
  *      Bob Fisch       2008.04.12      First Issue
  *      Kay Gürtzig     2017.04.23      Enh. #231 configuration of reserved words in the target language
+ *      Kay Gürtzig     2017.05.11      Enh. #354/#357: field for class-specific options added
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
  ******************************************************************************************************///
+
+import java.util.HashMap;
 
 public class GENPlugin 
 {
@@ -53,4 +56,11 @@ public class GENPlugin
 	public String[] reservedWords = null;
 	public boolean caseMatters = true;
 	// END KGU#239 2017-04-23
+	// START KGU#354/KGU#395 2017-05-11: Enh. #534 Allow configurable options
+	/**
+	 * Maps plugin-specific option names to simple value class names (Boolean, Integer, Double, String)
+	 * FIXME: This is still insufficient for setting up corresponding dialog elements 
+	 */
+	public HashMap<String, String> options = new HashMap<String, String>();
+	// END KGU#354/KGU#395 2017-05-11
 }

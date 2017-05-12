@@ -1532,7 +1532,7 @@ public class Menu extends LangMenuBar implements NSDController
     	case GENERATOR:
     		fileName = "generators.xml";
     		break;
-    	case PARSER:
+    	case PARSER:	// This isn't used anymore - we still leave it in the code for regularity
     		fileName = "parsers.xml";
     		break;
     	case IMPORTER:
@@ -1563,17 +1563,26 @@ public class Menu extends LangMenuBar implements NSDController
 				pluginItem.setToolTipText(tooltip.replace("%", plugin.info));
 			}
 			final String className = plugin.className;
+			// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
+			final HashMap<String, String> options = plugin.options;
+			// END KGU#354/KGU#395 2017-05-11
 			
 			ActionListener listener = null;
 			switch (_type) {
 			case GENERATOR:
-				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } };
+				// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
+				//listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } };
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className, options); doButtons(); } };
+				// END KGU#354/KGU#395 2017-05-11
 				break;
-			case PARSER:
+			case PARSER:	// This isn't used anymore - we still leave in the code for regularity
 				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(/*className*/); doButtons(); } };
 				break;
 			case IMPORTER:
-				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className); doButtons(); } };
+				// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
+				//listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className); doButtons(); } };
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className, options); doButtons(); } };
+				// END KGU#354/KGU#395 2017-05-11
 				break;
 			}
 			if (listener != null) {

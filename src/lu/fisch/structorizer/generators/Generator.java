@@ -106,6 +106,7 @@ package lu.fisch.structorizer.generators;
 import java.awt.Frame;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -146,6 +147,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	private String includeFiles = "";
 	// END KGU#351 2017-02-26
+	// START KGU#363 2017-05-11: Enh. #372 - license and author info ought to be exportable as well
+	private boolean exportAuthorLicense = false;
+	// END KGU#363 2017-05-11
+	// START KGU#395 2017-05-11: Enh. #357 - generator-specific options
+	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
+	// END KGU#395 2017-05-11
 
 	protected StringList code = new StringList();
 	
@@ -201,7 +208,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// START KGU  2016-03-29: For keyword detection improvement
 	private Vector<StringList> splitKeywords = new Vector<StringList>();
 	// END KGU 2016-03-29
-
 	
 	/************ Abstract Methods *************/
 	/**
@@ -243,6 +249,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #isCaseSignificant()
 	 * @return collection of key strings
 	 */
+	@Deprecated
 	public abstract String[] getReservedWords();
 	
 	/**
@@ -352,7 +359,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * how to generate these numbers is completely the task of the inheriting generator.
 	 * @return true if lines are to start with numbers.
 	 */
-	protected boolean optionBasicLineNumbering() {
+	protected boolean optionCodeLineNumbering() {
 		// START KGU 2016-04-04: Issue #151 - Get rid of the inflationary eod threads
 		//return (eod.lineNumbersCheckBox.isSelected());
 		return this.generateLineNumbers;
@@ -364,7 +371,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * Returns the value of the export option recursively to involve all available
 	 * subroutines (i.e. other diagrams) called by the diagrams to be exported. 
-	 * @return tru if subroutines are to be implicated.
+	 * @return true if subroutines are to be implicated.
 	 */
 	protected boolean optionExportSubroutines() {
 		return this.exportSubroutines;
@@ -388,6 +395,40 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#351 2017-02-26
 
+	// START KGU#395 2017-05-11: Enh. #357 - source format option for COBOL export
+	/**
+	 * Returns the value of the export option whether free source file format may
+	 * be used (chiefly for COBOL).
+	 * @return true if free file format is to be used.
+	 */
+	protected boolean optionExportLicenseInfo() {
+		return this.exportAuthorLicense;
+	}
+	// END KGU#395 2017-05-11
+	
+	/**
+	 * Returns a Generator-specific option value if available (otherwise null)
+	 * @param _optionName - option key, to be combined with the generator class name
+	 * @return an Object (of the type specified in the plugin) or null
+	 */
+	protected Object getPluginOption(String _optionName) {
+		Object optionVal = null;
+		if (this.optionMap.containsKey(_optionName)) {
+			optionVal = this.optionMap.get(_optionName);
+		}
+		return optionVal;
+	}
+
+	/**
+	 * Allows to set a plugin-specified option before the code generation starts
+	 * @param _optionName - a key string
+	 * @param _value - an object according to the type specified in the plugin
+	 */
+	public void setPluginOption(String _optionName, Object _value)
+	{
+		this.optionMap.put(_optionName, _value);
+	}
+	
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 	/**
 	 * Returns true if in the diagram referred by _root there are output instructions
@@ -1291,7 +1332,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// END KGU#61 2016-03-23
 	
 	// START KGU#178 2016-07-19: Enh. #160
-	private Root registerCalled(Call _call, Root _caller)
+	/**
+	 * Establishes a mapping among the Root referred to be {@code _called} and
+	 * the {@code _caller} Root in field {@link #subroutines}.
+	 * @param _call - a CALL element found in Root {@code _caller}
+	 * @param _caller - the Root containing {@code _call}
+	 * @return the called Root if being available and not having been mapped before 
+	 */
+	protected Root registerCalled(Call _call, Root _caller)
 	{
 		Root newSub = null;
 		Function called = _call.getCalledRoutine();
@@ -1500,7 +1548,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
 	 * @see #insertAsComment(Element, String)
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1528,7 +1576,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _alt - the {@link lu.fisch.structorizer.elements.Alernative} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1560,7 +1608,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1595,7 +1643,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _for - the {@link lu.fisch.structorizer.elements.For} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1625,7 +1673,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _while - the {@link lu.fisch.structorizer.elements.While} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1655,7 +1703,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _repeat - the {@link lu.fisch.structorizer.elements.Repeat} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1685,7 +1733,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _while - the {@link lu.fisch.structorizer.elements.While} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1713,7 +1761,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
@@ -1738,7 +1786,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
@@ -1765,7 +1813,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _para - the {@link lu.fisch.structorizer.elements.Parallel} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -1799,7 +1847,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
-	 * @see #optionBasicLineNumbering()
+	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _ele - the {@link lu.fisch.structorizer.elements.Element}
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2055,6 +2103,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
 			// END KGU#351 2017-02-26
+			// START KGU#363 2017-05-11: Enh. #372 - license and author info ought to be exportable as well
+			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
+			// END KGU#363 2017-05-11
 
 		} 
 		catch (FileNotFoundException ex)
@@ -2568,6 +2619,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				char ch = _options.charAt(i);
 				switch (ch)
 				{
+				// START KGU#363 2017-05-11: Enh. #372
+				//case 'A':
+				case 'a':
+					exportAuthorLicense = true;
+					break;
+				// END KGU#363 2017-05-11
 				//case 'C':
 				case 'c':
 					exportAsComments = true;
@@ -2576,6 +2633,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				case 'b':
 					startBlockNextLine = true;
 					break;
+				//case 'F':
+				case 'f':
+					overwrite = true;
+					break;
 				//case 'L':
 				case 'l':
 					generateLineNumbers = true;
@@ -2583,9 +2644,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				//case 'T':
 				case 't':
 					suppressTransformation = true;
-					break;
-				case 'f':
-					overwrite = true;
 					break;
 				case '-':	// Handled separately
 					break;

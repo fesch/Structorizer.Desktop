@@ -124,6 +124,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
  *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
  *      Kay Gürtzig     2017.05.09      Issue #400: Proper check whether preference changes were committed
+ *      Kay Gürtzig     2017.05.11      Enh. #357: Mechanism to retrieve plugin-specified generator options 
  *
  ******************************************************************************************************
  *
@@ -253,8 +254,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
-    // START KGU#354 207-03-15: Enh. #354 CodeParser cache
+    // START KGU#354 2017-03-15: Enh. #354 CodeParser cache
 	private static Vector<CodeParser> parsers = null;
+	private static HashMap<String, HashMap<String, String>> parserOptions = null;
 	// END KGU#354 2017-03-15
     
     // START KGU#300 2016-12-02: Enh. #300 - update notification settings
@@ -572,32 +574,42 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private CodeParser findParserForFileExtension(File file)
     {
     	CodeParser parser = null;
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
-		GENParser genp = new GENParser();
-		Vector<GENPlugin> parserPlugins = genp.parse(buff);
-		for (int i=0; i < parserPlugins.size() && parser == null; i++)
+    	// START KGU#354 2017-05-11: Enh.#354 - We had already a retrieval mechanism
+//		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
+//		GENParser genp = new GENParser();
+//		Vector<GENPlugin> parserPlugins = genp.parse(buff);
+//		for (int i=0; i < parserPlugins.size() && parser == null; i++)
+//		{
+//			GENPlugin plugin = parserPlugins.get(i);
+//			final String className = plugin.className;
+//			Class<?> parserClass;
+//			try {
+//				parserClass = Class.forName(className);
+//				parser = (CodeParser) parserClass.newInstance();
+//				if (!parser.accept(file)) {
+//					parser = null;
+//				}
+//			} catch (Exception e) {
+//				// FIXME: popup message box...
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
+//		try {
+//			buff.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		this.retrieveParsers();
+		for (int i=0; i < parsers.size() && parser == null; i++)
 		{
-			GENPlugin plugin = parserPlugins.get(i);
-			final String className = plugin.className;
-			Class<?> parserClass;
-			try {
-				parserClass = Class.forName(className);
-				parser = (CodeParser) parserClass.newInstance();
-				if (!parser.accept(file)) {
-					parser = null;
-				}
-			} catch (Exception e) {
-				// FIXME: popup message box...
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if (parsers.get(i).accept(file)) {
+				parser = parsers.get(i);
 			}
 		}
-		try {
-			buff.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		// END KGU#354 2017-05-11
+
 		return parser;
     }
 	// END KGU#354 2017-03-08
@@ -4292,8 +4304,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	/*****************************************
 	 * Import method
+	 * @param _specificOptions 
 	 *****************************************/
-	public void importNSD(String _className)
+	public void importNSD(String _className, HashMap<String, String> _specificOptions)
 	{
 		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
 		// only save if something has been changed
@@ -4443,8 +4456,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Gets an instance of the given parser class, interactively selects a source file
 	 * for the chosen language parses the file and tries to build a structogram from
 	 * it.
+	 * @param options 
 	 */
-	public void importCode(/*String _parserClassName*/)
+	public void importCode(/*String _parserClassName,*/)
 	{
 		// only save if something has been changed
 		saveNSD(true);
@@ -4453,6 +4467,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		// START KGU#354 2017-03-14: Enh. #354
 		this.retrieveParsers();
+		// END KGU#354 2017-03-14
 
 		JFileChooser dlgOpen = new JFileChooser();
 		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
@@ -4543,7 +4558,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 					}
 				}
-				// END KGU#354 2017-04-27				
+				// END KGU#354 2017-04-27
+				// START KGU#354 2017-05-11: Enh. #354 - we better use a new instance instead of statically sharing it
+				parser = parser.getClass().newInstance();
+				// END KGU#354 2017-05-11
 				List<Root> newRoots = parser.parse(file.getAbsolutePath(),
 						ini.getProperty("impImportCharset", "ISO-8859-1"),
 						// START KGU#354 2017-04-27: Enh. #354
@@ -4686,6 +4704,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			return;
 		}
 		parsers = new Vector<CodeParser>();
+		// START KGU#354/KGU#395 2017-05-11: Enh. #354, #357
+		parserOptions = new HashMap<String, HashMap<String, String>>();
+		// START KGU#354/KGU#395 2017-05-11: Enh. #354, #357
 		String errors = "";
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
 		GENParser genp = new GENParser();
@@ -4698,6 +4719,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			try {
 				Class<?> genClass = Class.forName(className);
 				parsers.add((CodeParser) genClass.newInstance());
+				// START KGU#354/KGU#395 2017-05-11: Enh. #354, #357
+				parserOptions.put(genClass.getSimpleName(), plugin.options);
+				// END KGU#354/KGU#395 2017-05-11
 			} catch (Exception ex) {
 				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 			}
@@ -4716,8 +4740,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	/*****************************************
 	 * export code methods
+	 * @param options 
 	 *****************************************/
-	public void export(String _generatorClassName)
+	public void export(String _generatorClassName, HashMap<String, String> _specificOptions)
 	{
 		try
 		{
@@ -4726,6 +4751,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#170 2016-04-01: Issue #143
 			pop.setVisible(false);	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
+			// START KGU#395 2017-05-11: Enh. #357
+			this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
+			// END KGU#395 2017-05-11
 			// START KGU 2017-04-26: Remember the export directory
 			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
 			this.lastCodeExportDir = 
@@ -4745,10 +4773,42 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	// START KGU#395 2017-05-11: Enh. #357
+	private void setPluginSpecificOptions(Generator _gen, String _generatorClassName,
+			HashMap<String, String> _specificOptions)
+	{
+		Ini ini = Ini.getInstance();
+		for (String optionName: _specificOptions.keySet()) {
+			String valueStr = ini.getProperty(_generatorClassName + "." + optionName, "");
+			Object value = null;
+			String type = _specificOptions.get(optionName);
+			// Now convert the option into the specified type
+			if (!valueStr.isEmpty() && type != null) {
+				if (type.equalsIgnoreCase("boolean")) {
+					value = Boolean.parseBoolean(valueStr);
+				}
+				else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
+					value = Integer.parseInt(valueStr);
+				}
+				else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
+					value = Double.parseDouble(valueStr);
+				}
+				else if (type.equalsIgnoreCase("string")) {
+					value = valueStr;
+				}
+			}
+			if (value != null) {
+				_gen.setPluginOption(optionName, value);
+			}
+		}
+	}
+	// END KGU#395 2017-05-11
+
 	// START KGU#208 2016-07-22: Enh. #199
 	/*****************************************
 	 * help method
 	 *****************************************/
+
 
 	/**
 	 * Tries to open the online User Guide in the browser
@@ -5544,6 +5604,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#162 2016-03-31: Enh. #144
             eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
             // END KGU#162 2016-03-31
+            // START KGU#363/KGU#395 2017-05-11: Enh. #372, #357
+            eod.chkExportLicenseInfo.setSelected(ini.getProperty("genExportLicenseInfo", "0").equals("true"));
+            // END KGU#363/KGU#395 2017-05-11
             // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
             eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
             // END KGU#170 2016-04-01
@@ -5574,6 +5637,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#162 2016-03-31: Enh. #144
                 ini.setProperty("genExportnoConversion", String.valueOf(eod.noConversionCheckBox.isSelected()));
                 // END KGU#162 2016-03-31
+                // START KGU#363/KGU#395 2017-05-11: Enh. #372, #357
+                ini.setProperty("genExportLicenseInfo", String.valueOf(eod.chkExportLicenseInfo.isSelected()));
+                // END KGU#363/KGU#395 2017-05-11
                 // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
                 this.prefGeneratorName = (String)eod.cbPrefGenerator.getSelectedItem();
                 ini.setProperty("genExportPreferred", this.prefGeneratorName);
