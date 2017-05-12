@@ -5642,7 +5642,9 @@ public class COBOLParser extends CodeParser
 						def.setColor(colorConst);
 					}
 					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
-					_parentNode.addElement(def);
+					if (_parentNode != null) {	// FIXME: HACK to prevent a NULL pointer exception from programs with `LINKAGE`
+						_parentNode.addElement(def);
+					}
 				}
 				//TODO stash the variables without a value clause somewhere to add
 				// all definitions that are used as variables within the NSD later, otherwise
