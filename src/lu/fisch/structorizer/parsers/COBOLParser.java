@@ -4660,58 +4660,9 @@ public class COBOLParser extends CodeParser
 				Instruction instr = new Instruction(content);
 				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD_OPEN_STATEMENT_OPEN)
-			{
-				System.out.println("PROD_OPEN_STATEMENT_OPEN");
-				// FIXME: Find a sensible conversion!
-				String content = this.getContent_R(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_READ_STATEMENT_READ)
-			{
-				System.out.println("PROD_READ_STATEMENT_READ");
-				// FIXME: Find a sensible conversion!
-				String content = this.getContent_R(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE)
+			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE )
 			{
 				System.out.println("PROD_WRITE_STATEMENT_WRITE");
-				// FIXME: Find a sensible conversion!
-				String content = this.getContent_R(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE)
-			{
-				System.out.println("PROD_REWRITE_STATEMENT_REWRITE");
-				// FIXME: Find a sensible conversion!
-				String content = this.getContent_R(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
-			{
-				System.out.println("PROD_DELETE_STATEMENT_DELETE");
-				// FIXME: Find a sensible conversion!
-				String content = this.getContent_R(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_CLOSE_STATEMENT_CLOSE)
-			{
-				System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
 				// FIXME: Find a sensible conversion!
 				String content = this.getContent_R(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -4729,7 +4680,7 @@ public class COBOLParser extends CodeParser
 					// FIXME cut all from an "as" keyword on...
 				}
 				// Maybe the actual name is given as string literal rather than an identifier
-				if (name.matches("\\\".*?\\\"")) {
+				if (name.matches("\\\".*?\\\"") || name.matches("['].*?[']")) {
 					name = name.substring(1, name.length()-1).replace("-", "_");
 				}
 				StringList args = new StringList();
@@ -5168,7 +5119,7 @@ public class COBOLParser extends CodeParser
 				}
 				Call dummyCall = new Call(content);
 				dummyCall.setColor(Color.RED);
-				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
+				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, wich is still not supported");
 				_parentNode.addElement(dummyCall);
 			}
 		}
@@ -5513,8 +5464,6 @@ public class COBOLParser extends CodeParser
 			// FIXME In a first approach we neglect records and delare all as plain variables
 			String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
 			// as long as we don't use records there is no use in parsing FILLER items
-			// and as long as we do so group items that have no VALUE clause and only containing
-			// FILLER items which have a VALUE clause are not parsed correctly
 			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {				
 				Reduction seqRed = _reduction.get(2).asReduction();
 				String type = "";
@@ -5620,12 +5569,7 @@ public class COBOLParser extends CodeParser
 				if (!picture.isEmpty()) {
 					type = deriveTypeInfoFromPic(picture);
 				}
-				// if we still have no type we're parsing a group item without usage
-				// --> this is always seen as COBOL alphanumeric (internal like a byte[]) -> set to string
-				if (type.isEmpty()) {
-					type = "string";
-				}
-				if (!isConst) {
+				if (!type.isEmpty() && !isConst) {
 					if (_parentNode != null && this.optionImportVarDecl) {
 						// Add the declaration	
 						Instruction decl = new Instruction("var " + varName + ": " + type);
@@ -5658,7 +5602,7 @@ public class COBOLParser extends CodeParser
 					if (isConst) {
 						def.setColor(colorConst);
 					}
-					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
+					// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
 					_parentNode.addElement(def);
 				}
 				//TODO stash the variables without a value clause somewhere to add
@@ -5698,7 +5642,7 @@ public class COBOLParser extends CodeParser
 				value = "{" + values.concatenate(", ") + "}";
 			}
 			if (_parentNode != null && value != null) {
-				// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
+				// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
 				Instruction def = new Instruction("const " + constName + " <- " + value);
 				def.setColor(colorConst);
 				_parentNode.addElement(def);
@@ -5905,11 +5849,6 @@ public class COBOLParser extends CodeParser
 					}
 					catch (Exception ex) {}
 				}
-				// FIXME: we currently need to manually derive constant values here, may not be needed later
-				//        if the preprocessor replace them (not sure yet if we want to do so in all places
-				//        as a const declaration in the NSD would likely lead to better results
-				//else {
-				//}
 				if (nDigits >= 9) {
 					type = "long";
 				}
@@ -6119,7 +6058,8 @@ public class COBOLParser extends CodeParser
 						for (int j = 0; j < hexText.length(); j += 2) {
 							String code = hexText.substring(j, j+2);
 							int val = Integer.parseInt(code, 16);
-							toAdd += "\\" + Integer.toOctalString(val);
+							//toAdd += "\\" + Integer.toOctalString(val);
+							toAdd += String.format("\\%1$03o", val);
 						}
 						toAdd += "\" ";
 					}
