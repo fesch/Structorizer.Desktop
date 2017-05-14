@@ -4677,40 +4677,34 @@ public class COBOLParser extends CodeParser
 			}
 			else if (ruleId == RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT)
 			{
-				String fileDescr = this.getContent_R(_reduction.get(2).asReduction(), "");
-				// Now fetch the file name (if available) and make sure it's a line-sequential file
-				// (otherwise we can't provide FileAPI support)
-				Reduction selsRed = _reduction.get(3).asReduction().get(0).asReduction();
-				while (selsRed.getParent().getTableIndex() == RuleConstants.PROD__SELECT_CLAUSE_SEQUENCE2) {
-					Reduction selRed = selsRed.get(1).asReduction();
-					selsRed = selsRed.get(0).asReduction();
-					String selHead = selRed.getParent().getHead().toString(); 
-					if (selHead.equals("<assign_clause>")) {
-						String fileName = this.getContent_R(selRed.get(4).asReduction(), "");
-						this.fileMap.put(fileDescr, fileName);
-					}
-					else if (selHead.equals("<file_status_clause>")) {
-						System.out.println(this.getContent_R(selRed.get(0).asReduction(), ""));
-						if (selRed.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD__FILE_OR_SORT_TOK_FILE) {
-							// map the status variable to the file descriptor!
-							String statusVar = this.getContent_R(selRed.get(3).asReduction(), "");
-							this.fileStatusMap.put(statusVar, fileDescr);
-						}
-					}
-					else if (selHead.equals("<organization_clause>")) {
-						// TODO make sure it's a text file
-						if (selRed.get(selRed.size()-1).asReduction().getParent().getTableIndex() != RuleConstants.PROD_ORGANIZATION_LINE_SEQUENTIAL) {
-							log("File organization of '" + fileDescr + "' unsuited for FleAPI!", false);
-						}
-					}
-				}
+				this.importFileControl(_reduction);
 			}
 			else if (ruleId == RuleConstants.PROD_FILE_DESCRIPTION)
 			{
 				System.out.println("PROD_FILE_DESCRIPTION");
-				Reduction fdRed = _reduction.get(0).asReduction();
-				Reduction recRed = _reduction.get(1).asReduction();
-				
+				Reduction fdRed = _reduction.get(0).asReduction();	// <file_description_enry>
+				Reduction reclRed = _reduction.get(1).asReduction();	// <_record_description_list>
+				// TODO map the record names (if any) to the file descriptor name (and vice versa?)
+				// for READ and WRITE statements
+				if (this.getContent_R(fdRed.get(0).asReduction(), "").trim().equalsIgnoreCase("fd")
+						&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
+					String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
+					do {
+						Reduction datRed = reclRed.get(0).asReduction();
+						if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
+							datRed = reclRed.get(1).asReduction();
+							reclRed = reclRed.get(0).asReduction();
+						}
+						else {
+							reclRed = null;
+						}
+						HashMap<String, String> typeMap = new HashMap<String, String>();
+						this.processDataDescriptions(datRed, null, typeMap);
+						for (String recName: typeMap.keySet()) {
+							this.fileRecordMap.put(recName, fdName);
+						}
+					} while (reclRed != null);
+				}
 			}
 			else if (ruleId == RuleConstants.PROD_OPEN_STATEMENT_OPEN)
 			{
@@ -4786,29 +4780,7 @@ public class COBOLParser extends CodeParser
 			}
 			else if (ruleId == RuleConstants.PROD_CALL_STATEMENT_CALL)
 			{
-				Reduction secRed = _reduction.get(1).asReduction();	// <call_body>
-				String name = this.getContent_R(secRed.get(1).asReduction(), "").trim();
-				// FIXME: This can be a lot of things, consider tokenizing it ...
-				String[] nameTokens = name.split("\\s+");
-				for (int i = 0; i < nameTokens.length; i++) {
-					// FIXME cut all from an "as" keyword on...
-				}
-				// Maybe the actual name is given as string literal rather than an identifier
-				if (name.matches("\\\".*?\\\"") || name.matches("['].*?[']")) {
-					name = name.substring(1, name.length()-1).replace("-", "_");
-				}
-				StringList args = new StringList();
-				if (secRed.get(2).asReduction().size() > 0) {
-					args = this.getParameterList(secRed.get(2).asReduction().get(1).asReduction(), "<call_param_list>", RuleConstants.PROD_CALL_PARAM, 2);
-				}
-				String content = name + "(" + args.concatenate(", ") + ")"; 
-				Reduction retRed = secRed.get(3).asReduction();
-				if (retRed.getParent().getTableIndex() == RuleConstants.PROD_CALL_RETURNING2) {
-					content = this.getContent_R(retRed.get(2).asReduction(), "") + " <- " + content;
-				}
-				Call ele = new Call(content);
-				ele.setComment(this.getOriginalText(_reduction, ""));
-				_parentNode.addElement(ele);
+				this.importCall(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_EXIT_STATEMENT_EXIT)
 			{
@@ -4879,6 +4851,66 @@ public class COBOLParser extends CodeParser
 		}
 	}	
 
+	private void importCall(Reduction _reduction, Subqueue _parentNode) {
+		boolean callOk = false;
+		Reduction secRed = _reduction.get(1).asReduction();	// <call_body>
+		String name = this.getContent_R(secRed.get(1).asReduction(), "").trim();
+		// FIXME: This can be a lot of things, consider tokenizing it ...
+		String[] nameTokens = name.split("\\s+");
+		// Maybe the actual name is given as string literal rather than an identifier
+		if (nameTokens.length == 1 && (name.matches("\\\".*?\\\"") || name.matches("['].*?[']"))) {
+			name = name.substring(1, name.length()-1).replace("-", "_");
+			callOk = true;
+		}
+		StringList args = new StringList();
+		if (secRed.get(2).asReduction().size() > 0) {
+			args = this.getParameterList(secRed.get(2).asReduction().get(1).asReduction(), "<call_param_list>", RuleConstants.PROD_CALL_PARAM, 2);
+		}
+		String content = name + "(" + args.concatenate(", ") + ")"; 
+		Reduction retRed = secRed.get(3).asReduction();
+		if (retRed.getParent().getTableIndex() == RuleConstants.PROD_CALL_RETURNING2) {
+			content = this.getContent_R(retRed.get(2).asReduction(), "") + " <- " + content;
+		}
+		Call ele = new Call(content);
+		String comment = this.getOriginalText(_reduction, "");
+		if (!callOk) {
+			ele.setColor(Color.RED);
+			comment = "A call with computed routine name is not supported in Structorizer!\n" + comment;
+		}
+		ele.setComment(StringList.explode(comment, "\n"));
+		_parentNode.addElement(ele);
+	}
+
+	private void importFileControl(Reduction _reduction) {
+		String fileDescr = this.getContent_R(_reduction.get(2).asReduction(), "");
+		// Now fetch the file name (if available) and make sure it's a line-sequential file
+		// (otherwise we can't provide FileAPI support)
+		Reduction selsRed = _reduction.get(3).asReduction().get(0).asReduction();
+		while (selsRed.getParent().getTableIndex() == RuleConstants.PROD__SELECT_CLAUSE_SEQUENCE2) {
+			Reduction selRed = selsRed.get(1).asReduction();
+			selsRed = selsRed.get(0).asReduction();
+			String selHead = selRed.getParent().getHead().toString(); 
+			if (selHead.equals("<assign_clause>")) {
+				String fileName = this.getContent_R(selRed.get(4).asReduction(), "");
+				this.fileMap.put(fileDescr, fileName);
+			}
+			else if (selHead.equals("<file_status_clause>")) {
+				System.out.println(this.getContent_R(selRed.get(0).asReduction(), ""));
+				if (selRed.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD__FILE_OR_SORT_TOK_FILE) {
+					// map the status variable to the file descriptor!
+					String statusVar = this.getContent_R(selRed.get(3).asReduction(), "");
+					this.fileStatusMap.put(statusVar, fileDescr);
+				}
+			}
+			else if (selHead.equals("<organization_clause>")) {
+				// TODO make sure it's a text file
+				if (selRed.get(selRed.size()-1).asReduction().getParent().getTableIndex() != RuleConstants.PROD_ORGANIZATION_LINE_SEQUENTIAL) {
+					log("File organization of '" + fileDescr + "' unsuited for FleAPI!", false);
+				}
+			}
+		}
+	}
+
 	private boolean importDelete(Reduction _reduction, Subqueue _parentNode) {
 		// TODO: Find a sensible conversion!
 		return false;
@@ -4891,7 +4923,38 @@ public class COBOLParser extends CodeParser
 
 	private boolean importWrite(Reduction _reduction, Subqueue _parentNode) {
 		// TODO: Find a sensible conversion!
-		return false;
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();	// <write_body>
+		String fdName = null;
+		String dataStr = null;
+		Reduction nameRed = secRed.get(0).asReduction();	// <file_or_record_name>
+		if (nameRed.getParent().getTableIndex() == RuleConstants.PROD_FILE_OR_RECORD_NAME_TOK_FILE) {
+			fdName = this.getContent_R(nameRed.get(1).asReduction(), "");	// Is rather the file name (path)
+			if (this.fileMap.containsValue(fdName)) {
+				// Perform a reverse search for the descriptor name
+				for (HashMap.Entry<String, String> entry: this.fileMap.entrySet()) {
+					if (entry.getValue().equals(fdName)) {
+						fdName = entry.getKey();
+						break;
+					}
+				}
+			}
+		}
+		else {
+			dataStr = this.getContent_R(nameRed, "");
+			fdName = this.fileRecordMap.get(dataStr);
+		}
+		Reduction fromRed = secRed.get(1).asReduction();
+		if (fromRed.getParent().getTableIndex() == RuleConstants.PROD_FROM_OPTION_FROM) {
+			dataStr = this.getContent_R(fromRed.get(1).asReduction(), "").trim();
+		}
+		if (fdName != null && dataStr != null) {
+			// TODO: try to consider types here.
+			Instruction writeInstr = new Instruction("fileWrite(" + fdName + ", " + dataStr + ")");
+			_parentNode.addElement(writeInstr);
+			done = true;
+		}
+		return done;
 	}
 
 	private boolean importRead(Reduction _reduction, Subqueue _parentNode) {
@@ -5857,7 +5920,7 @@ public class COBOLParser extends CodeParser
 				value = "{" + values.concatenate(", ") + "}";
 			}
 			if (_parentNode != null && value != null) {
-				// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
+				// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 				Instruction def = new Instruction("const " + constName + " <- " + value);
 				def.setColor(colorConst);
 				_parentNode.addElement(def);
