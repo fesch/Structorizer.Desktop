@@ -5322,7 +5322,7 @@ public class COBOLParser extends CodeParser
 				}
 				Call dummyCall = new Call(content);
 				dummyCall.setColor(Color.RED);
-				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, wich is still not supported");
+				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
 				_parentNode.addElement(dummyCall);
 			}
 		}
@@ -5817,7 +5817,7 @@ public class COBOLParser extends CodeParser
 					if (isConst) {
 						def.setColor(colorConst);
 					}
-					// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
+					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 					_parentNode.addElement(def);
 				}
 				//TODO stash the variables without a value clause somewhere to add
