@@ -5322,7 +5322,7 @@ public class COBOLParser extends CodeParser
 				}
 				Call dummyCall = new Call(content);
 				dummyCall.setColor(Color.RED);
-				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
+				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, wich is still not supported");
 				_parentNode.addElement(dummyCall);
 			}
 		}
@@ -5670,7 +5670,7 @@ public class COBOLParser extends CodeParser
 			String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
 			// as long as we don't use records there is no use in parsing FILLER items
 			// and as long as we do so group items that have no VALUE clause and only containing
-			// FILLER items which have a VALUEE clause are not parsed correctly
+			// FILLER items which have a VALUE clause are not parsed correctly
 			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {				
 				Reduction seqRed = _reduction.get(2).asReduction();
 				String type = "";
@@ -5817,7 +5817,7 @@ public class COBOLParser extends CodeParser
 					if (isConst) {
 						def.setColor(colorConst);
 					}
-					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
+					// FIXME: in case of isGlobal enforce the palcement in a global diagram to be imported wherever needed
 					_parentNode.addElement(def);
 				}
 				//TODO stash the variables without a value clause somewhere to add
