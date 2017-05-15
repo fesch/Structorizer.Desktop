@@ -461,6 +461,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								String parserError = null;
 								try {
 								// END KGU#354 2017-05-03
+									// START KGU#354 2017-05-12: Enh. #354 - we better use a new instance instead of statically sharing it
+									parser = parser.getClass().newInstance();
+									// END KGU#354 2017-05-12
 									List<Root> newRoots = parser.parse(filename, charSet, logPath);
 									if (parser.error.equals("")) {
 										boolean arrange = false;
