@@ -5719,22 +5719,21 @@ public class COBOLParser extends CodeParser
 		int ruleId = _reduction.getParent().getTableIndex();
 		if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
 		{
+			// NOTE: we can never get any constants here as there are seperate rules for them
 			System.out.println("PROD_DATA_DESCIPTION4");
+			// FIXME In a first approach we neglect records where we need the level number
+			// and declare all as plain variables
 			int level = 0;
 			try {
 				level = Integer.parseInt(this.getContent_R(_reduction.get(0).asReduction(), ""));
+			} catch (Exception ex) {
 			}
-			catch (Exception ex) {}
-			// This constant detection is just a fallback unlikely ever to be used - there is a separate rule
-			// for SEVENTY-EIGHT constants below, which is supposed to catch respective cases.
-			boolean isConst = level == 78;
-			// Picture clause: Find variable initializations and declarations
-			// FIXME In a first approach we neglect records and delare all as plain variables
 			String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
-			// as long as we don't use records there is no use in parsing FILLER items
-			// and as long as we do so group items that have no VALUE clause and only containing
-			// FILLER items which have a VALUE clause are not parsed correctly
-			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {				
+			// Picture clause: Find variable initializations and declarations
+			// as long as we don't use records there is no use in parsing FILLER
+			// items and as long as we do so group items that have no VALUE clause and
+			// only containing FILLER items which have a VALUE clause are not parsed correctly
+			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {
 				Reduction seqRed = _reduction.get(2).asReduction();
 				String type = "";
 				String value = "";
@@ -5846,18 +5845,16 @@ public class COBOLParser extends CodeParser
 				if (type.isEmpty()) {
 					type = "string";
 				}
-				if (!isConst) {
 				// END SSO 2017-05-12
-					if (_parentNode != null && this.optionImportVarDecl) {
-						// Add the declaration	
-						Instruction decl = new Instruction("var " + varName + ": " + type);
-						decl.setComment(picture);
-						decl.setColor(colorDecl);
-						_parentNode.addElement(decl);
-					}
-					if (_typeInfo != null) {
-						_typeInfo.put(varName, type);
-					}
+				if (_parentNode != null && this.optionImportVarDecl) {
+					// Add the declaration
+					Instruction decl = new Instruction("var " + varName + ": " + type);
+					decl.setComment(picture);
+					decl.setColor(colorDecl);
+					_parentNode.addElement(decl);
+				}
+				if (_typeInfo != null) {
+					_typeInfo.put(varName, type);
 				}
 				if (!value.isEmpty() && _parentNode != null) {
 					// Add the assignment
@@ -5873,13 +5870,7 @@ public class COBOLParser extends CodeParser
 						value = value + "L";
 					}
 					String content = varName + " <- " + value;
-					if (isConst) {
-						content = "const " + content;
-					}
 					Instruction def = new Instruction(content);
-					if (isConst) {
-						def.setColor(colorConst);
-					}
 					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 					_parentNode.addElement(def);
 				}
@@ -5894,6 +5885,8 @@ public class COBOLParser extends CodeParser
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_CONSTANT) {
 			boolean isGlobal = _reduction.get(3).asReduction().getParent().getTableIndex() == RuleConstants.PROD_CONST_GLOBAL_GLOBAL;
 			String constName = this.getContent_R(_reduction.get(1).asReduction(), "");
+			// NOTE: While the current grammar does not allow it we could have a constant expression here:
+			// 01 myconst AS CONSTANT 55 - 33 / 12.
 			String value = this.getContent_R(_reduction.get(4).asReduction().get(1).asReduction(), "");
 			String type = Element.identifyExprType(null, value, true);
 			if (!type.isEmpty() && _typeInfo != null) {
@@ -5909,12 +5902,25 @@ public class COBOLParser extends CodeParser
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_SEVENTY_EIGHT) {
 			boolean isGlobal = _reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL;
 			String constName = this.getContent_R(_reduction.get(1).asReduction(), "");
-			StringList values = this.getExpressionList(_reduction.get(3).asReduction(), "<value_item_list>", RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM);
+			// FIXME: we don't get the <value_item_list> here but the <value_clause>
+			StringList values = this.getExpressionList(_reduction.get(3).asReduction(), "<value_item_list>",
+					RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM); // FIXME: the parser should not get the COMMA_DELIM and normally spaces are used
+			// NOTE: While the current grammar does not allow it we could have a constant expression here:
+			// 78 myval  VALUE 55 - 33 / 12.
 			String value = null;
-			String type = "";
+			String type = ""; // unused
 			if (values.count() == 1) {
-				value = values.get(0);
-				type = Element.identifyExprType(null, value, true);
+				// FIXME: we currently get "VALUE  [IS] 123 "
+				value = values.get(0).trim();
+				// HACK:
+				String hack = value.toUpperCase();
+				if (hack.startsWith("VALUE")) {
+					value = value.substring(5).trim();
+					if (hack.startsWith("IS")) {
+						value = value.substring(3).trim();
+					}
+				}
+				type = Element.identifyExprType(null, value, true); // unused
 			}
 			else {
 				value = "{" + values.concatenate(", ") + "}";
