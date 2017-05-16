@@ -4739,27 +4739,16 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE)
+			else if (
+					ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE
+					||
+					ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
 			{
-				System.out.println("PROD_REWRITE_STATEMENT_REWRITE");
-				if (!this.importRewrite(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
-			{
-				System.out.println("PROD_DELETE_STATEMENT_DELETE");
-				if (!this.importDelete(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("Structorizer File API does not support indexed or other non-text files");
+				_parentNode.addElement(instr);
 			}
 			else if (ruleId == RuleConstants.PROD_CLOSE_STATEMENT_CLOSE)
 			{
@@ -4909,16 +4898,6 @@ public class COBOLParser extends CodeParser
 				}
 			}
 		}
-	}
-
-	private boolean importDelete(Reduction _reduction, Subqueue _parentNode) {
-		// TODO: Find a sensible conversion!
-		return false;
-	}
-
-	private boolean importRewrite(Reduction _reduction, Subqueue _parentNode) {
-		// TODO: Find a sensible conversion!
-		return false;
 	}
 
 	private boolean importWrite(Reduction _reduction, Subqueue _parentNode) {
@@ -5900,26 +5879,17 @@ public class COBOLParser extends CodeParser
 			}
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_SEVENTY_EIGHT) {
+			// Note: Though the current grammar still doesn't allow it, we could have a constant expression here e.g.:
+			// 78 myval  VALUE 55 - 33 / 12.
 			boolean isGlobal = _reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL;
 			String constName = this.getContent_R(_reduction.get(1).asReduction(), "");
-			// FIXME: we don't get the <value_item_list> here but the <value_clause>
-			StringList values = this.getExpressionList(_reduction.get(3).asReduction(), "<value_item_list>",
+			Reduction valClRed = _reduction.get(3).asReduction(); // <value_clause>
+			StringList values = this.getExpressionList(valClRed.get(2).asReduction(), "<value_item_list>",
 					RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM); // FIXME: the parser should not get the COMMA_DELIM and normally spaces are used
-			// NOTE: While the current grammar does not allow it we could have a constant expression here:
-			// 78 myval  VALUE 55 - 33 / 12.
 			String value = null;
 			String type = ""; // unused
 			if (values.count() == 1) {
-				// FIXME: we currently get "VALUE  [IS] 123 "
 				value = values.get(0).trim();
-				// HACK:
-				String hack = value.toUpperCase();
-				if (hack.startsWith("VALUE")) {
-					value = value.substring(5).trim();
-					if (hack.startsWith("IS")) {
-						value = value.substring(3).trim();
-					}
-				}
 				type = Element.identifyExprType(null, value, true); // unused
 			}
 			else {
@@ -6319,6 +6289,8 @@ public class COBOLParser extends CodeParser
 							_content += " <> " + this.getContent_R(subRed.get(2).asReduction(), "");
 						}
 					}
+					// FIXME (KGU#397): In certain cases, the <subref> token is also used for parameter lists in routine calls!
+					// (This can only be solved on the parent rule level - we don't have the context here)
 					else if (subRuleId == RuleConstants.PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN) {
 						_content += "[" + this.getContent_R(subRed.get(1).asReduction(), "") + "] ";	// FIXME: spaces!?
 					}
@@ -6361,6 +6333,9 @@ public class COBOLParser extends CodeParser
 					}
 					else if (toAdd.equalsIgnoreCase("space") || toAdd.equalsIgnoreCase("spaces")) {
 						toAdd = "\' \'";
+					}
+					else if (toAdd.equalsIgnoreCase("null")) {
+						toAdd = "\'\\0\'";
 					}
 					else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
 						toAdd = toAdd.toLowerCase();
