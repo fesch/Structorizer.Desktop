@@ -219,7 +219,7 @@ public class Call extends Instruction {
 				// Get all lines of the called routine
 				String name = this.getSignatureString();
 				if (Arranger.hasInstance()) {
-					Vector<Root> roots = Arranger.getInstance().findProgramsByName(name);
+					Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
 					if (roots.size() == 1) {
 						roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
 					}

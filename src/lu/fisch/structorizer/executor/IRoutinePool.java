@@ -38,6 +38,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.09.26:     Enh. #253: New public method getAllRoots() added.
  *      Kay Gürtzig     2016.04.11      Enh. #389: Method signature change: findRoutinesByName -> findDiagramsByName,
  *                                      new method findProgramsByName
+ *      Kay Gürtzig     2016.05.16      Enh. #389: Method signature change: findProgramsByName -> findIncludesByName,
  *
  ******************************************************************************************************
  *
@@ -67,11 +68,11 @@ public interface IRoutinePool {
 	public Vector<Root> findDiagramsByName(String rootName);
 
 	/**
-	 * Gathers all program diagrams responding to the name passed in. 
+	 * Gathers all includable diagrams responding to the name passed in. 
 	 * @param rootName - a String the Root objects looked for ought to respond to as method name
 	 * @return a collection of program Root objects responding to the passed-in name
 	 */
-	public Vector<Root> findProgramsByName(String rootName);
+	public Vector<Root> findIncludesByName(String rootName);
 
 	/**
 	 * Gathers all subroutine diagrams responding to the name passed in. 

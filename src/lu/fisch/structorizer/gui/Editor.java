@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -55,13 +54,13 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.02.09      Enh. #344: Ctrl-Y as additional redo key binding
  *      Kay Gürtzig     2017.03.27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
  *      Kay Gürtzig     2017.03.28      Enh. #387: New "Save All" button
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Button for third diagram type (includable)
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 
 import com.kobrix.notebook.gui.AKDockLayout;
@@ -146,10 +145,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JButton btnCut = new JButton(IconLoader.ico044); 
     protected final JButton btnCopy = new JButton(IconLoader.ico042); 
     protected final JButton btnPaste = new JButton(IconLoader.ico043);
-	// style 
+	// style / type
     protected final JToggleButton btnNice = new JToggleButton(IconLoader.ico040);
     protected final JToggleButton btnFunction = new JToggleButton(IconLoader.ico021);
     protected final JToggleButton btnProgram = new JToggleButton(IconLoader.ico022);
+    // START KGU#376 2017-05-16: Enh. #389
+    protected final JToggleButton btnInclude = new JToggleButton(IconLoader.ico071);
+    // END KGU#376 2017-05-16
 	// editing
     protected final JButton btnEdit = new JButton(IconLoader.ico006); 
     protected final JButton btnDelete = new JButton(IconLoader.ico005); 
@@ -652,6 +654,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnProgram);
 		btnProgram.setFocusable(false);
 		btnProgram.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setProgram(); doButtons(); } } );
+	    // START KGU#376 2017-05-16: Enh. #389
+        toolbar.add(btnInclude);
+		btnInclude.setFocusable(false);
+		btnInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
+	    // END KGU#376 2017-05-16
 
         // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Nice");
@@ -1216,8 +1223,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		// style
 		btnNice.setSelected(diagram.isNice());
-		btnFunction.setSelected(!diagram.isProgram());
+		btnFunction.setSelected(diagram.isSubroutine());
 		btnProgram.setSelected(diagram.isProgram());
+		btnInclude.setSelected(diagram.isInclude());
 
 		// DIN
 		if(Element.E_DIN==true)
@@ -1287,7 +1295,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupIndexGet.setEnabled(indexSelected && diagramIndex.getSelectedValue() != diagram.getRoot());
 		popupIndexSave.setEnabled(indexSelected && diagramIndex.getSelectedValue().hasChanged());
 		popupIndexRemove.setEnabled(indexSelected);
-		popupIndexCovered.setEnabled(indexSelected && Element.E_COLLECTRUNTIMEDATA && !diagramIndex.getSelectedValue().isProgram);
+		popupIndexCovered.setEnabled(indexSelected && Element.E_COLLECTRUNTIMEDATA && !diagramIndex.getSelectedValue().isProgram());
 		// END KGU#318 2017-01-05
            
                 //

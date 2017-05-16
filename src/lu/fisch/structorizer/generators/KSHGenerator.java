@@ -188,7 +188,7 @@ public class KSHGenerator extends BASHGenerator {
 		// START KGU 2015-11-02: Comments added
 		insertComment(_root, _indent);
 		// END KGU 2015-11-02
-		if( ! _root.isProgram ) {
+		if( _root.isSubroutine() ) {
 			// START KGU#53 2015-11-02: Shell functions obtain their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
 			String header = _root.getMethodName() + "()";
@@ -209,9 +209,9 @@ public class KSHGenerator extends BASHGenerator {
 		code.add("");
 		//insertComment("TODO declare your variables here", _indent);
 		//code.add("");
-		generateCode(_root.children, _root.isProgram ? _indent : _indent + this.getIndent());
+		generateCode(_root.children, _root.isProgram() ? _indent : _indent + this.getIndent());
 		
-		if( ! _root.isProgram ) {
+		if( _root.isSubroutine() ) {
 			code.add("}");
 		}
 		

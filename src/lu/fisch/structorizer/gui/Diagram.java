@@ -124,7 +124,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
  *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
  *      Kay Gürtzig     2017.05.09      Issue #400: Proper check whether preference changes were committed
- *      Kay Gürtzig     2017.05.11      Enh. #357: Mechanism to retrieve plugin-specified generator options 
+ *      Kay Gürtzig     2017.05.11      Enh. #357: Mechanism to retrieve plugin-specified generator options
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Support for third diagram type (include/import) 
  *
  ******************************************************************************************************
  *
@@ -5875,12 +5876,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setFunction()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && root.isProgram)
+		if (!root.isNice && root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
 		// END KGU#221 2016-07-28
-		root.isProgram=false;
+		root.setProgram(false);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
 		root.setChanged();
@@ -5894,12 +5895,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setProgram()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && !root.isProgram)
+		if (!root.isNice && !root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
 		// END KGU#221 2016-07-28
-		root.isProgram=true;
+		root.setProgram(true);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
 		root.setChanged();
@@ -5910,11 +5911,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	// START KGU#376 2017-05-16: Enh. #389
+	public void setInclude()
+	{
+		// START KGU#221 2016-07-28: Bugfix #208
+		if (!root.isNice && root.isProgram())
+		{
+			root.resetDrawingInfoUp();
+		}
+		// END KGU#221 2016-07-28
+		root.setInclude();
+		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
+		//root.hasChanged=true;
+		root.setChanged();
+		// END KGU#137 2016-01-11
+		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		analyse();
+		// END KGU#253 2016-09-22
+		redraw();
+	}
+	// END KGU #376 2017-05-16
+
 	public boolean isProgram()
 	{
-		return root.isProgram;
+		return root.isProgram();
 	}
-
+	public boolean isSubroutine()
+	{
+		return root.isSubroutine();
+	}
+	public boolean isInclude()
+	{
+		return root.isInclude();
+	}
 
 	public void setComments(boolean _comments)
 	{

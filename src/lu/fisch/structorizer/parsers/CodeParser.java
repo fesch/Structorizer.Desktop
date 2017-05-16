@@ -421,7 +421,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			// START KGU#354 2017-03-10: Hook for subclass postprocessing
 			this.subclassUpdateRoot(subroutine, _textToParse);
 			// END KGU#354 2017-03-10
-			if (!subroutine.isProgram)
+			if (subroutine.isSubroutine())
 			{
 				signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
 			}
@@ -662,7 +662,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		// START KGU#358 2017-03-06: Enh. #368 - consider import options!
 		this.optionImportVarDecl = Ini.getInstance().getProperty("impVarDeclarations", "false").equals("true");
 		// END KGU#358 2017-03-06
-		root.isProgram = true;
+		root.setProgram(true);
 		// Allow subclasses to adjust things before the recursive build process is going off.
 		this.initializeBuildNSD();
 		buildNSD_R(_reduction, root.children);

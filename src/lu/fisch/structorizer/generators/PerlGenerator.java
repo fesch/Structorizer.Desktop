@@ -973,7 +973,8 @@ public class PerlGenerator extends Generator {
 		}
 		// END KGU#178 2016-07-20
 		insertComment(_root, _indent);
-		if( ! _root.isProgram ) {
+		// FIXME: What to do with includable diagrams? 
+		if( _root.isSubroutine() ) {
 			code.add(_indent + "sub " + _procName + " {");
 			indent = _indent + this.getIndent();
 			for (int p = 0; p < _paramNames.count(); p++) {
@@ -1019,7 +1020,7 @@ public class PerlGenerator extends Generator {
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		if (_root.isSubroutine() && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
 			String result = "";
 			if (isFunctionNameSet)
@@ -1069,7 +1070,7 @@ public class PerlGenerator extends Generator {
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
-		if (!_root.isProgram) code.add(_indent + "}");		
+		if (_root.isSubroutine()) code.add(_indent + "}");		
 	}
 	// END KGU#78 2015-12-17
 	

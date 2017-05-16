@@ -631,7 +631,7 @@ public class CSharpGenerator extends CGenerator
 		}
 		// END KGU#178 2016-07-20
 		
-		if (_root.isProgram==true) {
+		if (_root.isProgram()) {
 			code.add(_indent + "using System;");
 			// START KGU#348 2017-02-24: Enh. #348
 			if (this.hasParallels) {
@@ -808,7 +808,7 @@ public class CSharpGenerator extends CGenerator
 		// Method block close
 		super.generateFooter(_root, _indent + this.getIndent());
 
-		if (_root.isProgram)
+		if (_root.isProgram())
 		{
 			// START KGU#178 2016-07-20: Enh. #160
 			// Modify the subroutine insertion position

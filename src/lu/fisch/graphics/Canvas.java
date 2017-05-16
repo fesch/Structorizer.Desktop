@@ -36,6 +36,7 @@ package lu.fisch.graphics;
  *      Bob Fisch       2007.12.10      First Issue
  *      Kay Gürtzig     2016.07.27      Issue #208: New public method fillRoundRect()
  *      Kay Gürtzig     2016.10.13      Enh. #270: Method hatchedRect() added to overlay a hatched pattern
+ *      Kay Gürtzig     2017.05.16      Enh. #389: New methods for polygons, API changes
  *
  ******************************************************************************************************
  *
@@ -50,12 +51,11 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Image;
 import java.awt.Paint;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-
-import lu.fisch.utils.*;
 
 public class Canvas  {
 	
@@ -118,10 +118,17 @@ public class Canvas  {
 		canvas.drawRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top);
 	}	
 	
-	public void roundRect(Rect _rect)
+	public void roundRect(Rect _rect, int _cornerRadius)
 	{
-		canvas.drawRoundRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top,30,30);
+		canvas.drawRoundRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top, 2*_cornerRadius, 2*_cornerRadius);
 	}	
+	
+	// START KGU#376 2017-05-16: Enh. #389
+	public void drawPoly(Polygon _poly)
+	{
+		canvas.drawPolygon(_poly);
+	}
+	// END KGU#376 2017-05-16
 	
 	public void fillRect(Rect _rect)
 	{
@@ -151,13 +158,20 @@ public class Canvas  {
 	}
 	// END KGU#277 2016-10-13
 	
-	// START KGU#221 2016-07-27: Enhancement for bugfix #208
-	public void fillRoundRect(Rect _rect)
+	// START KGU#221 2016-07-27: Enhancement for bugfix #208, KGU 2017-05-16: Signature changed
+	public void fillRoundRect(Rect _rect, int _cornerRadius)
 	{
-		canvas.fillRoundRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top, 30, 30);
+		canvas.fillRoundRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top, 2*_cornerRadius, 2*_cornerRadius);
 	}
 	// END KGU#221 2016-07-27
-	
+
+	// START KGU#357 2017-06-16: Enhancement for issue #389
+	public void fillPoly(Polygon _poly)
+	{
+		canvas.fillPolygon(_poly);
+	}
+	// END KGU#357 2017-06-16
+
 	public void writeOut(int _x, int _y, String _text)
 	{
 		String display = new String(_text);

@@ -472,10 +472,15 @@ public class CPlusPlusGenerator extends CGenerator {
         // add comment
     	insertComment(_root, _indent);
 
-        String pr = _root.isProgram ? "program" : "function";
+        String pr = "program";
+        if (_root.isSubroutine()) {
+        	pr = "function";
+        } else if (_root.isInclude()) {
+        	pr = "includable";
+        }
         insertComment(pr + " " + _root.getText().get(0), _indent);
         
-        if (_root.isProgram)
+        if (_root.isProgram())
         	code.add(_indent + "int main(void)");
         else {
         	// Start with the result type

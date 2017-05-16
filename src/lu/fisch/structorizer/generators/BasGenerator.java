@@ -1002,7 +1002,7 @@ public class BasGenerator extends Generator
         // END KGU#178 2016-07-20
         
         String signature = _root.getMethodName();
-        if (!_root.isProgram) {
+        if (_root.isSubroutine()) {
         	boolean isFunction = _resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet; 
         	pr = isFunction ? "FUNCTION" : "SUB";
         		
@@ -1069,7 +1069,7 @@ public class BasGenerator extends Generator
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		if (_root.isSubroutine() && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
 			String result = "0";
 			if (isFunctionNameSet)
@@ -1093,7 +1093,7 @@ public class BasGenerator extends Generator
 	protected void generateFooter(Root _root, String _indent)
 	{
 		String endPhrase = "END";
-        if (!_root.isProgram)
+        if (_root.isSubroutine())
         {
         	if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet)
         	{

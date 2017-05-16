@@ -729,7 +729,7 @@ public class JavaGenerator extends CGenerator
 			code.add("");
 		}
 		// END KGU#178 2016-07-20
-		if (_root.isProgram==true) {
+		if (_root.isProgram()) {
 			if (topLevel) {
 				if (this.hasInput()) {
 					code.add(_indent + "import java.util.Scanner;");
@@ -872,7 +872,7 @@ public class JavaGenerator extends CGenerator
 		super.generateFooter(_root, _indent + this.getIndent());
 
 		// Don't close class block if we haven't opened any
-		if (_root.isProgram)
+		if (_root.isProgram())
 		{
 			// START KGU#178 2016-07-20: Enh. #160
 			// Modify the subroutine insertion position

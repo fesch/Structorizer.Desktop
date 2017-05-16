@@ -1239,7 +1239,12 @@ public class CGenerator extends Generator {
 			code.add("");					
 		}
 		// END KGU#178 2016-07-20
-		String pr = (_root.isProgram) ? "program" : "function";
+		String pr = "program";
+		if (_root.isSubroutine()) {
+			pr = "function";
+		} else if (_root.isInclude()) {
+			pr = "includable";
+		}
 		insertComment(pr + " " + _root.getText().get(0), _indent);
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
@@ -1287,9 +1292,11 @@ public class CGenerator extends Generator {
 
 		insertComment(_root, _indent);
 		
-		if (_root.isProgram)
+		if (_root.isProgram())
 			code.add("int main(void)");
 		else {
+			// FIXME: Define a header for includable diagrams!
+			
 			// Compose the function header
 			String fnHeader = transformType(_root.getResultType(),
 					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
@@ -1520,12 +1527,13 @@ public class CGenerator extends Generator {
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (_root.isProgram && !alwaysReturns)
+		if (_root.isProgram() && !alwaysReturns)
 		{
 			code.add(_indent);
 			code.add(_indent + "return 0;");
 		}
-		else if ((returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		else if (_root.isSubroutine() &&
+				(returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
 			String result = "0";
 			if (isFunctionNameSet)

@@ -49,6 +49,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.10      Further accomplishments for EVALUATE (ALSO included)
  *      Kay Gürtzig     2017.05.13      EVALUATE import as Case element fixed. FileAPI support begun
  *      Kay Gürtzig     2017.05.14      PERFORM VARYING with composed condition or defective step fixed
+ *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
  *
  ******************************************************************************************************
  *
@@ -4423,7 +4424,7 @@ public class COBOLParser extends CodeParser
 				Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
 				String content = this.getContent_R(secRed.get(2).asReduction(), "");
 				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT) {
-					this.root.isProgram = false;
+					this.root.setProgram(false);
 				}
 				// Arguments and return value will be fetched from a different rule
 				root.setText(content);
@@ -4459,7 +4460,7 @@ public class COBOLParser extends CodeParser
 				}
 				if (arguments.count() > 0) {
 					root.setText(root.getText().getLongString() + "(" + arguments.concatenate(", ") + ")");
-					root.isProgram = false;
+					root.setProgram(false);
 				}
 			}
 			else if (ruleId == RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING)
@@ -4566,34 +4567,13 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD_SET_STATEMENT_SET)
 			{
 				System.out.println("PROD_SET_STATEMENT_SET");
-				Reduction secRed = _reduction.get(1).asReduction();	// <set_body>
-				String content = "";
-				if (secRed.getParent().getTableIndex() != RuleConstants.PROD_SET_TO_TO) {
-					content = this.getContent_R(_reduction, "");
+				if (!importSet(_reduction, _parentNode)) {
+					String content = this.getContent_R(_reduction, "");
 					Instruction instr = new Instruction(content);
 					instr.setComment("This statement cannot be converted into a sensible diagram element!");
 					instr.setColor(Color.RED);
 					instr.disabled = true;
 					_parentNode.addElement(instr);
-				}
-				else {
-					String expr = this.getContent_R(secRed.get(2).asReduction(), "");
-					StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-					if (targets.count() > 0)
-					{
-						StringList assignments = new StringList();
-						for (int i = 0; i < targets.count(); i++) {
-							String target = targets.get(i).trim();
-							if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
-								assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
-								assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
-							}
-							else {
-								assignments.add(target + " <- " + expr);
-							}
-						}
-						_parentNode.addElement(new Instruction(assignments));
-					}
 				}
 			}
 			else if (ruleId == RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE)
@@ -4839,6 +4819,83 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}	
+
+	private boolean importSet(Reduction _reduction, Subqueue _parentNode) {
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();	// <set_body>
+		int secRuleId = secRed.getParent().getTableIndex();
+		switch (secRuleId) {
+		case RuleConstants.PROD_SET_TO_TO:
+		{
+			String expr = this.getContent_R(secRed.get(2).asReduction(), "");
+			StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+			if (targets.count() > 0)
+			{
+				StringList assignments = new StringList();
+				for (int i = 0; i < targets.count(); i++) {
+					String target = targets.get(i).trim();
+					if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
+						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
+						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
+					}
+					else {
+						assignments.add(target + " <- " + expr);
+					}
+				}
+				_parentNode.addElement(new Instruction(assignments));
+				done = true;
+			}
+			break;
+		}
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE:
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE2:
+		{
+			Reduction setRed = secRed;
+			StringList assignments = new StringList();
+			do {
+				if (secRuleId == RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE2) {
+					setRed = secRed.get(1).asReduction();
+					secRed = secRed.get(0).asReduction();
+				}
+				else {
+					secRed = null;
+				}
+				this.addBoolAssignments(setRed, assignments);
+			} while (secRed != null);
+			if (assignments.count() > 0) {
+				_parentNode.addElement(new Instruction(assignments));
+			}
+			done = true;
+			break;
+		}
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_TRUE:
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_FALSE:
+		{
+			StringList assignments = new StringList();
+			this.addBoolAssignments(secRed, assignments);
+			if (assignments.count() > 0) {
+				_parentNode.addElement(new Instruction(assignments));
+			}
+			done = true;
+			break;
+		}
+		}
+		return done;
+	}
+
+	/**
+	 * Helper method for {@link #importSet(Reduction, Subqueue)}, just adding the assignments
+	 * of the <target_x_list> of the given reduction {@code setRed} to {@code assignments}
+	 * @param setRed
+	 * @param assignments
+	 */
+	private void addBoolAssignments(Reduction setRed, StringList assignments) {
+		String value = setRed.get(2).asString();
+		StringList targets = this.getExpressionList(setRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		for (int i = 0; i < targets.count(); i++) {
+			assignments.add(targets.get(i) + " <- " + value);
+		}
+	}
 
 	private void importCall(Reduction _reduction, Subqueue _parentNode) {
 		boolean callOk = false;
@@ -6325,6 +6382,9 @@ public class COBOLParser extends CodeParser
 						}
 						toAdd += "\" ";
 					}
+					else if (name.equals("TOK_AMPER")) {
+						toAdd = " + ";
+					}
 					else if (name.equals("TOK_PLUS") || name.equals("TOK_MINUS")) {
 						toAdd = " " + toAdd + " ";
 					}
@@ -6377,7 +6437,8 @@ public class COBOLParser extends CodeParser
 					fileName = fileName.toUpperCase();
 				}
 				aRoot.setText(fileName);
-				aRoot.isProgram = true;
+				// FIXME: Might also become an includable diagram!
+				aRoot.setProgram(true);
 			}
 		}
 		// Force returning of the specified result

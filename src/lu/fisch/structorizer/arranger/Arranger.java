@@ -645,11 +645,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#376 2017-04-11: Enh. #389
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.executor.IRoutinePool#findProgramsByName(java.lang.String)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
      */
     @Override
-    public Vector<Root> findProgramsByName(String rootName) {
-        return surface.findProgramsByName(rootName);
+    public Vector<Root> findIncludesByName(String rootName) {
+        return surface.findIncludesByName(rootName);
     }
     // END KGU#376 2017-04-11
 

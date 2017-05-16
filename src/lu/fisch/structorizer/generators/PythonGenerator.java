@@ -818,7 +818,8 @@ public class PythonGenerator extends Generator
 				// END KGU#311 2016-12-27
 			}
 			code.add("");
-			if (_root.isProgram) {
+			// FIXME: How to handle includables here?
+			if (!_root.isSubroutine()) {
 				insertComment(_root, _indent);
 			}
 			// END KGU#178 2016-07-20
@@ -848,7 +849,7 @@ public class PythonGenerator extends Generator
 		@Override
 		protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 		{
-			if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+			if (_root.isSubroutine() && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 			{
 				String result = "0";
 				if (isFunctionNameSet)

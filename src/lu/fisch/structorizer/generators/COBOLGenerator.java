@@ -571,7 +571,8 @@ public class COBOLGenerator extends Generator {
 		}
 		insertCopyright(_root, _indent, true);
 		addCode("IDENTIFICATION DIVISION.", _indent, false);
-		addCode((_root.isProgram ? "PROGRAM-ID. " : "FUNCTION-ID. ") + this.transformName(_root.getMethodName()) + ".", _indent, false);
+		// FIXME: What to do here for IMPORT diagrams?
+		addCode((_root.isProgram() ? "PROGRAM-ID. " : "FUNCTION-ID. ") + this.transformName(_root.getMethodName()) + ".", _indent, false);
 		addCode("", _indent, false);
 
 		// If we had something to tell then here might be the ENVIRONMENT DIVISION
@@ -622,7 +623,7 @@ public class COBOLGenerator extends Generator {
 		// Starts the PROCEDURE DIVISION
 		String procdiv = "PROCEDURE DIVISION";
 		StringList params = _root.getParameterNames();
-		if (!_root.isProgram || params.count() > 0) {
+		if (_root.isSubroutine() || params.count() > 0) {
 			procdiv += " USING " + params.concatenate(" ");
 		}
 		if (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) {
@@ -646,12 +647,13 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (_root.isProgram && !alwaysReturns)
+		if (_root.isProgram() && !alwaysReturns)
 		{
 //			code.add(_indent);
 //			code.add(_indent + "return 0;");
 		}
-		else if ((returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		else if (_root.isSubroutine() &&
+				(returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
 //			String result = "0";
 //			if (isFunctionNameSet)
@@ -678,7 +680,8 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
-		addCode("END " + (_root.isProgram ? "PROGRAM " : "FUNCTION ") + this.transformName(_root.getMethodName()) + ".", _indent, false);		
+		// FIXME: What do do here for IMPORT diagrams?
+		addCode("END " + (_root.isProgram() ? "PROGRAM " : "FUNCTION ") + this.transformName(_root.getMethodName()) + ".", _indent, false);		
 		this.subroutineInsertionLine = code.count();
 	}
 

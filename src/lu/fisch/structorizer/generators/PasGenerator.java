@@ -1083,14 +1083,15 @@ public class PasGenerator extends Generator
 			insertCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// STARTB KGU#351 2017-02-26: Enh. #346
-        	if (_root.isProgram) {
+			// FIXME This may have little to do with whether it's a program
+        	if (_root.isProgram()) {
         		this.insertUserIncludes(_indent);
         	}
 			// END KGU#351 2017-02-26
        }
         
         String signature = _root.getMethodName();
-        if (!_root.isProgram) {
+        if (!_root.isProgram()) {
         	// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
         	if (topLevel)
         	{
@@ -1173,7 +1174,7 @@ public class PasGenerator extends Generator
         }
         
 		// START KGU#311 2016-12-26: Enh. #314
-		if (topLevel && _root.isProgram && this.usesFileAPI) {
+		if (topLevel && _root.isProgram() && this.usesFileAPI) {
 			this.insertFileAPI("pas", code.count(), _indent, 1);
 		}
 		// END KGU#311 2016-12-26
@@ -1260,7 +1261,7 @@ public class PasGenerator extends Generator
         code.add("");
         
         // START KGU#178 2016-07-20: Enh. #160
-        if (topLevel && _root.isProgram && this.optionExportSubroutines())
+        if (topLevel && _root.isProgram() && this.optionExportSubroutines())
         {
     		subroutineInsertionLine = code.count();
     		subroutineIndent = _indent;
@@ -1282,7 +1283,7 @@ public class PasGenerator extends Generator
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (!_root.isProgram)
+		if (_root.isSubroutine())
 		{
 			String varName = "";
 			if (isResultSet && !isFunctionNameSet && !alwaysReturns)
@@ -1304,7 +1305,7 @@ public class PasGenerator extends Generator
 	protected void generateFooter(Root _root, String _indent)
 	{
     	// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
-        if (!_root.isProgram) {
+        if (!_root.isProgram()) {
         	code.add(_indent);
         	code.add(_indent + "end;");
         	if (topLevel)

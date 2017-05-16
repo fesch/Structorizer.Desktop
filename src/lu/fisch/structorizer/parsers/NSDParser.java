@@ -161,8 +161,18 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#362 2017-03-28
 			
 			// read attributes
-			root.isProgram = true;
-			if(attributes.getIndex("type")!=-1)  {if (attributes.getValue("type").equals("sub")) {root.isProgram=false;}}
+			root.setProgram(true);
+			// START KGU#376 2017-05-06: Enh. #389 (third diagram t<pe)
+			if(attributes.getIndex("type")!=-1)  {
+				String type = attributes.getValue("type"); 
+				if (type.equals("sub")) {
+					root.setProgram(false);
+				}
+				else if (type.equals("includable")) {
+					root.setInclude();
+				}
+			}
+			// END KGU#376 2017-05-16
 			root.isNice=true;
 			if(attributes.getIndex("style")!=-1)  {if (!attributes.getValue("style").equals("nice")) {root.isNice=false;}}
 			// START KGU 2015-12-04: The following line was nonsense

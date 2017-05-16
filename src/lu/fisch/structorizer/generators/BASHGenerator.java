@@ -1094,7 +1094,7 @@ public class BASHGenerator extends Generator {
 			subroutineInsertionLine = code.count();
 		}
 		
-		if( ! _root.isProgram ) {
+		if( _root.isSubroutine() ) {
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
 			String header = _root.getMethodName() + "()";
@@ -1118,7 +1118,7 @@ public class BASHGenerator extends Generator {
 		// END KGU#129 2016-01-08
 		generateCode(_root.children, indent);
 		
-		if( ! _root.isProgram ) {
+		if( ! _root.isProgram() ) {
 			code.add("}");
 		}
 		

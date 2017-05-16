@@ -963,10 +963,12 @@ public class OberonGenerator extends Generator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
-		String header = (_root.isProgram ? "MODULE " : "PROCEDURE ") + _procName;
-		if (!_root.isProgram)
+		// FIXME: How to handle includable diagrams?
+		String header = (_root.isProgram() ? "MODULE " : "PROCEDURE ") + _procName;
+		if (!_root.isProgram())
 		{
-        	// START KGU#236 2016-08-10: Issue #227 - create a MODULE context
+			// FIXME: How to handle includable diagrams?
+			// START KGU#236 2016-08-10: Issue #227 - create a MODULE context
         	if (topLevel && this.optionExportSubroutines())
         	{
         		// Though the MODULE name is to be the same as the file name
@@ -1065,7 +1067,7 @@ public class OberonGenerator extends Generator {
 		//{
 		//	code.add(_indent + "IMPORT In, Out");	// Later, this could be done on demand
 		//}
-		if (_root.isProgram && (this.hasInput(_root) || this.hasOutput(_root)))
+		if (_root.isProgram() && (this.hasInput(_root) || this.hasOutput(_root)))
 		{
   			StringList ioModules = new StringList();
 			if (this.hasInput(_root)) ioModules.add("In");
@@ -1122,7 +1124,8 @@ public class OberonGenerator extends Generator {
 		// START KGU#236 2016-08-10: Issue #227: Declare this variable only if needed
 		//code.add(indentPlusOne + "dummyInputChar: Char;	" +
 		//		this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
-		boolean isProcModule = !_root.isProgram && this.optionExportSubroutines();
+		boolean isProcModule = _root.isSubroutine() && this.optionExportSubroutines();
+		// FIXME: We need a damned good idea how to use includable diagrams here
 		if (topLevel && this.hasEmptyInput(_root) && !isProcModule)
 		{
 			code.add(indentPlusOne + "dummyInputChar: Char;	" +
@@ -1170,7 +1173,7 @@ public class OberonGenerator extends Generator {
 		}
 		
 		// START KGU#178 2016-07-20: Enh. #160 (subroutine export integration)
-		if (topLevel && _root.isProgram && this.optionExportSubroutines())
+		if (topLevel && _root.isProgram() && this.optionExportSubroutines())
 		{
 			code.add(_indent);
 			subroutineIndent = _indent;
@@ -1221,7 +1224,7 @@ public class OberonGenerator extends Generator {
 		// Method block close
 		// START KGU#236 2016-08-10: Bugfix #227
 		//code.add(_indent + "END " + _root.getMethodName() + ";");
-		code.add(_indent + "END " + _root.getMethodName() + (_root.isProgram ? "." : ";"));
+		code.add(_indent + "END " + _root.getMethodName() + (_root.isProgram() ? "." : ";"));
 		// END KGU#236 2016-08-10
 		// START KGU#178 2016-07-20: Enh. #160 - separate the routines
 		if (!topLevel)
@@ -1230,7 +1233,8 @@ public class OberonGenerator extends Generator {
 		}
 		// END KGU#178 2016-07-20
     	// START KGU#236 2016-08-10: Issue #227 - create an additional MODULE context
-		else if (!_root.isProgram && this.optionExportSubroutines())
+		// FIXME: An include diagram should be handled in yet another way (separate file)...
+		else if (!_root.isProgram() && this.optionExportSubroutines())
     	{
 			// Additionally append an empty module body if we export a
 			// potential bunch of routines

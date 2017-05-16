@@ -201,6 +201,7 @@ Menu.menuDiagramExpand.text=Expandir
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
+Menu.menuDiagramTypeInclude.text=Incluible
 Menu.menuDiagramNice.text=¿Diagrama en caja?
 Menu.menuDiagramComment.text=¿Mostrar comentarios?
 Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
@@ -461,6 +462,7 @@ Editor.btnPaste.tooltip=Pegar los elementos cortados o copiados después del ele
 Editor.btnNice.tooltip=Cambiar estilo visual del diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (esquinas redondeadas).
 Editor.btnProgram.tooltip=Main diagrama (esquinas cuadradas).
+Editor.btnInclude.tooltip=Diagrama incluible (2 esquinas sesgadas).
 // editing
 Editor.btnEdit.tooltip=Editar elemento seleccionado.
 Editor.btnDelete.tooltip=Borrar elementos seleccionados.

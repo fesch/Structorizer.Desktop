@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
  *      Kay Gürtzig     2017.04.18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
  *      Kay Gürtzig     2017.04.26      Signature of method exportCode() modified to return the used directory
+ *      Kay Gürtzig     2017.05.16      Enh.#372: New method insertCopyright()
  *
  ******************************************************************************************************
  *
@@ -2264,14 +2265,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				if (this.optionExportSubroutines())
 				{
 					// START KGU#237 2016-08-10: Bugfix #228 - precaution for recursive top-level routine
-					if (!_root.isProgram)
+					if (!_root.isProgram())
 					{
 						subroutines.put(_root, new SubTopoSortEntry(null));
 					}
 					// END KGU#237 2016-08-10
 					registerCalledSubroutines(_root);
 					// START KGU#237 2016-08-10: Bugfix #228
-					if (!_root.isProgram)
+					if (!_root.isProgram())
 					{
 						subroutines.remove(_root);
 					}

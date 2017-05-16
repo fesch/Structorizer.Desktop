@@ -77,7 +77,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser error for constant definitions (no. 22)
  *      Kay Gürtzig     2017.04.11      Enh. #389: Additional messages for analysis of import calls
  *      Kay Gürtzig     2017.04.20      Enh. #388: Second error (error22_2) for constant analysis
- *      Kay Gürtzig     2017.04.26/28   Enh. KGU#386: Method for plugin menu items, diagram file import 
+ *      Kay Gürtzig     2017.04.26/28   Enh. KGU#386: Method for plugin menu items, diagram file import
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added 
  *
  ******************************************************************************************************
  *
@@ -233,6 +234,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenu menuDiagramType = new JMenu("Type");
 	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
 	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub",IconLoader.ico021);
+	//START KGU#376 2017-05-16: Enh. #389
+	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable",IconLoader.ico071);
+	//END KGU#376 2017-05-16
 	protected final JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.ico040);
 	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.ico077);
 	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.ico079);
@@ -907,6 +911,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramType.add(menuDiagramTypeFunction);
 		menuDiagramTypeFunction.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setFunction(); doButtons(); } } );
 
+		//START KGU#376 2017-05-16: Enh. #389
+		menuDiagramType.add(menuDiagramTypeInclude);
+		menuDiagramTypeInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
+		// END KGU#376 2017-05-16
+
 		menuDiagram.add(menuDiagramNice);
 		menuDiagramNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(menuDiagramNice.isSelected()); doButtons(); } } );
 
@@ -1273,9 +1282,10 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditDowngradeTurtle.setEnabled(conditionAny);
 			// END KGU#282 2016-10-16
 
-			// style
-			menuDiagramTypeFunction.setSelected(!diagram.isProgram());
+			// style / type
+			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
+			menuDiagramTypeInclude.setSelected(diagram.isInclude());
 			menuDiagramNice.setSelected(diagram.getRoot().isNice);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 			// START KGU#305 2016-12-14: Enh. #305

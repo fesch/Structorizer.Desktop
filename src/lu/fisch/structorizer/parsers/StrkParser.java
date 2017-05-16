@@ -180,7 +180,7 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 		if (qualifiedName.equals("struktogramm"))
 		{
 			// read attributes
-			root.isProgram = true;
+			root.setProgram(true);
 			root.isNice=true;
 
 			// place stack

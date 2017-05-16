@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2016.12.12      First Issue
  *      Kay Gürtzig     2017.01.07      Enh. #319 - "covered" status now shown by the icons instead of the text
+ *      Kay Gürtzig     2017.05.16      Enh. #389: new icons for includable roots.
  *
  ******************************************************************************************************
  *
@@ -69,6 +70,10 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
     // START KGU#318/KGU#376 2017-04-29: Enh. #319, #389: show coverage status of (imported) main diagrams
     private final static ImageIcon mainIconCovered = IconLoader.ico070;
     // END KGU#318/KGU#376 2017-04-29
+    // START KGU#318/KGU#376 2017-05-16: Enh. #319, #389: show coverage status of (imported) main diagrams
+    private final static ImageIcon inclIcon = IconLoader.ico071;
+    private final static ImageIcon inclIconCovered = IconLoader.ico072;
+    // END KGU#318/KGU#376 2017-05-16
     private final static Color selectedBackgroundNimbus = new Color(57,105,138);
 
     @Override
@@ -79,12 +84,17 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
         setText(s);
         // START KGU#318/KGU#376 2017-04-29: Enh. #319, #389: show coverage status of (imported) main diagrams
         //setIcon((root.isProgram) ? mainIcon : (covered ? subIconCovered : subIcon));
-        if (root.isProgram) {
+        if (root.isProgram()) {
         	setIcon(covered ? mainIconCovered : mainIcon);
         }
-        else {
+        else if (root.isSubroutine()) {
         	setIcon(covered ? subIconCovered : subIcon);
         }
+        // START KGU#376 2017-05-16: Enh. #389
+        else if (root.isInclude()) {
+        	setIcon(covered ? inclIconCovered : inclIcon);
+        }
+        // END KGU#376 2017-05-16
         // END KGU#318/KGU#376 2017-04-29
         if (isSelected) {
             if (UIManager.getLookAndFeel().getName().equals("Nimbus"))

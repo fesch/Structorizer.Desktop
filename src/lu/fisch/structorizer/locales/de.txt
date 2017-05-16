@@ -199,6 +199,7 @@ Menu.menuDiagramExpand.text=Erweitern
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hauptprogramm
 Menu.menuDiagramTypeFunction.text=Unterprogramm
+Menu.menuDiagramTypeInclude.text=Include-Diagramm
 Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
@@ -459,6 +460,7 @@ Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements n
 Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=Unterprogramm-Diagramm (gerundete Ecken).
 Editor.btnProgram.tooltip=Hauptprogramm-Diagram (kantige Ecken).
+Editor.btnInclude.tooltip=Include-Diagram (2 abgeschrägte Ecken).
 // editing
 Editor.btnEdit.tooltip=Bearbeiten des ausgewählten Elements.
 Editor.btnDelete.tooltip=Löschen des ausgewählten Elements.

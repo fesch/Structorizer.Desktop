@@ -109,6 +109,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
  *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
  *      Kay Gürtzig     2017.05.09      Enh. #372: Statistic method supporting the AttributeInspector
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
  *
  ******************************************************************************************************
  *
@@ -167,6 +168,7 @@ import lu.fisch.structorizer.gui.*;
 import com.stevesoft.pat.*;
 
 import java.awt.Point;
+import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -188,8 +190,8 @@ public class Root extends Element {
 			new Comparator<Root>() {
 		public int compare(Root root1, Root root2)
 		{
-			String main_or_sub1 = root1.isProgram ? "M" : "S";
-			String main_or_sub2 = root2.isProgram ? "M" : "S";
+			String main_or_sub1 = root1.isProgram() ? "M" : "S";
+			String main_or_sub2 = root2.isProgram() ? "M" : "S";
 			int result = (main_or_sub1 + root1.getSignatureString(false)).compareToIgnoreCase(main_or_sub2 + root2.getSignatureString(false));
 			if (result == 0) {
 				result = ("" + root1.getPath()).compareToIgnoreCase("" + root2.getPath());
@@ -198,10 +200,16 @@ public class Root extends Element {
 		}
 	};
 	// END KGU#305 2016-12-12
+	
+	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
+	public static final int R_CORNER = 15;
+	private enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
+	public DiagramType diagrType = DiagramType.DT_MAIN;
+	// END KGU#376 2017-05-16
 
 	// some fields
 	public boolean isNice = true;
-	public boolean isProgram = true;
+	//private boolean isProgram = true;
 	// START KGU#137 2016-01-11: Bugfix #103 - More precise tracking of changes
 	//public boolean hasChanged = false;
 	private boolean hasChanged = false;		// Now only for global, not undoable changes
@@ -241,6 +249,43 @@ public class Root extends Element {
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	public String licenseName = null;
 	public String licenseText = null;
+	
+	/**
+	 * @return true if and only if the diagram type is main program
+	 */
+	public boolean isProgram() {
+		return diagrType == DiagramType.DT_MAIN;
+	}
+	/**
+	 * @param isProgram if the diagram type is to be main program (true) or subroutine
+	 * (false)
+	 */
+	public void setProgram(boolean isProgram) {
+		if (isProgram) {
+			diagrType = DiagramType.DT_MAIN;
+		} else {
+			diagrType = DiagramType.DT_SUB;
+		}
+	}
+	/**
+	 * @return true if and only if the diagram type is subroutine
+	 */
+	public boolean isSubroutine() {
+		return diagrType == DiagramType.DT_SUB;
+	}
+	/**
+	 * @return true if and only if the diagram type is main program
+	 */
+	public boolean isInclude() {
+		return diagrType == DiagramType.DT_INCL;
+	}
+	/**
+	 * @param isProgram if the diagram type is to be main program (true) or subroutine
+	 * (false)
+	 */
+	public void setInclude() {
+		diagrType = DiagramType.DT_INCL;
+	}
 	public String getAuthor() {
 		return this.author;
 	}
@@ -532,10 +577,7 @@ public class Root extends Element {
 		if (Element.E_COMMENTSPLUSTEXT)
 		{
 			commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
-			if (isNice)
-			{
-				commentRect.right += padding;
-			}
+			commentRect.right += padding;
 			if (rect0.right < commentRect.right)
 			{
 				rect0.right = commentRect.right;
@@ -562,7 +604,7 @@ public class Root extends Element {
 
 		rect0.bottom += subrect0.bottom;
 		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
-		if (!isNice && !isProgram) rect0.bottom += E_PADDING/2;
+		if (!isNice && !isProgram()) rect0.bottom += E_PADDING/2;
 		// END KGU#221 2016-07-28
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
@@ -619,14 +661,17 @@ public class Root extends Element {
 		// erase background
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
-		// START KGU#221 2016-07-27: Bugfix #208
+		// START KGU#221 2016-07-27: Bugfix #208, KGU#376 2017-05-16: third type
 		//canvas.fillRect(_top_left);
-		if (!isProgram)
-		{
-			canvas.fillRoundRect(_top_left);
-		}
-		else
-		{
+		int bevel = isNice ? R_CORNER : E_PADDING/2;
+		switch (diagrType) {
+		case DT_SUB:
+			canvas.fillRoundRect(_top_left, R_CORNER);
+			break;
+		case DT_INCL:
+			canvas.fillPoly(this.makeBevelledRect(_top_left, bevel));
+			break;
+		default:
 			canvas.fillRect(_top_left);
 		}
 		// END KGU#221 2016-07-27
@@ -637,10 +682,14 @@ public class Root extends Element {
 			// START KGU#221 2016-07-27: Bugfix #208
 			//this.drawCommentMark(_canvas, _top_left);
 			Rect commRect = _top_left.copy();
-			if (!isProgram)
+			if (isSubroutine())
 			{
 				commRect.top += E_PADDING/2;
 				commRect.bottom -= E_PADDING/2;
+			}
+			else if (isInclude())
+			{
+				commRect.top += bevel;
 			}
 			this.drawCommentMark(_canvas, commRect);
 			// END KGU#221 2016-07-27
@@ -694,7 +743,7 @@ public class Root extends Element {
 		{
 			bodyRect.bottom -= E_PADDING;
 		}
-		else if (!isProgram)
+		else if (!isProgram())
 		{
 			bodyRect.bottom -= E_PADDING/2;
 		}
@@ -707,7 +756,7 @@ public class Root extends Element {
 		canvas.setColor(Color.BLACK);
 		// START KGU#221 2016-07-27: Bugfix #208
 		//canvas.drawRect(_top_left);
-		if (isProgram)
+		if (isProgram())
 		{
 			canvas.drawRect(_top_left);
 		}
@@ -722,7 +771,7 @@ public class Root extends Element {
 			//rect.left = _top_left.left;
 			canvas.drawRect(sepRect);
 			// START KGU#221 2016-07-28: Bugfix #208
-			if (!isProgram)
+			if (!isProgram())
 			{
 				sepRect.top = bodyRect.bottom;
 				sepRect.bottom = sepRect.top + 1;
@@ -732,7 +781,7 @@ public class Root extends Element {
 		}
 
 
-		if (isProgram==false)
+		if (!isProgram())
 		{
 			//rect = _top_left.copy();
 			// START KGU#221 2016-07-27: Bugfix #208
@@ -746,7 +795,15 @@ public class Root extends Element {
 			// END KGU#221 2016-07-27
 			canvas.setColor(Color.BLACK);
 			rect = _top_left.copy();
-			canvas.roundRect(rect);
+			// START KGU#376 2017-05-16: Enh. #389
+			//canvas.roundRect(rect);
+			if (isSubroutine()) {
+				canvas.roundRect(rect, R_CORNER);
+			}
+			else {
+				canvas.drawPoly(this.makeBevelledRect(rect, bevel));
+			}
+			// END KGU#376 2017-05-16
 		}
 
 		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
@@ -758,8 +815,33 @@ public class Root extends Element {
 		// END KGU#136 2016-03-01
 	}
 
+	// START KGU#376 2017-05-16: Enh. #389
+    private Polygon makeBevelledRect(Rect _rect, int _bevel) {
+    	// We start with the lower left corner in clockwise direction, the upper left and the
+    	// lower right corners will be bevelled with _bevel argument
+    	int[] xCoords = new int[] {
+    			_rect.left,
+    			_rect.left,				// left edge
+    			_rect.left + _bevel,	// upper left bevel
+    			_rect.right,			// top edge
+    			_rect.right,			// right edge
+    			_rect.right - _bevel,	// lower right bevel
+    			//_rect.left			// closes automatically
+    	};
+    	int[] yCoords = new int[] {
+    			_rect.bottom,
+    			_rect.top + _bevel,		// left edge
+    			_rect.top,				// upper left bevel
+    			_rect.top,				// top edge
+    			_rect.bottom - _bevel,	// right edge
+    			_rect.bottom,			// lower right bevel
+    			//_rect.bottom			// closes automatically
+    	}; 
+		return  new Polygon(xCoords, yCoords, xCoords.length);
+	}
+    // END KGU#376 2017-05-16
 
-    @Override
+	@Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
             // START KGU#136 2016-03-01: Bugfix #97 - now we relativate cursor position rather than rectangles
@@ -996,7 +1078,7 @@ public class Root extends Element {
             Root ele = new Root(this.getText().copy());
             copyDetails(ele, false);
             ele.isNice=this.isNice;
-            ele.isProgram=this.isProgram;
+            ele.diagrType = this.diagrType;
             ele.children=(Subqueue) this.children.copy();
             // START KGU#2 (#9) 2015-11-13: By the above replacement the new children were orphans
             ele.children.parent = ele;
@@ -1389,7 +1471,7 @@ public class Root extends Element {
     {
     	// Whereas a subroutine diagram is likely to hold parameter declarations in the header,
     	// (such that we ought to deliver its header for the variable detection), this doesn't
-    	// hold for programs.
+    	// hold for programs and includable diagrams.
     	// START KGU#376 2017-04-21: Enh. #389 - beware of cyclic recursion
 		//if (!this.isProgram && !_instructionsOnly)
 		//{
@@ -1397,7 +1479,7 @@ public class Root extends Element {
 		//}
 		//this.children.addFullText(_lines, _instructionsOnly);
     	if (_implicatedRoots == null || !_implicatedRoots.contains(this)) {
-    		if (!this.isProgram && !_instructionsOnly)
+    		if (this.isSubroutine() && !_instructionsOnly)
     		{
     			_lines.add(this.getText());
     		}
@@ -1610,161 +1692,11 @@ public class Root extends Element {
     		for(int i=0; i<lines.count(); i++)
     		{
     			// START KGU#375 2017-04-04: Enh. #388 method decomposed
-//    			String allText = lines.get(i).trim();
-//    			Regex r;
-//
-//    			// modify "inc" and "dec" function (Pascal)
-//    			r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
-//    			r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
-//    			r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
-//    			r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
-//
-//    			StringList tokens = Element.splitLexically(allText, true);
-//
-//    			Element.unifyOperators(tokens, false);
-//
-//    			// Replace all split keywords by the respective configured strings
-//    			// This replacement will be aware of the case sensitivity preference
-//    			for (int kw = 0; kw < keywords.length; kw++)
-//    			{    				
-//        			if (keywords[kw].trim().length() > 0)
-//        			{
-//        				StringList keyTokens = this.splitKeywords.elementAt(kw);
-//            			int keyLength = keyTokens.count();
-//        				int pos = -1;
-//        				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
-//        				{
-//        					tokens.set(pos, keywords[kw]);
-//        					for (int j=1; j < keyLength; j++)
-//        					{
-//        						tokens.delete(pos+1);
-//        					}
-//        				}
-//        			}
-//    			}
-//    			
-//    			// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
-//    			if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
-//    			{
-//    				tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
-//    			}
-//    			
-//    			// Here all the unification, alignment, reduction is done, now the actual analysis begins
-//
-//    			int asgnPos = tokens.indexOf("<-");
-//    			if (asgnPos >= 0)
-//    			{
-//    				// Look for indexed variable as assignment target, get the indices in this case
-//    				String s = tokens.subSequence(0, asgnPos).concatenate();
-//    				if (s.indexOf("[") >= 0)
-//    				{
-//    					r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-//    					s = r.replaceAll(s);
-//    				} else { s = ""; }
-//
-//    				StringList indices = Element.splitLexically(s, true);
-//    				indices.add(tokens.subSequence(asgnPos+1, tokens.count()));
-//    				tokens = indices;
-//    			}
-//    			// START KGU#332 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
-//    			else if (tokens.indexOf("var") == 0) {
-//    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
-////    				int end = tokens.indexOf(":");
-////    				if (end < 0) {
-////    					end = tokens.count();
-////    				}
-////    				tokens = tokens.subSequence(1, end);
-//    				tokens.clear();
-//    				// END KGU#358 2017-03-06
-//    			}
-//    			else if (tokens.indexOf("dim") == 0) {
-//    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
-////    				int end = tokens.indexOf("as");
-////    				if (end < 0) {
-////    					end = tokens.count();
-////    				}
-////    				tokens = tokens.subSequence(1, end);
-//    				tokens.clear();
-//    				// END KGU#358 2017-03-06
-//    			}
-//    			// END KGU#332 2017-01-17
-//    			// START KGU#375 2017-03-31: Enh. #388 constant definitions can hardly be variable usages
-//    			// (not at least in the absence of an assignment symbol!)
-//    			else if (tokens.indexOf("const") == 0) {
-//    				tokens.clear();
-//    			}
-//    			// END #375 2017-03-31
-//
-//    			// cutoff output keyword
-//    			if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
-//    			{
-//    				tokens.delete(0);
-//    			}
-//
-//    			// parse out array index
-//    			// FIXME: Optimize this!
-//    			if(tokens.indexOf(CodeParser.getKeyword("input"))>=0)
-//    			{
-//    				String s = tokens.subSequence(tokens.indexOf(CodeParser.getKeyword("input"))+1, tokens.count()).concatenate();
-//    				if (s.indexOf("[") >= 0)
-//    				{
-//    					//System.out.print("Reducing \"" + s);
-//    					r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-//    					s = r.replaceAll(s);
-//    					//System.out.println("\" to \"" + s + "\"");
-//    				}
-//    				else 
-//    				{
-//    					s = ""; 
-//    				}
-//    				// Only the indices are relevant here
-//    				tokens = Element.splitLexically(s, true);
-//    			}
-//
-//    			//lines.set(i, allText);
-//    			parts.add(tokens);
     			parts.addIfNew(getUsedVarNames(lines.get(i).trim(), keywords));
     			// END KGU#375 2017-04-04
     		}
     		
     		// START KGU#375 2017-04-04: Enh. #388 - now already done by getUsedVarName(String, String[])
-    		// START KGU 2015-11-29: Get rid of spaces
-    		//parts.removeAll(" ");
-    		// END KGU 2015-11-29
-    		// Eliminate all keywords
-    		//for (int kw = 0; kw < keywords.length; kw++)
-    		//{
-    		//	parts.removeAll(keywords[kw]);
-    		//}
-    		//for (int kw = 0; kw < this.operatorsAndLiterals.length; kw++)
-    		//{
-    		//	int pos = -1;
-    		//	while ((pos = parts.indexOf(operatorsAndLiterals[kw], false)) >= 0)
-    		//	{
-    		//		parts.delete(pos);
-    		//	}
-    		//}
-    		//for(int i=0; i<parts.count(); i++)
-    		//{
-    		//	String token = parts.get(i);
-    		//
-    		//	//token = BString.replace(token, "<--","<-");	// No longer necessary, operators already unified
-    		//	//token = BString.replace(token, "<-","\u2190");	// Not needed to identify variables
-    		//
-    		//	if (!token.equals("") && !varNames.contains(token))
-    		//	{
-    		//		// START KG#163 2016-03-25: Get a full list of all identifiers
-    		//		//if(this.variables.contains(token)) && !varNames.contains(token))
-    		//		if((Function.testIdentifier(token, null)
-    		//				&& (i == parts.count() - 1 || !parts.get(i+1).equals("("))
-    		//				|| this.variables.contains(token)))
-    		//			// END KG#163 2016-03-25
-    		//		{
-    		//			//System.out.println("Adding to used var names: " + token);
-    		//			varNames.add(token);
-    		//		}
-    		//	}
-    		//}
     		varNames.addIfNew(parts);
     		// END KGU#375 2017-04-04
 
@@ -2100,7 +2032,7 @@ public class Root extends Element {
             // !! This will also detect the functionname itself if the parentheses are missing (bug?)
             // !!
         	// KGU 2015-11-29: Decomposed -> new method collectParameters
-            if (this.isProgram==false && _ele==this && !_onlyBody)
+            if (this.isSubroutine() && _ele==this && !_onlyBody)
             {
             	collectParameters(varNames, argTypes);
             	for (int i = 0; i < varNames.count(); i++) {
@@ -2193,7 +2125,7 @@ public class Root extends Element {
 				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, false);
 			}
 		}
-		if (!this.isProgram) {
+		if (this.isSubroutine()) {
 			typeSpec = this.getResultType();
 			if (typeSpec != null) {
 				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false);
@@ -2216,7 +2148,7 @@ public class Root extends Element {
         try 
         {
             // stop and return null if this is not a function
-            if(this.isProgram) return null;
+            if(!this.isSubroutine()) return null;
             // get the root text
             String rootText = this.getText().getText(); 
             // stop if there is no closing parenthesis
@@ -2772,7 +2704,7 @@ public class Root extends Element {
 			// CHECK: non-uppercase var (#5)
 			if(!myVar.toUpperCase().equals(myVar) && !rootVars.contains(myVar))
 			{
-				if(!((myVar.toLowerCase().equals("result") && !this.isProgram)))
+				if(!((myVar.toLowerCase().equals("result") && this.isSubroutine())))
 				{
 					//error  = new DetectedError("The variable «"+myVars.get(j)+"» must be written in uppercase!",(Element) _node.getElement(i));
 					addError(_errors, new DetectedError(errorMsg(Menu.error05, myVar), ele), 5);
@@ -2791,7 +2723,7 @@ public class Root extends Element {
 
 			// START KGU#78 2015-11-25
 			// CHECK: Competitive return mechanisms (#13)
-			if (!this.isProgram && myVar.toLowerCase().equals("result"))
+			if (this.isSubroutine() && myVar.toLowerCase().equals("result"))
 			{
 				_resultFlags[1] = true;
 				if (_resultFlags[0] || _resultFlags[2])
@@ -2801,7 +2733,7 @@ public class Root extends Element {
 					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, myVar), ele), 13);                                            	
 				}
 			}
-			else if (!this.isProgram && myVar.equals(getMethodName()))
+			else if (this.isSubroutine() && myVar.equals(getMethodName()))
 			{
 				_resultFlags[2] = true;
 				if (_resultFlags[0] || _resultFlags[1])
@@ -2955,7 +2887,7 @@ public class Root extends Element {
 			String name = ele.getSignatureString();
 			int count = 0;	// Number of matching routines
 			if (Arranger.hasInstance()) {
-				count = Arranger.getInstance().findProgramsByName(name).size();
+				count = Arranger.getInstance().findIncludesByName(name).size();
 			}
 			if (count == 0) {
 				//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
@@ -3395,7 +3327,7 @@ public class Root extends Element {
 	{
 		StringList paramNames = new StringList();
 		StringList paramTypes = new StringList();
-		if (!this.isProgram && !this.collectParameters(paramNames, paramTypes))
+		if (this.isSubroutine() && !this.collectParameters(paramNames, paramTypes))
 		{
 			// warning "A subroutine header must have a (possibly empty) parameter list within parentheses."
 			addError(_errors, new DetectedError(errorMsg(Menu.error20, ""), this), 20);								
@@ -3482,7 +3414,7 @@ public class Root extends Element {
 		}
 		// Get all lines of the called routine
 		String name = (_call).getSignatureString();
-		if (this.isProgram && name.equals(this.getMethodName())
+		if (!this.isSubroutine() && name.equals(this.getMethodName())
 				|| this.importStack.contains(name)) {
 			//error  = new DetectedError("Import of diagram «%1» is recursive! (Recursion path: %1 <- %2)");
 			addError(_errors, new DetectedError(errorMsg(Menu.error23_2, name), _call), 23);    				
@@ -3494,7 +3426,7 @@ public class Root extends Element {
 			addError(_errors, new DetectedError(errorMsg(Menu.error23_3, new String[]{name, path.concatenate("<-")}), _call), 23);    									
 		}
 		else if (Arranger.hasInstance()) {
-			Vector<Root> roots = Arranger.getInstance().findProgramsByName(name);
+			Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
 			if (roots.size() == 1) {
 				Root importedRoot = roots.get(0);
 				Vector<DetectedError> impErrors = new Vector<DetectedError>();
@@ -3594,8 +3526,8 @@ public class Root extends Element {
 
     	// START KGU#2 2015-11-25: Type-specific handling:
     	// In case of a function, the last identifier will be the name, preceding ones may be type specifiers
-    	// With a program, we just concatenate the strings by underscores
-    	if (!isProgram)
+    	// With a program or include, we just concatenate the strings by underscores
+    	if (isSubroutine())
     	{
     		String[] tokens = rootText.split(" ");
     		// It won't be that many strings, so we just go forward and keep the last acceptable one
@@ -3627,7 +3559,7 @@ public class Root extends Element {
     {
         // FIXME: This is not consistent to getMethodName()!
     	String resultType = null;
-    	if (!this.isProgram)	// KGU 2015-12-20: Types more rigorously discarded if this is a program
+    	if (this.isSubroutine())	// KGU 2015-12-20: Types more rigorously discarded if this is a program
     	{
     		String rootText = getText().getLongString();
     		StringList tokens = Element.splitLexically(rootText, true);
@@ -3691,7 +3623,7 @@ public class Root extends Element {
     	// START KGU#140 2017-01-31: Enh. #113: Better support for array arguments
     	final String arrayPattern = "(\\w.*)(\\[.*\\])$";
     	// END KGU#140 2017-01-31
-        if (!this.isProgram)
+        if (this.isSubroutine())
         {
         	try
         	{
@@ -3798,7 +3730,7 @@ public class Root extends Element {
      */
     public String getSignatureString(boolean _addPath) {
     	String presentation = this.getMethodName();
-    	if (!this.isProgram) {
+    	if (this.isSubroutine()) {
     		presentation += "(" + this.getParameterNames().count() + ")";
     	}
     	if (_addPath) {
@@ -3826,7 +3758,7 @@ public class Root extends Element {
     public String proposeFileName()
     {
     	String fname = this.getMethodName();
-    	if (!this.isProgram)
+    	if (this.isSubroutine())
     	{
     		fname += "-" + this.getParameterNames().count();
     	}
@@ -4253,7 +4185,7 @@ public class Root extends Element {
 			}
 			// Create the new subroutine and move the elements to it
 			subroutine = new Root();
-			subroutine.isProgram = false;
+			subroutine.setProgram(false);
 			for (int i = 0; i < nElements; i++) {
 				subroutine.children.addElement(elements.getElement(0));
 				elements.removeElement(0);
