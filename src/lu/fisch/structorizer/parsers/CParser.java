@@ -1848,7 +1848,10 @@ public class CParser extends CodeParser
 			if (this.globalRoot != null) {
 				String progName = fileName + "Globals";
 				this.globalRoot.setText(progName);
-				this.globalRoot.setProgram(true);
+				// START KGU#376 2017-05-17: Enh. #389 now we have an appropriate diagram type
+				//this.globalRoot.setProgram(true);
+				this.globalRoot.setInclude();
+				// END KGU#376 2017-05-17
 				for (Call provCall: this.provisionalImportCalls) {
 					provCall.setText(provCall.getText().get(0).replace("???", progName));
 				}

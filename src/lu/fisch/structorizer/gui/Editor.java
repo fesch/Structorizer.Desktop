@@ -648,12 +648,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		// style
 		//toolbar.addSeparator();
-        toolbar.add(btnFunction);
-		btnFunction.setFocusable(false);
-		btnFunction.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setFunction(); doButtons(); } } );
         toolbar.add(btnProgram);
 		btnProgram.setFocusable(false);
 		btnProgram.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setProgram(); doButtons(); } } );
+        toolbar.add(btnFunction);
+		btnFunction.setFocusable(false);
+		btnFunction.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setFunction(); doButtons(); } } );
 	    // START KGU#376 2017-05-16: Enh. #389
         toolbar.add(btnInclude);
 		btnInclude.setFocusable(false);

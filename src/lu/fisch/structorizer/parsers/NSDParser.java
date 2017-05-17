@@ -47,6 +47,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements handled (Simon Sobisch)
  *      Kay Gürtzig     2017.03.28      Issue #370: Default value of refactorKeywords turned to true,
  *                                      mechanism to preserve storedParserPrefs otherwise
+ *      Kay Gürtzig     2017.05.17      Issue #389: Call elements may now also have to be refactored
  *
  ******************************************************************************************************
  *
@@ -183,9 +184,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {root.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {root.getComment().setCommaText(attributes.getValue("comment"));}
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-			
 			// START KGU#363 2017-03-13: Enh. #372: License stuff
 			if (attributes.getIndex("licenseName") != -1) {
 				root.licenseName = attributes.getValue("licenseName");
@@ -217,9 +215,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-			
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
@@ -246,9 +241,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-						
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
@@ -274,10 +266,12 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-			
-			// Enh. #253: In a Call element, there isn't anything to refactor
+			// START KGU#258/KGU#376 2017-05-17: Enh. #253, #389: Now we have to rafctor at least one keyword
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258/KGU#376 2017-05-17
 			
 			// place stack
 			lastE=ele;
@@ -297,9 +291,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
@@ -329,9 +320,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
@@ -466,9 +454,6 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#61 2016-03-21
 			// END KGU#3 2015-11-08
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-			
 			// set children
 			ele.q.setColor(ele.getColor());
 			
@@ -489,9 +474,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
 			// Enh. #253: In a Forever loop, there isn't anything to refactor
 
@@ -516,9 +498,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-					
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
@@ -547,9 +526,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
@@ -594,9 +570,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 
 			// place stack
 			lastE=ele;
