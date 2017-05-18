@@ -66,6 +66,7 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -186,8 +187,16 @@ public class Instruction extends Element {
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
-		
+
 		myrect = _top_left.copy();
+		
+		AffineTransform oldTrans = null;
+		if (_element.rotated) {
+			oldTrans = _canvas.rotateLeftAround(myrect.left, myrect.top);
+			myrect.left -= (_top_left.bottom - _top_left.top);
+			myrect.right -= (_top_left.right - _top_left.left);
+			myrect.bottom = myrect.top + _top_left.right - _top_left.left;
+		}
 		
 		canvas.fillRect(myrect);
 				
@@ -206,8 +215,10 @@ public class Instruction extends Element {
 		if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())
 		{
 			Rect commentRect = _element.writeOutCommentLines(canvas,
-					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
-					_top_left.top + (Element.E_PADDING / 2),
+//					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+//					_top_left.top + (Element.E_PADDING / 2),
+					myrect.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+					myrect.top + (Element.E_PADDING / 2),
 					true);
 			commentHeight = commentRect.bottom - commentRect.top;
 		}
@@ -219,7 +230,8 @@ public class Instruction extends Element {
 			String text = _text.get(i);
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+//					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+					myrect.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
 					// START KGU#227 2016-07-30: Enh. #128
 					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
 					yTextline += fm.getHeight(),
@@ -233,16 +245,20 @@ public class Instruction extends Element {
 
 		// START KGU#156 2016-03-11: Enh. #124
 		// write the run-time info if enabled
-		_element.writeOutRuntimeInfo(_canvas, _top_left.left + _element.rect.right - (Element.E_PADDING / 2), _top_left.top);
+//		_element.writeOutRuntimeInfo(_canvas, _top_left.left + _element.rect.right - (Element.E_PADDING / 2), _top_left.top);
+		int width = (_element.rotated ? _element.rect.bottom : _element.rect.right);
+		_element.writeOutRuntimeInfo(_canvas, myrect.left + width - (Element.E_PADDING / 2), _top_left.top);
 		// END KGU#156 2016-03-11
 				
 		canvas.setColor(Color.BLACK);
 		if (_element.haveOuterRectDrawn())
 		{
-			canvas.drawRect(_top_left);
+//			canvas.drawRect(_top_left);
+			canvas.drawRect(myrect);
 			// START KGU#277 2016-10-13: Enh. #270
 			if (_element.disabled) {
-				canvas.hatchRect(_top_left, 5, 10);
+//				canvas.hatchRect(_top_left, 5, 10);
+				canvas.hatchRect(myrect, 5, 10);
 			}
 			// END KGU#277 2016-10-13
 		}
@@ -250,9 +266,14 @@ public class Instruction extends Element {
 		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
 		if (_element.isCollapsed() && !(_element instanceof Instruction))
 		{
-			canvas.draw(_element.getIcon().getImage(), _top_left.left, _top_left.top);
+//			canvas.draw(_element.getIcon().getImage(), _top_left.left, _top_left.top);
+			canvas.draw(_element.getIcon().getImage(), myrect.left, myrect.top);
 		}
 		// END KGU#122 2016-01-03
+		
+		if (oldTrans != null) {
+			canvas.setTransform(oldTrans);
+		}
 	}
                 
 	public void draw(Canvas _canvas, Rect _top_left)

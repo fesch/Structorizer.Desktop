@@ -125,7 +125,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
  *      Kay Gürtzig     2017.05.09      Issue #400: Proper check whether preference changes were committed
  *      Kay Gürtzig     2017.05.11      Enh. #357: Mechanism to retrieve plugin-specified generator options
- *      Kay Gürtzig     2017.05.16      Enh. #389: Support for third diagram type (include/import) 
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Support for third diagram type (include/import)
+ *      Kay Gürtzig     2017.05.18      Issue #405: New preference for width shrinking of CASE elements 
  *
  ******************************************************************************************************
  *
@@ -914,6 +915,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								return;
 							}
 							NSDControl.doButtons();
+							
+							// START KGU401 2017-05-17: Issue #405
+							selectedDown.resetDrawingInfoDown();
+							// END KGU#401 2017-05-17
 
 							// START KGU#87 2015-11-22: Subqueues should never be moved but better prevent...
 							//root.removeElement(selectedDown);
@@ -5107,6 +5112,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		preferences.edtRepeat.setText(Element.preRepeat);
                 
 		preferences.altPadRight.setSelected(Element.altPadRight);
+		
+		// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+		preferences.spnCaseRot.setValue(Element.caseShrinkByRot);
+		// END KGU#401 2017-05-18
 
 		preferences.pack();
 		preferences.setVisible(true);
@@ -5115,14 +5124,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (preferences.OK) {
 		// END KGU#393 2017-05-09		
 			// get fields
-			Element.preAltT=preferences.edtAltT.getText();
-			Element.preAltF=preferences.edtAltF.getText();
-			Element.preAlt=preferences.edtAlt.getText();
-			Element.preCase=preferences.txtCase.getText();
-			Element.preFor=preferences.edtFor.getText();
-			Element.preWhile=preferences.edtWhile.getText();
-			Element.preRepeat=preferences.edtRepeat.getText();
-			Element.altPadRight=preferences.altPadRight.isSelected();
+			Element.preAltT     = preferences.edtAltT.getText();
+			Element.preAltF     = preferences.edtAltF.getText();
+			Element.preAlt      = preferences.edtAlt.getText();
+			Element.preCase     = preferences.txtCase.getText();
+			Element.preFor      = preferences.edtFor.getText();
+			Element.preWhile    = preferences.edtWhile.getText();
+			Element.preRepeat   = preferences.edtRepeat.getText();
+			Element.altPadRight = preferences.altPadRight.isSelected();
+			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+			int newShrinkThreshold = (Integer)preferences.spnCaseRot.getModel().getValue();
+			if (newShrinkThreshold != Element.caseShrinkByRot) {
+				root.resetDrawingInfoDown();
+			}
+			Element.caseShrinkByRot = newShrinkThreshold;
+			// END KGU#401 2017-05-18
 
 			// save fields to ini-file
 			Element.saveToINI();

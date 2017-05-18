@@ -89,7 +89,8 @@ Current development version: 3.26-06 (2017.05.17)
 - 06: Enh. #372: New export option to store author and license information <2>
 - 06: Bugfix #403: Export of input/output instructions with parentheses [S. Sobisch]2
 - 06: Bugfix #51: Export of empty input instructions to C# needed fixing <2>
-- 06: Enh. #389: Third diagram type "includable" for importable definitons etc. <2> 
+- 06: Enh. #389: Third diagram type "includable" for importable definitons etc. <2>
+- 06: Issue #405: Preference for width-reducing in CASE elements [Simon Sobisch]2
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

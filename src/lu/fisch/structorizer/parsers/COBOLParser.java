@@ -4776,8 +4776,9 @@ public class COBOLParser extends CodeParser
 				int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
 				Reduction secRed = _reduction.get(contentIx).asReduction();
 				String content = CodeParser.getKeywordOrDefault("preExit", "exit");
-				content = this.getContent_R(secRed, content + " ");
-				_parentNode.addElement(new Jump(content));
+				String exitVal = this.getContent_R(secRed, "").trim();
+				if (exitVal.isEmpty()) exitVal = "0";
+				_parentNode.addElement(new Jump(content + " " + exitVal));
 			}
 			else if (ruleId == RuleConstants.PROD_GOTO_STATEMENT_GO)
 			{

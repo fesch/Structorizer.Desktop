@@ -654,4 +654,13 @@ public class Subqueue extends Element implements IElementSequence {
 		return true;
 	}
 	// END KGU#383 2017-04-18
+
+	// START KGU#3401 2017-05-17: Issue #405
+	public void setRotated(boolean _rotated) {
+		super.setRotated(_rotated);
+		for (int i = 0; i < this.getSize(); i++) {
+			this.getElement(i).rotated = _rotated;
+		}
+	}
+	// END KGU#401 2017-05-17
 }

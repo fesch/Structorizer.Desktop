@@ -681,6 +681,8 @@ Preferences.pnlCase.border=CASE-Anweisung
 Preferences.pnlCase.tooltip=Einstellungen zur CASE-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Der Voreinstellungs-Text im CASE-Anweisungs-Kopf.
+Preferences.lblCaseRot.text=Min. Zweigzahl für Rotation
+Preferences.lblCaseRot.tooltip=Zweiganzahlschwelle für Versuche, die Breite des CASE-Elements durch Drehen der Anweisungen zu verringern (0 = aus) 
 Preferences.pnlFor.border=FOR-Schleife
 Preferences.pnlFor.tooltip=Einstellungen zur FOR-Schleife
 Preferences.lblFor.text=Voreinstellungs-Text

@@ -685,6 +685,8 @@ Preferences.pnlCase.border=CASE statement
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Default content
 Preferences.lblCase.tooltip=The default content of a CASE statement.
+Preferences.lblCaseRot.text=Min. branches for rotation
+Preferences.lblCaseRot.tooltip=Branch count threshold for attempts to reduce width by rotating elements (0 = off) 
 Preferences.pnlFor.border=FOR loop
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Default content

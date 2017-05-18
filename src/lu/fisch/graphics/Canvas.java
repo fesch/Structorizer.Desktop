@@ -37,6 +37,7 @@ package lu.fisch.graphics;
  *      Kay Gürtzig     2016.07.27      Issue #208: New public method fillRoundRect()
  *      Kay Gürtzig     2016.10.13      Enh. #270: Method hatchedRect() added to overlay a hatched pattern
  *      Kay Gürtzig     2017.05.16      Enh. #389: New methods for polygons, API changes
+ *      Kay Gürtzig     2017.05.17      Issue #405: API enhancement for rotated drawing
  *
  ******************************************************************************************************
  *
@@ -54,6 +55,7 @@ import java.awt.Paint;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
@@ -65,8 +67,13 @@ public class Canvas  {
 	
 	public Canvas(Graphics2D _canvas)
 	{
-		canvas=_canvas;
-                if(canvas!=null) canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+		canvas = _canvas;
+		if(canvas != null) {
+			canvas.setRenderingHint(
+					RenderingHints.KEY_ANTIALIASING,
+					RenderingHints.VALUE_ANTIALIAS_ON
+					);
+		}
 	}
 	
 	public void draw(Image _img, int _x, int _y)
@@ -80,7 +87,7 @@ public class Canvas  {
 	}
 	
 	public int stringWidth(String _string)
-        {
+	{
 		Rectangle2D bounds = canvas.getFont().getStringBounds(_string,canvas.getFontRenderContext());
 		return new Double(bounds.getWidth()).intValue();
 	}
@@ -180,7 +187,6 @@ public class Canvas  {
 //		display = BString.replace(display, "<--","<-");
 //		display = BString.replace(display, "<-","\u2190");
 		// END KGU#377 2017-03-30
-		
 		canvas.drawString(display, _x, _y);
 	}
 	
@@ -195,5 +201,32 @@ public class Canvas  {
 		canvas.drawLine(x,y,_x,_y);
 		moveTo(_x,_y);
 	}
+	
+	// START KGU#401 2017-05-18: Issue #405
+	/**
+	 * Rotates the canvas by 90 degrees around {@code (_xRot, _yRot)} in order to
+	 * draw something counter-clock-wise rotated
+	 * @param _xRot - the rotation center (X value)
+	 * @param _yRot - the rotation center (Y value)
+	 * @return the former transform (allowing to restore it after the drawings)
+	 * @see #setTransform(AffineTransform)
+	 */
+	public AffineTransform rotateLeftAround(int _xRot, int _yRot)
+	{
+		AffineTransform oldTransf = canvas.getTransform();
+		canvas.rotate(-Math.PI/2.0, _xRot, _yRot);
+		return oldTransf;
+	}
+	
+	/**
+	 * Allows restoring a transform obtained by {@link #rotateLeftAround(int, int)} 
+	 * @param _transform - an {@code AffineTransform} previously cached
+	 * @see #rotateLeftAround(int, int)
+	 */
+	public void setTransform(AffineTransform _transform)
+	{
+		canvas.setTransform(_transform);
+	}
+	// END KGU#401 2017-05-18
 	
 }

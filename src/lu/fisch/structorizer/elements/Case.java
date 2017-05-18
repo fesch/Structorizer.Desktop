@@ -297,23 +297,53 @@ public class Case extends Element implements IFork
 
             fullWidth = 0;
             maxHeight = 0;
+    		// START KGU#401 2017-05-17: Issue #405
+            int rotatedWidth = 0;
+            int rotatedHeight = 0;
+            Vector<Integer> rotX0Branches = new Vector<Integer>();
+            Vector<Boolean> rotFlags = new Vector<Boolean>();
+    		// END KGU#401 217-05-17
 
             if (qs.size() > 0)
             {
             	for (int i = 0; i < nBranches; i++)
             	{
+            		Subqueue sq = qs.get(i);
             		// START KGU#136 2016-03-01: Bugfix #97
             		x0Branches.addElement(fullWidth);
             		// END KGU#136 2016-03-01
-            		Rect rtt = qs.get(i).prepareDraw(_canvas);
-            		fullWidth = fullWidth + Math.max(rtt.right, textWidths[i]);
-            		if (maxHeight < rtt.bottom)
-            		{
+            		sq.resetDrawingInfoDown();
+            		Rect rtt = sq.prepareDraw(_canvas);
+            		fullWidth += Math.max(rtt.right, textWidths[i]);
+            		if (maxHeight < rtt.bottom) {
             			maxHeight = rtt.bottom;
             		}
+            		// START KGU#401 2017-05-17: Issue #405
+            		boolean rotatable = rtt.bottom < rtt.right
+            				&& sq.getSize() == 1 && (sq.getElement(0) instanceof Instruction ||
+            						sq.getElement(0).isCollapsed());
+            		rotX0Branches.addElement(rotatedWidth);
+            		int rotWidth = (rotatable ? rtt.bottom : rtt.right);
+            		int rotHeight = (rotatable ? rtt.right : rtt.bottom);
+            		rotatedWidth += Math.max(rotWidth, textWidths[i]);
+            		if (rotatedHeight < rotHeight) {
+            			rotatedHeight = rotHeight;
+            		}
+            		rotFlags.add(rotatable);
+            		// END KGU#401 217-05-17
             	}
             }
 
+    		// START KGU#401 2017-05-17: Issue #405            
+            if (caseShrinkByRot != 0 && nBranches > caseShrinkByRot && rotatedWidth < fullWidth) {
+            	this.x0Branches = rotX0Branches;
+            	fullWidth = rotatedWidth;
+            	maxHeight = rotatedHeight;
+            	for (int i = 0; i < nBranches; i++) {
+            		qs.get(i).setRotated(rotFlags.get(i));
+            	}
+            }
+    		// END KGU#401 217-05-17
             rect0.right = Math.max(rect0.right, fullWidth);
             rect0.bottom = rect0.bottom + maxHeight;
 
@@ -558,6 +588,8 @@ public class Case extends Element implements IFork
     			count++;
     		}
 
+    		// FIXME
+    		//myrect.bottom = _top_left.bottom;
     		for(int i = 0; i < count ; i++)
     		{
 
