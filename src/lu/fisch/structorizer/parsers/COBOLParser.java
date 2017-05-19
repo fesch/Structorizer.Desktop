@@ -5291,7 +5291,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Buildsa  loop or Call element from the PERFORM statement represented by {@code _reduction}.
+	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
@@ -5312,14 +5312,14 @@ public class COBOLParser extends CodeParser
 		switch (optRed.getParent().getTableIndex()) {
 		case RuleConstants.PROD_PERFORM_OPTION_TIMES:
 			// FOR loop
-		{
-			// Prepare a generic variable name
-			content = this.getContent_R(optRed.get(0).asReduction(), content);
-			loop = new For("varStructorizer", "1", content, 1);
-			content = ((For)loop).getText().getLongString();
-			((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
-		}
-		break;
+			{
+				// Prepare a generic variable name
+				content = this.getContent_R(optRed.get(0).asReduction(), content);
+				loop = new For("varStructorizer", "1", content, 1);
+				content = ((For)loop).getText().getLongString();
+				((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
+			}
+			break;
 		case RuleConstants.PROD_PERFORM_OPTION_VARYING:
 			// FOR loop
 			{
@@ -5413,29 +5413,49 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			break;
+		case RuleConstants.PROD_PERFORM_OPTION:
+			// Just a macro (block):	PERFORM x
+			buildPerformCall(bodyRed, _parentNode);
+			break;
 		default:
-			// Just a macro (block)	
-			{
-				content = this.getContent_R(bodyRed.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
-				if (Character.isDigit(content.charAt(0))) {
-					content = "sub" + content;
-				}
-				Call dummyCall = new Call(content);
-				dummyCall.setColor(Color.RED);
-				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
-				_parentNode.addElement(dummyCall);
-			}
-		}
-		if (loop != null && bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
-			this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
-		}
-		else {
-			// FIXME
-			System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+			// CHECKME: Should never be reached	any more
+			System.err.println("UNRECOGNIZED: Index " + optRed.getParent().getTableIndex() + " " + this.getContent_R(_reduction, ""));
+			buildPerformCall(bodyRed, _parentNode);
 		}
 		if (loop != null) {
+			switch (bodyRed.getParent().getTableIndex()) {
+			case RuleConstants.PROD_PERFORM_BODY:
+				// a macro (block) within a loop:	PERFORM x UNTIL ...
+ 				this.buildPerformCall(bodyRed, loop.getBody());
+				break;
+			case RuleConstants.PROD_PERFORM_BODY2:
+				this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
+				break;
+			default:
+				// FIXME
+				System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+			}
 			_parentNode.addElement((Element)loop);
 		}
+	}
+
+	/**
+	 * Builds a Call element from the PERFORM statement for PROD_PERFORM_BODY represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed PERFORM statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) {
+		System.out.println("PROD_PERFORM_BODY");
+		// Ideally we find the named label and either copy its content into the body Subqueue or
+		// export it to a new NSD.
+		String content = this.getContent_R(_reduction.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
+		if (Character.isDigit(content.charAt(0))) {
+			content = "sub" + content;
+		}
+		Call dummyCall = new Call(content);
+		dummyCall.setColor(Color.RED);
+		dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
+		_parentNode.addElement(dummyCall);
 	}
 
 	/**
