@@ -6422,19 +6422,67 @@ public class COBOLParser extends CodeParser
 				{
 					String toAdd = token.asString();
 					String name = token.getName();
+					final String trueName = name;
+					// just drop the "zero terminated" and "Unicode" parts here
+					if (name.equals("ZLiteral") || name.equals("NationalLiteral")) {
+						toAdd = toAdd.substring(1);
+						name = "StringLiteral";
+					}
+					//
 					if (name.equals("COBOLWord")) {
 						toAdd = toAdd.replace("-", "_");
 					}
-					else if (name.equals("HexLiteral")) {
+					else if (name.equals("StringLiteral")) {
+						// convert from 'COBOL " Literal' --> "COBOL "" Literal"
+						if (toAdd.startsWith("'")) {
+							toAdd = toAdd.replace("\"", "\"\"")
+										.replace("''", "'")
+										.replaceAll("'(.*)'", "\"$1\"");
+						}
+						// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
+						toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
+						if (trueName.equals("ZLiteral")) { // handle zero terminated strings
+							toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
+						}
+						toAdd += " ";
+					}
+					else if (name.equals("HexLiteral")) { // this one defines a STRING literal in (non-unicode) Hex notation
 						String hexText = toAdd.replaceAll("[Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
-						toAdd = " \"";
-						for (int j = 0; j < hexText.length(); j += 2) {
-							String code = hexText.substring(j, j+2);
-							int val = Integer.parseInt(code, 16);
-							//toAdd += "\\" + Integer.toOctalString(val);
-							toAdd += String.format("\\%1$03o", val);
+						// MicroFocus COBOL allows an odd number - strange people...
+						if (hexText.length() % 2 == 1) {
+							hexText = "0" + hexText;
+						}
+						toAdd = "\"";
+						for (int j = 0; j < hexText.length() - 1; j += 2) {
+							toAdd += "\\u00" + hexText.substring(j, j+2);
 						}
 						toAdd += "\" ";
+					}
+					else if (name.equals("NationalHexLiteral")) { // this one defines a STRING literal in (unicode) Hex notation
+						String hexText = toAdd.replaceAll("[Nn][Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
+						toAdd = "\"";
+						for (int j = 0; j < hexText.length() - 3; j += 4) {
+							toAdd += "\\u" + hexText.substring(j, j+4);
+						}
+						toAdd += "\" ";
+					}
+					// Note: IntLiteral [+-]?{Number}+ needs no conversion
+					// Note: if we do convert Decimals to BigDecimal some day the following is needed DecimalLiteral 
+					//else if (name.equals("DecimalLiteral")) { //
+					//	toAdd = toAdd.trim() + "b ";
+					//}
+					// Make sure FloatLiteral [+-]?{Number}+ '.' {Number}+ 'E' [+-]?{Number}+ is recognized as float
+					else if (name.equals("FloatLiteral")) {
+						toAdd = toAdd.trim() + "f ";
+					}
+					else if (name.equals("AcuBinNumLiteral")) { // this one defines an INTEGER literal in binary notation
+						toAdd = toAdd.replaceAll("[Bb]#([01]+)", "0b$1 ");
+					}
+					else if (name.equals("AcuOctNumLiteral")) { // this one defines an INTEGER literal in Octal notation
+						toAdd = toAdd.replaceAll("[Oo]#([0-9]+)", "0$1 ");
+					}
+					else if (name.equals("AcuHexNumLiteral")) { // this one defines an INTEGER literal in Hex notation
+						toAdd = toAdd.replaceAll("[XxHh]#([0-9A-Fa-f]+)", "0x$1 ");
 					}
 					else if (name.equals("TOK_AMPER")) {
 						toAdd = " + ";
