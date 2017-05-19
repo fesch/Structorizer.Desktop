@@ -5629,9 +5629,6 @@ public class COBOLParser extends CodeParser
 				String conds = "";
 				while (whenlRed != null) {
 					String cond = "";
-					if (!conds.isEmpty()) {
-						conds += " or ";
-					}
 					Reduction condRed = null;
 					/* the token list is reversed -> as long as we get PROD_EVALUATE_WHEN_LIST_WHEN2
 					   we have more braching parts to check */
@@ -5647,8 +5644,13 @@ public class COBOLParser extends CodeParser
 					if (negate) {
 						cond = this.negateCondition(cond);
 					}
+					conds = cond + " or " + conds;
 				}
 				conds = conds.trim();
+				if (conds.endsWith(" or")) {
+					// fixing reversed token list by prefixing conds with the current one
+					conds = conds.substring(0, conds.length()-" or".length());
+				}
 				Alternative alt = new Alternative(conds);
 				// Get the instruction part
 				if (elseBranch instanceof Subqueue) {
