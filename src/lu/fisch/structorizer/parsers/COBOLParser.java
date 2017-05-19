@@ -4792,6 +4792,39 @@ public class COBOLParser extends CodeParser
 				jmp.setComment("GO TO statements are not supported in structured programming!");
 				_parentNode.addElement(jmp);
 			}
+			else if (ruleId == RuleConstants.PROD_STRING_STATEMENT_STRING)
+			{
+				System.out.println("PROD_STRING_STATEMENT_STRING");
+				// FIXME: At least add variable name parsing as we have in other places
+				//        and add some line breaks
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING)
+			{
+				System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
+				// FIXME: At least add variable name parsing as we have in other places
+				//        and add some line breaks
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_SEARCH_STATEMENT_SEARCH)
+			{
+				System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
+				// FIXME: At least add variable name parsing as we have in other places
+				//        and add some line breaks
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
 			else if (ruleId == RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT)
 			{
 				this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
@@ -5291,7 +5324,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Buildsa  loop or Call element from the PERFORM statement represented by {@code _reduction}.
+	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
@@ -5312,14 +5345,14 @@ public class COBOLParser extends CodeParser
 		switch (optRed.getParent().getTableIndex()) {
 		case RuleConstants.PROD_PERFORM_OPTION_TIMES:
 			// FOR loop
-		{
-			// Prepare a generic variable name
-			content = this.getContent_R(optRed.get(0).asReduction(), content);
-			loop = new For("varStructorizer", "1", content, 1);
-			content = ((For)loop).getText().getLongString();
-			((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
-		}
-		break;
+			{
+				// Prepare a generic variable name
+				content = this.getContent_R(optRed.get(0).asReduction(), content);
+				loop = new For("varStructorizer", "1", content, 1);
+				content = ((For)loop).getText().getLongString();
+				((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
+			}
+			break;
 		case RuleConstants.PROD_PERFORM_OPTION_VARYING:
 			// FOR loop
 			{
@@ -5413,29 +5446,49 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			break;
+		case RuleConstants.PROD_PERFORM_OPTION:
+			// Just a macro (block):	PERFORM x
+			buildPerformCall(bodyRed, _parentNode);
+			break;
 		default:
-			// Just a macro (block)	
-			{
-				content = this.getContent_R(bodyRed.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
-				if (Character.isDigit(content.charAt(0))) {
-					content = "sub" + content;
-				}
-				Call dummyCall = new Call(content);
-				dummyCall.setColor(Color.RED);
-				dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
-				_parentNode.addElement(dummyCall);
-			}
-		}
-		if (loop != null && bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
-			this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
-		}
-		else {
-			// FIXME
-			System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+			// CHECKME: Should never be reached	any more
+			System.err.println("UNRECOGNIZED: Index " + optRed.getParent().getTableIndex() + " " + this.getContent_R(_reduction, ""));
+			buildPerformCall(bodyRed, _parentNode);
 		}
 		if (loop != null) {
+			switch (bodyRed.getParent().getTableIndex()) {
+			case RuleConstants.PROD_PERFORM_BODY:
+				// a macro (block) within a loop:	PERFORM x UNTIL ...
+ 				this.buildPerformCall(bodyRed, loop.getBody());
+				break;
+			case RuleConstants.PROD_PERFORM_BODY2:
+				this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
+				break;
+			default:
+				// FIXME
+				System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+			}
 			_parentNode.addElement((Element)loop);
 		}
+	}
+
+	/**
+	 * Builds a Call element from the PERFORM statement for PROD_PERFORM_BODY represented by {@code _reduction}.
+	 * @param _reduction - the top Reduction of the parsed PERFORM statement
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 */
+	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) {
+		System.out.println("PROD_PERFORM_BODY");
+		// Ideally we find the named label and either copy its content into the body Subqueue or
+		// export it to a new NSD.
+		String content = this.getContent_R(_reduction.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
+		if (Character.isDigit(content.charAt(0))) {
+			content = "sub" + content;
+		}
+		Call dummyCall = new Call(content);
+		dummyCall.setColor(Color.RED);
+		dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
+		_parentNode.addElement(dummyCall);
 	}
 
 	/**
@@ -5577,11 +5630,13 @@ public class COBOLParser extends CodeParser
 				while (whenlRed != null) {
 					String cond = "";
 					Reduction condRed = null;
+					/* the token list is reversed -> as long as we get PROD_EVALUATE_WHEN_LIST_WHEN2
+					   we have more braching parts to check */
 					if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
 						condRed = whenlRed.get(2).asReduction();
 						whenlRed = whenlRed.get(0).asReduction();
 					}
-					else {
+					else { // PROD_EVALUATE_WHEN_LIST_WHEN -> last branch (first in the code)
 						condRed = whenlRed.get(1).asReduction();
 						whenlRed = null;
 					}
@@ -5593,6 +5648,7 @@ public class COBOLParser extends CodeParser
 				}
 				conds = conds.trim();
 				if (conds.endsWith(" or")) {
+					// fixing reversed token list by prefixing conds with the current one
 					conds = conds.substring(0, conds.length()-" or".length());
 				}
 				Alternative alt = new Alternative(conds);
@@ -6369,19 +6425,67 @@ public class COBOLParser extends CodeParser
 				{
 					String toAdd = token.asString();
 					String name = token.getName();
+					final String trueName = name;
+					// just drop the "zero terminated" and "Unicode" parts here
+					if (name.equals("ZLiteral") || name.equals("NationalLiteral")) {
+						toAdd = toAdd.substring(1);
+						name = "StringLiteral";
+					}
+					//
 					if (name.equals("COBOLWord")) {
 						toAdd = toAdd.replace("-", "_");
 					}
-					else if (name.equals("HexLiteral")) {
+					else if (name.equals("StringLiteral")) {
+						// convert from 'COBOL " Literal' --> "COBOL "" Literal"
+						if (toAdd.startsWith("'")) {
+							toAdd = toAdd.replace("\"", "\"\"")
+										.replace("''", "'")
+										.replaceAll("'(.*)'", "\"$1\"");
+						}
+						// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
+						toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
+						if (trueName.equals("ZLiteral")) { // handle zero terminated strings
+							toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
+						}
+						toAdd += " ";
+					}
+					else if (name.equals("HexLiteral")) { // this one defines a STRING literal in (non-unicode) Hex notation
 						String hexText = toAdd.replaceAll("[Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
-						toAdd = " \"";
-						for (int j = 0; j < hexText.length(); j += 2) {
-							String code = hexText.substring(j, j+2);
-							int val = Integer.parseInt(code, 16);
-							//toAdd += "\\" + Integer.toOctalString(val);
-							toAdd += String.format("\\%1$03o", val);
+						// MicroFocus COBOL allows an odd number - strange people...
+						if (hexText.length() % 2 == 1) {
+							hexText = "0" + hexText;
+						}
+						toAdd = "\"";
+						for (int j = 0; j < hexText.length() - 1; j += 2) {
+							toAdd += "\\u00" + hexText.substring(j, j+2);
 						}
 						toAdd += "\" ";
+					}
+					else if (name.equals("NationalHexLiteral")) { // this one defines a STRING literal in (unicode) Hex notation
+						String hexText = toAdd.replaceAll("[Nn][Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
+						toAdd = "\"";
+						for (int j = 0; j < hexText.length() - 3; j += 4) {
+							toAdd += "\\u" + hexText.substring(j, j+4);
+						}
+						toAdd += "\" ";
+					}
+					// Note: IntLiteral [+-]?{Number}+ needs no conversion
+					// Note: if we do convert Decimals to BigDecimal some day the following is needed DecimalLiteral 
+					//else if (name.equals("DecimalLiteral")) { //
+					//	toAdd = toAdd.trim() + "b ";
+					//}
+					// Make sure FloatLiteral [+-]?{Number}+ '.' {Number}+ 'E' [+-]?{Number}+ is recognized as float
+					else if (name.equals("FloatLiteral")) {
+						toAdd = toAdd.trim() + "f ";
+					}
+					else if (name.equals("AcuBinNumLiteral")) { // this one defines an INTEGER literal in binary notation
+						toAdd = toAdd.replaceAll("[Bb]#([01]+)", "0b$1 ");
+					}
+					else if (name.equals("AcuOctNumLiteral")) { // this one defines an INTEGER literal in Octal notation
+						toAdd = toAdd.replaceAll("[Oo]#([0-9]+)", "0$1 ");
+					}
+					else if (name.equals("AcuHexNumLiteral")) { // this one defines an INTEGER literal in Hex notation
+						toAdd = toAdd.replaceAll("[XxHh]#([0-9A-Fa-f]+)", "0x$1 ");
 					}
 					else if (name.equals("TOK_AMPER")) {
 						toAdd = " + ";
