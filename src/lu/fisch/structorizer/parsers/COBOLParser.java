@@ -4792,6 +4792,39 @@ public class COBOLParser extends CodeParser
 				jmp.setComment("GO TO statements are not supported in structured programming!");
 				_parentNode.addElement(jmp);
 			}
+			else if (ruleId == RuleConstants.PROD_STRING_STATEMENT_STRING)
+			{
+				System.out.println("PROD_STRING_STATEMENT_STRING");
+				// FIXME: At least add variable name parsing as we have in other places
+				//        and add some line breaks
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING)
+			{
+				System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
+				// FIXME: At least add variable name parsing as we have in other places
+				//        and add some line breaks
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+			else if (ruleId == RuleConstants.PROD_SEARCH_STATEMENT_SEARCH)
+			{
+				System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
+				// FIXME: At least add variable name parsing as we have in other places
+				//        and add some line breaks
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
 			else if (ruleId == RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT)
 			{
 				this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
