@@ -27,6 +27,10 @@
 !    17-05-02: Simon Sobisch
 !       * fixed edited Picture_Def
 !       * updated "Known Issues" entries
+!    17-05-19: Simon Sobisch
+!       * added more alias names (in general this should be done by
+!         dialect aware preprocessing!)
+!       * fixed escaped literal terminators in NationalLiteral and ZLiteral
 !
 ! -----------------------------------------------------------------------------
 !
@@ -114,6 +118,7 @@
           !         \s= ([^\w])$     = '$1'
           !   * create <COMMON_FUNCTION> from reserved.c FUNCTION_NAME
           !   * add synonyms from reserved.c
+          !   * add synonyms from config/default.conf
           !   * add terminal definitions from scanner.l
           !   * comment <error> parts --> !bison error token
           !   * copy this header into the final grammar file
@@ -152,19 +157,20 @@ StringLiteral      = '' ({String Chars 1} | '' '')*''
 HexLiteral         = 'X'(''{Hex Chars}+'' | '"'{Hex Chars}+'"')
 
 ! Split to additional LLiteral if needed
-ZLiteral           = [ZL](''{String Chars 1}*'' | '"'{String Chars 2}*'"')
+ZLiteral           = [ZL] '' ({String Chars 1} | '' '')*''
+                   | [ZL] '"'({String Chars 2} | '""')*'"'
                    
 BooleanLiteral     = 'B'(''[01]+'' | '"'[01]+'"')
 BooleanHexLiteral  = 'BX'(''{Hex Chars}+'' | '"'{Hex Chars}+'"')
 
-NationalLiteral    = 'N'(''{String Chars 1}*'' | '"'{String Chars 2}*'"')
+NationalLiteral    = 'N' '' ({String Chars 1} | '' '')*''
+                   | 'N' '"'({String Chars 2} | '""')*'"'
 NationalHexLiteral = 'NX'(''{Hex Chars}+'' | '"'{Hex Chars}+'"')
 
 AcuBinNumLiteral   = 'B#'[01]+
 AcuOctNumLiteral   = 'O#'{Number}+
 AcuHexNumLiteral   = [XH]'#'{Hex Chars}+
 
-! what about signed literals?
 IntLiteral         = [+-]?{Number}+
 DecimalLiteral     = [+-]?{Number}+ '.' {Number}+
 FloatLiteral       = [+-]?{Number}+ '.' {Number}+ 'E' [+-]?{Number}+
@@ -222,18 +228,18 @@ ASCII                          = 'ASCII'
 ASSIGN                         = 'ASSIGN'
 AT                             = 'AT'
 ATTRIBUTE                      = 'ATTRIBUTE'
-AUTO                           = 'AUTO'
+AUTO                           = 'AUTO' | 'AUTO-SKIP' | 'AUTOTERMINATE'
 AUTOMATIC                      = 'AUTOMATIC'
 AWAY_FROM_ZERO                 = 'AWAY-FROM-ZERO'
-BACKGROUND_COLOR               = 'BACKGROUND-COLOR'
+BACKGROUND_COLOR               = 'BACKGROUND-COLOR' | 'BACKGROUND-COLOUR'
 BASED                          = 'BASED'
 BEFORE                         = 'BEFORE'
-BELL                           = 'BELL'
+BELL                           = 'BELL' | 'BEEP'
 BINARY                         = 'BINARY'
 BINARY_C_LONG                  = 'BINARY-C-LONG'
 BINARY_CHAR                    = 'BINARY-CHAR'
-BINARY_DOUBLE                  = 'BINARY-DOUBLE'
-BINARY_LONG                    = 'BINARY-LONG'
+BINARY_DOUBLE                  = 'BINARY-DOUBLE' | 'BINARY-LONG-LONG'
+BINARY_LONG                    = 'BINARY-LONG' | 'BINARY-INT'
 BINARY_SHORT                   = 'BINARY-SHORT'
 BLANK                          = 'BLANK'
 BLINK                          = 'BLINK'
@@ -384,11 +390,11 @@ FLOAT_LONG                     = 'FLOAT-LONG'
 FLOAT_SHORT                    = 'FLOAT-SHORT'
 FOOTING                        = 'FOOTING'
 FOR                            = 'FOR'
-FOREGROUND_COLOR               = 'FOREGROUND-COLOR'
+FOREGROUND_COLOR               = 'FOREGROUND-COLOR' | 'FOREGROUND-COLOUR'
 FOREVER                        = 'FOREVER'
 FREE                           = 'FREE'
 FROM                           = 'FROM'
-FULL                           = 'FULL'
+FULL                           = 'FULL' | 'LENGTH-CHECK'
 FUNCTION                       = 'FUNCTION'
 FUNCTION_ID                    = 'FUNCTION-ID'
 GENERATE                       = 'GENERATE'
@@ -410,8 +416,8 @@ IN                             = 'IN'
 INDEX                          = 'INDEX'
 INDEXED                        = 'INDEXED'
 INDICATE                       = 'INDICATE'
-INITIALIZE                     = 'INITIALIZE'
-INITIALIZED                    = 'INITIALIZED'
+INITIALIZE                     = 'INITIALIZE' | 'INITIALISE'
+INITIALIZED                    = 'INITIALIZED' | 'INITIALISED'
 INITIATE                       = 'INITIATE'
 INPUT                          = 'INPUT'
 INPUT_OUTPUT                   = 'INPUT-OUTPUT'
@@ -488,7 +494,7 @@ OPTIONAL                       = 'OPTIONAL'
 OPTIONS                        = 'OPTIONS'
 OR                             = 'OR'
 ORDER                          = 'ORDER'
-ORGANIZATION                   = 'ORGANIZATION'
+ORGANIZATION                   = 'ORGANIZATION' | 'ORGANISATION'
 OTHER                          = 'OTHER'
 OUTPUT                         = 'OUTPUT'
 OVERLINE                       = 'OVERLINE'
@@ -545,7 +551,7 @@ REPORT                         = 'REPORT'
 REPORTING                      = 'REPORTING'
 REPORTS                        = 'REPORTS'
 REPOSITORY                     = 'REPOSITORY'
-REQUIRED                       = 'REQUIRED'
+REQUIRED                       = 'REQUIRED' | 'EMPTY-CHECK'
 RESERVE                        = 'RESERVE'
 RESET                          = 'RESET'
 RETRY                          = 'RETRY'
@@ -612,7 +618,7 @@ SUBTRACT                       = 'SUBTRACT'
 SUM                            = 'SUM'
 SUPPRESS                       = 'SUPPRESS'
 SYMBOLIC                       = 'SYMBOLIC'
-SYNCHRONIZED                   = 'SYNCHRONIZED'
+SYNCHRONIZED                   = 'SYNCHRONIZED' | 'SYNCHRONISED'
 SYSTEM_DEFAULT                 = 'SYSTEM-DEFAULT'
 SYSTEM_OFFSET                  = 'SYSTEM-OFFSET'
 TAB                            = 'TAB'
@@ -627,7 +633,7 @@ TEST                           = 'TEST'
 THEN                           = 'THEN'
 THRU                           = 'THRU' | 'THROUGH'
 TIME                           = 'TIME'
-TIME_OUT                       = 'TIME-OUT'
+TIME_OUT                       = 'TIME-OUT' | 'TIMEOUT'
 TIMES                          = 'TIMES'
 TO                             = 'TO'
 TOK_EXTERN                     = 'EXTERN'
@@ -706,13 +712,13 @@ SCREEN_CONTROL                 = 'SCREEN' {Whitespace}+ 'CONTROL'
 EVENT_STATUS                   = 'EVENT' {Whitespace}+ 'STATUS'
 READY_TRACE                    = 'READY' {Whitespace}+ 'TRACE'
 RESET_TRACE                    = 'RESET' {Whitespace}+ 'TRACE'
-GREATER_OR_EQUAL               = 'GREATER' ({Whitespace}+ 'THAN')? {Whitespace}+ 'OR' {Whitespace}+ 'EQUAL' ({Whitespace}+ 'TO')? {Whitespace}
+GREATER_OR_EQUAL               = 'GREATER' ({Whitespace}+ 'THAN')? {Whitespace}+ 'OR' {Whitespace}+ ('EQUAL'|'EQUALS') ({Whitespace}+ 'TO')? {Whitespace}
                                | '>='
 GREATER                        = 'GREATER' ({Whitespace}+ 'THAN')? {Whitespace}
-LESS_OR_EQUAL                  = 'LESS'    ({Whitespace}+ 'THAN')? {Whitespace}+ 'OR' {Whitespace}+ 'EQUAL' ({Whitespace}+ 'TO')? {Whitespace}
+LESS_OR_EQUAL                  = 'LESS'    ({Whitespace}+ 'THAN')? {Whitespace}+ 'OR' {Whitespace}+ ('EQUAL'|'EQUALS') ({Whitespace}+ 'TO')? {Whitespace}
                                | '<='
 LESS                           = 'LESS'    ({Whitespace}+ 'THAN')? {Whitespace}
-EQUAL                          = 'EQUAL'   ({Whitespace}+ 'TO')? {Whitespace}
+EQUAL                          = ('EQUAL'|'EQUALS')  ({Whitespace}+ 'TO')? {Whitespace}
 TOP                            = ('LINES' {Whitespace}+ ('AT' {Whitespace}+)?)? 'TOP' {Whitespace}
 BOTTOM                         = ('LINES' {Whitespace}+ ('AT' {Whitespace}+)?)? 'BOTTOM' {Whitespace}
 NO_ADVANCING                   = ('WITH' {Whitespace}+)? 'NO' {Whitespace}+ 'ADVANCING'
