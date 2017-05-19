@@ -204,6 +204,9 @@ public abstract class Element {
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
+	"Import grammars and parsers written and maintained by\n"+
+	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>"+
+	" - COBOL: Simon Sobisch, Kay Gürtzig"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -242,8 +245,8 @@ public abstract class Element {
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - David Tremain <DTremain@omnisource.com>\n"+
 	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
-	" - Benjamin Neuberg (newboerg)\n"+
-	" - Simon Sobisch (Gitmensch)\n"+
+	" - Benjamin Neuberg (https://github.com/newboerg)\n"+
+	" - Simon Sobisch (https://github.com/Gitmensch)\n"+
 	
 	"\n"+
 	"File dropper class by\n"+

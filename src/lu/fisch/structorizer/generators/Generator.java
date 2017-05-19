@@ -2094,8 +2094,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		if (this.optionExportLicenseInfo()) {
 			this.insertComment("", _indent);
 			this.insertComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
-			this.insertComment("License: " + _root.licenseName, _indent);
-			if (_fullText) {
+			if (_root.licenseName != null) {
+				this.insertComment("License: " + _root.licenseName, _indent);
+			}
+			if (_fullText && _root.licenseText != null) {
 				this.insertComment(StringList.explode(_root.licenseText, "\n"), _indent);
 			}
 			this.insertComment("", _indent);
