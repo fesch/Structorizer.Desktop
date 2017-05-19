@@ -975,7 +975,7 @@ public class Executor implements Runnable
 		// END KGU#384 207-04-22
 
 		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
-		if (!root.isProgram)
+		if (root.isSubroutine())
 		{
 		// END KGU#39 2015-10-16 (1/2)
 			StringList params = root.getParameterNames();
@@ -1147,7 +1147,7 @@ public class Executor implements Runnable
 			// END KGU#2 2015-11-24	
 		} else
 		{
-			if ((!root.isProgram) && (context.returned == false))
+			if (root.isSubroutine() && (context.returned == false))
 			{
 				// Possible result variable names
 				StringList posres = new StringList();
@@ -1378,7 +1378,7 @@ public class Executor implements Runnable
 			cloned = true;
 		}
 		// START KGU#384 2017-04-22: Execution context redesign
-		if (root.isProgram) {
+		if (root.isInclude()) {
 			// For an import Call continue the importList recursively
 			this.context = new ExecutionStackEntry(root, this.context.importList);
 		}
@@ -1426,7 +1426,7 @@ public class Executor implements Runnable
 		
 //		// START KGU#376 2017-04-21: Enh. #389 don't restore after an import call
 		// FIXME: Restore but cache the Interpreter with all variables and copy contents before
-		if (subRoot.isProgram) {
+		if (subRoot.isInclude()) {
 			// It was an import Call, so we have to import the definitions and values 
 			// FIXME: Derive a sensible type StringList from subRoot.getTypeInfo() 
 			this.copyInterpreterContents(context.interpreter, entry.interpreter,
@@ -1611,10 +1611,8 @@ public class Executor implements Runnable
     		}
     		else {
     			candidates = new Vector<Root>();
-    			for (Root cand: pool.findDiagramsByName(name)) {
-    				if (cand.isProgram) {
-    					candidates.add(cand);
-    				}
+    			for (Root cand: pool.findIncludesByName(name)) {
+    				candidates.add(cand);
     			}
     		}
     		// START KGU#317 2016-12-29: Now the execution will be aborted on ambiguous calls

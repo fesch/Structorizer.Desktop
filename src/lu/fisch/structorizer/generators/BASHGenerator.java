@@ -70,6 +70,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig         2017.04.18      Bugfix #386: Algorithmically empty Subqueues must produce a ':' line
  *      Kay Gürtzig         2017.05.05      Issue #396: function calls should better be enclosed in $(...) than in back ticks
+ *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017.05.19      Issue #237: Expression transformation heuristics improved
  *
  ******************************************************************************************************
  *
@@ -110,6 +112,7 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
 
 import java.util.regex.Matcher;
 
@@ -125,6 +128,7 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
@@ -218,6 +222,8 @@ public class BASHGenerator extends Generator {
 	// END KGU 2016-08-12
 	
 	/************ Code Generation **************/
+	
+	private HashMap<String, TypeMapEntry> typeMap = null;
 	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
@@ -384,20 +390,23 @@ public class BASHGenerator extends Generator {
 		Function fct = new Function(expr);
 		if (fct.isFunction())
 		{
-			expr = fct.getName();
-			for (int p = 0; p < fct.paramCount(); p++)
-			{
-				String param = fct.getParam(p);
-				if (param.matches("(.*?)(-|[+*/%])(.*?)"))
-				{
-					param = "$(( " + param + " ))";
-				}
-				else if (param.contains(" "))
-				{
-					param = "\"" + param + "\"";
-				}
-				expr += (" " + param);
-			}
+			// START KGU#405 2017-05-19: Bugfix #237 - was too simple an analysis
+			//expr = fct.getName();
+			//for (int p = 0; p < fct.paramCount(); p++)
+			//{
+			//	String param = fct.getParam(p);
+			//	if (param.matches("(.*?)(-|[+*/%])(.*?)"))
+			//	{
+			//		param = "$(( " + param + " ))";
+			//	}
+			//	else if (param.contains(" "))
+			//	{
+			//		param = "\"" + param + "\"";
+			//	}
+			//	expr += (" " + param);
+			//}
+			expr = transformExpression(fct);
+			// END KGU#405 2017-05-19
 			if (posAsgnOpr > 0)
 			{
 				// START KGU#390 2017-05-05: Issue #396
@@ -410,6 +419,11 @@ public class BASHGenerator extends Generator {
 		{
 			lval = "declare -a " + lval;
 			StringList items = Element.splitExpressionList(expr.substring(1, expr.length()-1), ",");
+			// START KGU#405 2017-05-19: Bugfix #237 - was too simple an analysis
+			for (int i = 0; i < items.count(); i++) {
+				items.set(i, transformExpression(items.get(i), true));
+			}
+			// END KGU#405 2017-05-19
 			expr = "(" + items.getLongString() + ")";
 		}
 		// The following is a very rough and vague heuristics to support arithmetic expressions 
@@ -419,13 +433,16 @@ public class BASHGenerator extends Generator {
 				|| expr.startsWith("\"") && expr.endsWith("\"")
 				|| expr.startsWith("[[") && expr.endsWith("]]")))
 		{
-			if (expr.matches("(.*?)(-|[+*/%])(.*?)"))
+			if (expr.matches(".*?[+*/%-].*?"))
 			{
-				expr = "(( " + expr + " ))";
-				if (posAsgnOpr > 0)
-				{
-					expr = "$" + expr;
-				}
+				// START KGU#405 2017-05-19: Issue #237
+				//expr = "(( " + expr + " ))";
+				//if (posAsgnOpr > 0)
+				//{
+				//	expr = "$" + expr;
+				//}
+				expr = transformExpression(expr, posAsgnOpr > 0);
+				// END KGU#405 2017-05-19
 			}
 			// START KGU 2016-03-31: Issue #135+#144 - quoting wasn't actually helpful
 //			else if (expr.contains(" "))
@@ -440,6 +457,90 @@ public class BASHGenerator extends Generator {
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
+	
+	// START KGU#405 2017-05-19: Issue #237
+	protected String transformExpression(StringList exprTokens, boolean isAssigned)
+	{
+		boolean isArithm =
+				exprTokens.contains("+") ||
+				exprTokens.contains("-") ||
+				exprTokens.contains("*") ||
+				exprTokens.contains("/") ||
+				exprTokens.contains("%");
+		if (isArithm) {
+			exprTokens.insert((isAssigned ? "$(( " : "(( "), 0);
+			exprTokens.add(" ))");
+		}
+		else if (isAssigned) {
+			exprTokens.insert("$(", 0);
+			exprTokens.add(")");
+		}
+		return exprTokens.concatenate();
+	}
+	protected String transformExpression(String expr, boolean isAssigned)
+	{
+		if (Function.isFunction(expr)) {
+			expr = this.transformExpression(new Function(expr));
+			if (isAssigned)
+			{
+				expr = "$(" + expr + ")";
+			}
+		}
+		else {
+			expr = transformExpression(Element.splitLexically(expr, true), isAssigned);
+		}
+		return expr;
+	}
+	protected String transformExpression(Function fct)
+	{
+		String expr = fct.getName();
+		for (int p = 0; p < fct.paramCount(); p++)
+		{
+			String param = fct.getParam(p);
+			param = this.transformExpression(param, true);
+			expr += (" " + param);
+		}
+		return expr;
+	}
+	private String finishCondition(String condition) {
+		if (!this.suppressTransformation && !(condition.trim().matches("^\\(\\(.*?\\)\\)$")))
+		{
+			final String[] compOprs = new String[]{"==", "<", ">", "<=", ">=", "!=", "<>"};
+			StringList condTokens = Element.splitLexically(condition, true);
+			condTokens.removeAll(" ");
+			boolean isNumber = false;
+			for (int i = 0; i < condTokens.count(); i++) {
+				for (int j = 1; j < compOprs.length-1; j++) {
+					if (condTokens.get(i).equals(compOprs[j])) {
+						// FIXME this is too vague again
+						int k = i-1;
+						String leftOpnd = condTokens.get(k);
+						while (k >= 0 && leftOpnd.equals(")") || leftOpnd.equals("}")) {
+							leftOpnd = condTokens.get(k--);
+						}
+						k = i+1;
+						String rightOpnd = condTokens.get(k);
+						while (j < condTokens.count() && rightOpnd.equals("$") || rightOpnd.equals("(") || rightOpnd.equals("{")) {
+							rightOpnd = condTokens.get(j++);
+						}
+						String typeLeft = Element.identifyExprType(typeMap, leftOpnd, true);
+						String typeRight = Element.identifyExprType(typeMap, rightOpnd, true);
+						if ((typeLeft.equals("int") || typeLeft.equals("double")) && (typeRight.equals("int") || typeRight.equals("double"))) {
+							isNumber = true;
+						}
+					}
+				}
+			}
+			if (isNumber) {
+				condition = "(( " + condition + " ))";
+			}
+			else {
+				condition = "[[ " + condition + " ]]";
+			}
+		}
+		return condition;
+	}
+	// END KGU#405 2017-05-10
 	
 	// START KGU#167 2016-03-30: Enh. #135 Array support
 	protected void transformVariableAccess(String _varName, StringList _tokens, int _start, int _end)
@@ -634,13 +735,9 @@ public class BASHGenerator extends Generator {
 			}
 		}
 		// END KGU#311 2017-01-05
-		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
-		{
-			condition = "[[ " + condition + " ]]";
-		}
 		// START KGU#277 2016-10-13: Enh. #270
 		//code.add(_indent + "if " + condition);
-		addCode("if " + condition, _indent, disabled);
+		addCode("if " + finishCondition(condition), _indent, disabled);
 		// END KGU#277 2016-10-13
 		// END KGU#132 2016-03-24
 		// END KGU#131 2016-01-08
@@ -836,13 +933,9 @@ public class BASHGenerator extends Generator {
 			}
 		}
 		// END KGU#311 2017-01-05
-		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
-		{
-			condition = "[[ " + condition + " ]]";
-		}
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent + "while " + condition);
-		addCode("while " + condition, _indent, disabled);
+		addCode("while " + this.finishCondition(condition), _indent, disabled);
 		// END KGU#277 2016-10-14
 		// END KGU#132/KGU#144 2016-03-31
 		// END KGU#132 2016-03-24
@@ -893,13 +986,9 @@ public class BASHGenerator extends Generator {
 			}
 		}
 		// END KGU#311 2017-01-05
-		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
-		{
-			condition = "[[ " + condition + " ]]";
-		}
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent + "while " + condition);
-		addCode("while " + condition, _indent, disabled);
+		addCode("while " + this.finishCondition(condition), _indent, disabled);
 		// END KGU#277 2016-10-14
 		// END KGU#132/KGU#144 2016-03-31
 		// END KGU#132 2016-03-24
@@ -916,6 +1005,7 @@ public class BASHGenerator extends Generator {
 		// END KGU#277 2016-10-14
 		
 	}
+
 	protected void generateCode(Forever _forever, String _indent) {
 		
 		// START KGU#277 2016-10-14: Enh. #270
@@ -1021,6 +1111,9 @@ public class BASHGenerator extends Generator {
 	// TODO: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent) {
 		
+		// START KGU#405 2017-05-19: Issue #237
+		typeMap = _root.getTypeInfo();
+		// END KGU#405 2017-05-19
 		if (topLevel)
 		{
 			code.add("#!/bin/bash");
@@ -1037,6 +1130,9 @@ public class BASHGenerator extends Generator {
 		if (topLevel)
 		{
 			insertComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
+			// START KGU#363 2017-05-16: Enh. #372
+			insertCopyright(_root, _indent, true);
+			// END KGU#363 2017-05-16
 
 			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 			if (this.usesFileAPI) {
@@ -1090,7 +1186,7 @@ public class BASHGenerator extends Generator {
 			subroutineInsertionLine = code.count();
 		}
 		
-		if( ! _root.isProgram ) {
+		if( _root.isSubroutine() ) {
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
 			String header = _root.getMethodName() + "()";
@@ -1114,7 +1210,7 @@ public class BASHGenerator extends Generator {
 		// END KGU#129 2016-01-08
 		generateCode(_root.children, indent);
 		
-		if( ! _root.isProgram ) {
+		if( ! _root.isProgram() ) {
 			code.add("}");
 		}
 		

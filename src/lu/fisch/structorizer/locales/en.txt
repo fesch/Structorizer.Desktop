@@ -202,6 +202,7 @@ Menu.menuDiagramExpand.text=Expand
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
+Menu.menuDiagramTypeInclude.text=Includable
 Menu.menuDiagramNice.text=Boxed diagram?
 Menu.menuDiagramComment.text=Show comments?
 Menu.menuDiagramSwitchComments.text=Switch text/comments?
@@ -462,6 +463,7 @@ Editor.btnPaste.tooltip=Paste the copied or cut element after the selected eleme
 Editor.btnNice.tooltip=Toggle the visual style of the diagram.
 Editor.btnFunction.tooltip=Sub diagram (rounded corners).
 Editor.btnProgram.tooltip=Main diagram (square corners).
+Editor.btnInclude.tooltip=Includable diagram (2 bevelled corners).
 // editing
 Editor.btnEdit.tooltip=Edit the selected element.
 Editor.btnDelete.tooltip=Delete the selected element.
@@ -683,6 +685,8 @@ Preferences.pnlCase.border=CASE statement
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Default content
 Preferences.lblCase.tooltip=The default content of a CASE statement.
+Preferences.lblCaseRot.text=Min. branches for rotation
+Preferences.lblCaseRot.tooltip=Branch count threshold for attempts to reduce width by rotating elements (0 = off) 
 Preferences.pnlFor.border=FOR loop
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Default content

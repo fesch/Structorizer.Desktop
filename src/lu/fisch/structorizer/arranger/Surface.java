@@ -1411,7 +1411,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	return Element.E_COLLECTRUNTIMEDATA &&
     			this.mouseSelected != null &&
     			this.mouseSelected.root != null &&
-    			!this.mouseSelected.root.isProgram;
+    			!this.mouseSelected.root.isProgram();
     }
     // END KGU#117 2016-03-09
 
@@ -1865,18 +1865,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     
     // START KGU#376 2017-04-11: Enh. #389 - Support for import calls
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.executor.IRoutinePool#findProgramsByName(java.lang.String)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
      */
     @Override
-    public Vector<Root> findProgramsByName(String rootName)
+    public Vector<Root> findIncludesByName(String rootName)
     {
-    	Vector<Root> progrs = new Vector<Root>();
+    	Vector<Root> incls = new Vector<Root>();
     	for (Root root: this.findDiagramsByName(rootName)) {
-    		if (root.isProgram) {
-    			progrs.add(root);
+    		if (root.isInclude()) {
+    			incls.add(root);
     		}
     	}
-    	return progrs;
+    	return incls;
     }
     // END KGU#376 2017-04-11
 
@@ -1892,7 +1892,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	for (int i = 0; i < functionsAny.size(); i++)
     	{
     		Root root = functionsAny.get(i);
-   			if (!root.isProgram && root.getParameterNames().count() == argCount)
+   			if (root.isSubroutine() && root.getParameterNames().count() == argCount)
    			{
    				functions.add(root);
     		}

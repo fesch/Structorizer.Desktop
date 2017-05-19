@@ -374,7 +374,12 @@ public class XmlGenerator extends Generator {
     @Override
 	public String generateCode(Root _root, String _indent)
 	{
-		String pr = _root.isProgram ? "program" : "sub";
+ 		String pr = _root.isProgram() ? "program" : "sub";
+ 	   	// START KGU#376 2017-05-16: Enh. #389
+ 		if (_root.isInclude()) {
+ 			pr = "includable";
+ 		}
+		// END KGU##376 2017-05-16
 		String ni = _root.isNice ? "nice" : "abbr";
 		
 		// START KGU#257 2016-09-25: Enh. #253

@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-06 (2017.05.14)
+Current development version: 3.26-06 (2017.05.19)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -86,7 +86,12 @@ Current development version: 3.26-06 (2017.05.14)
 - 06: Enh. #398: New built-in functions sgn (int result) and signum (float result) <2>
 - 06: Enh. #399: Unsuited files dragged into Structorizer now induce a message <2>
 - 06: Issue #400: Consistent behaviour of preferences dialogs [Simon Sobisch]2
-- 06: Enh. #357: New export option to store author and license information <2>
+- 06: Enh. #372: New export option to store author and license information <2>
+- 06: Bugfix #403: Export of input/output instructions with parentheses [S. Sobisch]2
+- 06: Bugfix #51: Export of empty input instructions to C# needed fixing <2>
+- 06: Enh. #389: Third diagram type "includable" for importable definitons etc. <2>
+- 06: Issue #405: Preference for width-reducing in CASE elements [Simon Sobisch]2
+- 06: Issue #237: Efforts to improve expression transformation on BASH export <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

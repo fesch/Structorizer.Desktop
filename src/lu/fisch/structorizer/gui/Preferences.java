@@ -37,7 +37,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes/radio buttons
  *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to class GUIScaler
- *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls 
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
+ *      Kay Gürtzig     2017.05.18      Issue #405: New option spnCaseRot introduced 
  *
  ******************************************************************************************************
  *
@@ -103,6 +104,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	protected JButton btnOK;
 	protected JCheckBox altPadRight;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
+	// START KGU#401 2017-05-18: Issue #405 (width-reduced Case elements by instruction rotation)
+	protected JPanel pnlCaseRot;
+	protected JLabel lblCaseRot;
+	protected JSpinner spnCaseRot;
+	// END KGU#401 2017-05-18
 	
 	/*public Preferences() {
 		super();
@@ -155,6 +161,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		buttonBar = new JPanel();
 		btnOK = new JButton();
 		altPadRight = new JCheckBox();
+		// START KGU#401 2017-05-18: Issue #405 (width-reduced Case elements by instruction rotation)
+		pnlCaseRot = new JPanel();
+		lblCaseRot = new JLabel();
+		spnCaseRot = new JSpinner();
+		// END KGU#401 2017-05-18
 
 		//======== this ========
 		setTitle("Structures Preferences");
@@ -196,7 +207,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 					// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 					//pnlLeft.setPreferredSize(new Dimension(200, 185));
 					border = (int)(8 * scaleFactor);
-					pnlLeft.setPreferredSize(new Dimension((int)(200*scaleFactor), (int)(185*scaleFactor)));
+					pnlLeft.setPreferredSize(new Dimension((int)(210*scaleFactor), (int)(200*scaleFactor)));
 					// END KGU#287 2016-11-01
 					pnlLeft.setFocusCycleRoot(true);
 					pnlLeft.setLayout(new BorderLayout(border, border));
@@ -268,6 +279,15 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 							scrollPane1.setViewportView(txtCase);
 						}
 						pnlCase.add(scrollPane1, BorderLayout.CENTER);
+
+						// START KGU#401 2017-05-18: Issue #405 (width-reduced Case elements by instruction rotation)
+						pnlCaseRot.setLayout(new BorderLayout(border, border));
+						lblCaseRot.setText("Min. branches for rotation");
+						spnCaseRot.setModel(new SpinnerNumberModel(0, 0, 20, 1));
+						pnlCaseRot.add(lblCaseRot, BorderLayout.WEST);
+						pnlCaseRot.add(spnCaseRot, BorderLayout.EAST);
+						pnlCase.add(pnlCaseRot, BorderLayout.SOUTH);
+						// END KGU#401 2017-05-18
 					}
 					pnlLeft.add(pnlCase, BorderLayout.CENTER);
 				}

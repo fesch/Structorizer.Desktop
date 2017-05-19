@@ -1063,7 +1063,7 @@ public class D7Parser extends CodeParser
 				content = BString.replaceInsensitive(content,";","; ");
 				content = BString.replaceInsensitive(content,";  ","; ");
 				root.setText(translateContent(content));
-				root.isProgram=false;
+				root.setProgram(false);
 				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
 				if (unitName != null)
 				{
@@ -1094,7 +1094,7 @@ public class D7Parser extends CodeParser
 				content = BString.replaceInsensitive(content,";","; ");
 				content = BString.replaceInsensitive(content,";  ","; ");
 				root.setText(translateContent(content));
-				root.isProgram = false;
+				root.setProgram(false);
 				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
 				if (unitName != null)
 				{

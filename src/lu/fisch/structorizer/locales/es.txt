@@ -201,6 +201,7 @@ Menu.menuDiagramExpand.text=Expandir
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
+Menu.menuDiagramTypeInclude.text=Incluible
 Menu.menuDiagramNice.text=¿Diagrama en caja?
 Menu.menuDiagramComment.text=¿Mostrar comentarios?
 Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
@@ -461,6 +462,7 @@ Editor.btnPaste.tooltip=Pegar los elementos cortados o copiados después del ele
 Editor.btnNice.tooltip=Cambiar estilo visual del diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (esquinas redondeadas).
 Editor.btnProgram.tooltip=Main diagrama (esquinas cuadradas).
+Editor.btnInclude.tooltip=Diagrama incluible (2 esquinas sesgadas).
 // editing
 Editor.btnEdit.tooltip=Editar elemento seleccionado.
 Editor.btnDelete.tooltip=Borrar elementos seleccionados.
@@ -682,6 +684,8 @@ Preferences.pnlCase.border=declaración CASE
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Contenido por defecto
 Preferences.lblCase.tooltip=El contenido por defecto de una declaración CASE.
+Preferences.lblCaseRot.text=Min. brazos para rotar
+Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca) 
 Preferences.pnlFor.border=bucle PARA
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Contenido por defecto

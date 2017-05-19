@@ -40,6 +40,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.07.20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
  *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done.
  *      Kay Gürtzig     2016.10.14      Enh. #270: Disabled elements are skipped here now
+ *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
  *
  ******************************************************************************************************
  *
@@ -345,17 +346,24 @@ public class TexGenerator extends Generator {
 		if (topLevel)
 		{
 		// END KGU#178 2016-07-20
-		code.add("\\documentclass[a4paper,10pt]{article}");
-		code.add("");
-		code.add("\\usepackage{struktex}");
-		code.add("\\usepackage{german}");
-		code.add("");
-		code.add("\\title{Structorizer StrukTeX Export}");
-		code.add("\\author{Structorizer "+Element.E_VERSION+"}");
-		code.add("");
-		code.add("\\begin{document}");
+			code.add("\\documentclass[a4paper,10pt]{article}");
+			code.add("");
+			code.add("\\usepackage{struktex}");
+			code.add("\\usepackage{german}");
+			code.add("");
+			code.add("\\title{Structorizer StrukTeX Export}");
+			// START KGU#363 2017-05-16: Enh. #372
+			code.add("\\author{Structorizer "+Element.E_VERSION+"}");
+			if (this.optionExportLicenseInfo()) {
+				code.add("\\author{" + _root.getAuthor() + "}");
+			} else {
+				code.add("\\author{Structorizer "+Element.E_VERSION+"}");
+			}
+			// END KGU#363 2017-05-16
+			code.add("");
+			code.add("\\begin{document}");
 		// START KGU#178 2016-07-20: Enh. #160
-		subroutineInsertionLine = code.count();
+			subroutineInsertionLine = code.count();
 		}
 		// END KGU#178 2016-07-20
 		code.add("");

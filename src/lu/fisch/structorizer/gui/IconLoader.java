@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.23      Enh. #380: Icon 068 for the conversion of a sequence to a subroutine
  *      Kay Gürtzig     2017.03.28      Enh. #387: Icon 069 for "Save All" added.
  *      Kay Gürtzig     2017.04.29      Enh. #319/#389: New icon 070_program_green for Arranger index
+ *      Kay Gürtzig     2017.05.16      Enh. #389: New icons 071_include, 072_include_green
  *
  ******************************************************************************************************
  *
@@ -177,6 +178,8 @@ public class IconLoader {
 	// END KGU#373 2017-03-28
 	// START KGU#318/KGU#376 2017-04-29: Enh. #319, #389
 	public static ImageIcon ico070 = getIconImage(getURI(from+"icons/070_program_green.png"));
+	public static ImageIcon ico071 = getIconImage(getURI(from+"icons/071_include.png"));
+	public static ImageIcon ico072 = getIconImage(getURI(from+"icons/072_include_green.png"));
 	// END KGU#318/KGU#376 2017-04-29
 	
 	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
@@ -338,6 +341,8 @@ public class IconLoader {
         	// END KGU#373 2017-03-28
         	// START KGU#318/KGU#376 2017-04-29: Enh. #319, #389
         	ico070 = getIconImage(getURI(from+"icons/070_program_green.png"));
+        	ico071 = getIconImage(getURI(from+"icons/071_include.png"));
+        	ico072 = getIconImage(getURI(from+"icons/072_include_green.png"));
         	// END KGU#318/KGU#376 2017-04-29
 
         	ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));

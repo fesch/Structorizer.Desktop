@@ -49,6 +49,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.10      Further accomplishments for EVALUATE (ALSO included)
  *      Kay Gürtzig     2017.05.13      EVALUATE import as Case element fixed. FileAPI support begun
  *      Kay Gürtzig     2017.05.14      PERFORM VARYING with composed condition or defective step fixed
+ *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
  *
  ******************************************************************************************************
  *
@@ -4423,7 +4424,7 @@ public class COBOLParser extends CodeParser
 				Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
 				String content = this.getContent_R(secRed.get(2).asReduction(), "");
 				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT) {
-					this.root.isProgram = false;
+					this.root.setProgram(false);
 				}
 				// Arguments and return value will be fetched from a different rule
 				root.setText(content);
@@ -4459,7 +4460,7 @@ public class COBOLParser extends CodeParser
 				}
 				if (arguments.count() > 0) {
 					root.setText(root.getText().getLongString() + "(" + arguments.concatenate(", ") + ")");
-					root.isProgram = false;
+					root.setProgram(false);
 				}
 			}
 			else if (ruleId == RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING)
@@ -4566,34 +4567,13 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD_SET_STATEMENT_SET)
 			{
 				System.out.println("PROD_SET_STATEMENT_SET");
-				Reduction secRed = _reduction.get(1).asReduction();	// <set_body>
-				String content = "";
-				if (secRed.getParent().getTableIndex() != RuleConstants.PROD_SET_TO_TO) {
-					content = this.getContent_R(_reduction, "");
+				if (!importSet(_reduction, _parentNode)) {
+					String content = this.getContent_R(_reduction, "");
 					Instruction instr = new Instruction(content);
 					instr.setComment("This statement cannot be converted into a sensible diagram element!");
 					instr.setColor(Color.RED);
 					instr.disabled = true;
 					_parentNode.addElement(instr);
-				}
-				else {
-					String expr = this.getContent_R(secRed.get(2).asReduction(), "");
-					StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-					if (targets.count() > 0)
-					{
-						StringList assignments = new StringList();
-						for (int i = 0; i < targets.count(); i++) {
-							String target = targets.get(i).trim();
-							if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
-								assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
-								assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
-							}
-							else {
-								assignments.add(target + " <- " + expr);
-							}
-						}
-						_parentNode.addElement(new Instruction(assignments));
-					}
 				}
 			}
 			else if (ruleId == RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE)
@@ -4739,27 +4719,16 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE)
+			else if (
+					ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE
+					||
+					ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
 			{
-				System.out.println("PROD_REWRITE_STATEMENT_REWRITE");
-				if (!this.importRewrite(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
-			{
-				System.out.println("PROD_DELETE_STATEMENT_DELETE");
-				if (!this.importDelete(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("Structorizer File API does not support indexed or other non-text files");
+				_parentNode.addElement(instr);
 			}
 			else if (ruleId == RuleConstants.PROD_CLOSE_STATEMENT_CLOSE)
 			{
@@ -4807,8 +4776,9 @@ public class COBOLParser extends CodeParser
 				int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
 				Reduction secRed = _reduction.get(contentIx).asReduction();
 				String content = CodeParser.getKeywordOrDefault("preExit", "exit");
-				content = this.getContent_R(secRed, content + " ");
-				_parentNode.addElement(new Jump(content));
+				String exitVal = this.getContent_R(secRed, "").trim();
+				if (exitVal.isEmpty()) exitVal = "0";
+				_parentNode.addElement(new Jump(content + " " + exitVal));
 			}
 			else if (ruleId == RuleConstants.PROD_GOTO_STATEMENT_GO)
 			{
@@ -4850,6 +4820,83 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}	
+
+	private boolean importSet(Reduction _reduction, Subqueue _parentNode) {
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();	// <set_body>
+		int secRuleId = secRed.getParent().getTableIndex();
+		switch (secRuleId) {
+		case RuleConstants.PROD_SET_TO_TO:
+		{
+			String expr = this.getContent_R(secRed.get(2).asReduction(), "");
+			StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+			if (targets.count() > 0)
+			{
+				StringList assignments = new StringList();
+				for (int i = 0; i < targets.count(); i++) {
+					String target = targets.get(i).trim();
+					if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
+						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
+						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
+					}
+					else {
+						assignments.add(target + " <- " + expr);
+					}
+				}
+				_parentNode.addElement(new Instruction(assignments));
+				done = true;
+			}
+			break;
+		}
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE:
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE2:
+		{
+			Reduction setRed = secRed;
+			StringList assignments = new StringList();
+			do {
+				if (secRuleId == RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE2) {
+					setRed = secRed.get(1).asReduction();
+					secRed = secRed.get(0).asReduction();
+				}
+				else {
+					secRed = null;
+				}
+				this.addBoolAssignments(setRed, assignments);
+			} while (secRed != null);
+			if (assignments.count() > 0) {
+				_parentNode.addElement(new Instruction(assignments));
+			}
+			done = true;
+			break;
+		}
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_TRUE:
+		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_FALSE:
+		{
+			StringList assignments = new StringList();
+			this.addBoolAssignments(secRed, assignments);
+			if (assignments.count() > 0) {
+				_parentNode.addElement(new Instruction(assignments));
+			}
+			done = true;
+			break;
+		}
+		}
+		return done;
+	}
+
+	/**
+	 * Helper method for {@link #importSet(Reduction, Subqueue)}, just adding the assignments
+	 * of the <target_x_list> of the given reduction {@code setRed} to {@code assignments}
+	 * @param setRed
+	 * @param assignments
+	 */
+	private void addBoolAssignments(Reduction setRed, StringList assignments) {
+		String value = setRed.get(2).asString();
+		StringList targets = this.getExpressionList(setRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		for (int i = 0; i < targets.count(); i++) {
+			assignments.add(targets.get(i) + " <- " + value);
+		}
+	}
 
 	private void importCall(Reduction _reduction, Subqueue _parentNode) {
 		boolean callOk = false;
@@ -4909,16 +4956,6 @@ public class COBOLParser extends CodeParser
 				}
 			}
 		}
-	}
-
-	private boolean importDelete(Reduction _reduction, Subqueue _parentNode) {
-		// TODO: Find a sensible conversion!
-		return false;
-	}
-
-	private boolean importRewrite(Reduction _reduction, Subqueue _parentNode) {
-		// TODO: Find a sensible conversion!
-		return false;
 	}
 
 	private boolean importWrite(Reduction _reduction, Subqueue _parentNode) {
@@ -5900,26 +5937,17 @@ public class COBOLParser extends CodeParser
 			}
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_SEVENTY_EIGHT) {
+			// Note: Though the current grammar still doesn't allow it, we could have a constant expression here e.g.:
+			// 78 myval  VALUE 55 - 33 / 12.
 			boolean isGlobal = _reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL;
 			String constName = this.getContent_R(_reduction.get(1).asReduction(), "");
-			// FIXME: we don't get the <value_item_list> here but the <value_clause>
-			StringList values = this.getExpressionList(_reduction.get(3).asReduction(), "<value_item_list>",
+			Reduction valClRed = _reduction.get(3).asReduction(); // <value_clause>
+			StringList values = this.getExpressionList(valClRed.get(2).asReduction(), "<value_item_list>",
 					RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM); // FIXME: the parser should not get the COMMA_DELIM and normally spaces are used
-			// NOTE: While the current grammar does not allow it we could have a constant expression here:
-			// 78 myval  VALUE 55 - 33 / 12.
 			String value = null;
 			String type = ""; // unused
 			if (values.count() == 1) {
-				// FIXME: we currently get "VALUE  [IS] 123 "
 				value = values.get(0).trim();
-				// HACK:
-				String hack = value.toUpperCase();
-				if (hack.startsWith("VALUE")) {
-					value = value.substring(5).trim();
-					if (hack.startsWith("IS")) {
-						value = value.substring(3).trim();
-					}
-				}
 				type = Element.identifyExprType(null, value, true); // unused
 			}
 			else {
@@ -6319,6 +6347,8 @@ public class COBOLParser extends CodeParser
 							_content += " <> " + this.getContent_R(subRed.get(2).asReduction(), "");
 						}
 					}
+					// FIXME (KGU#397): In certain cases, the <subref> token is also used for parameter lists in routine calls!
+					// (This can only be solved on the parent rule level - we don't have the context here)
 					else if (subRuleId == RuleConstants.PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN) {
 						_content += "[" + this.getContent_R(subRed.get(1).asReduction(), "") + "] ";	// FIXME: spaces!?
 					}
@@ -6353,6 +6383,9 @@ public class COBOLParser extends CodeParser
 						}
 						toAdd += "\" ";
 					}
+					else if (name.equals("TOK_AMPER")) {
+						toAdd = " + ";
+					}
 					else if (name.equals("TOK_PLUS") || name.equals("TOK_MINUS")) {
 						toAdd = " " + toAdd + " ";
 					}
@@ -6361,6 +6394,9 @@ public class COBOLParser extends CodeParser
 					}
 					else if (toAdd.equalsIgnoreCase("space") || toAdd.equalsIgnoreCase("spaces")) {
 						toAdd = "\' \'";
+					}
+					else if (toAdd.equalsIgnoreCase("null")) {
+						toAdd = "\'\\0\'";
 					}
 					else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
 						toAdd = toAdd.toLowerCase();
@@ -6402,7 +6438,8 @@ public class COBOLParser extends CodeParser
 					fileName = fileName.toUpperCase();
 				}
 				aRoot.setText(fileName);
-				aRoot.isProgram = true;
+				// FIXME: Might also become an includable diagram!
+				aRoot.setProgram(true);
 			}
 		}
 		// Force returning of the specified result

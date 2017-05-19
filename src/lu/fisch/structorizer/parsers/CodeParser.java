@@ -421,7 +421,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			// START KGU#354 2017-03-10: Hook for subclass postprocessing
 			this.subclassUpdateRoot(subroutine, _textToParse);
 			// END KGU#354 2017-03-10
-			if (!subroutine.isProgram)
+			if (subroutine.isSubroutine())
 			{
 				signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
 			}
@@ -662,7 +662,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		// START KGU#358 2017-03-06: Enh. #368 - consider import options!
 		this.optionImportVarDecl = Ini.getInstance().getProperty("impVarDeclarations", "false").equals("true");
 		// END KGU#358 2017-03-06
-		root.isProgram = true;
+		root.setProgram(true);
 		// Allow subclasses to adjust things before the recursive build process is going off.
 		this.initializeBuildNSD();
 		buildNSD_R(_reduction, root.children);
@@ -717,7 +717,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		keywordMap.put("postCase",   "");
 		keywordMap.put("preFor",     "for");
 		keywordMap.put("postFor",    "to");
-		keywordMap.put("stepFor",    "step");
+		keywordMap.put("stepFor",    "by");
 		keywordMap.put("preForIn",   "foreach");
 		keywordMap.put("postForIn",  "in");
 		keywordMap.put("preWhile",   "while");
@@ -728,10 +728,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		keywordMap.put("preReturn",  "return");
 		keywordMap.put("preExit",    "exit");
 		// START KGU#376 017-04-11: Enh. #389
-		keywordMap.put("preImport",  "import");
+		keywordMap.put("preImport",  "include");
 		// END KGU#376 2017-04-11
-		keywordMap.put("input",      "read");
-		keywordMap.put("output",     "write");
+		keywordMap.put("input",      "INPUT");
+		keywordMap.put("output",     "OUTPUT");
 	}
 	
 	public static void loadFromINI()
@@ -752,7 +752,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		defaultKeys.put("ParserOutput", "OUTPUT");
 		// END KGU 2017-01-06 #327
 		// START KGU#376 017-04-11: Enh. #389
-		defaultKeys.put("ParserPreImport", "import");
+		defaultKeys.put("ParserPreImport", "include");
 		// END KGU#376 2017-04-11
 		try
 		{

@@ -838,7 +838,7 @@ public class CParser extends CodeParser
 	@Override
 	protected void initializeBuildNSD()
 	{
-		root.isProgram = false;	// C programs are functions, primarily
+		root.setProgram(false);	// C programs are functions, primarily
 		this.optionUpperCaseProgName = Root.check(6);
 	}
 
@@ -1150,7 +1150,7 @@ public class CParser extends CodeParser
 				String funcName = secReduc.get(nameIx).getData().toString();
 				Root prevRoot = root;	// Cache the original root
 				root = new Root();	// Prepare a new root for the (sub)routine
-				root.isProgram = false;
+				root.setProgram(false);
 				subRoots.add(root);
 				String content = new String();
 				// Is there a type specification different from void?
@@ -1842,13 +1842,16 @@ public class CParser extends CodeParser
 			}
 			else {
 				aRoot.setText(fileName);
-				aRoot.isProgram = true;
+				aRoot.setProgram(true);
 			}
 			// Are there some global definitions to be imported?
 			if (this.globalRoot != null) {
 				String progName = fileName + "Globals";
 				this.globalRoot.setText(progName);
-				this.globalRoot.isProgram = true;
+				// START KGU#376 2017-05-17: Enh. #389 now we have an appropriate diagram type
+				//this.globalRoot.setProgram(true);
+				this.globalRoot.setInclude();
+				// END KGU#376 2017-05-17
 				for (Call provCall: this.provisionalImportCalls) {
 					provCall.setText(provCall.getText().get(0).replace("???", progName));
 				}
@@ -1876,7 +1879,7 @@ public class CParser extends CodeParser
 		// May there was no main function but global definitions
 		if (this.globalRoot != null && this.globalRoot.getMethodName().equals("???") && this.globalRoot.children.getSize() > 0) {
 			this.globalRoot.setText(defaultGlobalName);
-			this.globalRoot.isProgram = true;
+			this.globalRoot.setProgram(true);
 		}
 	}
 

@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
  *      Kay Gürtzig     2017.04.18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
  *      Kay Gürtzig     2017.04.26      Signature of method exportCode() modified to return the used directory
+ *      Kay Gürtzig     2017.05.16      Enh.#372: New method insertCopyright()
  *
  ******************************************************************************************************
  *
@@ -950,11 +951,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		// END KGU#281 2016-10-15
 		// Between the input keyword and the variable name there MUST be some blank...
 		String keyword = CodeParser.getKeyword("input").trim();
-		if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		// START KGU#399 2017-05-16: bugfix #403
+		//if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		String gap = (!keyword.isEmpty() && Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)) ? "[\\W]" : "");
+		String pattern = "^" + getKeywordPattern(keyword) + "(" + gap + ".*|$)";
+		if (!keyword.isEmpty() && _interm.matches(pattern))
+		// END KGU#399 2017-05-16
 		{
 			// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
 			String quotes = "";
-			String tail = _interm.substring(keyword.length()).trim();
+			// START KGU#399 2017-05-16: bugfix #403
+			//String tail = _interm.substring(keyword.length()).trim();
+			String tail = _interm.replaceFirst(pattern, "$1");
+			// END KGU#399 2017-05-16
 			if (tail.startsWith("\"")) {
 				quotes = "\"";
 			}
@@ -962,28 +971,37 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				quotes = "'";
 			}
 			// END KGU#281 2016-10-15
-			String matcher = Matcher.quoteReplacement(keyword);
-			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
-			{
-				matcher = matcher + "[ ]";
-			}
-                        
+			// START KGU#399 2017-05-16: Bugfix #403
+			//String matcher = Matcher.quoteReplacement(keyword);
+			//if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
+			//{
+			//	matcher = matcher + "[ ]";
+			//}
+			//
 			// Start - BFI (#51 - Allow empty input instructions)
-			if(!_interm.matches("^" + matcher + "(.*)"))
-			{
-				_interm += " ";
-			}
+			//if(!_interm.matches("^" + matcher + "(.*)"))
+			//{
+			//	_interm += " ";
+			//}
 			// End - BFI (#51)
+			// END KGU#399 2017-05-16
 			
 			// START KGU#281 2016-10-15: Enh. #271 (input instructions with prompt
 			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 			if (quotes.isEmpty()) {
 				String subst = getInputReplacer(false);
-				_interm = _interm.replaceFirst("^" + matcher + "[ ]*(.*)", subst);
+				// START KGU#399 2017-05-16: bugfix #51, #403
+				//_interm = _interm.replaceFirst("^" + matcher + "[ ]*(.*)", subst);
+				_interm = _interm.replaceFirst(pattern, subst);
+				// END KGU#399 2017-05-16
 			}
 			else {
 				String subst = getInputReplacer(true);
-				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")[, ]*(.*)", subst);
+				// START KGU#399 2017-05-16: bugfix #51, #403				
+				//_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")[, ]*(.*)", subst);
+				pattern = "^" + getKeywordPattern(keyword) + "\\h*("+quotes+".*"+quotes+")[,]?\\s*(.*)";
+				_interm = _interm.replaceFirst(pattern, subst);
+				// END KGU#399 2017-05-16
 			}
 			// END KGU#281 2016-10-15
 		}
@@ -1005,22 +1023,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		String subst = getOutputReplacer();
 		// Between the input keyword and the variable name there MUST be some blank...
 		String keyword = CodeParser.getKeyword("output").trim();
-		if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		// START KGU#399 2017-05-16: bugfix #403
+		//if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		String gap = (!keyword.isEmpty() && Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)) ? "[\\W]" : "");
+		String pattern = "^" + getKeywordPattern(keyword) + "(" + gap + ".*|$)";
+		if (!keyword.isEmpty() && _interm.matches(pattern))
+		// END KGU#399 2017-05-16
 		{
-			String matcher = Matcher.quoteReplacement(keyword);
-			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
-			{
-				matcher = matcher + "[ ]";
-			}
-
+			// START KGU#399 201-05-16: bugfix #51, #403
+			//String matcher = Matcher.quoteReplacement(keyword);
+			//if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
+			//{
+			//	matcher = matcher + "[ ]";
+			//}
+			//
 			// Start - BFI (#51 - Allow empty output instructions)
-			if(!_interm.matches("^" + matcher + "(.*)"))
-			{
-				_interm += " ";
-			}
+			//if(!_interm.matches("^" + matcher + "(.*)"))
+			//{
+			//	_interm += " ";
+			//}
 			// End - BFI (#51)
-			
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			//
+			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			_interm = _interm.replaceFirst(pattern, subst);
+			// END KGU#399 2017-05-16
 		}
 		return _interm;
 	}
@@ -2056,6 +2082,28 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#74 2015-11-30
 	
+	// START KGU#363 2017-05-16: Enh. #372 - more ease for subclasses to place the license information
+	/**
+	 * Inserts the copyright information (author name, license name and text) if the respective option
+	 * is enabled. 
+	 * @param _root - the Root object holding the relevant attributes
+	 * @param _indent - the current indentation string
+	 * @param _fullText - whether the full license text is to be inserted, too (may be lengthy!)
+	 */
+	protected void insertCopyright(Root _root, String _indent, boolean _fullText) {
+		if (this.optionExportLicenseInfo()) {
+			this.insertComment("", _indent);
+			this.insertComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
+			if (_root.licenseName != null) {
+				this.insertComment("License: " + _root.licenseName, _indent);
+			}
+			if (_fullText && _root.licenseText != null) {
+				this.insertComment(StringList.explode(_root.licenseText, "\n"), _indent);
+			}
+			this.insertComment("", _indent);
+		}
+	}
+	
 	/**
 	 * Entry point for interactively commanded code export. Retrieves export options,
 	 * opens a file selection dialog
@@ -2219,14 +2267,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				if (this.optionExportSubroutines())
 				{
 					// START KGU#237 2016-08-10: Bugfix #228 - precaution for recursive top-level routine
-					if (!_root.isProgram)
+					if (!_root.isProgram())
 					{
 						subroutines.put(_root, new SubTopoSortEntry(null));
 					}
 					// END KGU#237 2016-08-10
 					registerCalledSubroutines(_root);
 					// START KGU#237 2016-08-10: Bugfix #228
-					if (!_root.isProgram)
+					if (!_root.isProgram())
 					{
 						subroutines.remove(_root);
 					}

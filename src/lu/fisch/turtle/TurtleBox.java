@@ -87,12 +87,12 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
             // END KGU#303 2016-12-03
 
             // draw all elements
-            for(Element ele : elements)
+            for (Element ele : elements)
             {
                 ele.draw(g);
             }
 
-            if(turtleHidden==false)
+            if (!turtleHidden)
             {
             	// START #272 2016-10-16
                 // fix drawing point
@@ -101,15 +101,14 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
                 // fix drawing point
                 //int xRot = x+image.getWidth(this)/2;
                 //int yRot = y+image.getHeight(this)/2;
+                // apply rotation
+                //g.rotate((270-angle)/180*Math.PI,xRot,yRot);
                 // fix drawing point
                 double x = posX - (image.getWidth(this)/2);
                 double y = posY - (image.getHeight(this)/2);
-                // fix rotation point
-                double xRot = x + image.getWidth(this)/2;
-                double yRot = y + image.getHeight(this)/2;
-                // END #272 2016-10-16
                 // apply rotation
-                g.rotate((270-angle)/180*Math.PI,xRot,yRot);
+                g.rotate((270-angle)/180*Math.PI, posX, posY);
+                // END #272 2016-10-16
                 // draw the turtle
                 g.drawImage(image,(int)Math.round(x),(int)Math.round(y),this);
             }

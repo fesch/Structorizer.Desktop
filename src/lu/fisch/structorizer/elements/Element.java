@@ -204,6 +204,9 @@ public abstract class Element {
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
+	"Import grammars and parsers written and maintained by\n"+
+	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>"+
+	" - COBOL: Simon Sobisch, Kay Gürtzig"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -242,8 +245,8 @@ public abstract class Element {
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - David Tremain <DTremain@omnisource.com>\n"+
 	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
-	" - Benjamin Neuberg (newboerg)\n"+
-	" - Simon Sobisch (Gitmensch)\n"+
+	" - Benjamin Neuberg (https://github.com/newboerg)\n"+
+	" - Simon Sobisch (https://github.com/Gitmensch)\n"+
 	
 	"\n"+
 	"File dropper class by\n"+
@@ -340,6 +343,9 @@ public abstract class Element {
 
 	public static final String COLLAPSED =  "...";
 	public static boolean altPadRight = true;
+	// START KGU#401 2017-05-17: Issue #405
+	public static int caseShrinkByRot = 8;			// Number of CASE branches to trigger the attempt to shrink width by rotating branches
+	// END KGU#401 2017-05-17
 
 	// START KGU#156 2016-03-10; Enh. #124
 	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
@@ -473,6 +479,9 @@ public abstract class Element {
 	protected final void resetDrawingInfo()
 	{
 		this.isRectUpToDate = false;
+		// START KGU#401 2017-05-17: Issue #405
+		this.rotated = false;
+		// END KGU#401 2017-05-17
 	}
 	/**
 	 * Resets my drawing info and that of all of my ancestors
@@ -1635,6 +1644,9 @@ public abstract class Element {
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"default\""));
 			preCase=sl.getText();
+			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "0"));
+			// END KGU#401 2017-05-18
 			preFor=ini.getProperty("For","for ? <- ? to ?");
 			preWhile=ini.getProperty("While","while ()");
 			preRepeat=ini.getProperty("Repeat","until ()");
@@ -1678,6 +1690,9 @@ public abstract class Element {
 			StringList sl = new StringList();
 			sl.setText(preCase);
 			ini.setProperty("Case",sl.getCommaText());
+			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+			ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
+			// END KGU#401 2017-05-18
 			ini.setProperty("For",preFor);
 			ini.setProperty("While",preWhile);
 			ini.setProperty("Repeat",preRepeat);
@@ -2970,6 +2985,14 @@ public abstract class Element {
 			negCondition = "not " + condition;
 		}
 		return negCondition;
+	}
+	
+	public void setRotated(boolean _rotated)
+	{
+		if (rotated != _rotated) {
+			// Flip the stored rectangle
+			this.rect0 = new Rect(rect0.left, rect0.top, rect0.bottom, rect0.right);
+		}
 	}
 
 }
