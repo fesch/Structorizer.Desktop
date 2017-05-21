@@ -353,7 +353,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			try {
 			// END KGU#111 2015-12-17
-				Root root = parser.parse(f.toURI().toString());
+				// START KGU#363 2017-05-21: Issue #372 API change
+				//Root root = parser.parse(f.toURI().toString());
+				Root root = parser.parse(f);
+				// END KGU#363 2017-05-21
 
 				root.filename = filename;
 				// START KGU#316 2016-12-28: Enh. #318 Allow nsd files to "reside" in arrz files

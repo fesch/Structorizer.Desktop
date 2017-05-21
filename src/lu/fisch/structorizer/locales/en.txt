@@ -99,6 +99,7 @@
  *      Kay Gürtzig     2017.03.28      Issue #370: New Menu messages for enhanced refactoring options
  *      Kay Gürtzig     2017.03.30      Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017.05.21      Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *
  ******************************************************************************************************
  *
@@ -140,6 +141,7 @@ Menu.menuFileImport.text=Import
 Menu.menuFileImportCode.text=Source Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
+Menu.menuFileAttributes.text=Inspect attributes ...
 Menu.menuFileTranslator.text=Translator
 Menu.menuFileQuit.text=Quit
 
@@ -627,19 +629,62 @@ InputBoxFor.msgAttention.text=ATTENTION!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title=
-InputBoxRoot.txtText.tooltip=
+InputBoxRoot.lblText.text=Diagram name / function signature
+InputBoxRoot.txtText.tooltip=Enter the diagram name (for main or includable diagrams) or the subroutine signature (name, parameter list, result type if any)
+InputBoxRoot.lblComment.text=Comment
 InputBoxRoot.txtComment.tooltip=
 InputBoxRoot.btnOK.text=OK
 InputBoxRoot.btnOK.tooltip=
-InputBoxRoot.btnCancel.text=
+InputBoxRoot.btnCancel.text=Cancel
 InputBoxRoot.btnCancel.tooltip=
-InputBoxRoot.lblAuthorName.text=Author
-InputBoxRoot.btnLicenseText.text=License text
-InputBoxRoot.btnLicenseText.tooltip=Press this button to open edit or review the text for the selected license.
-InputBoxRoot.cbLicenseName.tooltip=Select an available license from the personal license pool or the current one to edit it.
-InputBoxRoot.msgOverrideLicense.text=Override license text by the selected default license "%"?
-InputBoxRoot.msgLicenseChange.text=License Modification
-InputBoxRoot.msgLicenseLoadError.text=Error on loading license text for license "%1":\n%2!
+InputBoxRoot.btnAttributes.text=Attributes
+InputBoxRoot.btnAttributes.tooltip=Opens a dialog to inspect attributes and properties of this diagram.
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=Diagram Attributes
+AttributeInspector.lblCreatedBy.text=Author
+AttributeInspector.lblCreatedOn.text=Created on
+AttributeInspector.lblModifiedBy.text=Last changed by
+AttributeInspector.lblModifiedOn.text=Last changed on
+AttributeInspector.lblFilePath.text=File path
+AttributeInspector.lblShadowPath.text=Shadow file path
+AttributeInspector.txtShadowPath.tooltip=This path (usually into a temporary files directory) is used for packing/unpacking if the diagram resides in a packed archive.
+AttributeInspector.lblElements.text=Elements total
+AttributeInspector.lblInstrs.text=Instructions
+AttributeInspector.lblAlts.text=Alternatives
+AttributeInspector.lblCases.text=Case selections
+AttributeInspector.lblLoops.text=Loops
+AttributeInspector.lblCalls.text=Calls
+AttributeInspector.lblJumps.text=Jumps
+AttributeInspector.lblPars.text=Parallel sections
+AttributeInspector.btnShowLicense.text=License text
+AttributeInspector.btnShowLicense.tooltip=Press this button to open edit or review the text for the selected license.
+AttributeInspector.cbLicenseName.tooltip=Select an available license from the personal license pool or the current one to edit it.
+AttributeInspector.lblPrefsAlt.text=IF statement
+AttributeInspector.lblPrefsCase.text=CASE statement
+AttributeInspector.lblPrefsFor.text=FOR loop
+AttributeInspector.lblPrefsForIn.text=FOR-IN loop
+AttributeInspector.lblPrefsWhile.text=WHILE loop
+AttributeInspector.lblPrefsRepeat.text=REPEAT loop
+AttributeInspector.lblPrefsIO.text=Input/Output
+AttributeInspector.lblPrefsJump.text=Jump (Exit)
+AttributeInspector.lblPrefsPre.text=Pre
+AttributeInspector.lblPrefsPost.text=Post
+AttributeInspector.lblPrefsMore.text=(More)
+AttributeInspector.btnParserPrefs.text=Compare parser keys
+AttributeInspector.btnOk.text=OK
+AttributeInspector.btnOk.tooltip=Commit changes and close dialog.
+AttributeInspector.btnCancel.text=Cancel
+AttributeInspector.btnCancel.tooltip=Leave the dialog without committing changes.
+AttributeInspector.lblMain.text=Main program
+AttributeInspector.lblSub.text=Subroutine
+AttributeInspector.lblIncl.text=Includable
+AttributeInspector.pnCopyrights.border=Copyrights
+AttributeInspector.pnStatistics.border=Statistics (counts)
+AttributeInspector.pnKeywordSet.border=Cached differing keyword set
+AttributeInspector.msgOverrideLicense.text=Override license text by the selected default license "%"?
+AttributeInspector.msgLicenseChange.text=License Modification
+AttributeInspector.msgLicenseLoadError.text=Error on loading license text for license "%1":\n%2!
 
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Structorizer License Editor: %

@@ -297,7 +297,8 @@ Menu.error19_1.text=
 Menu.error19_2.text=
 Menu.error20.text=
 Menu.error21.text=
-Menu.error22.text=
+Menu.error22_1.text=
+Menu.error22_2.text=
 Menu.errorLineReference.text= (riga %)
 
 -----[ AnalyserPreferences ]-----

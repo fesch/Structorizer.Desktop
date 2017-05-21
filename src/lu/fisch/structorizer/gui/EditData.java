@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.01      Enh. #215: Breakpoint trigger counters added (KGU#213)
  *      Kay Gürtzig     2016.10.13      Enh. #270: Disabling control added (KGU#277)
  *      Kay Gürtzig     2017.03.14      Enh. #372: Additional Root fields (author, license)
+ *      Kay Gürtzig     2017.05.20      Enh. #372: Structure of the passed license info changed
  *
  ******************************************************************************************************
  *
@@ -50,6 +51,7 @@ package lu.fisch.structorizer.gui;
  */
 
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.utils.*;
 
 public class EditData {
@@ -76,9 +78,12 @@ public class EditData {
 	public boolean disabled = false;
 	// END KGU#277 2016-10-13
 	// START KGU#363 2017-03-14: Enh. #372 Author name and license infor for Root
-	public String authorName = null;
-	public String licenseName = null;
-	public String licenseText = null;
+	// START KGU#363 2017-05-20
+//	public String authorName = null;
+//	public String licenseName = null;
+//	public String licenseText = null;
+	public RootAttributes licInfo = null;
+	// END KGU#363 2017-05-20
 	// END KGU#363 2017-03-14
 	
 	public boolean result = false;
