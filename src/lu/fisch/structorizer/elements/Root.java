@@ -111,7 +111,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.05.09      Enh. #372: Statistics method supporting the AttributeInspector
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
  *      Kay Gürtzig     2017.05.21      Enh. #372: additional attributes included in undo/redo mechanism
- *
+ *      Kay Gürtzig     2017.05.22      Inh. #272: New attribute "origin"
+ *      
  ******************************************************************************************************
  *
  *      Comment:		/
@@ -250,6 +251,7 @@ public class Root extends Element {
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	public String licenseName = null;
 	public String licenseText = null;
+	public String origin = "Structorizer " + E_VERSION;
 	
 	/**
 	 * @return true if and only if the diagram type is main program
@@ -1383,6 +1385,7 @@ public class Root extends Element {
     		this.author = attributes.authorName;
     		this.licenseName = attributes.licenseName;
     		this.licenseText = attributes.licenseText;
+    		this.origin = attributes.origin;
     	}
 	}
     // KGU#363 2017-05-21

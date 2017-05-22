@@ -6920,6 +6920,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		RootAttributes licInfo = new RootAttributes(root);
 		AttributeInspector attrInsp = new AttributeInspector(
 				this.NSDControl.getFrame(), licInfo);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
 		attrInsp.setVisible(true);
 		if (attrInsp.isCommitted()) {
 			root.addUndo(true);

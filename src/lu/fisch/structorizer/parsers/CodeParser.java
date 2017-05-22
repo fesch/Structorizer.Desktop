@@ -37,6 +37,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display
  *      Kay Gürtzig     2017.04.16      New hook method postProcess(String textToParse) for sub classes
  *      Kay Gürtzig     2017.04.27      File logging mechanism added (former debug prints) 
+ *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute 
  *
  ******************************************************************************************************
  *
@@ -443,6 +444,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		for (Root aRoot : subRoots)
 		{
 			aRoot.convertToCalls(signatures);
+			// START KGU#363 2017-05-22: Enh. #372
+			aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\""; 
+			// END KGU#363 2017-05-22
 		}
 		// END KGU#194 2016-07-07
 		

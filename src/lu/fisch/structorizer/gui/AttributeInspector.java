@@ -114,6 +114,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	protected final JLabel lblFilePath = new JLabel("File path");
 	protected final JLabel lblShadowPath = new JLabel("Shadow file path");
 
+	// START KGU#363 2017-05-22: Enh. #372
+	protected final JLabel lblOrigin = new JLabel("Origin"); 
+	// END KGU#363 2017-05-22
+
 	// Statistics / metrics
 	protected final JLabel lblElements = new JLabel("Elements total");
 	//protected final JLabel lblPaths = new JLabel();
@@ -158,6 +162,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	protected final JTextField txtFilePath = new JTextField(20);
 	protected final JTextField txtShadowPath = new JTextField(20);
 
+	// START KGU#363 2017-05-22: Enh. #372
+	protected final JTextField txtOrigin = new JTextField(15); 
+	// END KGU#363 2017-05-22
+
 	protected final JTextField txtAltPre = new JTextField(10);
 	protected final JTextField txtAltPost = new JTextField(10);
 	protected final JTextField txtCasePre = new JTextField(10);
@@ -177,6 +185,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	protected final JTextField txtJumpReturn = new JTextField(10);
 	protected final JTextField txtJumpExit = new JTextField(10);
 	protected final JTextField txtCallImport = new JTextField(10);
+
+	// START KGU#363 2017-05-22: Enh. #372
+	protected final JButton btnClearOrigin = new JButton("Clear"); 
+	// END KGU#363 2017-05-22
 
 	protected final JButton btnShowLicense = new JButton("License text");
 	protected final JComboBox<String> cbLicense = new JComboBox<String>();
@@ -300,6 +312,19 @@ public class AttributeInspector extends LangDialog implements WindowListener {
         txtModifiedOn.setEditable(false);
         txtModifiedOn.addKeyListener(keyListener);
         
+    	// START KGU#363 2017-05-22: Enh. #372
+        txtOrigin.setText(licenseInfo.origin != null ? licenseInfo.origin.trim() : "");
+        // It may contain a long file path, so make it a tooltip if it isn't empty
+        txtOrigin.setToolTipText(licenseInfo.origin);
+    	txtOrigin.setEditable(false);
+        txtOrigin.addKeyListener(keyListener);
+        btnClearOrigin.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                clearOrgButtonActionPerformed(evt);
+            }
+        });
+    	// END KGU#363 2017-05-22
+
         final JLabel[] statLabels = new JLabel[]{
                 lblElements,
                 lblInstrs,
@@ -395,6 +420,41 @@ public class AttributeInspector extends LangDialog implements WindowListener {
         gblDialog.setConstraints(txtShadowPath, gbcDialog);
         pnDialogPane.add(txtShadowPath);
         
+        // START KGU#363 2017-05-22
+        gbcDialog.gridy++;
+
+        gbcDialog.gridx = 1;
+        gbcDialog.gridwidth = 1;
+        gbcDialog.gridheight = 1;
+        gbcDialog.fill = GridBagConstraints.BOTH;
+        gbcDialog.weightx = 1;
+        gbcDialog.weighty = 1;
+        gbcDialog.anchor = GridBagConstraints.NORTH;
+        gblDialog.setConstraints(lblOrigin, gbcDialog);
+        pnDialogPane.add(lblOrigin);
+        
+        gbcDialog.gridx = 2;
+        gbcDialog.gridwidth = 2;
+        gbcDialog.gridheight = 1;
+        gbcDialog.fill = GridBagConstraints.BOTH;
+        gbcDialog.weightx = 2;
+        gbcDialog.weighty = 1;
+        gbcDialog.anchor = GridBagConstraints.NORTH;
+        gblDialog.setConstraints(txtOrigin, gbcDialog);
+        pnDialogPane.add(txtOrigin);
+        
+        gbcDialog.gridx = 4;
+        gbcDialog.gridwidth = 1;
+        gbcDialog.gridheight = 1;
+        gbcDialog.fill = GridBagConstraints.BOTH;
+        gbcDialog.weightx = 1;
+        gbcDialog.weighty = 1;
+        gbcDialog.anchor = GridBagConstraints.NORTH;
+        gblDialog.setConstraints(btnClearOrigin, gbcDialog);
+        pnDialogPane.add(btnClearOrigin);
+        
+        // END KGU#363 2017-05-22
+
         gbcDialog.gridy++;
 
         gbcDialog.gridx = 1;
@@ -699,6 +759,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 
 	}
 
+	protected void clearOrgButtonActionPerformed(ActionEvent evt) {
+		this.txtOrigin.setText("");
+	}
+
 	protected void licButtonActionPerformed(ActionEvent evt) {
     	File licFile = null;
     	String licName = (String)this.cbLicenseName.getSelectedItem();
@@ -841,6 +905,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		}
 		if (!this.txtCreatedBy.getText().equals(licenseInfo.authorName)) {
 			licenseInfo.authorName = this.txtCreatedBy.getText();
+			committed = true;
+		}
+		if (!this.txtOrigin.getText().equals(licenseInfo.origin)) {
+			licenseInfo.origin = this.txtOrigin.getText();
 			committed = true;
 		}
 	}

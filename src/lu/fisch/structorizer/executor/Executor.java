@@ -123,6 +123,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
  *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
  *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float resul)
+ *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
  *
  ******************************************************************************************************
  *
@@ -558,6 +559,11 @@ public class Executor implements Runnable
 				tokens.set(i, delim + internal + delim);
 			}
 			// END KGU#342 2017-01-08
+			// START KGU#354 2017-05-22: Unfortunately theinterpreter doesn't cope with binary integer literals, so convert them
+			else if (token.matches("0b[01]+")) {
+				tokens.set(i, "" + Integer.parseInt(token.substring(2), 2));
+			}
+			// END KGU#354 2017-05-22
 		}
 		// END KGU#285 2016-10-16
 		// Function names to be prefixed with "Math."

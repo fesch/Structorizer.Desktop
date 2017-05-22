@@ -49,6 +49,7 @@ package lu.fisch.structorizer.parsers;
  *                                      mechanism to preserve storedParserPrefs otherwise
  *      Kay Gürtzig     2017.05.17      Issue #389: Call elements may now also have to be refactored
  *      Kay Gürtzig     2017.05.21      Enh. #372: More intelligent Root attribute retrieval
+ *      Kay Gürtzig     2017.05.22      Enh. #372: Attribute "origin" added.
  *
  ******************************************************************************************************
  *
@@ -195,10 +196,16 @@ public class NSDParser extends DefaultHandler {
 				root.licenseText = attributes.getValue("license");
 			}
 			// END KGU#363 2017-03-13
+			// START KGU#363 2017-05-22: Enh. #372
+			if (attributes.getIndex("origin") != -1) {
+				root.origin = attributes.getValue("origin");
+			}
+			// END KGU#363 2017-05-22
 			
 			// START KGU#363 2017-03-10: Enh. #372
 			root.fetchAuthorDates(attributes);
 			// END KGU#363 3017-03-10
+			
 			
 			// place stack
 			lastE = root;

@@ -32,6 +32,7 @@ package lu.fisch.structorizer.elements;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.05.19      First Issue (for Enh. requ. #372)
+ *      Kay Gürtzig     2017.05.22      Attribute origin added
  *
  ******************************************************************************************************
  *
@@ -54,6 +55,10 @@ public class RootAttributes {
 	public String authorName = null;
 	public String licenseName = null;
 	public String licenseText = null;
+	// START KGU#363 2017-05-22: Enh. #372
+	public String origin = null; 
+	// END KGU#363 2017-05-22
+
 
 	/**
 	 * Creates an instance with empty data (null)
@@ -73,6 +78,9 @@ public class RootAttributes {
 		if (_root.licenseText != null) {
 			this.licenseText = _root.licenseText + "";
 		}
+		// START KGU#363 2017-05-22: Enh. #372
+		this.origin = _root.origin;; 
+		// END KGU#363 2017-05-22
 	}
 	
 	/**
@@ -86,6 +94,9 @@ public class RootAttributes {
 		info.authorName = this.authorName;
 		info.licenseName = this.licenseName;
 		info.licenseText = this.licenseText;
+		// START KGU#363 2017-05-22: Enh. #372
+		info.origin = this.origin;
+		// END KGU#363 2017-05-22
 		return info;
 	}
 
