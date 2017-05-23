@@ -70,11 +70,8 @@ import java.awt.Color;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Set;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -97,9 +94,6 @@ import lu.fisch.utils.StringList;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-
-import com.creativewidgetworks.goldparser.parser.GOLDParser;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the GnuCOBOL language.
@@ -6445,7 +6439,8 @@ public class COBOLParser extends CodeParser
 						// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
 						toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
 						if (trueName.equals("ZLiteral")) { // handle zero terminated strings
-							toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
+							//toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
+							toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\000\"");
 						}
 						toAdd += " ";
 					}
@@ -6470,7 +6465,7 @@ public class COBOLParser extends CodeParser
 						toAdd += "\" ";
 					}
 					// Note: IntLiteral [+-]?{Number}+ needs no conversion
-					// Note: if we do convert Decimals to BigDecimal some day the following is needed DecimalLiteral 
+					// NOTE: if we do convert Decimals to BigDecimal some day the following is needed DecimalLiteral 
 					//else if (name.equals("DecimalLiteral")) { //
 					//	toAdd = toAdd.trim() + "b ";
 					//}

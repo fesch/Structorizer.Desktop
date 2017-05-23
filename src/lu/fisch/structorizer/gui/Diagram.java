@@ -128,6 +128,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.16      Enh. #389: Support for third diagram type (include/import)
  *      Kay Gürtzig     2017.05.18      Issue #405: New preference for width shrinking of CASE elements 
  *      Kay Gürtzig     2017.05.21      Enh. #372: AttributeInspector integrated, undo mechanism adapted
+ *      Kay Gürtzig     2017.05.23      Enh. #354: On multiple-root code import now all roots go to Arranger
  *
  ******************************************************************************************************
  *
@@ -482,6 +483,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 										for (Root rootNew: newRoots) {
 											rootNew.setChanged();
 										}
+										// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
+										if (newRoots.size() > 2 || !root.isProgram()) {
+											arrangeNSD();
+										}
+										// END KGU#354 2017-05-23
 									}
 									else {
 								// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
@@ -4617,7 +4623,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
 						root.setChanged();
 						// END KGU#192 2016-05-02
-						// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
+						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
+						if (newRoots.size() > 2 || !root.isProgram()) {
+							this.arrangeNSD();
+						}
+						// END KGU#354 2017-05-23
+					// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
 					}
 					// END KGU#194 2016-05-08
 				}
