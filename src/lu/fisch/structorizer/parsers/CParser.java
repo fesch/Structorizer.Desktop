@@ -84,7 +84,7 @@ import lu.fisch.utils.StringList;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the %Name% language.
- * This file cntains grammar-specific constants and individual routines to build
+ * This file contains grammar-specific constants and individual routines to build
  * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
  * @author Kay Gürtzig
  */
@@ -127,7 +127,7 @@ public class CParser extends CodeParser
 
 	@Override
 	public String[] getFileExtensions() {
-		final String[] exts = { "c" };
+		final String[] exts = { "c", "h" };
 		return exts;
 	}
 
@@ -556,11 +556,15 @@ public class CParser extends CodeParser
 //		final int PROD_VALUE_LPAREN_RPAREN                          = 229;  // <Value> ::= '(' <Expr> ')'
 	};
 
+	//---------------------------- Local Definitions ---------------------
+
 	private enum PreprocState {TEXT, TYPEDEF, ENUMTYPE, STRUCTUNIONTYPE, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
 	private StringList typedefs = new StringList();
 	
 	// Import Call elements with provisional Name, which have to be renamed as soon as the name gets known
 	private LinkedList<Call> provisionalImportCalls = new LinkedList<Call>();
+
+	//------------------------------ Constructor -----------------------------
 	
 	/**
 	 * Constructs a parser for language ANSI-C, loads the grammar as resource and
@@ -570,14 +574,14 @@ public class CParser extends CodeParser
 
 	}
 
-	//------------------------- Preprocessor ---------------------------
+	//----------------------------- Preprocessor -----------------------------
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it and writes a new file _textToParse+".structorizer" to the
-	 * same directory, which is then actually parsed. For the C Parser e.g. the
-	 * preprocessor directives must be removed and possibly be executed (at least the
-	 * defines. with #if it would get difficult).
+	 * file, filters it and writes a new temporary file "Structorizer.c", which is
+	 * then actually parsed.
+	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
+	 * be executed (at least the defines. with #if it would get difficult).
 	 * The preprocessed file will always be saved with UTF-8 encoding.
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
@@ -813,8 +817,7 @@ public class CParser extends CodeParser
 			//System.out.println(srcCode);
 
 			// trim and save as new file
-			//interm = new File(_textToParse + ".structorizer");
-			interm = File.createTempFile("Structorizer", ".c");
+			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
 			ow.write(srcCode.trim()+"\n");
 			//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));
