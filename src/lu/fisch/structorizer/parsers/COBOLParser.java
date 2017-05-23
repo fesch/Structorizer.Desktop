@@ -6483,8 +6483,6 @@ public class COBOLParser extends CodeParser
 					}
 					else if (name.equals("AcuOctNumLiteral")) { // this one defines an INTEGER literal in Octal notation
 						toAdd = toAdd.replaceAll("[Oo]#([0-9]+)", "0$1 ");
-						int test = Integer.parseInt(toAdd);
-
 					}
 					else if (name.equals("AcuHexNumLiteral")) { // this one defines an INTEGER literal in Hex notation
 						toAdd = toAdd.replaceAll("[XxHh]#([0-9A-Fa-f]+)", "0x$1 ");
