@@ -99,6 +99,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * for later evaluation (empty if there was no error) 
 	 */
 	public String error;
+	// Used width for displaying the error in a dialog
+	final int DLG_STR_WIDTH = 100;
+
 	/**
 	 * The generic LALR(1) parser providing the parse tree
 	 */
@@ -345,7 +348,6 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
             e.printStackTrace();
         }
 		catch (IOException e1) {
-			// TODO Auto-generated catch block
             error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
 			e1.printStackTrace();
 		}
@@ -358,7 +360,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		if (isSyntaxError && intermediate != null)
 		{
 			Position pos = parser.getCurrentPosition();
-			error += "\nPreceding source context:";
+			error += "\n\nPreceding source context:";
 			int lineNo = pos.getLine() - 1;
 			int colNo = pos.getColumn() - 1;
 			int start = (lineNo > 10) ? lineNo -10 : 0;
@@ -373,11 +375,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			// anyway.
 			sourceLines.removeAll("");
 			for (int i = start; i < lineNo; i++) {
-				// START KGU 2017-04-11
-				//String line = sourceLines.get(i);
-				String line = undoIdReplacements(sourceLines.get(i));
-				// END KGU 2017-04-11
-				error += String.format("\n%4d:   %s", i+1, line.replace("\t", "    "));
+				addLineToErrorString(i+1, sourceLines.get(i));
 			}
 			String line = sourceLines.get(lineNo);
 			if (line.length() >= colNo) {
@@ -386,21 +384,28 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 				line = undoIdReplacements(line.substring(0, colNo) + "» " + line.substring(colNo));
 				// END KGU 2017-04-11
 			}
-			error += String.format("\n%4d:   %s", lineNo+1,	line.replace("\t", "    "));
 //			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
 //				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
 //			}
+			addLineToErrorString(lineNo+1, line);
 			SymbolList sl = parser.getExpectedSymbols();
 			Token token = parser.getCurrentToken();
-			String sepa = "\n\nFound token " + token.toString() + " (" + token.asString().trim() + ")\n\nExpected: ";
+			final String tokVal = token.toString();
+			error += "\n\nFound token " + tokVal;
+			String tokStr = token.asString().trim();
+			if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
+				error += " (" + tokStr + ")";
+			}
+			error += "\n\nExpected: ";
+			String sepa = "";
 			String exp = "";
 			for (Symbol sym: sl) {
 				exp += sepa + sym.toString();
 				sepa = " | ";
-				if (exp.length() > 80) {
+				if (exp.length() > DLG_STR_WIDTH) {
 					error += exp;
 					exp = "";
-					sepa = "\n | ";
+					sepa = "\n        | ";
 				}
 			}
 			error += exp;
@@ -476,7 +481,24 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		
 		return subRoots;
 	}
-	
+
+	/**
+	 * Adds a source line to the public error String, adds line breaks where necessary
+	 * @param lineNum number of line for output
+	 * @param content of source line, output is done with DLG_STR_WIDTH
+	 */
+	private void addLineToErrorString(int lineNum, String line) {
+		error += String.format("\n%5d:   %."+DLG_STR_WIDTH+"s", lineNum, line);
+		
+		// simple approach to insert line break by width, better approach would be
+		// breaking at word boundary
+		final int strLen = line.length();
+		for (int j = DLG_STR_WIDTH; j < strLen; j += DLG_STR_WIDTH) {
+			error += String.format("\n%5s+   %."+DLG_STR_WIDTH+"s", "", line.substring(j));
+		}
+		
+	}
+
 	/**
 	 * Writes the given _logContent to the current opened file if there is one.
 	 * Oherwise and if {@code _toSystemOutInstead} is true the content will be
