@@ -37,6 +37,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display
  *      Kay Gürtzig     2017.04.16      New hook method postProcess(String textToParse) for sub classes
  *      Kay Gürtzig     2017.04.27      File logging mechanism added (former debug prints) 
+ *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute
+ *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced 
  *
  ******************************************************************************************************
  *
@@ -375,14 +377,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			// anyway.
 			sourceLines.removeAll("");
 			for (int i = start; i < lineNo; i++) {
-				addLineToErrorString(i+1, sourceLines.get(i));
+				addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i)));
 			}
 			String line = sourceLines.get(lineNo);
 			if (line.length() >= colNo) {
-				// START KGU 2017-04-11
-				//line = line.substring(0, colNo) + "» " + line.substring(colNo);
 				line = undoIdReplacements(line.substring(0, colNo) + "» " + line.substring(colNo));
-				// END KGU 2017-04-11
 			}
 //			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
 //				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
@@ -393,6 +392,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			final String tokVal = token.toString();
 			error += "\n\nFound token " + tokVal;
 			String tokStr = token.asString().trim();
+			// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id  
+			tokStr = this.undoIdReplacements(tokStr);
+			// END KGU 2017-05-23
 			if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
 				error += " (" + tokStr + ")";
 			}
@@ -448,6 +450,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		for (Root aRoot : subRoots)
 		{
 			aRoot.convertToCalls(signatures);
+			// START KGU#363 2017-05-22: Enh. #372
+			aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\""; 
+			// END KGU#363 2017-05-22
 		}
 		// END KGU#194 2016-07-07
 		
@@ -540,7 +545,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 */
 	protected String undoIdReplacements(String line) {
 		for (Entry<String,String> entry: this.replacedIds.entrySet()) {
-			String pattern = "(^|.*\\W)" + entry.getKey() + "(\\W.*|$)";
+			String pattern = "(^|.*?\\W)" + entry.getKey() + "(\\W.*?|$)";
 			if (line.matches(pattern)) {
 				line = line.replaceAll(pattern, "$1" + Matcher.quoteReplacement(entry.getValue()) + "$2");
 			}

@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.02.26  KGU#352: Variable prefixing revised w.r.t. arrays and references
  *      Kay Gürtzig         2017.02.27  Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig         2017.05.16  Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017.05.24  Bugfix #412: The hash codes used to generate unique identifiers could get negative
  *
  ******************************************************************************************************
  *
@@ -609,7 +610,7 @@ public class PerlGenerator extends Generator {
     		StringList items = this.extractForInListItems(_for);
     		if (items != null)
     		{
-        		valueList = "@array" + _for.hashCode();
+        		valueList = "@array" + Integer.toHexString(_for.hashCode());
     			addCode("my " + valueList + " = (" + transform(items.concatenate(", "), false) + ")",
     					_indent, isDisabled);
     		}
@@ -848,6 +849,7 @@ public class PerlGenerator extends Generator {
 		StringList[] asgndVars = new StringList[nThreads];
 		String indentPlusOne = _indent + this.getIndent();
 		String indentPlusTwo = indentPlusOne + this.getIndent();
+		String suffix = Integer.toHexString(_para.hashCode());
 				
 		// START KGU 2014-11-16
 		insertComment(_para, _indent);
@@ -869,7 +871,7 @@ public class PerlGenerator extends Generator {
 			for (int v = 0; v < asgndVars[i].count(); v++) {
 				usedVars.removeAll(asgndVars[i].get(v));
 			}
-			String threadVar = "$thr" + _para.hashCode() + "_" + i;
+			String threadVar = "$thr" + suffix + "_" + i;
 			if (hasResults) {
 				// Define the thread in list context such that we may obtain more results
 				threadVar = "(" + threadVar + ")";
@@ -902,7 +904,7 @@ public class PerlGenerator extends Generator {
 			if (!resultVars.isEmpty()) {
 				resultVars = "($" + resultVars + ") = ";
 			}
-			addCode(resultVars + "$thr" + _para.hashCode() + "_" + i + "->join();", indentPlusOne, isDisabled);
+			addCode(resultVars + "$thr" + suffix + "_" + i + "->join();", indentPlusOne, isDisabled);
 			addCode("", "", isDisabled);
 		}
 

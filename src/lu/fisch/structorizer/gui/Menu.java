@@ -78,7 +78,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.11      Enh. #389: Additional messages for analysis of import calls
  *      Kay Gürtzig     2017.04.20      Enh. #388: Second error (error22_2) for constant analysis
  *      Kay Gürtzig     2017.04.26/28   Enh. KGU#386: Method for plugin menu items, diagram file import
- *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added 
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added
+ *      Kay Gürtzig     2017.05.21      Enh. #372: New menu entry and accelerator for AttribeInspector
  *
  ******************************************************************************************************
  *
@@ -147,6 +148,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#354 2017-03-14
 	protected final JMenuItem menuFileImportNSDEd = new JMenuItem("Foreign NSD editor file ...", IconLoader.ico074);
 
+	
+	// START KGU#363 2017-05-19: Enh. #372
+	protected final JMenuItem menuFileAttributes = new JMenuItem("Inspect attributes");
+	// END KGU#363 2017-05-19
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
 	// END KGU#2 2015-11-19
@@ -658,6 +663,14 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#2 2015-11-19
                 
         menuFile.addSeparator();
+
+        // START KGU#363 2017-05-19: Enh. #372
+    	menuFile.add(menuFileAttributes);
+    	menuFileAttributes.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.attributesNSD(); doButtons(); } } );
+		menuFileAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (java.awt.event.InputEvent.ALT_MASK /*| (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())*/)));
+
+    	menuFile.addSeparator();
+    	// END KGU#363 2017-05-19
 
         // START BOB 2016-08-02
 		menuFile.add(menuFileTranslator);

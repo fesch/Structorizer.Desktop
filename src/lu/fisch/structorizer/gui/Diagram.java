@@ -127,6 +127,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.11      Enh. #357: Mechanism to retrieve plugin-specified generator options
  *      Kay Gürtzig     2017.05.16      Enh. #389: Support for third diagram type (include/import)
  *      Kay Gürtzig     2017.05.18      Issue #405: New preference for width shrinking of CASE elements 
+ *      Kay Gürtzig     2017.05.21      Enh. #372: AttributeInspector integrated, undo mechanism adapted
+ *      Kay Gürtzig     2017.05.23      Enh. #354: On multiple-root code import now all roots go to Arranger
  *
  ******************************************************************************************************
  *
@@ -481,6 +483,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 										for (Root rootNew: newRoots) {
 											rootNew.setChanged();
 										}
+										// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
+										if (newRoots.size() > 2 || !root.isProgram()) {
+											arrangeNSD();
+										}
+										// END KGU#354 2017-05-23
 									}
 									else {
 								// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
@@ -1471,7 +1478,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// open an existing file
 				NSDParser parser = new NSDParser();
 				boolean hil = root.hightlightVars;
-				root = parser.parse(f.toURI().toString());
+				// START KGU#363 2017-05-21: Issue #372 API change
+				//root = parser.parse(f.toURI().toString());
+				root = parser.parse(f);
+				// END KGU#363 2017-05-21
 				root.hightlightVars = hil;
 				root.filename = _filename;
 				currentDirectory = new File(root.filename);
@@ -2468,9 +2478,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#363 2017-03-14: Enh. #372
 				else if (element instanceof Root)
 				{
-					data.authorName = ((Root)element).getAuthor();
-					data.licenseName = ((Root)element).licenseName;
-					data.licenseText = ((Root)element).licenseText;
+//					data.authorName = ((Root)element).getAuthor();
+//					data.licenseName = ((Root)element).licenseName;
+//					data.licenseText = ((Root)element).licenseText;
+					data.licInfo = new RootAttributes((Root)element);
 				}
 				// END KGU#363 2017-03-14
 
@@ -2484,7 +2495,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#120 2016-01-02: Bugfix #85 - StringList changes of Root are to be undoable, too!
 					//if (!element.getClass().getSimpleName().equals("Root"))
 					// END KGU#120 2016-01-02
-					root.addUndo();
+					// START KGU#363 2017-05-21: Enh. #372:
+					// Also cache root attributes if the edited element is a Root
+					//root.addUndo();
+					root.addUndo(element instanceof Root);
+					// END KGU#363 2017-05-21
 					if (!(element instanceof Forever))
 					{
 						element.setText(data.text.getText());
@@ -2512,9 +2527,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#3 2015-10-25
 					// START KGU#363 2017-03-14: Enh. #372
 					else if (element instanceof Root) {
-						((Root)element).setAuthor(data.authorName);
-						((Root)element).licenseName = data.licenseName;
-						((Root)element).licenseText = data.licenseText;
+						((Root)element).adoptAttributes(data.licInfo);
 					}
 					// END KGU#363 2017-03-14
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
@@ -4610,7 +4623,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
 						root.setChanged();
 						// END KGU#192 2016-05-02
-						// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
+						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
+						if (newRoots.size() > 2 || !root.isProgram()) {
+							this.arrangeNSD();
+						}
+						// END KGU#354 2017-05-23
+					// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
 					}
 					// END KGU#194 2016-05-08
 				}
@@ -6138,17 +6156,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#363 2017-03-13: Enh. #372
 			else if (_elementType.equals("Root")) {
 				InputBoxRoot ipbRt = new InputBoxRoot(NSDControl.getFrame(), true);
-				ipbRt.licenseInfo.rootName = root.getMethodName();
-				ipbRt.licenseInfo.licenseName = _data.licenseName;
-				ipbRt.licenseInfo.licenseText = _data.licenseText;
-				String author = _data.authorName;
-				String user = System.getProperty("user.name");
-				ipbRt.txtAuthorName.setText(author);
-				if (author != null && 
-						!author.equalsIgnoreCase(Ini.getInstance().getProperty("author", user)) &&
-						!author.equalsIgnoreCase(user)) {
-					ipbRt.txtAuthorName.setEditable(false);
-				}
+//				ipbRt.licenseInfo.rootName = root.getMethodName();
+//				ipbRt.licenseInfo.licenseName = _data.licenseName;
+//				ipbRt.licenseInfo.licenseText = _data.licenseText;
+//				String author = _data.authorName;
+//				String user = System.getProperty("user.name");
+//				ipbRt.txtAuthorName.setText(author);
+//				if (author != null && 
+//						!author.equalsIgnoreCase(Ini.getInstance().getProperty("author", user)) &&
+//						!author.equalsIgnoreCase(user)) {
+//					ipbRt.txtAuthorName.setEditable(false);
+//				}
+				ipbRt.licenseInfo = _data.licInfo;
 				inputbox = ipbRt;
 			}
 			// END KGU#363 2017-03-13 
@@ -6282,9 +6301,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#3 2015-10-25
 			// START KGU#363 2017-03-13: Enh. 372
 			else if (inputbox instanceof InputBoxRoot) {
-				_data.authorName = ((InputBoxRoot)inputbox).txtAuthorName.getText();
-				_data.licenseName = ((InputBoxRoot)inputbox).licenseInfo.licenseName;
-				_data.licenseText = ((InputBoxRoot)inputbox).licenseInfo.licenseText;
+				// START KGU#363 2017-05-20
+//				_data.authorName = ((InputBoxRoot)inputbox).txtAuthorName.getText();
+//				_data.licenseName = ((InputBoxRoot)inputbox).licenseInfo.licenseName;
+//				_data.licenseText = ((InputBoxRoot)inputbox).licenseInfo.licenseText;
+				_data.licInfo = ((InputBoxRoot)inputbox).licenseInfo;
+				// END KGU#363 2017-05-20
 			}
 			// END KGU#363 2017-03-13
 			_data.result = inputbox.OK;
@@ -6903,5 +6925,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	// END KGU#305
+
+	// START KGU#363 2017-05-19: Enh. #372
+	public void attributesNSD() {
+		RootAttributes licInfo = new RootAttributes(root);
+		AttributeInspector attrInsp = new AttributeInspector(
+				this.NSDControl.getFrame(), licInfo);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		attrInsp.setVisible(true);
+		if (attrInsp.isCommitted()) {
+			root.addUndo(true);
+			root.adoptAttributes(attrInsp.licenseInfo);
+		}
+	}
+	// END KGU#363 2017-05-17
 	
 }

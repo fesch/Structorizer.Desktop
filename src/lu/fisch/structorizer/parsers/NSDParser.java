@@ -48,6 +48,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.28      Issue #370: Default value of refactorKeywords turned to true,
  *                                      mechanism to preserve storedParserPrefs otherwise
  *      Kay Gürtzig     2017.05.17      Issue #389: Call elements may now also have to be refactored
+ *      Kay Gürtzig     2017.05.21      Enh. #372: More intelligent Root attribute retrieval
+ *      Kay Gürtzig     2017.05.22      Enh. #372: Attribute "origin" added.
  *
  ******************************************************************************************************
  *
@@ -62,8 +64,10 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
 import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Stack;
 
@@ -192,10 +196,16 @@ public class NSDParser extends DefaultHandler {
 				root.licenseText = attributes.getValue("license");
 			}
 			// END KGU#363 2017-03-13
+			// START KGU#363 2017-05-22: Enh. #372
+			if (attributes.getIndex("origin") != -1) {
+				root.origin = attributes.getValue("origin");
+			}
+			// END KGU#363 2017-05-22
 			
 			// START KGU#363 2017-03-10: Enh. #372
 			root.fetchAuthorDates(attributes);
 			// END KGU#363 3017-03-10
+			
 			
 			// place stack
 			lastE = root;
@@ -737,12 +747,35 @@ public class NSDParser extends DefaultHandler {
 	{
 		//String dataString =	new String(chars, startIndex, endIndex).trim();
 	}
-	
-	public Root parse(String _filename) throws SAXException, IOException
+    
+    // START KGU#363 2017-05-21: Issue #372 It was sensible to change this signature
+//    /**
+//     * Parses the NSD file specified by the URI (!) {@code _filename} and returns the composed Root if possible
+//     * @param _filename a URI specifying the file path. CAUTION: This string is not expected to be usable for e.g.
+//     * {@code new File(_filename)}. It may be derived e.g. from a {@code File} object f by {@code f.toURI().toString()}.  
+//     * @return the built diagram
+//     * @throws SAXException
+//     * @throws IOException
+//     */
+//	public Root parse(String _filename) throws SAXException, IOException
+    /**
+     * Parses the NSD file specified by the given {@code File} object and returns the composed Root (if possible),
+     * otherwise raises exceptions. 
+     * @param _file - a {@code File} object representing the NSD file to be parsed.  
+     * @return the built diagram
+     * @throws SAXException
+     * @throws IOException
+     */
+	public Root parse(File _file) throws SAXException, IOException
+	// END KGU#363 2017-05-21
 	{
 		// setup a new root
-		root=new Root();
+		root = new Root();
 		
+    	// START KGU#363 2017-05-21: Enh. #372: Fetch the default modification data from the file
+		root.fetchAuthorDates(_file);
+		// END KGU#363 2017-05-21
+
 		// clear stacks
 		stack.clear();
 		ifStack.clear();
@@ -763,11 +796,11 @@ public class NSDParser extends DefaultHandler {
 		try		
 		{
 			SAXParser saxParser = factory.newSAXParser();
-			saxParser.parse(_filename,this);
+			saxParser.parse(_file/*.toURI().toString()*/, this);
 		} 
 		catch(Exception e) 
 		{
-			String errorMessage = "Error parsing " + _filename + ": " + e;
+			String errorMessage = "Error parsing " + _file + ": " + e;
 			System.err.println(errorMessage);
 			e.printStackTrace();
 			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!

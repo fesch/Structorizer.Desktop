@@ -123,6 +123,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
  *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
  *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float resul)
+ *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
+ *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
  *
  ******************************************************************************************************
  *
@@ -552,12 +554,27 @@ public class Executor implements Runnable
 				//	tokenLen -= (intLen - internal.length());
 				//}
 				// END KGU 2017-04-22
+				// START KGU#406 2017-05-23: Bugfix #411 (arose with COBOL import)
+				// The interpreter doesn't cope with unicode escape sequences "\\u000a", "\\u000d", "\\u0022", and "\\u005c"
+				if (internal.contains("\\u00")) {
+					System.out.println(internal);
+				}
+				internal = internal.replaceAll("(.*)\\\\u000a(.*)", "$1\\012$2").
+						replaceAll("(.*?)\\\\u000d(.*?)", "$1\\\\015$2").
+						replaceAll("(.*?)\\\\u0022(.*?)", "$1\\\\042$2").
+						replaceAll("(.*?)\\\\u005c(.*?)", "$1\\\\134$2");
+				// END KGU#406 2017-05-23
 				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
 					delim = '\"';
 				}
 				tokens.set(i, delim + internal + delim);
 			}
 			// END KGU#342 2017-01-08
+			// START KGU#354 2017-05-22: Unfortunately theinterpreter doesn't cope with binary integer literals, so convert them
+			else if (token.matches("0b[01]+")) {
+				tokens.set(i, "" + Integer.parseInt(token.substring(2), 2));
+			}
+			// END KGU#354 2017-05-22
 		}
 		// END KGU#285 2016-10-16
 		// Function names to be prefixed with "Math."

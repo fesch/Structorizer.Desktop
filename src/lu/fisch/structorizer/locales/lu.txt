@@ -184,8 +184,6 @@ Menu.menuHelp.mnemonic=h
 Menu.menuHelpAbout.text=Iwwert ...
 Menu.menuHelpUpdate.text=Update. ..
 
-Menu.lblImportCode.text=% Code ...
-
 // Error messages for analyser
 Menu.error01_1.text=WARNUNG: Keng Schläifvariabel fonnt
 Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt: «%»

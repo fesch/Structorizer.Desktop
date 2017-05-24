@@ -102,6 +102,7 @@
  *      Kay Gürtzig         2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
  *      Kay Gürtzig         2017.03.30  Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig         2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig         2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *
  ******************************************************************************************************
  *
@@ -138,6 +139,7 @@ Menu.menuFileImport.text=Importieren
 Menu.menuFileImportCode.text=Quell-Code ...
 Menu.menuFilePrint.text=Drucken ...
 Menu.menuFileArrange.text=Im Arranger anordnen
+Menu.menuFileAttributes.text=Eigenschaften anzeigen ...
 Menu.menuFileTranslator.text=Übersetzer
 Menu.menuFileQuit.text=Beenden
 // Menu "Edit"
@@ -149,9 +151,9 @@ Menu.menuEditRedo.text=Wiederholen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
-Menu.menuEditUpgradeTurtle.text=Reelle Turtlebefehle
+Menu.menuEditUpgradeTurtle.text=Reelle Turtle-Befehle
 Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
-Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtlebefehle
+Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtle-Befehle
 Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
 Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
@@ -622,26 +624,72 @@ InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die
 InputBoxFor.msgAttention.text=ACHTUNG!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Angaben zum Programm bearbeiten...
-InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur
+InputBoxRoot.title=Angaben zum Diagramm bearbeiten...
+InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
+InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur (Name, Parameterliste, ggf. Rückggabetyp) eingeben
+InputBoxRoot.lblComment.text=Einzugebender Kommentar
 InputBoxRoot.txtComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
 InputBoxRoot.btnOK.text=Speichern
 InputBoxRoot.btnOK.tooltip=Speichern der Eintragungen.
 InputBoxRoot.btnCancel.text=Abbrechen
 InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
-InputBoxRoot.lblAuthorName.text=Autor
-InputBoxRoot.btnLicenseText.text=Lizenztext
-InputBoxRoot.btnLicenseText.tooltip=Schaltfläche zum Öffnen des Editors bzw. Betrachters des Lizenztexts zur ausgewählten Lizenz.
-InputBoxRoot.cbLicenseName.tooltip=Eine Lizenz aus dem persönlichen Lizenz-Pool auswählen oder die aktuell gesetzte Lizenz behalten.
-InputBoxRoot.msgOverrideLicense.text=Aktuellen Lizenztext durch den der ausgewählten Lizenzvorlage "%" ersetzen?
-InputBoxRoot.msgLicenseChange.text=Lizenzänderung
-InputBoxRoot.msgLicenseLoadError.text=Fehler beim Laden des Lizenztexts für Lizenz "%1":\n%2!
+InputBoxRoot.btnAttributes.text=Attribute
+InputBoxRoot.btnAttributes.tooltip=Öffnet ein Fenster zur Anzeige der Attribute und Eigenschaften dieses Diagramms.
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=Diagrammeigenschaften
+AttributeInspector.lblCreatedBy.text=Autor
+AttributeInspector.lblCreatedOn.text=Erstellt am
+AttributeInspector.lblModifiedBy.text=Zuletzt geändert von
+AttributeInspector.lblModifiedOn.text=Zuletzt geändert am
+AttributeInspector.lblFilePath.text=Dateipfad
+AttributeInspector.lblShadowPath.text=Schatten-Dateipfad
+AttributeInspector.txtShadowPath.tooltip=Dieser Pfad (meist in einem Temp.-Verzeichnis) wird zum Packen/Entpacken benutzt, wenn das Diagram aus einem komprimierten Archiv stammt.
+AttributeInspector.lblOrigin.text=Herkunft
+AttributeInspector.btnClearOrigin.text=Säubern
+AttributeInspector.btnClearOrigin.tooltip=Löscht des Herkunftseintrag
+AttributeInspector.lblElements.text=Elemente insges.
+AttributeInspector.lblInstrs.text=Anweisungen
+AttributeInspector.lblAlts.text=Alternativen
+AttributeInspector.lblCases.text=Fallauswahl
+AttributeInspector.lblLoops.text=Schleifen
+AttributeInspector.lblCalls.text=Routinenaufrufe
+AttributeInspector.lblJumps.text=Aussprünge
+AttributeInspector.lblPars.text=Parallelabschnitte
+AttributeInspector.btnShowLicense.text=Lizenztext
+AttributeInspector.btnShowLicense.tooltip=Diese Schaltfläche drücken, um den Text der gewählten Lizenz einzusehen, zu kopieren oder zu bearbeiten.
+AttributeInspector.cbLicenseName.tooltip=Eine verfügbare Lizenz unter den persönlichen Lizenz-Vorlagen oder die aktuelle wählen.
+AttributeInspector.lblPrefsAlt.text=IF-Anweisung
+AttributeInspector.lblPrefsCase.text=CASE-Anweisung
+AttributeInspector.lblPrefsFor.text=Zählschleife
+AttributeInspector.lblPrefsForIn.text=FOR-IN-Schleife
+AttributeInspector.lblPrefsWhile.text=WHILE-Schleife
+AttributeInspector.lblPrefsRepeat.text=REPEAT-Schleife
+AttributeInspector.lblPrefsIO.text=Ein-/Ausgabe
+AttributeInspector.lblPrefsJump.text=Aussprung
+AttributeInspector.lblPrefsPre.text=Vor
+AttributeInspector.lblPrefsPost.text=Nach
+AttributeInspector.lblPrefsMore.text=(Zusatz)
+AttributeInspector.btnParserPrefs.text=Parser-Einstellungen
+AttributeInspector.btnOk.text=OK
+AttributeInspector.btnOk.tooltip=Eventuelle Änderungen übernehmen und Dialog schließen.
+AttributeInspector.btnCancel.text=Abbruch
+AttributeInspector.btnCancel.tooltip=Dialog ohne Übernahme von Änderungen verlassen.
+AttributeInspector.lblMain.text=Hauptprogramm
+AttributeInspector.lblSub.text=Unterprogramm
+AttributeInspector.lblIncl.text=Include-Diagramm
+AttributeInspector.pnCopyrights.border=Copyrights
+AttributeInspector.pnStatistics.border=Statistik
+AttributeInspector.pnKeywordSet.border=Abweichender Schlüsselwort-Satz
+AttributeInspector.msgOverrideLicense.text=Lizenztext durch den der gewählten Lizenzvorlage "%" überschreiben?
+AttributeInspector.msgLicenseChange.text=Lizenz-Modifikation
+AttributeInspector.msgLicenseLoadError.text=Fehler beim Laden des Lizenztexts für Lizenz "%1":\n%2!
 
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Structorizer Lizenz-Editor: %
 LicenseEditor.menuFile.text=Datei
 LicenseEditor.menuFile.mnemonic=d
-LLicenseEditor.menuEdit.text=Bearbeiten
+LicenseEditor.menuEdit.text=Bearbeiten
 LicenseEditor.menuEdit.mnemonic=e
 LicenseEditor.menuProp.text=Eigenschaften
 LicenseEditor.menuProp.mnemonic=s
@@ -680,9 +728,9 @@ Preferences.altPadRight.text=Verbreitere FALSCH-Zweig
 Preferences.pnlCase.border=CASE-Anweisung
 Preferences.pnlCase.tooltip=Einstellungen zur CASE-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text
-Preferences.lblCase.tooltip=Der Voreinstellungs-Text im CASE-Anweisungs-Kopf.
-Preferences.lblCaseRot.text=Min. Zweigzahl für Rotation
-Preferences.lblCaseRot.tooltip=Zweiganzahlschwelle für Versuche, die Breite des CASE-Elements durch Drehen der Anweisungen zu verringern (0 = aus) 
+Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der CASE-Anweisung.
+Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
+Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des CASE-Elements verringern (0 = aus) 
 Preferences.pnlFor.border=FOR-Schleife
 Preferences.pnlFor.tooltip=Einstellungen zur FOR-Schleife
 Preferences.lblFor.text=Voreinstellungs-Text
@@ -694,7 +742,7 @@ Preferences.lblWhile.tooltip=Der Voreinstellungs-Text im WHILE-Schleifen-Kopf.
 Preferences.pnlRepeat.border=REPEAT-Schleife
 Preferences.pnlRepeat.tooltip=Einstellungen zur REPEAT-Schleife.
 Preferences.lblRepeat.text=Voreinstellungs-Text
-Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im REPEAT-Schleifen-Kopf.
+Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im REPEAT-Schleifen-Fuß.
 Preferences.btnOK.text=Speichern
 Preferences.btnOK.tooltip=Speichern der Einstellungen.
 
@@ -893,7 +941,7 @@ Surface.titleDiagramConflict.text=Diagramm-Konflikt
 Surface.msgInsertionConflict.0.text=Es gibt bereits eine Version von Diagramm "%2",\nwenigstens eine davon hat ungesicherte Änderungen.
 Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des Diagramms "%1"\nmit unterschiedlichem Dateipfad "%2".
 Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
-Surfcae.msgOverwriteFile.text=Bestehende Datei "%" überschreiben?
+Surface.msgOverwriteFile.text=Bestehende Datei "%" überschreiben?
 Surface.msgConfirmOverwrite.text=Überschreiben bestätigen
 
 -----> Executor

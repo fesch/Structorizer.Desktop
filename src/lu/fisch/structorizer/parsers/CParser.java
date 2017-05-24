@@ -43,6 +43,8 @@ package lu.fisch.structorizer.parsers;
  *                                      function declarations, mechanism to ensure sensible naming of the global Root
  *      Kay Gürtzig     2017.04.26      prepareTextfile() now eliminates void casts (the grammar doesn't cope with them)
  *      Kay Gürtzig     2017.04.27      Enh. #354: Bugs in procedure and expression list evaluation fixed
+ *      Simon Sobisch   2017.05.23      Enh. #409: File type .h added
+ *      Kay Gürtzig     2017.05.23/24   Enh. #354/#411: Pre-processor workaround for typedef significantly improved
  *
  ******************************************************************************************************
  *
@@ -65,6 +67,7 @@ import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.Vector;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -91,8 +94,12 @@ import lu.fisch.utils.StringList;
 public class CParser extends CodeParser
 {
 	
-	// DEfault diagram name for an importable program diagram with global definitions
-	private static final String defaultGlobalName = "GlobalDefinitions";
+	// Default diagram name for an importable program diagram with global definitions
+	private static final String DEFAULT_GLOBAL_NAME = "GlobalDefinitions";
+	// Template for the generation of grammar-conform user type ids (typedef-declared)
+	private static final String USER_TYPE_ID_MASK = "user_type_%03d";
+	// Replacement pattern for the decomposition of composed typdefs (named struct def + type def)
+	private static final String TYPEDEF_DECOMP_REPLACER = "$1 $2;\ntypedef $1 $3;";
 
 	//---------------------- Grammar specification ---------------------------
 
@@ -225,7 +232,7 @@ public class CParser extends CodeParser
 //		final int SYM_TYPEDEF       =  85;  // typedef
 //		final int SYM_UNION         =  86;  // union
 //		final int SYM_UNSIGNED      =  87;  // unsigned
-//		final int SYM_USER_TYPE_001 =  88;  // 'user_type_001'
+		final int SYM_USER_TYPE_001 =  88;  // 'user_type_001'
 //		final int SYM_USER_TYPE_002 =  89;  // 'user_type_002'
 //		final int SYM_USER_TYPE_003 =  90;  // 'user_type_003'
 //		final int SYM_USER_TYPE_004 =  91;  // 'user_type_004'
@@ -253,7 +260,7 @@ public class CParser extends CodeParser
 //		final int SYM_USER_TYPE_027 = 113;  // 'user_type_027'
 //		final int SYM_USER_TYPE_028 = 114;  // 'user_type_028'
 //		final int SYM_USER_TYPE_029 = 115;  // 'user_type_029'
-//		final int SYM_USER_TYPE_030 = 116;  // 'user_type_030'
+		final int SYM_USER_TYPE_030 = 116;  // 'user_type_030'
 //		final int SYM_VOID          = 117;  // void
 //		final int SYM_VOLATILE      = 118;  // volatile
 //		final int SYM_WCHAR_T       = 119;  // 'wchar_t'
@@ -558,7 +565,7 @@ public class CParser extends CodeParser
 
 	//---------------------------- Local Definitions ---------------------
 
-	private enum PreprocState {TEXT, TYPEDEF, ENUMTYPE, STRUCTUNIONTYPE, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
+	private enum PreprocState {TEXT, TYPEDEF, STRUCT_UNION_ENUM, STRUCT_UNION_ENUM_ID, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
 	private StringList typedefs = new StringList();
 	
 	// Import Call elements with provisional Name, which have to be renamed as soon as the name gets known
@@ -578,8 +585,8 @@ public class CParser extends CodeParser
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it and writes a new temporary file "Structorizer.c", which is
-	 * then actually parsed.
+	 * file, filters it and writes a new temporary file "Structorizer&lt;randomstring&gt;.c"
+	 * or "Structorizer&lt;randomstring&gt;.h", which is then actually parsed.
 	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
 	 * be executed (at least the defines. with #if it would get difficult).
 	 * The preprocessed file will always be saved with UTF-8 encoding.
@@ -648,7 +655,7 @@ public class CParser extends CodeParser
 			// because the grammar doesn't cope with user-defined type ids.
 			// In a first step we gather all type names defined via typedef in a
 			// StringList mapping them by their index to generic type ids being
-			// defined in the grammar ("user_type_##"). It will be a rudimentary parsing
+			// defined in the grammar ("user_type_###"). It will be a rudimentary parsing
 			// i.e. we don't consider anything except typedef declarations and we expect
 			// a syntactically correct construct. If something
 			// strange occurs then we just ignore the text until we bump into another
@@ -659,6 +666,7 @@ public class CParser extends CodeParser
 			
 			typedefs.clear();
 			Vector<Integer[]> blockRanges = new Vector<Integer[]>();
+			LinkedList<String> typedefDecomposers = new LinkedList<String>();
 			
 			Stack<Character> parenthStack = new Stack<Character>();
 			Stack<Integer> blockStarts = new Stack<Integer>();
@@ -676,58 +684,127 @@ public class CParser extends CodeParser
 			tokenizer.slashSlashComments(true);
 			tokenizer.parseNumbers();
 			tokenizer.eolIsSignificant(true);
+			// Underscore must be added to word characters!
+			tokenizer.wordChars('_', '_');
+			
+			// A regular search pattern to find and decompose type definitions with both
+			// struct/union/enum id and type id like in:
+			// typedef struct structId {...} typeId [, ...];
+			// (This is something the used grammar doesn't cope with and so it is to be 
+			// decomposed as follows for the example above:
+			// struct structId {...};
+			// typedef struct structId typeId [, ...];
+			String typedefStructPattern = "";
 			
 			while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
 				String word = null;
 				log("[" + tokenizer.lineno() + "]: ", false);
 				switch (tokenizer.ttype) {
 				case StreamTokenizer.TT_EOL:
-					log("**newline**", false);
+					log("**newline**\n", false);
+					if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += ".*?\\v";
+					}
 					break;
 				case StreamTokenizer.TT_NUMBER:
-					log("number: " + tokenizer.nval, false);
+					log("number: " + tokenizer.nval + "\n", false);
+					if (!typedefStructPattern.isEmpty()) {
+						// NOTE: a non-integral number literal is rather unlikely within a type definition...
+						typedefStructPattern += "\\W+[+-]?[0-9]+";
+					}
 					break;
 				case StreamTokenizer.TT_WORD:
-					log("word: " + tokenizer.sval, false);
 					word = tokenizer.sval;
+					log("word: " + word + "\n", false);
 					if (state == PreprocState.TYPEDEF) {
-						if (word.equals("enum")) {
-							state = PreprocState.ENUMTYPE;
-						}
-						else if (word.equals("struct") || word.equals("union")) {
-							state = PreprocState.STRUCTUNIONTYPE;
+						if (word.equals("enum") || word.equals("struct") || word.equals("union")) {
+							state = PreprocState.STRUCT_UNION_ENUM;
+							typedefStructPattern = "typedef\\s+(" + word;
 						}
 						else {
 							lastId = word;	// Might be the defined type id if no identifier will follow
+							typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
 						}
 					}
 					else if (state == PreprocState.TYPEID && indexDepth == 0) {
 						typedefs.add(word);
 						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						if (!typedefStructPattern.isEmpty()) {
+							if (typedefStructPattern.matches(".*?\\W")) {
+								typedefStructPattern += "\\s*" + word;
+							}
+							else {
+								typedefStructPattern += "\\s+" + word;
+							}
+						}
 					}
+					// START KGU 2017-05-23: Bugfix - declarations like "typedef struct structId typeId"
+					else if (state == PreprocState.STRUCT_UNION_ENUM) {
+						state = PreprocState.STRUCT_UNION_ENUM_ID;
+						// This must be the struct/union/enum id.
+						typedefStructPattern += "\\s+" + word + ")\\s*(";	// named struct/union/enum: add its id and switch to next group
+					}
+					else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
+						// We have read the struct/union/enum id already, so this must be the first type id.
+						typedefs.add(word);
+						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						typedefStructPattern = "";	// ... but it's definitely no combined struct and type definition
+						state = PreprocState.TYPEID;
+					}
+					// END KGU 2017-05-23
 					else if (word.equals("typedef")) {
 						typedefLevel = blockStarts.size();
 						state = PreprocState.TYPEDEF;
 					}
-					// in case of ENUMTYPE or STRUCTUNIONTYPE just skip the id
+					else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+						if (typedefStructPattern.matches(".*\\w") && !typedefStructPattern.endsWith("\\v")) {
+							typedefStructPattern += "\\s+";
+						}
+						else if (typedefStructPattern.endsWith(",") || typedefStructPattern.endsWith(";")) {
+							// these are typical positions for comments...
+							typedefStructPattern += ".*?";
+						}
+						else {
+							typedefStructPattern += "\\s*";
+						}
+						typedefStructPattern += word;
+					}
 					break;
 				case '\'':
-					log("character: '" + tokenizer.sval + "'", false);
+					log("character: '" + tokenizer.sval + "'\n", false);
+					if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += Pattern.quote("'"+tokenizer.sval+"'");	// We hope that there are no parentheses inserted
+					}
 					break;
 				case '"':
-					log("string: \"" + tokenizer.sval + "\"", false);
+					log("string: \"" + tokenizer.sval + "\"\n", false);
+					if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += Pattern.quote("\""+tokenizer.sval+"\"");	// We hope that there are no parentheses inserted
+					}
 					break;
 				case '{':
 					blockStarts.add(tokenizer.lineno());
-					if (state == PreprocState.STRUCTUNIONTYPE || state == PreprocState.ENUMTYPE) {
+					if (state == PreprocState.STRUCT_UNION_ENUM || state == PreprocState.STRUCT_UNION_ENUM_ID) {
 						state = PreprocState.COMPLIST;
+						if (state == PreprocState.STRUCT_UNION_ENUM) {
+							typedefStructPattern = ""; 	// We don't need a decomposition
+						}
+						else {
+							typedefStructPattern += "\\s*\\{";
+						}
 					}
 					parenthStack.push('}');
 					break;
 				case '(':
+					if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += "\\s*\\(";
+					}
 					parenthStack.push(')');
 					break;
 				case '[':	// FIXME: Handle index lists in typedefs!
+					if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += "\\s*\\[";
+					}
 					if (state == PreprocState.TYPEID) {
 						indexDepth++;
 					}
@@ -745,47 +822,82 @@ public class CParser extends CodeParser
 					}
 					if (state == PreprocState.COMPLIST && typedefLevel == blockStarts.size()) {
 						// After the closing brace, type ids are expected to follow
+						if (!typedefStructPattern.isEmpty()) {
+							typedefStructPattern += "\\s*\\})\\s*(";	// .. therefore open the next group
+						}
 						state = PreprocState.TYPEID;
 					}
 				case ')':
 				case ']':	// Handle index lists in typedef!s
-				{
-					if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
-						String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
-						+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
-						+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
-						System.err.println(errText);
-						log(errText, false);
+					{
+						if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
+							String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
+							+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
+							+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
+							System.err.println(errText);
+							log(errText, false);
+						}
+						else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
+							indexDepth--;
+							if (!typedefStructPattern.isEmpty()) {
+								typedefStructPattern += "\\s*\\" + (char)tokenizer.ttype;
+							}
+						}
 					}
-					else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
-						indexDepth--;
-					}
-				}
-					break;
+ 					break;
 				case '*':
 					if (state == PreprocState.TYPEDEF) {
 						state = PreprocState.TYPEID;
+					}
+					else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
+						typedefStructPattern = "";	// Cannot be a combined definition: '*' follows immediately to the struct id
+					}
+					else if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += "\\s*[*]";
 					}
 					break;
 				case ',':
 					if (state == PreprocState.TYPEDEF && lastId != null) {
 						typedefs.add(lastId);
 						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						if (!typedefStructPattern.isEmpty()) {
+							// Type name won't be replaced within the typedef clause
+							//typedefStructPattern += "\\s+" + String.format(USER_TYPE_ID_MASK, typedefs.count()) + "\\s*,";
+							typedefStructPattern += "\\s+" + lastId + "\\s*,";
+						}
 						state = PreprocState.TYPEID;
+					}
+					else if (state == PreprocState.TYPEID) {
+						if (!typedefStructPattern.isEmpty()) {
+							typedefStructPattern += "\\s*,";
+						}
 					}
 					break;
 				case ';':
 					if (state == PreprocState.TYPEDEF && lastId != null) {
 						typedefs.add(lastId);
 						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						typedefStructPattern = "";
 						state = PreprocState.TEXT;
 					}
 					else if (state == PreprocState.TYPEID) {
+						if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
+							typedefStructPattern += ")\\s*;";
+							typedefDecomposers.add(typedefStructPattern);
+						}
+						typedefStructPattern = "";
 						state = PreprocState.TEXT;						
 					}
+					else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+						typedefStructPattern += "\\s*;";
+					}
+					break;
 				default:
 					char tokenChar = (char)tokenizer.ttype;
-					log("other: " + tokenChar, false);
+					if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+						typedefStructPattern += "\\s*" + Pattern.quote(tokenChar + "");
+					}
+					log("other: " + tokenChar + "\n", false);
 				}
 				log("", false);
 			}
@@ -800,7 +912,7 @@ public class CParser extends CodeParser
 					range[1] = srcLines.count()-1;
 				}
 				String pattern = "(^|.*?\\W)("+typeName+")(\\W.*?|$)";
-				String subst = String.format("user_type_%03d", i+1);
+				String subst = String.format(USER_TYPE_ID_MASK, i+1);
 				this.replacedIds.put(subst, typeName);
 				subst = "$1" + subst + "$3";
 				for (int j = range[0]; j <= range[1]; j++) {
@@ -810,6 +922,11 @@ public class CParser extends CodeParser
 				}
 			}
 			srcCode = srcLines.concatenate("\n");
+			
+			// Now we try the impossible: to decompose compound struct/union/enum and type name definition
+			for (String pattern: typedefDecomposers) {
+				srcCode = srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
+			}
 
 //			Regex r = new Regex("(.*\\()\\s*?void\\s*?(\\).*)", "$1$2");
 //			srcCode = r.replaceAll(srcCode);
@@ -1775,7 +1892,13 @@ public class CParser extends CodeParser
 					else if (idx == SymbolConstants.SYM_FLOATLITERAL && toAdd.matches(".+?[fF]")) {
 						toAdd = toAdd.replaceAll("(.+?)[fFlL]", "$1");
 					}
+					// NOTE: The missing of a break; instruction is intended here! 
 				default:
+					// START KGU 2017-05-24: We must of course restore the original type name
+					if (idx >= SymbolConstants.SYM_USER_TYPE_001 && idx <= SymbolConstants.SYM_USER_TYPE_030) {
+						toAdd = this.undoIdReplacements(toAdd);
+					}
+					// END KGU 2017-05-24
 					if (toAdd.matches("^\\w.*") && _content.matches(".*\\w$") || _content.matches(".*[,;]$")) {
 						_content += " ";
 					}
@@ -1864,7 +1987,7 @@ public class CParser extends CodeParser
 		// START KGU#376 2017-04-11: enh. #389 import mechanism for globals
 		if (this.globalRoot != null && this.globalRoot != aRoot) {
 			String globalName = this.globalRoot.getMethodName();
-			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? defaultGlobalName : globalName));
+			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? DEFAULT_GLOBAL_NAME : globalName));
 			importCall.setColor(colorGlobal);
 			aRoot.children.insertElementAt(importCall, 0);
 			if (globalName.equals("???")) {
@@ -1881,8 +2004,11 @@ public class CParser extends CodeParser
 	{
 		// May there was no main function but global definitions
 		if (this.globalRoot != null && this.globalRoot.getMethodName().equals("???") && this.globalRoot.children.getSize() > 0) {
-			this.globalRoot.setText(defaultGlobalName);
-			this.globalRoot.setProgram(true);
+			this.globalRoot.setText(DEFAULT_GLOBAL_NAME);
+			// START KGU#376 2017-05-23: Enh. #389 now we have an appropriate diagram type
+			//this.globalRoot.setProgram(true);
+			this.globalRoot.setInclude();
+			// END KGU#376 2017-05-23
 		}
 	}
 

@@ -79,6 +79,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
  *      Kay Gürtzig     2017.03.30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
  *      Kay Gürtzig     2017.04.14      Enh. #380: New highlighting mechanism troubleMakers / E_TROUBLECOLOR
+ *      Kay Gürtzig     2017.05.22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals 
  *
  ******************************************************************************************************
  *
@@ -2147,6 +2148,12 @@ public abstract class Element {
 		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
 			typeSpec = "String";
 		}
+		// START KGU#354 2017-05-22: Enh. #354
+		// These literals cause errors with Double.parseDouble(expr) and Integer.parseInt(expr)
+		else if (expr.matches("0b[01]+") || expr.matches("0[0-6]+") || expr.matches("0x[0-9A-Fa-f]+")) {
+			typeSpec = "int";
+		}
+		// END KGU#354 2017-05-22
 		// 2. If none of the approaches above succeeded check for a numeric literal
 		if (typeSpec.isEmpty()) {
 			try {

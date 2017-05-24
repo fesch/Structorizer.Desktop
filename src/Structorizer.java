@@ -286,7 +286,10 @@ public class Structorizer
 				{
 					// open an existing file
 					NSDParser parser = new NSDParser();
-					root = parser.parse(f.toURI().toString());
+					// START KGU#363 2017-05-21: Issue #372 API change
+					//root = parser.parse(f.toURI().toString());
+					root = parser.parse(f);
+					// END KGU#363 2017-05-21
 					root.filename = fName;
 					roots.add(root);
 					// If no output file name is given then derive one from the first NSD file

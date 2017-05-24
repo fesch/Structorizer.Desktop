@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.03.10      Bugfix #378, #379: charset annotation / wrong inequality operator
  *      Kay Gürtzig             2017.05.16      Bugfix #51: an empty output instruction produced "print(, sep='')"
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017.05.24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
  *
  ******************************************************************************************************
  *
@@ -658,6 +659,7 @@ public class PythonGenerator extends Generator
 		{
 			boolean isDisabled = _para.isDisabled();
 			Root root = Element.getRoot(_para);
+			String suffix = Integer.toHexString(_para.hashCode());
 			
 			//String indentPlusOne = _indent + this.getIndent();
 			//String indentPlusTwo = indentPlusOne + this.getIndent();
@@ -675,8 +677,8 @@ public class PythonGenerator extends Generator
 				// START KGU#348 2017-02-19: Enh. #348 Actual translation
 				//generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
 				Subqueue sq = _para.qs.get(i);
-				String threadVar = "thr" + _para.hashCode() + "_" + i;
-				String threadFunc = "thread" + _para.hashCode() + "_" + i;
+				String threadVar = "thr" + suffix + "_" + i;
+				String threadFunc = "thread" + suffix + "_" + i;
 				StringList used = root.getUsedVarNames(sq, false, false);
 				StringList asgnd = root.getVarNames(sq, false);
 				for (int v = 0; v < asgnd.count(); v++) {
@@ -701,7 +703,7 @@ public class PythonGenerator extends Generator
 			}
 
 			for (int i = 0; i < _para.qs.size(); i++) {
-				String threadVar = "thr" + _para.hashCode() + "_" + i;
+				String threadVar = "thr" + suffix + "_" + i;
 				addCode(threadVar + ".join()", _indent, isDisabled);
 			}
 			insertComment("==========================================================", _indent);
@@ -733,7 +735,7 @@ public class PythonGenerator extends Generator
 			});
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
-				String functNameBase = "thread" + par.hashCode() + "_";
+				String functNameBase = "thread" + Integer.toHexString(par.hashCode()) + "_";
 				int i = 0;
 				// We still don't care for synchronisation, mutual exclusion etc.
 				for (Subqueue sq: par.qs) {

@@ -108,15 +108,17 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
  *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
  *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
- *      Kay Gürtzig     2017.05.09      Enh. #372: Statistic method supporting the AttributeInspector
+ *      Kay Gürtzig     2017.05.09      Enh. #372: Statistics method supporting the AttributeInspector
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
- *
+ *      Kay Gürtzig     2017.05.21      Enh. #372: additional attributes included in undo/redo mechanism
+ *      Kay Gürtzig     2017.05.22      Inh. #272: New attribute "origin"
+ *      
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
  *      2016.03.25 (KGU#163)
- *      - Detection of uninitialised variables (analyser check #3) only worked for variables with
+ *      - Detection of un-initialised variables (analyser check #3) only worked for variables with
  *        initialisation after use. Variables nowhere initialised weren't found at all! This was now
  *        eventually mended.
  *      2016.01.11 (KGU#137)
@@ -249,6 +251,7 @@ public class Root extends Element {
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	public String licenseName = null;
 	public String licenseText = null;
+	public String origin = "Structorizer " + E_VERSION;
 	
 	/**
 	 * @return true if and only if the diagram type is main program
@@ -299,12 +302,18 @@ public class Root extends Element {
 		return this.created;
 	}
 	public String getCreatedString() {
+		if (this.created == null) {
+			return "";
+		}
 		return dateFormat.format(this.created);
 	}
 	public Date getModified() {
 		return this.modified;
 	}
 	public String getModifiedString() {
+		if (this.modified == null) {
+			return "";
+		}
 		return dateFormat.format(this.modified);
 	}
 	public void fetchAuthorDates(Attributes attributes)
@@ -320,13 +329,27 @@ public class Root extends Element {
 		if(attributes.getIndex("changedby")!=-1)  {
 			this.modifiedby = attributes.getValue("changedby") ; 
 		}
-		if(attributes.getIndex("modified")!=-1)  {
+		if(attributes.getIndex("changed")!=-1)  {
 			try {
-				this.modified = this.dateFormat.parse(attributes.getValue("modified"));
+				this.modified = this.dateFormat.parse(attributes.getValue("changed"));
 			} catch (ParseException e) {} 
 		}
 	}
 	// END KGU#363 2017-03-10
+	// START KGU#363 2017-05-21: Enh. #372
+	public void fetchAuthorDates(File _file) {
+		// Override the constructor settings if the Root is loaded from file
+		this.created = null;
+		this.author = "???";
+		this.licenseName = null;
+		if (_file.canRead()) {
+			long modTime = _file.lastModified();
+			if (modTime != 0L) {
+				this.modified = new Date(modTime);
+			}
+		}
+	}
+	// END KGU#363 2017-05-21
 
 	/**
 	 * Names of variables defined within this diagram
@@ -1173,13 +1196,35 @@ public class Root extends Element {
 	}
 	// END KGU#117 2016-03-12
 
+	/**
+	 * Adds a new entry to the undo stack and clears the redo stack.
+	 * Supposed to be called before undoable changes to this diagram are applied. 
+	 */
 	public void addUndo()
 	{
-		undoList.add((Subqueue)children.copy());
+		addUndo(false);
+	}
+	
+	/**
+	 * Adds a new entry to the undo stack, including a snapshot of the editable Root attributes (like author name,
+	 * license data etc.) if {@code _cacheAttributes} is true. Only to be called before changes to the attributes
+	 * are expected. Otherwise {@link #addUndo()} should be used.
+	 * Clears the redo stack.
+	 * @param _cacheAttributes - pecifies whether diagram attributes are also to be cached.
+	 * @see #addUndo()
+	 */
+	public void addUndo(boolean _cacheAttributes)
+	{
+
+		Subqueue oldChildren = (Subqueue)children.copy(); 
 		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
-		undoList.peek().setText(this.text.copy());
-		undoList.peek().setComment(this.comment.copy());
+		oldChildren.setText(this.text.copy());
+		oldChildren.setComment(this.comment.copy());
 		// END KGU#120 2016-01-02
+		// START KGU#363 2017-05-21: Enh. #372: Care for the new attributes
+		if (_cacheAttributes) oldChildren.rootAttributes = new RootAttributes(this);
+		// END KGU#363 3017-05-21
+		undoList.add(oldChildren);
 		clearRedo();
 		// START KGU#137 2016-01-11: Bugfix #103
 		// If stack was lower than when last saved, then related info is going lost
@@ -1204,7 +1249,15 @@ public class Root extends Element {
     	// END KGU#363 2017-03-10
 	}
 
-    public boolean canUndo()
+	/**
+	 * Checks whether there are stacked undoable changes
+	 * @return true if there are entries on the undo stack and diagram is not being executed
+	 * @see #undo()
+	 * @see #addUndo()
+	 * @see #clearUndo()
+	 * @see #canRedo()
+	 */
+	public boolean canUndo()
     {
     	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
     	//return (undoList.size()>0);
@@ -1212,6 +1265,14 @@ public class Root extends Element {
     	// END KGU#143 2016-01-21
     }
 
+	/**
+	 * Checks whether there are stacked redoable changes
+	 * @return true if there are entries on the redo stack and diagram is not being executed
+	 * @see #redo()
+	 * @see #undo()
+	 * @see #clearRedo()
+	 * @see #canUndo()
+	 */
     public boolean canRedo()
     {
     	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
@@ -1220,11 +1281,23 @@ public class Root extends Element {
     	// END KGU#143 2016-01-21
     }
 
+    /**
+     * Removes all entries from the redo stack
+     * @see #undo()
+     * @see #redo()
+     * @see #canRedo()
+     */
     public void clearRedo()
     {
             redoList = new Stack<Subqueue>();
     }
 
+    /**
+     * Removes all entries from the undo stack
+     * @see #undo()
+     * @see #canUndo()
+     * @see #addUndo()
+     */
     public void clearUndo()
     {
             undoList = new Stack<Subqueue>();
@@ -1234,12 +1307,29 @@ public class Root extends Element {
     		// END KGU#137 2016-01-11
     }
 
+    /**
+     * Takes the top entry from the undo stack, reverts the associated changes and adds
+     * a respective entry to the redo stack.
+     * @see #addUndo()
+     * @see #canUndo()
+     * @see #undo(boolean)
+     */
     public void undo()
     {
     // START KGU#365 2017-03-19: Enh. #380 we need an undo without redo
         undo(true);
     }
     
+    /**
+     * Takes the top entry form the undo stack and reverts the associated changes. If argument {@code redoable}
+     * is true then adds a corresponding entry to the redo stack otherwise the undone action won't be redoable
+     * (This should only be set false in order to clean the undo stack of entries that are part of a larger
+     * transaction also involving other diagrams and cannot consistently be redone therefore e.g. on outsourcing
+     * subroutines, normally {@link #undo()} is to be used instead.)
+     * @see #undo()
+     * @see #canUndo()
+     * @see #addUndo()
+     */
     public void undo(boolean redoable)
     {
     // END KGU#365 2017-03-19
@@ -1267,6 +1357,18 @@ public class Root extends Element {
             children.text.clear();
             children.comment.clear();
             // END KGU#120 2016-01-02
+        	// START KGU#363 2017-05-21: Enh. #372
+        	// If the undone action involves Root attributes then we must
+        	// cache the current attributes on the redo stack accordingly
+            // and restore the attributes from the und stack
+        	if (children.rootAttributes != null) {
+        		if (redoable) {
+        			redoList.peek().rootAttributes = new RootAttributes(this);
+        		}
+        		this.adoptAttributes(children.rootAttributes);
+        		children.rootAttributes = null;
+        	}
+        	// END KGU#363 2017-05-21
             // START KGU#136 2016-03-01: Bugfix #97
             this.resetDrawingInfoDown();
             // END KGU#136 2016-03-01
@@ -1277,6 +1379,23 @@ public class Root extends Element {
         }
     }
 
+	// START KGU#363 2017-05-21: Enh. #372
+    public void adoptAttributes(RootAttributes attributes) {
+    	if (attributes != null) {
+    		this.author = attributes.authorName;
+    		this.licenseName = attributes.licenseName;
+    		this.licenseText = attributes.licenseText;
+    		this.origin = attributes.origin;
+    	}
+	}
+    // KGU#363 2017-05-21
+    
+    /**
+     * Takes the top entry from the redo stack and restores the results before the associated undo action.
+     * @see #undo()
+     * @see #canRedo()
+     * @see #clearRedo()
+     */
     public void redo()
     {
             if (redoList.size()>0)
@@ -1297,6 +1416,10 @@ public class Root extends Element {
             		children.text.clear();
             		children.comment.clear();
             		// END KGU#120 2016-01-02
+            		// START KGU#363 2017-05-21: Enh. #372
+            		this.adoptAttributes(children.rootAttributes);
+            		children.rootAttributes = null;
+            		// END KGU#363 2017-05-21
                 	// START KGU#136 2016-03-01: Bugfix #97
                 	this.resetDrawingInfoDown();
                 	// END KGU#136 2016-03-01

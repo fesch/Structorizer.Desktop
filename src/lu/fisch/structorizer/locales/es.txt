@@ -99,11 +99,12 @@
  *      Kay Gürtzig     2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
  *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
  *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
- *      Kay Gürtzig     2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig     2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot, and others
  *      Kay Gürtzig     2017.03.27  Enh. #380: Messages for outsourcing of element sequences
  *      Kay Gürtzig     2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
  *      Kay Gürtzig     2017.03.30  Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *
  ******************************************************************************************************
  *
@@ -140,6 +141,7 @@ Menu.menuFileImport.text=Importar
 Menu.menuFileImportCode.text=Código ...
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Colocar en el Arranger
+Menu.menuFileAttributes.text=Inspiciar propiedades ...
 Menu.menuFileTranslator.text=Traductor
 Menu.menuFileQuit.text=Salir
 // Menu "Edit"
@@ -573,7 +575,7 @@ InputBox.title[elementType:Root]=Editar nombre de programa...
 InputBox.title[elementType:Function]=Editar signatura de función...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Insertar instrucciones...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Insertar declaración SI...
-InputBox.title[elementType:Case,getInsertionType():insert]=Insertar decalaration CASE...
+InputBox.title[elementType:Case,getInsertionType():insert]=Insertar declaración CASE...
 InputBox.title[elementType:Forever,getInsertionType():insert]=Insertar bucle SINFIN...
 InputBox.title[elementType:Repeat,getInsertionType():insert]=Insertar bucle REPETIR...
 InputBox.title[elementType:While,getInsertionType():insert]=Insertar bucle MIENTRAS...
@@ -625,20 +627,64 @@ InputBoxFor.msgDiscardData.text=¡Alterando el estilo del bucle la mayoría de l
 InputBoxFor.msgAttention.text=¡CUIDADO!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=
-InputBoxRoot.txtText.tooltip=
-InputBoxRoot.txtComment.tooltip=
-InputBoxRoot.btnOK.text=
-InputBoxRoot.btnOK.tooltip=
-InputBoxRoot.btnCancel.text=
-InputBoxRoot.btnCancel.tooltip=
-InputBoxRoot.lblAuthorName.text=Autor
-InputBoxRoot.btnLicenseText.text=Texto de licencia
-InputBoxRoot.btnLicenseText.tooltip=Presar aquí para abrir el editor o para mirar el texto de la licencia eleccionada
-InputBoxRoot.cbLicenseName.tooltip=Selecciona una de las licencias disponibles o queda con la licencia asociada y adaptala
-InputBoxRoot.msgOverrideLicense.text=¿Sobrescribir el texto licencia con la seleccionada licencia disponible?
-InputBoxRoot.msgLicenseChange.text=Modificación de licencia
-InputBoxRoot.msgLicenseLoadError.text=Error cargando le contenido de la liecencia "%1":\n%2.
+InputBoxRoot.title=Editar diagrama...
+InputBoxRoot.lblText.text=Nombre de diagrama / signatura de función
+InputBoxRoot.txtText.tooltip=Nombre de diagrama (programa principal o incluíble) o signatura de función (nombre, lista de parámetros y tipo de resultado)
+InputBoxRoot.lblComment.text=Comentario
+InputBoxRoot.txtComment.tooltip=Por ejemplo: Que debe hacer el diagrama, como se utiliza, quién lo ha creado, ...
+InputBoxRoot.btnOK.text=Aceptar
+InputBoxRoot.btnOK.tooltip=Aceptar los cambios.
+InputBoxRoot.btnCancel.text=Cancelar
+InputBoxRoot.btnCancel.tooltip=Cancelar los cambios.
+InputBoxRoot.btnAttributes.text=Propiedades
+InputBoxRoot.btnAttributes.tooltip=Abre un diálogo para inspiciar propiedades de este diagrama.
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=Propiedades del diagrama
+AttributeInspector.lblCreatedBy.text=Autor
+AttributeInspector.lblCreatedOn.text=Día de creación
+AttributeInspector.lblModifiedBy.text=Modificado por
+AttributeInspector.lblModifiedOn.text=Día de modificación
+AttributeInspector.lblFilePath.text=Ruta de fichero
+AttributeInspector.lblShadowPath.text=Ruta de extracción
+AttributeInspector.txtShadowPath.tooltip=Ubicación del diagrama extraído (típicamente en un directorio de archivos temporarios) si el diagrama reside en un archivo comprimido.
+AttributeInspector.lblOrigin.text=Origen
+AttributeInspector.btnClearOrigin.text=Borrar
+AttributeInspector.btnClearOrigin.tooltip=Quita la información del origen
+AttributeInspector.lblElements.text=Número total de elementos
+AttributeInspector.lblInstrs.text=Instrucciones
+AttributeInspector.lblAlts.text=Declaraciones SI
+AttributeInspector.lblCases.text=Declaraciones CASE
+AttributeInspector.lblLoops.text=Bucles
+AttributeInspector.lblCalls.text=Llamadas
+AttributeInspector.lblJumps.text=Saltos
+AttributeInspector.lblPars.text=Secciones Paralelas
+AttributeInspector.btnShowLicense.text=Texto de licencia
+AttributeInspector.btnShowLicense.tooltip=Toca este botón para mirar, editar o revisar el texto de la licencia seleccionaada.
+AttributeInspector.cbLicenseName.tooltip=Selecciona una licencia ofrecida desde su colección o la designada para modificarla.
+AttributeInspector.lblPrefsAlt.text=Declaración SI
+AttributeInspector.lblPrefsCase.text=Declaración CASE
+AttributeInspector.lblPrefsFor.text=Bucle FOR
+AttributeInspector.lblPrefsForIn.text=Bucle FOR-IN
+AttributeInspector.lblPrefsWhile.text=Bucle MIENTRAS
+AttributeInspector.lblPrefsRepeat.text=Bucle REPITIR HASTA
+AttributeInspector.lblPrefsIO.text=Entrada / Salida
+AttributeInspector.lblPrefsJump.text=Salto
+AttributeInspector.lblPrefsPre.text=Antes
+AttributeInspector.lblPrefsPost.text=Después
+AttributeInspector.lblPrefsMore.text=(Demás)
+AttributeInspector.btnParserPrefs.text=Comparar claves configuradas
+AttributeInspector.btnOk.text=Aceptar
+AttributeInspector.btnCancel.text=Cancelar
+AttributeInspector.lblMain.text=Programa principal
+AttributeInspector.lblSub.text=Subrutina
+AttributeInspector.lblIncl.text=Incluíble
+AttributeInspector.pnCopyrights.border=Copyrights
+AttributeInspector.pnStatistics.border=Cantidades (estadística)
+AttributeInspector.pnKeywordSet.border=Juego diferente de palabras claves  
+AttributeInspector.msgOverrideLicense.text=¿Reemplazar el texto de licencia por el de la seleccionada licencia estandard "%"?
+AttributeInspector.msgLicenseChange.text=Modificación de Licencia
+AttributeInspector.msgLicenseLoadError.text=¡Error al tratar de cargar el texto de licencia "%1":\n%2!
 
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Structorizer - Editor de licencias

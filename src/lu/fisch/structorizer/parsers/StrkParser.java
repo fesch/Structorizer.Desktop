@@ -32,6 +32,7 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.04.25      First Issue
+ *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" supported 
  *
  ******************************************************************************************************
  *
@@ -421,6 +422,9 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 		}
 		progName = progName.replace(" ", "_");
 		root.setText(progName);
+		// START KGU#363 2017-05-22: Enh. #372
+		root.origin += " / " + this.getClass().getSimpleName() + ": \"" + _filename + "\""; 
+		// END KGU#363 2017-05-22
 
 		return root;
 	}

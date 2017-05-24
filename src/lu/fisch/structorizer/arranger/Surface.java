@@ -353,7 +353,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			try {
 			// END KGU#111 2015-12-17
-				Root root = parser.parse(f.toURI().toString());
+				// START KGU#363 2017-05-21: Issue #372 API change
+				//Root root = parser.parse(f.toURI().toString());
+				Root root = parser.parse(f);
+				// END KGU#363 2017-05-21
 
 				root.filename = filename;
 				// START KGU#316 2016-12-28: Enh. #318 Allow nsd files to "reside" in arrz files
@@ -1777,9 +1780,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			int resemblance = diagram.root.compareTo(root);
     			if (resemblance > 0) {
     				if (resemblance > 2 && warnLevel2andAbove) {
+    					String fName = diagram.root.filename.toString();
+    					if (fName == null || fName.trim().isEmpty()) {
+    						fName = "[" + diagram.root.proposeFileName() + "]";
+    					}
     					String message = msgInsertionConflict[resemblance-3].getText().
     							replace("%1", root.getSignatureString(false)).
-    							replace("%2", diagram.root.filename.toString());
+    							replace("%2", fName);
     					JOptionPane.showMessageDialog(this.getParent(), message,
     							this.titleDiagramConflict.getText(),
     							JOptionPane.WARNING_MESSAGE);			

@@ -20,10 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-import java.util.HashSet;
-
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -56,14 +53,15 @@ import java.util.HashSet;
  *      Kay Gürtzig     2016.11.25      Issue #294: Method isTestCovered adapted to refined CASE coverage rules
  *      Kay Gürtzig     2016.12.20      Bugfix KGU#315: Flawed selection and cursor navigation after element shifts
  *      Kay Gürtzig     2016.04.18      Bugfix #386: New method isNoOP().
+ *      Kay Gürtzig     2017.05.21      Enh. #372: Additional field for RootAttributes to be cached on undoing/redoing
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
 import java.awt.Color;
@@ -95,6 +93,9 @@ public class Subqueue extends Element implements IElementSequence {
 	// START KGU#136 2016-03-01: Bugfix #97
 	private Vector<Integer> y0Children = new Vector<Integer>();
 	// END KGU#136 2016-03-01
+	// START KGU#363 2017-05-21: Enh. #372 - for the undo/redo list we need to cache Root attributes
+	public RootAttributes rootAttributes = null;
+	// END KGU#363 2017-05-21
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
