@@ -95,6 +95,7 @@ Current development version: 3.26-06 (2017.05.24)
 - 06: Enh. #372: New dialog to inspect diagram attributes [Simon Sobisch]2
 - 06: Bugfix: 411: Some unicode escape sequences caused trouble in Executor <2> 
 - 06: Bugfix: 412: Code generators might produce defective unique identifiers <2>
+- 06: Enh. #413: New built-in function split(strg, part) introduced <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

@@ -125,6 +125,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float resul)
  *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
  *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
+ *      Kay Gürtzig     2017.05.24      Enh. #354: New function split(string, string) built in
  *
  ******************************************************************************************************
  *
@@ -624,7 +625,7 @@ public class Executor implements Runnable
 //		//r = new Regex("([^']*?)'(([^']|''){2,})'", "$1\"$2\"");
 //		s = r.replaceAll(s);
 		// END KGU#285 2016-10-16
-		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initialiseInterpreter() 
+		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
         // pascal: convert "inc" and "dec" procedures
         r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); s = r.replaceAll(s);
         r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); s = r.replaceAll(s);
@@ -1772,6 +1773,22 @@ public class Executor implements Runnable
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public String trim(String s) { return s.trim(); }";
 			interpreter.eval(pascalFunction);
+			// START KGU#410 2017-05-24: Enh. #413: Introduced to facilitate COBOL import but generally useful
+			// If we passed the result of String.split() directly then we would obtain a String[] object the 
+			// Executor cannot display.
+			pascalFunction = "public Object[] split(String s, String p)"
+					+ "{ p = java.util.regex.Pattern.quote(p);"
+					+ " String[] parts = s.split(p, -1);"
+					+ "Object[] results = new Object[parts.length];"
+					+ " for (int i = 0; i < parts.length; i++) {"
+					+ "		results[i] = parts[i];"
+					+ "}"
+					+ "return results; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Object[] split(String s, char c)"
+					+ "{ return split(s, \"\" + c); }";
+			interpreter.eval(pascalFunction);
+			// END KGU#410 2017-05-24
 			// START KGU#57 2015-11-07: More interoperability for characters and Strings
 			// char transformation
 			pascalFunction = "public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }";

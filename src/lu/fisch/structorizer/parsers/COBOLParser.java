@@ -51,7 +51,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.14      PERFORM VARYING with composed condition or defective step fixed
  *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
  *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
- *                                      STRING statement implemented
+ *                                      STRING statement implemented (refined with help of enh. #413)
  *
  ******************************************************************************************************
  *
@@ -4797,9 +4797,10 @@ public class COBOLParser extends CodeParser
 		}
 		// Now process the items backwards, this way froming an instruction sequence from last to first
 		// This way we avoid unnecessary recursion
-		// FIXME This version automatically produces several lines. We might first gather the contributors
+		// IDEA: This approach automatically produces several lines. We might first gather the contributors
 		// and then decide if their concatenation might fit into a single line.
 		StringList assignments = new StringList();
+		StringList preparations = new StringList();
 		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables 
 		Reduction itemlRed = secRed.get(0).asReduction();
 		do {
@@ -4832,18 +4833,8 @@ public class COBOLParser extends CodeParser
 			}
 			asgnmt += itemId;
 			if (delimiter != null) {
-				// now this requires some preparation...
-				Instruction instrAux = new Instruction("pos" + suffix + " <- pos(" + delimiter + ", " + itemId + ")");
-				instrAux.getText().add(itemId + suffix + " <- " + itemId);
-				instrAux.setColor(colorMisc);
-				_parentNode.addElement(instrAux);
-				Alternative alt = new Alternative("pos" + suffix + " > 0");
-				alt.setColor(colorMisc);
-				_parentNode.addElement(alt);
-				instrAux = new Instruction(itemId + suffix + " <- copy(" + itemId + ", 1, pos" + suffix + "-1)");
-				instrAux.setColor(colorMisc);
-				alt.qTrue.addElement(instrAux);
-				asgnmt += suffix;
+				preparations.add(itemId + suffix + " <- split(" + itemId + ", " + delimiter + ")");
+				asgnmt += suffix + "[0]";
 			}
 			assignments.add(asgnmt);
 		} while (itemlRed != null);
@@ -4852,6 +4843,8 @@ public class COBOLParser extends CodeParser
 		if (start != null) {
 			assignments.add(varName + " <- copy(" + varName + ", 1, " + start + ")");
 		}
+		// Append all the preparations to the assignments (such that they be at top afterwards)
+		assignments.add(preparations);
 		// Now add all the assignments in reverse order as a single element
 		Instruction instr = new Instruction(assignments.reverse());
 		instr.setComment(this.getOriginalText(_reduction, ""));
