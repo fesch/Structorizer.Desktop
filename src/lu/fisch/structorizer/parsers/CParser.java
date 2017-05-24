@@ -60,6 +60,7 @@ package lu.fisch.structorizer.parsers;
 
 import java.awt.Color;
 import java.io.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -597,35 +598,135 @@ public class CParser extends CodeParser
 	@Override
 	protected File prepareTextfile(String _textToParse, String _encoding)
 	{
-		final String voidCastPattern = "(^\\s*|.*?\\W+\\s*)\\(\\s*void\\s*\\)(.*?)";
+		final String voidCastPattern = "(^\\s*|.*?\\W+\\s*)\\(\\s*void\\s*\\)(.+)";
 		final String[][] typeReplacements = new String[][] {
 			{"size_t", "unsigned long"},
 			{"time_t", "unsigned long"}
 		};
-		final String definePattern = "^#define\\s+([\\w].*)\\s+(.+)";
+		// #define	a	b
+		// #define	a	// empty
+		final String definePattern	= "^#define\\s+(\\w\\S*)\\s*(.+)?";
+		// #define	a(b)	functionname (int b)
+		// #define	a(b,c,d)	functionname (int b, char *d)	// multiple ones, some may be omitted
+		// #define	a(b)	// empty
+		final String defineFuncPattern	= "^#define\\s+(\\w\\S*)\\(([^)]+)\\)\\s*(.+)?";
+		// #undef	a
+		final String undefPattern	= "^#undef\\s+([\\w].*)";
 		File interm = null;
 		try
 		{
 			File file = new File(_textToParse);
-			HashMap<String, String> defines = new LinkedHashMap<String, String>();
+			HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
 			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
 			// END KGU#193 2016-05-04
 			String strLine;
 			String srcCode = new String();
+			boolean inComment = false;
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the #define replacements (at least roughly...)
-			while ((strLine = br.readLine()) != null)   
+			// do the #define replacements (at least roughly...) which we do
+			while ((strLine = br.readLine()) != null)
 			{
 				String trimmedLine = strLine.trim();
-				if (trimmedLine.matches(definePattern) && !trimmedLine.contains("(") && !trimmedLine.contains(")")) {
-					String symbol = trimmedLine.replaceAll(definePattern, "$1");
-					String subst = trimmedLine.replaceAll(definePattern, "$2").trim();
-					defines.put(symbol, subst);
+				String splitLine[];
+				
+				if (trimmedLine.isEmpty()) {
+					srcCode += "\n";
+					continue;
 				}
-				else if (!trimmedLine.startsWith("#")) {
+				// the grammar doesn't know about continuation markers,
+				// concatenate the lines here
+				if (strLine.endsWith(" /") || strLine.endsWith("\t/")) {
+					int contLines = 0;
+					strLine = strLine.substring(0, strLine.length() - 1);
+					String otherline = "";
+					while ((otherline = br.readLine()) != null) {
+						contLines++;
+						if (otherline.endsWith("/")) {
+							strLine += otherline.substring(0, otherline.length() - 1);
+						} else {
+							strLine += otherline;
+							break;
+						}
+					}
+					// add line breaks for better line counter - useful?
+					strLine += Collections.nCopies(contLines, '\n');
+				}
+				
+				// check if we are in a comment block, in this case look for the end
+				// FIXME: currently only up to 1 comment block per line
+				if (inComment) {
+					splitLine = trimmedLine.split("\\*/");
+					if (splitLine.length != 1) {
+						inComment = false;
+						if (splitLine.length != 0) {  // zero -> only comment marker
+							trimmedLine = splitLine[1].trim();
+						} else {
+							trimmedLine = "";
+						}
+					}
+				}
+				
+				if (!trimmedLine.isEmpty()) {
+					splitLine = trimmedLine.split("//");
+					if (splitLine.length != 0) { // zero -> only comment marker
+						
+						// remove inline comments for further checks
+						trimmedLine = splitLine[0].trim();
+
+						// check if the line starts a new comment block
+						splitLine = trimmedLine.split("/\\*");
+						if (splitLine.length != 1) {
+							inComment = true;
+						}
+					}
+				}
+				
+				
+				if (inComment || trimmedLine.isEmpty()) {
+					// no further processing
+				}
+				else if (trimmedLine.startsWith("#")) {
+					if (trimmedLine.startsWith("#include")) {
+						// FIXME: *MAYBE* store list of non-system includes to parse as IMPORT diagram upon request?
+						//        Or always/optional do internal preparsing for resolving define/struct/typedef for the imported file?
+						strLine = "// preparser include: " + strLine;
+					}
+					else if (trimmedLine.matches(defineFuncPattern)) {
+						// #define	a1(a2,a3,a4)	stuff  ( a2 ) 
+						//          1  >  2   <		>     3     <
+						String symbol = trimmedLine.replaceAll(defineFuncPattern, "$1");
+						String params = trimmedLine.replaceAll(defineFuncPattern, "$2");
+						String subst = trimmedLine.replaceAll(defineFuncPattern, "$3");
+						String substTab[] = new String[2];
+						substTab[0] = replaceDefinedEntries(subst, defines).trim();
+						substTab[1] = params;
+						defines.put(symbol, substTab);
+						strLine = "// preparser define (function): " + strLine;
+					}
+					else if (trimmedLine.matches(definePattern)) {
+						// #define	a	b
+						//          1	2
+						String symbol = trimmedLine.replaceAll(definePattern, "$1");
+						String subst[] = new String[1];
+						subst[0] = trimmedLine.replaceAll(definePattern, "$2");
+						subst[0] = replaceDefinedEntries(subst[0], defines).trim();
+						defines.put(symbol, subst);
+						strLine = "// preparser define: " + strLine;
+					}
+					else if (trimmedLine.matches(undefPattern)) {
+						// #undef	a
+						String symbol = trimmedLine.replaceAll(definePattern, "$1");
+						defines.remove(symbol);
+						strLine = "// preparser undef: " + strLine;
+					} else {
+						// #pragma, #error, #include, #if, #ifdef ...
+						strLine = "// preparser instruction: " + strLine;
+					}
+				} else {
+					strLine = replaceDefinedEntries(strLine, defines);
 					// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
 					// replace as many as possible of them in advance.
 					// We cannot guess however, what's included since include files won't be available for us.
@@ -636,20 +737,15 @@ public class CParser extends CodeParser
 						}
 					}
 					if (strLine.matches(voidCastPattern)) {
-						strLine = strLine.replaceAll(voidCastPattern, "$1$2");
+						//strLine = strLine.replaceAll(voidCastPattern, "$1$2");
+						strLine = strLine.replaceAll(voidCastPattern, "$1$3");
 					}
-					srcCode += strLine + "\n";
 				}
+				srcCode += strLine + "\n";
 			}
 			//Close the input stream
 			in.close();
 
-			for (Entry<String, String> entry: defines.entrySet()) {
-//				if (logFile != null) {
-//					logFile.write("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()) + "\n");
-//				}
-				srcCode = srcCode.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)", "$1"+ Matcher.quoteReplacement((String)entry.getValue()) + "$2");
-			}
 			
 			// Now we try to replace all type names introduced by typedef declarations
 			// because the grammar doesn't cope with user-defined type ids.
@@ -945,6 +1041,44 @@ public class CParser extends CodeParser
 			System.err.println("CParser.prepareTextfile() -> " + e.getMessage());
 		}
 		return interm;
+	}
+
+	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) {
+		if (toReplace.trim().isEmpty()) {
+			return "";
+		}
+		//log("CParser.replaceDefinedEntries(): " + Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", false);
+		for (Entry<String, String[]> entry: defines.entrySet()) {
+			
+			// FIXME: doesn't work if entry is at start/end of toReplace 
+			
+			
+			if (entry.getValue().length > 1) {
+				//          key<val[0]>     <   val[1]   >
+				// #define	a1(a2,a3,a4)	stuff (  a2  )
+				// key  (  text1, text2, text3 )	--->	stuff (  text1  )
+				// #define	a1(a2,a3,a4)
+				// key  (  text1, text2, text3 )	--->
+				// #define	a1(a2,a3,a4)	a2
+				// key  (  text1, text2, text3 )	--->	text1
+				// #define	a1(a2,a3,a4)	some text
+				// key  (  text1, text2, text3 )	--->	some text
+				if (toReplace.matches(".*?\\W" + entry.getKey() + "\\s*\\(.*\\).*?")) {
+					if (entry.getValue()[1].isEmpty()) {
+						toReplace = toReplace.replaceAll("(.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
+					} else {
+						// FIXME: function like defines not implemented
+						log("CParser.replaceDefinedEntries() cannot translate: "
+								+ Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", true);
+					}
+				}
+			} else {
+				// from: #define	a	b, b can also be empty
+				toReplace = toReplace.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)",
+						"$1" + Matcher.quoteReplacement((String) entry.getValue()[0]) + "$2");
+			}
+		}
+		return toReplace;
 	}
 
 	//---------------------- Build methods for structograms ---------------------------
