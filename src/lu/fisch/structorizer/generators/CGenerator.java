@@ -820,7 +820,7 @@ public class CGenerator extends Generator {
 		StringList items = this.extractForInListItems(_for);
 		String itemVar = var;
 		String itemType = "";
-		String nameSuffix = Integer.toString(_for.hashCode());
+		String nameSuffix = Integer.toHexString(_for.hashCode());
 		String arrayName = "array" + nameSuffix;
 		String indexName = "index" + nameSuffix;
 		String indent = _indent + this.getIndent();

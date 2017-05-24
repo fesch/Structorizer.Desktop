@@ -1780,9 +1780,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			int resemblance = diagram.root.compareTo(root);
     			if (resemblance > 0) {
     				if (resemblance > 2 && warnLevel2andAbove) {
+    					String fName = diagram.root.filename.toString();
+    					if (fName == null || fName.trim().isEmpty()) {
+    						fName = "[" + diagram.root.proposeFileName() + "]";
+    					}
     					String message = msgInsertionConflict[resemblance-3].getText().
     							replace("%1", root.getSignatureString(false)).
-    							replace("%2", diagram.root.filename.toString());
+    							replace("%2", fName);
     					JOptionPane.showMessageDialog(this.getParent(), message,
     							this.titleDiagramConflict.getText(),
     							JOptionPane.WARNING_MESSAGE);			

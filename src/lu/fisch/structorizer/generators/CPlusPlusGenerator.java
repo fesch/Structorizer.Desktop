@@ -52,6 +52,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig     2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
  *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig     2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
  *
  ******************************************************************************************************
  *
@@ -287,6 +288,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		boolean isDisabled = _para.isDisabled();
 		Root root = Element.getRoot(_para);
 		String indentPlusOne = _indent + this.getIndent();
+		String suffix = Integer.toHexString(_para.hashCode());
 
 		insertComment(_para, _indent);
 
@@ -296,8 +298,8 @@ public class CPlusPlusGenerator extends CGenerator {
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			Subqueue sq = _para.qs.get(i);
-			String threadVar = "thr" + _para.hashCode() + "_" + i;
-			String threadFunc = "ThrFunc" + _para.hashCode() + "_" + i;
+			String threadVar = "thr" + suffix + "_" + i;
+			String threadFunc = "ThrFunc" + suffix + "_" + i;
 			String threadFuncInst = threadFunc.toLowerCase();
 			StringList used = root.getUsedVarNames(sq, false, false).reverse();
 			StringList asgnd = root.getVarNames(sq, false, false).reverse();
@@ -313,7 +315,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		}
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			String threadVar = "thr" + _para.hashCode() + "_" + i;
+			String threadVar = "thr" + suffix + "_" + i;
 			addCode(threadVar + ".join();", indentPlusOne, isDisabled);
 		}
 
@@ -342,7 +344,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		});
 		for (Parallel par: containedParallels) {
 			boolean isDisabled = par.isDisabled();
-			String functNameBase = "ThrFunc" + par.hashCode() + "_";
+			String functNameBase = "ThrFunc" + Integer.toHexString(par.hashCode()) + "_";
 			Root root = Element.getRoot(par);
 			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
 			int i = 0;

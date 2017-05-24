@@ -50,6 +50,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.13      EVALUATE import as Case element fixed. FileAPI support begun
  *      Kay Gürtzig     2017.05.14      PERFORM VARYING with composed condition or defective step fixed
  *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
+ *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
+ *                                      STRING statement implemented
  *
  ******************************************************************************************************
  *
@@ -71,6 +73,7 @@ import java.awt.Color;
 import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.*;
@@ -88,6 +91,7 @@ import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -4474,89 +4478,22 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD_IF_STATEMENT_IF)
 			{
 				System.out.println("PROD_IF_STATEMENT_IF");
-				String content = this.transformCondition(_reduction.get(1).asReduction(), "");
-				System.out.println("\tCondition: " + content);
-				Reduction secRed = _reduction.get(3).asReduction();
-				int secRuleId = secRed.getParent().getTableIndex();
-				Reduction trueRed = null;
-				Reduction falseRed = null;
-				switch (secRuleId) {
-				case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE:
-					trueRed = secRed.get(0).asReduction();
-					falseRed = secRed.get(2).asReduction();
-					break;
-				case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE2:
-					trueRed = secRed.get(1).asReduction();
-					content = negateCondition(content);
-					break;
-				default:
-					trueRed = secRed;
-					break;
-				}
-				Alternative alt = new Alternative(content);
-				if (trueRed != null) {
-					System.out.println("\tTHEN branch...");
-					this.buildNSD_R(trueRed, alt.qTrue);
-				}
-				if (falseRed != null) {
-					System.out.println("\tELSE branch...");
-					this.buildNSD_R(falseRed, alt.qFalse);
-				}
-				if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
-					alt.qTrue = alt.qFalse;
-					alt.qFalse = new Subqueue();
-					alt.qFalse.parent = alt;
-					alt.setText(negateCondition(content));
-				}
-				_parentNode.addElement(alt);
-				System.out.println("\tEND_IF");
+				this.importIf(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE)
 			{
+				System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
 				this.importEvaluate(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_PERFORM_STATEMENT_PERFORM)
 			{
+				System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
 				this.importPerform(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_MOVE_STATEMENT_MOVE)
 			{
 				System.out.println("PROD_MOVE_STATEMENT_MOVE");
-				Reduction secRed = _reduction.get(1).asReduction();
-				String expr = this.getContent_R(secRed.get(0).asReduction(), "");
-				// FIXME: This doesn't work for array elements - we need an expression list splitter
-				// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
-				//String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
-				//String[] targets;
-				// FIXME: the unwanted "," should not be passed to the engine at all,
-				// we currently split "literal, with a comma in" into two targets
-				//if (targetString.contains(",")) {
-				//	targets = targetString.split(",");
-				//}
-				//else {
-				//	targets = targetString.split(" ");
-				//}
-				//if (targets.length > 0) {
-				StringList targets = this.getExpressionList(secRed.get(2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-				if (targets.count() > 0)
-				{
-					// We must do something to avoid copy() calls on the left-hand side
-					StringList assignments = new StringList();
-					for (int i = 0; i < targets.count(); i++) {
-						String target = targets.get(i).trim();
-						if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
-							assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
-							assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
-						}
-						else {
-							assignments.add(target + " <- " + expr);
-							if (i == 0) {
-								expr = target;
-							}
-						}
-					}
-					_parentNode.addElement(new Instruction(assignments));
-				}
+				this.importMove(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_SET_STATEMENT_SET)
 			{
@@ -4609,19 +4546,7 @@ public class COBOLParser extends CodeParser
 			{
 				// Input instruction
 				System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
-				Reduction secRed = _reduction.get(1).asReduction();		// <accept_body>
-				int secRuleId = secRed.getParent().getTableIndex();
-				if (secRuleId == RuleConstants.PROD_ACCEPT_BODY || secRuleId == RuleConstants.PROD_ACCEPT_BODY_FROM3) {
-					// For these types we can offer a conversion
-					String content = getKeywordOrDefault("input", "input");
-					String varName = this.getContent_R(secRed.get(0).asReduction(), "");
-					if (varName.equalsIgnoreCase("OMITTED")) {
-						varName = "";
-					}
-					content += " " + varName;
-					_parentNode.addElement(new Instruction(content.trim()));
-				}
-				else {
+				if (!this.importAccept(_reduction, _parentNode)) {
 					Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
 					dummy.setComment(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
 							+ this.getOriginalText(_reduction, ""), "\n"));
@@ -4651,7 +4576,7 @@ public class COBOLParser extends CodeParser
 			}
 			else if (ruleId == RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT)
 			{
-				this.importFileControl(_reduction);
+				this.importFileControl(_reduction, _parentNode);
 			}
 			else if (ruleId == RuleConstants.PROD_FILE_DESCRIPTION)
 			{
@@ -4663,6 +4588,7 @@ public class COBOLParser extends CodeParser
 				if (this.getContent_R(fdRed.get(0).asReduction(), "").trim().equalsIgnoreCase("fd")
 						&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
 					String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
+					// The file descriptor should have been declared with the SELECT clause
 					do {
 						Reduction datRed = reclRed.get(0).asReduction();
 						if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
@@ -4673,7 +4599,10 @@ public class COBOLParser extends CodeParser
 							reclRed = null;
 						}
 						HashMap<String, String> typeMap = new HashMap<String, String>();
-						this.processDataDescriptions(datRed, null, typeMap);
+						// START KGU 2017-05-24: We do not only want the type info here but also create declarations 
+						//this.processDataDescriptions(datRed, null, typeMap);
+						this.processDataDescriptions(datRed, _parentNode, typeMap);
+						// END KGU 2017-05-24
 						for (String recName: typeMap.keySet()) {
 							this.fileRecordMap.put(recName, fdName);
 						}
@@ -4789,13 +4718,14 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD_STRING_STATEMENT_STRING)
 			{
 				System.out.println("PROD_STRING_STATEMENT_STRING");
-				// FIXME: At least add variable name parsing as we have in other places
-				//        and add some line breaks
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
+				if (!this.importString(_reduction, _parentNode)) {
+					String content = this.getOriginalText(_reduction, "");
+					Instruction instr = new Instruction(content);
+					instr.setColor(Color.RED);
+					instr.setComment("TODO: there is still no automatic conversion for this statement");
+					instr.disabled = true;
+					_parentNode.addElement(instr);
+				}
 			}
 			else if (ruleId == RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING)
 			{
@@ -4847,6 +4777,214 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}	
+
+	/**
+	 * Tries to build a sensible instruction (sequence) from an imported STRING statement,
+	 * i.e. a string concatenation
+	 * @param _reduction - the STRING statement reduction
+	 * @param _parentNode - Subqueue to append the resulting elements to
+	 * @return indicates whether some halfway usable element (sequence) could be generated
+	 */
+	private boolean importString(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		// <string_body> ::= <string_item_list> INTO <identifier> <_with_pointer> <_on_overflow_phrases>
+		String varName = this.getContent_R(secRed.get(2).asReduction(), "");	// target variable
+		Reduction withRed = secRed.get(3).asReduction();
+		String start = null;	// start position within the target
+		if (withRed.size() > 0) {
+			// <_with_pointer> ::= <_with> POINTER <_is> <identifier>
+			start = this.getContent_R(withRed.get(3).asReduction(), "");
+		}
+		// Now process the items backwards, this way froming an instruction sequence from last to first
+		// This way we avoid unnecessary recursion
+		// FIXME This version automatically produces several lines. We might first gather the contributors
+		// and then decide if their concatenation might fit into a single line.
+		StringList assignments = new StringList();
+		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables 
+		Reduction itemlRed = secRed.get(0).asReduction();
+		do {
+			// The first assigment (produced as the last one here) will just overwrite the target variable 
+			String asgnmt = varName + " <- ";
+			Reduction itemRed = itemlRed;	// <string_item> ::= <x> <_string_delimited>
+			if (itemlRed.getParent().getTableIndex() == RuleConstants.PROD_STRING_ITEM_LIST2) {
+				itemRed = itemlRed.get(1).asReduction();
+				itemlRed = itemlRed.get(0).asReduction();
+				// If there are preceding items then simply concatenate the new item content
+				asgnmt += varName + " + ";
+			}
+			else {
+				itemlRed = null;	// Prepare the loop exit
+				if (start != null) {
+					// If there is a start pointer then there will be an additional preparation assignment, so concatenate
+					asgnmt += varName + " + ";
+				}
+			}
+			// Now we analyse the item
+			String itemId = this.getContent_R(itemRed.get(0).asReduction(), "");	// source variable id
+			// Is there some extra delimiter?
+			String delimiter = null;
+			if (itemRed.get(1).asReduction().size() > 0) {
+				// <_string_delimited> ::= DELIMITED <_by> <string_delimiter>
+				delimiter = this.getContent_R(itemRed.get(1).asReduction().get(2).asReduction(), "");
+				if (delimiter.equalsIgnoreCase("SIZE")) {
+					delimiter = null;	// this is a dummy information, not delimiting at all
+				}
+			}
+			asgnmt += itemId;
+			if (delimiter != null) {
+				// now this requires some preparation...
+				Instruction instrAux = new Instruction("pos" + suffix + " <- pos(" + delimiter + ", " + itemId + ")");
+				instrAux.getText().add(itemId + suffix + " <- " + itemId);
+				instrAux.setColor(colorMisc);
+				_parentNode.addElement(instrAux);
+				Alternative alt = new Alternative("pos" + suffix + " > 0");
+				alt.setColor(colorMisc);
+				_parentNode.addElement(alt);
+				instrAux = new Instruction(itemId + suffix + " <- copy(" + itemId + ", 1, pos" + suffix + "-1)");
+				instrAux.setColor(colorMisc);
+				alt.qTrue.addElement(instrAux);
+				asgnmt += suffix;
+			}
+			assignments.add(asgnmt);
+		} while (itemlRed != null);
+		// Now if there was a start pointer, an additional preparation is necessary: Replace the target
+		// variable by its prefix left of the pointer (otherwise it will completely be overwritten)
+		if (start != null) {
+			assignments.add(varName + " <- copy(" + varName + ", 1, " + start + ")");
+		}
+		// Now add all the assignments in reverse order as a single element
+		Instruction instr = new Instruction(assignments.reverse());
+		instr.setComment(this.getOriginalText(_reduction, ""));
+		_parentNode.addElement(instr);
+		return true;
+	}
+
+	private boolean importAccept(Reduction _reduction, Subqueue _parentNode) {
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();		// <accept_body>
+		int secRuleId = secRed.getParent().getTableIndex();
+		Reduction targetRed = secRed.get(0).asReduction();
+		String varName = this.getContent_R(targetRed, "");
+		if (varName.equalsIgnoreCase("OMITTED")) {
+			varName = "";
+		}
+		if (secRuleId == RuleConstants.PROD_ACCEPT_BODY || secRuleId == RuleConstants.PROD_ACCEPT_BODY_FROM3) {
+			// For these types we can offer a conversion
+			String content = getKeywordOrDefault("input", "input");
+			content += " " + varName;
+			_parentNode.addElement(new Instruction(content.trim()));
+			done = true;
+		}
+		else if (!varName.isEmpty()) {
+			String content = "";
+			String comment = null;
+			boolean requiresManualAction = true;
+			switch (secRuleId) {
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_TIME:
+				content = varName + " <- " + "getTime()";
+				break;
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DATE:
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DATE_YYYYMMDD:
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DAY:
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DAY_YYYYDDD:
+				content = varName + " <- " + "getDate()";
+				comment = this.getOriginalText(_reduction, "");
+				break;
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_ENVIRONMENT:
+				content = this.getContent_R(secRed.get(3).asReduction(), "");
+				content = varName + " <- System.getenv(" + content + ")";
+			}
+			if (!content.trim().isEmpty()) {
+				Instruction instr = new Instruction(content.trim());
+				if (requiresManualAction) {
+					instr.setColor(colorMisc);
+				}
+				if (comment != null) {
+					instr.setComment(comment);
+				}
+				_parentNode.addElement(instr);
+				done = true;
+			}
+		}
+		return done;
+	}
+
+	private void importMove(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		String expr = this.getContent_R(secRed.get(0).asReduction(), "");
+		// FIXME: This doesn't work for array elements - we need an expression list splitter
+		// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
+		//String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
+		//String[] targets;
+		// FIXME: the unwanted "," should not be passed to the engine at all,
+		// we currently split "literal, with a comma in" into two targets
+		//if (targetString.contains(",")) {
+		//	targets = targetString.split(",");
+		//}
+		//else {
+		//	targets = targetString.split(" ");
+		//}
+		//if (targets.length > 0) {
+		StringList targets = this.getExpressionList(secRed.get(2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		if (targets.count() > 0)
+		{
+			// We must do something to avoid copy() calls on the left-hand side
+			StringList assignments = new StringList();
+			for (int i = 0; i < targets.count(); i++) {
+				String target = targets.get(i).trim();
+				if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
+					assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
+					assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
+				}
+				else {
+					assignments.add(target + " <- " + expr);
+					if (i == 0) {
+						expr = target;
+					}
+				}
+			}
+			_parentNode.addElement(new Instruction(assignments));
+		}
+	}
+
+	private void importIf(Reduction _reduction, Subqueue _parentNode) {
+		String content = this.transformCondition(_reduction.get(1).asReduction(), "");
+		System.out.println("\tCondition: " + content);
+		Reduction secRed = _reduction.get(3).asReduction();
+		int secRuleId = secRed.getParent().getTableIndex();
+		Reduction trueRed = null;
+		Reduction falseRed = null;
+		switch (secRuleId) {
+		case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE:
+			trueRed = secRed.get(0).asReduction();
+			falseRed = secRed.get(2).asReduction();
+			break;
+		case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE2:
+			trueRed = secRed.get(1).asReduction();
+			content = negateCondition(content);
+			break;
+		default:
+			trueRed = secRed;
+			break;
+		}
+		Alternative alt = new Alternative(content);
+		if (trueRed != null) {
+			System.out.println("\tTHEN branch...");
+			this.buildNSD_R(trueRed, alt.qTrue);
+		}
+		if (falseRed != null) {
+			System.out.println("\tELSE branch...");
+			this.buildNSD_R(falseRed, alt.qFalse);
+		}
+		if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
+			alt.qTrue = alt.qFalse;
+			alt.qFalse = new Subqueue();
+			alt.qFalse.parent = alt;
+			alt.setText(negateCondition(content));
+		}
+		_parentNode.addElement(alt);
+		System.out.println("\tEND_IF");
+	}
 
 	private boolean importSet(Reduction _reduction, Subqueue _parentNode) {
 		boolean done = false;
@@ -4955,8 +5093,9 @@ public class COBOLParser extends CodeParser
 		_parentNode.addElement(ele);
 	}
 
-	private void importFileControl(Reduction _reduction) {
+	private void importFileControl(Reduction _reduction, Subqueue _subqueue) {
 		String fileDescr = this.getContent_R(_reduction.get(2).asReduction(), "");
+		boolean isSuited = true;
 		// Now fetch the file name (if available) and make sure it's a line-sequential file
 		// (otherwise we can't provide FileAPI support)
 		Reduction selsRed = _reduction.get(3).asReduction().get(0).asReduction();
@@ -4979,9 +5118,19 @@ public class COBOLParser extends CodeParser
 			else if (selHead.equals("<organization_clause>")) {
 				// TODO make sure it's a text file
 				if (selRed.get(selRed.size()-1).asReduction().getParent().getTableIndex() != RuleConstants.PROD_ORGANIZATION_LINE_SEQUENTIAL) {
-					log("File organization of '" + fileDescr + "' unsuited for FleAPI!", false);
+					log("File organization of '" + fileDescr + "' unsuited for Structorizer FileAPI!", false);
+					isSuited = false;
 				}
 			}
+		}
+		if (this.optionImportVarDecl) {
+			Instruction decl = new Instruction("var " + fileDescr + ": int");
+			decl.setComment(this.getOriginalText(_reduction, ""));
+			if (!isSuited) {
+				decl.comment.add("Unsuited for Structorizer FileAPI!");
+			}
+			decl.setColor(isSuited ? colorDecl : Color.RED);
+			_subqueue.addElement(decl);
 		}
 	}
 
@@ -5022,8 +5171,55 @@ public class COBOLParser extends CodeParser
 	}
 
 	private boolean importRead(Reduction _reduction, Subqueue _parentNode) {
-		// TODO: Find a sensible conversion!
-		return false;
+		boolean done = false;
+		// <read_body> ::= <file_name> <_flag_next> <_record> <read_into> <lock_phrases> <read_key> <read_handler>
+		Reduction bodyRed = _reduction.get(1).asReduction();
+		// <_flag_next> - we support only forward reading
+		if (bodyRed.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD__FLAG_NEXT_PREVIOUS) {
+			return false;
+		}
+		String fdName = this.getContent_R(bodyRed.get(0).asReduction(), "");	// File descriptor
+		String target = null;
+		Reduction intoRed = bodyRed.get(3).asReduction();
+		if (intoRed.getParent().getTableIndex() == RuleConstants.PROD_READ_INTO_INTO) {
+			target = this.getContent_R(intoRed.get(1).asReduction(), ""); 
+		}
+		// Without an INTO clause we will have to search the file record map
+		if (target == null) {
+			// ... the entry should be unique then. Unfortunately we have to search backwards
+			for (Entry<String, String> entry: this.fileRecordMap.entrySet()) {
+				if (fdName.equalsIgnoreCase(entry.getValue())) {
+					target = entry.getKey();
+					break;
+				}
+			}
+		}
+		if (target != null) {
+			String fnName = "fileRead";	// The default function name
+			// In order to find the best fileRead function we try to get the typ info from root
+			TypeMapEntry typeInfo = root.getTypeInfo().get(target);
+			if (typeInfo != null && typeInfo.isConflictFree()) {
+				String type = typeInfo.getTypes().get(0);
+				if (type.equals("int") || type.equals("integer") || type.equals("short") || type.equals("long")) {
+					fnName = "fileReadInit";
+				}
+				else if (type.equals("double") || type.equals("float")) {
+					fnName = "fileReadDouble"; 
+				}
+				else if (type.equals("char")) {
+					fnName = "fileReadChar";
+				}
+				else if (type.equalsIgnoreCase("string")) {
+					fnName = "fileReadLine";
+				}
+			}
+			// we just ignore the lock clause 
+			Instruction instr = new Instruction(target + " <- " + fnName + "(" + fdName + ")");
+			instr.setComment(this.getOriginalText(_reduction, ""));
+			_parentNode.addElement(instr);
+			done = true;
+		}
+		return done;
 	}
 
 	private boolean importOpen(Reduction _reduction, Subqueue _parentNode) {
@@ -5323,7 +5519,6 @@ public class COBOLParser extends CodeParser
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
 	private final void importPerform(Reduction _reduction, Subqueue _parentNode) {
-		System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
 		// We will have to find out what kind of loop this is.
 		// In the worst case the body is just a paragraph name (PROD_PERFORM_BODY), which
 		// forces us to find that paragraph and to copy its content into the body Subqueue.
@@ -5492,7 +5687,6 @@ public class COBOLParser extends CodeParser
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
 	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) {
-		System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
 		// Possibly a CASE instruction, may have to be decomposed to an IF chain.
 		Reduction secRed = _reduction.get(1).asReduction();	// <evaluate_body>
 		Reduction subjlRed = secRed.get(0).asReduction();	// <evaluate_subject_list>

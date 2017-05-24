@@ -93,7 +93,8 @@ Current development version: 3.26-06 (2017.05.24)
 - 06: Issue #405: Preference for width-reducing in CASE elements [Simon Sobisch]2
 - 06: Issue #237: Efforts to improve expression transformation on BASH export <2>
 - 06: Enh. #372: New dialog to inspect diagram attributes [Simon Sobisch]2
-- 06: Bugfix: 411: Some unicode escape sequences cause trouble in Executor <2> 
+- 06: Bugfix: 411: Some unicode escape sequences caused trouble in Executor <2> 
+- 06: Bugfix: 412: Code generators might produce defective unique identifiers <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
