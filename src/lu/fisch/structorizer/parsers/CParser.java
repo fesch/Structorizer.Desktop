@@ -3,6 +3,7 @@
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,7 +25,7 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Class to parse an ANSI C file.
+ *      Description:    Class to parse an ANSI-C file and build structograms from the reduction tree.
  *
  ******************************************************************************************************
  *
@@ -45,22 +46,24 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.04.27      Enh. #354: Bugs in procedure and expression list evaluation fixed
  *      Simon Sobisch   2017.05.23      Enh. #409: File type .h added
  *      Kay Gürtzig     2017.05.23/24   Enh. #354/#411: Pre-processor workaround for typedef significantly improved
+ *      Simon Sobisch   2017.05.24      Enh. #409: Comment-aware #define analysis, with function macro approach
+ *      Kay Gürtzig     2017.05.26      Enh. #409: #define analysis (including function macros) accomplished
  *
  ******************************************************************************************************
  *
  *     Comment:		
- *     Licensed Material - Property of Matthew Hawkins (hawkini@4email.net)<br>
- *     GOLDParser - code ported from VB - Author Devin Cook. All rights reserved.<br>
+ *     Licensed Material - Property of Ralph Iden (GOLDParser) and Mathew Hawkins (parts of the template)
+ *     GOLDParser - code downloaded from https://github.com/ridencww/goldengine on 2017-03-05.<br>
  *     Modifications to this code are allowed as it is a helper class to use the engine.<br>
- *     Template File:  Java-MatthewHawkins.pgt<br>
- *     Author:         Matthew Hawkins<br>
+ *     Template File:  StructorizerParserTemplate.pgt (with elements of both<br>
+ *                     Java-MatthewHawkins.pgt and Java-IdenEngine.pgt)<br>
+ *     Authors:        Ralph Iden, Matthew Hawkins, Bob Fisch, Kay Gürtzig<br>
  *     Description:    A Sample class, takes in a file and runs the GOLDParser engine on it.<br>
  *
  ******************************************************************************************************/
 
 import java.awt.Color;
 import java.io.*;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -87,7 +90,7 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.StringList;
 
 /**
- * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the %Name% language.
+ * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the C language.
  * This file contains grammar-specific constants and individual routines to build
  * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
  * @author Kay Gürtzig
@@ -233,99 +236,70 @@ public class CParser extends CodeParser
 //		final int SYM_TYPEDEF       =  85;  // typedef
 //		final int SYM_UNION         =  86;  // union
 //		final int SYM_UNSIGNED      =  87;  // unsigned
-		final int SYM_USER_TYPE_001 =  88;  // 'user_type_001'
-//		final int SYM_USER_TYPE_002 =  89;  // 'user_type_002'
-//		final int SYM_USER_TYPE_003 =  90;  // 'user_type_003'
-//		final int SYM_USER_TYPE_004 =  91;  // 'user_type_004'
-//		final int SYM_USER_TYPE_005 =  92;  // 'user_type_005'
-//		final int SYM_USER_TYPE_006 =  93;  // 'user_type_006'
-//		final int SYM_USER_TYPE_007 =  94;  // 'user_type_007'
-//		final int SYM_USER_TYPE_009 =  95;  // 'user_type_009'
-//		final int SYM_USER_TYPE_010 =  96;  // 'user_type_010'
-//		final int SYM_USER_TYPE_011 =  97;  // 'user_type_011'
-//		final int SYM_USER_TYPE_012 =  98;  // 'user_type_012'
-//		final int SYM_USER_TYPE_013 =  99;  // 'user_type_013'
-//		final int SYM_USER_TYPE_014 = 100;  // 'user_type_014'
-//		final int SYM_USER_TYPE_015 = 101;  // 'user_type_015'
-//		final int SYM_USER_TYPE_016 = 102;  // 'user_type_016'
-//		final int SYM_USER_TYPE_017 = 103;  // 'user_type_017'
-//		final int SYM_USER_TYPE_018 = 104;  // 'user_type_018'
-//		final int SYM_USER_TYPE_019 = 105;  // 'user_type_019'
-//		final int SYM_USER_TYPE_020 = 106;  // 'user_type_020'
-//		final int SYM_USER_TYPE_021 = 107;  // 'user_type_021'
-//		final int SYM_USER_TYPE_022 = 108;  // 'user_type_022'
-//		final int SYM_USER_TYPE_023 = 109;  // 'user_type_023'
-//		final int SYM_USER_TYPE_024 = 110;  // 'user_type_024'
-//		final int SYM_USER_TYPE_025 = 111;  // 'user_type_025'
-//		final int SYM_USER_TYPE_026 = 112;  // 'user_type_026'
-//		final int SYM_USER_TYPE_027 = 113;  // 'user_type_027'
-//		final int SYM_USER_TYPE_028 = 114;  // 'user_type_028'
-//		final int SYM_USER_TYPE_029 = 115;  // 'user_type_029'
-		final int SYM_USER_TYPE_030 = 116;  // 'user_type_030'
-//		final int SYM_VOID          = 117;  // void
-//		final int SYM_VOLATILE      = 118;  // volatile
-//		final int SYM_WCHAR_T       = 119;  // 'wchar_t'
-//		final int SYM_WHILE         = 120;  // while
-//		final int SYM_ARG           = 121;  // <Arg>
-//		final int SYM_ARRAY         = 122;  // <Array>
-//		final int SYM_BASE          = 123;  // <Base>
-//		final int SYM_BLOCK         = 124;  // <Block>
-//		final int SYM_CALLID        = 125;  // <Call Id>
-//		final int SYM_CASESTMS      = 126;  // <Case Stms>
-//		final int SYM_CONSTMOD      = 127;  // <ConstMod>
-//		final int SYM_CONSTPOINTERS = 128;  // <ConstPointers>
-//		final int SYM_CONSTTYPE     = 129;  // <ConstType>
-//		final int SYM_DECL          = 130;  // <Decl>
-//		final int SYM_DECLEND       = 131;  // <Decl End>
-//		final int SYM_DECLSTMLIST   = 132;  // <Decl Stm List>
-//		final int SYM_ENUMDECL      = 133;  // <Enum Decl>
-//		final int SYM_ENUMDEF       = 134;  // <Enum Def>
-//		final int SYM_ENUMVAL       = 135;  // <Enum Val>
-//		final int SYM_EXPR          = 136;  // <Expr>
-//		final int SYM_EXPRINI       = 137;  // <ExprIni>
-//		final int SYM_EXTDECL       = 138;  // <ExtDecl>
-//		final int SYM_EXTDECLS      = 139;  // <ExtDecls>
-//		final int SYM_FUNCDECL      = 140;  // <Func Decl>
-//		final int SYM_FUNCID        = 141;  // <Func ID>
-//		final int SYM_FUNCPROTO     = 142;  // <Func Proto>
-//		final int SYM_IDLIST        = 143;  // <Id List>
-//		final int SYM_INITIALIZER   = 144;  // <Initializer>
-//		final int SYM_MOD           = 145;  // <Mod>
-//		final int SYM_NORMALSTM     = 146;  // <Normal Stm>
-//		final int SYM_OPADD         = 147;  // <Op Add>
-//		final int SYM_OPAND         = 148;  // <Op And>
-//		final int SYM_OPASSIGN      = 149;  // <Op Assign>
-//		final int SYM_OPBINAND      = 150;  // <Op BinAND>
-//		final int SYM_OPBINOR       = 151;  // <Op BinOR>
-//		final int SYM_OPBINXOR      = 152;  // <Op BinXOR>
-//		final int SYM_OPCOMPARE     = 153;  // <Op Compare>
-//		final int SYM_OPEQUATE      = 154;  // <Op Equate>
-//		final int SYM_OPIF          = 155;  // <Op If>
-//		final int SYM_OPMULT        = 156;  // <Op Mult>
-//		final int SYM_OPOR          = 157;  // <Op Or>
-//		final int SYM_OPPOINTER     = 158;  // <Op Pointer>
-//		final int SYM_OPSHIFT       = 159;  // <Op Shift>
-//		final int SYM_OPUNARY       = 160;  // <Op Unary>
-//		final int SYM_PARAM         = 161;  // <Param>
-//		final int SYM_PARAMS        = 162;  // <Params>
-//		final int SYM_POINTERS      = 163;  // <Pointers>
-//		final int SYM_SCALAR        = 164;  // <Scalar>
-//		final int SYM_SIGN          = 165;  // <Sign>
-//		final int SYM_STM           = 166;  // <Stm>
-//		final int SYM_STMLIST       = 167;  // <Stm List>
-//		final int SYM_STRUCTDECL    = 168;  // <Struct Decl>
-//		final int SYM_STRUCTDEF     = 169;  // <Struct Def>
-//		final int SYM_THENSTM       = 170;  // <Then Stm>
-//		final int SYM_TYPE          = 171;  // <Type>
-//		final int SYM_TYPEDEFDECL   = 172;  // <Typedef Decl>
-//		final int SYM_TYPES         = 173;  // <Types>
-//		final int SYM_UNIONDECL     = 174;  // <Union Decl>
-//		final int SYM_USERTYPE      = 175;  // <User Type>
-//		final int SYM_VALUE         = 176;  // <Value>
-//		final int SYM_VAR           = 177;  // <Var>
-//		final int SYM_VARDECL       = 178;  // <Var Decl>
-//		final int SYM_VARITEM       = 179;  // <Var Item>
-//		final int SYM_VARLIST       = 180;  // <Var List>
+		final int SYM_USERTYPEID    =  88;  // UserTypeId
+//		final int SYM_VOID          =  89;  // void
+//		final int SYM_VOLATILE      =  90;  // volatile
+//		final int SYM_WCHAR_T       =  91;  // 'wchar_t'
+//		final int SYM_WHILE         =  92;  // while
+//		final int SYM_ARG           =  93;  // <Arg>
+//		final int SYM_ARRAY         =  94;  // <Array>
+//		final int SYM_BASE          =  95;  // <Base>
+//		final int SYM_BLOCK         =  96;  // <Block>
+//		final int SYM_CALLID        =  97;  // <Call Id>
+//		final int SYM_CASESTMS      =  98;  // <Case Stms>
+//		final int SYM_CONSTMOD      =  99;  // <ConstMod>
+//		final int SYM_CONSTPOINTERS = 100;  // <ConstPointers>
+//		final int SYM_CONSTTYPE     = 101;  // <ConstType>
+//		final int SYM_DECL          = 102;  // <Decl>
+//		final int SYM_DECLEND       = 103;  // <Decl End>
+//		final int SYM_DECLSTMLIST   = 104;  // <Decl Stm List>
+//		final int SYM_ENUMDECL      = 105;  // <Enum Decl>
+//		final int SYM_ENUMDEF       = 106;  // <Enum Def>
+//		final int SYM_ENUMVAL       = 107;  // <Enum Val>
+//		final int SYM_EXPR          = 108;  // <Expr>
+//		final int SYM_EXPRINI       = 109;  // <ExprIni>
+//		final int SYM_EXTDECL       = 110;  // <ExtDecl>
+//		final int SYM_EXTDECLS      = 111;  // <ExtDecls>
+//		final int SYM_FUNCDECL      = 112;  // <Func Decl>
+//		final int SYM_FUNCID        = 113;  // <Func ID>
+//		final int SYM_FUNCPROTO     = 114;  // <Func Proto>
+//		final int SYM_IDLIST        = 115;  // <Id List>
+//		final int SYM_INITIALIZER   = 116;  // <Initializer>
+//		final int SYM_MOD           = 117;  // <Mod>
+//		final int SYM_NORMALSTM     = 118;  // <Normal Stm>
+//		final int SYM_OPADD         = 119;  // <Op Add>
+//		final int SYM_OPAND         = 120;  // <Op And>
+//		final int SYM_OPASSIGN      = 121;  // <Op Assign>
+//		final int SYM_OPBINAND      = 122;  // <Op BinAND>
+//		final int SYM_OPBINOR       = 123;  // <Op BinOR>
+//		final int SYM_OPBINXOR      = 124;  // <Op BinXOR>
+//		final int SYM_OPCOMPARE     = 125;  // <Op Compare>
+//		final int SYM_OPEQUATE      = 126;  // <Op Equate>
+//		final int SYM_OPIF          = 127;  // <Op If>
+//		final int SYM_OPMULT        = 128;  // <Op Mult>
+//		final int SYM_OPOR          = 129;  // <Op Or>
+//		final int SYM_OPPOINTER     = 130;  // <Op Pointer>
+//		final int SYM_OPSHIFT       = 131;  // <Op Shift>
+//		final int SYM_OPUNARY       = 132;  // <Op Unary>
+//		final int SYM_PARAM         = 133;  // <Param>
+//		final int SYM_PARAMS        = 134;  // <Params>
+//		final int SYM_POINTERS      = 135;  // <Pointers>
+//		final int SYM_SCALAR        = 136;  // <Scalar>
+//		final int SYM_SIGN          = 137;  // <Sign>
+//		final int SYM_STM           = 138;  // <Stm>
+//		final int SYM_STMLIST       = 139;  // <Stm List>
+//		final int SYM_STRUCTDECL    = 140;  // <Struct Decl>
+//		final int SYM_STRUCTDEF     = 141;  // <Struct Def>
+//		final int SYM_THENSTM       = 142;  // <Then Stm>
+//		final int SYM_TYPE          = 143;  // <Type>
+//		final int SYM_TYPEDEFDECL   = 144;  // <Typedef Decl>
+//		final int SYM_TYPES         = 145;  // <Types>
+//		final int SYM_UNIONDECL     = 146;  // <Union Decl>
+//		final int SYM_VALUE         = 147;  // <Value>
+//		final int SYM_VAR           = 148;  // <Var>
+//		final int SYM_VARDECL       = 149;  // <Var Decl>
+//		final int SYM_VARITEM       = 150;  // <Var Item>
+//		final int SYM_VARLIST       = 151;  // <Var List>
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -408,160 +382,131 @@ public class CParser extends CodeParser
 //		final int PROD_BASE_ENUM_ID                                 =  73;  // <Base> ::= enum Id
 //		final int PROD_BASE_ENUM_LBRACE_RBRACE                      =  74;  // <Base> ::= enum '{' <Enum Def> '}'
 //		final int PROD_BASE_VOID_TIMES                              =  75;  // <Base> ::= void '*'
-//		final int PROD_BASE2                                        =  76;  // <Base> ::= <User Type>
-//		final int PROD_USERTYPE_USER_TYPE_001                       =  77;  // <User Type> ::= 'user_type_001'
-//		final int PROD_USERTYPE_USER_TYPE_002                       =  78;  // <User Type> ::= 'user_type_002'
-//		final int PROD_USERTYPE_USER_TYPE_003                       =  79;  // <User Type> ::= 'user_type_003'
-//		final int PROD_USERTYPE_USER_TYPE_004                       =  80;  // <User Type> ::= 'user_type_004'
-//		final int PROD_USERTYPE_USER_TYPE_005                       =  81;  // <User Type> ::= 'user_type_005'
-//		final int PROD_USERTYPE_USER_TYPE_006                       =  82;  // <User Type> ::= 'user_type_006'
-//		final int PROD_USERTYPE_USER_TYPE_007                       =  83;  // <User Type> ::= 'user_type_007'
-//		final int PROD_USERTYPE_USER_TYPE_009                       =  84;  // <User Type> ::= 'user_type_009'
-//		final int PROD_USERTYPE_USER_TYPE_010                       =  85;  // <User Type> ::= 'user_type_010'
-//		final int PROD_USERTYPE_USER_TYPE_011                       =  86;  // <User Type> ::= 'user_type_011'
-//		final int PROD_USERTYPE_USER_TYPE_012                       =  87;  // <User Type> ::= 'user_type_012'
-//		final int PROD_USERTYPE_USER_TYPE_013                       =  88;  // <User Type> ::= 'user_type_013'
-//		final int PROD_USERTYPE_USER_TYPE_014                       =  89;  // <User Type> ::= 'user_type_014'
-//		final int PROD_USERTYPE_USER_TYPE_015                       =  90;  // <User Type> ::= 'user_type_015'
-//		final int PROD_USERTYPE_USER_TYPE_016                       =  91;  // <User Type> ::= 'user_type_016'
-//		final int PROD_USERTYPE_USER_TYPE_017                       =  92;  // <User Type> ::= 'user_type_017'
-//		final int PROD_USERTYPE_USER_TYPE_018                       =  93;  // <User Type> ::= 'user_type_018'
-//		final int PROD_USERTYPE_USER_TYPE_019                       =  94;  // <User Type> ::= 'user_type_019'
-//		final int PROD_USERTYPE_USER_TYPE_020                       =  95;  // <User Type> ::= 'user_type_020'
-//		final int PROD_USERTYPE_USER_TYPE_021                       =  96;  // <User Type> ::= 'user_type_021'
-//		final int PROD_USERTYPE_USER_TYPE_022                       =  97;  // <User Type> ::= 'user_type_022'
-//		final int PROD_USERTYPE_USER_TYPE_023                       =  98;  // <User Type> ::= 'user_type_023'
-//		final int PROD_USERTYPE_USER_TYPE_024                       =  99;  // <User Type> ::= 'user_type_024'
-//		final int PROD_USERTYPE_USER_TYPE_025                       = 100;  // <User Type> ::= 'user_type_025'
-//		final int PROD_USERTYPE_USER_TYPE_026                       = 101;  // <User Type> ::= 'user_type_026'
-//		final int PROD_USERTYPE_USER_TYPE_027                       = 102;  // <User Type> ::= 'user_type_027'
-//		final int PROD_USERTYPE_USER_TYPE_028                       = 103;  // <User Type> ::= 'user_type_028'
-//		final int PROD_USERTYPE_USER_TYPE_029                       = 104;  // <User Type> ::= 'user_type_029'
-//		final int PROD_USERTYPE_USER_TYPE_030                       = 105;  // <User Type> ::= 'user_type_030'
-//		final int PROD_SIGN_SIGNED                                  = 106;  // <Sign> ::= signed
-//		final int PROD_SIGN_UNSIGNED                                = 107;  // <Sign> ::= unsigned
-//		final int PROD_SIGN                                         = 108;  // <Sign> ::= 
-//		final int PROD_SCALAR_CHAR                                  = 109;  // <Scalar> ::= char
-//		final int PROD_SCALAR_WCHAR_T                               = 110;  // <Scalar> ::= 'wchar_t'
-//		final int PROD_SCALAR_INT                                   = 111;  // <Scalar> ::= int
-//		final int PROD_SCALAR_SHORT                                 = 112;  // <Scalar> ::= short
-//		final int PROD_SCALAR_LONG                                  = 113;  // <Scalar> ::= long
-//		final int PROD_SCALAR_SHORT_INT                             = 114;  // <Scalar> ::= short int
-//		final int PROD_SCALAR_LONG_INT                              = 115;  // <Scalar> ::= long int
-//		final int PROD_SCALAR_LONG_LONG                             = 116;  // <Scalar> ::= long long
-//		final int PROD_SCALAR_LONG_LONG_INT                         = 117;  // <Scalar> ::= long long int
-//		final int PROD_SCALAR_FLOAT                                 = 118;  // <Scalar> ::= float
-//		final int PROD_SCALAR_DOUBLE                                = 119;  // <Scalar> ::= double
-//		final int PROD_POINTERS_TIMES                               = 120;  // <Pointers> ::= '*' <Pointers>
-//		final int PROD_POINTERS_TIMES_CONST                         = 121;  // <Pointers> ::= '*' const <ConstPointers>
-//		final int PROD_POINTERS                                     = 122;  // <Pointers> ::= 
-//		final int PROD_CONSTPOINTERS_TIMES_CONST                    = 123;  // <ConstPointers> ::= '*' const <ConstPointers>
-//		final int PROD_CONSTPOINTERS_TIMES                          = 124;  // <ConstPointers> ::= '*'
-//		final int PROD_CONSTPOINTERS                                = 125;  // <ConstPointers> ::= 
-		final int PROD_STM_ID_COLON                                 = 126;  // <Stm> ::= Id ':'
-		final int PROD_STM_IF_LPAREN_RPAREN                         = 127;  // <Stm> ::= if '(' <Expr> ')' <Stm>
-		final int PROD_STM_IF_LPAREN_RPAREN_ELSE                    = 128;  // <Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
-		final int PROD_STM_WHILE_LPAREN_RPAREN                      = 129;  // <Stm> ::= while '(' <Expr> ')' <Stm>
-		final int PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN              = 130;  // <Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
-//		final int PROD_STM                                          = 131;  // <Stm> ::= <Normal Stm>
-//		final int PROD_THENSTM_IF_LPAREN_RPAREN_ELSE                = 132;  // <Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
-		final int PROD_THENSTM_WHILE_LPAREN_RPAREN                  = 133;  // <Then Stm> ::= while '(' <Expr> ')' <Then Stm>
-		final int PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN          = 134;  // <Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
-//		final int PROD_THENSTM                                      = 135;  // <Then Stm> ::= <Normal Stm>
-		final int PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN             = 136;  // <Normal Stm> ::= do <Stm> while '(' <Expr> ')'
-		final int PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE = 137;  // <Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
-//		final int PROD_NORMALSTM                                    = 138;  // <Normal Stm> ::= <Block>
-//		final int PROD_NORMALSTM_SEMI                               = 139;  // <Normal Stm> ::= <Expr> ';'
-		final int PROD_NORMALSTM_GOTO_ID_SEMI                       = 140;  // <Normal Stm> ::= goto Id ';'
-		final int PROD_NORMALSTM_BREAK_SEMI                         = 141;  // <Normal Stm> ::= break ';'
-		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 142;  // <Normal Stm> ::= continue ';'
-		final int PROD_NORMALSTM_RETURN_SEMI                        = 143;  // <Normal Stm> ::= return <Expr> ';'
-//		final int PROD_NORMALSTM_SEMI2                              = 144;  // <Normal Stm> ::= ';'
-//		final int PROD_ARG                                          = 145;  // <Arg> ::= <Expr>
-//		final int PROD_ARG2                                         = 146;  // <Arg> ::= 
-		final int PROD_CASESTMS_CASE_COLON                          = 147;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
-		final int PROD_CASESTMS_DEFAULT_COLON                       = 148;  // <Case Stms> ::= default ':' <Stm List>
-//		final int PROD_CASESTMS                                     = 149;  // <Case Stms> ::= 
-//		final int PROD_BLOCK_LBRACE_RBRACE                          = 150;  // <Block> ::= '{' <Decl Stm List> '}'
-//		final int PROD_DECLSTMLIST                                  = 151;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
-//		final int PROD_DECLSTMLIST2                                 = 152;  // <Decl Stm List> ::= <Stm List>
-		final int PROD_STMLIST                                      = 153;  // <Stm List> ::= <Stm> <Stm List>
-//		final int PROD_STMLIST2                                     = 154;  // <Stm List> ::= 
-//		final int PROD_INITIALIZER                                  = 155;  // <Initializer> ::= <Op If>
-//		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 156;  // <Initializer> ::= '{' <ExprIni> '}'
-//		final int PROD_EXPR_COMMA                                   = 157;  // <Expr> ::= <Expr> ',' <Op Assign>
-//		final int PROD_EXPR                                         = 158;  // <Expr> ::= <Op Assign>
-//		final int PROD_EXPRINI_COMMA                                = 159;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
-//		final int PROD_EXPRINI                                      = 160;  // <ExprIni> ::= <Initializer>
-		final int PROD_OPASSIGN_EQ                                  = 161;  // <Op Assign> ::= <Op If> '=' <Op Assign>
-		final int PROD_OPASSIGN_PLUSEQ                              = 162;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
-//		final int PROD_OPASSIGN_MINUSEQ                             = 163;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
-//		final int PROD_OPASSIGN_TIMESEQ                             = 164;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
-//		final int PROD_OPASSIGN_DIVEQ                               = 165;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
-//		final int PROD_OPASSIGN_CARETEQ                             = 166;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
-//		final int PROD_OPASSIGN_AMPEQ                               = 167;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
-//		final int PROD_OPASSIGN_PIPEEQ                              = 168;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
-//		final int PROD_OPASSIGN_GTGTEQ                              = 169;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
-		final int PROD_OPASSIGN_LTLTEQ                              = 170;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
-//		final int PROD_OPASSIGN                                     = 171;  // <Op Assign> ::= <Op If>
-//		final int PROD_OPIF_QUESTION_COLON                          = 172;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
-//		final int PROD_OPIF                                         = 173;  // <Op If> ::= <Op Or>
-//		final int PROD_OPOR_PIPEPIPE                                = 174;  // <Op Or> ::= <Op Or> '||' <Op And>
-//		final int PROD_OPOR                                         = 175;  // <Op Or> ::= <Op And>
-//		final int PROD_OPAND_AMPAMP                                 = 176;  // <Op And> ::= <Op And> '&&' <Op BinOR>
-//		final int PROD_OPAND                                        = 177;  // <Op And> ::= <Op BinOR>
-//		final int PROD_OPBINOR_PIPE                                 = 178;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
-//		final int PROD_OPBINOR                                      = 179;  // <Op BinOR> ::= <Op BinXOR>
-//		final int PROD_OPBINXOR_CARET                               = 180;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
-//		final int PROD_OPBINXOR                                     = 181;  // <Op BinXOR> ::= <Op BinAND>
-//		final int PROD_OPBINAND_AMP                                 = 182;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
-//		final int PROD_OPBINAND                                     = 183;  // <Op BinAND> ::= <Op Equate>
-//		final int PROD_OPEQUATE_EQEQ                                = 184;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
-//		final int PROD_OPEQUATE_EXCLAMEQ                            = 185;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
-//		final int PROD_OPEQUATE                                     = 186;  // <Op Equate> ::= <Op Compare>
-//		final int PROD_OPCOMPARE_LT                                 = 187;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
-//		final int PROD_OPCOMPARE_GT                                 = 188;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
-//		final int PROD_OPCOMPARE_LTEQ                               = 189;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
-//		final int PROD_OPCOMPARE_GTEQ                               = 190;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
-//		final int PROD_OPCOMPARE                                    = 191;  // <Op Compare> ::= <Op Shift>
-//		final int PROD_OPSHIFT_LTLT                                 = 192;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
-//		final int PROD_OPSHIFT_GTGT                                 = 193;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
-//		final int PROD_OPSHIFT                                      = 194;  // <Op Shift> ::= <Op Add>
-//		final int PROD_OPADD_PLUS                                   = 195;  // <Op Add> ::= <Op Add> '+' <Op Mult>
-//		final int PROD_OPADD_MINUS                                  = 196;  // <Op Add> ::= <Op Add> '-' <Op Mult>
-//		final int PROD_OPADD                                        = 197;  // <Op Add> ::= <Op Mult>
-//		final int PROD_OPMULT_TIMES                                 = 198;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
-//		final int PROD_OPMULT_DIV                                   = 199;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
-//		final int PROD_OPMULT_PERCENT                               = 200;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
-//		final int PROD_OPMULT                                       = 201;  // <Op Mult> ::= <Op Unary>
-//		final int PROD_OPUNARY_EXCLAM                               = 202;  // <Op Unary> ::= '!' <Op Unary>
-//		final int PROD_OPUNARY_TILDE                                = 203;  // <Op Unary> ::= '~' <Op Unary>
-//		final int PROD_OPUNARY_MINUS                                = 204;  // <Op Unary> ::= '-' <Op Unary>
-//		final int PROD_OPUNARY_TIMES                                = 205;  // <Op Unary> ::= '*' <Op Unary>
-//		final int PROD_OPUNARY_AMP                                  = 206;  // <Op Unary> ::= '&' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS                             = 207;  // <Op Unary> ::= '++' <Op Unary>
-		final int PROD_OPUNARY_MINUSMINUS                           = 208;  // <Op Unary> ::= '--' <Op Unary>
-//		final int PROD_OPUNARY_PLUSPLUS2                            = 209;  // <Op Unary> ::= <Op Pointer> '++'
-		final int PROD_OPUNARY_MINUSMINUS2                          = 210;  // <Op Unary> ::= <Op Pointer> '--'
-//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 211;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
-//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 212;  // <Op Unary> ::= sizeof '(' <Type> ')'
-//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 213;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
-//		final int PROD_OPUNARY                                      = 214;  // <Op Unary> ::= <Op Pointer>
-//		final int PROD_OPPOINTER_DOT                                = 215;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
-//		final int PROD_OPPOINTER_MINUSGT                            = 216;  // <Op Pointer> ::= <Op Pointer> '->' <Call Id>
-//		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 217;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
-//		final int PROD_OPPOINTER                                    = 218;  // <Op Pointer> ::= <Value>
-		final int PROD_CALLID_ID_LPAREN_RPAREN                      = 219;  // <Call Id> ::= Id '(' <Expr> ')'
-		final int PROD_CALLID_ID_LPAREN_RPAREN2                     = 220;  // <Call Id> ::= Id '(' ')'
-//		final int PROD_CALLID_ID                                    = 221;  // <Call Id> ::= Id
-//		final int PROD_VALUE_OCTLITERAL                             = 222;  // <Value> ::= OctLiteral
-//		final int PROD_VALUE_HEXLITERAL                             = 223;  // <Value> ::= HexLiteral
-//		final int PROD_VALUE_DECLITERAL                             = 224;  // <Value> ::= DecLiteral
-//		final int PROD_VALUE_STRINGLITERAL                          = 225;  // <Value> ::= StringLiteral
-//		final int PROD_VALUE_CHARLITERAL                            = 226;  // <Value> ::= CharLiteral
-//		final int PROD_VALUE_FLOATLITERAL                           = 227;  // <Value> ::= FloatLiteral
-//		final int PROD_VALUE                                        = 228;  // <Value> ::= <Call Id>
-//		final int PROD_VALUE_LPAREN_RPAREN                          = 229;  // <Value> ::= '(' <Expr> ')'
+//		final int PROD_BASE_USERTYPEID                              =  76;  // <Base> ::= UserTypeId
+//		final int PROD_SIGN_SIGNED                                  =  77;  // <Sign> ::= signed
+//		final int PROD_SIGN_UNSIGNED                                =  78;  // <Sign> ::= unsigned
+//		final int PROD_SIGN                                         =  79;  // <Sign> ::= 
+//		final int PROD_SCALAR_CHAR                                  =  80;  // <Scalar> ::= char
+//		final int PROD_SCALAR_WCHAR_T                               =  81;  // <Scalar> ::= 'wchar_t'
+//		final int PROD_SCALAR_INT                                   =  82;  // <Scalar> ::= int
+//		final int PROD_SCALAR_SHORT                                 =  83;  // <Scalar> ::= short
+//		final int PROD_SCALAR_LONG                                  =  84;  // <Scalar> ::= long
+//		final int PROD_SCALAR_SHORT_INT                             =  85;  // <Scalar> ::= short int
+//		final int PROD_SCALAR_LONG_INT                              =  86;  // <Scalar> ::= long int
+//		final int PROD_SCALAR_LONG_LONG                             =  87;  // <Scalar> ::= long long
+//		final int PROD_SCALAR_LONG_LONG_INT                         =  88;  // <Scalar> ::= long long int
+//		final int PROD_SCALAR_FLOAT                                 =  89;  // <Scalar> ::= float
+//		final int PROD_SCALAR_DOUBLE                                =  90;  // <Scalar> ::= double
+//		final int PROD_POINTERS_TIMES                               =  91;  // <Pointers> ::= '*' <Pointers>
+//		final int PROD_POINTERS_TIMES_CONST                         =  92;  // <Pointers> ::= '*' const <ConstPointers>
+//		final int PROD_POINTERS                                     =  93;  // <Pointers> ::= 
+//		final int PROD_CONSTPOINTERS_TIMES_CONST                    =  94;  // <ConstPointers> ::= '*' const <ConstPointers>
+//		final int PROD_CONSTPOINTERS_TIMES                          =  95;  // <ConstPointers> ::= '*'
+//		final int PROD_CONSTPOINTERS                                =  96;  // <ConstPointers> ::= 
+		final int PROD_STM_ID_COLON                                 =  97;  // <Stm> ::= Id ':'
+		final int PROD_STM_IF_LPAREN_RPAREN                         =  98;  // <Stm> ::= if '(' <Expr> ')' <Stm>
+		final int PROD_STM_IF_LPAREN_RPAREN_ELSE                    =  99;  // <Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
+		final int PROD_STM_WHILE_LPAREN_RPAREN                      = 100;  // <Stm> ::= while '(' <Expr> ')' <Stm>
+		final int PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN              = 101;  // <Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
+//		final int PROD_STM                                          = 102;  // <Stm> ::= <Normal Stm>
+//		final int PROD_THENSTM_IF_LPAREN_RPAREN_ELSE                = 103;  // <Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
+		final int PROD_THENSTM_WHILE_LPAREN_RPAREN                  = 104;  // <Then Stm> ::= while '(' <Expr> ')' <Then Stm>
+		final int PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN          = 105;  // <Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
+//		final int PROD_THENSTM                                      = 106;  // <Then Stm> ::= <Normal Stm>
+		final int PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN             = 107;  // <Normal Stm> ::= do <Stm> while '(' <Expr> ')'
+		final int PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE = 108;  // <Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
+//		final int PROD_NORMALSTM                                    = 109;  // <Normal Stm> ::= <Block>
+//		final int PROD_NORMALSTM_SEMI                               = 110;  // <Normal Stm> ::= <Expr> ';'
+		final int PROD_NORMALSTM_GOTO_ID_SEMI                       = 111;  // <Normal Stm> ::= goto Id ';'
+		final int PROD_NORMALSTM_BREAK_SEMI                         = 112;  // <Normal Stm> ::= break ';'
+		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 113;  // <Normal Stm> ::= continue ';'
+		final int PROD_NORMALSTM_RETURN_SEMI                        = 114;  // <Normal Stm> ::= return <Expr> ';'
+//		final int PROD_NORMALSTM_SEMI2                              = 115;  // <Normal Stm> ::= ';'
+//		final int PROD_ARG                                          = 116;  // <Arg> ::= <Expr>
+//		final int PROD_ARG2                                         = 117;  // <Arg> ::= 
+		final int PROD_CASESTMS_CASE_COLON                          = 118;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
+		final int PROD_CASESTMS_DEFAULT_COLON                       = 119;  // <Case Stms> ::= default ':' <Stm List>
+//		final int PROD_CASESTMS                                     = 120;  // <Case Stms> ::= 
+//		final int PROD_BLOCK_LBRACE_RBRACE                          = 121;  // <Block> ::= '{' <Decl Stm List> '}'
+//		final int PROD_DECLSTMLIST                                  = 122;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
+//		final int PROD_DECLSTMLIST2                                 = 123;  // <Decl Stm List> ::= <Stm List>
+		final int PROD_STMLIST                                      = 124;  // <Stm List> ::= <Stm> <Stm List>
+//		final int PROD_STMLIST2                                     = 125;  // <Stm List> ::= 
+//		final int PROD_INITIALIZER                                  = 126;  // <Initializer> ::= <Op If>
+//		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 127;  // <Initializer> ::= '{' <ExprIni> '}'
+//		final int PROD_EXPR_COMMA                                   = 128;  // <Expr> ::= <Expr> ',' <Op Assign>
+//		final int PROD_EXPR                                         = 129;  // <Expr> ::= <Op Assign>
+//		final int PROD_EXPRINI_COMMA                                = 130;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
+//		final int PROD_EXPRINI                                      = 131;  // <ExprIni> ::= <Initializer>
+		final int PROD_OPASSIGN_EQ                                  = 132;  // <Op Assign> ::= <Op If> '=' <Op Assign>
+		final int PROD_OPASSIGN_PLUSEQ                              = 133;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
+//		final int PROD_OPASSIGN_MINUSEQ                             = 134;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
+//		final int PROD_OPASSIGN_TIMESEQ                             = 135;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
+//		final int PROD_OPASSIGN_DIVEQ                               = 136;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
+//		final int PROD_OPASSIGN_CARETEQ                             = 137;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
+//		final int PROD_OPASSIGN_AMPEQ                               = 138;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
+//		final int PROD_OPASSIGN_PIPEEQ                              = 139;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
+//		final int PROD_OPASSIGN_GTGTEQ                              = 140;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
+		final int PROD_OPASSIGN_LTLTEQ                              = 141;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
+//		final int PROD_OPASSIGN                                     = 142;  // <Op Assign> ::= <Op If>
+//		final int PROD_OPIF_QUESTION_COLON                          = 143;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
+//		final int PROD_OPIF                                         = 144;  // <Op If> ::= <Op Or>
+//		final int PROD_OPOR_PIPEPIPE                                = 145;  // <Op Or> ::= <Op Or> '||' <Op And>
+//		final int PROD_OPOR                                         = 146;  // <Op Or> ::= <Op And>
+//		final int PROD_OPAND_AMPAMP                                 = 147;  // <Op And> ::= <Op And> '&&' <Op BinOR>
+//		final int PROD_OPAND                                        = 148;  // <Op And> ::= <Op BinOR>
+//		final int PROD_OPBINOR_PIPE                                 = 149;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
+//		final int PROD_OPBINOR                                      = 150;  // <Op BinOR> ::= <Op BinXOR>
+//		final int PROD_OPBINXOR_CARET                               = 151;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
+//		final int PROD_OPBINXOR                                     = 152;  // <Op BinXOR> ::= <Op BinAND>
+//		final int PROD_OPBINAND_AMP                                 = 153;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
+//		final int PROD_OPBINAND                                     = 154;  // <Op BinAND> ::= <Op Equate>
+//		final int PROD_OPEQUATE_EQEQ                                = 155;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
+//		final int PROD_OPEQUATE_EXCLAMEQ                            = 156;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
+//		final int PROD_OPEQUATE                                     = 157;  // <Op Equate> ::= <Op Compare>
+//		final int PROD_OPCOMPARE_LT                                 = 158;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
+//		final int PROD_OPCOMPARE_GT                                 = 159;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
+//		final int PROD_OPCOMPARE_LTEQ                               = 160;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
+//		final int PROD_OPCOMPARE_GTEQ                               = 161;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
+//		final int PROD_OPCOMPARE                                    = 162;  // <Op Compare> ::= <Op Shift>
+//		final int PROD_OPSHIFT_LTLT                                 = 163;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
+//		final int PROD_OPSHIFT_GTGT                                 = 164;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
+//		final int PROD_OPSHIFT                                      = 165;  // <Op Shift> ::= <Op Add>
+//		final int PROD_OPADD_PLUS                                   = 166;  // <Op Add> ::= <Op Add> '+' <Op Mult>
+//		final int PROD_OPADD_MINUS                                  = 167;  // <Op Add> ::= <Op Add> '-' <Op Mult>
+//		final int PROD_OPADD                                        = 168;  // <Op Add> ::= <Op Mult>
+//		final int PROD_OPMULT_TIMES                                 = 169;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
+//		final int PROD_OPMULT_DIV                                   = 170;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
+//		final int PROD_OPMULT_PERCENT                               = 171;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
+//		final int PROD_OPMULT                                       = 172;  // <Op Mult> ::= <Op Unary>
+//		final int PROD_OPUNARY_EXCLAM                               = 173;  // <Op Unary> ::= '!' <Op Unary>
+//		final int PROD_OPUNARY_TILDE                                = 174;  // <Op Unary> ::= '~' <Op Unary>
+//		final int PROD_OPUNARY_MINUS                                = 175;  // <Op Unary> ::= '-' <Op Unary>
+//		final int PROD_OPUNARY_TIMES                                = 176;  // <Op Unary> ::= '*' <Op Unary>
+//		final int PROD_OPUNARY_AMP                                  = 177;  // <Op Unary> ::= '&' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS                             = 178;  // <Op Unary> ::= '++' <Op Unary>
+		final int PROD_OPUNARY_MINUSMINUS                           = 179;  // <Op Unary> ::= '--' <Op Unary>
+//		final int PROD_OPUNARY_PLUSPLUS2                            = 180;  // <Op Unary> ::= <Op Pointer> '++'
+		final int PROD_OPUNARY_MINUSMINUS2                          = 181;  // <Op Unary> ::= <Op Pointer> '--'
+//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 182;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
+//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 183;  // <Op Unary> ::= sizeof '(' <Type> ')'
+//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 184;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
+//		final int PROD_OPUNARY                                      = 185;  // <Op Unary> ::= <Op Pointer>
+//		final int PROD_OPPOINTER_DOT                                = 186;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
+//		final int PROD_OPPOINTER_MINUSGT                            = 187;  // <Op Pointer> ::= <Op Pointer> '->' <Call Id>
+//		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 188;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
+//		final int PROD_OPPOINTER                                    = 189;  // <Op Pointer> ::= <Value>
+		final int PROD_CALLID_ID_LPAREN_RPAREN                      = 190;  // <Call Id> ::= Id '(' <Expr> ')'
+		final int PROD_CALLID_ID_LPAREN_RPAREN2                     = 191;  // <Call Id> ::= Id '(' ')'
+//		final int PROD_CALLID_ID                                    = 192;  // <Call Id> ::= Id
+//		final int PROD_VALUE_OCTLITERAL                             = 193;  // <Value> ::= OctLiteral
+//		final int PROD_VALUE_HEXLITERAL                             = 194;  // <Value> ::= HexLiteral
+//		final int PROD_VALUE_DECLITERAL                             = 195;  // <Value> ::= DecLiteral
+//		final int PROD_VALUE_STRINGLITERAL                          = 196;  // <Value> ::= StringLiteral
+//		final int PROD_VALUE_CHARLITERAL                            = 197;  // <Value> ::= CharLiteral
+//		final int PROD_VALUE_FLOATLITERAL                           = 198;  // <Value> ::= FloatLiteral
+//		final int PROD_VALUE                                        = 199;  // <Value> ::= <Call Id>
+//		final int PROD_VALUE_LPAREN_RPAREN                          = 200;  // <Value> ::= '(' <Expr> ')'
 	};
 
 	//---------------------------- Local Definitions ---------------------
@@ -598,24 +543,38 @@ public class CParser extends CodeParser
 	@Override
 	protected File prepareTextfile(String _textToParse, String _encoding)
 	{
-		final String voidCastPattern = "(^\\s*|.*?\\W+\\s*)\\(\\s*void\\s*\\)(.+)";
+		//final String voidCastPattern = "(^\\s*|.*?\\W+\\s*)\\(\\s*void\\s*\\)(.*?)";
+		final String voidCastPattern = "(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)";
 		final String[][] typeReplacements = new String[][] {
 			{"size_t", "unsigned long"},
-			{"time_t", "unsigned long"}
+			{"time_t", "unsigned long"},
+			// FIXME to be made configurable
+			{"cob_u8_t", "unsigned int"}
 		};
+		//========================================================================!!!
+		// FIXME introduce a plugin-defined option configuration for C
+		this.setPluginOption("typeNames", "cob_field,cob_u8_ptr,cob_call_union");
+		//========================================================================!!!
+		
 		// #define	a	b
+		final String definePattern = "^#define\\s+(\\w*)\\s+(\\S.*?)";
 		// #define	a	// empty
-		final String definePattern	= "^#define\\s+(\\w\\S*)\\s*(.+)?";
+		//final String definePattern	= "^#define\\s+(\\w\\S*)\\s*(.+)?";
+		final String defineEmptyPattern = "^#define\\s+(\\w*)\\s*";
 		// #define	a(b)	functionname (int b)
 		// #define	a(b,c,d)	functionname (int b, char *d)	// multiple ones, some may be omitted
 		// #define	a(b)	// empty
-		final String defineFuncPattern	= "^#define\\s+(\\w\\S*)\\(([^)]+)\\)\\s*(.+)?";
+		//final String defineFuncPattern	= "^#define\\s+(\\w\\S*)\\(([^)]+)\\)\\s*(.+)?";
+		final String defineFuncPattern	= "^#define\\s+(\\w+)\\s*\\(([^)]+)\\)\\s+(.*)";
 		// #undef	a
-		final String undefPattern	= "^#undef\\s+([\\w].*)";
+		//final String undefPattern	= "^#undef\\s+([\\w].*)";
+		final String undefPattern	= "^#undef\\s+(\\w+)(.*)";
 		File interm = null;
+		
 		try
 		{
 			File file = new File(_textToParse);
+			//HashMap<String, String> defines = new LinkedHashMap<String, String>();
 			HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
 			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
@@ -626,119 +585,135 @@ public class CParser extends CodeParser
 			boolean inComment = false;
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the #define replacements (at least roughly...) which we do
-			while ((strLine = br.readLine()) != null)
+			// do the #define replacements (at least roughly...)
+			while ((strLine = br.readLine()) != null)   
 			{
 				String trimmedLine = strLine.trim();
-				String splitLine[];
-				
+
 				if (trimmedLine.isEmpty()) {
 					srcCode += "\n";
 					continue;
 				}
+				
+				
 				// the grammar doesn't know about continuation markers,
 				// concatenate the lines here
-				if (strLine.endsWith(" /") || strLine.endsWith("\t/")) {
-					int contLines = 0;
+				if (strLine.endsWith("\\")) {
+					String newlines = "";
 					strLine = strLine.substring(0, strLine.length() - 1);
 					String otherline = "";
 					while ((otherline = br.readLine()) != null) {
-						contLines++;
-						if (otherline.endsWith("/")) {
+						newlines += "\n";
+						if (otherline.endsWith("\\")) {
 							strLine += otherline.substring(0, otherline.length() - 1);
 						} else {
 							strLine += otherline;
 							break;
 						}
 					}
+					trimmedLine = strLine.trim();
 					// add line breaks for better line counter - useful?
-					strLine += Collections.nCopies(contLines, '\n');
+					strLine += newlines;
 				}
 				
 				// check if we are in a comment block, in this case look for the end
-				// FIXME: currently only up to 1 comment block per line
-				if (inComment) {
-					splitLine = trimmedLine.split("\\*/");
-					if (splitLine.length != 1) {
-						inComment = false;
-						if (splitLine.length != 0) {  // zero -> only comment marker
-							trimmedLine = splitLine[1].trim();
-						} else {
-							trimmedLine = "";
+				boolean commentsChecked = false;
+				String commentFree = "";
+				String lineTail = trimmedLine;
+				while (!lineTail.isEmpty() && !commentsChecked) {
+					String splitLine[];
+					if (inComment) {
+						splitLine = lineTail.split("\\*/", 2);
+						if (splitLine.length > 1) {
+							inComment = false;
+							lineTail = " " + splitLine[1].trim();
+						}
+						else {
+							commentsChecked = true;
+							lineTail = "";
+						}
+					}
+
+					if (!inComment && !lineTail.isEmpty()) {
+						splitLine = lineTail.split("//", 2);
+						lineTail = splitLine[0].trim();
+						// check if the line starts a new comment block
+						splitLine = lineTail.split("/\\*", 2);
+						if (splitLine.length > 1) {
+							inComment = true;
+							commentFree += " " + splitLine[0].trim();
+							lineTail = splitLine[1];
+						}
+						else {
+							commentsChecked = true;
 						}
 					}
 				}
+				trimmedLine = (commentFree + lineTail).trim();
 				
 				if (!trimmedLine.isEmpty()) {
-					splitLine = trimmedLine.split("//");
-					if (splitLine.length != 0) { // zero -> only comment marker
-						
-						// remove inline comments for further checks
-						trimmedLine = splitLine[0].trim();
-
-						// check if the line starts a new comment block
-						splitLine = trimmedLine.split("/\\*");
-						if (splitLine.length != 1) {
-							inComment = true;
+					if (trimmedLine.startsWith("#")) {
+						if (trimmedLine.startsWith("#include")) {
+							// FIXME: *MAYBE* store list of non-system includes to parse as IMPORT diagram upon request?
+							//        Or always/optional do internal preparsing for resolving define/struct/typedef for the imported file?
+							strLine = "// preparser include: " + strLine;
 						}
-					}
-				}
-				
-				
-				if (inComment || trimmedLine.isEmpty()) {
-					// no further processing
-				}
-				else if (trimmedLine.startsWith("#")) {
-					if (trimmedLine.startsWith("#include")) {
-						// FIXME: *MAYBE* store list of non-system includes to parse as IMPORT diagram upon request?
-						//        Or always/optional do internal preparsing for resolving define/struct/typedef for the imported file?
-						strLine = "// preparser include: " + strLine;
-					}
-					else if (trimmedLine.matches(defineFuncPattern)) {
-						// #define	a1(a2,a3,a4)	stuff  ( a2 ) 
-						//          1  >  2   <		>     3     <
-						String symbol = trimmedLine.replaceAll(defineFuncPattern, "$1");
-						String params = trimmedLine.replaceAll(defineFuncPattern, "$2");
-						String subst = trimmedLine.replaceAll(defineFuncPattern, "$3");
-						String substTab[] = new String[2];
-						substTab[0] = replaceDefinedEntries(subst, defines).trim();
-						substTab[1] = params;
-						defines.put(symbol, substTab);
-						strLine = "// preparser define (function): " + strLine;
-					}
-					else if (trimmedLine.matches(definePattern)) {
-						// #define	a	b
-						//          1	2
-						String symbol = trimmedLine.replaceAll(definePattern, "$1");
-						String subst[] = new String[1];
-						subst[0] = trimmedLine.replaceAll(definePattern, "$2");
-						subst[0] = replaceDefinedEntries(subst[0], defines).trim();
-						defines.put(symbol, subst);
-						strLine = "// preparser define: " + strLine;
-					}
-					else if (trimmedLine.matches(undefPattern)) {
-						// #undef	a
-						String symbol = trimmedLine.replaceAll(definePattern, "$1");
-						defines.remove(symbol);
-						strLine = "// preparser undef: " + strLine;
+						else if (trimmedLine.matches(defineFuncPattern)) {
+							// #define	a1(a2,a3,a4)	stuff  ( a2 ) 
+							//          1  >  2   <		>     3     <
+							String symbol = trimmedLine.replaceAll(defineFuncPattern, "$1");
+							String[] params = trimmedLine.replaceAll(defineFuncPattern, "$2").split(",");
+							String subst = trimmedLine.replaceAll(defineFuncPattern, "$3");
+							String substTab[] = new String[params.length + 1];
+							substTab[0] = replaceDefinedEntries(subst, defines).trim();
+							for (int i = 0; i < params.length; i++) {
+								substTab[i+1] = params[i].trim();
+							}
+							defines.put(symbol, substTab);
+							strLine = "// preparser define (function): " + strLine;
+						}
+						else if (trimmedLine.matches(definePattern)) {
+							// #define	a	b
+							//          1	2
+							String symbol = trimmedLine.replaceAll(definePattern, "$1");
+							String subst[] = new String[1];
+							subst[0] = trimmedLine.replaceAll(definePattern, "$2");
+							subst[0] = replaceDefinedEntries(subst[0], defines).trim();
+							defines.put(symbol, subst);
+							strLine = "// preparser define: " + strLine;
+						}
+						else if (trimmedLine.matches(undefPattern)) {
+							// #undef	a
+							String symbol = trimmedLine.replaceAll(undefPattern, "$1");
+							defines.remove(symbol);
+							strLine = "// preparser undef: " + strLine;
+						}
+						else if (trimmedLine.matches(defineEmptyPattern)) {
+							// #define	a
+							String symbol = trimmedLine.replaceAll(definePattern, "$1");
+							String subst[] = new String[]{""};
+							defines.put(symbol, subst);
+							strLine = "// preparser define: " + strLine;
+						}
+						else {
+							// #pragma, #error, #include, #if, #ifdef ...
+							strLine = "// preparser instruction: " + strLine;
+						}
 					} else {
-						// #pragma, #error, #include, #if, #ifdef ...
-						strLine = "// preparser instruction: " + strLine;
-					}
-				} else {
-					strLine = replaceDefinedEntries(strLine, defines);
-					// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
-					// replace as many as possible of them in advance.
-					// We cannot guess however, what's included since include files won't be available for us.
-					for (String[] pair: typeReplacements) {
-						String search = "(^|.*\\W)"+pair[0]+"(\\W.*|$)";
-						if (strLine.matches(search)) {
-							strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
+						strLine = replaceDefinedEntries(strLine, defines);
+						// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
+						// replace as many as possible of them in advance.
+						// We cannot guess however, what's included since include files won't be available for us.
+						for (String[] pair: typeReplacements) {
+							String search = "(^|.*?\\W)"+Pattern.quote(pair[0])+"(\\W.*?|$)";
+							if (strLine.matches(search)) {
+								strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
+							}
 						}
-					}
-					if (strLine.matches(voidCastPattern)) {
-						//strLine = strLine.replaceAll(voidCastPattern, "$1$2");
-						strLine = strLine.replaceAll(voidCastPattern, "$1$3");
+						if (strLine.matches(voidCastPattern)) {
+							strLine = strLine.replaceAll(voidCastPattern, "$1$2");
+						}
+						//srcCode += strLine + "\n";
 					}
 				}
 				srcCode += strLine + "\n";
@@ -746,287 +721,17 @@ public class CParser extends CodeParser
 			//Close the input stream
 			in.close();
 
+//			for (Entry<String, String> entry: defines.entrySet()) {
+////				if (logFile != null) {
+////					logFile.write("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()) + "\n");
+////				}
+//				srcCode = srcCode.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)", "$1"+ Matcher.quoteReplacement((String)entry.getValue()) + "$2");
+//			}
 			
 			// Now we try to replace all type names introduced by typedef declarations
 			// because the grammar doesn't cope with user-defined type ids.
-			// In a first step we gather all type names defined via typedef in a
-			// StringList mapping them by their index to generic type ids being
-			// defined in the grammar ("user_type_###"). It will be a rudimentary parsing
-			// i.e. we don't consider anything except typedef declarations and we expect
-			// a syntactically correct construct. If something
-			// strange occurs then we just ignore the text until we bump into another
-			// typedef keyword.
-			// In the second step we replace all identifiers occurring in the map with
-			// their associated generic name.
-			// TODO in future this will have to care of the block scope...
-			
-			typedefs.clear();
-			Vector<Integer[]> blockRanges = new Vector<Integer[]>();
-			LinkedList<String> typedefDecomposers = new LinkedList<String>();
-			
-			Stack<Character> parenthStack = new Stack<Character>();
-			Stack<Integer> blockStarts = new Stack<Integer>();
-			int blockStartLine = -1;
-			int typedefLevel = -1;
-			int indexDepth = 0;
-			PreprocState state = PreprocState.TEXT;
-			String lastId = null;
-			char expected = '\0';
-			
-			StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(srcCode));
-			tokenizer.quoteChar('"');
-			tokenizer.quoteChar('\'');
-			tokenizer.slashStarComments(true);
-			tokenizer.slashSlashComments(true);
-			tokenizer.parseNumbers();
-			tokenizer.eolIsSignificant(true);
-			// Underscore must be added to word characters!
-			tokenizer.wordChars('_', '_');
-			
-			// A regular search pattern to find and decompose type definitions with both
-			// struct/union/enum id and type id like in:
-			// typedef struct structId {...} typeId [, ...];
-			// (This is something the used grammar doesn't cope with and so it is to be 
-			// decomposed as follows for the example above:
-			// struct structId {...};
-			// typedef struct structId typeId [, ...];
-			String typedefStructPattern = "";
-			
-			while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
-				String word = null;
-				log("[" + tokenizer.lineno() + "]: ", false);
-				switch (tokenizer.ttype) {
-				case StreamTokenizer.TT_EOL:
-					log("**newline**\n", false);
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += ".*?\\v";
-					}
-					break;
-				case StreamTokenizer.TT_NUMBER:
-					log("number: " + tokenizer.nval + "\n", false);
-					if (!typedefStructPattern.isEmpty()) {
-						// NOTE: a non-integral number literal is rather unlikely within a type definition...
-						typedefStructPattern += "\\W+[+-]?[0-9]+";
-					}
-					break;
-				case StreamTokenizer.TT_WORD:
-					word = tokenizer.sval;
-					log("word: " + word + "\n", false);
-					if (state == PreprocState.TYPEDEF) {
-						if (word.equals("enum") || word.equals("struct") || word.equals("union")) {
-							state = PreprocState.STRUCT_UNION_ENUM;
-							typedefStructPattern = "typedef\\s+(" + word;
-						}
-						else {
-							lastId = word;	// Might be the defined type id if no identifier will follow
-							typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
-						}
-					}
-					else if (state == PreprocState.TYPEID && indexDepth == 0) {
-						typedefs.add(word);
-						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-						if (!typedefStructPattern.isEmpty()) {
-							if (typedefStructPattern.matches(".*?\\W")) {
-								typedefStructPattern += "\\s*" + word;
-							}
-							else {
-								typedefStructPattern += "\\s+" + word;
-							}
-						}
-					}
-					// START KGU 2017-05-23: Bugfix - declarations like "typedef struct structId typeId"
-					else if (state == PreprocState.STRUCT_UNION_ENUM) {
-						state = PreprocState.STRUCT_UNION_ENUM_ID;
-						// This must be the struct/union/enum id.
-						typedefStructPattern += "\\s+" + word + ")\\s*(";	// named struct/union/enum: add its id and switch to next group
-					}
-					else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
-						// We have read the struct/union/enum id already, so this must be the first type id.
-						typedefs.add(word);
-						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-						typedefStructPattern = "";	// ... but it's definitely no combined struct and type definition
-						state = PreprocState.TYPEID;
-					}
-					// END KGU 2017-05-23
-					else if (word.equals("typedef")) {
-						typedefLevel = blockStarts.size();
-						state = PreprocState.TYPEDEF;
-					}
-					else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-						if (typedefStructPattern.matches(".*\\w") && !typedefStructPattern.endsWith("\\v")) {
-							typedefStructPattern += "\\s+";
-						}
-						else if (typedefStructPattern.endsWith(",") || typedefStructPattern.endsWith(";")) {
-							// these are typical positions for comments...
-							typedefStructPattern += ".*?";
-						}
-						else {
-							typedefStructPattern += "\\s*";
-						}
-						typedefStructPattern += word;
-					}
-					break;
-				case '\'':
-					log("character: '" + tokenizer.sval + "'\n", false);
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += Pattern.quote("'"+tokenizer.sval+"'");	// We hope that there are no parentheses inserted
-					}
-					break;
-				case '"':
-					log("string: \"" + tokenizer.sval + "\"\n", false);
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += Pattern.quote("\""+tokenizer.sval+"\"");	// We hope that there are no parentheses inserted
-					}
-					break;
-				case '{':
-					blockStarts.add(tokenizer.lineno());
-					if (state == PreprocState.STRUCT_UNION_ENUM || state == PreprocState.STRUCT_UNION_ENUM_ID) {
-						state = PreprocState.COMPLIST;
-						if (state == PreprocState.STRUCT_UNION_ENUM) {
-							typedefStructPattern = ""; 	// We don't need a decomposition
-						}
-						else {
-							typedefStructPattern += "\\s*\\{";
-						}
-					}
-					parenthStack.push('}');
-					break;
-				case '(':
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*\\(";
-					}
-					parenthStack.push(')');
-					break;
-				case '[':	// FIXME: Handle index lists in typedefs!
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*\\[";
-					}
-					if (state == PreprocState.TYPEID) {
-						indexDepth++;
-					}
-					parenthStack.push(']');
-					break;
-				case '}':
-					blockStartLine = blockStarts.pop();
-					// Store the start and current line no as block range if there are typedefs on this block level
-					int blockEndLine = tokenizer.lineno();
-					Integer[] entry;
-					for (int i = blockRanges.size()-1; i >= 0 && (entry = blockRanges.get(i))[1] >= blockStartLine; i--) {
-						if (entry[1] == blockStartLine && entry[1] < entry[0]) {
-							entry[1] = blockEndLine;
-						}
-					}
-					if (state == PreprocState.COMPLIST && typedefLevel == blockStarts.size()) {
-						// After the closing brace, type ids are expected to follow
-						if (!typedefStructPattern.isEmpty()) {
-							typedefStructPattern += "\\s*\\})\\s*(";	// .. therefore open the next group
-						}
-						state = PreprocState.TYPEID;
-					}
-				case ')':
-				case ']':	// Handle index lists in typedef!s
-					{
-						if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
-							String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
-							+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
-							+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
-							System.err.println(errText);
-							log(errText, false);
-						}
-						else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
-							indexDepth--;
-							if (!typedefStructPattern.isEmpty()) {
-								typedefStructPattern += "\\s*\\" + (char)tokenizer.ttype;
-							}
-						}
-					}
- 					break;
-				case '*':
-					if (state == PreprocState.TYPEDEF) {
-						state = PreprocState.TYPEID;
-					}
-					else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
-						typedefStructPattern = "";	// Cannot be a combined definition: '*' follows immediately to the struct id
-					}
-					else if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*[*]";
-					}
-					break;
-				case ',':
-					if (state == PreprocState.TYPEDEF && lastId != null) {
-						typedefs.add(lastId);
-						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-						if (!typedefStructPattern.isEmpty()) {
-							// Type name won't be replaced within the typedef clause
-							//typedefStructPattern += "\\s+" + String.format(USER_TYPE_ID_MASK, typedefs.count()) + "\\s*,";
-							typedefStructPattern += "\\s+" + lastId + "\\s*,";
-						}
-						state = PreprocState.TYPEID;
-					}
-					else if (state == PreprocState.TYPEID) {
-						if (!typedefStructPattern.isEmpty()) {
-							typedefStructPattern += "\\s*,";
-						}
-					}
-					break;
-				case ';':
-					if (state == PreprocState.TYPEDEF && lastId != null) {
-						typedefs.add(lastId);
-						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-						typedefStructPattern = "";
-						state = PreprocState.TEXT;
-					}
-					else if (state == PreprocState.TYPEID) {
-						if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
-							typedefStructPattern += ")\\s*;";
-							typedefDecomposers.add(typedefStructPattern);
-						}
-						typedefStructPattern = "";
-						state = PreprocState.TEXT;						
-					}
-					else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*;";
-					}
-					break;
-				default:
-					char tokenChar = (char)tokenizer.ttype;
-					if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*" + Pattern.quote(tokenChar + "");
-					}
-					log("other: " + tokenChar + "\n", false);
-				}
-				log("", false);
-			}
-			
-			StringList srcLines = StringList.explode(srcCode, "\n");
-			// Now we replace the detected user-specific type names by the respective generic ones.
-			for (int i = 0; i < typedefs.count(); i++) {
-				String typeName = typedefs.get(i);
-				Integer[] range = blockRanges.get(i);
-				// Global range?
-				if (range[1] < 0) {
-					range[1] = srcLines.count()-1;
-				}
-				String pattern = "(^|.*?\\W)("+typeName+")(\\W.*?|$)";
-				String subst = String.format(USER_TYPE_ID_MASK, i+1);
-				this.replacedIds.put(subst, typeName);
-				subst = "$1" + subst + "$3";
-				for (int j = range[0]; j <= range[1]; j++) {
-					if (srcLines.get(j).matches(pattern)) {
-						srcLines.set(j, srcLines.get(j).replaceAll(pattern, subst));
-					}
-				}
-			}
-			srcCode = srcLines.concatenate("\n");
-			
-			// Now we try the impossible: to decompose compound struct/union/enum and type name definition
-			for (String pattern: typedefDecomposers) {
-				srcCode = srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
-			}
+			srcCode = this.prepareTypedefs(srcCode, _textToParse);
 
-//			Regex r = new Regex("(.*\\()\\s*?void\\s*?(\\).*)", "$1$2");
-//			srcCode = r.replaceAll(srcCode);
-			
 			//System.out.println(srcCode);
 
 			// trim and save as new file
@@ -1041,6 +746,308 @@ public class CParser extends CodeParser
 			System.err.println("CParser.prepareTextfile() -> " + e.getMessage());
 		}
 		return interm;
+	}
+
+	/**
+	 * Detects typedef declarations in the {@code srcCode}, identifies the defined type names and replaces
+	 * them throughout their definition scopes text with generic names "user_type_###" defined in the grammar
+	 * such that the parse won't fail. The type name map is represented by the static variable {@link #typedefs}
+	 * where the ith entry is mapped to a type id "user_type_&lt;i+1&gt;" for later backwards replacement.
+	 * @param srcCode - the pre-processed source code as long string
+	 * @param _textToParse - the original file name
+	 * @return the source code with replaced type names
+	 * @throws IOException
+	 */
+	private String prepareTypedefs(String srcCode, String _textToParse) throws IOException
+	{
+		// In a first step we gather all type names defined via typedef in a
+		// StringList mapping them by their index to generic type ids being
+		// defined in the grammar ("user_type_###"). It will be a rudimentary parsing
+		// i.e. we don't consider anything except typedef declarations and we expect
+		// a syntactically correct construct. If something strange occurs then we just
+		// ignore the text until we bump into another typedef keyword.
+		// In the second step we replace all identifiers occurring in the map with
+		// their associated generic name, respecting the definition scope.
+		
+		typedefs.clear();
+
+		Vector<Integer[]> blockRanges = new Vector<Integer[]>();
+		LinkedList<String> typedefDecomposers = new LinkedList<String>();
+		
+		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow confiured global typenames
+		String configuredTypeNames = (String)this.getPluginOption("typeNames");
+		if (configuredTypeNames != null) {
+			String[] typeIds = configuredTypeNames.split("(,| )");
+			for (int i = 0; i < typeIds.length; i++) {
+				String typeId = typeIds[i].trim();
+				if (typeId.matches("^\\w+$")) {
+					typedefs.add(typeId);
+					blockRanges.addElement(new Integer[]{0, -1});
+				}
+			}
+		}
+		// END KGU 2017-05-26
+			
+		Stack<Character> parenthStack = new Stack<Character>();
+		Stack<Integer> blockStarts = new Stack<Integer>();
+		int blockStartLine = -1;
+		int typedefLevel = -1;
+		int indexDepth = 0;
+		PreprocState state = PreprocState.TEXT;
+		String lastId = null;
+		char expected = '\0';
+		
+		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(srcCode));
+		tokenizer.quoteChar('"');
+		tokenizer.quoteChar('\'');
+		tokenizer.slashStarComments(true);
+		tokenizer.slashSlashComments(true);
+		tokenizer.parseNumbers();
+		tokenizer.eolIsSignificant(true);
+		// Underscore must be added to word characters!
+		tokenizer.wordChars('_', '_');
+		
+		// A regular search pattern to find and decompose type definitions with both
+		// struct/union/enum id and type id like in:
+		// typedef struct structId {...} typeId [, ...];
+		// (This is something the used grammar doesn't cope with and so it is to be 
+		// decomposed as follows for the example above:
+		// struct structId {...};
+		// typedef struct structId typeId [, ...];
+		String typedefStructPattern = "";
+		
+		while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+			String word = null;
+			log("[" + tokenizer.lineno() + "]: ", false);
+			switch (tokenizer.ttype) {
+			case StreamTokenizer.TT_EOL:
+				log("**newline**\n", false);
+				if (!typedefStructPattern.isEmpty()) {
+					typedefStructPattern += ".*?\\v";
+				}
+				break;
+			case StreamTokenizer.TT_NUMBER:
+				log("number: " + tokenizer.nval + "\n", false);
+				if (!typedefStructPattern.isEmpty()) {
+					// NOTE: a non-integral number literal is rather unlikely within a type definition...
+					typedefStructPattern += "\\W+[+-]?[0-9]+";
+				}
+				break;
+			case StreamTokenizer.TT_WORD:
+				word = tokenizer.sval;
+				log("word: " + word + "\n", false);
+				if (state == PreprocState.TYPEDEF) {
+					if (word.equals("enum") || word.equals("struct") || word.equals("union")) {
+						state = PreprocState.STRUCT_UNION_ENUM;
+						typedefStructPattern = "typedef\\s+(" + word;
+					}
+					else {
+						lastId = word;	// Might be the defined type id if no identifier will follow
+						typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
+					}
+				}
+				else if (state == PreprocState.TYPEID && indexDepth == 0) {
+					typedefs.add(word);
+					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					if (!typedefStructPattern.isEmpty()) {
+						if (typedefStructPattern.matches(".*?\\W")) {
+							typedefStructPattern += "\\s*" + word;
+						}
+						else {
+							typedefStructPattern += "\\s+" + word;
+						}
+					}
+				}
+				// START KGU 2017-05-23: Bugfix - declarations like "typedef struct structId typeId"
+				else if (state == PreprocState.STRUCT_UNION_ENUM) {
+					state = PreprocState.STRUCT_UNION_ENUM_ID;
+					// This must be the struct/union/enum id.
+					typedefStructPattern += "\\s+" + word + ")\\s*(";	// named struct/union/enum: add its id and switch to next group
+				}
+				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
+					// We have read the struct/union/enum id already, so this must be the first type id.
+					typedefs.add(word);
+					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					typedefStructPattern = "";	// ... but it's definitely no combined struct and type definition
+					state = PreprocState.TYPEID;
+				}
+				// END KGU 2017-05-23
+				else if (word.equals("typedef")) {
+					typedefLevel = blockStarts.size();
+					state = PreprocState.TYPEDEF;
+				}
+				else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+					if (typedefStructPattern.matches(".*\\w") && !typedefStructPattern.endsWith("\\v")) {
+						typedefStructPattern += "\\s+";
+					}
+					else if (typedefStructPattern.endsWith(",") || typedefStructPattern.endsWith(";")) {
+						// these are typical positions for comments...
+						typedefStructPattern += ".*?";
+					}
+					else {
+						typedefStructPattern += "\\s*";
+					}
+					typedefStructPattern += word;
+				}
+				break;
+			case '\'':
+				log("character: '" + tokenizer.sval + "'\n", false);
+				if (!typedefStructPattern.isEmpty()) {
+					typedefStructPattern += Pattern.quote("'"+tokenizer.sval+"'");	// We hope that there are no parentheses inserted
+				}
+				break;
+			case '"':
+				log("string: \"" + tokenizer.sval + "\"\n", false);
+				if (!typedefStructPattern.isEmpty()) {
+					typedefStructPattern += Pattern.quote("\""+tokenizer.sval+"\"");	// We hope that there are no parentheses inserted
+				}
+				break;
+			case '{':
+				blockStarts.add(tokenizer.lineno());
+				if (state == PreprocState.STRUCT_UNION_ENUM || state == PreprocState.STRUCT_UNION_ENUM_ID) {
+					state = PreprocState.COMPLIST;
+					if (state == PreprocState.STRUCT_UNION_ENUM) {
+						typedefStructPattern = ""; 	// We don't need a decomposition
+					}
+					else {
+						typedefStructPattern += "\\s*\\{";
+					}
+				}
+				parenthStack.push('}');
+				break;
+			case '(':
+				if (!typedefStructPattern.isEmpty()) {
+					typedefStructPattern += "\\s*\\(";
+				}
+				parenthStack.push(')');
+				break;
+			case '[':	// FIXME: Handle index lists in typedefs!
+				if (!typedefStructPattern.isEmpty()) {
+					typedefStructPattern += "\\s*\\[";
+				}
+				if (state == PreprocState.TYPEID) {
+					indexDepth++;
+				}
+				parenthStack.push(']');
+				break;
+			case '}':
+				blockStartLine = blockStarts.pop();
+				// Store the start and current line no as block range if there are typedefs on this block level
+				int blockEndLine = tokenizer.lineno();
+				Integer[] entry;
+				for (int i = blockRanges.size()-1; i >= 0 && (entry = blockRanges.get(i))[1] >= blockStartLine; i--) {
+					if (entry[1] == blockStartLine && entry[1] < entry[0]) {
+						entry[1] = blockEndLine;
+					}
+				}
+				if (state == PreprocState.COMPLIST && typedefLevel == blockStarts.size()) {
+					// After the closing brace, type ids are expected to follow
+					if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += "\\s*\\})\\s*(";	// .. therefore open the next group
+					}
+					state = PreprocState.TYPEID;
+				}
+			case ')':
+			case ']':	// Handle index lists in typedef!s
+				{
+					if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
+						String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
+						+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
+						+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
+						System.err.println(errText);
+						log(errText, false);
+					}
+					else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
+						indexDepth--;
+						if (!typedefStructPattern.isEmpty()) {
+							typedefStructPattern += "\\s*\\" + (char)tokenizer.ttype;
+						}
+					}
+				}
+					break;
+			case '*':
+				if (state == PreprocState.TYPEDEF) {
+					state = PreprocState.TYPEID;
+				}
+				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
+					typedefStructPattern = "";	// Cannot be a combined definition: '*' follows immediately to the struct id
+				}
+				else if (!typedefStructPattern.isEmpty()) {
+					typedefStructPattern += "\\s*[*]";
+				}
+				break;
+			case ',':
+				if (state == PreprocState.TYPEDEF && lastId != null) {
+					typedefs.add(lastId);
+					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					if (!typedefStructPattern.isEmpty()) {
+						// Type name won't be replaced within the typedef clause
+						//typedefStructPattern += "\\s+" + String.format(USER_TYPE_ID_MASK, typedefs.count()) + "\\s*,";
+						typedefStructPattern += "\\s+" + lastId + "\\s*,";
+					}
+					state = PreprocState.TYPEID;
+				}
+				else if (state == PreprocState.TYPEID) {
+					if (!typedefStructPattern.isEmpty()) {
+						typedefStructPattern += "\\s*,";
+					}
+				}
+				break;
+			case ';':
+				if (state == PreprocState.TYPEDEF && lastId != null) {
+					typedefs.add(lastId);
+					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					typedefStructPattern = "";
+					state = PreprocState.TEXT;
+				}
+				else if (state == PreprocState.TYPEID) {
+					if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
+						typedefStructPattern += ")\\s*;";
+						typedefDecomposers.add(typedefStructPattern);
+					}
+					typedefStructPattern = "";
+					state = PreprocState.TEXT;						
+				}
+				else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+					typedefStructPattern += "\\s*;";
+				}
+				break;
+			default:
+				char tokenChar = (char)tokenizer.ttype;
+				if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+					typedefStructPattern += "\\s*" + Pattern.quote(tokenChar + "");
+				}
+				log("other: " + tokenChar + "\n", false);
+			}
+			log("", false);
+		}
+		StringList srcLines = StringList.explode(srcCode, "\n");
+		// Now we replace the detected user-specific type names by the respective generic ones.
+		for (int i = 0; i < typedefs.count(); i++) {
+			String typeName = typedefs.get(i);
+			Integer[] range = blockRanges.get(i);
+			// Global range?
+			if (range[1] < 0) {
+				range[1] = srcLines.count()-1;
+			}
+			String pattern = "(^|.*?\\W)("+typeName+")(\\W.*?|$)";
+			String subst = String.format(USER_TYPE_ID_MASK, i+1);
+			this.replacedIds.put(subst, typeName);
+			subst = "$1" + subst + "$3";
+			for (int j = range[0]; j <= range[1]; j++) {
+				if (srcLines.get(j).matches(pattern)) {
+					srcLines.set(j, srcLines.get(j).replaceAll(pattern, subst));
+				}
+			}
+		}
+		srcCode = srcLines.concatenate("\n");
+		
+		// Now we try the impossible: to decompose compound struct/union/enum and type name definition
+		for (String pattern: typedefDecomposers) {
+			srcCode = srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
+		}
+
+		return srcCode;
 	}
 
 	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) {
@@ -1063,13 +1070,48 @@ public class CParser extends CodeParser
 				// key  (  text1, text2, text3 )	--->	text1
 				// #define	a1(a2,a3,a4)	some text
 				// key  (  text1, text2, text3 )	--->	some text
-				if (toReplace.matches(".*?\\W" + entry.getKey() + "\\s*\\(.*\\).*?")) {
-					if (entry.getValue()[1].isEmpty()) {
-						toReplace = toReplace.replaceAll("(.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
+				// The trouble here is that text1, text2 etc. might also contain parentheses, so may the following text.
+				// The result of the replacement would then be a total desaster
+				while (toReplace.matches("(^|.*?\\W)" + entry.getKey() + "\\s*\\(.*\\).*?")) {
+					if (entry.getValue()[0].isEmpty()) {
+						toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
 					} else {
-						// FIXME: function like defines not implemented
-						log("CParser.replaceDefinedEntries() cannot translate: "
-								+ Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", true);
+						// The greedy quantifier inside the parentheses ensures that we get to the rightmost closing parenthesis
+						String argsRaw = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)", "$3");
+						// Now we split the balanced substring (up to the first unexpected closing parenthesis) syntactically
+						// (The unmatched tail of argsRaw will be re-appended later)
+						StringList args = Element.splitExpressionList(argsRaw, ",");
+						// We test whether argument and parameter count match
+						if (args.count() != entry.getValue().length - 1) {
+							// FIXME: function-like define doesn't match arg count
+							log("CParser.replaceDefinedEntries() cannot apply function macro\n\t"
+									+ entry.getKey() + entry.getValue().toString() + "\n\tdue to arg count diffs:\n\t"
+									+ toReplace + "\n", true);
+						}
+						else {
+							HashMap<String, String> argMap = new HashMap<String, String>();
+							// Lest the substitutions should interfere with one another we first split the string for all parameters
+							StringList parts = StringList.getNew(entry.getValue()[0]); 
+							for (int i = 0; i < args.count(); i++) {
+								String param = entry.getValue()[i+1];
+								argMap.put(param, args.get(i));
+								parts = StringList.explodeWithDelimiter(parts, param);
+							}
+							// Now we have all parts separated and walk through the StringList, substituting the parameter names
+							for (int i = 0; i < parts.count(); i++) {
+								String part = parts.get(i);
+								if (argMap.containsKey(part)) {
+									parts.set(i, argMap.get(part));
+								}
+							}
+							// Now we correct possible matching defects
+							StringList argsPlusTail = Element.splitExpressionList(argsRaw, ",", true);
+							if (argsPlusTail.count() > args.count()) {
+								parts.add(argsPlusTail.get(args.count()));
+							}
+							toReplace = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)",
+									"$1" + Matcher.quoteReplacement(parts.concatenate()) + "$4");
+						}
 					}
 				}
 			} else {
@@ -1411,7 +1453,7 @@ public class CParser extends CodeParser
 				if (typeIx >= 0) {
 					Token typeToken = secReduc.get(typeIx);
 					if (typeToken.getType() == SymbolType.CONTENT) {
-						content += typeToken.asString();
+						content += typeToken.asString() + " ";
 					}
 					else {
 						content = getContent_R(secReduc.get(typeIx).asReduction(), content).trim() + " ";
@@ -2026,13 +2068,13 @@ public class CParser extends CodeParser
 					else if (idx == SymbolConstants.SYM_FLOATLITERAL && toAdd.matches(".+?[fF]")) {
 						toAdd = toAdd.replaceAll("(.+?)[fFlL]", "$1");
 					}
-					// NOTE: The missing of a break; instruction is intended here! 
-				default:
-					// START KGU 2017-05-24: We must of course restore the original type name
-					if (idx >= SymbolConstants.SYM_USER_TYPE_001 && idx <= SymbolConstants.SYM_USER_TYPE_030) {
+					// NOTE: The missing of a break instruction is intended here!
+					// START KGU 2017-05-26: We must of course restore the original type name
+				case SymbolConstants.SYM_USERTYPEID:
 						toAdd = this.undoIdReplacements(toAdd);
-					}
-					// END KGU 2017-05-24
+					// END KGU 2017-05-26
+					// NOTE: The missing of a break instruction is intended here!
+				default:
 					if (toAdd.matches("^\\w.*") && _content.matches(".*\\w$") || _content.matches(".*[,;]$")) {
 						_content += " ";
 					}

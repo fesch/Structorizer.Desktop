@@ -133,6 +133,36 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
+
+	// START KGU#395 2017-05-26: Enh. #357 - parser-specific options
+	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
+
+	/**
+	 * Returns a Generator-specific option value if available (otherwise null)
+	 * @param _optionName - option key, to be combined with the parser class name
+	 * @return an Object (of the type specified in the plugin) or null
+	 */
+	protected Object getPluginOption(String _optionName) {
+		Object optionVal = null;
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		if (this.optionMap.containsKey(fullKey)) {
+			optionVal = this.optionMap.get(fullKey);
+		}
+		return optionVal;
+	}
+
+	/**
+	 * Allows to set a plugin-specified option before the code parsing starts
+	 * @param _optionName - a key string
+	 * @param _value - an object according to the type specified in the plugin
+	 */
+	public void setPluginOption(String _optionName, Object _value)
+	{
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		this.optionMap.put(fullKey, _value);
+	}
+	// END KGU#395 2017-05-26
+	
 	// START KGU#354 2017-04-27
 	/**
 	 * An open log file for verbose parsing and building if not null
@@ -377,7 +407,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			// anyway.
 			sourceLines.removeAll("");
 			for (int i = start; i < lineNo; i++) {
-				addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i)));
+				addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i).replace("\t", "    ")));
 			}
 			String line = sourceLines.get(lineNo);
 			if (line.length() >= colNo) {
@@ -386,7 +416,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 //			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
 //				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
 //			}
-			addLineToErrorString(lineNo+1, line);
+			addLineToErrorString(lineNo+1, line.replace("\t", "    "));
 			SymbolList sl = parser.getExpectedSymbols();
 			Token token = parser.getCurrentToken();
 			final String tokVal = token.toString();

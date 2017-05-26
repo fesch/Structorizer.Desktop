@@ -414,8 +414,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected Object getPluginOption(String _optionName) {
 		Object optionVal = null;
-		if (this.optionMap.containsKey(_optionName)) {
-			optionVal = this.optionMap.get(_optionName);
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		if (this.optionMap.containsKey(fullKey)) {
+			optionVal = this.optionMap.get(fullKey);
 		}
 		return optionVal;
 	}
@@ -427,7 +428,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	public void setPluginOption(String _optionName, Object _value)
 	{
-		this.optionMap.put(_optionName, _value);
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		this.optionMap.put(fullKey, _value);
 	}
 	
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
