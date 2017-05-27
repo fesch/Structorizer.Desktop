@@ -1100,14 +1100,20 @@ public class CParser extends CodeParser
 							// Now we have all parts separated and walk through the StringList, substituting the parameter names
 							for (int i = 0; i < parts.count(); i++) {
 								String part = parts.get(i);
-								if (argMap.containsKey(part)) {
+								if (!part.isEmpty() && argMap.containsKey(part)) {
 									parts.set(i, argMap.get(part));
 								}
 							}
 							// Now we correct possible matching defects
 							StringList argsPlusTail = Element.splitExpressionList(argsRaw, ",", true);
 							if (argsPlusTail.count() > args.count()) {
-								parts.add(argsPlusTail.get(args.count()));
+								String tail = argsPlusTail.get(args.count()).trim();
+								// With high probability tail stars with a closing parenthesis, which has to be dropped if so
+								// whereas the consumed parenthesis at the end has to be restored.
+								if (tail.startsWith(")")) {
+									tail = tail.substring(1) + ")";
+								}
+								parts.add(tail);
 							}
 							toReplace = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)",
 									"$1" + Matcher.quoteReplacement(parts.concatenate()) + "$4");
@@ -1997,7 +2003,25 @@ public class CParser extends CodeParser
 			switch (token.getType()) 
 			{
 			case NON_TERMINAL:
-				_content = getContent_R(token.asReduction(), _content);	
+				_content = getContent_R(token.asReduction(), _content);
+				// START KGU 2017-05-27: There may be strings split over several lines... 
+				{
+					// Real (unescaped) newlines shouldn't occur within expressions otherwise
+					StringList parts = StringList.explode(_content, "\n");
+					if (parts.count() > 1) {
+						_content = "";
+						for (i = 0; i < parts.count(); i++) {
+							String sep = " ";	// By default we will just put a space charcter ther
+							if (_content.endsWith("\"") && parts.get(i).trim().startsWith("\"")) {
+								// In this case we may concatenate the strings (which is the meaning)
+								sep = " + ";
+							}
+							_content += sep + parts.get(i).trim();
+						}
+						_content = _content.trim();
+					}
+				}
+				// END KGU 2017-05-27
 				break;
 			case CONTENT:
 			{
@@ -2100,7 +2124,7 @@ public class CParser extends CodeParser
 	{
 		StringList exprList = new StringList();
 		String ruleHead = _reduc.getParent().getHead().toString();
-		if (ruleHead.equals("<Value>")) {
+		if (ruleHead.equals("<Value>") || ruleHead.equals("<Call Id>")) {
 			exprList.add(getContent_R(_reduc, ""));
 		}
 		else while (ruleHead.equals("<Expr>") || ruleHead.equals("<ExprIni>")) {
