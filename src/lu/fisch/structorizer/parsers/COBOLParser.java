@@ -69,11 +69,11 @@ package lu.fisch.structorizer.parsers;
  *     GOLDbuild.exe GnuCOBOL.grm && GOLDprog.exe GnuCOBOL.egt StructorizerParserTemplate.pgt COBOLParser.java.skel && dos2unix COBOLParser.java.skel
  *     
  *     Language-specific options:
- *     - srcCodeDebugLines: boolean, default = false; // FIXME: get from setting/parsing
- *     - decimalComma: boolean, default = false; // FIXME: get from setting/parsing
- *     - settingFixedForm: boolean, default = true; // FIXME: get from setting/parsing
- *     - settingFixedColumnIndicator: integer, default = 7;  // FIXME: get from setting/parsing
- *     - settingFixedColumnText: integer, defualt = 73;  // FIXME: get from setting/parsing
+ *     - debugLines: boolean, default = false;
+ *     - decimalComma: boolean, default = false;
+ *     - fixedForm: boolean, default = true;
+ *     - fixedColumnIndicator: integer, default = 7;
+ *     - fixedColumnText: integer, defualt = 73;
  *     - ignoreUnstringAll: boolean, default = true
  *     
  ******************************************************************************************************/

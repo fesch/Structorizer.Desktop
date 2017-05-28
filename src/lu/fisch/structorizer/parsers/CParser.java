@@ -48,6 +48,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.23/24   Enh. #354/#411: Pre-processor workaround for typedef significantly improved
  *      Simon Sobisch   2017.05.24      Enh. #409: Comment-aware #define analysis, with function macro approach
  *      Kay Gürtzig     2017.05.26      Enh. #409: #define analysis (including function macros) accomplished
+ *      Kay Gürtzig     2017.05.28      Issue #409: Recursion overhead in buildNSD_R() significantly reduced. 
  *
  ******************************************************************************************************
  *
@@ -488,8 +489,8 @@ public class CParser extends CodeParser
 		final int PROD_OPUNARY_MINUSMINUS                           = 179;  // <Op Unary> ::= '--' <Op Unary>
 //		final int PROD_OPUNARY_PLUSPLUS2                            = 180;  // <Op Unary> ::= <Op Pointer> '++'
 		final int PROD_OPUNARY_MINUSMINUS2                          = 181;  // <Op Unary> ::= <Op Pointer> '--'
-//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 182;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
-//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 183;  // <Op Unary> ::= sizeof '(' <Type> ')'
+//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 182;  // <Op Unary> ::= '(' <ConstType> ')' <Op Unary>
+//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 183;  // <Op Unary> ::= sizeof '(' <ConstType> ')'
 //		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 184;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
 //		final int PROD_OPUNARY                                      = 185;  // <Op Unary> ::= <Op Pointer>
 //		final int PROD_OPPOINTER_DOT                                = 186;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
@@ -1157,6 +1158,7 @@ public class CParser extends CodeParser
 			String rule = _reduction.getParent().toString();
 			String ruleName = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
+			System.out.println(rule + ", " + _parentNode.parent);
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 			
 			if (
@@ -1605,6 +1607,17 @@ public class CParser extends CodeParser
 				//this.firstCaseWithoutBreak.push(0);
 				buildCase(_reduction, _parentNode);
 			}
+			// START KGU#412 2017-05-28: Frequent stack overflows on large sources was observed
+			else if (ruleId == RuleConstants.PROD_STMLIST)
+			{
+				// We can easily reduce recursion overhead since the crucial <Stm List> rule is
+				// right-recursive. We don't even need auxiliary data structures.
+				while (_reduction.size() > 0) {
+					this.buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
+					_reduction = _reduction.get(1).asReduction();
+				}
+			}
+			// END KGU#412 2017-05-28
 			// Block...?
 			else
 			{

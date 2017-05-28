@@ -291,39 +291,7 @@ Comment Line  = '//'
              | enum Id
              | enum '{' <Enum Def> '}' 
              | void '*'
-!             | <User Type>        ! Nasty workaround for the impossibility to place Id here
-             | UserTypeId
-
-!<User Type> ::= UserTypeId
-!user_type_001
-!             | user_type_002
-!             | user_type_003
-!             | user_type_004
-!             | user_type_005
-!             | user_type_006
-!             | user_type_007
-!             | user_type_009
-!             | user_type_010
-!             | user_type_011
-!             | user_type_012
-!             | user_type_013
-!             | user_type_014
-!             | user_type_015
-!             | user_type_016
-!             | user_type_017
-!             | user_type_018
-!             | user_type_019
-!             | user_type_020
-!             | user_type_021
-!             | user_type_022
-!             | user_type_023
-!             | user_type_024
-!             | user_type_025
-!             | user_type_026
-!             | user_type_027
-!             | user_type_028
-!             | user_type_029
-!             | user_type_030
+             | UserTypeId       ! workaround for the impossibility to place Id here
 
 <Sign>     ::= signed 
              | unsigned
@@ -468,8 +436,8 @@ Comment Line  = '//'
                | '--'   <Op Unary>
                | <Op Pointer> '++'
                | <Op Pointer> '--'
-               | '(' <Type> ')' <Op Unary>   !CAST
-               | sizeof '(' <Type> ')'
+               | '(' <ConstType> ')' <Op Unary>   !CAST
+               | sizeof '(' <ConstType> ')'
 !               | sizeof '(' ID <Pointers> ')'  !  Awkward attempt to allow type ids here which aren't elsewhere
                | sizeof '(' <Pointers> <Op Pointer> ')'
                | <Op Pointer>
