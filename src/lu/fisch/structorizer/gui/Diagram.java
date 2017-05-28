@@ -5764,32 +5764,41 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#309 2016-12-15: Enh. #310
     public void savingOptions()
     {
-    	SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
-    	Ini ini = Ini.getInstance();
-    	sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
-    	sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
-    	sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
-    	// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-    	sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
-    	sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
-    	// END KGU#363 2017-03-12
-    	sod.setVisible(true);
+    	try {
+    		SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
+    		Ini ini = Ini.getInstance();
+    		sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
+    		sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
+    		sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
+    		// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+    		sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
+    		sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
+    		// END KGU#363 2017-03-12
+    		sod.setVisible(true);
 
-    	if(sod.goOn==true)
-    	{
-    		Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
-    		Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
-    		Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
-        	// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-        	ini.setProperty("authorName", sod.txtAuthorName.getText());
-        	String licName = (String)sod.cbLicenseFile.getSelectedItem();
-        	if (licName == null) {
-        		ini.setProperty("licenseName", "");
-        	}
-        	else {
-        		ini.setProperty("licenseName", licName);
-        	}
-        	// END KGU#363 2017-03-12
+    		if(sod.goOn==true)
+    		{
+    			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
+    			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
+    			Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+    			ini.setProperty("authorName", sod.txtAuthorName.getText());
+    			String licName = (String)sod.cbLicenseFile.getSelectedItem();
+    			if (licName == null) {
+    				ini.setProperty("licenseName", "");
+    			}
+    			else {
+    				ini.setProperty("licenseName", licName);
+    			}
+    			// END KGU#363 2017-03-12
+    			ini.save();
+    		}
+    	} catch (FileNotFoundException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    	} catch (IOException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
     	}
     }
     // END KGU#258 2016-09-26

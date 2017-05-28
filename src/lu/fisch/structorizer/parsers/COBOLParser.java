@@ -52,6 +52,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
  *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
  *                                      STRING statement implemented (refined with help of enh. #413)
+ *      Kay Gürtzig     2017.05.28      First rough approach to implement UNSTRING import.
  *
  ******************************************************************************************************
  *
@@ -78,6 +79,7 @@ import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
+import com.sun.xml.internal.fastinfoset.util.ValueArrayResourceException;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -4730,13 +4732,13 @@ public class COBOLParser extends CodeParser
 			else if (ruleId == RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING)
 			{
 				System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
-				// FIXME: At least add variable name parsing as we have in other places
-				//        and add some line breaks
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
+				if (!this.importUnstring(_reduction, _parentNode)) {
+					String content = this.getOriginalText(_reduction, "");
+					Instruction instr = new Instruction(content);
+					instr.setColor(Color.RED);
+					instr.setComment("TODO: there is still no automatic conversion for this statement");
+					_parentNode.addElement(instr);
+				}
 			}
 			else if (ruleId == RuleConstants.PROD_SEARCH_STATEMENT_SEARCH)
 			{
@@ -4850,6 +4852,143 @@ public class COBOLParser extends CodeParser
 		instr.setComment(this.getOriginalText(_reduction, ""));
 		_parentNode.addElement(instr);
 		return true;
+	}
+
+	private boolean importUnstring(Reduction _reduction, Subqueue _parentNode) {
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();
+		// <unstring_body> ::= <identifier> <_unstring_delimited> <unstring_into> <_with_pointer> <_unstring_tallying> <_on_overflow_phrases>
+		String source = this.getContent_R(secRed.get(0).asReduction(), "");
+		Reduction delimRed = secRed.get(1).asReduction();
+		StringList delimiters = new StringList();
+		long allFlags = 0;	// one bit for every delimiter = 1 if "ALL" was given, 0 otherwise, first delimiter = last Bit
+		if (delimRed.size() > 0) {
+			Reduction itemlRed = delimRed.get(2).asReduction();
+			do {
+				Reduction itemRed = itemlRed;
+				if (itemlRed.getParent().getHead().toString().equals("<unstring_delimited_list>")) {
+					itemRed = itemlRed.get(2).asReduction();
+					itemlRed = itemlRed.get(0).asReduction();
+				}
+				else {
+					itemlRed = null;
+				}
+				delimiters.add(this.getContent_R(itemRed.get(1).asReduction(), ""));
+				allFlags <<= 1;
+				//if (itemRed.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD_FLAG_ALL_ALL) {
+				if (itemRed.get(0).asReduction().size() > 0) {
+					allFlags |= 1;
+				}
+			} while (itemlRed != null);
+			delimiters = delimiters.reverse();
+		}
+		// The elements of the list are String arrays with following content:
+		// [0] = target variable, [1] = delim variable or null, [2] = count variable or null, [3] = refmod if any
+		LinkedList<String[]> targets = new LinkedList<String[]>();
+		Reduction intoRed = secRed.get(2).asReduction();
+		do {
+			Reduction itemRed = intoRed.get(1).asReduction();
+			if (intoRed.getParent().getTableIndex() == RuleConstants.PROD_UNSTRING_INTO_INTO) {
+				// Just a single item - end of the loop
+				intoRed = null;
+			}
+			else {
+				intoRed = intoRed.get(0).asReduction();
+			}
+			// Make sure that it's not just a comma
+			if (itemRed.getParent().getTableIndex() == RuleConstants.PROD_UNSTRING_INTO_ITEM) {
+				String[] vars = new String[4];
+				for (int i = 0; i < 3; i++) {
+					Reduction varRed = itemRed.get(i).asReduction();
+					int varRuleId = varRed.getParent().getTableIndex();
+					if (varRed.size() > 0) {
+						if (i == 0) {
+							vars[i] = this.getContent_R(varRed, "");
+						}
+						else {
+							vars[i] = this.getContent_R(varRed.get(varRed.size()-1).asReduction(), "");
+						}
+;					}
+					else {
+						vars[i] = null;
+					}
+				}
+				targets.addFirst(vars);
+			}
+		} while (intoRed != null);
+		String start = null;
+		if (secRed.get(3).asReduction().size() > 0) {
+			start = this.getContent_R(secRed.get(3).asReduction().get(3).asReduction(), "");
+			source = "copy(" + source + ", " + start + ", length(" + source + ") - " + start + ")";
+		}
+		String tallying = null;
+		if (secRed.get(4).asReduction().size() > 0) {
+			tallying = this.getContent_R(secRed.get(4).asReduction().get(2).asReduction(), "");
+		}
+		// Now we have all information together and may compose the resulting algorithm
+		// Since this is significantly easier for a single separator we start with this
+		String suffix = Integer.toHexString(_reduction.hashCode());
+		if (delimiters.count() >= 1) {
+			String content = "unstring_"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
+			Instruction instr = new Instruction(content);
+			instr.setComment(this.getOriginalText(_reduction, ""));
+			instr.setColor(colorMisc);
+			_parentNode.addElement(instr);
+			for (int i = 1; i < delimiters.count(); i++) {
+				instr = new Instruction("index_" + suffix + " <- 0");
+				instr.setColor(colorMisc);
+				_parentNode.addElement(instr);
+				For loop = new For("part_" + suffix, "unstring_" + suffix + "_" + (1 - i % 2));
+				loop.setColor(colorMisc);
+				_parentNode.addElement(loop);
+				instr = new Instruction("split_" + suffix + " <- split(part_" + suffix + ", " +delimiters.get(i) + ")");
+				instr.setColor(colorMisc);
+				loop.getBody().addElement(instr);
+				For loop1 = new For("item_" + suffix, "split_" + suffix);
+				loop1.setColor(colorMisc);
+				loop.getBody().addElement(loop1);
+				instr = new Instruction("unstring_" + suffix + "_" + (i % 2) + "[index_" + suffix + "] <- item_" + suffix);
+				instr.setColor(colorMisc);
+				instr.getText().add("incr(index_" + suffix + ", 1)");
+				loop1.getBody().addElement(instr);
+			}
+			suffix += "_" + (1 - delimiters.count() % 2);
+			int index = 0;
+			for (String[] target: targets) {
+				// FIXME: I have no clear idea what the ALL flag actually means (do we have to skip
+				// empty substrings if it's not set?
+				boolean all = (allFlags & 1) != 0;
+				allFlags >>= 1;
+				String refmod = target[3];
+				if (refmod != null) {
+					// FIXME: there ary many syntactical variants here. a the moment we ignore refmods
+					// We cut off the parentheses and split the term by colon
+					String[] fromTo = refmod.substring(1, refmod.length()-1).split(":", 2);
+					// We would then have to split the target content at the beginning and the end of the subsequence
+					// into a head, the substring to be replaced and the tail, and recompose it out the head,
+					// the i-th split result and the tail.
+				}
+				instr = new Instruction(target[0] + " <- unstring_" + suffix + "[" + index + "]");
+				if (target[2] != null) {	// counter specified?
+					instr.getText().add(target[2] + " <- length(" + target[0] + ")");
+				}
+				if (target[1] != null) {	// delimiter variable specified?
+					instr.getText().add(target[1] + " <- " + delimiters.get(0));
+				}
+				if (tallying != null) {
+					instr.getText().add("inc(" + tallying + ", 1)");
+				}
+				instr.setColor(colorMisc);
+				Alternative alt = new Alternative("length(unstring_" + suffix + ") > " + index);
+				alt.setColor(colorMisc);
+				_parentNode.addElement(alt);
+				alt.qTrue.addElement(instr);
+				
+				index++;
+			}
+			done = true;
+		}
+		return done;
 	}
 
 	private boolean importAccept(Reduction _reduction, Subqueue _parentNode) {
