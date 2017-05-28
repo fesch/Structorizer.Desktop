@@ -1854,7 +1854,7 @@ public class Root extends Element {
 		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
 		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
 
-		StringList tokens = Element.splitLexically(_line, true);
+		StringList tokens = Element.splitLexically(_line.trim(), true);
 
 		Element.unifyOperators(tokens, false);
 
@@ -4277,7 +4277,7 @@ public class Root extends Element {
 	 * (where a record/struct might have been necessary instead).
 	 * @param elements - an element sequence from this Root
 	 * @param name - the name for the new subroutine
-	 * @param result - name of the result variable (if any) 
+	 * @param result - name of the result variable (if any) or null 
 	 * @return a new Root formed from the given elements or null if {@code elements} was
 	 * empty or didn't belong to this Root. 
 	 */
@@ -4289,7 +4289,7 @@ public class Root extends Element {
 		// 1. Variables set within elements (and still used afterwards outside);
 		// 2. Non-scalar variables passed to some subroutine call within elements;
 		// 3. Array variables with element assignments to them within elements.
-		// It woud be fine if the caller (Diagram) could do this analysis in advance
+		// It would be fine if the caller (Diagram) could do this analysis in advance
 		// and pass the committed result variable names in.
 		// In any case, if the number of committed result items is larger than 1,
 		// then we will have to gather them into a data structure (i.e. an array)
@@ -4364,7 +4364,7 @@ public class Root extends Element {
 				resAsgnmt = name + " <- {" + results.concatenate(", ") + "}";
 			}
 			subroutine.setText(signature);
-			subroutine.setChanged();
+			//subroutine.setChanged();		// This was not helpful for code import
 			if (resAsgnmt != null) {
 				subroutine.children.addElement(new Instruction(resAsgnmt));
 			}

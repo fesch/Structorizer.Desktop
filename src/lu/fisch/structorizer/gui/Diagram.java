@@ -480,14 +480,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 											arrange = true;
 											//System.out.println(root.getFullText().getText());
 										}
-										for (Root rootNew: newRoots) {
-											rootNew.setChanged();
-										}
 										// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
 										if (newRoots.size() > 2 || !root.isProgram()) {
 											arrangeNSD();
 										}
 										// END KGU#354 2017-05-23
+										for (Root rootNew: newRoots) {
+											rootNew.setChanged();
+										}
 									}
 									else {
 								// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
@@ -2907,6 +2907,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					sub.hightlightVars = root.hightlightVars;
 					sub.isNice = root.isNice;
 					sub.getVarNames();	// just to prepare proper drawing.
+					sub.setChanged();
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
 					arr.setVisible(true);

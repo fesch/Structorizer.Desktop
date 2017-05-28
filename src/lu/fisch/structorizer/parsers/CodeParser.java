@@ -140,10 +140,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	/**
 	 * Returns a Generator-specific option value if available (otherwise null)
 	 * @param _optionName - option key, to be combined with the parser class name
+	 * @param _defaultValue TODO
 	 * @return an Object (of the type specified in the plugin) or null
 	 */
-	protected Object getPluginOption(String _optionName) {
-		Object optionVal = null;
+	protected Object getPluginOption(String _optionName, Object _defaultValue) {
+		Object optionVal = _defaultValue;
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
 		if (this.optionMap.containsKey(fullKey)) {
 			optionVal = this.optionMap.get(fullKey);
@@ -556,15 +557,6 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		}
 	}
 
-	/**
-	 * Allows subclasses to do some finishing work after all general stuff after parsing and
-	 * NSD synthesis is practically done.
-	 * @param textToParse - path of the parsed source file
-	 */
-	protected void subclassPostProcess(String textToParse)
-	{
-	}
-
 	// START KGU 2017-04-11
 	/**
 	 * Replaces all strings being keys in this.replacedIds by their respective mapped
@@ -605,6 +597,15 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param sourceFileName
 	 */
 	protected abstract void subclassUpdateRoot(Root root, String sourceFileName);
+
+	/**
+	 * Allows subclasses to do some finishing work after all general stuff after parsing and
+	 * NSD synthesis is practically done.
+	 * @param textToParse - path of the parsed source file
+	 */
+	protected void subclassPostProcess(String textToParse)
+	{
+	}
 
 	/******* FileFilter Extension *********/
 	

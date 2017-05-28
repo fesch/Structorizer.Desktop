@@ -775,7 +775,7 @@ public class CParser extends CodeParser
 		LinkedList<String> typedefDecomposers = new LinkedList<String>();
 		
 		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow confiured global typenames
-		String configuredTypeNames = (String)this.getPluginOption("typeNames");
+		String configuredTypeNames = (String)this.getPluginOption("typeNames", null);
 		if (configuredTypeNames != null) {
 			String[] typeIds = configuredTypeNames.split("(,| )");
 			for (int i = 0; i < typeIds.length; i++) {

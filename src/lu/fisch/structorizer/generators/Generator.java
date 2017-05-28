@@ -410,10 +410,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * Returns a Generator-specific option value if available (otherwise null)
 	 * @param _optionName - option key, to be combined with the generator class name
-	 * @return an Object (of the type specified in the plugin) or null
+	 * @param _defaultValue - a (situative) default value 
+	 * @return an Object (of the type specified in the plugin) or _defaultValue
 	 */
-	protected Object getPluginOption(String _optionName) {
-		Object optionVal = null;
+	protected Object getPluginOption(String _optionName, Object _defaultValue) {
+		Object optionVal = _defaultValue;
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
 		if (this.optionMap.containsKey(fullKey)) {
 			optionVal = this.optionMap.get(fullKey);

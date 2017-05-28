@@ -449,7 +449,7 @@ public class COBOLGenerator extends Generator {
 	 */
 	private boolean optionFreeSourceFormat()
 	{
-		Object optionVal = this.getPluginOption("freeSourceFormat");
+		Object optionVal = this.getPluginOption("freeSourceFormat", false);
 		return optionVal instanceof Boolean && ((Boolean)optionVal).booleanValue();
 	}
 	
@@ -460,7 +460,7 @@ public class COBOLGenerator extends Generator {
 	 */
 	private boolean optionUnderscores2Hyphens()
 	{
-		Object optionVal = this.getPluginOption("underscores2hyphens");
+		Object optionVal = this.getPluginOption("underscores2hyphens", true);
 		return !(optionVal instanceof Boolean) || ((Boolean)optionVal).booleanValue();
 	}
 	// END KGU#395 2017-05-11	
