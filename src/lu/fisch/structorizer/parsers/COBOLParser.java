@@ -5033,7 +5033,7 @@ public class COBOLParser extends CodeParser
 				loop.getBody().addElement(loop1);
 				instr = new Instruction("unstring_" + suffix + "_" + (i % 2) + "[index_" + suffix + "] <- item_" + suffix);
 				instr.setColor(colorMisc);
-				instr.getText().add("incr(index_" + suffix + ", 1)");
+				instr.getText().add("inc(index_" + suffix + ", 1)");
 				loop1.getBody().addElement(instr);
 			}
 			suffix += "_" + (1 - delimiters.count() % 2);
@@ -5059,7 +5059,7 @@ public class COBOLParser extends CodeParser
 						While loop = new While("(" + indexVar + " < length(unstring_" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
 						loop.setColor(colorMisc);
 						_parentNode.addElement(loop);
-						instr = new Instruction("incr(" + indexVar + ", 1)");
+						instr = new Instruction("inc(" + indexVar + ", 1)");
 						instr.setColor(colorMisc);
 						loop.getBody().addElement(instr);
 					}
@@ -5094,7 +5094,7 @@ public class COBOLParser extends CodeParser
 				alt.qTrue.addElement(instr);
 				// FIXME Handling of ALL clausues is still unclear
 				if (!ignoreUnstringAllClauses) {
-					instr = new Instruction("incr(" + indexVar + ", 1)");
+					instr = new Instruction("inc(" + indexVar + ", 1)");
 					instr.setColor(colorMisc);
 					_parentNode.addElement(instr);
 				}
@@ -6636,11 +6636,16 @@ public class COBOLParser extends CodeParser
 	{
 		if (_reduction.getParent().getHead().toString().equals(_listRuleHead) && _reduction.size() > 1) {
 			_tokens.addFirst(_reduction.get(_reduction.size()-1));
+			int ruleId = _reduction.get(0).asReduction().getParent().getTableIndex();
+			switch (ruleId) {
+			// Ensure the processing of modrefs!
+			case RuleConstants.PROD_IDENTIFIER_1:
+			case RuleConstants.PROD_IDENTIFIER_13:
 			// Don't split qualified identifiers!
-			if (_reduction.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD_QUALIFIED_WORD2) {
+			case RuleConstants.PROD_QUALIFIED_WORD2:
 				_tokens.addFirst(_reduction.get(0));
-			}
-			else {
+				break;
+			default:
 				lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
 			}
 		}
