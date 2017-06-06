@@ -4065,7 +4065,10 @@ public class Executor implements Runnable
 		}
 		// END KGU#376 2017-04-11
 		else {
-			result = "<" + cmd + "> is not a correct function!";
+			// START KGU#197 2016-07-27: Now translatable
+			//result = "<" + cmd + "> is not a correct function!";
+			result = control.msgIllFunction.getText().replace("%1", cmd);
+			// END KGU#197 2016-07-27
 		}
 		return result;
 	}
