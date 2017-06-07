@@ -545,6 +545,42 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	protected void log(String _logContent, boolean _toSystemOutInstead)
 	{
 		boolean done = false;
+		
+		// Hack for replacing non-printable characters that we may have to log,
+		// for example from StreamTokenizer value of '\0'
+		StringBuilder printableString = new StringBuilder(_logContent.length());
+		for (int offset = 0; offset < _logContent.length();)
+		{
+			int codePoint = _logContent.codePointAt(offset);
+			char lcChar = _logContent.charAt(offset);
+
+			switch (lcChar) {
+				// include some standard characters
+				case '\n':
+				case '\r':
+				case '\t':
+					printableString.append(lcChar);
+					break;
+				default:
+					// Replace invisible control characters and unused code points
+					switch (Character.getType(codePoint))
+					{
+						case Character.CONTROL:     // \p{Cc}
+						case Character.FORMAT:      // \p{Cf}
+						case Character.PRIVATE_USE: // \p{Co}
+						case Character.SURROGATE:   // \p{Cs}
+						case Character.UNASSIGNED:  // \p{Cn}
+							printableString.append(String.format ("\\u%04x", (int)lcChar));
+							break;
+						default:
+							printableString.append(Character.toChars(codePoint));
+							break;
+					}
+					break;
+			}
+			offset += Character.charCount(codePoint);
+		}
+
 		if (logFile != null)
 		try {
 			logFile.write(_logContent);
