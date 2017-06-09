@@ -1250,6 +1250,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		super.paintComponent(g);
 		if(root!=null)
 		{
+			//System.out.println("Diagram: " + System.currentTimeMillis());
 			redraw(g);
 		}
 	}
@@ -1352,7 +1353,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
 		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
-
+		
 		// START KGU#48 2015-10-17: Arranger support
 		Root oldRoot = root;
 		// END KGU#48 2015-10-17
@@ -2219,7 +2220,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (selected instanceof Instruction)
 			{
 				Instruction instr = (Instruction)selected;
-				isConvertible = instr.getText().count() > 1
+				isConvertible = instr.getUnbrokenText().count() > 1
 						|| instr.isJump()
 						// START KGU#376 2017-04-15: Enh. #389 accept new call type, too
 						|| instr.isImportCall()
@@ -2863,7 +2864,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (!jumps.isEmpty()) {
 				String jumpTexts = "";
 				for (Jump jmp: jumps) {
-					String jumpLine = jmp.getText().getLongString().trim();
+					String jumpLine = jmp.getUnbrokenText().getLongString().trim();
 					if (jumpLine.isEmpty()) {
 						jumpLine = "(" + CodeParser.getKeywordOrDefault("preLeave", "leave") + ")";
 					}
@@ -2982,7 +2983,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} catch (CancelledException e) {
 				return;
 			}
-			if (selected.getText().count() > 1)
+			if (selected.getUnbrokenText().count() > 1)
 			{
 				transmuteToSequence(parent);
 			}
@@ -3045,12 +3046,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// otherwise the first instruction will get all comment.
 		int index = parent.getIndexOf(selected);
 		StringList comment = selected.getComment();
-		int count = selected.getText().count();
+		StringList text = selected.getBrokenText();
+		int count = text.count();
 		boolean distributeComment = (count == comment.count());
 		for (int i = 0; i < count; i++)
 		{
 			Instruction instr = (Instruction)selected.copy();
-			instr.setText(selected.getText().get(i));
+			instr.setText(StringList.explode(text.get(i), "\n"));
 			if (distributeComment)
 			{
 				instr.setComment(StringList.explode(comment.get(i), "\n"));
@@ -6950,4 +6952,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#363 2017-05-17
 	
+	// START KGU#324 2017-05-30: Enh. #415
+	public void findAndReplaceNSD() {
+		FindAndReplace far = new FindAndReplace(this);
+		pop.setVisible(false);
+		far.setVisible(true);
+	}
+	// END KGU#324 2017-05-30
+
 }

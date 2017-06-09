@@ -287,17 +287,18 @@ public class PHPGenerator extends Generator
 			
 			insertComment(_inst, _indent);
 
-			for (int i=0; i<_inst.getText().count(); i++)
+			StringList lines = _inst.getUnbrokenText();
+			for (int i=0; i<lines.count(); i++)
 			{
 				// START KGU#281 2016-10-16: Enh. #271
 				//addCode(transform(_inst.getText().get(i))+";",
 				//		_indent, isDisabled);
-				String transf = transform(_inst.getText().get(i)) + ";";
+				String transf = transform(lines.get(i)) + ";";
 				if (transf.startsWith("= $_GET[")) {
 					transf = "dummyInputVar " + transf;
 				}
 				// START KGU#284 2016-10-16: Enh. #274
-				else if (Instruction.isTurtleizerMove(_inst.getText().get(i))) {
+				else if (Instruction.isTurtleizerMove(lines.get(i))) {
 					transf += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 				}
 				// END KGU#284 2016-10-16
@@ -452,7 +453,7 @@ public class PHPGenerator extends Generator
     	insertComment(_while, _indent);
     	// END KGU 2014-11-16
 
-    	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+    	String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
     	// START KGU#301 2016-12-01: Bugfix #301
     	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
     	if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -478,7 +479,7 @@ public class PHPGenerator extends Generator
         generateCode(_repeat.q,_indent+this.getIndent());
         // START KGU#162 2016-04-01: Enh. #144 - more tentative approach
         //code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
-        String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+        String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
         // START KGU#301 2016-12-01: Bugfix #301
         //if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
         if (!this.suppressTransformation || !isParenthesized(condition))
@@ -514,11 +515,12 @@ public class PHPGenerator extends Generator
 		insertComment(_call, _indent);
 		// END KGU 2014-11-16
 
-        for(int i=0;i<_call.getText().count();i++)
+		StringList lines = _call.getUnbrokenText();
+        for(int i=0;i<lines.count();i++)
         {
         	// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
         	//addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
-        	addCode(transform(_call.getText().get(i))+";", _indent, isDisabled);
+        	addCode(transform(lines.get(i))+";", _indent, isDisabled);
         	// END KGU#319 2017-01-03
         }
     }
@@ -540,7 +542,7 @@ public class PHPGenerator extends Generator
 		// In case of an empty text generate a continue instruction by default.
 		boolean isEmpty = true;
 		
-		StringList lines = _jump.getText();
+		StringList lines = _jump.getUnbrokenText();
 		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 		String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";

@@ -38,7 +38,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.04.16      New hook method postProcess(String textToParse) for sub classes
  *      Kay Gürtzig     2017.04.27      File logging mechanism added (former debug prints) 
  *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute
- *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced 
+ *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced
+ *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream 
  *
  ******************************************************************************************************
  *
@@ -537,7 +538,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 
 	/**
 	 * Writes the given _logContent to the current opened file if there is one.
-	 * Oherwise and if {@code _toSystemOutInstead} is true the content will be
+	 * Otherwise and if {@code _toSystemOutInstead} is true the content will be
 	 * written to the console output.
 	 * @param _logContent - the message to be logged
 	 * @param _toSystemOutInstead - whether the message is to be reported to System.out
@@ -546,6 +547,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	{
 		boolean done = false;
 		
+		// START SSO 2017-06-07
 		// Hack for replacing non-printable characters that we may have to log,
 		// for example from StreamTokenizer value of '\0'
 		StringBuilder printableString = new StringBuilder(_logContent.length());
@@ -580,6 +582,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			}
 			offset += Character.charCount(codePoint);
 		}
+		// END SSO 2017-06-07
 
 		if (logFile != null)
 		try {

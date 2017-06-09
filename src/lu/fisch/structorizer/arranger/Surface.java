@@ -226,6 +226,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     @Override
     public void paint(Graphics g)
     {
+		//System.out.println("Surface: " + System.currentTimeMillis());
         super.paint(g);
         if(diagrams!=null)
         {
@@ -1785,7 +1786,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			if (resemblance > 0) {
     				if (resemblance > 2 && warnLevel2andAbove) {
     					String fName = diagram.root.filename.toString();
-    					if (fName == null || fName.trim().isEmpty()) {
+    					if (fName.trim().isEmpty()) {
     						fName = "[" + diagram.root.proposeFileName() + "]";
     					}
     					String message = msgInsertionConflict[resemblance-3].getText().

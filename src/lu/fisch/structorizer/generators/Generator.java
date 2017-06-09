@@ -1110,7 +1110,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			// and label both
 			if (elem instanceof Jump && !elem.isDisabled())
 			{
-				String jumpText = elem.getText().getLongString().trim();
+				// START KGU#413 2017-06-09: Enh. #416: There might be line continuation
+				//String jumpText = elem.getText().getLongString().trim();
+				String jumpText = elem.getUnbrokenText().getLongString();
+				// END KGU#413 2017-06-09
 				// START KGU#380 2017-04-14: Bugfix #394 Code revision, simplification
 				//if (jumpText.matches(patternReturn))
 				
@@ -1253,7 +1256,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			else if (elem instanceof Instruction)
 			{
-				StringList text = elem.getText();
+				// START KGU#413 2017-06-09: Enh. #416
+				//StringList text = elem.getText();
+				StringList text = elem.getUnbrokenText();
+				// END KGU#413 2017-06-09
 				for (int i = 0; i < text.count(); i++)
 				{
 					String line = text.get(i);

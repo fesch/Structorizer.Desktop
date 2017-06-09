@@ -312,7 +312,7 @@ public class Subqueue extends Element implements IElementSequence {
 		clear();
 	}
 	
-	public Iterator<Element> getIterator()
+	public java.util.Iterator<Element> getIterator()
 	{
 		return children.iterator();
 	}
@@ -560,7 +560,7 @@ public class Subqueue extends Element implements IElementSequence {
 	@Override
     public void setCollapsed(boolean collapsed) {
         super.setCollapsed(false);	// the Subqueue itself will never be collapsed
-        Iterator<Element> iter = getIterator();
+        java.util.Iterator<Element> iter = getIterator();
         while (iter.hasNext())
         {
         	iter.next().setCollapsed(collapsed);

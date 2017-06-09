@@ -53,6 +53,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
  *                                      STRING statement implemented (refined with help of enh. #413)
  *      Kay Gürtzig     2017.05.28      First rough approach to implement UNSTRING import and PERFOM &lt;procedure&gt;
+ *      Kay Gürtzig     2017.06.06      Correction in importUnstring(...) w.r.t. ALL clause
  *
  ******************************************************************************************************
  *
@@ -81,7 +82,6 @@ package lu.fisch.structorizer.parsers;
 import java.awt.Color;
 
 import java.io.*;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -91,7 +91,6 @@ import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
-import com.sun.xml.internal.fastinfoset.util.ValueArrayResourceException;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -5045,17 +5044,16 @@ public class COBOLParser extends CodeParser
 				_parentNode.addElement(instr);
 			}
 			for (String[] target: targets) {
-				// FIXME: I have no clear idea what the ALL flag actually means (do we have to skip
-				// empty substrings if it's not set?
+				// If there is an ALL flag set then we have to skip empty substrings from the split result.
 				// The trouble here is: we don't know anymore, which empty part resulted from which
-				// delimiter, and it can hardly be guessed at compile time. We would heve to implement a
-				// complex detection mechanism
+				// delimiter, and it can hardly be guessed at compile time. We would have to implement a
+				// complex detection mechanism which seems beyond reasonable efforts.
 				String expr = "unstring_" + suffix + "[" + index + "]";
 				boolean all = (allFlags & 1) != 0;
-				{ allFlags >>= 1; }	// Strangely, this instruction causes indentation defects in Eclipse
-				// FIXME Handling of ALL clausues is still unclear
+				{ allFlags >>= 1; }	// Strangely, this instruction without block caused indentation defects in Eclipse
+				// FIXME Handling of ALL clauses is still not correct (see remark above)
 				if (!ignoreUnstringAllClauses) {
-					if (!all) {
+					if (all) {
 						While loop = new While("(" + indexVar + " < length(unstring_" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
 						loop.setColor(colorMisc);
 						_parentNode.addElement(loop);
