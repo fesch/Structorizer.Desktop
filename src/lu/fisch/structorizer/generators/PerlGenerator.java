@@ -384,9 +384,10 @@ public class PerlGenerator extends Generator {
 			boolean isDisabled = _inst.isDisabled();
 	    	insertComment(_inst, _indent);
 
-			for(int i=0;i<_inst.getText().count();i++)
+	    	StringList lines = _inst.getUnbrokenText();
+			for(int i=0;i<lines.count();i++)
 			{
-				String text = transform(_inst.getText().get(i));
+				String text = transform(lines.get(i));
 				if (!text.endsWith(";")) { text += ";"; }
 				// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 				if (this.usesFileAPI) {
@@ -667,7 +668,7 @@ public class PerlGenerator extends Generator {
     	insertComment(_while, _indent);
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
-    	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+    	String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
@@ -706,7 +707,7 @@ public class PerlGenerator extends Generator {
 		generateCode(_repeat.q,_indent+this.getIndent());
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
-    	String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+    	String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
@@ -757,11 +758,12 @@ public class PerlGenerator extends Generator {
 
 			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
 			this.isWithinCall = true;
-			// END KGU#352 2017-02-26			
-			for (int i=0; i<_call.getText().count(); i++)
+			// END KGU#352 2017-02-26
+			StringList lines = _call.getUnbrokenText();
+			for (int i=0; i<lines.count(); i++)
 			{
 				// FIXME: Arrays must be passed as reference, i.e. "\@arr" or "\@$para"
-				addCode(transform(_call.getText().get(i)) + ";", _indent, isDisabled);
+				addCode(transform(lines.get(i)) + ";", _indent, isDisabled);
 			}
 			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
 			this.isWithinCall = false;
@@ -782,7 +784,7 @@ public class PerlGenerator extends Generator {
 			// In case of an empty text generate a break instruction by default.
 			boolean isEmpty = true;
 			
-			StringList lines = _jump.getText();
+			StringList lines = _jump.getUnbrokenText();
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");

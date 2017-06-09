@@ -51,7 +51,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.14      PERFORM VARYING with composed condition or defective step fixed
  *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
  *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
- *                                      STRING statement implemented
+ *                                      STRING statement implemented (refined with help of enh. #413)
+ *      Kay Gürtzig     2017.05.28      First rough approach to implement UNSTRING import and PERFOM &lt;procedure&gt;
+ *      Kay Gürtzig     2017.06.06      Correction in importUnstring(...) w.r.t. ALL clause
  *
  ******************************************************************************************************
  *
@@ -66,12 +68,23 @@ package lu.fisch.structorizer.parsers;
  *     Note:
  *     Process the grammar to get a ".skel" file to merge changes in the grammar:
  *     GOLDbuild.exe GnuCOBOL.grm && GOLDprog.exe GnuCOBOL.egt StructorizerParserTemplate.pgt COBOLParser.java.skel && dos2unix COBOLParser.java.skel
+ *     
+ *     Language-specific options:
+ *     - debugLines: boolean, default = false;
+ *     - decimalComma: boolean, default = false;
+ *     - fixedForm: boolean, default = true;
+ *     - fixedColumnIndicator: integer, default = 7;
+ *     - fixedColumnText: integer, defualt = 73;
+ *     - ignoreUnstringAll: boolean, default = true
+ *     
  ******************************************************************************************************/
 
 import java.awt.Color;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -93,6 +106,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.gui.SelectedSequence;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -4013,6 +4027,9 @@ public class COBOLParser extends CodeParser
 	private boolean srcCodeDebugLines;
 	private boolean decimalComma;
 	
+	private boolean ignoreUnstringAllClauses;
+	
+	// FIXME If the refrenced fields are options then this wil have to be recalculated
 	private int settingCodeLength = settingColumnText - settingColumnIndicator - 1;
 
 	/**
@@ -4057,11 +4074,12 @@ public class COBOLParser extends CodeParser
 			String strLine;
 			StringBuilder srcCode = new StringBuilder();
 
-			srcCodeDebugLines = false; // FIXME: get from setting/parsing
-			decimalComma = false; // FIXME: get from setting/parsing
-			settingFixedForm = true; // FIXME: get from setting/parsing
-			settingFixedColumnIndicator = 7;  // FIXME: get from setting/parsing
-			settingFixedColumnText = 73;  // FIXME: get from setting/parsing
+			srcCodeDebugLines = (boolean)this.getPluginOption("debugLines", false);
+			decimalComma = (boolean)this.getPluginOption("decimalComma", false);
+			settingFixedForm = (boolean)this.getPluginOption("fixedForm", true);
+			settingFixedColumnIndicator = (int)this.getPluginOption("fixedColumnIndicator", 7);
+			settingFixedColumnText = (int)this.getPluginOption("fixedColumnText", 73);
+			ignoreUnstringAllClauses = (boolean)this.getPluginOption("ignoreUnstringAll", true);
 			
 			if (settingFixedForm) {
 				setColumns(settingFixedColumnIndicator, settingFixedColumnText);
@@ -4361,8 +4379,32 @@ public class COBOLParser extends CodeParser
 		
 	}
 
-	//---------------------- Build methods for structograms ---------------------------
+	//---------------------- Build fields and methods for structograms ---------------------------
 
+	// Record for detected sections and paragraphs if needed as reference for possible calls 
+	private class SectionOrParagraph {
+		public String name;
+		public boolean isSection = true;
+		public int startsAt = -1;		// Element index of first statement within parent
+		public int endsBefore = -1;	// Element index beyond closing TOK_DOT within paent
+		public Subqueue parent = null;
+		public Element firstElement = null, lastElement = null;
+		
+		public SectionOrParagraph(String _name, boolean _isSection, int _startIndex, Subqueue _parentNode)
+		{
+			name = _name;
+			isSection = _isSection;
+			startsAt = _startIndex;
+			parent = _parentNode;
+		}
+	}
+	
+	// During build phase, all detected sections and paragraphs are listed here for resolution of internal calls
+	private LinkedList<SectionOrParagraph> procedureList = new LinkedList<SectionOrParagraph>();
+	
+	private LinkedHashMap< String, LinkedList<Call> > internalCalls = new LinkedHashMap< String, LinkedList<Call> >();
+	
+	// maps the names of function parameters to their type specifications
 	private HashMap<Root, HashMap<String, String>> paramTypeMap = new HashMap<Root, HashMap<String, String>>();
 
 	/**
@@ -4382,6 +4424,11 @@ public class COBOLParser extends CodeParser
 	 * Maps the file status variables to the respective file descriptor
 	 */
 	private HashMap<String, String> fileStatusMap = new HashMap<String, String>();
+
+	/**
+	 * Used to combine nested declarations within one element
+	 */
+	private Instruction previousDeclaration = null;
 	
 //	/* (non-Javadoc)
 //	 * @see CodeParser#initializeBuildNSD()
@@ -4409,11 +4456,9 @@ public class COBOLParser extends CodeParser
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 			System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
-			if (
-					ruleId == RuleConstants.PROD_PROGRAM_DEFINITION
-					||
-					ruleId == RuleConstants.PROD_FUNCTION_DEFINITION
-					)
+			switch (ruleId) {
+			case RuleConstants.PROD_PROGRAM_DEFINITION:
+			case RuleConstants.PROD_FUNCTION_DEFINITION:
 			{
 				System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
 				Root prevRoot = root;	// Cache the original root
@@ -4434,14 +4479,13 @@ public class COBOLParser extends CodeParser
 				// Restore the original root
 				root = prevRoot;
 			}
-//			else if (
-//					ruleId == RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT
-//					||
-//					ruleId == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT
-//					)
+			break;
+//			case RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT:
+//			case RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT:
 //			{
 //			}
-			else if (ruleId == RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING)
+//			break;
+			case RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING:
 			{
 				System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
 				//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
@@ -4461,7 +4505,8 @@ public class COBOLParser extends CodeParser
 					root.setProgram(false);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING)
+			break;
+			case RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING:
 			{
 				String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
 				this.returnMap .put(root, resultVar);
@@ -4475,27 +4520,63 @@ public class COBOLParser extends CodeParser
 					}
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_IF_STATEMENT_IF)
+			break;
+			case RuleConstants.PROD_SECTION_HEADER_SECTION_TOK_DOT:
 			{
+				// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
+				String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+				// We ignore segment number (if given and delaratives i.e. <_use_statemant>
+				this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
+			}
+			break;
+			case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
+			{
+				// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
+				String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+				if (Character.isDigit(name.charAt(0))) {
+					name = "sub" + name;
+				}
+				// We ignore segment number (if given and delaratives i.e. <_use_statemant>
+				this.procedureList.addFirst(new SectionOrParagraph(name, false, _parentNode.getSize(), _parentNode));
+			}
+			break;
+			case RuleConstants.PROD_PROCEDURE_TOK_DOT:
+				// First process the statements then handle the TOK_DOT with the subsequent case
+				buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
+				// No break; here!
+			case RuleConstants.PROD_PROCEDURE_TOK_DOT2:
+			{
+				// TODO close the last unsatisfied "procedure"
+				Iterator<SectionOrParagraph> iter = procedureList.iterator();
+				boolean found = false;
+				while (!found && iter.hasNext()) {
+					SectionOrParagraph sop = iter.next();
+					if (sop.parent == _parentNode && sop.endsBefore < 0) {
+						sop.endsBefore = _parentNode.getSize();
+						sop.firstElement = _parentNode.getElement(sop.startsAt);
+						sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+						found = true;
+					}
+				}
+			}
+			break;
+			case RuleConstants.PROD_IF_STATEMENT_IF:
 				System.out.println("PROD_IF_STATEMENT_IF");
 				this.importIf(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE)
-			{
+				break;
+			case RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE:
 				System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
 				this.importEvaluate(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_PERFORM_STATEMENT_PERFORM)
-			{
+				break;
+			case RuleConstants.PROD_PERFORM_STATEMENT_PERFORM:
 				System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
 				this.importPerform(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_MOVE_STATEMENT_MOVE)
-			{
+				break;
+			case RuleConstants.PROD_MOVE_STATEMENT_MOVE:
 				System.out.println("PROD_MOVE_STATEMENT_MOVE");
 				this.importMove(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_SET_STATEMENT_SET)
+				break;
+			case RuleConstants.PROD_SET_STATEMENT_SET:
 			{
 				System.out.println("PROD_SET_STATEMENT_SET");
 				if (!importSet(_reduction, _parentNode)) {
@@ -4507,7 +4588,8 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE)
+			break;
+			case RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE:
 			{
 				System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
 				Reduction secRed = _reduction.get(1).asReduction();
@@ -4522,27 +4604,24 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(new Instruction(content));
 				}				
 			}
-			else if (ruleId == RuleConstants.PROD_ADD_STATEMENT_ADD)
-			{
+			break;
+			case RuleConstants.PROD_ADD_STATEMENT_ADD:
 				System.out.println("PROD_ADD_STATEMENT_ADD");
-				this .importAdd(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT)
-			{
+				this.importAdd(_reduction, _parentNode);
+				break;
+			case RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT:
 				System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
 				this.importSubtract(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY)
-			{
+				break;
+			case RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY:
 				System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
 				this.importMultiply(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE)
-			{
+				break;
+			case RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE:
 				System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
 				this.importDivide(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT)
+				break;
+			case RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT:
 			{
 				// Input instruction
 				System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
@@ -4555,7 +4634,8 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(dummy);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY )
+			break;
+			case RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY:
 			{
 				// Output instruction
 				System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
@@ -4574,11 +4654,11 @@ public class COBOLParser extends CodeParser
 				Instruction instr = new Instruction(content);
 				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT)
-			{
+			break;
+			case RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT:
 				this.importFileControl(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_FILE_DESCRIPTION)
+				break;
+			case RuleConstants.PROD_FILE_DESCRIPTION:
 			{
 				System.out.println("PROD_FILE_DESCRIPTION");
 				Reduction fdRed = _reduction.get(0).asReduction();	// <file_description_enry>
@@ -4609,7 +4689,8 @@ public class COBOLParser extends CodeParser
 					} while (reclRed != null);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_OPEN_STATEMENT_OPEN)
+			break;
+			case RuleConstants.PROD_OPEN_STATEMENT_OPEN:
 			{
 				System.out.println("PROD_OPEN_STATEMENT_OPEN");
 				if (!this.importOpen(_reduction, _parentNode)) {
@@ -4620,7 +4701,8 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_READ_STATEMENT_READ)
+			break;
+			case RuleConstants.PROD_READ_STATEMENT_READ:
 			{
 				System.out.println("PROD_READ_STATEMENT_READ");
 				if (!this.importRead(_reduction, _parentNode)) {
@@ -4631,7 +4713,8 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE)
+			break;
+			case RuleConstants.PROD_WRITE_STATEMENT_WRITE:
 			{
 				System.out.println("PROD_WRITE_STATEMENT_WRITE");
 				if (!this.importWrite(_reduction, _parentNode)) {
@@ -4642,10 +4725,9 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (
-					ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE
-					||
-					ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
+			break;
+			case RuleConstants.PROD_REWRITE_STATEMENT_REWRITE:
+			case RuleConstants.PROD_DELETE_STATEMENT_DELETE:
 			{
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -4653,7 +4735,8 @@ public class COBOLParser extends CodeParser
 				instr.setComment("Structorizer File API does not support indexed or other non-text files");
 				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD_CLOSE_STATEMENT_CLOSE)
+			break;
+			case RuleConstants.PROD_CLOSE_STATEMENT_CLOSE:
 			{
 				System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
 				String fileDescr = this.getContent_R(_reduction.get(1).asReduction().get(0).asReduction(), "").trim();
@@ -4670,16 +4753,15 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_CALL_STATEMENT_CALL)
-			{
+			break;
+			case RuleConstants.PROD_CALL_STATEMENT_CALL:
 				this.importCall(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_EXIT_STATEMENT_EXIT)
-			{
+				break;
+			case RuleConstants.PROD_EXIT_STATEMENT_EXIT:
 				System.out.println("PROD_EXIT_STATEMENT_EXIT");
 				this.importExit(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_GOBACK_STATEMENT_GOBACK )
+				break;
+			case RuleConstants.PROD_GOBACK_STATEMENT_GOBACK:
 			{
 				System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
 				Reduction secRed = _reduction.get(1).asReduction();
@@ -4689,11 +4771,9 @@ public class COBOLParser extends CodeParser
 				}
 				_parentNode.addElement(new Jump(content.trim()));
 			}
-			else if (
-					ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP
-					||
-					ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP_RUN
-					)
+			break;
+			case RuleConstants.PROD_STOP_STATEMENT_STOP:
+			case RuleConstants.PROD_STOP_STATEMENT_STOP_RUN:
 			{
 				System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
 				int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
@@ -4703,7 +4783,8 @@ public class COBOLParser extends CodeParser
 				if (exitVal.isEmpty()) exitVal = "0";
 				_parentNode.addElement(new Jump(content + " " + exitVal));
 			}
-			else if (ruleId == RuleConstants.PROD_GOTO_STATEMENT_GO)
+			break;
+			case RuleConstants.PROD_GOTO_STATEMENT_GO:
 			{
 				System.out.println("PROD_GOTO_STATEMENT_GO");
 				String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
@@ -4715,7 +4796,8 @@ public class COBOLParser extends CodeParser
 				jmp.setComment("GO TO statements are not supported in structured programming!");
 				_parentNode.addElement(jmp);
 			}
-			else if (ruleId == RuleConstants.PROD_STRING_STATEMENT_STRING)
+			break;
+			case RuleConstants.PROD_STRING_STATEMENT_STRING:
 			{
 				System.out.println("PROD_STRING_STATEMENT_STRING");
 				if (!this.importString(_reduction, _parentNode)) {
@@ -4727,18 +4809,20 @@ public class COBOLParser extends CodeParser
 					_parentNode.addElement(instr);
 				}
 			}
-			else if (ruleId == RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING)
+			break;
+			case RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING:
 			{
 				System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
-				// FIXME: At least add variable name parsing as we have in other places
-				//        and add some line breaks
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
+				if (!this.importUnstring(_reduction, _parentNode)) {
+					String content = this.getOriginalText(_reduction, "");
+					Instruction instr = new Instruction(content);
+					instr.setColor(Color.RED);
+					instr.setComment("TODO: there is still no automatic conversion for this statement");
+					_parentNode.addElement(instr);
+				}
 			}
-			else if (ruleId == RuleConstants.PROD_SEARCH_STATEMENT_SEARCH)
+			break;
+			case RuleConstants.PROD_SEARCH_STATEMENT_SEARCH:
 			{
 				System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
 				// FIXME: At least add variable name parsing as we have in other places
@@ -4749,11 +4833,11 @@ public class COBOLParser extends CodeParser
 				instr.setComment("TODO: there is still no automatic conversion for this statement");
 				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT)
-			{
+			break;
+			case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
 				this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
-			}
-			else if (ruleId == RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT)
+				break;
+			case RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT:
 			{
 				if (!this.paramTypeMap.containsKey(root)) {
 					this.paramTypeMap.put(root, new HashMap<String, String>());
@@ -4762,8 +4846,8 @@ public class COBOLParser extends CodeParser
 				// don't pass the _parentNode.
 				this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
 			}
-			else
-			{
+			break;
+			default:
 				if (_reduction.size()>0)
 				{
 					for(int i=0; i<_reduction.size(); i++)
@@ -4797,9 +4881,10 @@ public class COBOLParser extends CodeParser
 		}
 		// Now process the items backwards, this way froming an instruction sequence from last to first
 		// This way we avoid unnecessary recursion
-		// FIXME This version automatically produces several lines. We might first gather the contributors
+		// IDEA: This approach automatically produces several lines. We might first gather the contributors
 		// and then decide if their concatenation might fit into a single line.
 		StringList assignments = new StringList();
+		StringList preparations = new StringList();
 		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables 
 		Reduction itemlRed = secRed.get(0).asReduction();
 		do {
@@ -4832,18 +4917,8 @@ public class COBOLParser extends CodeParser
 			}
 			asgnmt += itemId;
 			if (delimiter != null) {
-				// now this requires some preparation...
-				Instruction instrAux = new Instruction("pos" + suffix + " <- pos(" + delimiter + ", " + itemId + ")");
-				instrAux.getText().add(itemId + suffix + " <- " + itemId);
-				instrAux.setColor(colorMisc);
-				_parentNode.addElement(instrAux);
-				Alternative alt = new Alternative("pos" + suffix + " > 0");
-				alt.setColor(colorMisc);
-				_parentNode.addElement(alt);
-				instrAux = new Instruction(itemId + suffix + " <- copy(" + itemId + ", 1, pos" + suffix + "-1)");
-				instrAux.setColor(colorMisc);
-				alt.qTrue.addElement(instrAux);
-				asgnmt += suffix;
+				preparations.add(itemId + suffix + " <- split(" + itemId + ", " + delimiter + ")");
+				asgnmt += suffix + "[0]";
 			}
 			assignments.add(asgnmt);
 		} while (itemlRed != null);
@@ -4852,11 +4927,181 @@ public class COBOLParser extends CodeParser
 		if (start != null) {
 			assignments.add(varName + " <- copy(" + varName + ", 1, " + start + ")");
 		}
+		// Append all the preparations to the assignments (such that they be at top afterwards)
+		assignments.add(preparations);
 		// Now add all the assignments in reverse order as a single element
 		Instruction instr = new Instruction(assignments.reverse());
 		instr.setComment(this.getOriginalText(_reduction, ""));
 		_parentNode.addElement(instr);
 		return true;
+	}
+
+	private boolean importUnstring(Reduction _reduction, Subqueue _parentNode) {
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();
+		// <unstring_body> ::= <identifier> <_unstring_delimited> <unstring_into> <_with_pointer> <_unstring_tallying> <_on_overflow_phrases>
+		String source = this.getContent_R(secRed.get(0).asReduction(), "");
+		Reduction delimRed = secRed.get(1).asReduction();
+		StringList delimiters = new StringList();
+		long allFlags = 0;	// one bit for every delimiter = 1 if "ALL" was given, 0 otherwise, first delimiter = last Bit
+		if (delimRed.size() > 0) {
+			Reduction itemlRed = delimRed.get(2).asReduction();
+			do {
+				Reduction itemRed = itemlRed;
+				if (itemlRed.getParent().getHead().toString().equals("<unstring_delimited_list>")) {
+					itemRed = itemlRed.get(2).asReduction();
+					itemlRed = itemlRed.get(0).asReduction();
+				}
+				else {
+					itemlRed = null;
+				}
+				delimiters.add(this.getContent_R(itemRed.get(1).asReduction(), ""));
+				allFlags <<= 1;
+				//if (itemRed.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD_FLAG_ALL_ALL) {
+				if (itemRed.get(0).asReduction().size() > 0) {
+					allFlags |= 1;
+				}
+			} while (itemlRed != null);
+			delimiters = delimiters.reverse();
+		}
+		// The elements of the list are String arrays with following content:
+		// [0] = target variable (or substring), [1] = delim variable or null, [2] = count variable or null
+		LinkedList<String[]> targets = new LinkedList<String[]>();
+		Reduction intoRed = secRed.get(2).asReduction();
+		do {
+			Reduction itemRed = intoRed.get(1).asReduction();
+			if (intoRed.getParent().getTableIndex() == RuleConstants.PROD_UNSTRING_INTO_INTO) {
+				// Just a single item - end of the loop
+				intoRed = null;
+			}
+			else {
+				intoRed = intoRed.get(0).asReduction();
+			}
+			// Make sure that it's not just a comma
+			if (itemRed.getParent().getTableIndex() == RuleConstants.PROD_UNSTRING_INTO_ITEM) {
+				String[] vars = new String[3];
+				for (int i = 0; i < vars.length; i++) {
+					Reduction varRed = itemRed.get(i).asReduction();
+					int varRuleId = varRed.getParent().getTableIndex();
+					if (varRed.size() > 0) {
+						if (i == 0) {
+							vars[i] = this.getContent_R(varRed, "").trim();
+						}
+						else {
+							vars[i] = this.getContent_R(varRed.get(varRed.size()-1).asReduction(), "").trim();
+						}
+					}
+					else {
+						vars[i] = null;
+					}
+				}
+				targets.addFirst(vars);
+			}
+		} while (intoRed != null);
+		String start = null;
+		if (secRed.get(3).asReduction().size() > 0) {
+			start = this.getContent_R(secRed.get(3).asReduction().get(3).asReduction(), "");
+			source = "copy(" + source + ", " + start + ", length(" + source + ") - " + start + ")";
+		}
+		String tallying = null;
+		if (secRed.get(4).asReduction().size() > 0) {
+			tallying = this.getContent_R(secRed.get(4).asReduction().get(2).asReduction(), "");
+		}
+		// Now we have all information together and may compose the resulting algorithm
+		// Since this is significantly easier for a single separator we start with this
+		String suffix = Integer.toHexString(_reduction.hashCode());
+		if (delimiters.count() >= 1) {
+			String content = "unstring_"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
+			String indexVar = "index_" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
+			Instruction instr = new Instruction(content);
+			instr.setComment(this.getOriginalText(_reduction, ""));
+			instr.setColor(colorMisc);
+			_parentNode.addElement(instr);
+			for (int i = 1; i < delimiters.count(); i++) {
+				instr = new Instruction(indexVar + " <- 0");
+				instr.setColor(colorMisc);
+				_parentNode.addElement(instr);
+				For loop = new For("part_" + suffix, "unstring_" + suffix + "_" + (1 - i % 2));
+				loop.setColor(colorMisc);
+				_parentNode.addElement(loop);
+				instr = new Instruction("split_" + suffix + " <- split(part_" + suffix + ", " +delimiters.get(i) + ")");
+				instr.setColor(colorMisc);
+				loop.getBody().addElement(instr);
+				For loop1 = new For("item_" + suffix, "split_" + suffix);
+				loop1.setColor(colorMisc);
+				loop.getBody().addElement(loop1);
+				instr = new Instruction("unstring_" + suffix + "_" + (i % 2) + "[index_" + suffix + "] <- item_" + suffix);
+				instr.setColor(colorMisc);
+				instr.getText().add("inc(index_" + suffix + ", 1)");
+				loop1.getBody().addElement(instr);
+			}
+			suffix += "_" + (1 - delimiters.count() % 2);
+			int index = 0;
+			// FIXME Handling of ALL clausues is still unclear
+			if (!ignoreUnstringAllClauses) {
+				instr = new Instruction(indexVar + " <- 0");
+				instr.setColor(colorMisc);
+				_parentNode.addElement(instr);
+			}
+			for (String[] target: targets) {
+				// If there is an ALL flag set then we have to skip empty substrings from the split result.
+				// The trouble here is: we don't know anymore, which empty part resulted from which
+				// delimiter, and it can hardly be guessed at compile time. We would have to implement a
+				// complex detection mechanism which seems beyond reasonable efforts.
+				String expr = "unstring_" + suffix + "[" + index + "]";
+				boolean all = (allFlags & 1) != 0;
+				{ allFlags >>= 1; }	// Strangely, this instruction without block caused indentation defects in Eclipse
+				// FIXME Handling of ALL clauses is still not correct (see remark above)
+				if (!ignoreUnstringAllClauses) {
+					if (all) {
+						While loop = new While("(" + indexVar + " < length(unstring_" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
+						loop.setColor(colorMisc);
+						_parentNode.addElement(loop);
+						instr = new Instruction("inc(" + indexVar + ", 1)");
+						instr.setColor(colorMisc);
+						loop.getBody().addElement(instr);
+					}
+					expr = "unstring_" + suffix + "[" + indexVar + "]";
+				}
+				
+				StringList assignments = new StringList();
+				if (target[0].matches("^copy\\((.*),(.*),(.*)\\)$")) {
+					assignments.add(target[0].replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
+					assignments.add(target[0].replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
+				}
+				else {
+					assignments.add(target[0] + " <- " + expr);
+				}
+				if (target[2] != null) {	// counter specified?
+					assignments.add(target[2] + " <- length(" + target[0] + ")");
+				}
+				if (target[1] != null) {	// delimiter variable specified?
+					// FIXME This is only okay for the case of a single unique delimiter, otherwise I have no idea how to identify the responsible delimiter (i.e. with justifiable efforts)
+					assignments.add(target[1] + " <- " + delimiters.get(0));
+				}
+				if (tallying != null) {
+					assignments.add("inc(" + tallying + ", 1)");
+				}
+				instr = new Instruction(assignments);
+				instr.setColor(colorMisc);
+				// FIXME Handling of ALL clausues is still unclear
+				String indexStr = (ignoreUnstringAllClauses ? Integer.toString(index) : indexVar);
+				Alternative alt = new Alternative("length(unstring_" + suffix + ") > " + indexStr);
+				alt.setColor(colorMisc);
+				_parentNode.addElement(alt);
+				alt.qTrue.addElement(instr);
+				// FIXME Handling of ALL clausues is still unclear
+				if (!ignoreUnstringAllClauses) {
+					instr = new Instruction("inc(" + indexVar + ", 1)");
+					instr.setColor(colorMisc);
+					_parentNode.addElement(instr);
+				}
+
+				index++;
+			}
+			done = true;
+		}
+		return done;
 	}
 
 	private boolean importAccept(Reduction _reduction, Subqueue _parentNode) {
@@ -5479,6 +5724,7 @@ public class COBOLParser extends CodeParser
 		switch (secRuleId) {
 		case RuleConstants.PROD_EXIT_BODY:	// (empty)
 			content = "(exit from paragraph)";
+			color = colorMisc;
 			break;
 		case RuleConstants.PROD_EXIT_BODY_PROGRAM:	// <exit_body> ::= PROGRAM <exit_program_returning>
 		case RuleConstants.PROD_EXIT_BODY_FUNCTION:	// <exit_body> ::= FUNCTION
@@ -5640,17 +5886,19 @@ public class COBOLParser extends CodeParser
 			buildPerformCall(bodyRed, _parentNode);
 			break;
 		default:
-			// CHECKME: Should never be reached	any more
+			// CHECKME: Should never be reached	anymore
 			System.err.println("UNRECOGNIZED: Index " + optRed.getParent().getTableIndex() + " " + this.getContent_R(_reduction, ""));
 			buildPerformCall(bodyRed, _parentNode);
 		}
 		if (loop != null) {
 			switch (bodyRed.getParent().getTableIndex()) {
 			case RuleConstants.PROD_PERFORM_BODY:
+				// <perform_body> ::= <perform_procedure> <perform_option>
 				// a macro (block) within a loop:	PERFORM x UNTIL ...
  				this.buildPerformCall(bodyRed, loop.getBody());
 				break;
 			case RuleConstants.PROD_PERFORM_BODY2:
+				// <perform_body> ::= <perform_option> <statement_list> <end_perform>
 				this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
 				break;
 			default:
@@ -5667,17 +5915,25 @@ public class COBOLParser extends CodeParser
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) {
-		System.out.println("PROD_PERFORM_BODY");
+		// <perform_body> ::= <perform_procedure> <perform_option>
 		// Ideally we find the named label and either copy its content into the body Subqueue or
 		// export it to a new NSD.
-		String content = this.getContent_R(_reduction.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
-		if (Character.isDigit(content.charAt(0))) {
-			content = "sub" + content;
+		String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+		if (Character.isDigit(name.charAt(0))) {
+			name = "sub" + name;
 		}
+		String content = name + "()";
 		Call dummyCall = new Call(content);
 		dummyCall.setColor(Color.RED);
-		dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
+		dummyCall.setComment("This was a call of an internal section or paragraph, the support for which is still lacking");
 		_parentNode.addElement(dummyCall);
+		// Now we register the call for later linking
+		LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
+		if (otherCalls == null) {
+			otherCalls = new LinkedList<Call>();
+			this.internalCalls.put(name.toLowerCase(), otherCalls);
+		}
+		otherCalls.add(dummyCall);
 	}
 
 	/**
@@ -6124,15 +6380,27 @@ public class COBOLParser extends CodeParser
 				// if we still haven't got a type we're parsing a group item without usage
 				// --> this is always seen as COBOL alphanumeric (internal like a byte[]) -> set to string
 				if (type.isEmpty()) {
-					type = "string";
+					//type = "string";
+					type = "record";	// This is just a guess
 				}
 				// END SSO 2017-05-12
 				if (_parentNode != null && this.optionImportVarDecl) {
 					// Add the declaration
-					Instruction decl = new Instruction("var " + varName + ": " + type);
-					decl.setComment(picture);
-					decl.setColor(colorDecl);
-					_parentNode.addElement(decl);
+					String declText = "var " + varName + ": " + type;
+					if (level == 1 || this.previousDeclaration == null) {
+						Instruction decl = new Instruction(declText);
+						decl.setComment(picture);
+						decl.setColor(colorDecl);
+						_parentNode.addElement(decl);
+						this.previousDeclaration = decl;
+					}
+					else {
+						// At least optically we show the nesting depth
+						for (int i = 0; i < level; i++) {
+							declText = "  " + declText;
+						}
+						this.previousDeclaration.getText().add(declText);
+					}
 				}
 				if (_typeInfo != null) {
 					_typeInfo.put(varName, type);
@@ -6326,6 +6594,12 @@ public class COBOLParser extends CodeParser
 			}
 		}
 		cond += thruExpr;
+		if (cond.matches("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)")) {
+			cond.replaceAll("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)", "$1 <> $2");
+		}
+		if (cond.contains(" OF ")) {
+			System.out.println("A record access slipped through badly...");
+		}
 		return cond.trim();	// This is just an insufficient first default approach
 	}
 	
@@ -6356,10 +6630,22 @@ public class COBOLParser extends CodeParser
 	 * @param _reduction - the reduction representing the recursive token list rule
 	 * @param _listRuleHead - the name of the non-terminal (e.g. "&lt;expr_tokens&gt;")
 	 */
-	private final void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead) {
+	private final void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead)
+	{
 		if (_reduction.getParent().getHead().toString().equals(_listRuleHead) && _reduction.size() > 1) {
-			_tokens.add(0, _reduction.get(_reduction.size()-1));
-			lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
+			_tokens.addFirst(_reduction.get(_reduction.size()-1));
+			int ruleId = _reduction.get(0).asReduction().getParent().getTableIndex();
+			switch (ruleId) {
+			// Ensure the processing of modrefs!
+			case RuleConstants.PROD_IDENTIFIER_1:
+			case RuleConstants.PROD_IDENTIFIER_13:
+			// Don't split qualified identifiers!
+			case RuleConstants.PROD_QUALIFIED_WORD2:
+				_tokens.addFirst(_reduction.get(0));
+				break;
+			default:
+				lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
+			}
 		}
 		else {
 			for (int i = 0; i < _reduction.size(); i++) {
@@ -6518,6 +6804,10 @@ public class COBOLParser extends CodeParser
 		{
 			_content += " pow(" + this.getContent_R(_reduction.get(0).asReduction(), "")
 			+ this.getContent_R(_reduction.get(2).asReduction(), ", ") + ")"; 
+		}
+		else if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2) {
+			_content = this.getContent_R(_reduction.get(2).asReduction(), _content);
+			_content = this.getContent_R(_reduction.get(0).asReduction(), _content + ".");
 		}
 		else {
 			for(int i=0; i<_reduction.size(); i++)
@@ -6745,5 +7035,67 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}
+	
+	// START KGU 2017-05-28: Now we try to resolve internal calls
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassPostProcess(java.lang.String)
+	 */
+	protected void subclassPostProcess(String _textToParse)
+	{
+		//HashMap<Subqueue, Subqueue> subqueueMap = new HashMap<Subqueue, Subqueue>();
+		for (SectionOrParagraph sop: this.procedureList) {
+			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
+			if (clients != null && sop.firstElement != null && sop.lastElement != null) {
+				Root owner = Element.getRoot(sop.firstElement);
+				Subqueue sq = (Subqueue)sop.firstElement.parent;
+				// We will have to copy the content of the replacing call. Therefor we must
+				// have an opportunity to find the call. This should be feasible via the index
+				// of the first element of the subsequence. But we cannot be sure that sop.start
+				// is still correct - the original context may already have been outsourced itself
+				// so we search for it in the current context.
+				int callIndex = sq.getIndexOf(sop.firstElement);
+				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
+				Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
+				if (proc != null) {
+					// If we use includable diagrams then we don't use parameters... 
+					//proc.setText(sop.name + "()");
+					subRoots.add(proc);
+					Element replacingCall = sq.getElement(callIndex);
+					if (replacingCall instanceof Call) {
+						// FIXME
+						String callText = replacingCall.getText().getLongString();
+						String[] callParts = callText.split(" <- ", -1);
+						int ix = sq.getIndexOf(replacingCall);
+						Element resultDistribution = null;
+						if (callParts.length > 1 && ix > -1 && ix+1 < sq.getSize()) {
+							resultDistribution = sq.getElement(ix+1);
+						}
+						// TODO
+						// Both the original proc text (now overwritten) and the replacingCall text contain
+						// all required variable names as parameters, so we might check whether we got all declarations
+						for (Call client: clients) {
+							// FIXME we must care for an includable Root that defines all necessary variables
+							// By the time we can't do this just copy the call context from original root
+							client.setText(callText);
+							client.setColor(colorMisc);	// No longer needs to be red
+							client.disabled = false;
+							if (resultDistribution != null) {
+								ix = ((Subqueue)client.parent).getIndexOf(client);
+								if (ix > -1) {
+									((Subqueue)client.parent).insertElementAt(resultDistribution.copy(), ix+1);
+								}
+							}
+						}
+						// At the original place we most likely won't need the call anymore.
+						replacingCall.disabled = true;
+						if (resultDistribution != null) {
+							resultDistribution.disabled =true;
+						}
+					}
+				}
+			}
+		}
+	}
+	// END KGU 2017-05-28		
 
 }

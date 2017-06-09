@@ -79,7 +79,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
  *      Kay Gürtzig     2017.03.30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
  *      Kay Gürtzig     2017.04.14      Enh. #380: New highlighting mechanism troubleMakers / E_TROUBLECOLOR
- *      Kay Gürtzig     2017.05.22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals 
+ *      Kay Gürtzig     2017.05.22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals
+ *      Kay Gürtzig     2017.06-09      Enh. #416: Methods getUnbrokenText(), getBrokenText() introduced 
  *
  ******************************************************************************************************
  *
@@ -275,7 +276,10 @@ public abstract class Element {
 
 	// some static constants
 	protected static int E_PADDING = 20;
-	public static int E_INDENT = 2;
+	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
+	//public static int E_INDENT = 2;
+	public static int E_INDENT = 4;	// Used as minimum indentation for continuationn lines (after lines ending with backslash)
+	// END KGU#412 2017-06-09
 	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
@@ -733,6 +737,49 @@ public abstract class Element {
 		sl.add(COLLAPSED);
 		return sl;
 	}
+	
+	// START KGU#413 2017-06-09: Enh. #416 Cope with line continuations
+	/**
+	 * Returns the text of this element but with re-concatenated and trimmed lines if some
+	 * lines were deliberately broken (i.e. ended with backslash)
+	 * @return a StringList consisting of unbroken text lines
+	 */
+	public StringList getUnbrokenText()
+	{
+		return getBrokenText(" ");
+	}
+	/**
+	 * Returns the text of this element as a new StringList where each broken line (by means
+	 * of backslashes) will form together an element with newlines.
+	 * @return a StringList consisting of possibly broken text lines
+	 */
+	public StringList getBrokenText()
+	{
+		return getBrokenText("\\\n");
+	}
+	/**
+	 * Returns the text of this element as a new StringList where each broken line (by means
+	 * of backslashes) will be glued together such that instead of the delimiting backslashes
+	 * the given separator will be inserted.
+	 * @param separator - an arbitrary string working as separator instead of the original backslash
+	 * @return a StringList consisting of possibly broken text lines
+	 */
+	private StringList getBrokenText(String separator)
+	{
+		StringList sl = new StringList();
+		int nLines = text.count();
+		int i = 0;
+		while (i < nLines) {
+			String line = text.get(i).trim();
+			while (line.endsWith("\\") && (i + 1 < nLines)) {
+				line = line.substring(0, line.length()-1) + separator + text.get(++i).trim();
+			}
+			sl.add(line);
+			i++;
+		}
+		return sl;
+	}
+	// END KGU#413 2017-06-09
 
 	public void setComment(String _comment)
 	{
@@ -2654,9 +2701,10 @@ public abstract class Element {
     public StringList getIntermediateText()
     {
     	StringList interSl = new StringList();
-    	for (int i = 0; i < text.count(); i++)
+    	StringList lines = this.getUnbrokenText();
+    	for (int i = 0; i < lines.count(); i++)
     	{
-    		interSl.add(transformIntermediate(text.get(i)));
+    		interSl.add(transformIntermediate(lines.get(i)));
     	}
     	return interSl;
     }

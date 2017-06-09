@@ -1135,22 +1135,22 @@ public class Root extends Element {
 	
 	// START KGU#312 2016-12-29: Enh. #315
 	/**
-	 * Equivalence check returning one of the following similarity levels:
-	 * 0: no resemblance
-     * 1: Identity (i. e. the Java Root elements are identical);
+	 * Equivalence check returning one of the following similarity "levels":<br/>
+	 * 0: no resemblance<br/>
+     * 1: Identity (i. e. the Java Root elements are identical);<br/>
      * 2: Exact equality (i. e. objects aren't identical but all attributes
      *    and structure are recursively equal AND the file paths are equal
-     *    AND there are no unsaved changes in both diagrams);
+     *    AND there are no unsaved changes in both diagrams);<br/>
      * 3: Equal file path but unsaved changes in one or both diagrams (this
      *    can occur if several Structorizer instances in the same application
-     *    loaded the same file independently);
+     *    loaded the same file independently);<br/>
      * 4: Equal contents but different file paths (may occur if a file copy
      *    is loaded or if a Structorizer instance just copied the diagram
-     *    with "Save as");
+     *    with "Save as");<br/>
      * 5: Equal signature (i. e. type, name and argument number) but different
      *    content or structure.
      * @param another - the Root to compare with
-     * @return a resemblance level according to the description above
+     * @return a resemblance code according to the description above
 	 */
 	public int compareTo(Root another)
 	{
@@ -1854,7 +1854,7 @@ public class Root extends Element {
 		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
 		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
 
-		StringList tokens = Element.splitLexically(_line, true);
+		StringList tokens = Element.splitLexically(_line.trim(), true);
 
 		Element.unifyOperators(tokens, false);
 
@@ -4277,7 +4277,7 @@ public class Root extends Element {
 	 * (where a record/struct might have been necessary instead).
 	 * @param elements - an element sequence from this Root
 	 * @param name - the name for the new subroutine
-	 * @param result - name of the result variable (if any) 
+	 * @param result - name of the result variable (if any) or null 
 	 * @return a new Root formed from the given elements or null if {@code elements} was
 	 * empty or didn't belong to this Root. 
 	 */
@@ -4289,7 +4289,7 @@ public class Root extends Element {
 		// 1. Variables set within elements (and still used afterwards outside);
 		// 2. Non-scalar variables passed to some subroutine call within elements;
 		// 3. Array variables with element assignments to them within elements.
-		// It woud be fine if the caller (Diagram) could do this analysis in advance
+		// It would be fine if the caller (Diagram) could do this analysis in advance
 		// and pass the committed result variable names in.
 		// In any case, if the number of committed result items is larger than 1,
 		// then we will have to gather them into a data structure (i.e. an array)
@@ -4364,7 +4364,7 @@ public class Root extends Element {
 				resAsgnmt = name + " <- {" + results.concatenate(", ") + "}";
 			}
 			subroutine.setText(signature);
-			subroutine.setChanged();
+			//subroutine.setChanged();		// This was not helpful for code import
 			if (resAsgnmt != null) {
 				subroutine.children.addElement(new Instruction(resAsgnmt));
 			}
@@ -4584,5 +4584,17 @@ public class Root extends Element {
 		return counts;
 	}
 	// END KGU#363 2017-05-08
+	
+	// START KGU#324 2017-05-30: Enh. #373, #415
+	/**
+	 * Provides a tree iterator for forward (pre-order top-down) or backward (post-order bottom-up)
+	 * traversal.
+	 * @return An Iterator instance responding to hasNext(), next(), hasPrevious(), previous() method
+	 */
+	public IElementSequence.Iterator iterator()
+	{
+		return this.children.iterator(true);
+	}
+	// END KGU#363 2017-05-30
 	
 }

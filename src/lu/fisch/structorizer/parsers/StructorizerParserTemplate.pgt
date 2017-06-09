@@ -73,7 +73,6 @@ import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.regex.Matcher;
 
-import com.creativewidgetworks.goldparser.parser.*;
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
@@ -190,7 +189,7 @@ public class %Name%Parser extends CodeParser
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it and writes a new temporary file "Structorizer.{defaultExt}",
+	 * file, filters it and writes a new temporary file "Structorizer&lt;random&gt;.{defaultExt}",
 	 * which is then actually parsed.
 	 * The preprocessed file will always be saved with UTF-8 encoding.
 	 * @param _textToParse - name (path) of the source file

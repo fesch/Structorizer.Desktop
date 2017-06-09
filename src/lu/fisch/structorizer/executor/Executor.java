@@ -125,6 +125,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float resul)
  *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
  *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
+ *      Kay Gürtzig     2017.05.24      Enh. #354: New function split(string, string) built in
+ *      Kay Gürtzig     2017.06.09      Enh. #416: Support for execution line continuation by trailing backslash
  *
  ******************************************************************************************************
  *
@@ -624,7 +626,7 @@ public class Executor implements Runnable
 //		//r = new Regex("([^']*?)'(([^']|''){2,})'", "$1\"$2\"");
 //		s = r.replaceAll(s);
 		// END KGU#285 2016-10-16
-		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initialiseInterpreter() 
+		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
         // pascal: convert "inc" and "dec" procedures
         r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); s = r.replaceAll(s);
         r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); s = r.replaceAll(s);
@@ -1772,6 +1774,22 @@ public class Executor implements Runnable
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public String trim(String s) { return s.trim(); }";
 			interpreter.eval(pascalFunction);
+			// START KGU#410 2017-05-24: Enh. #413: Introduced to facilitate COBOL import but generally useful
+			// If we passed the result of String.split() directly then we would obtain a String[] object the 
+			// Executor cannot display.
+			pascalFunction = "public Object[] split(String s, String p)"
+					+ "{ p = java.util.regex.Pattern.quote(p);"
+					+ " String[] parts = s.split(p, -1);"
+					+ "Object[] results = new Object[parts.length];"
+					+ " for (int i = 0; i < parts.length; i++) {"
+					+ "		results[i] = parts[i];"
+					+ "}"
+					+ "return results; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Object[] split(String s, char c)"
+					+ "{ return split(s, \"\" + c); }";
+			interpreter.eval(pascalFunction);
+			// END KGU#410 2017-05-24
 			// START KGU#57 2015-11-07: More interoperability for characters and Strings
 			// char transformation
 			pascalFunction = "public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }";
@@ -3134,7 +3152,10 @@ public class Executor implements Runnable
 	{
 		String result = new String();
 
-		StringList sl = element.getText();
+		// START KGU#413 2017-06-09: Enh. #416 allow user-defined line concatenation
+		//StringList sl = element.getText();
+		StringList sl = element.getUnbrokenText();
+		// END KGU#413 2017-06-09
 		int i = 0;
 
 		// START KGU#77/KGU#78 2015-11-25: Leave if some kind of leave statement has been executed
@@ -3253,7 +3274,10 @@ public class Executor implements Runnable
 	{
 		String result = new String();
 
-		StringList sl = element.getText();
+		// START KGU#413 2017-06-09: Enh. #416 allow user-defined line concatenation
+		//StringList sl = element.getText();
+		StringList sl = element.getUnbrokenText();
+		// END KGU#413 2017-06-09
 		int i = 0;
 
 		// START KGU#117 2016-03-10: Enh. #77
@@ -3331,7 +3355,10 @@ public class Executor implements Runnable
 	{
 		String result = new String();
 
-		StringList sl = element.getText();
+		// START KGU#413 2017-06-09: Enh. #416 allow user-defined line concatenation
+		//StringList sl = element.getText();
+		StringList sl = element.getUnbrokenText();
+		// END KGU#413 2017-06-09
 		boolean done = false;
 
 		// START KGU#380 2017-04-14: #394 Radically rewritten and simplified (no multi-line evaluation anymore)
@@ -4065,10 +4092,10 @@ public class Executor implements Runnable
 		}
 		// END KGU#376 2017-04-11
 		else {
-			// START KGU#197 2016-07-27: Now translatable
+			// START KGU#197 2017-06-06: Now translatable
 			//result = "<" + cmd + "> is not a correct function!";
 			result = control.msgIllFunction.getText().replace("%1", cmd);
-			// END KGU#197 2016-07-27
+			// END KGU#197 2017-06-06
 		}
 		return result;
 	}
@@ -4286,7 +4313,10 @@ public class Executor implements Runnable
 		{
 			String condStr = "true";	// Condition expression
 			if (!eternal) {
-				condStr = ((While) element).getText().getText();
+				// START KGU#413 2017-06-09: Enh. #416: Cope with user-inserted line breaks
+				//condStr = element.getText().getText();
+				condStr = element.getUnbrokenText().getText();
+				// END KGU#413 2017-06-09
 				// START KGU#150 2016-04-03: More precise processing
 //				if (!CodeParser.preWhile.equals(""))
 //				{
@@ -4446,7 +4476,10 @@ public class Executor implements Runnable
 			// Hence, syntactic errors will be reported before the loop has been started at all.
 			// And, of course, variables only introduced within the loop won't be recognised--
 			// which is sound with scope rules in C or Java.
-			String condStr = element.getText().getText();
+			// START KGU#413 2017-06-09: Enh. #416: Cope with user-inserted line breaks
+			//String condStr = element.getText().getText();
+			String condStr = element.getUnbrokenText().getText();
+			// END KGU#413 2017-06-09
 			// STRT KGU#150 2016-04-03: More pecise processing
 //			if (!CodeParser.preRepeat.equals(""))
 //			{

@@ -1481,7 +1481,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	public void arrangerIndexRemove()
 	{
 		int index = diagramIndex.getSelectedIndex();
-		Arranger.getInstance().removeDiagram(diagramIndex.getSelectedValue());
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null) {
+			Arranger.getInstance().removeDiagram(selectedRoot);
+		}
 		if (index < diagramIndex.getModel().getSize()) {
 			diagramIndex.setSelectedIndex(index);
 		}

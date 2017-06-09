@@ -427,7 +427,7 @@ public class XmlGenerator extends Generator {
 		// END KGU#363 2017-05-22
 		// START KGU#363 2017-03-13: Enh. #372 License stuff
 		String licName = _root.licenseName;
-		if (licName == null && Ini.getInstance().getProperty("author", System.getProperty("user.name")).equals(_root.getAuthor())) {
+		if (licName == null && Ini.getInstance().getProperty("authorName", System.getProperty("user.name")).equals(_root.getAuthor())) {
 			// Look for a default license
 			licName = Ini.getInstance().getProperty("licenseName", "").trim();
 		}

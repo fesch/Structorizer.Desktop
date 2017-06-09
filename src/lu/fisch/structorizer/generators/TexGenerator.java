@@ -171,9 +171,10 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Instruction _inst, String _indent)
 	{
     	if (!_inst.disabled) {
-    		for(int i=0;i<_inst.getText().count();i++)
+    		StringList lines = _inst.getUnbrokenText();
+    		for(int i=0;i<lines.count();i++)
     		{
-    			code.add(_indent+"\\assign{\\("+transform(_inst.getText().get(i))+"\\)}");
+    			code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
     		}
     	}
 	}
@@ -242,7 +243,7 @@ public class TexGenerator extends Generator {
 	protected void generateCode(While _while, String _indent)
 	{
 		if (!_while.disabled) {
-			code.add(_indent+"\\while{\\("+BString.replace(transform(_while.getText().getText()),"\n","")+"\\)}");
+			code.add(_indent+"\\while{\\("+BString.replace(transform(_while.getUnbrokenText().getText()),"\n","")+"\\)}");
 			generateCode(_while.q,_indent+_indent.substring(0,1));
 			code.add(_indent+"\\whileend");
 		}
@@ -251,7 +252,7 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
 		if (!_repeat.disabled) {
-			code.add(_indent+"\\until{\\("+BString.replace(transform(_repeat.getText().getText()),"\n","")+"\\)}");
+			code.add(_indent+"\\until{\\("+BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","")+"\\)}");
 			generateCode(_repeat.q,_indent+_indent.substring(0,1));
 			code.add(_indent+"\\untilend");
 		}
@@ -268,11 +269,12 @@ public class TexGenerator extends Generator {
 
 	protected void generateCode(Call _call, String _indent)
 	{
-		for(int i=0; !_call.disabled && i<_call.getText().count(); i++)
+		StringList lines = _call.getUnbrokenText();
+		for(int i=0; !_call.disabled && i<lines.count(); i++)
 		{
 			// START KGU#2 2015-12-19: Wrong command, should be \sub
 			//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
-			code.add(_indent+"\\sub{\\("+transform(_call.getText().get(i))+"\\)}");
+			code.add(_indent+"\\sub{\\("+transform(lines.get(i))+"\\)}");
 			// END KGU#2 2015-12-19
 		}
 	}
@@ -280,9 +282,10 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Jump _jump, String _indent)
 	{
 		if (!_jump.disabled) {
+			StringList lines = _jump.getUnbrokenText();
 			// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 			//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
-			if (_jump.getText().count() == 0 || _jump.getText().getText().trim().isEmpty())
+			if (lines.count() == 0 || lines.getText().trim().isEmpty())
 			{
 				code.add(_indent+ "\\exit{}");
 			}
@@ -291,7 +294,7 @@ public class TexGenerator extends Generator {
 			{
 				// FIXME (KGU 2015-12-19): This should not be split into several blocks
 				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
-				for(int i=0; i<_jump.getText().count(); i++)
+				for(int i=0; i<lines.count(); i++)
 				{
 					// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 					//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");

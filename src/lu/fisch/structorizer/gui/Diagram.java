@@ -480,14 +480,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 											arrange = true;
 											//System.out.println(root.getFullText().getText());
 										}
-										for (Root rootNew: newRoots) {
-											rootNew.setChanged();
-										}
 										// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
 										if (newRoots.size() > 2 || !root.isProgram()) {
 											arrangeNSD();
 										}
 										// END KGU#354 2017-05-23
+										for (Root rootNew: newRoots) {
+											rootNew.setChanged();
+										}
 									}
 									else {
 								// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
@@ -1250,6 +1250,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		super.paintComponent(g);
 		if(root!=null)
 		{
+			//System.out.println("Diagram: " + System.currentTimeMillis());
 			redraw(g);
 		}
 	}
@@ -1352,7 +1353,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
 		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
-
+		
 		// START KGU#48 2015-10-17: Arranger support
 		Root oldRoot = root;
 		// END KGU#48 2015-10-17
@@ -2219,7 +2220,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (selected instanceof Instruction)
 			{
 				Instruction instr = (Instruction)selected;
-				isConvertible = instr.getText().count() > 1
+				isConvertible = instr.getUnbrokenText().count() > 1
 						|| instr.isJump()
 						// START KGU#376 2017-04-15: Enh. #389 accept new call type, too
 						|| instr.isImportCall()
@@ -2863,7 +2864,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (!jumps.isEmpty()) {
 				String jumpTexts = "";
 				for (Jump jmp: jumps) {
-					String jumpLine = jmp.getText().getLongString().trim();
+					String jumpLine = jmp.getUnbrokenText().getLongString().trim();
 					if (jumpLine.isEmpty()) {
 						jumpLine = "(" + CodeParser.getKeywordOrDefault("preLeave", "leave") + ")";
 					}
@@ -2907,6 +2908,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					sub.hightlightVars = root.hightlightVars;
 					sub.isNice = root.isNice;
 					sub.getVarNames();	// just to prepare proper drawing.
+					sub.setChanged();
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
 					arr.setVisible(true);
@@ -2981,7 +2983,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} catch (CancelledException e) {
 				return;
 			}
-			if (selected.getText().count() > 1)
+			if (selected.getUnbrokenText().count() > 1)
 			{
 				transmuteToSequence(parent);
 			}
@@ -3044,12 +3046,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// otherwise the first instruction will get all comment.
 		int index = parent.getIndexOf(selected);
 		StringList comment = selected.getComment();
-		int count = selected.getText().count();
+		StringList text = selected.getBrokenText();
+		int count = text.count();
 		boolean distributeComment = (count == comment.count());
 		for (int i = 0; i < count; i++)
 		{
 			Instruction instr = (Instruction)selected.copy();
-			instr.setText(selected.getText().get(i));
+			instr.setText(StringList.explode(text.get(i), "\n"));
 			if (distributeComment)
 			{
 				instr.setComment(StringList.explode(comment.get(i), "\n"));
@@ -5764,32 +5767,41 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#309 2016-12-15: Enh. #310
     public void savingOptions()
     {
-    	SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
-    	Ini ini = Ini.getInstance();
-    	sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
-    	sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
-    	sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
-    	// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-    	sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
-    	sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
-    	// END KGU#363 2017-03-12
-    	sod.setVisible(true);
+    	try {
+    		SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
+    		Ini ini = Ini.getInstance();
+    		sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
+    		sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
+    		sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
+    		// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+    		sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
+    		sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
+    		// END KGU#363 2017-03-12
+    		sod.setVisible(true);
 
-    	if(sod.goOn==true)
-    	{
-    		Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
-    		Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
-    		Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
-        	// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-        	ini.setProperty("authorName", sod.txtAuthorName.getText());
-        	String licName = (String)sod.cbLicenseFile.getSelectedItem();
-        	if (licName == null) {
-        		ini.setProperty("licenseName", "");
-        	}
-        	else {
-        		ini.setProperty("licenseName", licName);
-        	}
-        	// END KGU#363 2017-03-12
+    		if(sod.goOn==true)
+    		{
+    			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
+    			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
+    			Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+    			ini.setProperty("authorName", sod.txtAuthorName.getText());
+    			String licName = (String)sod.cbLicenseFile.getSelectedItem();
+    			if (licName == null) {
+    				ini.setProperty("licenseName", "");
+    			}
+    			else {
+    				ini.setProperty("licenseName", licName);
+    			}
+    			// END KGU#363 2017-03-12
+    			ini.save();
+    		}
+    	} catch (FileNotFoundException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    	} catch (IOException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
     	}
     }
     // END KGU#258 2016-09-26
@@ -6940,4 +6952,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#363 2017-05-17
 	
+	// START KGU#324 2017-05-30: Enh. #415
+	public void findAndReplaceNSD() {
+		FindAndReplace far = new FindAndReplace(this);
+		pop.setVisible(false);
+		far.setVisible(true);
+	}
+	// END KGU#324 2017-05-30
+
 }

@@ -460,11 +460,12 @@ public class PasGenerator extends Generator
 
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
-			for (int i=0; i<_inst.getText().count(); i++)
+			StringList lines = _inst.getUnbrokenText();
+			for (int i=0; i<lines.count(); i++)
 			{
 				// START KGU#74 2015-12-20: Bug #22 There might be a return outside of a Jump element, handle it!
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
-				String line = _inst.getText().get(i).trim();
+				String line = lines.get(i).trim();
 				if (line.matches(preReturnMatch))
 				{
 					String argument = line.substring(preReturn.length()).trim();
@@ -475,7 +476,7 @@ public class PasGenerator extends Generator
 					}
 					Subqueue sq = (_inst.parent == null) ? null : (Subqueue)_inst.parent;
 					if (sq == null || !(sq.parent instanceof Root) || sq.getIndexOf(_inst) != sq.getSize()-1 ||
-							i+1 < _inst.getText().count())
+							i+1 < lines.count())
 					{
 						addCode("exit;", _indent, isDisabled);
 					}
@@ -859,7 +860,7 @@ public class PasGenerator extends Generator
 		insertComment(_while, _indent);
 		// END KGU 2014-11-16
 
-		String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+		String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
 		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
 		addCode("while "+condition+" do", _indent, isDisabled);
@@ -884,7 +885,7 @@ public class PasGenerator extends Generator
 		insertComment(_repeat, _indent);
 		// END KGU 2014-11-16
 
-		String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+		String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
 		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
 		addCode("repeat", _indent, isDisabled);
@@ -930,9 +931,10 @@ public class PasGenerator extends Generator
 		insertComment(_call, _indent);
 		// END KGU 2014-11-16
 
-    	for(int i=0;i<_call.getText().count();i++)
+		StringList lines = _call.getUnbrokenText();
+    	for(int i=0;i<lines.count();i++)
     	{
-    		addCode(transform(_call.getText().get(i))+";", _indent, isDisabled);
+    		addCode(transform(lines.get(i))+";", _indent, isDisabled);
     	}
     }
 
@@ -950,7 +952,7 @@ public class PasGenerator extends Generator
 			// We will just have to translate exit into halt and return into exit
 			boolean isEmpty = true;
 			
-			StringList lines = _jump.getText();
+			StringList lines = _jump.getUnbrokenText();
 			// START KGU#142 2016-01-17: fixes Enh. #23 The following code had been
 			// misplaced inside the text line loop, it belongs to the top (no further
 			// analysis required):
