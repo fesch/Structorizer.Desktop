@@ -53,7 +53,6 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
  *                                      STRING statement implemented (refined with help of enh. #413)
  *      Kay Gürtzig     2017.05.28      First rough approach to implement UNSTRING import and PERFOM &lt;procedure&gt;
- *      Kay Gürtzig     2017.06.06      Correction in importUnstring(...) w.r.t. ALL clause
  *
  ******************************************************************************************************
  *
@@ -82,6 +81,8 @@ package lu.fisch.structorizer.parsers;
 import java.awt.Color;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -91,6 +92,7 @@ import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
+import com.sun.xml.internal.fastinfoset.util.ValueArrayResourceException;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -107,6 +109,7 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.gui.SelectedSequence;
+import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -4156,7 +4159,7 @@ public class COBOLParser extends CodeParser
 								srcLastCodeLenght++;
 							}
 							srcCode.insert(srcCodeLastPos - 1, firstNonSpaceInLine + " &");
-							srcCodeLastPos += 3;
+							srcCodeLastPos += 4;
 						}
 						strLine = srcLineCode;
 						srcLastCodeLenght = strLine.length();
@@ -4429,6 +4432,8 @@ public class COBOLParser extends CodeParser
 	 * Used to combine nested declarations within one element
 	 */
 	private Instruction previousDeclaration = null;
+	private int	previousDeclarationLevelDepth = 0;
+	private int	previousDeclarationLevelNumber = 0;
 	
 //	/* (non-Javadoc)
 //	 * @see CodeParser#initializeBuildNSD()
@@ -4524,42 +4529,63 @@ public class COBOLParser extends CodeParser
 			case RuleConstants.PROD_SECTION_HEADER_SECTION_TOK_DOT:
 			{
 				// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
+				// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
+				//       to close the previous section and the previous paragraph
+				
 				String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
-				// We ignore segment number (if given and delaratives i.e. <_use_statemant>
+				// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
+
+				// add to NSD
+				Call sec = new Call(name);
+				sec.setComment("Definition of section " + name);
+				sec.disabled = true;
+				_parentNode.addElement(sec);
+				
+				// add to procedureList for later handling
 				this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
 			}
 			break;
 			case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
 			{
-				// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
+				// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
+				// Note: this starts a new paragraph AND closes the previous paragraph
+				
 				String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+
+				// add to NSD
+				Call par = new Call(name);
+				par.setComment("Definition of paragraph " + name);
+				par.disabled = true;
+				_parentNode.addElement(par);
+				
+				// add to procedureList for later handling
 				if (Character.isDigit(name.charAt(0))) {
 					name = "sub" + name;
 				}
-				// We ignore segment number (if given and delaratives i.e. <_use_statemant>
 				this.procedureList.addFirst(new SectionOrParagraph(name, false, _parentNode.getSize(), _parentNode));
 			}
 			break;
-			case RuleConstants.PROD_PROCEDURE_TOK_DOT:
-				// First process the statements then handle the TOK_DOT with the subsequent case
-				buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
-				// No break; here!
-			case RuleConstants.PROD_PROCEDURE_TOK_DOT2:
-			{
-				// TODO close the last unsatisfied "procedure"
-				Iterator<SectionOrParagraph> iter = procedureList.iterator();
-				boolean found = false;
-				while (!found && iter.hasNext()) {
-					SectionOrParagraph sop = iter.next();
-					if (sop.parent == _parentNode && sop.endsBefore < 0) {
-						sop.endsBefore = _parentNode.getSize();
-						sop.firstElement = _parentNode.getElement(sop.startsAt);
-						sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
-						found = true;
-					}
-				}
-			}
-			break;
+//			deactivated as we get an ArrayIndexOutOfBoundsException sometimes
+//			case RuleConstants.PROD_PROCEDURE_TOK_DOT:
+//				// First process the statements then handle the TOK_DOT with the subsequent case
+//				buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
+//				// No break; here!
+//			case RuleConstants.PROD_PROCEDURE_TOK_DOT2:
+//			{
+//				// TODO close the last unsatisfied "procedure"
+//				Iterator<SectionOrParagraph> iter = procedureList.iterator();
+//				boolean found = false;
+//				while (!found && iter.hasNext()) {
+//					SectionOrParagraph sop = iter.next();
+//					if (sop.parent == _parentNode && sop.endsBefore < 0) {
+//						sop.endsBefore = _parentNode.getSize();
+//						sop.firstElement = _parentNode.getElement(sop.startsAt);
+//						sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+//						found = true;
+//					}
+//				}
+//			}
+//			break;
 			case RuleConstants.PROD_IF_STATEMENT_IF:
 				System.out.println("PROD_IF_STATEMENT_IF");
 				this.importIf(_reduction, _parentNode);
@@ -4825,7 +4851,7 @@ public class COBOLParser extends CodeParser
 			case RuleConstants.PROD_SEARCH_STATEMENT_SEARCH:
 			{
 				System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
-				// FIXME: At least add variable name parsing as we have in other places
+				// FIXME: At least add variable name parsing the same way we have in other places
 				//        and add some line breaks
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -5044,16 +5070,17 @@ public class COBOLParser extends CodeParser
 				_parentNode.addElement(instr);
 			}
 			for (String[] target: targets) {
-				// If there is an ALL flag set then we have to skip empty substrings from the split result.
+				// FIXME: I have no clear idea what the ALL flag actually means (do we have to skip
+				// empty substrings if it's not set?
 				// The trouble here is: we don't know anymore, which empty part resulted from which
-				// delimiter, and it can hardly be guessed at compile time. We would have to implement a
-				// complex detection mechanism which seems beyond reasonable efforts.
+				// delimiter, and it can hardly be guessed at compile time. We would heve to implement a
+				// complex detection mechanism
 				String expr = "unstring_" + suffix + "[" + index + "]";
 				boolean all = (allFlags & 1) != 0;
-				{ allFlags >>= 1; }	// Strangely, this instruction without block caused indentation defects in Eclipse
-				// FIXME Handling of ALL clauses is still not correct (see remark above)
+				{ allFlags >>= 1; }	// Strangely, this instruction causes indentation defects in Eclipse
+				// FIXME Handling of ALL clausues is still unclear
 				if (!ignoreUnstringAllClauses) {
-					if (all) {
+					if (!all) {
 						While loop = new While("(" + indexVar + " < length(unstring_" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
 						loop.setColor(colorMisc);
 						_parentNode.addElement(loop);
@@ -6270,12 +6297,18 @@ public class COBOLParser extends CodeParser
 			// as long as we don't use records there is no use in parsing FILLER
 			// items and as long as we do so group items that have no VALUE clause and
 			// only containing FILLER items which have a VALUE clause are not parsed correctly
-			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {
+//			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {
 				Reduction seqRed = _reduction.get(2).asReduction();
 				String type = "";
 				String value = "";
 				String picture = "";
+				String redefines = "";
 				boolean isGlobal = false;
+				boolean isExternal = false;
+				if (seqRed.isEmpty()) {
+					// This is a good guess and works in most cases but a record could have USAGE or SYNC clause, too
+					type = "record";
+				}
 				// We may not do anything if description is empty
 				while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
 					Reduction descrRed = seqRed.get(1).asReduction();
@@ -6364,13 +6397,26 @@ public class COBOLParser extends CodeParser
 					case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> --> initialisation
 						value = this.getContent_R(descrRed.get(2).asReduction(), "");
 						break;
+					case RuleConstants.PROD_EXTERNAL_CLAUSE_EXTERNAL: // <external_clause>
+						// only occurs on level 01/77, this record or single variable shares the same value in *independent* programs
+						// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need to share this
+						// variable in a single IMPORT NSD (name: var name)
+						isExternal = true;
+						break;
 					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
 					case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:
-						// FIXME Is this to be put to a globals Root or is the current diagram serving as an import Root?
+						// only occurs on level 01/77, this record or single variable shares the same value in *nested* programs
+						// in general this is a rare cause but to be "correct" we would need to share this
+						// variable in a single IMPORT NSD (name: first program's name that uses it + var name)
 						isGlobal = true;
 						break;
+					case RuleConstants.PROD_REDEFINES_CLAUSE_REDEFINES: // <redefines_clause> ::= REDEFINES <identifier_1>
+						// shares the same memory area
+						// FIXME at least add a comment
+						redefines = this.getContent_R(descrRed.get(1).asReduction(), "");
+						break;
 					}
-					seqRed = seqRed.get(0).asReduction();
+					seqRed = seqRed.get(0).asReduction(); 
 				}
 				if (!picture.isEmpty()) {
 					type = deriveTypeInfoFromPic(picture);
@@ -6380,26 +6426,42 @@ public class COBOLParser extends CodeParser
 				// if we still haven't got a type we're parsing a group item without usage
 				// --> this is always seen as COBOL alphanumeric (internal like a byte[]) -> set to string
 				if (type.isEmpty()) {
-					//type = "string";
-					type = "record";	// This is just a guess
+					type = "string";
 				}
 				// END SSO 2017-05-12
 				if (_parentNode != null && this.optionImportVarDecl) {
 					// Add the declaration
 					String declText = "var " + varName + ": " + type;
-					if (level == 1 || this.previousDeclaration == null) {
+					// provide global/exernal redefines as comment
+					String commentText = picture;
+					if (isGlobal) {
+						commentText += " (GLOBAL)";
+					} else if (isExternal) {
+						commentText += " (EXTERNAL)";
+					} else if (!redefines.isEmpty()) {
+						commentText += " REDEFINES " + redefines;
+					}
+					//if (level == 1 || this.previousDeclaration == null) {
+					if (level == 1 || level == 77) {
 						Instruction decl = new Instruction(declText);
-						decl.setComment(picture);
+						decl.setComment(commentText);
 						decl.setColor(colorDecl);
 						_parentNode.addElement(decl);
 						this.previousDeclaration = decl;
+						this.previousDeclarationLevelDepth = 1;
+						this.previousDeclarationLevelNumber = 1;
 					}
 					else {
-						// At least optically we show the nesting depth
-						for (int i = 0; i < level; i++) {
-							declText = "  " + declText;
+						// at least optically we show the nesting depth
+						if (this.previousDeclarationLevelNumber > level) {
+							this.previousDeclarationLevelDepth--;
+						} else if (this.previousDeclarationLevelNumber < level) {
+							this.previousDeclarationLevelDepth++;
 						}
-						this.previousDeclaration.getText().add(declText);
+						this.previousDeclarationLevelNumber = level;
+						String intend = new String(new char[this.previousDeclarationLevelDepth]).replace("\0", "  ");
+						this.previousDeclaration.getText().add(intend + declText);
+						this.previousDeclaration.getComment().add(varName + ":\t" + commentText);
 					}
 				}
 				if (_typeInfo != null) {
@@ -6420,7 +6482,7 @@ public class COBOLParser extends CodeParser
 					}
 					String content = varName + " <- " + value;
 					Instruction def = new Instruction(content);
-					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
+					// FIXME: in case of isGlobal / IsExternal enforce the placement in a global diagram to be imported wherever needed
 					_parentNode.addElement(def);
 				}
 				//TODO stash the variables without a value clause somewhere to add
@@ -6429,7 +6491,7 @@ public class COBOLParser extends CodeParser
 //				else {
 //					stashVariable(varName, type);
 //				}
-			}
+//			}
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_CONSTANT) {
 			boolean isGlobal = _reduction.get(3).asReduction().getParent().getTableIndex() == RuleConstants.PROD_CONST_GLOBAL_GLOBAL;
@@ -6552,34 +6614,37 @@ public class COBOLParser extends CodeParser
 		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
 			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
 		}
-		if (lastSubject == null || lastSubject.isEmpty()) {
-			Token tok = expr_tokens.getFirst();
-			if (!isComparisonOpRuleId(ruleId)) {
-				if (tok.getType() == SymbolType.CONTENT) {
-					lastSubject = tok.asString();
-					if (tok.getName().equals("COBOLWord")) {
-						lastSubject = lastSubject.replace("-", "_");
-					}
-				}
-				else {
-					lastSubject = this.getContent_R(tok.asReduction(), "");
-				}
-			}
-			else {
-				lastSubject = "";
-			}
-		}
 		boolean afterLogOpr = true;
-		for (Token tok: expr_tokens) {
-			String tokStr = "";
+		final int numberOfTokens = expr_tokens.size();
+		if (lastSubject == null) {
+			lastSubject = "";
+		}
+		
+		for (int currentToken = 0; currentToken < numberOfTokens; currentToken++ ) {
+			Token tok = expr_tokens.get(currentToken);
+			String tokStr;
 			if (tok.getType() == SymbolType.NON_TERMINAL) {
 				ruleId = tok.asReduction().getParent().getTableIndex();
 				tokStr = this.getContent_R(tok.asReduction(), "");
-			}
-			else {
+			} else {
 				tokStr = tok.asString();
 				if (tok.getName().equals("COBOLWord")) {
 					tokStr = tokStr.replace("-", "_");
+				}
+				
+				// get lastSubject
+				if (currentToken + 1 < numberOfTokens) {
+					Token tok2 = expr_tokens.get(currentToken + 1);
+					if (tok2.getType() == SymbolType.NON_TERMINAL) {
+						// if the next token is a comparision then the current token is the last subject
+						if (isComparisonOpRuleId(tok2.asReduction().getParent().getTableIndex())) {
+							if (tok.getType() == SymbolType.CONTENT) {
+								lastSubject = tokStr;
+							} else {
+								lastSubject = this.getContent_R(tok.asReduction(), "");
+							}
+						}
+					}
 				}
 			}
 			if (!tokStr.trim().isEmpty()) {
@@ -6590,7 +6655,7 @@ public class COBOLParser extends CodeParser
 				if (afterLogOpr) {
 					tokStr = tokStr.toLowerCase();
 				}
-				cond += " " + tokStr;
+				cond += " " + tokStr.trim();
 			}
 		}
 		cond += thruExpr;
@@ -7097,5 +7162,214 @@ public class COBOLParser extends CodeParser
 		}
 	}
 	// END KGU 2017-05-28		
+}
 
+
+class CobTools {
+
+	/* Field types */
+	public static enum Usage {
+		USAGE_BINARY,
+		USAGE_BIT,
+		USAGE_COMP_5,
+		USAGE_COMP_X,
+		USAGE_DISPLAY,
+		USAGE_FLOAT,
+		USAGE_DOUBLE,
+		USAGE_INDEX,
+		USAGE_NATIONAL,
+		USAGE_OBJECT,
+		USAGE_PACKED,
+		USAGE_POINTER,
+		USAGE_LENGTH,
+		USAGE_PROGRAM_POINTER,
+		USAGE_UNSIGNED_CHAR,
+		USAGE_SIGNED_CHAR,
+		USAGE_UNSIGNED_SHORT,
+		USAGE_SIGNED_SHORT,
+		USAGE_UNSIGNED_INT,
+		USAGE_SIGNED_INT,
+		USAGE_UNSIGNED_LONG,
+		USAGE_SIGNED_LONG,
+		USAGE_COMP_6,
+		USAGE_FP_DEC64,
+		USAGE_FP_DEC128,
+		USAGE_FP_BIN32,
+		USAGE_FP_BIN64,
+		USAGE_FP_BIN128,
+		USAGE_LONG_DOUBLE
+	};
+	
+	static private HashMap<String,ArrayList<CobVar>> varNames;
+	
+	private void insertVariableToVarList (CobVar variable) {
+		String varName = variable.getName();
+		
+		// check if we already have a List of variables with the given name
+		ArrayList<CobVar> varList = varNames.get(varName);
+		
+		// Otherwise create the List entry and add it to the name Map
+		if (varList == null) {
+			varList = new ArrayList<CobVar>();
+			varNames.put(varName, varList);
+		}
+		
+		// finally insert the variable to the found/new List
+		varList.add(variable);
+	}
+
+	public CobVar getCobVar(String nameOfVar) {
+		
+		if (nameOfVar.isEmpty()) {
+			return null;
+		}
+		nameOfVar = nameOfVar.toUpperCase();
+		
+		// get unqualified name (1st part) and possible qualifiers
+		String[] names = nameOfVar.split("\\s+(IN|OF)\\s+");
+		
+		// search for List of variables with the given (unqualified) name
+		ArrayList<CobVar> varList = varNames.get(names[0]);
+		
+		// if the entry exist check for neccessary qualification
+		if (varList == null) {
+			return null;
+		}		
+		if (varList.size() == 1) {
+			return varList.get(0);
+		}
+		
+		for (Iterator<CobVar> iterator = varList.iterator(); iterator.hasNext();) {
+			CobVar candidate = (CobVar) iterator.next();
+			if (candidate.hasParent()) {
+				if (candidate.getParent().getName().equals(names[0])) {
+					// TODO HIOER WEITER
+				}
+			}
+		}
+		
+		
+		
+		
+		
+		
+		return null;
+	}
+	
+	class CobVarList {
+		
+		
+	}
+	
+	class CobVar {
+		
+		private int	level;
+		private String name;
+		private String picture;
+		private Usage usage;
+		
+		private CobVar parent;
+		private CobVar child;
+		private CobVar sister;
+		private CobVar redefines;
+		
+		/**
+		 * @param level COBOL level number	
+		 * @param name
+		 * @param picture
+		 * @param usage
+		 * @param parent
+		 * @param redefines
+		 */
+		public CobVar(int level, String name, String picture, Usage usage, CobVar parent, CobVar redefines) {
+			super();
+			this.level = level;
+			this.name = name;
+			this.picture = picture;
+			this.usage = usage;
+			this.parent = parent;
+			this.redefines = redefines;
+			
+			insertVariableToVarList(this);
+		}
+		
+		public boolean hasParent() {
+			if (this.parent != null) {
+				return true;
+			}
+			return false;
+		}
+
+		/**
+		 * @param level COBOL level number	
+		 * @param name
+		 * @param picture
+		 * @param usage
+		 * @param parent
+		 * @param nameOfRedefines
+		 */
+		public CobVar(int level, String name, String picture, Usage usage, CobVar parent, String nameOfRedefines) {
+			this(level, name, picture, usage, parent, getCobVar(nameOfRedefines));
+		}
+
+		/**
+		 * @return the child
+		 */
+		public CobVar getChild() {
+			return child;
+		}
+
+		/**
+		 * @param child the child to set
+		 */
+		public void setChild(CobVar child) {
+			this.child = child;
+		}
+
+		/**
+		 * @return the sister
+		 */
+		public CobVar getSister() {
+			return sister;
+		}
+
+		/**
+		 * @param sister the sister to set
+		 */
+		public void setSister(CobVar sister) {
+			this.sister = sister;
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * @return the parent
+		 */
+		public CobVar getParent() {
+			return parent;
+		}
+
+		/**
+		 * @return the redefines
+		 */
+		public CobVar getRedefines() {
+			return redefines;
+		}
+		
+		/**
+		 * returns the Java type as string depending on usage, picture and size
+		 */
+		public String getTypeString () {
+			return "";
+		}
+
+		
+		
+	}
+	
 }
