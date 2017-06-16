@@ -80,6 +80,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.26/28   Enh. KGU#386: Method for plugin menu items, diagram file import
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added
  *      Kay Gürtzig     2017.05.21      Enh. #372: New menu entry and accelerator for AttribeInspector
+ *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
  *
  ******************************************************************************************************
  *
@@ -169,6 +170,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuEditCut = new JMenuItem("Cut",IconLoader.ico044);
 	protected final JMenuItem menuEditCopy = new JMenuItem("Copy",IconLoader.ico042);
 	protected final JMenuItem menuEditPaste = new JMenuItem("Paste",IconLoader.ico043);
+	// START KGU#324 2017-05-30: Enh. #415
+	protected final JMenuItem menuEditFindReplace = new JMenuItem("Find/Replace", IconLoader.ico073);
+	// END KGU#324 2017-05-30
 	protected final JMenuItem menuEditCopyDiagramPNG = new JMenuItem("Copy bitmap diagram to clipboard",IconLoader.ico032);
 	protected final JMenuItem menuEditCopyDiagramEMF = new JMenuItem("Copy vector diagram to clipboard",IconLoader.ico032);
 	// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
@@ -722,6 +726,13 @@ public class Menu extends LangMenuBar implements NSDController
 		menuEditPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
 
 		menuEdit.addSeparator();
+		
+		// START KGU#324 2017-05-30: Enh. #415
+		menuEdit.add(menuEditFindReplace);
+		menuEditFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditFindReplace.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.findAndReplaceNSD(); doButtons(); } } );
+		menuEdit.addSeparator();
+		// END KGU#324 2017-05-30
 
 		// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
 		menuEdit.add(menuEditUpgradeTurtle);

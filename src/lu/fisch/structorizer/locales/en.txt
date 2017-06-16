@@ -100,6 +100,7 @@
  *      Kay Gürtzig     2017.03.30      Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21      Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig     2017.06.14      Enh. #199, #415: Messages for toolbar and FindAndReplace
  *
  ******************************************************************************************************
  *
@@ -154,6 +155,7 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
+Menu.menuEditFindReplace.text=Find/Replace
 Menu.menuEditUpgradeTurtle.text=To fine graphics
 Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
 Menu.menuEditDowngradeTurtle.text=To integer graphics
@@ -457,6 +459,8 @@ Editor.btnAfterPara.tooltip=Insert a new PARALLEL statement after the selected e
 // undo & redo
 Editor.btnUndo.tooltip=Undo the last action.
 Editor.btnRedo.tooltip=Redo the last action.
+// find & replace
+Editor.btnFindReplace.tooltip=Open the Find & Replace dialog.
 // copy & paste
 Editor.btnCut.tooltip=Cut the selected element.
 Editor.btnCopy.tooltip=Copy the selected element.
@@ -479,8 +483,9 @@ Editor.btnArrange.tooltip=Add the diagram to the Arranger panel
 // font
 Editor.btnFontUp.tooltip=Increase the font size.
 Editor.btnFontDown.tooltip=Decrease the font size.
-// copyright 
+// copyright & help
 Editor.btnAbout.tooltip=Show the information message about Structorizer.
+Editor.btnHelp.tooltip=Show the Online User Guide in the browser.
 // colors
 Editor.btnColor0.tooltip=Colorize the selected element with this color.
 Editor.btnColor1.tooltip=Colorize the selected element with this color.
@@ -495,11 +500,11 @@ Editor.btnColor9.tooltip=Colorize the selected element with this color.
 // collapsing
 Editor.btnCollapse.tooltip=Collapse the selected element.
 Editor.btnExpand.tooltip=Expand the selected element.
-Editor.btnDisable.tooltip=Disable/enable the selected element(s).
-// turtleizer & executor
+// debug
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
 Editor.btnDropBrk.tooltip=Remove all breakpoints.
+Editor.btnDisable.tooltip=Disable/enable the selected element(s).
 // Popup menu
 Editor.popupCut.text=Cut
 Editor.popupCopy.text=Copy

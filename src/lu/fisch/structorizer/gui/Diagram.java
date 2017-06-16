@@ -210,6 +210,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#363 2017-03-28
 	
+	private static final int MAX_RECENT_FILES = 10;
+	
 	// START KGU#48 2015-10-18: We must be capable of preserving consistency when root is replaced by the Arranger
     //public Root root = new Root();
     private Root root = new Root();
@@ -280,6 +282,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     // toolbar management
     public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();
+
+	private FindAndReplace findDialog = null;
     
 	/*****************************************
 	 * CONSTRUCTOR
@@ -6614,7 +6618,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			recentFiles.remove(_filename);
 		}
 		recentFiles.insertElementAt(_filename,0);
-		while(recentFiles.size()>10)	// FIXME (KGU 2014-11-25) hard-coded "magic number"
+		while (recentFiles.size() > MAX_RECENT_FILES)
 		{
 			recentFiles.removeElementAt(recentFiles.size()-1);
 		}
@@ -6954,10 +6958,56 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	// START KGU#324 2017-05-30: Enh. #415
 	public void findAndReplaceNSD() {
-		FindAndReplace far = new FindAndReplace(this);
+		if (this.findDialog == null) {
+			findDialog = new FindAndReplace(this);
+		}
 		pop.setVisible(false);
-		far.setVisible(true);
+		// FIXME: Should be avoided, but then we need we must cache it or listen to its closing
+		// And the FindAndReplace dialog must listen to all important changes here!
+		if (!findDialog.isVisible()) {
+			findDialog.setVisible(true);
+		}
+	}
+	
+	/**
+	 * This only cares for the look and feel update of the Find&Replace dialog if it is open.
+	 */
+	protected void updateLookAndFeel()
+	{
+		if (this.findDialog != null) {
+            try {
+                javax.swing.SwingUtilities.updateComponentTreeUI(this.findDialog);
+            }
+            catch (Exception ex) {}
+		}
 	}
 	// END KGU#324 2017-05-30
+
+
+	public void cacheIniProperties(Ini ini) {
+		if(this.currentDirectory!=null)
+		{
+			ini.setProperty("currentDirectory", this.currentDirectory.getAbsolutePath());
+			// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+			ini.setProperty("lastExportDirectory", this.lastCodeExportDir.getAbsolutePath());
+			ini.setProperty("lastImportDirectory", this.lastCodeImportDir.getAbsolutePath());
+			ini.setProperty("lastImportFilter", this.lastImportFilter);
+			// END KGU#354 2017-04-26
+		}
+		// START KGU#305 2016-12-15: Enh. #305
+		ini.setProperty("index", (this.showArrangerIndex() ? "1" : "0"));
+		// END KGU#305 2016-12-15
+		if (this.recentFiles.size()!=0)
+		{
+			for(int i=0; i < this.recentFiles.size(); i++)
+			{
+				//System.out.println(i);
+				ini.setProperty("recent"+String.valueOf(i),(String)this.recentFiles.get(i));
+			} 
+		}
+		if (this.findDialog != null) {
+			this.findDialog.cacheToIni(ini);
+		}
+	}
 
 }

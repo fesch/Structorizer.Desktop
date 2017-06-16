@@ -2580,7 +2580,7 @@ public abstract class Element {
     }
     
     // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
-    protected ImageIcon getIcon()
+    public ImageIcon getIcon()
     {
     	return IconLoader.ico057;
     }

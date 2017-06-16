@@ -145,6 +145,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
 
+import javax.swing.ImageIcon;
+
 import org.xml.sax.Attributes;
 
 import java.io.File;
@@ -205,7 +207,7 @@ public class Root extends Element {
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
-	private enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
+	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
 	public DiagramType diagrType = DiagramType.DT_MAIN;
 	// END KGU#376 2017-05-16
 
@@ -863,6 +865,22 @@ public class Root extends Element {
 		return  new Polygon(xCoords, yCoords, xCoords.length);
 	}
     // END KGU#376 2017-05-16
+    
+    // START KGU#324 2017-06-16: Enh. #415 we need an icon for the find result tree
+    @Override
+    public ImageIcon getIcon()
+    {
+    	switch (this.diagrType) {
+    	case DT_INCL:
+    		return IconLoader.ico071;
+    	case DT_SUB:
+    		return IconLoader.ico021;
+    	case DT_MAIN:
+    		return IconLoader.ico022;
+    	}
+    	return super.getIcon();
+    }
+    // END KGU#324 2017-06-16
 
 	@Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
