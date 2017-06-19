@@ -34,15 +34,13 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.30      First Issue
  *      Kay Gürtzig     2017.06.13      Pattern combo boxes with history
  *      Kay Gürtzig     2017.06.17      JTree for multi-Root retrieval
+ *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fied 
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      TODO / FIXME:
- *      - Matching / Replacement with regular expressions
- *      - Find and Replace incrementally within text and comment (via splitting?)
- *      - How to address the alienation effect of the missing result tree in modes CURRENT_SELECTION and
- *        CURRENT_DIAGRAM after having worked in mode OPENED_DIAGRAMS?
+ *      - Matching / Replacement with regular expressions ok?
  *      - Update or clear this dialog on heavy changes to the set of available open diagrams
  *      - Translation efforts
  *      - Place element icons next to the element type checkboxes (and analogously to the Root type checkboxes)
@@ -53,7 +51,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -61,6 +59,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
@@ -110,19 +110,21 @@ import lu.fisch.utils.StringList;
 
 /**
  * @author Kay Gürtzig
- * A diaolog providing the usual tools to search a (sub) diagram for Elements matching certain string
+ * A dialog providing the usual tools to search a (sub) diagram for Elements matching certain string
  * patterns with the opportunity to replace the text parts by other patterns
  */
 @SuppressWarnings("serial")
 public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 
 	private static final int MAX_RECENT_PATTERNS = 10;
+	private static final int MAX_PREVIEW_HEIGHT = 75;
 	private static final String patternPrototype = "This is just a string long enough to establish a sufficient width";
 	private final LinkedList<String> searchPatterns = new LinkedList<String>();
 	private final LinkedList<String> replacePatterns = new LinkedList<String>();
 	private boolean fillingComboBox = false;
 	private IElementSequence.Iterator treeIterator = null;
 	private Element currentElement = null;
+	private int currentPosition = -1;		// Position of the match within an element's text or comment
 	private final DefaultMutableTreeNode resultTop = new DefaultMutableTreeNode("Search Results");
 	private DefaultMutableTreeNode currentNode = null;
 	private DefaultTreeModel resultModel = null;
@@ -139,9 +141,9 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 	
 	private Diagram diagram;
 	
-	private class MyRenderer extends DefaultTreeCellRenderer {
+	private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
 
-	    public MyRenderer() {}
+	    public MyTreeCellRenderer() {}
 
 	    public Component getTreeCellRendererComponent(
 	                        JTree tree,
@@ -161,6 +163,9 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 	    		StringList text = ((Element)value).getText();
 	    		if (text.count() > 0) {
 	    			description = text.get(0);
+	    			if (text.count() > 1) {
+	    				description += " ...";
+	    			}
 	    		}
 	    		else {
 	    			description = "---";
@@ -191,6 +196,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 	protected JCheckBox chkInTexts;
 	protected JCheckBox chkInComments;
 	protected JCheckBox chkDisabled;
+	protected JCheckBox chkElementwise;
 	protected JCheckBox[] chkElementTypes;
 	protected JCheckBox[] chkRootTypes;		// main, sub, includable (only active if scope is "open diagrams"
 	protected JComboBox<Scope> cmbScope;	// current diagram, current selection, open diagrams (or as radio group?)
@@ -387,14 +393,14 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			pnlPatterns.add(cmbReplacePattern);
 
 			contentPane.add(pnlPatterns, BorderLayout.NORTH);
-			
+
 		}
-		
+
 		//=================== OPTIONS ========================
 		{
-		
+
 			pnlOptions.setLayout(new BorderLayout());
-			
+
 			JPanel pnlOptionsWest = new JPanel();
 			pnlOptionsWest.setLayout(new BoxLayout(pnlOptionsWest, BoxLayout.Y_AXIS));
 
@@ -422,18 +428,21 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			this.chkRegEx = new JCheckBox("Regular expressions");
 			this.chkRegEx.setMnemonic(java.awt.event.KeyEvent.VK_X);
 			this.chkRegEx.addItemListener(new ItemListener() {
-				@Override
+				//@Override
 				public void itemStateChanged(ItemEvent evt) {
 					Boolean deselected = evt.getStateChange() == ItemEvent.DESELECTED;
 					chkCaseSensitive.setEnabled(deselected);
 					chkWholeWord.setEnabled(deselected && Function.testIdentifier((String)cmbSearchPattern.getEditor().getItem(), null));
-				}});
+				}
+			});
 			this.chkRegEx.setSelected(ini.getProperty("findRegEx", "0").equals("1"));
 			pnlMode.add(chkRegEx);
 			
 			JPanel pnlDirection = new JPanel();
 			pnlDirection.setLayout(new GridLayout(1, 0));
+			this.rbDown.setMnemonic(java.awt.event.KeyEvent.VK_D);
 			pnlDirection.add(rbDown);
+			this.rbUp.setMnemonic(java.awt.event.KeyEvent.VK_U);
 			pnlDirection.add(rbUp);
 			if (ini.getProperty("searchDir", "down").equals("up")) {
 				rbUp.setSelected(true);
@@ -609,29 +618,66 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			
 			pnlPreview.setLayout(new GridLayout(0, 1));
 			pnlPreview.setBorder(BorderFactory.createTitledBorder("Preview"));
+
+			// This is no good way to enforce maximum height because the layout continues
+			// to try to enlarge this on and on...
+//			ComponentAdapter textScrollListener = new ComponentAdapter() {
+//				@Override
+//				public void componentResized(ComponentEvent evt) {
+//					Component comp = evt.getComponent();
+//					int w = comp.getSize().width;
+//					int h = comp.getSize().height;
+//					int maxHeight = comp.getMaximumSize().height;
+//					System.out.println(comp + " w = " + w + ", h = " + h + ", maxh = " + maxHeight);
+//					if (h > maxHeight) {
+//						comp.setSize(new Dimension(w, maxHeight));
+//						comp.repaint();
+//						comp.revalidate();
+//					}
+//					
+//					super.componentResized(evt);
+//				}
+//			};
 			
 			txtText = new JTextPane();
 			txtText.setBorder(BorderFactory.createTitledBorder("Text"));
 	    	JScrollPane scrText = new JScrollPane(txtText);
+//	    	txtText.addComponentListener(textScrollListener);
 	    	docText = txtText.getStyledDocument();
 	    	//Style defStyle = doc.getStyle("default");
     		Style hilStyle = docText.addStyle("highlight", null);
     		hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+    		hilStyle = docText.addStyle("emphasis", null);
+    		hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
     		
     		pnlPreview.add(scrText);
 
     		txtComm = new JTextPane();
 			txtComm.setBorder(BorderFactory.createTitledBorder("Comment"));
-	    	JScrollPane scrComm = new JScrollPane(txtComm);
+			JScrollPane scrComm = new JScrollPane(txtComm);
+//	    	txtComm.addComponentListener(textScrollListener);
 	    	docComm = txtComm.getStyledDocument();
 	    	//Style defStyle = doc.getStyle("default");
     		hilStyle = docComm.addStyle("highlight", null);
     		hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+    		hilStyle = docComm.addStyle("emphasis", null);
+    		hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
     		
     		pnlPreview.add(scrComm);
     		pnlOptions.add(pnlPreview, BorderLayout.SOUTH);
 			
-			// --------------------------------------
+    		Dimension dim = scrText.getMaximumSize();
+    		if (dim != null) {
+    			scrText.setMaximumSize(new Dimension(dim.width, MAX_PREVIEW_HEIGHT));	// Doesn't actually work
+    			scrText.setPreferredSize(new Dimension(scrText.getPreferredSize().width, MAX_PREVIEW_HEIGHT));
+    		}
+    		dim = scrComm.getMaximumSize();
+    		if (dim != null) {
+    			scrComm.setMaximumSize(new Dimension(dim.width, MAX_PREVIEW_HEIGHT));	// Doesn't actually work
+    			scrComm.setPreferredSize(new Dimension(scrComm.getPreferredSize().width, MAX_PREVIEW_HEIGHT));
+    		}
+
+    		// --------------------------------------
 			contentPane.add(pnlOptions, BorderLayout.CENTER);
 			
 		}
@@ -648,15 +694,29 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			this.treResults.addTreeSelectionListener(new TreeSelectionListener(){
 				@Override
 				public void valueChanged(TreeSelectionEvent evt) {
-					currentNode = (DefaultMutableTreeNode)treResults.getLastSelectedPathComponent();
-					if (currentNode != null && currentNode.isLeaf()) {
-						Object ele = currentNode.getUserObject();
-						if (ele instanceof Element) {
-							setCurrentElement((Element)ele);
+					if (cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
+						currentNode = (DefaultMutableTreeNode)treResults.getLastSelectedPathComponent();
+						if (currentNode != null) {
+							Object ele = currentNode.getUserObject();
+							if (currentNode.isLeaf() && ele instanceof Element) {
+								int pos = -1;
+								if (chkElementwise == null || !chkElementwise.isSelected()) {
+									if (rbUp != null && rbUp.isSelected()) {
+										pos = checkElementMatch((Element)ele) - 1;
+									}
+									else {
+										pos = 0;
+									}
+								}
+								setCurrentElement((Element)ele, pos);
+							}
+							if (ele instanceof Root) {
+								Arranger.scrollToDiagram((Root)ele, true);
+							}
 						}
 					}
 				}});
-			this.treResults.setCellRenderer(new MyRenderer());
+			this.treResults.setCellRenderer(new MyTreeCellRenderer());
 			JScrollPane scrTree = new JScrollPane(this.treResults);
 
 			pnlOptions.add(scrTree, BorderLayout.CENTER);
@@ -665,7 +725,9 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		//=================== BUTTONS ========================
 		{
 		
-			pnlButtons.setLayout(new GridLayout(0, 4));
+			final int BUTTONS_PER_ROW = 4;
+			
+			pnlButtons.setLayout(new GridLayout(0, BUTTONS_PER_ROW));
 			
 			btnFind = new JButton("Find");
 			btnFind.addActionListener(new ActionListener(){
@@ -703,11 +765,32 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			});
 			pnlButtons.add(btnReplaceAll);
 			
+			chkElementwise = new JCheckBox("Element-wise");
+			chkElementwise.addItemListener(new ItemListener() {
+				@Override
+				public void itemStateChanged(ItemEvent evt) {
+					switch (evt.getStateChange()) {
+					case ItemEvent.SELECTED:
+						currentPosition = -1;
+						break;
+					case ItemEvent.DESELECTED:
+						if (currentPosition < 0) {
+							currentPosition= 0;
+						}
+						break;
+					}
+				}});
+			pnlButtons.add(chkElementwise);
+			
+			for (int i = pnlButtons.getComponentCount() + 1; i % BUTTONS_PER_ROW != 0; i++) {
+				pnlButtons.add(new JLabel(""));
+			}
+			
 			btnClose = new JButton("Close");
 			btnClose.addActionListener(new ActionListener(){
 				@Override
 				public void actionPerformed(ActionEvent evt) {
-					closeActionPerformed(evt);
+					setVisible(false);
 				}
 				
 			});
@@ -734,6 +817,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				currentElement.setSelected(false);
 			}
 			currentElement = null;
+			currentPosition = -1;
 			if (docText != null && docComm != null) {
 				clearDoc(docText);
 				clearDoc(docComm);
@@ -753,53 +837,160 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		}
 	}
 
-	private void setCurrentElement(Element ele)
+	private void setCurrentElement(Element ele, int positionInElement)
 	{
 		if (ele != currentElement) {
 			clearCurrentElement();
 		}
 		currentElement = ele;
+		currentPosition = positionInElement;
 		ele.setSelected(true);
 		diagram.redraw(ele);
 		//System.out.println(ele);
-		if (chkInTexts.isSelected() && this.textMatches(ele.getText())) {
-			fillPreview(ele.getText(), docText, txtText);
+		int nMatches = 0;
+		boolean enable = false;
+		if (chkInTexts.isSelected()) {
+			nMatches = this.textMatches(ele.getText());
+			enable = nMatches > 0;
 		}
-		if (chkInComments.isSelected() && this.textMatches(ele.getComment())) {
-			fillPreview(ele.getComment(), docComm, txtComm);
+		fillPreview(ele.getText(), docText, txtText, 0, enable);
+		if (chkInComments.isSelected()) {
+			enable = this.textMatches(ele.getComment()) > 0;
 		}
+		fillPreview(ele.getComment(), docComm, txtComm, nMatches, enable);
 		doButtons();
 	}
 	
-	private void fillPreview(StringList stringLst, StyledDocument doc, JTextPane txtPane) {
+	private int fillPreview(StringList stringLst, StyledDocument doc, JTextPane txtPane, int posOffset, boolean enable) {
+		int nParts = 0;
+		int currPos = currentPosition - posOffset;
 		String text0 = stringLst.getText();
 		clearDoc(doc);
-		if (!chkRegEx.isSelected()) {
-			String pattern = (String)cmbSearchPattern.getEditor().getItem();
-			int patternLgth = pattern.length();
-			String splitter = pattern;
-			String text = text0;
-			if (!chkCaseSensitive.isSelected()) {
-				text = text0.toLowerCase();
-				splitter = pattern.toLowerCase();
-			}
-			splitter = Pattern.quote(splitter);
-			String[] parts = text.split(splitter, -1);
-			int start = 0;
-			for (int i = 0; i < parts.length; i++) {
-				String part = text0.substring(start, start+parts[i].length());
-		    	try {
-		    		doc.insertString(doc.getLength(), part, doc.getStyle("default"));
-		    		if (i < parts.length-1) {
-		    			doc.insertString(doc.getLength(), pattern, doc.getStyle("highlight"));
-		    		}
-		    	} catch (BadLocationException e) {
-		    		// TODO Auto-generated catch block
-		    		e.printStackTrace();
-		    	}
-				start += part.length() + patternLgth;
+		txtPane.setEnabled(enable);
+		String pattern = (String)cmbSearchPattern.getEditor().getItem();
+		if (!enable) {
+			// Simply show the text without highlighting etc.
+			try {
+				doc.insertString(doc.getLength(), text0, doc.getStyle("default"));
+			} catch (BadLocationException e) {
+				e.printStackTrace();
 			}
 		}
+		else {
+			// In non-regex mode it's relatively simple: We know the exact length
+			// of the seeked pattern. The actual match might only differ in case
+			// So, having the split parts we can just copy the matches from the
+			// resective positions of the original text (text0).
+			// For whole word mode its more tricky - we must re-compose the erroneously
+			// slit parts first. All this is the task of splitText(). 
+			StringList matches = new StringList();
+			String[] parts = splitText(text0, pattern, matches);
+			nParts = parts.length;
+			int emphPos = -1;
+			for (int i = 0; i < nParts; i++) {
+		    	try {
+		    		doc.insertString(doc.getLength(), parts[i], doc.getStyle("default"));
+		    		if (i < nParts-1) {
+		    			if (i == currPos) {
+		    				emphPos = doc.getLength();
+		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("emphasis"));
+		    			}
+		    			else {
+		    				if (emphPos < 0) emphPos = doc.getLength();
+		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("highlight"));
+		    			}
+		    		}
+		    	} catch (BadLocationException e) {
+		    		e.printStackTrace();
+		    	}
+			}
+			if (emphPos > -1) {
+				txtPane.setCaretPosition(emphPos);
+			}
+		}
+		return nParts - 1;
+	}
+
+	private String[] splitText(String text, String pattern, StringList realWords) {
+		int lenPattern = pattern.length();
+		boolean caseSens = chkCaseSensitive.isSelected();
+		boolean isRegex = chkRegEx.isSelected();
+		String splitter = pattern + "";
+		if (!isRegex) {
+			if (caseSens) {
+				splitter = Pattern.quote(splitter);
+			}
+			else {
+				splitter = BString.breakup(splitter);
+			}
+		}
+		String[] parts = text.split(splitter, -1);
+		int nParts = parts.length;
+		// Restore all matched substrings.
+		String[] matches = new String[nParts-1];
+		int start = 0;
+		for (int i = 0; i < nParts-1; i++) {
+			String part = parts[i];
+			int lenPart = part.length();
+			if (!isRegex) {
+				if (caseSens) {
+					matches[i] = pattern;
+				}
+				else {
+					matches[i] = text.substring(start + lenPart, start + lenPart + lenPattern);
+				}
+			}
+			else {
+				// In case of regular expressions we cannot deduce the length of the match
+				// So we try something vague: We try to match the pattern in the remainder of
+				// the text and "replace" it by itself. This way, we my derive the length of
+				// the match and copy the respective substring from the original text.
+				String remainder = text.substring(start + lenPart);
+				// We have to consider that the regular expression may or may not subsume line
+				// feed under '.'. Hence we must either check linewise or replace all newlines
+				// by something unlikely in program texts but being matched by '.', or as third
+				// variant explicitly matching newlines. The last way is what we try.
+				// Unfortunately, this may crash in certain cases, we can't even catch it.
+				// FIXME: We should first try some possibly incomplete but less dangerous
+				// approach, e.g. by seeking the next split part in the text beyond the previous
+				// split part. We cannot exclude, however, that this text part might also be
+				// a substring of the match, thus suggesting too early a position...
+				int pos = remainder.indexOf(parts[i+1]);
+				if (pos > -1) {
+					matches[i] = remainder.replaceFirst("(" + splitter +")(\\n|.)*", "$1");
+				}
+				// The splitter might require a non-line start, so we better involve the previous
+				// context for the eventual trial...
+				remainder = text.substring(start);
+				matches[i] = remainder.replaceFirst("(\\n|.)*?(" + splitter + ")(\\n|.)*", "$2");
+			}
+			start += lenPart + matches[i].length();
+		}
+		// Finally we may have to re-combine wrong matches if we only may accept whole word matches
+		if (chkWholeWord.isSelected()) {
+			StringList realParts = new StringList(); 
+			String part = parts[0];
+			for (int i = 0; i < nParts - 1; i++) {
+				String nextPart = parts[i+1];
+				if ((part.isEmpty() || part.matches("(\\n|.)*?\\W"))
+						&& (i+2 == nParts && nextPart.isEmpty() || nextPart.matches("\\W(\\n|.)*?"))) {
+					realParts.add(part);
+					realWords.add(matches[i]);
+					part = nextPart;
+				}
+				else {
+					part += matches[i] + nextPart;
+				}
+			}
+			realParts.add(part);
+			parts = realParts.toArray();
+		}
+		else {
+			for (String word: matches) {
+				realWords.add(word);
+			}
+		}
+		return parts;
 	}
 
 	private void resetResults()
@@ -829,6 +1020,8 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 
 	protected boolean findActionPerformed(ActionEvent evt, boolean replace, boolean gotoNext) {
 		boolean done = false;
+		boolean up = rbUp.isSelected();
+		boolean elementwise = chkElementwise.isSelected();
 		Element selected = diagram.getSelected();
 		Scope scope = (Scope)cmbScope.getSelectedItem();
 		if (scope == Scope.OPENED_DIAGRAMS) {
@@ -842,8 +1035,9 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			// Reinitialize iterator for incremental search
 			if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
 				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-				if (checkElementMatch(diagram.getRoot())) {
-					setCurrentElement(diagram.getRoot());
+				int nMatches = checkElementMatch(diagram.getRoot()); 
+				if (nMatches > 0) {
+					setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
 					replace = false;
 					gotoNext = false;
 				}
@@ -857,35 +1051,73 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			}
 			else if (selected instanceof Root) {
 				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-				if (checkElementMatch(selected)) {
-					setCurrentElement(selected);
+				int nMatches = checkElementMatch(selected); 
+				if (nMatches > 0) {
+					setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
 					replace = false;
 					gotoNext = false;
 				}
 				treeIterator = ((Root)selected).children.iterator(true);
 			}
-			if (treeIterator != null && rbUp.isSelected()) {
+			// Go to last element if we are to go upwards
+			if (treeIterator != null && up) {
 				while (treeIterator.hasNext()) {
 					treeIterator.next();
 				}
 			}
 		}
-		if (replace && currentElement != null) {
-			// TODO replace according to the current pattern
+		int nMatches = 0;
+		if (currentElement != null) {
+			nMatches = checkElementMatch(currentElement);
+		}
+		if (replace && nMatches > 0) {
+			// Replace according to the current pattern
 			Root root = Element.getRoot(currentElement);
-			if (checkElementMatch(currentElement)) {
+			if (root != null) {
 				root.addUndo();
 			}
-			if (chkInTexts.isSelected()) {
-				StringList text = replacePattern(currentElement.getText(), true);
+			StringList text = currentElement.getText();
+			StringList comment = currentElement.getComment();
+//			int matchesSeen = 0;
+			int nMatchesComment = textMatches(comment);
+			int nMatchesText = textMatches(text);
+//			if (up && chkInComments.isSelected()) {
+//				if (nMatchesComment >= currentPosition) {
+//					comment = replacePattern(comment, elementwise, currentPosition);
+//					currentElement.setComment(comment);
+//					this.fillPreview(comment, docComm, txtComm, 0);
+//					done = true;
+//				}
+//				matchesSeen += nMatchesComment;
+//			}
+//			if ((elementwise || !done) && chkInTexts.isSelected()) {
+//				if (nMatchesText > currentPosition - matchesSeen) {
+//					text = replacePattern(text, elementwise, currentPosition - matchesSeen);
+//					currentElement.setText(text);
+//					this.fillPreview(text, docText, txtText, matchesSeen);
+//					done = true;
+//				}
+//				matchesSeen += nMatchesText;
+//			}
+//			if (rbDown.isSelected() && (elementwise || !done) && chkInComments.isSelected()
+//					&& nMatchesComment > currentPosition - matchesSeen) {
+//				comment = replacePattern(comment, elementwise, currentPosition - matchesSeen);
+//				currentElement.setComment(comment);
+//				this.fillPreview(comment, docComm, txtComm, matchesSeen);
+//				done = true;
+//			}
+			if ((elementwise || !done) && chkInTexts.isSelected() 
+					&& nMatchesText > currentPosition) {
+				text = replacePattern(text, elementwise, currentPosition);
 				currentElement.setText(text);
-				this.fillPreview(text, docText, txtText);
+				this.fillPreview(text, docText, txtText, 0, true);
 				done = true;
 			}
-			if (chkInComments.isSelected()) {
-				StringList comment = replacePattern(currentElement.getComment(), true);
+			if ((elementwise || !done) && chkInComments.isSelected()
+					&& nMatchesComment > currentPosition - nMatchesText) {
+				comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
 				currentElement.setComment(comment);
-				this.fillPreview(comment, docComm, txtComm);
+				this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
 				done = true;
 			}
 			if (currentNode != null) {
@@ -898,34 +1130,61 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			}
 			diagram.doButtons();
 			diagram.redraw(currentElement);
+			if (done) {
+				if (elementwise) {
+					nMatches = 0;
+				}
+				else {
+					nMatches--;
+					if (!up && currentPosition < nMatches || up && --currentPosition >= 0) {
+						gotoNext = false;
+					}
+				}
+			}
 		}
-		if (gotoNext && treeIterator != null) {
+		// Is there another matching position within this element?
+		if (gotoNext && !elementwise && currentPosition >= 0 && (up && currentPosition > 0 || !up && currentPosition < nMatches-1)) {
+			// just update the preview
+			if (up) {
+				currentPosition--;
+			}
+			else {
+				currentPosition++;
+			}
+			setCurrentElement(currentElement, currentPosition);
+		}
+		else if (gotoNext && treeIterator != null) {
 			// find the next matching element within the current diagram
 			boolean found = false;
 			clearCurrentElement();
 			if (rbUp.isSelected()) 
 				while (!found && treeIterator.hasPrevious()) {
 					Element ele = treeIterator.previous();
-					if (found = checkElementMatch(ele)) {
-						setCurrentElement(ele);
+					nMatches = checkElementMatch(ele);
+					if (found = nMatches > 0) {
+						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
+						updateResultTree();
 						done = true;
 					}
 				}
 			else 
 				while (!found && treeIterator.hasNext()) {
 					Element ele = treeIterator.next();
-					if (found = checkElementMatch(ele)) {
-						setCurrentElement(ele);
+					nMatches = checkElementMatch(ele);
+					if (found = nMatches > 0) {
+						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
+						updateResultTree();
 						done = true;
 					}
 				}
 			if (!found) {
 				// Iterator exhausted - drop it
 				treeIterator = null;
+				updateResultTree();
 			}
 		}
 		else if (gotoNext && currentNode != null) {
-			// got to the next element within in the search result tree
+			// go to the next element within in the search result tree
 			if (rbUp.isSelected()) {
 				currentNode = currentNode.getPreviousLeaf();
 			}
@@ -933,7 +1192,9 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				currentNode = currentNode.getNextLeaf();
 			}
 			if (currentNode != null) {
-				setCurrentElement((Element)currentNode.getUserObject());
+				Element ele = (Element)currentNode.getUserObject();
+				nMatches = checkElementMatch(ele);
+				setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
 				TreePath path = new TreePath(currentNode.getPath());
 				treResults.setSelectionPath(path);
 				treResults.scrollPathToVisible(path);
@@ -947,6 +1208,30 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		return done;
 	}
 	
+	private void updateResultTree() {
+		if (currentNode == null) {
+			this.resultTop.removeAllChildren();
+			this.resultModel.reload();
+			if (currentElement != null && treeIterator != null) {
+				if (treeIterator.hasPrevious()) {
+					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
+				}
+				DefaultMutableTreeNode eleNode = new DefaultMutableTreeNode(currentElement); 
+				this.resultModel.insertNodeInto(eleNode, resultTop, resultTop.getChildCount());
+				if (treeIterator.hasNext()) {
+					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
+				}
+				TreePath path = new TreePath(eleNode.getPath());
+				treResults.scrollPathToVisible(path);
+				treResults.setSelectionPath(path);
+				treResults.setEnabled(true);
+			}
+			else {
+				treResults.setEnabled(false);
+			}
+		}
+	}
+
 	/**
 	 * Initializes the result tree for scope OPENED_DIAGRAMS
 	 * Also sets this.currentNode (if possible)
@@ -962,7 +1247,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		}
 		for (Root root: roots) {
 			LinkedList<Element> elements = this.findElements(root.children, true);
-			if (checkElementMatch(root)) {
+			if (checkElementMatch(root) > 0) {
 				elements.addFirst(root);
 			}
 			if (!elements.isEmpty()) {
@@ -998,62 +1283,131 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		while (findActionPerformed(evt, true, true));
 	}
 
-	private StringList replacePattern(StringList text, boolean all) {
+	private StringList replacePattern(StringList text, boolean all, int pos) {
 		String brokenText = text.getText();
 		String searchPattern = (String)cmbSearchPattern.getEditor().getItem();
 		String replacePattern = (String)cmbReplacePattern.getEditor().getItem();
 		String resultText = brokenText;
-		if (!chkRegEx.isSelected()) {
-			if (!chkCaseSensitive.isSelected()) {
-				// FIXME We must solve the case-insensitive replacement!
-				// Unfortunately this is not compatible with quoting
-				searchPattern = BString.breakup(searchPattern);
-			}
-			else {
-				searchPattern = Pattern.quote(searchPattern);
-			}
-			replacePattern = "$1" + Matcher.quoteReplacement(replacePattern) + "$2";
-			if (chkWholeWord.isSelected()) {
-				searchPattern = "(^|.*?\\W)" + searchPattern + "($|\\W.*?)";
-			}
-			else {
-				searchPattern = "(.*?)" + searchPattern + "(.*?)";
-			}
-		}
+		boolean caseSensitive = chkCaseSensitive.isSelected();
+		boolean isRegex = chkRegEx.isSelected();
+		boolean wholeWord = chkWholeWord.isSelected(); 
 		if (all) {
+			if (!isRegex) {
+				if (!caseSensitive) {
+					// KGU 2017-06-18: Method breakup now ensures quoting of regex meta symbols
+					searchPattern = BString.breakup(searchPattern);
+				}
+				else {
+					searchPattern = Pattern.quote(searchPattern);
+				}
+				replacePattern = "$1" + Matcher.quoteReplacement(replacePattern) + "$2";
+				if (wholeWord) {
+					searchPattern = "(^|.*?\\W)" + searchPattern + "($|\\W.*?)";
+				}
+				else {
+					searchPattern = "(.*?)" + searchPattern + "(.*?)";
+				}
+			}
 			resultText = brokenText.replaceAll(searchPattern, replacePattern);
 		}
 		else {
-			resultText = brokenText.replaceFirst(searchPattern, replacePattern);
+			//resultText = brokenText.replaceFirst(searchPattern, replacePattern);
+			StringList actualMatches = new StringList();
+			String[] parts = splitText(brokenText, searchPattern, actualMatches);
+			String[] matches = actualMatches.toArray();
+			//String[] parts = brokenText.split(searchPattern, -1);
+			int nParts = parts.length;
+			// Restore all matched substrings.
+//			String[] matches = new String[nParts-1];
+//			int start = 0;
+//			for (int i = 0; i < nParts-1; i++) {
+//				String part = parts[i];
+//				matches[i] = brokenText.substring(start).replaceFirst("(\\n|.)*?(" + searchPattern + ")(\\n|.)*", "$2");
+//				start += part.length() + matches[i].length();
+//			}
+//			if (wholeWord) {
+//				StringList realParts = new StringList();
+//				StringList realWords = new StringList();
+//				String part = parts[0];
+//				for (int i = 0; i < nParts - 1; i++) {
+//					String nextPart = parts[i+1];
+//					if ((part.isEmpty() || part.matches(".*?\\W"))
+//							&& (i+2 == nParts && nextPart.isEmpty() || nextPart.matches("\\W.*?"))) {
+//						realParts.add(part);
+//						realWords.add(matches[i]);
+//						part = nextPart;
+//					}
+//					else {
+//						part += matches[i] + nextPart;
+//					}
+//				}
+//				realParts.add(part);
+//				nParts = realParts.count();
+//				parts = new String[nParts];
+//				matches = new String[realWords.count()];
+//				for (int i = 0; i < parts.length; i++) {
+//					parts[i] = realParts.get(i);
+//				}
+//				for (int i = 0; i < matches.length; i++) {
+//					matches[i] = realWords.get(i);
+//				}
+//			}
+			// Now we can work properly.
+//			if (rbUp.isSelected()) {
+//				pos = nParts - 2 - pos;
+//			}
+			resultText = "";
+			for (int i = 0; i < nParts; i++) {
+				resultText += parts[i];
+				if (i == pos) {
+					if (isRegex) {
+						resultText += matches[i].replaceFirst(searchPattern, replacePattern);
+					}
+					else {
+						resultText += replacePattern;
+					}
+				}
+				else if (i < nParts - 1) {
+					resultText += matches[i];
+				}
+			}
 		}
 		return StringList.explode(resultText, "\n");
 	}
 
-	private boolean checkElementMatch(Element _ele)
+	private int checkElementMatch(Element _ele)
 	{
+		int nMatches = 0;
 		String elementClass = _ele.getClass().getSimpleName().toUpperCase();
 		ElementType type = ElementType.valueOf(elementClass);
-		if (!chkElementTypes[type.ordinal()].isSelected()) {
-			return false;
+		if (chkElementTypes[type.ordinal()].isSelected()) {
+			if (chkInTexts.isSelected()) {
+				nMatches += textMatches(_ele.getText());
+			}
+			if (chkInComments.isSelected()) {
+				nMatches += textMatches(_ele.getComment());
+			}
 		}
-		return (chkInTexts.isSelected() && textMatches(_ele.getText()) || chkInComments.isSelected() && textMatches(_ele.getComment()));
+		return nMatches;
 	}
 
-	private boolean textMatches(StringList text) {
-		boolean doesMatch = false;
+	private int textMatches(StringList text) {
+		int nMatches = 0;
 		boolean caseSensi = chkCaseSensitive.isSelected();
 		String searchPattern = (String)cmbSearchPattern.getEditor().getItem();
 		String brokenText = text.getText();
 		if (chkRegEx.isSelected()) {
-			doesMatch = brokenText.matches(searchPattern);
+			//doesMatch = brokenText.matches(searchPattern);
+			nMatches = brokenText.split(searchPattern, -1).length - 1;
 		}
 		else if (chkWholeWord.isSelected()) {
 			// FIXME: Maybe we should rather tokenize the string!?
 			String[] words = brokenText.split("\\W+");
 			for (String word: words) {
 				if (caseSensi && word.equals(searchPattern) || !caseSensi && word.equalsIgnoreCase(searchPattern)) {
-					doesMatch = true;
-					break;
+					//doesMatch = true;
+					//break;
+					nMatches++;
 				}
 			}
 		}
@@ -1062,9 +1416,11 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				brokenText = brokenText.toLowerCase();
 				searchPattern = searchPattern.toLowerCase();
 			}
-			doesMatch = brokenText.contains(searchPattern);
+			//doesMatch = brokenText.contains(searchPattern);
+			nMatches = brokenText.split(Pattern.quote(searchPattern), -1).length - 1;
 		}
-		return doesMatch;
+		//return doesMatch;
+		return nMatches;
 	}
 
 	protected void patternChanged(ItemEvent evt) {
@@ -1101,10 +1457,6 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				box.setSelectedItem(item);
 			}
 		}
-	}
-
-	protected void closeActionPerformed(ActionEvent evt) {
-		this.setVisible(false);
 	}
 
 	private void refillPatternCombos(JComboBox<String> _box)
@@ -1156,8 +1508,8 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				chkRootTypes[i].setEnabled(allRoots);
 			}
 		}
-		if (!allRoots && treResults != null) {
-			treResults.setEnabled(false);
+		if (treResults != null) {
+			treResults.setEnabled(allRoots);
 		}
 	}
 	
@@ -1167,7 +1519,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		Iterator iter = _scope.iterator(_deeply);
 		while (iter.hasNext()) {
 			Element ele = iter.next();
-			if (checkElementMatch(ele)) {
+			if (checkElementMatch(ele) > 0) {
 				elements.add(ele);
 			}
 		}

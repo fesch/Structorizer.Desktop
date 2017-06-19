@@ -37,6 +37,9 @@ package lu.fisch.utils;
  *		Kay Gürtzig		2015.10.31		Performance improvements
  *      Kay Gürtzig     2017.03.13      New method pair encodeToXML and decodeFromXML added for enh. #372,
  *                                      Some code revisions where it ached too much looking at.
+ *      Kay Gürtzig     2017.06.18      Method breakup refined to cope with metasymbols in the string to
+ *                                      be broken up for regex matching. Code revision, seeral rdundant methods
+ *                                      declared deprecated
  *
  ******************************************************************************************************
  *
@@ -68,6 +71,7 @@ public abstract class BString
 			str=BString.replace(str,"\"","&#34;");
 			//str=BString.replace(str," ","&nbsp;");
 			
+			// FIXME (KGU): The following code is irrelevant for the result! Should we return res (if not null)?
 			String res = null;
 			try {
 				byte[] utf8 = str.getBytes("UTF-8");
@@ -207,29 +211,34 @@ public abstract class BString
 		}
 		
 		/**
-		 * Cuts blanks at the end and at the beginning of the string. [trim]
+		 * Cuts blanks at the end and at the beginning of the string. [trim]<br/>
+		 * NOTE: You should better use {@code str.trim()} instead.  
+		 *@param str - The string to be trimmed
 		 *@return The trimmed string
-		 *@param str The string to cut out
 		 */
+		@Deprecated
 		public static String cutOut(String str)
 		{
 			return str.trim();
 		}
 		
 		/**
-		 * Checks whether a string contains any non-blank characters
-		 *@return true iff there is at least one non-blank character
+		 * Checks whether a string contains any non-blank characters<br/>
+		 * NOTE: You may use {@code !str.trim().isEmpty()} instead
 		 *@param str The string to check
+		 *@return true iff there is at least one non-blank character
 		 */
+		@Deprecated
 		public static boolean containsSomething(String str)
 		{
 			boolean result = false;
 			
-			for (int i=0;i<str.length();i++)
+			for (int i = 0; i < str.length(); i++)
 			{
-				if (Character.isWhitespace(str.charAt(i))==false)
+				if (!Character.isWhitespace(str.charAt(i)))
 				{
 					result = true;
+					break;
 				}
 			}
 			
@@ -237,13 +246,15 @@ public abstract class BString
 		}
 		
 		/**
-		 * Replaces all substrings with another substring
-		 *@return The replaced string
+		 * Replaces all substrings with another substring <br/>
+		 * NOTE: You should better use {@code str.replace(substr, with)} instead.
 		 *@param str The original string
 		 *@param substr The substring to be replaced
 		 *@param with The substring to put in
+		 *@return The replaced string
 		 */
-		public static String replace(String str,String substr, String with)
+		@Deprecated
+		public static String replace(String str, String substr, String with)
 		{
 			String outi = new String("");
 			int width = str.length();
@@ -260,8 +271,7 @@ public abstract class BString
 					outi=outi+str.substring(count,str.length());
 					count=str.length();
 				}
-			}
-			while (count<width);
+			} while (count<width);
 			return outi;
 		}
 		
@@ -296,17 +306,25 @@ public abstract class BString
 			return outi;
 		}
 
+		/**
+		 * Checks that the character codes of string s are strictly monotonous,
+		 * i.e. i &le; j --&gt; s[i] &le; s[j], but not all equal (if there are
+		 * at least two characters).
+		 * @param s - the string to be analysed
+		 * @return true iff the monotony described above holds
+		 */
 		public static boolean croissantStrict(String s)
 		{
 			boolean ret = true;
-			for(int i=0;i<s.length()-1;i++)
+			for(int i = 0; i < s.length()-1; i++)
 			{
-				if(s.charAt(i)>s.charAt(i+1))
+				if (s.charAt(i) > s.charAt(i+1))
 				{
 					ret = false;
+					break;
 				}
 			}
-			if(s.charAt(0)>=s.charAt(s.length()-1))
+			if (s.charAt(0) >= s.charAt(s.length()-1))
 			{
 				ret = false;
 			}
@@ -317,6 +335,13 @@ public abstract class BString
 			return ret;
 		}
 		
+		/**
+		 * Use {@code str.startsWith(pre)} instead.
+		 * @param pre - the prefix to be confirmed
+		 * @param str - the analysed string
+		 * @return true iff {@code str} starts with prefix {@code pre}
+		 */
+		@Deprecated
 		public static boolean isPrefixOf(String pre, String str)
 		{
 //			boolean ret = false;
@@ -332,56 +357,113 @@ public abstract class BString
 			return str.startsWith(pre);
 		}
 		
+		/**
+		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
+		 * and returns a StringList consisting of the split parts (without the separating
+		 * delimiters) in order of occurrence.<br/>
+		 * NOTE: Use method {@code explode(String, String)} on {@link #StringList} instead.
+		 * @param _source - the string to be split
+		 * @param _by - the separating string
+		 * @return the split result
+		 */
+		@Deprecated
 		public static StringList explode(String _source, String _by)
 		{
-			StringList sl = new StringList();
-			
-			while(!_source.equals(""))
-			{
-				if (_source.indexOf(_by)>=0)
-				{
-					sl.add(_source.substring(0,_source.indexOf(_by)-1));
-					_source=_source.substring(_source.indexOf(_by)+_by.length(), _source.length());
-				}
-				else
-				{
-					sl.add(_source);
-					_source="";
-				}
-			}
-			return sl;
+			// START KGU 2017-06-18: Delegated to StringList.explode() where it belongs
+//			StringList sl = new StringList();
+//			
+//			while(!_source.equals(""))
+//			{
+//				if (_source.indexOf(_by)>=0)
+//				{
+//					sl.add(_source.substring(0,_source.indexOf(_by)-1));
+//					_source=_source.substring(_source.indexOf(_by)+_by.length(), _source.length());
+//				}
+//				else
+//				{
+//					sl.add(_source);
+//					_source="";
+//				}
+//			}
+//			return sl;
+			return StringList.explode(_source, _by);
+			// END KGU 2017-06-18
 		}
-		
+
+		/**
+		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
+		 * and returns a StringList consisting of the split parts and the separating
+		 * delimiters in order of occurrence.<br/>
+		 * NOTE: Use method {@code explodeWithDElimiter(String, String)} on {@link #StringList} instead.
+		 * @param _source - the string to be split
+		 * @param _by - the separating string
+		 * @return the split result
+		 */
+		@Deprecated
 		public static StringList explodeWithDelimiter(String _source, String _by)
 		{
-			StringList sl = new StringList();
-			
-			while(!_source.equals(""))
-			{
-				if (_source.indexOf(_by)>=0)
-				{
-					sl.add(_source.substring(0,_source.indexOf(_by)));
-					sl.add(_by);
-					_source=_source.substring(_source.indexOf(_by)+_by.length(), _source.length());
-				}
-				else
-				{
-					sl.add(_source);
-					_source="";
-				}
-			}
-			return sl;
+			// START KGU 2017-06-18: Delegated to StringList.explode() where it belongs
+//			StringList sl = new StringList();
+//			int lenBy = _by.length();
+//			while(!_source.equals(""))
+//			{
+//				int pos = _source.indexOf(_by); 
+//				if (pos >= 0)
+//				{
+//					sl.add(_source.substring(0, pos));
+//					sl.add(_by);
+//					_source = _source.substring(pos + lenBy, _source.length());
+//				}
+//				else
+//				{
+//					sl.add(_source);
+//					_source = "";
+//				}
+//			}
+//			return sl;
+			return StringList.explodeWithDelimiter(_source, _by);
+			// END KGU 2017-06-18
 		}
 		
+		/**
+		 * Produces a regular expression allowing to match the given string in a case-insensitive way.
+		 * All letters 'x' are replaced by "[xX]", meta symbols like '[', ']', '^', '$' are escaped or
+		 * quoted, others (like '(', ')') just enclosed in brackets. 
+		 * @param _replace - the string (not supposed to be regular expression)!
+		 * @return a regular expression string
+		 */
 		public static String breakup(String _replace)
 		{
-			_replace=_replace.toLowerCase();
+			// START KGU#324 2017-06-18: Bugfix on occ. #415
+			//_replace = _replace.toLowerCase();
+			String lower = _replace.toLowerCase();
+			// END KGU#324 2017-06-18
 			String upper = _replace.toUpperCase();
 			String result = new String();
 			
-			for(int i=0;i<_replace.length();i++)
+			for(int i=0; i < _replace.length(); i++)
 			{
-				result+="["+_replace.charAt(i)+upper.charAt(i)+"]";
+				// START KGU#324 2017-06-18: We must escape characters like brackets and shouldn't duplicate characters
+				//result+="["+_replace.charAt(i)+upper.charAt(i)+"]";
+				char ch1 = lower.charAt(i);
+				char ch2 = upper.charAt(i);
+				if (ch1 != ch2) {
+					result += "[" + ch1 + ch2 + "]";
+				}
+				else if ("[]^$".contains(ch1+"")) {
+					result += "\\" + ch1;
+					// The character following to a backslash is to be adopted as is
+					if (ch1 == '\\' && i < _replace.length() - 1) {
+						result += _replace.charAt(++i);
+					}
+				}
+				else if (ch1 == '-') {
+					result += ch1;
+				}
+				else {
+					result += "[" + ch1 + "]";
+				}
+				// END KGU#324 2017-06-18
 			}
 			
 			return result;
