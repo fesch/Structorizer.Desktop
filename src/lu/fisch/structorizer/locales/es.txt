@@ -105,6 +105,7 @@
  *      Kay Gürtzig     2017.03.30  Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig     2017.06.14  Enh. #199, #415: Messages for toolbar and FindAndReplace
  *
  ******************************************************************************************************
  *
@@ -153,6 +154,7 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
+Menu.menuEditFindReplace.text=Buscar/Reemplazar
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
 Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales.
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
@@ -271,6 +273,7 @@ Menu.menuHelp.text=Ayuda
 Menu.menuHelp.mnemonic=y
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Manual (inglés)
+Menu.menuHelpOnline.tooltip=Abrir el manual (inglés) en el browser.
 Menu.menuHelpAbout.text=Acerca de ...
 Menu.menuHelpUpdate.text=Actualizar ...
 
@@ -478,8 +481,9 @@ Editor.btnArrange.tooltip=Añadir el diagrama al Arranger.
 // font
 Editor.btnFontUp.tooltip=Aumentar tamaño de fuente.
 Editor.btnFontDown.tooltip=Disminuir tamaño de fuente.
-// copyright
+// copyright & help
 Editor.btnAbout.tooltip=Mostrar mensaje de información acerca de Structorizer.
+Editor.btnHelp.tooltip=Abrir al manual (inglés) en el browser.
 // colors
 Editor.btnColor0.tooltip=Colorear el elemento seleccionado con este color.
 Editor.btnColor1.tooltip=Colorear el elemento seleccionado con este color.
@@ -916,6 +920,39 @@ GUIScaleChooser.lblIcon.text=Previsión de icono
 GUIScaleChooser.chkTest.text=Previsión de elemento opción
 GUIScaleChooser.btnOK.text=Aceptar
 GUIScaleChooser.btnOK.tooltip=Aceptar los cambios.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Buscar / Reemplazar
+FindAndReplace.lblSearchPattern.text=Buscar:
+FindAndReplace.lblReplacePattern.text=Sustituir por:
+FindAndReplace.pnlMode.border=Modo
+FindAndReplace.chkCaseSensitive.text=Cuidar may./minúscula
+FindAndReplace.chkWholeWord.text=Palabra entera
+FindAndReplace.chkRegEx.text=Expresiones regulares
+FindAndReplace.rbDown.text=Abajo
+FindAndReplace.rbUp.text=Arriva
+FindAndReplace.pnlScope.border=Alcance
+FindAndReplace.cmbScope.item.0=Selección actual
+FindAndReplace.cmbScope.item.1=Diagrama actual
+FindAndReplace.cmbScope.item.2=Diagramas abiertos
+FindAndReplace.chkRootTypes.0.text=Programas
+FindAndReplace.chkRootTypes.1.text=Subrutinas
+FindAndReplace.chkRootTypes.2.text=Incluíbles
+FindAndReplace.chkInTexts.text=En textos
+FindAndReplace.chkInComments.text=En comentarios
+FindAndReplace.pnlElements.border=Tipos de elemente
+FindAndReplace.btnAll.text=Todos
+FindAndReplace.btnNone.text=Ningunos
+FindAndReplace.chkDisabled.text=Elementos inactivos
+FindAndReplace.pnlPreview.border=Contenido
+FindAndReplace.txtText.border=Texto
+FindAndReplace.txtComm.border=Comentario
+FindAndReplace.chkElementwise.text=Elemento a elemento
+FindAndReplace.btnFind.text=Buscar
+FindAndReplace.btnReplace.text=Reemplazar
+FindAndReplace.btnReplaceFind.text=Reemplazar/Avanzar
+FindAndReplace.btnReplaceAll.text=Reemplazar todos
+FindAndReplace.btnClose.text=Cerrar
 
 -----> Arranger
 Surface.msgFileLoadError.text=Error abriendo archivo:

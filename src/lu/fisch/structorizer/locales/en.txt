@@ -100,7 +100,7 @@
  *      Kay Gürtzig     2017.03.30      Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21      Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
- *      Kay Gürtzig     2017.06.14      Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig     2017.06.18      Enh. #199, #415: Messages for toolbar and FindAndReplace
  *
  ******************************************************************************************************
  *
@@ -274,6 +274,7 @@ Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
+Menu.menuHelpOnline.tooltip=Open the online User Guide in the browser
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -928,6 +929,39 @@ GUIScaleChooser.lblIcon.text=Icon Preview
 GUIScaleChooser.chkTest.text=CheckBox Preview
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Validate your choice for next start.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Find / Replace
+FindAndReplace.lblSearchPattern.text=Find:
+FindAndReplace.lblReplacePattern.text=Replace with:
+FindAndReplace.pnlMode.border=Mode
+FindAndReplace.chkCaseSensitive.text=Case sensitive
+FindAndReplace.chkWholeWord.text=Whole word
+FindAndReplace.chkRegEx.text=Regular expressions
+FindAndReplace.rbDown.text=Down
+FindAndReplace.rbUp.text=Up
+FindAndReplace.pnlScope.border=Scope
+FindAndReplace.cmbScope.item.0=Current selection
+FindAndReplace.cmbScope.item.1=Current diagram
+FindAndReplace.cmbScope.item.2=Opened diagrams
+FindAndReplace.chkRootTypes.0.text=Main programs
+FindAndReplace.chkRootTypes.1.text=Subroutines
+FindAndReplace.chkRootTypes.2.text=Includables
+FindAndReplace.chkInTexts.text=In texts
+FindAndReplace.chkInComments.text=In comments
+FindAndReplace.pnlElements.border=Element Types
+FindAndReplace.btnAll.text=All
+FindAndReplace.btnNone.text=None
+FindAndReplace.chkDisabled.text=Disabled elements
+FindAndReplace.pnlPreview.border=Contents
+FindAndReplace.txtText.border=Text
+FindAndReplace.txtComm.border=Comment
+FindAndReplace.chkElementwise.text=Element-wise
+FindAndReplace.btnFind.text=Find
+FindAndReplace.btnReplace.text=Replace
+FindAndReplace.btnReplaceFind.text=Replace/Find
+FindAndReplace.btnReplaceAll.text=Replace All
+FindAndReplace.btnClose.text=Close
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:

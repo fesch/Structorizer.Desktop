@@ -42,8 +42,7 @@ package lu.fisch.structorizer.gui;
  *      TODO / FIXME:
  *      - Matching / Replacement with regular expressions ok?
  *      - Update or clear this dialog on heavy changes to the set of available open diagrams
- *      - Translation efforts
- *      - Place element icons next to the element type checkboxes (and analogously to the Root type checkboxes)
+ *      - Place element icons next to the element type checkboxes (and analogously to the Root type checkboxes)?
  *
  ******************************************************************************************************///
 
@@ -52,17 +51,16 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -78,7 +76,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
@@ -104,7 +101,7 @@ import lu.fisch.structorizer.elements.IElementSequence.Iterator;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -114,11 +111,11 @@ import lu.fisch.utils.StringList;
  * patterns with the opportunity to replace the text parts by other patterns
  */
 @SuppressWarnings("serial")
-public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
+public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 
 	private static final int MAX_RECENT_PATTERNS = 10;
 	private static final int MAX_PREVIEW_HEIGHT = 75;
-	private static final String patternPrototype = "This is just a string long enough to establish a sufficient width";
+	private static final String patternPrototype = "This is just a string long enough to establish a sufficient width for the entire dialog";
 	private final LinkedList<String> searchPatterns = new LinkedList<String>();
 	private final LinkedList<String> replacePatterns = new LinkedList<String>();
 	private boolean fillingComboBox = false;
@@ -137,7 +134,18 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 	/**
 	 * Specifies the search scope
 	 */
-	public enum Scope { CURRENT_SELECTION, CURRENT_DIAGRAM, OPENED_DIAGRAMS };
+	public enum Scope { CURRENT_SELECTION, CURRENT_DIAGRAM, OPENED_DIAGRAMS;
+		private String text = null;
+		public String toString()
+		{
+			if (text != null) return text;
+			return super.toString();
+		}
+		public void setText(String _caption)
+		{
+			text = _caption;
+		}
+	};
 	
 	private Diagram diagram;
 	
@@ -190,7 +198,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 	protected JComboBox<String> cmbReplacePattern;
 	protected JRadioButton rbDown;
 	protected JRadioButton rbUp;
-	protected JCheckBox chkCaseSensitive;
+	protected JCheckBox chkCaseSensitive = new JCheckBox("Case sensitive");
 	protected JCheckBox chkWholeWord;	// Not sensible with regex search
 	protected JCheckBox chkRegEx;
 	protected JCheckBox chkInTexts;
@@ -207,10 +215,6 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 	protected JButton btnReplace;
 	protected JButton btnReplaceAll;
 	protected JButton btnClose;
-	protected JScrollPane scrElements;		// Scroll pane for the search results list lstElements
-	protected JList<Element> lstElements;	// Search results, to be represented by icon and first line each
-	protected JScrollPane scrRoots;			// Scroll pane for the list lstRoots
-	protected JList<Element> lstRoots;		// Owning Roots of the search results if several diagrams are involved
 	// FIXME Should there be only one text pane alternatively used for texts or comments? (How to distinguish both?)
 	protected JTextPane txtText;			// For the find result / preview, editable
 	protected StyledDocument docText = null;	// Copy of the found element text / comment with markers
@@ -235,53 +239,11 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		initComponents();
 	}
 
-//	/**
-//	 * @param owner - owning Frame
-//	 */
-//	public FindAndReplace(Frame owner) {
-//		super(owner);
-//		initComponents();
-//	}
-//
-//	/**
-//	 * @param owner - some kind of Dialog
-//	 */
-//	public FindAndReplace(Dialog owner) {
-//		super(owner);
-//		initComponents();
-//	}
-
-	/**
-	 * @param owner
-	 * @param modal
-	 */
-	public FindAndReplace(Frame owner, boolean modal) {
-		super(owner, modal);
-		// TODO Auto-generated constructor stub
-	}
-	
 	private void initComponents()
 	{
-		// TODO ...
-
-		// BorderLayout:
-		// NORTH (GridBagLayout): panel with find and replace pattern
-		// CENTER: scrollable BorderLayout with:
-		// * NORTH: GridBagLayout for options:
-		//   - case-sensitive, whole word, regex
-		// * WEST:
-		//   - scope (plus three Root types)
-		//   - wherein (text/comments)
-		// * EAST (GridLayout): 
-		//   - element types (EAST?)
-		// * SOUTH: Results
-		//   - lstRoots (diagrams)
-		//   - lstElements
-		// SOUTH: GridBagLayout with
-		// * txtPane
-		// * buttons
 		// FIXME: There should rather be buttons FindAll, FindNext, FindPrev, ReplaceNext, ReplaceAll
-		
+
+		this.setIconImage(IconLoader.ico074.getImage());
 		Ini ini = Ini.getInstance();
 		try {
 			ini.load();
@@ -320,6 +282,36 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 		contentPane.add(pnlContent);
 		contentPane.setLayout(new BorderLayout());
 		
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent evt) 
+			{
+				if (evt.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					setVisible(false);
+				}
+				if (evt.getKeyCode() == KeyEvent.VK_ADD)
+				{
+					selectAllElementTypes(true);
+				}
+				if (evt.getKeyCode() == KeyEvent.VK_SUBTRACT)
+				{
+					selectAllElementTypes(false);;
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+		};
 
 		//=================== PATTERNS ========================
 		{
@@ -329,6 +321,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			cmbReplacePattern = new JComboBox<String>();
 			cmbSearchPattern.setEditable(true);
 			cmbSearchPattern.setPrototypeDisplayValue(patternPrototype);
+			cmbSearchPattern.addKeyListener(keyListener);
 			cmbSearchPattern.addItemListener(new ItemListener(){
 				@Override
 				public void itemStateChanged(ItemEvent evt) {
@@ -337,6 +330,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			});
 			cmbReplacePattern.setEditable(true);
 			cmbReplacePattern.setPrototypeDisplayValue(patternPrototype);
+			cmbReplacePattern.addKeyListener(keyListener);
 			cmbReplacePattern.addItemListener(new ItemListener(){
 				@Override
 				public void itemStateChanged(ItemEvent evt) {
@@ -415,18 +409,21 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			grpDirection.add(rbDown);
 			grpDirection.add(rbUp);
 			
-			this.chkCaseSensitive = new JCheckBox("Case sensitive");
+			//this.chkCaseSensitive = new JCheckBox("Case sensitive");
 			this.chkCaseSensitive.setMnemonic(java.awt.event.KeyEvent.VK_C);
+			this.chkCaseSensitive.addKeyListener(keyListener);
 			this.chkCaseSensitive.setSelected(ini.getProperty("findCaseSensitive", "0").equals("1"));
 			pnlMode.add(chkCaseSensitive);
 			
 			this.chkWholeWord = new JCheckBox("Whole word");
 			this.chkWholeWord.setMnemonic(java.awt.event.KeyEvent.VK_W);
+			this.chkWholeWord.addKeyListener(keyListener);
 			this.chkWholeWord.setSelected(ini.getProperty("findWholeWord", "0").equals("1"));
 			pnlMode.add(chkWholeWord);
 
 			this.chkRegEx = new JCheckBox("Regular expressions");
 			this.chkRegEx.setMnemonic(java.awt.event.KeyEvent.VK_X);
+			this.chkRegEx.addKeyListener(keyListener);
 			this.chkRegEx.addItemListener(new ItemListener() {
 				//@Override
 				public void itemStateChanged(ItemEvent evt) {
@@ -441,8 +438,10 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			JPanel pnlDirection = new JPanel();
 			pnlDirection.setLayout(new GridLayout(1, 0));
 			this.rbDown.setMnemonic(java.awt.event.KeyEvent.VK_D);
+			this.rbDown.addKeyListener(keyListener);
 			pnlDirection.add(rbDown);
 			this.rbUp.setMnemonic(java.awt.event.KeyEvent.VK_U);
+			this.rbUp.addKeyListener(keyListener);
 			pnlDirection.add(rbUp);
 			if (ini.getProperty("searchDir", "down").equals("up")) {
 				rbUp.setSelected(true);
@@ -478,20 +477,14 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				}				
 			};
 			
-			//JPanel pnlScopeCombo = new JPanel();
-			cmbScope = new JComboBox<Scope>();
-			for (Scope item: Scope.values()) {
-				cmbScope.addItem(item);
-			}
+			cmbScope = new JComboBox<Scope>(Scope.values());
 			cmbScope.addItemListener(scopeListener);
+			cmbScope.addKeyListener(keyListener);
 			String lastScopeName = ini.getProperty("searchScope", Scope.CURRENT_DIAGRAM.name());
 			Scope lastScope = Scope.valueOf(lastScopeName); 
 			if (lastScope != null) {
 				cmbScope.setSelectedItem(lastScope);
 			}
-			//pnlScopeCombo.add(cmbScope);
-			//pnlScope.add(pnlScopeCombo);
-			//gblScope.setConstraints(cmbScope, gbcScope);
 			pnlScope.add(cmbScope, gbcScope);
 			
 			pnlRootTypes.setBorder(new TitledBorder("Diagram types"));
@@ -503,11 +496,11 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				chkRootTypes[i] = new JCheckBox(rootTypes[i].name());
 				chkRootTypes[i].setSelected(sel);
 				chkRootTypes[i].addItemListener(scopeListener);
+				chkRootTypes[i].addKeyListener(keyListener);
 				pnlRootTypes.add(chkRootTypes[i]);
 			}
 			gbcScope.gridy++;
 			gbcScope.insets.top = 0;
-			//gblScope.setConstraints(pnlRootTypes, gbcScope);
 			pnlScope.add(pnlRootTypes, gbcScope);
 			
 			//pnlWherein.setBorder(new TitledBorder("Wherein"));
@@ -516,10 +509,6 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			chkInTexts = new JCheckBox("In texts");
 			chkInTexts.setSelected(!ini.getProperty("findInTexts", "1").equals("0"));
 			pnlWherein.add(chkInTexts);
-//			gbcScope.gridy++;
-//			gbcScope.insets.top = inset;
-//			gbcScope.insets.bottom = 0;
-//			pnlScope.add(chkInTexts, gbcScope);
 			
 			chkInComments = new JCheckBox("In comments");
 			chkInComments.setSelected(!ini.getProperty("findInComments", "1").equals("0"));
@@ -537,42 +526,41 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 							chkInTexts.setSelected(true);
 						}
 					}
+					if (txtText != null) {
+						txtText.setEnabled(chkInTexts.isSelected() && currentElement != null && textMatches(currentElement.getText()) > 0);
+					}
+					if (txtComm != null) {
+						txtComm.setEnabled(chkInComments.isSelected() && currentElement != null && textMatches(currentElement.getComment()) > 0);
+					}
 				}};
 			chkInTexts.addItemListener(whereinListener);
+			chkInTexts.addKeyListener(keyListener);
 			chkInComments.addItemListener(whereinListener);
+			chkInComments.addKeyListener(keyListener);
 			
-//			gbcScope.gridy++;
-//			gbcScope.insets.top = 0;
-//			gbcScope.insets.bottom = inset;
-//			pnlScope.add(chkInComments, gbcScope);
 			gbcScope.gridy++;
 			gbcScope.insets.top = inset;
 			//gblScope.setConstraints(pnlWherein, gbcScope);
 			pnlScope.add(pnlWherein, gbcScope);
 			
-//			chkDisabled = new JCheckBox("Disabled elements");
-//			chkDisabled.setSelected(ini.getProperty("findDisabledElements", "0").equals("1"));
-//			gbcScope.gridy++;
-//			gbcScope.insets.top = 0;
-//			pnlScope.add(chkDisabled, gbcScope);	
-			
 			pnlOptionsWest.add(pnlScope);
 			
 			pnlOptions.add(pnlOptionsWest, BorderLayout.WEST);
-//			pnlOptions.add(pnlScope, BorderLayout.WEST);
 
 			// -------------- ELEMENT TYPES -------------
 			
 			JPanel pnlOptionsEast = new JPanel();
 			pnlOptionsEast.setLayout(new BoxLayout(pnlOptionsEast, BoxLayout.Y_AXIS));
 
-//			pnlElements.setLayout(new BoxLayout(pnlElements, BoxLayout.Y_AXIS));
+			pnlElements.setLayout(new BoxLayout(pnlElements, BoxLayout.Y_AXIS));
 			pnlElements.setLayout(new GridLayout(0, 1));
 			pnlElements.setBorder(new TitledBorder("Element Types"));
 			
 			btnAll = new JButton("All");
 			btnAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent arg0) { selectAllElementTypes(true); }});
+			btnAll.addKeyListener(keyListener);
 			btnNone = new JButton("None");
+			btnNone.addKeyListener(keyListener);
 			btnNone.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent arg0) { selectAllElementTypes(false); }});
 			JPanel pnlSelectButtons = new JPanel();
 			pnlSelectButtons.setLayout(new BoxLayout(pnlSelectButtons, BoxLayout.X_AXIS));
@@ -601,6 +589,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 				chkElementTypes[i] = new JCheckBox(types[i].name());
 				chkElementTypes[i].setSelected(sel);
 				chkElementTypes[i].addItemListener(elementTypeListener);
+				chkElementTypes[i].addKeyListener(keyListener);
 				pnlElements.add(chkElementTypes[i]);
 			}
 //			pnlOptions.add(pnlElements, BorderLayout.EAST);
@@ -609,6 +598,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			JPanel pnlDisabled = new JPanel();
 			chkDisabled = new JCheckBox("Disabled elements");
 			chkDisabled.setSelected(ini.getProperty("findDisabledElements", "0").equals("1"));
+			chkDisabled.addKeyListener(keyListener);
 			pnlDisabled.add(chkDisabled);
 			pnlOptionsEast.add(pnlDisabled);
 			
@@ -617,7 +607,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			// -------------- Text View ---------------
 			
 			pnlPreview.setLayout(new GridLayout(0, 1));
-			pnlPreview.setBorder(BorderFactory.createTitledBorder("Preview"));
+			pnlPreview.setBorder(BorderFactory.createTitledBorder("Contents"));
 
 			// This is no good way to enforce maximum height because the layout continues
 			// to try to enlarge this on and on...
@@ -641,6 +631,9 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			
 			txtText = new JTextPane();
 			txtText.setBorder(BorderFactory.createTitledBorder("Text"));
+			txtText.setEditable(false);
+			txtText.setEnabled(false);
+			txtText.addKeyListener(keyListener);
 	    	JScrollPane scrText = new JScrollPane(txtText);
 //	    	txtText.addComponentListener(textScrollListener);
 	    	docText = txtText.getStyledDocument();
@@ -654,6 +647,10 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 
     		txtComm = new JTextPane();
 			txtComm.setBorder(BorderFactory.createTitledBorder("Comment"));
+			txtComm.setEditable(false);
+			txtComm.setEnabled(false);
+			txtComm.addKeyListener(keyListener);
+
 			JScrollPane scrComm = new JScrollPane(txtComm);
 //	    	txtComm.addComponentListener(textScrollListener);
 	    	docComm = txtComm.getStyledDocument();
@@ -667,14 +664,15 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
     		pnlOptions.add(pnlPreview, BorderLayout.SOUTH);
 			
     		Dimension dim = scrText.getMaximumSize();
+    		int maxHeight = (int)Math.floor(scaleFactor * MAX_PREVIEW_HEIGHT);
     		if (dim != null) {
-    			scrText.setMaximumSize(new Dimension(dim.width, MAX_PREVIEW_HEIGHT));	// Doesn't actually work
-    			scrText.setPreferredSize(new Dimension(scrText.getPreferredSize().width, MAX_PREVIEW_HEIGHT));
+    			scrText.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
+    			scrText.setPreferredSize(new Dimension(scrText.getPreferredSize().width, maxHeight));
     		}
     		dim = scrComm.getMaximumSize();
     		if (dim != null) {
-    			scrComm.setMaximumSize(new Dimension(dim.width, MAX_PREVIEW_HEIGHT));	// Doesn't actually work
-    			scrComm.setPreferredSize(new Dimension(scrComm.getPreferredSize().width, MAX_PREVIEW_HEIGHT));
+    			scrComm.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
+    			scrComm.setPreferredSize(new Dimension(scrComm.getPreferredSize().width, maxHeight));
     		}
 
     		// --------------------------------------
@@ -717,6 +715,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 					}
 				}});
 			this.treResults.setCellRenderer(new MyTreeCellRenderer());
+			this.treResults.addKeyListener(keyListener);
 			JScrollPane scrTree = new JScrollPane(this.treResults);
 
 			pnlOptions.add(scrTree, BorderLayout.CENTER);
@@ -736,6 +735,8 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 					findActionPerformed(evt, false, true);
 				}
 			});
+			btnFind.setMnemonic(java.awt.event.KeyEvent.VK_N);
+			btnFind.addKeyListener(keyListener);
 			pnlButtons.add(btnFind);
 			
 			btnReplaceFind = new JButton("Replace/Find");
@@ -745,15 +746,18 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 					findActionPerformed(evt, true, true);
 				}
 			});
+			btnReplaceFind.addKeyListener(keyListener);
 			pnlButtons.add(btnReplaceFind);
 
 			btnReplace = new JButton("Replace");
+			btnReplace.setMnemonic(KeyEvent.VK_R);
 			btnReplace.addActionListener(new ActionListener(){
 				@Override
 				public void actionPerformed(ActionEvent evt) {
 					findActionPerformed(evt, true, false);
 				}
 			});
+			btnReplace.addKeyListener(keyListener);
 			pnlButtons.add(btnReplace);
 
 			btnReplaceAll = new JButton("Replace All");
@@ -763,9 +767,12 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 					replaceAllActionPerformed(evt);
 				}
 			});
+			btnReplaceAll.addKeyListener(keyListener);
 			pnlButtons.add(btnReplaceAll);
 			
 			chkElementwise = new JCheckBox("Element-wise");
+			chkElementwise.setMnemonic(java.awt.event.KeyEvent.VK_E);
+			chkElementwise.addKeyListener(keyListener);
 			chkElementwise.addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent evt) {
@@ -787,6 +794,8 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			}
 			
 			btnClose = new JButton("Close");
+			btnClose.setMnemonic(KeyEvent.VK_ESCAPE);
+			btnClose.addKeyListener(keyListener);
 			btnClose.addActionListener(new ActionListener(){
 				@Override
 				public void actionPerformed(ActionEvent evt) {
@@ -800,6 +809,8 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 
 		}
 		
+		GUIScaler.rescaleComponents(this);
+
 		this.pack();
 		
 		doButtonsScope();
@@ -854,9 +865,7 @@ public class FindAndReplace extends LangDialog /*implements WindowListener*/ {
 			enable = nMatches > 0;
 		}
 		fillPreview(ele.getText(), docText, txtText, 0, enable);
-		if (chkInComments.isSelected()) {
-			enable = this.textMatches(ele.getComment()) > 0;
-		}
+		enable = chkInComments.isSelected() && this.textMatches(ele.getComment()) > 0;
 		fillPreview(ele.getComment(), docComm, txtComm, nMatches, enable);
 		doButtons();
 	}
