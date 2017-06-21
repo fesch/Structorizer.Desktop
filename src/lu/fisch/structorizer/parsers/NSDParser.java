@@ -20,6 +20,8 @@
 
 package lu.fisch.structorizer.parsers;
 
+import javax.xml.XMLConstants;
+
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -50,6 +52,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.17      Issue #389: Call elements may now also have to be refactored
  *      Kay Gürtzig     2017.05.21      Enh. #372: More intelligent Root attribute retrieval
  *      Kay Gürtzig     2017.05.22      Enh. #372: Attribute "origin" added.
+ *      Kay Gürtzig     2017.06.20      Issue #404: Attempt to improve validation by providing a schema - in vain
  *
  ******************************************************************************************************
  *
@@ -59,6 +62,8 @@ package lu.fisch.structorizer.parsers;
 
 
 import javax.xml.parsers.*;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
@@ -67,6 +72,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Stack;
@@ -76,6 +82,8 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.io.Ini;
 
 public class NSDParser extends DefaultHandler {
+	
+	private static Schema nsdSchema = null;
 
 	private Root root = null;
 	
@@ -433,7 +441,7 @@ public class NSDParser extends DefaultHandler {
 			if (!reliable)
 			{
 				// This is now done with the current parser preferences - might fail.
-				ele.style = ((For)ele).classifyStyle();
+				ele.style = ele.classifyStyle();
 			}
 			if (ele.style == For.ForLoopStyle.TRAVERSAL)
 			{
@@ -793,6 +801,12 @@ public class NSDParser extends DefaultHandler {
 		// END KGU#258 2016-09-26
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
+		if (nsdSchema == null) {
+			URL schemaLocal = this.getClass().getResource("structorizer.xsd");
+			SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			nsdSchema = sFactory.newSchema(schemaLocal);
+		}
+		factory.setSchema(nsdSchema);
 		try		
 		{
 			SAXParser saxParser = factory.newSAXParser();

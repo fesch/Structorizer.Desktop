@@ -129,6 +129,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.18      Issue #405: New preference for width shrinking of CASE elements 
  *      Kay Gürtzig     2017.05.21      Enh. #372: AttributeInspector integrated, undo mechanism adapted
  *      Kay Gürtzig     2017.05.23      Enh. #354: On multiple-root code import now all roots go to Arranger
+ *      Kay Gürtzig     2017.06.20      Enh. #354,#357: GUI Support for configuration of plugin-specific options
  *
  ******************************************************************************************************
  *
@@ -186,6 +187,7 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -262,7 +264,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // END KGU#170 2016-04-01
     // START KGU#354 2017-03-15: Enh. #354 CodeParser cache
 	private static Vector<CodeParser> parsers = null;
-	private static HashMap<String, HashMap<String, String>> parserOptions = null;
+	// This map contains a string array (key, type, caption, tooltip) per option per parser
+	private static Vector<GENPlugin> parserPlugins = null;
 	// END KGU#354 2017-03-15
     
     // START KGU#300 2016-12-02: Enh. #300 - update notification settings
@@ -4335,7 +4338,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Import method
 	 * @param _specificOptions 
 	 *****************************************/
-	public void importNSD(String _className, HashMap<String, String> _specificOptions)
+	public void importNSD(String _className, Vector<HashMap<String, String>> _specificOptions)
 	{
 		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
 		// only save if something has been changed
@@ -4738,24 +4741,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			return;
 		}
 		parsers = new Vector<CodeParser>();
-		// START KGU#354/KGU#395 2017-05-11: Enh. #354, #357
-		parserOptions = new HashMap<String, HashMap<String, String>>();
-		// START KGU#354/KGU#395 2017-05-11: Enh. #354, #357
 		String errors = "";
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
 		GENParser genp = new GENParser();
-		Vector<GENPlugin> parserPlugins = genp.parse(buff);
-		for (int i=0; i < parserPlugins.size(); i++)
-		// END KGU#239 2016-08-12
+		this.parserPlugins = genp.parse(buff);
+		try { buff.close(); } catch (IOException e1) {}
+		for (int i = 0; i < parserPlugins.size(); i++)
 		{
 			GENPlugin plugin = parserPlugins.get(i);
 			final String className = plugin.className;
 			try {
 				Class<?> genClass = Class.forName(className);
 				parsers.add((CodeParser) genClass.newInstance());
-				// START KGU#354/KGU#395 2017-05-11: Enh. #354, #357
-				parserOptions.put(genClass.getSimpleName(), plugin.options);
-				// END KGU#354/KGU#395 2017-05-11
 			} catch (Exception ex) {
 				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 			}
@@ -4776,7 +4773,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * export code methods
 	 * @param options 
 	 *****************************************/
-	public void export(String _generatorClassName, HashMap<String, String> _specificOptions)
+	public void export(String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
 	{
 		try
 		{
@@ -4807,32 +4804,52 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	// START KGU#395 2017-05-11: Enh. #357
-	private void setPluginSpecificOptions(Generator _gen, String _generatorClassName,
-			HashMap<String, String> _specificOptions)
+	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20
+	private void setPluginSpecificOptions(IPluginClass _gen, String _generatorClassName,
+			Vector<HashMap<String, String>> _specificOptions)
 	{
 		Ini ini = Ini.getInstance();
-		for (String optionName: _specificOptions.keySet()) {
-			String valueStr = ini.getProperty(_generatorClassName + "." + optionName, "");
+		for (HashMap<String, String> optionSpec: _specificOptions) {
+			String optionKey = optionSpec.get("name");
+			String valueStr = ini.getProperty(_generatorClassName + "." + optionKey, "");
 			Object value = null;
-			String type = _specificOptions.get(optionName);
+			String type = optionSpec.get("type");
+			String items = optionSpec.get("items");
 			// Now convert the option into the specified type
-			if (!valueStr.isEmpty() && type != null) {
-				if (type.equalsIgnoreCase("boolean")) {
-					value = Boolean.parseBoolean(valueStr);
+			if (!valueStr.isEmpty() && type != null || items != null) {
+				// Better we fail with just a single option than with the entire method
+				try {
+					if (items != null) {
+						value = valueStr;
+					}
+					else if (type.equalsIgnoreCase("character")) {
+						value = valueStr.charAt(0);
+					}
+					else if (type.equalsIgnoreCase("boolean")) {
+						value = Boolean.parseBoolean(valueStr);
+					}
+					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
+						value = Integer.parseInt(valueStr);
+					}
+					else if (type.equalsIgnoreCase("unsiged")) {
+						value = Integer.parseUnsignedInt(valueStr);
+					}
+					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
+						value = Double.parseDouble(valueStr);
+					}
+					else if (type.equalsIgnoreCase("string")) {
+						value = valueStr;
+					}
 				}
-				else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
-					value = Integer.parseInt(valueStr);
-				}
-				else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
-					value = Double.parseDouble(valueStr);
-				}
-				else if (type.equalsIgnoreCase("string")) {
-					value = valueStr;
+				catch (NumberFormatException ex) {
+					System.err.println("Diagram.setPluginSpecificOptions("
+							+ _gen.getClass().getSimpleName()
+							+ "): " + ex.getMessage() + " on converting \""
+							+ valueStr + "\" to " + type + " for " + optionKey);
 				}
 			}
 			if (value != null) {
-				_gen.setPluginOption(optionName, value);
+				_gen.setPluginOption(optionKey, value);
 			}
 		}
 	}
@@ -5634,7 +5651,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
+            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame(), Menu.generatorPlugins);
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
@@ -5658,12 +5675,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
             // END KGU#168 2016-04-04 
-            // START KGU#351 2017-02-26: Enh. #346
-            if (eod.generatorKeys != null) {
-                for (int i = 0; i < eod.targetLabels.length; i++) {
-                    String propertyName = "genExportIncl" + eod.generatorKeys.get(i);
-                    eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
-                }
+            // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
+            for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
+            	GENPlugin plugin = Menu.generatorPlugins.get(i);
+            	String propertyName = "genExportIncl" + plugin.getKey();
+            	eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
+            	// START KGU#416 2017-06-20: Enh. #354,#357
+            	HashMap<String, String> optionValues = new HashMap<String, String>();
+            	for (HashMap<String, String> optionSpec: plugin.options) {
+            		String optKey = optionSpec.get("name");
+            		propertyName = plugin.getKey() + "." + optKey;
+            		optionValues.put(optKey, ini.getProperty(propertyName, ""));
+            	}
+            	eod.generatorOptions.add(optionValues);
+            	// END KGU#416 2017-06-20
             }
             // END KGU#351 2017-02-26
 
@@ -5693,12 +5718,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#168 2016-04-04: Issue #149 Charset for export
                 ini.setProperty("genExportCharset", (String)eod.cbCharset.getSelectedItem());
                 // END KGU#168 2016-04-04
-                // START KGU#351 2017-02-26: Enh. #346
-                if (eod.generatorKeys != null) {
-                    for (int i = 0; i < eod.targetLabels.length; i++) {
-                        String propertyName = "genExportIncl" + eod.generatorKeys.get(i);
-                        ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
-                    }
+                // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
+                for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
+                	GENPlugin plugin = Menu.generatorPlugins.get(i);
+                	String propertyName = "genExportIncl" + plugin.getKey();
+                	ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
+                	// START KGU#416 2017-06-20: Enh. #354,#357
+                	for (Map.Entry<String, String> entry: eod.generatorOptions.get(i).entrySet()) {
+                		propertyName = plugin.getKey() + "." + entry.getKey();
+                		ini.setProperty(propertyName, entry.getValue());
+                	}
+                	// END KGU#416 2017-06-20
                 }
                 // END KGU#351 2017-02-26
                 ini.save();
@@ -5721,7 +5751,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
+            // START KGU#416 2017-06-20: Enh. #354,#357
+            //ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
+        	this.retrieveParsers();
+            ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame(), parserPlugins);
+            // END KGU#416 2017-06-20
             // START KGU#362 2017-03-28: Issue #370 - default turned to true
             //iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
             iod.chkRefactorOnLoading.setSelected(!ini.getProperty("impRefactorOnLoading", "true").equals("false"));
@@ -5735,9 +5769,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // END KGU#354 2017-03-08
             // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
             iod.chkLogDir.setSelected(ini.getProperty("impLogToDir", "false").equals("true"));
-            iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));
+            iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));            
+            // START KGU#416 2017-06-20: Enh. #354,#357
+            if (parserPlugins != null) {
+                for (int i = 0; i < parserPlugins.size(); i++) {
+                	GENPlugin plugin = parserPlugins.get(i);
+                    HashMap<String, String> optionValues = new HashMap<String, String>();
+                    for (HashMap<String, String> optionSpec: plugin.options) {
+                    	String optKey = optionSpec.get("name");
+                    	String propertyName = plugin.getKey() + "." + optKey;
+                    	optionValues.put(optKey, ini.getProperty(propertyName, ""));
+                    }
+                    iod.parserOptions.add(optionValues);
+                }
+            }
+            // END KGU#416 2017-06-20
             iod.doLogButtons();
             // END KGU#354 2017-04-27
+            
             iod.setVisible(true);
             
             if(iod.goOn==true)
@@ -5754,6 +5803,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("impLogToDir", String.valueOf(iod.chkLogDir.isSelected()));
                 ini.setProperty("impLogDir", iod.txtLogDir.getText());
                 // END KGU#354 2017-04-27
+                // START KGU#416 2017-02-26: Enh. #354, #357
+                for (int i = 0; i < parserPlugins.size(); i++) {
+                	GENPlugin plugin = parserPlugins.get(i);
+                	for (Map.Entry<String, String> entry: iod.parserOptions.get(i).entrySet()) {
+                		String propertyName = plugin.getKey() + "." + entry.getKey();
+                		ini.setProperty(propertyName, entry.getValue());
+                	}
+                }
+            	// END KGU#416 2017-06-20
                 ini.save();
             }
         } 

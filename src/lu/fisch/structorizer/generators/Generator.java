@@ -128,11 +128,12 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Control;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 
-public abstract class Generator extends javax.swing.filechooser.FileFilter
+public abstract class Generator extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	/************ Fields ***********************/
 	// START KGU#162 2016-03-31: Enh. #144
@@ -413,7 +414,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _defaultValue - a (situative) default value 
 	 * @return an Object (of the type specified in the plugin) or _defaultValue
 	 */
-	protected Object getPluginOption(String _optionName, Object _defaultValue) {
+	@Override
+	public Object getPluginOption(String _optionName, Object _defaultValue) {
 		Object optionVal = _defaultValue;
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
 		if (this.optionMap.containsKey(fullKey)) {
@@ -427,6 +429,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _optionName - a key string
 	 * @param _value - an object according to the type specified in the plugin
 	 */
+	@Override
 	public void setPluginOption(String _optionName, Object _value)
 	{
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;

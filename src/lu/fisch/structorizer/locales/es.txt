@@ -874,6 +874,8 @@ ExportOptionDialoge.chkExportSubroutines.text=Incluir subprogramas empleados.
 ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
 ExportOptionDialoge.lbCharset.text=Codificación:
 ExportOptionDialoge.chkCharsetAll.text=Listar todas
+ExportOptionDialoge.btnPluginOptions.text=Preferencias específicas
+ExportOptionDialoge.msgOptionsForPlugin.text=Opciones para generador de %
 ExportOptionDialoge.jLabel1.text=Elige las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
@@ -893,6 +895,8 @@ ImportOptionDialog.chkVarDeclarations.text=Importar declaraciones de variables
 ImportOptionDialog.chkVarDeclarations.tooltip=Con esta preferencia, el importe va a hacer elementos inactivos de decalaraciones de variables desde el código leído.
 ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
 ImportOptionDialog.chkSaveParseTree.tooltip=Después de logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
+ImportOptionDialog.btnPluginOptions.text=Preferencias específicas
+ImportOptionDialog.msgOptionsForPlugin.text=Opciones para analisador de %
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
@@ -910,6 +914,15 @@ SaveOptionDialog.btnLicenseFile.text=Licencia (editor)
 SaveOptionDialog.btnLicenseFile.tooltip=Abre el editor ara el contenido (texto) de la licencia seleccionada
 SaveOptionDialog.btnOk.text=Aceptar
 SaveOptionDialog.btnOk.tooltip=Aceptar los cambios.
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=¡El valor para '%' tiene que ser un número entero!
+PluginOptionDialog.msgNoValidUnsigned.text=¡El valor para '%' tiene que ser un número entero positivo!
+PluginOptionDialog.msgNoValidCharacter.text=¡El valor para '%' tiene que ser un solo carácter!
+PluginOptionDialog.msgNoValidDouble.text=¡El valor para '%' tiene que ser un númbero (con punto decimal)!
+PluginOptionDialog.msgVerificationError.text=Error de verificación
+PluginOptionDialog.btnOk.text=Aceptar
+PluginOptionDialog.btnCancel.text=Cancelar
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=Calibración de interfaz gráfica

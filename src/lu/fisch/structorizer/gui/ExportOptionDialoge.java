@@ -22,7 +22,7 @@ package lu.fisch.structorizer.gui;
 
 /******************************************************************************************************
  *
- *      Author:         Bob Fisch
+ *      Authors:        Bob Fisch, Kay Gürtzig
  *
  *      Description:    This dialog allows to control certain settings for the code export.
  *
@@ -30,24 +30,25 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date         Description
- *      ------          ----         -----------
- *      Bob Fisch       2012.07.02   First Issue
- *      Kay Gürtzig     2016.04.01   Enh. #144: noConversionCheckBox and cbPrefGenerator added
- *      Kay Gürtzig     2016.04.04   Enh. #149: cbCharset added
- *      Kay Gürtzig     2016.07.20   Enh. #160: new option to involve called subroutines (= KGU#178)
- *      Kay Gürtzig     2016.07.25   Size setting dropped. With the current layout, pack() is fine (KGU#212).
- *      Kay Gürtzig     2016.07.26   Bug #204: Constructor API modified to ensure language translation before pack()
- *      Kay Gürtzig     2016.11.11   Issue #81: DPI-awareness workaround for checkboxes
- *      Kay Gürtzig     2017.01.07   Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
- *      Kay Gürtzig     2017.01.09   Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
- *      Kay Gürtzig     2017.02.27   Enh. #346: New tab for configuration of user-specific include directives
- *      Kay Gürtzig     2017.05.09   Issue #400: keyListener at all controls
- *      Kay Gürtzig     2017.05.11   Enh. #372: New option to export license attributes 
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2012.07.02  First Issue
+ *      Kay Gürtzig     2016.04.01  Enh. #144: noConversionCheckBox and cbPrefGenerator added
+ *      Kay Gürtzig     2016.04.04  Enh. #149: cbCharset added
+ *      Kay Gürtzig     2016.07.20  Enh. #160: new option to involve called subroutines (= KGU#178)
+ *      Kay Gürtzig     2016.07.25  Size setting dropped. With the current layout, pack() is fine (KGU#212).
+ *      Kay Gürtzig     2016.07.26  Bug #204: Constructor API modified to ensure language translation before pack()
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.02.27  Enh. #346: New tab for configuration of user-specific include directives
+ *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls
+ *      Kay Gürtzig     2017.05.11  Enh. #372: New option to export license attributes
+ *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
  *
  ******************************************************************************************************
  *
- *      Comment:		I used JFormDesigner to design this window graphically.
+ *      Comment:
  *
  ******************************************************************************************************///
 
@@ -65,7 +66,9 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.Vector;
 
@@ -79,12 +82,13 @@ import lu.fisch.structorizer.parsers.GENParser;
 
 /**
  * This dialog allows to control certain settings for the code export.
- * @author robertfisch
+ * @author robertfisch, codemanyak
  */
 @SuppressWarnings("serial")
 public class ExportOptionDialoge extends LangDialog
 {
-    public boolean goOn = false;
+    private static final int INCLUDE_LIST_WIDTH = 20;
+	public boolean goOn = false;
 
     /** Creates new form ExportOptionDialogue */
     public ExportOptionDialoge()
@@ -93,8 +97,13 @@ public class ExportOptionDialoge extends LangDialog
         setModal(true);
     }
 
-    public ExportOptionDialoge(Frame frame) //, String langFileName)
+    // START KGU#416 2017-06-20: Enh. #354,#357 - signature changed 
+    //public ExportOptionDialoge(Frame frame) //, String langFileName)
+    //{
+    public ExportOptionDialoge(Frame frame, Vector<GENPlugin> generatorPlugins)
     {
+    	plugins = generatorPlugins;
+    // END KGU#416 2017-06-20
         initComponents();
         setModal(true);
         setLocationRelativeTo(frame);
@@ -128,7 +137,7 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
         lbVoid = new javax.swing.JLabel();
         lbPrefGenerator = new javax.swing.JLabel();
-        cbPrefGenerator = new javax.swing.JComboBox<String>(this.getCodeGeneratorNames());
+        cbPrefGenerator = new javax.swing.JComboBox<String>(this.getCodeGeneratorNames(false));
         // END KGU#171 2016-04-01
         // START KGU#168 2016-04-04: Issue #149
         lbVoid1 = new javax.swing.JLabel();
@@ -142,6 +151,11 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#363 2017-05-11: Enh. #372
         chkExportLicenseInfo = new javax.swing.JCheckBox();
         // END KGU#363 2017-05-11
+        // START KGU#416 2017-06-20: Enh. #354,#357
+        btnPluginOptions = new javax.swing.JButton();
+        cbOptionPlugins = new javax.swing.JComboBox<String>(this.getCodeGeneratorNames(true));
+        // END KGU#416 2017-06-20
+
         
         setTitle("Export options ...");
 
@@ -198,6 +212,7 @@ public class ExportOptionDialoge extends LangDialog
 
         commentsCheckBox.setText("Export instructions as comments.");
 //        commentsCheckBox.addActionListener(new ActionListener() {
+//            @Override
 //            public void actionPerformed(ActionEvent evt) {
 //                commentsCheckBoxActionPerformed(evt);
 //            }
@@ -208,6 +223,7 @@ public class ExportOptionDialoge extends LangDialog
         bracesCheckBox.setText("Put block-opening brace on same line (C/C++/Java etc.).");
         //bracesCheckBox.setActionCommand("Put block-opening brace on same line (C/C++/Java etc.).");	// ??
         bracesCheckBox.addActionListener(new ActionListener() {
+			@Override
             public void actionPerformed(ActionEvent evt) {
                 bracesCheckBoxActionPerformed(evt);
             }
@@ -215,6 +231,7 @@ public class ExportOptionDialoge extends LangDialog
 
         lineNumbersCheckBox.setText("Generate line numbers on export to BASIC.");
         lineNumbersCheckBox.addActionListener(new ActionListener() {
+			@Override
             public void actionPerformed(ActionEvent evt) {
                 lineNumbersCheckBoxActionPerformed(evt);
             }
@@ -223,6 +240,7 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#178 2016-07-20: Enh. #160
         chkExportSubroutines.setText("Involve called subroutines");
         chkExportSubroutines.addActionListener(new ActionListener() {
+			@Override
         	public void actionPerformed(ActionEvent evt) {
         		subroutinesCheckBoxActionPerformed(evt);
         	}
@@ -232,6 +250,7 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#363 2017-05-11: Enh. #372
         chkExportLicenseInfo.setText("Export author and license attributes");
         chkExportLicenseInfo.addActionListener(new ActionListener() {
+			@Override
         	public void actionPerformed(ActionEvent evt) {
         		licenseInfoCheckBoxActionPerformed(evt);
         	}
@@ -240,12 +259,43 @@ public class ExportOptionDialoge extends LangDialog
         
         jButton1.setText("OK");
         jButton1.addActionListener(new ActionListener() {
+			@Override
             public void actionPerformed(ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
 
-        // START KGU#351 217-02-26: Enh. #346
+        // START KGU#416 2017-06-20: Enh. #354,#357
+        btnPluginOptions.setText("Language-specific Options");
+        btnPluginOptions.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+            	String pluginTitle = (String) cbOptionPlugins.getSelectedItem();
+            	// Identify the plugin by its title
+            	int pluginIndex = -1;
+            	for (int i = 0; pluginIndex < 0 && i < plugins.size(); i++) {
+            		GENPlugin plugin = plugins.get(i);
+            		if (pluginTitle.equals(plugin.title)) {
+            			pluginIndex = i;
+            		}
+            	}
+            	// If found then we can open the dialog
+            	if (pluginIndex >= 0) {
+            		openSpecificOptionDialog(
+            				msgOptionsForPlugin.getText(),
+            				plugins.get(pluginIndex),
+            				generatorOptions.get(pluginIndex));
+            	}
+			}});
+        cbOptionPlugins.setMaximumSize(
+        		new Dimension(cbPrefGenerator.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
+        if (cbOptionPlugins.getItemCount() == 0) {
+        	btnPluginOptions.setVisible(false);
+        	cbOptionPlugins.setVisible(false);
+        }
+        // END KGU#416 2017-06-20
+        
+        // START KGU#351 2017-02-26: Enh. #346
 		//======== contentPanel0 ========
         //org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         //getContentPane().setLayout(layout);
@@ -263,11 +313,17 @@ public class ExportOptionDialoge extends LangDialog
                     		.add(lbVoid1)
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             		.add(lbCharset)
-                            		.add(lbPrefGenerator))
+                            		.add(lbPrefGenerator)
+                                    // START KGU#416 2017-06-20: Enh. #353,#357
+                            		.add(btnPluginOptions))
+                            		// END KGU#416 2017-06-20
                     		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             		.add(cbCharset)
-                            		.add(cbPrefGenerator))
+                            		.add(cbPrefGenerator)
+                                    // START KGU#416 2017-06-20: Enh. #353,#357
+                            		.add(cbOptionPlugins))
+                            		// END KGU#416 2017-06-20
                     		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             		.add(chkCharsetAll)
@@ -332,6 +388,12 @@ public class ExportOptionDialoge extends LangDialog
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkExportLicenseInfo)
             	// END KGU#363 2017-05-11: Enh. #372
+                // START KGU#416 2017-06-20: Enh. #353,#357
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                				.add(btnPluginOptions)
+                				.add(cbOptionPlugins))
+                // END KGU#416 2017-06-20
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 /*.add(jButton1)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 8, Short.MAX_VALUE)
@@ -342,7 +404,7 @@ public class ExportOptionDialoge extends LangDialog
 		//======== contentPanel1 ========
 		{
 			// get generator Names
-			Vector<String> generatorNames = this.getCodeGeneratorNames();
+			Vector<String> generatorNames = this.getCodeGeneratorNames(false);
 			int nGenerators = generatorNames.size();
 			
 			this.targetLabels = new JLabel[nGenerators];
@@ -356,6 +418,7 @@ public class ExportOptionDialoge extends LangDialog
 			gbc0.gridwidth = 1;
 			gbc0.gridheight = 1;
 			gbc0.fill = GridBagConstraints.BOTH;
+			gbc0.insets = new Insets(0, 0, 0, 5);
 			gbc1.gridx = 2;
 			gbc1.gridy = 1;
 			gbc1.gridwidth = GridBagConstraints.REMAINDER;
@@ -366,7 +429,7 @@ public class ExportOptionDialoge extends LangDialog
 			{
 				this.targetLabels[i] = new JLabel(generatorNames.get(i));
 				contentPanel1.add(targetLabels[i], gbc0);
-				this.includeLists[i] = new JTextField(20);
+				this.includeLists[i] = new JTextField(INCLUDE_LIST_WIDTH);
 				//this.includeLists[i].setPreferredSize(new Dimension(100, 20));
 				this.includeLists[i].setToolTipText("Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted");
 				contentPanel1.add(includeLists[i], gbc1);
@@ -412,7 +475,7 @@ public class ExportOptionDialoge extends LangDialog
 				}
 			}
 			
-			public void keyReleased(KeyEvent ke) {} 
+			public void keyReleased(KeyEvent kevt) {} 
 			public void keyTyped(KeyEvent kevt) {}
 		};
 		jButton1.addKeyListener(keyListener);
@@ -427,7 +490,11 @@ public class ExportOptionDialoge extends LangDialog
 			this.includeLists[i].addKeyListener(keyListener);
 		}
 		tabbedPane.addKeyListener(keyListener);
-		// END KGU#393 2017-05-09		
+		// END KGU#393 2017-05-09
+		// START KGU#416 2017-06-20: Enh. #354,#357,#400
+		btnPluginOptions.addKeyListener(keyListener);
+		cbOptionPlugins.addKeyListener(keyListener);
+		// END KGU#416 2017-06-20
 
         // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
         GUIScaler.rescaleComponents(this);
@@ -435,6 +502,14 @@ public class ExportOptionDialoge extends LangDialog
         
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    // START KGU#416 2017-06-20: Enh. #354,#357
+    protected void openSpecificOptionDialog(String TitleFormat, GENPlugin plugin, HashMap<String, String> optionValues) {
+    	PluginOptionDialog pod = new PluginOptionDialog(plugin, optionValues);
+    	pod.setTitle(TitleFormat.replace("%", plugin.title));
+    	pod.setVisible(true);
+    }
+    // END KGU#416 2017-06-20
 
 //    private void commentsCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
 //    {//GEN-HEADEREND:event_commentsCheckBoxActionPerformed
@@ -509,73 +584,77 @@ public class ExportOptionDialoge extends LangDialog
     	}
     }
     
-    private Vector<String> getCodeGeneratorNames()
+    /**
+     * Returns a vector of the titles of all available Code Generators. The list may be
+     * restricted to those that provide specific options by {@code withOptionsOnly}.
+     * @param withOptionsOnly - if true then only the titles of generators with options will be returned
+     * @return The generator titles (actually rather language names)
+     */
+    private Vector<String> getCodeGeneratorNames(boolean withOptionsOnly)
     {
-		// read generators from file
-		// and add them to the Vector
+    	if (this.plugins == null) {
+    		// read generators from file
+    		// and add them to the Vector
+    		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
+    		GENParser genp = new GENParser();
+    		this.plugins = genp.parse(buff);
+    		try { buff.close();	} catch (IOException e) {}
+    	}
     	Vector<String> generatorNames = new Vector<String>();
-    	// START KGU#351 2017-02-26: Enh. #346 - include/uses configuration
-    	this.generatorKeys = new Vector<String>();
-    	// END KGU#351 2017-02-26
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
-		GENParser genp = new GENParser();
-		Vector<GENPlugin> plugins = genp.parse(buff);
-		for(int i=0;i<plugins.size();i++)
+		for(int i = 0; i < plugins.size(); i++)
 		{
-			GENPlugin plugin = (GENPlugin) plugins.get(i);
-			generatorNames.add(plugin.title);
-			String genKey = plugin.className;
-			genKey = genKey.substring(genKey.lastIndexOf(".")+1);
-			generatorKeys.add(genKey);
+			if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
+				generatorNames.add(plugins.get(i).title);
+			}
 		}
 		return generatorNames;
     }
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[])
-    {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try
-        {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
-            {
-                if ("Nimbus".equals(info.getName()))
-                {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable()
-        {
-
-            public void run()
-            {
-                new ExportOptionDialoge().setVisible(true);
-            }
-        });
-    }
+//    /**
+//     * @param args the command line arguments
+//     */
+//    public static void main(String args[])
+//    {
+//        /* Set the Nimbus look and feel */
+//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+//         */
+//        try
+//        {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
+//            {
+//                if ("Nimbus".equals(info.getName()))
+//                {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+//        } catch (ClassNotFoundException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (InstantiationException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (IllegalAccessException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (javax.swing.UnsupportedLookAndFeelException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        }
+//        //</editor-fold>
+//
+//        /* Create and display the form */
+//        java.awt.EventQueue.invokeLater(new Runnable()
+//        {
+//
+//            public void run()
+//            {
+//                new ExportOptionDialoge().setVisible(true);
+//            }
+//        });
+//    }
     
     // START KGU#168 2016-04-04: Issue #149
     public static String[] standardCharsets = {"ISO-8859-1", "UTF-8", "UTF-16", "windows-1250", "windows-1252", "US-ASCII"};
@@ -588,7 +667,15 @@ public class ExportOptionDialoge extends LangDialog
 	protected JLabel[] targetLabels;
 	protected JTextField[] includeLists = new JTextField[1];
 	public javax.swing.JPanel buttonBar;
-	public Vector<String> generatorKeys;
+	// START KGU#416 2017-06-20: Enh. #354, #357
+	//public Vector<String> generatorKeys;
+    private Vector<GENPlugin> plugins = null;
+	// In order of this.plugins there is an option value map per generator plugin
+	public Vector<HashMap<String, String>> generatorOptions = new Vector<HashMap<String, String>>();
+	public javax.swing.JButton btnPluginOptions;
+	public javax.swing.JComboBox<String> cbOptionPlugins;
+	public final LangTextHolder msgOptionsForPlugin = new LangTextHolder("Options for % Generator");
+	// END KGU#416 2017-06-20
 	// END KGU#351 2017-02-26
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JCheckBox bracesCheckBox;

@@ -316,7 +316,7 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
 	// START KGU#239 2016-08-12: Enh. #231
-	// Generator plugins accessible for Analyser
+	// Generator plugins accessible for Analyser, Diagram, ExportOptionDialoge etc.
 	public static Vector<GENPlugin> generatorPlugins = new Vector<GENPlugin>();
 	// END KGU#239 2016-08-12
 	// Error messages for Analyser
@@ -1578,6 +1578,7 @@ public class Menu extends LangMenuBar implements NSDController
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream(fileName));
 		GENParser genp = new GENParser();
 		Vector<GENPlugin> plugins = genp.parse(buff);
+		try { buff.close();	} catch (IOException e) {}
 		for (int i = 0; i < plugins.size(); i++)
 		{
 			GENPlugin plugin = plugins.get(i);
@@ -1598,7 +1599,7 @@ public class Menu extends LangMenuBar implements NSDController
 			}
 			final String className = plugin.className;
 			// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
-			final HashMap<String, String> options = plugin.options;
+			final Vector<HashMap<String, String>> options = plugin.options;
 			// END KGU#354/KGU#395 2017-05-11
 			
 			ActionListener listener = null;

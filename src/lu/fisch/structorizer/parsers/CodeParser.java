@@ -74,6 +74,7 @@ import com.creativewidgetworks.goldparser.engine.SymbolList;
 import com.creativewidgetworks.goldparser.engine.Token;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
 
@@ -93,7 +94,7 @@ import lu.fisch.utils.StringList;
  * real challenge is lurking...
  * @author Kay Gürtzig
  */
-public abstract class CodeParser extends javax.swing.filechooser.FileFilter
+public abstract class CodeParser extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	/************ Common fields *************/
 	
@@ -144,7 +145,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param _defaultValue TODO
 	 * @return an Object (of the type specified in the plugin) or null
 	 */
-	protected Object getPluginOption(String _optionName, Object _defaultValue) {
+	@Override
+	public Object getPluginOption(String _optionName, Object _defaultValue) {
 		Object optionVal = _defaultValue;
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
 		if (this.optionMap.containsKey(fullKey)) {
@@ -158,6 +160,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param _optionName - a key string
 	 * @param _value - an object according to the type specified in the plugin
 	 */
+	@Override
 	public void setPluginOption(String _optionName, Object _value)
 	{
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;

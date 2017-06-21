@@ -879,6 +879,8 @@ ExportOptionDialoge.chkExportSubroutines.text=Involve called subroutines.
 ExportOptionDialoge.lbPrefGenerator.text=Favorite Code Export:
 ExportOptionDialoge.lbCharset.text=Character set:
 ExportOptionDialoge.chkCharsetAll.text=List all?
+ExportOptionDialoge.btnPluginOptions.text=Language-specific Options
+ExportOptionDialoge.msgOptionsForPlugin.text=Options for % Generator
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
@@ -902,6 +904,8 @@ ImportOptionDialog.chkLogDir.text=Log to folder
 ImportOptionDialog.chkLogDir.tooltip=Enable saving a log file during import
 ImportOptionDialog.txtLogDir.tooltip=The empty path stands for the home directory of the source code file, "." for the current directory.
 ImportOptionDialog.btnLogDir.tooltip=Select a path via dialog.
+ImportOptionDialog.btnPluginOptions.text=Language-specific Options
+ImportOptionDialog.msgOptionsForPlugin.text=Options for % Parser
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
 
@@ -919,6 +923,15 @@ SaveOptionDialog.btnLicenseFile.text=License file
 SaveOptionDialog.btnLicenseFile.tooltip=Open the editor for the text of this license 
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Accept these settings.
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=Value for '%' must be an integral number!
+PluginOptionDialog.msgNoValidUnsigned.text=Value for '%' must be a cardinal number (unsigned integer)!
+PluginOptionDialog.msgNoValidCharacter.text=Value for '%' must be a single character!
+PluginOptionDialog.msgNoValidDouble.text=Value for '%' must be a number
+PluginOptionDialog.msgVerificationError.text=Input verification failed
+PluginOptionDialog.btnOk.text=OK
+PluginOptionDialog.btnCancel.text=Cancel
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI Scale
