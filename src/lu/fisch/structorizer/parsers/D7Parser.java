@@ -55,6 +55,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.26      Fix #357: New temp file mechanism for the prepared text file
  *      Kay Gürtzig     2017.03.29      Enh. #368: Evaluation of constant definitions and var declarations enabled
  *      Kay Gürtzig     2017.03.31      Enh. #388: new constants concept in Structorizer supported
+ *      Kay Gürtzig     2017.06.22      Enh. #420: Prepared for comment retrieval
  *
  ******************************************************************************************************
  *
@@ -84,6 +85,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.BString;
+import lu.fisch.utils.StringList;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -757,7 +759,66 @@ public class D7Parser extends CodeParser
     };
     // END KGU#358 2017-03-29
 
-    // START KGU#354 2017-03-04: Now inherited from CodeParser
+    // START KGU#407 2017-06-22: Enh. #420 - rule ids representing statements, used as stoppers for comment rerieval
+    private static final int[] statementIds = new int[]{
+    	RuleConstants.PROD_PACKAGEHEADER_PACKAGE_SEMI,
+    	RuleConstants.PROD_OPTREQUIRESCLAUSE_REQUIRES_SEMI,
+    	RuleConstants.PROD_OPTCONTAINSCLAUSE_CONTAINS_SEMI,
+    	RuleConstants.PROD_EXPORTDECLLIST,
+    	RuleConstants.PROD_EXPORTDECLLIST2,
+    	RuleConstants.PROD_EXPORTDECLITEM,
+    	RuleConstants.PROD_EXPORTDECLITEM2,
+    	RuleConstants.PROD_EXPORTDECLITEM3,
+    	RuleConstants.PROD_EXPORTDECLITEM4,
+    	RuleConstants.PROD_EXPORTDECLITEM_FORWARD_SEMI,
+    	RuleConstants.PROD_CALLSECTION,
+    	RuleConstants.PROD_CALLSECTION2,
+    	RuleConstants.PROD_IMPLEMENTATIONSECTION_IMPLEMENTATION,
+    	RuleConstants.PROD_INITSECTION_INITIALIZATION_END,
+    	RuleConstants.PROD_INITSECTION_INITIALIZATION_FINALIZATION_END,
+    	RuleConstants.PROD_INITSECTION,
+    	RuleConstants.PROD_INITSECTION_END,
+        RuleConstants.PROD_STATEMENT,
+        RuleConstants.PROD_STATEMENT2,
+        RuleConstants.PROD_STATEMENT3,
+        RuleConstants.PROD_STATEMENT4,
+        RuleConstants.PROD_STATEMENT5,
+        RuleConstants.PROD_STATEMENT6,
+        RuleConstants.PROD_STATEMENT7,
+        RuleConstants.PROD_STATEMENT8,
+        RuleConstants.PROD_STATEMENT9,
+        RuleConstants.PROD_STATEMENT10,
+        RuleConstants.PROD_STATEMENT11,
+        RuleConstants.PROD_STATEMENT12,
+        RuleConstants.PROD_STATEMENT13,
+        RuleConstants.PROD_STATEMENT14,
+        RuleConstants.PROD_STATEMENT15,
+        RuleConstants.PROD_ASSIGNMENTSTMT,
+        RuleConstants.PROD_ASSIGNMENTSTMT_AT_COLONEQ,
+        RuleConstants.PROD_CALLSTMT,
+        RuleConstants.PROD_CALLSTMT_WRITE_LPAREN_RPAREN,
+        RuleConstants.PROD_CALLSTMT_WRITELN_LPAREN_RPAREN,
+        RuleConstants.PROD_CALLSTMT_INHERITED,
+        RuleConstants.PROD_GOTOSTATEMENT_GOTO,
+        RuleConstants.PROD_GOTOSTATEMENT_GOTO2,
+        RuleConstants.PROD_COMPOUNDSTMT_BEGIN_END,
+        RuleConstants.PROD_IFSTATEMENT_IF_THEN_ELSE,
+        RuleConstants.PROD_IFSTATEMENT_IF_THEN,
+        RuleConstants.PROD_IFSTATEMENT_IF_SYNERROR_THEN,
+        RuleConstants.PROD_CASESTATEMENT_CASE_OF_END,
+        RuleConstants.PROD_FORSTATEMENT_FOR_COLONEQ_DO,
+        RuleConstants.PROD_WHILESTATEMENT_WHILE_DO,
+        RuleConstants.PROD_WITHSTATEMENT_WITH_DO,
+        RuleConstants.PROD_REPEATSTATEMENT_REPEAT_UNTIL,
+        RuleConstants.PROD_ASSEMBLERSTMT_ASM_END,
+        RuleConstants.PROD_RAISESTMT_RAISE_SYNERROR,
+        RuleConstants.PROD_RAISESTMT_RAISE,
+        RuleConstants.PROD_RAISESTMT_RAISE_AT,
+    	RuleConstants.PROD_OPTEXCEPTIONELSE_ELSE,
+    };
+    // END KGU#407 2017-06-22
+
+	// START KGU#354 2017-03-04: Now inherited from CodeParser
 	//Root root = null;
 	// START KGU#194 2016-05-08: Bugfix #185
 	// We may obtain a collection of Roots (unit or program with subroutines)!
@@ -901,6 +962,9 @@ public class D7Parser extends CodeParser
 		// START KGU#194 2016-05-08: Bugfix #185
 		unitName = null;
 		// END KGU#194 2016-05-08
+		// START KGU#407 207-06-22: Enh. #420: Configure the lookup table for comment retrieval
+		this.registerStatementRuleIds(statementIds);
+		// END KGU#407 2017-06-11
 	}
 	
 	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
@@ -926,7 +990,10 @@ public class D7Parser extends CodeParser
 				content=new String();
 				content=getContent_R(_reduction,content);
 				//System.out.println(ruleHead + ": " + content);
-				_parentNode.addElement(new Instruction(translateContent(content)));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//_parentNode.addElement(new Instruction(translateContent(content)));
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+				// END KGU#407 2017-06-22
 			}
 			// START KGU#358 2017-03-29: Enh. #368
 			else if (
@@ -957,8 +1024,12 @@ public class D7Parser extends CodeParser
 						content = "const " + content;
 					}
 					asgnmt = new Instruction(translateContent(content));
-					asgnmt.setComment("constant!");
-					asgnmt.setColor(Color.decode("0xFFC0FF"));
+					// START KGU#407 2017-06-20: Enh. #420 - comments already here
+					//asgnmt.setComment("constant!");
+					this.equipWithSourceComment(asgnmt, _reduction);
+					asgnmt.getComment().add("Constant!");
+					// END KGU#407 2017-06-22
+					asgnmt.setColor(colorConst);
 					// NO BREAK HERE!
 				case RuleConstants.PROD_VARDECL_COLON_SEMI:
 				case RuleConstants.PROD_VARDECL_COLON:
@@ -969,6 +1040,9 @@ public class D7Parser extends CodeParser
 						}
 						content = getContent_R(typeRule, "var " + idList + ": ");
 						Instruction decl = new Instruction(translateContent(content));
+						// START KGU#407 2017-06-20: Enh. #420 - comments already here
+						this.equipWithSourceComment(decl, _reduction);
+						// END KGU#407 2017-06-22
 						decl.setColor(colorDecl);
 						_parentNode.addElement(decl);
 					}
@@ -979,7 +1053,11 @@ public class D7Parser extends CodeParser
 				case RuleConstants.PROD_CONSTANTDECL_EQ_SEMI:
 					content = getContent_R(_reduction.get(2).asReduction(), "const " + idList + " <- ");
 					asgnmt = new Instruction(translateContent(content));
-					asgnmt.setComment("constant!");
+					// START KGU#407 2017-06-20: Enh. #420 - comments already here
+					//asgnmt.setComment("constant!");
+					this.equipWithSourceComment(asgnmt, _reduction);
+					asgnmt.getComment().add("Constant!");
+					// END KGU#407 2017-06-22
 					asgnmt.setColor(colorConst);
 					_parentNode.addElement(asgnmt);
 					break;
@@ -1009,6 +1087,7 @@ public class D7Parser extends CodeParser
 					 // END KGU#194 2016-05-08
 					 )
 			{
+				// This is just to skip these sections
 			}
 			// START KGU#194 2016-05-08: Bugfix #185 - we must handle unit headers
 			else if (
@@ -1027,6 +1106,9 @@ public class D7Parser extends CodeParser
 			{
 				Root prevRoot = root;	// Push the original root
 				root = new Root();	// Prepare a new root for the subroutine
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(root, _reduction);
+				// END KGU#407 2017-06-22
 				subRoots.add(root);
 				for (int i=0; i < _reduction.size(); i++)
 				{
@@ -1046,6 +1128,12 @@ public class D7Parser extends CodeParser
 				content=new String();
 				content=getContent_R(_reduction.get(1).asReduction(), content);
 				root.setText(translateContent(content));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				String comment = this.retrieveComment(_reduction);
+				if (comment != null) {
+					root.getComment().add(StringList.explode(comment, "\n"));
+				}
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					 ruleHead.equals("<ProcHeading>")
@@ -1070,6 +1158,12 @@ public class D7Parser extends CodeParser
 					root.setComment("(UNIT " + unitName + ")");
 				}
 				// END KGU#194 2016-05-08
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				String comment = this.retrieveComment(_reduction);
+				if (comment != null) {
+					root.getComment().add(StringList.explode(comment, "\n"));
+				}
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					 ruleHead.equals("<FuncHeading>")
@@ -1101,6 +1195,12 @@ public class D7Parser extends CodeParser
 					root.setComment("(UNIT " + unitName + ")");
 				}
 				// END KGU#194 2016-05-08
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				String comment = this.retrieveComment(_reduction);
+				if (comment != null) {
+					root.getComment().add(StringList.explode(comment, "\n"));
+				}
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					 ruleHead.equals("<WhileStatement>")
@@ -1109,6 +1209,9 @@ public class D7Parser extends CodeParser
 				content = new String();
 				content = getContent_R(_reduction.get(1).asReduction(), content);
 				While ele = new While(getKeyword("preWhile")+translateContent(content)+getKeyword("postWhile"));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.get(3).getData();
@@ -1121,6 +1224,9 @@ public class D7Parser extends CodeParser
 				content = new String();
 				content = getContent_R(_reduction.get(3).asReduction(), content);
 				Repeat ele = new Repeat(getKeyword("preRepeat")+translateContent(content)+getKeyword("postRepeat"));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(1).asReduction();
@@ -1148,6 +1254,9 @@ public class D7Parser extends CodeParser
 				//For ele = new For(preFor+updateContent(content));
 				For ele = new For(getKeyword("preFor").trim() + " " + translateContent(content));
 				// END KGU 2016-05-02
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
 				// Get and convert the body
@@ -1162,6 +1271,9 @@ public class D7Parser extends CodeParser
 				content = getContent_R(_reduction.get(1).asReduction(), content);
 				
 				Alternative ele = new Alternative(getKeyword("preAlt") + translateContent(content)+getKeyword("postAlt"));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(3).asReduction();
@@ -1228,6 +1340,9 @@ public class D7Parser extends CodeParser
 
 				Case ele = new Case(translateContent(content));
 				ele.setText(translateContent(content));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 
 				// déi eenzel Elementer siche goen

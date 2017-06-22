@@ -893,6 +893,7 @@ ImportOptionDialog.chkRefactorOnLoading.text=Reemplazar palabras claves al recar
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas siendo recargados debe ser adaptado automáticamente a las preferencias del analizador.
 ImportOptionDialog.chkVarDeclarations.text=Importar declaraciones de variables
 ImportOptionDialog.chkVarDeclarations.tooltip=Con esta preferencia, el importe va a hacer elementos inactivos de decalaraciones de variables desde el código leído.
+ImportOptionDialog.chkCommentImport.text=Importar comentarios del código
 ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
 ImportOptionDialog.chkSaveParseTree.tooltip=Después de logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
 ImportOptionDialog.btnPluginOptions.text=Preferencias específicas

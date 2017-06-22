@@ -35,7 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      Bob Fisch       2008.04.12      First Issue
  *      Kay Gürtzig     2016.04.01      Type of field plugins specialized
  *      Kay Gürtzig     2017.04.23      Enh. #231: reserved words configuration moved to plugin file
- *      Kay Gürtzig     2017.06.20      Enh. #354,#357: Option retrieval added
+ *      Kay Gürtzig     2017.06.20      Enh. #354,#357: Option retrieval added, #404: test with schema file (failed)
  *
  ******************************************************************************************************
  *
@@ -44,9 +44,13 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************///
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.*;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
@@ -55,6 +59,8 @@ import lu.fisch.structorizer.helpers.*;
 import lu.fisch.utils.StringList;
 
 public class GENParser extends DefaultHandler {
+	
+	private static Schema pluginSchema = null;
 	
 	private Vector<GENPlugin> plugins = new Vector<GENPlugin>();
 	// START KGU#416 2017-06-20: Enh. #354, #357
@@ -66,6 +72,32 @@ public class GENParser extends DefaultHandler {
 	public String errorMessage = null;
 	// END KGU#416 2017-06-20
 	
+	// START KGU#400 2017-06-20: Issue #404
+	public boolean validationError = false;  
+	public SAXParseException saxParseException = null; 
+	public void error(SAXParseException exception) throws SAXException
+	{
+//		System.err.println(exception);
+		validationError = true;
+		saxParseException = exception;
+		if (errorMessage == null) {
+			errorMessage = "";
+		}
+		errorMessage += exception.toString() + "\n";
+	}
+
+	public void fatalError(SAXParseException exception) throws SAXException
+	{
+//		System.err.println("FATAL: " + exception);
+		validationError = true;	    
+		saxParseException = exception;
+		if (errorMessage == null) {
+			errorMessage = "";
+		}
+		errorMessage += exception.toString() + "\n";
+	}		    
+	// END KGU#400 2017-06-20
+
 	public void startElement(String namespaceUri, String localName, String qualifiedName, Attributes attributes) throws SAXException 
 	{
 		// --- PLUGINS ---
@@ -153,7 +185,21 @@ public class GENParser extends DefaultHandler {
 		plugins = new Vector<GENPlugin>();
 		
 		SAXParserFactory factory = SAXParserFactory.newInstance();
-		// FIXME: Set the schema for the factory
+		// START KGU#400 2017-06-20: Issue #404
+		if (pluginSchema == null) {
+			URL schemaLocal = this.getClass().getResource("plugin.xsd");
+			SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			try {
+				pluginSchema = sFactory.newSchema(schemaLocal);
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		//factory.setNamespaceAware(true);
+		factory.setValidating(true);
+		factory.setSchema(pluginSchema);
+		// END KGU#400 2017-06-20: Issue #404
 		try		
 		{
 			SAXParser saxParser = factory.newSAXParser();
@@ -163,7 +209,10 @@ public class GENParser extends DefaultHandler {
 		{
 			// START KGU#416 2017-06-20: Enh. #354, #357 - error must be obtainable
 			//String errorMessage = "Error parsing input bugger: " + e;
-			errorMessage = "Error parsing input bugger: " + e;
+			if (errorMessage == null) {
+				errorMessage = "";
+			}
+			errorMessage += "Error parsing plugin file: " + e + "\n";
 			// END KGU#416 2017-06-20
 			System.err.println(errorMessage);
 			e.printStackTrace();

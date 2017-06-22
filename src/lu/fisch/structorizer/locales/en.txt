@@ -898,6 +898,7 @@ ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagr
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the diagram are to be adapted to the current parser preferences.
 ImportOptionDialog.chkVarDeclarations.text=Import variable declarations
 ImportOptionDialog.chkVarDeclarations.tooltip=With this option enabled, parsers will make instruction elements from variable declarations.
+ImportOptionDialog.chkCommentImport.text=Import source code comments
 ImportOptionDialog.chkSaveParseTree.text=Save parse tree as text file after import
 ImportOptionDialog.chkSaveParseTree.tooltip=After a successful import you may obtain the syntax tree saved to a text file "*.parsetree.txt".
 ImportOptionDialog.chkLogDir.text=Log to folder

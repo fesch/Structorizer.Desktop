@@ -893,6 +893,7 @@ ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagramme
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
 ImportOptionDialog.chkVarDeclarations.text=Variablendeklarationen mit importieren
 ImportOptionDialog.chkVarDeclarations.tooltip=Ist dies Option gewählt, können Parser gefundene Variablendeklarationen in inaktive Anweisungselemente legen.
+ImportOptionDialog.chkCommentImport.text=Quellcode-Kommentare mit importieren
 ImportOptionDialog.chkSaveParseTree.text=Nach dem Import Syntaxbaum als Textdatei speichern.
 ImportOptionDialog.chkSaveParseTree.tooltip=Nach erfolgreichem Code-Import kann der Syntaxbaum der Quelldatei in eine Textdatei "*.parsetree.txt" gesichert werden.
 ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis

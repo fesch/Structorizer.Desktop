@@ -133,6 +133,9 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#358 2017-03-06: Enh. #368
         chkVarDeclarations = new javax.swing.JCheckBox();
         // END KGU#358 2017-03-06
+        // START KGU#407 2017-06-22: Enh. #420 - new option to import statement comments
+        chkCommentImport = new javax.swing.JCheckBox();
+        // END KGU#407 2017-06-22
         // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
         chkSaveParseTree = new javax.swing.JCheckBox();
         // END KGU#354 2017-03-08
@@ -173,10 +176,14 @@ public class ImportOptionDialog extends LangDialog {
         });
         // END KGU#354 2017-04-27
 
-        // START KGU#358 2017-03-6: Enh. #368
+        // START KGU#358 2017-03-06: Enh. #368
         chkVarDeclarations.setText("Import variable declarations");
         chkVarDeclarations.setToolTipText("With this option enabled, parser will make instruction elements from variable declarations.");
         // END KGU#358 2017-03-06
+        // START KGU#407 2017-06-22: Enh. #420
+        chkCommentImport.setText("Import source code comments");
+        chkCommentImport.setToolTipText("With this option enabled, parser may equip derived elements with comments found closest in the source code.");
+        // END KGU#407 2017-06-22
         // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
         chkSaveParseTree.setText("Write parse tree to file after import");
         chkSaveParseTree.setToolTipText("After a successful import you may obtain the syntax tree saved to a text file \"*.parsetree.txt\".");
@@ -279,6 +286,7 @@ public class ImportOptionDialog extends LangDialog {
         						)
         				)
         		.add(chkVarDeclarations)
+        		.add(chkCommentImport)
         		.add(chkSaveParseTree)
         		);
         pnlCodeLayout.setVerticalGroup(
@@ -302,6 +310,7 @@ public class ImportOptionDialog extends LangDialog {
         						)
         				)
         		.add(chkVarDeclarations)
+        		.add(chkCommentImport)
         		.add(chkSaveParseTree)
         		// START KGU#416 2017-06-20: Enh. #354, #357
         		.add(pnlCodeLayout.createParallelGroup()
@@ -380,6 +389,7 @@ public class ImportOptionDialog extends LangDialog {
 		chkLogDir.addKeyListener(keyListener);
 		chkSaveParseTree.addKeyListener(keyListener);
 		chkVarDeclarations.addKeyListener(keyListener);
+		chkCommentImport.addKeyListener(keyListener);
 		chkRefactorOnLoading.addKeyListener(keyListener);
 		// END KGU#393 2017-05-09		
 	    // START KGU#416 2017-06-20: Enh. #354. #357
@@ -605,9 +615,12 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JCheckBox chkCharsetAll;
     public final LangTextHolder msgDirDoesntExist = new LangTextHolder("The selected log directory % doesn't exist!"); 
     public final LangTextHolder msgDirNotWritable = new LangTextHolder("The selected log directory % is not writable!"); 
-    // START KGU#358 2017-03-06: Enh. #368
+    // START KGU#358 2017-03-06: Enh. #368 - new option to import mere declarations
     public javax.swing.JCheckBox chkVarDeclarations;
     // END KGU#358 2017-03-06
+    // START KGU#407 2017-06-22: Enh. #420 - new option to import statement comments
+    public javax.swing.JCheckBox chkCommentImport;
+    // END KGU#407 2017-06-22
     // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
     public javax.swing.JCheckBox chkSaveParseTree;
     // END KGU#354 2017-03-08

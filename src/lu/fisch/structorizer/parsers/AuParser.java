@@ -34,6 +34,7 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.09      First Issue
  *      Kay Gürtzig     2017.04.27      File logging option added
+ *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import 
  *
  ******************************************************************************************************
  *
@@ -52,6 +53,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import com.creativewidgetworks.goldparser.engine.Group;
 import com.creativewidgetworks.goldparser.engine.Parser;
@@ -91,6 +94,35 @@ public class AuParser extends GOLDParser {
 	// START KGU#354 2017-04-27: Enh. #354
 	OutputStreamWriter logFile = null;
 	// END KGU#354 2017-04-27
+	
+	// START KGU#407 2017-07-21: Enh. #420: Prerequisites to map comment tokens.
+	// A comment may be associated to the previous statement (if there have been
+	// tokens in the same line before) or to the following statement - the usual
+	// case.
+	// Therefore we must cache both the last relevant token in expectation of a
+	// comment and the last unsatisfied comment token in expectation of a relevant
+	// token. All the time we must be aware of newline tokens. A newline cuts the
+	// connection between relevant token and further comments (if there hadn't been
+	// a comment then we just forget the preceding token, otherwise both will be
+	// mapped).
+	// Which tokens are representing statements cannot be decided while they are
+	// read (this is language-specific and the reduction process hasn't even been
+	// finished). Instead, the client parsers must traverse the subtree down from
+	// a token representing a statement (language-specific) and gather all tokens
+	// with
+	// comments. Lest nested statements should also mix in their comments, the
+	// client will have to configure the rule ids where the tree search is to be
+	// stopped. But this mechanism is up to the client parsers.
+	private String lastComment = null;
+	private Token lastToken = null;
+	/**
+	 * Maps tokens to neighbouring comment texts for possible comment import. The
+	 * client parsers must decide themselves whether and how they make use of it.
+	 * Typically, the retrieval will start from a reduction or token representing
+	 * a statement (i .e. something being converted into a structogram element. 
+	 */
+	protected final HashMap<Token, String> commentMap = new HashMap<Token, String>();
+	// END KGU#407 2017-07-21
 
 	/**
 	 * 
@@ -206,9 +238,39 @@ public class AuParser extends GOLDParser {
     }
 
     protected boolean processTokenRead() {
+    	Token token = this.getCurrentToken();
+    	// START KGU#407 2017-06-21: Enh. #420 Set the token - comment mapping
+    	String name = token.getName();	// FIXME is this sufficient for a classification?
+    	if (name.equalsIgnoreCase("comment")) {
+    		String comment = token.asString();
+    		if (lastToken != null) {
+    			commentMap.put(lastToken, comment);
+    			lastToken = null;
+    		}
+    		else if (lastComment != null) {
+    			lastComment += "\n" + comment;
+    		}
+    		else {
+    			lastComment = comment;
+    		}
+    	}
+    	else if (name.equalsIgnoreCase("NewLine")
+    			|| name.equalsIgnoreCase("Whitespace") && (token.getData() instanceof String) && ((String)token.getData()).contains("\n")) {
+    		lastToken = null;
+    	}
+    	else if (!name.equalsIgnoreCase("whitespace")) {
+    		if (lastComment != null) {
+    			commentMap.put(token, lastComment);
+    			lastComment = null;
+    			lastToken = null;
+    		}
+    		else {
+    			lastToken = token;
+    		}
+    	}
+    	// END KGU#407 2017-06-21
     	if (logFile != null) {
     		try {
-    			Token token = this.getCurrentToken();
     			String tokenStr = token.toString();
     			logFile.write("Token " + tokenStr + "\tat " + this.getCurrentPosition().toString().trim());
     			if (!tokenStr.equals("(NewLine)") && !tokenStr.equals("(Whitespace)") && !tokenStr.matches("^'.'$")) {

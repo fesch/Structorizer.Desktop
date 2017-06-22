@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<plugins>
+<plugins xmlns:nsd="http://structorizer.fisch.lu">
     
 	<plugin title="Pascal / Delphi" class="lu.fisch.structorizer.generators.PasGenerator"       icon="" case_matters="0" reserved_words="and,array,begin,case,const,div,do,downto,else,end,file,for,function,goto,if,in,label,mod,nil,not,of,or,packed,procedure,program,record,repeat,set,shl,shr,then,to,type,until,var,while,with" />
 	<plugin title="Oberon" 			class="lu.fisch.structorizer.generators.OberonGenerator"    icon="" reserved_words="ARRAY,BEGIN,BY,CASE,CONST,DIV,DO,ELSE,ELSIF,END,EXIT,FOR,IF,IMPORT,IN,IS,LOOP,MOD,MODULE,NIL,OF,OR,POINTER,PROCEDURE,RECORD,REPEAT,RETURN,THEN,TO,TYPE,UNTIL,VAR,WHILE,WITH,BOOLEAN,CHAR,FALSE,HALT,INTEGER,LONG,LONGINT,LONGREAL,NEW,REAL,SET,SHORT,SHORTINT,TRUE" />

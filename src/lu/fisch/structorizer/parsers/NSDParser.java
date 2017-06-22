@@ -109,7 +109,28 @@ public class NSDParser extends DefaultHandler {
 	// END KGU#362 2017-03-28
 	// END KGU#258 2016-09-25
 
-        @Override
+	// START KGU#400 2017-06-20: Issue #404
+	public boolean validationError = false;  
+	public SAXParseException saxParseException = null; 
+	public void error(SAXParseException exception) throws SAXException
+	{
+		validationError = true;
+		saxParseException = exception;
+	}
+
+	public void fatalError(SAXParseException exception) throws SAXException
+	{
+		validationError = true;	    
+		saxParseException = exception;
+	}
+
+	public void warning(SAXParseException exception) throws SAXException
+	{
+		System.out.println(exception);
+	}
+	// END KGU#400 2017-06-20
+	
+	@Override
 	public void startElement(String namespaceUri, String localName, String qualifiedName, Attributes attributes) throws SAXException 
 	{
 		// --- ELEMENTS ---
@@ -801,12 +822,21 @@ public class NSDParser extends DefaultHandler {
 		// END KGU#258 2016-09-26
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
+		// START KGU#400 2017-06-20: Issue #404
 		if (nsdSchema == null) {
 			URL schemaLocal = this.getClass().getResource("structorizer.xsd");
 			SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-			nsdSchema = sFactory.newSchema(schemaLocal);
+			try {
+				nsdSchema = sFactory.newSchema(schemaLocal);
+			} catch (SAXException ex) {
+				System.out.println(ex);
+			}
 		}
+		// FIXME: This doesn't work properly -maybe it requires full tag qualification
+		//factory.setNamespaceAware(true);
+		factory.setValidating(true);
 		factory.setSchema(nsdSchema);
+		// END KGU#400 2017-06-20
 		try		
 		{
 			SAXParser saxParser = factory.newSAXParser();
@@ -860,6 +890,22 @@ public class NSDParser extends DefaultHandler {
 		// END KGU#258 2016-09-26
 				
 		SAXParserFactory factory = SAXParserFactory.newInstance();
+		// START KGU#400 2017-06-20: Issue #404
+		if (nsdSchema == null) {
+			URL schemaLocal = this.getClass().getResource("structorizer.xsd");
+			SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			try {
+				nsdSchema = sFactory.newSchema(schemaLocal);
+			}
+			catch (SAXException ex) {
+				System.out.println(ex);
+			}
+		}
+		// FIXME: This doesn't work properly
+		factory.setNamespaceAware(true);
+		factory.setValidating(true);
+		factory.setSchema(nsdSchema);
+		// END KGU#400 2017-06-20
 		try		
 		{
 			SAXParser saxParser = factory.newSAXParser();

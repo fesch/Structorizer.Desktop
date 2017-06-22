@@ -37,9 +37,9 @@ package lu.fisch.utils;
  *		Kay Gürtzig		2015.10.31		Performance improvements
  *      Kay Gürtzig     2017.03.13      New method pair encodeToXML and decodeFromXML added for enh. #372,
  *                                      Some code revisions where it ached too much looking at.
- *      Kay Gürtzig     2017.06.18      Method breakup refined to cope with metasymbols in the string to
- *                                      be broken up for regex matching. Code revision, seeral rdundant methods
- *                                      declared deprecated
+ *      Kay Gürtzig     2017.06.18      Method breakup refined to cope with meta symbols in the string to
+ *                                      be broken up for regex matching. Code revision, several redundant methods
+ *                                      declared as deprecated
  *
  ******************************************************************************************************
  *
@@ -177,8 +177,8 @@ public abstract class BString
 		public static String phrase(String myS)
 		{
 			String ret = new String();
-			myS = BString.replace(myS,"."," ");
-			myS = BString.replace(myS,"_"," ");
+			myS = myS.replace("."," ");
+			myS = myS.replace("_"," ");
 			ret = myS.substring(0,1).toUpperCase();
 			for(int i=1; i<myS.length(); i++)
 			{
@@ -361,33 +361,28 @@ public abstract class BString
 		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
 		 * and returns a StringList consisting of the split parts (without the separating
 		 * delimiters) in order of occurrence.<br/>
-		 * NOTE: Use method {@code explode(String, String)} on {@link #StringList} instead.
 		 * @param _source - the string to be split
-		 * @param _by - the separating string
+		 * @param _by - the separating string (not interpreted as regular expression!)
 		 * @return the split result
 		 */
-		@Deprecated
 		public static StringList explode(String _source, String _by)
 		{
-			// START KGU 2017-06-18: Delegated to StringList.explode() where it belongs
-//			StringList sl = new StringList();
-//			
-//			while(!_source.equals(""))
-//			{
-//				if (_source.indexOf(_by)>=0)
-//				{
-//					sl.add(_source.substring(0,_source.indexOf(_by)-1));
-//					_source=_source.substring(_source.indexOf(_by)+_by.length(), _source.length());
-//				}
-//				else
-//				{
-//					sl.add(_source);
-//					_source="";
-//				}
-//			}
-//			return sl;
-			return StringList.explode(_source, _by);
-			// END KGU 2017-06-18
+			StringList sl = new StringList();
+			
+			while(!_source.equals(""))
+			{
+				if (_source.indexOf(_by)>=0)
+				{
+					sl.add(_source.substring(0,_source.indexOf(_by)-1));
+					_source=_source.substring(_source.indexOf(_by)+_by.length(), _source.length());
+				}
+				else
+				{
+					sl.add(_source);
+					_source="";
+				}
+			}
+			return sl;
 		}
 
 		/**

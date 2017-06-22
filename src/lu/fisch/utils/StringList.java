@@ -168,8 +168,8 @@ public class StringList {
 	 * @see #explodeFirstOnly(String, String)
 	 * @see #explodeWithDelimiter(StringList, String)
 	 * @param _source - the StringList further to be split
-	 * @param _by
-	 * @return
+	 * @param _by - the separator (delimiter) pattern (regex!)
+	 * @return The split results as StringList
 	 */
 	public static StringList explode(StringList _source, String _by)
 	{
@@ -200,41 +200,41 @@ public class StringList {
 	public static StringList explodeWithDelimiter(String _source, String _by)
 	{
 		// START KGU 2017-06-18: Bugfix - this (unused) version was defective ("ate" delimiters)
-		//String[] multi = _source.split(_by);
-		String[] multi = _source.split(Pattern.quote(_by), -1);	// We must not suppress empty parts!
-		// END KGU 2017-06-18
-		StringList sl = new StringList();
-
-		for(int i=0; i < multi.length; i++)
-		{
-			if (i != 0)
-			{
-				sl.add(_by);
-			}
-			sl.add(multi[i]);
-		}
-
-		return sl;
+//		//String[] multi = _source.split(_by);
+//		String[] multi = _source.split(Pattern.quote(_by), -1);	// We must not suppress empty parts!
+//		// END KGU 2017-06-18
+//		StringList sl = new StringList();
+//
+//		for(int i=0; i < multi.length; i++)
+//		{
+//			if (i != 0)
+//			{
+//				sl.add(_by);
+//			}
+//			sl.add(multi[i]);
+//		}
+//
+//		return sl;
 		// TODO: performance should be measured and compared between these two solutions!
 		// The following is the (optimized) alternative solution copied from BString  
-//		StringList sl = new StringList();
-//		int lenBy = _by.length();
-//		while(!_source.equals(""))
-//		{
-//			int pos = _source.indexOf(_by);
-//			if (pos >= 0)
-//			{
-//				sl.add(_source.substring(0,pos));
-//				sl.add(_by);
-//				_source=_source.substring(pos + lenBy, _source.length());
-//			}
-//			else
-//			{
-//				sl.add(_source);
-//				_source = "";
-//			}
-//		}
-//		return sl;
+		StringList sl = new StringList();
+		int lenBy = _by.length();
+		while (!_source.isEmpty())
+		{
+			int pos = _source.indexOf(_by);
+			if (pos >= 0)
+			{
+				sl.add(_source.substring(0,pos));
+				sl.add(_by);
+				_source=_source.substring(pos + lenBy, _source.length());
+			}
+			else
+			{
+				sl.add(_source);
+				_source = "";
+			}
+		}
+		return sl;
 	}
 
 	/**
@@ -690,11 +690,11 @@ public class StringList {
 
 	public void setText(String _text)
 	{
-		String[] words = _text.split ("\n");
+		String[] lines = _text.split ("\n");
 		strings.clear();
-		for (int i=0; i < words.length; i++)
+		for (int i=0; i < lines.length; i++)
 		{
-			strings.add(words[i]);
+			strings.add(lines[i]);
 		}
 	}
 
