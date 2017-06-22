@@ -23,7 +23,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Find & Replace dialog for Structorizer
+ *      Description:    Find & Replace dialog for Structorizer (according to Enh. Requ. #415)
  *
  ******************************************************************************************************
  *
@@ -31,10 +31,11 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.05.30      First Issue
+ *      Kay Gürtzig     2017.05.30      First Issue (#415)
  *      Kay Gürtzig     2017.06.13      Pattern combo boxes with history
  *      Kay Gürtzig     2017.06.17      JTree for multi-Root retrieval
- *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fied 
+ *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fixed
+ *      Kay Gürtzig     2017.06.22      NullPointerException on replacing due to cleared currentNode fixed
  *
  ******************************************************************************************************
  *
@@ -920,6 +921,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		return nParts - 1;
 	}
 
+	// FIXME: We might cache the split results for the currentElement
 	private String[] splitText(String text, String pattern, StringList realWords) {
 		int lenPattern = pattern.length();
 		boolean caseSens = chkCaseSensitive.isSelected();
@@ -1130,10 +1132,13 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				done = true;
 			}
 			if (currentNode != null) {
+				// We better cache the current Node locally lest the reload actions should reset it.
+				DefaultMutableTreeNode currNode = currentNode;
 				resultModel.reload(currentNode);
-				DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currentNode.getParent();
-				if (parent != null && parent.getUserObject() == currentNode.getUserObject()) {
+				DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
+				if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
 					resultModel.reload(parent);
+					currentNode = currNode;
 					treResults.setSelectionPath(new TreePath(currentNode.getPath()));
 				}
 			}
