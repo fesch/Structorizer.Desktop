@@ -54,6 +54,8 @@ package lu.fisch.structorizer.parsers;
  *                                      STRING statement implemented (refined with help of enh. #413)
  *      Kay Gürtzig     2017.05.28      First rough approach to implement UNSTRING import and PERFOM &lt;procedure&gt;
  *      Kay Gürtzig     2017.06.06      Correction in importUnstring(...) w.r.t. ALL clause
+ *      Simon Sobisch   2017.06.23      Optimization of getContent_R: use static Patterns and Matchers as
+ *                                      this function is called very often
  *
  ******************************************************************************************************
  *
@@ -90,6 +92,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -4450,52 +4453,54 @@ public class COBOLParser extends CodeParser
 	@Override
 	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
 	{
-		//String content = new String();
+		if (_reduction.isEmpty()) {
+			return;
+		}
 
-		if (_reduction.size() > 0)
+		String rule = _reduction.getParent().toString();
+		System.out.println(rule);
+		String ruleHead = _reduction.getParent().getHead().toString();
+		int ruleId = _reduction.getParent().getTableIndex();
+		log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
+		System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+
+		switch (ruleId) {
+		case RuleConstants.PROD_PROGRAM_DEFINITION:
+		case RuleConstants.PROD_FUNCTION_DEFINITION:
 		{
-			String rule = _reduction.getParent().toString();
-			System.out.println(rule);
-			String ruleHead = _reduction.getParent().getHead().toString();
-			int ruleId = _reduction.getParent().getTableIndex();
-			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
-			System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
-
-			switch (ruleId) {
-			case RuleConstants.PROD_PROGRAM_DEFINITION:
-			case RuleConstants.PROD_FUNCTION_DEFINITION:
-			{
-				System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
-				Root prevRoot = root;	// Cache the original root
-				root = new Root();	// Prepare a new root for the (sub)routine
-				subRoots.add(root);
-				Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
-				String content = this.getContent_R(secRed.get(2).asReduction(), "");
-				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT) {
-					this.root.setProgram(false);
-				}
-				// Arguments and return value will be fetched from a different rule
-				root.setText(content);
-
-				if (_reduction.get(4).getType() == SymbolType.NON_TERMINAL)
-				{
-					buildNSD_R(_reduction.get(4).asReduction(), root.children);
-				}
-				// Restore the original root
-				root = prevRoot;
+			System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
+			Root prevRoot = root;	// Cache the original root
+			root = new Root();	// Prepare a new root for the (sub)routine
+			subRoots.add(root);
+			Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
+			String content = this.getContent_R(secRed.get(2).asReduction(), "");
+			boolean isFunction = secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT;
+			if (isFunction) {
+				this.root.setProgram(false);
 			}
-			break;
+			// Arguments and return value will be fetched from a different rule
+			root.setText(content);
+			
+			if (_reduction.get(4).getType() == SymbolType.NON_TERMINAL)
+			{
+				buildNSD_R(_reduction.get(4).asReduction(), root.children);
+			}
+			// Restore the original root
+			root = prevRoot;
+		}
+		break;
 //			case RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT:
 //			case RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT:
 //			{
 //			}
 //			break;
-			case RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING:
-			{
-				System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
-				//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
-				//root.setText(root.getText().getLongString() + "(" + arguments + ")");
-				StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
+		case RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING:
+		{
+			System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
+			//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+			//root.setText(root.getText().getLongString() + "(" + arguments + ")");
+			StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
+			if (arguments.count() > 0) {
 				HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
 				if (paramTypes != null && paramTypes.size() > 0) {
 					for (int i = 0; i < arguments.count(); i++) {
@@ -4505,66 +4510,65 @@ public class COBOLParser extends CodeParser
 						}
 					}
 				}
-				if (arguments.count() > 0) {
-					root.setText(root.getText().getLongString() + "(" + arguments.concatenate(", ") + ")");
-					root.setProgram(false);
-				}
+				root.setText(root.getText().getLongString() + "(" + arguments.concatenate(", ") + ")");
+				root.setProgram(false);
 			}
-			break;
-			case RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING:
-			{
-				String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
-				this.returnMap .put(root, resultVar);
+		}
+		break;
+		case RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING:
+		{
+			String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
+			this.returnMap .put(root, resultVar);
+			if (this.paramTypeMap.containsKey(root)) {
 				StringList rootText = root.getText();
-				if (this.paramTypeMap.containsKey(root)) {
-					HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-					if (paramTypes.containsKey(resultVar)
-						&& rootText.count() >= 1
-						&& rootText.getLongString().trim().endsWith(")")) {
-						rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
-					}
+				HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
+				if (paramTypes.containsKey(resultVar)
+					&& rootText.count() >= 1
+					&& rootText.getLongString().trim().endsWith(")")) {
+					rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
 				}
 			}
-			break;
-			case RuleConstants.PROD_SECTION_HEADER_SECTION_TOK_DOT:
-			{
-				// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
-				// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
-				//       to close the previous section and the previous paragraph
-				
-				String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
-				// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
+		}
+		break;
+		case RuleConstants.PROD_SECTION_HEADER_SECTION_TOK_DOT:
+		{
+			// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
+			// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
+			//       to close the previous section and the previous paragraph
+			
+			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+			// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
 
-				// add to NSD
-				Call sec = new Call(name);
-				sec.setComment("Definition of section " + name);
-				sec.disabled = true;
-				_parentNode.addElement(sec);
-				
-				// add to procedureList for later handling
-				this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
-			}
-			break;
-			case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
-			{
-				// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
-				// Note: this starts a new paragraph AND closes the previous paragraph
-				
-				String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+			// add to NSD
+			Call sec = new Call(name);
+			sec.setComment("Definition of section " + name);
+			sec.disabled = true;
+			_parentNode.addElement(sec);
+			
+			// add to procedureList for later handling
+			this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
+		}
+		break;
+		case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
+		{
+			// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
+			// Note: this starts a new paragraph AND closes the previous paragraph
+			
+			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 
-				// add to NSD
-				Call par = new Call(name);
-				par.setComment("Definition of paragraph " + name);
-				par.disabled = true;
-				_parentNode.addElement(par);
-				
-				// add to procedureList for later handling
-				if (Character.isDigit(name.charAt(0))) {
-					name = "sub" + name;
-				}
-				this.procedureList.addFirst(new SectionOrParagraph(name, false, _parentNode.getSize(), _parentNode));
+			// add to NSD
+			Call par = new Call(name);
+			par.setComment("Definition of paragraph " + name);
+			par.disabled = true;
+			_parentNode.addElement(par);
+			
+			// add to procedureList for later handling
+			if (Character.isDigit(name.charAt(0))) {
+				name = "sub" + name;
 			}
-			break;
+			this.procedureList.addFirst(new SectionOrParagraph(name, false, _parentNode.getSize(), _parentNode));
+		}
+		break;
 //			deactivated as we get an ArrayIndexOutOfBoundsException sometimes
 //			case RuleConstants.PROD_PROCEDURE_TOK_DOT:
 //				// First process the statements then handle the TOK_DOT with the subsequent case
@@ -4586,307 +4590,306 @@ public class COBOLParser extends CodeParser
 //				}
 //			}
 //			break;
-			case RuleConstants.PROD_IF_STATEMENT_IF:
-				System.out.println("PROD_IF_STATEMENT_IF");
-				this.importIf(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE:
-				System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
-				this.importEvaluate(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_PERFORM_STATEMENT_PERFORM:
-				System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
-				this.importPerform(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_MOVE_STATEMENT_MOVE:
-				System.out.println("PROD_MOVE_STATEMENT_MOVE");
-				this.importMove(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_SET_STATEMENT_SET:
-			{
-				System.out.println("PROD_SET_STATEMENT_SET");
-				if (!importSet(_reduction, _parentNode)) {
-					String content = this.getContent_R(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setComment("This statement cannot be converted into a sensible diagram element!");
-					instr.setColor(Color.RED);
-					instr.disabled = true;
-					_parentNode.addElement(instr);
-				}
-			}
+		case RuleConstants.PROD_IF_STATEMENT_IF:
+			System.out.println("PROD_IF_STATEMENT_IF");
+			this.importIf(_reduction, _parentNode);
 			break;
-			case RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE:
-			{
-				System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
-				Reduction secRed = _reduction.get(1).asReduction();
-				StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-				String expr = this.getContent_R(secRed.get(2).asReduction(), "");
-				if (targets.count() > 0) {
-					StringList content = StringList.getNew(targets.get(0) + " <- " + expr);
-					for (int i = 1; i < targets.count(); i++) {
-						// FIXME Caution: target.get(0) might be a "reference modification"!
-						content.add(targets.get(i) + " <- " + targets.get(0));
-					}
-					_parentNode.addElement(new Instruction(content));
-				}				
-			}
+		case RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE:
+			System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
+			this.importEvaluate(_reduction, _parentNode);
 			break;
-			case RuleConstants.PROD_ADD_STATEMENT_ADD:
-				System.out.println("PROD_ADD_STATEMENT_ADD");
-				this.importAdd(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT:
-				System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
-				this.importSubtract(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY:
-				System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
-				this.importMultiply(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE:
-				System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
-				this.importDivide(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT:
-			{
-				// Input instruction
-				System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
-				if (!this.importAccept(_reduction, _parentNode)) {
-					Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
-					dummy.setComment(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
-							+ this.getOriginalText(_reduction, ""), "\n"));
-					dummy.setColor(Color.RED);
-					dummy.disabled = true;
-					_parentNode.addElement(dummy);
-				}
-			}
+		case RuleConstants.PROD_PERFORM_STATEMENT_PERFORM:
+			System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
+			this.importPerform(_reduction, _parentNode);
 			break;
-			case RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY:
-			{
-				// Output instruction
-				System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
-				// TODO: Identify whether fileAPI s to be used.
-				Reduction secRed = _reduction.get(1).asReduction();	// display body
-				// TODO: Define a specific routine to extract the exressions
-				//String content = this.appendDisplayBody(secRed, "");
-				String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
-				if (content.startsWith(", ")) {
-					content = content.substring(2);
-				}
-				if (content.endsWith(", ")) {
-					content = content.substring(0,  content.length()-2);
-				}
-				content = CodeParser.getKeyword("output") + " " + content;				
+		case RuleConstants.PROD_MOVE_STATEMENT_MOVE:
+			System.out.println("PROD_MOVE_STATEMENT_MOVE");
+			this.importMove(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_SET_STATEMENT_SET:
+		{
+			System.out.println("PROD_SET_STATEMENT_SET");
+			if (!importSet(_reduction, _parentNode)) {
+				String content = this.getContent_R(_reduction, "");
 				Instruction instr = new Instruction(content);
-				_parentNode.addElement(instr);
-			}
-			break;
-			case RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT:
-				this.importFileControl(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_FILE_DESCRIPTION:
-			{
-				System.out.println("PROD_FILE_DESCRIPTION");
-				Reduction fdRed = _reduction.get(0).asReduction();	// <file_description_enry>
-				Reduction reclRed = _reduction.get(1).asReduction();	// <_record_description_list>
-				// TODO map the record names (if any) to the file descriptor name (and vice versa?)
-				// for READ and WRITE statements
-				if (this.getContent_R(fdRed.get(0).asReduction(), "").trim().equalsIgnoreCase("fd")
-						&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
-					String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
-					// The file descriptor should have been declared with the SELECT clause
-					do {
-						Reduction datRed = reclRed.get(0).asReduction();
-						if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
-							datRed = reclRed.get(1).asReduction();
-							reclRed = reclRed.get(0).asReduction();
-						}
-						else {
-							reclRed = null;
-						}
-						HashMap<String, String> typeMap = new HashMap<String, String>();
-						// START KGU 2017-05-24: We do not only want the type info here but also create declarations 
-						//this.processDataDescriptions(datRed, null, typeMap);
-						this.processDataDescriptions(datRed, _parentNode, typeMap);
-						// END KGU 2017-05-24
-						for (String recName: typeMap.keySet()) {
-							this.fileRecordMap.put(recName, fdName);
-						}
-					} while (reclRed != null);
-				}
-			}
-			break;
-			case RuleConstants.PROD_OPEN_STATEMENT_OPEN:
-			{
-				System.out.println("PROD_OPEN_STATEMENT_OPEN");
-				if (!this.importOpen(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			break;
-			case RuleConstants.PROD_READ_STATEMENT_READ:
-			{
-				System.out.println("PROD_READ_STATEMENT_READ");
-				if (!this.importRead(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			break;
-			case RuleConstants.PROD_WRITE_STATEMENT_WRITE:
-			{
-				System.out.println("PROD_WRITE_STATEMENT_WRITE");
-				if (!this.importWrite(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			break;
-			case RuleConstants.PROD_REWRITE_STATEMENT_REWRITE:
-			case RuleConstants.PROD_DELETE_STATEMENT_DELETE:
-			{
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
+				instr.setComment("This statement cannot be converted into a sensible diagram element!");
 				instr.setColor(Color.RED);
-				instr.setComment("Structorizer File API does not support indexed or other non-text files");
+				instr.disabled = true;
 				_parentNode.addElement(instr);
 			}
+		}
+		break;
+		case RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE:
+		{
+			System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
+			Reduction secRed = _reduction.get(1).asReduction();
+			StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+			String expr = this.getContent_R(secRed.get(2).asReduction(), "");
+			if (targets.count() > 0) {
+				StringList content = StringList.getNew(targets.get(0) + " <- " + expr);
+				for (int i = 1; i < targets.count(); i++) {
+					// FIXME Caution: target.get(0) might be a "reference modification"!
+					content.add(targets.get(i) + " <- " + targets.get(0));
+				}
+				_parentNode.addElement(new Instruction(content));
+			}				
+		}
+		break;
+		case RuleConstants.PROD_ADD_STATEMENT_ADD:
+			System.out.println("PROD_ADD_STATEMENT_ADD");
+			this.importAdd(_reduction, _parentNode);
 			break;
-			case RuleConstants.PROD_CLOSE_STATEMENT_CLOSE:
-			{
-				System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
-				String fileDescr = this.getContent_R(_reduction.get(1).asReduction().get(0).asReduction(), "").trim();
-				Instruction instr = null;
-				if (this.fileMap.containsKey(fileDescr)) {
-					instr = new Instruction("fileClose(" + fileDescr + ")");
-				}
-				else {
-					instr = new Instruction(this.getOriginalText(_reduction, ""));
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-				}
-				if (instr != null) {
-					_parentNode.addElement(instr);
-				}
+		case RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT:
+			System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
+			this.importSubtract(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY:
+			System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
+			this.importMultiply(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE:
+			System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
+			this.importDivide(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT:
+		{
+			// Input instruction
+			System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
+			if (!this.importAccept(_reduction, _parentNode)) {
+				Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
+				dummy.setComment(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
+						+ this.getOriginalText(_reduction, ""), "\n"));
+				dummy.setColor(Color.RED);
+				dummy.disabled = true;
+				_parentNode.addElement(dummy);
 			}
-			break;
-			case RuleConstants.PROD_CALL_STATEMENT_CALL:
-				this.importCall(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_EXIT_STATEMENT_EXIT:
-				System.out.println("PROD_EXIT_STATEMENT_EXIT");
-				this.importExit(_reduction, _parentNode);
-				break;
-			case RuleConstants.PROD_GOBACK_STATEMENT_GOBACK:
-			{
-				System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
-				Reduction secRed = _reduction.get(1).asReduction();
-				String content = CodeParser.getKeywordOrDefault("preReturn", "return");
-				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
-					content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
-				}
-				_parentNode.addElement(new Jump(content.trim()));
+		}
+		break;
+		case RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY:
+		{
+			// Output instruction
+			System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
+			// TODO: Identify whether fileAPI s to be used.
+			Reduction secRed = _reduction.get(1).asReduction();	// display body
+			// TODO: Define a specific routine to extract the exressions
+			//String content = this.appendDisplayBody(secRed, "");
+			String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
+			if (content.startsWith(", ")) {
+				content = content.substring(2);
 			}
-			break;
-			case RuleConstants.PROD_STOP_STATEMENT_STOP:
-			case RuleConstants.PROD_STOP_STATEMENT_STOP_RUN:
-			{
-				System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
-				int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
-				Reduction secRed = _reduction.get(contentIx).asReduction();
-				String content = CodeParser.getKeywordOrDefault("preExit", "exit");
-				String exitVal = this.getContent_R(secRed, "").trim();
-				if (exitVal.isEmpty()) exitVal = "0";
-				_parentNode.addElement(new Jump(content + " " + exitVal));
+			if (content.endsWith(", ")) {
+				content = content.substring(0,  content.length()-2);
 			}
+			content = CodeParser.getKeyword("output") + " " + content;				
+			Instruction instr = new Instruction(content);
+			_parentNode.addElement(instr);
+		}
+		break;
+		case RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT:
+			this.importFileControl(_reduction, _parentNode);
 			break;
-			case RuleConstants.PROD_GOTO_STATEMENT_GO:
-			{
-				System.out.println("PROD_GOTO_STATEMENT_GO");
-				String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
-				if (content.toUpperCase().startsWith("TO ")) {
-					content = content.substring(3);
-				}
-				Jump jmp = new Jump("goto " + content);
-				jmp.setColor(Color.RED);
-				jmp.setComment("GO TO statements are not supported in structured programming!");
-				_parentNode.addElement(jmp);
+		case RuleConstants.PROD_FILE_DESCRIPTION:
+		{
+			System.out.println("PROD_FILE_DESCRIPTION");
+			Reduction fdRed = _reduction.get(0).asReduction();	// <file_description_enry>
+			Reduction reclRed = _reduction.get(1).asReduction();	// <_record_description_list>
+			// TODO map the record names (if any) to the file descriptor name (and vice versa?)
+			// for READ and WRITE statements
+			if (this.getContent_R(fdRed.get(0).asReduction(), "").trim().equalsIgnoreCase("fd")
+					&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
+				String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
+				// The file descriptor should have been declared with the SELECT clause
+				do {
+					Reduction datRed = reclRed.get(0).asReduction();
+					if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
+						datRed = reclRed.get(1).asReduction();
+						reclRed = reclRed.get(0).asReduction();
+					}
+					else {
+						reclRed = null;
+					}
+					HashMap<String, String> typeMap = new HashMap<String, String>();
+					// START KGU 2017-05-24: We do not only want the type info here but also create declarations 
+					//this.processDataDescriptions(datRed, null, typeMap);
+					this.processDataDescriptions(datRed, _parentNode, typeMap);
+					// END KGU 2017-05-24
+					for (String recName: typeMap.keySet()) {
+						this.fileRecordMap.put(recName, fdName);
+					}
+				} while (reclRed != null);
 			}
-			break;
-			case RuleConstants.PROD_STRING_STATEMENT_STRING:
-			{
-				System.out.println("PROD_STRING_STATEMENT_STRING");
-				if (!this.importString(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					instr.disabled = true;
-					_parentNode.addElement(instr);
-				}
-			}
-			break;
-			case RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING:
-			{
-				System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
-				if (!this.importUnstring(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			break;
-			case RuleConstants.PROD_SEARCH_STATEMENT_SEARCH:
-			{
-				System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
-				// FIXME: At least add variable name parsing the same way we have in other places
-				//        and add some line breaks
+		}
+		break;
+		case RuleConstants.PROD_OPEN_STATEMENT_OPEN:
+		{
+			System.out.println("PROD_OPEN_STATEMENT_OPEN");
+			if (!this.importOpen(_reduction, _parentNode)) {
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
 				instr.setComment("TODO: there is still no automatic conversion for this statement");
 				_parentNode.addElement(instr);
 			}
-			break;
-			case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
-				this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
-				break;
-			case RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT:
-			{
-				if (!this.paramTypeMap.containsKey(root)) {
-					this.paramTypeMap.put(root, new HashMap<String, String>());
-				}
-				// This is not to produce elements but to accomplish the type map, therefore we
-				// don't pass the _parentNode.
-				this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
+		}
+		break;
+		case RuleConstants.PROD_READ_STATEMENT_READ:
+		{
+			System.out.println("PROD_READ_STATEMENT_READ");
+			if (!this.importRead(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
 			}
+		}
+		break;
+		case RuleConstants.PROD_WRITE_STATEMENT_WRITE:
+		{
+			System.out.println("PROD_WRITE_STATEMENT_WRITE");
+			if (!this.importWrite(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_REWRITE_STATEMENT_REWRITE:
+		case RuleConstants.PROD_DELETE_STATEMENT_DELETE:
+		{
+			String content = this.getOriginalText(_reduction, "");
+			Instruction instr = new Instruction(content);
+			instr.setColor(Color.RED);
+			instr.setComment("Structorizer File API does not support indexed or other non-text files");
+			_parentNode.addElement(instr);
+		}
+		break;
+		case RuleConstants.PROD_CLOSE_STATEMENT_CLOSE:
+		{
+			System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
+			String fileDescr = this.getContent_R(_reduction.get(1).asReduction().get(0).asReduction(), "").trim();
+			Instruction instr = null;
+			if (this.fileMap.containsKey(fileDescr)) {
+				instr = new Instruction("fileClose(" + fileDescr + ")");
+			}
+			else {
+				instr = new Instruction(this.getOriginalText(_reduction, ""));
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+			}
+			if (instr != null) {
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_CALL_STATEMENT_CALL:
+			this.importCall(_reduction, _parentNode);
 			break;
-			default:
-				if (_reduction.size()>0)
+		case RuleConstants.PROD_EXIT_STATEMENT_EXIT:
+			System.out.println("PROD_EXIT_STATEMENT_EXIT");
+			this.importExit(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_GOBACK_STATEMENT_GOBACK:
+		{
+			System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
+			Reduction secRed = _reduction.get(1).asReduction();
+			String content = CodeParser.getKeywordOrDefault("preReturn", "return");
+			if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
+				content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
+			}
+			_parentNode.addElement(new Jump(content.trim()));
+		}
+		break;
+		case RuleConstants.PROD_STOP_STATEMENT_STOP:
+		case RuleConstants.PROD_STOP_STATEMENT_STOP_RUN:
+		{
+			System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
+			int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
+			Reduction secRed = _reduction.get(contentIx).asReduction();
+			String content = CodeParser.getKeywordOrDefault("preExit", "exit");
+			String exitVal = this.getContent_R(secRed, "").trim();
+			if (exitVal.isEmpty()) exitVal = "0";
+			_parentNode.addElement(new Jump(content + " " + exitVal));
+		}
+		break;
+		case RuleConstants.PROD_GOTO_STATEMENT_GO:
+		{
+			System.out.println("PROD_GOTO_STATEMENT_GO");
+			String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+			if (content.toUpperCase().startsWith("TO ")) {
+				content = content.substring(3);
+			}
+			Jump jmp = new Jump("goto " + content);
+			jmp.setColor(Color.RED);
+			jmp.setComment("GO TO statements are not supported in structured programming!");
+			_parentNode.addElement(jmp);
+		}
+		break;
+		case RuleConstants.PROD_STRING_STATEMENT_STRING:
+		{
+			System.out.println("PROD_STRING_STATEMENT_STRING");
+			if (!this.importString(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				instr.disabled = true;
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING:
+		{
+			System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
+			if (!this.importUnstring(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_SEARCH_STATEMENT_SEARCH:
+		{
+			System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
+			// FIXME: At least add variable name parsing the same way we have in other places
+			//        and add some line breaks
+			String content = this.getOriginalText(_reduction, "");
+			Instruction instr = new Instruction(content);
+			instr.setColor(Color.RED);
+			instr.setComment("TODO: there is still no automatic conversion for this statement");
+			_parentNode.addElement(instr);
+		}
+		break;
+		case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
+			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+		break;
+		case RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT:
+		{
+			if (!this.paramTypeMap.containsKey(root)) {
+				this.paramTypeMap.put(root, new HashMap<String, String>());
+			}
+			// This is not to produce elements but to accomplish the type map, therefore we
+			// don't pass the _parentNode.
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
+		}
+		break;
+		default:
+			if (_reduction.size()>0)
+			{
+				for(int i=0; i<_reduction.size(); i++)
 				{
-					for(int i=0; i<_reduction.size(); i++)
+					if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 					{
-						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
-						{
-							buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
-						}
+						buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
 					}
 				}
 			}
 		}
-	}	
+	}
 
 	/**
 	 * Tries to build a sensible instruction (sequence) from an imported STRING statement,
@@ -6804,13 +6807,22 @@ public class COBOLParser extends CodeParser
 	{
 		return getContent_R(_reduction, _content, "");
 	}
+	
+	// Patterns and Matchers needed for getContent_R
+	// (reusable, otherwise both get created and compiled over and over again)
+	private static final Pattern pHexLiteral = Pattern.compile("^[Nn]?[Xx][\"']([0-9A-Fa-f]+)[\"']");
+	private static final Pattern pIntLiteral = Pattern.compile("^0+([0-9]+)");
+	private static final Pattern pAcuNumLiteral = Pattern.compile("^[BbOoXxHh]#([0-9A-Fa-f]+)");
+	private static Matcher mHexLiteral = pHexLiteral.matcher("");
+	private static Matcher mIntLiteral = pIntLiteral.matcher("");
+	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
 
 	protected String getContent_R(Reduction _reduction, String _content, String _separator)
 	{
 		int ruleId = _reduction.getParent().getTableIndex();
 		String ruleHead = _reduction.getParent().getHead().toString();
 		if (ruleHead.equals("<function>") && ruleId != RuleConstants.PROD_FUNCTION) {
-			String functionName = this.getContent_R(_reduction.get(0).asReduction(),"").toLowerCase().replaceAll("-", "_");
+			String functionName = this.getContent_R(_reduction.get(0).asReduction(),"").toLowerCase().replace("-", "_");
 			if (!functionName.equals("mod")) {
 				if (functionName.equals("char")) {
 					functionName = "chr";
@@ -6978,19 +6990,20 @@ public class COBOLParser extends CodeParser
 						// convert from 'COBOL " Literal' --> "COBOL "" Literal"
 						if (toAdd.startsWith("'")) {
 							toAdd = toAdd.replace("\"", "\"\"")
-										.replace("''", "'")
-										.replaceAll("'(.*)'", "\"$1\"");
+										.replace("''", "'");
+							toAdd = "\"" + toAdd.substring(1, toAdd.length() - 1) + "\"";
 						}
 						// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
 						toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
 						if (trueName.equals("ZLiteral")) { // handle zero terminated strings
 							//toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
-							toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\000\"");
+							toAdd = toAdd.substring(0, toAdd.length() - 1) + "\\\\000\"";
 						}
-						toAdd += " ";
+						//toAdd += " ";
 					}
 					else if (name.equals("HexLiteral")) { // this one defines a STRING literal in (non-unicode) Hex notation
-						String hexText = toAdd.replaceAll("[Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
+						mHexLiteral.reset(toAdd);
+						String hexText = mHexLiteral.replaceAll("$1");
 						// MicroFocus COBOL allows an odd number - strange people...
 						if (hexText.length() % 2 == 1) {
 							hexText = "0" + hexText;
@@ -6999,51 +7012,60 @@ public class COBOLParser extends CodeParser
 						for (int j = 0; j < hexText.length() - 1; j += 2) {
 							toAdd += "\\u00" + hexText.substring(j, j+2);
 						}
-						toAdd += "\" ";
+						toAdd += "\"";
 					}
 					else if (name.equals("NationalHexLiteral")) { // this one defines a STRING literal in (unicode) Hex notation
-						String hexText = toAdd.replaceAll("[Nn][Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
+						mHexLiteral.reset(toAdd);
+						String hexText = mHexLiteral.replaceAll("$1");
 						toAdd = "\"";
 						for (int j = 0; j < hexText.length() - 3; j += 4) {
 							toAdd += "\\u" + hexText.substring(j, j+4);
 						}
-						toAdd += "\" ";
+						toAdd += "\"";
 					}
-					// Note: IntLiteral [+-]?{Number}+ needs no conversion
+					// Make sure IntLiteral [+-]?{Number}+ isn't falsely recognized as octal
+					else if (name.equals("IntLiteral")) {
+						mIntLiteral.reset(toAdd);
+						toAdd = mIntLiteral.replaceAll("$1");
+					}
 					// NOTE: if we do convert Decimals to BigDecimal some day the following is needed DecimalLiteral 
 					//else if (name.equals("DecimalLiteral")) { //
-					//	toAdd = toAdd.trim() + "b ";
+					//	toAdd = toAdd.trim() + "b";
 					//}
 					// Make sure FloatLiteral [+-]?{Number}+ '.' {Number}+ 'E' [+-]?{Number}+ is recognized as float
 					else if (name.equals("FloatLiteral")) {
-						toAdd = toAdd.trim() + "f ";
+						toAdd = toAdd + "f";
 					}
 					else if (name.equals("AcuBinNumLiteral")) { // this one defines an INTEGER literal in binary notation
-						toAdd = toAdd.replaceAll("[Bb]#([01]+)", "0b$1 ");
+						mAcuNumLiteral.reset(toAdd);
+						toAdd = mAcuNumLiteral.replaceAll("0b$1");
 					}
 					else if (name.equals("AcuOctNumLiteral")) { // this one defines an INTEGER literal in Octal notation
-						toAdd = toAdd.replaceAll("[Oo]#([0-9]+)", "0$1 ");
+						mAcuNumLiteral.reset(toAdd);
+						toAdd = mAcuNumLiteral.replaceAll("0$1");
 					}
 					else if (name.equals("AcuHexNumLiteral")) { // this one defines an INTEGER literal in Hex notation
-						toAdd = toAdd.replaceAll("[XxHh]#([0-9A-Fa-f]+)", "0x$1 ");
+						mAcuNumLiteral.reset(toAdd);
+						toAdd = mAcuNumLiteral.replaceAll("0x$1");
 					}
 					else if (name.equals("TOK_AMPER")) {
-						toAdd = " + ";
+						//toAdd = " + ";
+						toAdd = "+";
 					}
 					else if (name.equals("TOK_PLUS") || name.equals("TOK_MINUS")) {
-						toAdd = " " + toAdd + " ";
+						//toAdd = " " + toAdd + " ";
 					}
-					else if (toAdd.equalsIgnoreCase("zero") || toAdd.equalsIgnoreCase("zeroes")) {
+					else if (toAdd.equalsIgnoreCase("zero") || toAdd.matches("0+")) { // note: ZEROS and ZEROES replaced by grammar
 						toAdd = "0";
 					}
-					else if (toAdd.equalsIgnoreCase("space") || toAdd.equalsIgnoreCase("spaces")) {
+					else if (toAdd.equalsIgnoreCase("space")) { // note: SPACES replaced by grammar
 						toAdd = "\' \'";
 					}
-					else if (toAdd.equalsIgnoreCase("null")) {
+					else if (toAdd.equals("TOK_NULL")) {
 						toAdd = "\'\\0\'";
 					}
 					else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
-						toAdd = toAdd.toLowerCase();
+						toAdd = toAdd.substring(4).toLowerCase();
 					}
 					// Keywords FUNCTION and IS are to be suppressed
 					if (!name.equalsIgnoreCase("FUNCTION") && !name.equalsIgnoreCase("IS")) {
