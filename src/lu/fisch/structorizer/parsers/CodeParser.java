@@ -622,6 +622,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			}
 			offset += Character.charCount(codePoint);
 		}
+		_logContent = printableString.toString();
 		// END SSO 2017-06-07
 
 		if (logFile != null)
