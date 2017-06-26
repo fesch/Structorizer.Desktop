@@ -141,6 +141,7 @@ public class Parser {
     private void consumeBuffer(int count) {
         if (count > 0 && count <= lookaheadBuffer.length()) {
             // Adjust position
+            int lines = 0, columns = 0;
             for (int i = 0; i < count; i++) {
                 char c = lookaheadBuffer.charAt(i);
                 switch (c) {
@@ -151,12 +152,18 @@ public class Parser {
                     }
                     // Fall through
                 case 0x0A:
-                    sysPosition.incrementLine();
+                    lines++;
                     break;
                 default:
-                    sysPosition.incrementColumn();
+                    columns++;
                     break;
                 }
+            }
+            
+            if (lines != 0) {
+                sysPosition.incrementLine(lines);
+            } else {
+                sysPosition.incrementColumn(columns);
             }
             
             // Remove the characters
