@@ -156,13 +156,15 @@ public class CGT {
      * Closes the inputstream being processed
      */
     public void close() {
-        try {
-            is.close();
-        } catch (Throwable t) {
-            // okay, nothing to do
+        if (is != null) {
+           try {
+               is.close();
+           } catch (Throwable t) {
+               // okay, nothing to do
+           }
+           
+           is = null;
         }
-        
-        is = null;
         eofReached = true;
     }
     
