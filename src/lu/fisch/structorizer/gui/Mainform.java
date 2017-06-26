@@ -497,21 +497,24 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("Width",Integer.toString(getWidth()));
 			ini.setProperty("Height",Integer.toString(getHeight()));
 
-			// current directory, version retrieval
-			if(diagram!=null)
+			// current directory, version retrieval, recent files, find settings
+			if (diagram != null)
 			{
-				if(diagram.currentDirectory!=null)
-				{
-					ini.setProperty("currentDirectory", diagram.currentDirectory.getAbsolutePath());
-					// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
-					ini.setProperty("lastExportDirectory", diagram.lastCodeExportDir.getAbsolutePath());
-					ini.setProperty("lastImportDirectory", diagram.lastCodeImportDir.getAbsolutePath());
-					ini.setProperty("lastImportFilter", diagram.lastImportFilter);
-					// END KGU#354 2017-04-26
-				}
-				// START KGU#305 2016-12-15: Enh. #305
-				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));
-				// END KGU#305 2016-12-15
+				// START KGU#324 2017-06-16: Enh. #415 Let diagram cache it itself
+//				if(diagram.currentDirectory!=null)
+//				{
+//					ini.setProperty("currentDirectory", diagram.currentDirectory.getAbsolutePath());
+//					// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+//					ini.setProperty("lastExportDirectory", diagram.lastCodeExportDir.getAbsolutePath());
+//					ini.setProperty("lastImportDirectory", diagram.lastCodeImportDir.getAbsolutePath());
+//					ini.setProperty("lastImportFilter", diagram.lastImportFilter);
+//					// END KGU#354 2017-04-26
+//				}
+//				// START KGU#305 2016-12-15: Enh. #305
+//				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));
+//				// END KGU#305 2016-12-15
+				diagram.cacheIniProperties(ini);
+				// END KGU#324 2017-06-16
 			}
 			// START KGU#300 2016-12-02: Enh. #300
 			ini.setProperty("retrieveVersion", Boolean.toString(Diagram.retrieveVersion));
@@ -560,19 +563,21 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// Update hint suppression
 			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);
 			// END KGU#300 2016-12-02
-			
-			// recent files
-			if(diagram!=null)
-			{
-				if(diagram.recentFiles.size()!=0)
-				{
-					for(int i=0;i<diagram.recentFiles.size();i++)
-					{
-						//System.out.println(i);
-						ini.setProperty("recent"+String.valueOf(i),(String) diagram.recentFiles.get(i));
-					} 
-				}
-			}
+
+			// START KGU#324 2017-06-16: Enh. #415: Now done by diagram.cacheIniProperties(ini) above
+//			// recent files
+//			if (diagram!=null)
+//			{
+//				if (diagram.recentFiles.size()!=0)
+//				{
+//					for(int i=0;i<diagram.recentFiles.size();i++)
+//					{
+//						//System.out.println(i);
+//						ini.setProperty("recent"+String.valueOf(i),(String) diagram.recentFiles.get(i));
+//					} 
+//				}
+//			}
+			// END KGU#324 2017-06-16
 			
 			ini.save();
 		}
@@ -643,6 +648,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 						// START KGU#233 2016-08-08: Issue #220
 						Translator.updateLookAndFeel();
 						// END KGU#233 2016-08-08
+						// START #324 2017-06-16: Enh. #415 - we let diagram update the find&replace dialog
+						if (diagram != null) {
+							diagram.updateLookAndFeel();
+						}
+						// END KGU #324 2017-06-16
 					}
 					catch (Exception e)
 					{

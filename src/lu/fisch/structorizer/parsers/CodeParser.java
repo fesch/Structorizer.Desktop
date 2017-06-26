@@ -40,6 +40,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute
  *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced
  *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream 
+ *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import 
  *
  ******************************************************************************************************
  *
@@ -58,6 +59,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,8 +74,10 @@ import com.creativewidgetworks.goldparser.engine.Reduction;
 import com.creativewidgetworks.goldparser.engine.Symbol;
 import com.creativewidgetworks.goldparser.engine.SymbolList;
 import com.creativewidgetworks.goldparser.engine.Token;
+import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
 
@@ -93,7 +97,7 @@ import lu.fisch.utils.StringList;
  * real challenge is lurking...
  * @author Kay Gürtzig
  */
-public abstract class CodeParser extends javax.swing.filechooser.FileFilter
+public abstract class CodeParser extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	/************ Common fields *************/
 	
@@ -102,8 +106,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * for later evaluation (empty if there was no error) 
 	 */
 	public String error;
-	// Used width for displaying the error in a dialog
-	final int DLG_STR_WIDTH = 100;
+	/**
+	 * Maximum width for displaying parsing errors in a dialog (used for
+	 * line wrapping)
+	 */
+	protected final int DLG_STR_WIDTH = 100;
 
 	/**
 	 * The generic LALR(1) parser providing the parse tree
@@ -118,15 +125,27 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * of Roots (unit or program with subroutines)!
 	 */
 	protected List<Root> subRoots = new LinkedList<Root>();
+	// START KGU#407 2017-06-22: Enh. #420 Optional comment import
+	/**
+	 * Value of the import option to import source code comments
+	 * @see #optionSaveParseTree()
+	 * @see #optionImportVarDecl
+	 */
+	protected boolean optionImportComments = false;
+	// END KGU#407 2017-06-22
 	// START KGU#358 2017-03-06: Enh. #354, #368 - new import options
 	/**
 	 * Value of the import option to import mere variable declarations
+	 * The option is supported by method {@link #retrieveComment(Reduction)}
+	 * @see #optionImportComments
 	 * @see #optionSaveParseTree()
+	 * @see #retrieveComment(Reduction)
 	 */
 	protected boolean optionImportVarDecl = false;
 	/**
 	 * Returns the value of the import option to save the obtained parse tree
 	 * @return true iff the parse tree is to be saved as text file
+	 * @see #optionImportComments
 	 * @see #optionImportVarDecl
 	 */
 	protected boolean optionSaveParseTree()
@@ -144,7 +163,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param _defaultValue TODO
 	 * @return an Object (of the type specified in the plugin) or null
 	 */
-	protected Object getPluginOption(String _optionName, Object _defaultValue) {
+	@Override
+	public Object getPluginOption(String _optionName, Object _defaultValue) {
 		Object optionVal = _defaultValue;
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
 		if (this.optionMap.containsKey(fullKey)) {
@@ -158,6 +178,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param _optionName - a key string
 	 * @param _value - an object according to the type specified in the plugin
 	 */
+	@Override
 	public void setPluginOption(String _optionName, Object _value)
 	{
 		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
@@ -213,6 +234,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 */
 	protected HashMap<String, String> replacedIds = new HashMap<String, String>();
 	// END KGU 2017-04-11
+	
+	// START KGU#407 2017-06-22: Enh. #420: Comment import
+	/**
+	 * Maps Reductions back their respective "owning" Tokens if the latter is directly
+	 * associated with a comment, just for making sure we won't miss an entry on comment
+	 * retrieval.
+	 */
+	private HashMap<Reduction, Token> commentMap = new HashMap<Reduction, Token>();
+	// This set 
+	private Set<Integer> statementRuleIds = new HashSet<Integer>();
+	// END KGU#407 2017-06-22
 
 	/************ Abstract Methods *************/
 	
@@ -369,6 +401,14 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 					}
 					catch (Exception ex) {
 						System.err.println(ex.getMessage());
+					}
+				}
+				if (this.optionImportComments) {
+					// Prepare the comment map for reductions
+					for (Token commentedToken: parser.commentMap.keySet()) {
+						if (commentedToken.getType() == SymbolType.NON_TERMINAL) {
+							this.commentMap.put(commentedToken.asReduction(), commentedToken);
+						}
 					}
 				}
             	buildNSD(parser.getCurrentReduction());
@@ -595,6 +635,118 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			System.out.print(_logContent);
 		}
 	}
+	
+	// START KGU 2017-06-22: Enh. #420 allow subclasses a comment retrieval
+	/**
+	 * Adds all rule ids given by the array to the registered rule ids for statement
+	 * detection in comment retrieval.
+	 * @param _ruleIds - production table indices indicating a statement in the source language
+	 * @see #registerStatementRuleId(int)
+	 * @see #retrieveComment(Reduction) 
+	 */
+	protected void registerStatementRuleIds(int[] _ruleIds)
+	{
+		for (int id: _ruleIds) {
+			this.registerStatementRuleId(id);
+		}
+	}
+	/**
+	 * Add the given rule id  to the registered rule ids for statement detection
+	 * in comment retrieval.
+	 * @param _ruleIds - production table indices indicating a statement in the source language
+	 * @see #registerStatementRuleIds(int[])
+	 * @see #retrieveComment(Reduction) 
+	 */
+	protected void registerStatementRuleId(int _ruleId)
+	{
+		this.statementRuleIds.add(_ruleId);
+	}
+	/**
+	 * Retrieves comments associated to Tokens in the subtree rooted by the given
+	 * Reduction {@code _reduction} if {@link #optionImportComments} is set, otherwise
+	 * or there hasn't been a comment in the code returns null<br/>
+	 * NOTE: For a sensible limitation of the search depth the set of statement rule ids
+	 * must have been configured before. Otherwise the comments of substructure statements
+	 * might also be concatenated to the enclosing structured statement's comment.
+	 * @param _reduction
+	 * @return strung comprising the collected comment lines
+	 * @see #registerStatementRuleId(int)
+	 * @see #registerStatementRuleIds(int[])
+	 * @see #equipWithSourceComment(Element, Reduction)
+	 */
+	protected String retrieveComment(Reduction _reduction)
+	{
+		if (this.optionImportComments) {
+			StringBuilder comment = new StringBuilder();
+			// First we look if the reduction's token itself might have a comment 
+			Token topToken = this.commentMap.get(_reduction);
+			if (topToken != null) {
+				comment.append("\n" + parser.commentMap.get(topToken));
+			}
+			// Then we check the subtree recursively
+			retrieveComment_R(_reduction, comment);
+			if (comment.length() > 0) {
+				return comment.toString().substring(1);	// Remove the first newline
+			}
+		}
+		return null;
+	}
+	private void retrieveComment_R(Reduction _reduction, StringBuilder _comment)
+	{
+		// First we look i
+		for (int i = 0; i < _reduction.size(); i++) {
+			Token token = _reduction.get(i);
+			// Now the following cases are to be distinguished:
+			// 1. The token is a non-terminal
+			//    1.1 It represents a statement on its own: skip it
+			//    1.2 Something else: check for comment and descend
+			// 2. The token is a terminal: check for comment
+			if (token.getType() == SymbolType.NON_TERMINAL) {
+				Reduction red = token.asReduction();
+				if (!statementRuleIds.contains(red.getParent().getTableIndex())) {
+					String comment = parser.commentMap.get(token);
+					if (comment != null) {
+						_comment.append("\n" + comment);
+					}
+					retrieveComment_R(red, _comment);
+				}
+			}
+			else  {
+				String comment = parser.commentMap.get(token);
+				if (comment != null) {
+					_comment.append("\n" + comment);
+				}
+			}
+		}
+	}
+	/**
+	 * Convenience method that retrieves the source comment for the given Reduction
+	 * {@code _reduction} and places this (if any) in Element {@code _ele}, if the
+	 * option to import comments ({@link #optionImportComments}) is set. Does nothing
+	 * otherwise.<br/>
+	 * NOTE:<br/>
+	 * 1. In order to work correctly this method requires an initial parser-specific
+	 * statement rule registration via {@link #registerStatementRuleIds(int[])} once
+	 * been done.<br/>
+	 * 2. This method will overwrite any comment that might have been placed on
+	 * {@code _ele} before. So make sure to insert or append some additional comments
+	 * related to e.g. parsing or building issues afterwards.
+	 * @param _ele - The element built from Reduction {@code _reduction}
+	 * @param _reduction - The reduction, which led to the creation of {@code _ele}
+	 * @return The same element, but possibly with comment.
+	 * @see #optionImportComments
+	 * @see #retrieveComment(Reduction)
+	 * @see #registerStatementRuleIds(int[])
+	 */
+	protected Element equipWithSourceComment(Element _ele, Reduction _reduction)
+	{
+		String comment = this.retrieveComment(_reduction);
+		if (comment != null) {
+			_ele.setComment(comment);
+		}
+		return _ele;
+	}
+	// END KGU 2017-06-22
 
 	// START KGU 2017-04-11
 	/**
@@ -759,6 +911,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		// START KGU#358 2017-03-06: Enh. #368 - consider import options!
 		this.optionImportVarDecl = Ini.getInstance().getProperty("impVarDeclarations", "false").equals("true");
 		// END KGU#358 2017-03-06
+		// START KGU#407 2017-06-22
+		this.optionImportComments = Ini.getInstance().getProperty("impComments", "false").equals("true");
+		// END KGU#407 2017-06-22
 		root.setProgram(true);
 		// Allow subclasses to adjust things before the recursive build process is going off.
 		this.initializeBuildNSD();
@@ -786,7 +941,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	/**
 	 * Overridable method to do target-language-specific initialization before
 	 * the recursive method {@link #buildNSD_R(Reduction, Subqueue)} will be called.
-	 * Method is called in {@link #buildNSD(Reduction)}.
+	 * Method is called in {@link #buildNSD(Reduction)}.<br/>
+	 * The subclass method should call {@link #registerStatementRuleIds(int[])} here.
 	 */
 	protected void initializeBuildNSD()
 	{

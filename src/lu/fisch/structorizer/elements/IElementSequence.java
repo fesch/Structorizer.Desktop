@@ -105,12 +105,15 @@ public interface IElementSequence {
 			Element next = null;
 			//IElementSequence seq = current;
 			int level = positions.size() - 1;
-			int at = (level >= 0) ? positions.peek() : -1;
-			if (at < 0 && top.getSize() > 0) {
-				next = top.getElement(0);
-				if (move) {
-					current = top;
-					positions.push(0);
+			int at = -1;
+			if (level >= 0) at = positions.peek();
+			if (at < 0) {
+				if (top.getSize() > 0) {
+					next = top.getElement(0);
+					if (move) {
+						current = top;
+						positions.push(0);
+					}
 				}
 				return next;
 			}

@@ -105,6 +105,7 @@
  *      Kay Gürtzig     2017.03.30  Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig     2017.06.14  Enh. #199, #415: Messages for toolbar and FindAndReplace
  *
  ******************************************************************************************************
  *
@@ -153,6 +154,7 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
+Menu.menuEditFindReplace.text=Buscar/Reemplazar
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
 Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales.
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
@@ -271,6 +273,7 @@ Menu.menuHelp.text=Ayuda
 Menu.menuHelp.mnemonic=y
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Manual (inglés)
+Menu.menuHelpOnline.tooltip=Abrir el manual (inglés) en el browser.
 Menu.menuHelpAbout.text=Acerca de ...
 Menu.menuHelpUpdate.text=Actualizar ...
 
@@ -478,8 +481,9 @@ Editor.btnArrange.tooltip=Añadir el diagrama al Arranger.
 // font
 Editor.btnFontUp.tooltip=Aumentar tamaño de fuente.
 Editor.btnFontDown.tooltip=Disminuir tamaño de fuente.
-// copyright
+// copyright & help
 Editor.btnAbout.tooltip=Mostrar mensaje de información acerca de Structorizer.
+Editor.btnHelp.tooltip=Abrir al manual (inglés) en el browser.
 // colors
 Editor.btnColor0.tooltip=Colorear el elemento seleccionado con este color.
 Editor.btnColor1.tooltip=Colorear el elemento seleccionado con este color.
@@ -870,6 +874,8 @@ ExportOptionDialoge.chkExportSubroutines.text=Incluir subprogramas empleados.
 ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
 ExportOptionDialoge.lbCharset.text=Codificación:
 ExportOptionDialoge.chkCharsetAll.text=Listar todas
+ExportOptionDialoge.btnPluginOptions.text=Preferencias específicas
+ExportOptionDialoge.msgOptionsForPlugin.text=Opciones para generador de %
 ExportOptionDialoge.jLabel1.text=Elige las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
@@ -887,8 +893,11 @@ ImportOptionDialog.chkRefactorOnLoading.text=Reemplazar palabras claves al recar
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas siendo recargados debe ser adaptado automáticamente a las preferencias del analizador.
 ImportOptionDialog.chkVarDeclarations.text=Importar declaraciones de variables
 ImportOptionDialog.chkVarDeclarations.tooltip=Con esta preferencia, el importe va a hacer elementos inactivos de decalaraciones de variables desde el código leído.
+ImportOptionDialog.chkCommentImport.text=Importar comentarios del código
 ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
 ImportOptionDialog.chkSaveParseTree.tooltip=Después de logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
+ImportOptionDialog.btnPluginOptions.text=Preferencias específicas
+ImportOptionDialog.msgOptionsForPlugin.text=Opciones para analisador de %
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
@@ -907,6 +916,15 @@ SaveOptionDialog.btnLicenseFile.tooltip=Abre el editor ara el contenido (texto) 
 SaveOptionDialog.btnOk.text=Aceptar
 SaveOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=¡El valor para '%' tiene que ser un número entero!
+PluginOptionDialog.msgNoValidUnsigned.text=¡El valor para '%' tiene que ser un número entero positivo!
+PluginOptionDialog.msgNoValidCharacter.text=¡El valor para '%' tiene que ser un solo carácter!
+PluginOptionDialog.msgNoValidDouble.text=¡El valor para '%' tiene que ser un númbero (con punto decimal)!
+PluginOptionDialog.msgVerificationError.text=Error de verificación
+PluginOptionDialog.btnOk.text=Aceptar
+PluginOptionDialog.btnCancel.text=Cancelar
+
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=Calibración de interfaz gráfica
 GUIScaleChooser.txtComment.text=Solo ofrece preajuste con previsión. No es posible re-escalar la interfaz mientras operando.\nPara poner el factor de magificación en operación hay que rearrancar Structorizer.
@@ -916,6 +934,39 @@ GUIScaleChooser.lblIcon.text=Previsión de icono
 GUIScaleChooser.chkTest.text=Previsión de elemento opción
 GUIScaleChooser.btnOK.text=Aceptar
 GUIScaleChooser.btnOK.tooltip=Aceptar los cambios.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Buscar / Reemplazar
+FindAndReplace.lblSearchPattern.text=Buscar:
+FindAndReplace.lblReplacePattern.text=Sustituir por:
+FindAndReplace.pnlMode.border=Modo
+FindAndReplace.chkCaseSensitive.text=Cuidar may./minúscula
+FindAndReplace.chkWholeWord.text=Palabra entera
+FindAndReplace.chkRegEx.text=Expresiones regulares
+FindAndReplace.rbDown.text=Abajo
+FindAndReplace.rbUp.text=Arriva
+FindAndReplace.pnlScope.border=Alcance
+FindAndReplace.cmbScope.item.0=Selección actual
+FindAndReplace.cmbScope.item.1=Diagrama actual
+FindAndReplace.cmbScope.item.2=Diagramas abiertos
+FindAndReplace.chkRootTypes.0.text=Programas
+FindAndReplace.chkRootTypes.1.text=Subrutinas
+FindAndReplace.chkRootTypes.2.text=Incluíbles
+FindAndReplace.chkInTexts.text=En textos
+FindAndReplace.chkInComments.text=En comentarios
+FindAndReplace.pnlElements.border=Tipos de elemente
+FindAndReplace.btnAll.text=Todos
+FindAndReplace.btnNone.text=Ningunos
+FindAndReplace.chkDisabled.text=Elementos inactivos
+FindAndReplace.pnlPreview.border=Contenido
+FindAndReplace.txtText.border=Texto
+FindAndReplace.txtComm.border=Comentario
+FindAndReplace.chkElementwise.text=Elemento a elemento
+FindAndReplace.btnFind.text=Buscar
+FindAndReplace.btnReplace.text=Reemplazar
+FindAndReplace.btnReplaceFind.text=Reemplazar/Avanzar
+FindAndReplace.btnReplaceAll.text=Reemplazar todos
+FindAndReplace.btnClose.text=Cerrar
 
 -----> Arranger
 Surface.msgFileLoadError.text=Error abriendo archivo:

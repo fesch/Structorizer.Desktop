@@ -6526,7 +6526,10 @@ public class COBOLParser extends CodeParser
 					// provide global/exernal redefines as comment
 					String commentText = "";
 					if (picture != null) {
-						commentText = picture;
+						// START KGU 2017-06-24: Without the "pic" word the comment would be rather puzzling
+						//commentText = picture;
+						commentText = "pic " + picture;
+						// END KGU 2017-06-24
 					}
 					if (isGlobal) {
 						commentText += " (GLOBAL)";
@@ -8062,18 +8065,18 @@ class CobTools {
 		/**
 		 * @return the values as text for comparing, note: this text is a Java expression
 		 */
-		public String getValueComparisionString() {
+		public String getValueComparisonString() {
 			boolean firstValue = true;
-			String valueComparision = "";
+			String valueComparison = "";
 			for (Object value : values) {
 				if (firstValue) {
 					firstValue = false;
 				} else {
-					valueComparision += " || "; 
+					valueComparison += " || "; 
 				}
-				valueComparision += value.toString();
+				valueComparison += value.toString();
 			}
-			return valueComparision;
+			return valueComparison;
 		}
 
 		public boolean isAnyLength() {
@@ -8123,7 +8126,7 @@ class CobTools {
 			wantsDecimal = true;
 		} else if (vPos != -1) {
 			wantsDecimal = true;
-			picString = picString.substring(0, vPos) + picString.substring(vPos + 1, picString.length() - vPos);
+			picString = picString.substring(0, vPos) + picString.substring(vPos + 1);
 		}
 		
 		if (picString.startsWith("S")) {
@@ -8241,7 +8244,7 @@ class CobTools {
 		case USAGE_SIGNED_CHAR:		//-128 [-2**7]			< n < 128 [2**7]
 			return "byte";
 		case USAGE_UNSIGNED_CHAR:	// 0 					≤ n < 256 [2**8]
-			return "integer";
+			return "short";
 		case USAGE_PACKED:
 			return "double";
 		case USAGE_SIGNED_INT:		// -2147483648 [-2**31]	< n < 2147483648 [2**31]

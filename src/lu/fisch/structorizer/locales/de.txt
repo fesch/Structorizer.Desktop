@@ -103,6 +103,7 @@
  *      Kay Gürtzig         2017.03.30  Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig         2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig         2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig         2017.06.19  Enh. #199, #415: Messages for toolbar and FindAndReplace
  *
  ******************************************************************************************************
  *
@@ -269,6 +270,7 @@ Menu.menuHelp.text=Hilfe
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
+Menu.menuHelpOnline.tooltip=Öffnen des Online-Nutzerhandbuchs
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
 
@@ -454,6 +456,8 @@ Editor.btnAfterPara.tooltip=Einfügen einer neuen PARALLEL-Anweisung nach dem au
 // undo & redo
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
+// find & replace
+Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Erseiten.
 // copy & paste
 Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
@@ -476,8 +480,9 @@ Editor.btnArrange.tooltip=Diagram zum Arranger-Tableau hinzufügen.
 // font
 Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
 Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
-// copyright
+// copyright and help
 Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
+Editor.btnHelp.tooltip=Öffnen des Online-Nutzerhandbuchs
 // colors
 Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor1.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
@@ -869,6 +874,8 @@ ExportOptionDialoge.chkExportSubroutines.text=Aufgerufene Unterprogramme mit exp
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
 ExportOptionDialoge.lbCharset.text=Zeichensatz (Codierung):
 ExportOptionDialoge.chkCharsetAll.text=Alle auflisten?
+ExportOptionDialoge.btnPluginOptions.text=Sprachspezifische Optionen
+ExportOptionDialoge.msgOptionsForPlugin.text=Generator-Optionen für %
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
@@ -886,14 +893,17 @@ ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagramme
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
 ImportOptionDialog.chkVarDeclarations.text=Variablendeklarationen mit importieren
 ImportOptionDialog.chkVarDeclarations.tooltip=Ist dies Option gewählt, können Parser gefundene Variablendeklarationen in inaktive Anweisungselemente legen.
+ImportOptionDialog.chkCommentImport.text=Quellcode-Kommentare mit importieren
 ImportOptionDialog.chkSaveParseTree.text=Nach dem Import Syntaxbaum als Textdatei speichern.
 ImportOptionDialog.chkSaveParseTree.tooltip=Nach erfolgreichem Code-Import kann der Syntaxbaum der Quelldatei in eine Textdatei "*.parsetree.txt" gesichert werden.
-ImportOptionDialog.btnOk.text=OK
-ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
 ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
 ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Importprotokolldatei je Import ein-/ausschalten
 ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
 ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
+ImportOptionDialog.btnPluginOptions.text=Sprachspezifische Optionen
+ImportOptionDialog.msgOptionsForPlugin.text=Parser-Optionen für %
+ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
 
 -----[ SaveOptionDialog ]-----
 SaveOptionDialog.title=Optionen für das Sichern von Diagrammen ...
@@ -908,6 +918,15 @@ SaveOptionDialog.lblAuthorName.text=Autorname
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
 
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=Der Wert für '%' muss eine ganze Zahl sein!
+PluginOptionDialog.msgNoValidUnsigned.text=Der Wert für '%' muss eine natürliche (positive) Zahl sein!
+PluginOptionDialog.msgNoValidCharacter.text=Der Wert für '%' muss ein einzelnes Zeichen sein!
+PluginOptionDialog.msgNoValidDouble.text=Der Wert für '%' muss eine Zahl sein (ggf. mit DezimalPUNKT)!
+PluginOptionDialog.msgVerificationError.text=Fehler bei Eingabeprüfung
+PluginOptionDialog.btnOk.text=OK
+PluginOptionDialog.btnCancel.text=Abbrechen
+
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI-Skalierung
 GUIScaleChooser.txtComment.text=Dies bietet eine Voreinstellung mit Vorschau.\nEine unmittelbare Re-Skalierung der offenen Anwendung ist nicht möglich.\nDer Skalierungsfaktor wird erst beim nächsten Structorizer-Start wirksam.
@@ -917,6 +936,39 @@ GUIScaleChooser.lblIcon.text=Voransicht Icon-Größe
 GUIScaleChooser.chkTest.text=Voransicht Optionselement
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Suchen / Ersetzen
+FindAndReplace.lblSearchPattern.text=Suche:
+FindAndReplace.lblReplacePattern.text=Ersetze durch:
+FindAndReplace.pnlMode.border=Modus
+FindAndReplace.chkCaseSensitive.text=Beachte Groß/klein
+FindAndReplace.chkWholeWord.text=Ganzes Wort
+FindAndReplace.chkRegEx.text=Reguläre Ausdrücke
+FindAndReplace.rbDown.text=Abwärts
+FindAndReplace.rbUp.text=Aufwärts
+FindAndReplace.pnlScope.border=Suchbereich
+FindAndReplace.cmbScope.item.0=Ausgewählte Elemente
+FindAndReplace.cmbScope.item.1=Aktuelles Diagramm
+FindAndReplace.cmbScope.item.2=Geöffnete Diagramme
+FindAndReplace.chkRootTypes.0.text=Hauptprogramme
+FindAndReplace.chkRootTypes.1.text=Unterprogramme
+FindAndReplace.chkRootTypes.2.text=Include-Diagramme
+FindAndReplace.chkInTexts.text=In Texten
+FindAndReplace.chkInComments.text=In Kommentaren
+FindAndReplace.pnlElements.border=Elementtypen
+FindAndReplace.btnAll.text=Alle
+FindAndReplace.btnNone.text=Keine
+FindAndReplace.chkDisabled.text=Deaktivierte Elemente
+FindAndReplace.pnlPreview.border=Inhalt
+FindAndReplace.txtText.border=Text
+FindAndReplace.txtComm.border=Kommentar
+FindAndReplace.chkElementwise.text=Elementweise
+FindAndReplace.btnFind.text=Suchen
+FindAndReplace.btnReplace.text=Ersetzen
+FindAndReplace.btnReplaceFind.text=Ersetzen/Weiter
+FindAndReplace.btnReplaceAll.text=Alle ersetzen
+FindAndReplace.btnClose.text=Schließen
 
 -----> Arranger
 Surface.msgFileLoadError.text=Dateiladefehler:

@@ -1808,7 +1808,7 @@ public abstract class Element {
 		parts.add(_text);
 		
 		// split
-		parts=StringList.explodeWithDelimiter(parts," ");	// FIXME: Should we omit the delimiters here? 
+		parts=StringList.explodeWithDelimiter(parts," ");
 		parts=StringList.explodeWithDelimiter(parts,"\t");
 		parts=StringList.explodeWithDelimiter(parts,"\n");
 		parts=StringList.explodeWithDelimiter(parts,".");
@@ -2580,7 +2580,7 @@ public abstract class Element {
     }
     
     // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
-    protected ImageIcon getIcon()
+    public ImageIcon getIcon()
     {
     	return IconLoader.ico057;
     }

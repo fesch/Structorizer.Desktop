@@ -100,6 +100,7 @@
  *      Kay Gürtzig     2017.03.30      Enh. #388: Constancy violation messages for Control added
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21      Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig     2017.06.18      Enh. #199, #415: Messages for toolbar and FindAndReplace
  *
  ******************************************************************************************************
  *
@@ -154,6 +155,7 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
+Menu.menuEditFindReplace.text=Find/Replace
 Menu.menuEditUpgradeTurtle.text=To fine graphics
 Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
 Menu.menuEditDowngradeTurtle.text=To integer graphics
@@ -272,6 +274,7 @@ Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
+Menu.menuHelpOnline.tooltip=Open the online User Guide in the browser
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -457,6 +460,8 @@ Editor.btnAfterPara.tooltip=Insert a new PARALLEL statement after the selected e
 // undo & redo
 Editor.btnUndo.tooltip=Undo the last action.
 Editor.btnRedo.tooltip=Redo the last action.
+// find & replace
+Editor.btnFindReplace.tooltip=Open the Find & Replace dialog.
 // copy & paste
 Editor.btnCut.tooltip=Cut the selected element.
 Editor.btnCopy.tooltip=Copy the selected element.
@@ -479,8 +484,9 @@ Editor.btnArrange.tooltip=Add the diagram to the Arranger panel
 // font
 Editor.btnFontUp.tooltip=Increase the font size.
 Editor.btnFontDown.tooltip=Decrease the font size.
-// copyright 
+// copyright & help
 Editor.btnAbout.tooltip=Show the information message about Structorizer.
+Editor.btnHelp.tooltip=Show the Online User Guide in the browser.
 // colors
 Editor.btnColor0.tooltip=Colorize the selected element with this color.
 Editor.btnColor1.tooltip=Colorize the selected element with this color.
@@ -495,11 +501,11 @@ Editor.btnColor9.tooltip=Colorize the selected element with this color.
 // collapsing
 Editor.btnCollapse.tooltip=Collapse the selected element.
 Editor.btnExpand.tooltip=Expand the selected element.
-Editor.btnDisable.tooltip=Disable/enable the selected element(s).
-// turtleizer & executor
+// debug
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
 Editor.btnDropBrk.tooltip=Remove all breakpoints.
+Editor.btnDisable.tooltip=Disable/enable the selected element(s).
 // Popup menu
 Editor.popupCut.text=Cut
 Editor.popupCopy.text=Copy
@@ -873,6 +879,8 @@ ExportOptionDialoge.chkExportSubroutines.text=Involve called subroutines.
 ExportOptionDialoge.lbPrefGenerator.text=Favorite Code Export:
 ExportOptionDialoge.lbCharset.text=Character set:
 ExportOptionDialoge.chkCharsetAll.text=List all?
+ExportOptionDialoge.btnPluginOptions.text=Language-specific Options
+ExportOptionDialoge.msgOptionsForPlugin.text=Options for % Generator
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
@@ -890,12 +898,15 @@ ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagr
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the diagram are to be adapted to the current parser preferences.
 ImportOptionDialog.chkVarDeclarations.text=Import variable declarations
 ImportOptionDialog.chkVarDeclarations.tooltip=With this option enabled, parsers will make instruction elements from variable declarations.
+ImportOptionDialog.chkCommentImport.text=Import source code comments
 ImportOptionDialog.chkSaveParseTree.text=Save parse tree as text file after import
 ImportOptionDialog.chkSaveParseTree.tooltip=After a successful import you may obtain the syntax tree saved to a text file "*.parsetree.txt".
 ImportOptionDialog.chkLogDir.text=Log to folder
 ImportOptionDialog.chkLogDir.tooltip=Enable saving a log file during import
 ImportOptionDialog.txtLogDir.tooltip=The empty path stands for the home directory of the source code file, "." for the current directory.
 ImportOptionDialog.btnLogDir.tooltip=Select a path via dialog.
+ImportOptionDialog.btnPluginOptions.text=Language-specific Options
+ImportOptionDialog.msgOptionsForPlugin.text=Options for % Parser
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
 
@@ -914,6 +925,15 @@ SaveOptionDialog.btnLicenseFile.tooltip=Open the editor for the text of this lic
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Accept these settings.
 
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=Value for '%' must be an integral number!
+PluginOptionDialog.msgNoValidUnsigned.text=Value for '%' must be a cardinal number (unsigned integer)!
+PluginOptionDialog.msgNoValidCharacter.text=Value for '%' must be a single character!
+PluginOptionDialog.msgNoValidDouble.text=Value for '%' must be a number
+PluginOptionDialog.msgVerificationError.text=Input verification failed
+PluginOptionDialog.btnOk.text=OK
+PluginOptionDialog.btnCancel.text=Cancel
+
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI Scale
 GUIScaleChooser.txtComment.text=This is just a preview. A hot scaling of the entire application isn't possible.\nThe scale factor will only be active on next Structorizer start.
@@ -923,6 +943,39 @@ GUIScaleChooser.lblIcon.text=Icon Preview
 GUIScaleChooser.chkTest.text=CheckBox Preview
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Validate your choice for next start.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Find / Replace
+FindAndReplace.lblSearchPattern.text=Find:
+FindAndReplace.lblReplacePattern.text=Replace with:
+FindAndReplace.pnlMode.border=Mode
+FindAndReplace.chkCaseSensitive.text=Case sensitive
+FindAndReplace.chkWholeWord.text=Whole word
+FindAndReplace.chkRegEx.text=Regular expressions
+FindAndReplace.rbDown.text=Down
+FindAndReplace.rbUp.text=Up
+FindAndReplace.pnlScope.border=Scope
+FindAndReplace.cmbScope.item.0=Current selection
+FindAndReplace.cmbScope.item.1=Current diagram
+FindAndReplace.cmbScope.item.2=Opened diagrams
+FindAndReplace.chkRootTypes.0.text=Main programs
+FindAndReplace.chkRootTypes.1.text=Subroutines
+FindAndReplace.chkRootTypes.2.text=Includables
+FindAndReplace.chkInTexts.text=In texts
+FindAndReplace.chkInComments.text=In comments
+FindAndReplace.pnlElements.border=Element Types
+FindAndReplace.btnAll.text=All
+FindAndReplace.btnNone.text=None
+FindAndReplace.chkDisabled.text=Disabled elements
+FindAndReplace.pnlPreview.border=Contents
+FindAndReplace.txtText.border=Text
+FindAndReplace.txtComm.border=Comment
+FindAndReplace.chkElementwise.text=Element-wise
+FindAndReplace.btnFind.text=Find
+FindAndReplace.btnReplace.text=Replace
+FindAndReplace.btnReplaceFind.text=Replace/Find
+FindAndReplace.btnReplaceAll.text=Replace All
+FindAndReplace.btnClose.text=Close
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:

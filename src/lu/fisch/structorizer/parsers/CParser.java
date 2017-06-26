@@ -49,6 +49,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.05.24      Enh. #409: Comment-aware #define analysis, with function macro approach
  *      Kay Gürtzig     2017.05.26      Enh. #409: #define analysis (including function macros) accomplished
  *      Kay Gürtzig     2017.05.28      Issue #409: Recursion overhead in buildNSD_R() significantly reduced. 
+ *      Kay Gürtzig     2017.06.22      Enh. #420: Prepared for comment retrieval
  *
  ******************************************************************************************************
  *
@@ -105,6 +106,53 @@ public class CParser extends CodeParser
 	private static final String USER_TYPE_ID_MASK = "user_type_%03d";
 	// Replacement pattern for the decomposition of composed typdefs (named struct def + type def)
 	private static final String TYPEDEF_DECOMP_REPLACER = "$1 $2;\ntypedef $1 $3;";
+	// START KGU#407 2017-06-22: Enh. #420 - rule ids representing statements, used as stoppers for comment rerieval
+	private static final int[] statementIds = new int[]{
+		RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN,
+		RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2,
+		RuleConstants.PROD_FUNCDECL_LPAREN_VOID_RPAREN,
+		RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN3,
+		RuleConstants.PROD_VARDECL_SEMI,
+		RuleConstants.PROD_VARDECL_CONST_SEMI,
+		RuleConstants.PROD_VARDECL_SEMI2,
+		RuleConstants.PROD_VARDECL_SEMI3,
+		RuleConstants.PROD_VARDECL_CONST_SEMI2,
+		RuleConstants.PROD_OPASSIGN_EQ,
+		RuleConstants.PROD_OPASSIGN_PLUSEQ,
+		RuleConstants.PROD_OPASSIGN_MINUSEQ,
+		RuleConstants.PROD_OPASSIGN_TIMESEQ,
+		RuleConstants.PROD_OPASSIGN_DIVEQ,
+		RuleConstants.PROD_OPASSIGN_CARETEQ,
+		RuleConstants.PROD_OPASSIGN_AMPEQ,
+		RuleConstants.PROD_OPASSIGN_PIPEEQ,
+		RuleConstants.PROD_OPASSIGN_GTGTEQ,
+		RuleConstants.PROD_OPASSIGN_LTLTEQ,
+		RuleConstants.PROD_OPUNARY_PLUSPLUS,
+		RuleConstants.PROD_OPUNARY_PLUSPLUS2,
+		RuleConstants.PROD_OPUNARY_MINUSMINUS,
+		RuleConstants.PROD_OPUNARY_MINUSMINUS2,
+		RuleConstants.PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE,
+		RuleConstants.PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE,
+		RuleConstants.PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE,
+		RuleConstants.PROD_TYPEDEFDECL_TYPEDEF,
+		RuleConstants.PROD_NORMALSTM_BREAK_SEMI,
+		RuleConstants.PROD_NORMALSTM_RETURN_SEMI,
+		RuleConstants.PROD_NORMALSTM_GOTO_ID_SEMI,
+		RuleConstants.PROD_NORMALSTM_CONTINUE_SEMI,
+		RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN,
+		RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN2,
+		RuleConstants.PROD_STM_WHILE_LPAREN_RPAREN,
+		RuleConstants.PROD_THENSTM_WHILE_LPAREN_RPAREN,
+		RuleConstants.PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN,
+		RuleConstants.PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN,
+		RuleConstants.PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN,
+		RuleConstants.PROD_STM_IF_LPAREN_RPAREN,
+		RuleConstants.PROD_STM_IF_LPAREN_RPAREN_ELSE,
+		RuleConstants.PROD_CASESTMS_CASE_COLON,
+		RuleConstants.PROD_CASESTMS_DEFAULT_COLON,
+		RuleConstants.PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE
+	};
+	// END KGU#407 2017-06-22
 
 	//---------------------- Grammar specification ---------------------------
 
@@ -323,7 +371,7 @@ public class CParser extends CodeParser
 //		final int PROD_FUNCPROTO_LPAREN_RPAREN_SEMI3                =  13;  // <Func Proto> ::= <Func ID> '(' ')' ';'
 		final int PROD_FUNCDECL_LPAREN_RPAREN                       =  14;  // <Func Decl> ::= <Func ID> '(' <Params> ')' <Block>
 		final int PROD_FUNCDECL_LPAREN_RPAREN2                      =  15;  // <Func Decl> ::= <Func ID> '(' <Id List> ')' <Struct Def> <Block>
-//		final int PROD_FUNCDECL_LPAREN_VOID_RPAREN                  =  16;  // <Func Decl> ::= <Func ID> '(' void ')' <Block>
+		final int PROD_FUNCDECL_LPAREN_VOID_RPAREN                  =  16;  // <Func Decl> ::= <Func ID> '(' void ')' <Block>
 		final int PROD_FUNCDECL_LPAREN_RPAREN3                      =  17;  // <Func Decl> ::= <Func ID> '(' ')' <Block>
 //		final int PROD_PARAMS_COMMA                                 =  18;  // <Params> ::= <Param> ',' <Params>
 //		final int PROD_PARAMS                                       =  19;  // <Params> ::= <Param>
@@ -441,13 +489,13 @@ public class CParser extends CodeParser
 //		final int PROD_EXPRINI                                      = 131;  // <ExprIni> ::= <Initializer>
 		final int PROD_OPASSIGN_EQ                                  = 132;  // <Op Assign> ::= <Op If> '=' <Op Assign>
 		final int PROD_OPASSIGN_PLUSEQ                              = 133;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
-//		final int PROD_OPASSIGN_MINUSEQ                             = 134;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
-//		final int PROD_OPASSIGN_TIMESEQ                             = 135;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
-//		final int PROD_OPASSIGN_DIVEQ                               = 136;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
-//		final int PROD_OPASSIGN_CARETEQ                             = 137;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
-//		final int PROD_OPASSIGN_AMPEQ                               = 138;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
-//		final int PROD_OPASSIGN_PIPEEQ                              = 139;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
-//		final int PROD_OPASSIGN_GTGTEQ                              = 140;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
+		final int PROD_OPASSIGN_MINUSEQ                             = 134;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
+		final int PROD_OPASSIGN_TIMESEQ                             = 135;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
+		final int PROD_OPASSIGN_DIVEQ                               = 136;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
+		final int PROD_OPASSIGN_CARETEQ                             = 137;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
+		final int PROD_OPASSIGN_AMPEQ                               = 138;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
+		final int PROD_OPASSIGN_PIPEEQ                              = 139;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
+		final int PROD_OPASSIGN_GTGTEQ                              = 140;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
 		final int PROD_OPASSIGN_LTLTEQ                              = 141;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
 //		final int PROD_OPASSIGN                                     = 142;  // <Op Assign> ::= <Op If>
 //		final int PROD_OPIF_QUESTION_COLON                          = 143;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
@@ -487,7 +535,7 @@ public class CParser extends CodeParser
 //		final int PROD_OPUNARY_AMP                                  = 177;  // <Op Unary> ::= '&' <Op Unary>
 		final int PROD_OPUNARY_PLUSPLUS                             = 178;  // <Op Unary> ::= '++' <Op Unary>
 		final int PROD_OPUNARY_MINUSMINUS                           = 179;  // <Op Unary> ::= '--' <Op Unary>
-//		final int PROD_OPUNARY_PLUSPLUS2                            = 180;  // <Op Unary> ::= <Op Pointer> '++'
+		final int PROD_OPUNARY_PLUSPLUS2                            = 180;  // <Op Unary> ::= <Op Pointer> '++'
 		final int PROD_OPUNARY_MINUSMINUS2                          = 181;  // <Op Unary> ::= <Op Pointer> '--'
 //		final int PROD_OPUNARY_LPAREN_RPAREN                        = 182;  // <Op Unary> ::= '(' <ConstType> ')' <Op Unary>
 //		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 183;  // <Op Unary> ::= sizeof '(' <ConstType> ')'
@@ -1143,6 +1191,9 @@ public class CParser extends CodeParser
 	{
 		root.setProgram(false);	// C programs are functions, primarily
 		this.optionUpperCaseProgName = Root.check(6);
+		// START KGU#407 207-06-22: Enh. #420: Configure the lookup table for comment retrieval
+		this.registerStatementRuleIds(statementIds);
+		// END KGU#407 2017-06-11
 	}
 
 	/* (non-Javadoc)
@@ -1181,7 +1232,10 @@ public class CParser extends CodeParser
 					content = getKeywordOrDefault("preExit", "exit");
 					if (arguments.count() > 0) {
 						content += arguments.get(0);
-						_parentNode.addElement(new Jump(content));
+						// START KGU#407 2017-06-20: Enh. #420 - comments already here
+						//_parentNode.addElement(new Jump(content));
+						_parentNode.addElement(this.equipWithSourceComment(new Jump(content), _reduction));
+						// END KGU#407 2017-06-22
 					}
 				}
 				else if (procName.equals("printf") || procName.equals("puts") && arguments.count() == 1)
@@ -1192,7 +1246,10 @@ public class CParser extends CodeParser
 					buildInput(_reduction, procName, arguments, _parentNode);
 				}
 				else if (!convertBuiltInRoutines(_reduction, procName, arguments, _parentNode)) {
-					_parentNode.addElement(new Instruction(getContent_R(_reduction, content)));
+					// START KGU#407 2017-06-20: Enh. #420 - comments already here
+					//_parentNode.addElement(new Instruction(getContent_R(_reduction, content)));
+					_parentNode.addElement(this.equipWithSourceComment(new Instruction(getContent_R(_reduction, content)), _reduction));
+					// END KGU#407 2017-06-22
 				}
 			}
 			else if (
@@ -1210,7 +1267,10 @@ public class CParser extends CodeParser
 				//if (content.endsWith(";")) {
 				//	content = content.substring(0, content.length() - 1).trim();
 				//}
-				_parentNode.addElement(new Instruction(translateContent(content)));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//_parentNode.addElement(new Instruction(translateContent(content)));
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					// Variable declaration with or without initialization?
@@ -1258,9 +1318,12 @@ public class CParser extends CodeParser
 				if (isConstant) {
 					type = "const " + type;
 				}
+				// START KGU#407 2017-06-22: Enh.#420 grope for possible souce comments
+				String comment = this.retrieveComment(_reduction);
+				// END KGU#407 2017-06-22
 				// Now concern on the first declaration of the list
 				Reduction secReduc = _reduction.get(_reduction.size() - 3).asReduction();
-				buildDeclOrAssignment(secReduc, type, parentNode);
+				buildDeclOrAssignment(secReduc, type, parentNode, comment);
 //				if (_reduction.size() > typeIx+2) {
 					log("\tanalyzing <Var List> ...\n", false);
 //					secReduc = _reduction.get(typeIx + 2).asReduction();	// <Var List>
@@ -1271,7 +1334,7 @@ public class CParser extends CodeParser
 						// Get the pointers part
 						String pointers = getContent_R(thdReduc.get(0).asReduction(), "");
 						// Delegate the sub-reduction <Var>
-						buildDeclOrAssignment(secReduc.get(1).asReduction(), type+pointers, parentNode);
+						buildDeclOrAssignment(secReduc.get(1).asReduction(), type+pointers, parentNode, comment);
 						// Get the list tail
 						secReduc = secReduc.get(2).asReduction();	// <Var List>
 						ruleId = secReduc.getParent().getTableIndex();
@@ -1308,16 +1371,19 @@ public class CParser extends CodeParser
 					parentNode = this.globalRoot.children;
 				}
 				String content = this.getContent_R(_reduction, "");
+				// START KGU#407 2017-06-22: Enh. #420
+				String comment = this .retrieveComment(_reduction);
+				// END KGU#407 2017-06-22
 				int insertAt = parentNode.getSize();
 				if (ruleId != RuleConstants.PROD_TYPEDEFDECL_TYPEDEF) {
 					Reduction varDecl = _reduction.get(5).asReduction();
 					// Does it contain variable declarations?
 					if (varDecl.getParent().getTableIndex() == RuleConstants.PROD_DECLEND_SEMI2) {
 						String type = content.substring(0, content.indexOf("{")).trim();
-						this.buildDeclOrAssignment(varDecl.get(0).asReduction(), type, _parentNode);
+						this.buildDeclOrAssignment(varDecl.get(0).asReduction(), type, _parentNode, comment);
 						varDecl = varDecl.get(1).asReduction();
 						while (varDecl.getParent().getTableIndex() == RuleConstants.PROD_VARLIST_COMMA) {
-							this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, _parentNode);
+							this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, _parentNode, comment);
 							varDecl = varDecl.get(2).asReduction();
 						}
 						content = this.getContent_R(_reduction.get(3).asReduction(), type + " {") + "}";
@@ -1336,7 +1402,10 @@ public class CParser extends CodeParser
 					)
 			{
 				String content = getKeyword("preLeave");
-				_parentNode.addElement(new Jump(content.trim()));								
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//_parentNode.addElement(new Jump(content.trim()));								
+				_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					// RETURN instruction
@@ -1345,7 +1414,10 @@ public class CParser extends CodeParser
 			{
 				String content = translateContent(getKeyword("preReturn") + 
 						" " + getContent_R(_reduction.get(1).asReduction(), ""));
-				_parentNode.addElement(new Jump(content.trim()));												
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//_parentNode.addElement(new Jump(content.trim()));								
+				_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					// GOTO instruction
@@ -1354,7 +1426,11 @@ public class CParser extends CodeParser
 			{
 				String content = _reduction.get(0).asString() + " " + _reduction.get(1).asString();
 				Jump el = new Jump(content.trim());
-				el.setComment("FIXME: Goto is not supported in structured algorithms!");
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//el.setComment("FIXME: Goto is not supported in structured algorithms!");
+				this.equipWithSourceComment(el, _reduction);
+				el.getComment().add("FIXME: Goto is not supported in structured algorithms!");
+				// END KGU#407 2017-06-22
 				el.setColor(Color.RED);
 				_parentNode.addElement(el);				
 			}
@@ -1367,7 +1443,11 @@ public class CParser extends CodeParser
 				Instruction el = new Instruction(content);
 				el.setColor(Color.RED);	// will only be seen if the user enables the element
 				el.disabled = true;
-				el.setComment("FIXME: Goto instructions are not supported in structured algorithms!");
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//el.setComment("FIXME: Goto instructions are not supported in structured algorithms!");
+				this.equipWithSourceComment(el, _reduction);
+				el.getComment().add("FIXME: Goto insructions are not supported in structured algorithms!");
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(el);
 			}
 			else if (
@@ -1384,6 +1464,9 @@ public class CParser extends CodeParser
 				// So we'll just add a red jump for now
 				if (_parentNode.parent instanceof ILoop) {
 					Element el = new Jump(_reduction.get(0).asString());
+					// START KGU#407 2017-06-20: Enh. #420 - comments already here
+					this.equipWithSourceComment(el, _reduction);
+					// END KGU#407 2017-06-22
 					el.setColor(Color.RED);
 					_parentNode.addElement(el);
 				}
@@ -1401,7 +1484,10 @@ public class CParser extends CodeParser
 				String expr = getContent_R(_reduction.get(2).asReduction(), "");
 				content = lval + " <- " + lval + oprs[ruleId - RuleConstants.PROD_OPASSIGN_PLUSEQ] + expr;
 				//System.out.println(ruleName + ": " + content);
-				_parentNode.addElement(new Instruction(translateContent(content)));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//_parentNode.addElement(new Instruction(translateContent(content)));
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					// Autoincrement / autodecrement (i++, i--, ++i, --i)
@@ -1417,7 +1503,10 @@ public class CParser extends CodeParser
 				// Operator + or - ?
 				String opr = (ruleId % 2 == RuleConstants.PROD_OPUNARY_PLUSPLUS % 2) ? " + " : " - ";
 				String content = lval + " <- " + lval + opr + "1";
-				_parentNode.addElement(new Instruction(translateContent(content)));
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				//_parentNode.addElement(new Instruction(translateContent(content)));
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+				// END KGU#407 2017-06-22
 			}
 			else if (
 					// Function declaration?
@@ -1485,6 +1574,9 @@ public class CParser extends CodeParser
 				}
 				content += params + ")";
 				root.setText(content);
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(root, _reduction);
+				// END KGU#407 2017-06-22
 				if (_reduction.get(bodyIndex).getType() == SymbolType.NON_TERMINAL)
 				{
 					buildNSD_R(_reduction.get(bodyIndex).asReduction(), root.children);
@@ -1503,6 +1595,9 @@ public class CParser extends CodeParser
 				String content = new String();
 				content = getContent_R(_reduction.get(2).asReduction(), content);
 				While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(4).asReduction();
@@ -1519,6 +1614,9 @@ public class CParser extends CodeParser
 				// e.g. PROD_OPEQUATE_EQEQ, PROD_OPEQUATE_EXCLAMEQ, PROD_OPCOMPARE_LT, PROD_OPCOMPARE_GT
 				// etc. where we could try to replace the reduction by its opposite.
 				Repeat ele = new Repeat((getKeyword("preRepeat").trim() + " not (" + content + ") " + getKeyword("postRepeat").trim()).trim());
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(1).asReduction();
@@ -1545,11 +1643,14 @@ public class CParser extends CodeParser
 				Reduction secReduc = _reduction.get(2).asReduction();
 				buildNSD_R(secReduc, _parentNode);
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				_parentNode.getElement(_parentNode.getSize()-1).setColor(Element.color2);
+				_parentNode.getElement(_parentNode.getSize()-1).setColor(colorMisc);
 				
 				// get the second part - should be an ordinary condition
 				String content = getContent_R(_reduction.get(4).asReduction(), "");
 				While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
 				ele.setColor(colorMisc);
 				_parentNode.addElement(ele);
@@ -1580,6 +1681,9 @@ public class CParser extends CodeParser
 				content = getContent_R(_reduction.get(2).asReduction(), content);
 				
 				Alternative ele = new Alternative((getKeyword("preAlt").trim()+ " " + translateContent(content) + " " + getKeyword("postAlt").trim()).trim());
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(4).asReduction();
@@ -1684,8 +1788,9 @@ public class CParser extends CodeParser
 	 * @param _reduc - the Reduction object (PROD_VAR_ID or PROD_VAR_ID_EQ)
 	 * @param _type - the data type as string
 	 * @param _parentNode - the Subqueue the built Instruction is to be appended to
+	 * @param _comment - a retrieved source code comment to be placed inthe element or null
 	 */
-	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode)
+	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment)
 	{
 		boolean isConstant = _type != null && _type.startsWith("const ");
 		int ruleId = _reduc.getParent().getTableIndex();
@@ -1696,8 +1801,16 @@ public class CParser extends CodeParser
 			if (this.optionImportVarDecl) {
 				content = "var " + content + ": " + _type;
 				Element instr = new Instruction(translateContent(content));
+				// START KGU#407 2017-06-22: Enh. #420
+				if (_comment != null) {
+					instr.setComment(_comment);
+				}
+				// END KGU#407 2017-06-22
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
-					instr.setComment("globally declared!");
+					// START KGU#407 2017-06-22: Enh. #420
+					//instr.setComment("globally declared!");
+					instr.getComment().add("Globally declared!");
+					// END KGU#407 2017-06-22
 					instr.setColor(colorGlobal);
 				}
 				else {
@@ -1711,7 +1824,7 @@ public class CParser extends CodeParser
 			// This should be the <Pointers> token...
 			String ptype = this.getContent_R(_reduc.get(0).asReduction(), _type);
 			// .. and this is assumed to be the <Var> token
-			buildDeclOrAssignment(_reduc.get(1).asReduction(), ptype, _parentNode);
+			buildDeclOrAssignment(_reduc.get(1).asReduction(), ptype, _parentNode, _comment);
 		}
 		else if (ruleId == RuleConstants.PROD_VAR_ID_EQ) {
 			// assignment
@@ -1742,8 +1855,16 @@ public class CParser extends CodeParser
 					instr.setColor(colorConst);
 				}
 			}
+			// START KGU#407 2017-06-22: Enh. #420
+			if (_comment != null) {
+				instr.setComment(_comment);
+			}
+			// END KGU#407 2017-06-22
 			if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
-				instr.setComment("globally declared!");
+				// START KGU#407 2017-06-22: Enh. #420
+				//instr.setComment("globally declared!");
+				instr.getComment().add("Globally declared!");
+				// END KGU#407 2017-06-22
 				instr.setColor(colorGlobal);
 			}
 			_parentNode.addElement(instr);
@@ -1790,6 +1911,9 @@ public class CParser extends CodeParser
 		// Pooh, the translation is risky...
 		Case ele = new Case(translateContent(content));
 		//ele.setText(updateContent(content));
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		this.equipWithSourceComment(ele, _reduction);
+		// END KGU#407 2017-06-22
 		_parentNode.addElement(ele);
 
 		// Create the selector branches
@@ -1947,7 +2071,10 @@ public class CParser extends CodeParser
 			}
 			content += _args.concatenate(", ");
 		}
-		_parentNode.addElement(new Instruction(content.trim()));
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		//_parentNode.addElement(new Instruction(content.trim()));
+		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
+		// END KGU#407 2017-06-22
 	}
 
 	private void buildInput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode)
@@ -1967,7 +2094,10 @@ public class CParser extends CodeParser
 			}
 			content += _args.concatenate(", ");
 		}
-		_parentNode.addElement(new Instruction(content.trim()));
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		//_parentNode.addElement(new Instruction(content.trim()));
+		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
+		// END KGU#407 2017-06-22
 	}
 
 	/**
@@ -2192,7 +2322,7 @@ public class CParser extends CodeParser
 				this.globalRoot.setInclude();
 				// END KGU#376 2017-05-17
 				for (Call provCall: this.provisionalImportCalls) {
-					provCall.setText(provCall.getText().get(0).replace("???", progName));
+					provCall.setText(provCall.getText().get(0).replace(DEFAULT_GLOBAL_NAME, progName).replace("???", progName));
 				}
 				this.provisionalImportCalls.clear();
 			}
