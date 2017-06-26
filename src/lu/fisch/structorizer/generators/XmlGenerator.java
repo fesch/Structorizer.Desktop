@@ -48,6 +48,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.03.10      Enh. #372: Additional attributes (Simon Sobisch)
  *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements added (Simon Sobisch)
  *      Kay Gürtzig     2017.03.28      Enh. #370: Alternative keyword set may be saved (un-refactored diagrams)
+ *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" added.
  *
  ******************************************************************************************************
  *
@@ -419,9 +420,14 @@ public class XmlGenerator extends Generator {
 			pp_attributes += " changed=\"" + _root.getModifiedString() + "\"";
 		}
 		// END KGU#363 3017-03-10
-		// START KGU#362 2017-03-13: Enh. #372 License stuff
+		// START KGU#363 2017-05-22: Enh. #372
+		if (_root.origin != null && !_root.origin.trim().isEmpty()) {
+			pp_attributes += " origin=\"" + BString.encodeToXML(_root.origin) + "\"";
+		}
+		// END KGU#363 2017-05-22
+		// START KGU#363 2017-03-13: Enh. #372 License stuff
 		String licName = _root.licenseName;
-		if (licName == null && Ini.getInstance().getProperty("author", System.getProperty("user.name")).equals(_root.getAuthor())) {
+		if (licName == null && Ini.getInstance().getProperty("authorName", System.getProperty("user.name")).equals(_root.getAuthor())) {
 			// Look for a default license
 			licName = Ini.getInstance().getProperty("licenseName", "").trim();
 		}

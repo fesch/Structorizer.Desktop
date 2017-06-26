@@ -108,15 +108,17 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
  *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
  *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
- *      Kay Gürtzig     2017.05.09      Enh. #372: Statistic method supporting the AttributeInspector
+ *      Kay Gürtzig     2017.05.09      Enh. #372: Statistics method supporting the AttributeInspector
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
- *
+ *      Kay Gürtzig     2017.05.21      Enh. #372: additional attributes included in undo/redo mechanism
+ *      Kay Gürtzig     2017.05.22      Inh. #272: New attribute "origin"
+ *      
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
  *      2016.03.25 (KGU#163)
- *      - Detection of uninitialised variables (analyser check #3) only worked for variables with
+ *      - Detection of un-initialised variables (analyser check #3) only worked for variables with
  *        initialisation after use. Variables nowhere initialised weren't found at all! This was now
  *        eventually mended.
  *      2016.01.11 (KGU#137)
@@ -142,6 +144,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
+
+import javax.swing.ImageIcon;
 
 import org.xml.sax.Attributes;
 
@@ -203,7 +207,7 @@ public class Root extends Element {
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
-	private enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
+	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
 	public DiagramType diagrType = DiagramType.DT_MAIN;
 	// END KGU#376 2017-05-16
 
@@ -249,6 +253,7 @@ public class Root extends Element {
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	public String licenseName = null;
 	public String licenseText = null;
+	public String origin = "Structorizer " + E_VERSION;
 	
 	/**
 	 * @return true if and only if the diagram type is main program
@@ -299,12 +304,18 @@ public class Root extends Element {
 		return this.created;
 	}
 	public String getCreatedString() {
+		if (this.created == null) {
+			return "";
+		}
 		return dateFormat.format(this.created);
 	}
 	public Date getModified() {
 		return this.modified;
 	}
 	public String getModifiedString() {
+		if (this.modified == null) {
+			return "";
+		}
 		return dateFormat.format(this.modified);
 	}
 	public void fetchAuthorDates(Attributes attributes)
@@ -320,13 +331,27 @@ public class Root extends Element {
 		if(attributes.getIndex("changedby")!=-1)  {
 			this.modifiedby = attributes.getValue("changedby") ; 
 		}
-		if(attributes.getIndex("modified")!=-1)  {
+		if(attributes.getIndex("changed")!=-1)  {
 			try {
-				this.modified = this.dateFormat.parse(attributes.getValue("modified"));
+				this.modified = this.dateFormat.parse(attributes.getValue("changed"));
 			} catch (ParseException e) {} 
 		}
 	}
 	// END KGU#363 2017-03-10
+	// START KGU#363 2017-05-21: Enh. #372
+	public void fetchAuthorDates(File _file) {
+		// Override the constructor settings if the Root is loaded from file
+		this.created = null;
+		this.author = "???";
+		this.licenseName = null;
+		if (_file.canRead()) {
+			long modTime = _file.lastModified();
+			if (modTime != 0L) {
+				this.modified = new Date(modTime);
+			}
+		}
+	}
+	// END KGU#363 2017-05-21
 
 	/**
 	 * Names of variables defined within this diagram
@@ -840,6 +865,22 @@ public class Root extends Element {
 		return  new Polygon(xCoords, yCoords, xCoords.length);
 	}
     // END KGU#376 2017-05-16
+    
+    // START KGU#324 2017-06-16: Enh. #415 we need an icon for the find result tree
+    @Override
+    public ImageIcon getIcon()
+    {
+    	switch (this.diagrType) {
+    	case DT_INCL:
+    		return IconLoader.ico071;
+    	case DT_SUB:
+    		return IconLoader.ico021;
+    	case DT_MAIN:
+    		return IconLoader.ico022;
+    	}
+    	return super.getIcon();
+    }
+    // END KGU#324 2017-06-16
 
 	@Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
@@ -1112,22 +1153,22 @@ public class Root extends Element {
 	
 	// START KGU#312 2016-12-29: Enh. #315
 	/**
-	 * Equivalence check returning one of the following similarity levels:
-	 * 0: no resemblance
-     * 1: Identity (i. e. the Java Root elements are identical);
+	 * Equivalence check returning one of the following similarity "levels":<br/>
+	 * 0: no resemblance<br/>
+     * 1: Identity (i. e. the Java Root elements are identical);<br/>
      * 2: Exact equality (i. e. objects aren't identical but all attributes
      *    and structure are recursively equal AND the file paths are equal
-     *    AND there are no unsaved changes in both diagrams);
+     *    AND there are no unsaved changes in both diagrams);<br/>
      * 3: Equal file path but unsaved changes in one or both diagrams (this
      *    can occur if several Structorizer instances in the same application
-     *    loaded the same file independently);
+     *    loaded the same file independently);<br/>
      * 4: Equal contents but different file paths (may occur if a file copy
      *    is loaded or if a Structorizer instance just copied the diagram
-     *    with "Save as");
+     *    with "Save as");<br/>
      * 5: Equal signature (i. e. type, name and argument number) but different
      *    content or structure.
      * @param another - the Root to compare with
-     * @return a resemblance level according to the description above
+     * @return a resemblance code according to the description above
 	 */
 	public int compareTo(Root another)
 	{
@@ -1173,13 +1214,35 @@ public class Root extends Element {
 	}
 	// END KGU#117 2016-03-12
 
+	/**
+	 * Adds a new entry to the undo stack and clears the redo stack.
+	 * Supposed to be called before undoable changes to this diagram are applied. 
+	 */
 	public void addUndo()
 	{
-		undoList.add((Subqueue)children.copy());
+		addUndo(false);
+	}
+	
+	/**
+	 * Adds a new entry to the undo stack, including a snapshot of the editable Root attributes (like author name,
+	 * license data etc.) if {@code _cacheAttributes} is true. Only to be called before changes to the attributes
+	 * are expected. Otherwise {@link #addUndo()} should be used.
+	 * Clears the redo stack.
+	 * @param _cacheAttributes - pecifies whether diagram attributes are also to be cached.
+	 * @see #addUndo()
+	 */
+	public void addUndo(boolean _cacheAttributes)
+	{
+
+		Subqueue oldChildren = (Subqueue)children.copy(); 
 		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
-		undoList.peek().setText(this.text.copy());
-		undoList.peek().setComment(this.comment.copy());
+		oldChildren.setText(this.text.copy());
+		oldChildren.setComment(this.comment.copy());
 		// END KGU#120 2016-01-02
+		// START KGU#363 2017-05-21: Enh. #372: Care for the new attributes
+		if (_cacheAttributes) oldChildren.rootAttributes = new RootAttributes(this);
+		// END KGU#363 3017-05-21
+		undoList.add(oldChildren);
 		clearRedo();
 		// START KGU#137 2016-01-11: Bugfix #103
 		// If stack was lower than when last saved, then related info is going lost
@@ -1204,7 +1267,15 @@ public class Root extends Element {
     	// END KGU#363 2017-03-10
 	}
 
-    public boolean canUndo()
+	/**
+	 * Checks whether there are stacked undoable changes
+	 * @return true if there are entries on the undo stack and diagram is not being executed
+	 * @see #undo()
+	 * @see #addUndo()
+	 * @see #clearUndo()
+	 * @see #canRedo()
+	 */
+	public boolean canUndo()
     {
     	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
     	//return (undoList.size()>0);
@@ -1212,6 +1283,14 @@ public class Root extends Element {
     	// END KGU#143 2016-01-21
     }
 
+	/**
+	 * Checks whether there are stacked redoable changes
+	 * @return true if there are entries on the redo stack and diagram is not being executed
+	 * @see #redo()
+	 * @see #undo()
+	 * @see #clearRedo()
+	 * @see #canUndo()
+	 */
     public boolean canRedo()
     {
     	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
@@ -1220,11 +1299,23 @@ public class Root extends Element {
     	// END KGU#143 2016-01-21
     }
 
+    /**
+     * Removes all entries from the redo stack
+     * @see #undo()
+     * @see #redo()
+     * @see #canRedo()
+     */
     public void clearRedo()
     {
             redoList = new Stack<Subqueue>();
     }
 
+    /**
+     * Removes all entries from the undo stack
+     * @see #undo()
+     * @see #canUndo()
+     * @see #addUndo()
+     */
     public void clearUndo()
     {
             undoList = new Stack<Subqueue>();
@@ -1234,12 +1325,29 @@ public class Root extends Element {
     		// END KGU#137 2016-01-11
     }
 
+    /**
+     * Takes the top entry from the undo stack, reverts the associated changes and adds
+     * a respective entry to the redo stack.
+     * @see #addUndo()
+     * @see #canUndo()
+     * @see #undo(boolean)
+     */
     public void undo()
     {
     // START KGU#365 2017-03-19: Enh. #380 we need an undo without redo
         undo(true);
     }
     
+    /**
+     * Takes the top entry form the undo stack and reverts the associated changes. If argument {@code redoable}
+     * is true then adds a corresponding entry to the redo stack otherwise the undone action won't be redoable
+     * (This should only be set false in order to clean the undo stack of entries that are part of a larger
+     * transaction also involving other diagrams and cannot consistently be redone therefore e.g. on outsourcing
+     * subroutines, normally {@link #undo()} is to be used instead.)
+     * @see #undo()
+     * @see #canUndo()
+     * @see #addUndo()
+     */
     public void undo(boolean redoable)
     {
     // END KGU#365 2017-03-19
@@ -1267,6 +1375,18 @@ public class Root extends Element {
             children.text.clear();
             children.comment.clear();
             // END KGU#120 2016-01-02
+        	// START KGU#363 2017-05-21: Enh. #372
+        	// If the undone action involves Root attributes then we must
+        	// cache the current attributes on the redo stack accordingly
+            // and restore the attributes from the und stack
+        	if (children.rootAttributes != null) {
+        		if (redoable) {
+        			redoList.peek().rootAttributes = new RootAttributes(this);
+        		}
+        		this.adoptAttributes(children.rootAttributes);
+        		children.rootAttributes = null;
+        	}
+        	// END KGU#363 2017-05-21
             // START KGU#136 2016-03-01: Bugfix #97
             this.resetDrawingInfoDown();
             // END KGU#136 2016-03-01
@@ -1277,6 +1397,23 @@ public class Root extends Element {
         }
     }
 
+	// START KGU#363 2017-05-21: Enh. #372
+    public void adoptAttributes(RootAttributes attributes) {
+    	if (attributes != null) {
+    		this.author = attributes.authorName;
+    		this.licenseName = attributes.licenseName;
+    		this.licenseText = attributes.licenseText;
+    		this.origin = attributes.origin;
+    	}
+	}
+    // KGU#363 2017-05-21
+    
+    /**
+     * Takes the top entry from the redo stack and restores the results before the associated undo action.
+     * @see #undo()
+     * @see #canRedo()
+     * @see #clearRedo()
+     */
     public void redo()
     {
             if (redoList.size()>0)
@@ -1297,6 +1434,10 @@ public class Root extends Element {
             		children.text.clear();
             		children.comment.clear();
             		// END KGU#120 2016-01-02
+            		// START KGU#363 2017-05-21: Enh. #372
+            		this.adoptAttributes(children.rootAttributes);
+            		children.rootAttributes = null;
+            		// END KGU#363 2017-05-21
                 	// START KGU#136 2016-03-01: Bugfix #97
                 	this.resetDrawingInfoDown();
                 	// END KGU#136 2016-03-01
@@ -1731,7 +1872,7 @@ public class Root extends Element {
 		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
 		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
 
-		StringList tokens = Element.splitLexically(_line, true);
+		StringList tokens = Element.splitLexically(_line.trim(), true);
 
 		Element.unifyOperators(tokens, false);
 
@@ -4000,21 +4141,6 @@ public class Root extends Element {
     		String[] reserved = plugin.reservedWords/**/;
     		// Case relevance the generator will provide
     		boolean distinguishCase = plugin.caseMatters;
-    		if (reserved == null) {
-    		// END KGU#239 2017-04-23
-    			// The plugin file has no information about resrved words, so get it from the class
-    			try
-    			{
-    				// Try to get the information from the current generator
-    				Class<?> genClass = Class.forName(plugin.className);
-    				Generator generator = (Generator)genClass.newInstance();
-    				reserved = generator.getReservedWords();
-    				distinguishCase = generator.isCaseSignificant();
-    			}
-    			catch (Exception exc) {}
-    		// START KGU#239 2017-04-23: Enh. #231 Alternatively configurable in the plugin
-    		}
-    		// END KGU#239 2017-04-23
     		if (reserved != null)
     		{
     			Hashtable<String, StringList> table =
@@ -4154,7 +4280,7 @@ public class Root extends Element {
 	 * (where a record/struct might have been necessary instead).
 	 * @param elements - an element sequence from this Root
 	 * @param name - the name for the new subroutine
-	 * @param result - name of the result variable (if any) 
+	 * @param result - name of the result variable (if any) or null 
 	 * @return a new Root formed from the given elements or null if {@code elements} was
 	 * empty or didn't belong to this Root. 
 	 */
@@ -4166,7 +4292,7 @@ public class Root extends Element {
 		// 1. Variables set within elements (and still used afterwards outside);
 		// 2. Non-scalar variables passed to some subroutine call within elements;
 		// 3. Array variables with element assignments to them within elements.
-		// It woud be fine if the caller (Diagram) could do this analysis in advance
+		// It would be fine if the caller (Diagram) could do this analysis in advance
 		// and pass the committed result variable names in.
 		// In any case, if the number of committed result items is larger than 1,
 		// then we will have to gather them into a data structure (i.e. an array)
@@ -4241,7 +4367,7 @@ public class Root extends Element {
 				resAsgnmt = name + " <- {" + results.concatenate(", ") + "}";
 			}
 			subroutine.setText(signature);
-			subroutine.setChanged();
+			//subroutine.setChanged();		// This was not helpful for code import
 			if (resAsgnmt != null) {
 				subroutine.children.addElement(new Instruction(resAsgnmt));
 			}
@@ -4461,5 +4587,17 @@ public class Root extends Element {
 		return counts;
 	}
 	// END KGU#363 2017-05-08
+	
+	// START KGU#324 2017-05-30: Enh. #373, #415
+	/**
+	 * Provides a tree iterator for forward (pre-order top-down) or backward (post-order bottom-up)
+	 * traversal.
+	 * @return An Iterator instance responding to hasNext(), next(), hasPrevious(), previous() method
+	 */
+	public IElementSequence.Iterator iterator()
+	{
+		return this.children.iterator(true);
+	}
+	// END KGU#363 2017-05-30
 	
 }

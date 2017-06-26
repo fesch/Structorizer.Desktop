@@ -37,6 +37,10 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display
  *      Kay Gürtzig     2017.04.16      New hook method postProcess(String textToParse) for sub classes
  *      Kay Gürtzig     2017.04.27      File logging mechanism added (former debug prints) 
+ *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute
+ *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced
+ *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream 
+ *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import 
  *
  ******************************************************************************************************
  *
@@ -55,6 +59,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,8 +74,10 @@ import com.creativewidgetworks.goldparser.engine.Reduction;
 import com.creativewidgetworks.goldparser.engine.Symbol;
 import com.creativewidgetworks.goldparser.engine.SymbolList;
 import com.creativewidgetworks.goldparser.engine.Token;
+import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
 
@@ -90,7 +97,7 @@ import lu.fisch.utils.StringList;
  * real challenge is lurking...
  * @author Kay Gürtzig
  */
-public abstract class CodeParser extends javax.swing.filechooser.FileFilter
+public abstract class CodeParser extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	/************ Common fields *************/
 	
@@ -99,6 +106,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * for later evaluation (empty if there was no error) 
 	 */
 	public String error;
+	/**
+	 * Maximum width for displaying parsing errors in a dialog (used for
+	 * line wrapping)
+	 */
+	protected final int DLG_STR_WIDTH = 100;
+
 	/**
 	 * The generic LALR(1) parser providing the parse tree
 	 */
@@ -112,15 +125,27 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * of Roots (unit or program with subroutines)!
 	 */
 	protected List<Root> subRoots = new LinkedList<Root>();
+	// START KGU#407 2017-06-22: Enh. #420 Optional comment import
+	/**
+	 * Value of the import option to import source code comments
+	 * @see #optionSaveParseTree()
+	 * @see #optionImportVarDecl
+	 */
+	protected boolean optionImportComments = false;
+	// END KGU#407 2017-06-22
 	// START KGU#358 2017-03-06: Enh. #354, #368 - new import options
 	/**
 	 * Value of the import option to import mere variable declarations
+	 * The option is supported by method {@link #retrieveComment(Reduction)}
+	 * @see #optionImportComments
 	 * @see #optionSaveParseTree()
+	 * @see #retrieveComment(Reduction)
 	 */
 	protected boolean optionImportVarDecl = false;
 	/**
 	 * Returns the value of the import option to save the obtained parse tree
 	 * @return true iff the parse tree is to be saved as text file
+	 * @see #optionImportComments
 	 * @see #optionImportVarDecl
 	 */
 	protected boolean optionSaveParseTree()
@@ -128,6 +153,39 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
+
+	// START KGU#395 2017-05-26: Enh. #357 - parser-specific options
+	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
+
+	/**
+	 * Returns a Generator-specific option value if available (otherwise null)
+	 * @param _optionName - option key, to be combined with the parser class name
+	 * @param _defaultValue TODO
+	 * @return an Object (of the type specified in the plugin) or null
+	 */
+	@Override
+	public Object getPluginOption(String _optionName, Object _defaultValue) {
+		Object optionVal = _defaultValue;
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		if (this.optionMap.containsKey(fullKey)) {
+			optionVal = this.optionMap.get(fullKey);
+		}
+		return optionVal;
+	}
+
+	/**
+	 * Allows to set a plugin-specified option before the code parsing starts
+	 * @param _optionName - a key string
+	 * @param _value - an object according to the type specified in the plugin
+	 */
+	@Override
+	public void setPluginOption(String _optionName, Object _value)
+	{
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		this.optionMap.put(fullKey, _value);
+	}
+	// END KGU#395 2017-05-26
+	
 	// START KGU#354 2017-04-27
 	/**
 	 * An open log file for verbose parsing and building if not null
@@ -176,6 +234,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 */
 	protected HashMap<String, String> replacedIds = new HashMap<String, String>();
 	// END KGU 2017-04-11
+	
+	// START KGU#407 2017-06-22: Enh. #420: Comment import
+	/**
+	 * Maps Reductions back their respective "owning" Tokens if the latter is directly
+	 * associated with a comment, just for making sure we won't miss an entry on comment
+	 * retrieval.
+	 */
+	private HashMap<Reduction, Token> commentMap = new HashMap<Reduction, Token>();
+	// This set 
+	private Set<Integer> statementRuleIds = new HashSet<Integer>();
+	// END KGU#407 2017-06-22
 
 	/************ Abstract Methods *************/
 	
@@ -334,6 +403,14 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 						System.err.println(ex.getMessage());
 					}
 				}
+				if (this.optionImportComments) {
+					// Prepare the comment map for reductions
+					for (Token commentedToken: parser.commentMap.keySet()) {
+						if (commentedToken.getType() == SymbolType.NON_TERMINAL) {
+							this.commentMap.put(commentedToken.asReduction(), commentedToken);
+						}
+					}
+				}
             	buildNSD(parser.getCurrentReduction());
             } else {
             	isSyntaxError = true;
@@ -345,7 +422,6 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
             e.printStackTrace();
         }
 		catch (IOException e1) {
-			// TODO Auto-generated catch block
             error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
 			e1.printStackTrace();
 		}
@@ -358,7 +434,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		if (isSyntaxError && intermediate != null)
 		{
 			Position pos = parser.getCurrentPosition();
-			error += "\nPreceding source context:";
+			error += "\n\nPreceding source context:";
 			int lineNo = pos.getLine() - 1;
 			int colNo = pos.getColumn() - 1;
 			int start = (lineNo > 10) ? lineNo -10 : 0;
@@ -373,34 +449,37 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			// anyway.
 			sourceLines.removeAll("");
 			for (int i = start; i < lineNo; i++) {
-				// START KGU 2017-04-11
-				//String line = sourceLines.get(i);
-				String line = undoIdReplacements(sourceLines.get(i));
-				// END KGU 2017-04-11
-				error += String.format("\n%4d:   %s", i+1, line.replace("\t", "    "));
+				addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i).replace("\t", "    ")));
 			}
 			String line = sourceLines.get(lineNo);
 			if (line.length() >= colNo) {
-				// START KGU 2017-04-11
-				//line = line.substring(0, colNo) + "» " + line.substring(colNo);
 				line = undoIdReplacements(line.substring(0, colNo) + "» " + line.substring(colNo));
-				// END KGU 2017-04-11
 			}
-			error += String.format("\n%4d:   %s", lineNo+1,	line.replace("\t", "    "));
 //			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
 //				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
 //			}
+			addLineToErrorString(lineNo+1, line.replace("\t", "    "));
 			SymbolList sl = parser.getExpectedSymbols();
 			Token token = parser.getCurrentToken();
-			String sepa = "\n\nFound token " + token.toString() + " (" + token.asString().trim() + ")\n\nExpected: ";
+			final String tokVal = token.toString();
+			error += "\n\nFound token " + tokVal;
+			String tokStr = token.asString().trim();
+			// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id  
+			tokStr = this.undoIdReplacements(tokStr);
+			// END KGU 2017-05-23
+			if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
+				error += " (" + tokStr + ")";
+			}
+			error += "\n\nExpected: ";
+			String sepa = "";
 			String exp = "";
 			for (Symbol sym: sl) {
 				exp += sepa + sym.toString();
 				sepa = " | ";
-				if (exp.length() > 80) {
+				if (exp.length() > DLG_STR_WIDTH) {
 					error += exp;
 					exp = "";
-					sepa = "\n | ";
+					sepa = "\n        | ";
 				}
 			}
 			error += exp;
@@ -443,6 +522,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		for (Root aRoot : subRoots)
 		{
 			aRoot.convertToCalls(signatures);
+			// START KGU#363 2017-05-22: Enh. #372
+			aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\""; 
+			// END KGU#363 2017-05-22
 		}
 		// END KGU#194 2016-07-07
 		
@@ -476,10 +558,27 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		
 		return subRoots;
 	}
-	
+
+	/**
+	 * Adds a source line to the public error String, adds line breaks where necessary
+	 * @param lineNum number of line for output
+	 * @param content of source line, output is done with DLG_STR_WIDTH
+	 */
+	private void addLineToErrorString(int lineNum, String line) {
+		error += String.format("\n%5d:   %."+DLG_STR_WIDTH+"s", lineNum, line);
+		
+		// simple approach to insert line break by width, better approach would be
+		// breaking at word boundary
+		final int strLen = line.length();
+		for (int j = DLG_STR_WIDTH; j < strLen; j += DLG_STR_WIDTH) {
+			error += String.format("\n%5s+   %."+DLG_STR_WIDTH+"s", "", line.substring(j));
+		}
+		
+	}
+
 	/**
 	 * Writes the given _logContent to the current opened file if there is one.
-	 * Oherwise and if {@code _toSystemOutInstead} is true the content will be
+	 * Otherwise and if {@code _toSystemOutInstead} is true the content will be
 	 * written to the console output.
 	 * @param _logContent - the message to be logged
 	 * @param _toSystemOutInstead - whether the message is to be reported to System.out
@@ -487,6 +586,44 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	protected void log(String _logContent, boolean _toSystemOutInstead)
 	{
 		boolean done = false;
+		
+		// START SSO 2017-06-07
+		// Hack for replacing non-printable characters that we may have to log,
+		// for example from StreamTokenizer value of '\0'
+		StringBuilder printableString = new StringBuilder(_logContent.length());
+		for (int offset = 0; offset < _logContent.length();)
+		{
+			int codePoint = _logContent.codePointAt(offset);
+			char lcChar = _logContent.charAt(offset);
+
+			switch (lcChar) {
+				// include some standard characters
+				case '\n':
+				case '\r':
+				case '\t':
+					printableString.append(lcChar);
+					break;
+				default:
+					// Replace invisible control characters and unused code points
+					switch (Character.getType(codePoint))
+					{
+						case Character.CONTROL:     // \p{Cc}
+						case Character.FORMAT:      // \p{Cf}
+						case Character.PRIVATE_USE: // \p{Co}
+						case Character.SURROGATE:   // \p{Cs}
+						case Character.UNASSIGNED:  // \p{Cn}
+							printableString.append(String.format ("\\u%04x", (int)lcChar));
+							break;
+						default:
+							printableString.append(Character.toChars(codePoint));
+							break;
+					}
+					break;
+			}
+			offset += Character.charCount(codePoint);
+		}
+		// END SSO 2017-06-07
+
 		if (logFile != null)
 		try {
 			logFile.write(_logContent);
@@ -498,15 +635,118 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			System.out.print(_logContent);
 		}
 	}
-
+	
+	// START KGU 2017-06-22: Enh. #420 allow subclasses a comment retrieval
 	/**
-	 * Allows subclasses to do some finishing work after all general stuff after parsing and
-	 * NSD synthesis is practically done.
-	 * @param textToParse - path of the parsed source file
+	 * Adds all rule ids given by the array to the registered rule ids for statement
+	 * detection in comment retrieval.
+	 * @param _ruleIds - production table indices indicating a statement in the source language
+	 * @see #registerStatementRuleId(int)
+	 * @see #retrieveComment(Reduction) 
 	 */
-	protected void subclassPostProcess(String textToParse)
+	protected void registerStatementRuleIds(int[] _ruleIds)
 	{
+		for (int id: _ruleIds) {
+			this.registerStatementRuleId(id);
+		}
 	}
+	/**
+	 * Add the given rule id  to the registered rule ids for statement detection
+	 * in comment retrieval.
+	 * @param _ruleIds - production table indices indicating a statement in the source language
+	 * @see #registerStatementRuleIds(int[])
+	 * @see #retrieveComment(Reduction) 
+	 */
+	protected void registerStatementRuleId(int _ruleId)
+	{
+		this.statementRuleIds.add(_ruleId);
+	}
+	/**
+	 * Retrieves comments associated to Tokens in the subtree rooted by the given
+	 * Reduction {@code _reduction} if {@link #optionImportComments} is set, otherwise
+	 * or there hasn't been a comment in the code returns null<br/>
+	 * NOTE: For a sensible limitation of the search depth the set of statement rule ids
+	 * must have been configured before. Otherwise the comments of substructure statements
+	 * might also be concatenated to the enclosing structured statement's comment.
+	 * @param _reduction
+	 * @return strung comprising the collected comment lines
+	 * @see #registerStatementRuleId(int)
+	 * @see #registerStatementRuleIds(int[])
+	 * @see #equipWithSourceComment(Element, Reduction)
+	 */
+	protected String retrieveComment(Reduction _reduction)
+	{
+		if (this.optionImportComments) {
+			StringBuilder comment = new StringBuilder();
+			// First we look if the reduction's token itself might have a comment 
+			Token topToken = this.commentMap.get(_reduction);
+			if (topToken != null) {
+				comment.append("\n" + parser.commentMap.get(topToken));
+			}
+			// Then we check the subtree recursively
+			retrieveComment_R(_reduction, comment);
+			if (comment.length() > 0) {
+				return comment.toString().substring(1);	// Remove the first newline
+			}
+		}
+		return null;
+	}
+	private void retrieveComment_R(Reduction _reduction, StringBuilder _comment)
+	{
+		// First we look i
+		for (int i = 0; i < _reduction.size(); i++) {
+			Token token = _reduction.get(i);
+			// Now the following cases are to be distinguished:
+			// 1. The token is a non-terminal
+			//    1.1 It represents a statement on its own: skip it
+			//    1.2 Something else: check for comment and descend
+			// 2. The token is a terminal: check for comment
+			if (token.getType() == SymbolType.NON_TERMINAL) {
+				Reduction red = token.asReduction();
+				if (!statementRuleIds.contains(red.getParent().getTableIndex())) {
+					String comment = parser.commentMap.get(token);
+					if (comment != null) {
+						_comment.append("\n" + comment);
+					}
+					retrieveComment_R(red, _comment);
+				}
+			}
+			else  {
+				String comment = parser.commentMap.get(token);
+				if (comment != null) {
+					_comment.append("\n" + comment);
+				}
+			}
+		}
+	}
+	/**
+	 * Convenience method that retrieves the source comment for the given Reduction
+	 * {@code _reduction} and places this (if any) in Element {@code _ele}, if the
+	 * option to import comments ({@link #optionImportComments}) is set. Does nothing
+	 * otherwise.<br/>
+	 * NOTE:<br/>
+	 * 1. In order to work correctly this method requires an initial parser-specific
+	 * statement rule registration via {@link #registerStatementRuleIds(int[])} once
+	 * been done.<br/>
+	 * 2. This method will overwrite any comment that might have been placed on
+	 * {@code _ele} before. So make sure to insert or append some additional comments
+	 * related to e.g. parsing or building issues afterwards.
+	 * @param _ele - The element built from Reduction {@code _reduction}
+	 * @param _reduction - The reduction, which led to the creation of {@code _ele}
+	 * @return The same element, but possibly with comment.
+	 * @see #optionImportComments
+	 * @see #retrieveComment(Reduction)
+	 * @see #registerStatementRuleIds(int[])
+	 */
+	protected Element equipWithSourceComment(Element _ele, Reduction _reduction)
+	{
+		String comment = this.retrieveComment(_reduction);
+		if (comment != null) {
+			_ele.setComment(comment);
+		}
+		return _ele;
+	}
+	// END KGU 2017-06-22
 
 	// START KGU 2017-04-11
 	/**
@@ -518,7 +758,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 */
 	protected String undoIdReplacements(String line) {
 		for (Entry<String,String> entry: this.replacedIds.entrySet()) {
-			String pattern = "(^|.*\\W)" + entry.getKey() + "(\\W.*|$)";
+			String pattern = "(^|.*?\\W)" + entry.getKey() + "(\\W.*?|$)";
 			if (line.matches(pattern)) {
 				line = line.replaceAll(pattern, "$1" + Matcher.quoteReplacement(entry.getValue()) + "$2");
 			}
@@ -548,6 +788,15 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param sourceFileName
 	 */
 	protected abstract void subclassUpdateRoot(Root root, String sourceFileName);
+
+	/**
+	 * Allows subclasses to do some finishing work after all general stuff after parsing and
+	 * NSD synthesis is practically done.
+	 * @param textToParse - path of the parsed source file
+	 */
+	protected void subclassPostProcess(String textToParse)
+	{
+	}
 
 	/******* FileFilter Extension *********/
 	
@@ -662,6 +911,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		// START KGU#358 2017-03-06: Enh. #368 - consider import options!
 		this.optionImportVarDecl = Ini.getInstance().getProperty("impVarDeclarations", "false").equals("true");
 		// END KGU#358 2017-03-06
+		// START KGU#407 2017-06-22
+		this.optionImportComments = Ini.getInstance().getProperty("impComments", "false").equals("true");
+		// END KGU#407 2017-06-22
 		root.setProgram(true);
 		// Allow subclasses to adjust things before the recursive build process is going off.
 		this.initializeBuildNSD();
@@ -689,7 +941,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	/**
 	 * Overridable method to do target-language-specific initialization before
 	 * the recursive method {@link #buildNSD_R(Reduction, Subqueue)} will be called.
-	 * Method is called in {@link #buildNSD(Reduction)}.
+	 * Method is called in {@link #buildNSD(Reduction)}.<br/>
+	 * The subclass method should call {@link #registerStatementRuleIds(int[])} here.
 	 */
 	protected void initializeBuildNSD()
 	{

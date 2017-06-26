@@ -20,6 +20,8 @@
 
 package lu.fisch.structorizer.helpers;
 
+import java.util.HashMap;
+
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -35,6 +37,7 @@ package lu.fisch.structorizer.helpers;
  *      Bob Fisch       2008.04.12      First Issue
  *      Kay Gürtzig     2017.04.23      Enh. #231 configuration of reserved words in the target language
  *      Kay Gürtzig     2017.05.11      Enh. #354/#357: field for class-specific options added
+ *      Kay Gürtzig     2017.06.20      Enh. #354/#357: Structure of options field modified, method getKey() added
  *
  ******************************************************************************************************
  *
@@ -42,10 +45,11 @@ package lu.fisch.structorizer.helpers;
  *
  ******************************************************************************************************///
 
-import java.util.HashMap;
+import java.util.Vector;
 
 public class GENPlugin 
 {
+	public static final int STRINGS_PER_OPTION = 4;
 	public String className = null;
 	public String icon = null;
 	public String title = null;
@@ -58,9 +62,24 @@ public class GENPlugin
 	// END KGU#239 2017-04-23
 	// START KGU#354/KGU#395 2017-05-11: Enh. #534 Allow configurable options
 	/**
-	 * Maps plugin-specific option names to simple value class names (Boolean, Integer, Double, String)
-	 * FIXME: This is still insufficient for setting up corresponding dialog elements 
+	 * Vector of option specifications forming hash tables of strings each:<br/>
+	 * name: option key (mandatory)<br/>
+	 * type: a simple value class name (Boolean, Character, Integer, Unsigned, Double, String)
+	 * items: a string of the form "{item1; item2; ... itemN}"<br/>
+	 * title: external caption (English)<br/>
+	 * help: a tooltip help<br/>
+	 * default: a possible default value
 	 */
-	public HashMap<String, String> options = new HashMap<String, String>();
+	public Vector<HashMap<String, String>> options = new Vector<HashMap<String, String>>();
 	// END KGU#354/KGU#395 2017-05-11
+	// START KGU#416 2017-06-20
+	/**
+	 * Returns the simplified class name of the associated class
+	 * @return Just the pure class name without package
+	 */
+	public String getKey()
+	{
+		return this.className.substring(this.className.lastIndexOf('.')+1);
+	}
+	// END KGU#416 2017-06-20
 }

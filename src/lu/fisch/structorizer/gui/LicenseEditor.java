@@ -32,6 +32,8 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.13      First Issue
+ *      Kay Gürtzig     2017.05.20      Member class RootLicenseInfo refactored to global class RootAttributes
+ *                                      reddish text background colour if text cannot be edited 
  *
  ******************************************************************************************************
  *
@@ -78,6 +80,7 @@ import javax.swing.text.StyledDocument;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
+import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.locales.LangDialog;
@@ -88,11 +91,11 @@ import lu.fisch.structorizer.locales.LangDialog;
  *      1. Called from SaveOptionDialog with a selected license file
  *      2. Called from SaveOptionDialog with a new license name - an empty license file should then
  *         already have been created (hence it's more or less like case 1)
- *      3. Called from InputBoxRoot for a certain diagram with assigned license information selected
- *      4. Called from InputBoxRoot for a certain (unsaved) Root without license information but a selected
+ *      3. Called from AttributeInspector for a certain diagram with assigned license information selected
+ *      4. Called from AttributeInspector for a certain (unsaved) Root without license information but a selected
  *             file from pool
- *      5. Called from InputBoxRoot for a Root with assigned license info but a selected license from pool.
- *      6. Called from InputBoxRoot for a Root with assigned license name but no own text while the pool
+ *      5. Called from AttributeInspector for a Root with assigned license info but a selected license from pool.
+ *      6. Called from AttributeInspector for a Root with assigned license name but no own text while the pool
  *         may contain a license text with this name (a: license available, b: not available).
  *      What is to be shown/done in these cases?
  *      1. Content of the license file, allowed to modify, copy, rename, delete; title: name of the
@@ -114,7 +117,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	static protected final int PREFERRED_HEIGHT = 500;
 
 	private Frame frame;
-	private InputBoxRoot.RootLicenseInfo root = null;			// The associated diagram if any
+	private RootAttributes rootLicInfo = null;			// License info of the associated diagram if any
 	private JPanel panel;
 	private JTextPane textPane;
 	private StyledDocument doc = null;
@@ -175,16 +178,16 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	}
 
 	/**
-	 * Constructor for the Root editor, i.e. for a specific diagram (cases 3 ...6).
+	 * Constructor for {@code the AttributeInspector}, i.e. for a specific diagram (cases 3 ...6).
 	 * @param _frame - owning frame
 	 * @param _licenseFile - a selected license file (cases 4, 5, 6a) or null (cases 3, 6b)
 	 * @param _licInfo - license info of the diagram for which license settings are to be managed
 	 * @param _licenseName - the license name as set by root (case 3, 6)
 	 */
-	public LicenseEditor(Frame _frame, File _licenseFile, InputBoxRoot.RootLicenseInfo _licInfo, String _licenseName)
+	public LicenseEditor(Frame _frame, File _licenseFile, RootAttributes _licInfo, String _licenseName)
 	{
 		frame = _frame;
-		root = _licInfo;
+		rootLicInfo = _licInfo;
 		licenseFile = _licenseFile;
 		if (licenseFile == null) {
 			// case 3 or 6
@@ -197,9 +200,9 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		String errors = null;
 		// case 3 or 6?
 		if (licenseFile.isDirectory()) {
-			if (root.licenseText != null && !root.licenseText.trim().isEmpty())
+			if (rootLicInfo.licenseText != null && !rootLicInfo.licenseText.trim().isEmpty())
 			try {
-				doc.insertString(0, root.licenseText, null);
+				doc.insertString(0, rootLicInfo.licenseText, null);
 			} catch (BadLocationException e) {
 				errors = e.getMessage();
 			}
@@ -220,6 +223,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		this.undoMan.discardAllEdits();
 		if (this.licenseFile.exists() && !this.licenseFile.isDirectory()) {
 			this.textPane.setEditable(false);
+			this.textPane.setBackground(Color.decode("0xFFD0D0"));
 		}
 		doButtons();
 	}
@@ -305,14 +309,14 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(menuFile);
 		menuFile.setMnemonic(KeyEvent.VK_F);
-		if (this.root != null) {
+		if (this.rootLicInfo != null) {
 			menuFile.add(menuFileCommit);
 		}
 		menuFile.add(menuFileSave);
 		menuFile.add(menuFileSaveAs);
 		menuFile.add(menuFileRename);
 		menuFile.add(menuFileReload);
-		if (this.root == null) {
+		if (this.rootLicInfo == null) {
 			menuFile.add(menuFileDelete);
 		}
 		menuFile.add(menuFileQuit);
@@ -351,6 +355,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		defStyle.addAttribute(StyleConstants.FontSize, 12);
 		// START KGU#279 2016-10-11: Bugfix #268
 		textPane.setEditable(true);
+		textPane.setBackground(Color.WHITE);
 		// END KGU#279 2016-10-11
 		doc.addUndoableEditListener(this);
 		
@@ -396,8 +401,8 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	public String getLicenseName(boolean withoutMarkers)
 	{
 		if (this.licenseFile.isDirectory()) {
-			if (root != null && root.licenseText != null && root.licenseName != null && !root.licenseName.trim().isEmpty()) {
-				return root.licenseName;
+			if (rootLicInfo != null && rootLicInfo.licenseText != null && rootLicInfo.licenseName != null && !rootLicInfo.licenseName.trim().isEmpty()) {
+				return rootLicInfo.licenseName;
 			}
 			else {
 				return "???";
@@ -406,7 +411,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		String fileName = this.licenseFile.getName();
 		String licName = fileName.substring(LicFilter.getNamePrefix().length(),
 				fileName.lastIndexOf("." + LicFilter.acceptedExtension()));
-		if (this.root != null && !withoutMarkers) {
+		if (this.rootLicInfo != null && !withoutMarkers) {
 			licName += " (pool)";
 		}
 		return licName;
@@ -588,7 +593,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	private void update()
 	{
 		try {
-			root.licenseText = doc.getText(0, doc.getLength());
+			rootLicInfo.licenseText = doc.getText(0, doc.getLength());
 			this.undoMan.discardAllEdits();
 			licenseFromPool = false;
 		} catch (BadLocationException e) {	}
@@ -637,7 +642,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 				saveAs();
 			}
 			else {
-				save(this.root == null);
+				save(this.rootLicInfo == null);
 			}
 		}
 		else if (src == menuFileSaveAs) {
@@ -654,10 +659,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 				// no need to reload
 				return;
 			}
-			else if (root != null && !licenseFromPool && root.licenseText != null) {
+			else if (rootLicInfo != null && !licenseFromPool && rootLicInfo.licenseText != null) {
 				try {
 					doc.remove(0, doc.getLength());
-					doc.insertString(0, root.licenseText, null);
+					doc.insertString(0, rootLicInfo.licenseText, null);
 					this.undoMan.discardAllEdits();
 				} catch (BadLocationException e) {
 					System.err.println("LicenseEditor.actionPerformed(Reload): " + e.getLocalizedMessage());
@@ -712,7 +717,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 					this.licenseFile.getAbsolutePath(), JOptionPane.YES_NO_CANCEL_OPTION);
 			}
 			if (answer == JOptionPane.OK_OPTION) {
-				if (this.root != null) {
+				if (this.rootLicInfo != null) {
 					this.update();
 				}
 				else if (this.licenseFile.isDirectory()) {
@@ -723,7 +728,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 				}
 			}
 			else if (answer == JOptionPane.CANCEL_OPTION) {
-				// backed off
+				// backed off		
 				return;
 			}
 		}
@@ -733,16 +738,18 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	private void doButtons()
 	{
 		boolean validFile = this.licenseFile.exists() && !this.licenseFile.isDirectory();
-		this.menuFileCommit.setEnabled(root != null && this.undoMan.canUndoOrRedo());
-		this.menuFileSave.setEnabled((root == null) || validFile && this.undoMan.canUndoOrRedo());
+		this.menuFileCommit.setEnabled(rootLicInfo != null && this.undoMan.canUndoOrRedo());
+		this.menuFileSave.setEnabled((rootLicInfo == null) || validFile && this.undoMan.canUndoOrRedo());
 		this.menuFileSaveAs.setEnabled(doc.getLength() > 0);
-		this.menuFileReload.setEnabled(((root == null && validFile) || (root != null && !this.licenseFromPool)) && this.undoMan.canUndoOrRedo());
-		this.menuFileRename.setEnabled(root == null && validFile);
-		this.menuFileDelete.setEnabled(root == null && validFile);
+		this.menuFileReload.setEnabled(((rootLicInfo == null && validFile) || (rootLicInfo != null && !this.licenseFromPool)) && this.undoMan.canUndoOrRedo());
+		this.menuFileRename.setEnabled(rootLicInfo == null && validFile);
+		this.menuFileDelete.setEnabled(rootLicInfo == null && validFile);
 		this.menuEditUndo.setEnabled(this.undoMan.canUndo());
 		this.menuEditRedo.setEnabled(this.undoMan.canRedo());
 		this.menuEditClear.setEnabled(textPane.isEditable());
-		String title = (this.root != null ? this.root.rootName + " * " : "") +
+		//String title = (this.root != null ? this.root.rootName + " * " : "") +
+		//		this.getLicenseName();
+		String title = (this.rootLicInfo != null ? this.rootLicInfo.root.getMethodName() + " * " : "") +
 				this.getLicenseName();
 		if (!textPane.isEditable()) {
 			title = "[" + title + "]";

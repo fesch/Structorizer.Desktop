@@ -186,13 +186,13 @@ public class BTextfile
   }
 
  /**
-  * Reads a singel line from the file but cuts blanks at the beginning and the end
-  *@return mystring The string that has been read
+  * Reads a single line from the file but cuts blanks at the beginning and the end
+  *@return The trimmed string that has been read
   */
   public String readlnDataonly() throws IOException
   {
    String str = readln();
-   return BString.cutOut(str);
+   return str.trim();
   }
 
  /**

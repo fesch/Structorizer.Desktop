@@ -44,6 +44,7 @@ package lu.fisch.utils;
  *      Bob Fisch       2016.08.01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
  *      Kay Gürtzig     2017.01.31      Method remove(int,int) added. 
  *      Kay Gürtzig     2017.03.31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
+ *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake _by for a regex anymore)
  *
  ******************************************************************************************************
  *
@@ -62,11 +63,24 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Vector;
+import java.util.regex.Pattern;
 
 public class StringList {
 
 	private Vector<String> strings = new Vector<String>();
 
+	public StringList()
+	{}
+	
+	// START KGU 2017-06-18: New constructor as pendant to toArray()
+	public StringList(String[] _strings)
+	{
+		for (String str: _strings) {
+			strings.add(str);
+		}
+	}
+	// END KGU 2017-06-18
+	
 	public static StringList getNew(String _string)
 	{
 		StringList sl = new StringList();
@@ -75,13 +89,20 @@ public class StringList {
 	}
 	
 	/**
-	 * Splits string _source around matches of the given REGULAR EXPRESSION(!) _by.
+	 * Splits string {@code _source} around matches of the given REGULAR EXPRESSION(!) {@code _by}.
 	 * Trailing empty strings are not included in the resulting StringList.
 	 * The string "boo:and:foo", for example, yields the following results with
-	 * these expressions:
-	 * Regex Result
-	 * :     { "boo", "and", "foo" }
-	 * o     { "b", "", ":and:f" }
+	 * these expressions:<br/>
+	 * <table>
+	 * <tbody>
+	 * <tr><td>Regex</td><td>Result</td></tr>
+	 * <tr><td>":"</td><td>{ "boo", "and", "foo" }</td></tr>
+	 * <tr><td>"o"</td><td>{ "b", "", ":and:f" }</td></tr>
+	 * </tbody>
+	 * </table>
+	 * @see #explodeFirstOnly(String, String)
+	 * @see #explode(StringList, String)
+	 * @see #explodeWithDelimiter(String, String)
 	 * @param _source - the string to be split
 	 * @param _by - the splitting regular expression
 	 * @return the StringLits containing all splitting shards
@@ -99,6 +120,25 @@ public class StringList {
 		return sl;
 	}
 
+	/**
+	 * Splits string {@code _source} around the first match of the given REGULAR EXPRESSION(!) {@code _by}.
+	 * A trailing empty string is not included in the resulting StringList.
+	 * The string "boo:and:foo", for example, yields the following results with
+	 * these expressions:<br/>
+	 * <table>
+	 * <tbody>
+	 * <tr><td>Regex</td><td>Result</td></tr>
+	 * <tr><td>":"</td><td>{ "boo", "and:foo" }</td></tr>
+	 * <tr><td>"o"</td><td>{ "b", "o:and:f" }</td></tr>
+	 * </tbody>
+	 * </table>
+	 * @see #explode(String, String)
+	 * @see #explode(StringList, String)
+	 * @see #explodeWithDelimiter(String, String)
+	 * @param _source - the string to be split
+	 * @param _by - the splitting regular expression
+	 * @return the StringLits containing all splitting shards
+	 */
 	public static StringList explodeFirstOnly(String _source, String _by)
 	{
 		String[] multi = _source.split(_by);
@@ -120,12 +160,24 @@ public class StringList {
 		return sl;
 	}
 
+	/**
+	 * Splits all strings contained in {@code _source} around matches of the given REGULAR EXPRESSION(!) {@code _by}
+	 * and returns a single StringList containing all split results of all element strngs in sequential order.
+	 * Trailing empty strings are not included in the resulting StringList.
+	 * @see #explode(String, String)
+	 * @see #explodeFirstOnly(String, String)
+	 * @see #explodeWithDelimiter(StringList, String)
+	 * @param _source - the StringList further to be split
+	 * @param _by - the separator (delimiter) pattern (regex!)
+	 * @return The split results as StringList
+	 */
 	public static StringList explode(StringList _source, String _by)
 	{
 		StringList sl = new StringList();
 
 		for(int s=0; s<_source.count(); s++)
 		{
+			// FIXME KGU 2017-06-18: I suggest that all but the last string be split with second argument -1
 			String[] multi = _source.get(s).split(_by);
 			for(int i=0; i<multi.length; i++)
 			{
@@ -136,30 +188,73 @@ public class StringList {
 		return sl;
 	}
 
+	/**
+	 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
+	 * and returns a new StringList consisting of the split parts and the separating
+	 * delimiters in order of occurrence.<br/>
+	 * Note that the resulting StringList may be empty!
+	 * @param _source - the string to be split
+	 * @param _by - the separating string (plain string, no regex!)
+	 * @return the split result
+	 */
 	public static StringList explodeWithDelimiter(String _source, String _by)
 	{
-		String[] multi = _source.split(_by);
+		// START KGU 2017-06-18: Bugfix - this (unused) version was defective ("ate" delimiters)
+//		//String[] multi = _source.split(_by);
+//		String[] multi = _source.split(Pattern.quote(_by), -1);	// We must not suppress empty parts!
+//		// END KGU 2017-06-18
+//		StringList sl = new StringList();
+//
+//		for(int i=0; i < multi.length; i++)
+//		{
+//			if (i != 0)
+//			{
+//				sl.add(_by);
+//			}
+//			sl.add(multi[i]);
+//		}
+//
+//		return sl;
+		// TODO: performance should be measured and compared between these two solutions!
+		// The following is the (optimized) alternative solution copied from BString  
 		StringList sl = new StringList();
-
-		for(int i=0; i<multi.length; i++)
+		int lenBy = _by.length();
+		while (!_source.isEmpty())
 		{
-			if(i!=0)
+			int pos = _source.indexOf(_by);
+			if (pos >= 0)
 			{
+				sl.add(_source.substring(0,pos));
 				sl.add(_by);
+				_source=_source.substring(pos + lenBy, _source.length());
 			}
-			sl.add(multi[i]);
+			else
+			{
+				sl.add(_source);
+				_source = "";
+			}
 		}
-
 		return sl;
 	}
 
+	/**
+	 * Splits the elements of StringList {@code _source} around occurrences of delimiter string {@code _by}
+	 * and returns a new StringList consisting of all the split parts and the separating
+	 * delimiters in order of occurrence.<br/>
+	 * @param _source - the string to be split
+	 * @param _by - the separating string (plain string, no regex!)
+	 * @return the split result
+	 */
 	public static StringList explodeWithDelimiter(StringList _source, String _by)
 	{
 		StringList sl = new StringList();
 
 		for(int s=0;s<_source.count();s++)
 		{
-			StringList multi = BString.explodeWithDelimiter(_source.get(s),_by);
+			// START KGU 2017-06-18: We should rely on our own method
+			//StringList multi = BString.explodeWithDelimiter(_source.get(s),_by);
+			StringList multi = explodeWithDelimiter(_source.get(s),_by);
+			// END KGU 2017-06-18
 			sl.add(multi);
 		}
 
@@ -179,7 +274,15 @@ public class StringList {
 		return sl;
 	}
 	
-	// START KGU 2016-03-
+	// START KGU 2016-03-26
+	/**
+	 * Returns a StringList consisting of the elements with position {@code _start} through (but not including) {@code _end} of this.
+	 * If {@code _start} is less than 0 then the result starts at element 0, if {@code _end} is greater than {@link #count()} then
+	 * the result simply contains copies of all remaining elements.
+	 * @param _start - position (index) of the first element to be copied.
+	 * @param _end - position (index) beyond the last element to be copied.
+	 * @return The partial copy of this.
+	 */
 	public StringList subSequence(int _start, int _end)
 	{
 		StringList sl = new StringList();
@@ -192,11 +295,27 @@ public class StringList {
 		return sl;
 	}
 
+	/**
+	 * Appends the given String {@code _string} at end.
+	 * @param _string - a string
+	 */
 	public void add(String _string)
 	{
 		strings.add(_string);
 	}
 
+	/**
+	 * Inserts the given String {@code _string} at the appropriate place assuming that this is
+	 * a sorted StringList. Sorting criterion for the strings is lexicographic order according
+	 * to {@code String.compareTo(String)}.
+	 * Multiple String values may occur i.e. if you add a string that has already been member then
+	 * another copy of the string will be inserted.
+	 * @param _string
+	 * @see #add(String)
+	 * @see #addOrderedIfNew(String)
+	 * @see #addIfNew(String)
+	 * @see #addByLength(String)
+	 */
 	public void addOrdered(String _string)
 	{
 		addOrdered(_string, false);
@@ -223,10 +342,17 @@ public class StringList {
 	/**
 	 * Inserts _string such that the elements be ordered by decreasing length
 	 * (longest ones first!). If _string is empty then it won't be added at all.
-	 * Elements of same length occur in order of insertion.
+	 * Elements of same length occur in order of insertion.<br/>
 	 * (Only works if the already contained elements represent the order described
-	 * above.
+	 * above.)
+	 * Multiple String values may occur i.e. if you add a string that has already been member then
+	 * another copy of the string will be inserted.
 	 * @param _string the string to be inserted
+	 * @see #add(String)
+	 * @see #addIfNew(String)
+	 * @see #addOrdered(String)
+	 * @see #addOrderedIfNew(String)
+	 * @see #addByLengthIfNew(String)
 	 */
 	public void addByLength(String _string)
 	{
@@ -256,6 +382,11 @@ public class StringList {
 	 * contained in this StringList. 
 	 * @param _string - The string to be added
 	 * @return true if the string was new
+	 * @see #add(String)
+	 * @see #addOrdered(String)
+	 * @see #addOrderedIfNew(String)
+	 * @see #addByLength(String)
+	 * @see #addByLengthIfNew(String)
 	 */
 	public boolean addIfNew(String _string)
 	{
@@ -272,12 +403,30 @@ public class StringList {
 	 * contained in this StringList. 
 	 * @param _string - The string to be added
 	 * @return true if the string was new
+	 * @see #add(String)
+	 * @see #addIfNew(String)
+	 * @see #addOrdered(String)
+	 * @see #addByLength(String)
+	 * @see #addByLengthIfNew(String)
 	 */
 	public boolean addOrderedIfNew(String _string)
 	{
 		return addOrdered(_string, true);
 	}
 
+	/**
+	 * Inserts _string such that the elements be ordered by decreasing length
+	 * (longest ones first!). If _string is empty then it won't be added at all.
+	 * Elements of same length occur in order of insertion.
+	 * (Only works if the already contained elements represent the order described
+	 * above.
+	 * @param _string the string to be inserted
+	 * @see #add(String)
+	 * @see #addIfNew(String)
+	 * @see #addOrdered(String)
+	 * @see #addOrderedIfNew(String)
+	 * @see #addByLength(String)
+	 */
 	public boolean addByLengthIfNew(String _string)
 	{
 		boolean found = strings.contains(_string);
@@ -288,6 +437,18 @@ public class StringList {
 		return !found;
 	}
 
+	/**
+	 * Appends a copy of each element of {@code _stringList} to this StringList
+	 * no matter whether ther might already be an equal string element in this.
+	 * @param _string - The string to be added
+	 * @see #add(String)
+	 * @see #addIfNew(String)
+	 * @see #addIfNew(StringList)
+	 * @see #addOrdered(String)
+	 * @see #addOrderedIfNew(String)
+	 * @see #addByLength(String)
+	 * @see #addByLengthIfNew(String)
+	 */
 	public void add(StringList _stringList)
 	{
 		for(int i=0;i<_stringList.count();i++)
@@ -297,10 +458,17 @@ public class StringList {
 	}
 
 	/**
-	 * Adds each elements of _stringList that had not been
+	 * Appends each elements of _stringList that had not been
 	 * contained in this StringList.
 	 * @param _string - The string to be added
 	 * @return true if some of the strings of _stringList was added
+	 * @see #add(String)
+	 * @see #addIfNew(String)
+	 * @see #add(StringList)
+	 * @see #addOrdered(String)
+	 * @see #addOrderedIfNew(String)
+	 * @see #addByLength(String)
+	 * @see #addByLengthIfNew(String)
 	 */
 	public boolean addIfNew(StringList _stringList)
 	{
@@ -316,12 +484,38 @@ public class StringList {
 		return someInserted;
 	}
 
-	// START KGU 2015-11-04: New, more performant and informative searchers 
+	// START KGU 2015-11-04: New, more performant and informative searchers
+	/**
+	 * Returns the last element position of a string element exactly equal to {@code _string} or -1
+	 * if there is no such element in this.
+	 * @param _string - the search string (plain string, no regex!)
+	 * @return element index or -1
+	 * @see #indexOf(String)
+	 * @see #indexOf(String, boolean)
+	 * @see #indexOf(String, int)
+	 * @see #indexOf(String, int, boolean)
+	 * @see #lastIndexOf(String, boolean)
+	 * @see #lastIndexOf(String, int)
+	 * @see #lastIndexOf(String, int, boolean)
+	 */
 	public int lastIndexOf(String _string)
 	{
 		return this.strings.lastIndexOf(_string);
 	}
 
+	/**
+	 * Returns the last element position of a string element exactly equal to {@code _string} or -1
+	 * if there is no such element in this.
+	 * @param _string - the search string (plain string, no regex!)
+	 * @param _backwardFrom - the index of the element from which (including!) {@code _string} is looked for backwards.  
+	 * @return element index or -1
+	 * @see #indexOf(String)
+	 * @see #indexOf(String, boolean)
+	 * @see #indexOf(String, int)
+	 * @see #indexOf(String, int, boolean)
+	 * @see #lastIndexOf(String, boolean)
+	 * @see #lastIndexOf(String, int, boolean)
+	 */
 	public int lastIndexOf(String _string, int _backwardFrom)
 	{
 		return this.strings.lastIndexOf(_string, _backwardFrom);
@@ -496,11 +690,11 @@ public class StringList {
 
 	public void setText(String _text)
 	{
-		String[] words = _text.split ("\n");
+		String[] lines = _text.split ("\n");
 		strings.clear();
-		for (int i=0; i < words.length; i++)
+		for (int i=0; i < lines.length; i++)
 		{
-			strings.add(words[i]);
+			strings.add(lines[i]);
 		}
 	}
 

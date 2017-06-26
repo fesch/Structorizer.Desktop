@@ -21,8 +21,7 @@
 
 package lu.fisch.structorizer.arranger;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -70,6 +69,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.01.11      Fix KGU#328 in method replaced()
  *      Kay Gürtzig     2017.01.13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
  *      Kay Gürtzig     2017.04.22      Enh. #62, #318: Confirmation before overwriting a file, shadow paths considered
+ *      Kay Gürtzig     2017.05.26      Bugfix #414: Too large bounding boxes caused errors and made the GUI irresponsive
  *
  ******************************************************************************************************
  *
@@ -103,8 +103,7 @@ package lu.fisch.structorizer.arranger;
  *      - New interface method findSourcesByName() to prepare subroutine execution in a future effort (KGU#2)
  *      - Method saveDiagrams() added, enabling the Mainforms to save dirty diagrams before exit (KGU#49)
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -159,7 +158,6 @@ import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
-import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.PNGFilter;
@@ -228,6 +226,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     @Override
     public void paint(Graphics g)
     {
+		//System.out.println("Surface: " + System.currentTimeMillis());
         super.paint(g);
         if(diagrams!=null)
         {
@@ -353,7 +352,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			try {
 			// END KGU#111 2015-12-17
-				Root root = parser.parse(f.toURI().toString());
+				// START KGU#363 2017-05-21: Issue #372 API change
+				//Root root = parser.parse(f.toURI().toString());
+				Root root = parser.parse(f);
+				// END KGU#363 2017-05-21
 
 				root.filename = filename;
 				// START KGU#316 2016-12-28: Enh. #318 Allow nsd files to "reside" in arrz files
@@ -1083,11 +1085,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         this.setLayout(layout);
         layout.setHorizontalGroup(
         		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-        		.add(0, rect.right, Short.MAX_VALUE)
+        		// START KGU#411 2017-05-26: With huge diagrams the bouding boxx could exceed the Short value range
+        		//.add(0, rect.right, Short.MAX_VALUE)
+        		.add(0, Math.min(rect.right, Short.MAX_VALUE), Short.MAX_VALUE)
+        		// END KGU#411 2017-05-26
         		);
         layout.setVerticalGroup(
         		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-        		.add(0, rect.bottom, Short.MAX_VALUE)
+        		// START KGU#411 2017-05-26: With huge diagrams the bouding boxx could exceed the Short value range
+        		//.add(0, rect.bottom, Short.MAX_VALUE)
+        		.add(0, Math.min(rect.bottom, Short.MAX_VALUE), Short.MAX_VALUE)
+        		// END KGU#411 2017-05-26
         		);
     	return rect;	// Just in case someone might need it
     }
@@ -1777,9 +1785,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			int resemblance = diagram.root.compareTo(root);
     			if (resemblance > 0) {
     				if (resemblance > 2 && warnLevel2andAbove) {
+    					String fName = diagram.root.filename.toString();
+    					if (fName.trim().isEmpty()) {
+    						fName = "[" + diagram.root.proposeFileName() + "]";
+    					}
     					String message = msgInsertionConflict[resemblance-3].getText().
     							replace("%1", root.getSignatureString(false)).
-    							replace("%2", diagram.root.filename.toString());
+    							replace("%2", fName);
     					JOptionPane.showMessageDialog(this.getParent(), message,
     							this.titleDiagramConflict.getText(),
     							JOptionPane.WARNING_MESSAGE);			

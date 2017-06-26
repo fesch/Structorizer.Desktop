@@ -454,7 +454,7 @@ public class Alternative extends Element implements IFork {
 	
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
 	@Override
-	protected ImageIcon getIcon()
+	public ImageIcon getIcon()
 	{
 		return IconLoader.ico060;
 	}

@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2017.03.03      Enh. #354: New classification methods isLeave(), isReturn(), isExit()
  *      Kay Gürtzig     2017.04.14      Issues #23,#380,#394: new jump analysis helper methods
+ *      Kay Gürtzig     2017.06.09      Enh. #416: Adaptations for execution line continuation
  *
  ******************************************************************************************************
  *
@@ -193,7 +194,7 @@ public class Jump extends Instruction {
 
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
 	@Override
-	protected ImageIcon getIcon()
+	public ImageIcon getIcon()
 	{
 		return IconLoader.ico059;
 	}
@@ -219,7 +220,10 @@ public class Jump extends Instruction {
 		// In a jump instruction no variables ought to be introduced - so we ignore this text on _instructionsOnly
 		if (!this.isDisabled() && !_instructionsOnly)
 		{
-			_lines.add(this.getText());
+			// START KGU#413 2017-06-09: Enh. #416: Cope with user-inserted line breaks
+			//_lines.add(this.getText());
+			_lines.add(this.getUnbrokenText());
+			// END KGU#413 2017-06-09
 		}
 	}
 	// END KGU 2015-10-16
@@ -252,7 +256,11 @@ public class Jump extends Instruction {
 	 */
 	public boolean isReturn()
 	{
-		return this.text.count() == 1 && isReturn(this.text.get(0).trim());
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.count() == 1 && isReturn(this.text.get(0).trim());
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && isReturn(lines.get(0));
+		// END KGU#413 2017-06-09
 	}
 	/**
 	 * Checks whether the given line contains a leave statement
@@ -270,7 +278,11 @@ public class Jump extends Instruction {
 	 */
 	public boolean isLeave()
 	{
-		return this.text.getLongString().trim().isEmpty() || this.text.count() == 1 && isLeave(this.text.get(0).trim());
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.getLongString().trim().isEmpty() || this.text.count() == 1 && isLeave(this.text.get(0).trim());
+		StringList lines = this.getUnbrokenText();
+		return lines.getLongString().trim().isEmpty() || lines.count() == 1 && isLeave(lines.get(0).trim());
+		// END KGU#413 2017-06-09
 	}
 	/**
 	 * Checks whether this line contains an exit statement
@@ -288,7 +300,11 @@ public class Jump extends Instruction {
 	 */
 	public boolean isExit()
 	{
-		return this.text.count() == 1 && isExit(this.text.get(0).trim());
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.count() == 1 && isExit(this.text.get(0).trim());
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && isExit(lines.get(0));
+		// END KGU#413 2017-06-09
 	}
 	// END KGU#354 2017-03-03
 	
@@ -304,7 +320,10 @@ public class Jump extends Instruction {
 	{
 		int levelsUp = 0;
 		if (this.isLeave()) {
-			StringList tokens = Element.splitLexically(getText().get(0), true);
+			// START KGU#413 2017-06-09: Enh. #416 - cope with user-broken lines
+			//StringList tokens = Element.splitLexically(getText().get(0), true);
+			StringList tokens = Element.splitLexically(getUnbrokenText().get(0), true);
+			// END KGU#413 2017-06-09
 			if (tokens.count() > 0) {
 				tokens.remove(0);
 			}

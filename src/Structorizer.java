@@ -286,7 +286,10 @@ public class Structorizer
 				{
 					// open an existing file
 					NSDParser parser = new NSDParser();
-					root = parser.parse(f.toURI().toString());
+					// START KGU#363 2017-05-21: Issue #372 API change
+					//root = parser.parse(f.toURI().toString());
+					root = parser.parse(f);
+					// END KGU#363 2017-05-21
 					root.filename = fName;
 					roots.add(root);
 					// If no output file name is given then derive one from the first NSD file
@@ -314,11 +317,12 @@ public class Structorizer
 			BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("generators.xml"));
 			GENParser genp = new GENParser();
 			Vector<GENPlugin> plugins = genp.parse(buff);
+			try { buff.close();	} catch (IOException e) {}
 			for (int i=0; genClassName == null && i < plugins.size(); i++)
 			{
 				GENPlugin plugin = (GENPlugin) plugins.get(i);
 				StringList names = StringList.explode(plugin.title, "/");
-				String className = plugin.className.substring(plugin.className.lastIndexOf(".")+1);
+				String className = plugin.getKey();
 				usage += (i>0 ? " |" : "") + "\n\t" + className;
 				if (className.equalsIgnoreCase(_generatorName))
 				{
@@ -385,6 +389,7 @@ public class Structorizer
 		BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("parsers.xml"));
 		GENParser genp = new GENParser();
 		Vector<GENPlugin> plugins = genp.parse(buff);
+		try { buff.close();	} catch (IOException e) {}
 		Vector<CodeParser> parsers = new Vector<CodeParser>();
 		//String parsClassName = null;
 		CodeParser parser = null;
@@ -551,11 +556,12 @@ public class Structorizer
 		BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("generators.xml"));
 		GENParser genp = new GENParser();
 		Vector<GENPlugin> plugins = genp.parse(buff);
+		try { buff.close();	} catch (IOException e) {}
 		for (int i=0; i < plugins.size(); i++)
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
 			StringList names = StringList.explode(plugin.title, "/");
-			String className = plugin.className.substring(plugin.className.lastIndexOf(".")+1);
+			String className = plugin.getKey();
 			System.out.print( (i>0 ? " |" : "") + "\n\t\t" + className );
 			for (int j = 0; j < names.count(); j++)
 			{

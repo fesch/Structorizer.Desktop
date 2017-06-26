@@ -50,6 +50,18 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.13      EVALUATE import as Case element fixed. FileAPI support begun
  *      Kay Gürtzig     2017.05.14      PERFORM VARYING with composed condition or defective step fixed
  *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
+ *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
+ *                                      STRING statement implemented (refined with help of enh. #413)
+ *      Kay Gürtzig     2017.05.28      First rough approach to implement UNSTRING import and PERFOM &lt;procedure&gt;
+ *      Kay Gürtzig     2017.06.06      Correction in importUnstring(...) w.r.t. ALL clause
+ *      Simon Sobisch   2017.06.23      Added Classes CobTools (CobProg, CobVar) for COBOL-view of these
+ *                                      structures. Will be extended when needed.
+ *                                      Translation COBOL -> Java Types completely rewritten and validated
+ *                                      SET var [var2] TO (TRUE | FALSE) with lookup of condition names implemented
+ *                                      condition-names in expressions replaced (further improvements need work on expresssions)
+ *                                      new option "is32bit" for var types and for later care in preparser
+ *                                      Optimization of getContent_R: use static Patterns and Matchers as
+ *                                      this function is called very often
  *
  ******************************************************************************************************
  *
@@ -64,15 +76,30 @@ package lu.fisch.structorizer.parsers;
  *     Note:
  *     Process the grammar to get a ".skel" file to merge changes in the grammar:
  *     GOLDbuild.exe GnuCOBOL.grm && GOLDprog.exe GnuCOBOL.egt StructorizerParserTemplate.pgt COBOLParser.java.skel && dos2unix COBOLParser.java.skel
+ *     
+ *     Language-specific options:
+ *     - debugLines: boolean, default = false;
+ *     - decimalComma: boolean, default = false;
+ *     - fixedForm: boolean, default = true;
+ *     - fixedColumnIndicator: integer, default = 7;
+ *     - fixedColumnText: integer, defualt = 73;
+ *     - ignoreUnstringAll: boolean, default = true;
+ *     - is32bit, default = true;
+ *     
  ******************************************************************************************************/
 
 import java.awt.Color;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Set;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,15 +118,17 @@ import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.gui.SelectedSequence;
+import lu.fisch.structorizer.parsers.CobTools.CobProg;
+import lu.fisch.structorizer.parsers.CobTools.CobVar;
+import lu.fisch.structorizer.parsers.CobTools.Usage;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-
-import com.creativewidgetworks.goldparser.parser.GOLDParser;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the GnuCOBOL language.
@@ -4015,6 +4044,12 @@ public class COBOLParser extends CodeParser
 	private boolean srcCodeDebugLines;
 	private boolean decimalComma;
 	
+	private boolean ignoreUnstringAllClauses;
+	
+	// 32 or 64 bit, used for different size calculations and possibly in preparser
+	private boolean is32bit;
+	
+	// FIXME If the refrenced fields are options then this wil have to be recalculated
 	private int settingCodeLength = settingColumnText - settingColumnIndicator - 1;
 
 	/**
@@ -4059,11 +4094,13 @@ public class COBOLParser extends CodeParser
 			String strLine;
 			StringBuilder srcCode = new StringBuilder();
 
-			srcCodeDebugLines = false; // FIXME: get from setting/parsing
-			decimalComma = false; // FIXME: get from setting/parsing
-			settingFixedForm = true; // FIXME: get from setting/parsing
-			settingFixedColumnIndicator = 7;  // FIXME: get from setting/parsing
-			settingFixedColumnText = 73;  // FIXME: get from setting/parsing
+			srcCodeDebugLines = (boolean)this.getPluginOption("debugLines", false);
+			decimalComma = (boolean)this.getPluginOption("decimalComma", false);
+			settingFixedForm = (boolean)this.getPluginOption("fixedForm", true);
+			settingFixedColumnIndicator = (int)this.getPluginOption("fixedColumnIndicator", 7);
+			settingFixedColumnText = (int)this.getPluginOption("fixedColumnText", 73);
+			ignoreUnstringAllClauses = (boolean)this.getPluginOption("ignoreUnstringAll", true);
+			is32bit = (boolean)this.getPluginOption("is32bit", true);
 			
 			if (settingFixedForm) {
 				setColumns(settingFixedColumnIndicator, settingFixedColumnText);
@@ -4140,7 +4177,7 @@ public class COBOLParser extends CodeParser
 								srcLastCodeLenght++;
 							}
 							srcCode.insert(srcCodeLastPos - 1, firstNonSpaceInLine + " &");
-							srcCodeLastPos += 3;
+							srcCodeLastPos += 4;
 						}
 						strLine = srcLineCode;
 						srcLastCodeLenght = strLine.length();
@@ -4264,6 +4301,9 @@ public class COBOLParser extends CodeParser
 			if (codeLine.endsWith(".")) {
 				resultLine = "*> COPY statement: " + codeLine;
 			}
+			// we may revert this part later if we have not processed a COBOL statement
+			// and convert it to a NSD CALL instruction of an IMPORT diagram
+			// which could be created by a seperate run on the original copybook.
 		} else if (firstToken.equals("REPLACE")) {
 			// TODO store the replacements and do them
 			// removed because must be set as comment until next period (multiple lines):
@@ -4363,8 +4403,32 @@ public class COBOLParser extends CodeParser
 		
 	}
 
-	//---------------------- Build methods for structograms ---------------------------
+	//---------------------- Build fields and methods for structograms ---------------------------
 
+	// Record for detected sections and paragraphs if needed as reference for possible calls 
+	private class SectionOrParagraph {
+		public String name;
+		public boolean isSection = true;
+		public int startsAt = -1;		// Element index of first statement within parent
+		public int endsBefore = -1;	// Element index beyond closing TOK_DOT within paent
+		public Subqueue parent = null;
+		public Element firstElement = null, lastElement = null;
+		
+		public SectionOrParagraph(String _name, boolean _isSection, int _startIndex, Subqueue _parentNode)
+		{
+			name = _name;
+			isSection = _isSection;
+			startsAt = _startIndex;
+			parent = _parentNode;
+		}
+	}
+	
+	// During build phase, all detected sections and paragraphs are listed here for resolution of internal calls
+	private LinkedList<SectionOrParagraph> procedureList = new LinkedList<SectionOrParagraph>();
+	
+	private LinkedHashMap< String, LinkedList<Call> > internalCalls = new LinkedHashMap< String, LinkedList<Call> >();
+	
+	// maps the names of function parameters to their type specifications
 	private HashMap<Root, HashMap<String, String>> paramTypeMap = new HashMap<Root, HashMap<String, String>>();
 
 	/**
@@ -4384,6 +4448,13 @@ public class COBOLParser extends CodeParser
 	 * Maps the file status variables to the respective file descriptor
 	 */
 	private HashMap<String, String> fileStatusMap = new HashMap<String, String>();
+
+	/**
+	 * Used to combine nested declarations within one element
+	 */
+	private Instruction previousDeclaration = null;
+	private int	previousDeclarationLevelDepth = 0;
+	private int	previousDeclarationLevelNumber = 0;
 	
 //	/* (non-Javadoc)
 //	 * @see CodeParser#initializeBuildNSD()
@@ -4393,6 +4464,10 @@ public class COBOLParser extends CodeParser
 //	{
 //		// TODO insert initializations for the build phase if necessary ...
 //	}
+	
+	private CobTools cobTools = new CobTools();
+	private CobProg currentProg = null;
+	final static String STRUCTORIZER_PARTIAL = "Structorizer Partial";
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
@@ -4400,466 +4475,881 @@ public class COBOLParser extends CodeParser
 	@Override
 	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
 	{
-		//String content = new String();
+		if (_reduction.isEmpty()) {
+			return;
+		}
 
-		if (_reduction.size() > 0)
+		// create a dummy-program because we may have only a partial source that doesn't start with program definition
+		if (currentProg == null) {
+			currentProg = cobTools.new CobProg(STRUCTORIZER_PARTIAL, null, false, null);
+		}
+
+		String rule = _reduction.getParent().toString();
+		System.out.println(rule);
+		String ruleHead = _reduction.getParent().getHead().toString();
+		int ruleId = _reduction.getParent().getTableIndex();
+		log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
+		System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+
+		switch (ruleId) {
+		case RuleConstants.PROD_PROGRAM_DEFINITION:
+		case RuleConstants.PROD_FUNCTION_DEFINITION:
 		{
-			String rule = _reduction.getParent().toString();
-			System.out.println(rule);
-			String ruleHead = _reduction.getParent().getHead().toString();
-			int ruleId = _reduction.getParent().getTableIndex();
-			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
-			System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
-
-			if (
-					ruleId == RuleConstants.PROD_PROGRAM_DEFINITION
-					||
-					ruleId == RuleConstants.PROD_FUNCTION_DEFINITION
-					)
-			{
-				System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
-				Root prevRoot = root;	// Cache the original root
-				root = new Root();	// Prepare a new root for the (sub)routine
-				subRoots.add(root);
-				Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
-				String content = this.getContent_R(secRed.get(2).asReduction(), "");
-				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT) {
-					this.root.setProgram(false);
-				}
-				// Arguments and return value will be fetched from a different rule
-				root.setText(content);
-
-				if (_reduction.get(4).getType() == SymbolType.NON_TERMINAL)
-				{
-					buildNSD_R(_reduction.get(4).asReduction(), root.children);
-				}
-				// Restore the original root
-				root = prevRoot;
+			System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
+			Root prevRoot = root;	// Cache the original root
+			root = new Root();	// Prepare a new root for the (sub)routine
+			subRoots.add(root);
+			Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
+			boolean isFunction = secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT;
+			if (isFunction) {
+				this.root.setProgram(false);
 			}
-//			else if (
-//					ruleId == RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT
-//					||
-//					ruleId == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT
-//					)
+			String content = this.getContent_R(secRed.get(2).asReduction(), "");
+			// Arguments and return value will be fetched from LINKAGE rule
+			if (content.startsWith("\"") || content.startsWith("\'")) {
+				content = content.substring(1, content.length() - 1);
+			}
+			String extName = null;
+			Reduction extNameRed = secRed.get(3).asReduction();
+			if (extNameRed.size() >= 1) {
+				this.getContent_R(extNameRed.get(1).asReduction(), "");
+			}
+			root.setText(content);
+
+			// check if we still have an empty COBOL view of program
+			if (currentProg.getName().equals(STRUCTORIZER_PARTIAL)) {
+				if (currentProg.isEmtpy()) {
+					currentProg = null;
+				}
+			}
+			// create COBOL view of program
+			currentProg = cobTools.new CobProg(content, extName, isFunction, currentProg);
+
+			if (_reduction.get(4).getType() == SymbolType.NON_TERMINAL)
+			{
+				buildNSD_R(_reduction.get(4).asReduction(), root.children);
+			}
+			// Restore the original root
+			root = prevRoot;
+		}
+		break;
+//			case RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT:
+//			case RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT:
 //			{
 //			}
-			else if (ruleId == RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING)
-			{
-				System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
-				//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
-				//root.setText(root.getText().getLongString() + "(" + arguments + ")");
-				StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
-				HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-				if (paramTypes != null && paramTypes.size() > 0) {
-					for (int i = 0; i < arguments.count(); i++) {
-						String type = paramTypes.get(arguments.get(i));
-						if (type != null && !type.isEmpty() && !type.equals("???")) {
-							arguments.set(i, type + " " + arguments.get(i)) ;
-						}
+//			break;
+		case RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING:
+		{
+			System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
+			//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+			//root.setText(root.getText().getLongString() + "(" + arguments + ")");
+			StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
+//			HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
+//			if (paramTypes != null && paramTypes.size() > 0) {
+//				for (int i = 0; i < arguments.count(); i++) {
+//					String type = paramTypes.get(arguments.get(i));
+//					if (type != null && !type.isEmpty() && !type.equals("???")) {
+//						arguments.set(i, type + " " + arguments.get(i)) ;
+//					}
+//				}
+//			}
+			if (arguments.count() > 0) {
+				for (int i = 0; i < arguments.count(); i++) {
+					String varName = arguments.get(i);
+					String type = CobTools.getTypeString(currentProg.getCobVar(varName));
+					if (type != null) {
+						arguments.set(i, type + " " + varName) ;
 					}
 				}
-				if (arguments.count() > 0) {
-					root.setText(root.getText().getLongString() + "(" + arguments.concatenate(", ") + ")");
-					root.setProgram(false);
-				}
+				root.setText(root.getText().getLongString() + "(" + arguments.concatenate(", ") + ")");
+				root.setProgram(false);
 			}
-			else if (ruleId == RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING)
-			{
-				String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
-				this.returnMap .put(root, resultVar);
+		}
+		break;
+		case RuleConstants.PROD__PROCEDURE_RETURNING_RETURNING:
+		{
+			// Debug....
+			String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
+			this.returnMap .put(root, resultVar);
+			if (this.paramTypeMap.containsKey(root)) {
 				StringList rootText = root.getText();
-				if (this.paramTypeMap.containsKey(root)) {
-					HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-					if (paramTypes.containsKey(resultVar)
-						&& rootText.count() >= 1
-						&& rootText.getLongString().trim().endsWith(")")) {
-						rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
+				HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
+				if (paramTypes.containsKey(resultVar)
+					&& rootText.count() >= 1
+					&& rootText.getLongString().trim().endsWith(")")) {
+					rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
+				}
+			}
+		}
+		break;
+		case RuleConstants.PROD_SECTION_HEADER_SECTION_TOK_DOT:
+		{
+			// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
+			// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
+			//       to close the previous section and the previous paragraph
+			
+			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+			// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
+
+			// add to NSD
+			Call sec = new Call(name);
+			sec.setComment("Definition of section " + name);
+			sec.disabled = true;
+			_parentNode.addElement(sec);
+			
+			// add to procedureList for later handling
+			this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
+		}
+		break;
+		case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
+		{
+			// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
+			// Note: this starts a new paragraph AND closes the previous paragraph
+			
+			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+
+			// add to NSD
+			Call par = new Call(name);
+			par.setComment("Definition of paragraph " + name);
+			par.disabled = true;
+			_parentNode.addElement(par);
+			
+			// add to procedureList for later handling
+			if (Character.isDigit(name.charAt(0))) {
+				name = "sub" + name;
+			}
+			this.procedureList.addFirst(new SectionOrParagraph(name, false, _parentNode.getSize(), _parentNode));
+		}
+		break;
+//			deactivated as we get an ArrayIndexOutOfBoundsException sometimes
+//			case RuleConstants.PROD_PROCEDURE_TOK_DOT:
+//				// First process the statements then handle the TOK_DOT with the subsequent case
+//				buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
+//				// No break; here!
+//			case RuleConstants.PROD_PROCEDURE_TOK_DOT2:
+//			{
+//				// TODO close the last unsatisfied "procedure"
+//				Iterator<SectionOrParagraph> iter = procedureList.iterator();
+//				boolean found = false;
+//				while (!found && iter.hasNext()) {
+//					SectionOrParagraph sop = iter.next();
+//					if (sop.parent == _parentNode && sop.endsBefore < 0) {
+//						sop.endsBefore = _parentNode.getSize();
+//						sop.firstElement = _parentNode.getElement(sop.startsAt);
+//						sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+//						found = true;
+//					}
+//				}
+//			}
+//			break;
+		case RuleConstants.PROD_IF_STATEMENT_IF:
+			System.out.println("PROD_IF_STATEMENT_IF");
+			this.importIf(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE:
+			System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
+			this.importEvaluate(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_PERFORM_STATEMENT_PERFORM:
+			System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
+			this.importPerform(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_MOVE_STATEMENT_MOVE:
+			System.out.println("PROD_MOVE_STATEMENT_MOVE");
+			this.importMove(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_SET_STATEMENT_SET:
+		{
+			System.out.println("PROD_SET_STATEMENT_SET");
+			if (!importSet(_reduction, _parentNode)) {
+				String content = this.getContent_R(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setComment("This statement cannot be converted into a sensible diagram element!");
+				instr.setColor(Color.RED);
+				instr.disabled = true;
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE:
+		{
+			System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
+			Reduction secRed = _reduction.get(1).asReduction();
+			StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+			String expr = this.getContent_R(secRed.get(2).asReduction(), "");
+			if (targets.count() > 0) {
+				StringList content = StringList.getNew(targets.get(0) + " <- " + expr);
+				for (int i = 1; i < targets.count(); i++) {
+					// FIXME Caution: target.get(0) might be a "reference modification"!
+					content.add(targets.get(i) + " <- " + targets.get(0));
+				}
+				_parentNode.addElement(new Instruction(content));
+			}				
+		}
+		break;
+		case RuleConstants.PROD_ADD_STATEMENT_ADD:
+			System.out.println("PROD_ADD_STATEMENT_ADD");
+			this.importAdd(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT:
+			System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
+			this.importSubtract(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY:
+			System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
+			this.importMultiply(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE:
+			System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
+			this.importDivide(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT:
+		{
+			// Input instruction
+			System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
+			if (!this.importAccept(_reduction, _parentNode)) {
+				Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
+				dummy.setComment(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
+						+ this.getOriginalText(_reduction, ""), "\n"));
+				dummy.setColor(Color.RED);
+				dummy.disabled = true;
+				_parentNode.addElement(dummy);
+			}
+		}
+		break;
+		case RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY:
+		{
+			// Output instruction
+			System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
+			// TODO: Identify whether fileAPI s to be used.
+			Reduction secRed = _reduction.get(1).asReduction();	// display body
+			// TODO: Define a specific routine to extract the exressions
+			//String content = this.appendDisplayBody(secRed, "");
+			String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
+			if (content.startsWith(", ")) {
+				content = content.substring(2);
+			}
+			if (content.endsWith(", ")) {
+				content = content.substring(0,  content.length()-2);
+			}
+			content = CodeParser.getKeyword("output") + " " + content;				
+			Instruction instr = new Instruction(content);
+			_parentNode.addElement(instr);
+		}
+		break;
+		case RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT:
+			this.importFileControl(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_FILE_DESCRIPTION:
+		{
+			System.out.println("PROD_FILE_DESCRIPTION");
+			Reduction fdRed = _reduction.get(0).asReduction();	// <file_description_enry>
+			Reduction reclRed = _reduction.get(1).asReduction();	// <_record_description_list>
+			// TODO map the record names (if any) to the file descriptor name (and vice versa?)
+			// for READ and WRITE statements
+			if (this.getContent_R(fdRed.get(0).asReduction(), "").trim().equalsIgnoreCase("fd")
+					&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
+				String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
+				// The file descriptor should have been declared with the SELECT clause
+				do {
+					Reduction datRed = reclRed.get(0).asReduction();
+					if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
+						datRed = reclRed.get(1).asReduction();
+						reclRed = reclRed.get(0).asReduction();
 					}
-				}
+					else {
+						reclRed = null;
+					}
+					HashMap<String, String> typeMap = new HashMap<String, String>();
+					// START KGU 2017-05-24: We do not only want the type info here but also create declarations 
+					//this.processDataDescriptions(datRed, null, typeMap);
+					this.processDataDescriptions(datRed, _parentNode, typeMap);
+					// END KGU 2017-05-24
+					for (String recName: typeMap.keySet()) {
+						this.fileRecordMap.put(recName, fdName);
+					}
+				} while (reclRed != null);
 			}
-			else if (ruleId == RuleConstants.PROD_IF_STATEMENT_IF)
-			{
-				System.out.println("PROD_IF_STATEMENT_IF");
-				String content = this.transformCondition(_reduction.get(1).asReduction(), "");
-				System.out.println("\tCondition: " + content);
-				Reduction secRed = _reduction.get(3).asReduction();
-				int secRuleId = secRed.getParent().getTableIndex();
-				Reduction trueRed = null;
-				Reduction falseRed = null;
-				switch (secRuleId) {
-				case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE:
-					trueRed = secRed.get(0).asReduction();
-					falseRed = secRed.get(2).asReduction();
-					break;
-				case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE2:
-					trueRed = secRed.get(1).asReduction();
-					content = negateCondition(content);
-					break;
-				default:
-					trueRed = secRed;
-					break;
-				}
-				Alternative alt = new Alternative(content);
-				if (trueRed != null) {
-					System.out.println("\tTHEN branch...");
-					this.buildNSD_R(trueRed, alt.qTrue);
-				}
-				if (falseRed != null) {
-					System.out.println("\tELSE branch...");
-					this.buildNSD_R(falseRed, alt.qFalse);
-				}
-				if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
-					alt.qTrue = alt.qFalse;
-					alt.qFalse = new Subqueue();
-					alt.qFalse.parent = alt;
-					alt.setText(negateCondition(content));
-				}
-				_parentNode.addElement(alt);
-				System.out.println("\tEND_IF");
+		}
+		break;
+		case RuleConstants.PROD_OPEN_STATEMENT_OPEN:
+		{
+			System.out.println("PROD_OPEN_STATEMENT_OPEN");
+			if (!this.importOpen(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE)
-			{
-				this.importEvaluate(_reduction, _parentNode);
+		}
+		break;
+		case RuleConstants.PROD_READ_STATEMENT_READ:
+		{
+			System.out.println("PROD_READ_STATEMENT_READ");
+			if (!this.importRead(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD_PERFORM_STATEMENT_PERFORM)
-			{
-				this.importPerform(_reduction, _parentNode);
+		}
+		break;
+		case RuleConstants.PROD_WRITE_STATEMENT_WRITE:
+		{
+			System.out.println("PROD_WRITE_STATEMENT_WRITE");
+			if (!this.importWrite(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
 			}
-			else if (ruleId == RuleConstants.PROD_MOVE_STATEMENT_MOVE)
+		}
+		break;
+		case RuleConstants.PROD_REWRITE_STATEMENT_REWRITE:
+		case RuleConstants.PROD_DELETE_STATEMENT_DELETE:
+		{
+			String content = this.getOriginalText(_reduction, "");
+			Instruction instr = new Instruction(content);
+			instr.setColor(Color.RED);
+			instr.setComment("Structorizer File API does not support indexed or other non-text files");
+			_parentNode.addElement(instr);
+		}
+		break;
+		case RuleConstants.PROD_CLOSE_STATEMENT_CLOSE:
+		{
+			System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
+			String fileDescr = this.getContent_R(_reduction.get(1).asReduction().get(0).asReduction(), "").trim();
+			Instruction instr = null;
+			if (this.fileMap.containsKey(fileDescr)) {
+				instr = new Instruction("fileClose(" + fileDescr + ")");
+			}
+			else {
+				instr = new Instruction(this.getOriginalText(_reduction, ""));
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+			}
+			if (instr != null) {
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_CALL_STATEMENT_CALL:
+			this.importCall(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_EXIT_STATEMENT_EXIT:
+			System.out.println("PROD_EXIT_STATEMENT_EXIT");
+			this.importExit(_reduction, _parentNode);
+			break;
+		case RuleConstants.PROD_GOBACK_STATEMENT_GOBACK:
+		{
+			System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
+			Reduction secRed = _reduction.get(1).asReduction();
+			String content = CodeParser.getKeywordOrDefault("preReturn", "return");
+			if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
+				content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
+			}
+			_parentNode.addElement(new Jump(content.trim()));
+		}
+		break;
+		case RuleConstants.PROD_STOP_STATEMENT_STOP:
+		case RuleConstants.PROD_STOP_STATEMENT_STOP_RUN:
+		{
+			System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
+			int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
+			Reduction secRed = _reduction.get(contentIx).asReduction();
+			String content = CodeParser.getKeywordOrDefault("preExit", "exit");
+			String exitVal = this.getContent_R(secRed, "").trim();
+			if (exitVal.isEmpty()) exitVal = "0";
+			_parentNode.addElement(new Jump(content + " " + exitVal));
+		}
+		break;
+		case RuleConstants.PROD_GOTO_STATEMENT_GO:
+		{
+			System.out.println("PROD_GOTO_STATEMENT_GO");
+			String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
+			if (content.toUpperCase().startsWith("TO ")) {
+				content = content.substring(3);
+			}
+			Jump jmp = new Jump("goto " + content);
+			jmp.setColor(Color.RED);
+			jmp.setComment("GO TO statements are not supported in structured programming!");
+			_parentNode.addElement(jmp);
+		}
+		break;
+		case RuleConstants.PROD_STRING_STATEMENT_STRING:
+		{
+			System.out.println("PROD_STRING_STATEMENT_STRING");
+			if (!this.importString(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				instr.disabled = true;
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING:
+		{
+			System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
+			if (!this.importUnstring(_reduction, _parentNode)) {
+				String content = this.getOriginalText(_reduction, "");
+				Instruction instr = new Instruction(content);
+				instr.setColor(Color.RED);
+				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				_parentNode.addElement(instr);
+			}
+		}
+		break;
+		case RuleConstants.PROD_SEARCH_STATEMENT_SEARCH:
+		{
+			System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
+			// FIXME: At least add variable name parsing the same way we have in other places
+			//        and add some line breaks
+			String content = this.getOriginalText(_reduction, "");
+			Instruction instr = new Instruction(content);
+			instr.setColor(Color.RED);
+			instr.setComment("TODO: there is still no automatic conversion for this statement");
+			_parentNode.addElement(instr);
+		}
+		break;
+		case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
+		{
+			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_WORKING);
+			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+		}
+		break;
+		case RuleConstants.PROD__LOCAL_STORAGE_SECTION_LOCAL_STORAGE_SECTION_TOK_DOT:
+		{
+			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LOCAL);
+			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+		}
+		break;
+		case RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT:
+		{
+			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LINKAGE);
+			if (!this.paramTypeMap.containsKey(root)) {
+				this.paramTypeMap.put(root, new HashMap<String, String>());
+			}
+			// This is not to produce elements but to accomplish the type map, therefore we
+			// don't pass the _parentNode.
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
+		}
+		break;
+		case RuleConstants.PROD__FILE_SECTION_HEADER_TOK_FILE_SECTION_TOK_DOT:
+		{
+			// just set the storage here, the other parts are done in PROD_FILE_DESCRIPTION
+			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_FILE);
+		}
+		break;
+		case RuleConstants.PROD__REPORT_SECTION_REPORT_SECTION_TOK_DOT:
+		{
+			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_REPORT);
+			// TODO this is unlikely to work - take care later, ignore for now
+			//this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+		}
+		break;
+		case RuleConstants.PROD__SCREEN_SECTION_SCREEN_SECTION_TOK_DOT:
+		{
+			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_SCREEN);
+			// TODO this is unlikely to work - take care later, ignore for now
+			//this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+		}
+		break;
+		default:
+			if (_reduction.size()>0)
 			{
-				System.out.println("PROD_MOVE_STATEMENT_MOVE");
-				Reduction secRed = _reduction.get(1).asReduction();
-				String expr = this.getContent_R(secRed.get(0).asReduction(), "");
-				// FIXME: This doesn't work for array elements - we need an expression list splitter
-				// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
-				//String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
-				//String[] targets;
-				// FIXME: the unwanted "," should not be passed to the engine at all,
-				// we currently split "literal, with a comma in" into two targets
-				//if (targetString.contains(",")) {
-				//	targets = targetString.split(",");
-				//}
-				//else {
-				//	targets = targetString.split(" ");
-				//}
-				//if (targets.length > 0) {
-				StringList targets = this.getExpressionList(secRed.get(2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-				if (targets.count() > 0)
+				for(int i=0; i<_reduction.size(); i++)
 				{
-					// We must do something to avoid copy() calls on the left-hand side
-					StringList assignments = new StringList();
-					for (int i = 0; i < targets.count(); i++) {
-						String target = targets.get(i).trim();
-						if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
-							assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
-							assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
-						}
-						else {
-							assignments.add(target + " <- " + expr);
-							if (i == 0) {
-								expr = target;
-							}
-						}
-					}
-					_parentNode.addElement(new Instruction(assignments));
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_SET_STATEMENT_SET)
-			{
-				System.out.println("PROD_SET_STATEMENT_SET");
-				if (!importSet(_reduction, _parentNode)) {
-					String content = this.getContent_R(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setComment("This statement cannot be converted into a sensible diagram element!");
-					instr.setColor(Color.RED);
-					instr.disabled = true;
-					_parentNode.addElement(instr);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE)
-			{
-				System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
-				Reduction secRed = _reduction.get(1).asReduction();
-				StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-				String expr = this.getContent_R(secRed.get(2).asReduction(), "");
-				if (targets.count() > 0) {
-					StringList content = StringList.getNew(targets.get(0) + " <- " + expr);
-					for (int i = 1; i < targets.count(); i++) {
-						// FIXME Caution: target.get(0) might be a "reference modification"!
-						content.add(targets.get(i) + " <- " + targets.get(0));
-					}
-					_parentNode.addElement(new Instruction(content));
-				}				
-			}
-			else if (ruleId == RuleConstants.PROD_ADD_STATEMENT_ADD)
-			{
-				System.out.println("PROD_ADD_STATEMENT_ADD");
-				this .importAdd(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT)
-			{
-				System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
-				this.importSubtract(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY)
-			{
-				System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
-				this.importMultiply(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE)
-			{
-				System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
-				this.importDivide(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT)
-			{
-				// Input instruction
-				System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
-				Reduction secRed = _reduction.get(1).asReduction();		// <accept_body>
-				int secRuleId = secRed.getParent().getTableIndex();
-				if (secRuleId == RuleConstants.PROD_ACCEPT_BODY || secRuleId == RuleConstants.PROD_ACCEPT_BODY_FROM3) {
-					// For these types we can offer a conversion
-					String content = getKeywordOrDefault("input", "input");
-					String varName = this.getContent_R(secRed.get(0).asReduction(), "");
-					if (varName.equalsIgnoreCase("OMITTED")) {
-						varName = "";
-					}
-					content += " " + varName;
-					_parentNode.addElement(new Instruction(content.trim()));
-				}
-				else {
-					Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
-					dummy.setComment(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
-							+ this.getOriginalText(_reduction, ""), "\n"));
-					dummy.setColor(Color.RED);
-					dummy.disabled = true;
-					_parentNode.addElement(dummy);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY )
-			{
-				// Output instruction
-				System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
-				// TODO: Identify whether fileAPI s to be used.
-				Reduction secRed = _reduction.get(1).asReduction();	// display body
-				// TODO: Define a specific routine to extract the exressions
-				//String content = this.appendDisplayBody(secRed, "");
-				String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
-				if (content.startsWith(", ")) {
-					content = content.substring(2);
-				}
-				if (content.endsWith(", ")) {
-					content = content.substring(0,  content.length()-2);
-				}
-				content = CodeParser.getKeyword("output") + " " + content;				
-				Instruction instr = new Instruction(content);
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT)
-			{
-				this.importFileControl(_reduction);
-			}
-			else if (ruleId == RuleConstants.PROD_FILE_DESCRIPTION)
-			{
-				System.out.println("PROD_FILE_DESCRIPTION");
-				Reduction fdRed = _reduction.get(0).asReduction();	// <file_description_enry>
-				Reduction reclRed = _reduction.get(1).asReduction();	// <_record_description_list>
-				// TODO map the record names (if any) to the file descriptor name (and vice versa?)
-				// for READ and WRITE statements
-				if (this.getContent_R(fdRed.get(0).asReduction(), "").trim().equalsIgnoreCase("fd")
-						&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
-					String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
-					do {
-						Reduction datRed = reclRed.get(0).asReduction();
-						if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
-							datRed = reclRed.get(1).asReduction();
-							reclRed = reclRed.get(0).asReduction();
-						}
-						else {
-							reclRed = null;
-						}
-						HashMap<String, String> typeMap = new HashMap<String, String>();
-						this.processDataDescriptions(datRed, null, typeMap);
-						for (String recName: typeMap.keySet()) {
-							this.fileRecordMap.put(recName, fdName);
-						}
-					} while (reclRed != null);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_OPEN_STATEMENT_OPEN)
-			{
-				System.out.println("PROD_OPEN_STATEMENT_OPEN");
-				if (!this.importOpen(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_READ_STATEMENT_READ)
-			{
-				System.out.println("PROD_READ_STATEMENT_READ");
-				if (!this.importRead(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_WRITE_STATEMENT_WRITE)
-			{
-				System.out.println("PROD_WRITE_STATEMENT_WRITE");
-				if (!this.importWrite(_reduction, _parentNode)) {
-					String content = this.getOriginalText(_reduction, "");
-					Instruction instr = new Instruction(content);
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-					_parentNode.addElement(instr);
-				}
-			}
-			else if (
-					ruleId == RuleConstants.PROD_REWRITE_STATEMENT_REWRITE
-					||
-					ruleId == RuleConstants.PROD_DELETE_STATEMENT_DELETE)
-			{
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("Structorizer File API does not support indexed or other non-text files");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_CLOSE_STATEMENT_CLOSE)
-			{
-				System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
-				String fileDescr = this.getContent_R(_reduction.get(1).asReduction().get(0).asReduction(), "").trim();
-				Instruction instr = null;
-				if (this.fileMap.containsKey(fileDescr)) {
-					instr = new Instruction("fileClose(" + fileDescr + ")");
-				}
-				else {
-					instr = new Instruction(this.getOriginalText(_reduction, ""));
-					instr.setColor(Color.RED);
-					instr.setComment("TODO: there is still no automatic conversion for this statement");
-				}
-				if (instr != null) {
-					_parentNode.addElement(instr);
-				}
-			}
-			else if (ruleId == RuleConstants.PROD_CALL_STATEMENT_CALL)
-			{
-				this.importCall(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_EXIT_STATEMENT_EXIT)
-			{
-				System.out.println("PROD_EXIT_STATEMENT_EXIT");
-				this.importExit(_reduction, _parentNode);
-			}
-			else if (ruleId == RuleConstants.PROD_GOBACK_STATEMENT_GOBACK )
-			{
-				System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
-				Reduction secRed = _reduction.get(1).asReduction();
-				String content = CodeParser.getKeywordOrDefault("preReturn", "return");
-				if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
-					content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
-				}
-				_parentNode.addElement(new Jump(content.trim()));
-			}
-			else if (
-					ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP
-					||
-					ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP_RUN
-					)
-			{
-				System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
-				int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
-				Reduction secRed = _reduction.get(contentIx).asReduction();
-				String content = CodeParser.getKeywordOrDefault("preExit", "exit");
-				String exitVal = this.getContent_R(secRed, "").trim();
-				if (exitVal.isEmpty()) exitVal = "0";
-				_parentNode.addElement(new Jump(content + " " + exitVal));
-			}
-			else if (ruleId == RuleConstants.PROD_GOTO_STATEMENT_GO)
-			{
-				System.out.println("PROD_GOTO_STATEMENT_GO");
-				String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
-				if (content.toUpperCase().startsWith("TO ")) {
-					content = content.substring(3);
-				}
-				Jump jmp = new Jump("goto " + content);
-				jmp.setColor(Color.RED);
-				jmp.setComment("GO TO statements are not supported in structured programming!");
-				_parentNode.addElement(jmp);
-			}
-			else if (ruleId == RuleConstants.PROD_STRING_STATEMENT_STRING)
-			{
-				System.out.println("PROD_STRING_STATEMENT_STRING");
-				// FIXME: At least add variable name parsing as we have in other places
-				//        and add some line breaks
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING)
-			{
-				System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
-				// FIXME: At least add variable name parsing as we have in other places
-				//        and add some line breaks
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD_SEARCH_STATEMENT_SEARCH)
-			{
-				System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
-				// FIXME: At least add variable name parsing as we have in other places
-				//        and add some line breaks
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
-			}
-			else if (ruleId == RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT)
-			{
-				this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
-			}
-			else if (ruleId == RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT)
-			{
-				if (!this.paramTypeMap.containsKey(root)) {
-					this.paramTypeMap.put(root, new HashMap<String, String>());
-				}
-				// This is not to produce elements but to accomplish the type map, therefore we
-				// don't pass the _parentNode.
-				this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
-			}
-			else
-			{
-				if (_reduction.size()>0)
-				{
-					for(int i=0; i<_reduction.size(); i++)
+					if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 					{
-						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
-						{
-							buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
-						}
+						buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
 					}
 				}
 			}
 		}
-	}	
+	}
 
+	/**
+	 * Tries to build a sensible instruction (sequence) from an imported STRING statement,
+	 * i.e. a string concatenation
+	 * @param _reduction - the STRING statement reduction
+	 * @param _parentNode - Subqueue to append the resulting elements to
+	 * @return indicates whether some halfway usable element (sequence) could be generated
+	 */
+	private boolean importString(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		// <string_body> ::= <string_item_list> INTO <identifier> <_with_pointer> <_on_overflow_phrases>
+		String varName = this.getContent_R(secRed.get(2).asReduction(), "");	// target variable
+		Reduction withRed = secRed.get(3).asReduction();
+		String start = null;	// start position within the target
+		if (withRed.size() > 0) {
+			// <_with_pointer> ::= <_with> POINTER <_is> <identifier>
+			start = this.getContent_R(withRed.get(3).asReduction(), "");
+		}
+		// Now process the items backwards, this way froming an instruction sequence from last to first
+		// This way we avoid unnecessary recursion
+		// IDEA: This approach automatically produces several lines. We might first gather the contributors
+		// and then decide if their concatenation might fit into a single line.
+		StringList assignments = new StringList();
+		StringList preparations = new StringList();
+		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables 
+		Reduction itemlRed = secRed.get(0).asReduction();
+		do {
+			// The first assigment (produced as the last one here) will just overwrite the target variable 
+			String asgnmt = varName + " <- ";
+			Reduction itemRed = itemlRed;	// <string_item> ::= <x> <_string_delimited>
+			if (itemlRed.getParent().getTableIndex() == RuleConstants.PROD_STRING_ITEM_LIST2) {
+				itemRed = itemlRed.get(1).asReduction();
+				itemlRed = itemlRed.get(0).asReduction();
+				// If there are preceding items then simply concatenate the new item content
+				asgnmt += varName + " + ";
+			}
+			else {
+				itemlRed = null;	// Prepare the loop exit
+				if (start != null) {
+					// If there is a start pointer then there will be an additional preparation assignment, so concatenate
+					asgnmt += varName + " + ";
+				}
+			}
+			// Now we analyse the item
+			String itemId = this.getContent_R(itemRed.get(0).asReduction(), "");	// source variable id
+			// Is there some extra delimiter?
+			String delimiter = null;
+			if (itemRed.get(1).asReduction().size() > 0) {
+				// <_string_delimited> ::= DELIMITED <_by> <string_delimiter>
+				delimiter = this.getContent_R(itemRed.get(1).asReduction().get(2).asReduction(), "");
+				if (delimiter.equalsIgnoreCase("SIZE")) {
+					delimiter = null;	// this is a dummy information, not delimiting at all
+				}
+			}
+			asgnmt += itemId;
+			if (delimiter != null) {
+				preparations.add(itemId + suffix + " <- split(" + itemId + ", " + delimiter + ")");
+				asgnmt += suffix + "[0]";
+			}
+			assignments.add(asgnmt);
+		} while (itemlRed != null);
+		// Now if there was a start pointer, an additional preparation is necessary: Replace the target
+		// variable by its prefix left of the pointer (otherwise it will completely be overwritten)
+		if (start != null) {
+			assignments.add(varName + " <- copy(" + varName + ", 1, " + start + ")");
+		}
+		// Append all the preparations to the assignments (such that they be at top afterwards)
+		assignments.add(preparations);
+		// Now add all the assignments in reverse order as a single element
+		Instruction instr = new Instruction(assignments.reverse());
+		instr.setComment(this.getOriginalText(_reduction, ""));
+		_parentNode.addElement(instr);
+		return true;
+	}
+
+	private boolean importUnstring(Reduction _reduction, Subqueue _parentNode) {
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();
+		// <unstring_body> ::= <identifier> <_unstring_delimited> <unstring_into> <_with_pointer> <_unstring_tallying> <_on_overflow_phrases>
+		String source = this.getContent_R(secRed.get(0).asReduction(), "");
+		Reduction delimRed = secRed.get(1).asReduction();
+		StringList delimiters = new StringList();
+		long allFlags = 0;	// one bit for every delimiter = 1 if "ALL" was given, 0 otherwise, first delimiter = last Bit
+		if (delimRed.size() > 0) {
+			Reduction itemlRed = delimRed.get(2).asReduction();
+			do {
+				Reduction itemRed = itemlRed;
+				if (itemlRed.getParent().getHead().toString().equals("<unstring_delimited_list>")) {
+					itemRed = itemlRed.get(2).asReduction();
+					itemlRed = itemlRed.get(0).asReduction();
+				}
+				else {
+					itemlRed = null;
+				}
+				delimiters.add(this.getContent_R(itemRed.get(1).asReduction(), ""));
+				allFlags <<= 1;
+				//if (itemRed.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD_FLAG_ALL_ALL) {
+				if (itemRed.get(0).asReduction().size() > 0) {
+					allFlags |= 1;
+				}
+			} while (itemlRed != null);
+			delimiters = delimiters.reverse();
+		}
+		// The elements of the list are String arrays with following content:
+		// [0] = target variable (or substring), [1] = delim variable or null, [2] = count variable or null
+		LinkedList<String[]> targets = new LinkedList<String[]>();
+		Reduction intoRed = secRed.get(2).asReduction();
+		do {
+			Reduction itemRed = intoRed.get(1).asReduction();
+			if (intoRed.getParent().getTableIndex() == RuleConstants.PROD_UNSTRING_INTO_INTO) {
+				// Just a single item - end of the loop
+				intoRed = null;
+			}
+			else {
+				intoRed = intoRed.get(0).asReduction();
+			}
+			// Make sure that it's not just a comma
+			if (itemRed.getParent().getTableIndex() == RuleConstants.PROD_UNSTRING_INTO_ITEM) {
+				String[] vars = new String[3];
+				for (int i = 0; i < vars.length; i++) {
+					Reduction varRed = itemRed.get(i).asReduction();
+					int varRuleId = varRed.getParent().getTableIndex();
+					if (varRed.size() > 0) {
+						if (i == 0) {
+							vars[i] = this.getContent_R(varRed, "").trim();
+						}
+						else {
+							vars[i] = this.getContent_R(varRed.get(varRed.size()-1).asReduction(), "").trim();
+						}
+					}
+					else {
+						vars[i] = null;
+					}
+				}
+				targets.addFirst(vars);
+			}
+		} while (intoRed != null);
+		String start = null;
+		if (secRed.get(3).asReduction().size() > 0) {
+			start = this.getContent_R(secRed.get(3).asReduction().get(3).asReduction(), "");
+			source = "copy(" + source + ", " + start + ", length(" + source + ") - " + start + ")";
+		}
+		String tallying = null;
+		if (secRed.get(4).asReduction().size() > 0) {
+			tallying = this.getContent_R(secRed.get(4).asReduction().get(2).asReduction(), "");
+		}
+		// Now we have all information together and may compose the resulting algorithm
+		// Since this is significantly easier for a single separator we start with this
+		String suffix = Integer.toHexString(_reduction.hashCode());
+		if (delimiters.count() >= 1) {
+			String content = "unstring_"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
+			String indexVar = "index_" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
+			Instruction instr = new Instruction(content);
+			instr.setComment(this.getOriginalText(_reduction, ""));
+			instr.setColor(colorMisc);
+			_parentNode.addElement(instr);
+			for (int i = 1; i < delimiters.count(); i++) {
+				instr = new Instruction(indexVar + " <- 0");
+				instr.setColor(colorMisc);
+				_parentNode.addElement(instr);
+				For loop = new For("part_" + suffix, "unstring_" + suffix + "_" + (1 - i % 2));
+				loop.setColor(colorMisc);
+				_parentNode.addElement(loop);
+				instr = new Instruction("split_" + suffix + " <- split(part_" + suffix + ", " +delimiters.get(i) + ")");
+				instr.setColor(colorMisc);
+				loop.getBody().addElement(instr);
+				For loop1 = new For("item_" + suffix, "split_" + suffix);
+				loop1.setColor(colorMisc);
+				loop.getBody().addElement(loop1);
+				instr = new Instruction("unstring_" + suffix + "_" + (i % 2) + "[index_" + suffix + "] <- item_" + suffix);
+				instr.setColor(colorMisc);
+				instr.getText().add("inc(index_" + suffix + ", 1)");
+				loop1.getBody().addElement(instr);
+			}
+			suffix += "_" + (1 - delimiters.count() % 2);
+			int index = 0;
+			// FIXME Handling of ALL clausues is still unclear
+			if (!ignoreUnstringAllClauses) {
+				instr = new Instruction(indexVar + " <- 0");
+				instr.setColor(colorMisc);
+				_parentNode.addElement(instr);
+			}
+			for (String[] target: targets) {
+				// If there is an ALL flag set then we have to skip empty substrings from the split result.
+				// The trouble here is: we don't know anymore, which empty part resulted from which
+				// delimiter, and it can hardly be guessed at compile time. We would have to implement a
+				// complex detection mechanism which seems beyond reasonable efforts.
+				String expr = "unstring_" + suffix + "[" + index + "]";
+				boolean all = (allFlags & 1) != 0;
+				{ allFlags >>= 1; }	// Strangely, this instruction without block caused indentation defects in Eclipse
+				// FIXME Handling of ALL clauses is still not correct (see remark above)
+				if (!ignoreUnstringAllClauses) {
+					if (all) {
+						While loop = new While("(" + indexVar + " < length(unstring_" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
+						loop.setColor(colorMisc);
+						_parentNode.addElement(loop);
+						instr = new Instruction("inc(" + indexVar + ", 1)");
+						instr.setColor(colorMisc);
+						loop.getBody().addElement(instr);
+					}
+					expr = "unstring_" + suffix + "[" + indexVar + "]";
+				}
+				
+				StringList assignments = new StringList();
+				if (target[0].matches("^copy\\((.*),(.*),(.*)\\)$")) {
+					assignments.add(target[0].replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
+					assignments.add(target[0].replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
+				}
+				else {
+					assignments.add(target[0] + " <- " + expr);
+				}
+				if (target[2] != null) {	// counter specified?
+					assignments.add(target[2] + " <- length(" + target[0] + ")");
+				}
+				if (target[1] != null) {	// delimiter variable specified?
+					// FIXME This is only okay for the case of a single unique delimiter, otherwise I have no idea how to identify the responsible delimiter (i.e. with justifiable efforts)
+					assignments.add(target[1] + " <- " + delimiters.get(0));
+				}
+				if (tallying != null) {
+					assignments.add("inc(" + tallying + ", 1)");
+				}
+				instr = new Instruction(assignments);
+				instr.setColor(colorMisc);
+				// FIXME Handling of ALL clausues is still unclear
+				String indexStr = (ignoreUnstringAllClauses ? Integer.toString(index) : indexVar);
+				Alternative alt = new Alternative("length(unstring_" + suffix + ") > " + indexStr);
+				alt.setColor(colorMisc);
+				_parentNode.addElement(alt);
+				alt.qTrue.addElement(instr);
+				// FIXME Handling of ALL clausues is still unclear
+				if (!ignoreUnstringAllClauses) {
+					instr = new Instruction("inc(" + indexVar + ", 1)");
+					instr.setColor(colorMisc);
+					_parentNode.addElement(instr);
+				}
+
+				index++;
+			}
+			done = true;
+		}
+		return done;
+	}
+
+	private boolean importAccept(Reduction _reduction, Subqueue _parentNode) {
+		boolean done = false;
+		Reduction secRed = _reduction.get(1).asReduction();		// <accept_body>
+		int secRuleId = secRed.getParent().getTableIndex();
+		Reduction targetRed = secRed.get(0).asReduction();
+		String varName = this.getContent_R(targetRed, "");
+		if (varName.equalsIgnoreCase("OMITTED")) {
+			varName = "";
+		}
+		if (secRuleId == RuleConstants.PROD_ACCEPT_BODY || secRuleId == RuleConstants.PROD_ACCEPT_BODY_FROM3) {
+			// For these types we can offer a conversion
+			String content = getKeywordOrDefault("input", "input");
+			content += " " + varName;
+			_parentNode.addElement(new Instruction(content.trim()));
+			done = true;
+		}
+		else if (!varName.isEmpty()) {
+			String content = "";
+			String comment = null;
+			boolean requiresManualAction = true;
+			switch (secRuleId) {
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_TIME:
+				content = varName + " <- " + "getTime()";
+				break;
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DATE:
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DATE_YYYYMMDD:
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DAY:
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_DAY_YYYYDDD:
+				content = varName + " <- " + "getDate()";
+				comment = this.getOriginalText(_reduction, "");
+				break;
+			case RuleConstants.PROD_ACCEPT_BODY_FROM_ENVIRONMENT:
+				content = this.getContent_R(secRed.get(3).asReduction(), "");
+				content = varName + " <- System.getenv(" + content + ")";
+			}
+			if (!content.trim().isEmpty()) {
+				Instruction instr = new Instruction(content.trim());
+				if (requiresManualAction) {
+					instr.setColor(colorMisc);
+				}
+				if (comment != null) {
+					instr.setComment(comment);
+				}
+				_parentNode.addElement(instr);
+				done = true;
+			}
+		}
+		return done;
+	}
+
+	private void importMove(Reduction _reduction, Subqueue _parentNode) {
+		Reduction secRed = _reduction.get(1).asReduction();
+		String expr = this.getContent_R(secRed.get(0).asReduction(), "");
+		// FIXME: This doesn't work for array elements - we need an expression list splitter
+		// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
+		//String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
+		//String[] targets;
+		// FIXME: the unwanted "," should not be passed to the engine at all,
+		// we currently split "literal, with a comma in" into two targets
+		//if (targetString.contains(",")) {
+		//	targets = targetString.split(",");
+		//}
+		//else {
+		//	targets = targetString.split(" ");
+		//}
+		//if (targets.length > 0) {
+		StringList targets = this.getExpressionList(secRed.get(2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		if (targets.count() > 0)
+		{
+			StringList assignments = new StringList();
+			for (int i = 0; i < targets.count(); i++) {
+				String target = targets.get(i).trim();
+				// We must do something to avoid copy() calls on the left-hand side
+				if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
+					assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
+					assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
+				}
+				else {
+					assignments.add(target + " <- " + expr);
+					if (i == 0) {
+						expr = target;
+					}
+				}
+			}
+			_parentNode.addElement(new Instruction(assignments));
+		}
+	}
+
+	private void importIf(Reduction _reduction, Subqueue _parentNode) {
+		String content = this.transformCondition(_reduction.get(1).asReduction(), "");
+		System.out.println("\tCondition: " + content);
+		Reduction secRed = _reduction.get(3).asReduction();
+		int secRuleId = secRed.getParent().getTableIndex();
+		Reduction trueRed = null;
+		Reduction falseRed = null;
+		switch (secRuleId) {
+		case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE:
+			trueRed = secRed.get(0).asReduction();
+			falseRed = secRed.get(2).asReduction();
+			break;
+		case RuleConstants.PROD_IF_ELSE_STATEMENTS_ELSE2:
+			trueRed = secRed.get(1).asReduction();
+			content = negateCondition(content);
+			break;
+		default:
+			trueRed = secRed;
+			break;
+		}
+		Alternative alt = new Alternative(content);
+		if (trueRed != null) {
+			System.out.println("\tTHEN branch...");
+			this.buildNSD_R(trueRed, alt.qTrue);
+		}
+		if (falseRed != null) {
+			System.out.println("\tELSE branch...");
+			this.buildNSD_R(falseRed, alt.qFalse);
+		}
+		if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
+			alt.qTrue = alt.qFalse;
+			alt.qFalse = new Subqueue();
+			alt.qFalse.parent = alt;
+			alt.setText(negateCondition(content));
+		}
+		_parentNode.addElement(alt);
+		System.out.println("\tEND_IF");
+	}
+
+	/** Resolve SET var [var2,var3] TO TRUE | FLASE */
 	private boolean importSet(Reduction _reduction, Subqueue _parentNode) {
 		boolean done = false;
 		Reduction secRed = _reduction.get(1).asReduction();	// <set_body>
 		int secRuleId = secRed.getParent().getTableIndex();
 		switch (secRuleId) {
-		case RuleConstants.PROD_SET_TO_TO:
+		// COBOL: SET index1, index2 index3 TO index (or number) 
+		case RuleConstants.PROD_SET_TO_TO:	// <set_to> ::= <target_x_list> TO <x>
 		{
 			String expr = this.getContent_R(secRed.get(2).asReduction(), "");
 			StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
@@ -4868,40 +5358,48 @@ public class COBOLParser extends CodeParser
 				StringList assignments = new StringList();
 				for (int i = 0; i < targets.count(); i++) {
 					String target = targets.get(i).trim();
-					if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
-						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
-						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
-					}
-					else {
+					// We must do something to avoid copy() calls on the left-hand side
+//					Simon: should not be necessary here, at least as long as we have "valid" COBOL sources
+//					if (target.matches("^copy\\((.*),(.*),(.*)\\)$")) {
+//						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", "delete($1, $2, $3)"));
+//						assignments.add(target.replaceFirst("^copy\\((.*),(.*),(.*)\\)$", Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
+//					}
+//					else {
 						assignments.add(target + " <- " + expr);
-					}
+//					}
 				}
 				_parentNode.addElement(new Instruction(assignments));
 				done = true;
 			}
 			break;
 		}
+		// COBOL: SET var1 TO TRUE  var2 TO TRUE  var3 TO FALSE 
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE:
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE2:
 		{
 			Reduction setRed = secRed;
 			StringList assignments = new StringList();
 			do {
+				// more entries to come?
 				if (secRuleId == RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE2) {
 					setRed = secRed.get(1).asReduction();
 					secRed = secRed.get(0).asReduction();
+					secRuleId = secRed.getParent().getTableIndex();
 				}
 				else {
+					setRed = secRed;
 					secRed = null;
 				}
 				this.addBoolAssignments(setRed, assignments);
 			} while (secRed != null);
 			if (assignments.count() > 0) {
+				assignments = assignments.reverse();
 				_parentNode.addElement(new Instruction(assignments));
 			}
 			done = true;
 			break;
 		}
+		// COBOL: SET var1 TO TRUE | FALSE 
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_TRUE:
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_FALSE:
 		{
@@ -4924,10 +5422,35 @@ public class COBOLParser extends CodeParser
 	 * @param assignments
 	 */
 	private void addBoolAssignments(Reduction setRed, StringList assignments) {
-		String value = setRed.get(2).asString();
+		String value = setRed.get(2).asString();	// gets "true" or "false"
 		StringList targets = this.getExpressionList(setRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		for (int i = 0; i < targets.count(); i++) {
-			assignments.add(targets.get(i) + " <- " + value);
+			// resolve condName to get the original name and value assigned to the condition
+			// Note: this can only work correctly for "complete" sources, 
+			//       not possible if we haven't parsed the condition variable before
+			//       therefore we leave the fallback "condition-name <- true/false"
+			String condName = targets.get(i);
+			CobVar condVar = currentProg.getCobVar(condName);
+			if (condVar != null) {
+				String newValue;
+				if (value.equals("true")) {
+					newValue = condVar.getValueFirst();
+				} else {
+					newValue = condVar.getValueFalse();
+				}
+				// check if we actually have a true/false saved
+				if (newValue != null) {
+					String varName = condVar.getParent().getName();
+					assignments.add(varName + " <- " + newValue);
+					// Idea: we could place all the true/false values that are *actually set*
+					//       into a list of "const condName$value = newvalue", insert these
+					//       into the end of the import NSD and do the following here
+					// assignments.add(varName + " <- " + condName + "$" + value);
+					continue;
+				}
+			}
+			// not found in variable list: leave as is
+			assignments.add(condName + " <- " + value);
 		}
 	}
 
@@ -4961,8 +5484,9 @@ public class COBOLParser extends CodeParser
 		_parentNode.addElement(ele);
 	}
 
-	private void importFileControl(Reduction _reduction) {
+	private void importFileControl(Reduction _reduction, Subqueue _subqueue) {
 		String fileDescr = this.getContent_R(_reduction.get(2).asReduction(), "");
+		boolean isSuited = true;
 		// Now fetch the file name (if available) and make sure it's a line-sequential file
 		// (otherwise we can't provide FileAPI support)
 		Reduction selsRed = _reduction.get(3).asReduction().get(0).asReduction();
@@ -4985,9 +5509,19 @@ public class COBOLParser extends CodeParser
 			else if (selHead.equals("<organization_clause>")) {
 				// TODO make sure it's a text file
 				if (selRed.get(selRed.size()-1).asReduction().getParent().getTableIndex() != RuleConstants.PROD_ORGANIZATION_LINE_SEQUENTIAL) {
-					log("File organization of '" + fileDescr + "' unsuited for FleAPI!", false);
+					log("File organization of '" + fileDescr + "' unsuited for Structorizer FileAPI!", false);
+					isSuited = false;
 				}
 			}
+		}
+		if (this.optionImportVarDecl) {
+			Instruction decl = new Instruction("var " + fileDescr + ": int");
+			decl.setComment(this.getOriginalText(_reduction, ""));
+			if (!isSuited) {
+				decl.comment.add("Unsuited for Structorizer FileAPI!");
+			}
+			decl.setColor(isSuited ? colorDecl : Color.RED);
+			_subqueue.addElement(decl);
 		}
 	}
 
@@ -5028,8 +5562,55 @@ public class COBOLParser extends CodeParser
 	}
 
 	private boolean importRead(Reduction _reduction, Subqueue _parentNode) {
-		// TODO: Find a sensible conversion!
-		return false;
+		boolean done = false;
+		// <read_body> ::= <file_name> <_flag_next> <_record> <read_into> <lock_phrases> <read_key> <read_handler>
+		Reduction bodyRed = _reduction.get(1).asReduction();
+		// <_flag_next> - we support only forward reading
+		if (bodyRed.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD__FLAG_NEXT_PREVIOUS) {
+			return false;
+		}
+		String fdName = this.getContent_R(bodyRed.get(0).asReduction(), "");	// File descriptor
+		String target = null;
+		Reduction intoRed = bodyRed.get(3).asReduction();
+		if (intoRed.getParent().getTableIndex() == RuleConstants.PROD_READ_INTO_INTO) {
+			target = this.getContent_R(intoRed.get(1).asReduction(), ""); 
+		}
+		// Without an INTO clause we will have to search the file record map
+		if (target == null) {
+			// ... the entry should be unique then. Unfortunately we have to search backwards
+			for (Entry<String, String> entry: this.fileRecordMap.entrySet()) {
+				if (fdName.equalsIgnoreCase(entry.getValue())) {
+					target = entry.getKey();
+					break;
+				}
+			}
+		}
+		if (target != null) {
+			String fnName = "fileRead";	// The default function name
+			// In order to find the best fileRead function we try to get the typ info from root
+			TypeMapEntry typeInfo = root.getTypeInfo().get(target);
+			if (typeInfo != null && typeInfo.isConflictFree()) {
+				String type = typeInfo.getTypes().get(0);
+				if (type.equals("int") || type.equals("integer") || type.equals("short") || type.equals("long")) {
+					fnName = "fileReadInit";
+				}
+				else if (type.equals("double") || type.equals("float")) {
+					fnName = "fileReadDouble"; 
+				}
+				else if (type.equals("char")) {
+					fnName = "fileReadChar";
+				}
+				else if (type.equalsIgnoreCase("string")) {
+					fnName = "fileReadLine";
+				}
+			}
+			// we just ignore the lock clause 
+			Instruction instr = new Instruction(target + " <- " + fnName + "(" + fdName + ")");
+			instr.setComment(this.getOriginalText(_reduction, ""));
+			_parentNode.addElement(instr);
+			done = true;
+		}
+		return done;
 	}
 
 	private boolean importOpen(Reduction _reduction, Subqueue _parentNode) {
@@ -5289,6 +5870,7 @@ public class COBOLParser extends CodeParser
 		switch (secRuleId) {
 		case RuleConstants.PROD_EXIT_BODY:	// (empty)
 			content = "(exit from paragraph)";
+			color = colorMisc;
 			break;
 		case RuleConstants.PROD_EXIT_BODY_PROGRAM:	// <exit_body> ::= PROGRAM <exit_program_returning>
 		case RuleConstants.PROD_EXIT_BODY_FUNCTION:	// <exit_body> ::= FUNCTION
@@ -5329,7 +5911,6 @@ public class COBOLParser extends CodeParser
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
 	private final void importPerform(Reduction _reduction, Subqueue _parentNode) {
-		System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
 		// We will have to find out what kind of loop this is.
 		// In the worst case the body is just a paragraph name (PROD_PERFORM_BODY), which
 		// forces us to find that paragraph and to copy its content into the body Subqueue.
@@ -5451,17 +6032,19 @@ public class COBOLParser extends CodeParser
 			buildPerformCall(bodyRed, _parentNode);
 			break;
 		default:
-			// CHECKME: Should never be reached	any more
+			// CHECKME: Should never be reached	anymore
 			System.err.println("UNRECOGNIZED: Index " + optRed.getParent().getTableIndex() + " " + this.getContent_R(_reduction, ""));
 			buildPerformCall(bodyRed, _parentNode);
 		}
 		if (loop != null) {
 			switch (bodyRed.getParent().getTableIndex()) {
 			case RuleConstants.PROD_PERFORM_BODY:
+				// <perform_body> ::= <perform_procedure> <perform_option>
 				// a macro (block) within a loop:	PERFORM x UNTIL ...
  				this.buildPerformCall(bodyRed, loop.getBody());
 				break;
 			case RuleConstants.PROD_PERFORM_BODY2:
+				// <perform_body> ::= <perform_option> <statement_list> <end_perform>
 				this.buildNSD_R(bodyRed.get(1).asReduction(), loop.getBody());
 				break;
 			default:
@@ -5478,17 +6061,25 @@ public class COBOLParser extends CodeParser
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) {
-		System.out.println("PROD_PERFORM_BODY");
+		// <perform_body> ::= <perform_procedure> <perform_option>
 		// Ideally we find the named label and either copy its content into the body Subqueue or
 		// export it to a new NSD.
-		String content = this.getContent_R(_reduction.get(0).asReduction(), "").trim().replace(' ', '_') + "()";
-		if (Character.isDigit(content.charAt(0))) {
-			content = "sub" + content;
+		String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+		if (Character.isDigit(name.charAt(0))) {
+			name = "sub" + name;
 		}
+		String content = name + "()";
 		Call dummyCall = new Call(content);
 		dummyCall.setColor(Color.RED);
-		dummyCall.setComment("Seems to be a call of an internal paragraph/macro, which is still not supported");
+		dummyCall.setComment("This was a call of an internal section or paragraph, the support for which is still lacking");
 		_parentNode.addElement(dummyCall);
+		// Now we register the call for later linking
+		LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
+		if (otherCalls == null) {
+			otherCalls = new LinkedList<Call>();
+			this.internalCalls.put(name.toLowerCase(), otherCalls);
+		}
+		otherCalls.add(dummyCall);
 	}
 
 	/**
@@ -5498,7 +6089,6 @@ public class COBOLParser extends CodeParser
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 */
 	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) {
-		System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
 		// Possibly a CASE instruction, may have to be decomposed to an IF chain.
 		Reduction secRed = _reduction.get(1).asReduction();	// <evaluate_body>
 		Reduction subjlRed = secRed.get(0).asReduction();	// <evaluate_subject_list>
@@ -5814,8 +6404,7 @@ public class COBOLParser extends CodeParser
 		{
 			// NOTE: we can never get any constants here as there are seperate rules for them
 			System.out.println("PROD_DATA_DESCIPTION4");
-			// FIXME In a first approach we neglect records where we need the level number
-			// and declare all as plain variables
+
 			int level = 0;
 			try {
 				level = Integer.parseInt(this.getContent_R(_reduction.get(0).asReduction(), ""));
@@ -5826,146 +6415,184 @@ public class COBOLParser extends CodeParser
 			// as long as we don't use records there is no use in parsing FILLER
 			// items and as long as we do so group items that have no VALUE clause and
 			// only containing FILLER items which have a VALUE clause are not parsed correctly
-			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {
+//			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {
 				Reduction seqRed = _reduction.get(2).asReduction();
-				String type = "";
-				String value = "";
-				String picture = "";
+				String value = null;
+				String valueFalse = null;
+				String picture = null;
+				String redefines = null;
+				CobTools.Usage usage = null;
 				boolean isGlobal = false;
+				boolean isExternal = false;
+				int anyLength = 0;
 				// We may not do anything if description is empty
 				while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
 					Reduction descrRed = seqRed.get(1).asReduction();
 					int descrRuleId = descrRed.getParent().getTableIndex();
 					switch (descrRuleId) {
-					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
-						picture = descrRed.get(0).asReduction().get(0).asString();
-						break;
+//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
+//						// CHECKME: do we still need this?
+////						picture = descrRed.get(0).asReduction().get(0).asString();
+//						break;
 					case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
-						picture = descrRed.get(0).asString();
+						picture = descrRed.get(0).asString().split("\\s+", 3)[1];
+						// assume the first token to be PIC or PICTURE and a second token to be available
+						//(otherwise the grammar has a defect) 
 						break;
-					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE5: // <usage_clause> --> type info
-						{
-							String usage = this.getContent_R(descrRed.get(1).asReduction(), "").toLowerCase();
-							final String[] binTypes = new String[]{"float", "double", "short", "int", "long"};
-							for (String typeKey: binTypes) {
-								if (usage.contains(typeKey)) {
-									type = typeKey;
-									break;
-								}
-							}
-						}
+//					the following goes directly to default	
+//					case RuleConstants.PROD_USAGE_CLAUSE: // <usage_clause> ::= <usage>
+//						usage = getUsageFromReduction(descrRed.get(0).asReduction());
+//						break;
+					case RuleConstants.PROD_USAGE_CLAUSE_USAGE: // <usage_clause> ::= USAGE <_is> <usage> --> type info
+						usage = getUsageFromReduction(descrRed.get(2).asReduction());
 						break;
-					case RuleConstants.PROD_USAGE:                             // <usage> ::= <float_usage>
-						type = "float";
-						break;							
-					case RuleConstants.PROD_USAGE2:                            // <usage> ::= <double_usage>
-						type = "double";
-						break;
-					case RuleConstants.PROD_USAGE_DISPLAY:                     // <usage> ::= DISPLAY
-						type = "string";
-						break;
-					case RuleConstants.PROD_USAGE_POINTER:                     // <usage> ::= POINTER
-					case RuleConstants.PROD_USAGE_PROGRAM_POINTER:             // <usage> ::= 'PROGRAM_POINTER'
-						// Address types cannot be handled by Structorizer
-						type = "pointer";
-						break;
-					case RuleConstants.PROD_USAGE_BINARY_CHAR:                 // <usage> ::= 'BINARY_CHAR' <_signed>
-					case RuleConstants.PROD_USAGE_BINARY_CHAR_UNSIGNED:        // <usage> ::= 'BINARY_CHAR' UNSIGNED
-						type = "byte";
-						break;
-					case RuleConstants.PROD_USAGE_SIGNED_SHORT:                // <usage> ::= 'SIGNED_SHORT'
-					case RuleConstants.PROD_USAGE_UNSIGNED_SHORT:              // <usage> ::= 'UNSIGNED_SHORT'
-					case RuleConstants.PROD_USAGE_BINARY_SHORT:                // <usage> ::= 'BINARY_SHORT' <_signed>
-					case RuleConstants.PROD_USAGE_BINARY_SHORT_UNSIGNED:       // <usage> ::= 'BINARY_SHORT' UNSIGNED
-						type = "short";
-						break;
-					case RuleConstants.PROD_USAGE_INDEX:                       // <usage> ::= INDEX
-					case RuleConstants.PROD_USAGE_SIGNED_INT:                  // <usage> ::= 'SIGNED_INT'
-					case RuleConstants.PROD_USAGE_UNSIGNED_INT:                // <usage> ::= 'UNSIGNED_INT'
-					case RuleConstants.PROD_USAGE_SIGNED_LONG:                 // <usage> ::= 'SIGNED_LONG'
-					case RuleConstants.PROD_USAGE_UNSIGNED_LONG:               // <usage> ::= 'UNSIGNED_LONG'
-						type = "integer";
-						break;
-					case RuleConstants.PROD_USAGE_COMP_4:                      // <usage> ::= 'COMP_4'
-					case RuleConstants.PROD_USAGE_COMP_5:                      // <usage> ::= 'COMP_5'
-					case RuleConstants.PROD_USAGE_COMP_6:                      // <usage> ::= 'COMP_6'
-					case RuleConstants.PROD_USAGE_COMP_X:                      // <usage> ::= 'COMP_X'
-					case RuleConstants.PROD_USAGE_BINARY_LONG:                 // <usage> ::= 'BINARY_LONG' <_signed>
-					case RuleConstants.PROD_USAGE_BINARY_LONG_UNSIGNED:        // <usage> ::= 'BINARY_LONG' UNSIGNED
-					case RuleConstants.PROD_USAGE_BINARY_C_LONG:               // <usage> ::= 'BINARY_C_LONG' <_signed>
-					case RuleConstants.PROD_USAGE_BINARY_C_LONG_UNSIGNED:      // <usage> ::= 'BINARY_C_LONG' UNSIGNED
-					case RuleConstants.PROD_USAGE_BINARY_DOUBLE:               // <usage> ::= 'BINARY_DOUBLE' <_signed>
-					case RuleConstants.PROD_USAGE_BINARY_DOUBLE_UNSIGNED:      // <usage> ::= 'BINARY_DOUBLE' UNSIGNED
-						type = "long";
-						break;
-					case RuleConstants.PROD_USAGE_FLOAT_BINARY_32:             // <usage> ::= 'FLOAT_BINARY_32'
-					case RuleConstants.PROD_FLOAT_USAGE_COMP_1:
-					case RuleConstants.PROD_FLOAT_USAGE_FLOAT_SHORT:
-						type = "float";
-						break;
-					case RuleConstants.PROD_USAGE_COMP_3:                      // <usage> ::= 'COMP_3'
-					case RuleConstants.PROD_USAGE_PACKED_DECIMAL:              // <usage> ::= 'PACKED_DECIMAL'
-					case RuleConstants.PROD_USAGE_FLOAT_BINARY_64:             // <usage> ::= 'FLOAT_BINARY_64'
-					case RuleConstants.PROD_USAGE_FLOAT_BINARY_128:            // <usage> ::= 'FLOAT_BINARY_128'
-					case RuleConstants.PROD_USAGE_FLOAT_DECIMAL_16:            // <usage> ::= 'FLOAT_DECIMAL_16'
-					case RuleConstants.PROD_USAGE_FLOAT_DECIMAL_34:            // <usage> ::= 'FLOAT_DECIMAL_34'
-					case RuleConstants.PROD_DOUBLE_USAGE_FLOAT_LONG:
-					case RuleConstants.PROD_DOUBLE_USAGE_COMP_2:
-						type = "double";
-						break;
-					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
-						// FIXME: this is a quick and dirty hack
-						value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
-						break;
-					case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> --> initialisation
+//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE5: // <usage_clause> --> type info
+//						{
+//							// CHECKME: do we still need this?
+//							String usageStr = this.getContent_R(descrRed.get(1).asReduction(), "").toLowerCase();
+////							final String[] binTypes = new String[]{"float", "double", "short", "int", "long"};
+////							for (String typeKey: binTypes) {
+////								if (usageStr.contains(typeKey)) {
+////									type = typeKey;
+////									break;
+////								}
+////							}
+//						}
+//						break;
+//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
+//						
+//						/	/ CHECKME: do we still need this?
+//						// FIXME: this is a quick and dirty hack
+//						value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
+//						break;
+					case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> ::= VALUE <_is_are> <value_item_list> <_false_is>
+						// note: only one entry for value clause of plain data items, no false clause
 						value = this.getContent_R(descrRed.get(2).asReduction(), "");
 						break;
-					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
-					case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:
-						// FIXME Is this to be put to a globals Root or is the current diagram serving as an import Root?
+					case RuleConstants.PROD_REDEFINES_CLAUSE_REDEFINES: // <redefines_clause> ::= REDEFINES <identifier_1>
+						// shares the same memory area
+						// FIXME at least add a comment
+						redefines = this.getContent_R(descrRed.get(1).asReduction(), "");
+						break;
+					case RuleConstants.PROD_EXTERNAL_CLAUSE_EXTERNAL: // <external_clause>
+						// only occurs on level 01/77, this record or single variable shares the same value in *independent* programs
+						// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need to share this
+						// variable in a single IMPORT NSD (name: var name)
+						isExternal = true;
+						break;
+//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
+					case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:	//<global_clause> ::= <_is> GLOBAL
+						// only occurs on level 01/77, this record or single variable shares the same value in *nested* programs
+						// in general this is a rare cause but to be "correct" we would need to share this
+						// variable in a single IMPORT NSD (name: first program's name that uses it + var name)
 						isGlobal = true;
 						break;
+					case RuleConstants.PROD_ANY_LENGTH_CLAUSE_ANY_LENGTH: // <any_length_clause> ::= ANY LENGTH
+						// only occurs on level 01/77, variable is alphanumeric and can have any length
+						anyLength = 1;
+						break;
+					case RuleConstants.PROD_ANY_LENGTH_CLAUSE_ANY_NUMERIC: // <any_length_clause> ::= ANY NUMERIC
+						// only occurs on level 01/77, variable is numeric, can have any usage and can have any length
+						anyLength = 2;
+						break;
+					default:
+						// a variable without USAGE explicit given (77 myvar COMP-2) goes here;
+						usage = getUsageFromReduction(descrRed);
 					}
 					seqRed = seqRed.get(0).asReduction();
 				}
-				if (!picture.isEmpty()) {
-					type = deriveTypeInfoFromPic(picture);
+				
+				CobVar currentVar = cobTools.new CobVar(level, varName, picture, usage, value, currentProg.getCobVar(redefines), isGlobal, isExternal, anyLength);
+				currentProg.insertVar(currentVar);
+				
+				// TODO: postpone generation of NSD elements until everything is parsed
+				//       we now can always get the start variable of each section with CobProg.getWorkingStorage(), CobProg.getLinkage(), ... 
+				//       and iterate by CobVar.sister, subs in CobVar.child, ... - with the complete type declarations! 
+				String type;
+				// special case for Structorizer: record
+				// later (only possible if postponed)
+//				if (currentVar.hasChild()) {
+//					type = "record";
+//				} else {
+					type = CobTools.getTypeString(currentVar);
+//				}
+				// hack until then...
+				if (type.equals("-unknown-type-")) {
+					type = "record";
 				}
-				// START SSO 2017-05-12
-				//if (!type.isEmpty() && !isConst) {
-				// if we still haven't got a type we're parsing a group item without usage
-				// --> this is always seen as COBOL alphanumeric (internal like a byte[]) -> set to string
-				if (type.isEmpty()) {
-					type = "string";
-				}
-				// END SSO 2017-05-12
 				if (_parentNode != null && this.optionImportVarDecl) {
 					// Add the declaration
-					Instruction decl = new Instruction("var " + varName + ": " + type);
-					decl.setComment(picture);
-					decl.setColor(colorDecl);
-					_parentNode.addElement(decl);
+					String declText = "var " + varName + ": " + type;
+					// provide global/exernal redefines as comment
+					String commentText = "";
+					if (picture != null) {
+						// START KGU 2017-06-24: Without the "pic" word the comment would be rather puzzling
+						//commentText = picture;
+						commentText = "pic " + picture;
+						// END KGU 2017-06-24
+					}
+					if (isGlobal) {
+						commentText += " (GLOBAL)";
+					} else if (isExternal) {
+						commentText += " (EXTERNAL)";
+					} else if (redefines != null && !redefines.isEmpty()) {
+						commentText += " REDEFINES " + redefines;
+					}
+					//if (level == 1 || this.previousDeclaration == null) {
+					if (level == 1 || level == 77) {
+						Instruction decl = new Instruction(declText);
+						decl.setComment(commentText);
+						decl.setColor(colorDecl);
+						_parentNode.addElement(decl);
+						this.previousDeclaration = decl;
+						this.previousDeclarationLevelDepth = 1;
+						this.previousDeclarationLevelNumber = 1;
+					}
+					else {
+						// at least optically we show the nesting depth
+						if (this.previousDeclarationLevelNumber > level) {
+							this.previousDeclarationLevelDepth--;
+						} else if (this.previousDeclarationLevelNumber < level) {
+							this.previousDeclarationLevelDepth++;
+						}
+						this.previousDeclarationLevelNumber = level;
+						String intend = new String(new char[this.previousDeclarationLevelDepth]).replace("\0", "  ");
+						this.previousDeclaration.getText().add(intend + declText);
+						this.previousDeclaration.getComment().add(intend + varName + ":\t" + commentText);
+					}
 				}
 				if (_typeInfo != null) {
 					_typeInfo.put(varName, type);
 				}
-				if (!value.isEmpty() && _parentNode != null) {
+				if (_parentNode != null && value != null && !value.isEmpty()) {
 					// Add the assignment
-					//FIXME hexadecimal literals and other literal types must be converted (each literal tpye has its own
-					// terminal, otherwise the Executor doesn't know what x'09' is)
-					if (value.equalsIgnoreCase("zero") || value.equalsIgnoreCase("zeros")) {	// FIXME should no longer be necessary here
-						value = "0";
+					// Note: literal types like hexadecimal literals and the figurative constants SPACE/ZERO/NULL 
+					//       are converted by getContent_R already
+					
+					String initVal = value; 
+					if (currentVar.isNumeric()) {
+						if (initVal.equals("0")) {
+							initVal = "";
+						} else if (!this.optionImportVarDecl && !type.startsWith("0") && !type.endsWith("f ")) {
+							// Hack for now to force the Executor to use long/double data type,
+							// only necessary if the info is missing in the Executor because we have no Declarations
+							// and only done if literal hasn't type indicators already
+							// FIXME: Shouldn't be necessary, the Executor should cater for this already
+							if (type.equals("long")) {
+								value = value + "L";
+							} else if (type.equals("double")) {
+								value = value + "d";
+							}
+						}
+					} else if (value.equalsIgnoreCase("space") || value.matches("[\"\'] +[\"\']")) {
+						initVal = "";
 					}
-					//FIXME: Hack for now to force the Executor to use double data type for too big literals
-					// we should pass the datatype from deriveTypeInfo instead (and return "long" there)
-					if ((type.equals("long") || type.equals("integer"))
-							&& value.length() > 9) {
-						value = value + "L";
+					if (!initVal.isEmpty()) {
+						String content = currentVar.getName() + " <- " + initVal;
+						Instruction def = new Instruction(content);
+						// FIXME: in case of isGlobal / IsExternal enforce the placement in a global diagram to be imported wherever needed
+						_parentNode.addElement(def);
 					}
-					String content = varName + " <- " + value;
-					Instruction def = new Instruction(content);
-					// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
-					_parentNode.addElement(def);
 				}
 				//TODO stash the variables without a value clause somewhere to add
 				// all definitions that are used as variables within the NSD later, otherwise
@@ -5973,7 +6600,7 @@ public class COBOLParser extends CodeParser
 //				else {
 //					stashVariable(varName, type);
 //				}
-			}
+//			}
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_CONSTANT) {
 			boolean isGlobal = _reduction.get(3).asReduction().getParent().getTableIndex() == RuleConstants.PROD_CONST_GLOBAL_GLOBAL;
@@ -5981,13 +6608,17 @@ public class COBOLParser extends CodeParser
 			// NOTE: While the current grammar does not allow it we could have a constant expression here:
 			// 01 myconst AS CONSTANT 55 - 33 / 12.
 			String value = this.getContent_R(_reduction.get(4).asReduction().get(1).asReduction(), "");
+			
+			CobVar currentVar = cobTools.new CobVar(1, constName, value, isGlobal);
+			currentProg.insertVar(currentVar);
+			
 			String type = Element.identifyExprType(null, value, true);
 			if (!type.isEmpty() && _typeInfo != null) {
 				_typeInfo.put(constName, type);
 			}
 			// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 			if (_parentNode != null) {
-				Instruction def = new Instruction("const " + constName + " <- " + value);
+				Instruction def = new Instruction("const " + currentVar.getName() + " <- " + value);
 				def.setColor(colorConst);
 				_parentNode.addElement(def);
 			}
@@ -6000,6 +6631,10 @@ public class COBOLParser extends CodeParser
 			Reduction valClRed = _reduction.get(3).asReduction(); // <value_clause>
 			StringList values = this.getExpressionList(valClRed.get(2).asReduction(), "<value_item_list>",
 					RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM); // FIXME: the parser should not get the COMMA_DELIM and normally spaces are used
+			
+			CobVar currentVar = cobTools.new CobVar(78, constName, values.get(0), isGlobal);
+			currentProg.insertVar(currentVar);
+			
 			String value = null;
 			String type = ""; // unused
 			if (values.count() == 1) {
@@ -6011,10 +6646,29 @@ public class COBOLParser extends CodeParser
 			}
 			if (_parentNode != null && value != null) {
 				// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
-				Instruction def = new Instruction("const " + constName + " <- " + value);
+				Instruction def = new Instruction("const " + currentVar.getName() + " <- " + value);
 				def.setColor(colorConst);
 				_parentNode.addElement(def);
 			}
+		}
+		else if (ruleId == RuleConstants.PROD_CONDITION_NAME_ENTRY_EIGHTY_EIGHT) {
+			// <condition_name_entry> ::= 'EIGHTY_EIGHT' <user_entry_name> <value_clause>
+			String condName = this.getContent_R(_reduction.get(1).asReduction(), "");
+			String valueFalse = null;
+			String[] values = null;
+			
+			Reduction valClRed = _reduction.get(2).asReduction(); // result: <value_clause> ::= VALUE <_is_are> <value_item_list> <_false_is>
+			StringList valuesList = this.getExpressionList(valClRed.get(2).asReduction(), "<value_item_list>",
+					RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM); // FIXME: the parser should not get the COMMA_DELIM and normally spaces are used
+			Reduction valFalseRed = valClRed.get(3).asReduction(); // result: <_false_is> ::= <_when_set_to> 'TOK_FALSE' <_is> <lit_or_length>
+			if (valFalseRed != null && !valFalseRed.isEmpty()) {
+				valueFalse = this.getContent_R(valFalseRed.get(3).asReduction(), "");
+			}
+			
+			values = valuesList.toArray();
+
+			CobVar currentVar = cobTools.new CobVar(condName, values, valueFalse);
+			currentProg.insertVar(currentVar);
 		}
 		else {
 			for (int i = 0; i < _reduction.size(); i++) {
@@ -6023,6 +6677,94 @@ public class COBOLParser extends CodeParser
 				}
 			}
 		}
+	}
+
+	private Usage getUsageFromReduction(Reduction usageRed) {
+		// TODO Auto-generated method stub
+		int descrRuleId = usageRed.getParent().getTableIndex();
+		switch (descrRuleId) {
+//		Should not be needed as we check the sub-values directly
+		case RuleConstants.PROD_USAGE:                             // <usage> ::= <float_usage>
+//			return CobTools.Usage.USAGE_FLOAT;                    // COMP-1 + FLOAT-SHORT
+			return getUsageFromReduction(usageRed.get(0).asReduction());
+		case RuleConstants.PROD_USAGE2:                            // <usage> ::= <double_usage>
+//			return CobTools.Usage.USAGE_DOUBLE;                   // COMP-2 + FLOAT-LONG
+			return getUsageFromReduction(usageRed.get(0).asReduction());
+		case RuleConstants.PROD_USAGE_DISPLAY:                     // <usage> ::= DISPLAY
+			return CobTools.Usage.USAGE_DISPLAY;
+		case RuleConstants.PROD_USAGE_POINTER:                     // <usage> ::= POINTER
+			return CobTools.Usage.USAGE_POINTER;
+		case RuleConstants.PROD_USAGE_PROGRAM_POINTER:             // <usage> ::= 'PROGRAM_POINTER'
+			return CobTools.Usage.USAGE_PROGRAM_POINTER;
+		case RuleConstants.PROD_USAGE_BINARY_CHAR:                 // <usage> ::= 'BINARY_CHAR' <_signed>
+			return CobTools.Usage.USAGE_SIGNED_CHAR;
+		case RuleConstants.PROD_USAGE_BINARY_CHAR_UNSIGNED:        // <usage> ::= 'BINARY_CHAR' UNSIGNED
+			return CobTools.Usage.USAGE_UNSIGNED_CHAR;
+		case RuleConstants.PROD_USAGE_SIGNED_SHORT:                // <usage> ::= 'SIGNED_SHORT'
+		case RuleConstants.PROD_USAGE_BINARY_SHORT:                // <usage> ::= 'BINARY_SHORT' <_signed>
+			return CobTools.Usage.USAGE_SIGNED_SHORT;
+		case RuleConstants.PROD_USAGE_UNSIGNED_SHORT:              // <usage> ::= 'UNSIGNED_SHORT'
+		case RuleConstants.PROD_USAGE_BINARY_SHORT_UNSIGNED:       // <usage> ::= 'BINARY_SHORT' UNSIGNED
+			return CobTools.Usage.USAGE_UNSIGNED_SHORT;
+		case RuleConstants.PROD_USAGE_INDEX:                       // <usage> ::= INDEX
+			return CobTools.Usage.USAGE_INDEX;
+		case RuleConstants.PROD_USAGE_SIGNED_INT:                  // <usage> ::= 'SIGNED_INT'
+			return CobTools.Usage.USAGE_SIGNED_INT;
+		case RuleConstants.PROD_USAGE_UNSIGNED_INT:                // <usage> ::= 'UNSIGNED_INT'
+			return CobTools.Usage.USAGE_UNSIGNED_INT;
+		case RuleConstants.PROD_USAGE_SIGNED_LONG:                 // <usage> ::= 'SIGNED_LONG'
+		case RuleConstants.PROD_USAGE_BINARY_C_LONG:               // <usage> ::= 'BINARY_C_LONG' <_signed>
+			if (is32bit) {
+				return CobTools.Usage.USAGE_SIGNED_INT;			// correct on 32bit
+			} else {
+				return CobTools.Usage.USAGE_SIGNED_LONG;		// correct on 64bit
+			}
+		case RuleConstants.PROD_USAGE_UNSIGNED_LONG:               // <usage> ::= 'UNSIGNED_LONG'
+		case RuleConstants.PROD_USAGE_BINARY_C_LONG_UNSIGNED:      // <usage> ::= 'BINARY_C_LONG' UNSIGNED
+			if (is32bit) {
+				return CobTools.Usage.USAGE_UNSIGNED_INT;			// correct on 32bit
+			} else {
+				return CobTools.Usage.USAGE_UNSIGNED_LONG;		// correct on 64bit
+			}
+		case RuleConstants.PROD_USAGE_BINARY_DOUBLE:               // <usage> ::= 'BINARY_DOUBLE' <_signed>
+			return CobTools.Usage.USAGE_SIGNED_LONG;
+		case RuleConstants.PROD_USAGE_BINARY_DOUBLE_UNSIGNED:      // <usage> ::= 'BINARY_DOUBLE' UNSIGNED
+			return CobTools.Usage.USAGE_UNSIGNED_LONG;
+		case RuleConstants.PROD_USAGE_BINARY_LONG:                 // <usage> ::= 'BINARY_LONG' <_signed>
+			return CobTools.Usage.USAGE_SIGNED_INT;
+		case RuleConstants.PROD_USAGE_BINARY_LONG_UNSIGNED:        // <usage> ::= 'BINARY_LONG' UNSIGNED
+			return CobTools.Usage.USAGE_UNSIGNED_INT;
+		case RuleConstants.PROD_USAGE_BINARY:                      // <usage> ::= 'BINARY'
+		case RuleConstants.PROD_USAGE_COMP:                        // <usage> ::= 'COMP'
+		case RuleConstants.PROD_USAGE_COMP_4:                      // <usage> ::= 'COMP_4'
+			return CobTools.Usage.USAGE_BINARY;
+		case RuleConstants.PROD_USAGE_COMP_5:                      // <usage> ::= 'COMP_5'
+			return CobTools.Usage.USAGE_COMP_5;
+		case RuleConstants.PROD_USAGE_COMP_6:                      // <usage> ::= 'COMP_6'
+			return CobTools.Usage.USAGE_COMP_6;
+		case RuleConstants.PROD_USAGE_COMP_X:                      // <usage> ::= 'COMP_X'
+			return CobTools.Usage.USAGE_COMP_X;
+		case RuleConstants.PROD_USAGE_FLOAT_BINARY_32:             // <usage> ::= 'FLOAT_BINARY_32'
+			return CobTools.Usage.USAGE_FP_BIN32;
+		case RuleConstants.PROD_FLOAT_USAGE_COMP_1:
+		case RuleConstants.PROD_FLOAT_USAGE_FLOAT_SHORT:
+			return CobTools.Usage.USAGE_FLOAT;
+		case RuleConstants.PROD_USAGE_COMP_3:                      // <usage> ::= 'COMP_3'
+		case RuleConstants.PROD_USAGE_PACKED_DECIMAL:              // <usage> ::= 'PACKED_DECIMAL'
+			return CobTools.Usage.USAGE_PACKED;
+		case RuleConstants.PROD_USAGE_FLOAT_BINARY_64:             // <usage> ::= 'FLOAT_BINARY_64'
+			return CobTools.Usage.USAGE_FP_BIN64;
+		case RuleConstants.PROD_USAGE_FLOAT_BINARY_128:            // <usage> ::= 'FLOAT_BINARY_128'
+			return CobTools.Usage.USAGE_FP_BIN128;
+		case RuleConstants.PROD_USAGE_FLOAT_DECIMAL_16:            // <usage> ::= 'FLOAT_DECIMAL_16'
+			return CobTools.Usage.USAGE_FP_DEC64;
+		case RuleConstants.PROD_USAGE_FLOAT_DECIMAL_34:            // <usage> ::= 'FLOAT_DECIMAL_34'
+			return CobTools.Usage.USAGE_FP_DEC128;
+		case RuleConstants.PROD_DOUBLE_USAGE_FLOAT_LONG:
+		case RuleConstants.PROD_DOUBLE_USAGE_COMP_2:
+			return CobTools.Usage.USAGE_DOUBLE;
+		}
+		return null;
 	}
 
 	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) {
@@ -6103,6 +6845,15 @@ public class COBOLParser extends CodeParser
 					lastSubject = tok.asString();
 					if (tok.getName().equals("COBOLWord")) {
 						lastSubject = lastSubject.replace("-", "_");
+						/* FIXME: if the current word matches an internal register,
+						 * then check if it exists and create it otherwise.
+						 * Note: depending on the register we should fill it, too
+						 * (RETURN-CODE, NUMBER-OF-CALL-PARAMETERS, ...)
+						 * else if (cT.matchesRegister(lastSubject)) {
+						 * 		...
+						 * }
+						 */
+						;
 					}
 				}
 				else {
@@ -6124,6 +6875,13 @@ public class COBOLParser extends CodeParser
 				tokStr = tok.asString();
 				if (tok.getName().equals("COBOLWord")) {
 					tokStr = tokStr.replace("-", "_");
+					CobVar checkedVar = currentProg.getCobVar(lastSubject);
+					if (checkedVar != null) {
+						String condString = checkedVar.getValuesAsExpression();
+						if (!condString.isEmpty()) {
+							tokStr = condString;
+						}
+					} 
 				}
 			}
 			if (!tokStr.trim().isEmpty()) {
@@ -6137,7 +6895,15 @@ public class COBOLParser extends CodeParser
 				cond += " " + tokStr;
 			}
 		}
+		// TODO We currently don't resolve the cond-name of "NOT cond-name"
 		cond += thruExpr;
+		if (cond.matches("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)")) {
+			cond.replaceAll("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)", "$1 <> $2");
+		}
+		// bad check, the comparision can include the *text* " OF "!
+//		if (cond.contains(" OF ")) {
+//			System.out.println("A record access slipped through badly...");
+//		}
 		return cond.trim();	// This is just an insufficient first default approach
 	}
 	
@@ -6168,10 +6934,22 @@ public class COBOLParser extends CodeParser
 	 * @param _reduction - the reduction representing the recursive token list rule
 	 * @param _listRuleHead - the name of the non-terminal (e.g. "&lt;expr_tokens&gt;")
 	 */
-	private final void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead) {
+	private final void lineariseTokenList(LinkedList<Token> _tokens, Reduction _reduction, String _listRuleHead)
+	{
 		if (_reduction.getParent().getHead().toString().equals(_listRuleHead) && _reduction.size() > 1) {
-			_tokens.add(0, _reduction.get(_reduction.size()-1));
-			lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
+			_tokens.addFirst(_reduction.get(_reduction.size()-1));
+			int ruleId = _reduction.get(0).asReduction().getParent().getTableIndex();
+			switch (ruleId) {
+			// Ensure the processing of modrefs!
+			case RuleConstants.PROD_IDENTIFIER_1:
+			case RuleConstants.PROD_IDENTIFIER_13:
+			// Don't split qualified identifiers!
+			case RuleConstants.PROD_QUALIFIED_WORD2:
+				_tokens.addFirst(_reduction.get(0));
+				break;
+			default:
+				lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
+			}
 		}
 		else {
 			for (int i = 0; i < _reduction.size(); i++) {
@@ -6182,62 +6960,6 @@ public class COBOLParser extends CodeParser
 
 	private final String negateCondition(String condStr) {
 		return Element.negateCondition(condStr);
-	}
-	
-	/**
-	 * get type from PICTURE clause
-	 * sample inputs:  "pic s9(5)v9(2)", "pIcTuRe    zzzz999.99", "pic x(5000)"
-	 * @param picture
-	 * @return one of the following: double, [long,] integer, string
-	 */
-	private String deriveTypeInfoFromPic(String picture) {
-		String type = "";
-		String[] tokens = picture.toUpperCase().split("\\s+", 3);
-		// assume the first token to be PIC or PICTURE and a second token to be available
-		// (otherwise the grammar has a defect)
-		String spec = tokens[1];
-		if (spec.startsWith("S")) {
-			// Skip the sign placeholder for now...
-			spec = spec.substring(1);
-		} else 
-			while (spec.startsWith("P")) {
-				spec = spec.substring(1);
-			}
-		if (spec.startsWith("9")) {
-			if (spec.contains("V")) {
-				type = "double";
-			}
-			else {
-				int nDigits = 0;
-				int i = 0;
-				while (i < spec.length() && spec.charAt(i) == '9') {
-					nDigits++;
-					i++;
-				}
-				if (nDigits == 1 && spec.substring(i).matches("\\([0-9]+\\).*")) {
-					try {
-						nDigits = Integer.parseInt(spec.substring(i).replaceFirst("\\(([0-9]+)\\).*", "$1"));
-					}
-					catch (Exception ex) {}
-				}
-				// FIXME: We currently need to manually derive constant values here, may not be needed later
-				//        if the preprocessor replaces them (not sure yet if we want to do so in all places
-				//        as a const declaration in the NSD would likely lead to better results
-				if (nDigits >= 9) {
-					type = "long";
-				}
-				else if (nDigits < 5) {
-					type = "short";
-				}
-				else {
-					type = "integer";
-				}
-			}
-		}
-		else {
-			type = "string";
-		}
-		return type;
 	}
 	
 	private String getOriginalText(Reduction _reduction, String _content)
@@ -6269,13 +6991,22 @@ public class COBOLParser extends CodeParser
 	{
 		return getContent_R(_reduction, _content, "");
 	}
+	
+	// Patterns and Matchers needed for getContent_R
+	// (reusable, otherwise both get created and compiled over and over again)
+	private static final Pattern pHexLiteral = Pattern.compile("^[Nn]?[Xx][\"']([0-9A-Fa-f]+)[\"']");
+	private static final Pattern pIntLiteral = Pattern.compile("^0+([0-9]+)");
+	private static final Pattern pAcuNumLiteral = Pattern.compile("^[BbOoXxHh]#([0-9A-Fa-f]+)");
+	private static Matcher mHexLiteral = pHexLiteral.matcher("");
+	private static Matcher mIntLiteral = pIntLiteral.matcher("");
+	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
 
 	protected String getContent_R(Reduction _reduction, String _content, String _separator)
 	{
 		int ruleId = _reduction.getParent().getTableIndex();
 		String ruleHead = _reduction.getParent().getHead().toString();
 		if (ruleHead.equals("<function>") && ruleId != RuleConstants.PROD_FUNCTION) {
-			String functionName = this.getContent_R(_reduction.get(0).asReduction(),"").toLowerCase().replaceAll("-", "_");
+			String functionName = this.getContent_R(_reduction.get(0).asReduction(),"").toLowerCase().replace("-", "_");
 			if (!functionName.equals("mod")) {
 				if (functionName.equals("char")) {
 					functionName = "chr";
@@ -6314,6 +7045,7 @@ public class COBOLParser extends CodeParser
 				ruleId == RuleConstants.PROD_TARGET_IDENTIFIER_1 || ruleId == RuleConstants.PROD_TARGET_IDENTIFIER_13)
 		{
 			String qualName = this.getContent_R(_reduction.get(0).asReduction(), "");
+			// in case we need it: CobVar currentVar = currentProg.getCobVar(qualName);
 			String indexStr = "";
 			String lengthStr = "1";
 			if (_reduction.size() > 2) {
@@ -6330,6 +7062,10 @@ public class COBOLParser extends CodeParser
 		{
 			_content += " pow(" + this.getContent_R(_reduction.get(0).asReduction(), "")
 			+ this.getContent_R(_reduction.get(2).asReduction(), ", ") + ")"; 
+		}
+		else if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2) {
+			_content = this.getContent_R(_reduction.get(2).asReduction(), _content);
+			_content = this.getContent_R(_reduction.get(0).asReduction(), _content + ".");
 		}
 		else {
 			for(int i=0; i<_reduction.size(); i++)
@@ -6439,18 +7175,20 @@ public class COBOLParser extends CodeParser
 						// convert from 'COBOL " Literal' --> "COBOL "" Literal"
 						if (toAdd.startsWith("'")) {
 							toAdd = toAdd.replace("\"", "\"\"")
-										.replace("''", "'")
-										.replaceAll("'(.*)'", "\"$1\"");
+										.replace("''", "'");
+							toAdd = "\"" + toAdd.substring(1, toAdd.length() - 1) + "\"";
 						}
 						// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
 						toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
 						if (trueName.equals("ZLiteral")) { // handle zero terminated strings
-							toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
+							//toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
+							toAdd = toAdd.substring(0, toAdd.length() - 1) + "\\\\000\"";
 						}
-						toAdd += " ";
+						//toAdd += " ";
 					}
 					else if (name.equals("HexLiteral")) { // this one defines a STRING literal in (non-unicode) Hex notation
-						String hexText = toAdd.replaceAll("[Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
+						mHexLiteral.reset(toAdd);
+						String hexText = mHexLiteral.replaceAll("$1");
 						// MicroFocus COBOL allows an odd number - strange people...
 						if (hexText.length() % 2 == 1) {
 							hexText = "0" + hexText;
@@ -6459,51 +7197,61 @@ public class COBOLParser extends CodeParser
 						for (int j = 0; j < hexText.length() - 1; j += 2) {
 							toAdd += "\\u00" + hexText.substring(j, j+2);
 						}
-						toAdd += "\" ";
+						toAdd += "\"";
 					}
 					else if (name.equals("NationalHexLiteral")) { // this one defines a STRING literal in (unicode) Hex notation
-						String hexText = toAdd.replaceAll("[Nn][Xx][\"']([0-9A-Fa-f]+)[\"']", "$1");
+						mHexLiteral.reset(toAdd);
+						String hexText = mHexLiteral.replaceAll("$1");
 						toAdd = "\"";
 						for (int j = 0; j < hexText.length() - 3; j += 4) {
 							toAdd += "\\u" + hexText.substring(j, j+4);
 						}
-						toAdd += "\" ";
+						toAdd += "\"";
 					}
-					// Note: IntLiteral [+-]?{Number}+ needs no conversion
-					// Note: if we do convert Decimals to BigDecimal some day the following is needed DecimalLiteral 
-					//else if (name.equals("DecimalLiteral")) { //
-					//	toAdd = toAdd.trim() + "b ";
-					//}
+					// Make sure IntLiteral [+-]?{Number}+ isn't falsely recognized as octal
+					else if (name.equals("IntLiteral")) {
+						mIntLiteral.reset(toAdd);
+						toAdd = mIntLiteral.replaceAll("$1");
+					}
+					// NOTE: if we do convert Decimals to BigDecimal some day the following is needed 
+					//       we may set this as primitive type and add "/ 100" for 2 decimal places
+					else if (name.equals("DecimalLiteral")) {
+						//toAdd = toAdd + "b";
+					}
 					// Make sure FloatLiteral [+-]?{Number}+ '.' {Number}+ 'E' [+-]?{Number}+ is recognized as float
 					else if (name.equals("FloatLiteral")) {
-						toAdd = toAdd.trim() + "f ";
+						toAdd = toAdd + "f";
 					}
 					else if (name.equals("AcuBinNumLiteral")) { // this one defines an INTEGER literal in binary notation
-						toAdd = toAdd.replaceAll("[Bb]#([01]+)", "0b$1 ");
+						mAcuNumLiteral.reset(toAdd);
+						toAdd = mAcuNumLiteral.replaceAll("0b$1");
 					}
 					else if (name.equals("AcuOctNumLiteral")) { // this one defines an INTEGER literal in Octal notation
-						toAdd = toAdd.replaceAll("[Oo]#([0-9]+)", "0$1 ");
+						mAcuNumLiteral.reset(toAdd);
+						toAdd = mAcuNumLiteral.replaceAll("0$1");
 					}
 					else if (name.equals("AcuHexNumLiteral")) { // this one defines an INTEGER literal in Hex notation
-						toAdd = toAdd.replaceAll("[XxHh]#([0-9A-Fa-f]+)", "0x$1 ");
+						mAcuNumLiteral.reset(toAdd);
+						toAdd = mAcuNumLiteral.replaceAll("0x$1");
 					}
 					else if (name.equals("TOK_AMPER")) {
-						toAdd = " + ";
+						//toAdd = " + ";
+						toAdd = "+";
 					}
 					else if (name.equals("TOK_PLUS") || name.equals("TOK_MINUS")) {
-						toAdd = " " + toAdd + " ";
+						//toAdd = " " + toAdd + " ";
 					}
-					else if (toAdd.equalsIgnoreCase("zero") || toAdd.equalsIgnoreCase("zeroes")) {
+					else if (toAdd.equals("ZERO") || toAdd.matches("0+")) { // note: ZEROS and ZEROES replaced by grammar
 						toAdd = "0";
 					}
-					else if (toAdd.equalsIgnoreCase("space") || toAdd.equalsIgnoreCase("spaces")) {
+					else if (toAdd.equals("SPACE")) { // note: SPACES replaced by grammar
 						toAdd = "\' \'";
 					}
-					else if (toAdd.equalsIgnoreCase("null")) {
+					else if (toAdd.equals("TOK_NULL")) {
 						toAdd = "\'\\0\'";
 					}
 					else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
-						toAdd = toAdd.toLowerCase();
+						toAdd = toAdd.substring(4).toLowerCase();
 					}
 					// Keywords FUNCTION and IS are to be suppressed
 					if (!name.equalsIgnoreCase("FUNCTION") && !name.equalsIgnoreCase("IS")) {
@@ -6556,5 +7304,999 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}
+	
+	// START KGU 2017-05-28: Now we try to resolve internal calls
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassPostProcess(java.lang.String)
+	 */
+	protected void subclassPostProcess(String _textToParse)
+	{
+		//HashMap<Subqueue, Subqueue> subqueueMap = new HashMap<Subqueue, Subqueue>();
+		for (SectionOrParagraph sop: this.procedureList) {
+			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
+			if (clients != null && sop.firstElement != null && sop.lastElement != null) {
+				Root owner = Element.getRoot(sop.firstElement);
+				Subqueue sq = (Subqueue)sop.firstElement.parent;
+				// We will have to copy the content of the replacing call. Therefor we must
+				// have an opportunity to find the call. This should be feasible via the index
+				// of the first element of the subsequence. But we cannot be sure that sop.start
+				// is still correct - the original context may already have been outsourced itself
+				// so we search for it in the current context.
+				int callIndex = sq.getIndexOf(sop.firstElement);
+				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
+				Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
+				if (proc != null) {
+					// If we use includable diagrams then we don't use parameters... 
+					//proc.setText(sop.name + "()");
+					subRoots.add(proc);
+					Element replacingCall = sq.getElement(callIndex);
+					if (replacingCall instanceof Call) {
+						// FIXME
+						String callText = replacingCall.getText().getLongString();
+						String[] callParts = callText.split(" <- ", -1);
+						int ix = sq.getIndexOf(replacingCall);
+						Element resultDistribution = null;
+						if (callParts.length > 1 && ix > -1 && ix+1 < sq.getSize()) {
+							resultDistribution = sq.getElement(ix+1);
+						}
+						// TODO
+						// Both the original proc text (now overwritten) and the replacingCall text contain
+						// all required variable names as parameters, so we might check whether we got all declarations
+						for (Call client: clients) {
+							// FIXME we must care for an includable Root that defines all necessary variables
+							// By the time we can't do this just copy the call context from original root
+							client.setText(callText);
+							client.setColor(colorMisc);	// No longer needs to be red
+							client.disabled = false;
+							if (resultDistribution != null) {
+								ix = ((Subqueue)client.parent).getIndexOf(client);
+								if (ix > -1) {
+									((Subqueue)client.parent).insertElementAt(resultDistribution.copy(), ix+1);
+								}
+							}
+						}
+						// At the original place we most likely won't need the call anymore.
+						replacingCall.disabled = true;
+						if (resultDistribution != null) {
+							resultDistribution.disabled =true;
+						}
+					}
+				}
+			}
+		}
+	}
+	// END KGU 2017-05-28
+}
 
+
+class CobTools {
+
+	/** COBOL field types */
+	public static enum Usage {
+		USAGE_BINARY,
+		USAGE_BIT,
+		USAGE_COMP_5,
+		USAGE_COMP_X,
+		USAGE_DISPLAY,
+		USAGE_FLOAT,
+		USAGE_DOUBLE,
+		USAGE_INDEX,
+		USAGE_NATIONAL,
+		USAGE_OBJECT,
+		USAGE_PACKED,
+		USAGE_POINTER,
+		USAGE_LENGTH,
+		USAGE_PROGRAM_POINTER,
+		USAGE_UNSIGNED_CHAR,
+		USAGE_SIGNED_CHAR,
+		USAGE_UNSIGNED_SHORT,
+		USAGE_SIGNED_SHORT,
+		USAGE_UNSIGNED_INT,
+		USAGE_SIGNED_INT,
+		USAGE_UNSIGNED_LONG,
+		USAGE_SIGNED_LONG,
+		USAGE_COMP_6,
+		USAGE_FP_DEC64,
+		USAGE_FP_DEC128,
+		USAGE_FP_BIN32,
+		USAGE_FP_BIN64,
+		USAGE_FP_BIN128,
+		USAGE_LONG_DOUBLE,
+		USAGE_DISPLAY_NUMERIC /* calculated from picture: usage DISPLAY with only numeric values */,
+		USAGE_NOT_SET /* no explicit usage given, handle as USAGE_DISPLAY */,
+	};
+
+	/** COBOL storages */
+	public static enum Storage {
+		STORAGE_WORKING,
+		STORAGE_LOCAL,
+		STORAGE_LINKAGE,
+		STORAGE_SCREEN,
+		STORAGE_REPORT,
+		STORAGE_UNKNOWN,
+		STORAGE_FILE
+	};
+	
+	private CobProg currentProgram = null;
+//	private CobProg lastProgram = null;
+	
+	class CobProg {
+		
+		private String name = null;
+		private String extName = null;
+		private boolean isFunction = false;
+		
+		private CobProg parent = null;
+		private CobProg child = null;
+		private CobProg sister = null;
+	
+		/** internal map for faster lookup of a variable by its name */
+		private HashMap<String,ArrayList<CobVar>> varNames = null;
+		
+		/* first variable in different sections for possible IMPORT nsd generation */
+		private CobVar workingStorage = null;
+		private CobVar localStorage = null;	
+		private CobVar linkageStorage = null;
+		private CobVar screenStorage = null;
+		private CobVar reportStorage = null;
+		
+		private Storage currentStorage = Storage.STORAGE_UNKNOWN;
+		
+		/** Set the new storage for the program and resets lastVar 
+		 * @param currentStorage the currentStorage to set
+		 */
+		public void setCurrentStorage(Storage currentStorage) {
+			this.currentStorage = currentStorage;
+			lastVar = null;
+		}
+
+		public void insertVar(CobVar variable) {
+			
+			/* store first entry in current storage enabling iterations later */
+			switch (currentStorage) {
+			case STORAGE_LINKAGE:
+				if (linkageStorage == null) {
+					linkageStorage = variable;
+				}
+				break;
+			case STORAGE_LOCAL:
+				if (localStorage == null) {
+					localStorage = variable;
+				}
+				break;
+			case STORAGE_REPORT:
+				if (reportStorage == null) {
+					reportStorage = variable;
+				}
+				break;
+			case STORAGE_SCREEN:
+				if (screenStorage == null) {
+					screenStorage = variable;
+				}
+				break;
+			case STORAGE_UNKNOWN:
+				// assume WORKING-STORAGE
+				currentStorage = Storage.STORAGE_WORKING;
+				// fall-through
+			case STORAGE_WORKING:
+				if (workingStorage == null) {
+					workingStorage = variable;
+				}
+				break;
+			case STORAGE_FILE:
+				// TODO add handling - per file 
+				break;
+			}
+			
+			String varName = variable.getName();
+			
+			// check if we already have a List of variables with the given name
+			ArrayList<CobVar> varList = null;
+			if (varNames != null) {
+				varList = varNames.get(varName);
+			} else {
+				varNames = new HashMap<String,ArrayList<CobVar>>();
+			}
+			
+			// Otherwise create the List entry and add it to the name Map
+			if (varList == null) {
+				varList = new ArrayList<CobVar>();
+				varNames.put(varName, varList);
+			}
+			
+			// finally insert the variable to the new/found List
+			varList.add(variable);
+		}
+
+		/**
+		 * @param name
+		 * @param extName
+		 * @param isFunction
+		 * @param parent
+		 */
+		public CobProg(String name, String extName, boolean isFunction, CobProg parent) {
+			super();
+			this.name = name;
+			this.extName = extName;
+			this.isFunction = isFunction;
+			this.parent = parent;
+		}
+		
+		/** check if the program has any content (currently only variables) */
+		public boolean isEmtpy() {
+			if (varNames != null || currentStorage != Storage.STORAGE_UNKNOWN) {
+				return false;
+			}
+			return true;
+		}
+
+		/**
+		 * @return the child
+		 */
+		public CobProg getChild() {
+			return child;
+		}
+		/**
+		 * @param child the child to set
+		 */
+		public void setChild(CobProg child) {
+			this.child = child;
+		}
+		/**
+		 * @return the sister
+		 */
+		public CobProg getSister() {
+			return sister;
+		}
+		/**
+		 * @param sister the sister to set
+		 */
+		public void setSister(CobProg sister) {
+			this.sister = sister;
+		}
+		/**
+		 * @return the workingStorage
+		 */
+		public CobVar getWorkingStorage() {
+			return workingStorage;
+		}
+		/**
+		 * @return the localStorage
+		 */
+		public CobVar getLocalStorage() {
+			return localStorage;
+		}
+		/**
+		 * @return the linkageStorage
+		 */
+		public CobVar getLinkageStorage() {
+			return linkageStorage;
+		}
+		/**
+		 * @return the screenStorage
+		 */
+		public CobVar getScreenStorage() {
+			return screenStorage;
+		}
+		/**
+		 * @return the reportStorage
+		 */
+		public CobVar getReportStorage() {
+			return reportStorage;
+		}
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return name;
+		}
+		/**
+		 * @return the extName
+		 */
+		public String getExtName() {
+			return extName;
+		}
+		/**
+		 * @return the isFunction
+		 */
+		public boolean isFunction() {
+			return isFunction;
+		}
+		/**
+		 * @return the parent
+		 */
+		public CobProg getParent() {
+			return parent;
+		}
+
+		public CobVar getCobVar(String nameOfVar) {
+			
+			if (nameOfVar == null || nameOfVar.isEmpty()) {
+				return null;
+			}
+			nameOfVar = nameOfVar.toLowerCase();
+			
+			// get unqualified name (1st part) and possible qualifiers
+			String[] names = nameOfVar.split("\\s+(IN|OF)\\s+");
+			
+			// search for List of variables with the given (unqualified) name
+			ArrayList<CobVar> varList = varNames.get(names[0]);
+			
+			// if the entry exist check for neccessary qualification
+			if (varList == null) {
+				return null;
+			}		
+			if (varList.size() == 1 && names.length == 1) {
+				return varList.get(0);
+			}
+			
+			for (Iterator<CobVar> iterator = varList.iterator(); iterator.hasNext();) {
+				CobVar candidate = (CobVar) iterator.next();
+				if (candidate.hasParent()) {
+					if (candidate.getParent().getName().equals(names[0])) {
+						// TODO add code for qualified search
+					}
+				}
+			}
+			
+			return varList.get(0);
+		}
+		
+	}
+	
+	private CobVar lastVar;
+	//private static CobVar lastRealVar;
+	private int fillerCount = 0;
+	
+	
+	class CobVar {
+
+		/** level of COBOL field */
+		private int	level;
+		/** COBOL field name */
+		private String name;
+		/** Original picture of COBOL field */
+		private String picture;
+		/** usage of COBOL field */
+		private Usage usage;
+		/** COBOL field is signed */
+		private boolean hasSign;
+		/** COBOL field is Decimal (TODO: replace with decimal position) */
+		private boolean hasDecimal;
+		
+		/** length of COBOL field, mostly relevant for STRING and record-handling */
+		private int charLength;
+
+		private CobVar parent;
+		private CobVar child;
+		private CobVar sister;
+		private CobVar redefines;
+		
+		/** Array of COBOL values */
+		private String[] values;
+		/** converted ArrayList as Java Expression - done on first request */
+		private String valuesAsExpression;
+		/** Literal Value for "SET var TO TRUE */
+		// TODO: Create "const" item with name this.name+"$"+"TRUE" for assignments
+		private String valueFirst;
+		/** Literal Value for "SET var TO false */
+		// TODO: Create "const" item with name this.name+"$"+"FALSE" for assignments
+		private String valueFalse;
+		/** variable is GLOBAL --> should be considered to put in a single NSD
+		 * and include in all NSDs that are using it */
+		private boolean isGlobal;
+		/** variable is EXTERNAL --> should be considered to put in a single NSD */
+		private boolean isExternal;
+		/** variable is edited --> must be handled on MOVE (editing/de-editing) */ 
+		private boolean isEdited;
+		/** variable is filler */
+		private boolean isFiller;
+		/** variable has any alphanumeric (1) or numeric (2) length */
+		private int anyLength;
+		
+		/**
+		 * @return the valuesAsExpression
+		 */
+		public String getValuesAsExpression() {
+			if (this.valuesAsExpression == null) {
+				if (this.level == 88) {
+					// CHECKME: generate kind of SWITCH statement?
+					String varName = this.parent.name;
+					StringBuilder exprSB = new StringBuilder(this.values.length * (varName.length() + 10));
+					for (int i = 0; i < values.length; i++) {
+						String value = values[i];
+						if (value.equals("THRU")) {
+							i++;
+							value = values[i];
+							exprSB.append(" .. " + value);
+						} else {
+							if (i == 0) {
+								exprSB.append(varName + " == " + value);
+							} else {
+								exprSB.append(" || \\\n" + varName + " == " + value);
+							}
+						}
+					}
+					this.valuesAsExpression = exprSB.toString();
+				} else {
+					this.valuesAsExpression = "";
+				}
+			}
+			return this.valuesAsExpression;
+		}
+
+		public boolean isNumeric() {
+
+			switch (this.usage) {
+			case USAGE_FLOAT:
+			case USAGE_FP_BIN32:
+			case USAGE_DOUBLE:
+			case USAGE_FP_BIN64: 
+			case USAGE_FP_BIN128:
+			case USAGE_FP_DEC64:
+			case USAGE_FP_DEC128:
+			case USAGE_INDEX:
+			case USAGE_LENGTH:
+			case USAGE_SIGNED_CHAR:
+			case USAGE_UNSIGNED_CHAR:
+			case USAGE_PACKED:
+			case USAGE_SIGNED_INT:
+			case USAGE_UNSIGNED_INT:
+			case USAGE_SIGNED_LONG:
+			case USAGE_UNSIGNED_LONG:
+			case USAGE_LONG_DOUBLE:
+			case USAGE_COMP_X:
+			case USAGE_COMP_5:
+			case USAGE_COMP_6:
+			case USAGE_SIGNED_SHORT:
+			case USAGE_UNSIGNED_SHORT:
+			case USAGE_BINARY:
+			case USAGE_DISPLAY_NUMERIC:
+				return true;
+			//case USAGE_BIT: // CHECKME
+			default:
+				return false;
+			}
+		}
+
+		public boolean hasChild() {
+			if (this.child != null) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		/**
+		 * @return the isGlobal
+		 */
+		public boolean isGlobal() {
+			return isGlobal;
+		}
+
+		/**
+		 * @return the isExternal
+		 */
+		public boolean isExternal() {
+			return isExternal;
+		}
+
+		/**
+		 * @return the isEdited
+		 */
+		public boolean isEdited() {
+			return isEdited;
+		}
+
+		/**
+		 * @return the isFiller
+		 */
+		public boolean isFiller() {
+			return isFiller;
+		}
+
+		/**
+		 * @return the text that is to be used for SET var TO TRUE and for constant values
+		 */
+		public String getValueFirst() {
+			return valueFirst;
+		}
+
+		/**
+		 * @return the text that is to be used for SET var TO FALSE
+		 */
+		public String getValueFalse() {
+			return valueFalse;
+		}
+
+		/**
+		 * @param level COBOL level number	
+		 * @param name
+		 * @param picture
+		 * @param usage
+		 * @param redefines
+		 * @param isGlobal 
+		 * @param isExternal 
+		 * @param anyLength 
+		 */
+		public CobVar(int level, String name, String picture, Usage usage, String value, CobVar redefines, boolean isGlobal, boolean isExternal, int anyLength) {
+			super();
+			
+			// FIXME: check for level 66 before calling constructor
+			if (level != 1 && level != 77 && lastVar == null) {
+				// partial code import, generate implicit filler
+				lastVar = new CobVar (1, null, null, null, null, null, false, false, 0);
+			}
+			
+			this.level = level;
+			if (name != null && !name.isEmpty()) {
+				this.name = name.trim().toLowerCase();
+			} else {
+				this.name = "filler";
+			}
+			if (this.name.equals("filler")) {
+				fillerCount++;
+				this.name += "$" + fillerCount;
+			}
+			if (picture != null && !picture.isEmpty()) {
+				this.picture = picture.trim();
+				setVarAttributesFromPic(this, picture);
+			} else {
+				this.picture = "";
+			}
+
+			/* set relation to other fields */
+			this.parent = null;
+			if (lastVar != null && lastVar.level < level) {
+				this.parent = lastVar;
+				if (lastVar.child == null) {
+					lastVar.child = this;
+				}
+			} else {
+				for (CobVar v = lastVar; v != null; v = v.parent) {
+					if (level == v.level) {
+						this.parent = v.parent;
+						v.sister = this;
+						break;
+					} else if (v.level < level) {
+						this.parent = v;
+						insertFiller(v, this);
+						break;
+					}
+				}
+			}
+			this.child = null;
+			this.sister = null;
+			
+			// usage explicit given overrides usage calculated from PICTURE
+			if (usage != null) {
+				this.usage = usage;
+			} else {
+				// group item without usage
+				if (picture == null || picture.isEmpty()) {
+					if (this.parent != null) {
+						this.usage = this.parent.usage;
+					} else if (this.usage == null) {
+						this.usage = Usage.USAGE_NOT_SET;
+					}
+				// normal item, take the usage from parent, if set, otherwise from picture 
+				} else if (this.parent != null && this.parent.usage != Usage.USAGE_NOT_SET) {
+					this.usage = this.parent.usage;
+				// no usage set by picture --> explicit set to standard value
+				} else if (this.usage == null) {
+					if (this.usage == null) {
+						this.usage = Usage.USAGE_DISPLAY;
+					}
+				} 
+			}
+
+			if (value != null) {
+				this.values = new String[] {value};
+				this.valueFirst = value;
+			}
+			
+			this.redefines = redefines;
+			this.isGlobal = isGlobal;
+			this.isExternal = isExternal;
+			this.anyLength = anyLength; 
+//			lastRealVar = this;
+			lastVar = this;
+		}
+
+		/** Special Constructor for creating condition-names (level 88 variables)
+		 * @param name
+		 * @param values
+		 * @param valueFalse
+		 */
+		public CobVar(String name, String[] values, String valueFalse) {
+			super();
+
+			this.level = 88;
+			
+			if (name != null && !name.isEmpty()) {
+				this.name = name.trim().toLowerCase();
+			} else {
+				this.name = "BAD-CONDITION";
+			}
+
+			if (values != null) {
+				ArrayList<String> sortList = new ArrayList<String>(Arrays.asList(values));
+				Collections.reverse(sortList);
+				this.values = sortList.toArray(new String[sortList.size()]);
+				this.valueFirst = this.values[0];
+			}
+			this.valueFalse = valueFalse;
+
+			if (lastVar == null) {
+				// create "correct" picture first
+				String picString = createPicStringFromValues(values);
+				// partial code import, generate implicit filler
+				lastVar = new CobVar (1, null, picString, null, null, null, false, false, 0);
+			}
+			
+			this.picture = null;
+
+			/* set relation to other fields */
+			if (lastVar.level == 88) {
+				this.parent = lastVar.parent;
+				lastVar.sister = this;
+			} else {
+				this.parent = lastVar;
+				if (lastVar.child == null) {
+					lastVar.child = this;
+				}
+			}
+			this.child = null;
+			this.sister = null;
+			
+			/* set usage from parent */
+			this.usage = this.parent.usage;
+			
+			lastVar = this;
+		}
+
+		/** Special Constructor for creating constants (level 01 CONSTANT as / level 78 variables)
+		 * @param level TODO
+		 * @param value
+		 * @param name
+		 */
+		public CobVar(int level, String constName, String value, boolean isGlobal) {
+			super();
+			
+			this.level = level;
+			
+			if (name != null && !name.isEmpty()) {
+				this.name = name.trim().toLowerCase();
+			} else {
+				this.name = "BAD-CONST";
+			}
+
+			if (value != null) {
+				this.values = new String[] {value};
+				this.valueFirst = value;
+			}
+			this.valueFalse = null;
+
+			// create asumed picture first
+			this.picture = createPicStringFromValues(this.values);
+
+			/* set relation to other fields */
+			if (lastVar.level == level) {
+				this.parent = lastVar.parent;
+				lastVar.sister = this;
+			} else {
+				this.parent = lastVar;
+				if (lastVar.child == null) {
+					lastVar.child = this;
+				}
+			}
+			this.child = null;
+			this.sister = null;
+			
+			/* set usage from picture */
+			this.usage = null;
+			
+			this.isGlobal = isGlobal;
+			
+			lastVar = this;
+		}
+
+		/** create an implicit FILLER into parentVar and adjust childVar to be its sister */
+		private void insertFiller(CobVar parentVar, CobVar childVar) {
+			
+			/* sample code (compiling with "relaxed" syntax from different vendors)
+			  01 var1. 
+			     <- FILLER INSERTED HERE with level 02 ->
+			        03 var2
+			           04 var3 pic x.
+			     02 var4 pic x.
+			 */
+			
+			lastVar = parentVar;
+			CobVar fillerVar = new CobVar (childVar.level, null, null, null, null, null, false, false, 0);
+			fillerVar.child = parentVar.child;
+			parentVar.child = fillerVar;
+			fillerVar.sister = childVar;
+			
+		}
+
+		public boolean hasParent() {
+			if (this.parent != null) {
+				return true;
+			}
+			return false;
+		}
+
+		/**
+		 * @return the child
+		 */
+		public CobVar getChild() {
+			return this.child;
+		}
+
+		/**
+		 * @return the sister
+		 */
+		public CobVar getSister() {
+			return this.sister;
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return this.name;
+		}
+
+		/**
+		 * @return the parent
+		 */
+		public CobVar getParent() {
+			return this.parent;
+		}
+
+		/**
+		 * @return the redefines
+		 */
+		public CobVar getRedefines() {
+			return this.redefines;
+		}
+
+		/**
+		 * @return the values as text for comparing, note: this text is a Java expression
+		 */
+		public String getValueComparisonString() {
+			boolean firstValue = true;
+			String valueComparison = "";
+			for (Object value : values) {
+				if (firstValue) {
+					firstValue = false;
+				} else {
+					valueComparison += " || "; 
+				}
+				valueComparison += value.toString();
+			}
+			return valueComparison;
+		}
+
+		public boolean isAnyLength() {
+			return (this.anyLength == 1);
+		}
+
+		public boolean isAnyNumeric() {
+			return (this.anyLength == 2);
+		}
+		
+	}
+	
+	/**
+	 * set attributes to a given variable from a valid (!) PICTURE clause
+	 * sample inputs:  "s9(5)v9(2)", "zzzz999.99", "x(5000)", 9(number-of-items)
+	 * @param CobVar
+	 * @param picString validated picture, may contain constants
+	 */
+	private void setVarAttributesFromPic(CobVar variable, String picString) {
+		boolean wantsDecimal = false;
+		int vPos = 0;
+		boolean wantsSign = false;
+		
+		Matcher picMatcher = null;
+		StringBuffer picSB = null;
+		
+		picString = picString.toUpperCase();
+		
+		// replace constant values first (can be removed if we move this to the preparser later)
+		picMatcher = Pattern.compile("\\(([^)]*[A-Z_-][^)]*)\\)").matcher(picString);
+		picSB  = new StringBuffer(picString.length());
+		while (picMatcher.find()) {
+			CobVar constVar = currentProgram.getCobVar(picMatcher.group());
+			String constVal = "";
+			if (constVar != null && constVar.getValueFirst() != null) {
+				constVal = "(" + constVar.getValueFirst() + ")";
+			}
+			picMatcher.appendReplacement(picSB, constVal);
+		}
+		picMatcher.appendTail(picSB);
+		picString = picSB.toString();
+		
+		vPos = picString.indexOf('V');
+		if (picString.matches(".*P.+")) {
+			// no remove for P as we'd need to shift the value in all places
+			// TODO: Add handling of shifting numeric values
+			wantsDecimal = true;
+		} else if (vPos != -1) {
+			wantsDecimal = true;
+			picString = picString.substring(0, vPos) + picString.substring(vPos + 1);
+		}
+		
+		if (picString.startsWith("S")) {
+			picString = picString.substring(1);
+			wantsSign = true;
+		} else if (picString.endsWith("S")) {
+			picString = picString.substring(0, picString.length() - 1);
+			wantsSign = true;
+		}
+
+		variable.hasSign = wantsSign;
+		variable.hasDecimal = wantsDecimal;
+
+		// get length of value and remove the group part
+		picMatcher = Pattern.compile("(.\\([0-9]+\\))").matcher(picString);
+		picSB  = new StringBuffer(picString.length());
+		
+		variable.charLength = 0;
+
+		while (picMatcher.find()) {
+			// found group  X(6) or 9(0123); remove first 2 and last char, then parse
+			String picGroup = picMatcher.group();
+			String counterStr = picGroup.substring(2, picGroup.length() - 1);
+			variable.charLength += Integer.parseInt(counterStr) - 1;
+			picMatcher.appendReplacement(picSB, picGroup.substring(0, 1));
+		}
+		picMatcher.appendTail(picSB);
+		variable.charLength += picSB.length();
+	
+		picString = picSB.toString();
+	
+		// calculate usage
+		if (picString.contains("N")) {
+			variable.usage = Usage.USAGE_NATIONAL;
+			if (!picString.matches("N*")) {
+				variable.isEdited = true;
+			}
+		} else if (picString.matches("9*")) {
+			variable.usage = Usage.USAGE_DISPLAY_NUMERIC;
+		} else  if (picString.matches("[XA]*")){
+			variable.usage = Usage.USAGE_DISPLAY;
+		} else {
+			variable.usage = Usage.USAGE_DISPLAY;
+			variable.isEdited = true;
+		}
+	}
+	
+	public String createPicStringFromValues(String[] values) {
+		String picString;
+		int len = 0;
+		if (values == null || values[0].isEmpty()) {
+			// really bad code...
+			picString = "X";
+		} else {
+			if (values[0].startsWith("\'")
+			|| values[0].startsWith("\"")) {
+				picString = "X";
+			} else {
+				if (values[0].startsWith("-")) {
+					picString = "S9";
+				} else {
+					picString = "9";
+				}
+			}
+			for (String value : values) {
+				if (value.length() > len) {
+					len = value.length();
+				}
+			}
+			picString += "(" + len + ")";
+			
+		}
+		return picString;
+	}
+
+	/**
+	 * returns the Java type of a given CobVar depending on its attributes including
+	 * usage, picture and length
+	 * @param CobVar Variable to return the type for
+	 * @return Java type representation as string
+	 */
+	public static String getTypeString (CobVar variable) {
+		if (variable == null) {
+			return null;
+		}
+		switch (variable.usage) {
+		case USAGE_BIT: // CHECKME
+			return "";
+		case USAGE_FLOAT:		// "plain" float  --> mapping to IEEE Std 754-1985 bin 32
+		case USAGE_FP_BIN32:	// IEEE Std 754-2008 bin  32 
+			return "float";
+		case USAGE_DOUBLE:		// "plain" double --> mapping to IEEE Std 754-1985 bin 64
+		case USAGE_FP_BIN64:	// IEEE Std 754-2008 bin  64 
+		case USAGE_FP_BIN128:	// IEEE Std 754-2008 bin 128 - no 128bit floating point data in Java...
+		case USAGE_FP_DEC64:	// IEEE Std 754-2008 dec  64 - no decimal floating point data in Java...
+		case USAGE_FP_DEC128:	// IEEE Std 754-2008 dec 128 - no decimal/128bit floating point data in Java...
+			return "double";
+		case USAGE_INDEX:
+			return "integer";
+		case USAGE_LENGTH:
+			return "integer";
+		case USAGE_DISPLAY:
+			// Note: this isn't "correct" as String (and char) are already 16-bit Unicode types 
+			// CHECKME: maybe return char[picsize]
+			return "String";
+		case USAGE_NATIONAL:
+			// CHECKME: maybe return char[picsize]
+			return "String";
+		case USAGE_OBJECT:
+			return "Object";
+		// Address types cannot be handled by Executor
+		case USAGE_POINTER:
+		case USAGE_PROGRAM_POINTER:
+			return "pointer";
+		case USAGE_SIGNED_CHAR:		//-128 [-2**7]			< n < 128 [2**7]
+			return "byte";
+		case USAGE_UNSIGNED_CHAR:	// 0 					≤ n < 256 [2**8]
+			return "short";
+		case USAGE_PACKED:
+			return "double";
+		case USAGE_SIGNED_INT:		// -2147483648 [-2**31]	< n < 2147483648 [2**31]
+		case USAGE_UNSIGNED_INT:	// 0					≤ n < 4294967296 [2**32]
+		case USAGE_SIGNED_LONG:		// -2**63				< n < 2**63
+		case USAGE_UNSIGNED_LONG:	// 0					≤ n < 2**64		// not available in plain Java
+		case USAGE_LONG_DOUBLE:		// checked
+		case USAGE_COMP_X: // CHECKME
+		case USAGE_COMP_5: // CHECKME
+		case USAGE_COMP_6: // CHECKME
+			return "long";
+		case USAGE_SIGNED_SHORT:	// -32768 [-2**15] < n < 32768 [2**15]
+			return "short";
+		case USAGE_UNSIGNED_SHORT:	//  0 ≤ n < 65536 [2**16]
+			return "integer";
+		case USAGE_BINARY: //  two's-complement binary big-endian
+		case USAGE_DISPLAY_NUMERIC:
+			if (variable.hasDecimal) {
+				// FIXME: Should be BigDecimal in Java or manual shifting with primitive data type should be done
+				return "double";
+			} else if (variable.charLength > 9) {
+				if (variable.hasSign) {
+					return "long";		// identical to USAGE_SIGNED_LONG;
+				} else {
+					return "long";		// identical to USAGE_UNSIGNED_LONG;
+				}
+			} else if (variable.charLength > 4) {
+				if (variable.hasSign) {
+					return "long";		// identical to USAGE_SIGNED_INT;
+				} else {
+					return "long";		// identical to USAGE_UNSIGNED_INT;
+				}
+			} else {
+				if (variable.hasSign) {
+					return "short";		// identical to USAGE_SIGNED_SHORT;
+				} else {
+					return "integer";	// identical to USAGE_UNSIGNED_SHORT;
+				}
+			}
+		case USAGE_NOT_SET:
+			if (variable.isAnyLength()) {
+				return "String";
+			} else if (variable.isAnyNumeric()) {
+				return "long";
+			} else {
+				// CHECKME: does this happen? if not raise a warning or at least log a warning
+				//return "";
+				return "-unknown-type-";
+			}
+		// we explicit don't want a default, allowing check if all USAGEs have a value assigned
+		}
+		return "";
+	}
+	
 }

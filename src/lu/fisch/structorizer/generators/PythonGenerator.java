@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.03.10      Bugfix #378, #379: charset annotation / wrong inequality operator
  *      Kay Gürtzig             2017.05.16      Bugfix #51: an empty output instruction produced "print(, sep='')"
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017.05.24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
  *
  ******************************************************************************************************
  *
@@ -384,11 +385,12 @@ public class PythonGenerator extends Generator
 				// START KGU 2014-11-16
 				insertComment(_inst, _indent);
 				// END KGU 2014-11-16
-				for(int i=0;i<_inst.getText().count();i++)
+				StringList lines = _inst.getUnbrokenText();
+				for(int i = 0; i < lines.count(); i++)
 				{
 					// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 					//code.add(_indent + transform(_inst.getText().get(i)));
-					String line = _inst.getText().get(i);
+					String line = lines.get(i);
 					String codeLine = transform(line);
 					if (Instruction.isTurtleizerMove(line)) {
 						codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
@@ -514,7 +516,7 @@ public class PythonGenerator extends Generator
 			insertComment(_while, _indent);
 			// END KGU 2014-11-16
 			
-			String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+			String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
 			// START KGU#301 2016-12-01: Bugfix #301
 			//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 			if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -544,7 +546,7 @@ public class PythonGenerator extends Generator
             //code.delete(code.count()-1); // delete empty row
             //code.delete(code.count()-1); // delete empty row
             // END KGU#54 2015-10-19
-            addCode("if "+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+":",
+            addCode("if "+BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim()+":",
             		_indent+this.getIndent(), isDisabled);
             addCode("break", _indent+this.getIndent()+this.getIndent(), isDisabled);
 			// START KGU#54 2015-10-19: Add an empty line, but void accumulation of empty lines!
@@ -581,11 +583,12 @@ public class PythonGenerator extends Generator
 				// START KGU 2014-11-16
 				insertComment(_call, _indent);
 				// END KGU 2014-11-16
-				for(int i=0; i<_call.getText().count(); i++)
+				StringList lines = _call.getText();
+				for(int i=0; i<lines.count(); i++)
 				{
 					// START KGU 2016-07-20: Bugfix the extra parentheses were nonsense
 					//code.add(_indent+transform(_call.getText().get(i))+"()");
-					addCode(transform(_call.getText().get(i)), _indent, isDisabled);
+					addCode(transform(lines.get(i)), _indent, isDisabled);
 					// END KGU 2016-07-20
 				}
 			}
@@ -607,7 +610,7 @@ public class PythonGenerator extends Generator
 				// In case of an empty text generate a break instruction by default.
 				boolean isEmpty = true;
 
-				StringList lines = _jump.getText();
+				StringList lines = _jump.getUnbrokenText();
 				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 				String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
 				String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
@@ -658,6 +661,7 @@ public class PythonGenerator extends Generator
 		{
 			boolean isDisabled = _para.isDisabled();
 			Root root = Element.getRoot(_para);
+			String suffix = Integer.toHexString(_para.hashCode());
 			
 			//String indentPlusOne = _indent + this.getIndent();
 			//String indentPlusTwo = indentPlusOne + this.getIndent();
@@ -675,8 +679,8 @@ public class PythonGenerator extends Generator
 				// START KGU#348 2017-02-19: Enh. #348 Actual translation
 				//generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
 				Subqueue sq = _para.qs.get(i);
-				String threadVar = "thr" + _para.hashCode() + "_" + i;
-				String threadFunc = "thread" + _para.hashCode() + "_" + i;
+				String threadVar = "thr" + suffix + "_" + i;
+				String threadFunc = "thread" + suffix + "_" + i;
 				StringList used = root.getUsedVarNames(sq, false, false);
 				StringList asgnd = root.getVarNames(sq, false);
 				for (int v = 0; v < asgnd.count(); v++) {
@@ -701,7 +705,7 @@ public class PythonGenerator extends Generator
 			}
 
 			for (int i = 0; i < _para.qs.size(); i++) {
-				String threadVar = "thr" + _para.hashCode() + "_" + i;
+				String threadVar = "thr" + suffix + "_" + i;
 				addCode(threadVar + ".join()", _indent, isDisabled);
 			}
 			insertComment("==========================================================", _indent);
@@ -733,7 +737,7 @@ public class PythonGenerator extends Generator
 			});
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
-				String functNameBase = "thread" + par.hashCode() + "_";
+				String functNameBase = "thread" + Integer.toHexString(par.hashCode()) + "_";
 				int i = 0;
 				// We still don't care for synchronisation, mutual exclusion etc.
 				for (Subqueue sq: par.qs) {

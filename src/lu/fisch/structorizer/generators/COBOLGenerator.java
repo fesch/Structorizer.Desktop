@@ -102,7 +102,7 @@ public class COBOLGenerator extends Generator {
 
 		String prefix;
 		// switching the reference format between free-form and fixed-form
-		if (this.optionFreeSourceFormat()) {
+		if (!this.optionFixedSourceFormat()) {
 			prefix = this.getIndent();
 		} else {
 			if (this.optionCodeLineNumbering()) {
@@ -149,7 +149,7 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected String getIndent() {
 		// switching the reference format between free-form and fixed-form
-		if (this.optionFreeSourceFormat()) {
+		if (!this.optionFixedSourceFormat()) {
 			return "\t";
 		} else {
 			// a tab "\t" would be better but cannot be counted for the line
@@ -362,7 +362,7 @@ public class COBOLGenerator extends Generator {
 			// encloses entire line)
 			insertComment(_indent + text, "");
 		// START KGU 2017-05-11 At least in free format we shouldn't ignore the indentation
-		} else if (this.optionFreeSourceFormat()) {
+		} else if (!this.optionFixedSourceFormat()) {
 			code.add(this.getLineStart(false) + _indent + text);			
 		// END KGU 2017-05-11
 		} else {
@@ -443,13 +443,13 @@ public class COBOLGenerator extends Generator {
 
 	// START KGU#395 2017-05-11: Enh. #357 - source format option for COBOL export
 	/**
-	 * Returns the value of the export option whether free source file format may
+	 * Returns the value of the export option whether fixed source file format must
 	 * be used.
-	 * @return true if free file format is to be used.
+	 * @return true if fixed file format is to be used.
 	 */
-	private boolean optionFreeSourceFormat()
+	private boolean optionFixedSourceFormat()
 	{
-		Object optionVal = this.getPluginOption("freeSourceFormat");
+		Object optionVal = this.getPluginOption("fixedFormat", false);
 		return optionVal instanceof Boolean && ((Boolean)optionVal).booleanValue();
 	}
 	
@@ -460,7 +460,7 @@ public class COBOLGenerator extends Generator {
 	 */
 	private boolean optionUnderscores2Hyphens()
 	{
-		Object optionVal = this.getPluginOption("underscores2hyphens");
+		Object optionVal = this.getPluginOption("underscores2hyphens", true);
 		return !(optionVal instanceof Boolean) || ((Boolean)optionVal).booleanValue();
 	}
 	// END KGU#395 2017-05-11	
@@ -557,7 +557,7 @@ public class COBOLGenerator extends Generator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
-		if (topLevel && this.optionFreeSourceFormat()) {
+		if (topLevel && !this.optionFixedSourceFormat()) {
 			code.add("       >> SOURCE FORMAT IS FREE");
 		}
 		if (!topLevel) {

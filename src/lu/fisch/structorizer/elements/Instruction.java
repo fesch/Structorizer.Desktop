@@ -54,7 +54,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.26      Enh. #259: First retrieval approach for variable types
  *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
- *      Kay Gürtzig     2017-04-11      Enh. #289: Methods isImportCall() introduced
+ *      Kay Gürtzig     2017.04.11      Enh. #289: Methods isImportCall() introduced
+ *      Kay Gürtzig     2017.06.09      Enh. #416: drawing support for broken lines and is...() method adaptation
  *
  ******************************************************************************************************
  *
@@ -81,6 +82,9 @@ public class Instruction extends Element {
 	// START KGU#258 2016-09-26: Enh. #253
 	private static final String[] relevantParserKeys = {"input", "output", "preReturn"};
 	// END KGU#258 2016-09-25
+	// START KGU#413 2017-06-09: Enh. #416
+	protected static final String indentPattern = "(\\s*)(.*)";
+	// END KGU#413 2017-06-09
 	
 	public Instruction()
 	{
@@ -126,9 +130,24 @@ public class Instruction extends Element {
 		}
 		// END KGU#227 2016-07-30
 		
-		for(int i=0;i<_text.count();i++)
+		// START KGU#413 2017-06-09: Enh. #416
+		boolean isContinuation = false;
+		// END KGU#413 2017-06-09
+		for(int i = 0; i < _text.count(); i++)
 		{
-			int lineWidth = getWidthOutVariables(_canvas, _text.get(i), _element) + Element.E_PADDING;
+			// START KGU#413 2017-06-09: Enh. #416
+			//int lineWidth = getWidthOutVariables(_canvas, _text.get(i), _element) + Element.E_PADDING;
+			String line = _text.get(i);
+			if (isContinuation) {
+				String indent = line.replaceAll(indentPattern, "$1");
+				String rest = line.replaceAll(indentPattern, "$2");
+				if (indent.length() < Element.E_INDENT) {
+					line = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
+				}
+			}
+			isContinuation = line.trim().endsWith("\\");
+			int lineWidth = getWidthOutVariables(_canvas, line, _element) + Element.E_PADDING;
+			// END KGU#413 2017-06-09
 			if (rect.right < lineWidth)
 			{
 				rect.right = lineWidth;
@@ -225,9 +244,22 @@ public class Instruction extends Element {
 		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fm.getHeight()*/;
 		// END KGU#227 2016-07-30
 		
+		// START KGU#413 2017-06-09: Enh. #416
+		boolean isContinuation = false;
+		// END KGU#413 2017-06-09
 		for (int i = 0; i < _text.count(); i++)
 		{
 			String text = _text.get(i);
+			// START KGU#413 2017-06-09: Enh. #416
+			if (isContinuation) {
+				String indent = text.replaceAll(indentPattern, "$1");
+				String rest = text.replaceAll(indentPattern, "$2");
+				if (indent.length() < Element.E_INDENT) {
+					text = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
+				}
+			}
+			isContinuation = text.trim().endsWith("\\");
+			// END KGU#413 2017-06-09
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
 //					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
@@ -336,7 +368,10 @@ public class Instruction extends Element {
     protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
     {
 		if (!this.isDisabled()) {
-			_lines.add(this.getText());
+			// START KGU#413 2017-06-09: Enh. #416 cope with user-inserted line breaks
+			//_lines.add(this.getText());
+			_lines.add(this.getUnbrokenText());
+			// END KGU#413 2017-06-09
 		}
     }
     // END KGU 2015-10-16
@@ -376,7 +411,11 @@ public class Instruction extends Element {
 	}
 	public boolean isAssignment()
 	{
-		return this.text.count() == 1 && Instruction.isAssignment(this.text.get(0));
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.count() == 1 && Instruction.isAssignment(this.text.get(0));
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && Instruction.isAssignment(lines.get(0));
+		// END KGU#413 2017-06-09
 	}
 	
 	public static boolean isJump(String line)
@@ -389,7 +428,11 @@ public class Instruction extends Element {
 	}
 	public boolean isJump()
 	{
-		return this.text.count() == 0 || this.text.count() == 1 && Instruction.isJump(this.text.get(0));
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.count() == 0 || this.text.count() == 1 && Instruction.isJump(this.text.get(0));
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 0 || lines.count() == 1 && Instruction.isJump(lines.get(0));
+		// END KGU#413 2017-06-09
 	}
 	
 	public static boolean isProcedureCall(String line)
@@ -402,8 +445,13 @@ public class Instruction extends Element {
 	}
 	public boolean isProcedureCall()
 	{
-		return this.text.count() == 1 && Instruction.isProcedureCall(this.text.get(0));		
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.count() == 1 && Instruction.isProcedureCall(this.text.get(0));
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && Instruction.isProcedureCall(lines.get(0));
+		// END KGU#413 2017-06-09
 	}
+
 	// START #274 2016-10-16 (KGU): Improved support for Code export
 	public static boolean isTurtleizerMove(String line)
 	{
@@ -427,7 +475,11 @@ public class Instruction extends Element {
 	}
 	public boolean isFunctionCall()
 	{
-		return this.text.count() == 1 && Instruction.isFunctionCall(this.text.get(0));
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.count() == 1 && Instruction.isFunctionCall(this.text.get(0));
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && Instruction.isFunctionCall(lines.get(0));
+		// END KGU#413 2017-06-09
 	}
 	// END KGU#199 2016-07-06
 	
@@ -440,7 +492,11 @@ public class Instruction extends Element {
 	}
 	public boolean isImportCall()
 	{
-		return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && Instruction.isImportCall(lines.get(0));
+		// END KGU#413 2017-06-09
 	}
 	// END KGU#376 2017-04-11
 	
@@ -452,13 +508,23 @@ public class Instruction extends Element {
 	}
 	public boolean isOutput()
 	{
-		for (int i = 0; i < this.getText().count(); i++)
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//for (int i = 0; i < this.getText().count(); i++)
+		//{
+		//	if (isOutput(this.getText().get(i).trim()))
+		//	{
+		//		return true;
+		//	}
+		//}
+		StringList lines = this.getUnbrokenText();
+		for (int i = 0; i < lines.count(); i++)
 		{
-			if (isOutput(this.getText().get(i).trim()))
+			if (isOutput(lines.get(i)))
 			{
 				return true;
 			}
 		}
+		// END KGU#413 2017-06-09
 		return false;
 	}
 	
@@ -469,15 +535,26 @@ public class Instruction extends Element {
 	}
 	public boolean isInput()
 	{
-		for (int i = 0; i < this.getText().count(); i++)
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//for (int i = 0; i < this.getText().count(); i++)
+		//{
+		//	if (isInput(this.getText().get(i).trim()))
+		//	{
+		//		return true;
+		//	}
+		//}
+		StringList lines = this.getUnbrokenText();
+		for (int i = 0; i < lines.count(); i++)
 		{
-			if (isInput(this.getText().get(i).trim()))
+			if (isInput(lines.get(i)))
 			{
 				return true;
 			}
 		}
+		// END KGU#413 2017-06-09
 		return false;
 	}
+
 	
 	public static boolean isEmptyInput(String line)
 	{
@@ -496,17 +573,27 @@ public class Instruction extends Element {
 	}
 	public boolean isEmptyInput()
 	{
-		for (int i = 0; i < this.getText().count(); i++)
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//for (int i = 0; i < this.getText().count(); i++)
+		//{
+		//	if (isEmptyInput(this.getText().get(i).trim()))
+		//	{
+		//		return true;
+		//	}
+		//}
+		StringList lines = this.getUnbrokenText();
+		for (int i = 0; i < lines.count(); i++)
 		{
-			if (isEmptyInput(this.getText().get(i).trim()))
+			if (isEmptyInput(lines.get(i)))
 			{
 				return true;
 			}
 		}
+		// END KGU#413 2017-06-09
 		return false;
 	}	
 	// END KGU#236 2016-08-10
-
+	
 	// START KGU#322 2016-07-06: Enh. #335
 	/**
 	 * Returns true if the current line of code is a declarationof one of the following types:
@@ -539,20 +626,34 @@ public class Instruction extends Element {
 	public boolean isDeclaration()
 	{
 		boolean isDecl = true;
-		for (int i = 0; isDecl && i < this.text.count(); i++) {
-			String line = this.text.get(i).trim();
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//for (int i = 0; isDecl && i < this.text.count(); i++) {
+		//	String line = this.text.get(i).trim();
+		//	isDecl = line.isEmpty() || isDeclaration(line);
+		//}
+		StringList lines = this.getUnbrokenText();
+		for (int i = 0; isDecl && i < lines.count(); i++) {
+			String line = lines.get(i);
 			isDecl = line.isEmpty() || isDeclaration(line);
 		}
+		// END KGU#413 2017-06-09
 		return isDecl;
 	}
 	/** @return true if at least one line is a declaration */
 	public boolean hasDeclarations()
 	{
 		boolean hasDecl = false;
-		for (int i = 0; !hasDecl && i < this.text.count(); i++) {
-			String line = this.text.get(i).trim();
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//for (int i = 0; !hasDecl && i < this.text.count(); i++) {
+		//	String line = this.text.get(i).trim();
+		//	hasDecl = !line.isEmpty() && isDeclaration(line);
+		//}
+		StringList lines = this.getUnbrokenText();
+		for (int i = 0; !hasDecl && i < lines.count(); i++) {
+			String line = lines.get(i);
 			hasDecl = !line.isEmpty() && isDeclaration(line);
 		}
+		// END KGU#413 2017-06-09
 		return hasDecl;
 	}
 	// END KGU#332 2017-01-27
@@ -570,9 +671,13 @@ public class Instruction extends Element {
 	public Function getCalledRoutine()
 	{
 		Function called = null;
-		if (this.text.count() == 1)
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//StringList lines = this.text;
+		StringList lines = this.getUnbrokenText();
+		// END KGU#413 2017-06-09
+		if (lines.count() == 1)
 		{
-			String potentialCall = this.text.get(0);
+			String potentialCall = lines.get(0);
 			StringList tokens = Element.splitLexically(potentialCall, true);
 			unifyOperators(tokens, true);
 			int asgnPos = tokens.indexOf("<-");
@@ -631,9 +736,15 @@ public class Instruction extends Element {
 	@Override
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
-		for (int i = 0; i < this.getText().count(); i++) {
-			updateTypeMapFromLine(typeMap, this.getText().get(i), i);
+		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+		//for (int i = 0; i < this.getText().count(); i++) {
+		//	updateTypeMapFromLine(typeMap, this.getText().get(i), i);
+		//}
+		StringList lines = this.getUnbrokenText();
+		for (int i = 0; i < lines.count(); i++) {
+			updateTypeMapFromLine(typeMap, lines.get(i), i);
 		}
+		// END KGU#413 2017-06-09
 	}
 	
 	public void updateTypeMapFromLine(HashMap<String, TypeMapEntry> typeMap, String line, int lineNo)

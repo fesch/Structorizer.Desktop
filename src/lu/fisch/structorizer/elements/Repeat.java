@@ -226,7 +226,7 @@ public class Repeat extends Element implements ILoop {
 	
 	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
 	@Override
-	protected ImageIcon getIcon()
+	public ImageIcon getIcon()
 	{
 		return IconLoader.ico063;
 	}
@@ -343,7 +343,10 @@ public class Repeat extends Element implements ILoop {
 			// The own text contains just a condition (i.e. a logical expression), not an instruction
 			if (!_instructionsOnly)
 			{
-				_lines.add(this.getText());
+				// START KGU#413 2017-06-09: Enh. #416: Cope with user-inserted line breaks
+				//_lines.add(this.getText());
+				_lines.add(this.getUnbrokenText());
+				// END KGU#413 2017-06-09
 			}
 			this.q.addFullText(_lines, _instructionsOnly, implicatedRoots);
 		}

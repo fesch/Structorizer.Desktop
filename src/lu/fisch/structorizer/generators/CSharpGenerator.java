@@ -57,6 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.04.14      Enh. #335: Method isInternalDeclarationAllowed() duly overridden
  *      Kay Gürtzig             2017.05.16      Bugfix #51: Export of empty input instructions produced " = Console.ReadLine();"
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
  *
  ******************************************************************************************************
  *
@@ -446,6 +447,7 @@ public class CSharpGenerator extends CGenerator
 		boolean isDisabled = _para.isDisabled();
 		Root root = Element.getRoot(_para);
 		String indentPlusOne = _indent + this.getIndent();
+		String suffix = Integer.toHexString(_para.hashCode());
 
 		insertComment(_para, _indent);
 
@@ -459,8 +461,8 @@ public class CSharpGenerator extends CGenerator
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			Subqueue sq = _para.qs.get(i);
-			String threadVar = "thr" + _para.hashCode() + "_" + i;
-			String worker = "Worker" + _para.hashCode() + "_" + i;
+			String threadVar = "thr" + suffix + "_" + i;
+			String worker = "Worker" + suffix + "_" + i;
 			String workerInst = worker.toLowerCase();
 			StringList usedVars = root.getUsedVarNames(sq, false, false).reverse();
 			asgndVars[i] = root.getVarNames(sq, false, false).reverse();
@@ -476,13 +478,13 @@ public class CSharpGenerator extends CGenerator
 		}
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			String threadVar = "thr" + _para.hashCode() + "_" + i;
+			String threadVar = "thr" + suffix + "_" + i;
 			addCode(threadVar + ".Join();", indentPlusOne, isDisabled);
 		}
 		
 		for (int i = 0; i < _para.qs.size(); i++) {
 			for (int j = 0; j < asgndVars[i].count(); j++) {
-				String workerInst = "worker" + _para.hashCode() + "_" + i;
+				String workerInst = "worker" + suffix + "_" + i;
 				String varName = asgndVars[i].get(j);
 				addCode(varName + " = " + workerInst + "." + varName + ";", indentPlusOne, isDisabled);
 			}
@@ -521,7 +523,7 @@ public class CSharpGenerator extends CGenerator
 			insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
-				String workerNameBase = "Worker" + par.hashCode() + "_";
+				String workerNameBase = "Worker" + Integer.toHexString(par.hashCode()) + "_";
 				Root root = Element.getRoot(par);
 				HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
 				int i = 0;

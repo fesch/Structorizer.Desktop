@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.02.26  KGU#352: Variable prefixing revised w.r.t. arrays and references
  *      Kay Gürtzig         2017.02.27  Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig         2017.05.16  Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017.05.24  Bugfix #412: The hash codes used to generate unique identifiers could get negative
  *
  ******************************************************************************************************
  *
@@ -383,9 +384,10 @@ public class PerlGenerator extends Generator {
 			boolean isDisabled = _inst.isDisabled();
 	    	insertComment(_inst, _indent);
 
-			for(int i=0;i<_inst.getText().count();i++)
+	    	StringList lines = _inst.getUnbrokenText();
+			for(int i=0;i<lines.count();i++)
 			{
-				String text = transform(_inst.getText().get(i));
+				String text = transform(lines.get(i));
 				if (!text.endsWith(";")) { text += ";"; }
 				// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 				if (this.usesFileAPI) {
@@ -609,7 +611,7 @@ public class PerlGenerator extends Generator {
     		StringList items = this.extractForInListItems(_for);
     		if (items != null)
     		{
-        		valueList = "@array" + _for.hashCode();
+        		valueList = "@array" + Integer.toHexString(_for.hashCode());
     			addCode("my " + valueList + " = (" + transform(items.concatenate(", "), false) + ")",
     					_indent, isDisabled);
     		}
@@ -666,7 +668,7 @@ public class PerlGenerator extends Generator {
     	insertComment(_while, _indent);
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
-    	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+    	String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
@@ -705,7 +707,7 @@ public class PerlGenerator extends Generator {
 		generateCode(_repeat.q,_indent+this.getIndent());
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
-    	String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+    	String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
@@ -756,11 +758,12 @@ public class PerlGenerator extends Generator {
 
 			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
 			this.isWithinCall = true;
-			// END KGU#352 2017-02-26			
-			for (int i=0; i<_call.getText().count(); i++)
+			// END KGU#352 2017-02-26
+			StringList lines = _call.getUnbrokenText();
+			for (int i=0; i<lines.count(); i++)
 			{
 				// FIXME: Arrays must be passed as reference, i.e. "\@arr" or "\@$para"
-				addCode(transform(_call.getText().get(i)) + ";", _indent, isDisabled);
+				addCode(transform(lines.get(i)) + ";", _indent, isDisabled);
 			}
 			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
 			this.isWithinCall = false;
@@ -781,7 +784,7 @@ public class PerlGenerator extends Generator {
 			// In case of an empty text generate a break instruction by default.
 			boolean isEmpty = true;
 			
-			StringList lines = _jump.getText();
+			StringList lines = _jump.getUnbrokenText();
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
@@ -848,6 +851,7 @@ public class PerlGenerator extends Generator {
 		StringList[] asgndVars = new StringList[nThreads];
 		String indentPlusOne = _indent + this.getIndent();
 		String indentPlusTwo = indentPlusOne + this.getIndent();
+		String suffix = Integer.toHexString(_para.hashCode());
 				
 		// START KGU 2014-11-16
 		insertComment(_para, _indent);
@@ -869,7 +873,7 @@ public class PerlGenerator extends Generator {
 			for (int v = 0; v < asgndVars[i].count(); v++) {
 				usedVars.removeAll(asgndVars[i].get(v));
 			}
-			String threadVar = "$thr" + _para.hashCode() + "_" + i;
+			String threadVar = "$thr" + suffix + "_" + i;
 			if (hasResults) {
 				// Define the thread in list context such that we may obtain more results
 				threadVar = "(" + threadVar + ")";
@@ -902,7 +906,7 @@ public class PerlGenerator extends Generator {
 			if (!resultVars.isEmpty()) {
 				resultVars = "($" + resultVars + ") = ";
 			}
-			addCode(resultVars + "$thr" + _para.hashCode() + "_" + i + "->join();", indentPlusOne, isDisabled);
+			addCode(resultVars + "$thr" + suffix + "_" + i + "->join();", indentPlusOne, isDisabled);
 			addCode("", "", isDisabled);
 		}
 

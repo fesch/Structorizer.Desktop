@@ -641,7 +641,7 @@ public class Case extends Element implements IFork
 
     // START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
     @Override
-    protected ImageIcon getIcon()
+    public ImageIcon getIcon()
     {
     	// START KGU#217 2016-07-25: Issue #87 - Was wrong icon number
     	//return IconLoader.ico057;

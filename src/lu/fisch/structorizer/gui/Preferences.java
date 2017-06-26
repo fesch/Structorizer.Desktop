@@ -38,7 +38,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to class GUIScaler
  *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
- *      Kay Gürtzig     2017.05.18      Issue #405: New option spnCaseRot introduced 
+ *      Kay Gürtzig     2017.05.18      Issue #405: New option spnCaseRot introduced
+ *      Kay Gürtzig     2017.06.08      Issue #405: dimension tuning for Nimbus L&F
  *
  ******************************************************************************************************
  *
@@ -180,7 +181,14 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
 			int border = (int)(12 * scaleFactor);
 			dialogPane.setBorder(new EmptyBorder(border, border, border, border));
-			dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor), (int)(320*scaleFactor)));
+			// START KGU#401 2017-06-08: Enh. #405 We need more space for Nimbus L&F
+			//dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor), (int)(320*scaleFactor)));
+			double nimbusFactor = 1.0;
+			if (UIManager.getLookAndFeel().getName().equals("Nimbus")) {
+				nimbusFactor = 1.125;				
+			}
+			dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor*nimbusFactor), (int)(320*scaleFactor*nimbusFactor)));
+			// END KGU#401 2017-06-08
 			// END KGU#287 2016-11-01
 			dialogPane.setRequestFocusEnabled(false);
 
@@ -220,7 +228,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 						//======== pnlCases ========
 						{
 							pnlCases.setLayout(new BorderLayout(border, border));
-							int width = (int)(95 * scaleFactor);
+							int width = (int)(95 * scaleFactor * nimbusFactor);
 							int height = (int)(44*scaleFactor);
 
 							//======== pnlAltLeft ========

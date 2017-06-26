@@ -128,11 +128,12 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Control;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 
-public abstract class Generator extends javax.swing.filechooser.FileFilter
+public abstract class Generator extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	/************ Fields ***********************/
 	// START KGU#162 2016-03-31: Enh. #144
@@ -410,12 +411,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * Returns a Generator-specific option value if available (otherwise null)
 	 * @param _optionName - option key, to be combined with the generator class name
-	 * @return an Object (of the type specified in the plugin) or null
+	 * @param _defaultValue - a (situative) default value 
+	 * @return an Object (of the type specified in the plugin) or _defaultValue
 	 */
-	protected Object getPluginOption(String _optionName) {
-		Object optionVal = null;
-		if (this.optionMap.containsKey(_optionName)) {
-			optionVal = this.optionMap.get(_optionName);
+	@Override
+	public Object getPluginOption(String _optionName, Object _defaultValue) {
+		Object optionVal = _defaultValue;
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		if (this.optionMap.containsKey(fullKey)) {
+			optionVal = this.optionMap.get(fullKey);
 		}
 		return optionVal;
 	}
@@ -425,9 +429,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _optionName - a key string
 	 * @param _value - an object according to the type specified in the plugin
 	 */
+	@Override
 	public void setPluginOption(String _optionName, Object _value)
 	{
-		this.optionMap.put(_optionName, _value);
+		String fullKey = this.getClass().getSimpleName()+"."+_optionName;
+		this.optionMap.put(fullKey, _value);
 	}
 	
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
@@ -1107,7 +1113,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			// and label both
 			if (elem instanceof Jump && !elem.isDisabled())
 			{
-				String jumpText = elem.getText().getLongString().trim();
+				// START KGU#413 2017-06-09: Enh. #416: There might be line continuation
+				//String jumpText = elem.getText().getLongString().trim();
+				String jumpText = elem.getUnbrokenText().getLongString();
+				// END KGU#413 2017-06-09
 				// START KGU#380 2017-04-14: Bugfix #394 Code revision, simplification
 				//if (jumpText.matches(patternReturn))
 				
@@ -1250,7 +1259,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			else if (elem instanceof Instruction)
 			{
-				StringList text = elem.getText();
+				// START KGU#413 2017-06-09: Enh. #416
+				//StringList text = elem.getText();
+				StringList text = elem.getUnbrokenText();
+				// END KGU#413 2017-06-09
 				for (int i = 0; i < text.count(); i++)
 				{
 					String line = text.get(i);

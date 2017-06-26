@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
  *      Kay Gürtzig     2017.03.28      Enh. #387: New "Save All" button
  *      Kay Gürtzig     2017.05.16      Enh. #389: Button for third diagram type (includable)
+ *      Kay Gürtzig     2017.06.15      Enh. #415: Toolbar additions for find & replace
  *
  ******************************************************************************************************
  *
@@ -81,8 +82,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // Controller
     NSDController NSDControll = null;
 
-    // Toolbars
-    protected MyToolbar toolbar = null;
+//    // Toolbars
+//    protected MyToolbar toolbar = null;
 	
     // Splitpanes
     JSplitPane sp;
@@ -140,7 +141,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JButton btnAfterPara = new JButton(IconLoader.ico089);
 	// undo & redo
     protected final JButton btnUndo = new JButton(IconLoader.ico039); 
-	protected final JButton btnRedo = new JButton(IconLoader.ico038); 
+	protected final JButton btnRedo = new JButton(IconLoader.ico038);
+	// find & replace (KGU#324 2017-06-14: Enh. #415)
+	protected final JButton btnFindReplace = new JButton(IconLoader.ico073);
 	// copy & paste
 	protected final JButton btnCut = new JButton(IconLoader.ico044); 
     protected final JButton btnCopy = new JButton(IconLoader.ico042); 
@@ -187,6 +190,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // START KGU 2015-10-12: Breakpoint wiping
     protected final JButton btnDropBrk = new JButton(IconLoader.ico104);
     // END KGU 2015-10-12
+	// START KGU#414 2017-06-14: Enh. #199
+	protected final JButton btnHelp = new JButton(IconLoader.ico110);
+	// END KGU#414 2017-06-14
 	// colors
     protected ColorButton btnColor0 = new ColorButton(Element.color0);
     protected ColorButton btnColor1 = new ColorButton(Element.color1);
@@ -387,7 +393,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     
     private MyToolbar newToolBar(String name)
     {
-        toolbar = new MyToolbar();
+        MyToolbar toolbar = new MyToolbar();
         toolbar.setName(name);
         diagram.toolbars.add(toolbar);
         this.add(toolbar,AKDockLayout.NORTH);
@@ -399,6 +405,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
     private void create()
     {
+    	MyToolbar toolbar = null;
+    	
         // Setting up "this" ;-)
         addComponentListener(this);
         this.setDoubleBuffered(false);
@@ -553,7 +561,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
         this.setLayout(new AKDockLayout());
         // FIXME (KGU): Why is the static variable holding MyToolbar overwritten?
-        toolbar=newToolBar("New, open, save");
+        toolbar = newToolBar("New, open, save");
 		
         // Setting up the toolbar with all buttons and actions
 		// I/O
@@ -573,8 +581,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnSaveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAllNSD(); doButtons(); } } );
 	    // END KGU#373 2017-03-38
 		
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Print");
+		toolbar = newToolBar("Print");
 
 		// printing
 		//toolbar.addSeparator();
@@ -588,8 +595,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-24
 		
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Undo, redo");
+		toolbar = newToolBar("Undo, redo");
 
 		// undo & redo
 		//toolbar.addSeparator();
@@ -600,8 +606,16 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnRedo.setFocusable(false);
 		btnRedo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); } } );
 		
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Copy, cut, paste");
+        // START KGU#324 2017-06-14: Enh. #415
+		toolbar = newToolBar("Find & Replace");
+		
+		// find & replace
+		toolbar.add(btnFindReplace);
+		btnFindReplace.setFocusable(false);
+		btnFindReplace.addActionListener(new ActionListener() {	public void actionPerformed(ActionEvent arg0) { diagram.findAndReplaceNSD(); } });
+		// END KGU#324 2017-06-14
+		
+		toolbar = newToolBar("Copy, cut, paste");
 
 		// copy & paste
 		//toolbar.addSeparator();
@@ -615,8 +629,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnPaste.setFocusable(false);
 		btnPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
 		
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Edit, delete, move");
+		toolbar = newToolBar("Edit, delete, move");
 
 		// editing
 		//toolbar.addSeparator();
@@ -643,8 +656,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } ); 
 		// END KGU#199 2016-07-06
 		
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Method, program");
+		toolbar = newToolBar("Method, program");
 
 		// style
 		//toolbar.addSeparator();
@@ -660,16 +672,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
 	    // END KGU#376 2017-05-16
 
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Nice");
+		toolbar = newToolBar("Nice");
 		
 		//toolbar.addSeparator();
         toolbar.add(btnNice);
 		btnNice.setFocusable(false);
 		btnNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(btnNice.isSelected()); doButtons(); } } );
 		
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Add before ...");
+		toolbar = newToolBar("Add before ...");
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
 		
@@ -706,8 +716,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnBeforePara.setFocusable(false);
 		btnBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
 
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Add after ...");
+		toolbar = newToolBar("Add after ...");
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
 
@@ -744,8 +753,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnAfterPara.setFocusable(false);
 		btnAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
 		
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Colors ...");
+		toolbar = newToolBar("Colors ...");
 
 		// Colors
 		//toolbar.addSeparator();
@@ -781,8 +789,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnColor9.setFocusable(false);
 
 		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Collapsing");
+		toolbar = newToolBar("Collapsing");
 
 		// Collapse & Expand
 		//toolbar.addSeparator();
@@ -799,17 +806,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 //		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
 		// END KGU#123 2016-01-04
 
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("About");
-
-		// About
-		//toolbar.addSeparator();
-        toolbar.add(btnAbout);
-		btnAbout.setFocusable(false);
-		btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.aboutNSD(); } } );
-
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Turtle, interpret");
+		toolbar = newToolBar("Debug");
 
 		// Turtle
 		//toolbar.addSeparator();
@@ -828,8 +825,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
 		// END KGU#310 2016-12-14
 
-        // FIXME (KGU): Why is the previous toolbar overwritten?
-		toolbar=newToolBar("Font ...");
+		toolbar = newToolBar("Font ...");
 
 		// Font
 		//toolbar.addSeparator();
@@ -840,6 +836,19 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnFontDown.setFocusable(false);
 		btnFontDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontDownNSD(); doButtons(); } } );
 		
+		toolbar = newToolBar("About, help");
+
+		// About
+		//toolbar.addSeparator();
+        toolbar.add(btnAbout);
+		btnAbout.setFocusable(false);
+		btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.aboutNSD(); } } );
+		// START KGU#414 2017-06-14: Enh. #199
+		toolbar.add(btnHelp);
+		btnHelp.setFocusable(false);
+		btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.helpNSD(); } } );
+		// END KGU#414 2017-06-14
+
 		sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		this.add(sp,AKDockLayout.CENTER);
 		sp.setBorder(BorderFactory.createEmptyBorder());
@@ -1481,7 +1490,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	public void arrangerIndexRemove()
 	{
 		int index = diagramIndex.getSelectedIndex();
-		Arranger.getInstance().removeDiagram(diagramIndex.getSelectedValue());
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null) {
+			Arranger.getInstance().removeDiagram(selectedRoot);
+		}
 		if (index < diagramIndex.getModel().getSize()) {
 			diagramIndex.setSelectedIndex(index);
 		}

@@ -417,11 +417,12 @@ public class OberonGenerator extends Generator {
 			insertComment(_inst, _indent);
 
 			String outputKey = CodeParser.getKeyword("output");
-			for (int i=0; i<_inst.getText().count(); i++)
+			StringList lines = _inst.getUnbrokenText();
+			for (int i=0; i<lines.count(); i++)
 			{
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
-				String line = _inst.getText().get(i);
+				String line = lines.get(i);
 				// START KGU#236 2016-08-10: Issue #227: Simplification by delegation
 //				String matcherInput = "^" + getKeywordPattern(CodeParser.input);
 //				String matcherOutput = "^" + getKeywordPattern(CodeParser.output);
@@ -781,7 +782,7 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_while, _indent);
         // END KGU 2014-11-16
-		addCode("WHILE "+BString.replace(transform(_while.getText().getText()),"\n","")+" DO",
+		addCode("WHILE "+BString.replace(transform(_while.getUnbrokenText().getText()),"\n","")+" DO",
 				_indent, isDisabled);
 		generateCode(_while.q, _indent + this.getIndent());
 		addCode("END;", _indent, isDisabled);
@@ -795,7 +796,7 @@ public class OberonGenerator extends Generator {
         // END KGU 2014-11-16
 		addCode("REPEAT", _indent, isDisabled);
 		generateCode(_repeat.q,_indent+this.getIndent());
-		addCode("UNTIL "+BString.replace(transform(_repeat.getText().getText()),"\n","")+";",
+		addCode("UNTIL "+BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","")+";",
 				_indent, isDisabled);
 	}
 	
@@ -816,9 +817,10 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_call, _indent);
         // END KGU 2014-11-16
-		for(int i=0;i<_call.getText().count();i++)
+        StringList lines = _call.getUnbrokenText();
+		for(int i=0;i<lines.count();i++)
 		{
-			addCode(transform(_call.getText().get(i))+";", _indent, isDisabled);
+			addCode(transform(lines.get(i))+";", _indent, isDisabled);
 		}
 	}
 	
@@ -837,7 +839,7 @@ public class OberonGenerator extends Generator {
         // Only EXIT (= break) and RETURN exist, no further jump allowed
         boolean isEmpty = true;
 
-        StringList lines = _jump.getText();
+        StringList lines = _jump.getUnbrokenText();
         for (int i = 0; isEmpty && i < lines.count(); i++) {
         	String line = transform(lines.get(i)).trim();
         	if (!line.isEmpty())
