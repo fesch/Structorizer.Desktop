@@ -143,15 +143,19 @@ public class Parser {
             // Adjust position
             for (int i = 0; i < count; i++) {
                 char c = lookaheadBuffer.charAt(i);
-                if (c == 0x0A) {
-                    if (sysPosition.getColumn() > 1) {
-                        // Increment row if Unix EOLN (LF)
-                        sysPosition.incrementLine();
+                switch (c) {
+                case 0x0D:
+                    // increment char counter for Windows LF (MacOS would be plain 0x0D)
+                    if (i + 1 != count && lookaheadBuffer.charAt(i + 1) == 0x0A) {
+                        i++;
                     }
-                } else if (c == 0x0D) {
+                    // Fall through
+                case 0x0A:
                     sysPosition.incrementLine();
-                } else {
+                    break;
+                default:
                     sysPosition.incrementColumn();
+                    break;
                 }
             }
             
