@@ -141,18 +141,29 @@ public class Parser {
     private void consumeBuffer(int count) {
         if (count > 0 && count <= lookaheadBuffer.length()) {
             // Adjust position
+            int lines = 0, columns = 0;
             for (int i = 0; i < count; i++) {
                 char c = lookaheadBuffer.charAt(i);
-                if (c == 0x0A) {
-                    if (sysPosition.getColumn() > 1) {
-                        // Increment row if Unix EOLN (LF)
-                        sysPosition.incrementLine();
+                switch (c) {
+                case 0x0D:
+                    // increment char counter for Windows LF (MacOS would be plain 0x0D)
+                    if (i + 1 != count && lookaheadBuffer.charAt(i + 1) == 0x0A) {
+                        i++;
                     }
-                } else if (c == 0x0D) {
-                    sysPosition.incrementLine();
-                } else {
-                    sysPosition.incrementColumn();
+                    // Fall through
+                case 0x0A:
+                    lines++;
+                    break;
+                default:
+                    columns++;
+                    break;
                 }
+            }
+            
+            if (lines != 0) {
+                sysPosition.incrementLine(lines);
+            } else {
+                sysPosition.incrementColumn(columns);
             }
             
             // Remove the characters

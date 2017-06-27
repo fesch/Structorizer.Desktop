@@ -316,8 +316,8 @@ public class GOLDParser extends Parser {
         getErrorMessages().clear();
         
         if (sourceStatements == null || sourceStatements.trim().length() == 0) {
-            addErrorMessage(FormatHelper.formatMessage("messages", "error.no_source")); 
-            return false;            
+            addErrorMessage(FormatHelper.formatMessage("messages", "error.no_source"));
+            return false;
         }
         
         return parseSourceStatements(new StringReader(sourceStatements));
@@ -329,11 +329,9 @@ public class GOLDParser extends Parser {
         getErrorMessages().clear();
 
         if (sourceReader == null) {
-            addErrorMessage(FormatHelper.formatMessage("messages", "error.no_source_reader")); 
+            addErrorMessage(FormatHelper.formatMessage("messages", "error.no_source_reader"));
             return false;
-        } 
-        
-        getErrorMessages().clear();
+        }
         
         // Enable support for indentation sensitive grammars
         useIndentVirtualTerminals = getSymbolByName(VT_INDENT_INCREASE) != null;
@@ -342,22 +340,22 @@ public class GOLDParser extends Parser {
         
         boolean done = false;
         while (!done) { 
-            ParseMessage response = parse();      
+            ParseMessage response = parse();
             switch (response) {
                 case ACCEPT:
                     done = accept = processAccept();
                     break;
                     
                 case GROUP_ERROR:
-                    done = processGroupError();                 
+                    done = processGroupError();
                     break;
                     
                 case INTERNAL_ERROR:
-                    done = processInternalError(); 
+                    done = processInternalError();
                     break;
                     
                 case LEXICAL_ERROR:
-                    done = processLexicalError();                 
+                    done = processLexicalError();
                     break;
                     
                 case NOT_LOADED_ERROR:

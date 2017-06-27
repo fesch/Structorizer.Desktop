@@ -439,15 +439,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			int colNo = pos.getColumn() - 1;
 			int start = (lineNo > 10) ? lineNo -10 : 0;
 			StringList sourceLines = StringList.explode(sourceCode, "\n");
-			// Unfortunately, the lineNo obtained from the parser is not correct, i.e.
-			// it doesn't count empty lines. So there are two options for us here:
-			// a) we remove all empty lines by sourceLines.removeAll(""); and may
-			//    navigate quicker to the start but irritate the user
-			// b) We loop over all entries not counting empty lines. This way, line
-			//    numbering keeps half-way consistent with the user's counting.
-			// We decide for a), since some preprocessor lines have been dropped
-			// anyway.
-			sourceLines.removeAll("");
+			// Note: position may not correct if preprocessor has dropped / added lines
 			for (int i = start; i < lineNo; i++) {
 				addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i).replace("\t", "    ")));
 			}
@@ -622,6 +614,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			}
 			offset += Character.charCount(codePoint);
 		}
+		_logContent = printableString.toString();
 		// END SSO 2017-06-07
 
 		if (logFile != null)
