@@ -601,8 +601,8 @@ public class CParser extends CodeParser
 			{"cob_u8_t", "unsigned int"}
 		};
 		//========================================================================!!!
-		// FIXME introduce a plugin-defined option configuration for C
-		this.setPluginOption("typeNames", "cob_field,cob_u8_ptr,cob_call_union");
+		// Now introduced as plugin-defined option configuration for C
+		//this.setPluginOption("typeNames", "cob_field,cob_u8_ptr,cob_call_union");
 		//========================================================================!!!
 		
 		// #define	a	b

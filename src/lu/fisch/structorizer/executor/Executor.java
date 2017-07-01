@@ -125,8 +125,10 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float resul)
  *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
  *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
- *      Kay Gürtzig     2017.05.24      Enh. #354: New function split(string, string) built in
+ *      Kay Gürtzig     2017.05.24      Enh. #413: New function split(string, string) built in
  *      Kay Gürtzig     2017.06.09      Enh. #416: Support for execution line continuation by trailing backslash
+ *      Kay Gürtzig     2017.06.30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
+ *      Kay Gürtzig     2017.07.01      Enh. #413: Special check for built-in split function in stepForIn()
  *
  ******************************************************************************************************
  *
@@ -234,6 +236,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
@@ -792,7 +795,7 @@ public class Executor implements Runnable
 				if (replaced)
 				{
 					// Compose the partial expressions and undo the regex escaping for the initial split
-					str = BString.replace(exprs.getLongString(), " \\|\\| ", " || ");
+					str = exprs.getLongString().replace(" \\|\\| ", " || ");
 					str.replace("  ", " ");	// Get rid of multiple spaces
 				}
 			}
@@ -3176,6 +3179,10 @@ public class Executor implements Runnable
 //				}
 				// END KGU#271 2016-10-06
 				
+				// START KGU#417 2017-06-30: Enh. #424
+				cmd = this.evaluateDiagramControllerFunctions(cmd);
+				// END KGU#417 2017-06-30
+
 				// assignment?
 				// START KGU#377 2017-03-30: Bugfix
 				//if (cmd.indexOf("<-") >= 0)
@@ -3308,6 +3315,10 @@ public class Executor implements Runnable
 				}
 				// END KGU 2015-10-12
 
+				// START KGU#417 2017-06-30: Enh. #424
+				cmd = this.evaluateDiagramControllerFunctions(cmd);
+				// END KGU#417 2017-06-30
+
 				// assignment?
 				// START KGU#377 2017-03-30: Bugfix
 				//if (cmd.indexOf("<-") >= 0)
@@ -3377,7 +3388,12 @@ public class Executor implements Runnable
 		// Unstructured return?
 		else if (element.isReturn()) {
 			try {
-				result = tryReturn(convert(sl.get(0)));
+				// START KGU#417 2017-06-30: Enh. #424
+				//result = tryReturn(convert(sl.get(0)));
+				String cmd = convert(sl.get(0));
+				cmd = this.evaluateDiagramControllerFunctions(cmd);
+				result = tryReturn(cmd);
+				// END KGU#417 2017-06-30
 				done = true;			
 			}
 			catch (Exception ex)
@@ -3399,6 +3415,9 @@ public class Executor implements Runnable
 			try {
 				// START KGU 2017-04-14: #394 Allow arbitrary integer expressions now
 				//Object n = interpreter.eval(tokens.get(1));
+				// START KGU#417 2017-06-30: Enh. #424
+				expr = this.evaluateDiagramControllerFunctions(expr);
+				// END KGU#417 2017-06-30
 				Object n = context.interpreter.eval(expr);
 				// END KGU 2017-04-14
 				if (n instanceof Integer)
@@ -3465,6 +3484,84 @@ public class Executor implements Runnable
 		return result;
 	}
 	// END KGU#78 2015-11-25
+	
+	// START KGU#417 2017-06-29: Enh. #424 New mechanism to pre-evaluate Turtleizer functions
+	private String evaluateDiagramControllerFunctions(String expression) throws EvalError
+	{
+		if (diagramController != null && diagramController instanceof FunctionProvidingDiagramController) {
+			// Now, several ones of the functions offered by diagramController might
+			// occur at different nesting depths in the expression. So we must find
+			// and evaluate them from innermost to outermost.
+			// We advance from right to left, this way we will evaluate deeper nested
+			// functions first.
+			// Begin with collecting all possible occurrence positions
+			StringList tokens = Element.splitLexically(expression, true);
+			LinkedList<Integer> positions = new LinkedList<Integer>();
+			HashMap<String, Class<?>[]> funcMap = ((FunctionProvidingDiagramController)diagramController).getFunctionMap();
+			for (Entry<String, Class<?>[]> entry: funcMap.entrySet()) {
+				int pos = -1;
+				while ((pos = tokens.indexOf(entry.getKey(), pos+1, false)) >= 0) {
+					positions.add(pos);
+				}
+			}
+			// 
+			positions.sort(java.util.Collections.reverseOrder());
+			Iterator<Integer> iter = positions.iterator();
+			try {
+				while (iter.hasNext()) {
+					int pos = iter.next();
+					String fName = tokens.get(pos).toLowerCase();
+					String exprTail = tokens.concatenate("", pos + 1).trim();
+					if (exprTail.startsWith("(")) {
+						StringList args = Element.splitExpressionList(exprTail.substring(1), ",");
+						Class<?>[] signature = funcMap.get(fName);
+						int nArgs = args.count();
+						if (nArgs == signature.length - 1) {
+							String tail = "";
+							StringList parts = Element.splitExpressionList(exprTail.substring(1), ",", true);
+							if (parts.count() > nArgs) {
+								tail = parts.get(parts.count()-1).trim();
+							}
+							Object argVals[] = new Object[nArgs];
+							for (int i = 0; i < nArgs; i++) {
+								Object val = context.interpreter.eval(args.get(i));
+								try {
+									signature[i].cast(val);
+								}
+								catch (Exception ex) {
+									EvalError err = new EvalError("Function <" + fName + "> argument "
+											+ (i+1) + ": <" + args.get(i) + "> could not be converted to "
+											+ signature[i].getSimpleName(), null, null);
+									err.setStackTrace(ex.getStackTrace());
+									throw err;
+								}
+							}
+							// Passed till here, we try to execute the function - this may throw a FunctionException
+							Object result = ((FunctionProvidingDiagramController)diagramController).execute(fName, argVals);
+							tokens.remove(pos, tokens.count());
+							tokens.add(signature[signature.length-1].cast(result).toString());
+							if (!tail.isEmpty()) {
+								tokens.add(Element.splitLexically(tail.substring(1), true));
+							}
+						}
+					}
+				}
+			}
+			catch (EvalError ex) {
+				throw ex;
+			}
+			catch (Exception ex) {
+				// Convert other errors into EvalError
+				EvalError err = new EvalError(ex.toString(), null, null);
+				err.setStackTrace(ex.getStackTrace());
+				throw err;
+			}
+
+			expression = tokens.concatenate();
+		}
+		return expression;
+	}
+	// END KGU#417 2017-06-29
 	
 	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
 	// Submethod of stepInstruction(Instruction element), handling an assignment
@@ -4123,7 +4220,10 @@ public class Executor implements Runnable
 					tokens.removeAll(Element.splitLexically(key, false), !CodeParser.ignoreCase);
 				}		
 			}
-			String expression = tokens.concatenate() + " = ";
+			// START KGU#417 2017-06-30: Enh. #424
+			//String expression = tokens.concatenate() + " = ";
+			String expression = this.evaluateDiagramControllerFunctions(tokens.concatenate()) + " = ";
+			// END KGU#417 2017-06-30
 			// END KGU#259 2016-09-25
 			boolean done = false;
 			int last = text.count() - 1;
@@ -4239,6 +4339,10 @@ public class Executor implements Runnable
 			s = convert(tokens.concatenate());
 			// END KGU#150 2016-04-03
 
+			// START KGU#417 2017-06-30: Enh. #424
+			s = this.evaluateDiagramControllerFunctions(s);
+			// END KGU#417 2017-06-30
+
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
 			Object cond = context.interpreter.eval(s);
@@ -4348,7 +4452,11 @@ public class Executor implements Runnable
 			}
 
 			//int cw = 0;
-			Object cond = context.interpreter.eval(convertStringComparison(condStr));
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
+			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+			Object cond = context.interpreter.eval(convertStringComparison(tempCondStr));
+			// END KGU#417 2017-06-30
 
 			if (cond == null || !(cond instanceof Boolean))
 			{
@@ -4418,7 +4526,11 @@ public class Executor implements Runnable
 						delay();
 						// END KGU 2015-10-13
 					}
-					cond = context.interpreter.eval(convertStringComparison(condStr));
+					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+					//cond = context.interpreter.eval(convertStringComparison(condStr));
+					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+					cond = context.interpreter.eval(convertStringComparison(tempCondStr));
+					// END KGU#417 2017-06-30
 					if (cond == null)
 					{
 						// START KGU#197 2016-07-27: Localization support
@@ -4506,7 +4618,11 @@ public class Executor implements Runnable
 			// END KGU#150 2016-04-03
 
 			//int cw = 0;
-			Object cond = context.interpreter.eval(condStr);
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
+			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+			Object cond = context.interpreter.eval(convertStringComparison(tempCondStr));
+			// END KGU#417 2017-06-30
 			if (cond == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -4544,7 +4660,12 @@ public class Executor implements Runnable
 						//cw++;
 						element.executed = true;
 					}
-					cond = context.interpreter.eval(convertStringComparison(condStr));
+					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+					//cond = context.interpreter.eval(convertStringComparison(condStr));
+					//Object cond = context.interpreter.eval(condStr);
+					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+					cond = context.interpreter.eval(convertStringComparison(tempCondStr));
+					// END KGU#417 2017-06-30
 					if (cond == null || !(cond instanceof Boolean))
 					{
 						// START KGU#197 2016-07-27: Localization support
@@ -4663,6 +4784,9 @@ public class Executor implements Runnable
 			String s = element.getStartValue(); 
 			// END KGU#3 2015-10-27
 			s = convert(s);
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
+			s = this.evaluateDiagramControllerFunctions(s);
+			// END KGU#417 2017-06-30
 			Object n = context.interpreter.eval(s);
 			if (n == null)
 			{
@@ -4694,6 +4818,9 @@ public class Executor implements Runnable
 			s = element.getEndValue();
 			// END KGU#3 2015-10-27
 			s = convert(s);
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
+			s = this.evaluateDiagramControllerFunctions(s);
+			// END KGU#417 2017-06-30
 			
 			n = context.interpreter.eval(s);
 			if (n == null)
@@ -4823,7 +4950,20 @@ public class Executor implements Runnable
 		Object[] valueList = null;
 		String problem = "";	// Gathers exception descriptions for analysis purposes
 		Object value = null;
-		if (valueListString.startsWith("{") && valueListString.endsWith("}"))
+		// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+		try {
+			valueListString = this.evaluateDiagramControllerFunctions(valueListString).trim();
+		}
+		catch (EvalError ex)
+		{
+			problem += "\n" + ex.getMessage();
+		}
+		// END KGU#417 2017-06-30
+		// START KGU#410 2017-07-01: Enh. #413 - there is an array-returning built-in function now!
+		//if (valueListString.startsWith("{") && valueListString.endsWith("}"))
+		if (valueListString.startsWith("{") && valueListString.endsWith("}")
+			|| valueListString.matches("^split\\(.*?[,].*?\\)$"))
+		// END KGU#410 2017-07-01
 		{
 			try
 			{
@@ -4833,12 +4973,14 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
-		// There are no built-in functions returning an array and external function calls
+		// There are no other built-in functions returning an array and external function calls
 		// aren't allowed at this position, hence it's relatively safe to conclude
-		// an item enumeration from the occurrence of a comma.
+		// an item enumeration from the occurrence of a comma. (If the comma IS an argument
+		// separator of a function call then the function result will be an element of the
+		// value list, such that it must be put in braces.)
 		if (value == null && valueListString.contains(","))
 		{
 			try
@@ -4849,7 +4991,7 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
 		// Might be a function or variable otherwise evaluable
@@ -4861,12 +5003,12 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
 		if (value == null && valueListString.contains(" "))
 		{
-			// Rather desparate attempt to compose an array from loose strings (like in shell scripts)
+			// Rather desperate attempt to compose an array from loose strings (like in shell scripts)
 			StringList tokens = Element.splitExpressionList(valueListString, " ");
 			try
 			{
@@ -4876,7 +5018,7 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
 		if (value != null)

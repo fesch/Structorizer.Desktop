@@ -4570,14 +4570,17 @@ public class COBOLParser extends CodeParser
 		{
 			// Debug....
 			String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
-			this.returnMap .put(root, resultVar);
-			if (this.paramTypeMap.containsKey(root)) {
+			this.returnMap.put(root, resultVar);
+			if (this.paramTypeMap.containsKey(root)) {	// FIXME!
 				StringList rootText = root.getText();
-				HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-				if (paramTypes.containsKey(resultVar)
+				//HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
+				//if (paramTypes.containsKey(resultVar)
+				String resultType = CobTools.getTypeString(currentProg.getCobVar(resultVar));
+				if (resultType != null
 					&& rootText.count() >= 1
 					&& rootText.getLongString().trim().endsWith(")")) {
-					rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
+					//rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
+					rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + resultType);
 				}
 			}
 		}
@@ -7417,9 +7420,17 @@ class CobTools {
 		STORAGE_FILE
 	};
 	
+	/**
+	 * Current node in the CobProg tree 
+	 */
 	private CobProg currentProgram = null;
 //	private CobProg lastProgram = null;
 	
+	/**
+	 * Resource node in the tree of callable entities of a COBOL source,
+	 * holds different storage areas with their respective variable trees.
+	 * Is linked to the parent node, the next sibling and the first child.
+	 */
 	class CobProg {
 		
 		private String name = null;
@@ -7515,7 +7526,7 @@ class CobTools {
 		 * @param parent
 		 */
 		public CobProg(String name, String extName, boolean isFunction, CobProg parent) {
-			super();
+			super();	// ???
 			this.name = name;
 			this.extName = extName;
 			this.isFunction = isFunction;
@@ -7597,7 +7608,7 @@ class CobTools {
 			return extName;
 		}
 		/**
-		 * @return the isFunction
+		 * @return true if this represents a function, false otherwies
 		 */
 		public boolean isFunction() {
 			return isFunction;
@@ -7622,7 +7633,7 @@ class CobTools {
 			// search for List of variables with the given (unqualified) name
 			ArrayList<CobVar> varList = varNames.get(names[0]);
 			
-			// if the entry exist check for neccessary qualification
+			// if the entry exists check for neccessary qualification
 			if (varList == null) {
 				return null;
 			}		
@@ -7631,15 +7642,23 @@ class CobTools {
 			}
 			
 			for (Iterator<CobVar> iterator = varList.iterator(); iterator.hasNext();) {
-				CobVar candidate = (CobVar) iterator.next();
+				CobVar candidate = iterator.next();
 				if (candidate.hasParent()) {
-					if (candidate.getParent().getName().equals(names[0])) {
-						// TODO add code for qualified search
+//					if (candidate.getParent().getName().equals(names[0])) {
+//						// TODO add code for qualified search
+//					}
+					boolean matches = true;
+					CobVar parent = candidate.getChild();
+					for (int i = 1; matches && i < names.length; i++) {
+						matches = parent.getName().equals(names[i]);
+					}
+					if (matches) {
+						return candidate;
 					}
 				}
 			}
 			
-			return varList.get(0);
+			return varList.get(0);	// FIXME: Shouldn't this rather be null?
 		}
 		
 	}
@@ -7810,6 +7829,7 @@ class CobTools {
 		}
 
 		/**
+		 * General constructor 
 		 * @param level COBOL level number	
 		 * @param name
 		 * @param picture
@@ -7903,7 +7923,8 @@ class CobTools {
 			lastVar = this;
 		}
 
-		/** Special Constructor for creating condition-names (level 88 variables)
+		/**
+		 * Special constructor for creating condition-names (level 88 variables)
 		 * @param name
 		 * @param values
 		 * @param valueFalse
@@ -7955,7 +7976,8 @@ class CobTools {
 			lastVar = this;
 		}
 
-		/** Special Constructor for creating constants (level 01 CONSTANT as / level 78 variables)
+		/**
+		 * Special constructor for creating constants (level 01 CONSTANT as / level 78 variables)
 		 * @param level TODO
 		 * @param value
 		 * @param name
@@ -7984,11 +8006,12 @@ class CobTools {
 			if (lastVar.level == level) {
 				this.parent = lastVar.parent;
 				lastVar.sister = this;
-			} else {
+			} else {	// CHECKME: What if lastVar.level > level? 
 				this.parent = lastVar;
 				if (lastVar.child == null) {
 					lastVar.child = this;
 				}
+				// CHECKME: and otherwise?
 			}
 			this.child = null;
 			this.sister = null;
@@ -8021,10 +8044,7 @@ class CobTools {
 		}
 
 		public boolean hasParent() {
-			if (this.parent != null) {
-				return true;
-			}
-			return false;
+			return this.parent != null;
 		}
 
 		/**
@@ -8047,6 +8067,20 @@ class CobTools {
 		public String getName() {
 			return this.name;
 		}
+		
+		// START KGU 2017-06-26
+		public String getQualifiedName()
+		{
+			String qualName = this.name;
+			CobVar ancestor = this.parent;
+			while (ancestor != null) {
+				// FIXME: THanks to these strange fillers, we might face null names here
+				qualName = ancestor.name + "." + qualName;
+				ancestor = ancestor.parent;
+			}
+			return qualName;
+		}
+		// END KGU 2017-06-26
 
 		/**
 		 * @return the parent
@@ -8065,6 +8099,7 @@ class CobTools {
 		/**
 		 * @return the values as text for comparing, note: this text is a Java expression
 		 */
+		// FIXME: Does this make any sense without another variable?
 		public String getValueComparisonString() {
 			boolean firstValue = true;
 			String valueComparison = "";
@@ -8294,7 +8329,7 @@ class CobTools {
 				//return "";
 				return "-unknown-type-";
 			}
-		// we explicit don't want a default, allowing check if all USAGEs have a value assigned
+		// we explicitly don't want a default, allowing to check if all USAGEs have a value assigned
 		}
 		return "";
 	}

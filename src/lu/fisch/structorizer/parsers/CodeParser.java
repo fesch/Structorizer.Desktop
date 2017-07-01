@@ -439,7 +439,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			int colNo = pos.getColumn() - 1;
 			int start = (lineNo > 10) ? lineNo -10 : 0;
 			StringList sourceLines = StringList.explode(sourceCode, "\n");
-			// Note: position may not correct if preprocessor has dropped / added lines
+			// Note: position may not be correct if preprocessor dropped / added lines
 			for (int i = start; i < lineNo; i++) {
 				addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i).replace("\t", "    ")));
 			}

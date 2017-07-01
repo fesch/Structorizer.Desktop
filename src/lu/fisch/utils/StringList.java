@@ -63,7 +63,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Vector;
-import java.util.regex.Pattern;
 
 public class StringList {
 

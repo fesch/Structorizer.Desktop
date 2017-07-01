@@ -25,6 +25,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
@@ -32,6 +33,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import lu.fisch.structorizer.executor.DelayableDiagramController;
+import lu.fisch.structorizer.executor.FunctionProvidingDiagramController;
 import lu.fisch.turtle.elements.Element;
 import lu.fisch.turtle.elements.Line;
 import lu.fisch.turtle.elements.Move;
@@ -44,9 +46,20 @@ import lu.fisch.utils.StringList;
 // START KGU#97 2015-12-10: Inheritance change for enhancement request #48
 //public class TurtleBox extends JFrame implements DiagramController
 @SuppressWarnings("serial")
-public class TurtleBox extends JFrame implements DelayableDiagramController
+// START KGU#417 2017-06-30: Inheritance change for enh. #424
+//public class TurtleBox extends JFrame implements DelayableDiagramController
+public class TurtleBox extends JFrame implements DelayableDiagramController,  FunctionProvidingDiagramController
+// END KGU#417 2017-06-30
 // END KGU#97 2015-12-10
 {
+	// START KGU#417 2017-06-29: Enh. #424 Function capability map
+	private static final HashMap<String, Class<?>[]> definedFunctions = new HashMap<String, Class<?>[]>();
+	static {
+		definedFunctions.put("getx", new Class<?>[]{Double.class});
+		definedFunctions.put("gety", new Class<?>[]{Double.class});
+		definedFunctions.put("getorientation", new Class<?>[]{Double.class});
+	}
+	// END KGU#417 2017-06-29
     private final String TITLE = "Turtleizer";
 
     private Point pos;
@@ -54,7 +67,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     private double posX, posY;		// exact position
     // END #272 2016-10-16
     private Point home;
-    private double angle = -90;
+    private double angle = -90;		// upwards (north-bound)
     private Image image = (new ImageIcon(this.getClass().getResource("turtle.png"))).getImage();
     private boolean penDown = true;
     // START KGU#303 2016-12-02: Enh. #302
@@ -130,6 +143,23 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     {
         return 180+angle;
     }
+    
+    // START KGU#417 2017-06-29: Enh. #424
+    /**
+     * Returns the "external" turtle orientation in degrees in the interval
+     * -180 .. 180 where<br/>
+     * 0 is upwards/north (initial orientation),<br/>
+     * positive is right/east,
+     * negative is left/west
+     * @return orientation in degrees.
+     */
+    private double getOrientation() {
+    	double orient = angle + 90.0;
+    	while (orient > 180) { orient -= 360; }
+    	while (orient < -180) { orient += 360; }
+    	return -orient;
+    }
+    // END KGU#417 2017-06-29
     
     // START #272 2016-10-16 (KGU)
     private void setPos(Point newPos)
@@ -341,17 +371,17 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
 
         alpha = alpha/Math.PI*180;
 
-        // rounding
+        // rounding (FIXME: what for?)
         alpha = Math.round(alpha*100)/100;
 
         if (cosAlpha<0) // Q2 & Q3
         {
             alpha=180-alpha;
         }
-        alpha=-alpha;
-        alpha-=getAngle();
+        alpha =- alpha;
+        alpha -= getAngle();
 
-        while (alpha<0)
+        while (alpha < 0)
         {
             alpha+=360;
         }
@@ -510,10 +540,46 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
            else if (name.equals("setbackground")) { setBackgroundColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
            else if (name.equals("setpencolor")) { setPenColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
            // END KGU#303 2016-12-02
-           else { res="Function <"+name+"> not implemented!"; }
+           else { res="Procedure <"+name+"> not implemented!"; }
         }
         
         return res;
     }
+
+    // START KGU#417 2017-06-29: Enh. #424 - Allow function getX(), getY(), getOrientation();
+    public HashMap<String, Class<?>[]> getFunctionMap()
+    {
+    	return definedFunctions;
+    }
+    
+    /**
+     * Executes a provided function (by now only the following three
+     * are supported: getX(), getY(), getOrientation()). If the function signature isn't valid or some evaluation error occurs, a {@code FunctionException} will be thrown
+     * @param name - the function name
+     * @param arguments - function arguments as objects (number and types must match a signature specification provided by {@link #getFunctionMap()}) 
+     * @return the function's result (if valid)
+     */
+    @Override
+    public Object execute(String name, Object[] arguments) throws FunctionException
+    {
+    	Object result = null;
+        if (name != null && definedFunctions.containsKey(name) && arguments.length == definedFunctions.get(name).length-1)
+        {
+        	if (name.equals("getorientation")) {
+        		result = this.getOrientation();
+        	}
+        	else if (name.equals("getx")) {
+        		result = this.posX;
+        	}
+        	else if (name.equals("gety")) {
+        		result = this.posY;        		
+        	}
+        }
+        else {
+        	throw new FunctionException("TurtleBox: No function <" + name + "> with " + arguments.length + " arguments defined.");
+        }
+        return result;
+    }
+
 
 }

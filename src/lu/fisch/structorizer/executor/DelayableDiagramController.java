@@ -21,9 +21,8 @@
 package lu.fisch.structorizer.executor;
 
 /**
- * @author Kay Gürtzig
  * Introduced to allow immediate delay control on implementing classes 
- *
+ * @author Kay Gürtzig
  */
 public interface DelayableDiagramController extends DiagramController {
 	

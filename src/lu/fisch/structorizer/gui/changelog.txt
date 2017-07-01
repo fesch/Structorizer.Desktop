@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-06 (2017.06.22)
+Current development version: 3.26-06 (2017.07.01)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -101,6 +101,7 @@ Current development version: 3.26-06 (2017.06.22)
 - 06: Enh. #415: Find & Replace dialog added <2>
 - 06: Enh. #354/#357: plugin-defined options for import/export [Simon Sobisch] <2>
 - 06: Enh. #420: Comment import enabled for source code parsing [Simon Sobisch] <2>
+- 06: Enh. #424: Turlteizer functions getX(), getY(), getOrientation() [newboerg]2
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
