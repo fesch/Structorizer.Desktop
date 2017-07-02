@@ -92,6 +92,12 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	protected JScrollPane scrollPane1;
 	protected JTextArea txtCase;
 	protected JPanel pnlRight;
+	// START KGU#376 2017-07-01: Enh. #389
+	protected JPanel pnlLowerRight;
+	protected JPanel pnlRoot;
+	protected JLabel lblRoot;
+	protected JTextField edtRoot;
+	// END KGU#376 2017-07-01
 	protected JPanel pnlFor;
 	protected JLabel lblFor;
 	protected JTextField edtFor;
@@ -150,6 +156,12 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		scrollPane1 = new JScrollPane();
 		txtCase = new JTextArea();
 		pnlRight = new JPanel();
+		// START KGU#376 2017-07-01: Enh. #389
+		pnlLowerRight = new JPanel();
+		pnlRoot = new JPanel();
+		lblRoot = new JLabel();
+		edtRoot = new JTextField();
+		// END KGU#376 2017-07-01
 		pnlFor = new JPanel();
 		lblFor = new JLabel();
 		edtFor = new JTextField();
@@ -185,7 +197,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 			//dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor), (int)(320*scaleFactor)));
 			double nimbusFactor = 1.0;
 			if (UIManager.getLookAndFeel().getName().equals("Nimbus")) {
-				nimbusFactor = 1.125;				
+				nimbusFactor = 1.25;				
 			}
 			dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor*nimbusFactor), (int)(320*scaleFactor*nimbusFactor)));
 			// END KGU#401 2017-06-08
@@ -206,7 +218,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 				// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 				//contentPanel.setLayout(new BorderLayout(5, 5));
 				border = (int)(5 * scaleFactor);
-				contentPanel.setLayout(new BorderLayout(border, border));
+				//contentPanel.setLayout(new BorderLayout(border, border));
+				contentPanel.setLayout(new GridLayout(1, 0));
+				contentPanel.setBorder(new EmptyBorder(border, border, border, border));
 				// END KGU#287 2016-11-01
 
 				//======== pnlLeft ========
@@ -215,7 +229,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 					// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 					//pnlLeft.setPreferredSize(new Dimension(200, 185));
 					border = (int)(8 * scaleFactor);
-					pnlLeft.setPreferredSize(new Dimension((int)(210*scaleFactor), (int)(200*scaleFactor)));
+					//pnlLeft.setPreferredSize(new Dimension((int)(210*scaleFactor), (int)(200*scaleFactor)));	// has no effect
 					// END KGU#287 2016-11-01
 					pnlLeft.setFocusCycleRoot(true);
 					pnlLeft.setLayout(new BorderLayout(border, border));
@@ -227,7 +241,8 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 						//======== pnlCases ========
 						{
-							pnlCases.setLayout(new BorderLayout(border, border));
+							//pnlCases.setLayout(new BorderLayout(border, border));
+							pnlCases.setLayout(new GridLayout(1, 0, border, border));
 							int width = (int)(95 * scaleFactor * nimbusFactor);
 							int height = (int)(44*scaleFactor);
 
@@ -238,10 +253,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 								//---- lblAltTF ----
 								lblAltT.setText("Label TRUE");
+								lblAltT.setHorizontalAlignment(SwingConstants.LEFT);
 								pnlAltLeft.add(lblAltT, BorderLayout.NORTH);
 								pnlAltLeft.add(edtAltT, BorderLayout.CENTER);
 							}
-							pnlCases.add(pnlAltLeft, BorderLayout.WEST);
+							pnlCases.add(pnlAltLeft/*, BorderLayout.WEST*/);
 
 							//======== pnlAltRight ========
 							{
@@ -254,7 +270,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 								pnlAltRight.add(lblAltF, BorderLayout.NORTH);
 								pnlAltRight.add(edtAltF, BorderLayout.CENTER);
 							}
-							pnlCases.add(pnlAltRight, BorderLayout.CENTER);
+							pnlCases.add(pnlAltRight/*, BorderLayout.CENTER*/);
 						}
 						pnlAlt.add(pnlCases, BorderLayout.NORTH);
 
@@ -299,14 +315,28 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 					}
 					pnlLeft.add(pnlCase, BorderLayout.CENTER);
 				}
-				contentPanel.add(pnlLeft, BorderLayout.CENTER);
+				contentPanel.add(pnlLeft/*, BorderLayout.CENTER*/);
 
 				//======== pnlRight ========
 				{
 					border = (int)(8 * scaleFactor);
 					pnlRight.setMaximumSize(new Dimension(2147483647, 2147483647));
-					pnlRight.setPreferredSize(new Dimension((int)(200*scaleFactor), (int)(226*scaleFactor)));
+					//pnlRight.setPreferredSize(new Dimension((int)(200*scaleFactor), (int)(226*scaleFactor)));
 					pnlRight.setLayout(new BorderLayout(border, border));
+
+					// START KGU#376 2017-07-01: Enh. #389
+					//======== pnlRoot ========
+					{
+						pnlRoot.setBorder(new TitledBorder("Diagram header"));
+						pnlRoot.setLayout(new BorderLayout(border, border));
+
+						//---- lblFor ----
+						lblRoot.setText("Include list caption");
+						pnlRoot.add(lblRoot, BorderLayout.NORTH);
+						pnlRoot.add(edtRoot, BorderLayout.CENTER);
+					}
+					pnlRight.add(pnlRoot, BorderLayout.NORTH);
+					// END KGU#376 2017-07-01
 
 					//======== pnlFor ========
 					{
@@ -318,7 +348,17 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 						pnlFor.add(lblFor, BorderLayout.NORTH);
 						pnlFor.add(edtFor, BorderLayout.CENTER);
 					}
-					pnlRight.add(pnlFor, BorderLayout.NORTH);
+					// START KGU#376 2017-07-01: Enh. #389
+					//pnlRight.add(pnlFor, BorderLayout.NORTH);
+					pnlRight.add(pnlFor, BorderLayout.CENTER);
+					// END KGU#376 2017-07-01
+
+					// START KGU#376 2017-07-01: Enh. #389
+					//======== pnlLowerRight ========
+					{
+						pnlLowerRight.setLayout(new BorderLayout(border, border));
+					// END KGU#376 2017-07-01
+
 
 					//======== pnlRepeat ========
 					{
@@ -330,7 +370,10 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 						pnlRepeat.add(lblRepeat, BorderLayout.NORTH);
 						pnlRepeat.add(edtRepeat, BorderLayout.CENTER);
 					}
-					pnlRight.add(pnlRepeat, BorderLayout.SOUTH);
+					// START KGU#376 2017-07-01: Enh. #389
+					//pnlRight.add(pnlRepeat, BorderLayout.SOUTH);
+					pnlLowerRight.add(pnlRepeat, BorderLayout.SOUTH);
+					// END KGU#376 2017-07-01
 
 					//======== pnlWhile ========
 					{
@@ -343,9 +386,14 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 						pnlWhile.add(lblWhile, BorderLayout.NORTH);
 						pnlWhile.add(edtWhile, BorderLayout.CENTER);
 					}
-					pnlRight.add(pnlWhile, BorderLayout.CENTER);
+					// START KGU#376 2017-07-01: Enh. #389 
+					//pnlRight.add(pnlWhile, BorderLayout.CENTER);
+					pnlLowerRight.add(pnlWhile, BorderLayout.NORTH);
+					}
+					pnlRight.add(pnlLowerRight, BorderLayout.SOUTH);
+					// END KGU#376 2017-07-01
 				}
-				contentPanel.add(pnlRight, BorderLayout.EAST);
+				contentPanel.add(pnlRight/*, BorderLayout.EAST*/);
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
 
@@ -363,6 +411,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 					new Insets(0, 0, 0, 0), 0, 0));
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
+			dialogPane.setMinimumSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
+			dialogPane.setPreferredSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
+			dialogPane.setSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
 		
@@ -384,7 +435,14 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		edtFor.addKeyListener(this);
 		edtWhile.addKeyListener(this);
 		edtRepeat.addKeyListener(this);
+		// START KGU#394/KGU#401 2017-07-02: Issue #401, #405
+		spnCaseRot.addKeyListener(this);
+		// END KGU#394/KGU#401 2017-07-02
+		// START KGU#394/KGU#376 2017-07-01: Enh. #389, #401
+		edtRoot.addKeyListener(this);
+		// END KGU#376 2017-07-01
 		addKeyListener(this);
+		
 	}
 
 		

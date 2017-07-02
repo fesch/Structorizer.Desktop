@@ -973,9 +973,6 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		keywordMap.put("preLeave",   "leave");
 		keywordMap.put("preReturn",  "return");
 		keywordMap.put("preExit",    "exit");
-		// START KGU#376 017-04-11: Enh. #389
-		keywordMap.put("preImport",  "include");
-		// END KGU#376 2017-04-11
 		keywordMap.put("input",      "INPUT");
 		keywordMap.put("output",     "OUTPUT");
 	}

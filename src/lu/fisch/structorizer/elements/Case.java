@@ -835,7 +835,7 @@ public class Case extends Element implements IFork
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		if (!this.isDisabled()) {
 			if (!_instructionsOnly) {
@@ -847,7 +847,7 @@ public class Case extends Element implements IFork
 				if (!hasDefaultBranch()) nBranches--;
 				for (int i = 0; i < nBranches; i++)
 				{
-					qs.get(i).addFullText(_lines, _instructionsOnly, implicatedRoots);
+					qs.get(i).addFullText(_lines, _instructionsOnly);
 				}
 			}
 		}

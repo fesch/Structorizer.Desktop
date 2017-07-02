@@ -120,7 +120,6 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FilChooser
  *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
  *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
- *      Kay Gürtzig     2017.04.11/15   Enh. #389: Modifications in CALL transmutation and canTransmute()
  *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
  *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
  *      Kay Gürtzig     2017.05.09      Issue #400: Proper check whether preference changes were committed
@@ -130,6 +129,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.21      Enh. #372: AttributeInspector integrated, undo mechanism adapted
  *      Kay Gürtzig     2017.05.23      Enh. #354: On multiple-root code import now all roots go to Arranger
  *      Kay Gürtzig     2017.06.20      Enh. #354,#357: GUI Support for configuration of plugin-specific options
+ *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism transferred from CALL to ROOT
  *
  ******************************************************************************************************
  *
@@ -2229,9 +2229,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Instruction instr = (Instruction)selected;
 				isConvertible = instr.getUnbrokenText().count() > 1
 						|| instr.isJump()
-						// START KGU#376 2017-04-15: Enh. #389 accept new call type, too
-						|| instr.isImportCall()
-						// END KGU#376 2017-04-15
 						|| instr.isFunctionCall()
 						|| instr.isProcedureCall();
 			}
@@ -2490,6 +2487,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //					data.licenseName = ((Root)element).licenseName;
 //					data.licenseText = ((Root)element).licenseText;
 					data.licInfo = new RootAttributes((Root)element);
+					// START KGU#376 2017-07-01: Enh. #389
+					data.diagramRefs = ((Root)element).includeList;
+					// END KGU#376 2017-07-01
 				}
 				// END KGU#363 2017-03-14
 
@@ -2536,6 +2536,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#363 2017-03-14: Enh. #372
 					else if (element instanceof Root) {
 						((Root)element).adoptAttributes(data.licInfo);
+						// START KGU#376 2017-07-01: Enh. #389
+						((Root)element).includeList = data.diagramRefs;
+						// END KGU#376 2017-07-01
 					}
 					// END KGU#363 2017-03-14
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
@@ -3088,11 +3091,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			elem = new Call(instr);
 		}
-		// START KGU#376 2017-04-11. Enh. #389 - also support import calls
-		else if (instr.isImportCall()) {
-			elem = new Call(instr);
-		}
-		// END KGU#376 2017-04-11
 		else if (instr.isJump())
 		{
 			elem = new Jump(instr);
@@ -5158,6 +5156,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
 		preferences.spnCaseRot.setValue(Element.caseShrinkByRot);
 		// END KGU#401 2017-05-18
+		// START KGU#376 2017-07-02: Enh. #389
+		preferences.edtRoot.setText(Element.preImport);
+		// END KGU#376 2017-07-02
 
 		preferences.pack();
 		preferences.setVisible(true);
@@ -5174,13 +5175,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.preWhile    = preferences.edtWhile.getText();
 			Element.preRepeat   = preferences.edtRepeat.getText();
 			Element.altPadRight = preferences.altPadRight.isSelected();
+			// START KGU#376 2017-07-02: Enh. #389
+			String newImportCaption = preferences.edtRoot.getText();
+			// END KGU#376 2017-07-02
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
 			int newShrinkThreshold = (Integer)preferences.spnCaseRot.getModel().getValue();
-			if (newShrinkThreshold != Element.caseShrinkByRot) {
+			//if (newShrinkThreshold != Element.caseShrinkByRot) {
+			if (newShrinkThreshold != Element.caseShrinkByRot
+					|| !newImportCaption.equals(Element.preImport)) {
 				root.resetDrawingInfoDown();
 			}
 			Element.caseShrinkByRot = newShrinkThreshold;
 			// END KGU#401 2017-05-18
+			// START KGU#376 2017-07-02: Enh. #389
+			Element.preImport   = preferences.edtRoot.getText();
+			// END KGU#376 2017-07-02
 
 			// save fields to ini-file
 			Element.saveToINI();
@@ -6248,6 +6257,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //					ipbRt.txtAuthorName.setEditable(false);
 //				}
 				ipbRt.licenseInfo = _data.licInfo;
+				// START KGU#376 2017-07-01: Enh. #389
+				ipbRt.setIncludeList(_data.diagramRefs);
+				// END KGU#376 2017-07-01
 				inputbox = ipbRt;
 			}
 			// END KGU#363 2017-03-13 
@@ -6387,6 +6399,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //				_data.licenseText = ((InputBoxRoot)inputbox).licenseInfo.licenseText;
 				_data.licInfo = ((InputBoxRoot)inputbox).licenseInfo;
 				// END KGU#363 2017-05-20
+				// START KGU#376 2017-07-01: Enh. #389
+				_data.diagramRefs = ((InputBoxRoot)inputbox).getIncludeList();
+				// END KGU#376 2017-07-01
 			}
 			// END KGU#363 2017-03-13
 			_data.result = inputbox.OK;

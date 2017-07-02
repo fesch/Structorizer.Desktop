@@ -563,8 +563,11 @@ public class CParser extends CodeParser
 	private enum PreprocState {TEXT, TYPEDEF, STRUCT_UNION_ENUM, STRUCT_UNION_ENUM_ID, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
 	private StringList typedefs = new StringList();
 	
+	// START KGU#376 2017-07-01: Enh. #389 - modified mechanism
 	// Import Call elements with provisional Name, which have to be renamed as soon as the name gets known
-	private LinkedList<Call> provisionalImportCalls = new LinkedList<Call>();
+	//private LinkedList<Call> provisionalImportCalls = new LinkedList<Call>();
+	private LinkedList<Root> importingRoots = new LinkedList<Root>();
+	// END KGU#376 2017-07-01
 
 	//------------------------------ Constructor -----------------------------
 	
@@ -823,7 +826,7 @@ public class CParser extends CodeParser
 		Vector<Integer[]> blockRanges = new Vector<Integer[]>();
 		LinkedList<String> typedefDecomposers = new LinkedList<String>();
 		
-		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow confiured global typenames
+		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow configured global typenames
 		String configuredTypeNames = (String)this.getPluginOption("typeNames", null);
 		if (configuredTypeNames != null) {
 			String[] typeIds = configuredTypeNames.split("(,| )");
@@ -2315,27 +2318,41 @@ public class CParser extends CodeParser
 			}
 			// Are there some global definitions to be imported?
 			if (this.globalRoot != null) {
-				String progName = fileName + "Globals";
-				this.globalRoot.setText(progName);
+				String inclName = fileName + "Globals";
+				this.globalRoot.setText(inclName);
 				// START KGU#376 2017-05-17: Enh. #389 now we have an appropriate diagram type
 				//this.globalRoot.setProgram(true);
 				this.globalRoot.setInclude();
 				// END KGU#376 2017-05-17
-				for (Call provCall: this.provisionalImportCalls) {
-					provCall.setText(provCall.getText().get(0).replace(DEFAULT_GLOBAL_NAME, progName).replace("???", progName));
+				// START KGU#376 2017-07-01: Enh. #389 - now register global includable with Root
+//				for (Call provCall: this.provisionalImportCalls) {
+//					provCall.setText(provCall.getText().get(0).replace(DEFAULT_GLOBAL_NAME, inclName).replace("???", inclName));
+//				}
+//				this.provisionalImportCalls.clear();
+				for (Root impRoot: this.importingRoots) {
+					impRoot.includeList.replaceAll(DEFAULT_GLOBAL_NAME, inclName);
+					impRoot.includeList.replaceAll("???", inclName);
 				}
-				this.provisionalImportCalls.clear();
+				// END KGU#376 2017-07-01
 			}
 		}
 		// START KGU#376 2017-04-11: enh. #389 import mechanism for globals
 		if (this.globalRoot != null && this.globalRoot != aRoot) {
 			String globalName = this.globalRoot.getMethodName();
-			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? DEFAULT_GLOBAL_NAME : globalName));
-			importCall.setColor(colorGlobal);
-			aRoot.children.insertElementAt(importCall, 0);
-			if (globalName.equals("???")) {
-				this.provisionalImportCalls.add(importCall);
+			// START KGU#376 2017-07-01: Enh. #389 - modified mechanism
+//			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? DEFAULT_GLOBAL_NAME : globalName));
+//			importCall.setColor(colorGlobal);
+//			aRoot.children.insertElementAt(importCall, 0);
+//			if (globalName.equals("???")) {
+//				this.provisionalImportCalls.add(importCall);
+//			}
+			if (aRoot.includeList == null) {
+				aRoot.includeList = StringList.getNew(globalName);
 			}
+			else {
+				aRoot.includeList.addIfNew(globalName);
+			}
+			// END KGU#376 2017-07-01
 		}
 		// END KGU#376 2017-04-11
 	}

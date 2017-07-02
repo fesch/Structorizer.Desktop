@@ -54,7 +54,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.26      Enh. #259: First retrieval approach for variable types
  *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
- *      Kay Gürtzig     2017.04.11      Enh. #289: Methods isImportCall() introduced
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Methods isImportCall() introduced (2017-07-01 undone)
  *      Kay Gürtzig     2017.06.09      Enh. #416: drawing support for broken lines and is...() method adaptation
  *
  ******************************************************************************************************
@@ -365,7 +365,7 @@ public class Instruction extends Element {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		if (!this.isDisabled()) {
 			// START KGU#413 2017-06-09: Enh. #416 cope with user-inserted line breaks
@@ -483,21 +483,21 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-06
 	
-	// START KGU#376 2017-04-11: Enh. #389
-	public static boolean isImportCall(String line)
-	{
-		final String importKey = CodeParser.getKeywordOrDefault("preImport", "import").trim() + " ";
-		return line.startsWith( importKey ) &&
-				Function.testIdentifier(line.substring( importKey.length() ).trim(), null);
-	}
-	public boolean isImportCall()
-	{
-		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
-		//return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
-		StringList lines = this.getUnbrokenText();
-		return lines.count() == 1 && Instruction.isImportCall(lines.get(0));
-		// END KGU#413 2017-06-09
-	}
+	// START KGU#376 2017-04-11: Enh. #389 / 2017-07-01 dismissed 
+//	public static boolean isImportCall(String line)
+//	{
+//		final String importKey = CodeParser.getKeywordOrDefault("preImport", "import").trim() + " ";
+//		return line.startsWith( importKey ) &&
+//				Function.testIdentifier(line.substring( importKey.length() ).trim(), null);
+//	}
+//	public boolean isImportCall()
+//	{
+//		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+//		//return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
+//		StringList lines = this.getUnbrokenText();
+//		return lines.count() == 1 && Instruction.isImportCall(lines.get(0));
+//		// END KGU#413 2017-06-09
+//	}
 	// END KGU#376 2017-04-11
 	
 	// START KGU#236 2016-08-10: Issue #227: New classification for input and output

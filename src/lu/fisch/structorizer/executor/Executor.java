@@ -122,13 +122,14 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
  *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
  *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
- *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float resul)
+ *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float result)
  *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
  *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
  *      Kay Gürtzig     2017.05.24      Enh. #413: New function split(string, string) built in
  *      Kay Gürtzig     2017.06.09      Enh. #416: Support for execution line continuation by trailing backslash
  *      Kay Gürtzig     2017.06.30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
  *      Kay Gürtzig     2017.07.01      Enh. #413: Special check for built-in split function in stepForIn()
+ *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based) 
  *
  ******************************************************************************************************
  *
@@ -995,6 +996,10 @@ public class Executor implements Runnable
 		leave = 0;
 		// END KGU#78 2015-11-25
 		// END KGU#384 207-04-22
+		
+		// START KGU#376 2017-07-01: Enh. #389 - perform all specified includes
+		result = importSpecifiedIncludables(root);
+		// END KGU#376 2017-07-01
 
 		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
 		if (root.isSubroutine())
@@ -1281,6 +1286,75 @@ public class Executor implements Runnable
 		// END KGU# (#9) 2015-11-13
 	}
 	
+	// START KGU#376 2017-07-01: Enh. #389 - perform all specified includes
+	private String importSpecifiedIncludables(Root root) {
+		String errorString = "";
+		if (root.includeList != null) {
+			root.waited = true;
+			root.isIncluding = true;
+			for (int i = 0; errorString.isEmpty() && i < root.includeList.count(); i++) {
+				delay();
+				Root imp = null;
+				String diagrName = root.includeList.get(i);
+				try {
+					imp = this.findIncludableWithName(diagrName);
+				} catch (Exception ex) {
+					return ex.getMessage();	// Ambiguous call!
+				}
+				if (imp != null)
+				{
+					// START KGU#376 2017-04-21: Enh. #389
+					// Has this import already been executed -then just adopt the results
+					if (this.importMap.containsKey(imp)) {
+						ImportInfo impInfo = this.importMap.get(imp);
+						this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
+								imp.variables, null, imp.constants.keySet(), false);
+						// FIXME adopt the imported typedefs if any
+						context.variables.addIfNew(impInfo.variableNames);
+						for (String constName: imp.constants.keySet()) {
+							// FIXME: Is it okay just to ignore conflicting constants?
+							if (!context.constants.containsKey(constName)) {
+								try {
+									context.constants.put(constName, impInfo.interpreter.get(constName));
+								} catch (EvalError e) {
+									if (!errorString.isEmpty()) {
+										errorString += "\n";
+									}
+									errorString += e.getMessage();
+								}
+							}
+						}
+						try 
+						{
+							updateVariableDisplay();
+						}
+						catch (EvalError ex) {}
+					}
+					else {
+						// END KGU#376 2017-04-21
+						executeCall(imp, null, null);
+					}
+					context.importList.addIfNew(diagrName);
+				}
+				else
+				{
+					// START KGU#197 2016-07-27: Now translatable message
+					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
+					errorString = control.msgNoInclDiagram.getText().
+							replace("%", diagrName);
+					// END KGU#197 2016-07-27
+				}
+			}
+			if (errorString.isEmpty()) {
+				root.waited = false;
+				root.isIncluding = false;
+			}
+		}
+		return errorString;
+	}
+	// END KGU#376 2017-07-01
+
 	// START KGU#133 2016-01-09: New method for presenting result arrays as scrollable list
 	// START KGU#147 2016-01-29: Enh. #84 - interface enhanced, pause button added
 	//private void showArray(Object[] _array, String _title)
@@ -1335,6 +1409,7 @@ public class Executor implements Runnable
 	
 	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
 	// START KGU#156 2016-03-12: Enh. #124 - signature enhanced to overcome some nasty hacks
+	// KGU#376 2017-07-01: Enh.#389 - caller may now be null if an include is performed
 	//private Object executeCall(Root subRoot, Object[] arguments)
 	private Object executeCall(Root subRoot, Object[] arguments, Call caller)
 	// END KGU#156 2016-03-12
@@ -1421,13 +1496,15 @@ public class Executor implements Runnable
 		this.execute(arguments);	// Actual execution of the subroutine or import
 		/////////////////////////////////////////////////////////
 		
-		// START KGU#156 2016-03-11; Enh. #124
-		caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
-		if (cloned || root.isTestCovered(true))	
-		{
-			caller.deeplyCovered = true;
+		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
+		if (caller != null) {
+			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
+			if (cloned || root.isTestCovered(true))	
+			{
+				caller.deeplyCovered = true;
+			}
 		}
-		// END KGU#156 2016-03-11
+		// END KGU#156 2016-03-11 / KGU#376 2017-07-01
 
 		// START KGU#2 2015-11-24
 //		if (!done || stop)
@@ -1588,12 +1665,12 @@ public class Executor implements Runnable
 	// END KGU#2 2015-11-24
 	
     /**
-     * Searches all known pools for a unique program diagram with given name 
-     * @param name - program name
-     * @return a Root with given name if uniquely found, null otherwise
+     * Searches all known pools for a unique includable diagram with given name 
+     * @param name - diagram name
+     * @return a Root of type INCLUDABLE with given name if uniquely found, null otherwise
      * @throws Exception
      */
-	public Root findProgramWithName(String name) throws Exception
+	public Root findIncludableWithName(String name) throws Exception
 	{
 		return findDiagramWithSignature(name, -1);
 	}
@@ -4122,71 +4199,71 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		// START KGU#376 2017-04-11: Enh. #389
-		else if (element instanceof Call && element.isImportCall()) {
-			Root imp = null;
-			String diagrName = ((Call)element).getSignatureString();
-			try {
-				imp = this.findProgramWithName(diagrName);
-			} catch (Exception ex) {
-				return ex.getMessage();	// Ambiguous call!
-			}
-			// END KGU#317 2016-12-29
-			if (imp != null)
-			{
-				// START KGU#376 207-04-21: Enh. ä389
-				// Has this import already been executed -then just adopt the results
-				if (this.importMap.containsKey(imp)) {
-					ImportInfo impInfo = this.importMap.get(imp);
-					this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
-							imp.variables, null, imp.constants.keySet(), false);
-					// FIXME adopt the imported typedefs if any
-					context.variables.addIfNew(impInfo.variableNames);
-					for (String constName: imp.constants.keySet()) {
-						if (!context.constants.containsKey(constName)) {
-							context.constants.put(constName, impInfo.interpreter.get(constName));
-						}
-					}
-					// START KGU#117 2017-04-29: Enh. #77
-					if (Element.E_COLLECTRUNTIMEDATA)
-					{
-						element.simplyCovered = true;
-						if (imp.isTestCovered(true)) {
-							element.deeplyCovered = true;
-						}
-					}
-					// END KGU#117 2017-04-29
-					try 
-					{
-						updateVariableDisplay();
-					}
-					catch (EvalError ex) {}
-				}
-				else {
-				// END KGU#376 2017-04-21
-					executeCall(imp, null, (Call)element);
-					// START KGU#117 2016-03-10: Enh. #77
-					if (Element.E_COLLECTRUNTIMEDATA)
-					{
-						element.simplyCovered = true;
-					}
-					// END KGU#117 2016-03-10
-				// START KGU#376 207-04-21: Enh. ä389
-				}
-				context.importList.addIfNew(diagrName);
-				// END KGU#376 2017-04-21
-			}
-			else
-			{
-				// START KGU#197 2016-07-27: Now translatable message
-				//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
-				//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
-				result = control.msgNoProgDiagram.getText().
-						replace("%", diagrName);
-				// END KGU#197 2016-07-27
-			}
-			
-		}
+		// START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-07-01
+//		else if (element instanceof Call && element.isImportCall()) {
+//			Root imp = null;
+//			String diagrName = ((Call)element).getSignatureString();
+//			try {
+//				imp = this.findProgramWithName(diagrName);
+//			} catch (Exception ex) {
+//				return ex.getMessage();	// Ambiguous call!
+//			}
+//			// END KGU#317 2016-12-29
+//			if (imp != null)
+//			{
+//				// START KGU#376 207-04-21: Enh. ä389
+//				// Has this import already been executed -then just adopt the results
+//				if (this.importMap.containsKey(imp)) {
+//					ImportInfo impInfo = this.importMap.get(imp);
+//					this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
+//							imp.variables, null, imp.constants.keySet(), false);
+//					// FIXME adopt the imported typedefs if any
+//					context.variables.addIfNew(impInfo.variableNames);
+//					for (String constName: imp.constants.keySet()) {
+//						if (!context.constants.containsKey(constName)) {
+//							context.constants.put(constName, impInfo.interpreter.get(constName));
+//						}
+//					}
+//					// START KGU#117 2017-04-29: Enh. #77
+//					if (Element.E_COLLECTRUNTIMEDATA)
+//					{
+//						element.simplyCovered = true;
+//						if (imp.isTestCovered(true)) {
+//							element.deeplyCovered = true;
+//						}
+//					}
+//					// END KGU#117 2017-04-29
+//					try 
+//					{
+//						updateVariableDisplay();
+//					}
+//					catch (EvalError ex) {}
+//				}
+//				else {
+//				// END KGU#376 2017-04-21
+//					executeCall(imp, null, (Call)element);
+//					// START KGU#117 2016-03-10: Enh. #77
+//					if (Element.E_COLLECTRUNTIMEDATA)
+//					{
+//						element.simplyCovered = true;
+//					}
+//					// END KGU#117 2016-03-10
+//				// START KGU#376 207-04-21: Enh. ä389
+//				}
+//				context.importList.addIfNew(diagrName);
+//				// END KGU#376 2017-04-21
+//			}
+//			else
+//			{
+//				// START KGU#197 2016-07-27: Now translatable message
+//				//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+//				//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
+//				result = control.msgNoProgDiagram.getText().
+//						replace("%", diagrName);
+//				// END KGU#197 2016-07-27
+//			}
+//			
+//		}
 		// END KGU#376 2017-04-11
 		else {
 			// START KGU#197 2017-06-06: Now translatable

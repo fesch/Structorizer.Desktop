@@ -369,8 +369,8 @@ Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un va
 Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
 Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
 Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
-Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: «[ <var> <- ] <routine_name>(<arg_list>)» o «import <progr_name>»!
-Menu.error15_2.text=El llamado diagrama «%» ahora no está localizable.
+Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=El diagrama de la llamada subrutina «%» no está disponible.
 Menu.error15_3.text=Llamada ambigua: Hay más de un diagrama con signatura «%».
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
@@ -392,8 +392,8 @@ Menu.error23_1.text=Diagrama «%» no es apropiado para ser llamado como inclusi
 Menu.error23_2.text=¡El importe de diagrama «%» es recursivo!
 Menu.error23_3.text=Este importe será ignorado aquí porque el diagrama «%1» ya está importado por: %2.
 Menu.error23_4.text=Conflicto: ¡Para la variable o constante «%» existen ambos una declaración local y un importe!
-Menu.error23_5.text=¡Importes («%1») deben estar puestos en el inicio del diagrama («%2»)!
-Menu.error23_6.text=¡Un comando «%» tiene que formar un elemento de tipo LLAMADA!
+Menu.error23_5.text=¡Ningún diagrama incluíble con nombre «%» está disponible!
+Menu.error23_6.text=¡Diagrama incluíble con nombre «%» es ambiguo: Hay más de un diagrama con este nombre!
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -422,7 +422,7 @@ AnalyserPreferences.checkboxes.19.text=Comprobar que no habrá colisiones de nom
 AnalyserPreferences.checkboxes.20.text=Comprobar que un subprograma tiene un paréntesis para parámetros.
 AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables identificadores «I», «l» und «O».
 AnalyserPreferences.checkboxes.22.text=Comprobar que constantes no son comprometidas.
-AnalyserPreferences.checkboxes.23.text=Comprobar que llamadas de importe no están defectivos.
+AnalyserPreferences.checkboxes.23.text=Comprobar si la lista de diagramas a ser incluídos causa problemas.
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -632,6 +632,8 @@ InputBoxFor.msgAttention.text=¡CUIDADO!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title=Editar diagrama...
+InputBoxRoot.lblIncludeList.text=Diagramas a ser incluídos:
+InputBoxRoot.txtIncludeList.tooltip=Nombres de diagramas que deben ser incluídos antes de ejecutar este diagrama (sepáralos con coma o salto de linea).
 InputBoxRoot.lblText.text=Nombre de diagrama / signatura de función
 InputBoxRoot.txtText.tooltip=Nombre de diagrama (programa principal o incluíble) o signatura de función (nombre, lista de parámetros y tipo de resultado)
 InputBoxRoot.lblComment.text=Comentario
@@ -736,6 +738,9 @@ Preferences.lblCase.text=Contenido por defecto
 Preferences.lblCase.tooltip=El contenido por defecto de una declaración CASE.
 Preferences.lblCaseRot.text=Min. brazos para rotar
 Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca) 
+Preferences.pnlRoot.border=Encabezamiento del diagrama
+Preferences.lblRoot.text=Rótulo de la lista de incluíbles
+Preferences.lblRoot.tooltip=El rótulo debajo del cual la lista de diagramas a ser incluidos debe ser dibujada.
 Preferences.pnlFor.border=bucle PARA
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Contenido por defecto
@@ -1023,7 +1028,7 @@ Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Pregunta
 Control.msgTitleParallel.text=Problema en ejecución paralela
 Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parámetros) encontrado!\n¿Has olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
-Control.msgNoProgDiagram.text=¡No programa con nombre "%" encontrado!\n¿Has olvidado a abrir el Arranger y colocar programas referidos allí?
+Control.msgNoInclDiagram.text=¡No diagrama incluíble con nombre "%" encontrado!\n¿Has olvidado a abrir el Arranger y colocar diagramas referidos ahí?
 Control.msgAmbiguousCall.text=¡Llamada ambigua! Diferentes diagramas (subroutinas) "%1" con %2 parámetros encontrados.
 Control.msgInvalidExpr.text=¡<%1> no es una expresión correcta o existente!
 Control.msgInvalidBool.text=¡<%1> no es una válida expresión lógica!

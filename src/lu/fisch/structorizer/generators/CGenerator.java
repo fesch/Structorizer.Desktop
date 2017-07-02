@@ -1046,12 +1046,12 @@ public class CGenerator extends Generator {
 			StringList lines = _call.getText();
 			for (int i = 0; i < lines.count(); i++) {
 				String line = lines.get(i);
-				// START KGU#376 2017-04-13: Enh. #389 handle import calls
-				if (!isDisabled && Call.isImportCall(lines.get(i))) {
-					generateImportCode(_call, line, _indent);
-				}
-				else
-				// END KGU#376 2017-04-13
+//				// START KGU#376 2017-04-13: Enh. #389 handle import calls - withdrawn here
+//				if (!isDisabled && Call.isImportCall(lines.get(i))) {
+//					generateImportCode(_call, line, _indent);
+//				}
+//				else
+//				// END KGU#376 2017-04-13
 				// Input or Output should not occur here
 				addCode(transform(line, false) + ";", _indent, isDisabled);
 			}
@@ -1059,38 +1059,39 @@ public class CGenerator extends Generator {
 		
 	}
 
-	// START KGU#376 2017-04-13: Enh. #389 support for import CALLS
-	/**
-	 * Subclassable code generator for an import CALL line. The CGenerator will
-	 * rely on the preamble generator to have already coded the important constant
-	 * definitions and variable declarations. So it just creates a comment line.
-	 * Subclasses may do something more meaningful here.
-	 * @param _call - the origination CALL element
-	 * @param _line - the current line with import CALL syntax
-	 * @param _indent - indentation string
-	 */
-	protected void generateImportCode(Call _call, String _line, String _indent) {
-		// Do nothing but place it as comment here. The important contents
-		// (constant definitions and variable declarations) will already have
-		// been put to the preamble.
-		boolean done = false;
-		String diagrName = _call.getSignatureString();
-		if (this.isInternalDeclarationAllowed() && Arranger.hasInstance()) {
-			Vector<Root> roots = Arranger.getInstance().findDiagramsByName(diagrName);
-			if (roots.size() == 1) {
-				Root imported = roots.get(0);
-				imported.getVarNames();	// This also initializes the constants information we may need here
-				insertComment("*** START " + _line + " *** ", _indent);		
-				generateCode(imported.children, _indent);
-				insertComment("*** END " + _line + " *** ", _indent);		
-				done = true;
-			}
-		}
-		if (!done) {
-			insertComment(_line, _indent);		
-		}
-	}
-	// END KGU#376 2017-04-13
+	// FIXME: Will have to be replaced by e.g. #include directives
+//	// START KGU#376 2017-04-13: Enh. #389 support for import CALLS
+//	/**
+//	 * Subclassable code generator for an import CALL line. The CGenerator will
+//	 * rely on the preamble generator to have already coded the important constant
+//	 * definitions and variable declarations. So it just creates a comment line.
+//	 * Subclasses may do something more meaningful here.
+//	 * @param _call - the origination CALL element
+//	 * @param _line - the current line with import CALL syntax
+//	 * @param _indent - indentation string
+//	 */
+//	protected void generateImportCode(Call _call, String _line, String _indent) {
+//		// Do nothing but place it as comment here. The important contents
+//		// (constant definitions and variable declarations) will already have
+//		// been put to the preamble.
+//		boolean done = false;
+//		String diagrName = _call.getSignatureString();
+//		if (this.isInternalDeclarationAllowed() && Arranger.hasInstance()) {
+//			Vector<Root> roots = Arranger.getInstance().findDiagramsByName(diagrName);
+//			if (roots.size() == 1) {
+//				Root imported = roots.get(0);
+//				imported.getVarNames();	// This also initializes the constants information we may need here
+//				insertComment("*** START " + _line + " *** ", _indent);		
+//				generateCode(imported.children, _indent);
+//				insertComment("*** END " + _line + " *** ", _indent);		
+//				done = true;
+//			}
+//		}
+//		if (!done) {
+//			insertComment(_line, _indent);		
+//		}
+//	}
+//	// END KGU#376 2017-04-13
 
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
@@ -1272,6 +1273,13 @@ public class CGenerator extends Generator {
 			// STARTB KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
 			this.insertUserIncludes("");
 			// END KGU#351 2017-02-26
+			// START KGU#376 2017-07-01: Enh. #389 - now include directives for all referred diagrams will follow
+			if (_root.includeList != null) {
+				for (int i = 0; i < _root.includeList.count(); i++) {
+					code.add("#include \"" + _root.includeList.get(i) + ".h\"");
+				}
+			}
+			// END KGU#376 2017-07-01
 			// END KGU#236 2016-08-10
 		// START KGU#178 2016-07-20: Enh. #160
 			subroutineInsertionLine = code.count();

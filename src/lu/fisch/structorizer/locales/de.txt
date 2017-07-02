@@ -366,9 +366,9 @@ Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
 Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
-Menu.error15_1.text=Der Aufruf hat weder die Form «[ <var> <- ] <routine_name>(<arg_list>)» noch «import <progr_name>»!
-Menu.error15_2.text=Das aufgerufene Diagramm «%» ist z.Z. nicht verfügbar.
-Menu.error15_3.text=Mehr als ein Diagramm passt zu Aufruf «%».
+Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=Das Diagramm der aufgerufenen Routine «%» ist z.Z. nicht verfügbar.
+Menu.error15_3.text=Mehr als ein Diagramm passt zu Routinenaufruf «%».
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine «%»-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
 Menu.error16_3.text=«%1»- oder «%2»-Anweisungen sind nur als Aussprung-Elemente zulässig!
@@ -389,8 +389,8 @@ Menu.error23_1.text=Diagramm «%» ist eher ungeeignet für einen Importaufruf, 
 Menu.error23_2.text=Import von Diagramm «%» ist rekursiv!
 Menu.error23_3.text=Import hier wird ignoriert, da Diagram «%1» bereits importiert: %2.
 Menu.error23_4.text=Namenskonflikt zwischen lokaler and importierter Variable oder Konstante «%»!
-Menu.error23_5.text=Import-Aufrufe («%1») gehören direkt an den Anfang des Diagramms («%2»).
-Menu.error23_6.text=Eine %-Anweisung muss ein CALL-Element bilden!
+Menu.error23_5.text=Kein importierbares Diagram «%» gefunden.
+Menu.error23_6.text=Mehrere importierbare Diagramme «%» gefunden!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -419,7 +419,7 @@ AnalyserPreferences.checkboxes.19.text=Prüfen, ob Variablennamen mit reserviert
 AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeile) eine Parameterliste besitzt.
 AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variablennamen «I», «l» und «O» warnen.
 AnalyserPreferences.checkboxes.22.text=Prüfen, dass der Schutz von Konstanten nicht unterlaufen wird.
-AnalyserPreferences.checkboxes.23.text=Prüfen, dass Importaufrufe für Diagramme korrekt sind.
+AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehenden Diagramme korrekt ist.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -630,6 +630,8 @@ InputBoxFor.msgAttention.text=ACHTUNG!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title=Angaben zum Diagramm bearbeiten...
+InputBoxRoot.lblIncludeList.text=Einzubeziehende Diagramme
+InputBoxRoot.txtIncludeList.tooltip=Namen von Diagrammen, die vor dem Start einzubinden sind (durch Kommas oder Zeilenschaltung getrennt).
 InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
 InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur (Name, Parameterliste, ggf. Rückggabetyp) eingeben
 InputBoxRoot.lblComment.text=Einzugebender Kommentar
@@ -736,6 +738,9 @@ Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der CASE-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
 Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des CASE-Elements verringern (0 = aus) 
+Preferences.pnlRoot.border=Diagrammkopf
+Preferences.lblRoot.text=Beschriftung der Importliste
+Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.
 Preferences.pnlFor.border=FOR-Schleife
 Preferences.pnlFor.tooltip=Einstellungen zur FOR-Schleife
 Preferences.lblFor.text=Voreinstellungs-Text
@@ -1025,7 +1030,7 @@ Control.msgTitleError.text=Fehler
 Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
 Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
-Control.msgNoProgDiagram.text=Ein einbeziehbares Hauptprogramm \"%\" wurde nicht gefunden!\nPlatzieren Sie zu importierende Programm-Diagramme zunächst im Arranger.
+Control.msgNoInclDiagram.text=Ein einbeziehbares Diagramm \"%\" wurde nicht gefunden!\nPlatzieren Sie einzubeziehende Diagramme zunächst im Arranger.
 Control.msgAmbiguousCall.text=Mehrdeutiger Aufruf: Verschiedene Unterprogramm-Diagramme "%1" (%2 Parameter) gefunden!
 Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
 Control.msgInvalidBool.text=<%1> ist kein gültiger logischer Ausdruck.

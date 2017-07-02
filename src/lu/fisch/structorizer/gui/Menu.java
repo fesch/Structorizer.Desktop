@@ -404,8 +404,8 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error23_2 = new LangTextHolder("Import of diagram «%1» is recursive!");
 	public static final LangTextHolder error23_3 = new LangTextHolder("Import of diagram «%1» will be ignored here because it had already been imported: %2");
 	public static final LangTextHolder error23_4 = new LangTextHolder("Name conflict between local and imported variable or constant «%»!");
-	public static final LangTextHolder error23_5 = new LangTextHolder("Import Calls («%1») ought to be placed at the very beginning of the diagram («%2»)!");
-	public static final LangTextHolder error23_6 = new LangTextHolder("An % instruction must form a CALL element!");
+	public static final LangTextHolder error23_5 = new LangTextHolder("An includable diagram «%» is currently not available!");
+	public static final LangTextHolder error23_6 = new LangTextHolder("More than one includable diagrams with name «%» found!");
 	// END KGU#376 2017-04-11/21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization

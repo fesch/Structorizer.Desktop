@@ -80,7 +80,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.03.30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
  *      Kay Gürtzig     2017.04.14      Enh. #380: New highlighting mechanism troubleMakers / E_TROUBLECOLOR
  *      Kay Gürtzig     2017.05.22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals
- *      Kay Gürtzig     2017.06-09      Enh. #416: Methods getUnbrokenText(), getBrokenText() introduced 
+ *      Kay Gürtzig     2017.06.09      Enh. #416: Methods getUnbrokenText(), getBrokenText() introduced
+ *      Kay Gürtzig     2017.07.02      Enh. #389: Signature of addFullText() reverted to two arguments
  *
  ******************************************************************************************************
  *
@@ -342,6 +343,9 @@ public abstract class Element {
 	public static String preFor = "for ? <- ? to ?";
 	public static String preWhile = "while (?)";
 	public static String preRepeat = "until (?)";
+	// START KGU#376 2017-07-01: Enh #389 - Configurable caption for the includes box of Root
+	public static String preImport = "Included diagrams:";
+	// END KGU#376 2017-07-01
 	
 	// used font
 	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
@@ -1699,6 +1703,9 @@ public abstract class Element {
 			preWhile=ini.getProperty("While","while ()");
 			preRepeat=ini.getProperty("Repeat","until ()");
 			// END KGU 2017-01-06 #327
+			// START KGU#376 2017-07-02: Enh. #389
+			preImport = ini.getProperty("Import", "Included diagrams:");
+			// END KGU#376 2017-07-02
 			// font
 			// START KGU#264 2016-09-28: key Name replaced by the more expressive "Font"
 			//setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
@@ -1744,6 +1751,9 @@ public abstract class Element {
 			ini.setProperty("For",preFor);
 			ini.setProperty("While",preWhile);
 			ini.setProperty("Repeat",preRepeat);
+			// START KGU#376 2017-07-02: Enh. #389
+			ini.setProperty("Import", preImport);
+			// END KGU#376 2017-07-02
 			// font
 			// START KGU#264 2016-09-28: font name property renamed 
 			//ini.setProperty("Name",getFont().getFamily());
@@ -2338,9 +2348,6 @@ public abstract class Element {
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
 				// END KGU#116 2015-12-23
-				// START KGU#376 2017-04-11: Enh. #389 - highlight call keyword
-				jumpSigns.add(CodeParser.getKeywordOrDefault("preImport", "import").trim());
-				// END KGU#376 2017-04-11
 
 				// START KGU#377 2017-03-30: Bugfix #333
 				parts.replaceAll("<-","\u2190");
@@ -2602,10 +2609,7 @@ public abstract class Element {
     {
     	// The default...
     	StringList sl = new StringList();
-    	// START KGU#376 2017-04-21: Enh. #389 - We must prevent cyclic recursion
-    	//this.addFullText(sl, _instructionsOnly);
-    	this.addFullText(sl, _instructionsOnly, null);
-    	// END KGU#376 2017-04-21
+    	this.addFullText(sl, _instructionsOnly);
     	return sl;
     }
     
@@ -2618,9 +2622,8 @@ public abstract class Element {
      * (To be overridden by structured subclasses)
      * @param _lines - the StringList to append to 
      * @param _instructionsOnly - if true then texts not possibly containing variable declarations are omitted
-     * @param implicatedRoots - set of already recursively involved Roots (to beware of cyclic recursion) 
      */
-    protected abstract void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots);
+    protected abstract void addFullText(StringList _lines, boolean _instructionsOnly);
     // END KGU 2015-10-16
     
     // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed

@@ -111,7 +111,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.05.09      Enh. #372: Statistics method supporting the AttributeInspector
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
  *      Kay Gürtzig     2017.05.21      Enh. #372: additional attributes included in undo/redo mechanism
- *      Kay Gürtzig     2017.05.22      Inh. #272: New attribute "origin"
+ *      Kay Gürtzig     2017.05.22      Enh. #272: New attribute "origin"
+ *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList"
+ *      Kay Gürtzig     2017.07.02      Enh. #389: Analyser and execution mechanisms adapted to new include design
  *      
  ******************************************************************************************************
  *
@@ -224,6 +226,9 @@ public class Root extends Element {
 	// Executor: Is this routine currently waiting for a called subroutine?
 	public boolean isCalling = false;
 	// END KG#2 (#9) 2015-11-13
+	// START KGU#376 2017-07-02: Enh. #389 - we want to show execution in inlcudeList
+	public boolean isIncluding = false;
+	// END KGU#376 2017-07-02
 	
 	public Subqueue children = new Subqueue();
 
@@ -254,16 +259,28 @@ public class Root extends Element {
 	public String licenseName = null;
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
+	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now manageed directly by Root
+	public StringList includeList = null;
+	// END KGU#376 2017-06-30
 	
 	/**
-	 * @return true if and only if the diagram type is main program
+	 * @return true if and only if the diagram type is "main program"
+	 * @see #isSubroutine()
+	 * @see #isInclude()
+	 * @see #setProgram(boolean)
+	 * @see #setInclude()
 	 */
 	public boolean isProgram() {
 		return diagrType == DiagramType.DT_MAIN;
 	}
 	/**
-	 * @param isProgram if the diagram type is to be main program (true) or subroutine
+	 * Sets the diagram type to "main program" or "subroutine"
+	 * @param isProgram - if the diagram type is to be "main program" (true) or "subroutine"
 	 * (false)
+	 * @see #isProgram()
+	 * @see #isSubroutine()
+	 * @see #isInclude()
+	 * @see #setInclude()
 	 */
 	public void setProgram(boolean isProgram) {
 		if (isProgram) {
@@ -274,19 +291,30 @@ public class Root extends Element {
 	}
 	/**
 	 * @return true if and only if the diagram type is subroutine
+	 * @see #isProgram()
+	 * @see #isInclude()
+	 * @see #setProgram(boolean)
+	 * @see #setInclude()
 	 */
 	public boolean isSubroutine() {
 		return diagrType == DiagramType.DT_SUB;
 	}
 	/**
-	 * @return true if and only if the diagram type is main program
+	 * @return true if and only if the diagram type is "includable"
+	 * @see #isProgram()
+	 * @see #isSubroutine()
+	 * @see #setInclude()
+	 * @see #setProgram(boolean)
 	 */
 	public boolean isInclude() {
 		return diagrType == DiagramType.DT_INCL;
 	}
 	/**
-	 * @param isProgram if the diagram type is to be main program (true) or subroutine
-	 * (false)
+	 * Sets the diagram type to "includable"
+	 * @see #isInclude()
+	 * @see #isProgram()
+	 * @see #isSubroutine()
+	 * @see #setProgram(boolean)
 	 */
 	public void setInclude() {
 		diagrType = DiagramType.DT_INCL;
@@ -363,16 +391,6 @@ public class Root extends Element {
 	 */
 	public LinkedHashMap<String, String> constants = new LinkedHashMap<String, String>();
 	// END KGU#375 2017-03-31
-	// START KGU#376 2017-04-20: Enh. #389 (re-implementation)
-	/**
-	 * Maps the names imported Roots already analysed to their respectiv first import path
-	 */
-	public HashMap<String, StringList> analysedImports = new HashMap<String, StringList>();
-	/**
-	 * Stack of the nested imports currently being analysed, for cyclic recursion check
-	 */
-	private StringList importStack = new StringList();
-	// END KGU#376 2017-04-20
 	/**
 	 * Vector containing Element-related Analyser complaints
 	 */
@@ -611,6 +629,14 @@ public class Root extends Element {
 		}
 		// END KGU#227 2016-07-31
 		
+		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
+		if (this.includeList != null) {
+			Rect includesBox = this.writeOutImports(_canvas, 0, 0, rect0.right - 2 * padding, false);
+			rect0.bottom += includesBox.bottom - includesBox.top + E_PADDING/2;
+			rect0.right = Math.max(rect0.right, includesBox.right - includesBox.left + 2 * padding);
+		}
+		// END KGU#376 2017-07-01
+		
 		pt0Sub.y = rect0.bottom;
 		if (isNice)	pt0Sub.y -= E_PADDING;
 
@@ -667,6 +693,7 @@ public class Root extends Element {
 		Color drawColor = getFillColor();
 		// END KGU 2015-10-13
 
+		// FIXME: Drawing shouldn't modify the element
 		if (getText().count()==0)
 		{
 			text.add("???");
@@ -737,6 +764,16 @@ public class Root extends Element {
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		Font titleFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
 		canvas.setFont(titleFont);
+
+		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
+		if (this.includeList != null) {
+			Rect includesBox = this.writeOutImports(_canvas,
+					_top_left.left + textPadding,
+					_top_left.top + textPadding + commentHeight,
+					width - 2 * textPadding, true);
+			commentHeight += includesBox.bottom - includesBox.top + E_PADDING/2;
+		}
+		// END KGU#376 2017-07-01
 
 		// draw text
 		// START KGU#216 2016-07-25: Bug #205 - Except the padding the differences here had been wrong
@@ -839,6 +876,102 @@ public class Root extends Element {
 		this.topLeft.y = _top_left.top - this.drawPoint.y;
 		// END KGU#136 2016-03-01
 	}
+	
+	// START KGU#376 2017-07-01: Enh. #389
+	/**
+	 * Draws (or calculates) a box with the names of the diagrams to be included.<br/>
+	 * NOTE: Should only be called if includeList isn't empty.
+	 * @param _canvas - the current drawing surface
+	 * @param _x - left margin cordinate
+	 * @param _y - upper margin coordinate
+	 * @param maxWidth - maximum width of the box
+	 * @param _actuallyDraw - draw (true) or only calculate size (false)
+	 * @return The resulting shape of the box
+	 */
+	protected Rect writeOutImports(Canvas _canvas, int _x, int _y, int _maxWidth, boolean _actuallyDraw)
+	{
+		int height = 0;
+		int width = 0;
+		int padding = E_PADDING/2;
+		// smaller font
+		int smallFontSize = Element.font.getSize() * 2 / 3;
+		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, smallFontSize);
+		Font smallBoldFont = new Font(Element.font.getName(), Font.BOLD, smallFontSize);
+		FontMetrics fm = _canvas.getFontMetrics(smallFont);
+		int fontHeight = fm.getHeight();
+		// backup the original font
+		Font backupFont = _canvas.getFont();
+		_canvas.setFont(smallFont);
+		_canvas.setColor(Color.BLACK);
+		String caption = Element.preImport.trim();
+		int captionX = _x + padding;
+		int captionY = _y;
+		if (!caption.isEmpty()) {
+			if (!caption.endsWith(":")) {
+				caption += ":";
+			}
+			if (this.includeList.count() > 0) {
+				height += fontHeight/4 + fontHeight;	// upper padding + string height
+				width = _canvas.stringWidth(caption);
+				captionY = _y + height;
+			}
+		}
+		fm = _canvas.getFontMetrics(smallBoldFont);
+		fontHeight = fm.getHeight();
+		_canvas.setFont(smallBoldFont);
+		String line = "";
+		StringList includeLines = new StringList();
+		for (int i = 0; i < this.includeList.count(); i++) {
+			String name = this.includeList.get(i);
+			if (line.isEmpty() || padding + _canvas.stringWidth(line + ", " + name) < _maxWidth)
+			{
+				line += ", " + name;
+			}
+			else {
+				height += fontHeight;
+				width = Math.max(width, _canvas.stringWidth(line));
+				includeLines.add(line.substring(2));
+				line = ", " + name;
+			}
+		}
+		if (!line.isEmpty())
+		{
+			height += fontHeight;
+			width = Math.max(width, _canvas.stringWidth(line));
+			includeLines.add(line.substring(2));
+		}
+		Rect inclBox = new Rect(_x, _y, _x + Math.max(_maxWidth, width + 2 * padding), _y + height);
+		if (height > 0)
+		{
+			inclBox.bottom += fontHeight/2;
+			if (_actuallyDraw) {
+				Polygon bevelled = this.makeBevelledRect(inclBox, fontHeight/2);
+				if (this.isIncluding) {
+					_canvas.setColor(Element.E_RUNNINGCOLOR);
+					_canvas.fillPoly(bevelled);
+				}
+				_canvas.setColor(Color.GRAY);
+				_canvas.drawPoly(bevelled);
+			}
+		}
+		if (_actuallyDraw) {
+			_canvas.setColor(Color.BLACK);
+			if (!caption.isEmpty()) {
+				_canvas.setFont(smallFont);
+				if (this.includeList.count() > 0) {
+					_canvas.writeOut(captionX, captionY, caption);
+				}
+				_canvas.setFont(smallBoldFont);
+				for (int i = 0; i < includeLines.count(); i++) {
+					captionY += fontHeight;
+					_canvas.writeOut(captionX, captionY, includeLines.get(i));
+				}
+			}
+		}
+		_canvas.setFont(backupFont);
+		return inclBox;
+	}
+
 
 	// START KGU#376 2017-05-16: Enh. #389
     private Polygon makeBevelledRect(Rect _rect, int _bevel) {
@@ -1213,6 +1346,17 @@ public class Root extends Element {
 		return this.getExecCount() + " / (" + this.getExecStepCount(true) + ")";
 	}
 	// END KGU#117 2016-03-12
+	
+	// START KGU#376 2017-07-02: Enh. #389
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+	 */
+	public void clearExecutionStatus()
+	{
+		super.clearExecutionStatus();
+		this.isIncluding = false;
+	}
+	// END KGU#376 2017-07-02
 
 	/**
 	 * Adds a new entry to the undo stack and clears the redo stack.
@@ -1242,6 +1386,11 @@ public class Root extends Element {
 		// START KGU#363 2017-05-21: Enh. #372: Care for the new attributes
 		if (_cacheAttributes) oldChildren.rootAttributes = new RootAttributes(this);
 		// END KGU#363 3017-05-21
+		// START KGU#376 2017-07-01: Enh. #389
+		if (this.includeList != null) {
+			oldChildren.diagramRefs = this.includeList.concatenate(",");
+		}
+		// END KGU#376 2017-07-01
 		undoList.add(oldChildren);
 		clearRedo();
 		// START KGU#137 2016-01-11: Bugfix #103
@@ -1387,6 +1536,11 @@ public class Root extends Element {
         		children.rootAttributes = null;
         	}
         	// END KGU#363 2017-05-21
+        	// START KGU#376 2017-07-01: Enh. #389
+        	if (children.diagramRefs != null) {
+        		this.includeList = StringList.explode(children.diagramRefs, ",");
+        	}
+        	// END KGU#376 2017-07-01
             // START KGU#136 2016-03-01: Bugfix #97
             this.resetDrawingInfoDown();
             // END KGU#136 2016-03-01
@@ -1608,125 +1762,45 @@ public class Root extends Element {
      * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
      */
     @Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
     	// Whereas a subroutine diagram is likely to hold parameter declarations in the header,
     	// (such that we ought to deliver its header for the variable detection), this doesn't
     	// hold for programs and includable diagrams.
-    	// START KGU#376 2017-04-21: Enh. #389 - beware of cyclic recursion
+    	// START KGU#376 2017-07-02: Enh. #389 - beware of cyclic recursion
 		//if (!this.isProgram && !_instructionsOnly)
 		//{
 		//	_lines.add(this.getText());
 		//}
 		//this.children.addFullText(_lines, _instructionsOnly);
-    	if (_implicatedRoots == null || !_implicatedRoots.contains(this)) {
-    		if (this.isSubroutine() && !_instructionsOnly)
-    		{
-    			_lines.add(this.getText());
-    		}
-    		if (_implicatedRoots == null) {
-    			_implicatedRoots = new HashSet<Root>();
-    		}
-    		_implicatedRoots.add(this);
-    		this.children.addFullText(_lines, _instructionsOnly, _implicatedRoots);
-    	}
-    	// END KGU#376 2017-04-21
+		HashSet<Root> implicatedRoots = new HashSet<Root>();
+		this.addFullText(_lines, _instructionsOnly, implicatedRoots);
+		// END KGU#376 2017-07-02
     }
     // END KGU 2015-10-16
-
-    /**
-     * @deprecated Use _node.addFullText(_lines, _instructionsOnly) instead, where the argument
-     * _instructionsOnly specifies whether only lines potentially introducing new variables are of interest.
-     * @param _node - the instruction sequence to be evaluated
-     * @param _lines - the StringList to append to
-     */
-    private void getFullText(Subqueue _node, StringList _lines)
+    
+    // START KGU#376 2017-07-02: Enh. #389
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
     {
-    	for(int i=0; i<_node.getSize(); i++)
-    	{
-    		_lines.add(((Element)_node.getElement(i)).getText());
-    		if(_node.getElement(i).getClass().getSimpleName().equals("While"))
-    		{
-    			getFullText(((While) _node.getElement(i)).q,_lines);
-    		}
-    		else if(_node.getElement(i).getClass().getSimpleName().equals("For"))
-    		{
-    			getFullText(((For) _node.getElement(i)).q,_lines);
-    		}
-    		else if(_node.getElement(i).getClass().getSimpleName().equals("Repeat"))
-    		{
-    			getFullText(((Repeat) _node.getElement(i)).q,_lines);
-    		}
-    		else if(_node.getElement(i).getClass().getSimpleName().equals("Alternative"))
-    		{
-    			getFullText(((Alternative) _node.getElement(i)).qTrue,_lines);
-    			getFullText(((Alternative) _node.getElement(i)).qFalse,_lines);
-    		}
-    		else if(_node.getElement(i).getClass().getSimpleName().equals("Case"))
-    		{
-    			Case c = ((Case) _node.getElement(i));
-    			for (int j=0;j<c.qs.size();j++)
-    			{
-    				getFullText((Subqueue) c.qs.get(j),_lines);
-    			}
-    		}
+    	if (!_implicatedRoots.contains(this)) {
+        	if (this.includeList != null && Arranger.hasInstance()) {
+        		_implicatedRoots.add(this);
+        		for (int i = 0; i < this.includeList.count(); i++) {
+        			String name = this.includeList.get(i);
+    				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+    				if (roots.size() == 1) {
+    					roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
+    				}
+    			}		
+        	}
+        	if (this.isSubroutine() && !_instructionsOnly)
+        	{
+        		_lines.add(this.getText());
+        	}
+        	this.children.addFullText(_lines, _instructionsOnly);
     	}
     }
-
-    /**
-     * @deprecated Use getFullText(_instructionsOnly) instead, where argument _instructionsOnly
-     * specifies whether only lines potentially introducing new variables are of interest. 
-     * @return
-     */
-    public StringList getFullText()
-    {
-            StringList sl = getText().copy();
-            getFullText(children,sl);
-            return sl;
-    }
-
-    /**
-     * @deprecated Use _el.getFullText(_instructionsOnly) instead, where argument _instructionsOnly
-     * specifies whether only lines potentially introducing new variables are of interest.
-     * @param _el
-     * @return the composed StringList
-     */
-    public StringList getFullText(Element _el)
-    {
-            StringList sl = _el.getText().copy();
-
-            if(_el.getClass().getSimpleName().equals("While"))
-            {
-                    getFullText(((While) _el).q,sl);
-            }
-            else if(_el.getClass().getSimpleName().equals("For"))
-            {
-                    getFullText(((For) _el).q,sl);
-            }
-            else if(_el.getClass().getSimpleName().equals("Repeat"))
-            {
-                    getFullText(((Repeat) _el).q,sl);
-            }
-            else if(_el.getClass().getSimpleName().equals("Alternative"))
-            {
-                    getFullText(((Alternative)_el).qTrue,sl);
-                    getFullText(((Alternative) _el).qFalse,sl);
-            }
-            else if(_el.getClass().getSimpleName().equals("Case"))
-            {
-                    Case c = ((Case) _el);
-                    for (int j=0;j<c.qs.size();j++)
-                    {
-                            getFullText((Subqueue) c.qs.get(j),sl);
-                    }
-            }
-
-            return sl;
-    }
-
-    /*************************************
-     * Extract full text of all Elements
-     *************************************/
+    // END KGU#376 2017-07-02
 
     /**
      * Extracts the variable name out of a more complex string possibly also
@@ -1734,7 +1808,7 @@ public class Root extends Element {
      * @param _s the raw lvalue string
      * @return the pure variable name
      */
-    private String cleanup(String _s)
+    private String extractVarName(String _s)
     {
     	//System.out.println("IN : "+_s);
     	// START KGU#141 2016-01-16: Bugfix #112
@@ -1937,11 +2011,6 @@ public class Root extends Element {
 			tokens.clear();
 		}
 		// END #375 2017-03-31
-		// START KGU#376 2017-04-11: Enh. #389: New CALL flavour
-		else if (tokens.indexOf(CodeParser.getKeyword("preImport")) == 0) {
-			tokens.clear();
-		}
-		// END KGU#376 2017-04-11
 
 		// cutoff output keyword
 		if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
@@ -2083,9 +2152,9 @@ public class Root extends Element {
     		if (asgnPos > 0)
     		{
     			String s = tokens.subSequence(0, asgnPos).concatenate();
-    			// (KGU#141 2016-01-16: type elimination moved to cleanup())
-    			//System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
-    			String varName = cleanup(s.trim());
+    			// (KGU#141 2016-01-16: type elimination moved to extractVarName())
+    			//System.out.println("Adding to initialised var names: " + extractVarName(allText.trim()));
+    			String varName = extractVarName(s.trim());
     			boolean wasNew = varNames.addOrderedIfNew(varName);
     			// START KGU#375 2017-03-31: Enh. #388 collect constant definitions
     			// Register it as constant if marked as such and not having been declared before
@@ -2116,7 +2185,7 @@ public class Root extends Element {
     			StringList parts = Element.splitExpressionList(s, ",");
     			for (int p = 0; p < parts.count(); p++)
     			{
-    				varNames.addOrderedIfNew(cleanup(parts.get(p).trim()));
+    				varNames.addOrderedIfNew(extractVarName(parts.get(p).trim()));
     			}
     		}
 
@@ -2169,8 +2238,6 @@ public class Root extends Element {
             // !!
             // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
             // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
-            // !!
-            // !! This will also detect the functionname itself if the parentheses are missing (bug?)
             // !!
         	// KGU 2015-11-29: Decomposed -> new method collectParameters
             if (this.isSubroutine() && _ele==this && !_onlyBody)
@@ -2425,7 +2492,7 @@ public class Root extends Element {
 
     		// CHECK  #5: non-uppercase var
     		// CHECK  #7: correct identifiers
-    		// CHECK #13: Competetive return mechanisms
+    		// CHECK #13: Competitive return mechanisms
     		analyse_5_7_13(ele, _errors, myVars, _resultFlags);
     		
     		// START KGU#239/KGU#327 2016-08-12: Enh. #231 / # 329
@@ -2437,6 +2504,7 @@ public class Root extends Element {
 
     		// CHECK #10: wrong multi-line instruction
     		// CHECK #11: wrong assignment (comparison operator in assignment)
+    		// CHECK #22: constant depending on non-constants or constant redefinition
     		if (eleClassName.equals("Instruction"))
     		{
     			analyse_10_11(ele, _errors);
@@ -2511,7 +2579,7 @@ public class Root extends Element {
 			else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
     		{
     		// END KGU#78 2015-11-25
-				analyse_13_16_23_instr((Instruction)ele, _errors, i == _node.getSize()-1, myVars, _resultFlags);
+				analyse_13_16_instr((Instruction)ele, _errors, i == _node.getSize()-1, myVars, _resultFlags);
     		// START KGU#78 2015-11-25
     		}
     		// END KGU#78 2015-11-25
@@ -2656,10 +2724,10 @@ public class Root extends Element {
     			}
     			// look at the comment for the IF-structure
     		}
-    		// START KGU#376 2017-04-11: Enh. #389 - revised 2017-04-20
-    		else if ((ele instanceof Call && ((Call)ele).isImportCall())) {
-    			analyse_23((Call)ele, _errors, _vars, _uncertainVars, _constants);
-    		}
+    		// START KGU#376 2017-04-11: Enh. #389 - revised 2017-04-20 - disabled 2017-07-01
+    		//else if ((ele instanceof Call && ((Call)ele).isImportCall())) {
+    		//	analyse_23((Call)ele, _errors, _vars, _uncertainVars, _constants);
+    		//}
     		// END KGU#376 2017-04-11
     		
     	} // for(int i=0; i < _node.size(); i++)...
@@ -3011,9 +3079,9 @@ public class Root extends Element {
 	 */
 	private void analyse_15(Call ele, Vector<DetectedError> _errors)
 	{
-		// START KGU#376 2017-04-11: Enh. #389 - new call type
-		//if (!ele.isProcedureCall() && !ele.isFunctionCall())
-		if (!ele.isProcedureCall() && !ele.isFunctionCall() && !ele.isImportCall())
+		// START KGU#376 2017-04-11: Enh. #389 - new call type / undone 2017-07-01
+		if (!ele.isProcedureCall() && !ele.isFunctionCall())
+		//if (!ele.isProcedureCall() && !ele.isFunctionCall() && !ele.isImportCall())
 		// END KGU#376 2017-04-11
 		{
 			//error  = new DetectedError("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!",(Element) _node.getElement(i));
@@ -3023,22 +3091,22 @@ public class Root extends Element {
 			// END KGU#278 2016-10-11
 		}
 		// START KGU#278 2016-10-11: Enh. #267
-		// START KGU#376 2017-04-11: Enh. #389
-		else if (ele.isImportCall()) {
-			String name = ele.getSignatureString();
-			int count = 0;	// Number of matching routines
-			if (Arranger.hasInstance()) {
-				count = Arranger.getInstance().findIncludesByName(name).size();
-			}
-			if (count == 0) {
-				//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error15_2, name), ele), 15);
-			}
-			else if (count > 1) {
-				//error  = new DetectedError("There are several matching subroutines for «<routine_name>(<arg_count>)».",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error15_3, name), ele), 15);					
-			}
-		}
+		// START KGU#376 2017-04-11: Enh. #389 - undone 2017-07-01
+//		else if (ele.isImportCall()) {
+//			String name = ele.getSignatureString();
+//			int count = 0;	// Number of matching routines
+//			if (Arranger.hasInstance()) {
+//				count = Arranger.getInstance().findIncludesByName(name).size();
+//			}
+//			if (count == 0) {
+//				//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
+//				addError(_errors, new DetectedError(errorMsg(Menu.error15_2, name), ele), 15);
+//			}
+//			else if (count > 1) {
+//				//error  = new DetectedError("There are several matching subroutines for «<routine_name>(<arg_count>)».",(Element) _node.getElement(i));
+//				addError(_errors, new DetectedError(errorMsg(Menu.error15_3, name), ele), 15);					
+//			}
+//		}
 		// END KGU#376 2017-04-11
 		else {
 			// START KGU 2017-04-11: We have methods of higher level here!
@@ -3211,28 +3279,21 @@ public class Root extends Element {
 	/**
 	 * CHECK #16: Correct usage of return (suspecting hidden Jump)
 	 * CHECK #13: Competitive return mechanisms
-	 * CHECK #23: Correct usage of import
 	 * @param ele - Instruction to be analysed
 	 * @param _errors - global error list
 	 * @param _index - position of this element within the owning Subqueue
 	 * @param _myVars - all variables defined or modified by this element (should be empty so far, might be extended) 
 	 * @param _resultFlags - 3 flags for (0) return, (1) result, and (2) function name
 	 */
-	private void analyse_13_16_23_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
+	private void analyse_13_16_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
 		String preReturn =  CodeParser.getKeywordOrDefault("preReturn", "return").trim();
 		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave").trim();
 		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit").trim();
-		// START KGU#376 2017-04-22: Enh. #389
-		String preImport = CodeParser.getKeywordOrDefault("preImport", "import").trim();
-		// END KGU#376 2017-04-22
 		String patternReturn = Matcher.quoteReplacement(CodeParser.ignoreCase ? preReturn.toLowerCase() : preReturn);
 		String patternLeave = Matcher.quoteReplacement(CodeParser.ignoreCase ? preLeave.toLowerCase() : preLeave);
 		String patternExit = Matcher.quoteReplacement(CodeParser.ignoreCase ? preExit.toLowerCase() : preExit);
-		// START KGU#376 2017-04-22: Enh. #389
-		String patternImport = Matcher.quoteReplacement(CodeParser.ignoreCase ? preImport.toLowerCase() : preImport);
-		// END KGU#376 2017-04-22
 
 		for(int ls=0; ls<sl.count(); ls++)
 		{
@@ -3243,9 +3304,6 @@ public class Root extends Element {
 			boolean isReturn = line.matches(Matcher.quoteReplacement(patternReturn) + "([\\W].*|$)");
 			boolean isLeave = line.matches(Matcher.quoteReplacement(patternLeave) + "([\\W].*|$)");
 			boolean isExit = line.matches(Matcher.quoteReplacement(patternExit) + "([\\W].*|$)");
-			// START KGU#376 2017-04-22: Enh. #389
-			boolean isImport = line.matches(Matcher.quoteReplacement(patternImport) + "[\\W].*");
-			// END KGU#376 2017-04-22
 			boolean isJump = isLeave || isExit ||
 					line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 					line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
@@ -3283,12 +3341,6 @@ public class Root extends Element {
 				}
 			}
 			// END KGU#78 2015-11-25
-			// START KGU#376 2017-04-22: Enh. #389 New test (#23)
-			if (isImport && !(ele instanceof Call)) {
-				//error = new DetectedError("An import instruction must form a CALL element!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error23_6, preImport), ele), 23);				
-			}
-			// END KGU#376 2017-04-22
 		}
 	}
 
@@ -3528,96 +3580,125 @@ public class Root extends Element {
 	}
 	
 	/**
-	 * CHECK #23: Import calls
-	 * @param _call - Import call to be analysed
+	 * CHECK #23: Diagram includes
 	 * @param _errors - global error list
 	 * @param _vars - variables with certain initialisation
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
 	 * @param _constants - incremental constant definition map
+	 * @param _importStack TODO
+	 * @param _analyzedImports TODO
 	 */
-	private void analyse_23(Call _call, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants)
+	private void analyse_23(Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, StringList _importStack, HashMap<String, StringList> _analysedImports)
 	{
-		Subqueue node = (Subqueue)_call.parent;
-		// Check correct placement (must be at the beginning of the diagram
-		boolean misplaced = !(node.parent instanceof Root);
-		if (!misplaced) {
-			for (int j = 0; !misplaced && j < node.getIndexOf(_call); j++) {
-				Element el0 = node.getElement(j);
-				if (!el0.isDisabled() && (!(el0 instanceof Call) || !((Call)el0).isImportCall())) {
-					misplaced = true;
+		// START KGU#376 2017-07-01: Enh. #389 - obsolete
+//		Subqueue node = (Subqueue)_call.parent;
+//		// Check correct placement (must be at the beginning of the diagram
+//		boolean misplaced = !(node.parent instanceof Root);
+//		if (!misplaced) {
+//			for (int j = 0; !misplaced && j < node.getIndexOf(_call); j++) {
+//				Element el0 = node.getElement(j);
+//				if (!el0.isDisabled() && (!(el0 instanceof Call) || !((Call)el0).isImportCall())) {
+//					misplaced = true;
+//				}
+//			}
+//		}
+//		if (misplaced) {
+//			//error  = new DetectedError("Import calls () must be placed at the very beginning of the diagram!", ele);
+//			String[] data = new String[]{_call.getText().getLongString(), getRoot(_call).getMethodName()};
+//			addError(_errors, new DetectedError(errorMsg(Menu.error23_5, data), _call), 23);
+//		}
+//		String name = (_call).getSignatureString();
+		if (this.includeList == null) {
+			return;
+		}
+		for (int i = 0; i < includeList.count(); i++) {
+			String name = includeList.get(i);
+			int count = 0;	// Number of matching routines
+			if (Arranger.hasInstance()) {
+				count = Arranger.getInstance().findIncludesByName(name).size();
+			}
+			if (count == 0) {
+				//error  = new DetectedError("An includable diagram «<diagram_name>» is currently not available.", this);
+				addError(_errors, new DetectedError(errorMsg(Menu.error23_5, name), this), 23);
+			}
+			else if (count > 1) {
+				//error  = new DetectedError("There are several diagrams matching signature «<diagram_name>».", this);
+				addError(_errors, new DetectedError(errorMsg(Menu.error23_6, name), this), 23);					
+			}
+		// END KGU#376 2017-07-01
+			// Is this Root cyclically included?
+			if (this.isInclude() && name.equals(this.getMethodName())
+					|| _importStack.contains(name)) {
+				//error  = new DetectedError("Import of diagram «%1» is recursive! (Recursion path: %1 <- %2)");
+				addError(_errors, new DetectedError(errorMsg(Menu.error23_2, name), this), 23);    				
+
+			}
+			else if (_analysedImports.containsKey(name)) {
+				//error  = new DetectedError("Import of diagram «%1» will be ignored here because it had already been imported: %2");
+				StringList path = _analysedImports.get(name);
+				addError(_errors, new DetectedError(errorMsg(Menu.error23_3, new String[]{name, path.concatenate("<-")}), this), 23);    									
+			}
+			else if (Arranger.hasInstance()) {
+				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+				if (roots.size() == 1) {
+					Root importedRoot = roots.get(0);
+					Vector<DetectedError> impErrors = new Vector<DetectedError>();
+					boolean[] subResultFlags = new boolean[]{false, false, false};
+					// We are not interested in internal errors but in the imported variables and constants
+					// START KGU#376 2017-04-20: Enh. #389 - new semantic approach: no access to this context
+					//analyse(roots.get(0).children, new Vector<DetectedError>(), _vars, _uncertainVars, _constants, subResultFlags);
+					StringList importedVars = new StringList();
+					StringList importedUncVars = new StringList();
+					if (this.isInclude()) {
+						_importStack.add(this.getMethodName());
+					}
+					importedRoot.analyse_23(impErrors, importedVars, importedUncVars, _constants, _importStack, _analysedImports);
+					analyse(importedRoot.children, impErrors, importedVars, importedUncVars, _constants, subResultFlags);
+					_analysedImports.put(name, _importStack.copy());
+					if (this.isInclude()) {
+						_importStack.remove(_importStack.count()-1);
+					}
+					// END KGU#376 2017-04-20
+					if (subResultFlags[0]) {
+						//error  = new DetectedError("Diagram «%» is rather unsuited for an import call as it makes use of return.",(Element) _node.getElement(i));
+						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);    				
+					}
+					// Now associate all sub-analysis results with the Call element
+					for (DetectedError err: impErrors) {
+						// Unfortunately the error object doesn't know its category, so we relaunch it under category 23
+						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);    				
+					}
+					// Add analysis for name conflicts and uncertain variables - might still occur among includes!
+					for (int j = 0; j < importedVars.count(); j++) {
+						String varName = importedVars.get(j);
+						if (!_vars.addIfNew(varName) || _uncertainVars.contains(varName)) {
+							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+						}
+					}
+					for (int j = 0; j < importedUncVars.count(); j++) {
+						String varName = importedUncVars.get(j);
+						//error  = new DetectedError("The variable «%1» may not have been initialized%2!",(Element) _node.getElement(i));
+						addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{varName, ""}), this), 3);    						    					
+						if (_vars.contains(varName) || !_uncertainVars.addIfNew(varName)) {
+							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+						}
+					}
+					for (Entry<String, String> constEntry: importedRoot.constants.entrySet()) {
+						if (!_constants.containsKey(constEntry.getKey())) {
+							_constants.put(constEntry.getKey(), constEntry.getValue());
+							if (!this.constants.containsKey(constEntry.getKey())) {
+								this.constants.put(constEntry.getKey(), constEntry.getValue());		    						    					
+							}
+						}
+					}
 				}
 			}
-		}
-		if (misplaced) {
-			//error  = new DetectedError("Import calls () must be placed at the very beginning of the diagram!", ele);
-			String[] data = new String[]{_call.getText().getLongString(), getRoot(_call).getMethodName()};
-			addError(_errors, new DetectedError(errorMsg(Menu.error23_5, data), _call), 23);
-		}
-		// Get all lines of the called routine
-		String name = (_call).getSignatureString();
-		if (!this.isSubroutine() && name.equals(this.getMethodName())
-				|| this.importStack.contains(name)) {
-			//error  = new DetectedError("Import of diagram «%1» is recursive! (Recursion path: %1 <- %2)");
-			addError(_errors, new DetectedError(errorMsg(Menu.error23_2, name), _call), 23);    				
-			
-		}
-		else if (this.analysedImports.containsKey(name)) {
-			//error  = new DetectedError("Import of diagram «%1» will be ignored here because it had already been imported: %2");
-			StringList path = this.analysedImports.get(name);
-			addError(_errors, new DetectedError(errorMsg(Menu.error23_3, new String[]{name, path.concatenate("<-")}), _call), 23);    									
-		}
-		else if (Arranger.hasInstance()) {
-			Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
-			if (roots.size() == 1) {
-				Root importedRoot = roots.get(0);
-				Vector<DetectedError> impErrors = new Vector<DetectedError>();
-				boolean[] subResultFlags = new boolean[]{false, false, false};
-				// We are not interested in internal errors but in the imported variables and constants
-				// START KGU#376 2017-04-20: Enh. #389 - new semantic approach: no access to this context
-    			//analyse(roots.get(0).children, new Vector<DetectedError>(), _vars, _uncertainVars, _constants, subResultFlags);
-				StringList importedVars = new StringList();
-				StringList importedUncVars = new StringList();
-				this.importStack.add(name);
-    			analyse(importedRoot.children, impErrors, importedVars, importedUncVars, _constants, subResultFlags);
-    			this.analysedImports.put(name, this.importStack.copy());
-    			this.importStack.remove(this.importStack.count()-1);
-    			// END KGU#376 2017-04-20
-    			if (subResultFlags[0]) {
-    				//error  = new DetectedError("Diagram «%» is rather unsuited for an import call as it makes use of return.",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), _call), 23);    				
-    			}
-    			// Now associate all sub-analysis results with the Call element
-    			for (DetectedError err: impErrors) {
-    				addError(_errors, new DetectedError(name + ": " + err.getError(), _call), 23);    				
-    			}
-    			// Add analysis for name conflicts and uncertain variables
-    			for (int j = 0; j < importedVars.count(); j++) {
-    				String varName = importedVars.get(j);
-    				if (!_vars.addIfNew(varName) || _uncertainVars.contains(varName)) {
-	    				//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-						addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), _call), 23);    						    					
-    				}
-    			}
-    			for (int j = 0; j < importedUncVars.count(); j++) {
-    				String varName = importedUncVars.get(j);
-    				//error  = new DetectedError("The variable «%1» may not have been initialized%2!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{varName, ""}), _call), 3);    						    					
-    				if (_vars.contains(varName) || !_uncertainVars.addIfNew(varName)) {
-	    				//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-						addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), _call), 23);    						    					
-    				}
-    			}
-    			for (Entry<String, String> constEntry: importedRoot.constants.entrySet()) {
-    				if (!_constants.containsKey(constEntry.getKey())) {
-    					_constants.put(constEntry.getKey(), constEntry.getValue());
-    					if (!this.constants.containsKey(constEntry.getKey())) {
-    						this.constants.put(constEntry.getKey(), constEntry.getValue());		    						    					
-    					}
-    				}
-    			}
-			}
+		// START KGU#376 2017-07-01
 		}		
-		
+		// END KGU#376 2017-07-01
+
 	}
 
 
@@ -3915,26 +3996,23 @@ public class Root extends Element {
     		structorizerKeywords.add(keyword);
     	}
     	
-    	// START KGU#376 2017-04-20: Enh. #389
-    	this.analysedImports.clear();
-    	this.importStack.clear();
-    	// END KGU#376 2017-04-20
-    	
         this.getVarNames();	// also fills this.constants if not already done
         //System.out.println(this.variables);
 
         Vector<DetectedError> errors = new Vector<DetectedError>();
         // Retrieve the parameter names (in the effect)
-        StringList vars = getVarNames(this,true,false);
-        rootVars = vars.copy();
+//        StringList vars = getVarNames(this,true,false);
+//        rootVars = vars.copy();
+        rootVars = getVarNames(this, true, false);
+        StringList vars = new StringList();
         StringList uncertainVars = new StringList();
-        HashMap<String, String> definedConsts = new LinkedHashMap<String, String>();
-        for (int v = 0; v < vars.count(); v++) {
-        	String para = vars.get(v);
-        	if (this.constants.containsKey(para)) {
-        		definedConsts.put(para, this.constants.get(para));
-        	}
-        }
+//        HashMap<String, String> definedConsts = new LinkedHashMap<String, String>();
+//        for (int v = 0; v < vars.count(); v++) {
+//        	String para = vars.get(v);
+//        	if (this.constants.containsKey(para)) {
+//        		definedConsts.put(para, this.constants.get(para));
+//        	}
+//        }
 
         String programName = getMethodName();
 
@@ -3969,6 +4047,20 @@ public class Root extends Element {
 //        }
 		// END KGU#376 2017-04-11
 
+        
+    	// START KGU#376 2017-07-01: Enh. #389 - Now includes are a Root property (again)
+        LinkedHashMap<String, String> importedConstants = new LinkedHashMap<String, String>();
+    	this.analyse_23(errors, vars, uncertainVars, importedConstants, new StringList(), new HashMap<String,StringList>());
+    	// END KGU#376 2017-07-01
+    	
+    	vars.add(rootVars);
+        HashMap<String, String> definedConsts = new LinkedHashMap<String, String>();
+        for (int v = 0; v < vars.count(); v++) {
+        	String para = vars.get(v);
+        	if (this.constants.containsKey(para)) {
+        		definedConsts.put(para, this.constants.get(para));
+        	}
+        }
 
         // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
         // CHECK 19: identifier collision with reserved words
@@ -4003,13 +4095,15 @@ public class Root extends Element {
         // END KGU#253 2016-09-22
 
         // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
-        analyse_18_19_21(this, errors, uncertainVars, uncertainVars, vars);
+        // If check 23 is enabled then the below check will already have produced check 19 results for
+        // imported variables, otherwise these will have been suppressed, so we check all imported variables, too
+       	analyse_18_19_21(this, errors, vars, new StringList(), (check(23) ? rootVars : vars));
         // END KGU#239 2016-08-12
 
         // CHECK: two checks in one loop: (#12 - new!) & (#7)
-        for(int j=0; j<vars.count(); j++)
+        for(int j=0; j < rootVars.count(); j++)
         {
-            String para = vars.get(j);
+            String para = rootVars.get(j);
             // CHECK: non-conform parameter name (#12 - new!)
             if( !(para.charAt(0)=='p' && para.substring(1).toUpperCase().equals(para.substring(1))) )
             {
@@ -4021,7 +4115,7 @@ public class Root extends Element {
             // CHECK: correct identifiers (#7)
             // START KGU#61 2016-03-22: Method outsourced
             //if(testidentifier(vars.get(j))==false)
-            if (!Function.testIdentifier(vars.get(j), null))
+            if (!Function.testIdentifier(para, null))
             // END KGU#61 2016-03-22
             {
                 //error  = new DetectedError("«"+vars.get(j)+"» is not a valid name for a parameter!",this);

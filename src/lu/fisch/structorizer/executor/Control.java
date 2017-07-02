@@ -767,8 +767,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		new LangTextHolder("A subroutine diagram \"%1\" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
  // START KGU#376 2017-04-11: Enh. #389
     // END KGU#376 2017-04-11
-    public final LangTextHolder msgNoProgDiagram = 
-    		new LangTextHolder("An importable program diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.");
+    public final LangTextHolder msgNoInclDiagram = 
+    		new LangTextHolder("An includable diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.");
  // // START KGU#317 2016-12-29
     public final LangTextHolder msgAmbiguousCall =
     		new LangTextHolder("Ambiguous CALL: Different callable diagrams \"%1\" (%2 parameters) found!");
