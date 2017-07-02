@@ -42,6 +42,7 @@
  *      Kay Gürtzig     2017.01.27      Issue #306 + #290: Support for Arranger files in command line
  *      Kay Gürtzig     2017.03.04      Enh. #354: Configurable set of import parsers supported now
  *      Kay Gürtzig     2017.04.27      Enh. #354: Verbose option (-v with log directory) for batch import
+ *      Kay Gürtzig     2017.07.02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
  *
  ******************************************************************************************************
  *
@@ -57,8 +58,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Vector;
 
 import javax.swing.UIManager;
@@ -68,6 +71,7 @@ import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.structorizer.parsers.GENParser;
 import lu.fisch.structorizer.parsers.NSDParser;
@@ -390,7 +394,7 @@ public class Structorizer
 		GENParser genp = new GENParser();
 		Vector<GENPlugin> plugins = genp.parse(buff);
 		try { buff.close();	} catch (IOException e) {}
-		Vector<CodeParser> parsers = new Vector<CodeParser>();
+		HashMap<CodeParser, GENPlugin> parsers = new HashMap<CodeParser, GENPlugin>();
 		//String parsClassName = null;
 		CodeParser parser = null;
 		for (int i=0; i < plugins.size(); i++)
@@ -401,7 +405,7 @@ public class Structorizer
 			{
 				Class<?> parsClass = Class.forName(className);
 				parser = (CodeParser) parsClass.newInstance();
-				parsers.add(parser);
+				parsers.put(parser, plugin);
 				usage += "\n\t";
 				for (String ext: parser.getFileExtensions()) {
 					usage += ext + ", ";
@@ -444,11 +448,14 @@ public class Structorizer
 			//if (fileExt.equals("pas"))
 			File importFile = new File(filename);
 			parser = null;
-			for (int p = 0; parser == null && p < parsers.size(); p++) {
-				if (parsers.get(p).accept(importFile)) {
-					parser = parsers.get(p);
+			// START KGU#416 2017-07-02: Enh. #354, #409 Parser retrieval combined with option retrieval
+			for (Entry<CodeParser, GENPlugin> entry: parsers.entrySet()) {
+				if (entry.getKey().accept(importFile)) {
+					parser = cloneWithPluginOptions(entry.getValue());
+					break;
 				}
 			}
+			// END KGU#416 2017-07-02
 			if (parser != null)
 			// END KGU#354 2017-03-09
 			{
@@ -542,6 +549,73 @@ public class Structorizer
 	}
 	// END KGU#187 2016-04-29
 	
+	// START KGU#416 2017-07-03: Enh. #354, #409
+	private static CodeParser cloneWithPluginOptions(GENPlugin plugin) {
+		CodeParser parser;
+		try {
+			parser = (CodeParser)Class.forName(plugin.getKey()).newInstance();
+		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
+			System.err.println("Structorizer.CloneWithPluginSpecificOptions("
+					+ plugin.getKey()
+					+ "): " + ex.getMessage() + " on creating \"" + plugin.getKey()
+					+ "\"");
+			return null;
+		}
+		Ini ini = Ini.getInstance();
+		if (!plugin.options.isEmpty()) {
+			try {
+				ini.load();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		for (HashMap<String, String> optionSpec: plugin.options) {
+			String optionKey = optionSpec.get("name");
+			String valueStr = ini.getProperty(plugin.getKey() + "." + optionKey, "");
+			Object value = null;
+			String type = optionSpec.get("type");
+			String items = optionSpec.get("items");
+			// Now convert the option into the specified type
+			if (!valueStr.isEmpty() && type != null || items != null) {
+				// Better we fail with just a single option than with the entire method
+				try {
+					if (items != null) {
+						value = valueStr;
+					}
+					else if (type.equalsIgnoreCase("character")) {
+						value = valueStr.charAt(0);
+					}
+					else if (type.equalsIgnoreCase("boolean")) {
+						value = Boolean.parseBoolean(valueStr);
+					}
+					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
+						value = Integer.parseInt(valueStr);
+					}
+					else if (type.equalsIgnoreCase("unsiged")) {
+						value = Integer.parseUnsignedInt(valueStr);
+					}
+					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
+						value = Double.parseDouble(valueStr);
+					}
+					else if (type.equalsIgnoreCase("string")) {
+						value = valueStr;
+					}
+				}
+				catch (NumberFormatException ex) {
+					System.err.println("Structorizer.CloneWithPluginSpecificOptions("
+							+ plugin.getKey()
+							+ "): " + ex.getMessage() + " on converting \""
+							+ valueStr + "\" to " + type + " for " + optionKey);
+				}
+			}
+			if (value != null) {
+				parser.setPluginOption(optionKey, value);
+			}
+		}
+		return parser;
+	}
+	// END KGU#416 2017-07-02
+
 	// START KGU#187 2016-05-02: Enh. #179 - help might be sensible
 	private static void printHelp()
 	{

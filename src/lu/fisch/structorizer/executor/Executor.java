@@ -1002,7 +1002,7 @@ public class Executor implements Runnable
 		// END KGU#376 2017-07-01
 
 		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
-		if (root.isSubroutine())
+		if (root.isSubroutine() && result.isEmpty())
 		{
 		// END KGU#39 2015-10-16 (1/2)
 			StringList params = root.getParameterNames();

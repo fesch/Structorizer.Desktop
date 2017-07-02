@@ -130,6 +130,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.23      Enh. #354: On multiple-root code import now all roots go to Arranger
  *      Kay Gürtzig     2017.06.20      Enh. #354,#357: GUI Support for configuration of plugin-specific options
  *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism transferred from CALL to ROOT
+ *      Kay Gürtzig     2017.07.02      Enh. #357: plugin-specific option retrieval for code import
  *
  ******************************************************************************************************
  *
@@ -475,6 +476,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									// START KGU#354 2017-05-12: Enh. #354 - we better use a new instance instead of statically sharing it
 									parser = parser.getClass().newInstance();
 									// END KGU#354 2017-05-12
+									// START KGU#395 2017-07-02: Enh. #357
+									String parserClassName = parser.getClass().getSimpleName();
+									for (int j = 0; j < parserPlugins.size(); j++) {
+										GENPlugin plug = parserPlugins.get(i);
+										if (plug.getKey().equals(parserClassName)) 
+										setPluginSpecificOptions(parser, parserClassName, plug.options);
+									}
+									// END KGU#395 2017-07-02
 									List<Root> newRoots = parser.parse(filename, charSet, logPath);
 									if (parser.error.equals("")) {
 										boolean arrange = false;
@@ -593,33 +602,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private CodeParser findParserForFileExtension(File file)
     {
     	CodeParser parser = null;
-    	// START KGU#354 2017-05-11: Enh.#354 - We had already a retrieval mechanism
-//		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
-//		GENParser genp = new GENParser();
-//		Vector<GENPlugin> parserPlugins = genp.parse(buff);
-//		for (int i=0; i < parserPlugins.size() && parser == null; i++)
-//		{
-//			GENPlugin plugin = parserPlugins.get(i);
-//			final String className = plugin.className;
-//			Class<?> parserClass;
-//			try {
-//				parserClass = Class.forName(className);
-//				parser = (CodeParser) parserClass.newInstance();
-//				if (!parser.accept(file)) {
-//					parser = null;
-//				}
-//			} catch (Exception e) {
-//				// FIXME: popup message box...
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
-//		try {
-//			buff.close();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 		this.retrieveParsers();
 		for (int i=0; i < parsers.size() && parser == null; i++)
 		{
@@ -627,7 +609,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				parser = parsers.get(i);
 			}
 		}
-		// END KGU#354 2017-05-11
 
 		return parser;
     }
@@ -4592,6 +4573,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#354 2017-05-11: Enh. #354 - we better use a new instance instead of statically sharing it
 				parser = parser.getClass().newInstance();
 				// END KGU#354 2017-05-11
+				// START KGU#395 2017-07-02: Enh. #357
+				String parserClassName = parser.getClass().getSimpleName();
+				for (int i = 0; i < parserPlugins.size(); i++) {
+					GENPlugin plug = parserPlugins.get(i);
+					if (plug.getKey().equals(parserClassName)) 
+					this.setPluginSpecificOptions(parser, parserClassName, plug.options);
+				}
+				// END KGU#395 2017-07-02
 				List<Root> newRoots = parser.parse(file.getAbsolutePath(),
 						ini.getProperty("impImportCharset", "ISO-8859-1"),
 						// START KGU#354 2017-04-27: Enh. #354

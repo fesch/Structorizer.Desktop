@@ -50,6 +50,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.26      Enh. #409: #define analysis (including function macros) accomplished
  *      Kay Gürtzig     2017.05.28      Issue #409: Recursion overhead in buildNSD_R() significantly reduced. 
  *      Kay Gürtzig     2017.06.22      Enh. #420: Prepared for comment retrieval
+ *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism revised
  *
  ******************************************************************************************************
  *
@@ -2333,6 +2334,7 @@ public class CParser extends CodeParser
 					impRoot.includeList.replaceAll(DEFAULT_GLOBAL_NAME, inclName);
 					impRoot.includeList.replaceAll("???", inclName);
 				}
+				this.importingRoots.clear();
 				// END KGU#376 2017-07-01
 			}
 		}
@@ -2352,6 +2354,7 @@ public class CParser extends CodeParser
 			else {
 				aRoot.includeList.addIfNew(globalName);
 			}
+			this.importingRoots.add(aRoot);
 			// END KGU#376 2017-07-01
 		}
 		// END KGU#376 2017-04-11
