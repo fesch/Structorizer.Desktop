@@ -154,7 +154,7 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
-Menu.menuEditFindReplace.text=Buscar/Reemplazar
+Menu.menuEditFindReplace.text=Buscar/Reemplazar ...
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
 Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales.
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
@@ -459,6 +459,8 @@ Editor.btnAfterPara.tooltip=Insertar nueva sección PARALELA después del elemen
 // undo & redo
 Editor.btnUndo.tooltip=Deshacer la ultima acción.
 Editor.btnRedo.tooltip=Rehacer la ultima acción.
+// find & replace
+Editor.btnFindReplace.tooltip=Abrir el diálogo para buscar y reemplazar
 // copy & paste
 Editor.btnCut.tooltip=Cortar elementos seleccionados.
 Editor.btnCopy.tooltip=Copiar elementos seleccionados.
@@ -681,7 +683,9 @@ AttributeInspector.lblPrefsPost.text=Después
 AttributeInspector.lblPrefsMore.text=(Demás)
 AttributeInspector.btnParserPrefs.text=Comparar claves configuradas
 AttributeInspector.btnOk.text=Aceptar
+AttributeInspector.btnOk.tooltip=Aceptar los cambios y cerrar el diálogo
 AttributeInspector.btnCancel.text=Cancelar
+AttributeInspector.btnCancel.tooltip=Cerrar el diálogo sin guardar los cambios
 AttributeInspector.lblMain.text=Programa principal
 AttributeInspector.lblSub.text=Subrutina
 AttributeInspector.lblIncl.text=Incluíble
@@ -901,8 +905,12 @@ ImportOptionDialog.chkVarDeclarations.tooltip=Con esta preferencia, el importe v
 ImportOptionDialog.chkCommentImport.text=Importar comentarios del código
 ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
 ImportOptionDialog.chkSaveParseTree.tooltip=Después de logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
+ImportOptionDialog.chkLogDir.text=Protocolar (a directorio)
+ImportOptionDialog.chkLogDir.tooltip=Permitir a guardar un protocolo durante importación
+ImportOptionDialog.txtLogDir.tooltip=El camino vacío significa el mismo directorio donde reside el archivo código, "." significa el directorio activo.
+ImportOptionDialog.btnLogDir.tooltip=Selecciona un camino de protocolo vía diálogo.
 ImportOptionDialog.btnPluginOptions.text=Preferencias específicas
-ImportOptionDialog.msgOptionsForPlugin.text=Opciones para analisador de %
+ImportOptionDialog.msgOptionsForPlugin.text=Opciones para importar %
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
