@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-06 (2017.07.03)
+Current development version: 3.26-06 (2017.09.09)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -74,7 +74,7 @@ Current development version: 3.26-06 (2017.07.03)
 - 06: Enh. #259: Type detection for loop variables of FOR-IN loops improved <2>
 - 06: Enh. #354: ANSI-C grammar accomplished, CParser revised <2>
 - 06: Bugfix #386: BASH export of No-Op branches or loop bodies [Rolf Schmidt]2
-- 06: Enh. #389: New analyser option "check agains faulty diagram imports" <2>
+- 06: Enh. #389: New analyser option "check against faulty diagram imports" <2>
 - 06: Issue #62: Arranger should ask before an existing arr(z) file is overwritten <2>
 - 06: Issue #318: Saving arrangements failed if some diagrams reside in an arrz <2>
 - 06: Importer for "Struktogrammeditor" (http://whiledo.de) files added <2>

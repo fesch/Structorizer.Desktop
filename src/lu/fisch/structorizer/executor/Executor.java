@@ -129,7 +129,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.06.09      Enh. #416: Support for execution line continuation by trailing backslash
  *      Kay Gürtzig     2017.06.30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
  *      Kay Gürtzig     2017.07.01      Enh. #413: Special check for built-in split function in stepForIn()
- *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based) 
+ *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
+ *      Kay Gürtzig     2017.09.09      Bugfix #411 revised (issue #426)
  *
  ******************************************************************************************************
  *
@@ -142,9 +143,9 @@ package lu.fisch.structorizer.executor;
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in case of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
- *        is that the execution be paused. Then a double-click on the text item showing the subroutine
- *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (until now
- *        a simple message box has been used if the number of call levels didn't exceed 10).   
+ *        is that the execution be paused. Then a click on the button "Stacktrace" will do.
+ *        Moreover, the stacktrace will always be presented as list view (before, a simple message box had
+ *        been used unless the number of call levels exceeded 10).   
  *      2016-03-16/18 Bugfix #131 (KGU#157)
  *      - When the "run" (or "make") button was pressed while an execution was already running or stood
  *        paused then the Executor CALL stack, the event queues, and the connection between Diagram and
@@ -560,16 +561,13 @@ public class Executor implements Runnable
 				//	tokenLen -= (intLen - internal.length());
 				//}
 				// END KGU 2017-04-22
-				// START KGU#406 2017-05-23: Bugfix #411 (arose with COBOL import)
+				// START KGU#406/KGU#420 2017-05-23/2017-09-09: Bugfix #411, #426 (arose with COBOL import)
 				// The interpreter doesn't cope with unicode escape sequences "\\u000a", "\\u000d", "\\u0022", and "\\u005c"
-				if (internal.contains("\\u00")) {
-					System.out.println(internal);
-				}
-				internal = internal.replaceAll("(.*)\\\\u000a(.*)", "$1\\012$2").
-						replaceAll("(.*?)\\\\u000d(.*?)", "$1\\\\015$2").
+				internal = internal.replaceAll("(.*)\\\\u000[aA](.*)", "$1\\\\012$2").
+						replaceAll("(.*?)\\\\u000[dD](.*?)", "$1\\\\015$2").
 						replaceAll("(.*?)\\\\u0022(.*?)", "$1\\\\042$2").
-						replaceAll("(.*?)\\\\u005c(.*?)", "$1\\\\134$2");
-				// END KGU#406 2017-05-23
+						replaceAll("(.*?)\\\\u005[cC](.*?)", "$1\\\\134$2");
+				// END KGU#406/KGU#420 2017-05-23/2017-09-09
 				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
 					delim = '\"';
 				}
