@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.17      JTree for multi-Root retrieval
  *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fixed
  *      Kay Gürtzig     2017.06.22      NullPointerException on replacing due to cleared currentNode fixed
+ *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in puldown list and esc key without pulldown  
  *
  ******************************************************************************************************
  *
@@ -83,6 +84,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.text.BadLocationException;
@@ -231,6 +234,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	protected JPanel pnlElements;
 	protected JPanel pnlResults;
 	protected JPanel pnlPreview;
+	private KeyListener cmbKeyListener;		// Key listener for ComboBoxEditors
 	
 	/**
 	 * @param owner - commanding Diagram object (needed for selection retrieval etc.)
@@ -313,6 +317,57 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				
 			}
 		};
+		
+		cmbKeyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent evt) 
+			{
+				Object comp = evt.getSource();
+				if (evt.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					// Hide the window if Esc key is pressed without the pulldown list being visible
+					// (otherwise just close the pulldown)
+					JComboBox<String> box = cmbSearchPattern.getEditor().getEditorComponent() == comp ? cmbSearchPattern : cmbReplacePattern;
+					if (!box.isPopupVisible()) {
+						setVisible(false);
+					}
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				// Nothing to do
+			}
+
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				// Nothing to do
+			}
+		};
+		
+		PopupMenuListener cmbPopupListener = new PopupMenuListener() {
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				// Nothing to do
+			}
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent evt) {
+				// TODO Auto-generated method stub
+				Object comp = evt.getSource();
+				if (comp instanceof JComboBox<?>) {
+					updatePatternList((JComboBox<String>)comp);
+				}
+			}
+
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				// Nothing to do
+			}
+			
+		};
 
 		//=================== PATTERNS ========================
 		{
@@ -322,22 +377,27 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			cmbReplacePattern = new JComboBox<String>();
 			cmbSearchPattern.setEditable(true);
 			cmbSearchPattern.setPrototypeDisplayValue(patternPrototype);
-			cmbSearchPattern.addKeyListener(keyListener);
+			//cmbSearchPattern.addKeyListener(keyListener);
+			cmbSearchPattern.getEditor().getEditorComponent().addKeyListener(cmbKeyListener);
 			cmbSearchPattern.addItemListener(new ItemListener(){
 				@Override
 				public void itemStateChanged(ItemEvent evt) {
 					patternChanged(evt);
 				}
 			});
+			cmbSearchPattern.addPopupMenuListener(cmbPopupListener);
+			
 			cmbReplacePattern.setEditable(true);
 			cmbReplacePattern.setPrototypeDisplayValue(patternPrototype);
-			cmbReplacePattern.addKeyListener(keyListener);
+			//cmbReplacePattern.addKeyListener(keyListener);
+			cmbReplacePattern.getEditor().getEditorComponent().addKeyListener(cmbKeyListener);
 			cmbReplacePattern.addItemListener(new ItemListener(){
 				@Override
 				public void itemStateChanged(ItemEvent evt) {
 					patternChanged(evt);
 				}
 			});
+			cmbReplacePattern.addPopupMenuListener(cmbPopupListener);
 			
 			refillPatternCombos(null);
 			
@@ -1443,33 +1503,48 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		
 		@SuppressWarnings("unchecked")
 		JComboBox<String> box = (JComboBox<String>)comp;
+		if (box.isPopupVisible()) {
+			// Wait with updates until the popup gets closed. 
+			return;
+		}
+//		LinkedList<String> patternList = replacePatterns;
+//		if (box == cmbSearchPattern) {
+//			resetResults();
+//			patternList = searchPatterns;
+//		}
+		if (evt.getStateChange() == ItemEvent.SELECTED) {
+			updatePatternList(box);
+		}
+	}
+
+	/**
+	 * @param box
+	 */
+	private void updatePatternList(JComboBox<String> box) {
 		LinkedList<String> patternList = replacePatterns;
 		if (box == cmbSearchPattern) {
 			resetResults();
 			patternList = searchPatterns;
 		}
-		
-		if (evt.getStateChange() == ItemEvent.SELECTED) {
-			String item = (String)box.getEditor().getItem();
-			if (box == cmbSearchPattern) {
-				chkWholeWord.setEnabled(!chkRegEx.isSelected() && Function.testIdentifier(item, null));
-			}
-			if (patternList.isEmpty() || !item.equals(patternList.getFirst())) {
-				ListIterator<String> iter = patternList.listIterator();
-				boolean found = false;
-				while (!found && iter.hasNext()) {
-					found = item.equals(iter.next());
-					if (found) {
-						iter.remove();
-					}
+		String item = (String)box.getEditor().getItem();
+		if (box == cmbSearchPattern) {
+			chkWholeWord.setEnabled(!chkRegEx.isSelected() && Function.testIdentifier(item, null));
+		}
+		if (patternList.isEmpty() || !item.equals(patternList.getFirst())) {
+			ListIterator<String> iter = patternList.listIterator();
+			boolean found = false;
+			while (!found && iter.hasNext()) {
+				found = item.equals(iter.next());
+				if (found) {
+					iter.remove();
 				}
-				if (!found && patternList.size() >= MAX_RECENT_PATTERNS) {
-					patternList.removeLast();
-				}
-				patternList.addFirst(item);
-				this.refillPatternCombos(box);
-				box.setSelectedItem(item);
 			}
+			if (!found && patternList.size() >= MAX_RECENT_PATTERNS) {
+				patternList.removeLast();
+			}
+			patternList.addFirst(item);
+			this.refillPatternCombos(box);
+			box.setSelectedItem(item);
 		}
 	}
 
@@ -1612,6 +1687,23 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		ini.setProperty("findInTexts", chkInTexts.isSelected() ? "1" : "0");
 		ini.setProperty("findInComments", chkInTexts.isSelected() ? "1" : "0");
 		ini.setProperty("findDisabled", chkDisabled.isSelected() ? "1" : "0");		
+	}
+	
+	/**
+	 * Ensures that certain listeners on LaF-specific components don't get lost by a
+	 * Look & Feel change.
+	 */
+	public void adaptToNewLaF()
+	{
+		if (cmbKeyListener != null) {
+			if (cmbSearchPattern != null) {
+				cmbSearchPattern.getEditor().getEditorComponent().addKeyListener(cmbKeyListener);
+			}
+			if (cmbReplacePattern != null) {
+				cmbReplacePattern.getEditor().getEditorComponent().addKeyListener(cmbKeyListener);
+			}
+		}
+		pack();
 	}
 
 }

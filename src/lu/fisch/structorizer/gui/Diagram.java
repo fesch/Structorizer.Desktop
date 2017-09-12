@@ -131,6 +131,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.20      Enh. #354,#357: GUI Support for configuration of plugin-specific options
  *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism transferred from CALL to ROOT
  *      Kay Gürtzig     2017.07.02      Enh. #357: plugin-specific option retrieval for code import
+ *      Kay Gürtzig     2017.09.12      Enh. #415: Find&Replace dialog properly re-packed after L&F change
  *
  ******************************************************************************************************
  *
@@ -7045,6 +7046,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (this.findDialog != null) {
             try {
                 javax.swing.SwingUtilities.updateComponentTreeUI(this.findDialog);
+                // Restore sub-component listeners which might have got lost by the previous operation.
+                this.findDialog.adaptToNewLaF();
             }
             catch (Exception ex) {}
 		}
