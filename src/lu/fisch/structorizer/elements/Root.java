@@ -2351,11 +2351,14 @@ public class Root extends Element {
     {
     	if (this.typeMap.isEmpty()) {
     		// START KGU#388 2017-09-18: Enh. #423 adopt all type info from included diagrams first
-    		for (int i = 0; i < this.includeList.count(); i++) {
-    			String inclName = this.includeList.get(i);
-    			if (Arranger.hasInstance()) {
-    				for (Root incl: Arranger.getInstance().findIncludesByName(inclName)) {
-    					typeMap.putAll(incl.getTypeInfo());
+    		// FIXME: The import info can easily get obsolete unnoticedly!
+    		if (this.includeList != null) {
+    			for (int i = 0; i < this.includeList.count(); i++) {
+    				String inclName = this.includeList.get(i);
+    				if (Arranger.hasInstance()) {
+    					for (Root incl: Arranger.getInstance().findIncludesByName(inclName)) {
+    						typeMap.putAll(incl.getTypeInfo());
+    					}
     				}
     			}
     		}
