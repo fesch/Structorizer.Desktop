@@ -8006,12 +8006,15 @@ class CobTools {
 			if (lastVar.level == level) {
 				this.parent = lastVar.parent;
 				lastVar.sister = this;
-			} else {	// CHECKME: What if lastVar.level > level? 
-				this.parent = lastVar;
-				if (lastVar.child == null) {
-					lastVar.child = this;
-				}
-				// CHECKME: and otherwise?
+			} else { 
+				/* set relation to other fields */
+				for (CobVar v = lastVar; v != null; v = v.parent) {
+					if (v.level == 01 || v.level == 78) {
+						this.parent = v.parent;
+						v.sister = this;
+						break;
+					}
+				}	
 			}
 			this.child = null;
 			this.sister = null;
@@ -8069,12 +8072,17 @@ class CobTools {
 		}
 		
 		// START KGU 2017-06-26
+		/**
+		 * Returns a fully qualified variable name for this CobVar (i.e. a complete dot-separated path
+		 * for a component of a record). This is needed for Structorizer.
+		 * @return fully qualified name (e.g. "top.foo.bar").
+		 */
 		public String getQualifiedName()
 		{
 			String qualName = this.name;
 			CobVar ancestor = this.parent;
 			while (ancestor != null) {
-				// FIXME: THanks to these strange fillers, we might face null names here
+				// FIXME: Thanks to these strange fillers, we might face null names here
 				qualName = ancestor.name + "." + qualName;
 				ancestor = ancestor.parent;
 			}

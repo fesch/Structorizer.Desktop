@@ -101,6 +101,7 @@
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21      Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *      Kay Gürtzig     2017.06.18      Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig     2017.09.18      Enh. #423: New messages for record type handling introduced
  *
  ******************************************************************************************************
  *
@@ -362,6 +363,7 @@ Menu.error10_2.text=A single instruction element should not contain input and ou
 Menu.error10_3.text=A single instruction element should not contain input instructions and assignments!
 Menu.error10_4.text=A single instruction element should not contain output instructions and assignments!
 Menu.error10_5.text=A single instruction element should not mix constant definitions with other instructions!
+Menu.error10_6.text=A single instruction element should not mix type definitions with other instructions!
 Menu.error11.text=You probably made an assignment error. Please check this instruction!
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function does not return any result!
@@ -395,6 +397,14 @@ Menu.error23_3.text=Import will be ignored here because diagram «%1» had alrea
 Menu.error23_4.text=Name conflict between local and imported variable or constant «%»!
 Menu.error23_5.text=An includable diagram «%» is currently not available!
 Menu.error23_6.text=More than one includable diagrams with name «%» found!
+Menu.error23_7.text=There is a name conflict between local and imported type definition «%»!
+Menu.error24_1.text=Type definition in (composed) line % is malformed.
+Menu.error24_2.text=Type name «%» is illegal or colliding with another identifier.
+Menu.error24_3.text=Component name «%» is illegal or duplicate.
+Menu.error24_4.text=Component type «%» is undefined or unknown.
+Menu.error24_5.text=There is no defined record type «%»!
+Menu.error24_6.text=Record component «%» will not be modified/initialized!
+Menu.error24_7.text=Record type «%1» hasn't got a component «%2»!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -424,6 +434,7 @@ AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a para
 AnalyserPreferences.checkboxes.21.text=Discourage use of mistakable variable names «I», «l», and «O».
 AnalyserPreferences.checkboxes.22.text=Check for possible violations of constants.
 AnalyserPreferences.checkboxes.23.text=Check against faulty diagram imports.
+AnalyserPreferences.checkboxes.24.text=Check type definitions.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -1058,6 +1069,9 @@ Control.msgEndOfFile.text=Attempt to read data past end of file!
 Control.msgUseStopButton.text=There is a running or pending execution!\nUse the STOP button to abort and close.
 Control.msgConstantRedefinition.text=Illegal attempt to redefine or modify constant «%»!
 Control.msgConstantArrayElement.text=An array element «%» may not be made a constant by assignment!
+Control.msgInvalidComponent.text=There is no component «%1» in record type or variable «%2»!
+Control.msgConstantRecordComponent.text=A record component «%» may not be made a constant by assignment!
+Control.msgTypeMismatch.text=Value type «%1» is incompatible with declared type «%2» of variable/component «%3»!
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
 

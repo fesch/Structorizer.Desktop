@@ -57,6 +57,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
  *      Kay Gürtzig     2017.03.30      Enh. #388: Support for the display of constants
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Defective button control in step mode fixed.
+ *      Kay Gürtzig     2017.09.14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
  *
  ******************************************************************************************************
  *
@@ -814,6 +815,14 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgConstantArrayElement =
     		new LangTextHolder("An array element «%» may not be made a constant by assignment!");
     // END KGU#375 2017-03-30
+    // START KGU#388 2017-09-14: Enh. #423 - support for record types
+	public final LangTextHolder msgInvalidComponent =
+			new LangTextHolder("There is no component «%1» in record type or variable «%2»!");
+    public final LangTextHolder msgConstantRecordComponent =
+    		new LangTextHolder("A record component «%» may not be made a constant by assignment!");
+	public final LangTextHolder msgTypeMismatch =
+			new LangTextHolder("Value type «%1» is incompatible with declared type «%2» of variable/component «%3»!");
+	// END KGU#388 2017-09-14
     // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =
     		new LangTextHolder("Invalid file number or file not open for reading.");

@@ -52,6 +52,7 @@ import java.util.HashMap;
 
 import bsh.Interpreter;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.utils.StringList;
 
 public class ExecutionStackEntry {
@@ -78,6 +79,13 @@ public class ExecutionStackEntry {
 	 */
 	public HashMap<String, Object> constants = new HashMap<String, Object>();
 	// END KGU#375 2017-04-21
+	// START KGU#388 2017-09-14: Enh. #423 Support dynamic type declarations
+	/**
+	 * Maps variable, constant, and type names to type description entries
+	 */
+	public HashMap<String, TypeMapEntry> dynTypeMap = new HashMap<String, TypeMapEntry>();
+	// END KGU#375 2017-04-21
+	
 	/**
 	 * The BeanShell interpreter used to execute instructions and thereby holding the
 	 * accumulated context (built-in routines, variable values etc.)

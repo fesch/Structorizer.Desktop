@@ -82,6 +82,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.05.22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals
  *      Kay Gürtzig     2017.06.09      Enh. #416: Methods getUnbrokenText(), getBrokenText() introduced
  *      Kay Gürtzig     2017.07.02      Enh. #389: Signature of addFullText() reverted to two arguments
+ *      Kay Gürtzig     2017.09.13      Enh. #423: New methods supporting type definitions
+ *      Kay Gürtzig     2017.09.17      Enh. #423: Type name highlighting
  *
  ******************************************************************************************************
  *
@@ -181,6 +183,7 @@ import java.awt.Point;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -1805,12 +1808,13 @@ public abstract class Element {
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**
 	 * Splits the given _text into lexical morphemes (lexemes). This will possibly overdo
-	 * somewhat (e. g. split float literal 123.45 into "123", ".", "45").
+	 * somewhat (e. g. split float literal 123.45 into "123", ".", "45").<br>
 	 * By setting _restoreStrings true, at least string literals can be reassambled again,
-	 * consuming more time, of course. 
+	 * consuming more time, of course.<br>
+	 * Note that inter-lexeme whitespace will not be eliminated but form elements of the result.
 	 * @param _text - String to be exploded into lexical units
 	 * @param _restoreLiterals - if true then accidently split numeric and string literals will be reassembled 
-	 * @return StringList consisting ofvthe separated lexemes including isolated spaces etc.
+	 * @return StringList consisting of the separated lexemes including isolated spaces etc.
 	 */
 	public static StringList splitLexically(String _text, boolean _restoreStrings)
 	{
@@ -2073,9 +2077,9 @@ public abstract class Element {
 	// START KGU#101 2015-12-11: Enhancement #54: We need to split expression lists (might go to a helper class)
 	/**
 	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings representing one of the listed expressions each.
+	 * into strings comprising one of the listed expressions each.
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. These must not be broken.
+	 * of function calls etc. (These must not be broken.)
 	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
 	 * bracket, or the like).
 	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
@@ -2092,9 +2096,9 @@ public abstract class Element {
 	
 	/**
 	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings representing one of the listed expressions each.
+	 * into strings comprising one of the listed expressions each.
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. These must not be broken.
+	 * of function calls etc. (These must not be broken.)
 	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
 	 * bracket, or the like).
 	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
@@ -2107,20 +2111,44 @@ public abstract class Element {
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
-	// END KU#93 2015-12-21
+	// END KGU#93 2015-12-21
 	{
+		//StringList expressionList = new StringList();
+		//if (_listSeparator == null) _listSeparator = ",";
+		
+	// START KGU#388 2017-09-13: New subroutine
+		//StringList tokens = Element.splitLexically(_text, true);
+		return splitExpressionList(Element.splitLexically(_text, true), _listSeparator, _appendTail);
+	}
+	
+	/**
+	 * Splits the tokenized list _tokens of expressions separated by _listSeparator
+	 * into strings comprising one of the listed expressions each.
+	 * This is aware of string literals, argument lists of function calls etc. (These must not be broken.)
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
+	 * bracket, or the like).
+	 * The remaining tokens from the unsatisfied closing parenthesis, bracket, or brace on will
+	 * be concatenated and added as last element to the result if _appendRemainder is true.
+	 * If the last result element is empty then the expression list was syntactically "clean".
+	 * @param _text - string containing one or more expressions
+	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
+	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
+	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
+	 */
+	public static StringList splitExpressionList(StringList _tokens, String _listSeparator, boolean _appendTail)
+	{
+
 		StringList expressionList = new StringList();
 		if (_listSeparator == null) _listSeparator = ",";
-		StringList tokens = Element.splitLexically(_text, true);
-		
+	// END KGU#388 2017-09-13
 		int parenthDepth = 0;
 		boolean isWellFormed = true;
 		Stack<String> enclosings = new Stack<String>();
-		int tokenCount = tokens.count();
+		int tokenCount = _tokens.count();
 		String currExpr = "";
 		for (int i = 0; isWellFormed && parenthDepth >= 0 && i < tokenCount; i++)
 		{
-			String token = tokens.get(i);
+			String token = _tokens.get(i);
 			if (token.equals(_listSeparator) && enclosings.isEmpty())
 			{
 				// store the current expression and start a new one
@@ -2156,7 +2184,7 @@ public abstract class Element {
 				else if (_appendTail)
 				{
 					expressionList.add(currExpr.trim());
-					currExpr = tokens.concatenate("", i);
+					currExpr = _tokens.concatenate("", i);
 				}
 			}
 		}
@@ -2168,6 +2196,136 @@ public abstract class Element {
 		return expressionList;
 	}
 	// END KGU#101 2015-12-11
+	
+	// START KGU#388 2017-09-13: Enh. #423
+	/**
+	 * Extracts the parameter or component declarations from the parameter list (or
+	 * record type definition, respectively) given by {@code declText} and adds their names
+	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.
+	 * @param declText - the text of the declaration inside the parentheses or braces
+	 * @param declNames - the names of the declared parameters or record components (in order of occurrence)
+	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence)
+	 */
+	protected void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes) {
+    	// START KGU#140 2017-01-31: Enh. #113: Better support for array arguments
+    	final String arrayPattern = "(\\w.*)(\\[.*\\])$";
+    	// END KGU#140 2017-01-31
+		StringList declGroups = StringList.explode(declText,";");
+		for(int i = 0; i < declGroups.count(); i++)
+		{
+			// common type for parameter / component group
+			String type = null;
+			String group = declGroups.get(i);
+			int posColon = group.indexOf(":");
+			if (posColon >= 0)
+			{
+				type = group.substring(posColon + 1).trim();
+				group = group.substring(0, posColon).trim();
+			}
+			// START KGU#109 2016-01-15 Bugfix #61/#107 - was wrong, must first split by ','
+//        			else if ((posColon = group.indexOf(" as ")) >= 0)
+//        			{
+//        				type = group.substring(posColon + " as ".length()).trim();
+//        				group = group.substring(0, posColon).trim();
+//        			}
+			// END KGU#109 2016-01-15
+			StringList vars = StringList.explode(group,",");
+			for (int j=0; j < vars.count(); j++)
+			{
+				String decl = vars.get(j).trim();
+				if (!decl.isEmpty())
+				{
+					String prefix = "";	// KGU#375 2017-03-30: New for enh. #388 (constants)
+					// START KGU#109 2016-01-15: Bugfix #61/#107 - we must split every "varName" by ' '.
+					if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
+					{
+						type = decl.substring(posColon + " as ".length()).trim();
+						decl = decl.substring(0, posColon).trim();
+					}
+					StringList tokens = StringList.explode(decl, " ");
+					if (tokens.count() > 1) {
+						// START KGU#140 2017-01-31. Enh. #113 - this could cause wrong associations with C/Java syntax
+						//if (type == null) {
+						if (declGroups.count() == 1 && posColon < 0 || type == null) {
+						// END KGU#140 2017-01-31
+							type = tokens.concatenate(" ", 0, tokens.count() - 1);
+						}
+						// START KGU#375 2017-03-30: New for enh. #388 (constants)
+						else if (tokens.get(0).equals("const")) {
+							prefix = "const ";
+						}
+						// END KGU#375 2017-03-30
+						decl = tokens.get(tokens.count()-1);
+						// START KGU#140 2017-01-31: Enh. #113 Cope with C-style array declarations
+						if (decl.matches(arrayPattern)) {
+							// Convert it into a Java-like declaration
+							String indices = decl.replaceFirst(arrayPattern, "$2").trim();
+							type += indices;
+							decl = decl.replaceFirst(arrayPattern, "$1");
+						}
+						// END KGU#140 2017-01-31
+					}
+					//System.out.println("Adding parameter: " + vars.get(j).trim());
+					if (declNames != null)	declNames.add(decl);
+					// START KGU#375 2017-03-30: New for enh. #388 (constants)
+					//if (declTypes != null)	declTypes.add(type);
+					if (declTypes != null){
+						if (!prefix.isEmpty() || type != null) {
+							declTypes.add(prefix + type);
+						}
+						else {
+							declTypes.add(type);
+						}
+					}
+					// END KGU#375 2017-03-30
+				}
+			}
+		}
+	}
+
+	/**
+	 * Decomposes the interior of a record initializer of the form
+	 * [typename]{compname1: value1, compname2: value2, ...} into a hash table
+	 * mapping the component names to the corresponding value strings.
+	 * If there is text following the closing brace it will be mapped to key "§TAIL§".
+	 * If the typename is given then it will be provided mapped to key "§TYPENAME§".
+	 * @param _text - the initializer expression with or without typename but with braces.
+	 * @return the component map (or null if there are no braces).
+	 */
+	public static HashMap<String, String> splitRecordInitializer(String _text)
+	{
+		// Version 
+		HashMap<String, String> components = new HashMap<String, String>();
+		int posBrace = _text.indexOf("{");
+		if (posBrace < 0) {
+			return null;
+		}
+		String typename = _text.substring(0, posBrace);
+		if (!typename.isEmpty()) {
+			components.put("§TYPENAME§", typename);
+		}
+		StringList parts = splitExpressionList(_text.substring(posBrace+1).trim(), ",", true);
+		String tail = parts.get(parts.count()-1);
+		if (!tail.startsWith("}")) {
+			return null;
+		}
+		else if (!(tail = tail.substring(1).trim()).isEmpty()) {
+			components.put("§TAIL§", tail);
+		}
+		for (int i = 0; i < parts.count()-1; i++) {
+			StringList tokens = splitLexically(parts.get(i), true);
+			int posColon = tokens.indexOf(":");
+			if (posColon >= 0) {
+				String name = tokens.subSequence(0, posColon).concatenate().trim();
+				String expr = tokens.subSequence(posColon + 1, tokens.count()).concatenate().trim();
+				if (Function.testIdentifier(name, null)) {
+					components.put(name, expr);
+				}
+			}
+		}
+		return components;
+	}
+	// END KGU#388 2017-09-13
 
 	// START KGU#261 2017-02-01: Enh. #259 (type map) - moved from Instruction hitherto
 	// KGU 2017-04-14: signature enhanced by argument canonicalizeTypeNames
@@ -2178,6 +2336,8 @@ public abstract class Element {
 	 * The returned type description (if not empty) will be structurally canonicalized (i.e. array
 	 * levels will be symbolized by a sequence of "@" prefixes, the element type names may also be
 	 * heuristically canonicalized to assumed Java equivalents.
+	 * Record (struct) initializers will be replaced by their respective type name (which must have
+	 * been declared before). 
 	 * @param typeMap - current mapping of variable names to statically concluded type information (may be null)
 	 * @param expr - the expression to be categorized
 	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalized
@@ -2187,16 +2347,19 @@ public abstract class Element {
 	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr, boolean canonicalizeTypeNames)
 	{
 		String typeSpec = "";	// This means no info
-		// 1. Check whether its a known typed variable
+		// 1. Check whether it's a known typed variable
 		TypeMapEntry typeEntry = null;
 		if (typeMap != null) {
 			typeEntry = typeMap.get(expr);
 		}
 		if (typeEntry != null) {
-			StringList types = typeEntry.getTypes(canonicalizeTypeNames);
-			if (types.count() == 1) {
-				typeSpec = typeEntry.getTypes().get(0);
-			}
+			// START KGU#388 2017-07-12: Enh. #423
+			//StringList types = typeEntry.getTypes(canonicalizeTypeNames);
+			//if (types.count() == 1) {
+			//	typeSpec = typeEntry.getTypes().get(0);
+			//}
+			typeSpec = typeEntry.getCanonicalType(canonicalizeTypeNames, true);
+			// END KGU#388 2017-07-12
 		}
 		// Otherwise check if it's a built-in function with unambiguous type
 		else if (Function.isFunction(expr)) {
@@ -2205,6 +2368,15 @@ public abstract class Element {
 		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
 			typeSpec = "String";
 		}
+		// START KGU#388 2017-09-12: Enh. #423: Record initializer support (name-prefixed!)
+		else if (expr.matches("[A-Za-z]\\w*\\{.*\\}") && typeMap != null){
+			typeSpec = expr.replaceFirst("([A-Za-z]\\w*)\\{.*\\}", "$1");
+			if (!typeMap.containsKey(typeSpec)) {
+				// It's hardly a valid prefixed record initializer...
+				typeSpec = "";
+			}
+		}
+		// END KGU#388 2017-09-12
 		// START KGU#354 2017-05-22: Enh. #354
 		// These literals cause errors with Double.parseDouble(expr) and Integer.parseInt(expr)
 		else if (expr.matches("0b[01]+") || expr.matches("0[0-6]+") || expr.matches("0x[0-9A-Fa-f]+")) {
@@ -2292,6 +2464,11 @@ public abstract class Element {
 					// START KGU#375 2017-03-30: Enh. #388 "const" as declaration keyword
 					specialSigns.add("const");
 					// END KGU#375 2017-03-30
+					// START KGU#388 2017-09-13: Enh. #423 "type", "record", and "struct" as type definition keywords
+					specialSigns.add("type");
+					specialSigns.add("record");
+					specialSigns.add("struct");
+					// END KGU#388 2017-09-13
 					specialSigns.add("mod");
 					specialSigns.add("div");
 					// START KGU#331 2017-01-13: Enh. #333
@@ -2386,6 +2563,12 @@ public abstract class Element {
 							// set font
 							_canvas.setFont(boldFont);
 						}
+						// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
+						else if (root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
+							// set font
+							_canvas.setFont(boldFont);
+						}
+						// END KGU#388 2017-09-17
 						// if this part has to be colored with special color
 						else if(specialSigns.contains(display))
 						{
@@ -2919,8 +3102,8 @@ public abstract class Element {
 	/**
 	 * Helper method to detect exactly whether the given {@code expression} is enclosed in parentheses.
 	 * Simply check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
-	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a parenthesis without
-	 * being parenthesized.  
+	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with parentheses without
+	 * being parenthesized.
 	 * @param expression - the expression to be analysed as string
 	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
 	 * in C and derived languages.
@@ -2997,22 +3180,91 @@ public abstract class Element {
 	}
 	// END KGU#261 2017-01-19
 	
-	// START KGU#261 2017-01-26: Enh. #259 
-	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean isCStyle)
+	// START KGU#261 2017-01-26: Enh. #259
+	/**
+	 * Analyses the given {@code typeSpec} string and adds a derived {@code TypeMapEntry.VarDeclaration}
+	 * to the {@code typeMap} associated to the given {@code varName}.
+	 * @param typeMap - maps variable and type names to gathered detailed type information 
+	 * @param varName - name of a variable being declared
+	 * @param typeSpec - a type-describing string (might be a type name or a type construction)
+	 * @param lineNo - number of the element text line containing the type description
+	 * @param isAssigned - is to indicate whether a value is assigned here
+	 * @param explicitly - whether the type association was an explicit declaration or just guessed
+	 * @param isCStyle - additional indication whether the type description a C-like syntax
+	 */
+	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly, boolean isCStyle)
 	{
 		if (varName != null && !typeSpec.isEmpty()) {
 			TypeMapEntry entry = typeMap.get(varName);
-			if (entry == null) {
-				// Add a new entry to the type map
-				typeMap.put(varName, new TypeMapEntry(typeSpec, this, lineNo, isAssigned, isCStyle));
+			// Get the referred type entry in case typeSpec is a previously defined type
+			TypeMapEntry typeEntry = null;
+			if (Function.testIdentifier(typeSpec, null)) {
+				typeEntry = typeMap.get(":" + typeSpec);
 			}
-			else {
+			if (entry == null) {
+				if (typeEntry != null) {
+					typeMap.put(varName, typeEntry);
+				}
+				else {
+					// Add a new entry to the type map
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, this, lineNo, isAssigned, true, isCStyle));
+				}
+			}
+			else if (typeEntry == null || !typeEntry.isRecord()) {
 				// add an alternative declaration to the type map entry
 				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
 			}
 		}				
 	}
 	
+	// START KGU#388 2017-09-13: Enh. #423
+	/**
+	 * Adds a record type definition with name {@code typeName} and component definitions
+	 * from lists {@code compNames} and {@code compTypes} to the {@code typeMap}.
+	 * @param typeMap - maps variable and type names to gathered detailed type information 
+	 * @param typeName - name of the new defined type
+	 * @param typeSpec - a type-describing string as found in the definition
+	 * @param compNames - list of the component identifiers (strings)
+	 * @param compTypes - list of type-describing strings (a type name or a type construction)
+	 * @param lineNo - number of the element text line containing the type description
+	 * @param isAssigned - is to indicate whether a value is assigned here
+	 * @param isCStyle - additional indication whether the type description a C-like syntax
+	 * @return true if the {@code typeName} was new and could be placed in the {@code typeMap}.
+	 */
+	protected boolean addRecordTypeToTypeMap(HashMap<String,TypeMapEntry> typeMap, String typeName, String typeSpec, StringList compNames, StringList compTypes, int lineNo)
+	{
+		boolean done = false;
+		if (typeName != null && compNames.count() > 0 && compTypes.count() == compNames.count()) {
+			TypeMapEntry entry = typeMap.get(":" + typeName);
+			// Get the referred type entry in case typeSpec is a previously defined type
+			if (entry == null) {
+				// Add a new entry to the type map
+				LinkedHashMap<String, TypeMapEntry> components = new LinkedHashMap<String, TypeMapEntry>();
+				for (int i = 0; i < compNames.count(); i++) {
+					TypeMapEntry compEntry = null; 
+					if (i < compTypes.count()) {
+						String type = compTypes.get(i);
+						if (Function.testIdentifier(type, null) && typeMap.containsKey(type)) {
+							compEntry = typeMap.get(type);
+							if (!compEntry.isNamed()) {
+								// Not a type entry but that of a variable or constant!
+								compEntry = null;
+							}
+						}
+						else {
+							compEntry = new TypeMapEntry(type, type, this, lineNo, false, true, false);
+						}
+					}
+					components.putIfAbsent(compNames.get(i), compEntry);
+				}
+				typeMap.put(":" + typeName, new TypeMapEntry(typeSpec, typeName, components, this, lineNo));
+				done = true;
+			}
+		}
+		return done;
+	}
+	// END KGU#388 2017-09-13
+
 	/**
 	 * Negates the given condition as intelligently as possible.
 	 * @param condition - a boolean expression (in Structorizer-conform syntax)

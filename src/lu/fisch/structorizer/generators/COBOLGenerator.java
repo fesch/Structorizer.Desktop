@@ -483,7 +483,7 @@ public class COBOLGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, _root, 0, true, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, _root, 0, true, false, true));
 			}
 		}
 		// If the type is unambiguous and has no C-style declaration or may not be

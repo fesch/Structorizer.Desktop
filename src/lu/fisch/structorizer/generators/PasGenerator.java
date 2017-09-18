@@ -290,7 +290,7 @@ public class PasGenerator extends Generator
 	{
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, 0, false, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, 0, false, true, false);
 			String canonType = typeInfo.getTypes().get(0);
 			int nLevels = canonType.lastIndexOf('@')+1;
 			String elType = (canonType.substring(nLevels)).trim();

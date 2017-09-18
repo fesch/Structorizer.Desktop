@@ -104,6 +104,7 @@
  *      Kay Gürtzig         2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig         2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *      Kay Gürtzig         2017.06.19  Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig         2017.09.18  Enh. #423: New messages for record type handling introduced
  *
  ******************************************************************************************************
  *
@@ -359,6 +360,7 @@ Menu.error10_2.text=Eine Anweisung soll nicht zugleich Eingaben und Ausgaben bei
 Menu.error10_3.text=Eine Anweisung soll nicht zugleich Eingaben und Wertzuweisungen beinhalten!
 Menu.error10_4.text=Eine Anweisung soll nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
 Menu.error10_5.text=Ein Anweisungselement sollte Konstantendefinitonen nicht mit anderen Anweisungen mischen!
+Menu.error10_6.text=Ein Anweisungselement sollte Typdefinitonen nicht mit anderen Anweisungen mischen!
 Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
 Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
@@ -392,6 +394,14 @@ Menu.error23_3.text=Import hier wird ignoriert, da Diagram «%1» bereits import
 Menu.error23_4.text=Namenskonflikt zwischen lokaler and importierter Variable oder Konstante «%»!
 Menu.error23_5.text=Kein importierbares Diagram «%» gefunden.
 Menu.error23_6.text=Mehrere importierbare Diagramme «%» gefunden!
+Menu.error23_7.text=Namenskonflikt zwischen lokaler and importierter Typedefinition «%»!
+Menu.error24_1.text=Form der Typdefinition in (zusammengesetzter) Zeile % nicht korrekt.
+Menu.error24_2.text=Typname «%» ist unzulässig oder kollidiert mit anderem Bezeichner.
+Menu.error24_3.text=Komponentenname «%» ist unzulässig oder doppelt.
+Menu.error24_4.text=Komponententyp «%» ist undefiniert oder unbekannt.
+Menu.error24_5.text=Es gibt keinen definierten Verbund-Typ «%»!
+Menu.error24_6.text=Verdund-Komponente «%» wird nicht geändert bzw. initialisiert!
+Menu.error24_7.text=Verbundtyp «%1» besitzt keine Komponente «%2»!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -421,6 +431,7 @@ AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeil
 AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variablennamen «I», «l» und «O» warnen.
 AnalyserPreferences.checkboxes.22.text=Prüfen, dass der Schutz von Konstanten nicht unterlaufen wird.
 AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehenden Diagramme korrekt ist.
+AnalyserPreferences.checkboxes.24.text=Typedefinitionen überprüfen.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -1054,6 +1065,9 @@ Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!
 Control.msgUseStopButton.text=Ein Debugging ist in Ausführung oder pausierend!\nZum Abbrechen und Schließen bitte STOP-Taste verwenden.
 Control.msgConstantRedefinition.text=Unzulässiger Versuch, Konstante «%» neu zu setzen oder zu ändern!
 Control.msgConstantArrayElement.text=Ein Array-Element «%» kann nicht per Zuweisung zur Konstanten gemacht werden!
+Control.msgInvalidComponent.text=Es gibt keine Komponente «%1» in Verbundtyp oder -Variable «%2»!
+Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht mittels Zuweisung konstant gemacht werden!
+Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem deklarierten Typ «%2» der Variablen/Komponente «%3»!
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
 

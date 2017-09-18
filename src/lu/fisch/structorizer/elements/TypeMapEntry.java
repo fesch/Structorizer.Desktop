@@ -19,6 +19,8 @@
  */
 package lu.fisch.structorizer.elements;
 
+import java.util.HashMap;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -35,6 +37,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.03.05      Method isArray(boolean) added and JavaDoc updated
  *      Kay Gürtzig     2017.04.14      Issue #394: Method variants of getCanonicalType() and getTypes(),
  *                                      argument mixup fixed, type assimilation support 
+ *      Kay Gürtzig     2017.07.04      Issue #423: Structure changes to support record types and named
+ *                                      type definitions
  *
  ******************************************************************************************************
  *
@@ -45,7 +49,9 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
@@ -53,8 +59,8 @@ import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
- * @author kay
- *
+ * Entry of the central type map for variables and named types.
+ * @author Kay Gürtzig
  */
 public class TypeMapEntry {
 	
@@ -75,11 +81,14 @@ public class TypeMapEntry {
 		public int lineNo;
 		public Vector<int[]> indexRanges = null;
 		public String elementType = null;
+		// START KGU#388 2017-07-04: Enh. #423 New structure for record types  
+		public LinkedHashMap<String, TypeMapEntry> components = null;
+		// END KGU#388 2017-07-04
 		public boolean isCStyle = false;
 		
 		public VarDeclaration(String _descriptor, Element _element, int _lineNo, boolean _cStyle)
 		{
-			typeDescriptor = _descriptor;
+			typeDescriptor = _descriptor.trim();
 			definingElement = _element;
 			lineNo = _lineNo;
 			boolean isArray = (typeDescriptor.matches(".+\\[.*\\].*") || typeDescriptor.matches("(^|\\W.*)" + BString.breakup("array") + "($|\\W.*)"));
@@ -91,13 +100,40 @@ public class TypeMapEntry {
 		}
 		
 		/**
-		 * Indicates whether this declaration bear some evidence of an array structure
-		 * @return true if this refes to an indexed type.
+		 * Creates a new Type definition for a record type
+		 * @param _descriptor - textual description of the type
+		 * @param _element - originating element (should be an Instruction with a type definition)
+		 * @param _lineNo - line no within the element
+		 * @param _components - the ordered map of declared components
+		 */
+		public VarDeclaration(String _descriptor, Element _element, int _lineNo,
+				LinkedHashMap<String, TypeMapEntry> _components)
+		{
+			typeDescriptor = _descriptor.trim();
+			definingElement = _element;
+			lineNo = _lineNo;
+			components = _components; 
+		}
+		
+		/**
+		 * Indicates whether this declaration bears some evidence of an array structure
+		 * @return true if this refers to an indexed type.
 		 */
 		public boolean isArray()
 		{
 			return this.indexRanges != null;
 		}
+		
+		// START KGU#388 201707-04: Enh. #423
+		/**
+		 * Indicates whether this declaration represents a record structure
+		 * @return true if this refers to a structured type.
+		 */
+		public boolean isRecord()
+		{
+			return this.components != null;
+		}
+		// END KGU#388 2017-07-04
 		
 		/**
 		 * Returns a type string with canonicalized structure information, i.e.
@@ -132,20 +168,29 @@ public class TypeMapEntry {
 					type = "@" + type;
 				}
 			}
+			// START KGU#388 2017-07-04: Enh. #423
+			else if (this.isRecord()) {
+				StringList compDescr = new StringList();
+				for (Entry<String,TypeMapEntry> entry: this.components.entrySet()) {
+					compDescr.add(entry.getKey() + ":" + entry.getValue().getCanonicalType(canonicalizeTypeNames, true));
+				}
+				type = "${" + compDescr.concatenate(";") + "}";
+			}
+			// END KGU#388 2017-07-04
 			if (canonicalizeTypeNames) {
 				type = canonicalizeType(type);
 			}
 			return type;
 		}
 		// END KGU#380 2017-04-14
-
+		
 		private void setElementType()
 		{
 			// Possible cases we have to cope with might e.g. be:
 			// array of unsigned int[12]
 			// array[1...6] of ARRAY 9 OF BOOLEAN
 			// double[5][8]
-			// array [2...9, columns]of array of char
+			// array [2...9, columns] of array of char
 			String typeDescr = this.typeDescriptor;
 			while (typeDescr.matches(arrayPattern4)) {
 				typeDescr = typeDescr.replaceAll(arrayPattern4, "$2").trim();
@@ -224,10 +269,16 @@ public class TypeMapEntry {
 		}
 			
 	}
+	// START KGU#388 2017-07-04: Enh. #423 New structure for record types  
+	public String typeName = null;			// to distinguish and identify named types
+	// END KGU#388 2017-07-04
 	public LinkedList<VarDeclaration> declarations = new LinkedList<VarDeclaration>();
 	// Set of accessor ids
 	public Set<Element> modifiers = new HashSet<Element>();
 	public Set<Element> references = new HashSet<Element>();
+	// START KGU#388 2017-09-14: Enh. #423 we now distinguish between declared and guessed types
+	public boolean isDeclared = false;
+	// END KGU#388 2017-09-14
 	
 	private static final String[] canonicalNumericTypes = {
 			"byte",
@@ -239,23 +290,78 @@ public class TypeMapEntry {
 	};
 	
 	/**
-	 * Analyses the given declaration information and creates a corrsponding
+	 * Analyses the given declaration information and creates a corresponding
 	 * entry (with a single declaration record).
 	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle) 
 	 * @param _descriptor - the found type-describing or -specifying string
+	 * @param _typeName - the type name if this is a type definition, null otherwise (enh. #423, 2017-07-12)
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
 	 * @param _initialized - whether the variable is initialized or assigned here
+	 * @param _explicit - whether this is an explicit variable declaration (or just derived from value)
 	 * @param _cStyle - whether it's a C-style declaration or initialization
 	 */
-	public TypeMapEntry(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle)
+	public TypeMapEntry(String _descriptor, String _typeName, Element _element, int _lineNo, boolean _initialized, boolean _explicit, boolean _cStyle)
 	{
+		// START KGU#388 2017-07-12: Enh. #423
+		this.typeName = _typeName;
+		// END KGU#388 2017-07-12
 		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _cStyle));
 		if (_initialized) {
 			modifiers.add(_element);
 		}
+		isDeclared = _explicit;
 	}
 	
+	// START KGU#388 2017-07-12: Enh. #423
+	/**
+	 * Creates a record type entry as explicitly declared (with a single declaration record).
+	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle) 
+	 * @param _descriptor - the found type-describing or -specifying string
+	 * @param _typeName - the type name if this is a type definition (mandatory!)
+	 * @param _components - the component type map
+	 * @param _element - the originating Structorizer element
+	 * @param _lineNo - the line number within the element text
+	 */
+	public TypeMapEntry(String _descriptor, String _typeName, LinkedHashMap<String, TypeMapEntry> _components,
+			Element _element, int _lineNo)
+	{
+		this.typeName = _typeName;
+		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _components));
+		this.isDeclared = true;
+	}
+	// END KGU#388 2017-07-12
+	
+	/**
+	 * Returns a type string with canonicalized structure information and - if
+	 * {@code canonicalizeTypeNames} is true - canonicalized type identifiers (as far as
+	 * possible, i.e. type names like "integer", "real" etc. apparently designating
+	 * standard types will be replaced by corresponding Java type names), all
+	 * prefixed with as many '&#64;' characters as there are index levels if it
+	 * is an array type or embedded in a "${...}" if it is a record/struct type.
+	 * If the type information is too ambiguous then an empty string is returned.
+	 * @param _canonicalizeTypeNames - if contained element types are to be canonicalized, too.
+	 * @param _asName - set this true if in case of a named type the name is to be returned (otherwise
+	 * the structural description would be returned)
+	 * @return name or structural description
+	 */
+	public String getCanonicalType(boolean _canonicalizeTypeNames, boolean _asName) {
+		String type = "";
+		if (_asName && this.isNamed()) {
+			type = this.typeName;
+		}
+		else {
+			StringList types = this.getTypes(_canonicalizeTypeNames);
+			if (types.count() == 1) {
+				type = types.get(0);
+			}
+			else if (_canonicalizeTypeNames && this.isArray(true)) {
+				type = "@???";
+			}
+		}
+		return type;
+	}
+
 	/**
 	 * Tries to map the given type name to a unified type name for easer comparison.
 	 * The unified type names are similar to elementary C or Java type names but
@@ -291,10 +397,32 @@ public class TypeMapEntry {
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1string$3");
 		return type;
 	}
-
+	
+	/**
+	 * Checks if the canonicalized type description {@code typeName} is among the
+	 * canonical names of standard types.
+	 * @param typeName - a typ description (should be a name)
+	 * @return true if the type is detected.
+	 */
+	public static boolean isStandardType(String typeName)
+	{
+		String canonicalType = canonicalizeType(typeName);
+		if (canonicalType.equals("string") || canonicalType.equals("char")) {
+			return true;
+		}
+		for (String canon: canonicalNumericTypes) {
+			if (canonicalType.equals(canon)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Analyses the given declaration information and adds a corresponding
-	 * declaration info to this entry.
+	 * declaration info to this entry if it differs.
+	 * It will even be added if this entry is marked as (explicitly) declared
+	 * such that analysis may find out potential conflicts
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
@@ -344,7 +472,8 @@ public class TypeMapEntry {
 	/**
 	 * Returns a StringList containing the type specifications of all detected
 	 * declarations or assignments in canonicalized form (a prefix "&#64;" stands
-	 * for one array dimension level). Type names are preserved as declared.
+	 * for one array dimension level, a prefix "$" symbolizes a record/struct).
+	 * Type names are preserved as declared.
 	 * @return StringList of differing canonicalized type descriptions
 	 */
 	public StringList getTypes()
@@ -356,7 +485,7 @@ public class TypeMapEntry {
 	/**
 	 * Returns a StringList containing the type specifications of all detected
 	 * declarations or assignments in canonicalized form (a prefix "&#64;" stands
-	 * for one array dimension level).<br/>
+	 * for one array dimension level, a prefix "$" symbolizes a record/struct).<br/>
 	 * If {@code canonicalizeTypeNames} is true then type identifiers apparently
 	 * designating standard types (like "integer", "real" etc.) will be replaced
 	 * by corresponding Java type names. 
@@ -373,6 +502,66 @@ public class TypeMapEntry {
 	}
 	// END KGU#380 2017-04-14
 	
+// Was wrong concept
+//	// START KGU#388 2017-09-13: Enh. #423
+//	/**
+//	 * Returns the original definition type entry for the referred record type (may be
+//	 * this entry itself). 
+//	 * @param typeMap - the current type map for nme retrieval
+//	 * @return the defining record type entry if available, otherwise null.
+//	 */
+//	public TypeMapEntry getRecordType(HashMap<String, TypeMapEntry> typeMap)
+//	{
+//		TypeMapEntry recordType = null;
+//		if (this.isRecord()) {
+//			// Is this entry the type definition? Then return this directly
+//			if (this.isNamed()) {
+//				return this;
+//			}
+//			// Otherwise look for the first reference with record structure
+//			for (VarDeclaration varDecl: this.declarations) {
+//				if (varDecl.isRecord()) {
+//					recordType = typeMap.get(varDecl.typeDescriptor);
+//					if (recordType != null) {
+//						return recordType.getRecordType(typeMap);
+//					}
+//				} //if (varDecl.isRecord())
+//			} // for (VarDeclaration varDecl: this.declarations)
+//		} // if (this.isRecord())
+//		return recordType;
+//	}
+	
+	@SuppressWarnings("unchecked")
+	/**
+	 * If this is a defined record type, returns the component-type map
+	 * @param _merge - whether concurring definitions are to be merged.
+	 * @return an ordered table mapping component names to defining TypeMapEntries
+	 */
+	public LinkedHashMap<String, TypeMapEntry> getComponentInfo(boolean _merge)
+	{
+		LinkedHashMap<String, TypeMapEntry> componentInfo = null;
+		if (this.isRecord()) {
+			for (VarDeclaration varDecl: this.declarations) {
+				if (varDecl.isRecord()) {
+					if (componentInfo == null) {
+						componentInfo = varDecl.components;
+						if (!_merge) {
+							break;
+						}
+						componentInfo = (LinkedHashMap<String, TypeMapEntry>)componentInfo.clone();
+					}
+					else {
+						for (Entry<String, TypeMapEntry> entry: varDecl.components.entrySet()) {
+							componentInfo.putIfAbsent(entry.getKey(), entry.getValue());
+						}
+					} // if (componentInfo == null)
+				} //if (varDecl.isRecord())
+			} // for (VarDeclaration varDecl: this.declarations)
+		} // if (this.isRecord())
+		return componentInfo;
+	}
+	// END KGU#388 2017-09-13
+
 	/**
 	 * Checks if there is a C-style declaration for this variable in _element
 	 * or in the first declaring element (if _element = null)
@@ -393,6 +582,8 @@ public class TypeMapEntry {
 	 * Indicates whether at least the first declaration states that the type
 	 * is an array (this may be in conflict with other declarations, though)
 	 * @see #isArray(boolean)
+	 * @see #isRecord()
+	 * @see #isRecord(boolean)
 	 * @return true if there is some evidence of an array structure
 	 */
 	public boolean isArray()
@@ -406,6 +597,8 @@ public class TypeMapEntry {
 	 * the found declarations support the array property, otherwise it would be
 	 * enough that one of the declarations shows array structure. 
 	 * @see #isArray()
+	 * @see #isRecord()
+	 * @see #isRecord(boolean)
 	 * @_allDeclarations - whether all declarations must support the assumption 
 	 * @return true if there is enough evidence of an array structure
 	 */
@@ -422,6 +615,52 @@ public class TypeMapEntry {
 		return !_allDeclarations;
 	}
 	
+	// START KGU#388 2017-07-11: Enh. #423
+	/**
+	 * Indicates whether at least the first declaration states that the type
+	 * is a record (this may be in conflict with other declarations, though)
+	 * @see #isRecord(boolean)
+	 * @return true if there is some evidence of an array structure
+	 */
+	public boolean isRecord()
+	{
+		return !this.declarations.isEmpty() && this.declarations.element().isRecord();
+	}
+	
+	/**
+	 * Indicates whether there is some evidence for a record structure. If
+	 * _allDeclarations is true then the result will only be true if all of
+	 * the found declarations support the record property, otherwise it would be
+	 * enough that one of the declarations shows array structure. 
+	 * @see #isArray()
+	 * @see #isRecord()
+	 * @see #isArray(boolean)
+	 * @_allDeclarations - whether all declarations must support the assumption 
+	 * @return true if there is enough evidence of an array structure
+	 */
+	public boolean isRecord(boolean _allDeclarations)
+	{
+		for (VarDeclaration decl: this.declarations) {
+			if (_allDeclarations && !decl.isRecord()) {
+				return false;
+			}
+			else if (!_allDeclarations && decl.isRecord()) {
+				return true;
+			}
+		}
+		return !_allDeclarations;
+	}
+	
+	/**
+	 * Indicates whether this type entry refers to a named type definition
+	 * @return true if this has a type name.
+	 */
+	public boolean isNamed()
+	{
+		return this.typeName != null;
+	}
+	// END KGU#388 2017-07011
+
 	/**
 	 * Returns the maximum index of array dimension 'level' found over all
 	 * declarations or -1 if there is no substantial range information.
@@ -470,9 +709,9 @@ public class TypeMapEntry {
 	 * by aligning to the respective larger type, e.g. short -&gt; int -&gt; long -&gt; float
 	 * or char -&gt; String.   
 	 * @param type1 - a type-designating string
-	 * @param type2 - a type-designating sring
-	 * @param canonicalized - to be set true if both type names have already been canonicalized
-	 * (or if they must not be caninicalized). 
+	 * @param type2 - a type-designating string
+	 * @param canonicalized - set this true if both type names have already been canonicalized
+	 * (or if they must not be canonicalized). 
 	 * @return either common type name or "???" if both are incompatible
 	 */
 	public static String combineTypes(String type1, String type2, boolean canonicalized) {

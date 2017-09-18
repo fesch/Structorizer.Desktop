@@ -572,12 +572,12 @@ public class For extends Element implements ILoop {
 			if (valueListTokens.contains(",")) {
 				if (hadBraces)
 				{
-					valueListString = valueListString.substring(1, valueListString.length()-1);
+					valueListTokens = valueListTokens.subSequence(1, valueListTokens.count()-1);
 				}
-				valueItems = splitExpressionList(valueListString, ",");
+				valueItems = splitExpressionList(valueListTokens, ",", false);
 			}
 			else if (valueListTokens.contains(" ")) {
-				valueItems = splitExpressionList(valueListString, " ");
+				valueItems = splitExpressionList(valueListTokens, " ", false);
 			}
 			
 			if (valueItems != null && valueItems.count() == 1 && !hadBraces && Function.testIdentifier(valueItems.get(0), ".")) {
@@ -1146,7 +1146,7 @@ public class For extends Element implements ILoop {
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
 		if (!this.isForInLoop()) {
-			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false);
+			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false, false);
 		}
 		// START KGU#261 2017-04-14: Enh. #259 Try to make as much sense of the value list as possible
 		else {
@@ -1164,7 +1164,7 @@ public class For extends Element implements ILoop {
 					}
 				}
 				if (!typeSpec.isEmpty() && !typeSpec.equals("???")) {
-					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false);
+					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false, false);
 				}
 			}
 			else {
@@ -1174,7 +1174,7 @@ public class For extends Element implements ILoop {
 					typeSpec = identifyExprType(typeMap, valueListString, false);
 					if (!typeSpec.isEmpty() && typeSpec.startsWith("@")) {
 						// nibble one array level off as the loop variable is of the element type
-						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false);						
+						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false, false);						
 					}
 				}
 			}

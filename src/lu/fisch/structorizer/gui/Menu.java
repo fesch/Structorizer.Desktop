@@ -348,6 +348,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#375 2017-04-05: Enh. #388
 	public static final LangTextHolder error10_5 = new LangTextHolder("A single instruction element should not mix constant definitions with other instructions!");
 	// END KGU#375 2017-04-05
+	// START KGU#388 2017-09-13: Enh. #423
+	public static final LangTextHolder error10_6 = new LangTextHolder("A single instruction element should not mix type definitions with other instructions!");
+	// END KGU#388 2017-09-13
 	public static final LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
 	public static final LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
 	public static final LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
@@ -401,12 +404,24 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#375 2017-04-04
 	// START KGU#376 2017-04-11/21: Enh. #389 
 	public static final LangTextHolder error23_1 = new LangTextHolder("Diagram «%» is rather unsuited for an import call as it makes use of return.");
-	public static final LangTextHolder error23_2 = new LangTextHolder("Import of diagram «%1» is recursive!");
+	public static final LangTextHolder error23_2 = new LangTextHolder("Import of diagram «%» is recursive!");
 	public static final LangTextHolder error23_3 = new LangTextHolder("Import of diagram «%1» will be ignored here because it had already been imported: %2");
 	public static final LangTextHolder error23_4 = new LangTextHolder("Name conflict between local and imported variable or constant «%»!");
 	public static final LangTextHolder error23_5 = new LangTextHolder("An includable diagram «%» is currently not available!");
 	public static final LangTextHolder error23_6 = new LangTextHolder("More than one includable diagrams with name «%» found!");
 	// END KGU#376 2017-04-11/21
+	// START KGU#388 2017-09-17: Enh. #423: imported record type definitions
+	public static final LangTextHolder error23_7 = new LangTextHolder("There is a name conflict between local and imported type definition «%»!");
+	// END KGU#388 2017-09-17
+	// START KGU#388 2017-09-13: Enh. #423
+	public static final LangTextHolder error24_1 = new LangTextHolder("Type definition in (composed) line % is malformed.");
+	public static final LangTextHolder error24_2 = new LangTextHolder("Type name «%» is illegal or colliding with another identifier.");
+	public static final LangTextHolder error24_3 = new LangTextHolder("Component name «%» is illegal or duplicate.");
+	public static final LangTextHolder error24_4 = new LangTextHolder("Component type «%» is undefined or unknown.");
+	public static final LangTextHolder error24_5 = new LangTextHolder("There is no defined record type «%»!");
+	public static final LangTextHolder error24_6 = new LangTextHolder("Record component «%» will not be modified/initialized!");
+	public static final LangTextHolder error24_7 = new LangTextHolder("Record type «%1» hasn't got a component «%2»!");
+	// END KGU#388 2017-09-13
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
