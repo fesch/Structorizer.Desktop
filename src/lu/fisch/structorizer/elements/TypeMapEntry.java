@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.elements;
 
-import java.util.HashMap;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -39,6 +37,7 @@ import java.util.HashMap;
  *                                      argument mixup fixed, type assimilation support 
  *      Kay Gürtzig     2017.07.04      Issue #423: Structure changes to support record types and named
  *                                      type definitions
+ *      Kay Gürtzig     2017.09.18      Enh. #423: dummy singleton introduced (impacts poorly tested!)
  *
  ******************************************************************************************************
  *
@@ -63,6 +62,20 @@ import lu.fisch.utils.StringList;
  * @author Kay Gürtzig
  */
 public class TypeMapEntry {
+	
+	// START KGU#388 2017-09-18: Enh. 423
+	// A shared empty entry for undefined types
+	private static TypeMapEntry dummy = null;
+	// END KGU#388 2017-09-18
+	// "Canonical" scalar type names
+	private static final String[] canonicalNumericTypes = {
+			"byte",
+			"short",
+			"int",
+			"long",
+			"float",
+			"double"
+	};
 	
 	/**
 	 * Internal declaration list node of TypeMapEntry. Don't manipulate this directly
@@ -280,14 +293,9 @@ public class TypeMapEntry {
 	public boolean isDeclared = false;
 	// END KGU#388 2017-09-14
 	
-	private static final String[] canonicalNumericTypes = {
-			"byte",
-			"short",
-			"int",
-			"long",
-			"float",
-			"double"
-	};
+	private TypeMapEntry()
+	{
+	}
 	
 	/**
 	 * Analyses the given declaration information and creates a corresponding
@@ -329,6 +337,14 @@ public class TypeMapEntry {
 		this.typeName = _typeName;
 		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _components));
 		this.isDeclared = true;
+	}
+	
+	public static TypeMapEntry getDummy()
+	{
+		if (dummy == null) {
+			dummy = new TypeMapEntry();
+		}
+		return dummy;
 	}
 	// END KGU#388 2017-07-12
 	

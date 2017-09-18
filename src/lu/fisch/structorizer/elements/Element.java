@@ -84,6 +84,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.07.02      Enh. #389: Signature of addFullText() reverted to two arguments
  *      Kay Gürtzig     2017.09.13      Enh. #423: New methods supporting type definitions
  *      Kay Gürtzig     2017.09.17      Enh. #423: Type name highlighting
+ *      Kay Gürtzig     2017.09.18      Enh. #423: Recursive record definitions, splitLexically() improved
  *
  ******************************************************************************************************
  *
@@ -1808,10 +1809,14 @@ public abstract class Element {
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**
 	 * Splits the given _text into lexical morphemes (lexemes). This will possibly overdo
-	 * somewhat (e. g. split float literal 123.45 into "123", ".", "45").<br>
-	 * By setting _restoreStrings true, at least string literals can be reassambled again,
-	 * consuming more time, of course.<br>
-	 * Note that inter-lexeme whitespace will not be eliminated but form elements of the result.
+	 * somewhat (e. g. signs of number literals will be separated, but floating-point literals
+	 * like 123.45 or .09e-8 will properly be preserved as contiguous tokens).<br>
+	 * By setting {@code _restoreStrings} true, string literals will be re-assembled, too, consuming
+	 * a little more time, of course.<br>
+	 * Note that inter-lexeme whitespace will NOT be eliminated but forms elements of the result,
+	 * more precisely: a sequence of whitespace characters (like {@code "    "}) will form a series of
+	 * 1-character whitespace strings (here: " ", " ", " ", " "). So they can easily be removed
+	 * with removeAll(" ").
 	 * @param _text - String to be exploded into lexical units
 	 * @param _restoreLiterals - if true then accidently split numeric and string literals will be reassembled 
 	 * @return StringList consisting of the separated lexemes including isolated spaces etc.
@@ -1973,20 +1978,29 @@ public abstract class Element {
 					parts.set(i, ">=");
 				}
 				// END KGU#331 2017-01-13
-				// START KGU#335 2017-02-01: Recompose floating-point literals (except those starting or ending with ".")
-				else if (thisPart.matches("[0-9]+") && nextPart.equals(".") && i+2 < parts.count()) {
-					if (parts.get(i+2).matches("[0-9]+([eE][0-9]+)?")) {
-						parts.set(i, thisPart + nextPart + parts.get(i+2));
+				// START KGU#335 2017-09-18: Recompose floating-point literals (including those starting or ending with ".")
+				else if (thisPart.equals(".") || thisPart.matches("[0-9]+") && nextPart.equals(".")) {
+					// If there was a number sequence before the decimal point glue them together
+					if (!thisPart.equals(".")) {
+						parts.set(i, thisPart + nextPart);
 						parts.delete(i+1);
-						parts.delete(i+1);
+						thisPart = parts.get(i);
 					}
-					else if (parts.get(i+2).matches("[0-9]+[eE]") &&
-							i+4 < parts.count() && parts.get(i+3).matches("[+-]") && parts.get(i+4).matches("[0-9]+")) {
-						for (int j = 1; j <= 4; j++) {
-							thisPart += parts.get(i+1);
+					// Is there anything left at all?
+					if (i+1 < parts.count()) {
+						nextPart = parts.get(i+1);
+						if (nextPart.matches("[0-9]+([eE][0-9]+)?")) {
+							parts.set(i, thisPart + nextPart);
 							parts.delete(i+1);
 						}
-						parts.set(i, thisPart);
+						else if (nextPart.matches("[0-9]+[eE]") &&
+								i+3 < parts.count() && parts.get(i+2).matches("[+-]") && parts.get(i+3).matches("[0-9]+")) {
+							for (int j = 1; j <= 3; j++) {
+								thisPart += parts.get(i+1);
+								parts.delete(i+1);
+							}
+							parts.set(i, thisPart);
+						}
 					}
 				}
 				// END KGU#335 2017-02-01
@@ -3239,25 +3253,48 @@ public abstract class Element {
 			// Get the referred type entry in case typeSpec is a previously defined type
 			if (entry == null) {
 				// Add a new entry to the type map
+				boolean isRecursive = false;
 				LinkedHashMap<String, TypeMapEntry> components = new LinkedHashMap<String, TypeMapEntry>();
 				for (int i = 0; i < compNames.count(); i++) {
 					TypeMapEntry compEntry = null; 
 					if (i < compTypes.count()) {
 						String type = compTypes.get(i);
-						if (Function.testIdentifier(type, null) && typeMap.containsKey(type)) {
-							compEntry = typeMap.get(type);
-							if (!compEntry.isNamed()) {
-								// Not a type entry but that of a variable or constant!
-								compEntry = null;
+						if (type != null) {
+							if (Function.testIdentifier(type, null)) {
+								// Try to find an existing type entry with this name
+								compEntry = typeMap.get(":" + type);
+								if (compEntry == null) {
+									if (type.equals(typeName)) {
+										isRecursive = true;
+										// We postpone the completion of this self-referencing component 
+									}
+									else {
+										// Create a named dummy entry
+										compEntry = new TypeMapEntry(type, type, this, lineNo, false, true, false);
+									}
+								}
+							}
+							else {
+								// Create an unnamed dummy entry
+								compEntry = new TypeMapEntry(type, null, this, lineNo, false, true, false);								
 							}
 						}
-						else {
-							compEntry = new TypeMapEntry(type, type, this, lineNo, false, true, false);
+					}
+					// Note that compEntry may be null here
+					if (compEntry == null) compEntry = TypeMapEntry.getDummy();
+					components.put(compNames.get(i), compEntry);
+				}
+				entry = new TypeMapEntry(typeSpec, typeName, components, this, lineNo);
+				// In case of self-references map the respective component names to the created TypeMapEntry 
+				if (isRecursive) {
+					for (int i = 0; i < compNames.count(); i++) {
+						if (i < compTypes.count() && typeName.equals(compTypes.get(i))) {
+							components.put(compNames.get(i), entry);
 						}
 					}
-					components.putIfAbsent(compNames.get(i), compEntry);
 				}
-				typeMap.put(":" + typeName, new TypeMapEntry(typeSpec, typeName, components, this, lineNo));
+				// Now register the accomplished type entry
+				typeMap.put(":" + typeName, entry);
 				done = true;
 			}
 		}

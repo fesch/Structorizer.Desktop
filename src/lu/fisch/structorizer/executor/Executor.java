@@ -132,6 +132,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
  *      Kay Gürtzig     2017.09.09      Bugfix #411 revised (issue #426)
  *      Kay Gürtzig     2017.09.17      Enh. #423: First draft implementation of records.
+ *      Kay Gürtzig     2017.09.18      Enh. #423: Corrections on handling typed constants
  *
  ******************************************************************************************************
  *
@@ -2722,7 +2723,7 @@ public class Executor implements Runnable
 	// END KGU#307 2016-12-12
 	{
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
-		// There are the following sensible cases w.r.t. target here:
+		// There are the following sensible cases w.r.t. 'target' here:
 		// a) [const] <id>
 		// b) <id>'['<expr>']'
 		// c) [const] <typespec1> <id>
@@ -2766,11 +2767,19 @@ public class Executor implements Runnable
 			tokens = tokens.subSequence(1, posColon);
 			nTokens = tokens.count();
 			target = tokens.get(nTokens-1);
+			// START KGU#388 2017-09-18: Register the declared type
+			String typeName = null;
+			if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), null) && context.dynTypeMap.containsKey(":" + typeName)) {
+				context.dynTypeMap.put(target, context.dynTypeMap.get(":" + typeName));
+			}
+			// In other cases we cannot create a new TypeMapEntry because we are lacking element and line information here.
+			// So it is up to the calling method...
+			// END KGU#388 2017-09-18
 		}
 		String token0 = tokens.get(0).toLowerCase();
 		if (token0.equals("var") || token0.equals("dim")) {
 			// e) + f)
-			// Drop type information
+			// Drop type information (may not be a complex access path)
 			int posColon = tokens.indexOf((token0.equals("var") ? ":" : "as"), false);
 			if (posColon >= 0) {
 				typeDescr = tokens.subSequence(posColon+1, nTokens);

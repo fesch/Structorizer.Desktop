@@ -106,6 +106,7 @@
  *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *      Kay Gürtzig     2017.06.14  Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig     2017.09.18  Enh. #423: New messages for record type handling introduced
  *
  ******************************************************************************************************
  *
@@ -349,20 +350,21 @@ Menu.error02.text=¡Sin cambio de las variables de la condición! Posible bucle 
 Menu.error03_1.text=¡La variable «%1»%2 no ha sido inicializada!
 Menu.error03_2.text=¡La variable «%1»%2 no siempre habrá sido inicializada!
 Menu.error04.text=¡No tienes permiso usar una declaración IF con un bloque de verdad vacío!
-Menu.error05.text=¡La variable «%» debe ser escrita en mayúsculas!
-Menu.error06.text=¡El nombre del programa o de la rutina «%» debe ser escrito en mayúsculas!
+Menu.error05.text=La variable «%» debe ser escrita en mayúsculas.
+Menu.error06.text=El nombre del programa o de la rutina «%» debe ser escrito en mayúsculas.
 Menu.error07_1.text=¡«%» no es un nombre válido para el programa o método!
 Menu.error07_2.text=¡«%» no es un nombre válido para el parámetro!
 Menu.error07_3.text=¡«%» no es un nombre válido para la variable o constante!
 Menu.error08.text=¡No está permitido hacer una asignación dentro de una condición!
-Menu.error09.text=¡Tu programa («%») no debe tener el mismo nombre que una variable o parametro!
-Menu.error10_1.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones!
-Menu.error10_2.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y salida!
-Menu.error10_3.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
-Menu.error10_4.text=¡Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones!
-Menu.error10_5.text=¡Un elemento de instrucción no debe mezclar definiciones de constantes con otras instrucciones!
+Menu.error09.text=Tu programa («%») no debe tener el mismo nombre que una variable o parametro.
+Menu.error10_1.text=Un solo elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones.
+Menu.error10_2.text=Un solo elemento de instrucción no debe contener instrucciones de entrada y salida.
+Menu.error10_3.text=Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones.
+Menu.error10_4.text=Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones.
+Menu.error10_5.text=Un elemento de instrucción no debe mezclar definiciones de constantes con otras instrucciones.
+Menu.error10_6.text=Un elemento de instrucción no debe mezclar definiciones de tipos con otras instrucciones.
 Menu.error11.text=Probablemente cometiste un error de asignación. ¡Por favor comprueba esta instrucción!
-Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS!
+Menu.error12.text=El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS.
 Menu.error13_1.text=¡La función no retorna ningún resultado!
 Menu.error13_2.text=¡Su función no siempre retorna un resultado!
 Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un valor a la vez: «%»!
@@ -394,6 +396,14 @@ Menu.error23_3.text=Este importe será ignorado aquí porque el diagrama «%1» 
 Menu.error23_4.text=Conflicto: ¡Para la variable o constante «%» existen ambos una declaración local y un importe!
 Menu.error23_5.text=¡Ningún diagrama incluíble con nombre «%» está disponible!
 Menu.error23_6.text=¡Diagrama incluíble con nombre «%» es ambiguo: Hay más de un diagrama con este nombre!
+Menu.error23_7.text=Conflicto: ¡Para el tipo «%» existen ambos una definición local y un importe!
+Menu.error24_1.text=La definición de tipo en linea % no tiene sintaxis correcta.
+Menu.error24_2.text=El nombre del tipo «%» es ilegal o conflige con otro identificador.
+Menu.error24_3.text=Nombre «%» del componente is ilegal o doble.
+Menu.error24_4.text=El tipo del componente «%» no es definido o conocido.
+Menu.error24_5.text=Un tipo «%» estructurado no existe!
+Menu.error24_6.text=El componente «%» no será modificado/inicializado!
+Menu.error24_7.text=El tipo «%1» no tiene ningun componente «%2»!
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -423,6 +433,7 @@ AnalyserPreferences.checkboxes.20.text=Comprobar que un subprograma tiene un par
 AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables identificadores «I», «l» und «O».
 AnalyserPreferences.checkboxes.22.text=Comprobar que constantes no son comprometidas.
 AnalyserPreferences.checkboxes.23.text=Comprobar si la lista de diagramas a ser incluídos causa problemas.
+AnalyserPreferences.checkboxes.24.text=Combrobar las definiciones y el uso de tipos.
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -1057,6 +1068,9 @@ Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archiv
 Control.msgUseStopButton.text=¡Una ejecución está en progreso o pausando!\nUsa el botón STOP para abortarla y cerrar.
 Control.msgConstantRedefinition.text=¡Intento ilegal de redefinir or modificar constante «%»!
 Control.msgConstantArrayElement.text=¡No es posible hacer constante un elemento «%» de un array colocando un valor!
+Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura o variable «%2»!
+Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
+Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» declarado para variable/componente «%3»!
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

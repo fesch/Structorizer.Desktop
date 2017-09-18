@@ -2347,6 +2347,14 @@ public class Root extends Element {
     }
     
     // START KGU#261 2017-01-20: Enh. #259
+    /**
+     * Creates (if not already cached), caches, and returns the static overall type map
+     * for this diagram and its included definition providers (if having being available
+     * on the first creation).<br>
+     * Every change to this diagram clears the cache and hence leads to an info refresh.  
+     * @return the type table mapping prefixed type names and variable names to their
+     * respective defined or declared TypeMapEntries with structural information.
+     */
     public HashMap<String, TypeMapEntry> getTypeInfo()
     {
     	if (this.typeMap.isEmpty()) {
@@ -3689,11 +3697,12 @@ public class Root extends Element {
 					int posBrace = typeSpec.indexOf("{");
 					StringList compNames = new StringList();
 					StringList compTypes = new StringList();
-					if (!Function.testIdentifier(typename, null) || _types.containsKey(typename)) {
+					// We test here against type-associated variable names and an existing type name
+					if (!Function.testIdentifier(typename, null) || _types.containsKey(typename) || _types.containsKey(":" + typename)) {
 						//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
 						addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
 					}
-					this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes);
+					this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes);
 					for (int j = 0; j < compNames.count(); j++) {
 						String compName = compNames.get(j);
 						if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
@@ -3701,7 +3710,7 @@ public class Root extends Element {
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
 						}
 						String type = compTypes.get(j);
-						if (type != null && !TypeMapEntry.isStandardType(type) && (!_types.containsKey(type) || !_types.get(type).isNamed())) {
+						if (type != null && !TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
 							//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
 						}
