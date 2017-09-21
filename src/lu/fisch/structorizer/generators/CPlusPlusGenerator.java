@@ -397,7 +397,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			boolean isArray = false;
 			if (typeEntry != null) {
 				isArray = typeEntry.isArray();
-				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
 					typeSpec = typeSpecs.get(0);
 				}

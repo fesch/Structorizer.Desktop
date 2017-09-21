@@ -590,7 +590,7 @@ public class CSharpGenerator extends CGenerator
 			TypeMapEntry typeEntry = typeMap.get(varName);
 			String typeSpec = "/*type?*/";
 			if (typeEntry != null) {
-				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
 					typeSpec = typeSpecs.get(0);
 				}

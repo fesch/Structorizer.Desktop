@@ -260,7 +260,7 @@ public class Root extends Element {
 	public String licenseName = null;
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
-	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now manageed directly by Root
+	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now managed directly by Root
 	public StringList includeList = null;
 	// END KGU#376 2017-06-30
 	
@@ -2350,7 +2350,7 @@ public class Root extends Element {
     /**
      * Creates (if not already cached), caches, and returns the static overall type map
      * for this diagram and its included definition providers (if having being available
-     * on the first creation).<br>
+     * on the first creation).<br/>
      * Every change to this diagram clears the cache and hence leads to an info refresh.  
      * @return the type table mapping prefixed type names and variable names to their
      * respective defined or declared TypeMapEntries with structural information.

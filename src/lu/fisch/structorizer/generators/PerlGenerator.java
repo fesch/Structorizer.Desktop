@@ -494,7 +494,7 @@ public class PerlGenerator extends Generator {
 
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
-		String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
@@ -668,7 +668,7 @@ public class PerlGenerator extends Generator {
     	insertComment(_while, _indent);
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
-    	String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
+    	String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
@@ -707,7 +707,7 @@ public class PerlGenerator extends Generator {
 		generateCode(_repeat.q,_indent+this.getIndent());
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
-    	String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
+    	String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {

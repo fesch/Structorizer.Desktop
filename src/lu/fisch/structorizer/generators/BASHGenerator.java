@@ -622,7 +622,7 @@ public class BASHGenerator extends Generator {
 		// END KGU#162 2016-03-31
 		
 			// START KGU 2014-11-16 Support for Pascal-style operators		
-			intermed = BString.replace(intermed, " div ", " / ");
+			intermed = intermed.replace(" div ", " / ");
 			// END KGU 2014-11-06
 
 			// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords

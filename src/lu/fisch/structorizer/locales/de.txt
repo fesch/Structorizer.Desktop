@@ -888,6 +888,7 @@ ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren
 ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Aufgerufene Unterprogramme mit exportieren.
+ExportOptionDialoge.chkExportLicenseInfo.text=Autorenschafts- and Lizenzattribute exportieren.
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
 ExportOptionDialoge.lbCharset.text=Zeichensatz (Codierung):
 ExportOptionDialoge.chkCharsetAll.text=Alle auflisten?

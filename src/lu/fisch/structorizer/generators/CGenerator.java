@@ -903,7 +903,7 @@ public class CGenerator extends Generator {
 		}
 		else if (typeInfo != null && typeInfo.isArray()) {
 			String limitName = "count" + nameSuffix;
-			StringList typeDecls = getTransformedTypes(typeInfo);
+			StringList typeDecls = getTransformedTypes(typeInfo, false);
 			if (typeDecls.count() == 1) {
 				itemType = typeDecls.get(0).substring(1);
 				int lastAt = itemType.lastIndexOf('@');
@@ -1426,7 +1426,7 @@ public class CGenerator extends Generator {
 		String constValue = _root.constants.get(_name);
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
-			 types = getTransformedTypes(typeInfo);
+			 types = getTransformedTypes(typeInfo, false);
 		}
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
 		else if (constValue != null) {

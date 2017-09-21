@@ -782,40 +782,40 @@ public class StringList {
 		String input = _input+"";
 
 		// if not CSV, make it CSV
-		if(input.length()>0)
+		if (input.length()>0)
 		{
 			String first = Character.toString(input.charAt(0));
-			if(!first.equals("\""))
+			if (!first.equals("\""))
 			{
-				input="\""+input;
+				input = "\"" + input;
 			}
 			first = Character.toString(input.charAt(input.length()-1));
-			if(!first.equals("\""))
+			if (!first.equals("\""))
 			{
-				input=input+"\"";
+				input += "\"";
 			}
 		}
 
 		strings.clear();
 
 		String tmp = new String();
-		boolean open = false;
+		boolean isOpen = false;
 
-		for(int i=0;i<input.length();i++)
+		for(int i=0; i<input.length(); i++)
 		{
 			String chr = Character.toString(input.charAt(i));
-			if(chr.equals("\""))
+			if (chr.equals("\""))
 			{
-			   if(i+1<input.length())
+			   if (i+1<input.length())
 			   {
-				if(open == false)
+				if (!isOpen)
 				{
-					open =true;
+					isOpen = true;
 				}
 				else
 				{
 					String next = Character.toString(input.charAt(i+1));
-					if(next.equals("\""))
+					if (next.equals("\""))
 					{
 						tmp += "\"";
 						i++;
@@ -827,29 +827,29 @@ public class StringList {
 						   strings.add(tmp);
 						}
 						tmp = new String();
-						open = false;
+						isOpen = false;
 					}
 				}
 			   }
 			   else
 			   {
-				   if(!((strings.size()==0)&&(tmp.trim().equals(""))))
+				   if (!((strings.size()==0) && (tmp.trim().isEmpty())))
 				   {
 					   strings.add(tmp);
 				   }
 				   tmp = new String();
-				   open = false;
+				   isOpen = false;
 			   }
 			}
 			else
 			{
-			   if(open == true)
+			   if (isOpen)
 			   {
 				tmp += chr;
 			   }
 			}
 		}
-		if(!(tmp.trim().equals("")))
+		if (!(tmp.trim().isEmpty()))
 		{
 			strings.add(tmp);
 		}
@@ -859,15 +859,15 @@ public class StringList {
 	{
 		String res = new String();
 
-		for (int i = 0;i<strings.size();i++)
+		for (int i = 0; i<strings.size(); i++)
 		{
-			if(i==0)
+			if (i==0)
 			{
-				res+= "\""+BString.replace(get(i),"\"","\"\"")+"\"";
+				res+= "\"" + get(i).replace("\"", "\"\"") + "\"";
 			}
 			else
 			{
-				res+= ",\""+BString.replace(get(i),"\"","\"\"")+"\"";
+				res+= ",\"" + get(i).replace("\"", "\"\"") + "\"";
 			}
 		}
 

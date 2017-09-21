@@ -494,7 +494,8 @@ public class BasGenerator extends Generator
     protected void generateCode(Alternative _alt, String _indent)
     {
 
-    	String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
     	String indentPlusOne = _indent + this.getIndent();
 
     	// START KGU 2015-11-02

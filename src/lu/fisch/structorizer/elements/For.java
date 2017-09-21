@@ -937,8 +937,8 @@ public class For extends Element implements ILoop {
 					Integer.toString(_step);
 		}
 		// Now get rid of multiple blanks
-		forClause = BString.replace(forClause, "  ", " ");
-		forClause = BString.replace(forClause, "  ", " ");
+		forClause = forClause.replace("  ", " ");
+		forClause = forClause.replace("  ", " ");
 		return forClause;
 	}
 	

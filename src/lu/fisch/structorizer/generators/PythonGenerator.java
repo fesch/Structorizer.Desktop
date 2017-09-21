@@ -409,7 +409,7 @@ public class PythonGenerator extends Generator
 			insertComment(_alt, _indent);
 			// END KGU 2014-11-16
 
-			String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+			String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 			// START KGU#301 2016-12-01: Bugfix #301
 			//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 			if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -516,7 +516,7 @@ public class PythonGenerator extends Generator
 			insertComment(_while, _indent);
 			// END KGU 2014-11-16
 			
-			String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
+			String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 			// START KGU#301 2016-12-01: Bugfix #301
 			//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 			if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -546,8 +546,8 @@ public class PythonGenerator extends Generator
             //code.delete(code.count()-1); // delete empty row
             //code.delete(code.count()-1); // delete empty row
             // END KGU#54 2015-10-19
-            addCode("if "+BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim()+":",
-            		_indent+this.getIndent(), isDisabled);
+            addCode("if " + transform(_repeat.getUnbrokenText().getLongString()).trim()+":",
+            		_indent + this.getIndent(), isDisabled);
             addCode("break", _indent+this.getIndent()+this.getIndent(), isDisabled);
 			// START KGU#54 2015-10-19: Add an empty line, but void accumulation of empty lines!
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())

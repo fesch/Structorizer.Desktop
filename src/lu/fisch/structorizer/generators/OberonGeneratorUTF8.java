@@ -89,7 +89,7 @@ public class OberonGeneratorUTF8 extends OberonGenerator
 
                             try
                             {
-                                    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
+                                    String code = generateCode(_root,"\t").replace("\t",getIndent());
 
                                     FileOutputStream fos = new FileOutputStream(filename);
                                     Writer out = new OutputStreamWriter(fos, "UTF-8");

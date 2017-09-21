@@ -892,6 +892,7 @@ ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
 ExportOptionDialoge.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generate line numbers on export to BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Involve called subroutines.
+ExportOptionDialoge.chkExportLicenseInfo.text=Export author and license attributes.
 ExportOptionDialoge.lbPrefGenerator.text=Favorite Code Export:
 ExportOptionDialoge.lbCharset.text=Character set:
 ExportOptionDialoge.chkCharsetAll.text=List all?

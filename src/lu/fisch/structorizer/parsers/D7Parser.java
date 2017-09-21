@@ -1438,7 +1438,7 @@ public class D7Parser extends CodeParser
 		*/
 		
 		//_content = BString.replace(_content, ":="," \u2190 ");
-		_content = BString.replace(_content, ":="," <- ");
+		_content = _content.replace(":="," <- ");
 
 		return _content.trim();
 	}

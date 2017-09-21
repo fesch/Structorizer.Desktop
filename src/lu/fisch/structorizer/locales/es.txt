@@ -891,6 +891,7 @@ ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentario
 ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Incluir subprogramas empleados.
+ExportOptionDialoge.chkExportLicenseInfo.text=Exportar atributos sobre el autor y la licencia.
 ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
 ExportOptionDialoge.lbCharset.text=Codificación:
 ExportOptionDialoge.chkCharsetAll.text=Listar todas

@@ -645,7 +645,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         			StringList comment = StringList.explode(selEle.getComment(false), "\n");
         			comment.removeAll("");	// Don't include empty lines here
         			// END KGU#199 2016-07-07
-        			String htmlComment = "<html>"+BString.replace(BString.encodeToHtml(comment.getText()),"\n","<br>")+"</html>";
+        			String htmlComment = "<html>" + BString.encodeToHtml(comment.getText()).replace("\n", "<br>") + "</html>";
         			if(!lblPop.getText().equals(htmlComment))
         			{
         				lblPop.setText(htmlComment);

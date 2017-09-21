@@ -72,7 +72,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
  *      Kay Gürtzig     2017.04.18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
  *      Kay Gürtzig     2017.04.26      Signature of method exportCode() modified to return the used directory
- *      Kay Gürtzig     2017.05.16      Enh.#372: New method insertCopyright()
+ *      Kay Gürtzig     2017.05.16      Enh. #372: New method insertCopyright()
+ *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
  *
  ******************************************************************************************************
  *
@@ -183,6 +184,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected StringList missingSubroutines = new StringList();	// Signatures of missing routines
 	protected boolean topLevel = true;
 	// END KGU#178 2016-07-19
+	// START KGU#376 2017-09-20: Enh. #389
+	protected Hashtable<Root, SubTopoSortEntry> includedRoots = new Hashtable<Root, SubTopoSortEntry>();
+	// END KGU#376 2017-09-20
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 //	protected boolean hasOutput = false;
@@ -662,7 +666,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * This is a service method inheriting generators may call at the appropriate
 	 * position in order to insert include (or import or uses etc.) directives
 	 * for the include items configured in the export options for the respective
-	 * language. The method calls a subclassable empty method {@link #prepareIncludeItem(String)}
+	 * language.<br/>
+	 * The method calls a subclassable empty method {@link #prepareIncludeItem(String)}
 	 * for every item configured before the insertion takes place - if some
 	 * preprocessing of the items is necessary then the generator subclass may
 	 * override this method.<br/>
@@ -904,9 +909,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Transforms type identifier into the target language (as far as possible).
 	 * Is to be overridden by the Generator subclasses if typing is an issue.
-	 * Method is called e.g. by {@link #getTransformedTypes(TypeMapEntry)} and
+	 * Method is called e.g. by {@link #getTransformedTypes(TypeMapEntry, boolean)} and
 	 * in other contexts.
-	 * @see #getTransformedTypes(TypeMapEntry)
+	 * @see #getTransformedTypes(TypeMapEntry, boolean)
 	 * @see #transform(String, boolean)
 	 * @see #transformTokens(StringList)
 	 * @see #transformInput(String)
@@ -924,9 +929,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#1 2015-11-30	
 	
 	// START KGU#261 2017-01-26: Enh. #259/#335
-	protected StringList getTransformedTypes(TypeMapEntry typeEntry)
+	protected StringList getTransformedTypes(TypeMapEntry typeEntry, boolean preferName)
 	{
-		StringList types = typeEntry.getTypes();
+		// START KGU#388 2017-09-19: Enh. #423
+		//StringList types = typeEntry.getTypes();
+		StringList types;
+		if (preferName && typeEntry.isNamed()) {
+			types = StringList.getNew(typeEntry.typeName);
+		}
+		else {
+			types = typeEntry.getTypes();
+		}
+		// END KGU#388 2017-09-19
 		StringList transTypes = new StringList();
 		for (int i = 0; i < types.count(); i++) {
 			String type = types.get(i);
@@ -1391,28 +1405,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
 			{
-				Root sub = foundRoots.firstElement();
-				// Is there already an entry for this root?
-				SubTopoSortEntry entry = subroutines.getOrDefault(sub, null);
-				boolean toBeCounted = false;
-				if (entry == null)
-				{
-					// No - create a new entry
-					subroutines.put(sub, new SubTopoSortEntry(_caller));
-					newSub = sub;
-					toBeCounted = true;
-				}
-				else
-				{
-					// Yes: add the calling routine to the set of roots to be informed
-					// (if not already registered)
-					toBeCounted = entry.callers.add(_caller);
-				}
-				// Now count the call at the callers entry (if there is one)
-				if (toBeCounted && (entry = subroutines.getOrDefault(_caller, null)) != null)
-				{
-					entry.nReferingTo++;
-				}
+				newSub = putRootsToMap(foundRoots.firstElement(), _caller, subroutines);
 			}
 			// START KGU#237 2016-08-10: bugfix #228
 			else if ((newSub = getAmongSubroutines(called)) != null)
@@ -1428,6 +1421,40 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			{
 				missingSubroutines.addIfNew(_call.getSignatureString());
 			}
+		}
+		return newSub;
+	}
+
+	/**
+	 * Establishes a mapping between Roots {@code _referred} and {@code _caller} in the given
+	 * {@code _referenceMap} for later topological sorting.
+	 * @param _referred - the Root being referred to by _caller
+	 * @param _caller - the Root referring to {@code _referred}
+	 * @param _referenceMap - the map from referred Roots to referring Roots
+	 * @return the {@code _referred} Root if it hadn't been in {@code _referenceMap} before 
+	 */
+	private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap) {
+		// Is there already an entry for this root?
+		Root newSub = null;
+		SubTopoSortEntry entry = _referenceMap.get(_referred);
+		boolean toBeCounted = false;
+		if (entry == null)
+		{
+			// No - create a new entry
+			_referenceMap.put(_referred, new SubTopoSortEntry(_caller));
+			newSub = _referred;
+			toBeCounted = true;
+		}
+		else
+		{
+			// Yes: add the calling routine to the set of roots to be informed
+			// (if not already registered)
+			toBeCounted = entry.callers.add(_caller);
+		}
+		// Now count the call at the callers entry (if there is one)
+		if (toBeCounted && (entry = _referenceMap.get(_caller)) != null)
+		{
+			entry.nReferingTo++;
 		}
 		return newSub;
 	}
@@ -1498,6 +1525,50 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#237 2016-08-10
 	
+	// START KGU#376 2017-09-20: Enh. #389
+	private void registerIncludedRoots(Root _root)
+	{
+		if (_root.includeList != null && Arranger.hasInstance()) {
+			for (int i = 0; i < _root.includeList.count(); i++)
+			{
+				Root newIncl = null;
+				String includeName = _root.includeList.get(i);
+				Vector<Root> candidates = Arranger.getInstance().findIncludesByName(includeName);
+				if (!candidates.isEmpty()) {
+					newIncl = putRootsToMap(candidates.firstElement(), _root, includedRoots);
+				}
+					// START KGU#237 2016-08-10: bugfix #228
+				else if ((newIncl = getAmongExportedRoots(includeName)) != null)
+				{
+					includedRoots.get(newIncl).callers.add(_root);
+					// If we got here, then it's probably the top-level diagram itself
+					// So better be cautious with reference counting here (lest the
+					// including diagram would be suppressed on printing)
+					newIncl = null;	// ...and it's not a new subroutine, of course
+				}
+				if (newIncl != null) {
+					// Now do the recursion (the Includable itself may include others)
+					registerIncludedRoots(newIncl);
+				}
+			}
+		}
+	}
+
+	private Root getAmongExportedRoots(String includeName) {
+		for (Root included: includedRoots.keySet()) {
+			if (includeName.equals(included.getMethodName())) {
+				return included;
+			}
+		}
+		for (Root included: subroutines.keySet()) {
+			if (included.isInclude() && includeName.equals(included.getMethodName())) {
+				return included;
+			}
+		}
+		return null;
+	}
+	// END KGU#376 2017-09-20
+
 	// START KGU#236/KGU#311 2016-12-22: Issue #227, enh. #314 - we may need this more root-specificly
 	private final void gatherElementInformationRoot(Root _root)
 	{
@@ -1506,6 +1577,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (hasOutput) rootsWithOutput.add(_root);
 		if (hasInput) rootsWithInput.add(_root);
 		if (hasEmptyInput) rootsWithEmptyInput.add(_root);
+		// START KGU#376 2017-09-20: Enh. #389
+		this.registerIncludedRoots(_root);
+		// END KGU#376 2017-09-20
 	}
 	// END KGU#236/KGU#311 2016-12-22
 	// START KGU#236 2016-08-10: Issue #227
@@ -2299,6 +2373,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				//gatherElementInformation(_root);
 				gatherElementInformationRoot(_root);
 				// END KGU#311 2016-12-22
+				
 				if (this.optionExportSubroutines())
 				{
 					for (Root sub: subroutines.keySet())
@@ -2389,22 +2464,45 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * diagram code has been created and generates and inserts the code sequences of the
 	 * called subroutines of {@code _root}in topologically sorted order.
 	 * @param _root - the top-level diagram root.
-	 * @returnthe entire code for this {@code Root} including the subroutine diagrams as one string (with newlines)
+	 * @return the entire code for this {@code Root} including the subroutine diagrams as one string (with newlines)
+	 * @see #sortTopologically(Hashtable)
 	 */
 	protected final String generateSubroutineCode(Root _root)
 	{
 		StringList outerCodeTail = code.subSequence(this.subroutineInsertionLine, code.count());
 		code = code.subSequence(0, this.subroutineInsertionLine);
 		topLevel = false;
+		Queue<Root> roots = sortTopologically(subroutines);
+		while (!roots.isEmpty())
+		{
+			Root sub = roots.remove();	// get the next routine
+			generateCode(sub, subroutineIndent);	// add its code
+		}
+
+		code.add(outerCodeTail);
+		
+		topLevel = true;
+		
+		return code.getText();
+	}
+
+	/**
+	 * Performs a topological sorting of the Roots in the {@code _dependencyMap}
+	 * and returns the result as queue
+	 * @param _dependencyMap - the dependency graph of the routines as map
+	 * @return queue of the sorted diagrams (independent first, dependent ones following)
+	 */
+	protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap) {
+		Queue<Root> sortedRoots = new LinkedList<Root>();
 		Queue<Root> roots = new LinkedList<Root>();
 		// START KGU#349 2017-02-20: Bugfix #349 - precaution against indirect recursion, we must export all routines
 		int minRefCount = 0;
-		while (!this.subroutines.isEmpty()) {
+		while (!_dependencyMap.isEmpty()) {
 		// END KGU#349 2017-02-20
 			// Initial queue filling - this is a classical topological sorting algorithm
-			for (Root sub: this.subroutines.keySet())
+			for (Root sub: _dependencyMap.keySet())
 			{
-				SubTopoSortEntry entry = this.subroutines.get(sub);
+				SubTopoSortEntry entry = _dependencyMap.get(sub);
 				// If this routine refers to no other one, then enlist it
 				if (entry.nReferingTo == minRefCount)
 				{
@@ -2417,14 +2515,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			while (!roots.isEmpty())
 			{
 				Root sub = roots.remove();	// get the next routine
-
-				generateCode(sub, subroutineIndent);	// add its code
+				sortedRoots.add(sub);	// ... and add it to the result queue
 
 				// look for dependent routines and decrement their dependency counter
 				// (the entry for sub isn't needed any longer now)
-				for (Root caller: subroutines.remove(sub).callers)
+				for (Root caller: _dependencyMap.remove(sub).callers)
 				{
-					SubTopoSortEntry entry = this.subroutines.get(caller);
+					SubTopoSortEntry entry = _dependencyMap.get(caller);
 					// Last dependency? Then enlist the caller (if it's not already listed - in case of indirect recursion)
 					if (entry != null && --entry.nReferingTo <= 0 && !roots.contains(caller))
 					{
@@ -2439,11 +2536,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			minRefCount++;
 			// END KGU#349
 		}
-		code.add(outerCodeTail);
-		
-		topLevel = true;
-		
-		return code.getText();
+		return sortedRoots;
 	}
 	// END KGU#178 2016-07-20
 	
@@ -2642,8 +2735,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		return Element.isParenthesized(expression);
 	}
-	// END KGU#301 2016-12-01
-	
+	// END KGU#301 2017-09-19
+	/**
+	 * Helper method to detect exactly whether the expression represented by {@code tokens} is enclosed in
+	 * parentheses.<br/>
+	 * Simply check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
+	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a parenthesis without
+	 * being parenthesized.  
+	 * @param tokens - the tokenized expression to be analysed as StringList
+	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
+	 * in C and derived languages.
+	 */
+	protected static boolean isParenthesized(StringList tokens)
+	{
+		return Element.isParenthesized(tokens);
+	}
+	// END KGU#301 2017-09-19
+
 	// START KGU#187 2016-04-28: Enh. 179 batch mode
 	/*****************************************
 	 * batch code export methods

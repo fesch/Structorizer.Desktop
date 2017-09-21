@@ -759,5 +759,17 @@ public class TypeMapEntry {
 		}
 		return type1;
 	}
+
+	// START KGU#388 2017-09-19: Enh. #423 for code generator support
+	public boolean isDeclaredWithin(Root _root) {
+		//if (!isDeclared) return false;
+		for (VarDeclaration decl: declarations) {
+			if (decl.definingElement != null && Element.getRoot(decl.definingElement) == _root) {
+				return true;
+			}
+		}
+		return false;
+	}
+	// END KGU#388 2017-09-19
 	
 }

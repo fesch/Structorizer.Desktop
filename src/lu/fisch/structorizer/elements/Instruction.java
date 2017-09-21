@@ -610,9 +610,9 @@ public class Instruction extends Element {
 	
 	// START KGU#322 2016-07-06: Enh. #335
 	/**
-	 * Returns true if the current line of code is a declarationof one of the following types:<br>
-	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]<br>
-	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]<br>
+	 * Returns true if the current line of code is a variable declaration of one of the following types:<br/>
+	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
+	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
 	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;expr&gt;
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a), b), c)
@@ -830,7 +830,7 @@ public class Instruction extends Element {
 		int posColon = tokens.indexOf(token0.equals("dim") ? "as" : ":", false);
 		int posAsgnmt = tokens.indexOf("<-");
 		// First we try to extract a type description from a Pascal-style variable declaration
-		if (tokens.count() > 3 && (token0.equals("var") || token0.equals("dim")) && posColon >= 2) {
+		if (tokens.count() > 3 && (token0.equals("var") || token0.equals("dim") || token0.equals("const")) && posColon >= 2) {
 			isAssigned = posAsgnmt > posColon;
 			typeSpec = tokens.concatenate(" ", posColon+1, (isAssigned ? posAsgnmt : tokens.count()));
 			// There may be one or more variable names between "var" and ':' if there is no assignment
@@ -844,8 +844,14 @@ public class Instruction extends Element {
 			}
 		}
 		// Next we try to extract type information from an initial assignment (without "var" keyword)
-		else if (posAsgnmt > 0 && !tokens.contains("var") && !tokens.contains("dim")) {
+		else if (posAsgnmt > 0 && !token0.equals("var") && !token0.equals("dim")) {
 			// Type information might be found left of the variable name or be derivable from the initial value
+			// START KGU#375 2017-09-20: Enh. #388 - a "const" keyword might be here, drop it
+			if (token0.equals("const")) {
+				tokens.remove(0);
+				posAsgnmt--;
+			}
+			// EMD KGU#375 2017-09-20
 			StringList leftSide = tokens.subSequence(0, posAsgnmt);
 			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
 			isAssigned = rightSide.count() > 0;

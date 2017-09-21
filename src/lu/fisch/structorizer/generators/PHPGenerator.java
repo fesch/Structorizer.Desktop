@@ -319,7 +319,7 @@ public class PHPGenerator extends Generator
 		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
 
-    	String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
     	// START KGU#301 2016-12-01: Bugfix #301
     	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
     	if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -453,7 +453,7 @@ public class PHPGenerator extends Generator
     	insertComment(_while, _indent);
     	// END KGU 2014-11-16
 
-    	String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
+    	String condition = transform(_while.getUnbrokenText().getLongString()).trim();
     	// START KGU#301 2016-12-01: Bugfix #301
     	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
     	if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -479,7 +479,7 @@ public class PHPGenerator extends Generator
         generateCode(_repeat.q,_indent+this.getIndent());
         // START KGU#162 2016-04-01: Enh. #144 - more tentative approach
         //code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
-        String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
+        String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
         // START KGU#301 2016-12-01: Bugfix #301
         //if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
         if (!this.suppressTransformation || !isParenthesized(condition))

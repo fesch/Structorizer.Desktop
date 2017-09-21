@@ -189,6 +189,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
@@ -359,6 +360,19 @@ public abstract class Element {
 	// START KGU#401 2017-05-17: Issue #405
 	public static int caseShrinkByRot = 8;			// Number of CASE branches to trigger the attempt to shrink width by rotating branches
 	// END KGU#401 2017-05-17
+	
+	// START KGU 2017-09-19: Performance tuning for syntax analysis
+	private static final java.util.regex.Pattern FLOAT_PATTERN1 = java.util.regex.Pattern.compile("[0-9]+([eE][0-9]+)?");
+	private static final java.util.regex.Pattern FLOAT_PATTERN2 = java.util.regex.Pattern.compile("[0-9]+[eE]");
+	private static final java.util.regex.Pattern INT_PATTERN = java.util.regex.Pattern.compile("[0-9]+");
+	private static final java.util.regex.Pattern BIN_PATTERN = java.util.regex.Pattern.compile("0b[01]+");
+	private static final java.util.regex.Pattern OCT_PATTERN = java.util.regex.Pattern.compile("0[0-7]+");
+	private static final java.util.regex.Pattern HEX_PATTERN = java.util.regex.Pattern.compile("0x[0-9A-Fa-f]+");
+	private static final java.util.regex.Pattern SIGN_PATTERN = java.util.regex.Pattern.compile("[+-]");
+	//private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("(\\w.*)(\\[.*\\])$"); // seems to have been wrong
+	private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("([A-Za-z]\\w*)(\\[.*\\])$");
+	private static final java.util.regex.Pattern RECORD_PATTERN = java.util.regex.Pattern.compile("[A-Za-z]\\w*\\{.*\\}");
+	// END KGU 2017-09-19
 
 	// START KGU#156 2016-03-10; Enh. #124
 	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
@@ -1979,22 +1993,24 @@ public abstract class Element {
 				}
 				// END KGU#331 2017-01-13
 				// START KGU#335 2017-09-18: Recompose floating-point literals (including those starting or ending with ".")
-				else if (thisPart.equals(".") || thisPart.matches("[0-9]+") && nextPart.equals(".")) {
+				else if (thisPart.equals(".") || (thisPart.equals("+") || thisPart.equals("-")) && nextPart.equals(".")) {
 					// If there was a number sequence before the decimal point glue them together
 					if (!thisPart.equals(".")) {
-						parts.set(i, thisPart + nextPart);
+						thisPart += nextPart;
+						parts.set(i, thisPart);
 						parts.delete(i+1);
-						thisPart = parts.get(i);
 					}
 					// Is there anything left at all?
 					if (i+1 < parts.count()) {
 						nextPart = parts.get(i+1);
-						if (nextPart.matches("[0-9]+([eE][0-9]+)?")) {
+						// nextPart.matches("[0-9]+([eE][0-9]+)?")
+						if (FLOAT_PATTERN1.matcher(nextPart).matches()) {
 							parts.set(i, thisPart + nextPart);
 							parts.delete(i+1);
 						}
-						else if (nextPart.matches("[0-9]+[eE]") &&
-								i+3 < parts.count() && parts.get(i+2).matches("[+-]") && parts.get(i+3).matches("[0-9]+")) {
+						// nextPart.matches("[0-9]+[eE]")
+						else if (FLOAT_PATTERN2.matcher(nextPart).matches() &&
+								i+3 < parts.count() && SIGN_PATTERN.matcher(parts.get(i+2)).matches() && INT_PATTERN.matcher(parts.get(i+3)).matches()) {
 							for (int j = 1; j <= 3; j++) {
 								thisPart += parts.get(i+1);
 								parts.delete(i+1);
@@ -2221,9 +2237,6 @@ public abstract class Element {
 	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence)
 	 */
 	protected void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes) {
-    	// START KGU#140 2017-01-31: Enh. #113: Better support for array arguments
-    	final String arrayPattern = "(\\w.*)(\\[.*\\])$";
-    	// END KGU#140 2017-01-31
 		StringList declGroups = StringList.explode(declText,";");
 		for(int i = 0; i < declGroups.count(); i++)
 		{
@@ -2271,11 +2284,12 @@ public abstract class Element {
 						// END KGU#375 2017-03-30
 						decl = tokens.get(tokens.count()-1);
 						// START KGU#140 2017-01-31: Enh. #113 Cope with C-style array declarations
-						if (decl.matches(arrayPattern)) {
+						Matcher arrayMatcher = ARRAY_PATTERN.matcher(decl); 
+						if (arrayMatcher.matches()) {
 							// Convert it into a Java-like declaration
-							String indices = decl.replaceFirst(arrayPattern, "$2").trim();
+							String indices = arrayMatcher.replaceFirst("$2").trim();
 							type += indices;
-							decl = decl.replaceFirst(arrayPattern, "$1");
+							decl = arrayMatcher.replaceFirst("$1");
 						}
 						// END KGU#140 2017-01-31
 					}
@@ -2360,6 +2374,7 @@ public abstract class Element {
 	 */
 	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr, boolean canonicalizeTypeNames)
 	{
+		Matcher recordMatcher = null;
 		String typeSpec = "";	// This means no info
 		// 1. Check whether it's a known typed variable
 		TypeMapEntry typeEntry = null;
@@ -2383,8 +2398,8 @@ public abstract class Element {
 			typeSpec = "String";
 		}
 		// START KGU#388 2017-09-12: Enh. #423: Record initializer support (name-prefixed!)
-		else if (expr.matches("[A-Za-z]\\w*\\{.*\\}") && typeMap != null){
-			typeSpec = expr.replaceFirst("([A-Za-z]\\w*)\\{.*\\}", "$1");
+		else if ((recordMatcher = RECORD_PATTERN.matcher(expr)).matches() && typeMap != null){
+			typeSpec = recordMatcher.replaceFirst("$1");
 			if (!typeMap.containsKey(typeSpec)) {
 				// It's hardly a valid prefixed record initializer...
 				typeSpec = "";
@@ -2393,7 +2408,7 @@ public abstract class Element {
 		// END KGU#388 2017-09-12
 		// START KGU#354 2017-05-22: Enh. #354
 		// These literals cause errors with Double.parseDouble(expr) and Integer.parseInt(expr)
-		else if (expr.matches("0b[01]+") || expr.matches("0[0-6]+") || expr.matches("0x[0-9A-Fa-f]+")) {
+		else if (BIN_PATTERN.matcher(expr).matches() || OCT_PATTERN.matcher(expr).matches() || HEX_PATTERN.matcher(expr).matches()) {
 			typeSpec = "int";
 		}
 		// END KGU#354 2017-05-22
@@ -3127,21 +3142,46 @@ public abstract class Element {
 		boolean isEnclosed = expression.startsWith("(") && expression.endsWith(")");
 		if (isEnclosed) {
 			StringList tokens = Element.splitLexically(expression, true);
-			int level = 0;
-			for (int i = 1; level >= 0 && i < tokens.count()-1; i++) {
-				String token = tokens.get(i);
-				if (token.equals("(")) {
-					level++;
-				}
-				else if (token.equals(")")) {
-					level--;
-				}
-			}
-			isEnclosed = level == 0;
+			isEnclosed = isParenthesized0(tokens);
 		}
 		return isEnclosed;
 	}
 	// END KGU#301 2016-12-01
+	
+	// START KGU#301 2017-09-19: Issue #302: Method isParenthesized(String expression) decomposed
+	/**
+	 * Helper method to detect exactly whether expression represented by the given {@code tokens} is enclosed
+	 * in parentheses.<br>
+	 * Simply to check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
+	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with parentheses without
+	 * being parenthesized.
+	 * @param tokens - the tokenised expression to be analysed as StringList
+	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
+	 * in C and derived languages.
+	 */
+	public static boolean isParenthesized(StringList tokens)
+	{
+		return tokens.count() > 1 && tokens.get(0).equals("(") && tokens.get(tokens.count()-1).equals(")")
+				&& isParenthesized0(tokens);
+	}
+	
+	// Internal check for both public isParenthesized() methods
+	private static boolean isParenthesized0(StringList tokens) {
+		boolean isEnclosed;
+		int level = 0;
+		for (int i = 1; level >= 0 && i < tokens.count()-1; i++) {
+			String token = tokens.get(i);
+			if (token.equals("(")) {
+				level++;
+			}
+			else if (token.equals(")")) {
+				level--;
+			}
+		}
+		isEnclosed = level == 0;
+		return isEnclosed;
+	}
+	// END KGU#301 2019-09-19
 
 	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
 	public boolean isDisabled()
@@ -3316,17 +3356,17 @@ public abstract class Element {
 		// Already explicitly negated?
 		if (first.equals("not") || first.equals("!")) {
 			int i = 1;
-			while (i < length && condTokens.get(i).matches("^\\s+$")) i++;
+			while (i < length && condTokens.get(i).trim().isEmpty()) i++;
 			if (i == length-1) {
-				// Obviously a single negated token, so drop the operator
+				// Obviously a single negated token, so just drop the operator
 				negCondition = condTokens.get(i); 
 			}
-			else if (i < length && Element.isParenthesized(condTokens.subSequence(i, length).concatenate())) {
+			else if (i < length && Element.isParenthesized(condTokens.subSequence(i, length))) {
 				negCondition = condTokens.subSequence(i+1, length-1).concatenate();
 			}
 		}
 		if (negCondition == null) {
-			if (!Element.isParenthesized(condition)) {
+			if (!Element.isParenthesized(condTokens)) {
 				condition = "(" + condition + ")";
 			}
 			negCondition = "not " + condition;

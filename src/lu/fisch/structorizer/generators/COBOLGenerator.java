@@ -475,7 +475,7 @@ public class COBOLGenerator extends Generator {
 		String constValue = _root.constants.get(_name);
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
-			 types = getTransformedTypes(typeInfo);
+			 types = getTransformedTypes(typeInfo, false);
 		}
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
 		else if (constValue != null) {
