@@ -179,13 +179,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#74 2015-11-29
 	// START KGU#178 2016-07-19: Enh. #160 Subroutines for export integration
 	protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
-	protected int subroutineInsertionLine = 0;	// where to insert subroutine definitions
-	protected String subroutineIndent = "";		// Indentation level for subroutines
-	protected StringList missingSubroutines = new StringList();	// Signatures of missing routines
+	/** where to insert subroutine definitions (line number) */
+	protected int subroutineInsertionLine = 0;
+	/** Indentation level (string) for subroutine definitions to be inserted */
+	protected String subroutineIndent = "";
+	/** Signatures of missing routines (routines called but not found) */
+	protected StringList missingSubroutines = new StringList();
+	/** Is the currently processed Root the top of the tree (the one the job was started for)? */
 	protected boolean topLevel = true;
 	// END KGU#178 2016-07-19
 	// START KGU#376 2017-09-20: Enh. #389
-	protected Hashtable<Root, SubTopoSortEntry> includedRoots = new Hashtable<Root, SubTopoSortEntry>();
+	/** Topologically sorted Queue of all diagrams recursively included by the Roots to be exported. */
+	protected Queue<Root> includedRoots = new LinkedList<Root>();
 	// END KGU#376 2017-09-20
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
@@ -1526,7 +1531,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#237 2016-08-10
 	
 	// START KGU#376 2017-09-20: Enh. #389
-	private void registerIncludedRoots(Root _root)
+	private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
 	{
 		if (_root.includeList != null && Arranger.hasInstance()) {
 			for (int i = 0; i < _root.includeList.count(); i++)
@@ -1535,12 +1540,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				String includeName = _root.includeList.get(i);
 				Vector<Root> candidates = Arranger.getInstance().findIncludesByName(includeName);
 				if (!candidates.isEmpty()) {
-					newIncl = putRootsToMap(candidates.firstElement(), _root, includedRoots);
+					newIncl = putRootsToMap(candidates.firstElement(), _root, _includedRoots);
 				}
-					// START KGU#237 2016-08-10: bugfix #228
-				else if ((newIncl = getAmongExportedRoots(includeName)) != null)
+				else if ((newIncl = getAmongExportedRoots(includeName, _includedRoots)) != null)
 				{
-					includedRoots.get(newIncl).callers.add(_root);
+					_includedRoots.get(newIncl).callers.add(_root);
 					// If we got here, then it's probably the top-level diagram itself
 					// So better be cautious with reference counting here (lest the
 					// including diagram would be suppressed on printing)
@@ -1548,14 +1552,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 				if (newIncl != null) {
 					// Now do the recursion (the Includable itself may include others)
-					registerIncludedRoots(newIncl);
+					registerIncludedRoots(newIncl, _includedRoots);
 				}
 			}
 		}
 	}
 
-	private Root getAmongExportedRoots(String includeName) {
-		for (Root included: includedRoots.keySet()) {
+	private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap) {
+		for (Root included: _includeMap.keySet()) {
 			if (includeName.equals(included.getMethodName())) {
 				return included;
 			}
@@ -1578,7 +1582,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (hasInput) rootsWithInput.add(_root);
 		if (hasEmptyInput) rootsWithEmptyInput.add(_root);
 		// START KGU#376 2017-09-20: Enh. #389
-		this.registerIncludedRoots(_root);
+		Hashtable<Root, SubTopoSortEntry> inclRoots = new Hashtable<Root, SubTopoSortEntry>();
+		this.registerIncludedRoots(_root, inclRoots);
+		includedRoots = sortTopologically(inclRoots);
 		// END KGU#376 2017-09-20
 	}
 	// END KGU#236/KGU#311 2016-12-22
@@ -2488,8 +2494,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * Performs a topological sorting of the Roots in the {@code _dependencyMap}
-	 * and returns the result as queue
-	 * @param _dependencyMap - the dependency graph of the routines as map
+	 * and returns the result as queue.<br/>
+	 * ATTENTION: This routine consumes (i.e. destroys) the passed-in {@code _dependencyMap}!
+	 * @param _dependencyMap - the dependency graph of the routines as map - will be emptied!
 	 * @return queue of the sorted diagrams (independent first, dependent ones following)
 	 */
 	protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap) {

@@ -212,8 +212,7 @@ public class PasGenerator extends Generator
 	/************ Code Generation **************/
 	
 	// START KGU#376/KGU#388 2017-09-20: Enh. #389, #423
-	private HashMap<Root, StringList> postponedInitialisations = new HashMap<Root, StringList>();
-	private HashMap<Root, StringList> complexConsts = new HashMap<Root, StringList>();
+	private HashMap<Root, StringList> structuredInitialisations = new HashMap<Root, StringList>();
 	private HashMap<String, StringList> includedStuff = new HashMap<String, StringList>(); 
 	// END KGU#376/KGU#388 2017-09-20
     
@@ -1215,13 +1214,14 @@ public class PasGenerator extends Generator
 				this.insertUserIncludes(_indent);
 				// END KGU#351 2017-02-26
 				code.add(_indent);
+				
 			}
 			// END KGU#194 2016-05-07
 
 			pr = "function";
 			// Compose the function header
 			signature += "(";
-			insertComment("TODO: declare the parameters and specify the result type!", _indent);
+			//insertComment("TODO: declare the parameters and specify the result type!", _indent);
 			for (int p = 0; p < _paramNames.count(); p++) {
 				signature += ((p > 0) ? "; " : "");
 				signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
@@ -1246,6 +1246,12 @@ public class PasGenerator extends Generator
 
 				code.add(_indent);
 				code.add(_indent + "IMPLEMENTATION");
+
+				// START KGU#388 2017-09-21: Enh. #423
+				StringList complexConsts = new StringList();
+				generateDeclarations(_root, _indent, null, complexConsts);
+				// END KGU#388 2017-09-21
+								
 				// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines here
 				subroutineInsertionLine = code.count();
 				subroutineIndent = _indent;
@@ -1256,7 +1262,7 @@ public class PasGenerator extends Generator
 				}
 				// END KGU#311 2016-12-26
 				code.add(_indent);
-				insertComment("TODO: Repeat the parameter and result type specifications of the INTERFACE section!", _indent);
+				//insertComment("TODO: Repeat the parameter and result type specifications of the INTERFACE section!", _indent);
 			}
 			// END KGU#194 2016-05-07
 
@@ -1300,56 +1306,11 @@ public class PasGenerator extends Generator
 		// START KGU#388 2017-09-20: Enh. #423
 		StringList complexConsts = new StringList();
 		// END KGU#388 2017-09-20
+
 		// START KGU#376 2017-09-21: Enh. #389 Concentrate all included definitions here
-		Root[] includes = new Root[]{};
-		boolean introPlaced = false;	// Has the CONST keyword already been written?
-		if (topLevel) {
-			includes = this.sortTopologically(this.includedRoots).toArray(includes);
-			for (Root incl: includes) {
-				if (incl != _root) {
-					introPlaced = generateConstDefs(incl, _indent, complexConsts, introPlaced);
-				}
-			}
-		}
-		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
-		// START KGU#375 2017-04-12: Enh. #388 now passed to generatePreamble
-		generateConstDefs(_root, _indent, complexConsts, introPlaced);
+		Root[] includes = generateDeclarations(_root, _indent, _varNames, complexConsts);
+		// END KGU#376 2017-09-21
 		
-		// START KGU#376 2017-09-21: Enh. #389 Concentrate all included definitions here
-		introPlaced = false;	// Has the TYPE keyword already been written?
-		for (Root incl: includes) {
-			if (incl != _root) {
-				introPlaced = generateTypeDefs(incl, _indent, introPlaced);
-			}
-		}
-		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
-		introPlaced = generateTypeDefs(_root, _indent, introPlaced);
-		// END KGU#388 2017-09-19
-		
-		if (!this.postponedInitialisations.isEmpty()) {
-			// Was there a type efinition inbetwenn?
-			if (introPlaced) {
-				code.add(_indent + "const");
-			}
-			// START KGU#375 2017-09-20: Enh. #388 initialization of structured constants AFTER type definitions
-			// (Only if structured constants are allowed, which is the case in most newer Pascal dialects)
-			for (Root incl: includes) {
-				if (incl != _root) {
-					this.insertPostponedInitialisations(incl, _indent + this.getIndent());
-				}
-			}
-			this.insertPostponedInitialisations(_root, _indent + this.getIndent());
-			// END KGU#375 2017-09-20	
-		}
-		
-		introPlaced = false;	// Has the TYPE keyword already been written?
-		for (Root incl: includes) {
-			if (incl != _root) {
-				introPlaced = generateVarDecls(incl, _indent, incl.getVarNames(), complexConsts, introPlaced);
-			}
-		}
-		introPlaced = generateVarDecls(_root, _indent, _varNames, complexConsts, introPlaced);
-		// END KGU#375 2017-04-12
 		code.add("");
         
 		// START KGU#178 2016-07-20: Enh. #160
@@ -1373,6 +1334,13 @@ public class PasGenerator extends Generator
 		//code.add(_indent + "begin");
 		if (!_root.isInclude()) {
 			code.add(_indent + "begin");
+    		// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
+			if (_root.isProgram()) {
+        		for (Root incl: includes) {
+        			generateCode(incl.children, _indent + this.getIndent());
+        		}
+			}
+    		// END KGU#376 2017-09-21
 		}
 		else {
 			code.add(_indent + "BEGIN");
@@ -1393,6 +1361,85 @@ public class PasGenerator extends Generator
 	}
 
 	/**
+	 * Appends the const, type, and var declarations for the referred includable roots
+	 * and - possibly - {@code _root} itself to the code, as far as they haven't been
+	 * generated already.<br/>
+	 * Note:<br/>
+	 * The declarations of referred includables are only appended if we are at top level.<br/>
+	 * The declarations of {@code _root} itself are suppressed if {@code _varNames} is
+	 * null - in this case it is assumed that we are in the IMPLEMENTATION part of a UNIT
+	 * outside of any function.
+	 * @param _root - the currently processed diagram (usually at top level)
+	 * @param _indent - the indentation stringmof the current nesting level
+	 * @param _varNames - list of variable names if this is within preamble, otherwise null
+	 * @param _complexConsts - a StringList being filled with the names of those structured
+	 * constants that cannot be converted to structured Pascal constants but are to
+	 * be deconstructed as mere variables in the body (shouldn't be used anymore).
+	 * @return
+	 */
+	protected Root[] generateDeclarations(Root _root, String _indent, StringList _varNames, StringList _complexConsts) {
+		Root[] includes = new Root[]{};
+		boolean introPlaced = false;	// Has the CONST keyword already been written?
+		if (topLevel) {
+			includes = includedRoots.toArray(includes);
+			for (Root incl: includes) {
+				if (incl != _root) {
+					introPlaced = generateConstDefs(incl, _indent, _complexConsts, introPlaced);
+				}
+			}
+		}
+		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
+		// START KGU#375 2017-04-12: Enh. #388 now passed to generatePreamble
+		if (_varNames != null) {
+			generateConstDefs(_root, _indent, _complexConsts, introPlaced);
+		}
+		
+		// START KGU#376 2017-09-21: Enh. #389 Concentrate all included definitions here
+		introPlaced = false;	// Has the TYPE keyword already been written?
+		for (Root incl: includes) {
+			if (incl != _root) {
+				introPlaced = generateTypeDefs(incl, _indent, introPlaced);
+			}
+		}
+		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
+		if (_varNames != null) {
+			introPlaced = generateTypeDefs(_root, _indent, introPlaced);
+		}
+		// END KGU#388 2017-09-19
+		
+		if (!this.structuredInitialisations.isEmpty()) {
+			// Was there a type definition inbetween?
+			if (introPlaced) {
+				code.add(_indent + "const");
+			}
+			// START KGU#375 2017-09-20: Enh. #388 initialization of structured constants AFTER type definitions
+			// (Only if structured constants are allowed, which is the case in most newer Pascal dialects)
+			for (Root incl: includes) {
+				if (incl != _root) {
+					this.insertPostponedInitialisations(incl, _indent + this.getIndent());
+				}
+			}
+			if (_varNames != null) {
+				this.insertPostponedInitialisations(_root, _indent + this.getIndent());
+			}
+			// END KGU#375 2017-09-20
+			code.add(_indent);
+		}
+		
+		introPlaced = false;	// Has the TYPE keyword already been written?
+		for (Root incl: includes) {
+			if (incl != _root) {
+				introPlaced = generateVarDecls(incl, _indent, incl.getVarNames(), _complexConsts, introPlaced);
+			}
+		}
+		if (_varNames != null) {
+			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
+		}
+		// END KGU#375 2017-04-12
+		return includes;
+	}
+
+	/**
 	 * Adds constant definitions for all non-complex constants in {@code _root.constants}.
 	 * @param _root - originating Root
 	 * @param _indent - current indentation level (as String)
@@ -1402,7 +1449,6 @@ public class PasGenerator extends Generator
 	 */
 	protected boolean generateConstDefs(Root _root, String _indent, StringList _complexConsts, boolean _sectionBegun) {
 		if (!_root.constants.isEmpty()) {
-			boolean writeOrigin = _root.isInclude();
 			String indentPlus1 = _indent + this.getIndent();
 			// _root.constants is expected to be a LinkedHashMap, such that topological
 			// ordering should not be necessary
@@ -1420,7 +1466,7 @@ public class PasGenerator extends Generator
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
 						code.add(_indent + "const");
-						insertComment("TODO: check and accomplish constant definitions", indentPlus1);
+						//insertComment("TODO: check and accomplish constant definitions", indentPlus1);
 						_sectionBegun = true;
 					}
 					code.add(indentPlus1 + constEntry.getKey() + " = " + expr + ";");
@@ -1443,14 +1489,14 @@ public class PasGenerator extends Generator
 						// May be the assignment of e.g. another constant of the same type
 						generatedInit = StringList.getNew(constEntry.getKey() + " = " + expr + ";");
 					}
-					StringList postponedInits = this.postponedInitialisations.get(_root);
+					StringList postponedInits = this.structuredInitialisations.get(_root);
 					// Note: This effectively modifies an entry of attribute this.postponedInitialisations!
 					if (postponedInits != null) {
 						postponedInits.add("");
 						postponedInits.add(generatedInit);
 					}
 					else {
-						this.postponedInitialisations.put(_root, generatedInit);
+						this.structuredInitialisations.put(_root, generatedInit);
 					}
 					// Only needed if structured constant definitions aren't allowed
 					//_complexConsts.add(constEntry.getKey());
@@ -1528,7 +1574,7 @@ public class PasGenerator extends Generator
 			}
 			if (!_sectionBegun) {
 				code.add(_indent + "var");
-				insertComment("TODO: check and accomplish variable declarations", _indent + this.getIndent());
+				//insertComment("TODO: check and accomplish variable declarations", _indent + this.getIndent());
 				_sectionBegun = true;
 			}
 			TypeMapEntry typeInfo = typeMap.get(varName); 
@@ -1598,8 +1644,9 @@ public class PasGenerator extends Generator
 		}
 		if (!handled && topLevel && _root.isInclude()) {
 			String diagrName = _root.getMethodName();
-			if (this.includedStuff.containsKey(diagrName)) {
-				this.includedStuff.get(diagrName).addIfNew(_id);
+			StringList doneIds = this.includedStuff.get(diagrName);
+			if (doneIds != null) {
+				handled = !doneIds.addIfNew(_id);
 			}
 			else {
 				this.includedStuff.put(diagrName, StringList.getNew(_id));
@@ -1610,13 +1657,13 @@ public class PasGenerator extends Generator
 
 	// START KGU#375/KGU#376/KGU#388 2017-09-20: Enh. #388, #389, #423 
 	private void insertPostponedInitialisations(Root _root, String _indent) {
-		StringList initLines = this.postponedInitialisations.get(_root);
+		StringList initLines = this.structuredInitialisations.get(_root);
 		if (initLines != null) {
 			for (int i = 0; i < initLines.count(); i++) {
 				code.add(_indent + initLines.get(i));
 			}
 			// The same initialisations must not be inserted another time somewhere else!
-			this.postponedInitialisations.remove(_root);
+			this.structuredInitialisations.remove(_root);
 		}
 	}
 	// END KGU#375/KGU#376/KGU#388 2017-09-20
@@ -1654,6 +1701,11 @@ public class PasGenerator extends Generator
         	{
         		code.add(_indent);
         		code.add(_indent + "BEGIN");
+        		// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
+        		while (!includedRoots.isEmpty()) {
+        			generateCode(includedRoots.remove().children, _indent + this.getIndent());
+        		}
+        		// END KGU#376 2017-09-21
         		code.add(_indent + "END.");
         	}
         }
