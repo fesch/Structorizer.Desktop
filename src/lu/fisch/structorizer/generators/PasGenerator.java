@@ -525,11 +525,11 @@ public class PasGenerator extends Generator
 						isArrayOrRecordInit = posBrace == 0 && expr.endsWith("}");
 						if (isArrayOrRecordInit)
 						{
-							generateArrayInit(varName, expr, _indent, isDisabled);
+							generateArrayInit(varName, expr, _indent, null, isDisabled);
 						}
 						else if (posBrace > 0 && Function.testIdentifier(expr.substring(0,  posBrace), ".") && expr.endsWith("}"))
 						{
-							generateRecordInit(varName, expr, _indent, isDisabled);
+							generateRecordInit(varName, expr, _indent, false, isDisabled);
 							isArrayOrRecordInit = true;
 						}
 
@@ -602,44 +602,50 @@ public class PasGenerator extends Generator
 	 * @param _varName - name of the variable to be initialized
 	 * @param _expr - transformed initializer
 	 * @param _indent - current indentation string
+	 * @param _constType - in case of a constant the array type description (otherwise null)
 	 * @param _isDisabled - whether the source element is disabled (means to comment out the code)
 	 */
-	private void generateArrayInit(String _varName, String _expr, String _indent, boolean _isDisabled) {
+	private void generateArrayInit(String _varName, String _expr, String _indent, String _constType, boolean _isDisabled) {
 		StringList elements = Element.splitExpressionList(
 				_expr.substring(1, _expr.length()-1), ",");
-		// In order to be consistent with possible index access
-		// at other positions in code, we use the standard Java
-		// index range here (though in Pascal indexing usually 
-		// starts with 1 but may vary widely). We solve the problem
-		// by providing a configurable start index constant
-		//insertComment("TODO: Check indexBase value (automatically generated)", _indent);
-		insertComment("Hint: Automatically decomposed array initialization", _indent);
-		// START KGU#332 2017-01-30: We must be better prepared for two-dimensional arrays
-		//insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
-		//		_indent.length());
-		//for (int el = 0; el < elements.count(); el++)
-		//{
-		//	addCode(varName + "[indexBase_" + varName + " + " + el + "] := " + 
-		//			elements.get(el) + ";",
-		//			_indent, isDisabled);
-		//}
-		//String baseName = varName;
-		if (_varName.matches("\\w+\\[.*\\]")) {
-			//baseName = varName.replaceAll("(\\w.*)\\[(.*)\\]", "$1_$2");
-			_varName = _varName.replace("]", ", ");
+		if (_constType != null) {
+			addCode(_varName + ": " + _constType + " = (" + elements.concatenate(", ") + ");", _indent, _isDisabled);
 		}
 		else {
-			_varName = _varName + "[";
+			// In order to be consistent with possible index access
+			// at other positions in code, we use the standard Java
+			// index range here (though in Pascal indexing usually 
+			// starts with 1 but may vary widely). We solve the problem
+			// by providing a configurable start index constant
+			//insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+			insertComment("Hint: Automatically decomposed array initialization", _indent);
+			// START KGU#332 2017-01-30: We must be better prepared for two-dimensional arrays
+			//insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
+			//		_indent.length());
+			//for (int el = 0; el < elements.count(); el++)
+			//{
+			//	addCode(varName + "[indexBase_" + varName + " + " + el + "] := " + 
+			//			elements.get(el) + ";",
+			//			_indent, isDisabled);
+			//}
+			//String baseName = varName;
+			if (_varName.matches("\\w+\\[.*\\]")) {
+				//baseName = varName.replaceAll("(\\w.*)\\[(.*)\\]", "$1_$2");
+				_varName = _varName.replace("]", ", ");
+			}
+			else {
+				_varName = _varName + "[";
+			}
+			//insertDeclaration("const", "indexBase_" + baseName + " = 0;",
+			//		_indent.length());
+			for (int ix = 0; ix < elements.count(); ix++)
+			{
+				addCode(_varName /*+ "indexBase_" + baseName + " + "*/ + ix + "] := " + 
+						elements.get(ix) + ";",
+						_indent, _isDisabled);
+			}
+			// END KGU#332 2017-01-30
 		}
-		//insertDeclaration("const", "indexBase_" + baseName + " = 0;",
-		//		_indent.length());
-		for (int ix = 0; ix < elements.count(); ix++)
-		{
-			addCode(_varName /*+ "indexBase_" + baseName + " + "*/ + ix + "] := " + 
-					elements.get(ix) + ";",
-					_indent, _isDisabled);
-		}
-		// END KGU#332 2017-01-30
 	}
 	// START KGU#388 2017-09-20: Enh. #423
 	/**
@@ -648,18 +654,34 @@ public class PasGenerator extends Generator
 	 * @param _varName - name of the variable to be initialized
 	 * @param _expr - transformed initializer
 	 * @param _indent - current indentation string
+	 * @param _forConstant - whether this initializer is needed for a constant (a variable otherwise)
 	 * @param _isDisabled - whether the source element is disabled (means to comment out the code)
 	 */
-	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _isDisabled) {
+	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled) {
 		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
-		//insertDeclaration("const", "indexBase_" + baseName + " = 0;",
-		//		_indent.length());
-		for (Entry<String, String> comp: components.entrySet())
-		{
-			String compName = comp.getKey();
-			if (!compName.startsWith("§")) {
-				addCode(_varName + "." + comp.getKey() + " := " + comp.getValue() + ";",
-						_indent, _isDisabled);
+		if (_forConstant) {
+			String typeName = components.get("§TYPENAME§");
+			String indentPlus1 = _indent + this.getIndent();
+			String indentPlus2 = indentPlus1 + this.getIndent();
+			addCode(_varName + ": " + typeName + " = (", _indent, _isDisabled);
+			for (Entry<String, String> comp: components.entrySet())
+			{
+				String compName = comp.getKey();
+				if (!compName.startsWith("§")) {
+					addCode(comp.getKey() + ":\t" + comp.getValue() + ";",
+							indentPlus2, _isDisabled);
+				}
+			}
+			addCode(");", indentPlus1, _isDisabled);
+		}
+		else {
+			for (Entry<String, String> comp: components.entrySet())
+			{
+				String compName = comp.getKey();
+				if (!compName.startsWith("§")) {
+					addCode(_varName + "." + comp.getKey() + " := " + comp.getValue() + ";",
+							_indent, _isDisabled);
+				}
 			}
 		}
 	}
@@ -1301,8 +1323,24 @@ public class PasGenerator extends Generator
 			}
 		}
 		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
-		generateTypeDefs(_root, _indent, introPlaced);
+		introPlaced = generateTypeDefs(_root, _indent, introPlaced);
 		// END KGU#388 2017-09-19
+		
+		if (!this.postponedInitialisations.isEmpty()) {
+			// Was there a type efinition inbetwenn?
+			if (introPlaced) {
+				code.add(_indent + "const");
+			}
+			// START KGU#375 2017-09-20: Enh. #388 initialization of structured constants AFTER type definitions
+			// (Only if structured constants are allowed, which is the case in most newer Pascal dialects)
+			for (Root incl: includes) {
+				if (incl != _root) {
+					this.insertPostponedInitialisations(incl, _indent + this.getIndent());
+				}
+			}
+			this.insertPostponedInitialisations(_root, _indent + this.getIndent());
+			// END KGU#375 2017-09-20	
+		}
 		
 		introPlaced = false;	// Has the TYPE keyword already been written?
 		for (Root incl: includes) {
@@ -1341,13 +1379,13 @@ public class PasGenerator extends Generator
 		}
 		// END KGU#376 2017-09-21
 
-		// START KGU#375 2017-09-20: Enh. #388 Workaround for the initialization of complex constants
-		for (Root incl: includes) {
-			if (incl != _root) {
-				this.insertPostponedInitialisations(incl, _indent + this.getIndent());
-			}
-		}
-		this.insertPostponedInitialisations(_root, _indent + this.getIndent());
+		// START KGU#375 2017-09-20: Enh. #388 Workaround if structured constants aren't allowed
+		//for (Root incl: includes) {
+		//	if (incl != _root) {
+		//		this.insertPostponedInitialisations(incl, _indent + this.getIndent());
+		//	}
+		//}
+		//this.insertPostponedInitialisations(_root, _indent + this.getIndent());
 		// END KGU#375 2017-09-20
 
 		// START KGU#376 2017-09-21: Enh. #389 Includables cannot have an own body
@@ -1393,10 +1431,10 @@ public class PasGenerator extends Generator
 					if (expr.endsWith("}")) {
 						// Seems to be an initializer
 						if (constType.isArray()) {
-							generateArrayInit(constEntry.getKey(), expr, "", false);
+							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType), false);
 						}
 						else {
-							generateRecordInit(constEntry.getKey(), expr, "", false);
+							generateRecordInit(constEntry.getKey(), expr, "", true, false);
 						}
 						generatedInit = code.subSequence(lineNo, code.count());						
 						code.remove(lineNo, code.count());
@@ -1414,7 +1452,8 @@ public class PasGenerator extends Generator
 					else {
 						this.postponedInitialisations.put(_root, generatedInit);
 					}
-					_complexConsts.add(constEntry.getKey());
+					// Only needed if structured constant definitions aren't allowed
+					//_complexConsts.add(constEntry.getKey());
 				}
 				// END KGU#388 2017-09-19
 			}
@@ -1433,6 +1472,7 @@ public class PasGenerator extends Generator
 	protected boolean generateTypeDefs(Root _root, String _indent, boolean _sectionBegun) {
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
+		String indentPlus3 = indentPlus2 + this.getIndent();
 		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo().entrySet()) {
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
@@ -1448,9 +1488,9 @@ public class PasGenerator extends Generator
 				if (type.isRecord()) {
 					code.add(indentPlus1 + key.substring(1) + " = RECORD");
 					for (Entry<String, TypeMapEntry> compEntry: type.getComponentInfo(false).entrySet()) {
-						code.add(indentPlus2 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue()) + ";");
+						code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue()) + ";");
 					}
-					code.add(indentPlus1 + "END;");
+					code.add(indentPlus2 + "END;");
 				}
 				else {
 					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type) + ";");					
@@ -1576,7 +1616,7 @@ public class PasGenerator extends Generator
 				code.add(_indent + initLines.get(i));
 			}
 			// The same initialisations must not be inserted another time somewhere else!
-			this.postponedInitialisations.clear();
+			this.postponedInitialisations.remove(_root);
 		}
 	}
 	// END KGU#375/KGU#376/KGU#388 2017-09-20
