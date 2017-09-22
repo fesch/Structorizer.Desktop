@@ -101,13 +101,14 @@ import lu.fisch.utils.StringList;
 public class CParser extends CodeParser
 {
 	
-	// Default diagram name for an importable program diagram with global definitions
+	/** Default diagram name for an importable program diagram with global definitions */
 	private static final String DEFAULT_GLOBAL_NAME = "GlobalDefinitions";
-	// Template for the generation of grammar-conform user type ids (typedef-declared)
+	/** Template for the generation of grammar-conform user type ids (typedef-declared) */
 	private static final String USER_TYPE_ID_MASK = "user_type_%03d";
-	// Replacement pattern for the decomposition of composed typdefs (named struct def + type def)
+	/** Replacement pattern for the decomposition of composed typdefs (named struct def + type def) */
 	private static final String TYPEDEF_DECOMP_REPLACER = "$1 $2;\ntypedef $1 $3;";
-	// START KGU#407 2017-06-22: Enh. #420 - rule ids representing statements, used as stoppers for comment rerieval
+	// START KGU#407 2017-06-22: Enh. #420 
+	/** rule ids representing statements, used as stoppers for comment retrieval */
 	private static final int[] statementIds = new int[]{
 		RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN,
 		RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2,

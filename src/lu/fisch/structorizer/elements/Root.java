@@ -211,7 +211,7 @@ public class Root extends Element {
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
 	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
-	public DiagramType diagrType = DiagramType.DT_MAIN;
+	private DiagramType diagrType = DiagramType.DT_MAIN;
 	// END KGU#376 2017-05-16
 
 	// some fields

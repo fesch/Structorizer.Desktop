@@ -1169,6 +1169,11 @@ public class PasGenerator extends Generator
 		{
 			code.add(_indent);
 		}
+		// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - This is the unit comment, not the function comment
+		if (topLevel && _root.isSubroutine()) {
+			insertComment("Unit provides a routine with following functionality:", _indent);
+		}
+		// END KGU#194/KGU#376 2017-09-22
 		insertComment(_root, _indent);
 		if (topLevel)
 		{
@@ -1214,7 +1219,9 @@ public class PasGenerator extends Generator
 				this.insertUserIncludes(_indent);
 				// END KGU#351 2017-02-26
 				code.add(_indent);
-				
+				// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - the function header shall have the comment
+				insertComment(_root, _indent);
+				// END KGU#194/KGU#376 2017-09-22
 			}
 			// END KGU#194 2016-05-07
 
@@ -1680,6 +1687,7 @@ public class PasGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				varName = varNames.get(vx);
 				code.add(_indent);
+				insertComment("Automatically inserted to ensure Pascal value return. May be dropped on Structorizer reimport.", _indent);
 				code.add(_indent + this.getIndent() + _root.getMethodName() + " := " + varName + ";");
 			}
 		}

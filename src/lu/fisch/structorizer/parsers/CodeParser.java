@@ -776,9 +776,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	protected abstract File prepareTextfile(String _textToParse, String _encoding);
 	
 	/**
-	 * Called after the build for every created Root and allows thus to do some 
-	 * @param root
-	 * @param sourceFileName
+	 * Called after the build for every created Root and allows thus to do some
+	 * postprocessing for individual created Roots.
+	 * @param root - one of the build diagrams
+	 * @param sourceFileName - the name of the originating source file 
 	 */
 	protected abstract void subclassUpdateRoot(Root root, String sourceFileName);
 

@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.07.04      Issue #423: Structure changes to support record types and named
  *                                      type definitions
  *      Kay Gürtzig     2017.09.18      Enh. #423: dummy singleton introduced (impacts poorly tested!)
+ *      Kay Gürtzig     2017.09.22      Bugfix #428 Defective replacement pattern for "short" in canonicalizeType(String)
  *
  ******************************************************************************************************
  *
@@ -58,7 +59,7 @@ import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
- * Entry of the central type map for variables and named types.
+ * Recursive data record of the central type map for variables and named types.
  * @author Kay Gürtzig
  */
 public class TypeMapEntry {
@@ -390,7 +391,7 @@ public class TypeMapEntry {
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
-		type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$short$3");
+		type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$1short$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
@@ -423,7 +424,7 @@ public class TypeMapEntry {
 	public static boolean isStandardType(String typeName)
 	{
 		String canonicalType = canonicalizeType(typeName);
-		if (canonicalType.equals("string") || canonicalType.equals("char")) {
+		if (canonicalType.equals("string") || canonicalType.equals("char") || canonicalType.equals("boolean")) {
 			return true;
 		}
 		for (String canon: canonicalNumericTypes) {
