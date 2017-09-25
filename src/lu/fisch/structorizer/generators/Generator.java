@@ -74,6 +74,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.04.26      Signature of method exportCode() modified to return the used directory
  *      Kay Gürtzig     2017.05.16      Enh. #372: New method insertCopyright()
  *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
+ *      Kay Gürtzig     2017.09.20      Enh. #388/#423: comment mapping for declarations introduced
  *
  ******************************************************************************************************
  *
@@ -96,7 +97,7 @@ package lu.fisch.structorizer.generators;
  *      	
  *      2015.11.30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
  *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
- *      - parameter names and types as well as functio name and type are preprocessed
+ *      - parameter names and types as well as function name and type are preprocessed
  *      - result mechanisms are also analysed
  *
  *      2014.11.16 - Enhancement
@@ -178,8 +179,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
 	// END KGU#74 2015-11-29
 	// START KGU#178 2016-07-19: Enh. #160 Subroutines for export integration
+	/** Recursive usage map of called subroutines */
 	protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
-	/** where to insert subroutine definitions (line number) */
+	/** Line number where to insert subroutine definitions */
 	protected int subroutineInsertionLine = 0;
 	/** Indentation level (string) for subroutine definitions to be inserted */
 	protected String subroutineIndent = "";
@@ -189,6 +191,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected boolean topLevel = true;
 	// END KGU#178 2016-07-19
 	// START KGU#376 2017-09-20: Enh. #389
+	/** Recursive usage map of diagram includes */
+	protected Hashtable<Root, SubTopoSortEntry> includeMap = new Hashtable<Root, SubTopoSortEntry>();
 	/** Topologically sorted Queue of all diagrams recursively included by the Roots to be exported. */
 	protected Queue<Root> includedRoots = new LinkedList<Root>();
 	// END KGU#376 2017-09-20
@@ -211,6 +215,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#348 2017-02-19: Support for translation of Parallel elements
 	protected boolean hasParallels = false;
 	// END KGU#348 2017-02-19
+	// START KGU#424 2017-09-25: We introduce a source mapping for declaration comments
+	/** Maps declared names (variable, constants, types) per Root to originating Elements */
+	protected HashMap<Root, HashMap<String, Instruction>> declarationCommentMap = new HashMap<Root, HashMap<String, Instruction>>();
+	/** holds the Instruction the previous declaration comment was taken from */
+	protected Instruction lastDeclSource = null;
+	// END KGU#424 2017-09-25
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -674,7 +684,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * language.<br/>
 	 * The method calls a subclassable empty method {@link #prepareIncludeItem(String)}
 	 * for every item configured before the insertion takes place - if some
-	 * preprocessing of the items is necessary then the generator subclass may
+	 * pre-processing of the items is necessary then the generator subclass may
 	 * override this method.<br/>
 	 * The configured list of include items may also be retrieved directly via
 	 * method {@link #optionIncludeFiles()} and then be processed individually.
@@ -703,7 +713,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	/**
-	 * Method may preprocess an include file or module name for the import / use
+	 * Method may pre-process an include file or module name for the import / use
 	 * clause. This version is called by {@link #insertUserIncludes(String)} and does nothing but
 	 * may be overridden. 
 	 * @see #getIncludePattern()
@@ -1577,15 +1587,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	private final void gatherElementInformationRoot(Root _root)
 	{
 		hasOutput = hasInput = hasEmptyInput = false;
+		// START KGU#424 2017-09-25: Care for correct comment positioning
+		this.declarationCommentMap.put(_root, new HashMap<String, Instruction>());
+		// END KGU#4242 2017-09-25
 		gatherElementInformation(_root);
 		if (hasOutput) rootsWithOutput.add(_root);
 		if (hasInput) rootsWithInput.add(_root);
 		if (hasEmptyInput) rootsWithEmptyInput.add(_root);
-		// START KGU#376 2017-09-20: Enh. #389
-		Hashtable<Root, SubTopoSortEntry> inclRoots = new Hashtable<Root, SubTopoSortEntry>();
-		this.registerIncludedRoots(_root, inclRoots);
-		includedRoots = sortTopologically(inclRoots);
-		// END KGU#376 2017-09-20
+		// START KGU#376 2017-09-25: Enh. #389
+		this.registerIncludedRoots(_root, includeMap);
+		// END KGU#376 2017-09-25
 	}
 	// END KGU#236/KGU#311 2016-12-22
 	// START KGU#236 2016-08-10: Issue #227
@@ -1625,7 +1636,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				hasInput = true;
 				if (instr.isEmptyInput()) hasEmptyInput = true;
 			}
-			if (instr.isOutput()) hasOutput = true;			
+			if (instr.isOutput()) hasOutput = true;	
+			// START KGU#424 2017-09-25: We must build a comment map for declarations
+			Root owner = Element.getRoot(instr);
+			StringList declNames = owner.getVarNames(instr);
+			StringList text = instr.getUnbrokenText();
+			for (int i = 0; i < text.count(); i++) {
+				String line = text.get(i);
+				if (line.startsWith("type ") && line.contains("=")) {
+					declNames.add(":" + line.substring(4, line.indexOf("=")).trim());
+				}
+			}
+			HashMap<String, Instruction> commentMap = this.declarationCommentMap.get(owner);
+			for (int i = 0; i < declNames.count(); i++) {
+				commentMap.put(declNames.get(i), instr);
+			}
+			// END KGU#424 2017-09-25
 		}
 		// START KGU#348 2017-02-19: Support for translation of Parallel elements
 		else if (_ele instanceof Parallel)
@@ -2391,6 +2417,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					}		
 				}
 				// END KGU#236 2016-08-10
+				
+				// START KGU#376 2017-09-25: Enh. #389 Set up the topologically sorted include list
+				includedRoots = sortTopologically(includeMap);
+				// END KGU#376 2017-09-25
+				// START KGU#424 2017-09-25: Care for the mapping of appropriate comments
+				for (Root incl: includedRoots.toArray(new Root[]{})) {
+					gatherElementInformationRoot(incl);
+				}
+				// END KGU#424 2017-09-25
 
 				// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
 				// (And with them possibly any such characters that had not been there for indentation!)
@@ -2888,6 +2923,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				this.insertComment("============================================================", "");
 				code.add("");
 			}
+			// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
+			this.hasParallels = false;
+			// START KGU#348 2017-09-25
 			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
 			this.usesFileAPI = false;
 			gatherElementInformationRoot(root);

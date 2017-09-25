@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig         2017.09.19      Enh. #423: Export of record types
  *      Kay Gürtzig         2017.09.21      Enh. #388, #389: Export strategy for Includables and structured constants
+ *      Kay Gürtzig         2017.09.25      Enh. #388, #423: Positioning of declaration comments revised
  *
  ******************************************************************************************************
  *
@@ -478,12 +479,21 @@ public class PasGenerator extends Generator
 		if (!insertAsComment(_inst, _indent)) {
 			
 			boolean isDisabled = _inst.isDisabled();
-			
-			insertComment(_inst, _indent);
+
+			// START KGU#424 2017-09-25: Avoid the comment here if the element contains mere declarations
+			//insertComment(_inst, _indent);
+			boolean commentInserted = false;
+			// END KGU#424 2017-09-25
 
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			Pattern preReturnMatch = Pattern.compile(getKeywordPattern(preReturn)+"([\\W].*|$)");
 			StringList lines = _inst.getUnbrokenText();
+			// START KGU#424 2017-09-25: Put the comment if the element doesn't contain anything else
+			if (lines.getLongString().trim().isEmpty()) {
+				insertComment(_inst, _indent);
+				commentInserted = true;
+			}
+			// END KGU#424 2017-09-25
 			for (int i=0; i<lines.count(); i++)
 			{
 				// START KGU#74 2015-12-20: Bug #22 There might be a return outside of a Jump element, handle it!
@@ -494,6 +504,12 @@ public class PasGenerator extends Generator
 					String argument = line.substring(preReturn.length()).trim();
 					if (!argument.isEmpty())
 					{
+						// START KGU#424 2017-09-25: Put the comment o substantial content
+						if (!commentInserted) {
+							insertComment(_inst, _indent);
+							commentInserted = true;
+						}
+						// END KGU#424 2017-09-25
 						addCode(this.procName + " := " + transform(argument) + ";",
 								_indent, isDisabled); 
 					}
@@ -501,6 +517,12 @@ public class PasGenerator extends Generator
 					if (sq == null || !(sq.parent instanceof Root) || sq.getIndexOf(_inst) != sq.getSize()-1 ||
 							i+1 < lines.count())
 					{
+						// START KGU#424 2017-09-25: Put the comment o substantial content
+						if (!commentInserted) {
+							insertComment(_inst, _indent);
+							commentInserted = true;
+						}
+						// END KGU#424 2017-09-25
 						addCode("exit;", _indent, isDisabled);
 					}
 				}
@@ -521,6 +543,12 @@ public class PasGenerator extends Generator
 						String varName = transline.substring(0, asgnPos).trim();
 						String expr = transline.substring(asgnPos+2).trim();
 						int posBrace = expr.indexOf("{");
+						// START KGU#424 2017-09-25: Put the comment o substantial content
+						if (!commentInserted) {
+							insertComment(_inst, _indent);
+							commentInserted = true;
+						}
+						// END KGU#424 2017-09-25
 						isArrayOrRecordInit = posBrace == 0 && expr.endsWith("}");
 						if (isArrayOrRecordInit)
 						{
@@ -582,6 +610,12 @@ public class PasGenerator extends Generator
 							}
 						}
 						if (transline != null) {
+							// START KGU#424 2017-09-25: Put the comment o substantial content
+							if (!commentInserted) {
+								insertComment(_inst, _indent);
+								commentInserted = true;
+							}
+							// END KGU#424 2017-09-25
 							addCode(transline, _indent, isDisabled);
 						}
 						// END KGU#261 2017-01-26
@@ -1466,7 +1500,7 @@ public class PasGenerator extends Generator
 				if (wasDefHandled(_root, constName)) {
 					continue;
 				}
-				// START KGU#388 2017-09-19: Enh. #423 Pascal doesn't allow structured constants
+				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
 				//code.add(indentPlus1 + constEntry.getKey() + " = " + transform(constEntry.getValue()) + ";");
 				String expr = transform(constEntry.getValue());
 				TypeMapEntry constType = _root.getTypeInfo().get(constEntry.getKey()); 
@@ -1476,6 +1510,9 @@ public class PasGenerator extends Generator
 						//insertComment("TODO: check and accomplish constant definitions", indentPlus1);
 						_sectionBegun = true;
 					}
+					// START KGU#424 2017-09-25
+					insertDeclComment(_root, indentPlus1, constName);
+					// END KGU#424 2017-09-25
 					code.add(indentPlus1 + constEntry.getKey() + " = " + expr + ";");
 				}
 				else {
@@ -1483,6 +1520,9 @@ public class PasGenerator extends Generator
 					int lineNo = code.count();
 					if (expr.endsWith("}")) {
 						// Seems to be an initializer
+						// START KGU#424 2017-09-25
+						insertDeclComment(_root, "", constName);
+						// END KGU#424 2017-09-25
 						if (constType.isArray()) {
 							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType), false);
 						}
@@ -1496,11 +1536,11 @@ public class PasGenerator extends Generator
 						// May be the assignment of e.g. another constant of the same type
 						generatedInit = StringList.getNew(constEntry.getKey() + " = " + expr + ";");
 					}
-					StringList postponedInits = this.structuredInitialisations.get(_root);
-					// Note: This effectively modifies an entry of attribute this.postponedInitialisations!
-					if (postponedInits != null) {
-						postponedInits.add("");
-						postponedInits.add(generatedInit);
+					StringList structuredInits = this.structuredInitialisations.get(_root);
+					// Note: This effectively modifies an entry of attribute this.structuredInitialisations!
+					if (structuredInits != null) {
+						structuredInits.add("");
+						structuredInits.add(generatedInit);
 					}
 					else {
 						this.structuredInitialisations.put(_root, generatedInit);
@@ -1514,7 +1554,7 @@ public class PasGenerator extends Generator
 		}
 		return _sectionBegun;
 	}
-	
+
 	/**
 	 * Adds constant definitions for all non-complex constants in {@code _root.constants}.
 	 * @param _root - originating Root
@@ -1536,7 +1576,9 @@ public class PasGenerator extends Generator
 					code.add(_indent + "type");
 					_sectionBegun = true;
 				}
-				// FIXME: We need a topological sorting
+				// START KGU#424 2017-09-25
+				insertDeclComment(_root, indentPlus1, key);
+				// END KGU#424 2017-09-25
 				TypeMapEntry type = typeEntry.getValue();
 				if (type.isRecord()) {
 					code.add(indentPlus1 + key.substring(1) + " = RECORD");
@@ -1563,6 +1605,7 @@ public class PasGenerator extends Generator
 	 * @return TODO
 	 */
 	protected boolean generateVarDecls(Root _root, String _indent, StringList _varNames, StringList _complexConsts, boolean _sectionBegun) {
+		String indentPlus1 = _indent + this.getIndent();
 		// START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
 		HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();
 		// END KGU#261 2017-01-16
@@ -1584,6 +1627,9 @@ public class PasGenerator extends Generator
 				//insertComment("TODO: check and accomplish variable declarations", _indent + this.getIndent());
 				_sectionBegun = true;
 			}
+			// START KGU#424 2017-09-25
+			insertDeclComment(_root, indentPlus1, varName);
+			// END KGU#424 2017-09-25
 			TypeMapEntry typeInfo = typeMap.get(varName); 
 			StringList types = null;
 			if (typeInfo != null) {
@@ -1610,17 +1656,17 @@ public class PasGenerator extends Generator
 				}
 				type = prefix + type;
 				if (type.contains("???")) {
-					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
+					insertComment(varName + ": " + type + ";", indentPlus1);
 				}
 				else {
 					if (isComplexConst) {
 						varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
 					}
-					code.add(_indent + this.getIndent() + varName + ": " + type + ";");
+					code.add(indentPlus1 + varName + ": " + type + ";");
 				}
 			}
 			else {
-				insertComment(varName, _indent + this.getIndent());
+				insertComment(varName, indentPlus1);
 			}
 			// END KGU#261 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388
@@ -1629,6 +1675,39 @@ public class PasGenerator extends Generator
 		return _sectionBegun;
 	}
 
+	/**
+	 * Tries to find the defining instruction for identifier {@code _id} within
+	 * the given Root {@code _root} or one of the identified includables and puts
+	 * inserts the element comment at the current position in this case.
+	 * @param _root - the currently generated Root
+	 * @param _indent - the current indentation as String
+	 * @param _id - the declared identifier (const, var or type)
+	 */
+	private void insertDeclComment(Root _root, String _indent, String _id) {
+		if (this.declarationCommentMap.containsKey(_root)) {
+			Instruction srcElement = this.declarationCommentMap.get(_root).get(_id);
+			if (srcElement != null && srcElement != this.lastDeclSource) {
+				insertComment(srcElement, _indent);
+				// One comment is enough
+				this.lastDeclSource = srcElement;
+				return;
+			}
+		}
+		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+			if (_root.includeList != null
+					&& _root.includeList.contains(incl.getMethodName()) 
+					&& this.declarationCommentMap.containsKey(incl)) {
+				Instruction srcElement = this.declarationCommentMap.get(incl).get(_id);
+				if (srcElement != null && srcElement != this.lastDeclSource) {
+					insertComment(srcElement, _indent);
+					// One comment is enough
+					this.lastDeclSource = srcElement;
+					return;
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Checks whether the given {@code _id} has already been defined by one of the diagrams
 	 * include by {@code _root}. If not and {@code _root} is an includable diagram at top level

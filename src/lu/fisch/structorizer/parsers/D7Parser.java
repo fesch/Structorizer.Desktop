@@ -1274,7 +1274,7 @@ public class D7Parser extends CodeParser
 				// END KGU#194 2016-05-08
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				String comment = this.retrieveComment(_reduction);
-				if (comment != null) {
+				if (comment != null && !root.getComment().contains(comment)) {
 					root.getComment().add(StringList.explode(comment, "\n"));
 				}
 				// END KGU#407 2017-06-22
