@@ -4737,7 +4737,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String errors = "";
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
 		GENParser genp = new GENParser();
-		this.parserPlugins = genp.parse(buff);
+		parserPlugins = genp.parse(buff);
 		try { buff.close(); } catch (IOException e1) {}
 		for (int i = 0; i < parserPlugins.size(); i++)
 		{

@@ -75,6 +75,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.05.16      Enh. #372: New method insertCopyright()
  *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
  *      Kay Gürtzig     2017.09.20      Enh. #388/#423: comment mapping for declarations introduced
+ *      Kay Gürtzig     2017.09.26      Enh. #423: Supporting code parts from PasGenerator adopted
  *
  ******************************************************************************************************
  *
@@ -196,6 +197,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/** Topologically sorted Queue of all diagrams recursively included by the Roots to be exported. */
 	protected Queue<Root> includedRoots = new LinkedList<Root>();
 	// END KGU#376 2017-09-20
+	// START KGU#376/KGU#388 2017-09-26: Enh. #389, #423
+	protected HashMap<Root, StringList> structuredInitialisations = new HashMap<Root, StringList>();
+	private HashMap<String, StringList> includedStuff = new HashMap<String, StringList>(); 
+	// END KGU#376/KGU#388 2017-09-26
+    
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 //	protected boolean hasOutput = false;
@@ -226,7 +232,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
 	protected StringList varNames = new StringList();
 	// END KGU#129/KGU#61 2015-01-22
-	// START KGU  2016-03-29: For keyword detection improvement
+	// START KGU 2016-03-29: For keyword detection improvement
 	private Vector<StringList> splitKeywords = new Vector<StringList>();
 	// END KGU 2016-03-29
 	
@@ -551,6 +557,41 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#236 2016-12-22
 
+	// START KGU#376 2017-09-26: Enh. #389 - with inckudable diagrams, there might be several references
+	/**
+	 * Checks whether the given {@code _id} has already been defined by one of the diagrams
+	 * included by {@code _root}. If not and {@code _root} is an includable diagram at top level
+	 * then registers the {@code _id} with {@code _root} in {@link #includedStuff}.
+	 * @param _root - the currently exported Root
+	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
+	 * @return true if there had already been a definition before
+	 */
+	protected boolean wasDefHandled(Root _root, String _id)
+	{
+		boolean handled = false;
+		if (_root.includeList != null) {
+			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
+				String inclName = _root.includeList.get(i);
+				StringList defined = this.includedStuff.get(inclName);
+				if (defined != null) {
+					handled = defined.contains(_id);
+				}
+			}
+		}
+		if (!handled && topLevel && _root.isInclude()) {
+			String diagrName = _root.getMethodName();
+			StringList doneIds = this.includedStuff.get(diagrName);
+			if (doneIds != null) {
+				handled = !doneIds.addIfNew(_id);
+			}
+			else {
+				this.includedStuff.put(diagrName, StringList.getNew(_id));
+			}
+		}
+		return handled;
+	}
+	// END KGU#376 2017-09-26
+
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
 	/**
@@ -756,6 +797,41 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#277 2016-10-13
 
+	// START KGU#376/KGU#388 2017-09-25: Enh. #389, #423
+	/**
+	 * Tries to find the defining instruction for identifier {@code _id} within
+	 * the given Root {@code _root} or one of the identified includables and puts
+	 * inserts the element comment at the current position in this case.
+	 * @param _root - the currently generated Root
+	 * @param _indent - the current indentation as String
+	 * @param _id - the declared identifier (const, var or type)
+	 */
+	protected void insertDeclComment(Root _root, String _indent, String _id) {
+		if (this.declarationCommentMap.containsKey(_root)) {
+			Instruction srcElement = this.declarationCommentMap.get(_root).get(_id);
+			if (srcElement != null && srcElement != this.lastDeclSource) {
+				insertComment(srcElement, _indent);
+				// One comment is enough
+				this.lastDeclSource = srcElement;
+				return;
+			}
+		}
+		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+			if (_root.includeList != null
+					&& _root.includeList.contains(incl.getMethodName()) 
+					&& this.declarationCommentMap.containsKey(incl)) {
+				Instruction srcElement = this.declarationCommentMap.get(incl).get(_id);
+				if (srcElement != null && srcElement != this.lastDeclSource) {
+					insertComment(srcElement, _indent);
+					// One comment is enough
+					this.lastDeclSource = srcElement;
+					return;
+				}
+			}
+		}
+	}
+	// END KGU#376/KGU#388 2017-09-25
+
 	/**
 	 * Overridable general text transformation routine, performing the following steps:<br/>
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
@@ -942,6 +1018,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return _type;
 	}
 	// END KGU#1 2015-11-30	
+
+	// START KGU#388 2017-09-26: Enh. #423
+	/**
+	 * Creates a type description for the target language from the given
+	 * TypeMapEntry {@code typeInfo}
+	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
+	 * @return a String suited as type description in declarations etc. of the target language 
+	 */
+	protected String transformTypeFromEntry(TypeMapEntry typeInfo) {
+		// Just a dummy, to be overridden by subclasses
+		return typeInfo.getCanonicalType(true, true);
+	}
+	// END KGU#388 2017-09-26
 	
 	// START KGU#261 2017-01-26: Enh. #259/#335
 	protected StringList getTransformedTypes(TypeMapEntry typeEntry, boolean preferName)
@@ -1328,7 +1417,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// Avoid too much nonsense on indexed variables
 		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
     	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-		String lvalPattern = "(.*?)[\\[](.*)[\\]](.*?)";
+		String lvalPattern = "(.*?)\\[(.*)\\](.*?)";
     	Regex r = new Regex(lvalPattern,"$1 $3");
     	// END KGU#334 2017-01-30
     	String name = r.replaceAll(_lval);
@@ -2440,10 +2529,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 				// END KGU#178 2016-07-20
 				
-				// START KGU#355 2017-03-05: Bugfix #365 we may need global defs for C
-				code = insertGlobalDefs(code);
-				// END KGU#355 2017-03-05
-
 //				for (String charsetName : Charset.availableCharsets().keySet())
 //				{
 //					System.out.println(charsetName);
@@ -2485,19 +2570,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return exportDir;
 		// END KGU 2017-04-26
 	}
-	
-	// START KGU#355 2017-03-05: Bugfix #365
-	/**
-	 * Hook to allow subclasses to insert global definitions at an appropriate place
-	 * after all other code generation has been accomplished in this.code.
-	 * This base method doesn't do anything, just passes the argument through
-	 * @param _code - total code string as prepared by the previous code generation
-	 * @return modified code as string
-	 */
-	protected String insertGlobalDefs(String _code) {
-		return _code;
-	}
-	// END KGU#355 2017-03-05
 	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
 	/**

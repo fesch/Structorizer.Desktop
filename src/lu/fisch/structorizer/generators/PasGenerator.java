@@ -212,11 +212,6 @@ public class PasGenerator extends Generator
 	
 	/************ Code Generation **************/
 	
-	// START KGU#376/KGU#388 2017-09-20: Enh. #389, #423
-	private HashMap<Root, StringList> structuredInitialisations = new HashMap<Root, StringList>();
-	private HashMap<String, StringList> includedStuff = new HashMap<String, StringList>(); 
-	// END KGU#376/KGU#388 2017-09-20
-    
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
@@ -312,8 +307,9 @@ public class PasGenerator extends Generator
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
 	 * @return a String suited as Pascal type description in declarations etc. 
 	 */
+	@Override
 	protected String transformTypeFromEntry(TypeMapEntry typeInfo) {
-		// Record type descriptio won't usually occur (rather names)
+		// Record type descriptions won't usually occur here (rather names)
 		String _typeDescr;
 //		String canonType = typeInfo.getTypes().get(0);
 		String canonType = typeInfo.getCanonicalType(true, true);
@@ -325,7 +321,7 @@ public class PasGenerator extends Generator
 			_typeDescr += "array ";
 			int minIndex = typeInfo.getMinIndex(i);
 			int maxIndex = typeInfo.getMaxIndex(i);
-			if (minIndex >= 0 && maxIndex >= minIndex) {
+			if (maxIndex >= minIndex) {
 				_typeDescr += "[" + minIndex + ".." + maxIndex + "] ";
 			}
 			_typeDescr += "of ";
@@ -1673,72 +1669,6 @@ public class PasGenerator extends Generator
 		}
 		// END KGU#375 2017-04-12
 		return _sectionBegun;
-	}
-
-	/**
-	 * Tries to find the defining instruction for identifier {@code _id} within
-	 * the given Root {@code _root} or one of the identified includables and puts
-	 * inserts the element comment at the current position in this case.
-	 * @param _root - the currently generated Root
-	 * @param _indent - the current indentation as String
-	 * @param _id - the declared identifier (const, var or type)
-	 */
-	private void insertDeclComment(Root _root, String _indent, String _id) {
-		if (this.declarationCommentMap.containsKey(_root)) {
-			Instruction srcElement = this.declarationCommentMap.get(_root).get(_id);
-			if (srcElement != null && srcElement != this.lastDeclSource) {
-				insertComment(srcElement, _indent);
-				// One comment is enough
-				this.lastDeclSource = srcElement;
-				return;
-			}
-		}
-		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-			if (_root.includeList != null
-					&& _root.includeList.contains(incl.getMethodName()) 
-					&& this.declarationCommentMap.containsKey(incl)) {
-				Instruction srcElement = this.declarationCommentMap.get(incl).get(_id);
-				if (srcElement != null && srcElement != this.lastDeclSource) {
-					insertComment(srcElement, _indent);
-					// One comment is enough
-					this.lastDeclSource = srcElement;
-					return;
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Checks whether the given {@code _id} has already been defined by one of the diagrams
-	 * include by {@code _root}. If not and {@code _root} is an includable diagram at top level
-	 * then registers the {@code _id} with {@code _root} in {@link #includedStuff}.
-	 * @param _root - the currently exported Root
-	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
-	 * @return true if there had already been a definition before
-	 */
-	private boolean wasDefHandled(Root _root, String _id)
-	{
-		boolean handled = false;
-		if (_root.includeList != null) {
-			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
-				String inclName = _root.includeList.get(i);
-				StringList defined = this.includedStuff.get(inclName);
-				if (defined != null) {
-					handled = defined.contains(_id);
-				}
-			}
-		}
-		if (!handled && topLevel && _root.isInclude()) {
-			String diagrName = _root.getMethodName();
-			StringList doneIds = this.includedStuff.get(diagrName);
-			if (doneIds != null) {
-				handled = !doneIds.addIfNew(_id);
-			}
-			else {
-				this.includedStuff.put(diagrName, StringList.getNew(_id));
-			}
-		}
-		return handled;
 	}
 
 	// START KGU#375/KGU#376/KGU#388 2017-09-20: Enh. #388, #389, #423 
