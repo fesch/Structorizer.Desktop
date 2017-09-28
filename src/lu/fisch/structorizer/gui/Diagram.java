@@ -1155,7 +1155,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		rect.height = visibleRect.height;
     	}
     	// END KGU#276 2016-11-21
-    	scrollRectToVisible(rect);
+    	try {
+    		scrollRectToVisible(rect);
+    	}
+    	catch (Exception ex) {
+    		System.err.println("*** Executor.draw(" + element + "):" + ex);
+    	}
     	redraw();	// This is to make sure the drawing rectangles are correct
     }
     // END KGU#276 2016-10-09
@@ -4732,7 +4737,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String errors = "";
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
 		GENParser genp = new GENParser();
-		this.parserPlugins = genp.parse(buff);
+		parserPlugins = genp.parse(buff);
 		try { buff.close(); } catch (IOException e1) {}
 		for (int i = 0; i < parserPlugins.size(); i++)
 		{
