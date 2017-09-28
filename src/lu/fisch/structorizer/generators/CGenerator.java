@@ -392,7 +392,7 @@ public class CGenerator extends Generator {
 			}
 		}
 		// END KGU#342 2017-02-07
-		return tokens.concatenate();
+		return tokens.concatenate().trim();
 	}
 	// END KGU#93 2015-12-21
 
@@ -512,6 +512,13 @@ public class CGenerator extends Generator {
 	// END KGU#140 2017-01-31
 	
 	// START KGU#388 2017-09-26: Enh. #423 struct type support
+	/**
+	 * Returns a target-language expression replacing the Structorizer record
+	 * initializer- as far as it can be handled within one line
+	 * @param constValue - the Structorizer record initializer
+	 * @param typeInfo - the TypeMapEntry describing the record type
+	 * @return the equivalent target code as expression string
+	 */
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
@@ -735,17 +742,28 @@ public class CGenerator extends Generator {
 					// we must cut off the type specification (i.e. all text preceding the
 					// variable name).
 					// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
-					if (pureTokens.get(0).equals("const") && !this.isInternalDeclarationAllowed()) {
+					if (pureTokens.get(0).equals("const")) {
 						// Cases 1.1.1 or 2.1
-						// Should already have been defined
-						continue;
+						if (!this.isInternalDeclarationAllowed()) {
+							// Should already have been defined
+							continue;
+						}
+						// We try to enrich or accomplish defective type information
+						Root root = Element.getRoot(_inst);
+						if (root.constants.get(varName) != null) {
+							this.insertDeclaration(root, varName, _indent, true);
+							// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
+							commentInserted = true;
+							// END KGU#424 2017-09-26
+							continue;
+						}	
 					}
 					// END KGU#375 2017-04-12
 					if (isDecl && (this.isInternalDeclarationAllowed() || exprTokens != null)) {
 						// cases 1.1.2 or 2.2
 						if (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim")) {
 							// Case 1.1.2a/b or 2.2a/b (Pascal/BASIC declaration)
-							String separator = tokens.get(0).equalsIgnoreCase("var") ? ":" : "as";
+							String separator = tokens.get(0).equalsIgnoreCase("dim") ? "as" : ":";
 							int posColon = tokens.indexOf(separator, 2, false);
 							// Declaration well-formed?
 							if (posColon > 0) {
@@ -1528,17 +1546,7 @@ public class CGenerator extends Generator {
 		code.add(_indent + "{");
 		
 		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
-		if (topLevel) {
-			int startLine = code.count();
-			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent + this.getIndent());
-				generateCode(incl.children, _indent + this.getIndent());
-				insertComment("END initialization for \"" + incl.getMethodName() + "\"", _indent + this.getIndent());
-			}
-			if (code.count() > startLine) {
-				code.add(_indent);
-			}
-		}
+		insertGlobalInitialisations(_indent + this.getIndent());
 		// END KGU#376 2017-09-26
 		
 		return _indent + this.getIndent();
@@ -1592,7 +1600,7 @@ public class CGenerator extends Generator {
 			this.generateTypeDefs(_root, _indent);
 		}
 		// END KGU#388 2017-09-26
-        // START KGU 2015-11-30: List the variables to be declared
+        // START KGU 2015-11-30: List the variables to be declared (This will include merely declared variables!)
 		for (int v = 0; v < _varNames.count(); v++) {
 	        // START KGU#261/#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
 			//insertComment(varNames.get(v), _indent);
@@ -1603,6 +1611,15 @@ public class CGenerator extends Generator {
 			// END KGU#261/KGU#332 2017-01-16
 		}
 		// END KGU 2015-11-30
+		// START KGU#376 2017-09-28: Enh. #423 - Specific care for merely declared (uninitialized) variables
+		if (_root.isInclude()) {
+			for (String id: this.typeMap.keySet()) {
+				if (!id.startsWith(":") && !_varNames.contains(id)) {
+					insertDeclaration(_root, id, _indent, _force || !this.isInternalDeclarationAllowed());
+				}
+			}
+		}
+		// END KGU#376 2017-09-28
 		if (code.count() > lastLine) {
 			code.add(_indent);
 		}

@@ -1146,7 +1146,8 @@ public class For extends Element implements ILoop {
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
 		if (!this.isForInLoop()) {
-			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false, false);
+			// This may be regarded as an explicit type declaration
+			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, true, false);
 		}
 		// START KGU#261 2017-04-14: Enh. #259 Try to make as much sense of the value list as possible
 		else {

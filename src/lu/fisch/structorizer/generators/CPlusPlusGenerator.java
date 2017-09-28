@@ -562,6 +562,11 @@ public class CPlusPlusGenerator extends CGenerator {
         }
 		
 		code.add("{");
+
+		// START KGU#376 2017-09-28: Enh. #389 - insert the initialization code of the includables
+		insertGlobalInitialisations(_indent + this.getIndent());
+		// END KGU#376 2017-09-28
+
 		return _indent + this.getIndent();
 	}
 

@@ -3261,7 +3261,7 @@ public abstract class Element {
 				}
 				else {
 					// Add a new entry to the type map
-					typeMap.put(varName, new TypeMapEntry(typeSpec, null, this, lineNo, isAssigned, true, isCStyle));
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, this, lineNo, isAssigned, explicitly, isCStyle));
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {

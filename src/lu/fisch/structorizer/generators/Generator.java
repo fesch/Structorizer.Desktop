@@ -1100,7 +1100,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			String quotes = "";
 			// START KGU#399 2017-05-16: bugfix #403
 			//String tail = _interm.substring(keyword.length()).trim();
-			String tail = _interm.replaceFirst(pattern, "$1");
+			String tail = _interm.replaceFirst(pattern, "$1").trim();
 			// END KGU#399 2017-05-16
 			if (tail.startsWith("\"")) {
 				quotes = "\"";
@@ -1164,7 +1164,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// START KGU#399 2017-05-16: bugfix #403
 		//if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		String gap = (!keyword.isEmpty() && Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)) ? "[\\W]" : "");
-		String pattern = "^" + getKeywordPattern(keyword) + "(" + gap + ".*|$)";
+		String pattern = "^" + getKeywordPattern(keyword) + "\\s*(" + gap + ".*|$)";
 		if (!keyword.isEmpty() && _interm.matches(pattern))
 		// END KGU#399 2017-05-16
 		{
@@ -2321,6 +2321,28 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		
 	}
 	// END KGU#74 2015-11-30
+	
+	// START KGU#376 2017-09-28: Enh. #389 - insert the initialization code of the includables
+	/**
+	 * Generates the (initialisation) code of all includable diagrams recursively required by
+	 * the roots to be exported in topological order 
+	 * @param _indent - current indentation string
+	 */
+	protected void insertGlobalInitialisations(String _indent) {
+		if (topLevel) {
+			int startLine = code.count();
+			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+				insertComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+				generateCode(incl.children, _indent);
+				insertComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
+			}
+			if (code.count() > startLine) {
+				code.add(_indent);
+			}
+		}
+	}
+	// END KGU#376 2017-09-28
+
 	
 	// START KGU#363 2017-05-16: Enh. #372 - more ease for subclasses to place the license information
 	/**
