@@ -901,7 +901,8 @@ public class Instruction extends Element {
 			// FIXME: In future, array type definitions are also to be handled...
 			posAsgnmt = tokens.indexOf("=");
 			String typename = tokens.concatenate("", 1, posAsgnmt).trim();
-			typeSpec = tokens.concatenate("", posAsgnmt + 1, tokens.count()).trim();
+			// Because of possible C-style declarations we must not glue the tokens together with "".
+			typeSpec = tokens.concatenate(" ", posAsgnmt + 1, tokens.count()).trim();
 			int posBrace = typeSpec.indexOf("{");
 			StringList compNames = new StringList();
 			StringList compTypes = new StringList();

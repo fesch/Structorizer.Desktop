@@ -2324,6 +2324,39 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#376 2017-09-28: Enh. #389 - insert the initialization code of the includables
 	/**
+	 * Inserts the definitions and declarations of all includable diagrams recursively required by
+	 * the roots to be exported in topological order
+	 * @param _root - the currently exported Root (supposed to be the hierarchy top)
+	 * @param _indent - the current indentation
+	 * @param _force - Whether the insertion is to be forced no regard of declaration policy
+	 */
+	protected void insertGlobalDefinitions(Root _root, String _indent, boolean _force) {
+		boolean thisDone = false;
+		code.add("");
+		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+			insertDefinitions(incl, _indent, incl.getVarNames(), _force);
+			if (incl == _root) {
+				thisDone = true;
+			}
+		}
+		if (_root.isInclude() && !thisDone) {
+			insertDefinitions(_root, _indent, this.varNames, true);				
+		}
+	}
+	
+	/**
+	 * Inserts constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
+	 * @param _root - the diagram the daclarations and definitions of are to be inserted
+	 * @param _indent - the proper indentation as String
+	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
+	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
+	 */
+	protected void insertDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
 	 * Generates the (initialisation) code of all includable diagrams recursively required by
 	 * the roots to be exported in topological order 
 	 * @param _indent - current indentation string

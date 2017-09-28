@@ -442,6 +442,7 @@ public class JavaGenerator extends CGenerator
 	 */
 	@Override
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
+		// This is practically identical to C#
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		String recordInit = "new " + typeInfo.typeName + "(";
@@ -480,6 +481,7 @@ public class JavaGenerator extends CGenerator
 	 * @param _isDisabled - indicates whether the code is o be commented out
 	 */
 	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
+		// This is practically identical to C#
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue);
 		String typeName = comps.get("§TYPENAME§");
 		TypeMapEntry recordType = null;
@@ -572,15 +574,17 @@ public class JavaGenerator extends CGenerator
 		{
 			valueList = "{" + items.concatenate(", ") + "}";
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will just try four ways: int,
+			// do if items are heterogeneous? We will just try four ways: int,
 			// double, String, and derived type name. If none of them match we use
 			// Object and add a TODO comment.
 			int nItems = items.count();
 			boolean allInt = true;
 			boolean allDouble = true;
 			boolean allString = true;
+			// START KGU#388 2017-09-28: Enh. #423
 			boolean allCommon = true;
 			String commonType = null;
+			// END KGU#388 2017-09-28
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
@@ -609,6 +613,7 @@ public class JavaGenerator extends CGenerator
 					allString = item.startsWith("\"") && item.endsWith("\"") &&
 							!item.substring(1, item.length()-1).contains("\"");
 				}
+				// START KGU#388 2017-09-28: Enh. #423
 				if (allCommon)
 				{
 					String itType = Element.identifyExprType(this.typeMap, item, true);
@@ -619,9 +624,13 @@ public class JavaGenerator extends CGenerator
 						allCommon = false;
 					}
 				}
+				// END KGU#388 2017-09-28
 			}
+			// START KGU#388 2017-09-28: Enh. #423
+			//if (allInt) itemType = "int";
 			if (allCommon) itemType = commonType;
 			else if (allInt) itemType = "int";
+			// END KGU#388 2017-09-28
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
 			String arrayName = "array20160322";
@@ -643,7 +652,7 @@ public class JavaGenerator extends CGenerator
 		}
 		else
 		{
-			// START KGU 2017-09-28
+			// START KGU#388 2017-09-28 #423
 			//itemType = "Object";
 			//this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
 			TypeMapEntry listType = this.typeMap.get(valueList);
@@ -656,7 +665,7 @@ public class JavaGenerator extends CGenerator
 				itemType = "Object";
 				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
 			}
-			// END KGU 2017-09-28
+			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
 		}
 
@@ -864,17 +873,7 @@ public class JavaGenerator extends CGenerator
 			// END KGU#363 2017-05-16
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			if (!_root.isProgram()) {
-				boolean thisDone = false;
-				code.add("");
-				for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-					insertDefinitions(incl, indentPlus1, incl.getVarNames(), true);
-					if (incl == _root) {
-						thisDone = true;
-					}
-				}
-				if (_root.isInclude() && !thisDone) {
-					insertDefinitions(_root, indentPlus1, this.varNames, true);				
-				}
+				insertGlobalDefinitions(_root, indentPlus1, true);
 			}
 			// END KGU#376 2017-09-28
 			code.add("");
@@ -911,16 +910,7 @@ public class JavaGenerator extends CGenerator
 			code.add("");
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			//insertComment("TODO Declare and initialise class variables here", this.getIndent());
-			boolean thisDone = false;
-			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertDefinitions(incl, indentPlus1, incl.getVarNames(), true);
-				if (incl == _root) {
-					thisDone = true;
-				}
-			}
-			if (_root.isInclude() && !thisDone) {
-				insertDefinitions(_root, indentPlus1, this.varNames, false);				
-			}
+			insertGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
 			code.add("");
 			code.add(indentPlus1 + "/**");

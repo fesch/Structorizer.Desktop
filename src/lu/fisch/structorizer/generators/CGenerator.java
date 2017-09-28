@@ -1487,19 +1487,10 @@ public class CGenerator extends Generator {
 			code.add("");
 			// END KGU#351 2017-02-26
 			// START KGU#376 2017-09-26: Enh. #389 - definitions from all included diagrams will follow
-			boolean thisDone = false;
-			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertDefinitions(incl, _indent, incl.getVarNames(), false);
-				if (incl == _root) {
-					thisDone = true;
-				}
-			}
-			if (_root.isInclude() && !thisDone) {
-				insertDefinitions(_root, _indent, this.varNames, false);				
-			}
+			insertGlobalDefinitions(_root, _indent, false);
 			// END KGU#376 2017-09-26
 			// END KGU#236 2016-08-10
-		// START KGU#178 2016-07-20: Enh. #160
+			// START KGU#178 2016-07-20: Enh. #160
 			subroutineInsertionLine = code.count();
 			subroutineIndent = _indent;
 			

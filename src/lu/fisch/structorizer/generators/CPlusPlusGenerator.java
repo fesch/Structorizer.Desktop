@@ -491,16 +491,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			this.insertUserIncludes("");
 			// END KGU#351 2017-02-26
 			// START KGU#376 2017-09-27: Enh. #389 - definitions from all included diagrams will follow
-			boolean thisDone = false;
-			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertDefinitions(incl, _indent, incl.getVarNames(), true);
-				if (incl == _root) {
-					thisDone = true;
-				}
-			}
-			if (_root.isInclude() && !thisDone) {
-				insertDefinitions(_root, _indent, this.varNames, false);				
-			}
+			insertGlobalDefinitions(_root, _indent, true);
 			// END KGU#376 2017-09-27
 			// START KGU#311 2016-12-22: Enh. #314 - support for file API
 			if (this.usesFileAPI) {

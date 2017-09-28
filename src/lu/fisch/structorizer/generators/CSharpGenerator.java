@@ -58,6 +58,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.16      Bugfix #51: Export of empty input instructions produced " = Console.ReadLine();"
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
+ *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
  *
  ******************************************************************************************************
  *
@@ -118,7 +119,9 @@ package lu.fisch.structorizer.generators;
 import lu.fisch.utils.*;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.*;
@@ -337,6 +340,108 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#332 2017-04-14
 
+	// START KGU#388 2017-09-28: Enh. #423
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordInit(java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
+	 */
+	@Override
+	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
+		// This is practically identical to Java
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
+		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
+		String recordInit = "new " + typeInfo.typeName + "(";
+		boolean isFirst = true;
+		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
+			String compName = compEntry.getKey();
+			String compVal = comps.get(compName);
+			if (isFirst) {
+				isFirst = false;
+			}
+			else {
+				recordInit += ", ";
+			}
+			if (!compName.startsWith("§")) {
+				if (compVal == null) {
+					recordInit += "null";
+				}
+				else if (compEntry.getValue().isRecord()) {
+					recordInit += transformRecordInit(compVal, compEntry.getValue());
+				}
+				else {
+					recordInit += transform(compVal);
+				}
+			}
+		}
+		recordInit += ")";
+		return recordInit;
+	}
+
+	/**
+	 * Generates code that either allows direct assignment or decomposes the record
+	 * initializer into separate component assignments
+	 * @param _lValue - the left side of the assignment (without modifiers!)
+	 * @param _recordValue - the record initializier according to Structorizer syntax
+	 * @param _indent - current indentation level (as String)
+	 * @param _isDisabled - indicates whether the code is o be commented out
+	 */
+	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
+		// This is practically identical to Java
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue);
+		String typeName = comps.get("§TYPENAME§");
+		TypeMapEntry recordType = null;
+		if (typeName == null || (recordType = typeMap.get(":"+typeName)) == null || !recordType.isRecord()) {
+			// Just decompose it (requires that the target variable has been initialized before).
+			super.generateRecordInit(_lValue, _recordValue, _indent, _isDisabled);
+		}
+		// This way has the particular advantage not to fail with an uninitialized variable (important for Java!). 
+		addCode(_lValue + " = " + this.transformRecordInit(_recordValue, recordType) + ";", _indent, _isDisabled);
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#generateTypeDef(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry, java.lang.String, boolean)
+	 */
+	@Override
+	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String typeKey = ":" + _typeName;
+		if (this.wasDefHandled(_root, typeKey, true)) {
+			return;
+		}
+		insertDeclComment(_root, _indent, typeKey);
+		if (_type.isRecord()) {
+			String indentPlus1 = _indent + this.getIndent();
+			String indentPlus2 = indentPlus1 + this.getIndent();
+			addCode("public struct " + _typeName + "{", _indent, _asComment);
+			boolean isFirst = true;
+			StringBuffer constructor = new StringBuffer();
+			StringList constrBody = new StringList();
+			constructor.append("public " + _typeName + "(");
+			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+				String compName = compEntry.getKey();
+				String typeStr = transformTypeFromEntry(compEntry.getValue());
+				addCode("public " + typeStr + "\t" + compName + ";",
+						indentPlus1, _asComment);
+				if (!isFirst) constructor.append(", ");
+				constructor.append(typeStr + " p_" + compName);
+				constrBody.add(compName + " = p_" + compName + ";");
+				isFirst = false;
+			}
+			constructor.append(")");
+			addCode(constructor.toString(), indentPlus1, _asComment);
+			addCode("{", indentPlus1, _asComment);
+			for (int i = 0; i < constrBody.count(); i++) {
+				addCode(constrBody.get(i), indentPlus2, _asComment);
+			}
+			addCode("}", indentPlus1, _asComment);
+			addCode("};", _indent, _asComment);
+		}
+		else {
+			// FIXME: What do we here in C#? This must be placed at another position
+			addCode("using "  + _typeName + " = " + this.transformTypeFromEntry(_type) + ";",
+					_indent, true);
+		}
+	}
+	// END KGU#388 2017-09-28
+
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
 	 * We try our very best to create a working loop from a FOR-IN construct
@@ -360,12 +465,17 @@ public class CSharpGenerator extends CGenerator
 		{
 			valueList = "{" + items.concatenate(", ") + "}";
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will just try three types: int,
-			// double and String, and if none of them match we add a TODO comment.
+			// do if items are heterogeneous? We will just try four ways: int,
+			// double, String, and derived type name. If none of them match we use
+			// Object and add a TODO comment.
 			int nItems = items.count();
 			boolean allInt = true;
 			boolean allDouble = true;
 			boolean allString = true;
+			// START KGU#388 2017-09-28: Enh. #423
+			boolean allCommon = true;
+			String commonType = null;
+			// END KGU#388 2017-09-28
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
@@ -395,7 +505,11 @@ public class CSharpGenerator extends CGenerator
 							!item.substring(1, item.length()-1).contains("\"");
 				}
 			}
-			if (allInt) itemType = "int";
+			// START KGU#388 2017-09-28: Enh. #423
+			//if (allInt) itemType = "int";
+			if (allCommon) itemType = commonType;
+			else if (allInt) itemType = "int";
+			// END KGU#388 2017-09-28
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
 			String arrayName = "array20160322";
@@ -416,8 +530,20 @@ public class CSharpGenerator extends CGenerator
 		}
 		else
 		{
-			itemType = "object";
-			this.insertComment("TODO: Find a more specific item type than object and/or prepare the elements of the array", indent);
+			// START KGU#388 2017-09-28 #423
+			//itemType = "Object";
+			//this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+			TypeMapEntry listType = this.typeMap.get(valueList);
+			if (listType != null && listType.isArray() && (itemType = listType.getCanonicalType(true, false)) != null
+					&& itemType.startsWith("@"))
+			{
+				itemType = this.transformType(itemType.substring(1), "Object");	
+			}
+			else {
+				itemType = "Object";
+				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+			}
+			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
 		}
 
@@ -520,7 +646,9 @@ public class CSharpGenerator extends CGenerator
 					return true;
 				}
 			});
-			insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+			if (!containedParallels.isEmpty()) {
+				insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+			}
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
 				String workerNameBase = "Worker" + Integer.toHexString(par.hashCode()) + "_";
@@ -573,7 +701,9 @@ public class CSharpGenerator extends CGenerator
 					i++;
 				}
 			}
-			insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+			if (!containedParallels.isEmpty()) {
+				insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+			}
 			code.add(_indent);
 		}
 		finally {
@@ -616,6 +746,8 @@ public class CSharpGenerator extends CGenerator
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
+		String indentPlus1 = _indent + this.getIndent();
+		String indentPlus2 = indentPlus1 + this.getIndent();
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
@@ -623,6 +755,11 @@ public class CSharpGenerator extends CGenerator
 			// START KGU#363 2017-05-16: Enh. #372
 			insertCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
+			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
+			if (!_root.isProgram()) {
+				insertGlobalDefinitions(_root, indentPlus1, true);
+			}
+			// END KGU#376 2017-09-28
 			code.add("");
 			subroutineInsertionLine = code.count();	// default position for subroutines
 			subroutineIndent = _indent;
@@ -659,20 +796,23 @@ public class CSharpGenerator extends CGenerator
 				code.add(_indent);
 			}
 			// END KU#311 2017-01-05
-			insertComment("TODO: Declare and initialise class and member variables here", _indent + this.getIndent());
+			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
+			//insertComment("TODO Declare and initialise class variables here", indentPlus1);
+			insertGlobalDefinitions(_root, indentPlus1, true);
+			// END KGU#376 2017-09-28
 			code.add(_indent);
-			code.add(_indent + this.getIndent()+"/**");
-			code.add(_indent + this.getIndent()+" * @param args - array of command line arguments");
-			code.add(_indent + this.getIndent()+" */");
+			code.add(indentPlus1 + "/**");
+			code.add(indentPlus1 + " * @param args - array of command line arguments");
+			code.add(indentPlus1 + " */");
 
-			insertBlockHeading(_root, "public static void Main(string[] args)", _indent + this.getIndent());
+			insertBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
 			code.add("");
 		}
 		else {
 			// START KGU#311 2017-01-05: Enh. #314 File API
 			if (this.topLevel && this.usesFileAPI) {
 				this.insertFileAPI("cs", code.count(), _indent, 0);
-				code.add(_indent+this.getIndent());
+				code.add(indentPlus1);
 			}
 			// END KU#311 2017-01-05
 			// START KGU#348 2017-02-24: Enh.#348
@@ -680,10 +820,10 @@ public class CSharpGenerator extends CGenerator
 				this.subClassInsertionLine = code.count();
 			}
 			// END KGU#348 2017-02-24
-			insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
+			insertBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				insertBlockComment(_paramNames, _indent + this.getIndent(), null, " * @param ", null);
+				insertBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
 				code.add(_indent+this.getIndent() + " * @return ");
 				code.add(_indent+this.getIndent() + " */");
 				_resultType = transformType(_resultType, "int");
@@ -693,7 +833,7 @@ public class CSharpGenerator extends CGenerator
 			}
 			else
 			{
-				insertBlockComment(_paramNames, _indent+this.getIndent(), null, " * @param ", " */");
+				insertBlockComment(_paramNames, indentPlus1, null, " * @param ", " */");
 				_resultType = "void";
 			}
 			// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private
@@ -710,11 +850,15 @@ public class CSharpGenerator extends CGenerator
 				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
-			insertBlockHeading(_root, fnHeader, _indent+this.getIndent());
+			insertBlockHeading(_root, fnHeader, indentPlus1);
 		}
 
+		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
+		insertGlobalInitialisations(indentPlus2);
+		// END KGU#376 2017-09-26
+
 		// START KGU#348 2017-02-24: Enh. #348 - Actual translation of Parallel sections
-		StringList workers = this.generateParallelThreadWorkers(_root, _indent + this.getIndent());
+		StringList workers = this.generateParallelThreadWorkers(_root, indentPlus1);
 		boolean moveSubroutineInsertions = this.subroutineInsertionLine > this.subClassInsertionLine;
 		for (int i = 0; i < workers.count(); i++) {
 			this.code.insert(workers.get(i), this.subClassInsertionLine++);
@@ -722,8 +866,9 @@ public class CSharpGenerator extends CGenerator
 		}
 		// END KGU#348 2017-02-24
 		
-		return _indent + this.getIndent() + this.getIndent();
+		return indentPlus2;
 	}
+
 
 	// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
 //	/**
