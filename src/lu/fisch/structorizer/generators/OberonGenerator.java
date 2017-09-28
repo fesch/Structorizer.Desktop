@@ -355,13 +355,16 @@ public class OberonGenerator extends Generator {
 			{
 				String varName = transline.substring(0, asgnPos).trim();
 				String expr = transline.substring(asgnPos+2).trim();
-				String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
+				String[] typeNameIndex = this.lValueToTypeNameIndexComp(varName);
 				varName = typeNameIndex[1];
 				String index = typeNameIndex[2];
 				if (!index.isEmpty())
 				{
 					varName = varName + "["+index+"]";
 				}
+				// START KGU#388 2017-09-27: Enh. #423
+				varName += typeNameIndex[3];
+				// END KGU#388 2017-09-27: Enh. #423
 				transline = varName + " := " + expr;
 			}
 			// END KGU#109/KGU#141 2016-01-16

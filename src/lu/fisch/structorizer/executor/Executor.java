@@ -132,7 +132,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
  *      Kay Gürtzig     2017.09.09      Bugfix #411 revised (issue #426)
  *      Kay Gürtzig     2017.09.17      Enh. #423: First draft implementation of records.
- *      Kay Gürtzig     2017.09.18      Enh. #423: Corrections on handling typed constants
+ *      Kay Gürtzig     2017.09.18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
  *
  ******************************************************************************************************
  *
@@ -2732,7 +2732,7 @@ public class Executor implements Runnable
 		// f) [const|dim] <id> as <typespec2>
 		// g) <id>(.<id>['['<expr>']'])+
 		// h) <id>'['<expr>']'(.<id>)+
-		// ILLEGAL (not supported here):
+		// ILLEGAL (NOT supported here):
 		// w) const <id>'['<expr>']'  - single elements can't be const
 		// x) [const] <id>'['']'  - C-style array declaration: redundant if array value is assigned, wrong otherwise
 		// y) <id>'['<expr>(','<expr>)+']'
@@ -2869,7 +2869,7 @@ public class Executor implements Runnable
 		// END KGU#388 2017-09-14
 		else {
 			// The standard case: a) or c)
-			// START KGU#388 2017-09-18: Register the declared type if it's a define typename
+			// START KGU#388 2017-09-18: Register the declared type if it's a defined type name
 			if (nTokens == 2) {
 				typeDescr = tokens.subSequence(0, nTokens - 1);
 				String typeName = typeDescr.get(0);
@@ -5551,9 +5551,22 @@ public class Executor implements Runnable
 				{
 					try
 					{
+						Object iterVal = valueList[cw];
+						// START KGU#388 2017-09-27: Enh. #423 declare or un-declare the loop variable dynamically
+						TypeMapEntry iterType = null;
+						if (iterVal instanceof HashMap<?,?>) {
+							Object typeName = ((HashMap<String, Object>)iterVal).get("§TYPENAME§");
+							if (typeName instanceof String && (iterType = context.dynTypeMap.get(":" + typeName)) != null) {
+								context.dynTypeMap.put(iterVar, iterType);
+							}
+						}
+						else if (iterVal != null && (iterType = context.dynTypeMap.get(iterVar)) != null && iterType.isRecord()) {
+							context.dynTypeMap.remove(iterVar);
+						}
+						// END KGU#388 2017-09-27
 						// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 						//setVar(iterVar, valueList[cw]);
-						setVar(iterVar, valueList[cw], forLoopLevel-1);
+						setVar(iterVar, iterVal, forLoopLevel-1);
 						// END KGU#307 2016-12-12
 						element.executed = false;
 						element.waited = true;

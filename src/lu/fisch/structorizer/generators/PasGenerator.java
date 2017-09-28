@@ -420,13 +420,16 @@ public class PasGenerator extends Generator
 		{
 			String varName = transline.substring(0, asgnPos).trim();
 			String expr = transline.substring(asgnPos + ":=".length()).trim();
-			String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
+			String[] typeNameIndex = this.lValueToTypeNameIndexComp(varName);
 			varName = typeNameIndex[1];
 			String index = typeNameIndex[2];
 			if (!index.isEmpty())
 			{
-				varName = varName + "["+index+"]";
+				varName += "["+index+"]";
 			}
+			// START KGU#388 2017-09-27: Enh. #423
+			varName += typeNameIndex[3];
+			// END KGU#388 2017-09-27: Enh. #423
 			transline = varName + " := " + expr;
 		}
 		// END KGU#109/KGU#141 2016-01-16
@@ -1493,7 +1496,7 @@ public class PasGenerator extends Generator
 				String constName = constEntry.getKey();
 				// We must make sure that the constant hasn't been included from a diagram
 				// already handled at top level.
-				if (wasDefHandled(_root, constName)) {
+				if (wasDefHandled(_root, constName, true)) {
 					continue;
 				}
 				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
@@ -1565,7 +1568,7 @@ public class PasGenerator extends Generator
 		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo().entrySet()) {
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
-				if (wasDefHandled(_root, key)) {
+				if (wasDefHandled(_root, key, true)) {
 					continue;
 				}
 				if (!_sectionBegun) {
@@ -1615,7 +1618,7 @@ public class PasGenerator extends Generator
 				continue;
 			}
 			// END KGU#375 2017-04-12
-			if (wasDefHandled(_root, varName)) {
+			if (wasDefHandled(_root, varName, true)) {
 				continue;
 			}
 			if (!_sectionBegun) {

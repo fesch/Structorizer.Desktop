@@ -317,10 +317,13 @@ public class PythonGenerator extends Generator
 				{
 					String lval = _input.substring(0, asgnPos).trim();
 					String expr = _input.substring(asgnPos + "<-".length()).trim();
-					String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
+					String[] typeNameIndex = this.lValueToTypeNameIndexComp(lval);
 					String index = typeNameIndex[2];
 					if (!index.isEmpty()) index = "[" + index + "]";
-					_input = typeNameIndex[1] + index + " <- " + expr;
+					// START KGU#388 2017-09-27: Enh. #423
+					//_input = typeNameIndex[1] + index + " <- " + expr;
+					_input = typeNameIndex[1] + index + typeNameIndex[3] + " <- " + expr;
+					// END KGU#388 2017-09-27: Enh. #423
 				}
 				// END KGU#109 2016-01-17
 			// START KGU#162 2016-04-01: Enh. #144 - hands off in "no conversion" mode!

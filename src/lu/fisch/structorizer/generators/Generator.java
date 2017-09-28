@@ -75,7 +75,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.05.16      Enh. #372: New method insertCopyright()
  *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
  *      Kay Gürtzig     2017.09.20      Enh. #388/#423: comment mapping for declarations introduced
- *      Kay Gürtzig     2017.09.26      Enh. #423: Supporting code parts from PasGenerator adopted
+ *      Kay Gürtzig     2017.09.26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
  *
  ******************************************************************************************************
  *
@@ -122,8 +122,6 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 
 import javax.swing.*;
-
-import com.stevesoft.pat.Regex;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.arranger.Arranger;
@@ -199,7 +197,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#376 2017-09-20
 	// START KGU#376/KGU#388 2017-09-26: Enh. #389, #423
 	protected HashMap<Root, StringList> structuredInitialisations = new HashMap<Root, StringList>();
-	private HashMap<String, StringList> includedStuff = new HashMap<String, StringList>(); 
+	/** Maps diagram signatures to the respective lists of names of declared constants, types and variables */
+	private HashMap<String, StringList> declaredStuff = new HashMap<String, StringList>(); 
 	// END KGU#376/KGU#388 2017-09-26
     
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
@@ -557,40 +556,55 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#236 2016-12-22
 
-	// START KGU#376 2017-09-26: Enh. #389 - with inckudable diagrams, there might be several references
+	// START KGU#376 2017-09-26: Enh. #389 - with includable diagrams, there might be several references
 	/**
 	 * Checks whether the given {@code _id} has already been defined by one of the diagrams
-	 * included by {@code _root}. If not and {@code _root} is an includable diagram at top level
-	 * then registers the {@code _id} with {@code _root} in {@link #includedStuff}.
+	 * included by {@code _root} or this diagram itself.
+	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id} with {@code _root}
+	 * in {@link #declaredStuff}.
 	 * @param _root - the currently exported Root
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
+	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @return true if there had already been a definition before
 	 */
-	protected boolean wasDefHandled(Root _root, String _id)
+	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot)
 	{
-		boolean handled = false;
+		String signature = _root.getSignatureString(false);
+		StringList definedIds = this.declaredStuff.get(signature);
+		boolean handled = definedIds != null && definedIds.contains(_id);
 		if (_root.includeList != null) {
 			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
 				String inclName = _root.includeList.get(i);
-				StringList defined = this.includedStuff.get(inclName);
-				if (defined != null) {
-					handled = defined.contains(_id);
+				if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
+					handled = definedIds.contains(_id);
 				}
 			}
 		}
-		if (!handled && topLevel && _root.isInclude()) {
-			String diagrName = _root.getMethodName();
-			StringList doneIds = this.includedStuff.get(diagrName);
-			if (doneIds != null) {
-				handled = !doneIds.addIfNew(_id);
-			}
-			else {
-				this.includedStuff.put(diagrName, StringList.getNew(_id));
-			}
+		// The topLevel restriction for includables is here because only definitions of includables
+		// introduced at top level may be regarded as overall available. Usually, the declarations
+		// of all includables are inserted at top level.
+		if (!handled && (topLevel || !_root.isInclude()) && _setDefinedIfNot) {
+			setDefHandled(signature, _id);
 		}
 		return handled;
 	}
 	// END KGU#376 2017-09-26
+
+	/**
+	 * Registers the declaration of entity {@code _id} as handled in the code for the {@link Root}
+	 * with signature {@code _signature}. Returns whether the 
+	 * @param signature
+	 * @param _id
+	 */
+	protected void setDefHandled(String _signature, String _id) {
+		StringList definedIds;
+		if ((definedIds = this.declaredStuff.get(_signature)) != null) {
+			definedIds.addIfNew(_id);
+		}
+		else {
+			this.declaredStuff.put(_signature, StringList.getNew(_id));
+		}
+	}
 
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
@@ -1405,23 +1419,41 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#109/KGU#141 2016-01-16: New for ease of fixing #61 and #112
 	/**
 	 * Decomposes the left-hand side of an assignment passed in as _lval
-	 * into three strings:
-	 * [0] - type specification (a sequence of tokens, may be empty)
-	 * [1] - variable name (a single token supposed to be the identifier)
-	 * [2] - index expression (if _lval is an indexed variable, else empty)
+	 * into four strings:<br/>
+	 * [0] - type specification (a sequence of tokens, may be empty)<br/>
+	 * [1] - variable name (a single token supposed to be the identifier)<br/>
+	 * [2] - index expression (if _lval is an indexed variable, else empty)<br/>
+	 * [3] - component path (if _lval is a record component of an indexed variable, else empty)
 	 * @param _lval a string found on the left-hand side of an assignment operator
-	 * @return String array of [0] type, [1] name, [2] index; all but [1] may be empty
+	 * @return String array of [0] type, [1] name, [2] index, [3] component path; all but [1] may be empty
 	 */
-	protected String[] lValueToTypeNameIndex(String _lval)
+	protected String[] lValueToTypeNameIndexComp(String _lval)
 	{
 		// Avoid too much nonsense on indexed variables
 		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
-    	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-		String lvalPattern = "(.*?)\\[(.*)\\](.*?)";
-    	Regex r = new Regex(lvalPattern,"$1 $3");
+    	//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
     	// END KGU#334 2017-01-30
-    	String name = r.replaceAll(_lval);
 		String type = "";
+		String name = null;
+		String index = "";
+		String comp = "";
+    	String before = _lval;
+    	String after = "";
+    	int posL = _lval.indexOf("[");
+    	int posR = _lval.lastIndexOf("]");
+    	if (posL >= 0 && posR > posL) {
+    		index = _lval.substring(posL + 1, posR);
+    		before = _lval.substring(0, posL);
+    		after = _lval.substring(posR + 1);
+    	}
+		if (after.startsWith(".") && Function.testIdentifier(after.substring(1), ".")) {
+			comp = after;
+			name = before;
+		}
+		else {
+			name = (before + " " + after).trim();	// This is somewhat strange in general
+		}
+		// END KGU#388 2017-09-27
 		// Check Pascal and BASIC style of type specifications
 		int subPos = name.indexOf(":");
 		if (subPos > 0)
@@ -1429,7 +1461,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			type = name.substring(subPos + 1).trim() + " ";
 			name = name.substring(0, subPos).trim();
 		}
-		else if ((subPos = name.indexOf(" as ")) > 0)
+		else if ((subPos = name.toLowerCase().indexOf(" as ")) > 0)
 		{
 			type = name.substring(subPos + " as ".length()).trim() + " ";
 			name = name.substring(0, subPos).trim();
@@ -1442,18 +1474,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		name = nameParts.get(nameParts.count()-1);
 		//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-		String index = "";
-		
-		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
-		{
-			// START KGU#189 2016-04-29: Bugfix #337 for multidimensional array expressions
-			// lvalues like a[i][j] <- ... had been transformed to a[ij] <- ...
-			// Now index would become "i][j" in such a case which at least preserves syntax
-			//index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
-			index = _lval.replaceAll(lvalPattern,"$2").trim();
-			// END KGU#189 2016-04-29
-		}
-		String[] typeNameIndex = {type, name, index};
+		// START KGU#388 2017-09-27: Enh. #423 Didn't work, since often appended a "tail"
+		//String index = "";
+		//if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
+		//{
+		//	// START KGU#189 2016-04-29: Bugfix #337 for multidimensional array expressions
+		//	// lvalues like a[i][j] <- ... had been transformed to a[ij] <- ...
+		//	// Now index would become "i][j" in such a case which at least preserves syntax
+		//	index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
+		//	// END KGU#189 2016-04-29
+		//}
+		//String[] typeNameIndex = {type, name, index};
+		String[] typeNameIndex = {type, name, index, comp};
+		// END KGU#388 2017-09-27
 		return typeNameIndex;
 	}
 	// END KGU#109/KGU#141 2016-01-16

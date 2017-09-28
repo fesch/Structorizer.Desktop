@@ -53,6 +53,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
  *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig     2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
+ *      Kay Gürtzig     2017.09.27      Enh. #423: Handling of struct definitions and access
  *
  ******************************************************************************************************
  *
@@ -67,6 +68,7 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -241,6 +243,38 @@ public class CPlusPlusGenerator extends CGenerator {
 		return true;
 	}
 	// END KGU#332 2017-04-12
+
+	// START KGU#388 2017-09-27: Enh.#423
+	/**
+	 * Inserts a typedef for the type passed in by {@code _typeEnry} if it hadn't been defined
+	 * globally or in the preamble before.
+	 * @param _root - the originating Root
+	 * @param _type - the type map entry the definition for which is requested here
+	 * @param _indent - the current indentation
+	 * @param _asComment - if the type deinition is only to be added as comment (disabled)
+	 */
+	@Override
+	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String typeKey = ":" + _typeName;
+		if (this.wasDefHandled(_root, typeKey, true)) {
+			return;
+		}
+		insertDeclComment(_root, _indent, typeKey);
+		if (_type.isRecord()) {
+			String indentPlus1 = _indent + this.getIndent();
+			addCode("struct " + _typeName + " {", _indent, _asComment);
+			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+				addCode(transformTypeFromEntry(compEntry.getValue()) + "\t" + compEntry.getKey() + ";",
+						indentPlus1, _asComment);
+			}
+			addCode("};", _indent, _asComment);
+		}
+		else {
+			addCode("typedef " + this.transformTypeFromEntry(_type) + " " + _typeName + ";",
+					_indent, _asComment);					
+		}
+	}
+	// END KGU#388 2017-09-27
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -456,6 +490,18 @@ public class CPlusPlusGenerator extends CGenerator {
 			// STARTB KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes("");
 			// END KGU#351 2017-02-26
+			// START KGU#376 2017-09-27: Enh. #389 - definitions from all included diagrams will follow
+			boolean thisDone = false;
+			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+				insertDefinitions(incl, _indent, incl.getVarNames(), true);
+				if (incl == _root) {
+					thisDone = true;
+				}
+			}
+			if (_root.isInclude() && !thisDone) {
+				insertDefinitions(_root, _indent, this.varNames, false);				
+			}
+			// END KGU#376 2017-09-27
 			// START KGU#311 2016-12-22: Enh. #314 - support for file API
 			if (this.usesFileAPI) {
 		        this.insertFileAPI("cpp", code.count(), "", 0);

@@ -291,6 +291,7 @@ public class TypeMapEntry {
 	public Set<Element> modifiers = new HashSet<Element>();
 	public Set<Element> references = new HashSet<Element>();
 	// START KGU#388 2017-09-14: Enh. #423 we now distinguish between declared and guessed types
+	/** Distinguishes between declared type (true) and guessed or derived type (false) */
 	public boolean isDeclared = false;
 	// END KGU#388 2017-09-14
 	
@@ -763,7 +764,9 @@ public class TypeMapEntry {
 
 	// START KGU#388 2017-09-19: Enh. #423 for code generator support
 	public boolean isDeclaredWithin(Root _root) {
-		//if (!isDeclared) return false;
+		if (_root == null) {
+			return this.isDeclared;
+		}
 		for (VarDeclaration decl: declarations) {
 			if (decl.definingElement != null && Element.getRoot(decl.definingElement) == _root) {
 				return true;

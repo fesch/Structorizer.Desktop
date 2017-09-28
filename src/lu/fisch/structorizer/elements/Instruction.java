@@ -57,7 +57,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.11      Enh. #389: Methods isImportCall() introduced (2017-07-01 undone)
  *      Kay Gürtzig     2017.06.09      Enh. #416: drawing support for broken lines and is...() method adaptation
  *      Kay Gürtzig     2017.07.03      Enh. #423: Type definition concept for record/struct types begun
- *      Kay Gürtzig     2017.09.15      Enh. #423: Record type definition concept nearly accomplished
+ *      Kay Gürtzig     2017.09.15-28   Enh. #423: Record type definition concept nearly accomplished
  *
  ******************************************************************************************************
  *
@@ -632,6 +632,16 @@ public class Instruction extends Element {
     			tokens = tokens.subSequence(0, posLBrack);
     		}
     		tokens.removeAll(" ");
+    		// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
+    		if (tokens.contains(".")) {
+    			int i = 1;
+    			while (i < tokens.count() - 1) {
+    				if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), null) && Function.testIdentifier(tokens.get(i+1), null)) {
+    					tokens.remove(i, i+2);
+    				}
+    			}
+    		}
+    		// END KGU#388 2017-09-27
     		typeC = tokens.count() > 1;
     	}
 		return typeA || typeB || typeC;
