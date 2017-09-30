@@ -821,7 +821,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgConstantRecordComponent =
     		new LangTextHolder("A record component «%» may not be made a constant by assignment!");
 	public final LangTextHolder msgTypeMismatch =
-			new LangTextHolder("Value type «%1» is incompatible with declared type «%2» of variable/component «%3»!");
+			new LangTextHolder("Value type «%1» is incompatible with type «%2» of variable/component «%3»!");
 	// END KGU#388 2017-09-14
     // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =

@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -85,6 +84,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.09.13      Enh. #423: New methods supporting type definitions
  *      Kay Gürtzig     2017.09.17      Enh. #423: Type name highlighting
  *      Kay Gürtzig     2017.09.18      Enh. #423: Recursive record definitions, splitLexically() improved
+ *      Kay Gürtzig     2017.09.29      Enh. #423: splitLexically() debugged, now ellipses are tokens too
  *
  ******************************************************************************************************
  *
@@ -162,8 +162,7 @@ package lu.fisch.structorizer.elements;
  *        writeOutVariables() and getWidthOutVariables(),
  *      - minor code revision respecting 2- and 3-character operator symbols
  *
- ******************************************************************************************************
- */
+ ****************************************************************************************************///
 
 
 import java.awt.Color;
@@ -371,8 +370,44 @@ public abstract class Element {
 	private static final java.util.regex.Pattern SIGN_PATTERN = java.util.regex.Pattern.compile("[+-]");
 	//private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("(\\w.*)(\\[.*\\])$"); // seems to have been wrong
 	private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("([A-Za-z]\\w*)(\\[.*\\])$");
-	private static final java.util.regex.Pattern RECORD_PATTERN = java.util.regex.Pattern.compile("[A-Za-z]\\w*\\{.*\\}");
+	private static final java.util.regex.Pattern RECORD_PATTERN = java.util.regex.Pattern.compile("([A-Za-z]\\w*)\\s*\\{.*\\}");
 	// END KGU 2017-09-19
+	// START KGU#425 2017-09-29: Lexical core mechanisms revised
+	private static final String[] LEXICAL_DELIMITERS = new String[] {
+			" ",
+			"\t",
+			"\n",
+			".",
+			",",
+			";",
+			"(",
+			")",
+			"[",
+			"]",
+			// START KGU#100 2016-01-14: We must also catch the initialiser delimiters
+			"{",
+			"}",
+			// END KGU#100 2016-01-14
+			"-",
+			"+",
+			"/",
+			"*",
+			">",
+			"<",
+			"=",
+			":",
+			"!",
+			"'",
+			"\"",
+			"\\",
+			"%",
+			// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
+			"\u2260",
+			"\u2264",
+			"\u2265"
+			// END KGU#331 2017-01-13
+	};
+	// END KGU#425 2017-09-29
 
 	// START KGU#156 2016-03-10; Enh. #124
 	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
@@ -1841,40 +1876,39 @@ public abstract class Element {
 		parts.add(_text);
 		
 		// split
-		parts=StringList.explodeWithDelimiter(parts," ");
-		parts=StringList.explodeWithDelimiter(parts,"\t");
-		parts=StringList.explodeWithDelimiter(parts,"\n");
-		parts=StringList.explodeWithDelimiter(parts,".");
-		parts=StringList.explodeWithDelimiter(parts,",");
-		parts=StringList.explodeWithDelimiter(parts,";");
-		parts=StringList.explodeWithDelimiter(parts,"(");
-		parts=StringList.explodeWithDelimiter(parts,")");
-		parts=StringList.explodeWithDelimiter(parts,"[");
-		parts=StringList.explodeWithDelimiter(parts,"]");
-		// START KGU#100 2016-01-14: We must also catch the initialiser delimiters
-		parts=StringList.explodeWithDelimiter(parts,"{");
-		parts=StringList.explodeWithDelimiter(parts,"}");
-		// END KGU#100 2016-01-14
-		parts=StringList.explodeWithDelimiter(parts,"-");
-		parts=StringList.explodeWithDelimiter(parts,"+");
-		parts=StringList.explodeWithDelimiter(parts,"/");
-		parts=StringList.explodeWithDelimiter(parts,"*");
-		parts=StringList.explodeWithDelimiter(parts,">");
-		parts=StringList.explodeWithDelimiter(parts,"<");
-		parts=StringList.explodeWithDelimiter(parts,"=");
-		parts=StringList.explodeWithDelimiter(parts,":");
-		parts=StringList.explodeWithDelimiter(parts,"!");
-		parts=StringList.explodeWithDelimiter(parts,"'");
-		parts=StringList.explodeWithDelimiter(parts,"\"");
-
-		parts=StringList.explodeWithDelimiter(parts,"\\");
-		parts=StringList.explodeWithDelimiter(parts,"%");
-		
-		// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
-		parts=StringList.explodeWithDelimiter(parts,"\u2260");
-		parts=StringList.explodeWithDelimiter(parts,"\u2264");
-		parts=StringList.explodeWithDelimiter(parts,"\u2265");
-		// END KGU#331 2017-01-13
+		// START KGU#425 2017-09-29: Code revision
+		//parts=StringList.explodeWithDelimiter(parts," ");
+		//parts=StringList.explodeWithDelimiter(parts,"\t");
+		//parts=StringList.explodeWithDelimiter(parts,"\n");
+		//parts=StringList.explodeWithDelimiter(parts,".");
+		//parts=StringList.explodeWithDelimiter(parts,",");
+		//parts=StringList.explodeWithDelimiter(parts,";");
+		//parts=StringList.explodeWithDelimiter(parts,"(");
+		//parts=StringList.explodeWithDelimiter(parts,")");
+		//parts=StringList.explodeWithDelimiter(parts,"[");
+		//parts=StringList.explodeWithDelimiter(parts,"]");
+		//parts=StringList.explodeWithDelimiter(parts,"{");
+		//parts=StringList.explodeWithDelimiter(parts,"}");
+		//parts=StringList.explodeWithDelimiter(parts,"-");
+		//parts=StringList.explodeWithDelimiter(parts,"+");
+		//parts=StringList.explodeWithDelimiter(parts,"/");
+		//parts=StringList.explodeWithDelimiter(parts,"*");
+		//parts=StringList.explodeWithDelimiter(parts,">");
+		//parts=StringList.explodeWithDelimiter(parts,"<");
+		//parts=StringList.explodeWithDelimiter(parts,"=");
+		//parts=StringList.explodeWithDelimiter(parts,":");
+		//parts=StringList.explodeWithDelimiter(parts,"!");
+		//parts=StringList.explodeWithDelimiter(parts,"'");
+		//parts=StringList.explodeWithDelimiter(parts,"\"");
+		//parts=StringList.explodeWithDelimiter(parts,"\\");
+		//parts=StringList.explodeWithDelimiter(parts,"%");
+		//parts=StringList.explodeWithDelimiter(parts,"\u2260");
+		//parts=StringList.explodeWithDelimiter(parts,"\u2264");
+		//parts=StringList.explodeWithDelimiter(parts,"\u2265");
+		for (int i = 0; i < LEXICAL_DELIMITERS.length; i++) {
+			parts = StringList.explodeWithDelimiter(parts, LEXICAL_DELIMITERS[i]);
+		}
+		// END KGU#425 2017-09-29
 
 		// reassemble symbols
 		int i = 0;
@@ -1884,6 +1918,9 @@ public abstract class Element {
 			if (i < parts.count()-1)
 			{
 				String nextPart = parts.get(i+1);
+				boolean isInt = false;
+				boolean isSign = false;
+				boolean isEllipse = false;
 				if (thisPart.equals("<") && nextPart.equals("-"))
 				{
 					parts.set(i,"<-");
@@ -1992,34 +2029,74 @@ public abstract class Element {
 					parts.set(i, ">=");
 				}
 				// END KGU#331 2017-01-13
-				// START KGU#335 2017-09-18: Recompose floating-point literals (including those starting or ending with ".")
-				else if (thisPart.equals(".") || (thisPart.equals("+") || thisPart.equals("-")) && nextPart.equals(".")) {
-					// If there was a number sequence before the decimal point glue them together
-					if (!thisPart.equals(".")) {
+				// START KGU#335/KGU#425 2017-09-29: Re-compose floating-point literals (including those starting or ending with ".")
+				// These are legal cases ($ = line end, ? = don't care):
+				// i             i+1             i+2           i+3        comment
+				// .              .               ?             ?         two-dot-ellipse (Pascal range)
+				// .              .               .             ?         three-dot-ellipse (rarely used)
+				// .            FLOAT1            ?             ?         float literal
+				// .            FLOAT2           [+-]        [0-9]+       float literal
+				// [+-]           .            FLOAT1           ?         float literal - reduce this case the the one -2
+				// [+-]           .            FLOAT2         [+-] [0-9]+ float literal - reduce this case the the one -2
+				// [0-9]+         .            FLOAT1           ?         float literal - reduce this case the the one -4
+				// [0-9]+         .            FLOAT2         [+-] [0-9]+ float literal - reduce this case the the one -4
+				// These are the illegal cases:
+				// [+-]           .               $
+				// [+-]           .               ?
+				// [0-9]+         .               .
+				// So we will first do the necessary lookahead before we manipulate parts
+				else if ( (isEllipse = thisPart.equals("."))	// a single dot might merge with another one or a float pattern
+						|| (	// Otherwise a digit sequence might melt with a dot
+								(isInt = INT_PATTERN.matcher(thisPart).matches())
+								|| (isSign = (thisPart.equals("+") || thisPart.equals("-"))	// a sign with a dot requires more...
+										&& i+2 < parts.count())
+								&& nextPart.equals(".")) 
+						) {
+					int nDelete = 0;
+					// Glue the two together - the only pathologic case would be 
+					if (nextPart.equals(".")) {
 						thisPart += nextPart;
-						parts.set(i, thisPart);
-						parts.delete(i+1);
+						nDelete = 1;
+						// Is there anything left at all?
+						if (i+2 < parts.count()) {
+							nextPart = parts.get(i+2);
+						}
+						if (isEllipse && nextPart.equals(".")) {
+							// Okay, then be it a three-point ellipse "..."
+							thisPart += nextPart;
+							nDelete++;
+						}
+						// In case of an ellipse we are done here
 					}
-					// Is there anything left at all?
-					if (i+1 < parts.count()) {
-						nextPart = parts.get(i+1);
-						// nextPart.matches("[0-9]+([eE][0-9]+)?")
-						if (FLOAT_PATTERN1.matcher(nextPart).matches()) {
-							parts.set(i, thisPart + nextPart);
-							parts.delete(i+1);
+					else {
+						isEllipse = false;
+					}
+					// nextPart.matches("[0-9]+([eE][0-9]+)?")
+					if (!isEllipse && FLOAT_PATTERN1.matcher(nextPart).matches()) {
+						thisPart += nextPart;
+						nDelete++;
+					}
+					// nextPart.matches("[0-9]+[eE]")
+					else if (!isEllipse && FLOAT_PATTERN2.matcher(nextPart).matches()
+							&& i+nDelete+3 < parts.count()
+							&& SIGN_PATTERN.matcher(parts.get(i+nDelete+2)).matches()
+							&& INT_PATTERN.matcher(parts.get(i+nDelete+3)).matches()) {
+						for (int j = 1; j <= 3; j++) {
+							nDelete++;
+							thisPart += parts.get(i+nDelete);
 						}
-						// nextPart.matches("[0-9]+[eE]")
-						else if (FLOAT_PATTERN2.matcher(nextPart).matches() &&
-								i+3 < parts.count() && SIGN_PATTERN.matcher(parts.get(i+2)).matches() && INT_PATTERN.matcher(parts.get(i+3)).matches()) {
-							for (int j = 1; j <= 3; j++) {
-								thisPart += parts.get(i+1);
-								parts.delete(i+1);
-							}
-							parts.set(i, thisPart);
-						}
+					}
+					else if (isSign || isInt && i+2 < parts.count() && parts.get(i+2).equals(".")) {
+						// In this case the amalgamation may not take place
+						nDelete = 0;
+					}
+					// Now carry out the amalgamation if sensible
+					if (nDelete > 0) {
+						parts.set(i, thisPart);
+						parts.remove(i+1, i+nDelete+1);
 					}
 				}
-				// END KGU#335 2017-02-01
+				// END KGU#335/KGU#425 2017-09-29
 			}
 			i++;
 		}
@@ -2400,7 +2477,7 @@ public abstract class Element {
 		// START KGU#388 2017-09-12: Enh. #423: Record initializer support (name-prefixed!)
 		else if ((recordMatcher = RECORD_PATTERN.matcher(expr)).matches() && typeMap != null){
 			typeSpec = recordMatcher.replaceFirst("$1");
-			if (!typeMap.containsKey(typeSpec)) {
+			if (!typeMap.containsKey(":" + typeSpec)) {
 				// It's hardly a valid prefixed record initializer...
 				typeSpec = "";
 			}
@@ -2469,7 +2546,11 @@ public abstract class Element {
 				if (specialSigns == null)	// lazy initialisation
 				{
 					specialSigns = new StringList();
-					// ENDU KGU#64 2015-11-03
+				// END KGU#64 2015-11-03
+					// START KGU#425 2017-09-29: Add the possible ellipses, too
+					specialSigns.add("...");
+					specialSigns.add("..");					
+					// END KGU#425 2017-09-29
 					specialSigns.add(".");
 					specialSigns.add("[");
 					specialSigns.add("]");

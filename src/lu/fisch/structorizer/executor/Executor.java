@@ -133,6 +133,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.09.09      Bugfix #411 revised (issue #426)
  *      Kay Gürtzig     2017.09.17      Enh. #423: First draft implementation of records.
  *      Kay Gürtzig     2017.09.18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
+ *      Kay Gürtzig     2017.09.30      Bugfix #429: Initializer evaluation made available in return statements
  *
  ******************************************************************************************************
  *
@@ -250,7 +251,6 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -319,7 +319,7 @@ public class Executor implements Runnable
 		public ImportInfo(Interpreter _interpr, StringList _varNames, HashMap<String, TypeMapEntry> _typeMap) {
 			interpreter = _interpr;
 			variableNames = _varNames;
-			typeDefinitions = (HashMap<String, TypeMapEntry>)_typeMap.clone();
+			typeDefinitions = new HashMap<String, TypeMapEntry>(_typeMap);
 		}
 		// END KGU#388 2017-09-18
 	};
@@ -750,8 +750,8 @@ public class Executor implements Runnable
 						try
 						{
 							int pos = -1;	// some character position
-							Object leftO = this.evaluateExpression(left);
-							Object rightO = this.evaluateExpression(right);
+							Object leftO = this.evaluateExpression(left, false);
+							Object rightO = this.evaluateExpression(right, false);
 							String neg = (op > 0) ? "!" : "";
 							// First the obvious case: two String expressions
 							if ((leftO instanceof String) && (rightO instanceof String))
@@ -2611,13 +2611,22 @@ public class Executor implements Runnable
 
 	
 	// START KGU#67/KGU#68/KGU#69 2015-11-08: We must distinguish between raw input and evaluated objects
-	private void setVarRaw(String name, String rawInput) throws EvalError
+	/**
+	 * Interprets and evaluates the user input string {@code rawInput} and assigns the result to the given
+	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object)}.
+	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
+	 * @param rawInput - the raw input string to be interpreted
+	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the resulting
+	 * value is inappropriate, if both don't match or if a loop variable violation is detected.
+	 * @see #setVar(String, Object) 
+	 */
+	private void setVarRaw(String target, String rawInput) throws EvalError
 	{
 		// first add as string (lest we should end with nothing at all...)
 		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
 		//setVar(name, rawInput);
 		try {
-			setVar(name, rawInput);
+			setVar(target, rawInput);
 		}
 		catch (EvalError ex)
 		{
@@ -2634,53 +2643,53 @@ public class Executor implements Runnable
 				if (strInput.startsWith("\"") && strInput.endsWith("\"") ||
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
-					this.evaluateExpression(name + " = " + rawInput);
-					setVar(name, context.interpreter.get(name));
+					this.evaluateExpression(target + " = " + rawInput, false);
+					setVar(target, context.interpreter.get(target));
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
-					this.evaluateExpression(name + " = \"" + rawInput + "\"");
-					setVar(name, context.interpreter.get(name));					
+					this.evaluateExpression(target + " = \"" + rawInput + "\"", false);
+					setVar(target, context.interpreter.get(target));					
 				}
 				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
 					Character charInput = rawInput.charAt(0);
-					setVar(name, charInput);
+					setVar(target, charInput);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
 				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
 				{
-					String asgnmt = "Object[] " + name + " = " + rawInput;
+					String asgnmt = "Object[] " + target + " = " + rawInput;
 					// Nested initializers won't work here!
-					this.evaluateExpression(asgnmt);
-					setVar(name, context.interpreter.get(name));
+					this.evaluateExpression(asgnmt, false);
+					setVar(target, context.interpreter.get(target));
 				}
 				// END KGU#184 2016-04-25
 				// START KGU#388 2017-09-18: Enh. #423
 				else if (strInput.indexOf("{") > 0 && strInput.endsWith("}")
 						&& Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null)) {
-					String asgnmt = "HashMap " + name + " = new HashMap()";
-					this.evaluateExpression(asgnmt);
+					String asgnmt = "HashMap " + target + " = new HashMap()";
+					this.evaluateExpression(asgnmt, false);
 					HashMap<String, String> components = Element.splitRecordInitializer(strInput);
 					for (Entry<String, String> comp: components.entrySet()) {
 						String value = comp.getValue();
 						if (comp.getKey().startsWith("§")) {
 							value = "\"" + value + "\"";
 						}
-						asgnmt = name + ".put(\"" + comp.getKey() + "\", " + value + ")";
-						this.evaluateExpression(asgnmt);
+						asgnmt = target + ".put(\"" + comp.getKey() + "\", " + value + ")";
+						this.evaluateExpression(asgnmt, false);
 					}
-					setVar(name, context.interpreter.get(name));
+					setVar(target, context.interpreter.get(target));
 				}
 				// END KGU#388 2017-09-18
 				// START KGU#283 2016-10-16: Enh. #273
 				else if (strInput.equals("true") || strInput.equals("false"))
 				{
-					setVar(name, Boolean.valueOf(strInput));
+					setVar(target, Boolean.valueOf(strInput));
 				}
 				// END KGU#283 2016-10-16
 			}
@@ -2696,7 +2705,7 @@ public class Executor implements Runnable
 		try
 		{
 			double dblInput = Double.parseDouble(rawInput);
-			setVar(name, dblInput);
+			setVar(target, dblInput);
 		} catch (Exception ex)
 		{
 			//System.out.println(rawInput + " as double: " + ex.getMessage());
@@ -2705,7 +2714,7 @@ public class Executor implements Runnable
 		try
 		{
 			int intInput = Integer.parseInt(rawInput);
-			setVar(name, intInput);
+			setVar(target, intInput);
 		} catch (Exception ex)
 		{
 			//System.out.println(rawInput + " as int: " + ex.getMessage());
@@ -2713,93 +2722,100 @@ public class Executor implements Runnable
 	}
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
+	/**
+	 * Assigns the computed value {@code content} to the given variable extracted from the "lvalue"
+	 * {@code target}. Analyses and handles possibly given extra information in order to register and
+	 * declare the target variable or constant.<br/>
+	 * Also ensures that no loop variable manipulation is performed (the entire loop stack is checked,
+	 * so use {@link #setVar(String, Object, int)} for a regular loop variable update).<br/>
+	 * There are the following sensible cases w.r.t. {@code target} here (unquoted brackets enclose optional parts):<br/>
+	 * a) {@code [const] <id>}<br/>
+	 * b) {@code <id>'['<expr>']'}<br/>
+	 * c) {@code [const] <typespec1> <id>}<br/>
+	 * d) {@code [const] <typespec1> <id>'['[<expr>]']'}  - implicit C-style array declaration (questionable)<br/>
+	 * e) {@code [const|var] <id> : <typespec2>}<br/>
+	 * f) {@code [const|dim] <id> as <typespec2>}<br/>
+	 * g) {@code <id>(.<id>['['<expr>']'])+}<br/>
+	 * h) {@code <id>'['<expr>']'(.<id>)+}<br/>
+	 * ILLEGAL (NOT supported here):<br/>
+	 * w) {@code const <id>'['<expr>']'} - single elements can't be const<br/>
+	 * x) {@code [const] <id>'['']'}  - C-style array declaration: redundant if array value is assigned, wrong otherwise<br/>
+	 * y) {@code <id>'['<expr>']'('['<expr>']')}+<br/>
+	 * Meta symbol legend (as far as not obvious):<br/>
+	 * {@code <typespec1> ::=}<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;<code>{modifier} &lt;typeid&gt; |</code><br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;<code>{modifier} &lt;typeid&gt; ('['']')+</code> - Java-style array type (questionable)<br/>
+	 * {@code <typespec2> ::=}<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code <typeid> |}<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code array ['['<range>']'] of <typespec>}<br/>
+	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
+	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
+	 * @param content - the value to be assigned
+	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
+	 * match or if a loop variable violation is detected.
+	 * @see #setVarRaw(String, Object)
+	 * @see #setVar(String, Object, int) 
+	 */
 	private void setVar(String target, Object content) throws EvalError
 	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
 		setVar(target, content, context.forLoopVars.count()-1);
 	}
 
+	/**
+	 * Assigns the computed value {@code content} to the given variable extracted from the "lvalue"
+	 * {@code target}. Analyses and handles possibly given extra information in order to register and
+	 * declare the target variable or constant.<br/>
+	 * Also ensures that no loop variable manipulation is performed. 
+	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
+	 * @param content - the value to be assigned
+	 * @param ignoreLoopStackLevel - the loop nesting level beyond which loop variables aren't critical.
+	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
+	 * match or if a loop variable violation is detected.
+	 * @see #setVarRaw(String, Object)
+	 * @see #setVar(String, Object)
+	 */
 	private void setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
 	// END KGU#307 2016-12-12
 	{
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
-		// There are the following sensible cases w.r.t. 'target' here:
-		// a) [const] <id>
-		// b) <id>'['<expr>']'
-		// c) [const] <typespec1> <id>
-		// d) [const] <typespec1> <id>'['[<expr>]']'  - implicit C-style array declaration (questionable)
-		// e) [const|var] <id> : <typespec2>
-		// f) [const|dim] <id> as <typespec2>
-		// g) <id>(.<id>['['<expr>']'])+
-		// h) <id>'['<expr>']'(.<id>)+
-		// ILLEGAL (NOT supported here):
-		// w) const <id>'['<expr>']'  - single elements can't be const
-		// x) [const] <id>'['']'  - C-style array declaration: redundant if array value is assigned, wrong otherwise
-		// y) <id>'['<expr>(','<expr>)+']'
-		// z) <id>'['<expr>']'('['<expr>']')+
-		// <typespec1> ::=
-		//    {<modifier>} <typeid> |
-		//    {<modifier>} <typeid> ('['']')+   - Java-style array type (questionable)
-		// <typespec2> ::=
-		//    <id> |
-		//    array ['['<range>']'] of <typespec2> |
-		// <range> ::= <id> | <intliteral> .. <intliteral>
+		// We refer to the cases listed in the javadoc of method setVar(target, content).
 		boolean isConstant = false;
 		String recordName = null;
 		TypeMapEntry compType = null;
 		StringList typeDescr = null;
 		String indexStr = null;
+
+		// ======== PHASE 1: Analysis of the target structure ===========
+
 		StringList tokens = Element.splitLexically(target, true);
 		tokens.removeAll(" ");
 		int nTokens = tokens.count();
-		if (tokens.get(0).equalsIgnoreCase("const")) {
+		String token0 = tokens.get(0).toLowerCase();
+		if ((isConstant = token0.equals("const")) || token0.equals("var") || token0.equals("dim")) {
 			// a), c), d), e), f) ?
-			isConstant = true;
-			// Drop type information
+			tokens.remove(0);
+			// Extract type information
 			int posColon = tokens.indexOf(":");
-			if (posColon < 0) posColon = tokens.indexOf("as", false);
+			if (posColon < 0 && !token0.equals("var")) posColon = tokens.indexOf("as", false);
 			if (posColon >= 0) {
 				typeDescr = tokens.subSequence(posColon+1, nTokens);
+				tokens = tokens.subSequence(0, posColon);
+				// In case of an explicit and Pascal- or BASIC-style declaration the target must be an unqualified identifier
+				if (tokens.contains(".")) {
+					throw new EvalError(control.msgConstantRecordComponent.getText().replace("%", target), null, null);
+				}
+				if (tokens.contains("[")) {
+					throw new EvalError(control.msgConstantArrayElement.getText().replace("%", target), null, null);
+				}
 			}
-			else {
-				posColon = nTokens;
-			}
-			tokens = tokens.subSequence(1, posColon);
 			nTokens = tokens.count();
 			target = tokens.get(nTokens-1);
-			// START KGU#388 2017-09-18: Register the declared type
-			String typeName = null;
-			if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), null) && context.dynTypeMap.containsKey(":" + typeName)) {
-				context.dynTypeMap.put(target, context.dynTypeMap.get(":" + typeName));
-			}
-			// In other cases we cannot create a new TypeMapEntry because we are lacking element and line information here.
-			// So it is up to the calling method...
+			// START KGU#388 2017-09-18: Enh. #423 - Register the declared type
+			associateType(target, typeDescr);
 			// END KGU#388 2017-09-18
 		}
-		String token0 = tokens.get(0).toLowerCase();
-		if (token0.equals("var") || token0.equals("dim")) {
-			// e) + f)
-			// Drop type information (may not be a complex access path)
-			int posColon = tokens.indexOf((token0.equals("var") ? ":" : "as"), false);
-			if (posColon >= 0) {
-				typeDescr = tokens.subSequence(posColon+1, nTokens);
-			}
-			else {
-				posColon = nTokens;
-			}
-			tokens = tokens.subSequence(1, posColon);
-			nTokens = tokens.count();
-			target = tokens.get(nTokens-1);
-			// START KGU#388 2017-09-16: Register the declared type
-			String typeName = null;
-			if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), null) && context.dynTypeMap.containsKey(":" + typeName)) {
-				context.dynTypeMap.put(target, context.dynTypeMap.get(":" + typeName));
-			}
-			// In other cases we cannot create a new TypeMapEntry because we are lacking element and line information here.
-			// So it is up to the calling method...
-			// END KGU#388 2017-09-16
-		}
-		// Now it must be some C or Java style declaration or just a plain variable (possibly indexed)
+		// Now it must be some C or Java style declaration or just a plain variable (possibly indexed or qualified or both)
 		// START KGU#388 2017-09-14: Enh. #423 - We try recursively to track cases g) and h) down
 //		else if (tokens.get(nTokens-1).equals("]")) {
 //			// b) indexed variable or d) a C-style array declaration or g) or h)?
@@ -2817,9 +2833,10 @@ public class Executor implements Runnable
 //				}
 //			}
 //		}
+		// qualified or indexed or both?
 		else if (tokens.indexOf(".") == 1 || tokens.get(nTokens-1).equals("]")) {
 			// FIXME: Face a mixed encapsulation of arrays and records
-			// In case of a record component access there may not be modifiers
+			// In case of a record component access there must not be modifiers
 			if (tokens.indexOf(".") == 1) {
 				TypeMapEntry recordType = null;
 				// The base variable name should be the last identifier in the series
@@ -2872,18 +2889,15 @@ public class Executor implements Runnable
 			// START KGU#388 2017-09-18: Register the declared type if it's a defined type name
 			if (nTokens == 2) {
 				typeDescr = tokens.subSequence(0, nTokens - 1);
-				String typeName = typeDescr.get(0);
-				if (typeDescr.count() == 1 && Function.testIdentifier(typeName, null) && context.dynTypeMap.containsKey(":" + typeName)) {
-					context.dynTypeMap.put(tokens.get(1), context.dynTypeMap.get(":" + typeName));
-				}
-				// In other cases we cannot create a new TypeMapEntry because we are lacking element and line information here.
-				// So it is up to the calling method...
-				// END KGU#388 2017-09-18
+				associateType(tokens.get(1), typeDescr);
 			}
+			// END KGU#388 2017-09-18
 			target = tokens.get(nTokens-1);
 		}
 		
-		// FIXME: name may still contain type and other modifiers, so this check might fail!
+		// ======== PHASE 2: Check of loop variable violations ===========
+		
+		// FIXME: target may still contain type and other modifiers, so this check might fail!
 		// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 		if (context.forLoopVars.lastIndexOf(target, ignoreLoopStackLevel) >= 0)
 		{
@@ -2891,6 +2905,7 @@ public class Executor implements Runnable
 		}
 		// END KGU#307 2016-12-12
 		
+		// ======== PHASE 3: Precautions against violation of constants ===========
 		// START KGU#375 2017-03-30: Enh. #388 - check redefinition of constant
 		if (this.isConstant(target)) {
 			throw new EvalError(control.msgConstantRedefinition.getText().replace("%", target), null, null);
@@ -2904,34 +2919,10 @@ public class Executor implements Runnable
 		// START KGU#388 2017-09-14: Enh. #423
 		if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			content = (HashMap)((HashMap)content).clone();
+			content = new HashMap<String, Object>((HashMap<String, ?>)content);
 		}
 		// END KGU#388 2017-09-14
 		
-		// START KGU#69 2015-11-09: This is only a good idea in case of raw input
-		//if (content instanceof String)
-		//{
-		//	if (!isNumeric((String) content))
-		//	{
-		//		content = "\"" + (String) content + "\"";
-		//	}
-		//}
-		// END KGU#69 2015-11-08
-
-		// MODIFIED BY GENNARO DONNARUMMA
-
-		// START KGU#141 2016-01-16: Bugfix #112 - this spoiled many index expressions!
-		// No idea what this might have been intended for - enclosing parentheses after input?
-		//if ((name != null) && (name.contains("(")))
-		//{
-		//	name = name.replace("(", "");
-		//}
-		//if ((name != null) && (name.contains(")")))
-		//{
-		//	name = name.replace(")", "");
-		//}
-		// END KGU#141 2016-01-16
-
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
 		// Fundamentally revised by Kay Gürtzig 2015-11-08
 
@@ -2959,6 +2950,10 @@ public class Executor implements Runnable
 //		// END KGU#359 2017-03-06 
 //			boolean arrayFound = this.variables.contains(arrayname);
 //			int index = this.getIndexValue(name);
+		
+		// ======== PHASE 4: Structure-aware value assignment ===========
+
+		// -------- Step 4 a: Array element assignment ----------------------- 
 		if (indexStr != null) {
 		// END KGU#375 2017-03-30
 			boolean arrayFound = context.variables.contains(target);
@@ -2978,7 +2973,7 @@ public class Executor implements Runnable
 				{
 					// Produce a meaningful EvalError instead
 					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content));
+					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
 				}
 			}
 			else if (componentArrayFound)
@@ -2995,7 +2990,7 @@ public class Executor implements Runnable
 						if (!(comp instanceof HashMap<?,?>)) {
 							throw new EvalError(control.msgInvalidComponent.getText().replace("%1", path.get(i+1)).replace("%2", path.concatenate(".", 0, i)), null, null);
 						}
-						comp = ((HashMap)comp).get(path.get(i));
+						comp = ((HashMap<?, ?>)comp).get(path.get(i));
 					}
 					objectArray = (Object[])comp;
 					oldSize = objectArray.length;
@@ -3004,7 +2999,7 @@ public class Executor implements Runnable
 				{
 					// Produce a meaningful EvalError instead
 					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content));
+					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
 				}
 			}
 			if (index > oldSize - 1) // This includes the case of oldSize = 0
@@ -3051,7 +3046,7 @@ public class Executor implements Runnable
 				{
 					// Produce a meaningful EvalError instead
 					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content));
+					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
 				}
 				
 			}
@@ -3061,6 +3056,7 @@ public class Executor implements Runnable
 			}
 		}
 		// START KGU#388 2017-09-14: Enh. #423 Special treatment for record components
+		// -------- Step 4 b: Record component assignment -------------------- 
 		else if (recordName != null) {
 			StringList path = StringList.explode(target, "\\.");
 			try {
@@ -3070,18 +3066,18 @@ public class Executor implements Runnable
 				}
 				Object comp = record;
 				for (int i = 1; i < path.count()-1; i++) {
-					Object subComp = ((HashMap)comp).get(path.get(i));
+					Object subComp = ((HashMap<?, ?>)comp).get(path.get(i));
 					if (subComp == null && i == path.count()-2) {
-						// We tolerate that the penultimate level is undefined...
+						// We tolerate that the penultimate level is unset...
 						subComp = this.createEmptyRecord(path, i);
-						((HashMap)comp).put(path.get(i), subComp);
+						((HashMap<String, Object>)comp).put(path.get(i), subComp);
 					}
 					else if (!(subComp instanceof HashMap<?,?>)) {
 						throw new EvalError(control.msgInvalidComponent.getText().replace("%1", path.get(i-1)).replace("%2", path.concatenate(".",0,i-1)), null, null);
 					}
 					comp = subComp;
 				}
-				((HashMap)comp).put(path.get(path.count()-1), content);
+				((HashMap<String, Object>)comp).put(path.get(path.count()-1), content);
 				context.interpreter.set(recordName, record);
 			}
 			catch (EvalError ex) {
@@ -3092,6 +3088,7 @@ public class Executor implements Runnable
 			}
 		}
 		// END KGU#388 2017-09-14
+		// -------- Step 4 c: assignment to a plain variable ----------------------- 
 		else // indexString == null && recordName == null
 		{
 			// START KGU#375 2017-03-30: Enh. #388 - this has all been done already now
@@ -3109,16 +3106,21 @@ public class Executor implements Runnable
 			// END KGU#375 2017-03-30
 
 			// START KGU#388 2017-09-14: Enh. #423
-			// Throw an error if a record is assigned to an undeclared, non-record or wrong record-type variable
+			// Throw an error if a record is assigned to a used but undeclared, non-record or wrong-record-type variable
 			// or vice versa 
 			if (content instanceof HashMap<?,?>) {
-				String typeName = ((HashMap)content).get("§TYPENAME§").toString();
-				if (!context.dynTypeMap.containsKey(target) || (compType = context.dynTypeMap.get(target)) == null || !compType.isRecord()
-					|| !compType.typeName.equals(typeName)) {
-				throw new EvalError(control.msgTypeMismatch.getText().
-						replace("%1", ((HashMap)content).get("§TYPENAME§").toString()).
-						replace("%2", compType == null ? "???" : compType.typeName).
-						replace("%3", target), null, null);
+				String typeName = ((HashMap<?, ?>)content).get("§TYPENAME§").toString();
+				if ((context.variables.contains(target) || typeDescr != null)
+						&& (!context.dynTypeMap.containsKey(target) || (compType = context.dynTypeMap.get(target)) == null || !compType.isRecord()
+						|| !compType.typeName.equals(typeName))) {
+					String compTypeStr = "???";
+					if (compType != null) {
+						compTypeStr = compType.getCanonicalType(true, true).replace("@", "array of ");
+					}
+					throw new EvalError(control.msgTypeMismatch.getText().
+							replace("%1", ((HashMap<?, ?>)content).get("§TYPENAME§").toString()).
+							replace("%2", compTypeStr).
+							replace("%3", target), null, null);
 				}
 			}
 			else if (content != null && (context.dynTypeMap.containsKey(target) && (compType = context.dynTypeMap.get(target)) != null
@@ -3168,7 +3170,7 @@ public class Executor implements Runnable
 			if (! (content instanceof String || content instanceof Character || content instanceof Object[] || content instanceof HashMap<?,?>))
 			{
 				try {
-					this.evaluateExpression(target + " = " + content);	// Avoid the variable content to be an object
+					this.evaluateExpression(target + " = " + content, false);	// Avoid the variable content to be an object
 				}
 				catch (EvalError ex)	// Just ignore an error (if we may rely on the previously set content to survive)
 				{}
@@ -3202,6 +3204,22 @@ public class Executor implements Runnable
 			updateVariableDisplay();
 		}
 		// END KGU#20 2015-10-13
+	}
+
+	/**
+	 * Detects whether the StringList {@code _typeDescr} specifies a defined type and if so
+	 * associates the latter to the given variable or constant name {@code target} in {@code this.context.dynTypeMap}.
+	 * @param target - a variable or constant identifier
+	 * @param typeDescr - a {@link StringList} comprising a found type description
+	 */
+	private void associateType(String target, StringList typeDescr) {
+		String typeName = null;
+		if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), null)
+				&& context.dynTypeMap.containsKey(":" + typeName)) {
+			context.dynTypeMap.put(target, context.dynTypeMap.get(":" + typeName));
+		}
+		// In other cases we cannot create a new TypeMapEntry because we are lacking element and line information here.
+		// So it is up to the calling method...
 	}
 	
 	private HashMap<String, Object> createEmptyRecord(StringList path, int depth) {
@@ -3345,7 +3363,7 @@ public class Executor implements Runnable
 					// In this case an initialisation expression ("{ ..., ..., ...}") is expected
 					String asgnmt = "Object[] " + varName + " = " + newValue;
 					// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
-					this.evaluateExpression(asgnmt);
+					this.evaluateExpression(asgnmt, false);
 //					// Okay, but now we have to sort out some un-boxed strings
 //					Object[] objectArray = (Object[]) interpreter.get(varName);
 //					for (int j = 0; j < objectArray.length; j++)
@@ -3835,7 +3853,7 @@ public class Executor implements Runnable
 				// START KGU#417 2017-06-30: Enh. #424
 				expr = this.evaluateDiagramControllerFunctions(expr);
 				// END KGU#417 2017-06-30
-				Object n = this.evaluateExpression(expr);
+				Object n = this.evaluateExpression(expr, false);
 				// END KGU 2017-04-14
 				if (n instanceof Integer)
 				{
@@ -3941,7 +3959,7 @@ public class Executor implements Runnable
 							}
 							Object argVals[] = new Object[nArgs];
 							for (int i = 0; i < nArgs; i++) {
-								Object val = this.evaluateExpression(args.get(i));
+								Object val = this.evaluateExpression(args.get(i), false);
 								try {
 									signature[i].cast(val);
 								}
@@ -4053,7 +4071,7 @@ public class Executor implements Runnable
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
-						args[p] = this.evaluateExpression(f.getParam(p));
+						args[p] = this.evaluateExpression(f.getParam(p), false);
 					}
 					value = executeCall(sub, args, (Call)instr);
 					// START KGU#117 2016-03-10: Enh. #77
@@ -4085,52 +4103,58 @@ public class Executor implements Runnable
 		}
 		// END KGU#2 2015-10-17
 		// Now evaluate the expression
-		// FIXME: This should be recursive!
-		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
-		else if (expression.startsWith("{") && expression.endsWith("}"))
-		{
-			// FIXME: We might have to evaluate those element values in advance, which are initializers themselves...
-			this.evaluateExpression("Object[] tmp20160114kgu = " + expression);
-			value = context.interpreter.get("tmp20160114kgu");
-			context.interpreter.unset("tmp20160114kgu");
-		}
-		// END KGU#100 2016-01-14
-		// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
-		else if (tokens.indexOf("{") == 1 && expression.endsWith("}")
-				&& (recordType = identifyRecordType(tokens.get(0), true)) != null)
-		{
-			this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()");
-			HashMap<String, String> components = Element.splitRecordInitializer(expression);
-			if (components == null || components.containsKey("§TAIL§")) {
-				result = control.msgInvalidExpr.getText().replace("%1", expression);
-			}
-			else {
-				components.remove("§TYPENAME§");
-				LinkedHashMap<String, TypeMapEntry> compDefs = recordType.getComponentInfo(false);
-				for (Entry<String, String> comp: components.entrySet()) {
-					// FIXME: We might have to evaluate the component value in advance if it is an initializer itself...
-					if (compDefs.containsKey(comp.getKey())) {
-						context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
-					}
-					else {
-						result = control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName);
-						break;
-					}
-				}
-				value = context.interpreter.get("tmp20170913kgu");
-				if (value instanceof HashMap<?,?>) {
-					((HashMap)value).put("§TYPENAME§", recordType.typeName);
-				}
-				context.interpreter.unset("tmp20170913kgu");
-			}
-		}
-		// END KGU#388 2017-09-13
+		// START KGU#426 2017-09-30: Enh. #48, #423, bugfix #429 we need this code e.g in tryReturn, too
+//		// FIXME: This should be recursive!
+//		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+//		else if (expression.startsWith("{") && expression.endsWith("}"))
+//		{
+//			// FIXME: We might have to evaluate those element values in advance, which are initializers themselves...
+//			this.evaluateExpression("Object[] tmp20160114kgu = " + expression, false);
+//			value = context.interpreter.get("tmp20160114kgu");
+//			context.interpreter.unset("tmp20160114kgu");
+//		}
+//		// END KGU#100 2016-01-14
+//		// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
+//		else if (tokens.indexOf("{") == 1 && expression.endsWith("}")
+//				&& (recordType = identifyRecordType(tokens.get(0), true)) != null)
+//		{
+//			this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
+//			HashMap<String, String> components = Element.splitRecordInitializer(expression);
+//			if (components == null || components.containsKey("§TAIL§")) {
+//				result = control.msgInvalidExpr.getText().replace("%1", expression);
+//			}
+//			else {
+//				components.remove("§TYPENAME§");
+//				LinkedHashMap<String, TypeMapEntry> compDefs = recordType.getComponentInfo(false);
+//				for (Entry<String, String> comp: components.entrySet()) {
+//					// FIXME: We might have to evaluate the component value in advance if it is an initializer itself...
+//					if (compDefs.containsKey(comp.getKey())) {
+//						context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
+//					}
+//					else {
+//						result = control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName);
+//						break;
+//					}
+//				}
+//				value = context.interpreter.get("tmp20170913kgu");
+//				if (value instanceof HashMap<?,?>) {
+//					((HashMap<String, Object>)value).put("§TYPENAME§", recordType.typeName);
+//				}
+//				context.interpreter.unset("tmp20170913kgu");
+//			}
+//		}
+//		// END KGU#388 2017-09-13
+//		else
+//		{
+//			//cmd = cmd.replace("<-", "=");
+//		
+//			value = this.evaluateExpression(expression);
+//		}
 		else
 		{
-			//cmd = cmd.replace("<-", "=");
-		
-			value = this.evaluateExpression(expression);
+			value = this.evaluateExpression(expression, true);
 		}
+		// END KGU#426 2017-09-30
 		
 		if (value != null)
 		{
@@ -4145,7 +4169,11 @@ public class Executor implements Runnable
 				if (!context.dynTypeMap.containsKey(target) || !(oldEntry = context.dynTypeMap.get(target)).isDeclared) {
 					String typeDescr = Instruction.identifyExprType(context.dynTypeMap, expression, true);
 					if (oldEntry == null) {
-						context.dynTypeMap.put(target, new TypeMapEntry(typeDescr, null, instr, lineNo, true, false, false));
+						TypeMapEntry typeEntry = null;
+						if (typeDescr != null && (typeEntry = context.dynTypeMap.get(":" + typeDescr)) == null) {
+							typeEntry = new TypeMapEntry(typeDescr, null, instr, lineNo, true, false, false);
+						}
+						context.dynTypeMap.put(target, typeEntry);
 					}
 					else {
 						oldEntry.addDeclaration(typeDescr, instr, lineNo, true, false);
@@ -4187,7 +4215,7 @@ public class Executor implements Runnable
 				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
 				try {
 					String dummyVar = "prompt" + this.hashCode();
-					this.evaluateExpression(dummyVar + "=\"" + prompt + "\"");
+					this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false);
 					Object res = context.interpreter.get(dummyVar);
 					if (res != null) {
 						prompt = res.toString();
@@ -4351,7 +4379,7 @@ public class Executor implements Runnable
 			{
 				out = outExpressions.get(i);
 		// END KGU#101 2015-12-11
-				Object n = this.evaluateExpression(out);
+				Object n = this.evaluateExpression(out, false);
 				if (n == null)
 				{
 					result = control.msgInvalidExpr.getText().replace("%1", out);
@@ -4449,7 +4477,10 @@ public class Executor implements Runnable
 		Object resObj = null;
 		if (!out.isEmpty())
 		{
-			resObj = this.evaluateExpression(out);
+			// START KGU#426 2017-09-30: Bugfix #429
+			//resObj = this.evaluateExpression(out);
+			resObj = this.evaluateExpression(out, true);
+			// END KGU#426 2017-09-30
 			// If this diagram is executed at top level then show the return value
 			if (this.callers.empty())
 			{
@@ -4521,7 +4552,7 @@ public class Executor implements Runnable
 			{
 				try
 				{
-					args[p] = this.evaluateExpression(f.getParam(p));
+					args[p] = this.evaluateExpression(f.getParam(p), false);
 					if (args[p] == null)
 					{
 						if (!result.isEmpty())
@@ -4608,7 +4639,7 @@ public class Executor implements Runnable
 				else	
 				{
 					// Try as built-in subroutine as is
-					this.evaluateExpression(cmd);
+					this.evaluateExpression(cmd, false);
 				}
 			}
 		}
@@ -4757,7 +4788,7 @@ public class Executor implements Runnable
 						}
 						String test = convert(expression + tokens.concatenate());
 						// END KGU#259 2016-09-25
-						Object n = this.evaluateExpression(test);
+						Object n = this.evaluateExpression(test, false);
 						go = n.toString().equals("true");
 					}
 					// END KGU#15 2015-10-21
@@ -4835,7 +4866,7 @@ public class Executor implements Runnable
 
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
-			Object cond = this.evaluateExpression(s);
+			Object cond = this.evaluateExpression(s, false);
 			//System.out.println("Res= " + n);
 			if (cond == null || !(cond instanceof Boolean))
 			{
@@ -4945,7 +4976,7 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
 			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr));
+			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
 			// END KGU#417 2017-06-30
 
 			if (cond == null || !(cond instanceof Boolean))
@@ -5019,7 +5050,7 @@ public class Executor implements Runnable
 					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 					//cond = context.interpreter.eval(convertStringComparison(condStr));
 					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-					cond = this.evaluateExpression(convertStringComparison(tempCondStr));
+					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
 					// END KGU#417 2017-06-30
 					if (cond == null)
 					{
@@ -5111,7 +5142,7 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
 			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr));
+			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
 			// END KGU#417 2017-06-30
 			if (cond == null)
 			{
@@ -5154,7 +5185,7 @@ public class Executor implements Runnable
 					//cond = context.interpreter.eval(convertStringComparison(condStr));
 					//Object cond = context.interpreter.eval(condStr);
 					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-					cond = this.evaluateExpression(convertStringComparison(tempCondStr));
+					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
 					// END KGU#417 2017-06-30
 					if (cond == null || !(cond instanceof Boolean))
 					{
@@ -5277,7 +5308,7 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
 			s = this.evaluateDiagramControllerFunctions(s);
 			// END KGU#417 2017-06-30
-			Object n = this.evaluateExpression(s);
+			Object n = this.evaluateExpression(s, false);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -5312,7 +5343,7 @@ public class Executor implements Runnable
 			s = this.evaluateDiagramControllerFunctions(s);
 			// END KGU#417 2017-06-30
 			
-			n = this.evaluateExpression(s);
+			n = this.evaluateExpression(s, false);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -5457,7 +5488,7 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				this.evaluateExpression("Object[] tmp20160321kgu = " + valueListString);
+				this.evaluateExpression("Object[] tmp20160321kgu = " + valueListString, false);
 				value = context.interpreter.get("tmp20160321kgu");
 				context.interpreter.unset("tmp20160321kgu");
 			}
@@ -5475,7 +5506,7 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				this.evaluateExpression("Object[] tmp20160321kgu = {" + valueListString + "}");
+				this.evaluateExpression("Object[] tmp20160321kgu = {" + valueListString + "}", false);
 				value = context.interpreter.get("tmp20160321kgu");
 				context.interpreter.unset("tmp20160321kgu");
 			}
@@ -5489,7 +5520,7 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				value = this.evaluateExpression(valueListString);
+				value = this.evaluateExpression(valueListString, false);
 			}
 			catch (EvalError ex)
 			{
@@ -5502,7 +5533,7 @@ public class Executor implements Runnable
 			StringList tokens = Element.splitExpressionList(valueListString, " ");
 			try
 			{
-				this.evaluateExpression("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}");
+				this.evaluateExpression("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}", false);
 				value = context.interpreter.get("tmp20160321kgu");
 				context.interpreter.unset("tmp20160321kgu");
 			}
@@ -5555,7 +5586,7 @@ public class Executor implements Runnable
 						// START KGU#388 2017-09-27: Enh. #423 declare or un-declare the loop variable dynamically
 						TypeMapEntry iterType = null;
 						if (iterVal instanceof HashMap<?,?>) {
-							Object typeName = ((HashMap<String, Object>)iterVal).get("§TYPENAME§");
+							Object typeName = ((HashMap<?, ?>)iterVal).get("§TYPENAME§");
 							if (typeName instanceof String && (iterType = context.dynTypeMap.get(":" + typeName)) != null) {
 								context.dynTypeMap.put(iterVar, iterType);
 							}
@@ -5728,22 +5759,84 @@ public class Executor implements Runnable
 	}
 	
 	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
-	Object evaluateExpression(String _expr) throws EvalError
+	/**
+	 * Resolves qualified names (record access) where contained and - if allowed by setting
+	 * {@code _withInitializers} - array or record initializers and has the interpreter evaluate
+	 * the prepared expression.<br/>
+	 * This preparation work might perhaps also have been done by the convert function but requires
+	 * current evaluation context. So it was rather located here.<br/>
+	 * Note: Argument {@code _withInitializers} (and the associated mechanism) was added via
+	 * refactoring afterwards with a default value of {@code false} in order to avoid unwanted
+	 * impact. If there happens to be some place in code where it seems helpful to activate this
+	 * mechanism just go ahead and try.   
+	 * @param _expr -the converted expression to be evaluated
+	 * @param _withInitializers - whether an array or record initializer is to be managed here
+	 * @return the evaluated result if successful 
+	 * @throws EvalError an exception if something went wrong (may be raised by the interpreter
+	 * or this method itself)
+	 */
+	private Object evaluateExpression(String _expr, boolean _withInitializers) throws EvalError
 	{
+		Object value = null;
 		StringList tokens = Element.splitLexically(_expr, true);
 		int i = 0;
-		// FIXME: Special treatment for inc() and dec functions
+		// FIXME: Special treatment for inc() and dec functions - no need if convert was applied before
 		while ((i = tokens.indexOf(".", i+1)) > 0) {
 			if (i+1 < tokens.count() && Function.testIdentifier(tokens.get(i+1), null) && (i+2 == tokens.count() || !tokens.get(i+2).equals("("))) {
 				tokens.set(i, ".get(\"" + tokens.get(i+1) + "\")");
 				tokens.remove(i+1);
 			}
 		}
-		_expr = tokens.concatenate();
-		return context.interpreter.eval(_expr);
+		// START KGU#100/KGU#388 2017-09-29: Enh. #84, #423 Make this avaialable at more places
+		TypeMapEntry recordType = null;
+		// FIXME: This should be recursive!
+		if (tokens.get(tokens.count()-1).equals("}") && _withInitializers) {
+			// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+			if (tokens.get(0).equals("{"))
+			{
+				// FIXME: We might have to evaluate those element values in advance, which are initializers themselves...
+				this.evaluateExpression("Object[] tmp20160114kgu = " + tokens.concatenate(), false);
+				value = context.interpreter.get("tmp20160114kgu");
+				context.interpreter.unset("tmp20160114kgu");
+			}
+			// END KGU#100 2016-01-14
+			// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
+			else if (tokens.get(1).equals("{") && (recordType = identifyRecordType(tokens.get(0), true)) != null)
+			{
+				this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
+				HashMap<String, String> components = Element.splitRecordInitializer(_expr);
+				if (components == null || components.containsKey("§TAIL§")) {
+					throw new EvalError(control.msgInvalidExpr.getText().replace("%1", _expr), null, null);
+				}
+				else {
+					components.remove("§TYPENAME§");
+					LinkedHashMap<String, TypeMapEntry> compDefs = recordType.getComponentInfo(false);
+					for (Entry<String, String> comp: components.entrySet()) {
+						// FIXME: We might have to evaluate the component value in advance if it is an initializer itself...
+						if (compDefs.containsKey(comp.getKey())) {
+							context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
+						}
+						else {
+							throw new EvalError(control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName), null, null);
+						}
+					}
+					value = context.interpreter.get("tmp20170913kgu");
+					if (value instanceof HashMap<?,?>) {
+						((HashMap<String, Object>)value).put("§TYPENAME§", recordType.typeName);
+					}
+					context.interpreter.unset("tmp20170913kgu");
+				}
+			}
+			// END KGU#388 2017-09-13
+		}
+		else
+		{
+			value = context.interpreter.eval(tokens.concatenate());
+		}
+		return value;
 	}
 	// END KGU#388 2017-09-16
-
+	
 	private String unconvert(String s)
 	{
 		s = s.replace("==", "=");
@@ -5803,7 +5896,7 @@ public class Executor implements Runnable
 		try
 		{
 			//index = Integer.parseInt(ind);		// KGU: This was nonsense - usually no literal here
-			index = (Integer) this.evaluateExpression(ind);
+			index = (Integer) this.evaluateExpression(ind, false);
 		}
 		catch (Exception e)
 		{

@@ -421,6 +421,7 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error24_5 = new LangTextHolder("There is no defined record type «%»!");
 	public static final LangTextHolder error24_6 = new LangTextHolder("Record component «%» will not be modified/initialized!");
 	public static final LangTextHolder error24_7 = new LangTextHolder("Record type «%1» hasn't got a component «%2»!");
+	public static final LangTextHolder error24_8 = new LangTextHolder("Variable «%1» hasn't got a component «%2»!");
 	// END KGU#388 2017-09-13
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization

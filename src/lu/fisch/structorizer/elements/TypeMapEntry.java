@@ -39,12 +39,26 @@ package lu.fisch.structorizer.elements;
  *                                      type definitions
  *      Kay Gürtzig     2017.09.18      Enh. #423: dummy singleton introduced (impacts poorly tested!)
  *      Kay Gürtzig     2017.09.22      Bugfix #428 Defective replacement pattern for "short" in canonicalizeType(String)
+ *      Kay Gürtzig     2017.09.29      Regex stuff revised (final Strings -> final Patterns)
  *
  ******************************************************************************************************
  *
  *      Comment: Entry contains a single-linked list of possibly conflicting specifications as well as
- *      sets of element numbers with assigning and referencing use.
+ *      references to elements with assigning and referencing use.
  *      
+ *      FIXME: Redesign plan (Enh. #423): Replace the multi-level index range architecture in VarDeclaration
+ *      by a single-level index range where the elementType would be a TypeMapEntry reference instead of
+ *      a mere String. This way, a fully recursive type structure would be possible (e.g. records of arrays of
+ *      arrays of records etc.). Maybe the multi-level index ranges could evene be preserved if the intermediate
+ *      levels are of no individual meaning, though this obviously complicates type comparability.
+ *      
+ *      Further on, the use of the same structure for type definitions which may be shard among variables
+ *      provoked an inconsistency: the sets of defining and modifying elements are misleading fpr shared type
+ *      entries.
+ *      In the event there should be a (recursive) type table withiut references to modifying elements
+ *      and a separate map from variable names to entries, which collect data over the live cycle of the
+ *      variable where one of the data items is a type link (or a list of type links, wth a declaring element
+ *      each). The type entry itself will only need a link to the (first) defining element. 
  *
  ******************************************************************************************************///
 
@@ -54,6 +68,8 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -77,18 +93,20 @@ public class TypeMapEntry {
 			"float",
 			"double"
 	};
+	private static final Pattern ARRAY_PATTERN1 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?[Oo][Ff](\\s.*)");
+	private static final Pattern ARRAY_PATTERN1o = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?(\\d*)\\s*?[Oo][Ff](\\s.*)");	// Oberon style
+	private static final Pattern ARRAY_PATTERN2 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?\\[(.*)\\]\\s*?[Oo][Ff](\\s.*)");
+	private static final Pattern ARRAY_PATTERN3 = Pattern.compile("(.*?)\\[(.*?)\\](.*)");
+	private static final Pattern ARRAY_PATTERN4 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy](\\W.*?\\W|\\s*?)[Oo][Ff](\\s.*)");
+	private static final Pattern ARRAY_PATTERN5 = Pattern.compile("(.*?)\\[.*?\\]$");
+	//private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)[.][.][.]?([0-9]+)$");
+	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)\\s*?[.][.][.]?\\s*?([0-9]+)$");
 	
 	/**
 	 * Internal declaration list node of TypeMapEntry. Don't manipulate this directly
 	 * @author Kay Gürtzig
 	 */
 	class VarDeclaration {
-		private static final String arrayPattern1 = "^[Aa][Rr][Rr][Aa][Yy]\\s*?[Oo][Ff](\\s.*)";
-		private static final String arrayPattern1o = "^[Aa][Rr][Rr][Aa][Yy]\\s*?(\\d*)\\s*?[Oo][Ff](\\s.*)";	// Oberon style
-		private static final String arrayPattern2 = "^[Aa][Rr][Rr][Aa][Yy]\\s*?\\[(.*)\\]\\s*?[Oo][Ff](\\s.*)";
-		private static final String arrayPattern3 = "(.*?)\\[(.*?)\\](.*)";
-		private static final String arrayPattern4 = "^[Aa][Rr][Rr][Aa][Yy](\\W.*?\\W|\\s*?)[Oo][Ff](\\s.*)";
-		private static final String arrayPattern5 = "(.*?)\\[.*?\\]$";
 
 		public String typeDescriptor;
 		public Element definingElement;
@@ -202,15 +220,16 @@ public class TypeMapEntry {
 		{
 			// Possible cases we have to cope with might e.g. be:
 			// array of unsigned int[12]
-			// array[1...6] of ARRAY 9 OF BOOLEAN
+			// array[1..6] of ARRAY 9 OF BOOLEAN
 			// double[5][8]
-			// array [2...9, columns] of array of char
+			// array [2..9, columns] of array of char
 			String typeDescr = this.typeDescriptor;
-			while (typeDescr.matches(arrayPattern4)) {
-				typeDescr = typeDescr.replaceAll(arrayPattern4, "$2").trim();
+			Matcher matcher;
+			while ((matcher = ARRAY_PATTERN4.matcher(typeDescr)).matches()) {
+				typeDescr = matcher.replaceAll( "$2").trim();
 			}
-			while (typeDescr.matches(arrayPattern5)) {
-				typeDescr = typeDescr.replaceAll(arrayPattern5, "$1").trim();
+			while ((matcher = ARRAY_PATTERN5.matcher(typeDescr)).matches()) {
+				typeDescr = matcher.replaceAll( "$1").trim();
 			}
 			if (typeDescr.isEmpty()) {
 				typeDescr = "???";
@@ -226,14 +245,18 @@ public class TypeMapEntry {
 			//final String arrayPattern3 = "(.*?)\\[(.*?)\\](.*)";
 			String typeDescr = this.typeDescriptor;
 			this.indexRanges = new Vector<int[]>();
-			while (typeDescr.matches(arrayPattern1) || typeDescr.matches(arrayPattern1o) || typeDescr.matches(arrayPattern2)) {
-				if (typeDescr.matches(arrayPattern1)) {
-					typeDescr = typeDescr.replaceFirst(arrayPattern1, "$1").trim();
+			Matcher matcher1, matcher1o = null, matcher2 = null;
+			boolean matches1 = false, matches1o = false;
+			while ((matches1 = (matcher1 = ARRAY_PATTERN1.matcher(typeDescr)).matches())
+					|| (matches1o = (matcher1o = ARRAY_PATTERN1o.matcher(typeDescr)).matches())
+					|| (matcher2 = ARRAY_PATTERN2.matcher(typeDescr)).matches()) {
+				if (matches1) {
+					typeDescr = matcher1.replaceFirst("$1").trim();
 					this.indexRanges.add(new int[]{0, -1});
 				}
-				else if (typeDescr.matches(arrayPattern1o)) {
-					String dimensions = typeDescr.replaceFirst(arrayPattern1o, "$1").trim();
-					typeDescr = typeDescr.replaceFirst(arrayPattern1o, "$2").trim();
+				else if (matches1o) {
+					String dimensions = matcher1o.replaceFirst("$1").trim();
+					typeDescr = matcher1o.replaceFirst("$2").trim();
 					StringList counts = StringList.explode(dimensions, ",");
 					for (int i = 0; i < counts.count(); i++) {
 						try {
@@ -246,30 +269,34 @@ public class TypeMapEntry {
 					}
 				}
 				else {
-					String dimens = typeDescr.replaceFirst(arrayPattern2, "$1").trim();
-					typeDescr = typeDescr.replaceFirst(arrayPattern2, "$2").trim();
-					StringList ranges = StringList.explode(dimens, "\\]\\[");
+					String dimens = matcher2.replaceFirst("$1").trim();
+					typeDescr = matcher2.replaceFirst("$2").trim();
+					StringList ranges = StringList.explode(dimens, "\\]\\s*\\[");
 					addIndexRanges(StringList.explode(ranges, ","));
 				}
+				matches1 = matches1o = false;
 			};
-			while (typeDescr.endsWith("]") && typeDescr.matches(arrayPattern3)) {
-				String dimens = typeDescr.replaceFirst(arrayPattern3, "$2").trim();
-				typeDescr = typeDescr.replaceFirst(arrayPattern3, "$1$3").trim();
+			Matcher matcher3 = ARRAY_PATTERN3.matcher(typeDescr);
+			while (typeDescr.endsWith("]") && matcher3.matches()) {
+				String dimens = matcher3.replaceFirst("$2").trim();
+				typeDescr = matcher3.replaceFirst("$1$3").trim();
 				addIndexRanges(StringList.explode(dimens, ","));
+				matcher3.reset(typeDescr);
 			}
 			
 		}
 		
 		private void addIndexRanges(StringList ranges)
 		{
-			final String rangePattern = "^([0-9]+)[.][.][.]?([0-9]+)$";
+			Matcher matcher = RANGE_PATTERN.matcher("");
 
 			for (int i = 0; i < ranges.count(); i++) {
 				int[] indexRange = new int[]{0, -1};
 				String range = ranges.get(i).trim();
-				if (range.matches(rangePattern)) {
-					indexRange[0] = Integer.parseInt(range.replaceAll(rangePattern, "$1"));
-					indexRange[1] = Integer.parseInt(range.replaceAll(rangePattern, "$2"));
+				matcher.reset(range);
+				if (matcher.matches()) {
+					indexRange[0] = Integer.parseInt(matcher.replaceAll("$1"));
+					indexRange[1] = Integer.parseInt(matcher.replaceAll("$2"));
 				}
 				else {
 					try {
@@ -719,7 +746,8 @@ public class TypeMapEntry {
 	@Override
     public String toString()
     {
-		return getClass().getSimpleName() + "(" + this.getTypes().concatenate(" | ") + ")";
+		String name = typeName == null ? "" : typeName + "=";
+		return getClass().getSimpleName() + "(" + name + this.getTypes().concatenate(" | ") + ")";
     }
 
 	/**

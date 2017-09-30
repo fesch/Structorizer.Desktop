@@ -403,7 +403,8 @@ Menu.error24_3.text=Nombre «%» del componente is ilegal o doble.
 Menu.error24_4.text=El tipo del componente «%» no es definido o conocido.
 Menu.error24_5.text=Un tipo «%» estructurado no existe!
 Menu.error24_6.text=El componente «%» no será modificado/inicializado!
-Menu.error24_7.text=El tipo «%1» no tiene ningun componente «%2»!
+Menu.error24_7.text=El tipo «%1» no tiene ningún componente «%2»!
+Menu.error24_8.text=La variable «%1» no tiene ningún componente «%2»!
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -1071,7 +1072,7 @@ Control.msgConstantRedefinition.text=¡Intento ilegal de redefinir or modificar 
 Control.msgConstantArrayElement.text=¡No es posible hacer constante un elemento «%» de un array colocando un valor!
 Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura o variable «%2»!
 Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
-Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» declarado para variable/componente «%3»!
+Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

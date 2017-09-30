@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-06 (2017.09.28)
+Current development version: 3.26-06 (2017.09.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -105,6 +105,7 @@ Current development version: 3.26-06 (2017.09.28)
 - 06: Enh. #423: Support for record types (structs) in Executor and Analyser <2>
 - 06: Enh. #388,#389,#423: Export of Includables, records and constants to Pascal <2>
 - 06: Enh. #428: Structorizer got stuck on using type name "short" <2>
+- 06: Bugfix #429: Array/record literals in result statements fail in Executor <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

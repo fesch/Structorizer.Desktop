@@ -699,7 +699,12 @@ public class StringList {
 
 	// START KGU 2015-12-21: More flexibility with reduced redundancy
 	/**
-	 * Concatenates all elements, putting the _separator string between them
+	 * Concatenates all elements, putting the _separator string between them.<br/>
+	 * NEW: If {@code _separator} is {@code null} then an empty separator is
+	 * used unless a preceding string ending with an identifier character
+	 * would meet a beginning identifier character of the current string in
+	 * which case a single space would be inserted, thus preserving a lexical
+	 * gap.
 	 * @param _separator - a string placed between the elements of this 
 	 * @return the concatenated string
 	 */
@@ -709,7 +714,12 @@ public class StringList {
 	}
 	
 	/**
-	 * Concatenates all elements, putting the _separator string between them
+	 * Concatenates all elements, putting the _separator string between them.<br/>
+	 * NEW: If {@code _separator} is {@code null} then an empty separator is
+	 * used unless a preceding string ending with an identifier character
+	 * would meet a beginning identifier character of the current string in
+	 * which case a single space would be inserted, thus preserving a lexical
+	 * gap.
 	 * @param _separator - a string placed between the elements of this
 	 * @param _start - index of the first element to be included
 	 * @param _end - index beyond the last element to be included 
@@ -717,21 +727,37 @@ public class StringList {
 	 */
 	public String concatenate(String _separator, int _start, int _end)
 	{
-		String text = "";
+		// START KGU#425 2017-09-29
+		//String text = "";
+		StringBuffer text = new StringBuffer();
+		boolean lastEndedLikeId = false;
+		// END KGU#425 2017-09-29
 		boolean isFirst = true;
         for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
 		{
+        	String thisString = strings.get(i);
 			if (isFirst)
 			{
-				text = strings.get(i);
+				//text = strings.get(i);
 				isFirst = false;
 			}
+			// START KGU#425 2019-09-29
+			else if (_separator == null && !thisString.isEmpty()) {
+				if (lastEndedLikeId && Character.isJavaIdentifierPart(thisString.charAt(0))) {
+					text.append(" ");
+				}
+				lastEndedLikeId = Character.isJavaIdentifierPart(thisString.charAt(thisString.length()-1));
+			}
+			// END KGU#425 2019-09-29
 			else
 			{
-				text += _separator + strings.get(i);
+				//text += _separator + thisString;
+				text.append(_separator);
 			}
+			text.append(thisString);
 		}
-		return text;
+		//return text;
+        return text.toString();
 	}
 	
 	public String concatenate(String _separator, int _start)

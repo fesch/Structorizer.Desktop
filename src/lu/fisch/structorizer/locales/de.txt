@@ -402,6 +402,7 @@ Menu.error24_4.text=Komponententyp «%» ist undefiniert oder unbekannt.
 Menu.error24_5.text=Es gibt keinen definierten Verbund-Typ «%»!
 Menu.error24_6.text=Verbund-Komponente «%» wird nicht geändert bzw. initialisiert!
 Menu.error24_7.text=Verbundtyp «%1» besitzt keine Komponente «%2»!
+Menu.error24_8.text=Variable «%1» besitzt keine Komponente «%2»!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -1068,7 +1069,7 @@ Control.msgConstantRedefinition.text=Unzulässiger Versuch, Konstante «%» neu 
 Control.msgConstantArrayElement.text=Ein Array-Element «%» kann nicht per Zuweisung zur Konstanten gemacht werden!
 Control.msgInvalidComponent.text=Es gibt keine Komponente «%1» in Verbundtyp oder -Variable «%2»!
 Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht mittels Zuweisung konstant gemacht werden!
-Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem deklarierten Typ «%2» der Variablen/Komponente «%3»!
+Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
 

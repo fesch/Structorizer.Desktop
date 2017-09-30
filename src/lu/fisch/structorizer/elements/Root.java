@@ -208,6 +208,12 @@ public class Root extends Element {
 	};
 	// END KGU#305 2016-12-12
 	
+	private final static java.util.regex.Pattern INC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
+	private final static java.util.regex.Pattern INC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
+	private final static java.util.regex.Pattern DEC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
+	private final static java.util.regex.Pattern DEC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
+	private final static java.util.regex.Pattern INDEX_PATTERN = java.util.regex.Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
+	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
 	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
@@ -1948,7 +1954,6 @@ public class Root extends Element {
      * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
      * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
      * HYP 3: output (?) &lt;used&gt; (?)<br/>
-     * Note: This works only if _ele is different from this.<br/>
      * @param _line - the element text line to be analysed
      * @param _keywords the set of parser keywords (if available)
      * @return StringList of used variable names according to the above specification
@@ -1958,13 +1963,17 @@ public class Root extends Element {
     	if (_keywords == null) {
     		_keywords = CodeParser.getAllProperties();
     	}
-		Regex r;
+//		Regex r;
 
 		// modify "inc" and "dec" function (Pascal)
-		r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); _line = r.replaceAll(_line);
-		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); _line = r.replaceAll(_line);
-		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
-		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
+//		r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); _line = r.replaceAll(_line);
+//		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); _line = r.replaceAll(_line);
+//		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
+//		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
+		_line = INC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 + $2");
+		_line = INC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 + 1");
+		_line = DEC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 - $2");
+		_line = DEC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 - 1");
 
 		StringList tokens = Element.splitLexically(_line.trim(), true);
 
@@ -1998,6 +2007,8 @@ public class Root extends Element {
 		
 		// Here all the unification, alignment, reduction is done, now the actual analysis begins
 
+		String token0 = "";
+		if (tokens.count() > 0) token0 = tokens.get(0);
 		int asgnPos = tokens.indexOf("<-");
 		if (asgnPos >= 0)
 		{
@@ -2005,55 +2016,43 @@ public class Root extends Element {
 			String s = tokens.subSequence(0, asgnPos).concatenate();
 			if (s.indexOf("[") >= 0)
 			{
-				r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-				s = r.replaceAll(s);
+				//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+				//s = r.replaceAll(s);
+				s = INDEX_PATTERN.matcher(s).replaceAll("$2");
 			} else { s = ""; }
 
 			StringList indices = Element.splitLexically(s, true);
 			indices.add(tokens.subSequence(asgnPos+1, tokens.count()));
 			tokens = indices;
 		}
-		// START KGU#332 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
-		else if (tokens.indexOf("var") == 0) {
+		// START KGU#332/KGU#375 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
+		else if (token0.equalsIgnoreCase("var") || token0.equalsIgnoreCase("dim") || token0.equalsIgnoreCase("const")) {
 			// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
+			// (though an uninitialized const is a syntax error)
 			tokens.clear();
 			// END KGU#358 2017-03-06
 		}
-		else if (tokens.indexOf("dim") == 0) {
-			// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
-			tokens.clear();
-			// END KGU#358 2017-03-06
-		}
-		// END KGU#332 2017-01-17
-		// START KGU#375 2017-03-31: Enh. #388 constant definitions can hardly be variable usages
-		// (not at least in the absence of an assignment symbol!)
-		else if (tokens.indexOf("const") == 0) {
-			tokens.clear();
-		}
-		// END #375 2017-03-31
+		// END KGU#332/KGU#375 2017-01-17
 
 		// cutoff output keyword
-		if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
+		else if (token0.equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
 		{
 			tokens.delete(0);
 		}
 
 		// parse out array index
-		// FIXME: Optimize this!
-		if(tokens.indexOf(CodeParser.getKeyword("input"))>=0)
+		else if (token0.equals(CodeParser.getKeyword("input")))
 		{
-			String s = tokens.subSequence(tokens.indexOf(CodeParser.getKeyword("input"))+1, tokens.count()).concatenate();
-			if (s.indexOf("[") >= 0)
+			String s = "";
+			if (tokens.indexOf("[", 1) >= 0)
 			{
 				//System.out.print("Reducing \"" + s);
-				r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-				s = r.replaceAll(s);
+				//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+				//s = r.replaceAll(s);
+				s = INDEX_PATTERN.matcher(tokens.subSequence(1, tokens.count()).concatenate()).replaceAll("$2");
 				//System.out.println("\" to \"" + s + "\"");
 			}
 			else 
-			{
-				s = ""; 
-			}
 			// Only the indices are relevant here
 			tokens = Element.splitLexically(s, true);
 		}
@@ -3735,6 +3734,7 @@ public class Root extends Element {
 				// START KGU#388 2017-09-17: Enh. #423 Check the definition of type names and components
 				if (check(24)) {
 					StringList tokens = Element.splitLexically(line, true);
+					int nTokens = tokens.count();
 					int posBrace = 0;
 					String typeName = "";
 					while ((posBrace = tokens.indexOf("{", posBrace + 1)) > 1 && Function.testIdentifier((typeName = tokens.get(posBrace-1)), null)) {
@@ -3760,6 +3760,56 @@ public class Root extends Element {
 							}
 						}
 					}
+					// START KGU#388 2017-09-29: Enh. #423
+					int posDot = -1;
+					String path = "";
+					TypeMapEntry varType = null;
+					while ((posDot = tokens.indexOf(".", posDot + 1)) > 0 && posDot < nTokens - 1) {
+						String before = tokens.get(posDot - 1);
+						// Jump in front of an index access
+						int posBrack = -1;
+						if (before.equals("]") && (posBrack = tokens.lastIndexOf("[", posDot)) > 0) {
+							before = tokens.get(posBrack - 1);
+						}
+						String after = tokens.get(posDot+1);
+						if (!Function.testIdentifier(after, null) || !Function.testIdentifier(before, null)) {
+							path = "";
+							varType = null;
+							continue;
+						}
+						if ((path.isEmpty() || varType == null) && Function.testIdentifier(before, null)) {
+							if (path.isEmpty()) {
+								path = before;
+							}
+							varType = typeMap.get(path);
+						}
+						if (varType != null && posBrack > 0 && varType.isArray()) {
+							String arrTypeStr = varType.getCanonicalType(true, false);
+							if (arrTypeStr != null && arrTypeStr.startsWith("@")) {
+								// Try to get the element type
+								varType = typeMap.get(":" + arrTypeStr.substring(1));
+							}
+						}
+						if (varType == null || !varType.isRecord() || !varType.getComponentInfo(false).containsKey(after)) {
+							if (posBrack > 0) {
+								path += tokens.concatenate("", posBrack, posDot);
+							}
+							//error  = new DetectedError("Record type «"+typeName+"» hasn't got a component «"+compName+"»!", _instr);
+							addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _instr), 24);
+							varType = null;
+							path += "." + after;
+						}
+						else if (posDot + 2 < nTokens && tokens.get(posDot+2).equals(".")) {
+							path += "." + after;
+							varType = varType.getComponentInfo(false).get(after);
+						}
+						else {
+							varType = null;
+							path = "";
+						}
+					}
+					// END KGU#388 2017-09-29
+
 				}
 				// END KGU#388 2017-09-17
 			}
@@ -4024,7 +4074,7 @@ public class Root extends Element {
     		else if (posColon != -1)
     		{
     			// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
-    			resultType = tokens.concatenate("", posColon+1).trim();
+    			resultType = tokens.concatenate(null, posColon+1).trim();
     		}
     	}
     	
