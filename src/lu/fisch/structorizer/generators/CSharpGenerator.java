@@ -417,7 +417,7 @@ public class CSharpGenerator extends CGenerator
 			constructor.append("public " + _typeName + "(");
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
 				String compName = compEntry.getKey();
-				String typeStr = transformTypeFromEntry(compEntry.getValue());
+				String typeStr = transformTypeFromEntry(compEntry.getValue(), null);
 				addCode("public " + typeStr + "\t" + compName + ";",
 						indentPlus1, _asComment);
 				if (!isFirst) constructor.append(", ");
@@ -436,7 +436,7 @@ public class CSharpGenerator extends CGenerator
 		}
 		else {
 			// FIXME: What do we here in C#? This must be placed at another position
-			addCode("using "  + _typeName + " = " + this.transformTypeFromEntry(_type) + ";",
+			addCode("using "  + _typeName + " = " + this.transformTypeFromEntry(_type, null) + ";",
 					_indent, true);
 		}
 	}
@@ -892,6 +892,14 @@ public class CSharpGenerator extends CGenerator
 //		return _indent;
 //	}
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
+	 */
+	@Override
+	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
+		return structName;
+	}
+
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{

@@ -297,7 +297,7 @@ public class PasGenerator extends Generator
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
 			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, 0, false, true, false);
-			_typeDescr = transformTypeFromEntry(typeInfo);
+			_typeDescr = transformTypeFromEntry(typeInfo, null);
 		}
 		return _typeDescr;
 	}
@@ -308,7 +308,7 @@ public class PasGenerator extends Generator
 	 * @return a String suited as Pascal type description in declarations etc. 
 	 */
 	@Override
-	protected String transformTypeFromEntry(TypeMapEntry typeInfo) {
+	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin) {
 		// Record type descriptions won't usually occur here (rather names)
 		String _typeDescr;
 //		String canonType = typeInfo.getTypes().get(0);
@@ -527,7 +527,7 @@ public class PasGenerator extends Generator
 				}
 				// START KGU#375 2107-09-21: Enh. #388 constant definitions must not be generated here (preamble stuff)
 				//else	// no return
-				if (!Instruction.isTypeDefinition(line) && !line.toLowerCase().startsWith("const "))
+				if (!Instruction.isTypeDefinition(line, null) && !line.toLowerCase().startsWith("const "))
 				// END KGU#375 2017-09-21
 				{
 					// START KGU#100 2016-01-14: Enh. #84 - resolve array initialisation
@@ -1523,7 +1523,7 @@ public class PasGenerator extends Generator
 						insertDeclComment(_root, "", constName);
 						// END KGU#424 2017-09-25
 						if (constType.isArray()) {
-							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType), false);
+							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType, null), false);
 						}
 						else {
 							generateRecordInit(constEntry.getKey(), expr, "", true, false);
@@ -1582,12 +1582,12 @@ public class PasGenerator extends Generator
 				if (type.isRecord()) {
 					code.add(indentPlus1 + key.substring(1) + " = RECORD");
 					for (Entry<String, TypeMapEntry> compEntry: type.getComponentInfo(false).entrySet()) {
-						code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue()) + ";");
+						code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue(), null) + ";");
 					}
 					code.add(indentPlus2 + "END;");
 				}
 				else {
-					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type) + ";");					
+					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
 				}
 				code.add("");
 			}

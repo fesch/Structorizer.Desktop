@@ -1888,7 +1888,7 @@ public class Root extends Element {
     			if (_ele instanceof Instruction) {
     				for (int i = 0; i < unbrokenLines.count(); i++) {
     					String line = unbrokenLines.get(i);
-    					if (!Instruction.isTypeDefinition(line)) {
+    					if (!Instruction.isTypeDefinition(line, null)) {
     						lines.add(line);
     					}
     				}
@@ -2308,7 +2308,7 @@ public class Root extends Element {
                     if (_ele instanceof Instruction) {
                     	int i = 0;
                     	while (i < lines.count()) {
-                    		if (Instruction.isTypeDefinition(lines.get(i))) {
+                    		if (Instruction.isTypeDefinition(lines.get(i), null)) {
                     			lines.remove(i);
                     		}
                     		else {
@@ -2618,7 +2618,7 @@ public class Root extends Element {
     			// END KGU#423 2017-09-13
     				String line = ele.getText().get(j);
     				// START KGU#388 2017-09-13: Enh. #423
-    				if (!Instruction.isTypeDefinition(line)) {
+    				if (!Instruction.isTypeDefinition(line, _types)) {
     				// END KGU#388 2017-09-13
     					myUsed = getUsedVarNames(line, keywords);
     					analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, -1);
@@ -3661,7 +3661,7 @@ public class Root extends Element {
 			String line = unbrText.get(i);
 		// END KGU#413 2017-09-17
 			// START KGU#388 2017-09-13: Enh. #423: Type checks
-			boolean isTypedef = Instruction.isTypeDefinition(line);
+			boolean isTypedef = Instruction.isTypeDefinition(line, _types);
 			// END KGU#413 2017-09-13
 			if (line.startsWith("const ")) {
 				StringList myUsedVars = getUsedVarNames(line.substring("const ".length()), keywords);

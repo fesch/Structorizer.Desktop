@@ -3597,7 +3597,7 @@ public class Executor implements Runnable
 				// END KGU#271 2016-10-06
 				
 				// START KGU#388 2017-09-13: Enh. #423 We shouldn't do this for type definitions
-				if (!Instruction.isTypeDefinition(cmd)) {
+				if (!Instruction.isTypeDefinition(cmd, context.dynTypeMap)) {
 					cmd = convert(cmd).trim();
 				// END KGU#388 2017-09-13
 

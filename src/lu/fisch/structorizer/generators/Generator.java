@@ -1016,6 +1016,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Is to be overridden by the Generator subclasses if typing is an issue.
 	 * Method is called e.g. by {@link #getTransformedTypes(TypeMapEntry, boolean)} and
 	 * in other contexts.
+	 * Note: This method does not perform a type map retrieval!
 	 * @see #getTransformedTypes(TypeMapEntry, boolean)
 	 * @see #transform(String, boolean)
 	 * @see #transformTokens(StringList)
@@ -1031,16 +1032,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			_type = _default;
 		return _type;
 	}
-	// END KGU#1 2015-11-30	
-
+	// END KGU#16 2015-11-30
+	
 	// START KGU#388 2017-09-26: Enh. #423
 	/**
 	 * Creates a type description for the target language from the given
-	 * TypeMapEntry {@code typeInfo}
+	 * TypeMapEntry {@code typeInfo}.
+	 * For the case special treatment might be necessary within a nested type
+	 * definition, the enclosing TypeInfo may be given as {@code definingType}
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
+	 * @param definingType - the enclosing type just being defined or null
 	 * @return a String suited as type description in declarations etc. of the target language 
 	 */
-	protected String transformTypeFromEntry(TypeMapEntry typeInfo) {
+	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingType) {
 		// Just a dummy, to be overridden by subclasses
 		return typeInfo.getCanonicalType(true, true);
 	}

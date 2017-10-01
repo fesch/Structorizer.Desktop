@@ -102,8 +102,6 @@ import java.nio.charset.CodingErrorAction;
 
 import com.stevesoft.pat.Regex;
 
-import java.awt.Color;
-
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the ObjectPascal, Pascal
  * or Delphi 7 language.
@@ -123,6 +121,8 @@ public class D7Parser extends CodeParser
  	public D7Parser() {
  	}
 
+	//---------------------- File Filter configuration ---------------------------
+	
 	@Override
 	public String getDialogTitle() {
 		return "Pascal";
@@ -139,6 +139,24 @@ public class D7Parser extends CodeParser
 		return exts;
 	}
 
+	//------------------- Comment delimiter specification ---------------------------------
+	
+	// START KGU#407 2017-09-30: Enh. #420
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#getCommentDelimiters()
+	 */
+	@Override
+	protected String[][] getCommentDelimiters()
+	{
+		return new String[][]{
+			{"(*", "*)"},
+			{"{", "}"}
+		};
+	}
+	// END KGU#407 2017-09-30
+	
+	//---------------------- Grammar specification ---------------------------
+	
 	@Override
 	protected final String getCompiledGrammar()
 	{
@@ -150,6 +168,8 @@ public class D7Parser extends CodeParser
 	{
 		return "ObjectPascal";
 	}
+	
+	//------------------- Grammar table constants DON'T MODIFY! ---------------------------
 	
 	// START KGU#358 2017-03-29: Enh. #368 - rule constants inserted to facilitate build phase
 	// Symbolic constants naming the table indices of the grammar rules

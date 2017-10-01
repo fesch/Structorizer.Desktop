@@ -76,6 +76,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.04.14      Bugfix #394: Export of Jump elements (esp. leave) revised
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017.09.26      Enh. #389/#423: Export with includable diagrams (as global definitions)
+ *      Kay Gürtzig             2017.09.30      Enh. #423: struct export fixed.
  *
  ******************************************************************************************************
  *
@@ -461,6 +462,10 @@ public class CGenerator extends Generator {
 	}
 
 	// START KGU#16 2015-11-29
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTypeString(java.lang.String, java.lang.String)
+	 * see also: transformType(java.lang.String, java.lang.String)
+	 */
 	@Override
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
@@ -493,6 +498,22 @@ public class CGenerator extends Generator {
 		return _type;
 	}
 	// END KGU#16 2015-11-29
+	
+	// START KGU#388 2017-09-2017: Enh. #423
+	protected String transformTypeWithLookup(String _type, String _default) {
+		TypeMapEntry typeInfo = this.typeMap.get(":" + _type);
+		// The typeInfo might be an alias, in this case no specific measures are necessary
+		if (typeInfo != null && typeInfo.isRecord() && _type.equals(typeInfo.typeName)) {
+			_type = this.transformRecordTypeRef(typeInfo.typeName, false);
+		}
+		else {
+			_type = transformType(_type, _default);
+		}
+		return _type;
+	}
+	// END KGU#388 2017-09-2017
+
+
 
 	// START KGU#140 2017-01-31: Enh. #113: Advanced array transformation
 	protected String transformArrayDeclaration(String _typeDescr, String _varName)
@@ -606,14 +627,19 @@ public class CGenerator extends Generator {
 	 * @return a String suited as C type description in declarations etc. 
 	 */
 	@Override
-	protected String transformTypeFromEntry(TypeMapEntry typeInfo) {
+	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin) {
 		// Record type description won't usually occur (rather names)
 		String _typeDescr;
 //		String canonType = typeInfo.getTypes().get(0);
 		String canonType = typeInfo.getCanonicalType(true, true);
 		int nLevels = canonType.lastIndexOf('@')+1;
 		String elType = (canonType.substring(nLevels)).trim();
-		elType = transformType(elType, "/*???*/");
+		if (typeInfo.isRecord()) {
+			elType = transformRecordTypeRef(elType, typeInfo == definingWithin);
+		}
+		else {
+			elType = transformType(elType, "/*???*/");
+		}
 		_typeDescr = elType;
 		for (int i = 0; i < nLevels; i++) {
 			_typeDescr += "[";
@@ -633,6 +659,18 @@ public class CGenerator extends Generator {
 	}
 
 	/**
+	 * Special adaptation of record type name references in C-like languages, e.g. C
+	 * adds a prefix "struct" wherever it is used. C++ doesn't need to, Java and C#
+	 * don't, so the inheriting classes must override this.
+	 * @param structName - name of the structured type
+	 * @param isRecursive - if used defining this very type
+	 * @return the prepared reference string
+	 */
+	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
+		return "struct " + structName + (isRecursive ? " * " : "");
+	}
+
+	/**
 	 * Adds the type definitions for all types in {@code _root.getTypeInfo()}.
 	 * @param _root - originating Root
 	 * @param _indent - current indentation level (as String)
@@ -647,8 +685,8 @@ public class CGenerator extends Generator {
 	}
 
 	/**
-	 * Inserts a typedef for the type passed in by {@code _typeEnry} if it hadn't been defined
-	 * globally or in the preamble before.
+	 * Inserts a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * if it hadn't been defined globally or in the preamble before.
 	 * @param _root - the originating Root
 	 * @param _type - the type map entry the definition for which is requested here
 	 * @param _indent - the current indentation
@@ -662,15 +700,15 @@ public class CGenerator extends Generator {
 		insertDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
 			String indentPlus1 = _indent + this.getIndent();
-			addCode("typedef struct{", _indent, _asComment);
+			addCode("struct " + _type.typeName + " {", _indent, _asComment);
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
-				addCode(transformTypeFromEntry(compEntry.getValue()) + "\t" + compEntry.getKey() + ";",
+				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
 						indentPlus1, _asComment);
 			}
-			addCode("} " + _typeName + ";", _indent, _asComment);
+			addCode("};", _indent, _asComment);
 		}
 		else {
-			addCode("typedef " + this.transformTypeFromEntry(_type) + " " + _typeName + ";",
+			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
 					_indent, _asComment);					
 		}
 	}
@@ -845,7 +883,7 @@ public class CGenerator extends Generator {
 					}
 				}
 				// START KGU#388 2017-09-25: Enh. #423
-				else if (!this.suppressTransformation && Instruction.isTypeDefinition(line)) {
+				else if (!this.suppressTransformation && Instruction.isTypeDefinition(line, typeMap)) {
 					// Attention! The following condition must not be combined with the above one! 
 					if (this.isInternalDeclarationAllowed()) {
 						tokens.removeAll(" ");
@@ -1508,7 +1546,7 @@ public class CGenerator extends Generator {
 			code.add("int main(void)");
 		else {
 			// Compose the function header
-			String fnHeader = transformType(_root.getResultType(),
+			String fnHeader = transformTypeWithLookup(_root.getResultType(),
 					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
 			boolean returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
@@ -1522,7 +1560,7 @@ public class CGenerator extends Generator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
@@ -1639,10 +1677,20 @@ public class CGenerator extends Generator {
 		String constValue = _root.constants.get(_name);
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
-			types = getTransformedTypes(typeInfo, true);
+			// START KGU#388 2017-09-30: Enh. #423
+			//types = getTransformedTypes(typeInfo, true);
+			if (typeInfo.isRecord()) {
+				types = StringList.getNew(this.transformRecordTypeRef(typeInfo.typeName, false));
+			}
+			else {
+				types = getTransformedTypes(typeInfo, true);
+			}
+			// END KGU#388 2017-09-30
 		}
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
+		// FIXME (KGU 2017-09-30): It should be extremely unlikely now that there isn't a typeMap entry
 		else if (constValue != null) {
+			System.out.println(this.getClass().getSimpleName()+".insertDeclaration(" + _name + "): MISSING TYPE MAP ENTRY FOR THIS CONSTANT!");
 			String type = Element.identifyExprType(typeMap, constValue, false);
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
@@ -1658,7 +1706,7 @@ public class CGenerator extends Generator {
 				//(typeInfo != null && !typeInfo.isCStyleDeclaredAt(null) || _fullDecl)) {			
 				(typeInfo != null && !typeInfo.isDeclaredWithin(null) || _fullDecl)) {			
 			String decl = types.get(0).trim();
-			// START KGU#375 2017-04-12: Enh. #388
+			// START KGU#375 2017-04-12: Enh. #388 - types.get(0) doesn't contain anymore than e.g. "const"?
 			if (decl.equals(transfConst) && constValue != null) {
 				// The actual type spec is missing but we try to extract it from the value
 				decl += " " + Element.identifyExprType(typeMap, constValue, false);

@@ -264,13 +264,13 @@ public class CPlusPlusGenerator extends CGenerator {
 			String indentPlus1 = _indent + this.getIndent();
 			addCode("struct " + _typeName + " {", _indent, _asComment);
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
-				addCode(transformTypeFromEntry(compEntry.getValue()) + "\t" + compEntry.getKey() + ";",
+				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
 						indentPlus1, _asComment);
 			}
 			addCode("};", _indent, _asComment);
 		}
 		else {
-			addCode("typedef " + this.transformTypeFromEntry(_type) + " " + _typeName + ";",
+			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
 					_indent, _asComment);					
 		}
 	}
@@ -571,6 +571,14 @@ public class CPlusPlusGenerator extends CGenerator {
 		return super.generatePreamble(_root, _indent, varNames);
 	}
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
+	 */
+	@Override
+	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
+		return structName + (isRecursive ? " * " : "");
+	}
+
 	@Override
 	protected void generateIOComment(Root _root, String _indent)
 	{

@@ -380,7 +380,7 @@ public class Instruction extends Element {
 			StringList myLines = this.getUnbrokenText();
 			for (int i = 0; i < myLines.count(); i++) {
 				String line = myLines.get(i);
-				if (!isTypeDefinition(line)) {
+				if (!isTypeDefinition(line, null)) {
 					_lines.add(line);
 				}
 			}
@@ -686,15 +686,35 @@ public class Instruction extends Element {
 
 	// START KGU#388 2017-07-03: Enh. #423
 	/**
-	 * Returns true if the current line of code is a type definition of the following form:<br>
+	 * Returns true if the current line of code is a type definition of one of the following forms:<br>
 	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br>
 	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br>
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br>
 	 * d)...f) same as a)...c) but with struct instead of record.
+	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a), b), c)
+	 * @see #isTypeDefinition(String, HashMap)
 	 */
 	public static boolean isTypeDefinition(String line)
+	{
+		return isTypeDefinition(line, null);
+	}
+
+	// START KGU#388 2017-07-03: Enh. #423
+	/**
+	 * Returns true if the current line of code is a type definition of one of the following forms:<br>
+	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br/>
+	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br/>
+	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br/>
+	 * d)...f) same as a)...c) but with struct instead of record.<br/>
+	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
+	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap}.
+	 * @param line - String comprising one line of code
+	 * @param typeMap TODO
+	 * @return true iff line is of one of the forms a), b), c)
+	 */
+	public static boolean isTypeDefinition(String line, HashMap<String, TypeMapEntry> typeMap)
 	{
     	StringList tokens = Element.splitLexically(line.trim(), true);
     	if (tokens.count() == 0 || !tokens.get(0).equalsIgnoreCase("type")) {
@@ -708,30 +728,43 @@ public class Instruction extends Element {
 		String typename = tokens.concatenate("", 1, posDef).trim();
 		tokens = tokens.subSequence(posDef+1, tokens.count());
 		tokens.removeAll(" ");
-		return Function.testIdentifier(typename, null) && tokens.get(0).equalsIgnoreCase("record") || tokens.get(0).equalsIgnoreCase("struct");
+		return Function.testIdentifier(typename, null) && 
+				((tokens.get(0).equalsIgnoreCase("record") || tokens.get(0).equalsIgnoreCase("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
+				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tokens.get(0)) || typeMap == null && Function.testIdentifier(tokens.get(0), null)));
+		
 	}
 	/** @return true if all non-empty lines are type definitions */
 	public boolean isTypeDefinition()
 	{
-		boolean isTypeDef = true;
+		return isTypeDefinition(null, true);
+	}
+
+	/** @param typeMap TODO
+	 * @param allLines TODO
+	 * @return true if all non-empty lines are type definitions */
+	public boolean isTypeDefinition(HashMap<String, TypeMapEntry> typeMap, boolean allLines)
+	{
+		boolean isTypeDef = false;
 		StringList lines = this.getUnbrokenText();
-		for (int i = 0; isTypeDef && i < lines.count(); i++) {
-			String line = lines.get(i).trim();
-			isTypeDef = line.isEmpty() || isTypeDefinition(line);
+		if (allLines) {
+			isTypeDef = true;
+			for (int i = 0; isTypeDef && i < lines.count(); i++) {
+				String line = lines.get(i).trim();
+				isTypeDef = line.isEmpty() || isTypeDefinition(line, typeMap);
+			}
 		}
-		// END KGU#413 2017-06-09
+		else {
+			for (int i = 0; !isTypeDef && i < lines.count(); i++) {
+				String line = lines.get(i);
+				isTypeDef = !line.isEmpty() && isTypeDefinition(line, typeMap);
+			}
+		}
 		return isTypeDef;
 	}
 	/** @return true if at least one line is a type definition */
 	public boolean hasTypeDefinitions()
 	{
-		boolean hasTypeDefs = false;
-		StringList lines = this.getUnbrokenText();
-		for (int i = 0; !hasTypeDefs && i < lines.count(); i++) {
-			String line = lines.get(i);
-			hasTypeDefs = !line.isEmpty() && isTypeDefinition(line);
-		}
-		return hasTypeDefs;
+		return isTypeDefinition(null, false);
 	}
 	// END KGU#388 2017-07-03
 
@@ -873,10 +906,10 @@ public class Instruction extends Element {
 			if (varName != null && !varName.contains(".")) {
 				int pos = leftSide.indexOf(varName);
 				// C-style type declaration left of the variable name?
-				typeSpec = leftSide.concatenate(" ", 0, pos);
+				typeSpec = leftSide.concatenate(null, 0, pos);
 				// Check for array declaration (or array element access)
 				while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
-					typeSpec += leftSide.concatenate("", pos, leftSide.indexOf("]")+1);
+					typeSpec += leftSide.concatenate(null, pos, leftSide.indexOf("]")+1);
 					leftSide.remove(pos, leftSide.indexOf("]")+1);
 				}
 				// No explicit type specification but new variable?
@@ -897,17 +930,22 @@ public class Instruction extends Element {
 			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isDeclared || isCStyleDecl, isCStyleDecl);
 		}
 		// START KU#388 2017-08-07: Enh. #423
-		else if (isTypeDefinition(line)) {
+		else if (isTypeDefinition(line, typeMap)) {
 			// FIXME: In future, array type definitions are also to be handled...
-			posAsgnmt = tokens.indexOf("=");
-			String typename = tokens.concatenate("", 1, posAsgnmt).trim();
+			String typename = tokens.get(1);
 			// Because of possible C-style declarations we must not glue the tokens together with "".
-			typeSpec = tokens.concatenate(" ", posAsgnmt + 1, tokens.count()).trim();
+			typeSpec = tokens.concatenate(null, 3, tokens.count()).trim();
 			int posBrace = typeSpec.indexOf("{");
-			StringList compNames = new StringList();
-			StringList compTypes = new StringList();
-			this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes);
-			addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
+			if (posBrace > 0 && tokens.get(tokens.count()-1).equals("}")) {
+				StringList compNames = new StringList();
+				StringList compTypes = new StringList();
+				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes);
+				addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
+			}
+			else {
+				// According to isTypeefinition() this must now be an alias for an existing type
+				typeMap.put(":" + typename, typeMap.get(":" + tokens.get(3)));
+			}
 		}
 		// END KGU#388 2017-08-07
 	}

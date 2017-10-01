@@ -62,6 +62,7 @@ package lu.fisch.structorizer.parsers;
  *                                      new option "is32bit" for var types and for later care in preparser
  *                                      Optimization of getContent_R: use static Patterns and Matchers as
  *                                      this function is called very often
+ *      Kay Gürtzig     2017.09.30      Enh. #420: Comment import mechanism provisionally introduced.
  *
  ******************************************************************************************************
  *
@@ -93,7 +94,6 @@ import java.awt.Color;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -186,6 +186,21 @@ public class COBOLParser extends CodeParser
 		return exts;
 	}
 
+	//------------------- Comment delimiter specification ---------------------------------
+	
+	// START KGU#407 2017-09-30: Enh. #420
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#getCommentDelimiters()
+	 */
+	@Override
+	protected String[][] getCommentDelimiters()
+	{
+		return new String[][]{
+			{"*>"}
+		};
+	}
+	// END KGU#407 2017-09-30
+	
 	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 
@@ -4003,6 +4018,59 @@ public class COBOLParser extends CodeParser
 		final int PROD_CONTROL_KEYWORD_CONTROL                                               = 2251;  // <control_keyword> ::= CONTROL <_is>
 		final int PROD_CONTROL_KEYWORD_CONTROLS                                              = 2252;  // <control_keyword> ::= CONTROLS <_are>
 	};
+	
+	//------------------- Comment association specification ---------------------------------
+	
+	// START KGU#407 2017-09-30: Enh. #420 - first rough approach - still to be tuned
+	/** rule ids representing statements, used as stoppers for comment retrieval */
+	private static final int[] statementIds = new int[]{
+			RuleConstants.PROD_PROGRAM_DEFINITION,
+			RuleConstants.PROD_FUNCTION_DEFINITION,
+			RuleConstants.PROD_IDENTIFICATION_OR_ID_IDENTIFICATION,
+			RuleConstants.PROD_IDENTIFICATION_OR_ID_ID,
+			RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT,
+			RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT,
+			RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING,
+			RuleConstants.PROD_SECTION_HEADER_SECTION_TOK_DOT,
+			RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT,
+			RuleConstants.PROD_PROCEDURE_TOK_DOT,
+			RuleConstants.PROD_PROCEDURE_TOK_DOT2,
+			RuleConstants.PROD_IF_STATEMENT_IF,
+			RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE,
+			RuleConstants.PROD_PERFORM_STATEMENT_PERFORM,
+			RuleConstants.PROD_MOVE_STATEMENT_MOVE,
+			RuleConstants.PROD_SET_STATEMENT_SET,
+			RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE,
+			RuleConstants.PROD_ADD_STATEMENT_ADD,
+			RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT,
+			RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY,
+			RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE,
+			RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT,
+			RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY,
+			RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT,
+			RuleConstants.PROD_FILE_DESCRIPTION,
+			RuleConstants.PROD_OPEN_STATEMENT_OPEN,
+			RuleConstants.PROD_READ_STATEMENT_READ,
+			RuleConstants.PROD_WRITE_STATEMENT_WRITE,
+			RuleConstants.PROD_REWRITE_STATEMENT_REWRITE,
+			RuleConstants.PROD_DELETE_STATEMENT_DELETE,
+			RuleConstants.PROD_CLOSE_STATEMENT_CLOSE,
+			RuleConstants.PROD_CALL_STATEMENT_CALL,
+			RuleConstants.PROD_EXIT_STATEMENT_EXIT,
+			RuleConstants.PROD_GOBACK_STATEMENT_GOBACK,
+			RuleConstants.PROD_STOP_STATEMENT_STOP,
+			RuleConstants.PROD_GOTO_STATEMENT_GO,
+			RuleConstants.PROD_STRING_STATEMENT_STRING,
+			RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING,
+			RuleConstants.PROD_SEARCH_STATEMENT_SEARCH,
+			RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT,
+			RuleConstants.PROD__LOCAL_STORAGE_SECTION_LOCAL_STORAGE_SECTION_TOK_DOT,
+			RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT,
+			RuleConstants.PROD__FILE_SECTION_HEADER_TOK_FILE_SECTION_TOK_DOT,
+			RuleConstants.PROD__REPORT_SECTION_REPORT_SECTION_TOK_DOT,
+			RuleConstants.PROD__SCREEN_SECTION_SCREEN_SECTION_TOK_DOT
+	};
+	// END KGU#407 2017-09-30
 
 	//----------------------- Local helper functions -------------------------
 
@@ -4498,6 +4566,7 @@ public class COBOLParser extends CodeParser
 			System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
 			Root prevRoot = root;	// Cache the original root
 			root = new Root();	// Prepare a new root for the (sub)routine
+			this.equipWithSourceComment(root, _reduction);
 			subRoots.add(root);
 			Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
 			boolean isFunction = secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT;
@@ -4596,9 +4665,9 @@ public class COBOLParser extends CodeParser
 
 			// add to NSD
 			Call sec = new Call(name);
-			sec.setComment("Definition of section " + name);
 			sec.disabled = true;
-			_parentNode.addElement(sec);
+			_parentNode.addElement(this.equipWithSourceComment(sec, _reduction));
+			sec.getComment().insert("Definition of section " + name, 0);
 			
 			// add to procedureList for later handling
 			this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
@@ -4613,9 +4682,9 @@ public class COBOLParser extends CodeParser
 
 			// add to NSD
 			Call par = new Call(name);
-			par.setComment("Definition of paragraph " + name);
 			par.disabled = true;
-			_parentNode.addElement(par);
+			_parentNode.addElement(this.equipWithSourceComment(par, _reduction));
+			par.getComment().insert("Definition of paragraph " + name, 0);
 			
 			// add to procedureList for later handling
 			if (Character.isDigit(name.charAt(0))) {
@@ -4667,10 +4736,10 @@ public class COBOLParser extends CodeParser
 			if (!importSet(_reduction, _parentNode)) {
 				String content = this.getContent_R(_reduction, "");
 				Instruction instr = new Instruction(content);
-				instr.setComment("This statement cannot be converted into a sensible diagram element!");
 				instr.setColor(Color.RED);
 				instr.disabled = true;
-				_parentNode.addElement(instr);
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				instr.getComment().add("This statement cannot be converted into a sensible diagram element!");
 			}
 		}
 		break;
@@ -4686,7 +4755,7 @@ public class COBOLParser extends CodeParser
 					// FIXME Caution: target.get(0) might be a "reference modification"!
 					content.add(targets.get(i) + " <- " + targets.get(0));
 				}
-				_parentNode.addElement(new Instruction(content));
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(content), _reduction));
 			}				
 		}
 		break;
@@ -4712,11 +4781,11 @@ public class COBOLParser extends CodeParser
 			System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
 			if (!this.importAccept(_reduction, _parentNode)) {
 				Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
-				dummy.setComment(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
-						+ this.getOriginalText(_reduction, ""), "\n"));
 				dummy.setColor(Color.RED);
 				dummy.disabled = true;
-				_parentNode.addElement(dummy);
+				_parentNode.addElement(this.equipWithSourceComment(dummy, _reduction));
+				dummy.getComment().add(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
+						+ this.getOriginalText(_reduction, ""), "\n"));
 			}
 		}
 		break;
@@ -4737,7 +4806,7 @@ public class COBOLParser extends CodeParser
 			}
 			content = CodeParser.getKeyword("output") + " " + content;				
 			Instruction instr = new Instruction(content);
-			_parentNode.addElement(instr);
+			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 		}
 		break;
 		case RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT:
@@ -4782,8 +4851,8 @@ public class COBOLParser extends CodeParser
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
 		}
 		break;
@@ -4794,8 +4863,8 @@ public class COBOLParser extends CodeParser
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
 		}
 		break;
@@ -4806,8 +4875,8 @@ public class COBOLParser extends CodeParser
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
 		}
 		break;
@@ -4817,8 +4886,8 @@ public class COBOLParser extends CodeParser
 			String content = this.getOriginalText(_reduction, "");
 			Instruction instr = new Instruction(content);
 			instr.setColor(Color.RED);
-			instr.setComment("Structorizer File API does not support indexed or other non-text files");
-			_parentNode.addElement(instr);
+			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			instr.getComment().add("TODO: Structorizer File API does not support indexed or other non-text files");
 		}
 		break;
 		case RuleConstants.PROD_CLOSE_STATEMENT_CLOSE:
@@ -4828,11 +4897,13 @@ public class COBOLParser extends CodeParser
 			Instruction instr = null;
 			if (this.fileMap.containsKey(fileDescr)) {
 				instr = new Instruction("fileClose(" + fileDescr + ")");
+				this.equipWithSourceComment(instr, _reduction);
 			}
 			else {
 				instr = new Instruction(this.getOriginalText(_reduction, ""));
 				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
+				this.equipWithSourceComment(instr, _reduction);
+				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
 			if (instr != null) {
 				_parentNode.addElement(instr);
@@ -4854,7 +4925,7 @@ public class COBOLParser extends CodeParser
 			if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
 				content = this.getContent_R(secRed.get(1).asReduction(), content + " ");
 			}
-			_parentNode.addElement(new Jump(content.trim()));
+			_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
 		}
 		break;
 		case RuleConstants.PROD_STOP_STATEMENT_STOP:
@@ -4866,7 +4937,7 @@ public class COBOLParser extends CodeParser
 			String content = CodeParser.getKeywordOrDefault("preExit", "exit");
 			String exitVal = this.getContent_R(secRed, "").trim();
 			if (exitVal.isEmpty()) exitVal = "0";
-			_parentNode.addElement(new Jump(content + " " + exitVal));
+			_parentNode.addElement(this.equipWithSourceComment(new Jump(content + " " + exitVal), _reduction));
 		}
 		break;
 		case RuleConstants.PROD_GOTO_STATEMENT_GO:
@@ -4878,8 +4949,8 @@ public class COBOLParser extends CodeParser
 			}
 			Jump jmp = new Jump("goto " + content);
 			jmp.setColor(Color.RED);
-			jmp.setComment("GO TO statements are not supported in structured programming!");
-			_parentNode.addElement(jmp);
+			_parentNode.addElement(this.equipWithSourceComment(jmp, _reduction));
+			jmp.getComment().add("GO TO statements are not supported in structured programming!");
 		}
 		break;
 		case RuleConstants.PROD_STRING_STATEMENT_STRING:
@@ -4889,9 +4960,9 @@ public class COBOLParser extends CodeParser
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
 				instr.disabled = true;
-				_parentNode.addElement(instr);
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
 		}
 		break;
@@ -4902,8 +4973,8 @@ public class COBOLParser extends CodeParser
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
-				instr.setComment("TODO: there is still no automatic conversion for this statement");
-				_parentNode.addElement(instr);
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
 		}
 		break;
@@ -4915,8 +4986,8 @@ public class COBOLParser extends CodeParser
 			String content = this.getOriginalText(_reduction, "");
 			Instruction instr = new Instruction(content);
 			instr.setColor(Color.RED);
-			instr.setComment("TODO: there is still no automatic conversion for this statement");
-			_parentNode.addElement(instr);
+			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 		}
 		break;
 		case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
@@ -5045,8 +5116,9 @@ public class COBOLParser extends CodeParser
 		assignments.add(preparations);
 		// Now add all the assignments in reverse order as a single element
 		Instruction instr = new Instruction(assignments.reverse());
-		instr.setComment(this.getOriginalText(_reduction, ""));
-		_parentNode.addElement(instr);
+		_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+		instr.getComment().add("-----------------------------------");
+		instr.getComment().add(this.getOriginalText(_reduction, ""));
 		return true;
 	}
 
@@ -5128,9 +5200,10 @@ public class COBOLParser extends CodeParser
 			String content = "unstring_"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
 			String indexVar = "index_" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
 			Instruction instr = new Instruction(content);
-			instr.setComment(this.getOriginalText(_reduction, ""));
 			instr.setColor(colorMisc);
-			_parentNode.addElement(instr);
+			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			instr.getComment().add("-----------------------------------");
+			instr.getComment().add(this.getOriginalText(_reduction, ""));
 			for (int i = 1; i < delimiters.count(); i++) {
 				instr = new Instruction(indexVar + " <- 0");
 				instr.setColor(colorMisc);
@@ -5258,10 +5331,10 @@ public class COBOLParser extends CodeParser
 				if (requiresManualAction) {
 					instr.setColor(colorMisc);
 				}
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 				if (comment != null) {
-					instr.setComment(comment);
+					instr.getComment().add(comment);
 				}
-				_parentNode.addElement(instr);
 				done = true;
 			}
 		}
@@ -5302,7 +5375,7 @@ public class COBOLParser extends CodeParser
 					}
 				}
 			}
-			_parentNode.addElement(new Instruction(assignments));
+			_parentNode.addElement(this.equipWithSourceComment(new Instruction(assignments), _reduction));
 		}
 	}
 
@@ -5341,7 +5414,7 @@ public class COBOLParser extends CodeParser
 			alt.qFalse.parent = alt;
 			alt.setText(negateCondition(content));
 		}
-		_parentNode.addElement(alt);
+		_parentNode.addElement(this.equipWithSourceComment(alt, _reduction));
 		System.out.println("\tEND_IF");
 	}
 
@@ -5371,7 +5444,8 @@ public class COBOLParser extends CodeParser
 						assignments.add(target + " <- " + expr);
 //					}
 				}
-				_parentNode.addElement(new Instruction(assignments));
+				_parentNode.addElement(this.equipWithSourceComment(
+						new Instruction(assignments), _reduction));
 				done = true;
 			}
 			break;
@@ -5397,7 +5471,8 @@ public class COBOLParser extends CodeParser
 			} while (secRed != null);
 			if (assignments.count() > 0) {
 				assignments = assignments.reverse();
-				_parentNode.addElement(new Instruction(assignments));
+				_parentNode.addElement(this.equipWithSourceComment(
+						new Instruction(assignments), _reduction));
 			}
 			done = true;
 			break;
@@ -5409,7 +5484,8 @@ public class COBOLParser extends CodeParser
 			StringList assignments = new StringList();
 			this.addBoolAssignments(secRed, assignments);
 			if (assignments.count() > 0) {
-				_parentNode.addElement(new Instruction(assignments));
+				_parentNode.addElement(this.equipWithSourceComment(
+						new Instruction(assignments), _reduction));
 			}
 			done = true;
 			break;
@@ -5483,8 +5559,8 @@ public class COBOLParser extends CodeParser
 			ele.setColor(Color.RED);
 			comment = "A call with computed routine name is not supported in Structorizer!\n" + comment;
 		}
-		ele.setComment(StringList.explode(comment, "\n"));
-		_parentNode.addElement(ele);
+		_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
+		ele.getComment().add(StringList.explode(comment, "\n"));
 	}
 
 	private void importFileControl(Reduction _reduction, Subqueue _subqueue) {
@@ -5519,12 +5595,13 @@ public class COBOLParser extends CodeParser
 		}
 		if (this.optionImportVarDecl) {
 			Instruction decl = new Instruction("var " + fileDescr + ": int");
-			decl.setComment(this.getOriginalText(_reduction, ""));
+			decl.setColor(isSuited ? colorDecl : Color.RED);
+			_subqueue.addElement(this.equipWithSourceComment(decl, _reduction));
+			decl.comment.add("-----------------------------------");
+			decl.comment.add(this.getOriginalText(_reduction, ""));
 			if (!isSuited) {
 				decl.comment.add("Unsuited for Structorizer FileAPI!");
 			}
-			decl.setColor(isSuited ? colorDecl : Color.RED);
-			_subqueue.addElement(decl);
 		}
 	}
 
@@ -5558,7 +5635,7 @@ public class COBOLParser extends CodeParser
 		if (fdName != null && dataStr != null) {
 			// TODO: try to consider types here.
 			Instruction writeInstr = new Instruction("fileWrite(" + fdName + ", " + dataStr + ")");
-			_parentNode.addElement(writeInstr);
+			_parentNode.addElement(this.equipWithSourceComment(writeInstr, _reduction));
 			done = true;
 		}
 		return done;
@@ -5609,8 +5686,8 @@ public class COBOLParser extends CodeParser
 			}
 			// we just ignore the lock clause 
 			Instruction instr = new Instruction(target + " <- " + fnName + "(" + fdName + ")");
-			instr.setComment(this.getOriginalText(_reduction, ""));
-			_parentNode.addElement(instr);
+			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			instr.getComment().add(this.getOriginalText(_reduction, ""));
 			done = true;
 		}
 		return done;
@@ -5660,8 +5737,9 @@ public class COBOLParser extends CodeParser
 				content += "(" + fileName + ")";
 			}
 			Instruction instr = new Instruction(content);
+			this.equipWithSourceComment(instr, _reduction);
 			if (unsupportedMode) {
-				instr.setComment("File mode unknown or not supported");
+				instr.getComment().add("File mode unknown or not supported");
 				instr.setColor(Color.RED);
 			}
 			_parentNode.insertElementAt(instr, pos);
@@ -5709,14 +5787,15 @@ public class COBOLParser extends CodeParser
 					lastResult = null;
 				}
 			}
-			_parentNode.addElement(new Instruction(content));
+			_parentNode.addElement(this.equipWithSourceComment(
+					new Instruction(content), _reduction));
 		}
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
 			defective.disabled = true;
-			defective.setComment("COBOL import still not implemented");
-			_parentNode.addElement(defective);
+			_parentNode.addElement(this.equipWithSourceComment(defective, _reduction));
+			defective.getComment().add("COBOL import still not implemented");
 		}
 	}
 
@@ -5748,14 +5827,15 @@ public class COBOLParser extends CodeParser
 					lastResult = null;
 				}
 			}
-			_parentNode.addElement(new Instruction(content));
+			_parentNode.addElement(this.equipWithSourceComment(
+					new Instruction(content), _reduction));
 		}
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
 			defective.disabled = true;
-			defective.setComment("COBOL import still not implemented");
-			_parentNode.addElement(defective);
+			_parentNode.addElement(this.equipWithSourceComment(defective, _reduction));
+			defective.getComment().add("COBOL import still not implemented");
 		}
 	}
 
@@ -5789,13 +5869,15 @@ public class COBOLParser extends CodeParser
 					lastResult = null;
 				}
 			}
-			_parentNode.addElement(new Instruction(content));
+			_parentNode.addElement(this.equipWithSourceComment(
+					new Instruction(content), _reduction));
 		}
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
 			defective.disabled = true;
-			defective.setComment("COBOL import still not implemented");
+			this.equipWithSourceComment(defective, _reduction);
+			defective.getComment().add("COBOL import still not implemented");
 			_parentNode.addElement(defective);
 		}
 	}
@@ -5848,13 +5930,15 @@ public class COBOLParser extends CodeParser
 			if (remainder != null) {
 				content.add(remainder + " <- " + dividend + " mod " + divisor);
 			}
-			_parentNode.addElement(new Instruction(content));
+			_parentNode.addElement(this.equipWithSourceComment(
+					new Instruction(content), _reduction));
 		}
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
 			defective.disabled = true;
-			defective.setComment("COBOL import still not implemented");
+			this.equipWithSourceComment(defective, _reduction);
+			defective.getComment().add("COBOL import still not implemented");
 			_parentNode.addElement(defective);
 		}
 	}
@@ -5897,8 +5981,9 @@ public class COBOLParser extends CodeParser
 		}
 		if (content != null) {
 			Jump jmp = new Jump(content.trim());
+			this.equipWithSourceComment(jmp, _reduction);
 			if (!comment.isEmpty()) {
-				jmp.setComment(comment);
+				jmp.getComment().add(comment);
 			}
 			if (color != null) {
 				jmp.setColor(color);
@@ -5933,6 +6018,7 @@ public class COBOLParser extends CodeParser
 				// Prepare a generic variable name
 				content = this.getContent_R(optRed.get(0).asReduction(), content);
 				loop = new For("varStructorizer", "1", content, 1);
+				this.equipWithSourceComment((For)loop, _reduction);
 				content = ((For)loop).getText().getLongString();
 				((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
 			}
@@ -5983,13 +6069,13 @@ public class COBOLParser extends CodeParser
 						incr.setColor(colorMisc);
 						wloop.setColor(colorMisc);
 						wloop.getBody().addElement(incr);
-						_parentNode.addElement(wloop);
+						_parentNode.addElement(this.equipWithSourceComment(wloop, _reduction));
 					}
 					else {
 						Instruction defective = new Instruction(this.getContent_R(_reduction, ""));
 						defective.setColor(Color.RED);
 						defective.disabled = true;
-						_parentNode.addElement(defective);
+						_parentNode.addElement(this.equipWithSourceComment(defective, _reduction));
 					}
 				}
 //				else if (testAfter) {
@@ -6003,6 +6089,7 @@ public class COBOLParser extends CodeParser
 						cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName), "$1");
 					}
 					loop = new For(varName, from, cond.trim(), step);
+					this.equipWithSourceComment((For)loop, _reduction);
 					// FIXME: This should have become superfluous as soon as the conversion to a REPEAT loop above is implemented  
 					if (testAfter) {
 						((For)loop).setComment("WARNING: In the original code this loop was specified to do the test AFTER the body!");
@@ -6013,6 +6100,7 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD_PERFORM_OPTION_FOREVER:
 			// FOREVER loop
 			loop = new Forever();
+			this.equipWithSourceComment((Forever)loop, _reduction);
 			break;
 		case RuleConstants.PROD_PERFORM_OPTION_UNTIL:
 			// WHILE or REPEAT loop
@@ -6024,9 +6112,11 @@ public class COBOLParser extends CodeParser
 				if (testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST
 						|| testRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_BEFORE_OR_AFTER_BEFORE) {
 					loop = new While(negateCondition(content));
+					this.equipWithSourceComment((While)loop, _reduction);
 				}
 				else {
 					loop = new Repeat(content);
+					this.equipWithSourceComment((Repeat)loop, _reduction);
 				}
 			}
 			break;
@@ -6074,7 +6164,8 @@ public class COBOLParser extends CodeParser
 		String content = name + "()";
 		Call dummyCall = new Call(content);
 		dummyCall.setColor(Color.RED);
-		dummyCall.setComment("This was a call of an internal section or paragraph, the support for which is still lacking");
+		this.equipWithSourceComment(dummyCall, _reduction);
+		dummyCall.getComment().add("This was a call of an internal section or paragraph, the support for which is still lacking");
 		_parentNode.addElement(dummyCall);
 		// Now we register the call for later linking
 		LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
@@ -6321,7 +6412,7 @@ public class COBOLParser extends CodeParser
 				condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
 			} while (condlRed != null);
 			ele.setText(caseText);
-			_parentNode.addElement(ele);
+			_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
 		}
 	}
 

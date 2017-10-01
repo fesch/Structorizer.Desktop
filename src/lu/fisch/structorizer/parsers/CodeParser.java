@@ -40,7 +40,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute
  *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced
  *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream 
- *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import 
+ *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
+ *      Kay Gürtzig     2017.09.30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
  *
  ******************************************************************************************************
  *
@@ -629,7 +630,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 	}
 	
-	// START KGU 2017-06-22: Enh. #420 allow subclasses a comment retrieval
+	// START KGU#407 2017-06-22: Enh. #420 allow subclasses a comment retrieval
 	/**
 	 * Adds all rule ids given by the array to the registered rule ids for statement
 	 * detection in comment retrieval.
@@ -670,6 +671,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	protected String retrieveComment(Reduction _reduction)
 	{
 		if (this.optionImportComments) {
+			//System.out.println("START SEARCH FOR " + _reduction);
 			StringBuilder comment = new StringBuilder();
 			// First we look if the reduction's token itself might have a comment 
 			Token topToken = this.commentMap.get(_reduction);
@@ -679,14 +681,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			// Then we check the subtree recursively
 			retrieveComment_R(_reduction, comment);
 			if (comment.length() > 0) {
-				return comment.toString().substring(1);	// Remove the first newline
+				return cleanComment(comment.toString().substring(1));	// Remove the first newline
 			}
 		}
 		return null;
 	}
 	private void retrieveComment_R(Reduction _reduction, StringBuilder _comment)
 	{
-		// First we look i
 		for (int i = 0; i < _reduction.size(); i++) {
 			Token token = _reduction.get(i);
 			// Now the following cases are to be distinguished:
@@ -696,6 +697,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			// 2. The token is a terminal: check for comment
 			if (token.getType() == SymbolType.NON_TERMINAL) {
 				Reduction red = token.asReduction();
+				//System.out.println(Integer.toString(i) + ". checking reduction " + red);
 				if (!statementRuleIds.contains(red.getParent().getTableIndex())) {
 					String comment = parser.commentMap.get(token);
 					if (comment != null) {
@@ -705,6 +707,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				}
 			}
 			else  {
+				//System.out.println(Integer.toString(i) + ". ending at leave " + token);
 				String comment = parser.commentMap.get(token);
 				if (comment != null) {
 					_comment.append("\n" + comment);
@@ -739,7 +742,46 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 		return _ele;
 	}
-	// END KGU 2017-06-22
+	// END KGU#407 2017-06-22
+	// START KGU#407 2017-09-30: Enh. #420
+	private String cleanComment(String _rawComment) {
+		StringList lines = StringList.explode(_rawComment, "\n");
+		String endDelim = null;
+		String[][] delims = this.getCommentDelimiters();
+		for (int i = 0; i < lines.count(); i++) {
+			String line = lines.get(i);
+			if (endDelim == null) {
+				line = line.trim();
+				for (String[] pair: delims) {
+					if (line.startsWith(pair[0])) {
+						line = line.substring(pair[0].length());
+						lines.set(i, line);
+						if (pair.length > 1) {
+							endDelim = pair[1];
+						}
+						break;
+					}
+				}
+			}
+			if (endDelim != null && line.endsWith(endDelim)) {
+				line = line.substring(0, line.length() - endDelim.length());
+				lines.set(i, line);
+				endDelim = null;
+			}
+		}
+		return lines.getText();
+	}
+	/**
+	 * Returns an array of String arrays. Each element String array must consist of:<br/>
+	 * 1. a single String representing a line comment delimiter, or<br/>
+	 * 2. a pair of comment delimiters ([0] the left and [1] the right one)
+	 * <p>
+	 * This method is to be implemented by the subclasses. 
+	 * @return the array of single delimiters and delimiter pairs
+	 */
+	abstract protected String[][] getCommentDelimiters();
+	// END KGU#407 2017-09-30
+
 
 	// START KGU 2017-04-11
 	/**

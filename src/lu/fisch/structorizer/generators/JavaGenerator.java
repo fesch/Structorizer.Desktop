@@ -526,7 +526,7 @@ public class JavaGenerator extends CGenerator
 			constructor.append("public " + _typeName + "(");
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
 				String compName = compEntry.getKey();
-				String typeStr = transformTypeFromEntry(compEntry.getValue());
+				String typeStr = transformTypeFromEntry(compEntry.getValue(), null);
 				addCode("public " + typeStr + "\t" + compName + ";",
 						indentPlus1, _asComment);
 				if (!isFirst) constructor.append(", ");
@@ -545,7 +545,7 @@ public class JavaGenerator extends CGenerator
 		}
 		else {
 			// FIXME: What do we here in Java? Replace this type name all over the code?
-			addCode("typedef " + this.transformTypeFromEntry(_type) + " " + _typeName + ";",
+			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
 					_indent, true);					
 		}
 	}
@@ -975,6 +975,13 @@ public class JavaGenerator extends CGenerator
 		return super.generatePreamble(_root, _indent, varNames);
 	}
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
+	 */
+	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
+		return structName;
+	}
+
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
