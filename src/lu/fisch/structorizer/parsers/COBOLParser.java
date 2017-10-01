@@ -63,6 +63,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Optimization of getContent_R: use static Patterns and Matchers as
  *                                      this function is called very often
  *      Kay Gürtzig     2017.09.30      Enh. #420: Comment import mechanism provisionally introduced.
+ *      Kay Gürtzig     2017.10.01      Enh. #420: Missing stop rule registration for comment retrieval added.
  *
  ******************************************************************************************************
  *
@@ -4021,13 +4022,13 @@ public class COBOLParser extends CodeParser
 	
 	//------------------- Comment association specification ---------------------------------
 	
-	// START KGU#407 2017-09-30: Enh. #420 - first rough approach - still to be tuned
+	// START KGU#407 2017-10-01: Enh. #420 - Slightly improved approach - still to be tuned
 	/** rule ids representing statements, used as stoppers for comment retrieval */
 	private static final int[] statementIds = new int[]{
 			RuleConstants.PROD_PROGRAM_DEFINITION,
 			RuleConstants.PROD_FUNCTION_DEFINITION,
-			RuleConstants.PROD_IDENTIFICATION_OR_ID_IDENTIFICATION,
-			RuleConstants.PROD_IDENTIFICATION_OR_ID_ID,
+			//RuleConstants.PROD_IDENTIFICATION_OR_ID_IDENTIFICATION,
+			//RuleConstants.PROD_IDENTIFICATION_OR_ID_ID,
 			RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT,
 			RuleConstants.PROD_PROGRAM_ID_PARAGRAPH_PROGRAM_ID_TOK_DOT_TOK_DOT,
 			RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING,
@@ -4070,7 +4071,7 @@ public class COBOLParser extends CodeParser
 			RuleConstants.PROD__REPORT_SECTION_REPORT_SECTION_TOK_DOT,
 			RuleConstants.PROD__SCREEN_SECTION_SCREEN_SECTION_TOK_DOT
 	};
-	// END KGU#407 2017-09-30
+	// END KGU#407 2017-10-01
 
 	//----------------------- Local helper functions -------------------------
 
@@ -4524,14 +4525,16 @@ public class COBOLParser extends CodeParser
 	private int	previousDeclarationLevelDepth = 0;
 	private int	previousDeclarationLevelNumber = 0;
 	
-//	/* (non-Javadoc)
-//	 * @see CodeParser#initializeBuildNSD()
-//	 */
-//	@Override
-//	protected void initializeBuildNSD()
-//	{
-//		// TODO insert initializations for the build phase if necessary ...
-//	}
+	/* (non-Javadoc)
+	 * @see CodeParser#initializeBuildNSD()
+	 */
+	@Override
+	protected void initializeBuildNSD()
+	{
+		// START KGU#407 2017-10-01: Enh. #420: Configure the lookup table for comment retrieval
+		this.registerStatementRuleIds(statementIds);
+		// END KGU#407 2017-10-01
+	}
 	
 	private CobTools cobTools = new CobTools();
 	private CobProg currentProg = null;

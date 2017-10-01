@@ -357,6 +357,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			error = "**FILE PREPARATION ERROR** on file \"" + _textToParse + "\"" + error;
 			if (logFile != null) {
 				try {
+					logFile.write(error);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
 					logFile.close();
 					logFile = null;
 				} catch (IOException e) {
@@ -697,21 +702,29 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			// 2. The token is a terminal: check for comment
 			if (token.getType() == SymbolType.NON_TERMINAL) {
 				Reduction red = token.asReduction();
-				//System.out.println(Integer.toString(i) + ". checking reduction " + red);
+				//System.out.print(Integer.toString(i) + ". ("+ red.getParent().getTableIndex() +") " + red);
 				if (!statementRuleIds.contains(red.getParent().getTableIndex())) {
 					String comment = parser.commentMap.get(token);
+					//System.out.println(" ==> " + comment);
 					if (comment != null) {
 						_comment.append("\n" + comment);
 					}
 					retrieveComment_R(red, _comment);
 				}
+				else {
+					//System.out.println(" STOP!");
+				}
 			}
 			else  {
-				//System.out.println(Integer.toString(i) + ". ending at leave " + token);
 				String comment = parser.commentMap.get(token);
+				//System.out.print(Integer.toString(i) + ". ending at " + token + " (" + token.hashCode() + ")");
 				if (comment != null) {
+					//System.out.println(" ==> " + comment.substring(0, Math.min(comment.length(), 30)));
 					_comment.append("\n" + comment);
 				}
+				//else {
+				//	System.out.println(" %%% ");
+				//}
 			}
 		}
 	}

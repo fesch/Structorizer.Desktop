@@ -617,8 +617,8 @@ public class CParser extends CodeParser
 	
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
 
-	final static Pattern pVoidCast = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
-	static Matcher mVoidCast = pVoidCast.matcher("");
+	final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
+	static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
 
 	//----------------------------- Preprocessor -----------------------------
 
@@ -710,7 +710,6 @@ public class CParser extends CodeParser
 			while ((strLine = br.readLine()) != null)
 			{
 				String trimmedLine = strLine.trim();
-
 				if (trimmedLine.isEmpty()) {
 					if (srcCodeSB != null) {
 						// no processing if we only want to check for defines
@@ -788,9 +787,10 @@ public class CParser extends CodeParser
 							commentsChecked = true;
 						}
 					}
+
 				}
 				trimmedLine = (commentFree + lineTail).trim();
-				
+
 				// Note: trimmedLine can be empty if we start a block comment only
 				if (trimmedLine.isEmpty()) {
 					if (srcCodeSB != null) {
@@ -826,9 +826,9 @@ public class CParser extends CodeParser
 							strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
 						}
 					}
-					mVoidCast.reset(strLine);
-					if (mVoidCast.matches()) {
-						strLine = mVoidCast.group(1) + mVoidCast.group(2);	// checkme
+					mtchVoidCast.reset(strLine);
+					if (mtchVoidCast.matches()) {
+						strLine = mtchVoidCast.group(1) + mtchVoidCast.group(2);	// checkme
 					}
 					srcCodeSB.append(strLine);
 				}
@@ -841,7 +841,7 @@ public class CParser extends CodeParser
 		catch (Exception e) 
 		{
 			if (srcCodeSB != null) {
-				System.err.println("CParser.prepareTextfile() -> " + e.getMessage());
+				System.err.println("CParser.processSourcefile() -> " + e.getMessage());
 			}
 			return false;
 		}
@@ -938,10 +938,11 @@ public class CParser extends CodeParser
 			// do internal preparsing for resolving define/struct/typedef for the imported file
 			// FIXME: maybe do only when set as preparser option
 			// FIXME: add option to use more than the main file's path as preparser option
-			if (File.separatorChar == '/') {
-				incName = incName.replaceAll("\\\\", File.separator);
+			if (File.separatorChar == '\\') {
+				// FIXME (KGU) This doesn't seem so good an idea - usually both systems cope with '/' 
+				incName = incName.replaceAll("/", "\\\\");
 			} else {
-				incName = incName.replaceAll("/", File.separator);
+				incName = incName.replaceAll("\\\\", File.separator);
 			}
 			
 			if (processSourceFile(this.ParserPath + incName, null)) {
@@ -2712,12 +2713,17 @@ public class CParser extends CodeParser
 //				}
 //				this.provisionalImportCalls.clear();
 				for (Root impRoot: this.importingRoots) {
-					int n = impRoot.includeList.replaceAll(oldName, inclName);
-					n += impRoot.includeList.replaceAll(DEFAULT_GLOBAL_NAME, inclName);
-					n += impRoot.includeList.replaceAll("???", inclName);
-					if (n > 1) {
-						impRoot.includeList.removeAll(inclName);
-						impRoot.includeList.add(inclName);
+					if (impRoot.includeList != null) {
+						int n = impRoot.includeList.replaceAll(oldName, inclName);
+						n += impRoot.includeList.replaceAll(DEFAULT_GLOBAL_NAME, inclName);
+						n += impRoot.includeList.replaceAll("???", inclName);
+						if (n > 1) {
+							impRoot.includeList.removeAll(inclName);
+							impRoot.includeList.add(inclName);
+						}
+					}
+					else {
+						impRoot.includeList = StringList.getNew(inclName);
 					}
 				}
 				this.importingRoots.clear();
