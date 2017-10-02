@@ -129,6 +129,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	private final DefaultMutableTreeNode resultTop = new DefaultMutableTreeNode("Search Results");
 	private DefaultMutableTreeNode currentNode = null;
 	private DefaultTreeModel resultModel = null;
+	
+	private static final Pattern PTRN_WORDL = Pattern.compile("(\\n|.)*?\\W");
+	private static final Pattern PTRN_WORDR = Pattern.compile("\\W(\\n|.)*?");
+	private static Matcher mtchWordL = PTRN_WORDL.matcher("");
+	private static Matcher mtchWordR = PTRN_WORDR.matcher("");
 
 	/**
 	 * Allows to formulate sets of interesting element types
@@ -1043,8 +1048,8 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			String part = parts[0];
 			for (int i = 0; i < nParts - 1; i++) {
 				String nextPart = parts[i+1];
-				if ((part.isEmpty() || part.matches("(\\n|.)*?\\W"))
-						&& (i+2 == nParts && nextPart.isEmpty() || nextPart.matches("\\W(\\n|.)*?"))) {
+				if ((part.isEmpty() || mtchWordL.reset(part).matches())
+						&& (i+2 == nParts && nextPart.isEmpty() || mtchWordR.reset(nextPart).matches())) {
 					realParts.add(part);
 					realWords.add(matches[i]);
 					part = nextPart;

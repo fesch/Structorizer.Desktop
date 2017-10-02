@@ -44,7 +44,8 @@ package lu.fisch.utils;
  *      Bob Fisch       2016.08.01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
  *      Kay Gürtzig     2017.01.31      Method remove(int,int) added. 
  *      Kay Gürtzig     2017.03.31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
- *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake _by for a regex anymore)
+ *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore)
+ *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
  *
  ******************************************************************************************************
  *
@@ -665,6 +666,14 @@ public class StringList {
 		}
 	}
 
+	/**
+	 * Returns the String element at position {@code _index}<br/>
+	 * NOTE: In case the given index is invalid (i.e. {@code _index < 0}
+	 * or {@code _index >= this.count()} neither an exception is raised nor
+	 * {@code null} is returned but an empty String!
+	 * @param _index - the number of the element
+	 * @return the requested string or an empty string (!), see text.
+	 */
 	public String get(int _index)
 	{
 		if(_index<strings.size() && _index>=0)
@@ -740,20 +749,26 @@ public class StringList {
 			{
 				//text = strings.get(i);
 				isFirst = false;
+				// START KGU#425 2019-10-02
+				lastEndedLikeId = !thisString.isEmpty() && Character.isJavaIdentifierPart(thisString.charAt(thisString.length()-1));
+				// END KGU#425 2019-10-02
 			}
-			// START KGU#425 2019-09-29
-			else if (_separator == null && !thisString.isEmpty()) {
+			// START KGU#425 2019-10-02
+			//else
+			else if (_separator != null)
+			// END KGU#425 2019-10-02
+			{
+				//text += _separator + thisString;
+				text.append(_separator);
+			}
+			// START KGU#425 2019-10-02
+			else if (!thisString.isEmpty()) {
 				if (lastEndedLikeId && Character.isJavaIdentifierPart(thisString.charAt(0))) {
 					text.append(" ");
 				}
 				lastEndedLikeId = Character.isJavaIdentifierPart(thisString.charAt(thisString.length()-1));
 			}
-			// END KGU#425 2019-09-29
-			else
-			{
-				//text += _separator + thisString;
-				text.append(_separator);
-			}
+			// END KGU#425 2019-10-02
 			text.append(thisString);
 		}
 		//return text;

@@ -85,6 +85,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.09.17      Enh. #423: Type name highlighting
  *      Kay Gürtzig     2017.09.18      Enh. #423: Recursive record definitions, splitLexically() improved
  *      Kay Gürtzig     2017.09.29      Enh. #423: splitLexically() debugged, now ellipses are tokens too
+ *      Kay Gürtzig     2017.10.02      Enh. #423: Method extractDeclarationsFromList() and regex mechanisms revised
  *
  ******************************************************************************************************
  *
@@ -369,8 +370,7 @@ public abstract class Element {
 	private static final java.util.regex.Pattern HEX_PATTERN = java.util.regex.Pattern.compile("0x[0-9A-Fa-f]+");
 	private static final java.util.regex.Pattern SIGN_PATTERN = java.util.regex.Pattern.compile("[+-]");
 	//private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("(\\w.*)(\\[.*\\])$"); // seems to have been wrong
-	private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("([A-Za-z]\\w*)(\\[.*\\])$");
-	private static final java.util.regex.Pattern RECORD_PATTERN = java.util.regex.Pattern.compile("([A-Za-z]\\w*)\\s*\\{.*\\}");
+	private static final Matcher RECORD_MATCHER = java.util.regex.Pattern.compile("([A-Za-z]\\w*)\\s*\\{.*\\}").matcher("");
 	// END KGU 2017-09-19
 	// START KGU#425 2017-09-29: Lexical core mechanisms revised
 	private static final String[] LEXICAL_DELIMITERS = new String[] {
@@ -2327,11 +2327,11 @@ public abstract class Element {
 				group = group.substring(0, posColon).trim();
 			}
 			// START KGU#109 2016-01-15 Bugfix #61/#107 - was wrong, must first split by ','
-//        			else if ((posColon = group.indexOf(" as ")) >= 0)
-//        			{
-//        				type = group.substring(posColon + " as ".length()).trim();
-//        				group = group.substring(0, posColon).trim();
-//        			}
+//			else if ((posColon = group.indexOf(" as ")) >= 0)
+//			{
+//				type = group.substring(posColon + " as ".length()).trim();
+//				group = group.substring(0, posColon).trim();
+//			}
 			// END KGU#109 2016-01-15
 			StringList vars = StringList.explode(group,",");
 			for (int j=0; j < vars.count(); j++)
@@ -2346,32 +2346,44 @@ public abstract class Element {
 						type = decl.substring(posColon + " as ".length()).trim();
 						decl = decl.substring(0, posColon).trim();
 					}
-					StringList tokens = StringList.explode(decl, " ");
+					StringList tokens = splitLexically(decl, true);
+					tokens.removeAll(" ");
 					if (tokens.count() > 1) {
-						// START KGU#140 2017-01-31. Enh. #113 - this could cause wrong associations with C/Java syntax
-						//if (type == null) {
+						// Is a C or Java array type involved? 
 						if (declGroups.count() == 1 && posColon < 0 || type == null) {
-						// END KGU#140 2017-01-31
-							type = tokens.concatenate(" ", 0, tokens.count() - 1);
+							int posBrack1 = tokens.indexOf("[");
+							int posBrack2 = tokens.lastIndexOf("]");
+							if (posBrack1 > 0 && posBrack2 > posBrack1) {
+								String indices = tokens.concatenate(null, posBrack1, posBrack2+1);
+								if (posBrack2 == tokens.count()-1) {
+									// C-style: brackets right of the variable id
+									decl = tokens.get(posBrack1-1);
+									if (posBrack1 > 1 && type == null) {
+										type = tokens.concatenate(null, 0, posBrack1-1);
+										type += indices;
+									}
+								}
+								else {
+									// Java style: brackets between element type and variable id
+									decl = tokens.concatenate(null, posBrack2+1, tokens.count());
+									if (type == null) {
+										type = tokens.concatenate(null, 0, posBrack2+1);
+									}
+								}
+							}
+							else {
+								type = tokens.concatenate(null, 0, tokens.count()-1);
+								decl = tokens.get(tokens.count()-1);
+							}
 						}
 						// START KGU#375 2017-03-30: New for enh. #388 (constants)
 						else if (tokens.get(0).equals("const")) {
 							prefix = "const ";
 						}
 						// END KGU#375 2017-03-30
-						decl = tokens.get(tokens.count()-1);
-						// START KGU#140 2017-01-31: Enh. #113 Cope with C-style array declarations
-						Matcher arrayMatcher = ARRAY_PATTERN.matcher(decl); 
-						if (arrayMatcher.matches()) {
-							// Convert it into a Java-like declaration
-							String indices = arrayMatcher.replaceFirst("$2").trim();
-							type += indices;
-							decl = arrayMatcher.replaceFirst("$1");
-						}
-						// END KGU#140 2017-01-31
 					}
 					//System.out.println("Adding parameter: " + vars.get(j).trim());
-					if (declNames != null)	declNames.add(decl);
+					if (declNames != null) declNames.add(decl);
 					// START KGU#375 2017-03-30: New for enh. #388 (constants)
 					//if (declTypes != null)	declTypes.add(type);
 					if (declTypes != null){
@@ -2451,7 +2463,6 @@ public abstract class Element {
 	 */
 	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr, boolean canonicalizeTypeNames)
 	{
-		Matcher recordMatcher = null;
 		String typeSpec = "";	// This means no info
 		// 1. Check whether it's a known typed variable
 		TypeMapEntry typeEntry = null;
@@ -2475,8 +2486,8 @@ public abstract class Element {
 			typeSpec = "String";
 		}
 		// START KGU#388 2017-09-12: Enh. #423: Record initializer support (name-prefixed!)
-		else if ((recordMatcher = RECORD_PATTERN.matcher(expr)).matches() && typeMap != null){
-			typeSpec = recordMatcher.replaceFirst("$1");
+		else if ((RECORD_MATCHER.reset(expr)).matches() && typeMap != null){
+			typeSpec = RECORD_MATCHER.group(1);
 			if (!typeMap.containsKey(":" + typeSpec)) {
 				// It's hardly a valid prefixed record initializer...
 				typeSpec = "";

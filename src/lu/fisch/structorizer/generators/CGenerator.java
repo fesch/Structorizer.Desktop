@@ -148,12 +148,10 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Vector;
 import java.util.Map.Entry;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
-import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -499,7 +497,7 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#16 2015-11-29
 	
-	// START KGU#388 2017-09-2017: Enh. #423
+	// START KGU#388 2017-09-29: Enh. #423
 	protected String transformTypeWithLookup(String _type, String _default) {
 		TypeMapEntry typeInfo = this.typeMap.get(":" + _type);
 		// The typeInfo might be an alias, in this case no specific measures are necessary
@@ -511,7 +509,7 @@ public class CGenerator extends Generator {
 		}
 		return _type;
 	}
-	// END KGU#388 2017-09-2017
+	// END KGU#388 2017-09-29
 
 
 
@@ -1541,11 +1539,11 @@ public class CGenerator extends Generator {
 		// END KGU#178 2016-07-20
 
 		insertComment(_root, _indent);
-		
 		if (_root.isProgram())
 			code.add("int main(void)");
 		else {
 			// Compose the function header
+			this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
 			String fnHeader = transformTypeWithLookup(_root.getResultType(),
 					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
@@ -1588,7 +1586,6 @@ public class CGenerator extends Generator {
 	 * @param _indent - the current indentation string
 	 * @param varNames - list of variable names introduced inside the body
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList varNames)
 	{
@@ -1616,7 +1613,7 @@ public class CGenerator extends Generator {
 		int lastLine = code.count();
 		// START KGU#375 2017-04-12: Enh. #388 - we want to add new information but this is not to have an impact on _root 
 		//this.typeMap = _root.getTypeInfo();
-		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo().clone();
+		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
 		// END KGU#375 2017-04-12
 		// END KGU#261/KGU#332 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388 special treatment of constants

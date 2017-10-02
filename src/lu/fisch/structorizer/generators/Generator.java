@@ -849,15 +849,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Overridable general text transformation routine, performing the following steps:<br/>
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
-	 *    (see {@link lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)}).
-	 *         "preAlt", "preCase", "preWhile", "preRepeat",
-	 *         "postAlt", "postCase", "postWhile", "postRepeat";<br/>
+	 *    (see {@link lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)}).<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;"preAlt", "preCase", "preWhile", "preRepeat",<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;"postAlt", "postCase", "postWhile", "postRepeat";<br/>
 	 * 2. Tokenizes the result, processes the tokens by an overridable method
 	 *    {@link #transformTokens(StringList)}, and re-concatenates the result;<br/>
 	 * 3. Transforms Input and Output lines according to regular replacement expressions defined
 	 *    by {@link #getInputReplacer(boolean)} and {@link #getOutputReplacer()}, respectively. This is done by overridable
 	 *    methods {@link #transformInput(String)} and {@link #transformOutput(String)}, respectively.
-	 *    This is only done if _input starts with one of the configured Input and Output keywords
+	 *    This is only done if _input starts with one of the configured Input and Output keywords<br/>
+	 * Note: Of course steps 1 through 3 will only be done if the overriding method calls
+	 * this parent method at some suited point.
 	 * @see #transform(String, boolean)
 	 * @see #transformTokens(StringList)   
 	 * @see #transformInput(String)
@@ -980,7 +982,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
 	/**
 	 * Transforms operators and other tokens from the given intermediate
-	 * language into tokens of the target language.
+	 * language into tokens of the target language and returns the result
+	 * as string.<br/>
 	 * OVERRIDE this! (Method just returns the re-concatenated tokens)
 	 * This method is called by {@link #transform(String, boolean)} but may
 	 * also be used elsewhere for a specific token list.
@@ -2170,7 +2173,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * This method does not generate anything itself, it just delegates
 	 * the job to the methods for the contained elements.<br/>
 	 * Should NOT be overridden by subclasses except if inevitable. (Then
-	 * super ought to be called before or after he specific enhancements.)
+	 * super ought to be called before or after the specific enhancements.)
 	 * @see #generateCode(Instruction, String)
 	 * @see #generateCode(Alternative, String)
 	 * @see #generateCode(Case, String)
@@ -2642,6 +2645,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			catch(Exception e)
 			{
 				String message = e.getMessage();
+				e.printStackTrace();
 				if (message == null) {
 					message = e.getClass().getSimpleName();
 				}

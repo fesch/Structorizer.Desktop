@@ -43,6 +43,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
  *      Kay Gürtzig     2016.02.03  Issue #340: registration without immediate update launch
  *      Kay Gürtzig     2017.02.27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
+ *      Kay Gürtzig     2017.10.02  Enh. #415: The title localization wasn't done for JFrame offsprings 
  *
  ******************************************************************************************************
  *
@@ -61,6 +62,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
@@ -565,6 +567,11 @@ public class Locales {
                         if (component instanceof JDialog) {
                             ((JDialog) component).setTitle(parts.get(1));
                         }
+                        // START KGU#324 2017-10-02: Enh. #415 JFrames should also be able to get the title localized
+                        else if (component instanceof JFrame) {
+                            ((JFrame) component).setTitle(parts.get(1));
+                        }
+                        // END KGU#324 2017-10-02
                     } 
                     else {
                         Field field = null;

@@ -975,6 +975,7 @@ FindAndReplace.pnlScope.border=Alcance
 FindAndReplace.cmbScope.item.0=Selección actual
 FindAndReplace.cmbScope.item.1=Diagrama actual
 FindAndReplace.cmbScope.item.2=Diagramas abiertos
+FindAndReplace.pnlRootTypes.border=Tipos de diagrama
 FindAndReplace.chkRootTypes.0.text=Programas
 FindAndReplace.chkRootTypes.1.text=Subrutinas
 FindAndReplace.chkRootTypes.2.text=Incluíbles

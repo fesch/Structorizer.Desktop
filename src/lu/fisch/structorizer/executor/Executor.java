@@ -134,6 +134,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.09.17      Enh. #423: First draft implementation of records.
  *      Kay Gürtzig     2017.09.18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
  *      Kay Gürtzig     2017.09.30      Bugfix #429: Initializer evaluation made available in return statements
+ *      Kay Gürtzig     2017.30.02      Some regex stuff revised to gain performance
  *
  ******************************************************************************************************
  *
@@ -251,6 +252,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -308,18 +310,14 @@ public class Executor implements Runnable
 		// START KGU#388 2017-09-18: Enh. 423
 		public final HashMap<String, TypeMapEntry> typeDefinitions;
 		// END KGU#388 2017-09-18
-		public ImportInfo(Interpreter _interpr, StringList _varNames) {
-			interpreter = _interpr;
-			variableNames = _varNames;
-			// START KGU#388 2017-09-18: Enh. 423
-			typeDefinitions = new HashMap<String, TypeMapEntry>();
-			// END KGU#388 2017-09-18
-		}
 		// START KGU#388 2017-09-18: Enh. 423
+		//public ImportInfo(Interpreter _interpr, StringList _varNames) {
 		public ImportInfo(Interpreter _interpr, StringList _varNames, HashMap<String, TypeMapEntry> _typeMap) {
 			interpreter = _interpr;
 			variableNames = _varNames;
+			// START KGU#388 2017-09-18: Enh. 423
 			typeDefinitions = new HashMap<String, TypeMapEntry>(_typeMap);
+			// END KGU#388 2017-09-18
 		}
 		// END KGU#388 2017-09-18
 	};
@@ -475,6 +473,34 @@ public class Executor implements Runnable
 	// START KGU 2016-12-18: Enh. #314: Stream table for Simple file API
 	private final Vector<Closeable> openFiles = new Vector<Closeable>();
 	// END KGU 2016-12-18
+	
+	// Constant set of matchers for unicode literals that cause harm in interpreter
+	private static final Matcher[] MTCHs_BAD_UNICODE = new Matcher[]{
+			Pattern.compile("(.*)\\\\u000[aA](.*)").matcher(""),
+			Pattern.compile("(.*?)\\\\u000[dD](.*?)").matcher(""),
+			Pattern.compile("(.*?)\\\\u0022(.*?)").matcher(""),
+			Pattern.compile("(.*?)\\\\u005[cC](.*?)").matcher("")
+	};
+	// Replacement patterns for the unicode literals associated with the matchers above
+	private static final String[] RPLCs_BAD_UNICODE = new String[]{
+			"$1\\\\012$2",
+			"$1\\\\015$2",
+			"$1\\\\042$2",
+			"$1\\\\134$2"
+	};
+	// Matcher for binary integer literals, which the interpreter doesn't cope with
+	private static final Matcher MTCH_BIN_LITERAL = Pattern.compile("0b[01]+").matcher("");
+	// Matcher for certain interpreter error messages relating to array assignment
+	// FIXME: Might have to be adapted with a newer version of the bean shell interpreter some day ...
+	private static final Matcher MTCH_EVAL_ERROR_ARRAY = Pattern.compile(".*Can't assign.*to java\\.lang\\.Object \\[\\].*").matcher("");
+	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
+	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
+	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
+	private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
+	private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
+	private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
+	private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -541,8 +567,6 @@ public class Executor implements Runnable
 	
 	private String convert(String s, boolean convertComparisons)
 	{
-		Regex r;
-
 		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
 		StringList tokens = Element.splitLexically(s, true);
 		Element.unifyOperators(tokens, false);
@@ -581,10 +605,13 @@ public class Executor implements Runnable
 				// END KGU 2017-04-22
 				// START KGU#406/KGU#420 2017-05-23/2017-09-09: Bugfix #411, #426 (arose with COBOL import)
 				// The interpreter doesn't cope with unicode escape sequences "\\u000a", "\\u000d", "\\u0022", and "\\u005c"
-				internal = internal.replaceAll("(.*)\\\\u000[aA](.*)", "$1\\\\012$2").
-						replaceAll("(.*?)\\\\u000[dD](.*?)", "$1\\\\015$2").
-						replaceAll("(.*?)\\\\u0022(.*?)", "$1\\\\042$2").
-						replaceAll("(.*?)\\\\u005[cC](.*?)", "$1\\\\134$2");
+				//internal = internal.replaceAll("(.*)\\\\u000[aA](.*)", "$1\\\\012$2").
+				//		replaceAll("(.*?)\\\\u000[dD](.*?)", "$1\\\\015$2").
+				//		replaceAll("(.*?)\\\\u0022(.*?)", "$1\\\\042$2").
+				//		replaceAll("(.*?)\\\\u005[cC](.*?)", "$1\\\\134$2");
+				for (int mtch = 0; mtch < MTCHs_BAD_UNICODE.length; mtch++) {
+					internal = MTCHs_BAD_UNICODE[mtch].reset(internal).replaceAll(RPLCs_BAD_UNICODE[mtch]);
+				}
 				// END KGU#406/KGU#420 2017-05-23/2017-09-09
 				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
 					delim = '\"';
@@ -592,8 +619,8 @@ public class Executor implements Runnable
 				tokens.set(i, delim + internal + delim);
 			}
 			// END KGU#342 2017-01-08
-			// START KGU#354 2017-05-22: Unfortunately theinterpreter doesn't cope with binary integer literals, so convert them
-			else if (token.matches("0b[01]+")) {
+			// START KGU#354 2017-05-22: Unfortunately the interpreter doesn't cope with binary integer literals, so convert them
+			else if (MTCH_BIN_LITERAL.reset(token).matches()) {
 				tokens.set(i, "" + Integer.parseInt(token.substring(2), 2));
 			}
 			// END KGU#354 2017-05-22
@@ -629,17 +656,9 @@ public class Executor implements Runnable
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
 		// pascal: delete
-		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
-		//r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1=delete($1,$2,$3)");
-		r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
-		// END KGU#275 2016-10-09
-		s = r.replaceAll(s);
+		s = RPLC_DELETE_PROC.replaceAll(s);
 		// pascal: insert
-		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
-		//r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2=insert($1,$2,$3)");
-		r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
-		// END KGU#275 2016-10-09
-		s = r.replaceAll(s);
+		s = RPLC_INSERT_PROC.replaceAll(s);
 		// START KGU#285 2016-10-16: Bugfix #276 - this spoiled apostrophes because misplaced here
 //		// pascal: quotes
 //		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
@@ -648,10 +667,10 @@ public class Executor implements Runnable
 		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
         // pascal: convert "inc" and "dec" procedures
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); s = r.replaceAll(s);
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); s = r.replaceAll(s);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); s = r.replaceAll(s);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); s = r.replaceAll(s);
+		s = RPLC_INC2_PROC.replaceAll(s);
+		s = RPLC_INC1_PROC.replaceAll(s);
+		s = RPLC_DEC2_PROC.replaceAll(s);
+		s = RPLC_DEC1_PROC.replaceAll(s);
         // END KGU 2015-11-29
 		
         // START KGU 2017-04-22: now done above in the string token conversion
@@ -3138,7 +3157,7 @@ public class Executor implements Runnable
 				context.interpreter.set(target, content);
 			}
 			catch (EvalError ex) {
-				if (ex.getMessage().matches(".*Can't assign.*to java\\.lang\\.Object \\[\\].*")) {
+				if (MTCH_EVAL_ERROR_ARRAY.reset(ex.getMessage()).matches()) {
 					// Stored array type is an obstacle for re-assignment, so drop it
 					context.interpreter.unset(target);
 					// Now try again
@@ -3223,7 +3242,6 @@ public class Executor implements Runnable
 	}
 	
 	private HashMap<String, Object> createEmptyRecord(StringList path, int depth) {
-		HashMap<String, Object> record = new HashMap<String, Object>();
 		TypeMapEntry recordType = this.identifyRecordType(path.get(0), false);
 		for (int i = 1; i <= depth; i++) {
 			recordType = recordType.getComponentInfo(true).get(path.get(i));
@@ -3305,13 +3323,14 @@ public class Executor implements Runnable
 			// START KGU#388 2017-09-14: Enh. #423
 			if (val.getClass().getSimpleName().equals("HashMap"))
 			{
-				valStr = ((HashMap)val).get("§TYPENAME§") + "{";
+				HashMap<String, Object> hmVal = (HashMap)val;
+				valStr = hmVal.get("§TYPENAME§") + "{";
 				int j = 0;
-				for (Object entry: ((HashMap)val).entrySet())
+				for (Entry<String, Object> entry: hmVal.entrySet())
 				{
-					String key = (String)((Entry)entry).getKey();
+					String key = entry.getKey();
 					if (!key.startsWith("§")) {
-						String elementStr = prepareValueForDisplay(((Entry)entry).getValue());
+						String elementStr = prepareValueForDisplay(entry.getValue());
 						valStr = valStr + ((j++ > 0) ? ", " : "") + key + ": " + elementStr;
 					}
 				}
@@ -4028,7 +4047,6 @@ public class Executor implements Runnable
 		while (tokens.count() > 0 && tokens.get(0).trim().isEmpty()) {
 			tokens.remove(0);
 		}
-		TypeMapEntry recordType = null;
 		// END KGU#388 2017-09-13
 		// Watch out for constant arrays or records
 		for (int i = 0; i < tokens.count(); i++) {

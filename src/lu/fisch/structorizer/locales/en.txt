@@ -976,6 +976,7 @@ FindAndReplace.pnlScope.border=Scope
 FindAndReplace.cmbScope.item.0=Current selection
 FindAndReplace.cmbScope.item.1=Current diagram
 FindAndReplace.cmbScope.item.2=Opened diagrams
+FindAndReplace.pnlRootTypes.border=Diagram types
 FindAndReplace.chkRootTypes.0.text=Main programs
 FindAndReplace.chkRootTypes.1.text=Subroutines
 FindAndReplace.chkRootTypes.2.text=Includables
