@@ -2195,7 +2195,7 @@ public class CParser extends CodeParser
 					// FIXME
 					if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
 						this.importingRoots.add(root);
-						((Root)_parentNode.parent).includeList.addIfNew(((Root)_parentNode.parent).getMethodName());
+						((Root)_parentNode.parent).addToIncludeList((Root)_parentNode.parent);
 					}
 				}
 				else {

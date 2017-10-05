@@ -197,9 +197,9 @@ public class Root extends Element {
 			new Comparator<Root>() {
 		public int compare(Root root1, Root root2)
 		{
-			String main_or_sub1 = root1.isProgram() ? "M" : "S";
-			String main_or_sub2 = root2.isProgram() ? "M" : "S";
-			int result = (main_or_sub1 + root1.getSignatureString(false)).compareToIgnoreCase(main_or_sub2 + root2.getSignatureString(false));
+			String prefix1 = Integer.toString(root1.diagrType.ordinal());
+			String prefix2 = Integer.toString(root2.diagrType.ordinal());
+			int result = (prefix1 + root1.getSignatureString(false)).compareToIgnoreCase(prefix2 + root2.getSignatureString(false));
 			if (result == 0) {
 				result = ("" + root1.getPath()).compareToIgnoreCase("" + root2.getPath());
 			}
@@ -269,6 +269,21 @@ public class Root extends Element {
 	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now managed directly by Root
 	public StringList includeList = null;
 	// END KGU#376 2017-06-30
+	public boolean addToIncludeList(Root aRoot)
+	{
+		boolean added = false;
+		if (aRoot.isInclude()) {
+			added = addToIncludeList(aRoot.getMethodName());
+		}
+		return added;
+	}
+	public boolean addToIncludeList(String rootName)
+	{
+		if (this.includeList == null) {
+			this.includeList = new StringList();
+		}
+		return this.includeList.addIfNew(rootName);
+	}
 	
 	/**
 	 * @return true if and only if the diagram type is "main program"
@@ -464,7 +479,7 @@ public class Root extends Element {
 	public Root()
 	{
 		super(StringList.getNew("???"));
-		setText(StringList.getNew("???"));
+		setText(StringList.getNew("???"));	// This looked redundant
 		children.parent=this;
 		// START KGU#363 2017-03-10: Enh. #372 - Author and date fields
 		author = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
@@ -476,12 +491,13 @@ public class Root extends Element {
 		// START KGU#363 2017-03-14: Enh. #372 - License fields
 		licenseName = Ini.getInstance().getProperty("licenseName", "");
 		// END KGU#363 2017-03-14
+		//this(StringList.getNew("???"));
 	}
 
-	public Root(StringList _strings)
+	public Root(StringList _header)
 	{
-		super(_strings);
-		setText(_strings);
+		super(_header);
+		setText(_header);	// This looked redundant
 		children.parent=this;
 		// START KGU#363 2017-03-10: Enh. #372 - Author and date fields
 		author = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
@@ -2614,9 +2630,10 @@ public class Root extends Element {
     			StringList initVars = _vars.copy();
     			// START KGU#423 2017-09-13: Enh. #416 - cope with user-defined line breaks
     			//for (int j = 0; j < ele.getText().count(); j++) {
-    			for (int j = 0; j < ele.getUnbrokenText().count(); j++) {
+    			StringList unbrokenText = ele.getUnbrokenText();
+    			for (int j = 0; j < unbrokenText.count(); j++) {
     			// END KGU#423 2017-09-13
-    				String line = ele.getText().get(j);
+    				String line = unbrokenText.get(j);
     				// START KGU#388 2017-09-13: Enh. #423
     				if (!Instruction.isTypeDefinition(line, _types)) {
     				// END KGU#388 2017-09-13

@@ -524,6 +524,7 @@ public class Locales {
         
         for (int i = 0; i < lines.count(); i++) {
             parts = StringList.explodeFirstOnly(lines.get(i), "=");
+        	//System.out.println(parts.get(0));
             pieces = StringList.explode(parts.get(0), "\\.");
             
             if (pieces.get(0).equalsIgnoreCase(component.getClass().getSimpleName()) && 
@@ -661,18 +662,26 @@ public class Locales {
                                 {
                                 	String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
                                 	Method method = fieldClass.getMethod("get", new Class[]{Object.class});
-                                	try {
-                                		target = method.invoke(target, piece2);
-                                		if (target == null)
-                                		{
-                                			System.err.println("LANG: No Element <" + pieces.get(0) + "." + piece1_2 + "> found!");
-                                		}
-                                	}
-                                	catch (Exception e) {
-                                		// FIXME: No idea why this always goes off just on startup
-                                		//System.err.println("LANG: Trouble accessing <" + pieces.get(0) + "." + piece1_2 + ">");
-                                	}
-                                	if (target != null)
+                                	// On startup we might be faster here than the initialisation of the components such
+                                	// that we must face nasty NullPointerExceptions if we don't prevent
+                            		if (target == null)
+                            		{
+                            			System.out.println("LANG: No Element <" + pieces.get(0) + "." + pieces.get(1) + "> found!");
+                            		}
+                            		else {
+                            			try {
+                            				target = method.invoke(target, piece2);
+                            				if (target == null)
+                            				{
+                            					System.err.println("LANG: No Element <" + pieces.get(0) + "." + piece1_2 + "> found!");
+                            				}
+                            			}
+                            			catch (Exception e) {
+                            				// FIXME: No idea why this always goes off just on startup
+                            				System.err.println("LANG: Trouble accessing <" + pieces.get(0) + "." + piece1_2 + ">");
+                            			}
+                            		}
+                            		if (target != null)
                                 	{
                                 		fieldClass = target.getClass();
                                 		pieces.remove(2);	// Key no longer needed
