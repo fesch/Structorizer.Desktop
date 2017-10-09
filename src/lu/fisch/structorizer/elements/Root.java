@@ -115,6 +115,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList"
  *      Kay Gürtzig     2017.07.02      Enh. #389: Analyser and execution mechanisms adapted to new include design
  *      Kay Gürtzig     2017.09.18      Enh. #423: Type retrieval and Analyser enhancement for record types
+ *      Kay Gürtzig     2017.10.09      Enh. #423: Adjustments for Analyser check 24.
  *      
  ******************************************************************************************************
  *
@@ -424,7 +425,7 @@ public class Root extends Element {
 	// END KGU#261 2017-01-19
 	// START KGU#163 2016-03-25: Added to solve the complete detection of unknown/uninitialised identifiers
 	// Pre-processed parser preference keywords to match them against tokenized strings
-	private Vector<StringList> splitKeywords = new Vector<StringList>();
+	private static Vector<StringList> splitKeywords = new Vector<StringList>();
 	private String[] operatorsAndLiterals = {"false", "true", "div"};
 	// END KGU#163 2016-03-25
 
@@ -1964,7 +1965,7 @@ public class Root extends Element {
     	return varNames;
     }
     
-    // START KGU#375 2017-04-04: Enh. #388 getUsedVarNames decomposed on occasion of analyse_22
+    // START KGU#375 2017-04-04: Enh. #388 getUsedVarNames decomposed on occasion of analyse_22_24
     /**
      * Gathers the names of all variables that are used in text line _line in expressions:<br/>
      * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
@@ -2001,7 +2002,7 @@ public class Root extends Element {
 		{    				
 			if (_keywords[kw].trim().length() > 0)
 			{
-				StringList keyTokens = this.splitKeywords.elementAt(kw);
+				StringList keyTokens = splitKeywords.elementAt(kw);
     			int keyLength = keyTokens.count();
 				int pos = -1;
 				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
@@ -2088,24 +2089,7 @@ public class Root extends Element {
 			}
 		}
 		// START KGU#388 2017-09-17: Enh. #423 Cut off all irrelevant stuff of record initializers
-		int posBrace = 0;
-		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
-			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
-				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1));
-				// Remove all tokens from the type name on (they are in the HashMap now)
-				tokens.remove(posBrace-1, tokens.count());
-				// Append all the value strings for the components but not the component names
-				for (Entry<String, String> comp: components.entrySet()) {
-					if (!comp.getKey().startsWith("§")) {
-						tokens.add(Element.splitLexically(comp.getValue(), true));
-					}
-				}
-				// If there was further text beyond the initializer then tokenize and append it
-				if (components.containsKey("§TAIL§")) {
-					tokens.add(Element.splitLexically(components.get("§TAIL§"), true));
-				}
-			}
-		}
+		skimRecordInitializers(tokens);
 		// END KGU#388 2017-09-17
 		int i = 0;
 		while(i < tokens.count())
@@ -2133,6 +2117,36 @@ public class Root extends Element {
 		return tokens;
     }
     // END KGU#375 2017-04-04
+	// START KGU#388 2017-10-09: Enh. #423
+	/**
+	 * Recursively cuts off all irrelevant stuff of record initializers for {@link #getUsedVarNames(String, String[])}
+	 * @param tokens - the skimmed tokens
+	 */
+	private void skimRecordInitializers(StringList tokens) {
+		int posBrace = 0;
+		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
+			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
+				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1));
+				// Remove all tokens from the type name on (they are in the HashMap now)
+				tokens.remove(posBrace-1, tokens.count());
+				// Append all the value strings for the components but not the component names
+				for (Entry<String, String> comp: components.entrySet()) {
+					if (!comp.getKey().startsWith("§")) {
+						StringList subTokens = Element.splitLexically(comp.getValue(), true);
+						skimRecordInitializers(subTokens);
+						tokens.add(subTokens);
+					}
+				}
+				// If there was further text beyond the initializer then tokenize and append it
+				if (components.containsKey("§TAIL§")) {
+					StringList subTokens = Element.splitLexically(components.get("§TAIL§"), true);
+					skimRecordInitializers(subTokens);
+					tokens.add(subTokens);
+				}
+			}
+		}
+	}
+	// END KGU#388 2017-10-09
 
     // KGU 2016-03-29 Rewritten based on tokens
     /**
@@ -2156,7 +2170,7 @@ public class Root extends Element {
     	StringList varNames = new StringList();
 
     	// START KGU#163 2016-03-25: Pre-processed match patterns for identifier search
-    	this.splitKeywords.clear();
+    	splitKeywords.clear();
     	String[] keywords = CodeParser.getAllProperties();
     	for (int k = 0; k < keywords.length; k++)
     	{
@@ -3725,10 +3739,20 @@ public class Root extends Element {
 							//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
 						}
-						String type = compTypes.get(j);
-						if (type != null && !TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-							//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-							addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+						String type = compTypes.get(j).trim();
+						// Clear off array specifiers, but the check is still too restrictive...
+						if (type != null) {
+							String typeLower;
+							if (type.endsWith("]") && type.contains("[")) {
+								type = type.substring(0, type.indexOf("[")).trim();
+							}
+							else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+								type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+							}
+							if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+								//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+							}
 						}
 					}
 				}

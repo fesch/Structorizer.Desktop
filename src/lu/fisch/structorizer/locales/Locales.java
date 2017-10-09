@@ -662,13 +662,9 @@ public class Locales {
                                 {
                                 	String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
                                 	Method method = fieldClass.getMethod("get", new Class[]{Object.class});
-                                	// On startup we might be faster here than the initialisation of the components such
+                                	// On startup we might be faster here than the initialization of the components, such
                                 	// that we must face nasty NullPointerExceptions if we don't prevent
-                            		if (target == null)
-                            		{
-                            			System.out.println("LANG: No Element <" + pieces.get(0) + "." + pieces.get(1) + "> found!");
-                            		}
-                            		else {
+                            		if (target != null) {
                             			try {
                             				target = method.invoke(target, piece2);
                             				if (target == null)

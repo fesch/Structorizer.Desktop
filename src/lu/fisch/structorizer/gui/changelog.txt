@@ -7,8 +7,8 @@
 
 Known issues:
 - Severe but unclear performance degradation on subdiagram calls
-- Analyser gives wrong complaints on structured component types of records
 - Possible difficulties in using Java objects (due to record access conversions)
+- Access irritations with deeply nested data structures (records/arrays)
 
 Current development version: 3.26-07 (2017.10.09)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
@@ -70,7 +70,7 @@ Current development version: 3.26-07 (2017.10.09)
 - 06: Enh. #387: "Save All" menu item and toolbar button <2>
 - 06: Bugfix #365: FOR-IN loop export fix (to C) revised again <2>
 - 06: Enh. #388: Concept of constants introduced (executor, import, analyser) <2>
-- 06: Enh. #389: Mechanism to "include" diagrams on execution [S. Sobisch]2
+- 06: Enh. #389: Mechanism to "include" diagrams on execution [Simon Sobisch]2
 - 06: Enh. #390: Improved variable initialization check in multi-line instructions <2>
 - 06: Bugfix #391: Debugger button control was defective in step mode <2>
 - 06: Enh. #335/#388/#389: generators for Pascal, C, C++, and Java revised <2>

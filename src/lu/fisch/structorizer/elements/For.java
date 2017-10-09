@@ -857,7 +857,7 @@ public class For extends Element implements ILoop {
 	 * Intended to be used in the constructor with String argument.
 	 * @return the identified style of the loop (counting, traversing, or "freestyle")
 	 */
-	private ForLoopStyle updateFromForClause()
+	public ForLoopStyle updateFromForClause()
 	{
 		String[] forParts = this.splitForClause();
 		this.setCounterVar(forParts[0]);

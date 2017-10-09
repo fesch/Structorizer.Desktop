@@ -36,7 +36,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.17      JTree for multi-Root retrieval
  *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fixed
  *      Kay Gürtzig     2017.06.22      NullPointerException on replacing due to cleared currentNode fixed
- *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in puldown list and esc key without pulldown  
+ *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in puldown list and esc key without pulldown
+ *      Kay Gürtzig     2017.10.09      Internal consistency of For elements on replacement ensured
  *
  ******************************************************************************************************
  *
@@ -100,6 +101,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.IElementSequence;
 import lu.fisch.structorizer.elements.IElementSequence.Iterator;
 import lu.fisch.structorizer.elements.Root;
@@ -1186,6 +1188,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					&& nMatchesText > currentPosition) {
 				text = replacePattern(text, elementwise, currentPosition);
 				currentElement.setText(text);
+				// START KGU 2017-10-09: We must handle the structured fields of For elements				
+				if (currentElement instanceof For) {
+					((For)currentElement).updateFromForClause();					
+				}
+				// END KGU 2017-10-09
 				this.fillPreview(text, docText, txtText, 0, true);
 				done = true;
 			}

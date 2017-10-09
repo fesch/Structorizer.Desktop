@@ -336,6 +336,307 @@ public class Executor implements Runnable
 	};
 	// END KGU#311 2016-12-22
 
+	private static final String[] builtInFunctions = new String[] {
+			"public int random(int max) { return (int) (Math.random()*max); }",
+			"public void randomize() {  }",
+			// START KGU#391 2017-05-07: Enh. #398 - we need a sign function to ease the rounding support for COBOL import
+			"public int sgn(int i) { return (i == 0 ? 0 : (i > 0 ? 1 : -1)); }",
+			"public int sgn(double d) { return (d == 0 ? 0 : (d > 0 ? 1 : -1)); }",
+			// END KGU#391 2017-05-07
+			// square
+			"public double sqr(double d) { return d * d; }",
+			// square root
+			"public double sqrt(double d) { return Math.sqrt(d); }",
+			// length of a string
+			"public int length(String s) { return s.length(); }",
+			// position of a substring inside another string
+			"public int pos(String subs, String s) { return s.indexOf(subs)+1; }",
+			"public int pos(Character subs, String s) { return s.indexOf(subs)+1; }",
+			// return a substring of a string
+			// START KGU#275 2016-10-09: Bugfix #266: length tolerance of copy function had to be considered
+			//"public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }",
+			"public String copy(String s, int start, int count) { int end = Math.min(start-1+count, s.length()); return s.substring(start-1,end); }",
+			// END KGU#275 2016-10-09
+			// delete a part of a string
+			"public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1); }",
+			// insert a string into another one
+			"public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1); }",
+			// string transformation
+			"public String lowercase(String s) { return s.toLowerCase(); }",
+			"public String uppercase(String s) { return s.toUpperCase(); }",
+			"public String trim(String s) { return s.trim(); }",
+			// START KGU#410 2017-05-24: Enh. #413: Introduced to facilitate COBOL import but generally useful
+			// If we passed the result of String.split() directly then we would obtain a String[] object the 
+			// Executor cannot display.
+			"public Object[] split(String s, String p)"
+					+ "{ p = java.util.regex.Pattern.quote(p);"
+					+ " String[] parts = s.split(p, -1);"
+					+ "Object[] results = new Object[parts.length];"
+					+ " for (int i = 0; i < parts.length; i++) {"
+					+ "		results[i] = parts[i];"
+					+ "}"
+					+ "return results; }",
+			"public Object[] split(String s, char c)"
+					+ "{ return split(s, \"\" + c); }",
+			// END KGU#410 2017-05-24
+			// START KGU#57 2015-11-07: More interoperability for characters and Strings
+			// char transformation
+			"public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }",
+			"public Character uppercase(Character ch) { return (Character)Character.toUpperCase(ch); }",
+			// START KGU#150 2016-04-03
+			"public int ord(Character ch) { return (int)ch; }",
+			// START KGU 2016-04-26: It is conform to many languages just to use the first character
+			//"public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }",
+			"public int ord(String s) { return (int)s.charAt(0); }",
+			// END KGU 2016-04-26
+			"public char chr(int code) { return (char)code; }",
+			// END KGU#150 2016-04-03
+			// END KGU#57 2015-11-07
+			// START KGU#322 2017-01-06: Enh. #325 - reflection functions
+			"public boolean isArray(Object obj) { return (obj instanceof Object[]); }",
+			"public boolean isString(Object obj) { return (obj instanceof String); }",
+			"public boolean isChar(Object obj) { return (obj instanceof Character); }",
+			"public boolean isBool(Object obj) { return (obj instanceof Boolean); }",
+			"public boolean isNumber(Object obj) { return (obj instanceof Integer) || (obj instanceof Double); }",
+			"public int length(Object[] arr) { return arr.length; }",
+			// END KGU#322 2017-01-06
+			// START KGU 2016-12-18: #314: Support for simple text file API
+			"public int fileOpen(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileInputStream fis = new java.io.FileInputStream(file); "
+					+ "java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(new java.util.Scanner(reader)); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }",
+
+			"public int fileCreate(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file); "
+					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(writer); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }",
+
+			"public int fileAppend(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true); "
+					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(writer); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; "
+					+ "}",
+
+			"public void fileClose(int fileNo) { "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file != null) { "
+					+ "try { file.close(); } "
+					+ "catch (java.io.IOException e) {} "
+					+ "executorFileMap.set(fileNo - 1, null); } "
+					+ "}"
+					+ "}",
+
+			"public boolean fileEOF(int fileNo) {"
+					+ "	boolean isEOF = true; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "		if (reader instanceof java.util.Scanner) { "
+					+ "			try { "
+					+ "				isEOF = !((java.util.Scanner)reader).hasNext();"
+					+ "			} catch (IOException e) {}"
+					+ "		}"
+					+ "	}"
+					+ "	else { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "	return isEOF;"
+					+"}",
+			// The following is just a helper method...
+			"public Object structorizerGetScannedObject(java.util.Scanner sc) {"
+					+ "Object result = null; "
+					+ "sc.useLocale(java.util.Locale.UK); "
+					+ "if (sc.hasNextInt()) { result = sc.nextInt(); } "
+					+ "else if (sc.hasNextDouble()) { result = sc.nextDouble(); } "
+					+ "else if (sc.hasNext(\"\\\\\\\".*?\\\\\\\"\")) { "
+					+ "String str = sc.next(\"\\\\\\\".*?\\\\\\\"\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*?'\")) { "
+					+ "String str = sc.next(\"'.*?'\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*?\\\\}\")) { "
+					+ "String token = sc.next(); "
+					+ "result = new Object[]{token.substring(1, token.length()-1)}; "
+					+ "} " 
+					+ "else if (sc.hasNext(\"\\\\\\\".*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*\\\\\\\"\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*'\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*\")) { "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\\\\}\"); "
+					+ "String content = sc.next().trim().substring(1); "
+					+ "sc.useDelimiter(oldDelim); "
+					+ "if (sc.hasNext(\"\\\\}\")) { sc.next(); } "
+					+ "String[] elements = {}; "
+					+ "if (!content.isEmpty()) { "
+					+ "elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
+					+ "} "
+					+ "Object[] objects = new Object[elements.length]; "
+					+ "for (int i = 0; i < elements.length; i++) { "
+					+ "java.util.Scanner sc0 = new java.util.Scanner(elements[i]); "
+					+ "objects[i] = structorizerGetScannedObject(sc0); "
+					+ "sc0.close(); "
+					+ "} "
+					+ "result = objects;"
+					+ "}"
+					+ "else { result = sc.next(); } "
+					+ "return result; }",
+			"public Object fileRead(int fileNo) { "
+					+ "Object result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = structorizerGetScannedObject((java.util.Scanner)reader); "
+					+ "ok = true;"
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public Character fileReadChar(int fileNo) { "
+					+ "Character result = '\0'; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "java.util.Scanner sc = (java.util.Scanner)reader; "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\"); "
+					+ "try { "
+					+ "if (!sc.hasNext(\".\") && sc.hasNextLine()) { sc.nextLine(); result = '\\n'; }"
+					+ "else { result = sc.next(\".\").charAt(0); } "
+					+ "}"
+					+ "finally { sc.useDelimiter(oldDelim); } "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public Integer fileReadInt(int fileNo) { "
+					+ "Integer result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = ((java.util.Scanner)reader).nextInt(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public Double fileReadDouble(int fileNo) { "
+					+ "Double result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = ((java.util.Scanner)reader).nextDouble(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public String fileReadLine(int fileNo) { "
+					+ "String line = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "line = ((java.util.Scanner)reader).nextLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return line;	}",
+			"public void fileWrite(int fileNo, java.lang.Object data) { "
+					+ "	boolean ok = false; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable writer = executorFileMap.get(fileNo - 1); "
+					+ "		if (writer instanceof java.io.BufferedWriter) { "
+					+ "			((java.io.BufferedWriter)writer).write(data.toString()); "
+					+ "		ok = true;"
+					+ "	}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}",
+			"public void fileWriteLine(int fileNo, java.lang.Object data) { "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file instanceof java.io.BufferedWriter) { "
+					+ "((java.io.BufferedWriter)file).write(data.toString()); "
+					+ "((java.io.BufferedWriter)file).newLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}",
+			// END KGU 2016-12-18
+			// START KGU#375 2017-03-30: Enh. #388 Workaround for missing support of Object[].clone() in bsh-2.0b4.jar
+			"public Object[] copyArray(Object[] sourceArray) {"
+					+ "Object[] targetArray = new Object[sourceArray.length];"
+					+ "for (int i = 0; i < sourceArray.length; i++) {"
+					+ "targetArray[i] = sourceArray[i];"
+					+ "}"
+					+ "return targetArray;"
+					+ "}",
+			// END KGU#375 2017-03-30
+			// START KGU#388 2017-09-13: Enh. #423 Workaround for missing support of HashMap<?,?>.clone() in bsh-2.0b4.jar
+			"public HashMap copyRecord(HashMap sourceRecord) {"
+					+ "HashMap targetRecord = new HashMap();"
+					+ "for (java.util.Map.Entry entry: sourceRecord.entrySet()) {"
+					+ "targetRecord.put(entry.getKey(), entry.getValue());"
+					+ "}"
+					+ "return targetRecord;"
+					+ "}"
+	};
+	
 	/**
 	 * Returns the singleton instance if there is one
 	 * @return the existing instance or null.
@@ -952,7 +1253,7 @@ public class Executor implements Runnable
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
 		// START KGU#384 2017-04-22
-		this.context = new ExecutionStackEntry(root, null);
+		this.context = new ExecutionStackEntry(root);
 		initInterpreter();
 		// END KGU#384 2017-04-22
 		/////////////////////////////////////////////////////////
@@ -1491,7 +1792,12 @@ public class Executor implements Runnable
 //				this.importList
 //				// END KGU#375, KGU#376 2017-04-21
 //				);
+		long time0 = System.nanoTime();
 		this.callers.push(this.context);
+		long time1 = System.nanoTime();
+		System.out.println("executeCall: push context " + (time1 - time0));
+		time0 = time1;
+		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		// END KGU#384 2017-04-22
 		// START KGU#376 2017-04-21: Update all current imports before sub execution
 		for (int i = 0; i < context.importList.count(); i++) {
@@ -1504,6 +1810,9 @@ public class Executor implements Runnable
 				}
 			}
 		}
+		time1 = System.nanoTime();
+		System.out.println("executeCall: import list check " + (time1 - time0));
+		time0 = time1;
 		// START KGU#384 2017-04-22 Is done below now, when setting up the new context
 //		if (!subRoot.isProgram) {
 //			// It's not an import, so start with a new importList 
@@ -1532,6 +1841,9 @@ public class Executor implements Runnable
 			cloned = true;
 		}
 		// START KGU#384 2017-04-22: Execution context redesign
+		time1 = System.nanoTime();
+		System.out.println("executeCall: root copy (recursion) " + (time1 - time0));
+		time0 = time1;
 		if (root.isInclude()) {
 			// For an import Call continue the importList recursively
 			this.context = new ExecutionStackEntry(root, this.context.importList);
@@ -1540,10 +1852,19 @@ public class Executor implements Runnable
 			// For a subroutine call, start with a new import list
 			this.context = new ExecutionStackEntry(root);
 		}
+		time1 = System.nanoTime();
+		System.out.println("executeCall: execution stack entry " + (time1 - time0));
+		time0 = time1;
 		initInterpreter();
 		// END KGU#384 2017-04-22
+		time1 = System.nanoTime();
+		System.out.println("executeCall: initInterpreter " + (time1 - time0));
+		time0 = time1;
 		
 		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
+		time1 = System.nanoTime();
+		System.out.println("executeCall: diagram.setRoot() " + (time1 - time0));
+		time0 = time1;
 		
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
@@ -1553,6 +1874,10 @@ public class Executor implements Runnable
 		this.execute(arguments);	// Actual execution of the subroutine or import
 		/////////////////////////////////////////////////////////
 		
+		time1 = System.nanoTime();
+		System.out.println("executeCall: execute sub " + (time1 - time0));
+		time0 = time1;
+
 		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
 		if (caller != null) {
 			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
@@ -1578,6 +1903,10 @@ public class Executor implements Runnable
 		}
 		// END KG#117 2016-03-07
 		
+		time1 = System.nanoTime();
+		System.out.println("executeCall: runtime data " + (time1 - time0));
+		time0 = time1;
+
 		ExecutionStackEntry entry = this.callers.pop();	// former context
 		
 //		// START KGU#376 2017-04-21: Enh. #389 don't restore after an import call
@@ -1627,6 +1956,9 @@ public class Executor implements Runnable
 				}
 			}
 		}
+		time1 = System.nanoTime();
+		System.out.println("executeCall: context synchron. " + (time1 - time0));
+		time0 = time1;
 //		// END KGU#376 2017-04-21
 		// START KGU#384 2017-04-22: Now done at once with the entire context cartridge
 //		this.variables = entry.variables;
@@ -1643,6 +1975,9 @@ public class Executor implements Runnable
 		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		entry.root.isCalling = false;
 
+		time1 = System.nanoTime();
+		System.out.println("executeCall: diagram.setRoot() " + (time1 - time0));
+		time0 = time1;
 		// START KGU#376 2017-04-21: Enh. #389
 		// The called subroutine will certainly have returned a value...
 		resultObject = this.context.returnedValue;
@@ -1661,6 +1996,9 @@ public class Executor implements Runnable
 		}
 		catch (EvalError ex) {}
 		
+		time1 = System.nanoTime();
+		System.out.println("executeCall: updateVariableDisplay() " + (time1 - time0)+"\n\n");
+		time0 = time1;
 		return resultObject;
 	}
 	
@@ -1875,395 +2213,17 @@ public class Executor implements Runnable
 			//interpreter = new Interpreter();
 			Interpreter interpreter = this.context.interpreter;
 			// END KGU#384 2017-04-22
-			String pascalFunction;
-			// random
-			pascalFunction = "public int random(int max) { return (int) (Math.random()*max); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void randomize() {  }";
-			interpreter.eval(pascalFunction);
-			// START KGU#391 2017-05-07: Enh. #398 - we need a sign function to ease the rounding support for COBOL import
-			pascalFunction = "public int sgn(int i) { return (i == 0 ? 0 : (i > 0 ? 1 : -1)); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int sgn(double d) { return (d == 0 ? 0 : (d > 0 ? 1 : -1)); }";
-			interpreter.eval(pascalFunction);
-			// END KGU#391 2017-05-07
-			// square
-			pascalFunction = "public double sqr(double d) { return d * d; }";
-			interpreter.eval(pascalFunction);
-			// square root
-			pascalFunction = "public double sqrt(double d) { return Math.sqrt(d); }";
-			interpreter.eval(pascalFunction);
-			// length of a string
-			pascalFunction = "public int length(String s) { return s.length(); }";
-			interpreter.eval(pascalFunction);
-			// position of a substring inside another string
-			pascalFunction = "public int pos(String subs, String s) { return s.indexOf(subs)+1; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int pos(Character subs, String s) { return s.indexOf(subs)+1; }";
-			interpreter.eval(pascalFunction);
-			// return a substring of a string
-			// START KGU#275 2016-10-09: Bugfix #266: length tolerance of copy function had to be considered
-			//pascalFunction = "public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }";
-			pascalFunction = "public String copy(String s, int start, int count) { int end = Math.min(start-1+count, s.length()); return s.substring(start-1,end); }";
-			// END KGU#275 2016-10-09
-			interpreter.eval(pascalFunction);
-			// delete a part of a string
-			pascalFunction = "public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1); }";
-			interpreter.eval(pascalFunction);
-			// insert a string into another one
-			pascalFunction = "public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1); }";
-			interpreter.eval(pascalFunction);
-			// string transformation
-			pascalFunction = "public String lowercase(String s) { return s.toLowerCase(); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public String uppercase(String s) { return s.toUpperCase(); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public String trim(String s) { return s.trim(); }";
-			interpreter.eval(pascalFunction);
-			// START KGU#410 2017-05-24: Enh. #413: Introduced to facilitate COBOL import but generally useful
-			// If we passed the result of String.split() directly then we would obtain a String[] object the 
-			// Executor cannot display.
-			pascalFunction = "public Object[] split(String s, String p)"
-					+ "{ p = java.util.regex.Pattern.quote(p);"
-					+ " String[] parts = s.split(p, -1);"
-					+ "Object[] results = new Object[parts.length];"
-					+ " for (int i = 0; i < parts.length; i++) {"
-					+ "		results[i] = parts[i];"
-					+ "}"
-					+ "return results; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Object[] split(String s, char c)"
-					+ "{ return split(s, \"\" + c); }";
-			interpreter.eval(pascalFunction);
-			// END KGU#410 2017-05-24
-			// START KGU#57 2015-11-07: More interoperability for characters and Strings
-			// char transformation
-			pascalFunction = "public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Character uppercase(Character ch) { return (Character)Character.toUpperCase(ch); }";
-			interpreter.eval(pascalFunction);
-			// START KGU#150 2016-04-03
-			pascalFunction = "public int ord(Character ch) { return (int)ch; }";
-			interpreter.eval(pascalFunction);
-			// START KGU 2016-04-26: It is conform to many languages just to use the first character
-			//pascalFunction = "public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }";
-			pascalFunction = "public int ord(String s) { return (int)s.charAt(0); }";
-			// END KGU 2016-04-26
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public char chr(int code) { return (char)code; }";
-			interpreter.eval(pascalFunction);
-			// END KGU#150 2016-04-03
-			// END KGU#57 2015-11-07
-			// START KGU#322 2017-01-06: Enh. #325 - reflection functions
-			pascalFunction = "public boolean isArray(Object obj) { return (obj instanceof Object[]); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isString(Object obj) { return (obj instanceof String); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isChar(Object obj) { return (obj instanceof Character); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isBool(Object obj) { return (obj instanceof Boolean); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isNumber(Object obj) { return (obj instanceof Integer) || (obj instanceof Double); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int length(Object[] arr) { return arr.length; }";
-			interpreter.eval(pascalFunction);
-			// END KGU#322 2017-01-06
+
 			// START KGU 2016-12-18: #314: Support for simple text file API
 			interpreter.set("executorFileMap", this.openFiles);
 			interpreter.set("executorCurrentDirectory", 
 					(diagram.currentDirectory.isDirectory() ? diagram.currentDirectory : diagram.currentDirectory.getParentFile()).getAbsolutePath());
-			pascalFunction = "public int fileOpen(String filePath) { "
-					+ "int fileNo = 0; "
-					+ "java.io.File file = new java.io.File(filePath); "
-					+ "if (!file.isAbsolute()) { "
-					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
-					+ "} "
-					+ "try { java.io.FileInputStream fis = new java.io.FileInputStream(file); "
-					+ "java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, \"UTF-8\")); "
-					+ "fileNo = executorFileMap.size() + 1; "
-					+ "executorFileMap.add(new java.util.Scanner(reader)); "
-					+ "} "
-					+ "catch (SecurityException e) { fileNo = -3; } "
-					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
-					+ "catch (java.io.IOException e) { fileNo = -1; } "
-					+ "return fileNo; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int fileCreate(String filePath) { "
-					+ "int fileNo = 0; "
-					+ "java.io.File file = new java.io.File(filePath); "
-					+ "if (!file.isAbsolute()) { "
-					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
-					+ "} "
-					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file); "
-					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
-					+ "fileNo = executorFileMap.size() + 1; "
-					+ "executorFileMap.add(writer); "
-					+ "} "
-					+ "catch (SecurityException e) { fileNo = -3; } "
-					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
-					+ "catch (java.io.IOException e) { fileNo = -1; } "
-					+ "return fileNo; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int fileAppend(String filePath) { "
-					+ "int fileNo = 0; "
-					+ "java.io.File file = new java.io.File(filePath); "
-					+ "if (!file.isAbsolute()) { "
-					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
-					+ "} "
-					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true); "
-					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
-					+ "fileNo = executorFileMap.size() + 1; "
-					+ "executorFileMap.add(writer); "
-					+ "} "
-					+ "catch (SecurityException e) { fileNo = -3; } "
-					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
-					+ "catch (java.io.IOException e) { fileNo = -1; } "
-					+ "return fileNo; "
-					+ "}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void fileClose(int fileNo) { "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
-					+ "if (file != null) { "
-					+ "try { file.close(); } "
-					+ "catch (java.io.IOException e) {} "
-					+ "executorFileMap.set(fileNo - 1, null); } "
-					+ "}"
-					+ "}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean fileEOF(int fileNo) {"
-					+ "	boolean isEOF = true; "
-					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "		java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "		if (reader instanceof java.util.Scanner) { "
-					+ "			try { "
-					+ "				isEOF = !((java.util.Scanner)reader).hasNext();"
-					+ "			} catch (IOException e) {}"
-					+ "		}"
-					+ "	}"
-					+ "	else { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "	return isEOF;"
-					+"}";
-			interpreter.eval(pascalFunction);
-			// The following is just a helper method...
-			pascalFunction = "public Object structorizerGetScannedObject(java.util.Scanner sc) {"
-					+ "Object result = null; "
-					+ "sc.useLocale(java.util.Locale.UK); "
-					+ "if (sc.hasNextInt()) { result = sc.nextInt(); } "
-					+ "else if (sc.hasNextDouble()) { result = sc.nextDouble(); } "
-					+ "else if (sc.hasNext(\"\\\\\\\".*?\\\\\\\"\")) { "
-					+ "String str = sc.next(\"\\\\\\\".*?\\\\\\\"\"); "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"'.*?'\")) { "
-					+ "String str = sc.next(\"'.*?'\"); "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"\\\\{.*?\\\\}\")) { "
-					+ "String token = sc.next(); "
-					+ "result = new Object[]{token.substring(1, token.length()-1)}; "
-					+ "} " 
-					+ "else if (sc.hasNext(\"\\\\\\\".*\")) { "
-					+ "String str = sc.next(); "
-					+ "while (sc.hasNext() && !sc.hasNext(\".*\\\\\\\"\")) { "
-					+ "str += \" \" + sc.next(); "
-					+ "} "
-					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"'.*\")) { "
-					+ "String str = sc.next(); "
-					+ "while (sc.hasNext() && !sc.hasNext(\".*'\")) { "
-					+ "str += \" \" + sc.next(); "
-					+ "} "
-					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"\\\\{.*\")) { "
-					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
-					+ "sc.useDelimiter(\"\\\\}\"); "
-					+ "String content = sc.next().trim().substring(1); "
-					+ "sc.useDelimiter(oldDelim); "
-					+ "if (sc.hasNext(\"\\\\}\")) { sc.next(); } "
-					+ "String[] elements = {}; "
-					+ "if (!content.isEmpty()) { "
-					+ "elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
-					+ "} "
-					+ "Object[] objects = new Object[elements.length]; "
-					+ "for (int i = 0; i < elements.length; i++) { "
-					+ "java.util.Scanner sc0 = new java.util.Scanner(elements[i]); "
-					+ "objects[i] = structorizerGetScannedObject(sc0); "
-					+ "sc0.close(); "
-					+ "} "
-					+ "result = objects;"
-					+ "}"
-					+ "else { result = sc.next(); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-// KGU: The following outcommented code is for debugging the local equivalent of the function above
-//			Scanner sc = new Scanner("test 3.4 4,6 \"Alles großer Murks \" hier. {tfzz64} \"aha\" {6, 89,8, 2,DFj}\n{666}");
-//			Object obj = null;
-//			do {
-//				try {
-//				obj = this.structorizerGetScannedObject(sc);
-//				if (obj instanceof Object[]) {
-//					System.out.print("Array: ");
-//					for (int i = 0; i < ((Object[])obj).length; i++) {
-//						System.out.print(" | " + ((Object[])obj)[i]);
-//					}
-//					System.out.println("");
-//				}
-//				else System.out.println(obj.getClass().getName() + ": " + obj);
-//				}
-//				catch (java.util.NoSuchElementException ex) { obj = null; }
-//			} while (obj != null);
-//			sc.close();
-// KGU: The preceding outcommented code is for debugging the local equivalent of the function above
-			pascalFunction = "public Object fileRead(int fileNo) { "
-					+ "Object result = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = structorizerGetScannedObject((java.util.Scanner)reader); "
-					+ "ok = true;"
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Character fileReadChar(int fileNo) { "
-					+ "Character result = '\0'; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "java.util.Scanner sc = (java.util.Scanner)reader; "
-					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
-					+ "sc.useDelimiter(\"\"); "
-					+ "try { "
-					+ "if (!sc.hasNext(\".\") && sc.hasNextLine()) { sc.nextLine(); result = '\\n'; }"
-					+ "else { result = sc.next(\".\").charAt(0); } "
-					+ "}"
-					+ "finally { sc.useDelimiter(oldDelim); } "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Integer fileReadInt(int fileNo) { "
-					+ "Integer result = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = ((java.util.Scanner)reader).nextInt(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Double fileReadDouble(int fileNo) { "
-					+ "Double result = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = ((java.util.Scanner)reader).nextDouble(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public String fileReadLine(int fileNo) { "
-					+ "String line = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "line = ((java.util.Scanner)reader).nextLine(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return line;	}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void fileWrite(int fileNo, java.lang.Object data) { "
-					+ "	boolean ok = false; "
-					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "		java.io.Closeable writer = executorFileMap.get(fileNo - 1); "
-					+ "		if (writer instanceof java.io.BufferedWriter) { "
-					+ "			((java.io.BufferedWriter)writer).write(data.toString()); "
-					+ "		ok = true;"
-					+ "	}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
-					+ "}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void fileWriteLine(int fileNo, java.lang.Object data) { "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
-					+ "if (file instanceof java.io.BufferedWriter) { "
-					+ "((java.io.BufferedWriter)file).write(data.toString()); "
-					+ "((java.io.BufferedWriter)file).newLine(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
-					+ "}";
-			interpreter.eval(pascalFunction);
 			// END KGU 2016-12-18
-			// START KGU#375 2017-03-30: Enh. #388 Workaround for missing support of Object[].clone() in bsh-2.0b4.jar
-			pascalFunction = "public Object[] copyArray(Object[] sourceArray) {"
-					+ "Object[] targetArray = new Object[sourceArray.length];"
-					+ "for (int i = 0; i < sourceArray.length; i++) {"
-					+ "targetArray[i] = sourceArray[i];"
-					+ "}"
-					+ "return targetArray;"
-					+ "}";
-			interpreter.eval(pascalFunction);
-			// END KGU#375 2017-03-30
-			// START KGU#388 2017-09-13: Enh. #423 Workaround for missing support of HashMap<?,?>.clone() in bsh-2.0b4.jar
-			pascalFunction = "public HashMap copyRecord(HashMap sourceRecord) {"
-					+ "HashMap targetRecord = new HashMap();"
-					+ "for (java.util.Map.Entry entry: sourceRecord.entrySet()) {"
-					+ "targetRecord.put(entry.getKey(), entry.getValue());"
-					+ "}"
-					+ "return targetRecord;"
-					+ "}";
-			interpreter.eval(pascalFunction);
-			// END KGU#388 2017-09-13
-			// START TEST fileAppend
-//			int handle = fileAppend("AppendTest.txt");
-//			System.out.println("fileAppend: " + handle);
-//			interpreter.eval("fileWriteLine("+handle+", \"Bandwurm\")");
-//			interpreter.eval("fileWriteLine("+handle+", 4711)");
-//			interpreter.eval("fileClose("+handle+")");
-			// END TEST
-			// START TEST fileRead
-//			int handle = fileOpen("D:/SW-Produkte/Structorizer/tests/Issue314/StructorizerFileAPI.cpp");
-//			if (handle > 0) {
-//				try {
-//					while (!fileEOF(handle)) {
-//						Object value = fileRead(handle);
-//						System.out.println(value);
-//					}
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				try {
-//					fileClose(handle);
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
-			// END TEST
+
+			for (int i = 0; i < builtInFunctions.length; i++) {
+				interpreter.eval(builtInFunctions[i]);
+			}
+			
 		} catch (EvalError ex)
 		{
 			//java.io.IOException
@@ -3790,20 +3750,28 @@ public class Executor implements Runnable
 				}
 				// END KGU 2015-10-12
 
+				long time0 = System.nanoTime();
 				// START KGU#417 2017-06-30: Enh. #424
 				cmd = this.evaluateDiagramControllerFunctions(cmd);
 				// END KGU#417 2017-06-30
+				long time1 = System.nanoTime();
+				System.out.println("DiagramControllerFunctions: " + (time1-time0));
 
 				// assignment?
 				// START KGU#377 2017-03-30: Bugfix
 				//if (cmd.indexOf("<-") >= 0)
+				time0 = time1;
 				if (Element.splitLexically(cmd, true).contains("<-"))
 				// END KGU#377 2017-03-30: Bugfix
 				{
+					time1 = System.nanoTime();
+					System.out.println("splitLexically: " + (time1-time0));
 					result = tryAssignment(cmd, element, i);
 				}
 				else
 				{
+					time1 = System.nanoTime();
+					System.out.println("splitLexically: " + (time1-time0));
 					result = trySubroutine(cmd, element);
 				}
 				
@@ -4050,6 +4018,7 @@ public class Executor implements Runnable
 	 */
 	private String tryAssignment(String cmd, Instruction instr, int lineNo) throws EvalError
 	{
+		long time0 = System.nanoTime();
 		String result = "";
 		Object value = null;
 		// KGU#2: In case of a Call element, we allow an assignment with just the subroutine call on the
@@ -4065,10 +4034,11 @@ public class Executor implements Runnable
 		String leftSide = tokens.subSequence(0, posAsgnOpr).concatenate().trim();
 		tokens.remove(0, posAsgnOpr+1);
 		// START KGU#388 2017-09-13: Enh. #423 support records
-		while (tokens.count() > 0 && tokens.get(0).trim().isEmpty()) {
-			tokens.remove(0);
-		}
+		tokens.removeAll(" ");
 		// END KGU#388 2017-09-13
+		long time1 = System.nanoTime();
+		System.out.println("tryAssignment: Lexik " + (time1 - time0));
+		time0 = time1;
 		// Watch out for constant arrays or records
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
@@ -4088,7 +4058,9 @@ public class Executor implements Runnable
 		}
 		String expression = tokens.concatenate().trim();
 		// END KGU#375 2017-03-30
-		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
+		time1 = System.nanoTime();
+		System.out.println("tryAssignment: constants " + (time1 - time0));
+		time0 = time1;
 		if (instr instanceof Call)
 		{
 			Function f = new Function(expression);
@@ -4112,7 +4084,13 @@ public class Executor implements Runnable
 					{
 						args[p] = this.evaluateExpression(f.getParam(p), false);
 					}
+					time1 = System.nanoTime();
+					System.out.println("tryAssignment: Sub-diagram retrieval " + (time1 - time0));
+					time0 = time1;
 					value = executeCall(sub, args, (Call)instr);
+					time1 = System.nanoTime();
+					System.out.println("tryAssignment: executeCall total " + (time1 - time0));
+					time0 = time1;
 					// START KGU#117 2016-03-10: Enh. #77
 					if (Element.E_COLLECTRUNTIMEDATA)
 					{
