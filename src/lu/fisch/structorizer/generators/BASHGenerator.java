@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.05.05      Issue #396: function calls should better be enclosed in $(...) than in back ticks
  *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig         2017.05.19      Issue #237: Expression transformation heuristics improved
+ *      Kay Gürtzig         2017.10.05      Enh. #423: First incomplete approach to handle record variables
  *
  ******************************************************************************************************
  *
@@ -314,7 +315,7 @@ public class BASHGenerator extends Generator {
 		// START KGU#61 2016-03-21: Enh. #84/#135
 		if (posAsgnOpr < 0 && !CodeParser.getKeyword("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(CodeParser.getKeyword("postForIn"));
 		// END KGU#61 2016-03-21
-		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
+		// If there is an array variable left of the assignment symbol, check the index 
 		int posBracket1 = tokens.indexOf("[");
 		int posBracket2 = -1;
 		if (posBracket1 >= 0 && posBracket1 < posAsgnOpr) posBracket2 = tokens.lastIndexOf("]", posAsgnOpr-1);
@@ -323,7 +324,9 @@ public class BASHGenerator extends Generator {
     		String varName = varNames.get(i);
     		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+    		// Transform the expression right of the assignment symbol
     		transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
+    		// Transform the index expression on the left side of the assignment symbol
     		transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
     	}
 
@@ -461,6 +464,11 @@ public class BASHGenerator extends Generator {
 	// START KGU#405 2017-05-19: Issue #237
 	protected String transformExpression(StringList exprTokens, boolean isAssigned)
 	{
+		// FIXME: Check the operands - they must be literals (type detectable),
+		// variables (consult typeMap), built-in functions (type known), or
+		// recursively constructed expressions themselves (analyse recursively)
+		// This static type check should be implemented as static method on Element
+		// but needs access to the typeMap of the current Root.
 		boolean isArithm =
 				exprTokens.contains("+") ||
 				exprTokens.contains("-") ||
@@ -550,7 +558,8 @@ public class BASHGenerator extends Generator {
 		{
 			int posNext = pos+1;
 			while (posNext < _end && _tokens.get(posNext).trim().isEmpty()) posNext++;
-			if (_tokens.get(posNext).equals("["))
+			String nextToken = _tokens.get(posNext); 
+			if (nextToken.equals("["))
 			{
 				_tokens.set(pos, "${" + _varName);
 				// index brackets follow, so remove the blanks
@@ -577,6 +586,15 @@ public class BASHGenerator extends Generator {
 					}
 				}
 			}
+			// START KGU#388 2017-10-05: Enh. #423
+			else if (nextToken.equals(".") && posNext+1 < _end && Function.testIdentifier(_tokens.get(posNext+1), null))
+			{
+				// FIXME: Handle multi-level record access! We might also check type
+				_tokens.set(pos, "${" + _varName + "[" + _tokens.get(posNext+1) + "]}");
+				_tokens.remove(posNext, posNext+2);
+				_end -= 2;
+			}
+			// END KGU#388 2017-10-05
 			else
 			{
 				_tokens.set(pos, "${" + _varName + "}");
@@ -679,12 +697,13 @@ public class BASHGenerator extends Generator {
 			insertComment(_inst, _indent);
 			boolean disabled = _inst.isDisabled();
 			// END KGU 2014-11-16
-			int nLines = _inst.getText().count();
+			StringList text = _inst.getUnbrokenText(); 
+			int nLines = text.count();
 			for (int i = 0; i < nLines; i++)
 			{
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
-				String line = _inst.getText().get(i);
+				String line = text.get(i);
 				String codeLine = transform(line);
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 				if (this.usesFileAPI) {

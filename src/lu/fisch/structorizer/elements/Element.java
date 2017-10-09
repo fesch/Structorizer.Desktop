@@ -195,7 +195,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.26-06";
+	public static String E_VERSION = "3.26-07";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2225,18 +2225,20 @@ public abstract class Element {
 		
 	// START KGU#388 2017-09-13: New subroutine
 		//StringList tokens = Element.splitLexically(_text, true);
-		return splitExpressionList(Element.splitLexically(_text, true), _listSeparator, _appendTail);
+		return splitExpressionList(Element.splitLexically(_text.trim(), true), _listSeparator, _appendTail);
 	}
 	
 	/**
-	 * Splits the tokenized list _tokens of expressions separated by _listSeparator
+	 * Splits the tokenized list {@code _tokens} of expressions separated by {@code _listSeparator}
 	 * into strings comprising one of the listed expressions each.
 	 * This is aware of string literals, argument lists of function calls etc. (These must not be broken.)
 	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
 	 * bracket, or the like).
 	 * The remaining tokens from the unsatisfied closing parenthesis, bracket, or brace on will
 	 * be concatenated and added as last element to the result if _appendRemainder is true.
-	 * If the last result element is empty then the expression list was syntactically "clean".
+	 * If the last result element is empty in mode {@code _appedTail} then the expression list was syntactically
+	 * "clean".
+	 * FIXME If the expression was given without some parentheses as delimiters then a tail won't be added.
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
@@ -2253,6 +2255,7 @@ public abstract class Element {
 		Stack<String> enclosings = new Stack<String>();
 		int tokenCount = _tokens.count();
 		String currExpr = "";
+		String tail = "";
 		for (int i = 0; isWellFormed && parenthDepth >= 0 && i < tokenCount; i++)
 		{
 			String token = _tokens.get(i);
@@ -2291,14 +2294,19 @@ public abstract class Element {
 				else if (_appendTail)
 				{
 					expressionList.add(currExpr.trim());
-					currExpr = _tokens.concatenate("", i);
+					currExpr = "";
+					tail = _tokens.concatenate("", i).trim();
 				}
 			}
 		}
 		// add the last expression if it's not empty
-		if (!currExpr.trim().isEmpty() || _appendTail)
+		if (!(currExpr = currExpr.trim()).isEmpty())
 		{
-			expressionList.add(currExpr.trim());
+			expressionList.add(currExpr);
+		}
+		// Add the tail if requested. Empty if there is no bad tail
+		if (_appendTail) {
+			expressionList.add(tail);
 		}
 		return expressionList;
 	}
@@ -3408,7 +3416,7 @@ public abstract class Element {
 							}
 							else {
 								// Create an unnamed dummy entry
-								compEntry = new TypeMapEntry(type, null, this, lineNo, false, true, false);								
+								compEntry = new TypeMapEntry(type, null, this, lineNo, false, true, false);
 							}
 						}
 					}
@@ -3428,6 +3436,9 @@ public abstract class Element {
 				// Now register the accomplished type entry
 				typeMap.put(":" + typeName, entry);
 				done = true;
+			}
+			else {
+				System.out.println("*** Type redefinition attempt for \"" + typeName + "\"!");
 			}
 		}
 		return done;

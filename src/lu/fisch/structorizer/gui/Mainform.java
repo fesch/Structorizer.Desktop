@@ -61,6 +61,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
  *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
  *      Kay Gürtzig     2017.03.15      Enh. #300: turned retrieveVersion to static
+ *      Kay Gürtzig     2017.10.06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
  *
  ******************************************************************************************************
  *
@@ -439,6 +440,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
 			// END KGU#331 2017-01-15
 			
+			// START KGU#428 2017-10-06: Enh. #430
+			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
+			// END KGU#428 2017-10-06
+			
 			// recent files
 			try
 			{	
@@ -559,6 +564,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
 			// END KGU#287 2017-01-11
 			
+			// START KGU#428 2017-10-06: Enh. #430
+			if (InputBox.FONT_SIZE > 0) {
+				ini.setProperty("editorFontSize", Float.toString(InputBox.FONT_SIZE));
+			}
+			// END KGU#428 2017-10-06
+
 			// START KGU#300 2016-12-02: Enh. #300
 			// Update hint suppression
 			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);

@@ -1020,6 +1020,7 @@ Surface.msgConfirmOverwrite.text=Überschreiben bestätigen
 
 -----> Executor
 -----[ Control ]-----
+Control.title=Diagramm-Test
 Control.lblSpeed.text=Verzögerung:
 Control.btnCallStack.text=Aufrufstapel
 Control.lblCallLevel.text=Aufruftiefe:
@@ -1071,6 +1072,8 @@ Control.msgConstantArrayElement.text=Ein Array-Element «%» kann nicht per Zuwe
 Control.msgInvalidComponent.text=Es gibt keine Komponente «%1» in Verbundtyp oder -Variable «%2»!
 Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht mittels Zuweisung konstant gemacht werden!
 Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!
+Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
+Control.msgBadValueListDetails.text=Details: %
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
 

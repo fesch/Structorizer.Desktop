@@ -1023,6 +1023,7 @@ Surface.msgConfirmOverwrite.text=Confirma gravar
 
 -----> Executor
 -----[ Control ]-----
+Control.title=Control de Ejecución
 Control.lblSpeed.text=Demora:
 Control.btnCallStack.text=Lote de llamadas
 Control.lblCallLevel.text=Nivel:
@@ -1074,6 +1075,8 @@ Control.msgConstantArrayElement.text=¡No es posible hacer constante un elemento
 Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura o variable «%2»!
 Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
 Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
+Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
+Control.msgBadValueListDetails.text=Detalles: %
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

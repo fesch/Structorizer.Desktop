@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Basic scaling outsourced to class GUIScaler
  *      Kay Gürtzig     2017.03.14  Enh. #372: Additional hook for subclass InputBoxRoot.
+ *      Kay Gürtzig     2017.10.06  Enh. #430: The scaled TextField font size (#284) is now kept during the session
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,11 @@ import lu.fisch.structorizer.elements.Element;
 
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
+	
+	// START KGU#428 2017-10-06: Issue #430 Modified editor font size should be maintained
+	/** font size for the text fields, 0 = default, may be overridden by keys or from ini */
+	public static float FONT_SIZE = 0;	// Default value
+	// END KGU#428 2017-10-06
 
     public boolean OK = false;
 
@@ -178,6 +184,14 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         scalableComponents.addElement(txtText);
         scalableComponents.addElement(txtComment);
         // END KGU#294 2016-11-21
+        // START KGU#428 2017-10-06: Enh. #430
+        if (FONT_SIZE > 0) {
+        	for (JComponent comp: scalableComponents) {
+            	Font font = comp.getFont();
+            	comp.setFont(font.deriveFont(FONT_SIZE));
+        	}
+        }
+        // END KGU#428 2017-10-06
         
         JPanel pnPanel0 = new JPanel();
         GridBagLayout gbPanel0 = new GridBagLayout();
@@ -503,7 +517,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     	if (!up) {
     		increment = font.getSize() > 8 ? -2.0f : 0.0f;
     	}
-    	Font newFont = font.deriveFont(font.getSize()+increment);
+    	// START KGU#428 2017-10-06: Enh. #430
+    	//Font newFont = font.deriveFont(font.getSize()+increment);
+    	FONT_SIZE = font.getSize()+increment;
+    	Font newFont = font.deriveFont(FONT_SIZE);
+    	// END KGU#428 2017-10-06
     	for (JComponent comp: scalableComponents) {
     		comp.setFont(newFont);
     	}
