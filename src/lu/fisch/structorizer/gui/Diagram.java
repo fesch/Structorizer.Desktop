@@ -132,6 +132,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism transferred from CALL to ROOT
  *      Kay Gürtzig     2017.07.02      Enh. #357: plugin-specific option retrieval for code import
  *      Kay Gürtzig     2017.09.12      Enh. #415: Find&Replace dialog properly re-packed after L&F change
+ *      Kay Gürtzig     2017.10.10      Issue #432: Workaround for nasty synch problem in redraw()
  *
  ******************************************************************************************************
  *
@@ -1167,9 +1168,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     
     public void redraw()
     {
-    	if (root.hightlightVars==true)
+    	boolean wasHighLight = root.hightlightVars; 
+    	if (wasHighLight)
     	{
-    		root.getVarNames();
+        	// START KGU#430 2017-10-10: Issue #432
+    		//root.getVarNames();
+    		try {
+    			root.getVarNames();
+    		}
+    		catch (Exception ex) {
+    			System.out.println("*** Possible sync problem in diagram.redraw(): " + ex.toString());
+    			ex.printStackTrace(System.out);
+    			// Avoid trouble
+    			root.hightlightVars = false;
+    		}
+    		// END KGU#430 2017-10-10
     	}
 
     	Rect rect = root.prepareDraw(this.getGraphics());
@@ -1185,6 +1198,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     	//redraw(this.getGraphics());
     	this.repaint();
+    	
+    	// START KGU#430 2017-10-10: Issue #432
+    	root.hightlightVars = wasHighLight;
+		// END KGU#430 2017-10-10
     }
 
 	public void redraw(Graphics _g)

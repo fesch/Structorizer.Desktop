@@ -137,6 +137,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.02      Some regex stuff revised to gain performance
  *      Kay Gürtzig     2017.10.08      Enh. #423: Recursive array and record initializer evaluation,
  *                                      Array element assignment in record components fixed.
+ *      Kay Gürtzig     2017.10.10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
  *
  ******************************************************************************************************
  *
@@ -1528,10 +1529,18 @@ public class Executor implements Runnable
 			{
 				// Possible result variable names
 				StringList posres = new StringList();
-				posres.add(root.getMethodName());
-				posres.add("result");
-				posres.add("RESULT");
-				posres.add("Result");
+				// START KGU#434 2017-10-10: Bugfix #433 The name must have existed as variable in this context, too
+				// It happened that e.g. a Java object like java.awt.Polygon was "found" as result for diagram "Polygon"
+				//posres.add(root.getMethodName());
+				//posres.add("result");
+				//posres.add("RESULT");
+				//posres.add("Result");
+				for (String resCand: new String[]{root.getMethodName(), "result", "RESULT", "Result"}) {
+					if (context.variables.contains(resCand)) {
+						posres.add(resCand);
+					}
+				}
+				// END KGU#434 2017-10-10
 
 				try
 				{
@@ -1792,11 +1801,7 @@ public class Executor implements Runnable
 //				this.importList
 //				// END KGU#375, KGU#376 2017-04-21
 //				);
-		long time0 = System.nanoTime();
 		this.callers.push(this.context);
-		long time1 = System.nanoTime();
-		System.out.println("executeCall: push context " + (time1 - time0));
-		time0 = time1;
 		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		// END KGU#384 2017-04-22
 		// START KGU#376 2017-04-21: Update all current imports before sub execution
@@ -1810,9 +1815,6 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		time1 = System.nanoTime();
-		System.out.println("executeCall: import list check " + (time1 - time0));
-		time0 = time1;
 		// START KGU#384 2017-04-22 Is done below now, when setting up the new context
 //		if (!subRoot.isProgram) {
 //			// It's not an import, so start with a new importList 
@@ -1841,9 +1843,6 @@ public class Executor implements Runnable
 			cloned = true;
 		}
 		// START KGU#384 2017-04-22: Execution context redesign
-		time1 = System.nanoTime();
-		System.out.println("executeCall: root copy (recursion) " + (time1 - time0));
-		time0 = time1;
 		if (root.isInclude()) {
 			// For an import Call continue the importList recursively
 			this.context = new ExecutionStackEntry(root, this.context.importList);
@@ -1852,19 +1851,10 @@ public class Executor implements Runnable
 			// For a subroutine call, start with a new import list
 			this.context = new ExecutionStackEntry(root);
 		}
-		time1 = System.nanoTime();
-		System.out.println("executeCall: execution stack entry " + (time1 - time0));
-		time0 = time1;
 		initInterpreter();
 		// END KGU#384 2017-04-22
-		time1 = System.nanoTime();
-		System.out.println("executeCall: initInterpreter " + (time1 - time0));
-		time0 = time1;
 		
 		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
-		time1 = System.nanoTime();
-		System.out.println("executeCall: diagram.setRoot() " + (time1 - time0));
-		time0 = time1;
 		
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
@@ -1874,10 +1864,6 @@ public class Executor implements Runnable
 		this.execute(arguments);	// Actual execution of the subroutine or import
 		/////////////////////////////////////////////////////////
 		
-		time1 = System.nanoTime();
-		System.out.println("executeCall: execute sub " + (time1 - time0));
-		time0 = time1;
-
 		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
 		if (caller != null) {
 			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
@@ -1903,10 +1889,6 @@ public class Executor implements Runnable
 		}
 		// END KG#117 2016-03-07
 		
-		time1 = System.nanoTime();
-		System.out.println("executeCall: runtime data " + (time1 - time0));
-		time0 = time1;
-
 		ExecutionStackEntry entry = this.callers.pop();	// former context
 		
 //		// START KGU#376 2017-04-21: Enh. #389 don't restore after an import call
@@ -1956,9 +1938,6 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		time1 = System.nanoTime();
-		System.out.println("executeCall: context synchron. " + (time1 - time0));
-		time0 = time1;
 //		// END KGU#376 2017-04-21
 		// START KGU#384 2017-04-22: Now done at once with the entire context cartridge
 //		this.variables = entry.variables;
@@ -1975,9 +1954,6 @@ public class Executor implements Runnable
 		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		entry.root.isCalling = false;
 
-		time1 = System.nanoTime();
-		System.out.println("executeCall: diagram.setRoot() " + (time1 - time0));
-		time0 = time1;
 		// START KGU#376 2017-04-21: Enh. #389
 		// The called subroutine will certainly have returned a value...
 		resultObject = this.context.returnedValue;
@@ -1996,9 +1972,6 @@ public class Executor implements Runnable
 		}
 		catch (EvalError ex) {}
 		
-		time1 = System.nanoTime();
-		System.out.println("executeCall: updateVariableDisplay() " + (time1 - time0)+"\n\n");
-		time0 = time1;
 		return resultObject;
 	}
 	
@@ -2555,11 +2528,12 @@ public class Executor implements Runnable
 		if (delay == 0)
 		{
 			diagram.redraw();
-			try {
+ 			try {
 				updateVariableDisplay();
 			}
-			catch (EvalError e)
+			catch (EvalError ex)
 			{
+				System.out.println("*** Sync Error in setPaus()/updateVariableDisplay(): " + ex.toString());
 			}
 		}
 		// END KGU 2015-10-13
@@ -3750,28 +3724,20 @@ public class Executor implements Runnable
 				}
 				// END KGU 2015-10-12
 
-				long time0 = System.nanoTime();
 				// START KGU#417 2017-06-30: Enh. #424
 				cmd = this.evaluateDiagramControllerFunctions(cmd);
 				// END KGU#417 2017-06-30
-				long time1 = System.nanoTime();
-				System.out.println("DiagramControllerFunctions: " + (time1-time0));
 
 				// assignment?
 				// START KGU#377 2017-03-30: Bugfix
 				//if (cmd.indexOf("<-") >= 0)
-				time0 = time1;
 				if (Element.splitLexically(cmd, true).contains("<-"))
 				// END KGU#377 2017-03-30: Bugfix
 				{
-					time1 = System.nanoTime();
-					System.out.println("splitLexically: " + (time1-time0));
 					result = tryAssignment(cmd, element, i);
 				}
 				else
 				{
-					time1 = System.nanoTime();
-					System.out.println("splitLexically: " + (time1-time0));
 					result = trySubroutine(cmd, element);
 				}
 				
@@ -4018,7 +3984,6 @@ public class Executor implements Runnable
 	 */
 	private String tryAssignment(String cmd, Instruction instr, int lineNo) throws EvalError
 	{
-		long time0 = System.nanoTime();
 		String result = "";
 		Object value = null;
 		// KGU#2: In case of a Call element, we allow an assignment with just the subroutine call on the
@@ -4036,9 +4001,6 @@ public class Executor implements Runnable
 		// START KGU#388 2017-09-13: Enh. #423 support records
 		tokens.removeAll(" ");
 		// END KGU#388 2017-09-13
-		long time1 = System.nanoTime();
-		System.out.println("tryAssignment: Lexik " + (time1 - time0));
-		time0 = time1;
 		// Watch out for constant arrays or records
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
@@ -4058,9 +4020,6 @@ public class Executor implements Runnable
 		}
 		String expression = tokens.concatenate().trim();
 		// END KGU#375 2017-03-30
-		time1 = System.nanoTime();
-		System.out.println("tryAssignment: constants " + (time1 - time0));
-		time0 = time1;
 		if (instr instanceof Call)
 		{
 			Function f = new Function(expression);
@@ -4084,13 +4043,7 @@ public class Executor implements Runnable
 					{
 						args[p] = this.evaluateExpression(f.getParam(p), false);
 					}
-					time1 = System.nanoTime();
-					System.out.println("tryAssignment: Sub-diagram retrieval " + (time1 - time0));
-					time0 = time1;
 					value = executeCall(sub, args, (Call)instr);
-					time1 = System.nanoTime();
-					System.out.println("tryAssignment: executeCall total " + (time1 - time0));
-					time0 = time1;
 					// START KGU#117 2016-03-10: Enh. #77
 					if (Element.E_COLLECTRUNTIMEDATA)
 					{

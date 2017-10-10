@@ -71,7 +71,6 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Point;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
