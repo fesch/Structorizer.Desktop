@@ -2,36 +2,42 @@
 set -e
 ################################################################################
 #
-#      Author:		Bob Fisch
+#      Author:        Bob Fisch
 #
-#      Description:	
+#      Description:    
 #
 ################################################################################
 #
 #      Revision List
 #
-#      Author						Date		Description
-#      ------						----		-----------
-#      Bob Fisch					2008.10.15  First Issue
-#	   Bob Fisch & Philipp Hübner	2009.07.08  Scripting ameliorations
-#	   Bob Fisch					2010.01.25	Update for new libraries and signature removing
+#      Author                        Date        Description
+#      ------                        ----        -----------
+#      Bob Fisch                     2008.10.15  First Issue
+#      Bob Fisch & Philipp Hübner    2009.07.08  Scripting ameliorations
+#      Bob Fisch                     2010.01.25  Update for new libraries and signature removing
+#      Simon Sobisch                 2017.03.06  Check for jar, use comments instead of `echo`,
+#                                                using recursive cp for libs
 #
 ################################################################################
 
-echo "delete the old archive (if present)"
+# check for jar in PATH
+jar 2>/dev/null 1&>2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
+
+# delete the old archive (if present)
 [ -f structorizer.jar ] && rm structorizer.jar
 
-echo "make directory"
+# make directory
 [ -d jar ] && rm -R jar
 mkdir jar
 
-echo "copy libs"
-cp lib/* jar
+# copy libs
+cp -R lib/* jar
 
-echo "move into jar directory"
-cd jar
+# change into jar directory
+pushd jar
 
-echo "decompress jar's"
+# decompress jar's
+echo "Decompressing jar's ..."
 jar xf bsh-2.0b4.jar
 jar xf swing-layout-1.0.3.jar
 jar xf freehep-graphics2d-2.1.1.jar
@@ -43,24 +49,27 @@ jar xf freehep-xml-2.1.1.jar
 jar xf freehep-graphicsio-svg-2.1.1.jar
 jar xf freehep.jar
 
-echo "deleting signatures"
+# deleting signatures
 rm -f META-INF/*.SF
 rm -f META-INF/*.DSA
 
-echo "remove jar files"
+# remove jar files
 rm *.jar
 
-echo "go back"
-cd ..
+# go back
+popd
 
-echo "copy other files"
+# copy other files
+echo "Copying resources"
 cp -R bin/* jar/
 
-echo "create an new archive"
+# create a new archive
+echo "Create a new archive"
 jar cmf structorizer.big.manifest structorizer.jar -C jar/ .
 
-echo "remove the jar-directory"
+# remove the jar-directory
 rm -R jar/
 
-echo "execute the archive"
+# execute the archive
+echo "Running Structorizer from all-in-one jar"
 java -jar structorizer.jar
