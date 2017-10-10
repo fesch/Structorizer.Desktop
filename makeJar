@@ -2,19 +2,19 @@
 set -e
 ################################################################################
 #
-#      Author:		Bob Fisch
+#      Author:        Bob Fisch
 #
-#      Description:	
+#      Description:   create jar to be used in conjunction with additional jars
 #
 ################################################################################
 #
 #      Revision List
 #
-#      Author						Date		Description
-#      ------						----		-----------
-#      Bob Fisch					2008.10.04  First Issue
-#	   Bob Fisch & Philipp Hübner	2009.07.08  Scripting ameliorations
-#      Simon Sobisch                2017.03.06  Check for jar
+#      Author                        Date          Description
+#      ------                        ----          -----------
+#      Bob Fisch                     2008.10.04    First Issue
+#      Bob Fisch & Philipp Hübner    2009.07.08    Scripting ameliorations
+#      Simon Sobisch                 2017.03.06    Check for jar
 #
 ################################################################################
 
