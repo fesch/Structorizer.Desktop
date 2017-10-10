@@ -5,7 +5,12 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-06 (2017.06.22)
+Known issues:
+- Severe but unclear performance degradation on subdiagram calls
+- Possible difficulties in using Java objects (due to record access conversions)
+- Access irritations with deeply nested data structures (records/arrays)
+
+Current development version: 3.26-07 (2017.10.09)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -44,7 +49,7 @@ Current development version: 3.26-06 (2017.06.22)
 - 04: Perl export: variable prefixing improved w.r.t. arrays and references <2>
 - 04: Enh. #346: Configuration of include directives to be exported [Rolf Schmidt]2
 - 05: Some typos in the locale file keys mended
-- 05: Bugfix #365: Improved FOR-IN loop export to C (also more conform with early C) <2>
+- 05: Bugfix #365: Improved FOR-IN loop export to C <2>
 - 05: Enh. #367: Transmutation (swapping) of IF branches introduced [Simon Sobisch]2
 - 05: Enh. #372: Date and author attributes in he NSD files [Simon Sobisch]2
 - 05: Enh. #376: Opportunity to move elements among diagrams [Simon Sobisch]2
@@ -65,7 +70,7 @@ Current development version: 3.26-06 (2017.06.22)
 - 06: Enh. #387: "Save All" menu item and toolbar button <2>
 - 06: Bugfix #365: FOR-IN loop export fix (to C) revised again <2>
 - 06: Enh. #388: Concept of constants introduced (executor, import, analyser) <2>
-- 06: Enh. #389: New CALL flavour "import" (called program shares context) [S. Sobisch]2
+- 06: Enh. #389: Mechanism to "include" diagrams on execution [Simon Sobisch]2
 - 06: Enh. #390: Improved variable initialization check in multi-line instructions <2>
 - 06: Bugfix #391: Debugger button control was defective in step mode <2>
 - 06: Enh. #335/#388/#389: generators for Pascal, C, C++, and Java revised <2>
@@ -74,7 +79,7 @@ Current development version: 3.26-06 (2017.06.22)
 - 06: Enh. #259: Type detection for loop variables of FOR-IN loops improved <2>
 - 06: Enh. #354: ANSI-C grammar accomplished, CParser revised <2>
 - 06: Bugfix #386: BASH export of No-Op branches or loop bodies [Rolf Schmidt]2
-- 06: Enh. #389: New analyser option "check faulty diagram import calls" <2>
+- 06: Enh. #389: New analyser option "check against faulty diagram imports" <2>
 - 06: Issue #62: Arranger should ask before an existing arr(z) file is overwritten <2>
 - 06: Issue #318: Saving arrangements failed if some diagrams reside in an arrz <2>
 - 06: Importer for "Struktogrammeditor" (http://whiledo.de) files added <2>
@@ -98,9 +103,18 @@ Current development version: 3.26-06 (2017.06.22)
 - 06: Enh. #413: New built-in function split(strg, part) introduced <2>
 - 06: Bugfix #414: Too large bounding boxes in Arranger caused GUI degrading <2>
 - 06: Enh. #416: Line continuation by backslash at line end [Simon Sobisch]2
-- 06: Enh. #415: Find & Replace dialog added <2>
-- 06: Enh. #354/#357: plugin-defined options for import/export [Simon Sobisch] <2>
-- 06: Enh. #420: Comment import enabled for source code parsing [Simon Sobisch] <2>
+- 06: Enh. #415: Find & Replace dialog added and refined <2>
+- 06: Enh. #354/#357: plugin-defined options for import/export [Simon Sobisch]2
+- 06: Enh. #420: Comment import enabled for source code parsing [Simon Sobisch]2
+- 06: Enh. #424: Turtleizer functions getX(), getY(), getOrientation() [newboerg]2
+- 06: Enh. #423: Support for record types (structs) in Executor and Analyser <2>
+- 06: Enh. #388,#389,#423: Export of Includables, records and constants to Pascal <2>
+- 06: Enh. #428: Structorizer got stuck on using type name "short" <2>
+- 06: Bugfix #429: Array/record literals in result statements fail in Executor <2>
+- 07: Issue 430: Element editor font size now sustained in ini file [A. Poschinger]2
+- 07: Execution Control frame now got a title string <2>
+- 07: Issue #431: Modified handling of strings by FOR-IN loop <2>
+- 07: Enh. #174/#423: Structorizer now understands nested initializers <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

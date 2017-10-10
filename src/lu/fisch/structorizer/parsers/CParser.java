@@ -47,9 +47,16 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.05.23      Enh. #409: File type .h added
  *      Kay Gürtzig     2017.05.23/24   Enh. #354/#411: Pre-processor workaround for typedef significantly improved
  *      Simon Sobisch   2017.05.24      Enh. #409: Comment-aware #define analysis, with function macro approach
+ *                                                 C continuation line handling
  *      Kay Gürtzig     2017.05.26      Enh. #409: #define analysis (including function macros) accomplished
  *      Kay Gürtzig     2017.05.28      Issue #409: Recursion overhead in buildNSD_R() significantly reduced. 
  *      Kay Gürtzig     2017.06.22      Enh. #420: Prepared for comment retrieval
+ *      Simon Sobisch   2017.06.26      Enh. #409: Handling of C includes: preparse them for retrieving defines;
+ *                                                 Minimized Pattern/Matcher Objects used by explicit using/reseting them
+ *                                                 instead of using the implicit generation by replaceAll
+ *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism revised
+ *      Kay Gürtzig     2017.09.30      Enh. #411: Bugfix in typedef preparation, enh. #423: struct import done
+ *                                      Enh. #420: Comment delimiter specification added
  *
  ******************************************************************************************************
  *
@@ -100,13 +107,14 @@ import lu.fisch.utils.StringList;
 public class CParser extends CodeParser
 {
 	
-	// Default diagram name for an importable program diagram with global definitions
+	/** Default diagram name for an importable program diagram with global definitions */
 	private static final String DEFAULT_GLOBAL_NAME = "GlobalDefinitions";
-	// Template for the generation of grammar-conform user type ids (typedef-declared)
+	/** Template for the generation of grammar-conform user type ids (typedef-declared) */
 	private static final String USER_TYPE_ID_MASK = "user_type_%03d";
-	// Replacement pattern for the decomposition of composed typdefs (named struct def + type def)
+	/** Replacement pattern for the decomposition of composed typdefs (named struct def + type def) */
 	private static final String TYPEDEF_DECOMP_REPLACER = "$1 $2;\ntypedef $1 $3;";
-	// START KGU#407 2017-06-22: Enh. #420 - rule ids representing statements, used as stoppers for comment rerieval
+	// START KGU#407 2017-06-22: Enh. #420 
+	/** rule ids representing statements, used as stoppers for comment retrieval */
 	private static final int[] statementIds = new int[]{
 		RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN,
 		RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2,
@@ -190,7 +198,22 @@ public class CParser extends CodeParser
 		final String[] exts = { "c", "h" };
 		return exts;
 	}
-
+	
+	//------------------- Comment delimiter specification ---------------------------------
+	
+	// START KGU#407 2017-09-30: Enh. #420
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#getCommentDelimiters()
+	 */
+	protected String[][] getCommentDelimiters()
+	{
+		return new String[][]{
+			{"/*", "*/"},
+			{"//"}
+		};
+	}
+	// END KGU#407 2017-09-30
+	
 	//------------------- Grammar table constants DON'T MODIFY! ---------------------------
 	
 	// Symbolic constants naming the table indices of the symbols of the grammar 
@@ -420,12 +443,12 @@ public class CParser extends CodeParser
 //		final int PROD_ENUMVAL_ID_EQ_OCTLITERAL                     =  62;  // <Enum Val> ::= Id '=' OctLiteral
 //		final int PROD_ENUMVAL_ID_EQ_HEXLITERAL                     =  63;  // <Enum Val> ::= Id '=' HexLiteral
 //		final int PROD_ENUMVAL_ID_EQ_DECLITERAL                     =  64;  // <Enum Val> ::= Id '=' DecLiteral
-//		final int PROD_CONSTTYPE_CONST                              =  65;  // <ConstType> ::= const <Type>
+		final int PROD_CONSTTYPE_CONST                              =  65;  // <ConstType> ::= const <Type>
 //		final int PROD_CONSTTYPE                                    =  66;  // <ConstType> ::= <Type>
 //		final int PROD_TYPE                                         =  67;  // <Type> ::= <Base> <Pointers>
 //		final int PROD_BASE                                         =  68;  // <Base> ::= <Sign> <Scalar>
-//		final int PROD_BASE_STRUCT_ID                               =  69;  // <Base> ::= struct Id
-//		final int PROD_BASE_STRUCT_LBRACE_RBRACE                    =  70;  // <Base> ::= struct '{' <Struct Def> '}'
+		final int PROD_BASE_STRUCT_ID                               =  69;  // <Base> ::= struct Id
+		final int PROD_BASE_STRUCT_LBRACE_RBRACE                    =  70;  // <Base> ::= struct '{' <Struct Def> '}'
 //		final int PROD_BASE_UNION_ID                                =  71;  // <Base> ::= union Id
 //		final int PROD_BASE_UNION_LBRACE_RBRACE                     =  72;  // <Base> ::= union '{' <Struct Def> '}'
 //		final int PROD_BASE_ENUM_ID                                 =  73;  // <Base> ::= enum Id
@@ -560,11 +583,17 @@ public class CParser extends CodeParser
 
 	//---------------------------- Local Definitions ---------------------
 
-	private enum PreprocState {TEXT, TYPEDEF, STRUCT_UNION_ENUM, STRUCT_UNION_ENUM_ID, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
+	private static enum PreprocState {TEXT, TYPEDEF, STRUCT_UNION_ENUM, STRUCT_UNION_ENUM_ID, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
 	private StringList typedefs = new StringList();
+	// START KGU#388 2017-09-30: Enh. #423 counter for anonymous types
+	private int typeCount = 0;
+	// END KGU#388 2017-09-30
 	
-	// Import Call elements with provisional Name, which have to be renamed as soon as the name gets known
-	private LinkedList<Call> provisionalImportCalls = new LinkedList<Call>();
+	// START KGU#376 2017-07-01: Enh. #389 - modified mechanism
+	// Roots having induced global definitions, which will have to be renamed as soon as the name gets known
+	//private LinkedList<Call> provisionalImportCalls = new LinkedList<Call>();
+	private LinkedList<Root> importingRoots = new LinkedList<Root>();
+	// END KGU#376 2017-07-01
 
 	//------------------------------ Constructor -----------------------------
 	
@@ -575,6 +604,21 @@ public class CParser extends CodeParser
 	public CParser() {
 
 	}
+	
+	private String ParserEncoding;
+	private String ParserPath;
+	
+	private	final String[][] typeReplacements = new String[][] {
+		{"size_t", "unsigned long"},
+		{"time_t", "unsigned long"},
+		// FIXME to be made configurable
+		{"cob_u8_t", "unsigned int"}
+	};
+	
+	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
+
+	final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
+	static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
 
 	//----------------------------- Preprocessor -----------------------------
 
@@ -591,59 +635,88 @@ public class CParser extends CodeParser
 	 */
 	@Override
 	protected File prepareTextfile(String _textToParse, String _encoding)
-	{
-		//final String voidCastPattern = "(^\\s*|.*?\\W+\\s*)\\(\\s*void\\s*\\)(.*?)";
-		final String voidCastPattern = "(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)";
-		final String[][] typeReplacements = new String[][] {
-			{"size_t", "unsigned long"},
-			{"time_t", "unsigned long"},
-			// FIXME to be made configurable
-			{"cob_u8_t", "unsigned int"}
-		};
+	{	
+		this.ParserPath = null; // set after file object creation
+		this.ParserEncoding	= _encoding;
+		
 		//========================================================================!!!
-		// FIXME introduce a plugin-defined option configuration for C
-		this.setPluginOption("typeNames", "cob_field,cob_u8_ptr,cob_call_union");
+		// Now introduced as plugin-defined option configuration for C
+		//this.setPluginOption("typeNames", "cob_field,cob_u8_ptr,cob_call_union");
+		//                  +"cob_content,cob_pic_symbol,cob_field_attr");
 		//========================================================================!!!
 		
-		// #define	a	b
-		final String definePattern = "^#define\\s+(\\w*)\\s+(\\S.*?)";
-		// #define	a	// empty
-		//final String definePattern	= "^#define\\s+(\\w\\S*)\\s*(.+)?";
-		final String defineEmptyPattern = "^#define\\s+(\\w*)\\s*";
-		// #define	a(b)	functionname (int b)
-		// #define	a(b,c,d)	functionname (int b, char *d)	// multiple ones, some may be omitted
-		// #define	a(b)	// empty
-		//final String defineFuncPattern	= "^#define\\s+(\\w\\S*)\\(([^)]+)\\)\\s*(.+)?";
-		final String defineFuncPattern	= "^#define\\s+(\\w+)\\s*\\(([^)]+)\\)\\s+(.*)";
-		// #undef	a
-		//final String undefPattern	= "^#undef\\s+([\\w].*)";
-		final String undefPattern	= "^#undef\\s+(\\w+)(.*)";
+		boolean parsed = false;
+		
+		StringBuilder srcCodeSB = new StringBuilder();
+		parsed = processSourceFile(_textToParse, srcCodeSB);
+
 		File interm = null;
+		if (parsed) {
+			try {
+//				for (Entry<String, String> entry: defines.entrySet()) {
+////					if (logFile != null) {
+////						logFile.write("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()) + "\n");
+////					}
+//					srcCode = srcCode.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)", "$1"+ Matcher.quoteReplacement((String)entry.getValue()) + "$2");
+//				}
+			
+				// Now we try to replace all type names introduced by typedef declarations
+				// because the grammar doesn't cope with user-defined type ids.
+				String srcCode = this.prepareTypedefs(srcCodeSB.toString(), _textToParse);
+//				System.out.println(srcCode);
+				
+				// trim and save as new file
+				interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
+				OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
+				ow.write(srcCode.trim()+"\n");
+				//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));
+				ow.close();
+			}
+			catch (Exception e) 
+			{
+				System.err.println("CParser.prepareTextfile() creation of intermediate file -> " + e.getMessage());
+			}
+		}
+		return interm;
+	}
+
+	/**
+	 * Performs some necessary preprocessing for the text file. Actually opens the
+	 * file, filters it places its contents into the given StringBuilder (if set).
+	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
+	 * be executed (at least the defines. with #if it would get difficult).
+	 * @param _textToParse - name (path) of the source file
+	 * @param srcCodeSB - optional: StringBuilder to store the content of the preprocessing<br/>
+	 * if not given only the preprocessor handling (including #defines) will be done  
+	 * @return info if the preprocessing worked
+	 */
+	private boolean processSourceFile(String _textToParse, StringBuilder srcCodeSB) {
 		
 		try
 		{
 			File file = new File(_textToParse);
-			//HashMap<String, String> defines = new LinkedHashMap<String, String>();
-			HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
+			if (this.ParserPath == null) {
+				this.ParserPath = file.getAbsoluteFile().getParent() + File.separatorChar;
+			}
 			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
-			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
+			BufferedReader br = new BufferedReader(new InputStreamReader(in, this.ParserEncoding));
 			// END KGU#193 2016-05-04
 			String strLine;
-			String srcCode = new String();
 			boolean inComment = false;
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the #define replacements (at least roughly...)
-			while ((strLine = br.readLine()) != null)   
+			// do the #define replacements (at least roughly...) which we do
+			while ((strLine = br.readLine()) != null)
 			{
 				String trimmedLine = strLine.trim();
-
 				if (trimmedLine.isEmpty()) {
-					srcCode += "\n";
+					if (srcCodeSB != null) {
+						// no processing if we only want to check for defines
+						srcCodeSB.append("\n");
+					}
 					continue;
 				}
-				
 				
 				// the grammar doesn't know about continuation markers,
 				// concatenate the lines here
@@ -661,7 +734,9 @@ public class CParser extends CodeParser
 						}
 					}
 					trimmedLine = strLine.trim();
-					// add line breaks for better line counter - useful?
+					// add line breaks for better line counter,
+					// works but looks strange in the case of errors when
+					// the "preceding context" consist of 8 empty lines
 					strLine += newlines;
 				}
 				
@@ -670,12 +745,17 @@ public class CParser extends CodeParser
 				String commentFree = "";
 				String lineTail = trimmedLine;
 				while (!lineTail.isEmpty() && !commentsChecked) {
-					String splitLine[];
 					if (inComment) {
-						splitLine = lineTail.split("\\*/", 2);
-						if (splitLine.length > 1) {
+						// check if the line ends the current comment block
+						int commentPos = lineTail.indexOf("*/");
+						if (commentPos >= 0) {
 							inComment = false;
-							lineTail = " " + splitLine[1].trim();
+							commentPos += 2;
+							if (lineTail.length() > commentPos) {
+								lineTail = " " + lineTail.substring(commentPos).trim();
+							} else {
+								lineTail = "";
+							}
 						}
 						else {
 							commentsChecked = true;
@@ -684,117 +764,202 @@ public class CParser extends CodeParser
 					}
 
 					if (!inComment && !lineTail.isEmpty()) {
-						splitLine = lineTail.split("//", 2);
-						lineTail = splitLine[0].trim();
+						// remove inline comments
+						int commentPos = lineTail.indexOf("//");
+						if (commentPos > 0) {
+							lineTail = lineTail.substring(0, commentPos).trim(); 
+						}
 						// check if the line starts a new comment block
-						splitLine = lineTail.split("/\\*", 2);
-						if (splitLine.length > 1) {
+						commentPos = lineTail.indexOf("/*");
+						if (commentPos >= 0) {
 							inComment = true;
-							commentFree += " " + splitLine[0].trim();
-							lineTail = splitLine[1];
+							if (commentPos > 0) {
+								commentFree += " " + lineTail.substring(0, commentPos).trim();
+							}
+							commentPos += 2;
+							if (lineTail.length() > commentPos) {
+								lineTail = lineTail.substring(commentPos);
+							} else {
+								lineTail = "";
+							}
 						}
 						else {
 							commentsChecked = true;
 						}
 					}
+
 				}
 				trimmedLine = (commentFree + lineTail).trim();
-				
-				if (!trimmedLine.isEmpty()) {
-					if (trimmedLine.startsWith("#")) {
-						if (trimmedLine.startsWith("#include")) {
-							// FIXME: *MAYBE* store list of non-system includes to parse as IMPORT diagram upon request?
-							//        Or always/optional do internal preparsing for resolving define/struct/typedef for the imported file?
-							strLine = "// preparser include: " + strLine;
-						}
-						else if (trimmedLine.matches(defineFuncPattern)) {
-							// #define	a1(a2,a3,a4)	stuff  ( a2 ) 
-							//          1  >  2   <		>     3     <
-							String symbol = trimmedLine.replaceAll(defineFuncPattern, "$1");
-							String[] params = trimmedLine.replaceAll(defineFuncPattern, "$2").split(",");
-							String subst = trimmedLine.replaceAll(defineFuncPattern, "$3");
-							String substTab[] = new String[params.length + 1];
-							substTab[0] = replaceDefinedEntries(subst, defines).trim();
-							for (int i = 0; i < params.length; i++) {
-								substTab[i+1] = params[i].trim();
-							}
-							defines.put(symbol, substTab);
-							strLine = "// preparser define (function): " + strLine;
-						}
-						else if (trimmedLine.matches(definePattern)) {
-							// #define	a	b
-							//          1	2
-							String symbol = trimmedLine.replaceAll(definePattern, "$1");
-							String subst[] = new String[1];
-							subst[0] = trimmedLine.replaceAll(definePattern, "$2");
-							subst[0] = replaceDefinedEntries(subst[0], defines).trim();
-							defines.put(symbol, subst);
-							strLine = "// preparser define: " + strLine;
-						}
-						else if (trimmedLine.matches(undefPattern)) {
-							// #undef	a
-							String symbol = trimmedLine.replaceAll(undefPattern, "$1");
-							defines.remove(symbol);
-							strLine = "// preparser undef: " + strLine;
-						}
-						else if (trimmedLine.matches(defineEmptyPattern)) {
-							// #define	a
-							String symbol = trimmedLine.replaceAll(definePattern, "$1");
-							String subst[] = new String[]{""};
-							defines.put(symbol, subst);
-							strLine = "// preparser define: " + strLine;
-						}
-						else {
-							// #pragma, #error, #include, #if, #ifdef ...
-							strLine = "// preparser instruction: " + strLine;
-						}
-					} else {
-						strLine = replaceDefinedEntries(strLine, defines);
-						// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
-						// replace as many as possible of them in advance.
-						// We cannot guess however, what's included since include files won't be available for us.
-						for (String[] pair: typeReplacements) {
-							String search = "(^|.*?\\W)"+Pattern.quote(pair[0])+"(\\W.*?|$)";
-							if (strLine.matches(search)) {
-								strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
-							}
-						}
-						if (strLine.matches(voidCastPattern)) {
-							strLine = strLine.replaceAll(voidCastPattern, "$1$2");
-						}
-						//srcCode += strLine + "\n";
+
+				// Note: trimmedLine can be empty if we start a block comment only
+				if (trimmedLine.isEmpty()) {
+					if (srcCodeSB != null) {
+						// no processing if we only want to check for defines
+						srcCodeSB.append(strLine);
+						srcCodeSB.append("\n");
 					}
+					continue;
 				}
-				srcCode += strLine + "\n";
+				// FIXME: try to take care for #if/#else/#endif, maybe depending upon an import setting
+				//        likely only useful if we parse includes...
+				//        and/or add a standard (dialect specific) list of defines
+				if (trimmedLine.charAt(0) == '#') {
+					if (srcCodeSB == null) {
+						handlePreprocessorLine(trimmedLine.substring(1), defines);
+						// no further processing if we only want to check for defines
+						continue;
+					}
+					srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
+					srcCodeSB.append(strLine);
+				} else {
+					if (srcCodeSB == null) {
+						// no further processing if we only want to check for defines
+						continue;
+					}
+					strLine = replaceDefinedEntries(strLine, defines);
+					// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
+					// replace as many as possible of them in advance.
+					// We cannot guess however, what's included since include files won't be available for us.
+					for (String[] pair: typeReplacements) {
+						String search = "(^|.*?\\W)"+Pattern.quote(pair[0])+"(\\W.*?|$)";
+						if (strLine.matches(search)) {
+							strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
+						}
+					}
+					mtchVoidCast.reset(strLine);
+					if (mtchVoidCast.matches()) {
+						strLine = mtchVoidCast.group(1) + mtchVoidCast.group(2);	// checkme
+					}
+					srcCodeSB.append(strLine);
+				}
+				srcCodeSB.append("\n");
 			}
 			//Close the input stream
 			in.close();
-
-//			for (Entry<String, String> entry: defines.entrySet()) {
-////				if (logFile != null) {
-////					logFile.write("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()) + "\n");
-////				}
-//				srcCode = srcCode.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)", "$1"+ Matcher.quoteReplacement((String)entry.getValue()) + "$2");
-//			}
-			
-			// Now we try to replace all type names introduced by typedef declarations
-			// because the grammar doesn't cope with user-defined type ids.
-			srcCode = this.prepareTypedefs(srcCode, _textToParse);
-
-			//System.out.println(srcCode);
-
-			// trim and save as new file
-			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
-			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
-			ow.write(srcCode.trim()+"\n");
-			//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));
-			ow.close();
+			return true;
 		}
 		catch (Exception e) 
 		{
-			System.err.println("CParser.prepareTextfile() -> " + e.getMessage());
+			if (srcCodeSB != null) {
+				System.err.println("CParser.processSourcefile() -> " + e.getMessage());
+			}
+			return false;
 		}
-		return interm;
+	}
+
+	// Patterns and Matchers for preprocessing
+	// (reusable, otherwise these get created and compiled over and over again)
+	// #define	a	b
+	private static final Pattern PTRN_DEFINE = Pattern.compile("^define\\s+(\\w*)\\s+(\\S.*?)");
+	// #define	a	// empty
+	private static final Pattern PTRN_DEFINE_EMPTY = Pattern.compile("^define\\s+(\\w*)\\s*");
+	// #define	a(b)	functionname (int b)
+	// #define	a(b,c,d)	functionname (int b, char *d)	// multiple ones, some may be omitted
+	// #define	a(b)	// empty
+	private static final Pattern PTRN_DEFINE_FUNC = Pattern.compile("^define\\s+(\\w+)\\s*\\(([^)]+)\\)\\s+(.*)");
+	// #undef	a
+	private static final Pattern PTRN_UNDEF = Pattern.compile("^undef\\s+(\\w+)(.*)");
+	// #undef	a
+	private static final Pattern PTRN_INCLUDE = Pattern.compile("^include\\s+[<\"]([^>\"]+)[>\"]");
+	// multiple things we can ignore: #pragma, #warning, #error, #message 
+	private static final Pattern PTRN_IGNORE = Pattern.compile("^(?>pragma)|(?>warning)|(?>error)|(?>message)");
+	
+	private static Matcher mtchDefine = PTRN_DEFINE.matcher("");
+	private static Matcher mtchDefineEmpty = PTRN_DEFINE_EMPTY.matcher("");
+	private static Matcher mtchDefineFunc = PTRN_DEFINE_FUNC.matcher("");
+	private static Matcher mtchUndef = PTRN_UNDEF.matcher("");
+	private static Matcher mtchInclude = PTRN_INCLUDE.matcher("");
+	private static Matcher mtchIgnore = PTRN_IGNORE.matcher("");
+
+	// Patterns and Matchers for parsing / building
+	// detection of a const modifier in a declaration
+	private static final Pattern PTRN_CONST = Pattern.compile("(^|.*?\\s+)const(\\s+.*?|$)");
+
+	private static Matcher mtchConst = PTRN_CONST.matcher("");
+
+	/**
+	 * Helper function for prepareTextfile to handle C preprocessor commands
+	 * @param preprocessorLine	line for the preprocessor without leading '#'
+	 * @param defines 
+	 * @return comment string that can be used for prefixing the original source line
+	 */
+	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines)
+	{
+		mtchDefineFunc.reset(preprocessorLine);
+		if (mtchDefineFunc.matches()) {
+			// #define	a1(a2,a3,a4)	stuff  ( a2 ) 
+			//          1  >  2   <		>     3     <
+			String symbol = mtchDefineFunc.group(1);
+			String[] params = mtchDefineFunc.group(2).split(",");
+			String subst = mtchDefineFunc.group(3);
+			String substTab[] = new String[params.length + 1];
+			substTab[0] = replaceDefinedEntries(subst, defines).trim();
+			for (int i = 0; i < params.length; i++) {
+				substTab[i+1] = params[i].trim();
+			}
+			defines.put(symbol, substTab);
+			return "// preparser define (function): ";
+		}
+
+		mtchDefine.reset(preprocessorLine);
+		if (mtchDefine.matches()) {
+			// #define	a	b
+			//          1	2
+			String symbol = mtchDefine.group(1);
+			String subst[] = new String[1];
+			subst[0] = mtchDefine.group(2);
+			subst[0] = replaceDefinedEntries(subst[0], defines).trim();
+			defines.put(symbol, subst);
+			return "// preparser define: ";
+		}
+		
+		mtchUndef.reset(preprocessorLine);
+		if (mtchUndef.matches()) {
+			// #undef	a
+			String symbol = mtchUndef.group(1);
+			defines.remove(symbol);
+			return "// preparser undef: ";
+		}
+
+		mtchDefineEmpty.reset(preprocessorLine);
+		if (mtchDefineEmpty.matches()) {
+			// #define	a
+			String symbol = mtchDefineEmpty.group(1);
+			String subst[] = new String[]{""};
+			defines.put(symbol, subst);
+			return "// preparser define: ";
+		}
+
+		mtchInclude.reset(preprocessorLine);
+		if (mtchInclude.matches()) {
+			// #include	"header"
+			// FIXME: *MAYBE* store list of non-system includes to parse as IMPORT diagram upon request?
+			String incName = mtchInclude.group(1);
+			// do internal preparsing for resolving define/struct/typedef for the imported file
+			// FIXME: maybe do only when set as preparser option
+			// FIXME: add option to use more than the main file's path as preparser option
+			if (File.separatorChar == '\\') {
+				// FIXME (KGU) This doesn't seem so good an idea - usually both systems cope with '/' 
+				incName = incName.replaceAll("/", "\\\\");
+			} else {
+				incName = incName.replaceAll("\\\\", File.separator);
+			}
+			
+			if (processSourceFile(this.ParserPath + incName, null)) {
+				return "// preparser include (parsed): ";
+			} else {
+				return "// preparser include: ";
+			}
+		}
+
+		mtchIgnore.reset(preprocessorLine);
+		if (mtchIgnore.find()) {
+			// #pragma, #error, #warning, #message ...
+			return "// preparser instruction (ignored): ";
+		}
+
+		// #if, #ifdef, #ifndef, #else, #elif, #endif, ...
+		return "// preparser instruction (not parsed!): ";
 	}
 
 	/**
@@ -823,7 +988,7 @@ public class CParser extends CodeParser
 		Vector<Integer[]> blockRanges = new Vector<Integer[]>();
 		LinkedList<String> typedefDecomposers = new LinkedList<String>();
 		
-		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow confiured global typenames
+		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow configured global typenames
 		String configuredTypeNames = (String)this.getPluginOption("typeNames", null);
 		if (configuredTypeNames != null) {
 			String[] typeIds = configuredTypeNames.split("(,| )");
@@ -954,13 +1119,13 @@ public class CParser extends CodeParser
 			case '{':
 				blockStarts.add(tokenizer.lineno());
 				if (state == PreprocState.STRUCT_UNION_ENUM || state == PreprocState.STRUCT_UNION_ENUM_ID) {
-					state = PreprocState.COMPLIST;
 					if (state == PreprocState.STRUCT_UNION_ENUM) {
 						typedefStructPattern = ""; 	// We don't need a decomposition
 					}
 					else {
 						typedefStructPattern += "\\s*\\{";
 					}
+					state = PreprocState.COMPLIST;
 				}
 				parenthStack.push('}');
 				break;
@@ -1279,51 +1444,35 @@ public class CParser extends CodeParser
 			{
 				// If declaration import is allowed then we make an instruction in
 				// Pascal syntax out of it.
-				String rootName = root.getMethodName();
 				Subqueue parentNode = _parentNode;
-				boolean isGlobal = rootName.equals("???"); 
+				// Just a container for the type to be returned
+				StringList tmpTypes = new StringList();
+				String rootName = root.getMethodName();
+				boolean isGlobal = rootName.equals("???");
 				if (isGlobal) {
 					if (this.globalRoot == null) {
 						this.globalRoot = root;
-//						this.globalRoot.setText("global");
-//						subRoots.add(this.globalRoot);
+//								this.globalRoot.setText("global");
+//								subRoots.add(this.globalRoot);
 					}
 					parentNode = this.globalRoot.children;
 				}
-				boolean isConstant = false;
-				int typeIx = -1;	// token index of the type description
-				switch (ruleId) {
-				case RuleConstants.PROD_VARDECL_SEMI:
-					isConstant = getContent_R(_reduction.get(0).asReduction(), "").contains("const");
-					typeIx = 1;
-					break;
-				case RuleConstants.PROD_VARDECL_CONST_SEMI:
-					isConstant = true;
-					typeIx = 2;
-					break;
-				case RuleConstants.PROD_VARDECL_SEMI2:
-					typeIx = 0;
-					break;
-				case RuleConstants.PROD_VARDECL_CONST_SEMI2:
-					isConstant = true;
-				}
-				String type = "int";	// default type if there is only a modifier
-				if (typeIx >= 0) {
-					type = getContent_R(_reduction.get(typeIx).asReduction(), "");
-					if (type.matches("(^|.*?\\s+)const(\\s+.*?|$)")) {
-						type = type.replaceAll("(^|.*?\\s+)const(\\s+.*?|$)", "$1$2");
-						isConstant = true;
-					}
-				}
-				if (isConstant) {
-					type = "const " + type;
-				}
+				// START KGU#388 2017-09-30: Enh. #423
+				boolean isStruct = processTypes(_reduction, ruleId, parentNode, isGlobal, tmpTypes, true);
+				// END KGU#388 2017-09-30
+				String type = tmpTypes.concatenate();
 				// START KGU#407 2017-06-22: Enh.#420 grope for possible souce comments
 				String comment = this.retrieveComment(_reduction);
 				// END KGU#407 2017-06-22
 				// Now concern on the first declaration of the list
 				Reduction secReduc = _reduction.get(_reduction.size() - 3).asReduction();
-				buildDeclOrAssignment(secReduc, type, parentNode, comment);
+				buildDeclOrAssignment(secReduc, type, parentNode, comment, isStruct);
+				// START KGU#376 2017-09-30: Enh. #389
+				// CHECKME!
+				if (isGlobal && root != globalRoot && !importingRoots.contains(root)) {
+					importingRoots.add(root);
+				}
+				// END KGU#376 2017-09-30
 //				if (_reduction.size() > typeIx+2) {
 					log("\tanalyzing <Var List> ...\n", false);
 //					secReduc = _reduction.get(typeIx + 2).asReduction();	// <Var List>
@@ -1334,7 +1483,7 @@ public class CParser extends CodeParser
 						// Get the pointers part
 						String pointers = getContent_R(thdReduc.get(0).asReduction(), "");
 						// Delegate the sub-reduction <Var>
-						buildDeclOrAssignment(secReduc.get(1).asReduction(), type+pointers, parentNode, comment);
+						buildDeclOrAssignment(secReduc.get(1).asReduction(), type+pointers, parentNode, comment, isStruct);
 						// Get the list tail
 						secReduc = secReduc.get(2).asReduction();	// <Var List>
 						ruleId = secReduc.getParent().getTableIndex();
@@ -1372,29 +1521,130 @@ public class CParser extends CodeParser
 				}
 				String content = this.getContent_R(_reduction, "");
 				// START KGU#407 2017-06-22: Enh. #420
-				String comment = this .retrieveComment(_reduction);
+				String comment = this.retrieveComment(_reduction);
 				// END KGU#407 2017-06-22
 				int insertAt = parentNode.getSize();
-				if (ruleId != RuleConstants.PROD_TYPEDEFDECL_TYPEDEF) {
+				// START KGU#388 2017-09-30: Enh. #423 Now struct types supported in Structorizer
+				boolean isValid = false;
+				if (ruleId == RuleConstants.PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE) {
+					// <Struct Decl> ::= struct Id '{' <Struct Def> '}' <Decl End>
+					String structName = _reduction.get(1).asString();
+					// FIXME: This is only quick and dirty - of course we must analyse recursively!
+					String components = this.getContent_R(_reduction.get(3).asReduction(), "").replace("struct ", "").trim();
+					if (components.endsWith(";")) components = components.substring(0, components.length()-1);
+					content = "type " + structName + " = struct{" + components + "}";
+					isValid = true;
+				}
+				// END KGU#388 2017-09-30
+				if (ruleId == RuleConstants.PROD_TYPEDEFDECL_TYPEDEF) {
+					// <Typedef Decl> ::= typedef <Var Decl>
+					StringList typeNames = new StringList();
+					StringList typeRanges = new StringList();
+					StringList typePointers = new StringList();
+					Reduction varDecl = _reduction.get(1).asReduction();	// <Var Decl>
+					int varRuleId = varDecl.getParent().getTableIndex(); 
+					int varIx = 0;
+					switch (varRuleId) {
+					case RuleConstants.PROD_VARDECL_SEMI:
+						// <Var Decl> ::= <ConstMod> <Type> <Var> <Var List> ';'
+						varIx = 2;
+						break;
+					case RuleConstants.PROD_VARDECL_CONST_SEMI:
+						// <Var Decl> ::= <Mod> const <Type> <Var> <Var List> ';'
+						varIx = 3;
+						break;
+					default:
+						// <Var Decl> ::= <ConstType> <Var> <Var List> ';'
+						// <Var Decl> ::= <ConstMod> <Var> <Var List> ';'
+						// <Var Decl> ::= const <Var> <Var List> ';'
+						varIx = 1;
+					}
+					// <Var> ::= Id <Array> [ '=' <Initializer> ]
+					String type = varDecl.get(varIx).asReduction().get(0).asString().trim();
+					String range = this.getContent_R(varDecl.get(varIx).asReduction().get(1).asReduction(), "").trim();
+					// We want a non-array type at the top
+					boolean hadPlainId = false;
+					typeNames.add(type);
+					typePointers.add("");
+					if (range.isEmpty()) {
+						hadPlainId = true;
+					}
+					else { 
+						range = "array " + range + " of ";
+					}
+					typeRanges.add(range);
+					Reduction varRed = varDecl.get(varIx + 1).asReduction();	// <Var List>
+					while (varRed.getParent().getTableIndex() == RuleConstants.PROD_VARLIST_COMMA) {
+						// <Var List> ::= ',' <Var Item> <Var List>
+						Reduction varItem = varRed.get(1).asReduction();
+						// <Var Item> ::= <Pointers> <Var>
+						String pointers = this.getContent_R(varItem.get(0).asReduction(), "").trim(); 
+						type = varItem.get(1).asReduction().get(0).asString();
+						range = this.getContent_R(varItem.get(1).asReduction().get(1).asReduction(), "").trim();
+						if (range.isEmpty() && pointers.isEmpty() && !hadPlainId) {
+							typeNames.insert(type, 0);
+							typeRanges.insert("", 0);
+							typePointers.insert("", 0);
+							hadPlainId = true;
+						}
+						else {
+							if (!range.isEmpty()) {
+								range = "array " + range + " of ";
+							}
+							typeNames.add(type);
+							typeRanges.add(range);
+							typePointers.add(pointers);
+						}
+						
+						varRed = varRed.get(2).asReduction();
+					}
+					StringList tmpTypes = new StringList();
+					if (hadPlainId) {
+						// The first type name may be used for an anonymous struct 
+						tmpTypes = typeNames;
+					}
+					int nTypesBefore = tmpTypes.count();
+					// If the number of types in tmpTypes doesn't increment then the first type was consumed already
+					this.processTypes(varDecl, varRuleId, parentNode, isGlobal, tmpTypes, false);
+					int diff = tmpTypes.count() - nTypesBefore;
+					if (nTypesBefore == 0) {
+						tmpTypes.add(typeNames);
+					}
+					content = "";
+					String type0 = tmpTypes.get(0);
+					for (int i = 1; i < tmpTypes.count(); i++) {
+						content += (i > 0 ? "\n" : ":") + "type " + tmpTypes.get(i) + " = " + typeRanges.get(i-diff) + type0 + typePointers.get(i-diff);
+					}
+					insertAt = parentNode.getSize();
+				}
+				else {
 					Reduction varDecl = _reduction.get(5).asReduction();
 					// Does it contain variable declarations?
 					if (varDecl.getParent().getTableIndex() == RuleConstants.PROD_DECLEND_SEMI2) {
 						String type = content.substring(0, content.indexOf("{")).trim();
-						this.buildDeclOrAssignment(varDecl.get(0).asReduction(), type, _parentNode, comment);
+						this.buildDeclOrAssignment(varDecl.get(0).asReduction(), type, _parentNode, comment, false);
 						varDecl = varDecl.get(1).asReduction();
 						while (varDecl.getParent().getTableIndex() == RuleConstants.PROD_VARLIST_COMMA) {
-							this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, _parentNode, comment);
+							this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, _parentNode, comment, false);
 							varDecl = varDecl.get(2).asReduction();
 						}
 						content = this.getContent_R(_reduction.get(3).asReduction(), type + " {") + "}";
 					}
 				}
-				Instruction decl = new Instruction(translateContent(content));
-				decl.disabled = true;
-				if (isGlobal) {
-					decl.setColor(colorGlobal);
+				if (!content.trim().isEmpty()) {
+					Instruction decl = new Instruction(StringList.explode(translateContent(content), "\n"));
+					decl.disabled = !isValid;
+					if (isGlobal) {
+						decl.setColor(colorGlobal);
+						// START KGU#376 2017-09-30: Enh. #389
+						// CHECKME!
+						if (root != globalRoot && !importingRoots.contains(root)) {
+							importingRoots.add(root);
+						}
+						// END KGU#376 2017-09-30
+					}
+					parentNode.insertElementAt(this.equipWithSourceComment(decl, _reduction), insertAt);
 				}
-				parentNode.insertElementAt(decl, insertAt);
 			}
 			else if (
 					// BREAK instruction
@@ -1545,6 +1795,12 @@ public class CParser extends CodeParser
 				root = new Root();	// Prepare a new root for the (sub)routine
 				root.setProgram(false);
 				subRoots.add(root);
+				// START KGU#376 2017-09-30: Enh. #389
+				if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0) {
+					// We must have inserted some global stuff, so assume a dependency...
+					this.importingRoots.add(root);
+				}
+				// END KGU#376 2017-09-30
 				String content = new String();
 				// Is there a type specification different from void?
 				if (typeIx >= 0) {
@@ -1738,6 +1994,129 @@ public class CParser extends CodeParser
 			}
 		}
 	}
+
+	/**
+	 * Processes type specifications for a variable / constant declaration or a
+	 * type definition (argument {@code _declaringVars} indicates which of both).
+	 * If an anonymous struct description is found then a type definition object
+	 * will be inserted either with a generic name (if {@code _typeList} is empty)
+	 * or with the first element of {@code _typeList} as name. Except in the latter
+	 * case (type definition with given name created) the name of the found type
+	 * will be inserted at the beginning of {@code _typeList}.
+	 * If {@code _isGlobal} is true and a type definition is to be created then
+	 * a dependency of the current root to the global diagram is established in
+	 * {@code this.importingRoots}.
+	 * @param _reduction - current {@link Reduction} object
+	 * @param _ruleId - table id of the production rule
+	 * @param _subqueue - the {@link Subqueue} to which elements are to be added
+	 * @param _isGlobal - whether the type / variable is a global one
+	 * @param _typeList - a container for type names, both for input and output 
+	 * @param _declaringVars - whether this is used by a variable/constant declaration (type definition otherwise)
+	 * @return a logical value indicating whether the current type is a structured one
+	 */
+	protected boolean processTypes(Reduction _reduction, int _ruleId, Subqueue _subqueue, boolean _isGlobal,
+			StringList _typeList, boolean _declaringVars) {
+		boolean isStruct = false;
+		String type = "int";
+		boolean isConstant = false;
+		boolean addType = true;
+		int typeIx = -1;	// token index of the type description
+		switch (_ruleId) {
+		case RuleConstants.PROD_VARDECL_SEMI:
+			isConstant = getContent_R(_reduction.get(0).asReduction(), "").contains("const");
+			typeIx = 1;
+			break;
+		case RuleConstants.PROD_VARDECL_CONST_SEMI:
+			isConstant = true;
+			typeIx = 2;
+			break;
+		case RuleConstants.PROD_VARDECL_SEMI2:
+			typeIx = 0;
+			break;
+		case RuleConstants.PROD_VARDECL_CONST_SEMI2:
+			isConstant = true;
+		}
+		if (typeIx >= 0) {
+			Reduction typeRed = _reduction.get(typeIx).asReduction();
+			type = getContent_R(typeRed, "").trim();
+			mtchConst.reset(type);
+			if (mtchConst.matches()) {
+				type = mtchConst.replaceAll("$1$2").trim();
+				isConstant = true;
+			}
+			// START KGU#388 2017-09-30: Enh. #423 Support for struct types and their references
+			if (type.contains("struct")) {
+				switch (_ruleId) {
+				case RuleConstants.PROD_VARDECL_SEMI:
+				case RuleConstants.PROD_VARDECL_CONST_SEMI:
+					typeRed = typeRed.get(0).asReduction();
+					break;
+				case RuleConstants.PROD_VARDECL_SEMI2:
+					if (typeRed.getParent().getTableIndex() == RuleConstants.PROD_CONSTTYPE_CONST) {
+						typeRed = typeRed.get(1).asReduction().get(0).asReduction();	
+					}
+					else {
+						typeRed = typeRed.get(0).asReduction();
+					}					
+					break;
+				}
+				switch (typeRed.getParent().getTableIndex())
+				{
+				case RuleConstants.PROD_BASE_STRUCT_ID:
+					type = type.replace("struct ", "").trim();
+					isStruct = true;
+					break;
+				case RuleConstants.PROD_BASE_STRUCT_LBRACE_RBRACE:
+					// We have an anonymous type here - if we didn't obtain a type name, we'll create a new one
+					{
+						if (_typeList.count() == 0) {
+							type = String.format("AnonStruct%1$03d", typeCount++);
+						}
+						else {
+							type = _typeList.get(0);
+							addType = false;
+						}
+						// FIXME: This is only quick and dirty - of course we must analyse recursively!
+						String components = this.getContent_R(typeRed.get(2).asReduction(), "").replace("struct ", "").trim();
+						if (components.endsWith(";")) components = components.substring(0, components.length()-1);
+						String content = "type " + type + " = struct{" + components + "}";
+						Instruction typeDef = new Instruction(this.translateContent(content));
+						if (addType && _declaringVars) {
+							typeDef.setComment("Automatically created from anonymous struct in following declaration");
+						}
+						else {
+							this.equipWithSourceComment(typeDef, _reduction);
+						}
+						if (_isGlobal) {
+							typeDef.setColor(colorGlobal);
+							// START KGU#376 2017-09-30: Enh. #389
+							// CHECKME!
+							if (root != globalRoot && !importingRoots.contains(root)) {
+								importingRoots.add(root);
+							}
+							// END KGU#376 2017-09-30
+						}
+						_subqueue.addElement(typeDef);
+						isStruct = true;
+					}
+					break;
+				default:
+					// Something strange or more complicated might go on - put a remark to the log
+					this.log(this.getContent_R(_reduction,
+							"Unclear occurrence of \"struct\" detected, consider reporting this issue to http://structorizer.fisch.lu:\n"),
+							false);
+				}
+			}
+			// END KGU#388 2017-09-30
+		}
+		if (isConstant && _declaringVars) {
+			type = "const " + type;
+		}
+		if (addType) {
+			_typeList.insert(type, 0);
+		}
+		return isStruct;
+	}
 	
 	/**
 	 * Helper method for he analysis of the very old C function declaration syntax:
@@ -1789,8 +2168,9 @@ public class CParser extends CodeParser
 	 * @param _type - the data type as string
 	 * @param _parentNode - the Subqueue the built Instruction is to be appended to
 	 * @param _comment - a retrieved source code comment to be placed inthe element or null
+	 * @param _forceDecl TODO
 	 */
-	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment)
+	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl)
 	{
 		boolean isConstant = _type != null && _type.startsWith("const ");
 		int ruleId = _reduc.getParent().getTableIndex();
@@ -1798,7 +2178,7 @@ public class CParser extends CodeParser
 		if (ruleId == RuleConstants.PROD_VAR_ID) {
 			log("\ttrying PROD_VAR_ID ...\n", false);
 			// Simple declaration - if allowed then make it to a Pascal decl.
-			if (this.optionImportVarDecl) {
+			if (this.optionImportVarDecl || _forceDecl) {
 				content = "var " + content + ": " + _type;
 				Element instr = new Instruction(translateContent(content));
 				// START KGU#407 2017-06-22: Enh. #420
@@ -1812,6 +2192,11 @@ public class CParser extends CodeParser
 					instr.getComment().add("Globally declared!");
 					// END KGU#407 2017-06-22
 					instr.setColor(colorGlobal);
+					// FIXME
+					if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
+						this.importingRoots.add(root);
+						((Root)_parentNode.parent).addToIncludeList((Root)_parentNode.parent);
+					}
 				}
 				else {
 					instr.setColor(colorDecl);	// local declarations with a smooth green
@@ -1824,7 +2209,7 @@ public class CParser extends CodeParser
 			// This should be the <Pointers> token...
 			String ptype = this.getContent_R(_reduc.get(0).asReduction(), _type);
 			// .. and this is assumed to be the <Var> token
-			buildDeclOrAssignment(_reduc.get(1).asReduction(), ptype, _parentNode, _comment);
+			buildDeclOrAssignment(_reduc.get(1).asReduction(), ptype, _parentNode, _comment, _forceDecl);
 		}
 		else if (ruleId == RuleConstants.PROD_VAR_ID_EQ) {
 			// assignment
@@ -2303,7 +2688,7 @@ public class CParser extends CodeParser
 			if (this.optionUpperCaseProgName) {
 				fileName = fileName.toUpperCase();
 			}
-			fileName = fileName.replace(" ", "_");
+			fileName = fileName.replaceAll("(.*?)[^A-Za-z_](.*?)", "$1_$2");
 			if (aRoot.getParameterNames().count() > 0) {
 				String header = aRoot.getText().getText();
 				header = header.replaceFirst("(.*?)main([((].*)", "$1" + fileName + "$2");
@@ -2314,29 +2699,58 @@ public class CParser extends CodeParser
 				aRoot.setProgram(true);
 			}
 			// Are there some global definitions to be imported?
-			if (this.globalRoot != null) {
-				String progName = fileName + "Globals";
-				this.globalRoot.setText(progName);
+			if (this.globalRoot != null && this.globalRoot.children.getSize() > 0 && this.globalRoot != aRoot) {
+				String oldName = this.globalRoot.getMethodName();
+				String inclName = fileName + "Globals";
+				this.globalRoot.setText(inclName);
 				// START KGU#376 2017-05-17: Enh. #389 now we have an appropriate diagram type
 				//this.globalRoot.setProgram(true);
 				this.globalRoot.setInclude();
 				// END KGU#376 2017-05-17
-				for (Call provCall: this.provisionalImportCalls) {
-					provCall.setText(provCall.getText().get(0).replace(DEFAULT_GLOBAL_NAME, progName).replace("???", progName));
+				// START KGU#376 2017-07-01: Enh. #389 - now register global includable with Root
+//				for (Call provCall: this.provisionalImportCalls) {
+//					provCall.setText(provCall.getText().get(0).replace(DEFAULT_GLOBAL_NAME, inclName).replace("???", inclName));
+//				}
+//				this.provisionalImportCalls.clear();
+				for (Root impRoot: this.importingRoots) {
+					if (impRoot.includeList != null) {
+						int n = impRoot.includeList.replaceAll(oldName, inclName);
+						n += impRoot.includeList.replaceAll(DEFAULT_GLOBAL_NAME, inclName);
+						n += impRoot.includeList.replaceAll("???", inclName);
+						if (n > 1) {
+							impRoot.includeList.removeAll(inclName);
+							impRoot.includeList.add(inclName);
+						}
+					}
+					else {
+						impRoot.includeList = StringList.getNew(inclName);
+					}
 				}
-				this.provisionalImportCalls.clear();
+				this.importingRoots.clear();
+				// END KGU#376 2017-07-01
 			}
 		}
 		// START KGU#376 2017-04-11: enh. #389 import mechanism for globals
-		if (this.globalRoot != null && this.globalRoot != aRoot) {
-			String globalName = this.globalRoot.getMethodName();
-			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? DEFAULT_GLOBAL_NAME : globalName));
-			importCall.setColor(colorGlobal);
-			aRoot.children.insertElementAt(importCall, 0);
-			if (globalName.equals("???")) {
-				this.provisionalImportCalls.add(importCall);
-			}
-		}
+//		if (this.globalRoot != null && this.globalRoot != aRoot) {
+//			String globalName = this.globalRoot.getMethodName();
+//			// START KGU#376 2017-07-01: Enh. #389 - modified mechanism
+////			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? DEFAULT_GLOBAL_NAME : globalName));
+////			importCall.setColor(colorGlobal);
+////			aRoot.children.insertElementAt(importCall, 0);
+////			if (globalName.equals("???")) {
+////				this.provisionalImportCalls.add(importCall);
+////			}
+//			if (aRoot.includeList == null) {
+//				aRoot.includeList = StringList.getNew(globalName);
+//			}
+//			else {
+//				aRoot.includeList.addIfNew(globalName);
+//			}
+//			if (!this.importingRoots.contains(aRoot)) {
+//				this.importingRoots.add(aRoot);
+//			}
+//			// END KGU#376 2017-07-01
+//		}
 		// END KGU#376 2017-04-11
 	}
 
@@ -2346,12 +2760,27 @@ public class CParser extends CodeParser
 	protected void subclassPostProcess(String textToParse)
 	{
 		// May there was no main function but global definitions
-		if (this.globalRoot != null && this.globalRoot.getMethodName().equals("???") && this.globalRoot.children.getSize() > 0) {
-			this.globalRoot.setText(DEFAULT_GLOBAL_NAME);
+		if (this.globalRoot != null && this.globalRoot.children.getSize() > 0) {
+			String globalName = this.globalRoot.getMethodName();
+			if (globalName.equals("???")) {
+				// FIXME: Shouldn't we also derive the name from the filename as in the method above?
+				this.globalRoot.setText(globalName = DEFAULT_GLOBAL_NAME);
+			}
 			// START KGU#376 2017-05-23: Enh. #389 now we have an appropriate diagram type
 			//this.globalRoot.setProgram(true);
 			this.globalRoot.setInclude();
 			// END KGU#376 2017-05-23
+			// Check again that we haven't forgotten to update any include list
+			for (Root dependent: this.importingRoots) {
+				if (dependent.includeList == null) {
+					dependent.includeList = StringList.getNew(globalName);
+				}
+				else {
+					dependent.includeList.removeAll("???");
+					dependent.includeList.addIfNew(globalName);
+				}
+			}
+			this.importingRoots.clear();
 		}
 	}
 

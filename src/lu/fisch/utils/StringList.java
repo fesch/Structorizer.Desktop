@@ -44,7 +44,8 @@ package lu.fisch.utils;
  *      Bob Fisch       2016.08.01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
  *      Kay Gürtzig     2017.01.31      Method remove(int,int) added. 
  *      Kay Gürtzig     2017.03.31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
- *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake _by for a regex anymore)
+ *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore)
+ *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
  *
  ******************************************************************************************************
  *
@@ -63,7 +64,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Vector;
-import java.util.regex.Pattern;
 
 public class StringList {
 
@@ -666,6 +666,14 @@ public class StringList {
 		}
 	}
 
+	/**
+	 * Returns the String element at position {@code _index}<br/>
+	 * NOTE: In case the given index is invalid (i.e. {@code _index < 0}
+	 * or {@code _index >= this.count()} neither an exception is raised nor
+	 * {@code null} is returned but an empty String!
+	 * @param _index - the number of the element
+	 * @return the requested string or an empty string (!), see text.
+	 */
 	public String get(int _index)
 	{
 		if(_index<strings.size() && _index>=0)
@@ -700,7 +708,12 @@ public class StringList {
 
 	// START KGU 2015-12-21: More flexibility with reduced redundancy
 	/**
-	 * Concatenates all elements, putting the _separator string between them
+	 * Concatenates all elements, putting the _separator string between them.<br/>
+	 * NEW: If {@code _separator} is {@code null} then an empty separator is
+	 * used unless a preceding string ending with an identifier character
+	 * would meet a beginning identifier character of the current string in
+	 * which case a single space would be inserted, thus preserving a lexical
+	 * gap.
 	 * @param _separator - a string placed between the elements of this 
 	 * @return the concatenated string
 	 */
@@ -710,7 +723,12 @@ public class StringList {
 	}
 	
 	/**
-	 * Concatenates all elements, putting the _separator string between them
+	 * Concatenates all elements, putting the _separator string between them.<br/>
+	 * NEW: If {@code _separator} is {@code null} then an empty separator is
+	 * used unless a preceding string ending with an identifier character
+	 * would meet a beginning identifier character of the current string in
+	 * which case a single space would be inserted, thus preserving a lexical
+	 * gap.
 	 * @param _separator - a string placed between the elements of this
 	 * @param _start - index of the first element to be included
 	 * @param _end - index beyond the last element to be included 
@@ -718,21 +736,43 @@ public class StringList {
 	 */
 	public String concatenate(String _separator, int _start, int _end)
 	{
-		String text = "";
+		// START KGU#425 2017-09-29
+		//String text = "";
+		StringBuffer text = new StringBuffer();
+		boolean lastEndedLikeId = false;
+		// END KGU#425 2017-09-29
 		boolean isFirst = true;
         for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
 		{
+        	String thisString = strings.get(i);
 			if (isFirst)
 			{
-				text = strings.get(i);
+				//text = strings.get(i);
 				isFirst = false;
+				// START KGU#425 2019-10-02
+				lastEndedLikeId = !thisString.isEmpty() && Character.isJavaIdentifierPart(thisString.charAt(thisString.length()-1));
+				// END KGU#425 2019-10-02
 			}
-			else
+			// START KGU#425 2019-10-02
+			//else
+			else if (_separator != null)
+			// END KGU#425 2019-10-02
 			{
-				text += _separator + strings.get(i);
+				//text += _separator + thisString;
+				text.append(_separator);
 			}
+			// START KGU#425 2019-10-02
+			else if (!thisString.isEmpty()) {
+				if (lastEndedLikeId && Character.isJavaIdentifierPart(thisString.charAt(0))) {
+					text.append(" ");
+				}
+				lastEndedLikeId = Character.isJavaIdentifierPart(thisString.charAt(thisString.length()-1));
+			}
+			// END KGU#425 2019-10-02
+			text.append(thisString);
 		}
-		return text;
+		//return text;
+        return text.toString();
 	}
 	
 	public String concatenate(String _separator, int _start)
@@ -783,40 +823,40 @@ public class StringList {
 		String input = _input+"";
 
 		// if not CSV, make it CSV
-		if(input.length()>0)
+		if (input.length()>0)
 		{
 			String first = Character.toString(input.charAt(0));
-			if(!first.equals("\""))
+			if (!first.equals("\""))
 			{
-				input="\""+input;
+				input = "\"" + input;
 			}
 			first = Character.toString(input.charAt(input.length()-1));
-			if(!first.equals("\""))
+			if (!first.equals("\""))
 			{
-				input=input+"\"";
+				input += "\"";
 			}
 		}
 
 		strings.clear();
 
 		String tmp = new String();
-		boolean open = false;
+		boolean isOpen = false;
 
-		for(int i=0;i<input.length();i++)
+		for(int i=0; i<input.length(); i++)
 		{
 			String chr = Character.toString(input.charAt(i));
-			if(chr.equals("\""))
+			if (chr.equals("\""))
 			{
-			   if(i+1<input.length())
+			   if (i+1<input.length())
 			   {
-				if(open == false)
+				if (!isOpen)
 				{
-					open =true;
+					isOpen = true;
 				}
 				else
 				{
 					String next = Character.toString(input.charAt(i+1));
-					if(next.equals("\""))
+					if (next.equals("\""))
 					{
 						tmp += "\"";
 						i++;
@@ -828,29 +868,29 @@ public class StringList {
 						   strings.add(tmp);
 						}
 						tmp = new String();
-						open = false;
+						isOpen = false;
 					}
 				}
 			   }
 			   else
 			   {
-				   if(!((strings.size()==0)&&(tmp.trim().equals(""))))
+				   if (!((strings.size()==0) && (tmp.trim().isEmpty())))
 				   {
 					   strings.add(tmp);
 				   }
 				   tmp = new String();
-				   open = false;
+				   isOpen = false;
 			   }
 			}
 			else
 			{
-			   if(open == true)
+			   if (isOpen)
 			   {
 				tmp += chr;
 			   }
 			}
 		}
-		if(!(tmp.trim().equals("")))
+		if (!(tmp.trim().isEmpty()))
 		{
 			strings.add(tmp);
 		}
@@ -860,15 +900,15 @@ public class StringList {
 	{
 		String res = new String();
 
-		for (int i = 0;i<strings.size();i++)
+		for (int i = 0; i<strings.size(); i++)
 		{
-			if(i==0)
+			if (i==0)
 			{
-				res+= "\""+BString.replace(get(i),"\"","\"\"")+"\"";
+				res+= "\"" + get(i).replace("\"", "\"\"") + "\"";
 			}
 			else
 			{
-				res+= ",\""+BString.replace(get(i),"\"","\"\"")+"\"";
+				res+= ",\"" + get(i).replace("\"", "\"\"") + "\"";
 			}
 		}
 

@@ -19,6 +19,9 @@
  */
 package lu.fisch.structorizer.gui;
 
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -32,7 +35,8 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.13      First Issue (for Enh. requ. #372)
- *      Kay Gürtzig     2017.05.21      Attribute editing now delegated to new class AttributeInspector 
+ *      Kay Gürtzig     2017.05.21      Attribute editing now delegated to new class AttributeInspector
+ *      Kay Gürtzig     2017.06.30      Enh. #389: Text area for Include list added.
  *
  ******************************************************************************************************
  *
@@ -45,12 +49,19 @@ package lu.fisch.structorizer.gui;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import lu.fisch.structorizer.elements.RootAttributes;
+import lu.fisch.structorizer.io.Ini;
+import lu.fisch.utils.StringList;
 
 /**
  * Enhanced and specialized element editor for diagram Roots
@@ -80,6 +91,11 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 	private AttributeInspector attrInspr;
 	protected JButton btnAttributes;
 	// END KGU#363 2017-05-20
+	// START KGU#376 2017-06-30: Enh. #389 - Diagram import now directly from Root 
+	private JLabel lblIncludeList;
+	private JTextArea txtIncludeList;
+    protected JScrollPane scrIncludeList;
+	// END KGU#376 2017-06-30
 	public RootAttributes licenseInfo = new RootAttributes();
 	private Frame frame;
 
@@ -93,7 +109,72 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 //		this.addWindowListener(this);
 	}
 
+	// START KGU#376 2017-06-30: Enh. #389
     /**
+     * Subclassable method to add specific stuff to the Panel top
+     * @param _panel the panel to be enhanced
+     * @param pnPanel0c the layout constraints
+     * @return number of lines (y cell units) inserted
+     */
+	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
+	{
+		double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		
+		int lineNo = 1;
+
+//		int border = (int)(5 * scaleFactor);
+//		_gbc.insets = new Insets(2*border, border, 0, border);
+		
+		lblIncludeList = new JLabel("Diagrams to be included");
+		txtIncludeList = new JTextArea();
+	    scrIncludeList = new JScrollPane(txtIncludeList);
+
+	    txtIncludeList.addKeyListener(this);
+        // Issue #163 - tab isn't really needed within the text
+        txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+        txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+
+        scalableComponents.addElement(txtIncludeList);
+
+        _gbc.gridx = 1;
+		_gbc.gridy = lineNo;
+		_gbc.gridheight = 1;
+		_gbc.gridwidth = 18;
+        _gbc.fill = GridBagConstraints.BOTH;
+        _gbc.weightx = 1;
+        _gbc.weighty = 0;
+        _gbc.anchor = GridBagConstraints.NORTH;
+		_panel.add(lblIncludeList, _gbc);
+
+		_gbc.gridx = 1;
+		_gbc.gridy = ++lineNo;
+		_gbc.gridheight = 4;
+		_gbc.gridwidth = 18;
+        _gbc.fill = GridBagConstraints.BOTH;
+        _gbc.weightx = 1;
+        _gbc.weighty = 1;
+        _gbc.anchor = GridBagConstraints.NORTH;
+		_panel.add(scrIncludeList, _gbc);
+		int stdFontHeight = txtIncludeList.getFontMetrics(txtIncludeList.getFont()).getHeight();
+		scrIncludeList.setPreferredSize(new Dimension(getPreferredSize().width, (int)Math.ceil(3 * stdFontHeight * scaleFactor)));
+
+        _gbc.gridx = 1;
+        _gbc.gridy = (lineNo += _gbc.gridheight);
+        _gbc.gridwidth = 18;
+        _gbc.gridheight = 1;
+        _gbc.fill = GridBagConstraints.BOTH;
+        _gbc.weightx = 1;
+        _gbc.weighty = 0;
+        _gbc.anchor = GridBagConstraints.NORTH;
+        _gb.setConstraints(lblText, _gbc);
+        _panel.add(lblText);
+        
+		return lineNo + _gbc.gridheight;
+	}
+	// END KGU#376 2017-06-30
+	
+	
+	/**
      * Adds additional controls to the left of the font button panel.
      * Returns the number of columns created.
      * @param _panel - the panel where the extra controls may be added
@@ -334,4 +415,56 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 //			this.updateLicenseChoice();
 //		}
 //	}
+    
+    // START KGU#376 2017-07-01: Enh. #389 display-width-aware text setting
+    /**
+     * Fills the Include List text area with the names of includable diagrams given
+     * as {@code includeNames}
+     * @param includeNames - a StringList holding a diagram name per line or null.
+     */
+    public void setIncludeList(StringList includeNames)
+    {
+    	if (includeNames == null) {
+    		return;
+    	}
+    	FontMetrics fm = txtIncludeList.getFontMetrics(txtIncludeList.getFont());
+    	int width = txtIncludeList.getWidth();	// FIXME: Either this width is wrong or the font metrics result
+    	StringList lines = new StringList();
+    	String line = "";
+    	for (int i = 0; i < includeNames.count(); i++) {
+    		String name = includeNames.get(i);
+    		if (line.isEmpty() || fm.stringWidth(line + name) < width) {
+    			line += ", " + name;
+    		}
+    		else {
+    			lines.add(line.substring(2).trim() + (i + 1 < includeNames.count() ? "," : ""));
+    			line = ", " + name;
+    		}
+    	}
+    	if (!line.isEmpty()) {
+    		lines.add(line.substring(2));
+    	}
+    	txtIncludeList.setText(lines.getText());
+    }
+    
+    /**
+     * Extracts the items (names of includable diagrams) out of the multi-line
+     * comma-separated text of this.txtIncludeList and returns them as a StringList.  
+     * @return a StringList with a name per element or null
+     */
+    public StringList getIncludeList()
+    {
+    	StringList names = null;
+    	String content = txtIncludeList.getText().trim();
+    	if (!content.isEmpty()) {
+    		names = StringList.explode(txtIncludeList.getText(), "\n");
+    		names = StringList.explode(names, ",");
+    		names.removeAll("");
+    		for (int i = 0; i < names.count(); i++) {
+    			names.set(i, names.get(i).trim());
+    		}
+    	}
+    	return names;
+    }
+    // END KGU#376 2017-07-01
 }

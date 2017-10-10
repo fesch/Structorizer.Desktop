@@ -475,7 +475,7 @@ public class COBOLGenerator extends Generator {
 		String constValue = _root.constants.get(_name);
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
-			 types = getTransformedTypes(typeInfo);
+			 types = getTransformedTypes(typeInfo, false);
 		}
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
 		else if (constValue != null) {
@@ -483,7 +483,7 @@ public class COBOLGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, _root, 0, true, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, _root, 0, true, false, true));
 			}
 		}
 		// If the type is unambiguous and has no C-style declaration or may not be

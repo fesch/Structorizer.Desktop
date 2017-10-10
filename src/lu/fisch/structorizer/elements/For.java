@@ -426,7 +426,7 @@ public class For extends Element implements ILoop {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		if (!this.isDisabled()) {
 			// START KGU#3 2015-11-30: Fine tuning
@@ -436,7 +436,7 @@ public class For extends Element implements ILoop {
 				_lines.add(this.getText());
 			}
 			// END KGU#3 2015-11-30
-			this.q.addFullText(_lines, _instructionsOnly, implicatedRoots);
+			this.q.addFullText(_lines, _instructionsOnly);
 		}
     }
     // END KGU 2015-10-16
@@ -572,12 +572,12 @@ public class For extends Element implements ILoop {
 			if (valueListTokens.contains(",")) {
 				if (hadBraces)
 				{
-					valueListString = valueListString.substring(1, valueListString.length()-1);
+					valueListTokens = valueListTokens.subSequence(1, valueListTokens.count()-1);
 				}
-				valueItems = splitExpressionList(valueListString, ",");
+				valueItems = splitExpressionList(valueListTokens, ",", false);
 			}
 			else if (valueListTokens.contains(" ")) {
-				valueItems = splitExpressionList(valueListString, " ");
+				valueItems = splitExpressionList(valueListTokens, " ", false);
 			}
 			
 			if (valueItems != null && valueItems.count() == 1 && !hadBraces && Function.testIdentifier(valueItems.get(0), ".")) {
@@ -857,7 +857,7 @@ public class For extends Element implements ILoop {
 	 * Intended to be used in the constructor with String argument.
 	 * @return the identified style of the loop (counting, traversing, or "freestyle")
 	 */
-	private ForLoopStyle updateFromForClause()
+	public ForLoopStyle updateFromForClause()
 	{
 		String[] forParts = this.splitForClause();
 		this.setCounterVar(forParts[0]);
@@ -937,8 +937,8 @@ public class For extends Element implements ILoop {
 					Integer.toString(_step);
 		}
 		// Now get rid of multiple blanks
-		forClause = BString.replace(forClause, "  ", " ");
-		forClause = BString.replace(forClause, "  ", " ");
+		forClause = forClause.replace("  ", " ");
+		forClause = forClause.replace("  ", " ");
 		return forClause;
 	}
 	
@@ -1146,7 +1146,8 @@ public class For extends Element implements ILoop {
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
 		if (!this.isForInLoop()) {
-			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false);
+			// This may be regarded as an explicit type declaration
+			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, true, false);
 		}
 		// START KGU#261 2017-04-14: Enh. #259 Try to make as much sense of the value list as possible
 		else {
@@ -1164,7 +1165,7 @@ public class For extends Element implements ILoop {
 					}
 				}
 				if (!typeSpec.isEmpty() && !typeSpec.equals("???")) {
-					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false);
+					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false, false);
 				}
 			}
 			else {
@@ -1174,7 +1175,7 @@ public class For extends Element implements ILoop {
 					typeSpec = identifyExprType(typeMap, valueListString, false);
 					if (!typeSpec.isEmpty() && typeSpec.startsWith("@")) {
 						// nibble one array level off as the loop variable is of the element type
-						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false);						
+						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false, false);						
 					}
 				}
 			}

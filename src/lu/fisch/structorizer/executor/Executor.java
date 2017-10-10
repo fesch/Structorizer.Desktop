@@ -122,11 +122,21 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
  *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
  *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
- *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float resul)
+ *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float result)
  *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
  *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
- *      Kay Gürtzig     2017.05.24      Enh. #354: New function split(string, string) built in
+ *      Kay Gürtzig     2017.05.24      Enh. #413: New function split(string, string) built in
  *      Kay Gürtzig     2017.06.09      Enh. #416: Support for execution line continuation by trailing backslash
+ *      Kay Gürtzig     2017.06.30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
+ *      Kay Gürtzig     2017.07.01      Enh. #413: Special check for built-in split function in stepForIn()
+ *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
+ *      Kay Gürtzig     2017.09.09      Bugfix #411 revised (issue #426)
+ *      Kay Gürtzig     2017.09.17      Enh. #423: First draft implementation of records.
+ *      Kay Gürtzig     2017.09.18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
+ *      Kay Gürtzig     2017.09.30      Bugfix #429: Initializer evaluation made available in return statements
+ *      Kay Gürtzig     2017.10.02      Some regex stuff revised to gain performance
+ *      Kay Gürtzig     2017.10.08      Enh. #423: Recursive array and record initializer evaluation,
+ *                                      Array element assignment in record components fixed.
  *
  ******************************************************************************************************
  *
@@ -139,9 +149,9 @@ package lu.fisch.structorizer.executor;
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in case of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
- *        is that the execution be paused. Then a double-click on the text item showing the subroutine
- *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (until now
- *        a simple message box has been used if the number of call levels didn't exceed 10).   
+ *        is that the execution be paused. Then a click on the button "Stacktrace" will do.
+ *        Moreover, the stacktrace will always be presented as list view (before, a simple message box had
+ *        been used unless the number of call levels exceeded 10).   
  *      2016-03-16/18 Bugfix #131 (KGU#157)
  *      - When the "run" (or "make") button was pressed while an execution was already running or stood
  *        paused then the Executor CALL stack, the event queues, and the connection between Diagram and
@@ -234,6 +244,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
@@ -242,6 +254,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -262,6 +275,7 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
@@ -285,9 +299,9 @@ public class Executor implements Runnable
 	// START KGU#376 2017-04-20: Enh. #389
 	/**
 	 * Context record for an imported Root in order to fetch the defined constants
-	 * and global/staic variables (as well as - in future - defined types or the like).
-	 * This prototye version just contains the BeanShell interpreter used at the
-	 * initial execution ad hence bearing values etc. and a list of variable names.
+	 * and global/static variables as well as defined or declared types.
+	 * This prototype version just contains the BeanShell interpreter used at the
+	 * initial execution and hence bearing values etc. and a list of variable names.
 	 * Supports enhancement #389
 	 * @author Kay Gürtzig
 	 * @see Executor#importMap
@@ -295,10 +309,19 @@ public class Executor implements Runnable
 	private class ImportInfo {
 		public final Interpreter interpreter;
 		public final StringList variableNames;
-		public ImportInfo(Interpreter _interpr, StringList _varNames) {
+		// START KGU#388 2017-09-18: Enh. 423
+		public final HashMap<String, TypeMapEntry> typeDefinitions;
+		// END KGU#388 2017-09-18
+		// START KGU#388 2017-09-18: Enh. 423
+		//public ImportInfo(Interpreter _interpr, StringList _varNames) {
+		public ImportInfo(Interpreter _interpr, StringList _varNames, HashMap<String, TypeMapEntry> _typeMap) {
 			interpreter = _interpr;
 			variableNames = _varNames;
+			// START KGU#388 2017-09-18: Enh. 423
+			typeDefinitions = new HashMap<String, TypeMapEntry>(_typeMap);
+			// END KGU#388 2017-09-18
 		}
+		// END KGU#388 2017-09-18
 	};
 	// END KGU#376 2017-04-20
 
@@ -313,6 +336,307 @@ public class Executor implements Runnable
 	};
 	// END KGU#311 2016-12-22
 
+	private static final String[] builtInFunctions = new String[] {
+			"public int random(int max) { return (int) (Math.random()*max); }",
+			"public void randomize() {  }",
+			// START KGU#391 2017-05-07: Enh. #398 - we need a sign function to ease the rounding support for COBOL import
+			"public int sgn(int i) { return (i == 0 ? 0 : (i > 0 ? 1 : -1)); }",
+			"public int sgn(double d) { return (d == 0 ? 0 : (d > 0 ? 1 : -1)); }",
+			// END KGU#391 2017-05-07
+			// square
+			"public double sqr(double d) { return d * d; }",
+			// square root
+			"public double sqrt(double d) { return Math.sqrt(d); }",
+			// length of a string
+			"public int length(String s) { return s.length(); }",
+			// position of a substring inside another string
+			"public int pos(String subs, String s) { return s.indexOf(subs)+1; }",
+			"public int pos(Character subs, String s) { return s.indexOf(subs)+1; }",
+			// return a substring of a string
+			// START KGU#275 2016-10-09: Bugfix #266: length tolerance of copy function had to be considered
+			//"public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }",
+			"public String copy(String s, int start, int count) { int end = Math.min(start-1+count, s.length()); return s.substring(start-1,end); }",
+			// END KGU#275 2016-10-09
+			// delete a part of a string
+			"public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1); }",
+			// insert a string into another one
+			"public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1); }",
+			// string transformation
+			"public String lowercase(String s) { return s.toLowerCase(); }",
+			"public String uppercase(String s) { return s.toUpperCase(); }",
+			"public String trim(String s) { return s.trim(); }",
+			// START KGU#410 2017-05-24: Enh. #413: Introduced to facilitate COBOL import but generally useful
+			// If we passed the result of String.split() directly then we would obtain a String[] object the 
+			// Executor cannot display.
+			"public Object[] split(String s, String p)"
+					+ "{ p = java.util.regex.Pattern.quote(p);"
+					+ " String[] parts = s.split(p, -1);"
+					+ "Object[] results = new Object[parts.length];"
+					+ " for (int i = 0; i < parts.length; i++) {"
+					+ "		results[i] = parts[i];"
+					+ "}"
+					+ "return results; }",
+			"public Object[] split(String s, char c)"
+					+ "{ return split(s, \"\" + c); }",
+			// END KGU#410 2017-05-24
+			// START KGU#57 2015-11-07: More interoperability for characters and Strings
+			// char transformation
+			"public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }",
+			"public Character uppercase(Character ch) { return (Character)Character.toUpperCase(ch); }",
+			// START KGU#150 2016-04-03
+			"public int ord(Character ch) { return (int)ch; }",
+			// START KGU 2016-04-26: It is conform to many languages just to use the first character
+			//"public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }",
+			"public int ord(String s) { return (int)s.charAt(0); }",
+			// END KGU 2016-04-26
+			"public char chr(int code) { return (char)code; }",
+			// END KGU#150 2016-04-03
+			// END KGU#57 2015-11-07
+			// START KGU#322 2017-01-06: Enh. #325 - reflection functions
+			"public boolean isArray(Object obj) { return (obj instanceof Object[]); }",
+			"public boolean isString(Object obj) { return (obj instanceof String); }",
+			"public boolean isChar(Object obj) { return (obj instanceof Character); }",
+			"public boolean isBool(Object obj) { return (obj instanceof Boolean); }",
+			"public boolean isNumber(Object obj) { return (obj instanceof Integer) || (obj instanceof Double); }",
+			"public int length(Object[] arr) { return arr.length; }",
+			// END KGU#322 2017-01-06
+			// START KGU 2016-12-18: #314: Support for simple text file API
+			"public int fileOpen(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileInputStream fis = new java.io.FileInputStream(file); "
+					+ "java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(new java.util.Scanner(reader)); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }",
+
+			"public int fileCreate(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file); "
+					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(writer); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }",
+
+			"public int fileAppend(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true); "
+					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(writer); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; "
+					+ "}",
+
+			"public void fileClose(int fileNo) { "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file != null) { "
+					+ "try { file.close(); } "
+					+ "catch (java.io.IOException e) {} "
+					+ "executorFileMap.set(fileNo - 1, null); } "
+					+ "}"
+					+ "}",
+
+			"public boolean fileEOF(int fileNo) {"
+					+ "	boolean isEOF = true; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "		if (reader instanceof java.util.Scanner) { "
+					+ "			try { "
+					+ "				isEOF = !((java.util.Scanner)reader).hasNext();"
+					+ "			} catch (IOException e) {}"
+					+ "		}"
+					+ "	}"
+					+ "	else { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "	return isEOF;"
+					+"}",
+			// The following is just a helper method...
+			"public Object structorizerGetScannedObject(java.util.Scanner sc) {"
+					+ "Object result = null; "
+					+ "sc.useLocale(java.util.Locale.UK); "
+					+ "if (sc.hasNextInt()) { result = sc.nextInt(); } "
+					+ "else if (sc.hasNextDouble()) { result = sc.nextDouble(); } "
+					+ "else if (sc.hasNext(\"\\\\\\\".*?\\\\\\\"\")) { "
+					+ "String str = sc.next(\"\\\\\\\".*?\\\\\\\"\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*?'\")) { "
+					+ "String str = sc.next(\"'.*?'\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*?\\\\}\")) { "
+					+ "String token = sc.next(); "
+					+ "result = new Object[]{token.substring(1, token.length()-1)}; "
+					+ "} " 
+					+ "else if (sc.hasNext(\"\\\\\\\".*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*\\\\\\\"\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*'\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*\")) { "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\\\\}\"); "
+					+ "String content = sc.next().trim().substring(1); "
+					+ "sc.useDelimiter(oldDelim); "
+					+ "if (sc.hasNext(\"\\\\}\")) { sc.next(); } "
+					+ "String[] elements = {}; "
+					+ "if (!content.isEmpty()) { "
+					+ "elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
+					+ "} "
+					+ "Object[] objects = new Object[elements.length]; "
+					+ "for (int i = 0; i < elements.length; i++) { "
+					+ "java.util.Scanner sc0 = new java.util.Scanner(elements[i]); "
+					+ "objects[i] = structorizerGetScannedObject(sc0); "
+					+ "sc0.close(); "
+					+ "} "
+					+ "result = objects;"
+					+ "}"
+					+ "else { result = sc.next(); } "
+					+ "return result; }",
+			"public Object fileRead(int fileNo) { "
+					+ "Object result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = structorizerGetScannedObject((java.util.Scanner)reader); "
+					+ "ok = true;"
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public Character fileReadChar(int fileNo) { "
+					+ "Character result = '\0'; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "java.util.Scanner sc = (java.util.Scanner)reader; "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\"); "
+					+ "try { "
+					+ "if (!sc.hasNext(\".\") && sc.hasNextLine()) { sc.nextLine(); result = '\\n'; }"
+					+ "else { result = sc.next(\".\").charAt(0); } "
+					+ "}"
+					+ "finally { sc.useDelimiter(oldDelim); } "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public Integer fileReadInt(int fileNo) { "
+					+ "Integer result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = ((java.util.Scanner)reader).nextInt(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public Double fileReadDouble(int fileNo) { "
+					+ "Double result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = ((java.util.Scanner)reader).nextDouble(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }",
+			"public String fileReadLine(int fileNo) { "
+					+ "String line = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "line = ((java.util.Scanner)reader).nextLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return line;	}",
+			"public void fileWrite(int fileNo, java.lang.Object data) { "
+					+ "	boolean ok = false; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable writer = executorFileMap.get(fileNo - 1); "
+					+ "		if (writer instanceof java.io.BufferedWriter) { "
+					+ "			((java.io.BufferedWriter)writer).write(data.toString()); "
+					+ "		ok = true;"
+					+ "	}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}",
+			"public void fileWriteLine(int fileNo, java.lang.Object data) { "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file instanceof java.io.BufferedWriter) { "
+					+ "((java.io.BufferedWriter)file).write(data.toString()); "
+					+ "((java.io.BufferedWriter)file).newLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}",
+			// END KGU 2016-12-18
+			// START KGU#375 2017-03-30: Enh. #388 Workaround for missing support of Object[].clone() in bsh-2.0b4.jar
+			"public Object[] copyArray(Object[] sourceArray) {"
+					+ "Object[] targetArray = new Object[sourceArray.length];"
+					+ "for (int i = 0; i < sourceArray.length; i++) {"
+					+ "targetArray[i] = sourceArray[i];"
+					+ "}"
+					+ "return targetArray;"
+					+ "}",
+			// END KGU#375 2017-03-30
+			// START KGU#388 2017-09-13: Enh. #423 Workaround for missing support of HashMap<?,?>.clone() in bsh-2.0b4.jar
+			"public HashMap copyRecord(HashMap sourceRecord) {"
+					+ "HashMap targetRecord = new HashMap();"
+					+ "for (java.util.Map.Entry entry: sourceRecord.entrySet()) {"
+					+ "targetRecord.put(entry.getKey(), entry.getValue());"
+					+ "}"
+					+ "return targetRecord;"
+					+ "}"
+	};
+	
 	/**
 	 * Returns the singleton instance if there is one
 	 * @return the existing instance or null.
@@ -452,6 +776,34 @@ public class Executor implements Runnable
 	// START KGU 2016-12-18: Enh. #314: Stream table for Simple file API
 	private final Vector<Closeable> openFiles = new Vector<Closeable>();
 	// END KGU 2016-12-18
+	
+	// Constant set of matchers for unicode literals that cause harm in interpreter
+	private static final Matcher[] MTCHs_BAD_UNICODE = new Matcher[]{
+			Pattern.compile("(.*)\\\\u000[aA](.*)").matcher(""),
+			Pattern.compile("(.*?)\\\\u000[dD](.*?)").matcher(""),
+			Pattern.compile("(.*?)\\\\u0022(.*?)").matcher(""),
+			Pattern.compile("(.*?)\\\\u005[cC](.*?)").matcher("")
+	};
+	// Replacement patterns for the unicode literals associated with the matchers above
+	private static final String[] RPLCs_BAD_UNICODE = new String[]{
+			"$1\\\\012$2",
+			"$1\\\\015$2",
+			"$1\\\\042$2",
+			"$1\\\\134$2"
+	};
+	// Matcher for binary integer literals, which the interpreter doesn't cope with
+	private static final Matcher MTCH_BIN_LITERAL = Pattern.compile("0b[01]+").matcher("");
+	// Matcher for certain interpreter error messages relating to array assignment
+	// FIXME: Might have to be adapted with a newer version of the bean shell interpreter some day ...
+	private static final Matcher MTCH_EVAL_ERROR_ARRAY = Pattern.compile(".*Can't assign.*to java\\.lang\\.Object \\[\\].*").matcher("");
+	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
+	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
+	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
+	private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
+	private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
+	private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
+	private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -518,8 +870,6 @@ public class Executor implements Runnable
 	
 	private String convert(String s, boolean convertComparisons)
 	{
-		Regex r;
-
 		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
 		StringList tokens = Element.splitLexically(s, true);
 		Element.unifyOperators(tokens, false);
@@ -556,24 +906,24 @@ public class Executor implements Runnable
 				//	tokenLen -= (intLen - internal.length());
 				//}
 				// END KGU 2017-04-22
-				// START KGU#406 2017-05-23: Bugfix #411 (arose with COBOL import)
+				// START KGU#406/KGU#420 2017-05-23/2017-09-09: Bugfix #411, #426 (arose with COBOL import)
 				// The interpreter doesn't cope with unicode escape sequences "\\u000a", "\\u000d", "\\u0022", and "\\u005c"
-				if (internal.contains("\\u00")) {
-					System.out.println(internal);
+				//internal = internal.replaceAll("(.*)\\\\u000[aA](.*)", "$1\\\\012$2").
+				//		replaceAll("(.*?)\\\\u000[dD](.*?)", "$1\\\\015$2").
+				//		replaceAll("(.*?)\\\\u0022(.*?)", "$1\\\\042$2").
+				//		replaceAll("(.*?)\\\\u005[cC](.*?)", "$1\\\\134$2");
+				for (int mtch = 0; mtch < MTCHs_BAD_UNICODE.length; mtch++) {
+					internal = MTCHs_BAD_UNICODE[mtch].reset(internal).replaceAll(RPLCs_BAD_UNICODE[mtch]);
 				}
-				internal = internal.replaceAll("(.*)\\\\u000a(.*)", "$1\\012$2").
-						replaceAll("(.*?)\\\\u000d(.*?)", "$1\\\\015$2").
-						replaceAll("(.*?)\\\\u0022(.*?)", "$1\\\\042$2").
-						replaceAll("(.*?)\\\\u005c(.*?)", "$1\\\\134$2");
-				// END KGU#406 2017-05-23
+				// END KGU#406/KGU#420 2017-05-23/2017-09-09
 				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
 					delim = '\"';
 				}
 				tokens.set(i, delim + internal + delim);
 			}
 			// END KGU#342 2017-01-08
-			// START KGU#354 2017-05-22: Unfortunately theinterpreter doesn't cope with binary integer literals, so convert them
-			else if (token.matches("0b[01]+")) {
+			// START KGU#354 2017-05-22: Unfortunately the interpreter doesn't cope with binary integer literals, so convert them
+			else if (MTCH_BIN_LITERAL.reset(token).matches()) {
 				tokens.set(i, "" + Integer.parseInt(token.substring(2), 2));
 			}
 			// END KGU#354 2017-05-22
@@ -609,17 +959,9 @@ public class Executor implements Runnable
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
 		// pascal: delete
-		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
-		//r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1=delete($1,$2,$3)");
-		r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
-		// END KGU#275 2016-10-09
-		s = r.replaceAll(s);
+		s = RPLC_DELETE_PROC.replaceAll(s);
 		// pascal: insert
-		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
-		//r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2=insert($1,$2,$3)");
-		r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
-		// END KGU#275 2016-10-09
-		s = r.replaceAll(s);
+		s = RPLC_INSERT_PROC.replaceAll(s);
 		// START KGU#285 2016-10-16: Bugfix #276 - this spoiled apostrophes because misplaced here
 //		// pascal: quotes
 //		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
@@ -628,10 +970,10 @@ public class Executor implements Runnable
 		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
         // pascal: convert "inc" and "dec" procedures
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); s = r.replaceAll(s);
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); s = r.replaceAll(s);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); s = r.replaceAll(s);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); s = r.replaceAll(s);
+		s = RPLC_INC2_PROC.replaceAll(s);
+		s = RPLC_INC1_PROC.replaceAll(s);
+		s = RPLC_DEC2_PROC.replaceAll(s);
+		s = RPLC_DEC1_PROC.replaceAll(s);
         // END KGU 2015-11-29
 		
         // START KGU 2017-04-22: now done above in the string token conversion
@@ -730,8 +1072,8 @@ public class Executor implements Runnable
 						try
 						{
 							int pos = -1;	// some character position
-							Object leftO = context.interpreter.eval(left);
-							Object rightO = context.interpreter.eval(right);
+							Object leftO = this.evaluateExpression(left, false);
+							Object rightO = this.evaluateExpression(right, false);
 							String neg = (op > 0) ? "!" : "";
 							// First the obvious case: two String expressions
 							if ((leftO instanceof String) && (rightO instanceof String))
@@ -792,7 +1134,7 @@ public class Executor implements Runnable
 				if (replaced)
 				{
 					// Compose the partial expressions and undo the regex escaping for the initial split
-					str = BString.replace(exprs.getLongString(), " \\|\\| ", " || ");
+					str = exprs.getLongString().replace(" \\|\\| ", " || ");
 					str.replace("  ", " ");	// Get rid of multiple spaces
 				}
 			}
@@ -911,7 +1253,7 @@ public class Executor implements Runnable
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
 		// START KGU#384 2017-04-22
-		this.context = new ExecutionStackEntry(root, null);
+		this.context = new ExecutionStackEntry(root);
 		initInterpreter();
 		// END KGU#384 2017-04-22
 		/////////////////////////////////////////////////////////
@@ -992,9 +1334,13 @@ public class Executor implements Runnable
 		leave = 0;
 		// END KGU#78 2015-11-25
 		// END KGU#384 207-04-22
+		
+		// START KGU#376 2017-07-01: Enh. #389 - perform all specified includes
+		result = importSpecifiedIncludables(root);
+		// END KGU#376 2017-07-01
 
 		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
-		if (root.isSubroutine())
+		if (root.isSubroutine() && result.isEmpty())
 		{
 		// END KGU#39 2015-10-16 (1/2)
 			StringList params = root.getParameterNames();
@@ -1017,6 +1363,18 @@ public class Executor implements Runnable
 				String type = pTypes.get(i);
 				boolean isConstant = type != null && (type.toLowerCase() + " ").startsWith("const ");
 				// END KGU#375 2017-03-30
+				// START KGU#388 2017-09-18: Enh. #423 Track at least record types
+				if (type != null) {
+					StringList typeTokens = Element.splitLexically(type, true);
+					typeTokens.removeAll(" ");
+					if (isConstant) {
+						typeTokens.remove(0);
+					}
+					if (typeTokens.count() == 1 && context.dynTypeMap.containsKey(":" + (type = typeTokens.get(0)))) {
+						context.dynTypeMap.put(in, context.dynTypeMap.get(":" + type));
+					}
+				}
+				// END KGU#388 2017-09-18
 				
 				// START KGU#2 (#9) 2015-11-13: If root was not called then ask the user for values
 				if (noArguments)
@@ -1278,6 +1636,83 @@ public class Executor implements Runnable
 		// END KGU# (#9) 2015-11-13
 	}
 	
+	// START KGU#376 2017-07-01: Enh. #389 - perform all specified includes
+	private String importSpecifiedIncludables(Root root) {
+		String errorString = "";
+		if (root.includeList != null) {
+			root.waited = true;
+			root.isIncluding = true;
+			for (int i = 0; errorString.isEmpty() && i < root.includeList.count(); i++) {
+				delay();
+				Root imp = null;
+				String diagrName = root.includeList.get(i);
+				try {
+					imp = this.findIncludableWithName(diagrName);
+				} catch (Exception ex) {
+					return ex.getMessage();	// Ambiguous call!
+				}
+				if (imp != null)
+				{
+					// START KGU#376 2017-04-21: Enh. #389
+					// Has this import already been executed -then just adopt the results
+					if (this.importMap.containsKey(imp)) {
+						ImportInfo impInfo = this.importMap.get(imp);
+						this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
+								imp.variables, imp.constants.keySet(), false);
+						// START KGU#388 2017-09-18: Enh. #423
+						// Adopt the imported typedefs if any
+						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
+							TypeMapEntry oldEntry = context.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
+							if (oldEntry != null) {
+								System.err.println("Conflicting type entry " + typeEntry.getKey() + " from Includable " + diagrName);
+							}
+						}
+						// END KGU#388 2017-09-18
+						context.variables.addIfNew(impInfo.variableNames);
+						for (String constName: imp.constants.keySet()) {
+							// FIXME: Is it okay just to ignore conflicting constants?
+							if (!context.constants.containsKey(constName)) {
+								try {
+									context.constants.put(constName, impInfo.interpreter.get(constName));
+								} catch (EvalError e) {
+									if (!errorString.isEmpty()) {
+										errorString += "\n";
+									}
+									errorString += e.getMessage();
+								}
+							}
+						}
+						try 
+						{
+							updateVariableDisplay();
+						}
+						catch (EvalError ex) {}
+					}
+					else {
+						// END KGU#376 2017-04-21
+						executeCall(imp, null, null);
+					}
+					context.importList.addIfNew(diagrName);
+				}
+				else
+				{
+					// START KGU#197 2016-07-27: Now translatable message
+					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
+					errorString = control.msgNoInclDiagram.getText().
+							replace("%", diagrName);
+					// END KGU#197 2016-07-27
+				}
+			}
+			if (errorString.isEmpty()) {
+				root.waited = false;
+				root.isIncluding = false;
+			}
+		}
+		return errorString;
+	}
+	// END KGU#376 2017-07-01
+
 	// START KGU#133 2016-01-09: New method for presenting result arrays as scrollable list
 	// START KGU#147 2016-01-29: Enh. #84 - interface enhanced, pause button added
 	//private void showArray(Object[] _array, String _title)
@@ -1332,6 +1767,7 @@ public class Executor implements Runnable
 	
 	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
 	// START KGU#156 2016-03-12: Enh. #124 - signature enhanced to overcome some nasty hacks
+	// KGU#376 2017-07-01: Enh.#389 - caller may now be null if an include is performed
 	//private Object executeCall(Root subRoot, Object[] arguments)
 	private Object executeCall(Root subRoot, Object[] arguments, Call caller)
 	// END KGU#156 2016-03-12
@@ -1356,7 +1792,12 @@ public class Executor implements Runnable
 //				this.importList
 //				// END KGU#375, KGU#376 2017-04-21
 //				);
+		long time0 = System.nanoTime();
 		this.callers.push(this.context);
+		long time1 = System.nanoTime();
+		System.out.println("executeCall: push context " + (time1 - time0));
+		time0 = time1;
+		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		// END KGU#384 2017-04-22
 		// START KGU#376 2017-04-21: Update all current imports before sub execution
 		for (int i = 0; i < context.importList.count(); i++) {
@@ -1365,10 +1806,13 @@ public class Executor implements Runnable
 			for (Root impRoot: this.importMap.keySet()) {
 				if (impRoot.getMethodName().equals(impName)) {
 					ImportInfo info = this.importMap.get(impRoot);
-					this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, null, impRoot.constants.keySet(), true);
+					this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, impRoot.constants.keySet(), true);
 				}
 			}
 		}
+		time1 = System.nanoTime();
+		System.out.println("executeCall: import list check " + (time1 - time0));
+		time0 = time1;
 		// START KGU#384 2017-04-22 Is done below now, when setting up the new context
 //		if (!subRoot.isProgram) {
 //			// It's not an import, so start with a new importList 
@@ -1397,6 +1841,9 @@ public class Executor implements Runnable
 			cloned = true;
 		}
 		// START KGU#384 2017-04-22: Execution context redesign
+		time1 = System.nanoTime();
+		System.out.println("executeCall: root copy (recursion) " + (time1 - time0));
+		time0 = time1;
 		if (root.isInclude()) {
 			// For an import Call continue the importList recursively
 			this.context = new ExecutionStackEntry(root, this.context.importList);
@@ -1405,10 +1852,19 @@ public class Executor implements Runnable
 			// For a subroutine call, start with a new import list
 			this.context = new ExecutionStackEntry(root);
 		}
+		time1 = System.nanoTime();
+		System.out.println("executeCall: execution stack entry " + (time1 - time0));
+		time0 = time1;
 		initInterpreter();
 		// END KGU#384 2017-04-22
+		time1 = System.nanoTime();
+		System.out.println("executeCall: initInterpreter " + (time1 - time0));
+		time0 = time1;
 		
 		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
+		time1 = System.nanoTime();
+		System.out.println("executeCall: diagram.setRoot() " + (time1 - time0));
+		time0 = time1;
 		
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
@@ -1418,13 +1874,19 @@ public class Executor implements Runnable
 		this.execute(arguments);	// Actual execution of the subroutine or import
 		/////////////////////////////////////////////////////////
 		
-		// START KGU#156 2016-03-11; Enh. #124
-		caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
-		if (cloned || root.isTestCovered(true))	
-		{
-			caller.deeplyCovered = true;
+		time1 = System.nanoTime();
+		System.out.println("executeCall: execute sub " + (time1 - time0));
+		time0 = time1;
+
+		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
+		if (caller != null) {
+			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
+			if (cloned || root.isTestCovered(true))	
+			{
+				caller.deeplyCovered = true;
+			}
 		}
-		// END KGU#156 2016-03-11
+		// END KGU#156 2016-03-11 / KGU#376 2017-07-01
 
 		// START KGU#2 2015-11-24
 //		if (!done || stop)
@@ -1441,22 +1903,35 @@ public class Executor implements Runnable
 		}
 		// END KG#117 2016-03-07
 		
+		time1 = System.nanoTime();
+		System.out.println("executeCall: runtime data " + (time1 - time0));
+		time0 = time1;
+
 		ExecutionStackEntry entry = this.callers.pop();	// former context
 		
 //		// START KGU#376 2017-04-21: Enh. #389 don't restore after an import call
 		// FIXME: Restore but cache the Interpreter with all variables and copy contents before
 		if (subRoot.isInclude()) {
 			// It was an import Call, so we have to import the definitions and values 
-			// FIXME: Derive a sensible type StringList from subRoot.getTypeInfo() 
+			// FIXME: Derive a sensible type StringList from subRoot.getTypeInfo() KGU 2017-09-18: what for?
 			this.copyInterpreterContents(context.interpreter, entry.interpreter,
-					this.context.variables, null, entry.root.constants.keySet(), false);
+					this.context.variables, entry.root.constants.keySet(), false);
+			// START KGU#388 2017-09-18: Enh. #423
+			// Adopt the imported typedefs if any
+			for (Entry<String, TypeMapEntry> typeEntry: context.dynTypeMap.entrySet()) {
+				TypeMapEntry oldEntry = entry.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
+				if (oldEntry != null) {
+					System.err.println("Conflicting type entry " + typeEntry.getKey() + " from Includable " + subRoot.getMethodName());
+				}
+			}
+			// END KGU#388 2017-09-18
 			entry.variables.addIfNew(context.variables);
 			for (Entry<String, Object> constEntry: context.constants.entrySet()) {
 				if (!entry.constants.containsKey(constEntry.getKey())) {
 					entry.constants.put(constEntry.getKey(), constEntry.getValue());
 				}
 			}	
-			this.importMap.put(subRoot, new ImportInfo(this.context.interpreter, this.context.variables));
+			this.importMap.put(subRoot, new ImportInfo(this.context.interpreter, this.context.variables, this.context.dynTypeMap));
 			context.importList.addIfNew(subRoot.getMethodName());
 			// TODO: Check this for necessity and soundness!
 			for (Entry<String, String> constEntry: subRoot.constants.entrySet()) {
@@ -1473,14 +1948,17 @@ public class Executor implements Runnable
 				for (Root impRoot: this.importMap.keySet()) {
 					if (impRoot.getMethodName().equals(impName)) {
 						ImportInfo info = this.importMap.get(impRoot);
-						if (this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, null, impRoot.constants.keySet(), true)
+						if (this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, impRoot.constants.keySet(), true)
 								&& entry.importList.contains(impName)) {
-							this.copyInterpreterContents(info.interpreter, entry.interpreter, info.variableNames, null, impRoot.constants.keySet(), true);
+							this.copyInterpreterContents(info.interpreter, entry.interpreter, info.variableNames, impRoot.constants.keySet(), true);
 						}
 					}
 				}
 			}
 		}
+		time1 = System.nanoTime();
+		System.out.println("executeCall: context synchron. " + (time1 - time0));
+		time0 = time1;
 //		// END KGU#376 2017-04-21
 		// START KGU#384 2017-04-22: Now done at once with the entire context cartridge
 //		this.variables = entry.variables;
@@ -1497,6 +1975,9 @@ public class Executor implements Runnable
 		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		entry.root.isCalling = false;
 
+		time1 = System.nanoTime();
+		System.out.println("executeCall: diagram.setRoot() " + (time1 - time0));
+		time0 = time1;
 		// START KGU#376 2017-04-21: Enh. #389
 		// The called subroutine will certainly have returned a value...
 		resultObject = this.context.returnedValue;
@@ -1515,6 +1996,9 @@ public class Executor implements Runnable
 		}
 		catch (EvalError ex) {}
 		
+		time1 = System.nanoTime();
+		System.out.println("executeCall: updateVariableDisplay() " + (time1 - time0)+"\n\n");
+		time0 = time1;
 		return resultObject;
 	}
 	
@@ -1585,12 +2069,12 @@ public class Executor implements Runnable
 	// END KGU#2 2015-11-24
 	
     /**
-     * Searches all known pools for a unique program diagram with given name 
-     * @param name - program name
-     * @return a Root with given name if uniquely found, null otherwise
+     * Searches all known pools for a unique includable diagram with given name 
+     * @param name - diagram name
+     * @return a Root of type INCLUDABLE with given name if uniquely found, null otherwise
      * @throws Exception
      */
-	public Root findProgramWithName(String name) throws Exception
+	public Root findIncludableWithName(String name) throws Exception
 	{
 		return findDiagramWithSignature(name, -1);
 	}
@@ -1729,385 +2213,17 @@ public class Executor implements Runnable
 			//interpreter = new Interpreter();
 			Interpreter interpreter = this.context.interpreter;
 			// END KGU#384 2017-04-22
-			String pascalFunction;
-			// random
-			pascalFunction = "public int random(int max) { return (int) (Math.random()*max); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void randomize() {  }";
-			interpreter.eval(pascalFunction);
-			// START KGU#391 2017-05-07: Enh. #398 - we need a sign function to ease the rounding support for COBOL import
-			pascalFunction = "public int sgn(int i) { return (i == 0 ? 0 : (i > 0 ? 1 : -1)); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int sgn(double d) { return (d == 0 ? 0 : (d > 0 ? 1 : -1)); }";
-			interpreter.eval(pascalFunction);
-			// END KGU#391 2017-05-07
-			// square
-			pascalFunction = "public double sqr(double d) { return d * d; }";
-			interpreter.eval(pascalFunction);
-			// square root
-			pascalFunction = "public double sqrt(double d) { return Math.sqrt(d); }";
-			interpreter.eval(pascalFunction);
-			// length of a string
-			pascalFunction = "public int length(String s) { return s.length(); }";
-			interpreter.eval(pascalFunction);
-			// position of a substring inside another string
-			pascalFunction = "public int pos(String subs, String s) { return s.indexOf(subs)+1; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int pos(Character subs, String s) { return s.indexOf(subs)+1; }";
-			interpreter.eval(pascalFunction);
-			// return a substring of a string
-			// START KGU#275 2016-10-09: Bugfix #266: length tolerance of copy function had to be considered
-			//pascalFunction = "public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }";
-			pascalFunction = "public String copy(String s, int start, int count) { int end = Math.min(start-1+count, s.length()); return s.substring(start-1,end); }";
-			// END KGU#275 2016-10-09
-			interpreter.eval(pascalFunction);
-			// delete a part of a string
-			pascalFunction = "public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1); }";
-			interpreter.eval(pascalFunction);
-			// insert a string into another one
-			pascalFunction = "public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1); }";
-			interpreter.eval(pascalFunction);
-			// string transformation
-			pascalFunction = "public String lowercase(String s) { return s.toLowerCase(); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public String uppercase(String s) { return s.toUpperCase(); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public String trim(String s) { return s.trim(); }";
-			interpreter.eval(pascalFunction);
-			// START KGU#410 2017-05-24: Enh. #413: Introduced to facilitate COBOL import but generally useful
-			// If we passed the result of String.split() directly then we would obtain a String[] object the 
-			// Executor cannot display.
-			pascalFunction = "public Object[] split(String s, String p)"
-					+ "{ p = java.util.regex.Pattern.quote(p);"
-					+ " String[] parts = s.split(p, -1);"
-					+ "Object[] results = new Object[parts.length];"
-					+ " for (int i = 0; i < parts.length; i++) {"
-					+ "		results[i] = parts[i];"
-					+ "}"
-					+ "return results; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Object[] split(String s, char c)"
-					+ "{ return split(s, \"\" + c); }";
-			interpreter.eval(pascalFunction);
-			// END KGU#410 2017-05-24
-			// START KGU#57 2015-11-07: More interoperability for characters and Strings
-			// char transformation
-			pascalFunction = "public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Character uppercase(Character ch) { return (Character)Character.toUpperCase(ch); }";
-			interpreter.eval(pascalFunction);
-			// START KGU#150 2016-04-03
-			pascalFunction = "public int ord(Character ch) { return (int)ch; }";
-			interpreter.eval(pascalFunction);
-			// START KGU 2016-04-26: It is conform to many languages just to use the first character
-			//pascalFunction = "public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }";
-			pascalFunction = "public int ord(String s) { return (int)s.charAt(0); }";
-			// END KGU 2016-04-26
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public char chr(int code) { return (char)code; }";
-			interpreter.eval(pascalFunction);
-			// END KGU#150 2016-04-03
-			// END KGU#57 2015-11-07
-			// START KGU#322 2017-01-06: Enh. #325 - reflection functions
-			pascalFunction = "public boolean isArray(Object obj) { return (obj instanceof Object[]); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isString(Object obj) { return (obj instanceof String); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isChar(Object obj) { return (obj instanceof Character); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isBool(Object obj) { return (obj instanceof Boolean); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean isNumber(Object obj) { return (obj instanceof Integer) || (obj instanceof Double); }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int length(Object[] arr) { return arr.length; }";
-			interpreter.eval(pascalFunction);
-			// END KGU#322 2017-01-06
+
 			// START KGU 2016-12-18: #314: Support for simple text file API
 			interpreter.set("executorFileMap", this.openFiles);
 			interpreter.set("executorCurrentDirectory", 
 					(diagram.currentDirectory.isDirectory() ? diagram.currentDirectory : diagram.currentDirectory.getParentFile()).getAbsolutePath());
-			pascalFunction = "public int fileOpen(String filePath) { "
-					+ "int fileNo = 0; "
-					+ "java.io.File file = new java.io.File(filePath); "
-					+ "if (!file.isAbsolute()) { "
-					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
-					+ "} "
-					+ "try { java.io.FileInputStream fis = new java.io.FileInputStream(file); "
-					+ "java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, \"UTF-8\")); "
-					+ "fileNo = executorFileMap.size() + 1; "
-					+ "executorFileMap.add(new java.util.Scanner(reader)); "
-					+ "} "
-					+ "catch (SecurityException e) { fileNo = -3; } "
-					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
-					+ "catch (java.io.IOException e) { fileNo = -1; } "
-					+ "return fileNo; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int fileCreate(String filePath) { "
-					+ "int fileNo = 0; "
-					+ "java.io.File file = new java.io.File(filePath); "
-					+ "if (!file.isAbsolute()) { "
-					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
-					+ "} "
-					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file); "
-					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
-					+ "fileNo = executorFileMap.size() + 1; "
-					+ "executorFileMap.add(writer); "
-					+ "} "
-					+ "catch (SecurityException e) { fileNo = -3; } "
-					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
-					+ "catch (java.io.IOException e) { fileNo = -1; } "
-					+ "return fileNo; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public int fileAppend(String filePath) { "
-					+ "int fileNo = 0; "
-					+ "java.io.File file = new java.io.File(filePath); "
-					+ "if (!file.isAbsolute()) { "
-					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
-					+ "} "
-					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true); "
-					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
-					+ "fileNo = executorFileMap.size() + 1; "
-					+ "executorFileMap.add(writer); "
-					+ "} "
-					+ "catch (SecurityException e) { fileNo = -3; } "
-					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
-					+ "catch (java.io.IOException e) { fileNo = -1; } "
-					+ "return fileNo; "
-					+ "}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void fileClose(int fileNo) { "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
-					+ "if (file != null) { "
-					+ "try { file.close(); } "
-					+ "catch (java.io.IOException e) {} "
-					+ "executorFileMap.set(fileNo - 1, null); } "
-					+ "}"
-					+ "}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public boolean fileEOF(int fileNo) {"
-					+ "	boolean isEOF = true; "
-					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "		java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "		if (reader instanceof java.util.Scanner) { "
-					+ "			try { "
-					+ "				isEOF = !((java.util.Scanner)reader).hasNext();"
-					+ "			} catch (IOException e) {}"
-					+ "		}"
-					+ "	}"
-					+ "	else { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "	return isEOF;"
-					+"}";
-			interpreter.eval(pascalFunction);
-			// The following is just a helper method...
-			pascalFunction = "public Object structorizerGetScannedObject(java.util.Scanner sc) {"
-					+ "Object result = null; "
-					+ "sc.useLocale(java.util.Locale.UK); "
-					+ "if (sc.hasNextInt()) { result = sc.nextInt(); } "
-					+ "else if (sc.hasNextDouble()) { result = sc.nextDouble(); } "
-					+ "else if (sc.hasNext(\"\\\\\\\".*?\\\\\\\"\")) { "
-					+ "String str = sc.next(\"\\\\\\\".*?\\\\\\\"\"); "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"'.*?'\")) { "
-					+ "String str = sc.next(\"'.*?'\"); "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"\\\\{.*?\\\\}\")) { "
-					+ "String token = sc.next(); "
-					+ "result = new Object[]{token.substring(1, token.length()-1)}; "
-					+ "} " 
-					+ "else if (sc.hasNext(\"\\\\\\\".*\")) { "
-					+ "String str = sc.next(); "
-					+ "while (sc.hasNext() && !sc.hasNext(\".*\\\\\\\"\")) { "
-					+ "str += \" \" + sc.next(); "
-					+ "} "
-					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"'.*\")) { "
-					+ "String str = sc.next(); "
-					+ "while (sc.hasNext() && !sc.hasNext(\".*'\")) { "
-					+ "str += \" \" + sc.next(); "
-					+ "} "
-					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
-					+ "result = str.substring(1, str.length() - 1); "
-					+ "} "
-					+ "else if (sc.hasNext(\"\\\\{.*\")) { "
-					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
-					+ "sc.useDelimiter(\"\\\\}\"); "
-					+ "String content = sc.next().trim().substring(1); "
-					+ "sc.useDelimiter(oldDelim); "
-					+ "if (sc.hasNext(\"\\\\}\")) { sc.next(); } "
-					+ "String[] elements = {}; "
-					+ "if (!content.isEmpty()) { "
-					+ "elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
-					+ "} "
-					+ "Object[] objects = new Object[elements.length]; "
-					+ "for (int i = 0; i < elements.length; i++) { "
-					+ "java.util.Scanner sc0 = new java.util.Scanner(elements[i]); "
-					+ "objects[i] = structorizerGetScannedObject(sc0); "
-					+ "sc0.close(); "
-					+ "} "
-					+ "result = objects;"
-					+ "}"
-					+ "else { result = sc.next(); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-// KGU: The following outcommented code is for debugging the local equivalent of the function above
-//			Scanner sc = new Scanner("test 3.4 4,6 \"Alles großer Murks \" hier. {tfzz64} \"aha\" {6, 89,8, 2,DFj}\n{666}");
-//			Object obj = null;
-//			do {
-//				try {
-//				obj = this.structorizerGetScannedObject(sc);
-//				if (obj instanceof Object[]) {
-//					System.out.print("Array: ");
-//					for (int i = 0; i < ((Object[])obj).length; i++) {
-//						System.out.print(" | " + ((Object[])obj)[i]);
-//					}
-//					System.out.println("");
-//				}
-//				else System.out.println(obj.getClass().getName() + ": " + obj);
-//				}
-//				catch (java.util.NoSuchElementException ex) { obj = null; }
-//			} while (obj != null);
-//			sc.close();
-// KGU: The preceding outcommented code is for debugging the local equivalent of the function above
-			pascalFunction = "public Object fileRead(int fileNo) { "
-					+ "Object result = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = structorizerGetScannedObject((java.util.Scanner)reader); "
-					+ "ok = true;"
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Character fileReadChar(int fileNo) { "
-					+ "Character result = '\0'; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "java.util.Scanner sc = (java.util.Scanner)reader; "
-					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
-					+ "sc.useDelimiter(\"\"); "
-					+ "try { "
-					+ "if (!sc.hasNext(\".\") && sc.hasNextLine()) { sc.nextLine(); result = '\\n'; }"
-					+ "else { result = sc.next(\".\").charAt(0); } "
-					+ "}"
-					+ "finally { sc.useDelimiter(oldDelim); } "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Integer fileReadInt(int fileNo) { "
-					+ "Integer result = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = ((java.util.Scanner)reader).nextInt(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public Double fileReadDouble(int fileNo) { "
-					+ "Double result = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = ((java.util.Scanner)reader).nextDouble(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return result; }";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public String fileReadLine(int fileNo) { "
-					+ "String line = null; "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
-					+ "if (reader instanceof java.util.Scanner) { "
-					+ "line = ((java.util.Scanner)reader).nextLine(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
-					+ "return line;	}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void fileWrite(int fileNo, java.lang.Object data) { "
-					+ "	boolean ok = false; "
-					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "		java.io.Closeable writer = executorFileMap.get(fileNo - 1); "
-					+ "		if (writer instanceof java.io.BufferedWriter) { "
-					+ "			((java.io.BufferedWriter)writer).write(data.toString()); "
-					+ "		ok = true;"
-					+ "	}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
-					+ "}";
-			interpreter.eval(pascalFunction);
-			pascalFunction = "public void fileWriteLine(int fileNo, java.lang.Object data) { "
-					+ "boolean ok = false; "
-					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
-					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
-					+ "if (file instanceof java.io.BufferedWriter) { "
-					+ "((java.io.BufferedWriter)file).write(data.toString()); "
-					+ "((java.io.BufferedWriter)file).newLine(); "
-					+ "ok = true; "
-					+ "}"
-					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
-					+ "}";
-			interpreter.eval(pascalFunction);
 			// END KGU 2016-12-18
-			// START KGU#375 2017-03-30: Enh. #388 Workaround for missing support of Object[].clone() in bsh-2.0b4.jar
-			pascalFunction = "public Object[] copyArray(Object[] sourceArray) {"
-					+ "Object[] targetArray = new Object[sourceArray.length];"
-					+ "for (int i = 0; i < sourceArray.length; i++) {"
-					+ "targetArray[i] = sourceArray[i];"
-					+ "}"
-					+ "return targetArray;"
-					+ "}";
-			interpreter.eval(pascalFunction);
-			// END KGU#375 2017-03-30
-			// START TEST fileAppend
-//			int handle = fileAppend("AppendTest.txt");
-//			System.out.println("fileAppend: " + handle);
-//			interpreter.eval("fileWriteLine("+handle+", \"Bandwurm\")");
-//			interpreter.eval("fileWriteLine("+handle+", 4711)");
-//			interpreter.eval("fileClose("+handle+")");
-			// END TEST
-			// START TEST fileRead
-//			int handle = fileOpen("D:/SW-Produkte/Structorizer/tests/Issue314/StructorizerFileAPI.cpp");
-//			if (handle > 0) {
-//				try {
-//					while (!fileEOF(handle)) {
-//						Object value = fileRead(handle);
-//						System.out.println(value);
-//					}
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				try {
-//					fileClose(handle);
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
-			// END TEST
+
+			for (int i = 0; i < builtInFunctions.length; i++) {
+				interpreter.eval(builtInFunctions[i]);
+			}
+			
 		} catch (EvalError ex)
 		{
 			//java.io.IOException
@@ -2285,31 +2401,20 @@ public class Executor implements Runnable
 
 	// START KGU#376 2017-04-20: Enh. #389 - we need to copy interpreter contents 
 	/**
-	 * Copies the type declarations specified by <code>_typedefs</code>, the constants specified
-	 * by <code>_constNames</code> and the values of the variables specified by <code>_varNames</code>
-	 * from the <code>_source</code> interpreter context to the <code>_target</code> interpreter context.
+	 * Copies the constants specified by <code>_constNames</code> and the values of the variables
+	 * specified by <code>_varNames</code> from the <code>_source</code> interpreter context to the
+	 * <code>_target</code> interpreter context.
 	 * @param _source - the source interpreter
 	 * @param _target - the target interpreter
 	 * @param _varNames - names of the variables to be considered
-	 * @param _typedefs - names of the typedefinitions to be involved (still not implemented)
 	 * @param _constNames - names of the constants to be included
 	 * @param _overwrite - whereas defined constants are never overwritten, for variables this argument
 	 * may aloow to update the values of already existing values (default is false)
 	 * @return true if there was at least one copied entity
 	 */
-	private boolean copyInterpreterContents(Interpreter _source, Interpreter _target, StringList _varNames, StringList _typedefs, Set<String> _constNames, boolean _overwrite)
+	private boolean copyInterpreterContents(Interpreter _source, Interpreter _target, StringList _varNames, Set<String> _constNames, boolean _overwrite)
 	{
 		boolean somethingCopied = false;
-		if (_typedefs != null) {
-			for (int i = 0; i < _typedefs.count(); i++) {
-				try {
-					_target.eval(_typedefs.get(i));
-				} catch (EvalError e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
 		for (int i = 0; i < _varNames.count(); i++) {
 			String varName = _varNames.get(i);
 			try {
@@ -2487,17 +2592,27 @@ public class Executor implements Runnable
 
 	
 	// START KGU#67/KGU#68/KGU#69 2015-11-08: We must distinguish between raw input and evaluated objects
-	private void setVarRaw(String name, String rawInput) throws EvalError
+	/**
+	 * Interprets and evaluates the user input string {@code rawInput} and assigns the result to the given
+	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object)}.
+	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
+	 * @param rawInput - the raw input string to be interpreted
+	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the resulting
+	 * value is inappropriate, if both don't match or if a loop variable violation is detected.
+	 * @see #setVar(String, Object) 
+	 */
+	private void setVarRaw(String target, String rawInput) throws EvalError
 	{
 		// first add as string (lest we should end with nothing at all...)
 		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
 		//setVar(name, rawInput);
+		EvalError finalError = null;
 		try {
-			setVar(name, rawInput);
+			setVar(target, rawInput);
 		}
 		catch (EvalError ex)
 		{
-			System.out.println(rawInput + " as raw string " + ex.getMessage());			
+			finalError = ex;	// Remember this error for the case all other attempts will fail
 		}
 		// END KGU#109 2015-12-15
 		// Try some refinement if possible
@@ -2510,161 +2625,295 @@ public class Executor implements Runnable
 				if (strInput.startsWith("\"") && strInput.endsWith("\"") ||
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
-					context.interpreter.eval(name + " = " + rawInput);
-					setVar(name, context.interpreter.get(name));
+					this.evaluateExpression(target + " = " + rawInput, false);
+					setVar(target, context.interpreter.get(target));
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
-					context.interpreter.eval(name + " = \"" + rawInput + "\"");
-					setVar(name, context.interpreter.get(name));					
+					this.evaluateExpression(target + " = \"" + rawInput + "\"", false);
+					setVar(target, context.interpreter.get(target));					
 				}
 				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
 					Character charInput = rawInput.charAt(0);
-					setVar(name, charInput);
+					setVar(target, charInput);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
-				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
-				{
-					String asgnmt = "Object[] " + name + " = " + rawInput;
-					// Nested initializers won't work here!
-					context.interpreter.eval(asgnmt);
-					setVar(name, context.interpreter.get(name));
+//				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
+//				{
+//					String asgnmt = "Object[] " + target + " = " + rawInput;
+//					// Nested initializers won't work here!
+//					this.evaluateExpression(asgnmt, false);
+//					setVar(target, context.interpreter.get(target));
+//				}
+//				// END KGU#184 2016-04-25
+//				// START KGU#388 2017-09-18: Enh. #423
+//				else if (strInput.indexOf("{") > 0 && strInput.endsWith("}")
+//						&& Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null)) {
+//					String asgnmt = "HashMap " + target + " = new HashMap()";
+//					this.evaluateExpression(asgnmt, false);
+//					HashMap<String, String> components = Element.splitRecordInitializer(strInput);
+//					for (Entry<String, String> comp: components.entrySet()) {
+//						String value = comp.getValue();
+//						if (comp.getKey().startsWith("§")) {
+//							value = "\"" + value + "\"";
+//						}
+//						asgnmt = target + ".put(\"" + comp.getKey() + "\", " + value + ")";
+//						this.evaluateExpression(asgnmt, false);
+//					}
+//					setVar(target, context.interpreter.get(target));
+//				}
+				// END KGU#388 2017-09-18
+				else if (strInput.endsWith("}") && (strInput.startsWith("{") ||
+						strInput.indexOf("{") > 0 && Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null))) {
+					setVar(target, this.evaluateExpression(strInput, true));
 				}
-				// END KGU#184 2016-04-25
 				// START KGU#283 2016-10-16: Enh. #273
 				else if (strInput.equals("true") || strInput.equals("false"))
 				{
-					setVar(name, Boolean.valueOf(strInput));
+					setVar(target, Boolean.valueOf(strInput));
 				}
 				// END KGU#283 2016-10-16
 			}
 			catch (Exception ex)
 			{
 				System.out.println(rawInput + " as string/char: " + ex.getMessage());
+				// START KGU#388 2017-09-18: These explicit errors should get raised
+				throw ex;
+				// END KGU#388 2017-09-18
 			}
+			// If all went well until here, then it's fine
+			finalError = null;
 		}
 		// try adding as double
 		try
 		{
 			double dblInput = Double.parseDouble(rawInput);
-			setVar(name, dblInput);
+			setVar(target, dblInput);
+			finalError = null;
 		} catch (Exception ex)
 		{
 			//System.out.println(rawInput + " as double: " + ex.getMessage());
+			if (ex instanceof EvalError) {
+				finalError = (EvalError)ex;
+			}
 		}
 		// finally try adding as integer
 		try
 		{
 			int intInput = Integer.parseInt(rawInput);
-			setVar(name, intInput);
+			setVar(target, intInput);
+			finalError = null;
 		} catch (Exception ex)
 		{
 			//System.out.println(rawInput + " as int: " + ex.getMessage());
+			if (ex instanceof EvalError) {
+				finalError = (EvalError)ex;
+			}
+		}
+		if (finalError != null) {
+			throw finalError;
 		}
 	}
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
-	private void setVar(String name, Object content) throws EvalError
+	/**
+	 * Assigns the computed value {@code content} to the given variable extracted from the "lvalue"
+	 * {@code target}. Analyses and handles possibly given extra information in order to register and
+	 * declare the target variable or constant.<br/>
+	 * Also ensures that no loop variable manipulation is performed (the entire loop stack is checked,
+	 * so use {@link #setVar(String, Object, int)} for a regular loop variable update).<br/>
+	 * There are the following sensible cases w.r.t. {@code target} here (unquoted brackets enclose optional parts):<br/>
+	 * a) {@code [const] <id>}<br/>
+	 * b) {@code <id>'['<expr>']'}<br/>
+	 * c) {@code [const] <typespec1> <id>}<br/>
+	 * d) {@code [const] <typespec1> <id>'['[<expr>]']'}  - implicit C-style array declaration (questionable)<br/>
+	 * e) {@code [const|var] <id> : <typespec2>}<br/>
+	 * f) {@code [const|dim] <id> as <typespec2>}<br/>
+	 * g) {@code <id>(.<id>['['<expr>']'])+}<br/>
+	 * h) {@code <id>'['<expr>']'(.<id>)+}<br/>
+	 * ILLEGAL (NOT supported here):<br/>
+	 * w) {@code const <id>'['<expr>']'} - single elements can't be const<br/>
+	 * x) {@code [const] <id>'['']'}  - C-style array declaration: redundant if array value is assigned, wrong otherwise<br/>
+	 * y) {@code <id>'['<expr>']'('['<expr>']')}+<br/>
+	 * Meta symbol legend (as far as not obvious):<br/>
+	 * {@code <typespec1> ::=}<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;<code>{modifier} &lt;typeid&gt; |</code><br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;<code>{modifier} &lt;typeid&gt; ('['']')+</code> - Java-style array type (questionable)<br/>
+	 * {@code <typespec2> ::=}<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code <typeid> |}<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code array ['['<range>']'] of <typespec>}<br/>
+	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
+	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
+	 * @param content - the value to be assigned
+	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both aren't compatible
+	 * or if a loop variable violation is detected.
+	 * @see #setVarRaw(String, Object)
+	 * @see #setVar(String, Object, int) 
+	 */
+	private void setVar(String target, Object content) throws EvalError
 	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
-		setVar(name, content, context.forLoopVars.count()-1);
+		setVar(target, content, context.forLoopVars.count()-1);
 	}
 
-	private void setVar(String name, Object content, int ignoreLoopStackLevel) throws EvalError
+	/**
+	 * Assigns the computed value {@code content} to the given variable extracted from the "lvalue"
+	 * {@code target}. Analyses and handles possibly given extra information in order to register and
+	 * declare the target variable or constant.<br/>
+	 * Also ensures that no loop variable manipulation is performed. 
+	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
+	 * @param content - the value to be assigned
+	 * @param ignoreLoopStackLevel - the loop nesting level beyond which loop variables aren't critical.
+	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
+	 * match or if a loop variable violation is detected.
+	 * @see #setVarRaw(String, Object)
+	 * @see #setVar(String, Object)
+	 */
+	private void setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
 	// END KGU#307 2016-12-12
 	{
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
-		// There are the following sensible cases w.r.t. name here:
-		// a) [const] <id>
-		// b) <id>'['<expr>']'
-		// c) [const] <typespec1> <id>
-		// d) [const] <typespec1> <id>'['[<expr>]']'  - implicit C-style array declaration (questionable)
-		// e) [const|var] <id> : <typespec2>
-		// f) [const|dim] <id> as <typespec2>
-		// ILLEGAL (not supported here):
-		// g) const <id>'['<expr>']'  - single elements can't be const
-		// h) [const] <id>'['']'  - C-style array declaration: redundant if array value is assigned, wrong otherwise
-		// i) <id>'['<expr>(','<expr>)+']'
-		// j) <id>'['<expr>']'('['<expr>']')+
-		// <typespec1> ::=
-		//    {<modifier>} <typeid> |
-		//    {<modifier>} <typeid> ('['']')+   - Java-style array type (questionable)
-		// <typespec2> ::=
-		//    <id> |
-		//    array ['['<range>']'] of <typespec2> |
-		// <range> ::= <id> | <intliteral> .. <intliteral>
+		// We refer to the cases listed in the javadoc of method setVar(target, content).
 		boolean isConstant = false;
+		String recordName = null;
+		TypeMapEntry compType = null;
+		StringList typeDescr = null;
 		String indexStr = null;
-		StringList tokens = Element.splitLexically(name, true);
+
+		// ======== PHASE 1: Analysis of the target structure ===========
+
+		StringList tokens = Element.splitLexically(target, true);
 		tokens.removeAll(" ");
 		int nTokens = tokens.count();
-		if (tokens.get(0).equalsIgnoreCase("const")) {
+		String token0 = tokens.get(0).toLowerCase();
+		if ((isConstant = token0.equals("const")) || token0.equals("var") || token0.equals("dim")) {
 			// a), c), d), e), f) ?
-			isConstant = true;
-			// Drop type information
+			tokens.remove(0);
+			// Extract type information
 			int posColon = tokens.indexOf(":");
-			if (posColon < 0) posColon = tokens.indexOf("as", false);
-			if (posColon < 0) posColon = nTokens;
-			tokens = tokens.subSequence(1, posColon);
-			nTokens = tokens.count();
-			name = tokens.get(nTokens-1);
-		}
-		if (tokens.get(0).equalsIgnoreCase("var")) {
-			// e)
-			// Drop type information
-			int posColon = tokens.indexOf(":");
-			if (posColon < 0) posColon = nTokens;
-			tokens = tokens.subSequence(1, posColon);
-			nTokens = tokens.count();
-			name = tokens.get(nTokens-1);
-		}
-		else if (tokens.get(0).equalsIgnoreCase("dim")) {
-			// f)
-			// Drop type information
-			int posColon = tokens.indexOf("as", false);
-			if (posColon < 0) posColon = nTokens;
-			tokens = tokens.subSequence(1, posColon);
-			nTokens = tokens.count();
-			name = tokens.get(nTokens-1);
-		}
-		// Now it must be some C or Java style declaration or just a plain variable (possibly indexed)
-		else if (tokens.get(nTokens-1).equals("]")) {
-			// b) indexed variable or d) a C-style array declaration?
-			int posLBrack = tokens.indexOf("[");
-			if (posLBrack < 1) {
-				throw new EvalError(control.msgInvalidExpr.getText().replace("%1", tokens.concatenate(" ")), null, null);
+			if (posColon < 0 && !token0.equals("var")) posColon = tokens.indexOf("as", false);
+			if (posColon >= 0) {
+				typeDescr = tokens.subSequence(posColon+1, nTokens);
+				tokens = tokens.subSequence(0, posColon);
+				// In case of an explicit and Pascal- or BASIC-style variable declaration the target must be an unqualified identifier
+				if (tokens.contains(".")) {
+					throw new EvalError(control.msgConstantRecordComponent.getText().replace("%", target), null, null);
+				}
+				if (tokens.contains("[")) {
+					throw new EvalError(control.msgConstantArrayElement.getText().replace("%", target), null, null);
+				}
 			}
-			else {
-				name = tokens.get(posLBrack-1);
-				if (posLBrack == 1) {
-					indexStr = tokens.concatenate(" ");
-					if (isConstant) {
-						throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
+			nTokens = tokens.count();
+			target = tokens.get(nTokens-1);
+			// START KGU#388 2017-09-18: Enh. #423 - Register the declared type
+			associateType(target, typeDescr);
+			// END KGU#388 2017-09-18
+		}
+		// Now it must be some C or Java style declaration or just a plain variable (possibly indexed or qualified or both)
+		// START KGU#388 2017-09-14: Enh. #423 - We try recursively to track cases g) and h) down
+//		else if (tokens.get(nTokens-1).equals("]")) {
+//			// b) indexed variable or d) a C-style array declaration or g) or h)?
+//			int posLBrack = tokens.indexOf("[");
+//			if (posLBrack < 1) {
+//				throw new EvalError(control.msgInvalidExpr.getText().replace("%1", tokens.concatenate(" ")), null, null);
+//			}
+//			else {
+//				name = tokens.get(posLBrack-1);
+//				if (posLBrack == 1) {
+//					indexStr = tokens.concatenate(" ");
+//					if (isConstant) {
+//						throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
+//					}
+//				}
+//			}
+//		}
+		// qualified or indexed or both?
+		else if (tokens.indexOf(".") == 1 || tokens.get(nTokens-1).equals("]")) {
+			// FIXME: Face a mixed encapsulation of arrays and records
+			// In case of a record component access there must not be modifiers
+			if (tokens.indexOf(".") == 1) {
+				TypeMapEntry recordType = null;
+				// The base variable name should be the last identifier in the series
+				target = tokens.get(0);
+				recordType = this.identifyRecordType(target, false);	// This will only differ from null if it's a record type
+				recordName = target;
+				// Now check recursively for record component names 
+				while (recordType != null && nTokens >= 3 && tokens.get(1).equals(".") && Function.testIdentifier(tokens.get(2), null)) {
+					LinkedHashMap<String, TypeMapEntry> comps = recordType.getComponentInfo(false);
+					String compName = tokens.get(2);
+					if (comps.containsKey(compName)) {
+						// If this is in turn a record type, it may be going on recursively...
+						target += "." + compName;
+						compType = comps.get(compName);
+						if (compType.isRecord()) {
+							recordType = compType;
+						}
+						else {
+							recordType = null;
+						}
+						tokens.set(0, target);
+						tokens.remove(1, 3);
+						nTokens -= 2;
+					}
+					else {
+						throw new EvalError(control.msgInvalidExpr.getText().replace("%1", target + "." + compName), null, null);
+					}
+				}
+				if (isConstant) {
+					throw new EvalError(control.msgConstantRecordComponent.getText().replace("%", target), null, null);
+				}
+				if (this.isConstant(recordName)) {
+					throw new EvalError(control.msgConstantRedefinition.getText().replace("%", recordName), null, null);
+				}
+			}
+			if (tokens.get(nTokens-1).equals("]")) {
+				// b) indexed variable or d) a C-style array declaration?
+				int posLBrack = tokens.indexOf("[");
+				if (posLBrack < 1 || recordName != null && posLBrack > 1) {
+					throw new EvalError(control.msgInvalidExpr.getText().replace("%1", tokens.concatenate(" ")), null, null);
+				}
+				else {
+					target = tokens.get(posLBrack-1);
+					if (posLBrack == 1) {
+						indexStr = tokens.concatenate(" ");
+						if (isConstant) {
+							throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
+						}
 					}
 				}
 			}
 		}
+		// END KGU#388 2017-09-14
 		else {
-			// The standard case: a)
-			name = tokens.get(nTokens-1);
+			// The standard case: a) or c)
+			// START KGU#388 2017-09-18: Register the declared type if it's a defined type name
+			if (nTokens == 2) {
+				typeDescr = tokens.subSequence(0, nTokens - 1);
+				associateType(tokens.get(1), typeDescr);
+			}
+			// END KGU#388 2017-09-18
+			target = tokens.get(nTokens-1);
 		}
 		
-		// FIXME: name still contains type and other modifiers, so this check may fail!
+		// ======== PHASE 2: Check of loop variable violations ===========
+		
+		// FIXME: target may still contain type and other modifiers, so this check might fail!
 		// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
-		if (context.forLoopVars.lastIndexOf(name, ignoreLoopStackLevel) >= 0)
+		if (context.forLoopVars.lastIndexOf(target, ignoreLoopStackLevel) >= 0)
 		{
-			throw new EvalError(control.msgForLoopManipulation.getText().replace("%", name), null, null);
+			throw new EvalError(control.msgForLoopManipulation.getText().replace("%", target), null, null);
 		}
 		// END KGU#307 2016-12-12
 		
+		// ======== PHASE 3: Precautions against violation of constants ===========
 		// START KGU#375 2017-03-30: Enh. #388 - check redefinition of constant
-		if (this.isConstant(name)) {
-			throw new EvalError(control.msgConstantRedefinition.getText().replace("%", name), null, null);
+		if (this.isConstant(target) || recordName != null && this.isConstant(recordName)) {
+			throw new EvalError(control.msgConstantRedefinition.getText().replace("%", target), null, null);
 		}
 		
 		// Avoid sharing an array if the target is a constant (while the source may not be) 
@@ -2672,31 +2921,13 @@ public class Executor implements Runnable
 			content = ((Object[])content).clone();
 		}
 		// END KGU#375 2017-03-30
+		// START KGU#388 2017-09-14: Enh. #423
+		if (isConstant && content instanceof HashMap<?,?>) {
+			// FIXME: This is only a shallow copy, we might have to clone all values as well
+			content = new HashMap<String, Object>((HashMap<String, ?>)content);
+		}
+		// END KGU#388 2017-09-14
 		
-		// START KGU#69 2015-11-09: This is only a good idea in case of raw input
-		//if (content instanceof String)
-		//{
-		//	if (!isNumeric((String) content))
-		//	{
-		//		content = "\"" + (String) content + "\"";
-		//	}
-		//}
-		// END KGU#69 2015-11-08
-
-		// MODIFIED BY GENNARO DONNARUMMA
-
-		// START KGU#141 2016-01-16: Bugfix #112 - this spoiled many index expressions!
-		// No idea what this might have been intended for - enclosing parentheses after input?
-		//if ((name != null) && (name.contains("(")))
-		//{
-		//	name = name.replace("(", "");
-		//}
-		//if ((name != null) && (name.contains(")")))
-		//{
-		//	name = name.replace(")", "");
-		//}
-		// END KGU#141 2016-01-16
-
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
 		// Fundamentally revised by Kay Gürtzig 2015-11-08
 
@@ -2724,25 +2955,64 @@ public class Executor implements Runnable
 //		// END KGU#359 2017-03-06 
 //			boolean arrayFound = this.variables.contains(arrayname);
 //			int index = this.getIndexValue(name);
+		
+		// ======== PHASE 4: Structure-aware value assignment ===========
+
+		// -------- Step 4 a: Array element assignment ----------------------- 
 		if (indexStr != null) {
 		// END KGU#375 2017-03-30
-			boolean arrayFound = context.variables.contains(name);
+			boolean arrayFound = context.variables.contains(target);
+			boolean componentArrayFound = compType != null && context.variables.contains(recordName) && compType.isArray();
 			int index = this.getIndexValue(indexStr);
 			Object[] objectArray = null;
+			Object record = null;
+			HashMap<String, Object> parentRecord = null;
 			int oldSize = 0;
 			if (arrayFound)
 			{
 				try {
 					// If it hasn't been an array then we'll get an error here
 					//objectArray = (Object[]) this.interpreter.get(arrayname);
-					objectArray = (Object[]) context.interpreter.get(name);
+					objectArray = (Object[]) context.interpreter.get(target);
 					oldSize = objectArray.length;
 				}
 				catch (Exception ex)
 				{
 					// Produce a meaningful EvalError instead
 					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-					context.interpreter.eval(name + "[" + index + "] = " + prepareValueForDisplay(content));
+					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
+				}
+			}
+			else if (componentArrayFound)
+			{
+				// Now get the original array component
+				StringList path = StringList.explode(target, "\\.");
+				record = context.interpreter.get(path.get(0));	// base record
+				if (record == null) {
+					record = this.createEmptyRecord(path, 0);
+				}
+				Object comp = record;
+				for (int i = 1; i < path.count(); i++) {
+					parentRecord = (HashMap<String,Object>)comp;
+					comp = parentRecord.get(path.get(i));
+					if (comp == null && i < path.count()-1) {
+						comp = this.createEmptyRecord(path, i);
+						parentRecord.put(path.get(i), comp);
+					}
+				}
+				if (comp == null) {
+					objectArray = new Object[]{};
+				}
+				else if (comp instanceof Object[]) {
+					objectArray = (Object[])comp;
+					oldSize = objectArray.length;
+				}
+				else {
+					String valueType = Instruction.identifyExprType(context.dynTypeMap, this.prepareValueForDisplay(comp), true);
+					throw new EvalError(control.msgTypeMismatch.getText().
+							replace("%1", valueType).
+									replace("%2", compType.getCanonicalType(true, true)).
+									replace("%3", target), null, null);
 				}
 			}
 			if (index > oldSize - 1) // This includes the case of oldSize = 0
@@ -2761,10 +3031,60 @@ public class Executor implements Runnable
 			objectArray[index] = content;
 			//this.interpreter.set(arrayname, objectArray);
 			//this.variables.addIfNew(arrayname);
-			context.interpreter.set(name, objectArray);
-			context.variables.addIfNew(name);
-			
-		} else // if ((name.contains("[")) && (name.contains("]")))
+			if (componentArrayFound) {
+				//try {
+					StringList path = StringList.explode(target, "\\.");
+					parentRecord.put(path.get(path.count()-1), objectArray);
+					context.interpreter.set(recordName, record);
+				//}
+				//catch (Exception ex)
+				//{
+				//	// Produce a meaningful EvalError instead
+				//	//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
+				//	this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
+				//}
+				
+			}
+			else {
+				context.interpreter.set(target, objectArray);
+				context.variables.addIfNew(target);
+			}
+		}
+		// START KGU#388 2017-09-14: Enh. #423 Special treatment for record components
+		// -------- Step 4 b: Record component assignment -------------------- 
+		else if (recordName != null) {
+			StringList path = StringList.explode(target, "\\.");
+			try {
+				Object record = context.interpreter.get(recordName);
+				if (record == null && path.count() == 2) {
+					record = createEmptyRecord(path, 0);
+				}
+				Object comp = record;
+				for (int i = 1; i < path.count()-1; i++) {
+					Object subComp = ((HashMap<?, ?>)comp).get(path.get(i));
+					if (subComp == null && i == path.count()-2) {
+						// We tolerate that the penultimate level is unset...
+						subComp = this.createEmptyRecord(path, i);
+						((HashMap<String, Object>)comp).put(path.get(i), subComp);
+					}
+					else if (!(subComp instanceof HashMap<?,?>)) {
+						throw new EvalError(control.msgInvalidComponent.getText().replace("%1", path.get(i-1)).replace("%2", path.concatenate(".",0,i-1)), null, null);
+					}
+					comp = subComp;
+				}
+				((HashMap<String, Object>)comp).put(path.get(path.count()-1), content);
+				context.interpreter.set(recordName, record);
+			}
+			catch (EvalError ex) {
+				throw ex;
+			}
+			catch (Exception ex) {
+				throw new EvalError(ex.toString(), null, null);
+			}
+		}
+		// END KGU#388 2017-09-14
+		// -------- Step 4 c: assignment to a plain variable ----------------------- 
+		else // indexString == null && recordName == null
 		{
 			// START KGU#375 2017-03-30: Enh. #388 - this has all been done already now
 //			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
@@ -2779,18 +3099,45 @@ public class Executor implements Runnable
 //			name = nameParts[nameParts.length-1];
 //			// END KGU#109 2015-12-15
 			// END KGU#375 2017-03-30
-			
+
+			// START KGU#388 2017-09-14: Enh. #423
+			// Throw an error if a record is assigned to a used but undeclared, non-record or wrong-record-type variable
+			// or vice versa 
+			if (content instanceof HashMap<?,?>) {
+				String typeName = ((HashMap<?, ?>)content).get("§TYPENAME§").toString();
+				if ((context.variables.contains(target) || typeDescr != null)
+						&& (!context.dynTypeMap.containsKey(target) || (compType = context.dynTypeMap.get(target)) == null || !compType.isRecord()
+						|| !compType.typeName.equals(typeName))) {
+					String compTypeStr = "???";
+					if (compType != null) {
+						compTypeStr = compType.getCanonicalType(true, true).replace("@", "array of ");
+					}
+					throw new EvalError(control.msgTypeMismatch.getText().
+							replace("%1", ((HashMap<?, ?>)content).get("§TYPENAME§").toString()).
+							replace("%2", compTypeStr).
+							replace("%3", target), null, null);
+				}
+			}
+			else if (content != null && (context.dynTypeMap.containsKey(target) && (compType = context.dynTypeMap.get(target)) != null
+				|| typeDescr != null && typeDescr.count() == 1 && (compType = context.dynTypeMap.get("%" + typeDescr.get(0))) != null)
+					&& compType.isRecord() ) {
+				throw new EvalError(control.msgTypeMismatch.getText().
+						replace("%1", content.toString()).
+						replace("%2", compType.typeName).
+						replace("%3", target), null, null);
+			}
+
 			// START KGU#322 2017-01-06: Bugfix #324 - an array assigned on input hindered scalar re-assignment
 			//this.interpreter.set(name, content);
 			try {
-				context.interpreter.set(name, content);
+				context.interpreter.set(target, content);
 			}
 			catch (EvalError ex) {
-				if (ex.getMessage().matches(".*Can't assign.*to java\\.lang\\.Object \\[\\].*")) {
+				if (MTCH_EVAL_ERROR_ARRAY.reset(ex.getMessage()).matches()) {
 					// Stored array type is an obstacle for re-assignment, so drop it
-					context.interpreter.unset(name);
+					context.interpreter.unset(target);
 					// Now try again
-					context.interpreter.set(name, content);
+					context.interpreter.set(target, content);
 				}
 				else {
 					// Something different, so rethrow
@@ -2815,19 +3162,19 @@ public class Executor implements Runnable
 //			}
 //			this.interpreter.eval(name + " = " + content);	// What the heck is this good for, now?
 			// START KGU#99 2015-12-10: Bugfix #49 - for later comparison etc. we try to replace wrapper objects by simple values
-			if (! (content instanceof String || content instanceof Character || content instanceof Object[]))
+			if (! (content instanceof String || content instanceof Character || content instanceof Object[] || content instanceof HashMap<?,?>))
 			{
 				try {
-					context.interpreter.eval(name + " = " + content);	// Avoid the variable content to be an object
+					this.evaluateExpression(target + " = " + content, false);	// Avoid the variable content to be an object
 				}
 				catch (EvalError ex)	// Just ignore an error (if we may rely on the previously set content to survive)
 				{}
 			}
 			// END KGU#99 2015-12-10
-			context.variables.addIfNew(name);
+			context.variables.addIfNew(target);
 			// START KGU#375 2017-03-30: Enh. #388
 			if (isConstant) {
-				context.constants.put(name, context.interpreter.get(name));
+				context.constants.put(target, context.interpreter.get(target));
 			}
 			// END KGU#375 2017-03-30
 		}
@@ -2852,6 +3199,56 @@ public class Executor implements Runnable
 			updateVariableDisplay();
 		}
 		// END KGU#20 2015-10-13
+	}
+
+	/**
+	 * Detects whether the StringList {@code _typeDescr} specifies a defined type and if so
+	 * associates the latter to the given variable or constant name {@code target} in {@code this.context.dynTypeMap}.
+	 * @param target - a variable or constant identifier
+	 * @param typeDescr - a {@link StringList} comprising a found type description
+	 */
+	private void associateType(String target, StringList typeDescr) {
+		String typeName = null;
+		if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), null)
+				&& context.dynTypeMap.containsKey(":" + typeName)) {
+			context.dynTypeMap.put(target, context.dynTypeMap.get(":" + typeName));
+		}
+		// In other cases we cannot create a new TypeMapEntry because we are lacking element and line information here.
+		// So it is up to the calling method...
+	}
+	
+	private HashMap<String, Object> createEmptyRecord(StringList path, int depth) {
+		TypeMapEntry recordType = this.identifyRecordType(path.get(0), false);
+		for (int i = 1; i <= depth; i++) {
+			recordType = recordType.getComponentInfo(true).get(path.get(i));
+		}
+		return createEmptyRecord(recordType);
+	}
+	private HashMap<String, Object> createEmptyRecord(TypeMapEntry recordType) {
+		HashMap<String, Object> record = new HashMap<String, Object>();
+		for (String compName: recordType.getComponentInfo(true).keySet()) {
+			record.put(compName, null);
+		}
+		record.put("§TYPENAME§", recordType.typeName);
+		return record;
+	}
+
+	/**
+	 * Checks if the name described by {@code varName} represents a record and if so
+	 * returns the respective TypeMapEntry, otherwise null.
+	 * @param typeOrVarName - a string sequence of modifiers, ids, and possible selectors 
+	 * @param isTypeName TODO
+	 * @return a TypeMapEntry for a record type or null
+	 */
+	private TypeMapEntry identifyRecordType(String typeOrVarName, boolean isTypeName)
+	{
+		TypeMapEntry recordType = context.dynTypeMap.get((isTypeName ? ":" : "") + typeOrVarName);
+		
+		if (recordType != null && !recordType.isRecord()) {
+				recordType = null;
+		}
+		
+		return recordType;
 	}
 
 	// START KGU#20 2015-10-13: Code from above moved hitherto and formed to a method
@@ -2899,6 +3296,23 @@ public class Executor implements Runnable
 				}
 				valStr = valStr + "}";
 			}
+			// START KGU#388 2017-09-14: Enh. #423
+			if (val.getClass().getSimpleName().equals("HashMap"))
+			{
+				HashMap<String, Object> hmVal = (HashMap)val;
+				valStr = hmVal.get("§TYPENAME§") + "{";
+				int j = 0;
+				for (Entry<String, Object> entry: hmVal.entrySet())
+				{
+					String key = entry.getKey();
+					if (!key.startsWith("§")) {
+						String elementStr = prepareValueForDisplay(entry.getValue());
+						valStr = valStr + ((j++ > 0) ? ", " : "") + key + ": " + elementStr;
+					}
+				}
+				valStr = valStr + "}";
+			}
+			// END KGU#388 2017-09-14
 			else if (val instanceof String)
 			{
 				// START KGU#285 2016-10-16: Bugfix #276
@@ -2943,8 +3357,7 @@ public class Executor implements Runnable
 				{
 					// In this case an initialisation expression ("{ ..., ..., ...}") is expected
 					String asgnmt = "Object[] " + varName + " = " + newValue;
-					// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
-					context.interpreter.eval(asgnmt);
+					this.evaluateExpression(asgnmt, true);
 //					// Okay, but now we have to sort out some un-boxed strings
 //					Object[] objectArray = (Object[]) interpreter.get(varName);
 //					for (int j = 0; j < objectArray.length; j++)
@@ -2958,6 +3371,11 @@ public class Executor implements Runnable
 //						}
 //					}
 				}
+				// START KGU#388 2017-10-08: Enh. #423
+				else if (context.dynTypeMap.containsKey(varName) && context.dynTypeMap.get(varName).isRecord()) {
+					context.interpreter.set(varName, evaluateExpression((String)newValue, true));
+				}
+				// END KGU#388 2017-10-08
 				else
 				{
 					setVarRaw(varName, (String)newValue);
@@ -3165,8 +3583,9 @@ public class Executor implements Runnable
 		// END KGU#77/KGU#78 2015-11-25
 		{
 			String cmd = sl.get(i);
-			// cmd=cmd.replace(":=", "<-");
-			cmd = convert(cmd).trim();
+			// START KGU#388 2017-09-13: Enh. #423 We shouldn't do this for type definitions
+			//cmd = convert(cmd).trim();
+			// END KGU#388 2017-09-13
 			try
 			{
 				// START KGU#271: 2016-10-06: Bugfix #269 - this was mis-placed here and had to go to the loop body end 
@@ -3176,64 +3595,86 @@ public class Executor implements Runnable
 //				}
 				// END KGU#271 2016-10-06
 				
-				// assignment?
-				// START KGU#377 2017-03-30: Bugfix
-				//if (cmd.indexOf("<-") >= 0)
-				if (Element.splitLexically(cmd, true).contains("<-"))
-				// END KGU#377 2017-03-30: Bugfix
-				{
-					result = tryAssignment(cmd, element);
-				}
-				// input
-				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
-				//else if (cmd.indexOf(CodeParser.input) >= 0)
-				else if (cmd.matches(
-						this.getKeywordPattern(CodeParser.getKeyword("input")) + "([\\W].*|$)"))
-				// END KGU#65 2015-11-04
-				{
-					result = tryInput(cmd);
-				}
-				// output
-				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
-				//else if (cmd.indexOf(CodeParser.output) >= 0)
-				else if (cmd.matches(
-						this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
-				// END KGU#65 2015-11-04
-				{
-					result = tryOutput(cmd);
-				}
-				// return statement
-				// START KGU 2015-11-28: The "return" keyword ought to be the first word of the instruction,
-				// comparison should not be case-sensitive while CodeParser.preReturn isn't fully configurable,
-				// but a separator would be fine...
-				//else if (cmd.indexOf("return") >= 0)
-				else if (cmd.matches(
-						this.getKeywordPattern(CodeParser.getKeywordOrDefault("preReturn", "return")) + "([\\W].*|$)"))
-				// END KGU 2015-11-11
-				{		 
-					result = tryReturn(cmd.trim());
-				}
-				// START KGU#332 2017-01-17/19: Enh. #335 - tolerate a Pascal variable declaration
-				else if (cmd.matches("^var.*:.*")) {
-					StringList varNames = StringList.explode(cmd.substring("var".length(), cmd.indexOf(":")), ",");
-					for (int j = 0; j < varNames.count(); j++) {
-						setVar(varNames.get(j), null);
+				// START KGU#388 2017-09-13: Enh. #423 We shouldn't do this for type definitions
+				if (!Instruction.isTypeDefinition(cmd, context.dynTypeMap)) {
+					cmd = convert(cmd).trim();
+				// END KGU#388 2017-09-13
+
+					// START KGU#417 2017-06-30: Enh. #424 (Turtleizer functions introduced) 
+					cmd = this.evaluateDiagramControllerFunctions(cmd);
+					// END KGU#417 2017-06-30
+
+					// assignment?
+					// START KGU#377 2017-03-30: Bugfix
+					//if (cmd.indexOf("<-") >= 0)
+					if (Element.splitLexically(cmd, true).contains("<-"))
+						// END KGU#377 2017-03-30: Bugfix
+					{
+						result = tryAssignment(cmd, element, i);
 					}
-				}
-				else if (cmd.matches("^dim.* as .*")) {
-					StringList varNames = StringList.explode(cmd.substring("dim".length(), cmd.indexOf(" as ")), ",");
-					for (int j = 0; j < varNames.count(); j++) {
-						setVar(varNames.get(j), null);
+					// input
+					// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
+					//else if (cmd.indexOf(CodeParser.input) >= 0)
+					else if (cmd.matches(
+							this.getKeywordPattern(CodeParser.getKeyword("input")) + "([\\W].*|$)"))
+						// END KGU#65 2015-11-04
+					{
+						result = tryInput(cmd);
 					}
+					// output
+					// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
+					//else if (cmd.indexOf(CodeParser.output) >= 0)
+					else if (cmd.matches(
+							this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
+						// END KGU#65 2015-11-04
+					{
+						result = tryOutput(cmd);
+					}
+					// return statement
+					// START KGU 2015-11-28: The "return" keyword ought to be the first word of the instruction,
+					// comparison should not be case-sensitive while CodeParser.preReturn isn't fully configurable,
+					// but a separator would be fine...
+					//else if (cmd.indexOf("return") >= 0)
+					else if (cmd.matches(
+							this.getKeywordPattern(CodeParser.getKeywordOrDefault("preReturn", "return")) + "([\\W].*|$)"))
+						// END KGU 2015-11-11
+					{		 
+						result = tryReturn(cmd.trim());
+					}
+					// START KGU#332 2017-01-17/19: Enh. #335 - tolerate a Pascal variable declaration
+					else if (cmd.matches("^var.*:.*")) {
+						// START KGU#388 2017-09-14: Enh. #423
+						element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
+						// END KGU#388 2017-09-14
+						StringList varNames = StringList.explode(cmd.substring("var".length(), cmd.indexOf(":")), ",");
+						for (int j = 0; j < varNames.count(); j++) {
+							setVar(varNames.get(j).trim(), null);
+						}
+					}
+					else if (cmd.matches("^dim.* as .*")) {
+						// START KGU#388 2017-09-14: Enh. #423
+						element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
+						// END KGU#388 2017-09-14
+						StringList varNames = StringList.explode(cmd.substring("dim".length(), cmd.indexOf(" as ")), ",");
+						for (int j = 0; j < varNames.count(); j++) {
+							setVar(varNames.get(j), null);
+						}
+					}
+					// END KGU#332 2017-01-17/19
+					else
+					{
+						result = trySubroutine(cmd, element);
+					}
+					// START KGU#156 2016-03-11: Enh. #124
+					element.addToExecTotalCount(1, true);	// For the instruction line
+					//END KGU#156 2016-03-11
+					
+				// START KGU#388 2017-09-13: Enh. #423
 				}
-				// END KGU#332 2017-01-17/19
-				else
-				{
-					result = trySubroutine(cmd, element);
+				else {
+					element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
 				}
-				// START KGU#156 2016-03-11: Enh. #124
-				element.addToExecTotalCount(1, true);	// For the instruction line
-				//END KGU#156 2016-03-11
+				// END KGU#388 2017-09-13
 				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
 				if ((i+1 < sl.count()) && result.equals("") && (stop == false)
 						&& !context.returned && leave == 0)
@@ -3259,6 +3700,7 @@ public class Executor implements Runnable
 			{
 				result = ex.getLocalizedMessage();
 				if (result == null) result = ex.getMessage();
+				if (result == null) result = ex.toString();
 			}
 			i++;
 		}
@@ -3308,16 +3750,28 @@ public class Executor implements Runnable
 				}
 				// END KGU 2015-10-12
 
+				long time0 = System.nanoTime();
+				// START KGU#417 2017-06-30: Enh. #424
+				cmd = this.evaluateDiagramControllerFunctions(cmd);
+				// END KGU#417 2017-06-30
+				long time1 = System.nanoTime();
+				System.out.println("DiagramControllerFunctions: " + (time1-time0));
+
 				// assignment?
 				// START KGU#377 2017-03-30: Bugfix
 				//if (cmd.indexOf("<-") >= 0)
+				time0 = time1;
 				if (Element.splitLexically(cmd, true).contains("<-"))
 				// END KGU#377 2017-03-30: Bugfix
 				{
-					result = tryAssignment(cmd, element);
+					time1 = System.nanoTime();
+					System.out.println("splitLexically: " + (time1-time0));
+					result = tryAssignment(cmd, element, i);
 				}
 				else
 				{
+					time1 = System.nanoTime();
+					System.out.println("splitLexically: " + (time1-time0));
 					result = trySubroutine(cmd, element);
 				}
 				
@@ -3377,7 +3831,12 @@ public class Executor implements Runnable
 		// Unstructured return?
 		else if (element.isReturn()) {
 			try {
-				result = tryReturn(convert(sl.get(0)));
+				// START KGU#417 2017-06-30: Enh. #424
+				//result = tryReturn(convert(sl.get(0)));
+				String cmd = convert(sl.get(0));
+				cmd = this.evaluateDiagramControllerFunctions(cmd);
+				result = tryReturn(cmd);
+				// END KGU#417 2017-06-30
 				done = true;			
 			}
 			catch (Exception ex)
@@ -3399,7 +3858,10 @@ public class Executor implements Runnable
 			try {
 				// START KGU 2017-04-14: #394 Allow arbitrary integer expressions now
 				//Object n = interpreter.eval(tokens.get(1));
-				Object n = context.interpreter.eval(expr);
+				// START KGU#417 2017-06-30: Enh. #424
+				expr = this.evaluateDiagramControllerFunctions(expr);
+				// END KGU#417 2017-06-30
+				Object n = this.evaluateExpression(expr, false);
 				// END KGU 2017-04-14
 				if (n instanceof Integer)
 				{
@@ -3466,10 +3928,97 @@ public class Executor implements Runnable
 	}
 	// END KGU#78 2015-11-25
 	
-	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
-	// Submethod of stepInstruction(Instruction element), handling an assignment
-	private String tryAssignment(String cmd, Instruction instr) throws EvalError
+	// START KGU#417 2017-06-29: Enh. #424 New mechanism to pre-evaluate Turtleizer functions
+	private String evaluateDiagramControllerFunctions(String expression) throws EvalError
 	{
+		if (diagramController != null && diagramController instanceof FunctionProvidingDiagramController) {
+			// Now, several ones of the functions offered by diagramController might
+			// occur at different nesting depths in the expression. So we must find
+			// and evaluate them from innermost to outermost.
+			// We advance from right to left, this way we will evaluate deeper nested
+			// functions first.
+			// Begin with collecting all possible occurrence positions
+			StringList tokens = Element.splitLexically(expression, true);
+			LinkedList<Integer> positions = new LinkedList<Integer>();
+			HashMap<String, Class<?>[]> funcMap = ((FunctionProvidingDiagramController)diagramController).getFunctionMap();
+			for (Entry<String, Class<?>[]> entry: funcMap.entrySet()) {
+				int pos = -1;
+				while ((pos = tokens.indexOf(entry.getKey(), pos+1, false)) >= 0) {
+					positions.add(pos);
+				}
+			}
+			// 
+			positions.sort(java.util.Collections.reverseOrder());
+			Iterator<Integer> iter = positions.iterator();
+			try {
+				while (iter.hasNext()) {
+					int pos = iter.next();
+					String fName = tokens.get(pos).toLowerCase();
+					String exprTail = tokens.concatenate("", pos + 1).trim();
+					if (exprTail.startsWith("(")) {
+						StringList args = Element.splitExpressionList(exprTail.substring(1), ",");
+						Class<?>[] signature = funcMap.get(fName);
+						int nArgs = args.count();
+						if (nArgs == signature.length - 1) {
+							String tail = "";
+							StringList parts = Element.splitExpressionList(exprTail.substring(1), ",", true);
+							if (parts.count() > nArgs) {
+								tail = parts.get(parts.count()-1).trim();
+							}
+							Object argVals[] = new Object[nArgs];
+							for (int i = 0; i < nArgs; i++) {
+								Object val = this.evaluateExpression(args.get(i), false);
+								try {
+									signature[i].cast(val);
+								}
+								catch (Exception ex) {
+									EvalError err = new EvalError("Function <" + fName + "> argument "
+											+ (i+1) + ": <" + args.get(i) + "> could not be converted to "
+											+ signature[i].getSimpleName(), null, null);
+									err.setStackTrace(ex.getStackTrace());
+									throw err;
+								}
+							}
+							// Passed till here, we try to execute the function - this may throw a FunctionException
+							Object result = ((FunctionProvidingDiagramController)diagramController).execute(fName, argVals);
+							tokens.remove(pos, tokens.count());
+							tokens.add(signature[signature.length-1].cast(result).toString());
+							if (!tail.isEmpty()) {
+								tokens.add(Element.splitLexically(tail.substring(1), true));
+							}
+						}
+					}
+				}
+			}
+			catch (EvalError ex) {
+				throw ex;
+			}
+			catch (Exception ex) {
+				// Convert other errors into EvalError
+				EvalError err = new EvalError(ex.toString(), null, null);
+				err.setStackTrace(ex.getStackTrace());
+				throw err;
+			}
+
+			expression = tokens.concatenate();
+		}
+		return expression;
+	}
+	// END KGU#417 2017-06-29
+	
+	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
+	/**
+	 * Submethod of stepInstruction(Instruction element), handling an assignment.
+	 * Also updates the dynamic type map. 
+	 * @param cmd - the (assignment) instruction line, may also contain declarative parts
+	 * @param instr - the Instruction element
+	 * @param lineNo - the line number of the current assignment (for the type resgistration)
+	 * @return a possible error message (for errors not thrown as EvalError)
+	 * @throws EvalError
+	 */
+	private String tryAssignment(String cmd, Instruction instr, int lineNo) throws EvalError
+	{
+		long time0 = System.nanoTime();
 		String result = "";
 		Object value = null;
 		// KGU#2: In case of a Call element, we allow an assignment with just the subroutine call on the
@@ -3482,20 +4031,36 @@ public class Executor implements Runnable
 //				cmd.indexOf("<-") + 2, cmd.length()).trim();
 		StringList tokens = Element.splitLexically(cmd, true);
 		int posAsgnOpr = tokens.indexOf("<-");
-		String varName = tokens.subSequence(0, posAsgnOpr).concatenate().trim();
+		String leftSide = tokens.subSequence(0, posAsgnOpr).concatenate().trim();
 		tokens.remove(0, posAsgnOpr+1);
-		// Watch out for constant arrays
+		// START KGU#388 2017-09-13: Enh. #423 support records
+		tokens.removeAll(" ");
+		// END KGU#388 2017-09-13
+		long time1 = System.nanoTime();
+		System.out.println("tryAssignment: Lexik " + (time1 - time0));
+		time0 = time1;
+		// Watch out for constant arrays or records
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
-			if (context.constants.get(token) instanceof Object[]) {
+			Object constVal = context.constants.get(token);
+			if (constVal instanceof Object[]) {
 				// Let a constant array be replaced by its clone, so we avoid structure
 				// sharing, which would break the assurance of constancy.
 				tokens.set(i, "copyArray(" + token + ")");
 			}
+			// START KGU#388 2017-09-13: Enh. #423 support records, too
+			else if (constVal instanceof HashMap<?, ?>) {
+				// Let a constant record be replaced by its clone, so we avoid structure
+				// sharing, which would break the assurance of constancy.
+				tokens.set(i, "copyRecord(" + token + ")");
+			}
+			// END KGU#388 2017-09-13
 		}
 		String expression = tokens.concatenate().trim();
 		// END KGU#375 2017-03-30
-		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
+		time1 = System.nanoTime();
+		System.out.println("tryAssignment: constants " + (time1 - time0));
+		time0 = time1;
 		if (instr instanceof Call)
 		{
 			Function f = new Function(expression);
@@ -3517,9 +4082,15 @@ public class Executor implements Runnable
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
-						args[p] = context.interpreter.eval(f.getParam(p));
+						args[p] = this.evaluateExpression(f.getParam(p), false);
 					}
+					time1 = System.nanoTime();
+					System.out.println("tryAssignment: Sub-diagram retrieval " + (time1 - time0));
+					time0 = time1;
 					value = executeCall(sub, args, (Call)instr);
+					time1 = System.nanoTime();
+					System.out.println("tryAssignment: executeCall total " + (time1 - time0));
+					time0 = time1;
 					// START KGU#117 2016-03-10: Enh. #77
 					if (Element.E_COLLECTRUNTIMEDATA)
 					{
@@ -3548,25 +4119,85 @@ public class Executor implements Runnable
 			}
 		}
 		// END KGU#2 2015-10-17
-		// evaluate the expression
-		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
-		else if (expression.startsWith("{") && expression.endsWith("}"))
+		// Now evaluate the expression
+		// START KGU#426 2017-09-30: Enh. #48, #423, bugfix #429 we need this code e.g in tryReturn, too
+//		// FIXME: This should be recursive!
+//		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+//		else if (expression.startsWith("{") && expression.endsWith("}"))
+//		{
+//			// FIXME: We might have to evaluate those element values in advance, which are initializers themselves...
+//			this.evaluateExpression("Object[] tmp20160114kgu = " + expression, false);
+//			value = context.interpreter.get("tmp20160114kgu");
+//			context.interpreter.unset("tmp20160114kgu");
+//		}
+//		// END KGU#100 2016-01-14
+//		// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
+//		else if (tokens.indexOf("{") == 1 && expression.endsWith("}")
+//				&& (recordType = identifyRecordType(tokens.get(0), true)) != null)
+//		{
+//			this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
+//			HashMap<String, String> components = Element.splitRecordInitializer(expression);
+//			if (components == null || components.containsKey("§TAIL§")) {
+//				result = control.msgInvalidExpr.getText().replace("%1", expression);
+//			}
+//			else {
+//				components.remove("§TYPENAME§");
+//				LinkedHashMap<String, TypeMapEntry> compDefs = recordType.getComponentInfo(false);
+//				for (Entry<String, String> comp: components.entrySet()) {
+//					// FIXME: We might have to evaluate the component value in advance if it is an initializer itself...
+//					if (compDefs.containsKey(comp.getKey())) {
+//						context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
+//					}
+//					else {
+//						result = control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName);
+//						break;
+//					}
+//				}
+//				value = context.interpreter.get("tmp20170913kgu");
+//				if (value instanceof HashMap<?,?>) {
+//					((HashMap<String, Object>)value).put("§TYPENAME§", recordType.typeName);
+//				}
+//				context.interpreter.unset("tmp20170913kgu");
+//			}
+//		}
+//		// END KGU#388 2017-09-13
+//		else
+//		{
+//			//cmd = cmd.replace("<-", "=");
+//		
+//			value = this.evaluateExpression(expression);
+//		}
+		else
 		{
-			context.interpreter.eval("Object[] tmp20160114kgu = " + expression);
-			value = context.interpreter.get("tmp20160114kgu");
-			context.interpreter.unset("tmp20160114kgu");
+			value = this.evaluateExpression(expression, true);
 		}
-		// END KGU#100 2016-01-14
-		else		
-		{
-			//cmd = cmd.replace("<-", "=");
-		
-			value = context.interpreter.eval(expression);
-		}
+		// END KGU#426 2017-09-30
 		
 		if (value != null)
 		{
-			setVar(varName, value);
+			// Assign the value and handle provided declaration
+			setVar(leftSide, value);
+			// START KGU#388 2017-09-14. Enh. #423
+			// FIXME: This is poorly done, particularly we must handle cases of record assignment 
+			//instr.updateTypeMapFromLine(context.dynTypeMap, cmd, lineNo);
+			if (!leftSide.contains(".") && !leftSide.contains("[")) {
+				TypeMapEntry oldEntry = null;
+				String target = instr.getAssignedVarname(Element.splitLexically(leftSide, true)) + "";
+				if (!context.dynTypeMap.containsKey(target) || !(oldEntry = context.dynTypeMap.get(target)).isDeclared) {
+					String typeDescr = Instruction.identifyExprType(context.dynTypeMap, expression, true);
+					if (oldEntry == null) {
+						TypeMapEntry typeEntry = null;
+						if (typeDescr != null && (typeEntry = context.dynTypeMap.get(":" + typeDescr)) == null) {
+							typeEntry = new TypeMapEntry(typeDescr, null, instr, lineNo, true, false, false);
+						}
+						context.dynTypeMap.put(target, typeEntry);
+					}
+					else {
+						oldEntry.addDeclaration(typeDescr, instr, lineNo, true, false);
+					}
+				}
+			}
+			// END KGU#388 2017-09-14
 		}
 		// START KGU#2 2015-11-24: In case of an already detected problem don't fill the result
 		//else if (result.isEmpty())
@@ -3601,7 +4232,7 @@ public class Executor implements Runnable
 				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
 				try {
 					String dummyVar = "prompt" + this.hashCode();
-					context.interpreter.eval(dummyVar + "=\"" + prompt + "\"");
+					this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false);
 					Object res = context.interpreter.get(dummyVar);
 					if (res != null) {
 						prompt = res.toString();
@@ -3765,7 +4396,7 @@ public class Executor implements Runnable
 			{
 				out = outExpressions.get(i);
 		// END KGU#101 2015-12-11
-				Object n = context.interpreter.eval(out);
+				Object n = this.evaluateExpression(out, false);
 				if (n == null)
 				{
 					result = control.msgInvalidExpr.getText().replace("%1", out);
@@ -3863,7 +4494,10 @@ public class Executor implements Runnable
 		Object resObj = null;
 		if (!out.isEmpty())
 		{
-			resObj = context.interpreter.eval(out);
+			// START KGU#426 2017-09-30: Bugfix #429
+			//resObj = this.evaluateExpression(out);
+			resObj = this.evaluateExpression(out, true);
+			// END KGU#426 2017-09-30
 			// If this diagram is executed at top level then show the return value
 			if (this.callers.empty())
 			{
@@ -3928,13 +4562,14 @@ public class Executor implements Runnable
 		Function f = new Function(cmd);
 		if (f.isFunction())
 		{
+			String procName = f.getName();
 			String params = new String();	// List of evaluated arguments
 			Object[] args = new Object[f.paramCount()];
 			for (int p = 0; p < f.paramCount(); p++)
 			{
 				try
 				{
-					args[p] = context.interpreter.eval(f.getParam(p));
+					args[p] = this.evaluateExpression(f.getParam(p), false);
 					if (args[p] == null)
 					{
 						if (!result.isEmpty())
@@ -3973,7 +4608,7 @@ public class Executor implements Runnable
 				//Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				Root sub = null;
 				try {
-					sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+					sub = this.findSubroutineWithSignature(procName, f.paramCount());
 				} catch (Exception ex) {
 					return ex.getMessage();	// Ambiguous call!
 				}
@@ -3994,7 +4629,7 @@ public class Executor implements Runnable
 					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
 					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
 					result = control.msgNoSubroutine.getText().
-							replace("%1", f.getName()).
+							replace("%1", procName).
 							replace("%2", Integer.toString(f.paramCount())).
 							replace("\\n", "\n");
 					// END KGU#197 2016-07-27
@@ -4010,7 +4645,7 @@ public class Executor implements Runnable
 						// Cut off the leading comma from the list of evaluated arguments
 						params = params.substring(1);
 					}
-					cmd = f.getName().toLowerCase() + "(" + params + ")";
+					cmd = procName.toLowerCase() + "(" + params + ")";
 					result = getExec(cmd, element.getColor());
 				} 
 //				else if (CodeParser.ignoreCase) {
@@ -4021,75 +4656,75 @@ public class Executor implements Runnable
 				else	
 				{
 					// Try as built-in subroutine as is
-					context.interpreter.eval(cmd);
+					this.evaluateExpression(cmd, false);
 				}
 			}
 		}
-		// START KGU#376 2017-04-11: Enh. #389
-		else if (element instanceof Call && element.isImportCall()) {
-			Root imp = null;
-			String diagrName = ((Call)element).getSignatureString();
-			try {
-				imp = this.findProgramWithName(diagrName);
-			} catch (Exception ex) {
-				return ex.getMessage();	// Ambiguous call!
-			}
-			// END KGU#317 2016-12-29
-			if (imp != null)
-			{
-				// START KGU#376 207-04-21: Enh. ä389
-				// Has this import already been executed -then just adopt the results
-				if (this.importMap.containsKey(imp)) {
-					ImportInfo impInfo = this.importMap.get(imp);
-					this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
-							imp.variables, null, imp.constants.keySet(), false);
-					// FIXME adopt the imported typedefs if any
-					context.variables.addIfNew(impInfo.variableNames);
-					for (String constName: imp.constants.keySet()) {
-						if (!context.constants.containsKey(constName)) {
-							context.constants.put(constName, impInfo.interpreter.get(constName));
-						}
-					}
-					// START KGU#117 2017-04-29: Enh. #77
-					if (Element.E_COLLECTRUNTIMEDATA)
-					{
-						element.simplyCovered = true;
-						if (imp.isTestCovered(true)) {
-							element.deeplyCovered = true;
-						}
-					}
-					// END KGU#117 2017-04-29
-					try 
-					{
-						updateVariableDisplay();
-					}
-					catch (EvalError ex) {}
-				}
-				else {
-				// END KGU#376 2017-04-21
-					executeCall(imp, null, (Call)element);
-					// START KGU#117 2016-03-10: Enh. #77
-					if (Element.E_COLLECTRUNTIMEDATA)
-					{
-						element.simplyCovered = true;
-					}
-					// END KGU#117 2016-03-10
-				// START KGU#376 207-04-21: Enh. ä389
-				}
-				context.importList.addIfNew(diagrName);
-				// END KGU#376 2017-04-21
-			}
-			else
-			{
-				// START KGU#197 2016-07-27: Now translatable message
-				//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
-				//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
-				result = control.msgNoProgDiagram.getText().
-						replace("%", diagrName);
-				// END KGU#197 2016-07-27
-			}
-			
-		}
+		// START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-07-01
+//		else if (element instanceof Call && element.isImportCall()) {
+//			Root imp = null;
+//			String diagrName = ((Call)element).getSignatureString();
+//			try {
+//				imp = this.findProgramWithName(diagrName);
+//			} catch (Exception ex) {
+//				return ex.getMessage();	// Ambiguous call!
+//			}
+//			// END KGU#317 2016-12-29
+//			if (imp != null)
+//			{
+//				// START KGU#376 207-04-21: Enh. ä389
+//				// Has this import already been executed -then just adopt the results
+//				if (this.importMap.containsKey(imp)) {
+//					ImportInfo impInfo = this.importMap.get(imp);
+//					this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
+//							imp.variables, null, imp.constants.keySet(), false);
+//					// FIXME adopt the imported typedefs if any
+//					context.variables.addIfNew(impInfo.variableNames);
+//					for (String constName: imp.constants.keySet()) {
+//						if (!context.constants.containsKey(constName)) {
+//							context.constants.put(constName, impInfo.interpreter.get(constName));
+//						}
+//					}
+//					// START KGU#117 2017-04-29: Enh. #77
+//					if (Element.E_COLLECTRUNTIMEDATA)
+//					{
+//						element.simplyCovered = true;
+//						if (imp.isTestCovered(true)) {
+//							element.deeplyCovered = true;
+//						}
+//					}
+//					// END KGU#117 2017-04-29
+//					try 
+//					{
+//						updateVariableDisplay();
+//					}
+//					catch (EvalError ex) {}
+//				}
+//				else {
+//				// END KGU#376 2017-04-21
+//					executeCall(imp, null, (Call)element);
+//					// START KGU#117 2016-03-10: Enh. #77
+//					if (Element.E_COLLECTRUNTIMEDATA)
+//					{
+//						element.simplyCovered = true;
+//					}
+//					// END KGU#117 2016-03-10
+//				// START KGU#376 207-04-21: Enh. ä389
+//				}
+//				context.importList.addIfNew(diagrName);
+//				// END KGU#376 2017-04-21
+//			}
+//			else
+//			{
+//				// START KGU#197 2016-07-27: Now translatable message
+//				//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+//				//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
+//				result = control.msgNoProgDiagram.getText().
+//						replace("%", diagrName);
+//				// END KGU#197 2016-07-27
+//			}
+//			
+//		}
 		// END KGU#376 2017-04-11
 		else {
 			// START KGU#197 2017-06-06: Now translatable
@@ -4123,7 +4758,10 @@ public class Executor implements Runnable
 					tokens.removeAll(Element.splitLexically(key, false), !CodeParser.ignoreCase);
 				}		
 			}
-			String expression = tokens.concatenate() + " = ";
+			// START KGU#417 2017-06-30: Enh. #424
+			//String expression = tokens.concatenate() + " = ";
+			String expression = this.evaluateDiagramControllerFunctions(tokens.concatenate()) + " = ";
+			// END KGU#417 2017-06-30
 			// END KGU#259 2016-09-25
 			boolean done = false;
 			int last = text.count() - 1;
@@ -4167,7 +4805,7 @@ public class Executor implements Runnable
 						}
 						String test = convert(expression + tokens.concatenate());
 						// END KGU#259 2016-09-25
-						Object n = context.interpreter.eval(test);
+						Object n = this.evaluateExpression(test, false);
 						go = n.toString().equals("true");
 					}
 					// END KGU#15 2015-10-21
@@ -4239,9 +4877,13 @@ public class Executor implements Runnable
 			s = convert(tokens.concatenate());
 			// END KGU#150 2016-04-03
 
+			// START KGU#417 2017-06-30: Enh. #424
+			s = this.evaluateDiagramControllerFunctions(s);
+			// END KGU#417 2017-06-30
+
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
-			Object cond = context.interpreter.eval(s);
+			Object cond = this.evaluateExpression(s, false);
 			//System.out.println("Res= " + n);
 			if (cond == null || !(cond instanceof Boolean))
 			{
@@ -4348,7 +4990,11 @@ public class Executor implements Runnable
 			}
 
 			//int cw = 0;
-			Object cond = context.interpreter.eval(convertStringComparison(condStr));
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
+			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+			// END KGU#417 2017-06-30
 
 			if (cond == null || !(cond instanceof Boolean))
 			{
@@ -4418,7 +5064,11 @@ public class Executor implements Runnable
 						delay();
 						// END KGU 2015-10-13
 					}
-					cond = context.interpreter.eval(convertStringComparison(condStr));
+					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+					//cond = context.interpreter.eval(convertStringComparison(condStr));
+					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+					// END KGU#417 2017-06-30
 					if (cond == null)
 					{
 						// START KGU#197 2016-07-27: Localization support
@@ -4506,7 +5156,11 @@ public class Executor implements Runnable
 			// END KGU#150 2016-04-03
 
 			//int cw = 0;
-			Object cond = context.interpreter.eval(condStr);
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
+			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+			// END KGU#417 2017-06-30
 			if (cond == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -4544,7 +5198,12 @@ public class Executor implements Runnable
 						//cw++;
 						element.executed = true;
 					}
-					cond = context.interpreter.eval(convertStringComparison(condStr));
+					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+					//cond = context.interpreter.eval(convertStringComparison(condStr));
+					//Object cond = context.interpreter.eval(condStr);
+					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+					// END KGU#417 2017-06-30
 					if (cond == null || !(cond instanceof Boolean))
 					{
 						// START KGU#197 2016-07-27: Localization support
@@ -4663,7 +5322,10 @@ public class Executor implements Runnable
 			String s = element.getStartValue(); 
 			// END KGU#3 2015-10-27
 			s = convert(s);
-			Object n = context.interpreter.eval(s);
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
+			s = this.evaluateDiagramControllerFunctions(s);
+			// END KGU#417 2017-06-30
+			Object n = this.evaluateExpression(s, false);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -4694,8 +5356,11 @@ public class Executor implements Runnable
 			s = element.getEndValue();
 			// END KGU#3 2015-10-27
 			s = convert(s);
+			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
+			s = this.evaluateDiagramControllerFunctions(s);
+			// END KGU#417 2017-06-30
 			
-			n = context.interpreter.eval(s);
+			n = this.evaluateExpression(s, false);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -4823,33 +5488,49 @@ public class Executor implements Runnable
 		Object[] valueList = null;
 		String problem = "";	// Gathers exception descriptions for analysis purposes
 		Object value = null;
-		if (valueListString.startsWith("{") && valueListString.endsWith("}"))
+		boolean valueNoArray = false;
+		// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+		try {
+			valueListString = this.evaluateDiagramControllerFunctions(valueListString).trim();
+		}
+		catch (EvalError ex)
+		{
+			problem += "\n" + ex.getMessage();
+		}
+		// END KGU#417 2017-06-30
+		// START KGU#410 2017-07-01: Enh. #413 - there is an array-returning built-in function now!
+		//if (valueListString.startsWith("{") && valueListString.endsWith("}"))
+		if (valueListString.startsWith("{") && valueListString.endsWith("}")
+			|| valueListString.matches("^split\\(.*?[,].*?\\)$"))
+		// END KGU#410 2017-07-01
 		{
 			try
 			{
-				context.interpreter.eval("Object[] tmp20160321kgu = " + valueListString);
+				this.evaluateExpression("Object[] tmp20160321kgu = " + valueListString, false);
 				value = context.interpreter.get("tmp20160321kgu");
 				context.interpreter.unset("tmp20160321kgu");
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
-		// There are no built-in functions returning an array and external function calls
+		// There are no other built-in functions returning an array and external function calls
 		// aren't allowed at this position, hence it's relatively safe to conclude
-		// an item enumeration from the occurrence of a comma.
+		// an item enumeration from the occurrence of a comma. (If the comma IS an argument
+		// separator of a function call then the function result will be an element of the
+		// value list, such that it must be put in braces.)
 		if (value == null && valueListString.contains(","))
 		{
 			try
 			{
-				context.interpreter.eval("Object[] tmp20160321kgu = {" + valueListString + "}");
+				this.evaluateExpression("Object[] tmp20160321kgu = {" + valueListString + "}", false);
 				value = context.interpreter.get("tmp20160321kgu");
 				context.interpreter.unset("tmp20160321kgu");
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
 		// Might be a function or variable otherwise evaluable
@@ -4857,26 +5538,33 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				value = context.interpreter.eval(valueListString);
+				value = this.evaluateExpression(valueListString, false);
+				// START KGU#429 2017-10-08
+				// In case it was a variable or function, it MUST contain or return an array to be acceptable
+				if (value != null && !(value instanceof Object[]) && !(value instanceof String)) {
+					valueNoArray = true;
+					problem += valueListString + " = " + this.prepareValueForDisplay(value);
+				}
+				// END KGU#429 2017-10-08
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
 		if (value == null && valueListString.contains(" "))
 		{
-			// Rather desparate attempt to compose an array from loose strings (like in shell scripts)
+			// Rather desperate attempt to compose an array from loose strings (like in shell scripts)
 			StringList tokens = Element.splitExpressionList(valueListString, " ");
 			try
 			{
-				context.interpreter.eval("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}");
+				this.evaluateExpression("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}", false);
 				value = context.interpreter.get("tmp20160321kgu");
 				context.interpreter.unset("tmp20160321kgu");
 			}
 			catch (EvalError ex)
 			{
-				problem = ex.getMessage();
+				problem += "\n" + ex.getMessage();
 			}
 		}
 		if (value != null)
@@ -4885,7 +5573,16 @@ public class Executor implements Runnable
 			{
 				valueList = (Object[]) value;
 			}
-			else
+			// START KGU#429 2017-10-08
+			else if (value instanceof String) {
+				char[] chars = ((String)value).toCharArray(); 
+				valueList = new Character[chars.length];
+				for (int i = 0; i < chars.length; i++) {
+					valueList[i] = chars[i];
+				}
+			}
+			// END KGU#429 2017-10-08
+			else if (!valueNoArray)
 			{
 				valueList = new Object[1];
 				valueList[0] = value;
@@ -4894,12 +5591,11 @@ public class Executor implements Runnable
 
 		if (valueList == null)
 		{
-			result = "<" + valueListString
-					+ "> cannot be interpreted as value list.";
+			result = control.msgBadValueList.getText().replace("%", valueListString);
 			// START KGU 2016-07-06: Privide the gathered information
 			if (!problem.isEmpty())
 			{
-				result += "\nDetails: " + problem;
+				result += "\n" + control.msgBadValueListDetails.getText().replace("%", problem);
 			}
 			// END KGU 2016-07-06
 		}
@@ -4919,9 +5615,22 @@ public class Executor implements Runnable
 				{
 					try
 					{
+						Object iterVal = valueList[cw];
+						// START KGU#388 2017-09-27: Enh. #423 declare or un-declare the loop variable dynamically
+						TypeMapEntry iterType = null;
+						if (iterVal instanceof HashMap<?,?>) {
+							Object typeName = ((HashMap<?, ?>)iterVal).get("§TYPENAME§");
+							if (typeName instanceof String && (iterType = context.dynTypeMap.get(":" + typeName)) != null) {
+								context.dynTypeMap.put(iterVar, iterType);
+							}
+						}
+						else if (iterVal != null && (iterType = context.dynTypeMap.get(iterVar)) != null && iterType.isRecord()) {
+							context.dynTypeMap.remove(iterVar);
+						}
+						// END KGU#388 2017-09-27
 						// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 						//setVar(iterVar, valueList[cw]);
-						setVar(iterVar, valueList[cw], forLoopLevel-1);
+						setVar(iterVar, iterVal, forLoopLevel-1);
 						// END KGU#307 2016-12-12
 						element.executed = false;
 						element.waited = true;
@@ -5081,7 +5790,128 @@ public class Executor implements Runnable
 		}
 		return result;
 	}
+	
+	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
+	/**
+	 * Resolves qualified names (record access) where contained and - if allowed by setting
+	 * {@code _withInitializers} - array or record initializers and has the interpreter evaluate
+	 * the prepared expression.<br/>
+	 * This preparation work might perhaps also have been done by the convert function but requires
+	 * current evaluation context. So it was rather located here.<br/>
+	 * Note: Argument {@code _withInitializers} (and the associated mechanism) was added via
+	 * refactoring afterwards with a default value of {@code false} in order to avoid unwanted
+	 * impact. If there happens to be some place in code where it seems helpful to activate this
+	 * mechanism just go ahead and try.   
+	 * @param _expr -the converted expression to be evaluated
+	 * @param _withInitializers - whether an array or record initializer is to be managed here
+	 * @return the evaluated result if successful 
+	 * @throws EvalError an exception if something went wrong (may be raised by the interpreter
+	 * or this method itself)
+	 */
+	private Object evaluateExpression(String _expr, boolean _withInitializers) throws EvalError
+	{
+		Object value = null;
+		StringList tokens = Element.splitLexically(_expr, true);
+		// Special treatment for inc() and dec functions? - no need if convert was applied before
+		int i = 0;
+		while ((i = tokens.indexOf(".", i+1)) > 0) {
+			// FIXME: We should check for either declared type or actual object type of what's on the left of the dot.
+			// The trouble is that we would have to analyse the expression on the left of the dot in order to find out
+			// whether it is a record. But where does it begin? It could be a function call (e.g. copyRecord()) or an
+			// indexed access to an array element... An how can we make sure its evaluation hasn't got irreversible side
+			// effects?
+			// At least the check against following parenthesis will help to avoid the spoiling of Java method calls.
+			if (i+1 < tokens.count() && Function.testIdentifier(tokens.get(i+1), null) && (i+2 == tokens.count() || !tokens.get(i+2).equals("("))) {
+				tokens.set(i, ".get(\"" + tokens.get(i+1) + "\")");
+				tokens.remove(i+1);
+			}
+		}
+		// START KGU#100/KGU#388 2017-09-29: Enh. #84, #423 TODO Make this available at more places
+		if (tokens.get(tokens.count()-1).equals("}") && _withInitializers) {
+			TypeMapEntry recordType = null;
+			// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+			if (tokens.get(0).equals("{")) {			
+				value = evaluateArrayInitializer(_expr, tokens);
+			}
+			// END KGU#100 2016-01-14
+			// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
+			else if (tokens.get(1).equals("{") && (recordType = identifyRecordType(tokens.get(0), true)) != null) {
+				value = evaluateRecordInitializer(_expr, tokens, recordType);
+			}
+			// END KGU#388 2017-09-13
+		}
+		// END KGU#100/KGU#388 2017-09-29
+		else
+		{
+			value = context.interpreter.eval(tokens.concatenate());
+		}
+		return value;
+	}
+	// END KGU#388 2017-09-16
 
+	// START KGU#100 2017-10-08: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+	/**
+	 * Recursively pre-evaluates array initializer expressions
+	 * @param _expr - the initializer as String (just for a possible error message)
+	 * @param tokens - the initializer in precomputed tokenized form
+	 * @return
+	 * @throws EvalError
+	 */
+	private Object evaluateArrayInitializer(String _expr, StringList tokens) throws EvalError {
+		// We have to evaluate those element values in advance, which are initializers themselves...
+//		this.evaluateExpression("Object[] tmp20160114kgu = " + tokens.concatenate(), false);
+//		value = context.interpreter.get("tmp20160114kgu");
+//		context.interpreter.unset("tmp20160114kgu");
+		StringList elementExprs = Element.splitExpressionList(tokens.subSequence(1, tokens.count()-1), ",", true);
+		int nElements = elementExprs.count();
+		if (!elementExprs.get(nElements-1).isEmpty()) {
+			throw new EvalError(control.msgInvalidExpr.getText().replace("%1", _expr), null, null);				
+		}
+		elementExprs.remove(--nElements);
+		Object[] valueArray = new Object[nElements];
+		for (int i = 0; i < nElements; i++) {
+			valueArray[i] = evaluateExpression(elementExprs.get(i), true);
+		}
+		return valueArray;
+	}
+	// END KGU#100 2016-01-14
+	// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
+	/**
+	 * Recursively pre-evaluates record initializer expressions
+	 * @param _expr
+	 * @param value
+	 * @param tokens
+	 * @return
+	 * @throws EvalError
+	 */
+	private Object evaluateRecordInitializer(String _expr, StringList tokens, TypeMapEntry recordType) throws EvalError {
+//		this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
+		HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate(null));
+		if (components == null || components.containsKey("§TAIL§")) {
+			throw new EvalError(control.msgInvalidExpr.getText().replace("%1", _expr), null, null);
+		}
+		HashMap<String, Object> valueRecord = new HashMap<String, Object>();
+		valueRecord.put("§TYPENAME§", components.remove("§TYPENAME§"));
+		LinkedHashMap<String, TypeMapEntry> compDefs = recordType.getComponentInfo(false);
+		for (Entry<String, String> comp: components.entrySet()) {
+			if (compDefs.containsKey(comp.getKey())) {
+				// We have to evaluate the component value in advance if it is an initializer itself...
+				//context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
+				valueRecord.put(comp.getKey(), this.evaluateExpression(comp.getValue(), true));
+			}
+			else {
+				throw new EvalError(control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName), null, null);
+			}
+		}
+//		value = context.interpreter.get("tmp20170913kgu");
+//		if (value instanceof HashMap<?,?>) {
+//			((HashMap<String, Object>)value).put("§TYPENAME§", recordType.typeName);
+//		}
+//		context.interpreter.unset("tmp20170913kgu");
+		return valueRecord;
+	}
+	// END KGU#388 2017-09-13
+		
 	private String unconvert(String s)
 	{
 		s = s.replace("==", "=");
@@ -5141,7 +5971,7 @@ public class Executor implements Runnable
 		try
 		{
 			//index = Integer.parseInt(ind);		// KGU: This was nonsense - usually no literal here
-			index = (Integer) context.interpreter.eval(ind);
+			index = (Integer) this.evaluateExpression(ind, false);
 		}
 		catch (Exception e)
 		{

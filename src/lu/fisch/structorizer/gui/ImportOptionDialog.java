@@ -128,7 +128,7 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#354 2017-04-27: Enh. #354 Specify a log directory
         chkLogDir = new javax.swing.JCheckBox();
         txtLogDir = new javax.swing.JTextField(20);
-        btnLogDir = new javax.swing.JButton("?");
+        btnLogDir = new javax.swing.JButton("<<");
         // END KGU#354 2017-04-27
         // START KGU#358 2017-03-06: Enh. #368
         chkVarDeclarations = new javax.swing.JCheckBox();

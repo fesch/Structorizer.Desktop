@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.22  stepFor label mended; issue #284: Font resizing buttons added
  *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.07.01  Issue #413 FOR-IN value list check made aware of built-in split function
  *
  ******************************************************************************************************
  *
@@ -694,11 +695,18 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		}
 		else if (Function.isFunction(forInValueList))
 		{
-			txtParserInfo.setForeground(Color.BLUE);
-			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
-			//lblParserInfo.setText("Ensure the function returns an array.");			
-			txtParserInfo.setText(msgEnsureReturnedArray.getText());
-			// END KGU#247 2016-09-23
+			// START KGU#410 2017-07-01: Enh. #413 - for the split function we know that it returns an array
+			Function fct = new Function(forInValueList);
+			if (!fct.getName().equals("split") || fct.paramCount() != 2) {
+			// END KGU#410 2017-07-01
+				txtParserInfo.setForeground(Color.BLUE);
+				// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
+				//lblParserInfo.setText("Ensure the function returns an array.");			
+				txtParserInfo.setText(msgEnsureReturnedArray.getText());
+				// END KGU#247 2016-09-23
+			// START KGU#410 2017-07-01: Enh. #413 (2)
+			}
+			// END KGU#410 2017-07-01
 		}
 		else if (forInValueList.isEmpty())
 		{

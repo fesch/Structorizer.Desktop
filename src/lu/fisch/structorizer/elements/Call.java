@@ -46,7 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.19      Enh. #160: New method getSignatureString()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
- *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour.
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
  *
  ******************************************************************************************************
  *
@@ -107,10 +107,6 @@ import lu.fisch.structorizer.parsers.CodeParser;
 
 public class Call extends Instruction {
 	
-	// START KGU#376 2017-04-11: Enh. #389
-	private static final String[] relevantParserKeys = {"preImport"};
-	// END KGU#376 2017-04-11
-
 	public Call()
 	{
 		super();
@@ -207,30 +203,30 @@ public class Call extends Instruction {
 		// END KGU#199 2016-07-07
 	}
 	
-	// START KGU#376 2017-04-11: Enh. #389 - secific suport for import calls
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
-	 */
-	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
-    {
-		if (!this.isDisabled()) {
-			if (this.isImportCall()) {
-				// Get all lines of the called routine
-				String name = this.getSignatureString();
-				if (Arranger.hasInstance()) {
-					Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
-					if (roots.size() == 1) {
-						roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
-					}
-				}		
-			}
-			else {
-				super.addFullText(_lines, _instructionsOnly, _implicatedRoots);
-			}
-		}
-    }
-    // END KGU#376 2017-04-11
+//	// START KGU#376 2017-04-11: Enh. #389 - secific support for import calls / KGU#376 2017-07-01 withdrawn
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+//	 */
+//	@Override
+//    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
+//    {
+//		if (!this.isDisabled()) {
+//			if (this.isImportCall()) {
+//				// Get all lines of the called routine
+//				String name = this.getSignatureString();
+//				if (Arranger.hasInstance()) {
+//					Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+//					if (roots.size() == 1) {
+//						roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
+//					}
+//				}		
+//			}
+//			else {
+//				super.addFullText(_lines, _instructionsOnly, _implicatedRoots);
+//			}
+//		}
+//    }
+//    // END KGU#376 2017-04-11
 
 	
 	// START #178 2016-07-19: Enh. #160
@@ -253,12 +249,6 @@ public class Call extends Instruction {
 			signature = fct.getSignatureString();
 			// END KGU#261 2017-02-20
 		}
-		// START KGU#376 2017-04-11: Enh. #389 import mechanism
-		else if (this.isImportCall()) {
-			String importKey = CodeParser.getKeywordOrDefault("preImport", "import").trim();
-			signature = this.getText().getText().substring(importKey.length()+1).trim();
-		}
-		// END KGU#376 2017-04-11
 		return signature;
 	}
 	// END #178 2016-07-19
@@ -293,8 +283,8 @@ public class Call extends Instruction {
 	@Override
 	protected String[] getRelevantParserKeys() {
 		// START KGU#376 2017-04-11: Enh. #389 Now there is...
-		//return null;
-		return relevantParserKeys;
+		return null;
+		//return relevantParserKeys;
 		// END KGU#376 2017-04-11
 	}
 

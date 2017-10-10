@@ -355,13 +355,16 @@ public class OberonGenerator extends Generator {
 			{
 				String varName = transline.substring(0, asgnPos).trim();
 				String expr = transline.substring(asgnPos+2).trim();
-				String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
+				String[] typeNameIndex = this.lValueToTypeNameIndexComp(varName);
 				varName = typeNameIndex[1];
 				String index = typeNameIndex[2];
 				if (!index.isEmpty())
 				{
 					varName = varName + "["+index+"]";
 				}
+				// START KGU#388 2017-09-27: Enh. #423
+				varName += typeNameIndex[3];
+				// END KGU#388 2017-09-27: Enh. #423
 				transline = varName + " := " + expr;
 			}
 			// END KGU#109/KGU#141 2016-01-16
@@ -484,7 +487,7 @@ public class OberonGenerator extends Generator {
 						if (procName.isEmpty()) {
 							TypeMapEntry typeInfo = typeMap.get(expr);
 							if (typeInfo != null) {
-								StringList types = this.getTransformedTypes(typeInfo);
+								StringList types = this.getTransformedTypes(typeInfo, false);
 								if (types.count() == 1) {
 									String type = types.get(0);
 									if (type.equals("INTEGER") || type.equals("LONGINT") || type.equals("SHORTINT")) {
@@ -782,7 +785,9 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_while, _indent);
         // END KGU 2014-11-16
-		addCode("WHILE "+BString.replace(transform(_while.getUnbrokenText().getText()),"\n","")+" DO",
+//		addCode("WHILE "+BString.replace(transform(_while.getUnbrokenText().getText()),"\n","")+" DO",
+//				_indent, isDisabled);
+		addCode("WHILE " + transform(_while.getUnbrokenText().getLongString()) + " DO",
 				_indent, isDisabled);
 		generateCode(_while.q, _indent + this.getIndent());
 		addCode("END;", _indent, isDisabled);
@@ -796,7 +801,9 @@ public class OberonGenerator extends Generator {
         // END KGU 2014-11-16
 		addCode("REPEAT", _indent, isDisabled);
 		generateCode(_repeat.q,_indent+this.getIndent());
-		addCode("UNTIL "+BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","")+";",
+//		addCode("UNTIL "+BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","")+";",
+//				_indent, isDisabled);
+		addCode("UNTIL " + transform(_repeat.getUnbrokenText().getLongString()) + ";",
 				_indent, isDisabled);
 	}
 	
@@ -1144,7 +1151,7 @@ public class OberonGenerator extends Generator {
 			TypeMapEntry typeInfo = typeMap.get(varName); 
 			StringList types = null;
 			if (typeInfo != null) {
-				 types = getTransformedTypes(typeInfo);
+				 types = getTransformedTypes(typeInfo, false);
 			}
 			if (types != null && types.count() == 1) {
 				String type = types.get(0);

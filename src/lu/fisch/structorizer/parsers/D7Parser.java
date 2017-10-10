@@ -56,6 +56,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.29      Enh. #368: Evaluation of constant definitions and var declarations enabled
  *      Kay Gürtzig     2017.03.31      Enh. #388: new constants concept in Structorizer supported
  *      Kay Gürtzig     2017.06.22      Enh. #420: Prepared for comment retrieval
+ *      Kay Gürtzig     2017.09.22      Enh. #388 + #423: Import of types and structured initializers (var/const) fixed
+ *                                      Enh. #389 Import of Units and program declarations to includables
  *
  ******************************************************************************************************
  *
@@ -78,6 +80,7 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Repeat;
@@ -99,8 +102,6 @@ import java.nio.charset.CodingErrorAction;
 
 import com.stevesoft.pat.Regex;
 
-import java.awt.Color;
-
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the ObjectPascal, Pascal
  * or Delphi 7 language.
@@ -110,6 +111,8 @@ import java.awt.Color;
  */
 public class D7Parser extends CodeParser
 {
+	/** Default diagram name for an importable program diagram with global definitions */
+	private static final String DEFAULT_GLOBAL_SUFFIX = "Globals";
 
  	/**
  	 * Class to parse a Pascal (or Delphi 7, more precisely) file, generating a Structogram.
@@ -118,6 +121,8 @@ public class D7Parser extends CodeParser
  	public D7Parser() {
  	}
 
+	//---------------------- File Filter configuration ---------------------------
+	
 	@Override
 	public String getDialogTitle() {
 		return "Pascal";
@@ -134,6 +139,24 @@ public class D7Parser extends CodeParser
 		return exts;
 	}
 
+	//------------------- Comment delimiter specification ---------------------------------
+	
+	// START KGU#407 2017-09-30: Enh. #420
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#getCommentDelimiters()
+	 */
+	@Override
+	protected String[][] getCommentDelimiters()
+	{
+		return new String[][]{
+			{"(*", "*)"},
+			{"{", "}"}
+		};
+	}
+	// END KGU#407 2017-09-30
+	
+	//---------------------- Grammar specification ---------------------------
+	
 	@Override
 	protected final String getCompiledGrammar()
 	{
@@ -145,6 +168,8 @@ public class D7Parser extends CodeParser
 	{
 		return "ObjectPascal";
 	}
+	
+	//------------------- Grammar table constants DON'T MODIFY! ---------------------------
 	
 	// START KGU#358 2017-03-29: Enh. #368 - rule constants inserted to facilitate build phase
 	// Symbolic constants naming the table indices of the grammar rules
@@ -971,7 +996,7 @@ public class D7Parser extends CodeParser
 	{
 		String content = new String();
 	
-		if (_reduction.size()>0)
+		if (_reduction.size() > 0)
 		{
 			String ruleHead = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
@@ -1009,62 +1034,130 @@ public class D7Parser extends CodeParser
 				String idList = getContent_R(_reduction.get(0).asReduction(), "");
 				String[] ids = idList.split(",");
 				String value = "";
-				Instruction asgnmt = null;
+				String type = "";
+				Instruction instr = null;
 				switch (ruleId)
 				{
 				case RuleConstants.PROD_VARDECL_COLON_EQ_SEMI:
 				case RuleConstants.PROD_CONSTANTDECL_COLON_EQ_SEMI:
-					// So called typed constant - this is always to be made an instruction
-					value = getContent_R(_reduction.get(4).asReduction(), " <- ");
-					content = "";
-					for (int i = 0; i < ids.length; i++) {
-						content += "\n" + ids[i] + value;
+					{
+						boolean isConstant = ruleId == RuleConstants.PROD_CONSTANTDECL_COLON_EQ_SEMI;
+						// So called typed constant - this is always to be made an instruction
+						// START KGU#375/KGU#388 2017-09-22: Enh. #388, #423 constants and record support
+						String prefix = ruleId == RuleConstants.PROD_VARDECL_COLON_EQ_SEMI ? "var" : "const";
+						// FIXME: Handle type specifiers here (for type ids it's ok)!
+						type = getContent_R(_reduction.get(2).asReduction(), "");
+						// FIXME: Decompose the value of structured initializers!
+						Reduction valRed = _reduction.get(4).asReduction(); 
+						switch (valRed.getParent().getTableIndex()) {
+						case RuleConstants.PROD_ARRAYCONSTANT_LPAREN_RPAREN:
+							value = getContent_R(valRed.get(1).asReduction(), " <- {") + "}";
+							{
+								StringList valueTokens = Element.splitLexically(value, true);
+								valueTokens.replaceAll(",", ", ");
+								value = valueTokens.concatenate();
+							}
+							break;
+						case RuleConstants.PROD_RECORDCONSTANT_LPAREN_RPAREN:
+						case RuleConstants.PROD_RECORDCONSTANT_LPAREN_SEMI_RPAREN:
+							value = getContent_R(valRed.get(1).asReduction(), " <- " + type + "{") + "}";
+							{
+								StringList valueTokens = Element.splitLexically(value, true);
+								valueTokens.replaceAll(":", ": ");
+								valueTokens.replaceAll(";", "; ");
+								value = valueTokens.concatenate();
+							}
+							break;
+						default:
+							value = getContent_R(valRed, " <- ");
+						}
+						if (!this.optionImportVarDecl || isConstant) {
+							// FIXME: Handle type specifiers here (for type ids it's ok)!
+							type = ": " + type;
+						}
+						else {
+							type = "";
+						}
+						StringList lines = new StringList();
+						for (int i = 0; i < ids.length; i++) {
+							// We replace 'value' by ids[0] in lines > 0
+							lines.add(prefix + " " + ids[i] + type + value);
+							value = " <- " + ids[0];
+						}
+						instr = new Instruction(StringList.explode(translateContent(lines.getText()), "\n"));
+						// START KGU#407 2017-06-20: Enh. #420 - comments already here
+						//asgnmt.setComment("constant!");
+						this.equipWithSourceComment(instr, _reduction);
+						//asgnmt.getComment().add("Constant!");
+						// END KGU#407 2017-06-22
+						if (isConstant) {
+							instr.setColor(colorConst);
+						}
+						_parentNode.addElement(instr);
 					}
-					if (ruleId == RuleConstants.PROD_CONSTANTDECL_COLON_EQ_SEMI) {
-						content = "const " + content;
-					}
-					asgnmt = new Instruction(translateContent(content));
-					// START KGU#407 2017-06-20: Enh. #420 - comments already here
-					//asgnmt.setComment("constant!");
-					this.equipWithSourceComment(asgnmt, _reduction);
-					asgnmt.getComment().add("Constant!");
-					// END KGU#407 2017-06-22
-					asgnmt.setColor(colorConst);
-					// NO BREAK HERE!
+					break;
 				case RuleConstants.PROD_VARDECL_COLON_SEMI:
 				case RuleConstants.PROD_VARDECL_COLON:
+					// Uninitialized variable declarations
 					if (this.optionImportVarDecl) {
 						Reduction typeRule = _reduction.get(2).asReduction();
 						if (ruleId == RuleConstants.PROD_VARDECL_COLON) {
 							typeRule = typeRule.get(0).asReduction();
 						}
 						content = getContent_R(typeRule, "var " + idList + ": ");
-						Instruction decl = new Instruction(translateContent(content));
+						instr = new Instruction(translateContent(content));
 						// START KGU#407 2017-06-20: Enh. #420 - comments already here
-						this.equipWithSourceComment(decl, _reduction);
+						this.equipWithSourceComment(instr, _reduction);
 						// END KGU#407 2017-06-22
-						decl.setColor(colorDecl);
-						_parentNode.addElement(decl);
-					}
-					if (asgnmt != null) {
-						_parentNode.addElement(asgnmt);
+						instr.setColor(colorDecl);
+						_parentNode.addElement(instr);
 					}
 					break;
 				case RuleConstants.PROD_CONSTANTDECL_EQ_SEMI:
 					content = getContent_R(_reduction.get(2).asReduction(), "const " + idList + " <- ");
-					asgnmt = new Instruction(translateContent(content));
+					instr = new Instruction(translateContent(content));
 					// START KGU#407 2017-06-20: Enh. #420 - comments already here
 					//asgnmt.setComment("constant!");
-					this.equipWithSourceComment(asgnmt, _reduction);
-					asgnmt.getComment().add("Constant!");
+					this.equipWithSourceComment(instr, _reduction);
+					//asgnmt.getComment().add("Constant!");
 					// END KGU#407 2017-06-22
-					asgnmt.setColor(colorConst);
-					_parentNode.addElement(asgnmt);
+					instr.setColor(colorConst);
+					_parentNode.addElement(instr);
 					break;
 				default:;
 				}
 			}
 			// END KGU#358 2017-03-29
+			// START KGU#388 2017-09-22: Enh. #423 accept record type definitions
+			else if (
+					ruleId == RuleConstants.PROD_TYPEDECL_EQ
+					&&
+					_reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_TYPESPEC_SEMI
+					)
+			{
+				String typeName = this.getContent_R(_reduction.get(0).asReduction(), "type ") + " = ";
+				Reduction secRed = _reduction.get(2).asReduction().get(0).asReduction();
+				int subRuleId = secRed.getParent().getTableIndex();
+				switch (subRuleId) {
+				case RuleConstants.PROD_RECTYPE_RECORD_END:
+					// FIXME: It might be necessary recursively to decompose the type specifier if nested
+					content = this.getContent_R(secRed.get(2).asReduction(), typeName + "record{") + "}";
+					content = content.replace(":", ": ").replace(";}", "}").replace(";", "; ");
+					break;
+				case RuleConstants.PROD_ARRAYTYPE_ARRAY_LBRACKET_RBRACKET_OF:
+				case RuleConstants.PROD_ARRAYTYPE_ARRAY_OF_CONST:
+				case RuleConstants.PROD_ARRAYTYPE_ARRAY_OF:
+					content = this.getContent_R(secRed, typeName);
+					break;
+				default:
+					break;
+				}
+				if (!content.isEmpty()) {
+					// FIXME: Could be global if outside of functions! --> global Root --> includable
+					_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+				}
+			}
+			// END KGU#388 2017-09-22
 			else if (
 					 ruleHead.equals("<UsesClause>")
 					 // START KGU#358 2017-03-29: Enh. #368 we do no longer ignore const/var declarations
@@ -1072,8 +1165,8 @@ public class D7Parser extends CodeParser
 					 //ruleHead.equals("<VarSection>")
 					 //||
 					 //ruleHead.equals("<ConstSection>")
-					 ||
-					 ruleHead.equals("<TypeSection>")
+					 //||
+					 //ruleHead.equals("<TypeSection>")
 					 ||
 					 ruleHead.equals("<LabelSection>")
 					 // END KGU#358 2017-03-29
@@ -1105,6 +1198,25 @@ public class D7Parser extends CodeParser
 					)
 			{
 				Root prevRoot = root;	// Push the original root
+				// If root this is top level and a program diagram then there may only have been declarations
+				// so far. And these may be global. So transfer them to a new includable diagram and act as if
+				// it were a unit.
+				if (unitName == null && subRoots.isEmpty() && prevRoot.isProgram()) {
+					Root includable = new Root();
+					String progName = prevRoot.getMethodName();
+					unitName = progName;
+					includable.setText(unitName + DEFAULT_GLOBAL_SUFFIX);
+					includable.setComment("Global declarations for program " + progName);
+					for (int i = 0; i < prevRoot.children.getSize(); i++) {
+						Element elem = prevRoot.children.getElement(i);
+						elem.parent = includable.children;
+						includable.children.addElement(elem);
+					}
+					includable.setInclude();
+					prevRoot.children.removeElements();
+					prevRoot.includeList = StringList.getNew(unitName + DEFAULT_GLOBAL_SUFFIX);
+					subRoots.add(includable);
+				}
 				root = new Root();	// Prepare a new root for the subroutine
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(root, _reduction);
@@ -1118,6 +1230,10 @@ public class D7Parser extends CodeParser
 					}
 				}
 				// Restore the original root
+				// START KGU#376 2017-09-22: Enh. #389
+				// FIXME transfer declarations to a global includable if prevRoot 
+				
+				// END KGU#376 2017-09-22
 				root = prevRoot;
 			}
 			// END KGU#194 2016-05-08
@@ -1137,35 +1253,7 @@ public class D7Parser extends CodeParser
 			}
 			else if (
 					 ruleHead.equals("<ProcHeading>")
-					 )
-			{
-				content = new String();
-				content = getContent_R(_reduction.get(1).asReduction(),content);
-				
-				Reduction secReduc = _reduction.get(2).asReduction();
-				if (secReduc.size()!=0)
-				{
-					content = getContent_R(secReduc,content);
-				}
-				
-				content = BString.replaceInsensitive(content,";","; ");
-				content = BString.replaceInsensitive(content,";  ","; ");
-				root.setText(translateContent(content));
-				root.setProgram(false);
-				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
-				if (unitName != null)
-				{
-					root.setComment("(UNIT " + unitName + ")");
-				}
-				// END KGU#194 2016-05-08
-				// START KGU#407 2017-06-20: Enh. #420 - comments already here
-				String comment = this.retrieveComment(_reduction);
-				if (comment != null) {
-					root.getComment().add(StringList.explode(comment, "\n"));
-				}
-				// END KGU#407 2017-06-22
-			}
-			else if (
+					 ||
 					 ruleHead.equals("<FuncHeading>")
 					 )
 			{
@@ -1178,26 +1266,35 @@ public class D7Parser extends CodeParser
 					content = getContent_R(secReduc,content);
 				}
 				
-				secReduc = _reduction.get(4).asReduction();
-				if (secReduc.size()!=0)
+				if (ruleHead.equals("<FuncHeading>"))
 				{
-					content += ": ";
-					content = getContent_R(secReduc,content);
+					secReduc = _reduction.get(4).asReduction();
+					if (secReduc.size() > 0)
+					{
+						content += ": ";
+						content = getContent_R(secReduc,content);
+					}
 				}
 				
-				content = BString.replaceInsensitive(content,";","; ");
-				content = BString.replaceInsensitive(content,";  ","; ");
+				content = content.replace(";", "; ");
+				content = content.replace(";  ", "; ");
 				root.setText(translateContent(content));
 				root.setProgram(false);
 				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
 				if (unitName != null)
 				{
-					root.setComment("(UNIT " + unitName + ")");
+					// START KGU#376 2017-09-22: Enh. #389 - the unit will be an includable now
+					//root.setComment("(UNIT " + unitName + ")");
+					if (root.includeList == null) {
+						root.includeList = new StringList();
+					}
+					root.includeList.addIfNew(unitName + DEFAULT_GLOBAL_SUFFIX);
+					// END KGU#376 2017-09-22
 				}
 				// END KGU#194 2016-05-08
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				String comment = this.retrieveComment(_reduction);
-				if (comment != null) {
+				if (comment != null && !root.getComment().contains(comment)) {
 					root.getComment().add(StringList.explode(comment, "\n"));
 				}
 				// END KGU#407 2017-06-22
@@ -1391,11 +1488,11 @@ public class D7Parser extends CodeParser
 			}
 			else
 			{
-				if (_reduction.size()>0)
+				if (_reduction.size() > 0)
 				{
-					for(int i=0; i<_reduction.size(); i++)
+					for (int i=0; i<_reduction.size(); i++)
 					{
-						if (_reduction.get(i).getType()==SymbolType.NON_TERMINAL)
+						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 						{
 							buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
 						}
@@ -1408,7 +1505,7 @@ public class D7Parser extends CodeParser
 	
 	private String translateContent(String _content)
 	{
-		/* Fucking Regex class -> No need to use it, becaue Java implements a ***working*** version!
+		/* Fucking Regex class -> No need to use it, because Java implements a ***working*** version!
 		Regex r;
 	
 		r = new Regex(BString.breakup("write")+"[((](.*?)[))]",output+" $1"); _content=r.replaceAll(_content);
@@ -1438,7 +1535,7 @@ public class D7Parser extends CodeParser
 		*/
 		
 		//_content = BString.replace(_content, ":="," \u2190 ");
-		_content = BString.replace(_content, ":="," <- ");
+		_content = _content.replace(":="," <- ");
 
 		return _content.trim();
 	}
@@ -1509,10 +1606,17 @@ public class D7Parser extends CodeParser
 		return _content;
 	}
 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
 	@Override
 	protected void subclassUpdateRoot(Root root, String sourceFileName) {
-		// TODO Auto-generated method stub
-		
+		System.out.println(root.getSignatureString(false));
+		if (unitName != null && root.isProgram() && root.getMethodName().equals("???")) {
+			root.setText(unitName + DEFAULT_GLOBAL_SUFFIX);
+			root.setInclude();
+			root.getComment().insert("(UNIT " + unitName + ")", 0);
+		}
 	}
 
 }

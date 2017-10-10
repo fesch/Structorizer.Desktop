@@ -106,6 +106,7 @@
  *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *      Kay Gürtzig     2017.06.14  Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig     2017.09.18  Enh. #423: New messages for record type handling introduced
  *
  ******************************************************************************************************
  *
@@ -154,7 +155,7 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
-Menu.menuEditFindReplace.text=Buscar/Reemplazar
+Menu.menuEditFindReplace.text=Buscar/Reemplazar ...
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
 Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales.
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
@@ -349,28 +350,29 @@ Menu.error02.text=¡Sin cambio de las variables de la condición! Posible bucle 
 Menu.error03_1.text=¡La variable «%1»%2 no ha sido inicializada!
 Menu.error03_2.text=¡La variable «%1»%2 no siempre habrá sido inicializada!
 Menu.error04.text=¡No tienes permiso usar una declaración IF con un bloque de verdad vacío!
-Menu.error05.text=¡La variable «%» debe ser escrita en mayúsculas!
-Menu.error06.text=¡El nombre del programa o de la rutina «%» debe ser escrito en mayúsculas!
+Menu.error05.text=La variable «%» debe ser escrita en mayúsculas.
+Menu.error06.text=El nombre del programa o de la rutina «%» debe ser escrito en mayúsculas.
 Menu.error07_1.text=¡«%» no es un nombre válido para el programa o método!
 Menu.error07_2.text=¡«%» no es un nombre válido para el parámetro!
 Menu.error07_3.text=¡«%» no es un nombre válido para la variable o constante!
 Menu.error08.text=¡No está permitido hacer una asignación dentro de una condición!
-Menu.error09.text=¡Tu programa («%») no debe tener el mismo nombre que una variable o parametro!
-Menu.error10_1.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones!
-Menu.error10_2.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y salida!
-Menu.error10_3.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
-Menu.error10_4.text=¡Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones!
-Menu.error10_5.text=¡Un elemento de instrucción no debe mezclar definiciones de constantes con otras instrucciones!
+Menu.error09.text=Tu programa («%») no debe tener el mismo nombre que una variable o parametro.
+Menu.error10_1.text=Un solo elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones.
+Menu.error10_2.text=Un solo elemento de instrucción no debe contener instrucciones de entrada y salida.
+Menu.error10_3.text=Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones.
+Menu.error10_4.text=Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones.
+Menu.error10_5.text=Un elemento de instrucción no debe mezclar definiciones de constantes con otras instrucciones.
+Menu.error10_6.text=Un elemento de instrucción no debe mezclar definiciones de tipos con otras instrucciones.
 Menu.error11.text=Probablemente cometiste un error de asignación. ¡Por favor comprueba esta instrucción!
-Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS!
+Menu.error12.text=El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS.
 Menu.error13_1.text=¡La función no retorna ningún resultado!
 Menu.error13_2.text=¡Su función no siempre retorna un resultado!
 Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un valor a la vez: «%»!
 Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
 Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
 Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
-Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: «[ <var> <- ] <routine_name>(<arg_list>)» o «import <progr_name>»!
-Menu.error15_2.text=El llamado diagrama «%» ahora no está localizable.
+Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=El diagrama de la llamada subrutina «%» no está disponible.
 Menu.error15_3.text=Llamada ambigua: Hay más de un diagrama con signatura «%».
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
@@ -392,8 +394,17 @@ Menu.error23_1.text=Diagrama «%» no es apropiado para ser llamado como inclusi
 Menu.error23_2.text=¡El importe de diagrama «%» es recursivo!
 Menu.error23_3.text=Este importe será ignorado aquí porque el diagrama «%1» ya está importado por: %2.
 Menu.error23_4.text=Conflicto: ¡Para la variable o constante «%» existen ambos una declaración local y un importe!
-Menu.error23_5.text=¡Importes («%1») deben estar puestos en el inicio del diagrama («%2»)!
-Menu.error23_6.text=¡Un comando «%» tiene que formar un elemento de tipo LLAMADA!
+Menu.error23_5.text=¡Ningún diagrama incluíble con nombre «%» está disponible!
+Menu.error23_6.text=¡Diagrama incluíble con nombre «%» es ambiguo: Hay más de un diagrama con este nombre!
+Menu.error23_7.text=Conflicto: ¡Para el tipo «%» existen ambos una definición local y un importe!
+Menu.error24_1.text=La definición de tipo en linea % no tiene sintaxis correcta.
+Menu.error24_2.text=El nombre del tipo «%» es ilegal o conflige con otro identificador.
+Menu.error24_3.text=Nombre «%» del componente is ilegal o doble.
+Menu.error24_4.text=El tipo del componente «%» no es definido o conocido.
+Menu.error24_5.text=Un tipo «%» estructurado no existe!
+Menu.error24_6.text=El componente «%» no será modificado/inicializado!
+Menu.error24_7.text=El tipo «%1» no tiene ningún componente «%2»!
+Menu.error24_8.text=La variable «%1» no tiene ningún componente «%2»!
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -422,7 +433,8 @@ AnalyserPreferences.checkboxes.19.text=Comprobar que no habrá colisiones de nom
 AnalyserPreferences.checkboxes.20.text=Comprobar que un subprograma tiene un paréntesis para parámetros.
 AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables identificadores «I», «l» und «O».
 AnalyserPreferences.checkboxes.22.text=Comprobar que constantes no son comprometidas.
-AnalyserPreferences.checkboxes.23.text=Comprobar que llamadas de importe no están defectivos.
+AnalyserPreferences.checkboxes.23.text=Comprobar si la lista de diagramas a ser incluídos causa problemas.
+AnalyserPreferences.checkboxes.24.text=Combrobar las definiciones y el uso de tipos.
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -459,6 +471,8 @@ Editor.btnAfterPara.tooltip=Insertar nueva sección PARALELA después del elemen
 // undo & redo
 Editor.btnUndo.tooltip=Deshacer la ultima acción.
 Editor.btnRedo.tooltip=Rehacer la ultima acción.
+// find & replace
+Editor.btnFindReplace.tooltip=Abrir el diálogo para buscar y reemplazar
 // copy & paste
 Editor.btnCut.tooltip=Cortar elementos seleccionados.
 Editor.btnCopy.tooltip=Copiar elementos seleccionados.
@@ -632,6 +646,8 @@ InputBoxFor.msgAttention.text=¡CUIDADO!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title=Editar diagrama...
+InputBoxRoot.lblIncludeList.text=Diagramas a ser incluídos:
+InputBoxRoot.txtIncludeList.tooltip=Nombres de diagramas que deben ser incluídos antes de ejecutar este diagrama (sepáralos con coma o salto de linea).
 InputBoxRoot.lblText.text=Nombre de diagrama / signatura de función
 InputBoxRoot.txtText.tooltip=Nombre de diagrama (programa principal o incluíble) o signatura de función (nombre, lista de parámetros y tipo de resultado)
 InputBoxRoot.lblComment.text=Comentario
@@ -679,7 +695,9 @@ AttributeInspector.lblPrefsPost.text=Después
 AttributeInspector.lblPrefsMore.text=(Demás)
 AttributeInspector.btnParserPrefs.text=Comparar claves configuradas
 AttributeInspector.btnOk.text=Aceptar
+AttributeInspector.btnOk.tooltip=Aceptar los cambios y cerrar el diálogo
 AttributeInspector.btnCancel.text=Cancelar
+AttributeInspector.btnCancel.tooltip=Cerrar el diálogo sin guardar los cambios
 AttributeInspector.lblMain.text=Programa principal
 AttributeInspector.lblSub.text=Subrutina
 AttributeInspector.lblIncl.text=Incluíble
@@ -736,6 +754,9 @@ Preferences.lblCase.text=Contenido por defecto
 Preferences.lblCase.tooltip=El contenido por defecto de una declaración CASE.
 Preferences.lblCaseRot.text=Min. brazos para rotar
 Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca) 
+Preferences.pnlRoot.border=Encabezamiento del diagrama
+Preferences.lblRoot.text=Rótulo de la lista de incluíbles
+Preferences.lblRoot.tooltip=El rótulo debajo del cual la lista de diagramas a ser incluidos debe ser dibujada.
 Preferences.pnlFor.border=bucle PARA
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Contenido por defecto
@@ -871,6 +892,7 @@ ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentario
 ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Incluir subprogramas empleados.
+ExportOptionDialoge.chkExportLicenseInfo.text=Exportar atributos sobre el autor y la licencia.
 ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
 ExportOptionDialoge.lbCharset.text=Codificación:
 ExportOptionDialoge.chkCharsetAll.text=Listar todas
@@ -896,8 +918,12 @@ ImportOptionDialog.chkVarDeclarations.tooltip=Con esta preferencia, el importe v
 ImportOptionDialog.chkCommentImport.text=Importar comentarios del código
 ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
 ImportOptionDialog.chkSaveParseTree.tooltip=Después de logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
+ImportOptionDialog.chkLogDir.text=Protocolar (a directorio)
+ImportOptionDialog.chkLogDir.tooltip=Permitir a guardar un protocolo durante importación
+ImportOptionDialog.txtLogDir.tooltip=El camino vacío significa el mismo directorio donde reside el archivo código, "." significa el directorio activo.
+ImportOptionDialog.btnLogDir.tooltip=Selecciona un camino de protocolo vía diálogo.
 ImportOptionDialog.btnPluginOptions.text=Preferencias específicas
-ImportOptionDialog.msgOptionsForPlugin.text=Opciones para analisador de %
+ImportOptionDialog.msgOptionsForPlugin.text=Opciones para importar %
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
@@ -949,6 +975,7 @@ FindAndReplace.pnlScope.border=Alcance
 FindAndReplace.cmbScope.item.0=Selección actual
 FindAndReplace.cmbScope.item.1=Diagrama actual
 FindAndReplace.cmbScope.item.2=Diagramas abiertos
+FindAndReplace.pnlRootTypes.border=Tipos de diagrama
 FindAndReplace.chkRootTypes.0.text=Programas
 FindAndReplace.chkRootTypes.1.text=Subrutinas
 FindAndReplace.chkRootTypes.2.text=Incluíbles
@@ -996,6 +1023,7 @@ Surface.msgConfirmOverwrite.text=Confirma gravar
 
 -----> Executor
 -----[ Control ]-----
+Control.title=Control de Ejecución
 Control.lblSpeed.text=Demora:
 Control.btnCallStack.text=Lote de llamadas
 Control.lblCallLevel.text=Nivel:
@@ -1023,7 +1051,7 @@ Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Pregunta
 Control.msgTitleParallel.text=Problema en ejecución paralela
 Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parámetros) encontrado!\n¿Has olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
-Control.msgNoProgDiagram.text=¡No programa con nombre "%" encontrado!\n¿Has olvidado a abrir el Arranger y colocar programas referidos allí?
+Control.msgNoInclDiagram.text=¡No diagrama incluíble con nombre "%" encontrado!\n¿Has olvidado a abrir el Arranger y colocar diagramas referidos ahí?
 Control.msgAmbiguousCall.text=¡Llamada ambigua! Diferentes diagramas (subroutinas) "%1" con %2 parámetros encontrados.
 Control.msgInvalidExpr.text=¡<%1> no es una expresión correcta o existente!
 Control.msgInvalidBool.text=¡<%1> no es una válida expresión lógica!
@@ -1044,6 +1072,11 @@ Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archiv
 Control.msgUseStopButton.text=¡Una ejecución está en progreso o pausando!\nUsa el botón STOP para abortarla y cerrar.
 Control.msgConstantRedefinition.text=¡Intento ilegal de redefinir or modificar constante «%»!
 Control.msgConstantArrayElement.text=¡No es posible hacer constante un elemento «%» de un array colocando un valor!
+Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura o variable «%2»!
+Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
+Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
+Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
+Control.msgBadValueListDetails.text=Detalles: %
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

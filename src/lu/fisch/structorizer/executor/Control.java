@@ -57,6 +57,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
  *      Kay Gürtzig     2017.03.30      Enh. #388: Support for the display of constants
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Defective button control in step mode fixed.
+ *      Kay Gürtzig     2017.09.14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
+ *      Kay Gürtzig     2017.10.08      Title String and further error message for enh. #423 introduced
  *
  ******************************************************************************************************
  *
@@ -155,6 +157,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     	// START KGU#89 2015-11-25
     	this.setIconImage(IconLoader.ico004.getImage());
     	// END KGU#89 2015-11-25
+    	// START KGU 2017-10-08
+    	this.setTitle("Executor Control");
+    	// END KGU 2017-10-08
     	// START KGU#210 2016-07-25: Initialisation with min, max, and value
         //slSpeed = new javax.swing.JSlider();
         slSpeed = new javax.swing.JSlider(0, 2000, 50);
@@ -767,8 +772,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		new LangTextHolder("A subroutine diagram \"%1\" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
  // START KGU#376 2017-04-11: Enh. #389
     // END KGU#376 2017-04-11
-    public final LangTextHolder msgNoProgDiagram = 
-    		new LangTextHolder("An importable program diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.");
+    public final LangTextHolder msgNoInclDiagram = 
+    		new LangTextHolder("An includable diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.");
  // // START KGU#317 2016-12-29
     public final LangTextHolder msgAmbiguousCall =
     		new LangTextHolder("Ambiguous CALL: Different callable diagrams \"%1\" (%2 parameters) found!");
@@ -814,6 +819,20 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgConstantArrayElement =
     		new LangTextHolder("An array element «%» may not be made a constant by assignment!");
     // END KGU#375 2017-03-30
+    // START KGU#388 2017-09-14: Enh. #423 - support for record types
+	public final LangTextHolder msgInvalidComponent =
+			new LangTextHolder("There is no component «%1» in record type or variable «%2»!");
+    public final LangTextHolder msgConstantRecordComponent =
+    		new LangTextHolder("A record component «%» may not be made a constant by assignment!");
+	public final LangTextHolder msgTypeMismatch =
+			new LangTextHolder("Value type «%1» is incompatible with type «%2» of variable/component «%3»!");
+	// END KGU#388 2017-09-14
+    // START KGU 2017-10-08
+    public final LangTextHolder msgBadValueList =
+    		new LangTextHolder("<%> cannot be interpreted as value list.");
+    public final LangTextHolder msgBadValueListDetails =
+    		new LangTextHolder("Details: %");
+    // END KGU 2017-10-08
     // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =
     		new LangTextHolder("Invalid file number or file not open for reading.");

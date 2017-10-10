@@ -38,8 +38,8 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017.03.13      New method pair encodeToXML and decodeFromXML added for enh. #372,
  *                                      Some code revisions where it ached too much looking at.
  *      Kay Gürtzig     2017.06.18      Method breakup refined to cope with meta symbols in the string to
- *                                      be broken up for regex matching. Code revision, several redundant methods
- *                                      declared as deprecated
+ *                                      be broken up for regex matching. Code revision, several redundant
+ *                                      methods declared as deprecated
  *
  ******************************************************************************************************
  *
@@ -62,13 +62,13 @@ public abstract class BString
 		 */
 		public static String encodeToHtml(String str)
 		{
-			str=BString.replace(str,"&","&amp;");
+			str = str.replace("&","&amp;");
 //			str=BString.replace(str,"<","&lt;");
-			str=BString.replace(str,"<","&#60;");
+			str = str.replace("<","&#60;");
 //			str=BString.replace(str,">","&gt;");
-			str=BString.replace(str,">","&#62;");
+			str = str.replace(">","&#62;");
 //			str=BString.replace(str,"\"","&quot;");
-			str=BString.replace(str,"\"","&#34;");
+			str = str.replace("\"","&#34;");
 			//str=BString.replace(str," ","&nbsp;");
 			
 			// FIXME (KGU): The following code is irrelevant for the result! Should we return res (if not null)?

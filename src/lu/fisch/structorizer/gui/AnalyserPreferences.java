@@ -48,7 +48,8 @@ package lu.fisch.structorizer.gui;
  *                                      bugfix #330: Checkbox status visibility in "Nimbus" look & feel
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling stuff outsourced to GUIScaler
  *      Kay Gürtzig     2017.04.04      Enh. #388: New check for constant definitions (no. 22)
- *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls 
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
+ *      Kay Gürtzig     2017.09.13      Enh. #423: New Analyser error24 (type definitions) 
  *
  ******************************************************************************************************
  *
@@ -96,7 +97,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*20*/"Check that a subroutine header has a parameter list.",
 		/*21*/"Discourage use of mistakable variable names «I», «l», and «O».",
 		/*22*/"Check for possible violations of constants.",
-		/*23*/"Check for faulty diagram imports"
+		/*23*/"Check against faulty diagram includes",
+		/*24*/"Check type definitions"
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -109,7 +111,7 @@ public class AnalyserPreferences extends LangDialog {
 	static {
 		checkboxTabs.put("Algorithmic", new int[]{
 				// instructions
-				3, 11, 22,
+				3, 11, 22, 24,
 				0,// alternatives
 				8, 4,
 				0,// loops

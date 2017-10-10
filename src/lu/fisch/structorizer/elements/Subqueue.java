@@ -54,6 +54,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.20      Bugfix KGU#315: Flawed selection and cursor navigation after element shifts
  *      Kay Gürtzig     2016.04.18      Bugfix #386: New method isNoOP().
  *      Kay Gürtzig     2017.05.21      Enh. #372: Additional field for RootAttributes to be cached on undoing/redoing
+ *      Kay Gürtzig     2017.07.01      Enh. #389: Additional field for caching the includeList on undoing/redoing 
  *
  ******************************************************************************************************
  *
@@ -96,6 +97,9 @@ public class Subqueue extends Element implements IElementSequence {
 	// START KGU#363 2017-05-21: Enh. #372 - for the undo/redo list we need to cache Root attributes
 	public RootAttributes rootAttributes = null;
 	// END KGU#363 2017-05-21
+	// START KGU#376 2017-07-01: Enh. #389: comma-separated diagram names
+	public String diagramRefs = null;
+	// END KGU#376 2017-07-01
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -533,12 +537,12 @@ public class Subqueue extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		// No own text is to be considered here
         for(int i = 0; i < children.size(); i++)
         {      
-            children.get(i).addFullText(_lines, _instructionsOnly, implicatedRoots);
+            children.get(i).addFullText(_lines, _instructionsOnly);
         }
     }
     // END KGU 2015-10-16

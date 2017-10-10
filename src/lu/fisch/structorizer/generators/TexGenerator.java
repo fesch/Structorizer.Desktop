@@ -149,20 +149,20 @@ public class TexGenerator extends Generator {
 		_input = transformAssignment(_input);
 		
 		// Leerzeichen
-		_input=BString.replace(_input," ","\\ ");
+		_input = _input.replace(" ","\\ ");
 		
 		// Umlaute (UTF-8 -> LaTeX)
-		_input=BString.replace(_input,"\u00F6","\"o");
-		_input=BString.replace(_input,"\u00D6","\"O");
-		_input=BString.replace(_input,"\u00E4","\"a");
-		_input=BString.replace(_input,"\u00C4","\"A");
-		_input=BString.replace(_input,"\u00FC","\"u");
-		_input=BString.replace(_input,"\u00DC","\"U");
-		_input=BString.replace(_input,"\u00E9","\"e");
-		_input=BString.replace(_input,"\u00CB","\"E");
+		_input = _input.replace("\u00F6","\"o");
+		_input = _input.replace("\u00D6","\"O");
+		_input = _input.replace("\u00E4","\"a");
+		_input = _input.replace("\u00C4","\"A");
+		_input = _input.replace("\u00FC","\"u");
+		_input = _input.replace("\u00DC","\"U");
+		_input = _input.replace("\u00E9","\"e");
+		_input = _input.replace("\u00CB","\"E");
 		
 		// scharfes "S"
-		_input=BString.replace(_input,"\u00DF","\\ss{}");
+		_input = _input.replace("\u00DF","\\ss{}");
 
 		return _input;
 	}
@@ -194,7 +194,7 @@ public class TexGenerator extends Generator {
 */
 		
     	if (!_alt.disabled) {
-    		code.add(_indent+"\\ifthenelse{"+Math.max(1,8-2*_alt.getText().count())+"}{"+Math.max(1,8-2*_alt.getText().count())+"}{\\("+BString.replace(transform(_alt.getText().getText()),"\n","")+"\\)}{"+Element.preAltT+"}{"+Element.preAltF+"}");
+    		code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
     		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
     		if(_alt.qFalse.getSize()!=0)
     		{
@@ -234,27 +234,27 @@ public class TexGenerator extends Generator {
 	protected void generateCode(For _for, String _indent)
 	{
 		if (!_for.disabled) {
-			code.add(_indent+"\\while{\\("+BString.replace(transform(_for.getText().getText()),"\n","")+"\\)}");
-			generateCode(_for.q,_indent+_indent.substring(0,1));
-			code.add(_indent+"\\whileend");
+			code.add(_indent + "\\while{\\(" + transform(_for.getUnbrokenText().getLongString()) + "\\)}");
+			generateCode(_for.q, _indent + _indent.substring(0,1));
+			code.add(_indent + "\\whileend");
 		}
 	}
 	
 	protected void generateCode(While _while, String _indent)
 	{
 		if (!_while.disabled) {
-			code.add(_indent+"\\while{\\("+BString.replace(transform(_while.getUnbrokenText().getText()),"\n","")+"\\)}");
-			generateCode(_while.q,_indent+_indent.substring(0,1));
-			code.add(_indent+"\\whileend");
+			code.add(_indent + "\\while{\\(" + transform(_while.getUnbrokenText().getLongString()) + "\\)}");
+			generateCode(_while.q, _indent + _indent.substring(0,1));
+			code.add(_indent + "\\whileend");
 		}
 	}
 	
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
 		if (!_repeat.disabled) {
-			code.add(_indent+"\\until{\\("+BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","")+"\\)}");
-			generateCode(_repeat.q,_indent+_indent.substring(0,1));
-			code.add(_indent+"\\untilend");
+			code.add(_indent + "\\until{\\(" + transform(_repeat.getUnbrokenText().getLongString()) + "\\)}");
+			generateCode(_repeat.q, _indent + _indent.substring(0,1));
+			code.add(_indent + "\\untilend");
 		}
 	}
 	

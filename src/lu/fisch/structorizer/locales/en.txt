@@ -101,6 +101,7 @@
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.05.21      Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *      Kay Gürtzig     2017.06.18      Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig     2017.09.18      Enh. #423: New messages for record type handling introduced
  *
  ******************************************************************************************************
  *
@@ -155,7 +156,7 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
-Menu.menuEditFindReplace.text=Find/Replace
+Menu.menuEditFindReplace.text=Find/Replace ...
 Menu.menuEditUpgradeTurtle.text=To fine graphics
 Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
 Menu.menuEditDowngradeTurtle.text=To integer graphics
@@ -362,6 +363,7 @@ Menu.error10_2.text=A single instruction element should not contain input and ou
 Menu.error10_3.text=A single instruction element should not contain input instructions and assignments!
 Menu.error10_4.text=A single instruction element should not contain output instructions and assignments!
 Menu.error10_5.text=A single instruction element should not mix constant definitions with other instructions!
+Menu.error10_6.text=A single instruction element should not mix type definitions with other instructions!
 Menu.error11.text=You probably made an assignment error. Please check this instruction!
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function does not return any result!
@@ -370,9 +372,9 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15_1.text=The CALL has neither form «[ <var> <- ] <routine_name>(<arg_list>)» nor «import <progr_name>»!
-Menu.error15_2.text=The called diagram «%» is currently not available.
-Menu.error15_3.text=There are several diagrams matching signature «%».
+Menu.error15_1.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=The called subroutine diagram «%» is currently not available.
+Menu.error15_3.text=There are several subroutine diagrams matching signature «%».
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
 Menu.error16_2.text=A % instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=A %1 or %2 instruction is only allowed as JUMP element!
@@ -393,8 +395,17 @@ Menu.error23_1.text=Diagram «%» is rather unsuited for an import call as it ma
 Menu.error23_2.text=Import of diagram «%» is recursive!
 Menu.error23_3.text=Import will be ignored here because diagram «%1» had already been imported: %2.
 Menu.error23_4.text=Name conflict between local and imported variable or constant «%»!
-Menu.error23_5.text=Import Calls («%1») ought to be placed at the very beginning of the diagram («%2»)!
-Menu.error23_6.text=An «%» instruction must form a CALL element!
+Menu.error23_5.text=An includable diagram «%» is currently not available!
+Menu.error23_6.text=More than one includable diagrams with name «%» found!
+Menu.error23_7.text=There is a name conflict between local and imported type definition «%»!
+Menu.error24_1.text=Type definition in (composed) line % is malformed.
+Menu.error24_2.text=Type name «%» is illegal or colliding with another identifier.
+Menu.error24_3.text=Component name «%» is illegal or duplicate.
+Menu.error24_4.text=Component type «%» is undefined or unknown.
+Menu.error24_5.text=There is no defined record type «%»!
+Menu.error24_6.text=Record component «%» will not be modified/initialized!
+Menu.error24_7.text=Record type «%1» hasn't got a component «%2»!
+Menu.error24_8.text=Variable «%1» hasn't got a component «%2»!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -423,7 +434,8 @@ AnalyserPreferences.checkboxes.19.text=Check if an identifier might collide with
 AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a parameter list.
 AnalyserPreferences.checkboxes.21.text=Discourage use of mistakable variable names «I», «l», and «O».
 AnalyserPreferences.checkboxes.22.text=Check for possible violations of constants.
-AnalyserPreferences.checkboxes.23.text=Check for faulty diagram imports.
+AnalyserPreferences.checkboxes.23.text=Check against faulty diagram imports.
+AnalyserPreferences.checkboxes.24.text=Check type definitions.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -635,6 +647,8 @@ InputBoxFor.msgAttention.text=ATTENTION!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title=
+InputBoxRoot.lblIncludeList.text=Diagrams to be included
+InputBoxRoot.txtIncludeList.tooltip=Names of diagrams to be included on execution start (separated by commas or newlines).
 InputBoxRoot.lblText.text=Diagram name / function signature
 InputBoxRoot.txtText.tooltip=Enter the diagram name (for main or includable diagrams) or the subroutine signature (name, parameter list, result type if any)
 InputBoxRoot.lblComment.text=Comment
@@ -741,6 +755,9 @@ Preferences.lblCase.text=Default content
 Preferences.lblCase.tooltip=The default content of a CASE statement.
 Preferences.lblCaseRot.text=Min. branches for rotation
 Preferences.lblCaseRot.tooltip=Branch count threshold for attempts to reduce width by rotating elements (0 = off) 
+Preferences.pnlRoot.border=Diagram Header
+Preferences.lblRoot.text=Include List Caption
+Preferences.lblRoot.tooltip=The caption for the list of includable diagrams when being drawn.
 Preferences.pnlFor.border=FOR loop
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Default content
@@ -876,6 +893,7 @@ ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
 ExportOptionDialoge.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generate line numbers on export to BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Involve called subroutines.
+ExportOptionDialoge.chkExportLicenseInfo.text=Export author and license attributes.
 ExportOptionDialoge.lbPrefGenerator.text=Favorite Code Export:
 ExportOptionDialoge.lbCharset.text=Character set:
 ExportOptionDialoge.chkCharsetAll.text=List all?
@@ -958,6 +976,7 @@ FindAndReplace.pnlScope.border=Scope
 FindAndReplace.cmbScope.item.0=Current selection
 FindAndReplace.cmbScope.item.1=Current diagram
 FindAndReplace.cmbScope.item.2=Opened diagrams
+FindAndReplace.pnlRootTypes.border=Diagram types
 FindAndReplace.chkRootTypes.0.text=Main programs
 FindAndReplace.chkRootTypes.1.text=Subroutines
 FindAndReplace.chkRootTypes.2.text=Includables
@@ -1005,6 +1024,7 @@ Surface.msgConfirmOverwrite.text=Confirm Overwrite
 
 -----> Executor
 -----[ Control ]-----
+Control.title=Executor Control
 Control.lblSpeed.text= Delay: 
 Control.btnCallStack.text=Call Stack
 Control.lblCallLevel.text=Call depth:
@@ -1032,7 +1052,7 @@ Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Question
 Control.msgTitleParallel.text=Parallel Execution Problem
 Control.msgNoSubroutine.text=A subroutine diagram "%1" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.
-Control.msgNoProgDiagram.text=An importable program diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.
+Control.msgNoInclDiagram.text=An includable diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.
 Control.msgAmbiguousCall.text=Ambiguous CALL: Different subroutine diagrams "%1" (%2 parameters) found!
 Control.msgInvalidExpr.text=<%1> is not a correct or existing expression.
 Control.msgInvalidBool.text=<%1> is not a valid Boolean expression.
@@ -1053,6 +1073,11 @@ Control.msgEndOfFile.text=Attempt to read data past end of file!
 Control.msgUseStopButton.text=There is a running or pending execution!\nUse the STOP button to abort and close.
 Control.msgConstantRedefinition.text=Illegal attempt to redefine or modify constant «%»!
 Control.msgConstantArrayElement.text=An array element «%» may not be made a constant by assignment!
+Control.msgInvalidComponent.text=There is no component «%1» in record type or variable «%2»!
+Control.msgConstantRecordComponent.text=A record component «%» may not be made a constant by assignment!
+Control.msgTypeMismatch.text=Value type «%1» is incompatible with type «%2» of variable/component «%3»!
+Control.msgBadValueList.text=<%> cannot be interpreted as value list.
+Control.msgBadValueListDetails.text=Details: %
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
 

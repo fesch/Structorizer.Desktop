@@ -216,6 +216,14 @@ public class NSDParser extends DefaultHandler {
 			root.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			if(attributes.getIndex("text")!=-1)  {root.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {root.getComment().setCommaText(attributes.getValue("comment"));}
+			// START KGU#376 2017-06-30: Enh. #389: Includable now directly managed by Root
+			if (attributes.getIndex("includeList") != -1) {
+				String includeString = attributes.getValue("includeList").trim();
+				if (!includeString.isEmpty()) {
+					root.includeList = StringList.explode(includeString, ",");
+				}
+			}
+			// END KGU#376 2017-06-30
 			
 			// START KGU#363 2017-03-13: Enh. #372: License stuff
 			if (attributes.getIndex("licenseName") != -1) {
@@ -834,8 +842,8 @@ public class NSDParser extends DefaultHandler {
 		}
 		// FIXME: This doesn't work properly -maybe it requires full tag qualification
 		//factory.setNamespaceAware(true);
-		factory.setValidating(true);
-		factory.setSchema(nsdSchema);
+//		factory.setValidating(true);
+//		factory.setSchema(nsdSchema);
 		// END KGU#400 2017-06-20
 		try		
 		{

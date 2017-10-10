@@ -49,6 +49,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements added (Simon Sobisch)
  *      Kay Gürtzig     2017.03.28      Enh. #370: Alternative keyword set may be saved (un-refactored diagrams)
  *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" added.
+ *      Kay Gürtuig     2017.06.30      Enh. #389: New attribute "includeList" added.
  *
  ******************************************************************************************************
  *
@@ -405,6 +406,12 @@ public class XmlGenerator extends Generator {
 			// END KGU#362 2017-03-28
 		}
 		// END KGU#257 2016-09-25
+		
+		// START KGU#376 2017-06-30: Enh. #389
+		if (_root.includeList != null && _root.includeList.count() > 0) {
+			pp_attributes += " includeList=\"" + _root.includeList.concatenate(",").trim() + "\"";
+		}
+		// END KGU#376 2017-06-30
 		
 		// START KGU#363 2017-03-10: Enh. #372 These are no parser preferences but the mechanism is convenient
 		if (_root.getAuthor() != null) {

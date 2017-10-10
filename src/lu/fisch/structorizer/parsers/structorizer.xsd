@@ -5,42 +5,46 @@ xmlns:nsd="http://structorizer.fisch.lu"
 elementFormDefault="qualified">
   <xs:element name="root">
     <xs:complexType>
-      <xs:sequence>
-        <xs:element name="children" type="nsd:subqueue" minOccurs="1" maxOccurs="1"/>
-      </xs:sequence>
-      <xs:attribute name="version" type="nsd:version" default="3.26-06"/>
-      <xs:attribute name="text" type="xs:string" use="required"/>
-      <xs:attribute name="comment" type="xs:string" use="required"/>
-      <xs:attribute name="color" type="nsd:color" default="ffffff"/>
-      <xs:attribute name="type" type="nsd:mainorsub" default="program"/>
-      <xs:attribute name="style" type="nsd:style" default="nice"/>
-      <xs:attribute name="preAlt" type="xs:string"/>
-      <xs:attribute name="postAlt" type="xs:string"/>
-      <xs:attribute name="preCase" type="xs:string"/>
-      <xs:attribute name="postCase" type="xs:string"/>
-      <xs:attribute name="preFor" type="xs:string"/>
-      <xs:attribute name="postFor" type="xs:string"/>
-      <xs:attribute name="stepFor" type="xs:string"/>
-      <xs:attribute name="preForIn" type="xs:string"/>
-      <xs:attribute name="postForIn" type="xs:string"/>
-      <xs:attribute name="preWhile" type="xs:string"/>
-      <xs:attribute name="postWhile" type="xs:string"/>
-      <xs:attribute name="preRepeat" type="xs:string"/>
-      <xs:attribute name="postRepeat" type="xs:string"/>
-      <xs:attribute name="preLeave" type="xs:string"/>
-      <xs:attribute name="preReturn" type="xs:string"/>
-      <xs:attribute name="preExit" type="xs:string"/>
-      <xs:attribute name="preImport" type="xs:string"/>
-      <xs:attribute name="input" type="xs:string"/>
-      <xs:attribute name="output" type="xs:string"/>
-      <xs:attribute name="ignoreCase" type="xs:boolean"/>
-      <xs:attribute name="licenseName" type="xs:string"/>
-      <xs:attribute name="license" type="xs:string"/>
-      <xs:attribute name="origin" type="xs:string"/>
-      <xs:attribute name="author" type="xs:string"/>
-      <xs:attribute name="created" type="nsd:date"/>
-      <xs:attribute name="changedby" type="xs:string"/>
-      <xs:attribute name="changed" type="nsd:date"/>
+    	<xs:sequence>
+    		<xs:element name="children" type="nsd:subqueue"
+    			minOccurs="1" maxOccurs="1" />
+    	</xs:sequence>
+    	<xs:attribute name="version" type="nsd:version"
+    		default="3.26-06" />
+    	<xs:attribute name="text" type="xs:string" use="required" />
+    	<xs:attribute name="comment" type="xs:string" use="required" />
+    	<xs:attribute name="color" type="nsd:color" default="ffffff" />
+    	<xs:attribute name="type" type="nsd:mainorsub"
+    		default="program" />
+    	<xs:attribute name="style" type="nsd:style" default="nice" />
+    	<xs:attribute name="preAlt" type="xs:string" />
+    	<xs:attribute name="postAlt" type="xs:string" />
+    	<xs:attribute name="preCase" type="xs:string" />
+    	<xs:attribute name="postCase" type="xs:string" />
+    	<xs:attribute name="preFor" type="xs:string" />
+    	<xs:attribute name="postFor" type="xs:string" />
+    	<xs:attribute name="stepFor" type="xs:string" />
+    	<xs:attribute name="preForIn" type="xs:string" />
+    	<xs:attribute name="postForIn" type="xs:string" />
+    	<xs:attribute name="preWhile" type="xs:string" />
+    	<xs:attribute name="postWhile" type="xs:string" />
+    	<xs:attribute name="preRepeat" type="xs:string" />
+    	<xs:attribute name="postRepeat" type="xs:string" />
+    	<xs:attribute name="preLeave" type="xs:string" />
+    	<xs:attribute name="preReturn" type="xs:string" />
+    	<xs:attribute name="preExit" type="xs:string" />
+    	<xs:attribute name="preImport" type="xs:string" />
+    	<xs:attribute name="input" type="xs:string" />
+    	<xs:attribute name="output" type="xs:string" />
+    	<xs:attribute name="ignoreCase" type="xs:boolean" />
+    	<xs:attribute name="licenseName" type="xs:string" />
+    	<xs:attribute name="license" type="xs:string" />
+    	<xs:attribute name="origin" type="xs:string" />
+    	<xs:attribute name="author" type="xs:string" />
+    	<xs:attribute name="created" type="nsd:date" />
+    	<xs:attribute name="changedby" type="xs:string" />
+    	<xs:attribute name="changed" type="nsd:date" />
+    	<xs:attribute name="includeList" type="xs:string" />
     </xs:complexType>
   </xs:element>
   <xs:complexType name="subqueue">

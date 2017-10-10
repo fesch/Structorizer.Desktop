@@ -54,8 +54,10 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.26      Enh. #259: First retrieval approach for variable types
  *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
- *      Kay Gürtzig     2017.04.11      Enh. #289: Methods isImportCall() introduced
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Methods isImportCall() introduced (2017-07-01 undone)
  *      Kay Gürtzig     2017.06.09      Enh. #416: drawing support for broken lines and is...() method adaptation
+ *      Kay Gürtzig     2017.07.03      Enh. #423: Type definition concept for record/struct types begun
+ *      Kay Gürtzig     2017.09.15-28   Enh. #423: Record type definition concept nearly accomplished
  *
  ******************************************************************************************************
  *
@@ -85,6 +87,9 @@ public class Instruction extends Element {
 	// START KGU#413 2017-06-09: Enh. #416
 	protected static final String indentPattern = "(\\s*)(.*)";
 	// END KGU#413 2017-06-09
+	// START KGU#388 2017-07-03: Enh. #423
+	protected static final String typeDefPattern = "^[tT][yY][pP][eE]\\s+\\w+\\s*=\\s*\\S*$";
+	// END KGU#413 2017-07-03
 	
 	public Instruction()
 	{
@@ -365,12 +370,21 @@ public class Instruction extends Element {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		if (!this.isDisabled()) {
 			// START KGU#413 2017-06-09: Enh. #416 cope with user-inserted line breaks
 			//_lines.add(this.getText());
-			_lines.add(this.getUnbrokenText());
+			// START KGU#388 2017-09-13: Enh. #423: We must not add type definition lines
+			//_lines.add(this.getUnbrokenText());
+			StringList myLines = this.getUnbrokenText();
+			for (int i = 0; i < myLines.count(); i++) {
+				String line = myLines.get(i);
+				if (!isTypeDefinition(line, null)) {
+					_lines.add(line);
+				}
+			}
+			// END KGU#388 2017-09-13
 			// END KGU#413 2017-06-09
 		}
     }
@@ -483,21 +497,21 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-06
 	
-	// START KGU#376 2017-04-11: Enh. #389
-	public static boolean isImportCall(String line)
-	{
-		final String importKey = CodeParser.getKeywordOrDefault("preImport", "import").trim() + " ";
-		return line.startsWith( importKey ) &&
-				Function.testIdentifier(line.substring( importKey.length() ).trim(), null);
-	}
-	public boolean isImportCall()
-	{
-		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
-		//return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
-		StringList lines = this.getUnbrokenText();
-		return lines.count() == 1 && Instruction.isImportCall(lines.get(0));
-		// END KGU#413 2017-06-09
-	}
+	// START KGU#376 2017-04-11: Enh. #389 / 2017-07-01 dismissed 
+//	public static boolean isImportCall(String line)
+//	{
+//		final String importKey = CodeParser.getKeywordOrDefault("preImport", "import").trim() + " ";
+//		return line.startsWith( importKey ) &&
+//				Function.testIdentifier(line.substring( importKey.length() ).trim(), null);
+//	}
+//	public boolean isImportCall()
+//	{
+//		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
+//		//return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
+//		StringList lines = this.getUnbrokenText();
+//		return lines.count() == 1 && Instruction.isImportCall(lines.get(0));
+//		// END KGU#413 2017-06-09
+//	}
 	// END KGU#376 2017-04-11
 	
 	// START KGU#236 2016-08-10: Issue #227: New classification for input and output
@@ -596,10 +610,10 @@ public class Instruction extends Element {
 	
 	// START KGU#322 2016-07-06: Enh. #335
 	/**
-	 * Returns true if the current line of code is a declarationof one of the following types:
-	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]
-	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]
-	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;- &lt;expr&gt;
+	 * Returns true if the current line of code is a variable declaration of one of the following types:<br/>
+	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
+	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
+	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;expr&gt;
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a), b), c)
 	 */
@@ -618,11 +632,22 @@ public class Instruction extends Element {
     			tokens = tokens.subSequence(0, posLBrack);
     		}
     		tokens.removeAll(" ");
+    		// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
+    		if (tokens.contains(".")) {
+    			int i = 1;
+    			while (i < tokens.count() - 1) {
+    				if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), null) && Function.testIdentifier(tokens.get(i+1), null)) {
+    					tokens.remove(i, i+2);
+    				}
+    			}
+    		}
+    		// END KGU#388 2017-09-27
     		typeC = tokens.count() > 1;
     	}
 		return typeA || typeB || typeC;
 	}
-	/** @return true if all non-empty lines are declarations */
+	/** @return true if all non-empty lines are declarations
+	 * @see #isDeclaration(String) */
 	public boolean isDeclaration()
 	{
 		boolean isDecl = true;
@@ -639,7 +664,8 @@ public class Instruction extends Element {
 		// END KGU#413 2017-06-09
 		return isDecl;
 	}
-	/** @return true if at least one line is a declaration */
+	/** @return true if at least one line is a declaration
+	 * @see #isDeclaration(String) */
 	public boolean hasDeclarations()
 	{
 		boolean hasDecl = false;
@@ -657,6 +683,90 @@ public class Instruction extends Element {
 		return hasDecl;
 	}
 	// END KGU#332 2017-01-27
+
+	// START KGU#388 2017-07-03: Enh. #423
+	/**
+	 * Returns true if the current line of code is a type definition of one of the following forms:<br>
+	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br>
+	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br>
+	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br>
+	 * d)...f) same as a)...c) but with struct instead of record.
+	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
+	 * @param line - String comprising one line of code
+	 * @return true iff line is of one of the forms a), b), c)
+	 * @see #isTypeDefinition(String, HashMap)
+	 */
+	public static boolean isTypeDefinition(String line)
+	{
+		return isTypeDefinition(line, null);
+	}
+
+	// START KGU#388 2017-07-03: Enh. #423
+	/**
+	 * Returns true if the current line of code is a type definition of one of the following forms:<br>
+	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br/>
+	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br/>
+	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br/>
+	 * d)...f) same as a)...c) but with struct instead of record.<br/>
+	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
+	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap}.
+	 * @param line - String comprising one line of code
+	 * @param typeMap TODO
+	 * @return true iff line is of one of the forms a), b), c)
+	 */
+	public static boolean isTypeDefinition(String line, HashMap<String, TypeMapEntry> typeMap)
+	{
+    	StringList tokens = Element.splitLexically(line.trim(), true);
+    	if (tokens.count() == 0 || !tokens.get(0).equalsIgnoreCase("type")) {
+    		return false;
+    	}
+    	unifyOperators(tokens, true);
+    	int posDef = tokens.indexOf("=");
+    	if (posDef < 2) {
+    		return false;
+    	}
+		String typename = tokens.concatenate("", 1, posDef).trim();
+		tokens = tokens.subSequence(posDef+1, tokens.count());
+		tokens.removeAll(" ");
+		return Function.testIdentifier(typename, null) && 
+				((tokens.get(0).equalsIgnoreCase("record") || tokens.get(0).equalsIgnoreCase("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
+				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tokens.get(0)) || typeMap == null && Function.testIdentifier(tokens.get(0), null)));
+		
+	}
+	/** @return true if all non-empty lines are type definitions */
+	public boolean isTypeDefinition()
+	{
+		return isTypeDefinition(null, true);
+	}
+
+	/** @param typeMap TODO
+	 * @param allLines TODO
+	 * @return true if all non-empty lines are type definitions */
+	public boolean isTypeDefinition(HashMap<String, TypeMapEntry> typeMap, boolean allLines)
+	{
+		boolean isTypeDef = false;
+		StringList lines = this.getUnbrokenText();
+		if (allLines) {
+			isTypeDef = true;
+			for (int i = 0; isTypeDef && i < lines.count(); i++) {
+				String line = lines.get(i).trim();
+				isTypeDef = line.isEmpty() || isTypeDefinition(line, typeMap);
+			}
+		}
+		else {
+			for (int i = 0; !isTypeDef && i < lines.count(); i++) {
+				String line = lines.get(i);
+				isTypeDef = !line.isEmpty() && isTypeDefinition(line, typeMap);
+			}
+		}
+		return isTypeDef;
+	}
+	/** @return true if at least one line is a type definition */
+	public boolean hasTypeDefinitions()
+	{
+		return isTypeDefinition(null, false);
+	}
+	// END KGU#388 2017-07-03
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed
@@ -753,47 +863,60 @@ public class Instruction extends Element {
 		String varName = null;
 		String typeSpec = "";
 		boolean isAssigned = false;
+		boolean isDeclared = true;
 		unifyOperators(tokens, true);
 		tokens.removeAll(" ");
 		if (tokens.count() == 0) {
 			return;
 		}
-		int posColon = tokens.indexOf(tokens.get(0).equals("dim") ? "as" : ":");
+		String token0 = tokens.get(0).toLowerCase();
+		int posColon = tokens.indexOf(token0.equals("dim") ? "as" : ":", false);
 		int posAsgnmt = tokens.indexOf("<-");
 		// First we try to extract a type description from a Pascal-style variable declaration
-		if (tokens.count() > 3 && (tokens.get(0).equals("var") || tokens.get(0).equals("dim")) && posColon >= 2) {
+		if (tokens.count() > 3 && (token0.equals("var") || token0.equals("dim") || token0.equals("const")) && posColon >= 2) {
 			isAssigned = posAsgnmt > posColon;
 			typeSpec = tokens.concatenate(" ", posColon+1, (isAssigned ? posAsgnmt : tokens.count()));
 			// There may be one or more variable names between "var" and ':' if there is no assignment
-			for (int i = 1; i < posColon; i++)
+			StringList varTokens = tokens.subSequence(1, posColon);
+			varTokens.removeAll(" ");
+			for (int i = 0; i < varTokens.count(); i++)
 			{
-				if (Function.testIdentifier(tokens.get(i), null)) {
-					addToTypeMap(typeMap, tokens.get(i), typeSpec, lineNo, isAssigned, false);
+				if (Function.testIdentifier(varTokens.get(i), null) && (i + 1 >= varTokens.count() || varTokens.get(i+1).equals(","))) {
+					addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true, false);
 				}
 			}
 		}
 		// Next we try to extract type information from an initial assignment (without "var" keyword)
-		else if (posAsgnmt > 0 && !tokens.contains("var") && !tokens.contains("dim")) {
+		else if (posAsgnmt > 0 && !token0.equals("var") && !token0.equals("dim")) {
 			// Type information might be found left of the variable name or be derivable from the initial value
+			// START KGU#375 2017-09-20: Enh. #388 - a "const" keyword might be here, drop it
+			if (token0.equals("const")) {
+				tokens.remove(0);
+				posAsgnmt--;
+			}
+			// EMD KGU#375 2017-09-20
 			StringList leftSide = tokens.subSequence(0, posAsgnmt);
 			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
 			isAssigned = rightSide.count() > 0;
 			// Isolate the variable name from the left-hand side of the assignment
 			varName = getAssignedVarname(leftSide);
+			// Without const, var, or dim a declaration must be a C-style declaration
 			boolean isCStyleDecl = Instruction.isDeclaration(line);
-			if (varName != null) {
+			// If the target is a record component we won't add a type specification.
+			if (varName != null && !varName.contains(".")) {
 				int pos = leftSide.indexOf(varName);
 				// C-style type declaration left of the variable name?
-				typeSpec = leftSide.concatenate(" ", 0, pos);
+				typeSpec = leftSide.concatenate(null, 0, pos);
 				// Check for array declaration (or array element access)
 				while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
-					typeSpec += leftSide.concatenate("", pos, leftSide.indexOf("]")+1);
+					typeSpec += leftSide.concatenate(null, pos, leftSide.indexOf("]")+1);
 					leftSide.remove(pos, leftSide.indexOf("]")+1);
 				}
 				// No explicit type specification but new variable?
 				if (typeSpec.isEmpty() && !typeMap.containsKey(varName)) {
 					//String expr = rightSide.concatenate(" ");
 					typeSpec = getTypeFromAssignedValue(rightSide, typeMap);
+					isDeclared = false;
 					if (typeSpec.isEmpty()) {
 						typeSpec = "???";
 					}
@@ -804,13 +927,33 @@ public class Instruction extends Element {
 					}
 				}
 			}
-			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isCStyleDecl);
+			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isDeclared || isCStyleDecl, isCStyleDecl);
 		}
+		// START KU#388 2017-08-07: Enh. #423
+		else if (isTypeDefinition(line, typeMap)) {
+			// FIXME: In future, array type definitions are also to be handled...
+			String typename = tokens.get(1);
+			// Because of possible C-style declarations we must not glue the tokens together with "".
+			typeSpec = tokens.concatenate(null, 3, tokens.count()).trim();
+			int posBrace = typeSpec.indexOf("{");
+			if (posBrace > 0 && tokens.get(tokens.count()-1).equals("}")) {
+				StringList compNames = new StringList();
+				StringList compTypes = new StringList();
+				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes);
+				addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
+			}
+			else {
+				// According to isTypeefinition() this must now be an alias for an existing type
+				typeMap.put(":" + typename, typeMap.get(":" + tokens.get(3)));
+			}
+		}
+		// END KGU#388 2017-08-07
 	}
 	
 	/**
 	 * Extracts the target variable name out of the given blank-free token sequence which may comprise
 	 * the entire line of an assignment or just its left part.
+	 * The variable name may be qualified, i.e. be a sequence of identifiers separated by dots.
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
 	 * @return the extracted variable name or null
 	 */
@@ -825,9 +968,23 @@ public class Instruction extends Element {
 			// If it's an array element access then cut of the index expression
 			tokens = tokens.subSequence(0, posLBracket);
 		}
-		// The last token should be the variable name
+		// START KGU#388 2017-09-15: Enh. #423 avoid accidental return of type information
+		int posColon = tokens.indexOf(":");
+		if (posColon > 0 || (posColon = tokens.indexOf("as", false)) > 0) {
+			// It contains a declaration part
+			tokens = tokens.subSequence(0, posColon);
+		}
+		// END KGU#388 2017-09-15
+		// The last sequence of dot.separated ids should be the variable name
 		if (tokens.count() > 0) {
-			varName = tokens.get(tokens.count()-1);
+			int i = tokens.count()-1;
+			varName = tokens.get(i);
+			// START KGU#388 2017-09-14: Enh. #423
+			while (i > 1 && tokens.get(i-1).equals(".") && Function.testIdentifier(tokens.get(i-2), null)) {
+				varName = tokens.get(i-2) + "." + varName;
+				i -= 2;
+			}
+			// END KGU#388 2017-09-14
 		}
 		return varName;
 	}
@@ -845,7 +1002,7 @@ public class Instruction extends Element {
 		String typeSpec = "";
 		// Check for array initializer expression
 		if (rightSide.count() >= 2 && rightSide.get(0).equals("{") && rightSide.get(rightSide.count()-1).equals("}")) {
-			StringList items = Element.splitExpressionList(rightSide.concatenate("", 1, rightSide.count()-1), ",");
+			StringList items = Element.splitExpressionList(rightSide.subSequence(1, rightSide.count()-1), ",", false);
 			// Try to identify the element type(s)
 			for (int i = 0; !typeSpec.contains("???") && i < items.count(); i++) {
 				String itemType = identifyExprType(knownTypes, items.get(i), false);
@@ -868,5 +1025,22 @@ public class Instruction extends Element {
 		return typeSpec;
 	}
 	// END KGU#261 2017-02-20
+
+	// START KGU#388 2017-08-07: Enh. #423 type definition support for record 
+	/**
+	 * Tries to extract type information from the right side of an assignment.
+	 * @param typeDef - tokens of the type definition
+	 * @param knownTypes - the typeMap as filled so far (won't be changed here)
+	 * @return - A type specification or an empty string (no clue) or "???" (ambiguous)
+	 */
+	protected String getTypeFromTypeDefinition(StringList rightSide, HashMap<String, TypeMapEntry> knownTypes)
+	{
+		String typeSpec = "";
+		
+			// Try to derive the type from the expression
+			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
+		return typeSpec;
+	}
+	// END KGU#388 2017-08-07
 
 }

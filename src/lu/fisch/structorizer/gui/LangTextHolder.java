@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Kay Gürtzig     2016.03.25      First Issue
+ *      Kay Gürtzig     2017.09.29      Method toString overridden
  *
  ******************************************************************************************************
  *
@@ -65,5 +66,13 @@ public class LangTextHolder
 	public String getText()
 	{
 		return this.text;
+	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return this.getClass().getName() + "[text=" + this.text + "]";
 	}
 }

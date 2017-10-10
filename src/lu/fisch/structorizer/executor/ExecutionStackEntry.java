@@ -52,6 +52,7 @@ import java.util.HashMap;
 
 import bsh.Interpreter;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.utils.StringList;
 
 public class ExecutionStackEntry {
@@ -78,11 +79,18 @@ public class ExecutionStackEntry {
 	 */
 	public HashMap<String, Object> constants = new HashMap<String, Object>();
 	// END KGU#375 2017-04-21
+	// START KGU#388 2017-09-14: Enh. #423 Support dynamic type declarations
+	/**
+	 * Maps variable, constant, and type names to type description entries
+	 */
+	public HashMap<String, TypeMapEntry> dynTypeMap = new HashMap<String, TypeMapEntry>();
+	// END KGU#375 2017-04-21
+	
 	/**
 	 * The BeanShell interpreter used to execute instructions and thereby holding the
 	 * accumulated context (built-in routines, variable values etc.)
 	 */
-	public Interpreter interpreter = new Interpreter();
+	public final Interpreter interpreter = new Interpreter();
 	// START KGU#78 2015-11-25
 	/**
 	 * The current nesting level of loops
@@ -130,26 +138,26 @@ public class ExecutionStackEntry {
 	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth)
 	// START KGU#375/KGU#376 2017-04-21: Enh. #388, #389
 	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth, StringList _forLoopVars)
-	@Deprecated
-	public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth, StringList _forLoopVars, HashMap<String, Object> _constants, StringList _imported)
-	// END KGU#375/KGU#376 2017-04-21
-	// END KGU#307 2016-12-12
-	// END KGU#78 2015-11-25
-	{
-		_root.isCalling = true;
-		this.root = _root;
-		this.variables = _variables;
-		this.interpreter = _interpreter;
-		// START KGU#78 2015-11-25
-		this.loopDepth = _loopDepth;
-		// END KGU#78 2015-11-25
-		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-		this.forLoopVars = _forLoopVars; 
-		// END KGU#307 2016-12-12
-		// START KGU#376 2017-04-21: Enh. #389
-		this.constants = _constants;
-		this.importList = _imported;
-		// END KGU#376 2017-04-21
-	}
+//	@Deprecated
+//	public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth, StringList _forLoopVars, HashMap<String, Object> _constants, StringList _imported)
+//	// END KGU#375/KGU#376 2017-04-21
+//	// END KGU#307 2016-12-12
+//	// END KGU#78 2015-11-25
+//	{
+//		_root.isCalling = true;
+//		this.root = _root;
+//		this.variables = _variables;
+//		this.interpreter = _interpreter;
+//		// START KGU#78 2015-11-25
+//		this.loopDepth = _loopDepth;
+//		// END KGU#78 2015-11-25
+//		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+//		this.forLoopVars = _forLoopVars; 
+//		// END KGU#307 2016-12-12
+//		// START KGU#376 2017-04-21: Enh. #389
+//		this.constants = _constants;
+//		this.importList = _imported;
+//		// END KGU#376 2017-04-21
+//	}
 
 }
