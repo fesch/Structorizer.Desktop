@@ -41,7 +41,7 @@ package lu.fisch.structorizer.parsers;
  *                                      free-form and fixed-form (with continuation + debugging lines),
  *                                      minimal subset of compiler directives, passes NIST EXEC85.cob
  *                                      and DB201A.CBL (with manual source changes because of
- *                                      insufficent COBOL-85.grm)
+ *                                      insufficient COBOL-85.grm)
  *      Kay Gürtzig     2017.03.26      Fix #384: New temp file mechanism for the prepared text file
  *      Simon Sobisch   2017.04.24      Moved from COBOL-85.grm (NOT being COBOL 85!!!) to GnuCOBOL.grm
  *      Kay Gürtzig     2017.05.07      ADD/SUBTRACT/MULTIPLY/DIVIDE with ROUNDED mode implemented, SET
@@ -58,7 +58,7 @@ package lu.fisch.structorizer.parsers;
  *                                      structures. Will be extended when needed.
  *                                      Translation COBOL -> Java Types completely rewritten and validated
  *                                      SET var [var2] TO (TRUE | FALSE) with lookup of condition names implemented
- *                                      condition-names in expressions replaced (further improvements need work on expresssions)
+ *                                      condition-names in expressions replaced (further improvements need work on expressions)
  *                                      new option "is32bit" for var types and for later care in preparser
  *                                      Optimization of getContent_R: use static Patterns and Matchers as
  *                                      this function is called very often
@@ -67,6 +67,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.10.06      SEARCH statement implemented, approach to OCCURS ... INDEXED clause
  *      Kay Gürtzig     2017.19.08      Enh. #423: index placement in qualified names and conditions fixed
  *                                      Decisive improvements for SEARCH and SET statements
+ *      Kay Gürtzig     2017.10...      
+ *      Simon Sobisch   2017.10.10      Fixed numeric case items for alphanumeric variables in EVALUATE (TODO: needed for every expression)
+ *                                      Fixed getContentToken_R to correctly replace SPACE/ZERO/NULL
  *
  ******************************************************************************************************
  *
@@ -5187,7 +5190,7 @@ public class COBOLParser extends CodeParser
 			// <_with_pointer> ::= <_with> POINTER <_is> <identifier>
 			start = this.getContent_R(withRed.get(3).asReduction(), "");
 		}
-		// Now process the items backwards, this way froming an instruction sequence from last to first
+		// Now process the items backwards, this way forming an instruction sequence from last to first
 		// This way we avoid unnecessary recursion
 		// IDEA: This approach automatically produces several lines. We might first gather the contributors
 		// and then decide if their concatenation might fit into a single line.
@@ -6490,6 +6493,19 @@ public class COBOLParser extends CodeParser
 			// Single discriminator expression - there might be a chance to convert this to a CASE element
 			System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
 			StringList caseText = StringList.getNew(this.getContent_R(subjlRed, ""));
+			int caseVarStringLength = 0;
+			if (caseText != null) {
+				String possibleVarName = caseText.toString();
+				if (possibleVarName.matches("\".+\"")) {
+					possibleVarName = possibleVarName.substring(1, possibleVarName.length()-1);
+				}
+				CobVar caseVar = currentProg.getCobVar(possibleVarName);
+				String type = CobTools.getTypeString(caseVar, false);
+				if (type != null && type.equals("String")) {
+					caseVarStringLength = caseVar.getCharLength();
+				}
+			}
+
 			Case ele = new Case();
 			// Now analyse the branches
 			Reduction otherRed = null;
@@ -6520,28 +6536,41 @@ public class COBOLParser extends CodeParser
 				ele.qs.add(0, sq);
 				// Now collect the WHEN clauses and concoct the compound condition
 				Reduction whenlRed = caseRed.get(0).asReduction();	// <evaluate_when_list>
-				String selectors = "";
+				String selectors = null;
 				while (whenlRed != null) {
+					String selector = null;
 					// FIXME: At this point we cannot handle incomplete expressions sensibly
-					// (as soon as we bump into an incomlete comparison expression or the like we
+					// (as soon as we bump into an incomplete comparison expression or the like we
 					// would have had to convert the entire CASE element into a nested alternative tree.
 					// The trouble is that all kinds of selectors (literals, complete expressions, and
 					// incomplete expressions may occur among the listed selectors.
 					if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
-						selectors = this.getContent_R(whenlRed.get(2).asReduction(), "") + ", " + selectors;
+						selector = this.getContent_R(whenlRed.get(2).asReduction(), "");
 						whenlRed = whenlRed.get(0).asReduction();
-					}
-					else {
-						selectors = this.getContent_R(whenlRed.get(1).asReduction(), "") + ", " + selectors;
+					} else {
+						selector = this.getContent_R(whenlRed.get(1).asReduction(), "");
 						whenlRed = null;
 					}
+					// special case: case is alphanumeric while selector isn't --> transform selector
+					if (caseVarStringLength != 0 && selector.matches("[0-9]+")) {
+						int selLitSize = selector.length();
+						while (selLitSize < caseVarStringLength) {
+							selector = "0" + selector;
+							selLitSize++;
+						}
+						selector = "\"" + selector + "\"";
+					}
+					if (selectors != null) {
+						selectors = selector + ", " + selectors;
+					} else {
+						selectors = selector;
+					}
 				}
-				selectors = selectors.trim();
-				if (selectors.endsWith(",")) {
-					selectors = selectors.substring(0, selectors.length()-1);
-				}
+//				selectors = selectors.trim();
+//				if (selectors.endsWith(",")) {
+//					selectors = selectors.substring(0, selectors.length()-1);
+//				}
 				caseText.insert(selectors, 1);
-				//}
 				condlRed = (caseHead.equals("<evaluate_case_list>")) ? condlRed.get(0).asReduction() : null;
 			} while (condlRed != null);
 			ele.setText(caseText);
@@ -7482,6 +7511,12 @@ public class COBOLParser extends CodeParser
 				// END KGU#388 2017-10-04
 				break;
 			}
+			case RuleConstants.PROD__EVALUATE_THRU_EXPR:
+			// FIXME: likely relevant for more items that are optional -> emtpy 
+			{
+				// Empty THRU expression --> don't change _content
+				break;
+			}
 			default:
 			{
 				for(int i=0; i<_reduction.size(); i++)
@@ -7498,7 +7533,7 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Subroutine of {@link #getContent_R(Reduction, String, String)} for the conversion of sub-tokens,
 	 * which are not necessarily non-terminals. 
-	 * @param _token - the curentv token
+	 * @param _token - the current token
 	 * @param _content - previous content the string representation of this token is to be appended to. 
 	 * @param _separator - a string to be put between the result for sub-tokens
 	 * @param _isFirst - whether this token is the first in a sequence (i.e. if a separator isn't needed before)
@@ -7584,7 +7619,7 @@ public class COBOLParser extends CodeParser
 				if (!_isFirst && !_separator.isEmpty()) {
 					sepa = _separator;
 				}
-				else if (_content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
+				else if (!toAdd.isEmpty() && _content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
 					sepa = " ";
 				}
 				_content += sepa + toAdd;
@@ -7681,13 +7716,13 @@ public class COBOLParser extends CodeParser
 			else if (name.equals("TOK_PLUS") || name.equals("TOK_MINUS")) {
 				//toAdd = " " + toAdd + " ";
 			}
-			else if (toAdd.equals("ZERO") || toAdd.matches("0+")) { // note: ZEROS and ZEROES replaced by grammar
+			else if (name.equals("ZERO") || toAdd.matches("0+")) { // note: ZEROS and ZEROES replaced by grammar
 				toAdd = "0";
 			}
-			else if (toAdd.equals("SPACE")) { // note: SPACES replaced by grammar
+			else if (name.equals("SPACE")) { // note: SPACES replaced by grammar
 				toAdd = "\' \'";
 			}
-			else if (toAdd.equals("TOK_NULL")) {
+			else if (name.equals("TOK_NULL")) {
 				toAdd = "\'\\0\'";
 			}
 			else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
@@ -7889,9 +7924,8 @@ public class COBOLParser extends CodeParser
 		if (var.isArray() && initialization != null) {
 			initialization = "{" + var.getValueList(", ", null) + "}";
 		}
-		initialization = transformValueString(initialization);
 		if (child != null && !child.isConditionName()) {
-			// FIXME: What to do with an array of recprds here? How would the values be organized in CobVar then?
+			// FIXME: What to do with an array of records here? How would the values be organized in CobVar then?
 			String typeName = var.forceName() + "_" + (declLevel == 0 ? "type" : Integer.toHexString(var.hashCode()));
 			typeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
 			StringBuilder init = new StringBuilder(typeName);
@@ -7899,7 +7933,6 @@ public class COBOLParser extends CodeParser
 			do {
 				String value = makeInitialization(child, declLevel+1);
 				if (value != null) {
-					value = transformValueString(value);
 					init.append(sepa + child.forceName() + ": " + value);
 					sepa = ",\\\n";					
 				}
@@ -7914,25 +7947,6 @@ public class COBOLParser extends CodeParser
 		return initialization;
 	}
 	// END KGU#388 2017-10-03
-
-	/**
-	 * @param value
-	 * @return
-	 */
-	private static String transformValueString(String value) {
-		if (value != null) {
-			if (MTCH_SPACE.reset(value).matches()) {
-				value = MTCH_SPACE.replaceAll("$1\\' \\'$2");
-			}
-			if (MTCH_SPACES.reset(value).matches()) {
-				value = MTCH_SPACES.replaceAll("$1\\\" \\\"$2");
-			}
-			if (MTCH_ZERO.reset(value).matches()) {
-				value = MTCH_ZERO.replaceAll("$10$2");
-			}
-		}
-		return value;
-	}
 
 	//------------------------- Postprocessor ---------------------------
 
@@ -8294,16 +8308,11 @@ class CobTools {
 		}
 
 		public CobVar getCobVar(String nameOfVar) {
-			
-			// START KGU 2017-10-04
-			if (varNames == null) {
-				return null;
-			}
-			// END KGU 2017-10-04
 
-			if (nameOfVar == null || nameOfVar.isEmpty()) {
+			if (varNames == null || nameOfVar == null || nameOfVar.isEmpty()) {
 				return null;
 			}
+			
 			nameOfVar = nameOfVar.toLowerCase();
 			
 			// get unqualified name (1st part) and possible qualifiers
@@ -8400,6 +8409,13 @@ class CobTools {
 		
 		/** length of COBOL field, mostly relevant for STRING and record-handling */
 		private int charLength;
+
+		/**
+		 * @return the charLength
+		 */
+		public int getCharLength() {
+			return charLength;
+		}
 
 		private CobVar parent;
 		private CobVar child;
