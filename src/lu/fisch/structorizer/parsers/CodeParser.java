@@ -145,7 +145,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	protected boolean optionImportVarDecl = false;
 	/**
 	 * Returns the value of the import option to save the obtained parse tree
-	 * @return true if the parse tree is to be saved as text file
+	 * @return true iff the parse tree is to be saved as text file
 	 * @see #optionImportComments
 	 * @see #optionImportVarDecl
 	 */
