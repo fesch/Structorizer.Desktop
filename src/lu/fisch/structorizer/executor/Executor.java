@@ -138,6 +138,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.08      Enh. #423: Recursive array and record initializer evaluation,
  *                                      Array element assignment in record components fixed.
  *      Kay Gürtzig     2017.10.10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
+ *      Kay Gürtzig     2017.10.11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
  *
  ******************************************************************************************************
  *
@@ -4923,7 +4924,7 @@ public class Executor implements Runnable
 //					// FIXME: might damage variable names
 //					condStr = BString.replace(condStr, CodeParser.postWhile, "");
 //				}
-//				// START KGU#79 2015-11-12: Forgotten zu write back the result!
+//				// START KGU#79 2015-11-12: Forgotten to write back the result!
 //				//convert(condStr, false);
 //				condStr = convert(condStr, false);
 //				// END KGU#79 2015-11-12
@@ -4938,7 +4939,10 @@ public class Executor implements Runnable
 						tokens.removeAll(Element.splitLexically(key, false), !CodeParser.ignoreCase);
 					}		
 				}
-				condStr = convert(tokens.concatenate());
+				// START KGU#433 2017-10-11: Bugfix #434 Don't try to be too clever here - variables might change type within the loop..
+				//condStr = convert(tokens.concatenate());
+				condStr = convert(tokens.concatenate(), false);
+				// END KGU#433 2017-10-11
 				// END KGU#150 2016-04-03
 			}
 
@@ -5083,7 +5087,7 @@ public class Executor implements Runnable
 			//String condStr = element.getText().getText();
 			String condStr = element.getUnbrokenText().getText();
 			// END KGU#413 2017-06-09
-			// STRT KGU#150 2016-04-03: More pecise processing
+			// START KGU#150 2016-04-03: More precise processing
 //			if (!CodeParser.preRepeat.equals(""))
 //			{
 //				// FIXME: might damage variable names
@@ -5105,7 +5109,10 @@ public class Executor implements Runnable
 					tokens.removeAll(Element.splitLexically(key, false), !CodeParser.ignoreCase);
 				}		
 			}
-			condStr = convert(tokens.concatenate());
+			// START KGU#433 2017-10-11: Bugfix #434 Don't try to be too clever here - variables might change type within the loop...
+			//condStr = convert(tokens.concatenate());
+			condStr = convert(tokens.concatenate(), false);
+			// END KGU#433 2017-10-11
 			// END KGU#150 2016-04-03
 
 			//int cw = 0;

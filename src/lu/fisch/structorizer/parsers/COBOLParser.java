@@ -65,9 +65,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.10.01      Enh. #420: Comment import mechanism built in and roughly configured
  *      Kay Gürtzig     2017.10.05      Enh. #423: Record type detection and declaration implemented
  *      Kay Gürtzig     2017.10.06      SEARCH statement implemented, approach to OCCURS ... INDEXED clause
- *      Kay Gürtzig     2017.19.08      Enh. #423: index placement in qualified names and conditions fixed
+ *      Kay Gürtzig     2017.10.08      Enh. #423: index placement in qualified names and conditions fixed
  *                                      Decisive improvements for SEARCH and SET statements
- *      Kay Gürtzig     2017.10...      
  *      Simon Sobisch   2017.10.10      Fixed numeric case items for alphanumeric variables in EVALUATE (TODO: needed for every expression)
  *                                      Fixed getContentToken_R to correctly replace SPACE/ZERO/NULL
  *
