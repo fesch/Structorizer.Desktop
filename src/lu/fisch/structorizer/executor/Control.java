@@ -59,6 +59,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Defective button control in step mode fixed.
  *      Kay Gürtzig     2017.09.14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
  *      Kay Gürtzig     2017.10.08      Title String and further error message for enh. #423 introduced
+ *      Kay Gürtzig     2017.10.11      Bugfix #435: Checkboxes didn't show selected state in rescaled GUI mode
  *
  ******************************************************************************************************
  *
@@ -246,16 +247,18 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         lblSpeedValue.setText("50");
         // END KGU#89 2015-11-25
         
-		// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
-        chkOutputToTextWindow.addItemListener(this);
-		// END KGU#160 2016-04-12
-
-		// START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
-        chkCollectRuntimeData.addItemListener(this);
-        // END KGU#117 2016-03-06
-        // START KGU#165 2016-03-13: Enh. #124
-        cbRunDataDisplay.addItemListener(this);
-        // END KGU#156 2016-03-13
+        // START KGU#437 2017-10-11: Bugfix #435 this triggers meddle with the GUI scaling and must be set thereafter
+//		// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+//        chkOutputToTextWindow.addItemListener(this);
+//		// END KGU#160 2016-04-12
+//
+//		// START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
+//        chkCollectRuntimeData.addItemListener(this);
+//        // END KGU#117 2016-03-06
+//        // START KGU#165 2016-03-13: Enh. #124
+//        cbRunDataDisplay.addItemListener(this);
+//        // END KGU#156 2016-03-13
+        // END KGU#437 2017-10-11
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
@@ -488,6 +491,19 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         SwingUtilities.updateComponentTreeUI(this);
         // END KGU#287 2017-01-09
        
+        // START KGU#437 2017-10-11: Bugfix #435 this triggers meddle with the GUI scaling and must be set thereafter
+		// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+        chkOutputToTextWindow.addItemListener(this);
+        // END KGU#160 2016-04-12
+
+        // START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
+        chkCollectRuntimeData.addItemListener(this);
+        // END KGU#117 2016-03-06
+        // START KGU#165 2016-03-13: Enh. #124
+        cbRunDataDisplay.addItemListener(this);
+        // END KGU#156 2016-03-13
+        // END KGU#437 2017-10-11
+
         // START KGU#375 2017-03-30: Enh. #388 Distinguished display for constants
         // We must do this as late as possible, otherwise "Nimbus" tends to ignore this
         tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());

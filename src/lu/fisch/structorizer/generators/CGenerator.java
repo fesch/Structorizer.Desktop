@@ -910,8 +910,10 @@ public class CGenerator extends Generator {
 				}
 				// Now append the codeLine in case it was composed and not already appended
 				if (codeLine != null) {
+					String lineEnd = ";";
 					if (Instruction.isTurtleizerMove(line)) {
-						codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+						codeLine += "; " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+						lineEnd = "";
 					}
 					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
 					if (!commentInserted) {
@@ -919,7 +921,7 @@ public class CGenerator extends Generator {
 						commentInserted = true;
 					}
 					// END KGU#424 2017-09-26
-					addCode(codeLine + ";", _indent, isDisabled);
+					addCode(codeLine + lineEnd, _indent, isDisabled);
 				}
 				// END KGU#261 2017-01-26
 				// END KGU#277/KGU#284 2016-10-13
