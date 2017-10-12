@@ -139,6 +139,7 @@ package lu.fisch.structorizer.executor;
  *                                      Array element assignment in record components fixed.
  *      Kay Gürtzig     2017.10.10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
  *      Kay Gürtzig     2017.10.11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
+ *      Kay Gürtzig     2017.10.12      Issue #432: Attempt to improve performance by redusing redraw() calls on delay 0
  *
  ******************************************************************************************************
  *
@@ -1323,7 +1324,15 @@ public class Executor implements Runnable
 		// Unselect all elements before start!
 		//diagram.unselectAll();	// KGU 2016-03-08: There is no need anymore
 		// Reset all execution state remnants (just for sure)
-		diagram.clearExecutionStatus();
+		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls at least if delay = 0
+		//diagram.clearExecutionStatus();
+		if (delay > 0) {
+			diagram.clearExecutionStatus();
+		}
+		else {
+			root.clearExecutionStatus(); // Avoid refresh
+		}
+		// END KGU#430 2017-10-12
 		// END KGU 2015-10-11/13
 		// START KGU#376 2017-04-11: Enh. #389 - Must no longer done here but in execute() and executeCall()
 		//initInterpreter();
@@ -1477,7 +1486,12 @@ public class Executor implements Runnable
 			}
 		}
 
-		diagram.redraw();
+		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls with delay 0
+		//diagram.redraw();
+		if (delay > 0) {
+			diagram.redraw();
+		}
+		// END KGU#430 2017-10-12
 		if (!result.equals(""))
 		{
 			// START KGU#2 (#9) 2015-11-13
@@ -1632,7 +1646,15 @@ public class Executor implements Runnable
 
 		}
 		// START KGU 2015-10-13: Unsets all execution flags in the diagram
-		diagram.clearExecutionStatus();
+		// START KGU#430 2017-10-12: Issue #432 Reduce redraw() calls at least if delay = 0
+		//diagram.clearExecutionStatus();
+		if (delay > 0) {
+			diagram.clearExecutionStatus();
+		}
+		else {
+			context.root.clearExecutionStatus();
+		}
+		// END KGU#430 2017-10-12
 		// END KGU 2015-10-13
 		diagram.setAnalyser(analyserState);
 
@@ -1855,7 +1877,10 @@ public class Executor implements Runnable
 		initInterpreter();
 		// END KGU#384 2017-04-22
 		
-		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
+		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls on delauy 0
+		//this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
+		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		// END KGU#430 2017-10-12
 		
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
@@ -1952,7 +1977,10 @@ public class Executor implements Runnable
 //		this.forLoopVars = entry.forLoopVars;
 		// END KGU#384 2017-08-22
 		
-		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
+		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls on delay 0
+		//this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
+		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		// END KGU#430 2017-10-12
 		entry.root.isCalling = false;
 
 		// START KGU#376 2017-04-21: Enh. #389

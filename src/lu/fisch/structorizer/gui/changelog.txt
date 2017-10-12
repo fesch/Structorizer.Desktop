@@ -10,7 +10,7 @@ Known issues:
 - Possible difficulties in using Java objects (due to record access conversions)
 - Access irritations with deeply nested data structures (records/arrays)
 
-Current development version: 3.26-07 (2017.10.11)
+Current development version: 3.26-07 (2017.10.12)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -119,6 +119,7 @@ Current development version: 3.26-07 (2017.10.11)
 - 07: Bugfix #433: Ghost results shown for procedures named like Java classes <2>
 - 07: Bugfix #434: Pre-compilation of comparisons in loop conditions caused errors <2>
 - 07: Bugfix #435: Executor checkboxes didn't show selected icons in scaled GUI mode <2>
+- 07: Issue #432 Attempt to speed up execution by reducing redraw acts on delay 0 <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

@@ -133,6 +133,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.07.02      Enh. #357: plugin-specific option retrieval for code import
  *      Kay Gürtzig     2017.09.12      Enh. #415: Find&Replace dialog properly re-packed after L&F change
  *      Kay Gürtzig     2017.10.10      Issue #432: Workaround for nasty synch problem in redraw()
+ *      Kay Gürtzig     2017.10.12      Issue #432: redrawing made optional in two methods 
  *
  ******************************************************************************************************
  *
@@ -328,10 +329,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!this.checkRunning()) return false;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
 
-		return setRoot(root, true);
+		return setRoot(root, true, true);
 	}
 	
-	public boolean setRoot(Root root, boolean askToSave) {
+	// START KGU#430 2017-10-12: Issue #432 allow to set the root without immediate redrawing
+	//public boolean setRoot(Root root, boolean askToSave)
+	public boolean setRoot(Root root, boolean askToSave, boolean draw)
+	// END KGU#430 2017-10-12
+	{
 		if (root != null)
 		{
 			// Save if something has been changed
@@ -340,7 +345,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// Abort this if the user cancels the save request
 				return false;
 			}
-			this.unselectAll();
+			this.unselectAll(draw);
 
 			boolean hil = this.root.hightlightVars;
 			this.root = root;
@@ -356,8 +361,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				root.setSelected(true);
 			}
 			// END KGU#183 2016-04-23
-			redraw();
-			analyse();
+			if (draw) {
+				redraw();
+				analyse();
+			}
 			// START KGU#149 2016-02-03: Bugfix #117
 			doButtons();
 			// END KGU#149 2016-02-03
@@ -1295,17 +1302,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#87 2015-11-22
 	
     // START KGU#41 2015-10-11: Unselecting, e.g. before export, had left the diagram status inconsistent:
-    // Though the selected status of the elements was unset, the references of the formerly selected
-    // elements invisibly remained in the respective diagram attributes, possibly causing unwanted effects.
-    // So this new method was introduced to replace the selectElementByCoord(-1,-1) calls.
-    public void unselectAll()
+	// Though the selected status of the elements was unset, the references of the formerly selected
+	// elements invisibly remained in the respective diagram attributes, possibly causing unwanted effects.
+	// So this new method was introduced to replace the selectElementByCoord(-1,-1) calls.
+	/**
+	 * Resets the selected state on all elements of the current {@link Root} and redraws
+	 * the diagram.
+	 * @see #unselectAll(boolean)
+	 */
+	public void unselectAll()
+	// START KGU#430 2017-10-12: Issue #432 allow to suppress redrawing
+	{
+		unselectAll(true);
+	}
+
+	/**
+	 * Resets the selected state on all elements of the current {@link Root} and redraws
+	 * the diagram if {@code refresh} is true.
+	 */
+    public void unselectAll(boolean refresh)
+    // END KGU#430 2017-10-12
     {
     	if (root != null)
     	{
     		root.selectElementByCoord(-1, -1);
     	}
     	selected = selectedUp = selectedDown = selectedMoved = null;
-    	redraw();
+    	if (refresh) {
+    		redraw();
+    	}
     }
 	// END KGU#41 2015-10-11
 
@@ -3647,7 +3672,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as Multi-PNG ...");
@@ -3818,7 +3843,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
@@ -3919,7 +3944,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as EMF ...");
@@ -4020,7 +4045,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SVG ...");
@@ -4142,7 +4167,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
@@ -4243,7 +4268,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PDF ...");
@@ -6434,7 +6459,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -6467,7 +6492,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
