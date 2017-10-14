@@ -60,7 +60,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.09.14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
  *      Kay Gürtzig     2017.10.08      Title String and further error message for enh. #423 introduced
  *      Kay Gürtzig     2017.10.11      Bugfix #435: Checkboxes didn't show selected state in rescaled GUI mode
- *      Kay Gürtzig     2017.10.13      Enh. #437: Message box on failed interactive variable setting 
+ *      Kay Gürtzig     2017.10.13      Enh. #437: Message box on failed interactive variable setting
+ *      Kay Gürtzig     2017.10.14      Enh. #438: Execution can no longer be resumed with pending variable editing
  *
  ******************************************************************************************************
  *
@@ -88,6 +89,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -524,9 +526,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public void init()
     {
         btnStop.setEnabled(true);
-        btnPlay.setEnabled(true);
+        startButtonsEnabled = true;
+        btnPlay.setEnabled(startButtonsEnabled);
         btnPause.setEnabled(false);
-        btnStep.setEnabled(true);
+        btnStep.setEnabled(startButtonsEnabled);
         // START KGU#210 2016-07-25: Issue #201 - new call stack display strategy
         btnCallStack.setEnabled(false);
         // END KGU#210 2016-07-25
@@ -569,8 +572,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     private void btnPlayActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPlayActionPerformed
     {
         btnPause.setEnabled(true);
-        btnPlay.setEnabled(false);
-        btnStep.setEnabled(false);
+        startButtonsEnabled = false;
+        btnPlay.setEnabled(startButtonsEnabled);
+        btnStep.setEnabled(startButtonsEnabled);
         // START KGU#210 2016-07-25: Issue #201 - new Call Stack display strategy
         btnCallStack.setEnabled(false);
         // END KGU#210 2016-07-25
@@ -620,8 +624,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // START KGU#379 2017-04-12: Bugfix #391
         if (allButtons) {
         // END KGU#379 2017-04-12
-            btnPlay.setEnabled(true);
-            btnStep.setEnabled(true);
+        	startButtonsEnabled = true;
+            btnPlay.setEnabled(startButtonsEnabled);
+            btnStep.setEnabled(startButtonsEnabled);
             // START KGU#210 2016-07-25: Issue #201 - new Call stack display strategy
             btnCallStack.setEnabled(true);
             // END KGU#210 2016-07-25
@@ -650,8 +655,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     	// Buttons will be switched back in Executor.waitForNext()
     	// Attention: the pause button must not be enabled here because it has toggling effect, hence it
     	// would turn step mode into run mode if pressed during step execution!
-        btnStep.setEnabled(false);
-        btnPlay.setEnabled(false);
+    	startButtonsEnabled = false;
+        btnStep.setEnabled(startButtonsEnabled);
+        btnPlay.setEnabled(startButtonsEnabled);
         btnCallStack.setEnabled(false);
         // END KGU#379 2017-04-12
     	// START KGU#68 2015-11-06: Enhancement - update edited values
@@ -758,7 +764,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     }
     // END KGU#2 (#9) 2015-11-14
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration
     private javax.swing.JButton btnPause;
     private javax.swing.JButton btnPlay;
     private javax.swing.JButton btnStep;
@@ -785,6 +791,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public javax.swing.JLabel lblCallLevel;
     public javax.swing.JTextField txtCallLevel;
     // END KGU#2 (#9) 2015-11-14
+    // START KGU#442 2017-10-14: Issue #438 - prevent continuation while a cell editor is active
+    /** Normative visibility for play and step button (to be restored when cell editor is released) */
+    private boolean startButtonsEnabled = true;
+    // END KGU#442 2017-10-14
     // START KGU#89/KGU#157 2016-03-18: Bugfix #131 - Language support for Executor
     public LangTextHolder lbStopRunningProc;
     public LangTextHolder lbInputValue;
@@ -890,22 +900,49 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public static final LangTextHolder msgVarUpdatesFailed =
     		new LangTextHolder("These variable modifications failed because of evaluation errors:\n\n%");
     // START KGU#441 2017-10-13
+    // START KGU#442 2017-10-14: Issue #438
+	public static final LangTextHolder msgEndEditing = new LangTextHolder("To continue, first release the variable cell editor (Enter or Esc).");
+	// END KGU#442 2017-10-14
+
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 
     @Override
 	public void propertyChange(PropertyChangeEvent pcEv) {
 		// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
-    	if (pcEv.getSource() == this.tblVar && pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
+    	// START KGU#442 2017-10-14: Issue #438 Prevent restart while the cell editor is active (neither quit nor committed)
+    	//if (pcEv.getSource() == this.tblVar && pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
+        if (pcEv.getSource() == this.tblVar && pcEv.getPropertyName().equals("tableCellEditor"))
+    	// END KGU#442 2017-10-14
     	{
-    		int rowNr = tblVar.getSelectedRow();
-            DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
-            Object val = tm.getValueAt(rowNr, 1);
-            if (val != null)
-            {
-            	varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
-            	//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
-            }
+        	// START KGU#442 2017-10-14: Issue #438 - Prevent restart while the cell editor is active (neither quit nor committed)
+        	if (pcEv.getNewValue() != null) {
+        		// Cell editor activated - disable start buttons and put a hint bubble
+        		// (The normative enabling state is still available in startButtonsEnabled)
+        		btnPlay.setEnabled(false);
+        		btnStep.setEnabled(false);
+        		if (startButtonsEnabled) {
+        			btnPlay.setToolTipText(msgEndEditing.getText());
+        			btnStep.setToolTipText(msgEndEditing.getText());
+        		}
+        	}
+        	else {
+            // END KGU#442 2017-10-14
+        		int rowNr = tblVar.getSelectedRow();
+        		DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
+        		Object val = tm.getValueAt(rowNr, 1);
+        		if (val != null)
+        		{
+        			varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
+        			//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
+        		}
+            	// START KGU#442 2017-10-14: Issue #438 - Re-enable restart
+        		btnPlay.setEnabled(startButtonsEnabled);
+        		btnStep.setEnabled(startButtonsEnabled);
+        		btnPlay.setToolTipText(null);
+        		btnStep.setToolTipText(null);
+            	// END KGU#442 2017-10-14
+        	}
     	}
 		
 	}

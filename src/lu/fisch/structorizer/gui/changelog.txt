@@ -119,7 +119,8 @@ Current development version: 3.26-07 (2017.10.14)
 - 07: Bugfix #435: Executor checkboxes didn't show selected icons in scaled GUI mode <2>
 - 07: Issue #432: Attempt to speed up execution by reducing redraw calls on delay 0 <2>
 - 08: Issue #436: Reference consistency for array parameters (adding elements) <2>
-- 08: Issue #437: Defective variable modifications in paused state now reported <2> 
+- 08: Issue #437: Defective variable modifications in paused state now reported <2>
+- 08: Issue #438: Pending variable editing now prevents to resume execution <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

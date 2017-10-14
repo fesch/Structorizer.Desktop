@@ -1079,6 +1079,7 @@ Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
 Control.msgBadValueListDetails.text=Detalles: %
 Control.msgVarUpdateErrors.text=Problemas poniendo nuevos valores
 Control.msgVarUpdatesFailed.text=Estas modificaciones de variables no valen por faltas sintacticas:\n\n%
+Control.msgEndEditing.text=Para continuar cesa editar variables (Enter o Esc).
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

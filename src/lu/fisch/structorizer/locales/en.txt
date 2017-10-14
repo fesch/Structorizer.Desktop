@@ -1080,6 +1080,7 @@ Control.msgBadValueList.text=<%> cannot be interpreted as value list.
 Control.msgBadValueListDetails.text=Details: %
 Control.msgVarUpdateErrors.text=Trouble updating variables
 Control.msgVarUpdatesFailed.text=These variable modifications failed because of evaluation errors:\n\n%
+Control.msgEndEditing.text=To continue, first release the variable cell editor (Enter or Esc).
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
 
