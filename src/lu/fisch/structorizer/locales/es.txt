@@ -1077,6 +1077,8 @@ Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser 
 Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
 Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
 Control.msgBadValueListDetails.text=Detalles: %
+Control.msgVarUpdateErrors.text=Problemas poniendo nuevos valores
+Control.msgVarUpdatesFailed.text=Estas modificaciones de variables no valen por faltas sintacticas:\n\n%
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

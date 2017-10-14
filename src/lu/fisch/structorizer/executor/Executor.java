@@ -139,14 +139,32 @@ package lu.fisch.structorizer.executor;
  *                                      Array element assignment in record components fixed.
  *      Kay Gürtzig     2017.10.10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
  *      Kay Gürtzig     2017.10.11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
- *      Kay Gürtzig     2017.10.12      Issue #432: Attempt to improve performance by redusing redraw() calls on delay 0
+ *      Kay Gürtzig     2017.10.12      Issue #432: Attempt to improve performance by reducing redraw() calls on delay 0
+ *      Kay Gürtzig     2017.10.14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2017-10-13/14 Issue #436
+ *      - The internal representations of Structorizer arrays as Object[] caused inconsistent behaviour when
+ *        used as parameters: subroutines obtain a reference and replacements of elements are thus effective
+ *        for the calling diagram, but as soon as additional elements was appended to the array the reference
+ *        got broken (because the Object[] was replaced by a larger one) and all further manipulations weren't
+ *        visible to the calling level but performed on a detached copy.
+ *        This is now solved by representing arrays as ArrayLists internally (synchronisation is not an issue
+ *        here, so Vectors aren't necessary). This enlarges of course the overhead, both in space and time,
+ *        expressions require more syntactical conversion before they can be passed to the interpreter.
+ *      2017-09-17/2017-10-08
+ *      - Type definitions (in Instruction elements) were introduced, particularly for record/struct types:
+ *            type &lt;type_name&gt; = record{&lt;component_declaration&gt; ;...}
+ *            type &lt;type_name&gt; = struct{&lt;component_declaration&gt; ;...}
+ *      - Record initializer expressions were introduced:
+ *            &lt;type_name&gt;{&lt;component_name&gt;: &lt;component_value&gt; ,...}
+ *      - record values are supported in form of HashMaps, which requires conversion of qualified
+ *        names and rather complicated tests on assignments {@see #setVar(String, Object)}
  *      2017-04-22 Code revision (KGU#384)
  *      - The execution context as to be pushed to call stack had been distributed over numerous attributes
- *        and were bundled to an ExecutionStackEntry held in attribute context (the class ExecutionStackEntry
+ *        and was bundled to an ExecutionStackEntry held in attribute context (the class ExecutionStackEntry
  *        is likely to be renamed to ExecutionContext). This was to simplify the call mechanisms and regain
  *        overview and control.
  *      2016-03-17 Enh. #133 (KGU#159)
@@ -245,6 +263,7 @@ import java.awt.event.WindowListener;
 import java.io.Closeable;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -371,15 +390,15 @@ public class Executor implements Runnable
 			// START KGU#410 2017-05-24: Enh. #413: Introduced to facilitate COBOL import but generally useful
 			// If we passed the result of String.split() directly then we would obtain a String[] object the 
 			// Executor cannot display.
-			"public Object[] split(String s, String p)"
+			"public ArrayList split(String s, String p)"
 					+ "{ p = java.util.regex.Pattern.quote(p);"
 					+ " String[] parts = s.split(p, -1);"
-					+ "Object[] results = new Object[parts.length];"
+					+ "ArrayList results = new ArrayList(parts.length);"
 					+ " for (int i = 0; i < parts.length; i++) {"
-					+ "		results[i] = parts[i];"
+					+ "		results.add(parts[i]);"
 					+ "}"
 					+ "return results; }",
-			"public Object[] split(String s, char c)"
+			"public ArrayList split(String s, char c)"
 					+ "{ return split(s, \"\" + c); }",
 			// END KGU#410 2017-05-24
 			// START KGU#57 2015-11-07: More interoperability for characters and Strings
@@ -396,12 +415,15 @@ public class Executor implements Runnable
 			// END KGU#150 2016-04-03
 			// END KGU#57 2015-11-07
 			// START KGU#322 2017-01-06: Enh. #325 - reflection functions
-			"public boolean isArray(Object obj) { return (obj instanceof Object[]); }",
+			"public boolean isArray(Object obj) { return (obj instanceof ArrayList); }",
 			"public boolean isString(Object obj) { return (obj instanceof String); }",
 			"public boolean isChar(Object obj) { return (obj instanceof Character); }",
 			"public boolean isBool(Object obj) { return (obj instanceof Boolean); }",
 			"public boolean isNumber(Object obj) { return (obj instanceof Integer) || (obj instanceof Double); }",
-			"public int length(Object[] arr) { return arr.length; }",
+			// START KGU#439 2017-10-13: Issue #436
+			//"public int length(Object[] arr) { return arr.length; }",
+			"public int length(ArrayList arr) { return arr.size(); }",
+			// END KGU#439 2017-10-13
 			// END KGU#322 2017-01-06
 			// START KGU 2016-12-18: #314: Support for simple text file API
 			"public int fileOpen(String filePath) { "
@@ -621,22 +643,21 @@ public class Executor implements Runnable
 					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
 					+ "}",
 			// END KGU 2016-12-18
-			// START KGU#375 2017-03-30: Enh. #388 Workaround for missing support of Object[].clone() in bsh-2.0b4.jar
-			"public Object[] copyArray(Object[] sourceArray) {"
-					+ "Object[] targetArray = new Object[sourceArray.length];"
-					+ "for (int i = 0; i < sourceArray.length; i++) {"
-					+ "targetArray[i] = sourceArray[i];"
-					+ "}"
-					+ "return targetArray;"
+			// START KGU#439 2017-10-13: Issue #436 Array representation changed from Object[] to ArrayList<Object>
+			//"public ArrayList copyArray(Object[] sourceArray) {"
+			//		+ "ArrayList targetArray = new ArrayList(sourceArray.length);"
+			//		+ "for (int i = 0; i < sourceArray.length; i++) {"
+			//		+ "targetArray.add(sourceArray[i]);"
+			//		+ "}"
+			//		+ "return targetArray;"
+			//		+ "}",
+			"public ArrayList copyArray(ArrayList sourceArray) {"
+					+ "return new ArrayList(targetArray);"
 					+ "}",
-			// END KGU#375 2017-03-30
+			// END KGU#439 2017-10-13
 			// START KGU#388 2017-09-13: Enh. #423 Workaround for missing support of HashMap<?,?>.clone() in bsh-2.0b4.jar
 			"public HashMap copyRecord(HashMap sourceRecord) {"
-					+ "HashMap targetRecord = new HashMap();"
-					+ "for (java.util.Map.Entry entry: sourceRecord.entrySet()) {"
-					+ "targetRecord.put(entry.getKey(), entry.getValue());"
-					+ "}"
-					+ "return targetRecord;"
+					+ "return new HashMap(sourceRecord);"
 					+ "}"
 	};
 	
@@ -794,11 +815,13 @@ public class Executor implements Runnable
 			"$1\\\\042$2",
 			"$1\\\\134$2"
 	};
-	// Matcher for binary integer literals, which the interpreter doesn't cope with
+	/** Matcher for binary integer literals, which the interpreter doesn't cope with */
 	private static final Matcher MTCH_BIN_LITERAL = Pattern.compile("0b[01]+").matcher("");
-	// Matcher for certain interpreter error messages relating to array assignment
+	/** Matcher for certain interpreter error messages related to array assignment */
 	// FIXME: Might have to be adapted with a newer version of the bean shell interpreter some day ...
 	private static final Matcher MTCH_EVAL_ERROR_ARRAY = Pattern.compile(".*Can't assign.*to java\\.lang\\.Object \\[\\].*").matcher("");
+	/** Matcher for split function */
+	private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
 	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
 	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
 	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
@@ -806,6 +829,8 @@ public class Executor implements Runnable
 	private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
 	private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
 	private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+	
+	private static final StringList OBJECT_ARRAY = StringList.explode("Object,[,]", ",");
 
 
 	private Executor(Diagram diagram, DiagramController diagramController)
@@ -1075,8 +1100,8 @@ public class Executor implements Runnable
 						try
 						{
 							int pos = -1;	// some character position
-							Object leftO = this.evaluateExpression(left, false);
-							Object rightO = this.evaluateExpression(right, false);
+							Object leftO = this.evaluateExpression(left, false, false);
+							Object rightO = this.evaluateExpression(right, false, false);
 							String neg = (op > 0) ? "!" : "";
 							// First the obvious case: two String expressions
 							if ((leftO instanceof String) && (rightO instanceof String))
@@ -1578,13 +1603,19 @@ public class Executor implements Runnable
 								//JOptionPane.showMessageDialog(diagram, n,
 								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
 								// KGU#133 2016-01-29: Arrays now always shown as listview (independent of size)
-								if (resObj instanceof Object[] /*&& ((Object[])resObj).length > 20*/)
+								// START KGU#439 2017-10-13: Issue #436
+								//if (resObj instanceof Object[] /*&& ((Object[])resObj).length > 20*/)
+								//{
+								//	// START KGU#147 2016-01-29: Enh. #84 - interface changed for more flexibility
+								//	//showArray((Object[])resObj, "Returned result");
+								//	showArray((Object[])resObj, header, !step);
+								//	// END KGU#147 2016-01-29
+								//}
+								if (resObj instanceof ArrayList<?> /*&& ((Object[])resObj).length > 20*/)
 								{
-									// START KGU#147 2016-01-29: Enh. #84 - interface changed for more flexibility
-									//showArray((Object[])resObj, "Returned result");
-									showArray((Object[])resObj, header, !step);
-									// END KGU#147 2016-01-29
+									showArray((ArrayList<Object>)resObj, header, !step);
 								}
+								// END KGU#439 2017-10-13
 								// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 								//else
 								//{
@@ -1748,8 +1779,58 @@ public class Executor implements Runnable
 	// START KGU#133 2016-01-09: New method for presenting result arrays as scrollable list
 	// START KGU#147 2016-01-29: Enh. #84 - interface enhanced, pause button added
 	//private void showArray(Object[] _array, String _title)
-	private void showArray(Object[] _array, String _title, boolean withPauseButton)
-	// END KGU#147 2016-01-29
+//	@Deprecated
+//	private void showArray(Object[] _array, String _title, boolean withPauseButton)
+//	// END KGU#147 2016-01-29
+//	{	
+//		JDialog arrayView = new JDialog();
+//		arrayView.setTitle(_title);
+//		arrayView.setIconImage(IconLoader.ico004.getImage());
+//		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//		// START KGU#147 2016-01-29: Enh. #84 (continued)
+//		JButton btnPause = new JButton("Pause");
+//		btnPause.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent event) 
+//			{
+//				step = true; paus = true; control.setButtonsForPause(true);
+//				if (event.getSource() instanceof JButton)
+//				{
+//					Container parent = ((JButton)(event.getSource())).getParent();
+//					while (parent != null && !(parent instanceof JDialog))
+//					{
+//						parent = parent.getParent();
+//					}
+//					if (parent != null) {
+//						((JDialog)parent).dispose();
+//					}
+//				}
+//			}
+//		});
+//		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
+//		btnPause.setVisible(withPauseButton);
+//		// END KGU#147 2016-01-29
+//		// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
+//		this.console.writeln("*** " + _title + ":", Color.CYAN);
+//		// END KGU#160 2016-04-26
+//		List arrayContent = new List(10);
+//		for (int i = 0; i < _array.length; i++)
+//		{
+//			// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
+//			String valLine = "[" + i + "]  " + prepareValueForDisplay(_array[i]);
+//			this.console.writeln("\t" + valLine, Color.CYAN);
+//			// END KGU#160 2016-04-26
+//			arrayContent.add(valLine);
+//		}
+//		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
+//		arrayView.setSize(300, 300);
+//		arrayView.setLocationRelativeTo(control);
+//		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
+//		arrayView.setVisible(true);
+//	}
+//	// END KGU#133 2016-01-09
+
+	// START KGU#439 2017-10-13: Enh. #436
+	private void showArray(ArrayList<Object> _array, String _title, boolean withPauseButton)
 	{	
 		JDialog arrayView = new JDialog();
 		arrayView.setTitle(_title);
@@ -1781,10 +1862,10 @@ public class Executor implements Runnable
 		this.console.writeln("*** " + _title + ":", Color.CYAN);
 		// END KGU#160 2016-04-26
 		List arrayContent = new List(10);
-		for (int i = 0; i < _array.length; i++)
+		for (int i = 0; i < _array.size(); i++)
 		{
 			// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-			String valLine = "[" + i + "]  " + prepareValueForDisplay(_array[i]);
+			String valLine = "[" + i + "]  " + prepareValueForDisplay(_array.get(i));
 			this.console.writeln("\t" + valLine, Color.CYAN);
 			// END KGU#160 2016-04-26
 			arrayContent.add(valLine);
@@ -1795,7 +1876,7 @@ public class Executor implements Runnable
 		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
 		arrayView.setVisible(true);
 	}
-	// END KGU#133 2016-01-09
+	// END KGU#439 2017-10-13
 	
 	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
 	// START KGU#156 2016-03-12: Enh. #124 - signature enhanced to overcome some nasty hacks
@@ -2628,14 +2709,14 @@ public class Executor implements Runnable
 				if (strInput.startsWith("\"") && strInput.endsWith("\"") ||
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
-					this.evaluateExpression(target + " = " + rawInput, false);
+					this.evaluateExpression(target + " = " + rawInput, false, false);
 					setVar(target, context.interpreter.get(target));
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
-					this.evaluateExpression(target + " = \"" + rawInput + "\"", false);
+					this.evaluateExpression(target + " = \"" + rawInput + "\"", false, false);
 					setVar(target, context.interpreter.get(target));					
 				}
 				// END KGU#285 2016-10-16
@@ -2673,7 +2754,7 @@ public class Executor implements Runnable
 				// END KGU#388 2017-09-18
 				else if (strInput.endsWith("}") && (strInput.startsWith("{") ||
 						strInput.indexOf("{") > 0 && Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null))) {
-					setVar(target, this.evaluateExpression(strInput, true));
+					setVar(target, this.evaluateExpression(strInput, true, false));
 				}
 				// START KGU#283 2016-10-16: Enh. #273
 				else if (strInput.equals("true") || strInput.equals("false"))
@@ -2921,11 +3002,24 @@ public class Executor implements Runnable
 		
 		// Avoid sharing an array if the target is a constant (while the source may not be) 
 		if (isConstant && content instanceof Object[]) {
-			content = ((Object[])content).clone();
+			// START KGU#439 2017-10-13: Enh. #436
+			//content = ((Object[])content).clone();
+			ArrayList<Object> newContent = new ArrayList<Object>(((Object[])content).length);
+			for (Object elem: (Object[])content) {
+				newContent.add(elem);
+			}
+			content = newContent;
+			// END KGU#439 2017-10-13
 		}
 		// END KGU#375 2017-03-30
+		// START KGU#439 2017-10-13: Enh. #436
+		else if (isConstant && content instanceof ArrayList<?>) {
+			// FIXME: This is only a shallow copy, we might have to clone all values as well
+			content = new ArrayList<Object>((ArrayList<Object>)content);
+		}
+		// END KGU#439 2017-10-13
 		// START KGU#388 2017-09-14: Enh. #423
-		if (isConstant && content instanceof HashMap<?,?>) {
+		else if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
 			content = new HashMap<String, Object>((HashMap<String, ?>)content);
 		}
@@ -2967,24 +3061,39 @@ public class Executor implements Runnable
 			boolean arrayFound = context.variables.contains(target);
 			boolean componentArrayFound = compType != null && context.variables.contains(recordName) && compType.isArray();
 			int index = this.getIndexValue(indexStr);
-			Object[] objectArray = null;
+			ArrayList<Object> objectArray = null;
 			Object record = null;
 			HashMap<String, Object> parentRecord = null;
 			int oldSize = 0;
 			if (arrayFound)
 			{
-				try {
-					// If it hasn't been an array then we'll get an error here
-					//objectArray = (Object[]) this.interpreter.get(arrayname);
-					objectArray = (Object[]) context.interpreter.get(target);
-					oldSize = objectArray.length;
+				// START KGU#439 2017-10-13: Issue #436
+//				try {
+//					// If it hasn't been an array then we'll get an error here
+//					//objectArray = (Object[]) this.interpreter.get(arrayname);
+//					objectArray = (Object[]) context.interpreter.get(target);
+//					oldSize = objectArray.length;
+//				}
+//				catch (Exception ex)
+//				{
+//					// Produce a meaningful EvalError instead
+//					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
+//					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
+//				}
+				Object targetObject = this.context.interpreter.get(target);
+				if (targetObject == null && context.dynTypeMap.containsKey(target) && context.dynTypeMap.get(target).isArray()) {
+					// KGU#432: The variable had been declared as array but not initialized - so be generous here
+					objectArray = new ArrayList<Object>();
 				}
-				catch (Exception ex)
-				{
-					// Produce a meaningful EvalError instead
-					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
+				else if (targetObject instanceof ArrayList<?>) {
+					objectArray = (ArrayList<Object>)targetObject;
+					oldSize = objectArray.size();
 				}
+				else {
+					// FIXME: Produce a more meaningful EvalError
+					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false, true);
+				}
+				// END KGU#439 2017-10-13
 			}
 			else if (componentArrayFound)
 			{
@@ -3004,11 +3113,11 @@ public class Executor implements Runnable
 					}
 				}
 				if (comp == null) {
-					objectArray = new Object[]{};
+					objectArray = new ArrayList<Object>();
 				}
-				else if (comp instanceof Object[]) {
-					objectArray = (Object[])comp;
-					oldSize = objectArray.length;
+				else if (comp instanceof ArrayList<?>) {
+					objectArray = (ArrayList<Object>)comp;
+					oldSize = objectArray.size();
 				}
 				else {
 					String valueType = Instruction.identifyExprType(context.dynTypeMap, this.prepareValueForDisplay(comp), true);
@@ -3020,18 +3129,28 @@ public class Executor implements Runnable
 			}
 			if (index > oldSize - 1) // This includes the case of oldSize = 0
 			{
-				Object[] oldObjectArray = objectArray;
-				objectArray = new Object[index + 1];
-				for (int i = 0; i < oldSize; i++)
-				{
-					objectArray[i] = oldObjectArray[i];
+				// START KGU#439 2017-10-13: Issue #436
+//				Object[] oldObjectArray = objectArray;
+//				objectArray = new Object[index + 1];
+//				for (int i = 0; i < oldSize; i++)
+//				{
+//					objectArray[i] = oldObjectArray[i];
+//				}
+//				for (int i = oldSize; i < index; i++)
+//				{
+//					objectArray[i] = new Integer(0);
+//				}
+				if (objectArray == null) {
+					objectArray = new ArrayList<Object>(index+1);
 				}
-				for (int i = oldSize; i < index; i++)
-				{
-					objectArray[i] = new Integer(0);
+				// This adds dummy elements until inclusively index
+				for (int i = oldSize; i <= index; i++) {
+					objectArray.add(0);
 				}
+				// END KGU#439 2017-10-13
 			}
-			objectArray[index] = content;
+			//objectArray[index] = content;
+			objectArray.set(index, content);
 			//this.interpreter.set(arrayname, objectArray);
 			//this.variables.addIfNew(arrayname);
 			if (componentArrayFound) {
@@ -3165,10 +3284,11 @@ public class Executor implements Runnable
 //			}
 //			this.interpreter.eval(name + " = " + content);	// What the heck is this good for, now?
 			// START KGU#99 2015-12-10: Bugfix #49 - for later comparison etc. we try to replace wrapper objects by simple values
-			if (! (content instanceof String || content instanceof Character || content instanceof Object[] || content instanceof HashMap<?,?>))
+			// FIXME: Why is String also excluded here?
+			if (! (content instanceof String || content instanceof Character || content instanceof ArrayList<?> || content instanceof HashMap<?,?>))
 			{
 				try {
-					this.evaluateExpression(target + " = " + content, false);	// Avoid the variable content to be an object
+					this.evaluateExpression(target + " = " + content, false, false);	// Avoid the variable content to be an object
 				}
 				catch (EvalError ex)	// Just ignore an error (if we may rely on the previously set content to survive)
 				{}
@@ -3288,13 +3408,14 @@ public class Executor implements Runnable
 		if (val != null)
 		{
 			valStr = val.toString();
-			if (val.getClass().getSimpleName().equals("Object[]"))
+			if (val instanceof ArrayList<?>)
 			{
 				valStr = "{";
-				Object[] valArray = (Object[]) val;
-				for (int j = 0; j < valArray.length; j++)
+				@SuppressWarnings("unchecked")
+				ArrayList<Object> valArray = (ArrayList<Object>)val;
+				for (int j = 0; j < valArray.size(); j++)
 				{
-					String elementStr = prepareValueForDisplay(valArray[j]);
+					String elementStr = prepareValueForDisplay(valArray.get(j));
 					valStr = valStr + ((j > 0) ? ", " : "") + elementStr;
 				}
 				valStr = valStr + "}";
@@ -3302,7 +3423,8 @@ public class Executor implements Runnable
 			// START KGU#388 2017-09-14: Enh. #423
 			if (val.getClass().getSimpleName().equals("HashMap"))
 			{
-				HashMap<String, Object> hmVal = (HashMap)val;
+				@SuppressWarnings("unchecked")
+				HashMap<String, Object> hmVal = (HashMap<String, Object>)val;
 				valStr = hmVal.get("§TYPENAME§") + "{";
 				int j = 0;
 				for (Entry<String, Object> entry: hmVal.entrySet())
@@ -3336,13 +3458,24 @@ public class Executor implements Runnable
 	// END KGU#67/KGU#68 2015-11-08
 	
 	// START KGU#68 2015-11-06 - modified 2016-10-07 for improved thread-safety
-	public void adoptVarChanges(HashMap<String,Object> newValues)
+	/**
+	 * Tries to commit the variable manipulations prepared in the Control display
+	 * and reports the manipulations to the Output Console Window.
+	 * If errors occur, then the returned {@link StringList} will contain the respective
+	 * messages.
+	 * @param newValues - a {@link HashMap} containing the names and new value strings
+	 * of manipulated variables.
+	 * @return a {@link StringList} containing obtained evluation errors.
+	 */
+	@SuppressWarnings("unchecked")
+	public StringList adoptVarChanges(HashMap<String,Object> newValues)
 	{
+		StringList errors = new StringList();
 		String tmplManuallySet = control.lbManuallySet.getText();	// The message template
 		for (HashMap.Entry<String, Object> entry: newValues.entrySet())
 		{
+			String varName = entry.getKey();
 			try {
-				String varName = entry.getKey();
 				Object oldValue = context.interpreter.get(varName);
 				Object newValue = entry.getValue();
 				// START KGU#160 2016-04-12: Enh. #137 - text window output
@@ -3356,11 +3489,33 @@ public class Executor implements Runnable
 				}
 				// END KGU#160 2016-04-12
 
-				if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
+				if (oldValue != null && oldValue instanceof ArrayList<?>)
 				{
 					// In this case an initialisation expression ("{ ..., ..., ...}") is expected
-					String asgnmt = "Object[] " + varName + " = " + newValue;
-					this.evaluateExpression(asgnmt, true);
+					int oldSize = ((ArrayList<Object>)oldValue).size();
+					//String asgnmt = "Object[] " + tmpVarName + " = " + newValue;
+					//this.evaluateExpression(asgnmt, true, false);
+					Object newObject = this.evaluateExpression(newValue.toString(), true, false);
+					//context.interpreter.unset(tmpVarName);
+					if (newObject instanceof ArrayList<?>) {
+						int newSize = ((ArrayList<Object>)newObject).size();
+						// First replace existing elements
+						for (int i = 0; i < Math.min(oldSize, newSize); i++) {
+							((ArrayList<Object>)oldValue).set(i, ((ArrayList<Object>)newObject).get(i));
+						}
+						// If the array has shrunk then get rid of obsolete elements
+						for (int i = oldSize-1; i >= newSize; i--) {
+							((ArrayList<Object>)oldValue).remove(i);
+						}
+						// If the element has grown then add the additional values
+						for (int i = oldSize; i < newSize; i++) {
+							((ArrayList<Object>)oldValue).add(((ArrayList<Object>)newObject).get(i));
+						}
+					}
+					else {
+						// FIXME check if the variable had explicitly been declared as Array - in this case refuse
+						context.interpreter.set(varName, newObject);
+					}
 //					// Okay, but now we have to sort out some un-boxed strings
 //					Object[] objectArray = (Object[]) interpreter.get(varName);
 //					for (int j = 0; j < objectArray.length; j++)
@@ -3376,18 +3531,41 @@ public class Executor implements Runnable
 				}
 				// START KGU#388 2017-10-08: Enh. #423
 				else if (context.dynTypeMap.containsKey(varName) && context.dynTypeMap.get(varName).isRecord()) {
-					context.interpreter.set(varName, evaluateExpression((String)newValue, true));
+					// START KGU#439 2017-10-13: Issue #436 We must not break references
+					//context.interpreter.set(varName, evaluateExpression((String)newValue, true));
+					Object newObject = evaluateExpression((String)newValue, true, false);
+					if (oldValue instanceof HashMap && newObject instanceof HashMap) {
+						TypeMapEntry type = context.dynTypeMap.get(varName);
+						for (String key: type.getComponentInfo(true).keySet()) {
+							if (!key.startsWith("§")) {
+								if (((HashMap<String, Object>)newObject).containsKey(key)) {
+									((HashMap<String, Object>)oldValue).put(key, ((HashMap<String, Object>)newObject).get(key));
+								}
+								else {
+									((HashMap<String, Object>)oldValue).remove(key);
+								}
+							}
+						}
+					}
+					else if (oldValue == null) {
+						context.interpreter.set(varName, newObject);
+					}
+					// END KGU#439 2017-10-13
 				}
-				// END KGU#388 2017-10-08
 				else
 				{
 					setVarRaw(varName, (String)newValue);
 				}
+				// END KGU#388 2017-10-08
 			}
 			catch (EvalError err) {
+				// START KGU#441 2017-10-13: Enh. #437
+				errors.add(varName + ": " + err.getMessage());
+				// END KGU#441 2017-10-13
 				System.err.println("Executor.adoptVarChanges(" + newValues + "): " + err.getMessage());
 			}
 		}
+		return errors;
 	}
 	// END KGU#68 2015-11-06
 	
@@ -3856,7 +4034,7 @@ public class Executor implements Runnable
 				// START KGU#417 2017-06-30: Enh. #424
 				expr = this.evaluateDiagramControllerFunctions(expr);
 				// END KGU#417 2017-06-30
-				Object n = this.evaluateExpression(expr, false);
+				Object n = this.evaluateExpression(expr, false, false);
 				// END KGU 2017-04-14
 				if (n instanceof Integer)
 				{
@@ -3962,7 +4140,7 @@ public class Executor implements Runnable
 							}
 							Object argVals[] = new Object[nArgs];
 							for (int i = 0; i < nArgs; i++) {
-								Object val = this.evaluateExpression(args.get(i), false);
+								Object val = this.evaluateExpression(args.get(i), false, false);
 								try {
 									signature[i].cast(val);
 								}
@@ -4034,7 +4212,7 @@ public class Executor implements Runnable
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			Object constVal = context.constants.get(token);
-			if (constVal instanceof Object[]) {
+			if (constVal instanceof ArrayList<?>) {
 				// Let a constant array be replaced by its clone, so we avoid structure
 				// sharing, which would break the assurance of constancy.
 				tokens.set(i, "copyArray(" + token + ")");
@@ -4070,7 +4248,7 @@ public class Executor implements Runnable
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
-						args[p] = this.evaluateExpression(f.getParam(p), false);
+						args[p] = this.evaluateExpression(f.getParam(p), false, false);
 					}
 					value = executeCall(sub, args, (Call)instr);
 					// START KGU#117 2016-03-10: Enh. #77
@@ -4151,7 +4329,7 @@ public class Executor implements Runnable
 //		}
 		else
 		{
-			value = this.evaluateExpression(expression, true);
+			value = this.evaluateExpression(expression, true, false);
 		}
 		// END KGU#426 2017-09-30
 		
@@ -4214,7 +4392,7 @@ public class Executor implements Runnable
 				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
 				try {
 					String dummyVar = "prompt" + this.hashCode();
-					this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false);
+					this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false, false);
 					Object res = context.interpreter.get(dummyVar);
 					if (res != null) {
 						prompt = res.toString();
@@ -4378,7 +4556,7 @@ public class Executor implements Runnable
 			{
 				out = outExpressions.get(i);
 		// END KGU#101 2015-12-11
-				Object n = this.evaluateExpression(out, false);
+				Object n = this.evaluateExpression(out, false, false);
 				if (n == null)
 				{
 					result = control.msgInvalidExpr.getText().replace("%1", out);
@@ -4478,20 +4656,24 @@ public class Executor implements Runnable
 		{
 			// START KGU#426 2017-09-30: Bugfix #429
 			//resObj = this.evaluateExpression(out);
-			resObj = this.evaluateExpression(out, true);
+			resObj = this.evaluateExpression(out, true, false);
 			// END KGU#426 2017-09-30
 			// If this diagram is executed at top level then show the return value
 			if (this.callers.empty())
 			{
-				if (resObj == null)
-				{
+				if (resObj == null)	{
 					result = control.msgInvalidExpr.getText().replace("%1", out);
+				} 
 				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
-				} else if (resObj instanceof Object[])
-				{
-					showArray((Object[])resObj, header, !step);
-				} else if (step)
-				{
+				// START KGU#439 2017-10-13: Issue 436 - Structorizer arrays now implemented as ArrayLists rather than Object[] 
+				//else if (resObj instanceof Object[]) {
+				//	showArray((Object[])resObj, header, !step);
+				//}
+				else if (resObj instanceof ArrayList<?>) {
+					showArray((ArrayList<Object>)resObj, header, !step);
+				}
+				// END KGU#439 2017-10-13
+				else if (step) {
 					// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
 					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 					// END KGU#160 2016-04-26
@@ -4503,8 +4685,8 @@ public class Executor implements Runnable
 							header, JOptionPane.INFORMATION_MESSAGE);
 					// END KGU#147 2016-01-29					
 				// END KGU#133 2016-01-29
-				} else
-				{
+				}
+				else {
 					// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
 					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 					// END KGU#198 2016-05-25
@@ -4551,7 +4733,7 @@ public class Executor implements Runnable
 			{
 				try
 				{
-					args[p] = this.evaluateExpression(f.getParam(p), false);
+					args[p] = this.evaluateExpression(f.getParam(p), false, false);
 					if (args[p] == null)
 					{
 						if (!result.isEmpty())
@@ -4638,7 +4820,7 @@ public class Executor implements Runnable
 				else	
 				{
 					// Try as built-in subroutine as is
-					this.evaluateExpression(cmd, false);
+					this.evaluateExpression(cmd, false, false);
 				}
 			}
 		}
@@ -4787,7 +4969,7 @@ public class Executor implements Runnable
 						}
 						String test = convert(expression + tokens.concatenate());
 						// END KGU#259 2016-09-25
-						Object n = this.evaluateExpression(test, false);
+						Object n = this.evaluateExpression(test, false, false);
 						go = n.toString().equals("true");
 					}
 					// END KGU#15 2015-10-21
@@ -4865,7 +5047,7 @@ public class Executor implements Runnable
 
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
-			Object cond = this.evaluateExpression(s, false);
+			Object cond = this.evaluateExpression(s, false, false);
 			//System.out.println("Res= " + n);
 			if (cond == null || !(cond instanceof Boolean))
 			{
@@ -4978,7 +5160,7 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
 			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
 			// END KGU#417 2017-06-30
 
 			if (cond == null || !(cond instanceof Boolean))
@@ -5052,7 +5234,7 @@ public class Executor implements Runnable
 					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 					//cond = context.interpreter.eval(convertStringComparison(condStr));
 					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
 					// END KGU#417 2017-06-30
 					if (cond == null)
 					{
@@ -5147,7 +5329,7 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
 			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
 			// END KGU#417 2017-06-30
 			if (cond == null)
 			{
@@ -5190,7 +5372,7 @@ public class Executor implements Runnable
 					//cond = context.interpreter.eval(convertStringComparison(condStr));
 					//Object cond = context.interpreter.eval(condStr);
 					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false);
+					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
 					// END KGU#417 2017-06-30
 					if (cond == null || !(cond instanceof Boolean))
 					{
@@ -5313,7 +5495,7 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
 			s = this.evaluateDiagramControllerFunctions(s);
 			// END KGU#417 2017-06-30
-			Object n = this.evaluateExpression(s, false);
+			Object n = this.evaluateExpression(s, false, false);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -5348,7 +5530,7 @@ public class Executor implements Runnable
 			s = this.evaluateDiagramControllerFunctions(s);
 			// END KGU#417 2017-06-30
 			
-			n = this.evaluateExpression(s, false);
+			n = this.evaluateExpression(s, false, false);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -5486,23 +5668,23 @@ public class Executor implements Runnable
 			problem += "\n" + ex.getMessage();
 		}
 		// END KGU#417 2017-06-30
-		// START KGU#410 2017-07-01: Enh. #413 - there is an array-returning built-in function now!
-		//if (valueListString.startsWith("{") && valueListString.endsWith("}"))
-		if (valueListString.startsWith("{") && valueListString.endsWith("}")
-			|| valueListString.matches("^split\\(.*?[,].*?\\)$"))
-		// END KGU#410 2017-07-01
+		if (valueListString.startsWith("{") && valueListString.endsWith("}"))
 		{
 			try
 			{
-				this.evaluateExpression("Object[] tmp20160321kgu = " + valueListString, false);
-				value = context.interpreter.get("tmp20160321kgu");
-				context.interpreter.unset("tmp20160321kgu");
+				// START KGU#439 2017-10-13: Issue #436
+				//this.evaluateExpression("Object[] tmp20160321kgu = " + valueListString, false, false);
+				//value = context.interpreter.get("tmp20160321kgu");
+				//context.interpreter.unset("tmp20160321kgu");
+				value = this.evaluateExpression(valueListString, true, false);
+				// END KGU#439 2017-10-13
 			}
 			catch (EvalError ex)
 			{
 				problem += "\n" + ex.getMessage();
 			}
 		}
+
 		// There are no other built-in functions returning an array and external function calls
 		// aren't allowed at this position, hence it's relatively safe to conclude
 		// an item enumeration from the occurrence of a comma. (If the comma IS an argument
@@ -5512,9 +5694,12 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				this.evaluateExpression("Object[] tmp20160321kgu = {" + valueListString + "}", false);
-				value = context.interpreter.get("tmp20160321kgu");
-				context.interpreter.unset("tmp20160321kgu");
+				// START KGU#439 2017-10-13: Issue #436
+				//this.evaluateExpression("Object[] tmp20160321kgu = {" + valueListString + "}", false, false);
+				//value = context.interpreter.get("tmp20160321kgu");
+				//context.interpreter.unset("tmp20160321kgu");
+				value = this.evaluateExpression("{" + valueListString + "}", true, false);
+				// END KGU#439 2017-10-13
 			}
 			catch (EvalError ex)
 			{
@@ -5526,10 +5711,10 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				value = this.evaluateExpression(valueListString, false);
+				value = this.evaluateExpression(valueListString, false, false);
 				// START KGU#429 2017-10-08
 				// In case it was a variable or function, it MUST contain or return an array to be acceptable
-				if (value != null && !(value instanceof Object[]) && !(value instanceof String)) {
+				if (value != null && /*!(value instanceof Object[]) &&*/ !(value instanceof ArrayList<?>) && !(value instanceof String)) {
 					valueNoArray = true;
 					problem += valueListString + " = " + this.prepareValueForDisplay(value);
 				}
@@ -5546,9 +5731,12 @@ public class Executor implements Runnable
 			StringList tokens = Element.splitExpressionList(valueListString, " ");
 			try
 			{
-				this.evaluateExpression("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}", false);
-				value = context.interpreter.get("tmp20160321kgu");
-				context.interpreter.unset("tmp20160321kgu");
+				// START KGU#439 2017-10-13: Issue #436
+				//this.evaluateExpression("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}", false, false);
+				//value = context.interpreter.get("tmp20160321kgu");
+				//context.interpreter.unset("tmp20160321kgu");
+				value = this.evaluateExpression("{" + tokens.concatenate(",") + "}", true, false);
+				// END KGU#439 2017-10-13
 			}
 			catch (EvalError ex)
 			{
@@ -5557,9 +5745,13 @@ public class Executor implements Runnable
 		}
 		if (value != null)
 		{
+			// Shouldn't occur anymore
 			if (value instanceof Object[])
 			{
 				valueList = (Object[]) value;
+			}
+			else if (value instanceof ArrayList<?>) {
+				valueList = ((ArrayList<Object>)value).toArray();
 			}
 			// START KGU#429 2017-10-08
 			else if (value instanceof String) {
@@ -5780,6 +5972,7 @@ public class Executor implements Runnable
 	}
 	
 	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
+	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
 	/**
 	 * Resolves qualified names (record access) where contained and - if allowed by setting
 	 * {@code _withInitializers} - array or record initializers and has the interpreter evaluate
@@ -5792,14 +5985,25 @@ public class Executor implements Runnable
 	 * mechanism just go ahead and try.   
 	 * @param _expr -the converted expression to be evaluated
 	 * @param _withInitializers - whether an array or record initializer is to be managed here
+	 * @param _preserveBrackets - if true then brackets won't be substituted
 	 * @return the evaluated result if successful 
 	 * @throws EvalError an exception if something went wrong (may be raised by the interpreter
 	 * or this method itself)
 	 */
-	private Object evaluateExpression(String _expr, boolean _withInitializers) throws EvalError
+	private Object evaluateExpression(String _expr, boolean _withInitializers, boolean _preserveBrackets) throws EvalError
 	{
 		Object value = null;
 		StringList tokens = Element.splitLexically(_expr, true);
+		// START KGU#439 2017-10-13: Enh. #436 Arrays now represented by ArrayLists
+		if (!_preserveBrackets) {
+			if (tokens.indexOf(OBJECT_ARRAY, 0, true) == 0) {
+				tokens.set(0, "Object[]");
+				tokens.remove(1,3);
+			}
+			tokens.replaceAll("[", ".get(");
+			tokens.replaceAll("]", ")");
+		}
+		// END KGU#439 2017-10-13
 		// Special treatment for inc() and dec functions? - no need if convert was applied before
 		int i = 0;
 		while ((i = tokens.indexOf(".", i+1)) > 0) {
@@ -5842,7 +6046,7 @@ public class Executor implements Runnable
 	 * Recursively pre-evaluates array initializer expressions
 	 * @param _expr - the initializer as String (just for a possible error message)
 	 * @param tokens - the initializer in precomputed tokenized form
-	 * @return
+	 * @return object that should be a ArrayList<Object>
 	 * @throws EvalError
 	 */
 	private Object evaluateArrayInitializer(String _expr, StringList tokens) throws EvalError {
@@ -5856,9 +6060,9 @@ public class Executor implements Runnable
 			throw new EvalError(control.msgInvalidExpr.getText().replace("%1", _expr), null, null);				
 		}
 		elementExprs.remove(--nElements);
-		Object[] valueArray = new Object[nElements];
+		ArrayList<Object> valueArray = new ArrayList<Object>(nElements);
 		for (int i = 0; i < nElements; i++) {
-			valueArray[i] = evaluateExpression(elementExprs.get(i), true);
+			valueArray.add(evaluateExpression(elementExprs.get(i), true, false));
 		}
 		return valueArray;
 	}
@@ -5885,7 +6089,7 @@ public class Executor implements Runnable
 			if (compDefs.containsKey(comp.getKey())) {
 				// We have to evaluate the component value in advance if it is an initializer itself...
 				//context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
-				valueRecord.put(comp.getKey(), this.evaluateExpression(comp.getValue(), true));
+				valueRecord.put(comp.getKey(), this.evaluateExpression(comp.getValue(), true, false));
 			}
 			else {
 				throw new EvalError(control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName), null, null);
@@ -5959,7 +6163,7 @@ public class Executor implements Runnable
 		try
 		{
 			//index = Integer.parseInt(ind);		// KGU: This was nonsense - usually no literal here
-			index = (Integer) this.evaluateExpression(ind, false);
+			index = (Integer) this.evaluateExpression(ind, false, false);
 		}
 		catch (Exception e)
 		{

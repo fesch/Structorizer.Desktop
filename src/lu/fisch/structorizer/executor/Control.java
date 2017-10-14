@@ -60,6 +60,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.09.14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
  *      Kay Gürtzig     2017.10.08      Title String and further error message for enh. #423 introduced
  *      Kay Gürtzig     2017.10.11      Bugfix #435: Checkboxes didn't show selected state in rescaled GUI mode
+ *      Kay Gürtzig     2017.10.13      Enh. #437: Message box on failed interactive variable setting 
  *
  ******************************************************************************************************
  *
@@ -87,6 +88,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -102,6 +104,7 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangFrame;
+import lu.fisch.utils.StringList;
 
 
 /**
@@ -578,9 +581,17 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // START KGU#68 205-11-06: Enhancement - update edited values
     	if (!varUpdates.isEmpty())
     	{
-    		Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		// START KGU#441 2017-10-13: Enh. #437 Report syntax problems to the user
+    		//Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		StringList troubles = Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		if (troubles.count() > 0) {
+    			JOptionPane.showMessageDialog(this, 
+    					msgVarUpdatesFailed.getText().replace("%",troubles.getText()),
+    					msgVarUpdateErrors.getText(), JOptionPane.WARNING_MESSAGE);
+    		}
+    		// END KGU#441 2017-10-13
+        	varUpdates.clear();
     	}
-    	varUpdates.clear();
     	// END KGU#68 2015-11-06
         if(Executor.getInstance().isRunning()==false)
         {
@@ -646,7 +657,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     	// START KGU#68 2015-11-06: Enhancement - update edited values
     	if (!varUpdates.isEmpty())
     	{
-    		Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		// START KGU#441 2017-10-13: Enh. #437 Report syntax problems to the user
+    		//Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		StringList troubles = Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		if (troubles.count() > 0) {
+    			JOptionPane.showMessageDialog(this, 
+    					msgVarUpdatesFailed.getText().replace("%",troubles.getText()),
+    					msgVarUpdateErrors.getText(), JOptionPane.WARNING_MESSAGE);
+    		}
+    		// END KG#441 2017-10-13
     		varUpdates.clear();
     	}
     	// END KGU#68 2015-11-06
@@ -865,7 +884,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public static final LangTextHolder msgUseStopButton =
     		new LangTextHolder("There is a running or pending execution!\nUse the STOP button to abort and close.");
     // END KGU#372 2017-03-27
-    
+    // START KGU#441 2017-10-13: Enh. #437
+    public static final LangTextHolder msgVarUpdateErrors =
+    		new LangTextHolder("Trouble updating variables");
+    public static final LangTextHolder msgVarUpdatesFailed =
+    		new LangTextHolder("These variable modifications failed because of evaluation errors:\n\n%");
+    // START KGU#441 2017-10-13
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 
