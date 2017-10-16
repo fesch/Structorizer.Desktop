@@ -19,9 +19,6 @@
  */
 package lu.fisch.structorizer.gui;
 
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -46,10 +43,11 @@ import java.awt.FontMetrics;
  *
  ******************************************************************************************************///
 
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 

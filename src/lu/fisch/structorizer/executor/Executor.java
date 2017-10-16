@@ -141,6 +141,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
  *      Kay Gürtzig     2017.10.12      Issue #432: Attempt to improve performance by reducing redraw() calls on delay 0
  *      Kay Gürtzig     2017.10.14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
+ *      Kay Gürtzig     2017.10.16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
  *
  ******************************************************************************************************
  *
@@ -679,9 +680,15 @@ public class Executor implements Runnable
 	public static Executor getInstance(Diagram diagram,
 			DiagramController diagramController)
 	{
+		// START KGU#443 2017-10-16: It is annoying if control refuses to keep its place on restart
+		boolean setControlLocation = false;
+		// END KGU#443 2017-10-16
 		if (mySelf == null)
 		{
 			mySelf = new Executor(diagram, diagramController);
+			// START KGU#443 2017-10-16: It is annoying if control refuses to keep its place on restart
+			setControlLocation = true;
+			// END KGU#443 2017-10-16
 		}
 		if (diagramController != null)
 		{
@@ -725,7 +732,12 @@ public class Executor implements Runnable
 				mySelf.diagram = diagram;
 			}
 			mySelf.control.init();
-			mySelf.control.setLocationRelativeTo(diagram);
+			// START KGU#443 2017-10-16: It is annoying if control refuses to keep its place on restart
+			//mySelf.control.setLocationRelativeTo(diagram);
+			if (setControlLocation) {
+				mySelf.control.setLocationRelativeTo(diagram);
+			}
+			// END KGU#443 2017-10-16
 		}
 		// END KGU#157 2016-03-16: Bugfix #131
 		mySelf.control.validate();
@@ -1449,7 +1461,7 @@ public class Executor implements Runnable
 						arguments[i] = context.interpreter.get(in);
 						// END KGU#2 2015-11-24
 						// START KGU#160 2016-04-26: Issue #137 - document the arguments
-						this.console.writeln("*** Argument <" + in + "> = " + this.prepareValueForDisplay(arguments[i]), Color.CYAN);
+						this.console.writeln("*** Argument <" + in + "> = " + prepareValueForDisplay(arguments[i]), Color.CYAN);
 						// END KGU#160 2016-04-26
 					} catch (EvalError ex)
 					{
@@ -1611,9 +1623,9 @@ public class Executor implements Runnable
 								//	showArray((Object[])resObj, header, !step);
 								//	// END KGU#147 2016-01-29
 								//}
-								if (resObj instanceof ArrayList<?> /*&& ((Object[])resObj).length > 20*/)
+								if (resObj instanceof ArrayList<?> || resObj instanceof HashMap<?,?>)
 								{
-									showArray((ArrayList<Object>)resObj, header, !step);
+									showCompoundValue(resObj, header, !step);
 								}
 								// END KGU#439 2017-10-13
 								// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
@@ -1625,7 +1637,7 @@ public class Executor implements Runnable
 								else if (step)
 								{
 									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#160 2016-04-26
 									JOptionPane.showMessageDialog(diagram.getParent(), resObj,
 											header, JOptionPane.INFORMATION_MESSAGE);
@@ -1633,7 +1645,7 @@ public class Executor implements Runnable
 								else
 								{
 									// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
-									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#198 2016-05-25
 									Object[] options = {
 											control.lbOk.getText(),
@@ -1830,7 +1842,7 @@ public class Executor implements Runnable
 //	// END KGU#133 2016-01-09
 
 	// START KGU#439 2017-10-13: Enh. #436
-	private void showArray(ArrayList<Object> _array, String _title, boolean withPauseButton)
+	private void showCompoundValue(Object _arrayOrRecord, String _title, boolean withPauseButton)
 	{	
 		JDialog arrayView = new JDialog();
 		arrayView.setTitle(_title);
@@ -1862,12 +1874,38 @@ public class Executor implements Runnable
 		this.console.writeln("*** " + _title + ":", Color.CYAN);
 		// END KGU#160 2016-04-26
 		List arrayContent = new List(10);
-		for (int i = 0; i < _array.size(); i++)
-		{
-			// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-			String valLine = "[" + i + "]  " + prepareValueForDisplay(_array.get(i));
+		if (_arrayOrRecord instanceof ArrayList<?>) {
+			@SuppressWarnings("unchecked")
+			ArrayList<Object> array = (ArrayList<Object>)_arrayOrRecord;
+			for (int i = 0; i < array.size(); i++)
+			{
+				// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
+				String valLine = "[" + i + "]  " + prepareValueForDisplay(array.get(i));
+				this.console.writeln("\t" + valLine, Color.CYAN);
+				// END KGU#160 2016-04-26
+				arrayContent.add(valLine);
+			}
+		}
+		else if (_arrayOrRecord instanceof HashMap<?,?>) {
+			@SuppressWarnings("unchecked")
+			HashMap<String, Object> record = (HashMap<String, Object>)_arrayOrRecord;
+			if (record.containsKey("§TYPENAME§")) {
+				String valLine = "== " + record.get("§TYPENAME§") + " ==";
+				this.console.writeln("\t" + valLine, Color.CYAN);
+				arrayContent.add(valLine);				
+			}
+			for (Entry<String, Object> entry: record.entrySet())
+			{
+				if (!entry.getKey().startsWith("§")) {
+					String valLine = entry.getKey() + ":  " + prepareValueForDisplay(entry.getValue());
+					this.console.writeln("\t" + valLine, Color.CYAN);
+					arrayContent.add(valLine);
+				}
+			}
+		}
+		else {
+			String valLine = prepareValueForDisplay(_arrayOrRecord);
 			this.console.writeln("\t" + valLine, Color.CYAN);
-			// END KGU#160 2016-04-26
 			arrayContent.add(valLine);
 		}
 		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
@@ -3120,7 +3158,7 @@ public class Executor implements Runnable
 					oldSize = objectArray.size();
 				}
 				else {
-					String valueType = Instruction.identifyExprType(context.dynTypeMap, this.prepareValueForDisplay(comp), true);
+					String valueType = Instruction.identifyExprType(context.dynTypeMap, prepareValueForDisplay(comp), true);
 					throw new EvalError(control.msgTypeMismatch.getText().
 							replace("%1", valueType).
 									replace("%2", compType.getCanonicalType(true, true)).
@@ -3402,7 +3440,7 @@ public class Executor implements Runnable
 	// END KGU#20 2015-10-13
 	
 	// START KGU#67/KGU#68 2015-11-08: We have to present values in an editable way (recursively!)
-	private String prepareValueForDisplay(Object val)
+	protected static String prepareValueForDisplay(Object val)
 	{
 		String valStr = "";
 		if (val != null)
@@ -4669,13 +4707,13 @@ public class Executor implements Runnable
 				//else if (resObj instanceof Object[]) {
 				//	showArray((Object[])resObj, header, !step);
 				//}
-				else if (resObj instanceof ArrayList<?>) {
-					showArray((ArrayList<Object>)resObj, header, !step);
+				else if (resObj instanceof ArrayList<?> || resObj instanceof HashMap<?,?>) {
+					showCompoundValue(resObj, header, !step);
 				}
 				// END KGU#439 2017-10-13
 				else if (step) {
 					// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
+					this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
 					// END KGU#160 2016-04-26
 					// START KGU#147 2016-01-29: This "unconverting" copied from tryOutput() didn't make sense...
 					//String s = unconvert(resObj.toString());
@@ -4688,7 +4726,7 @@ public class Executor implements Runnable
 				}
 				else {
 					// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
-					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
+					this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
 					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {
@@ -5716,7 +5754,7 @@ public class Executor implements Runnable
 				// In case it was a variable or function, it MUST contain or return an array to be acceptable
 				if (value != null && /*!(value instanceof Object[]) &&*/ !(value instanceof ArrayList<?>) && !(value instanceof String)) {
 					valueNoArray = true;
-					problem += valueListString + " = " + this.prepareValueForDisplay(value);
+					problem += valueListString + " = " + prepareValueForDisplay(value);
 				}
 				// END KGU#429 2017-10-08
 			}
@@ -5990,7 +6028,7 @@ public class Executor implements Runnable
 	 * @throws EvalError an exception if something went wrong (may be raised by the interpreter
 	 * or this method itself)
 	 */
-	private Object evaluateExpression(String _expr, boolean _withInitializers, boolean _preserveBrackets) throws EvalError
+	protected Object evaluateExpression(String _expr, boolean _withInitializers, boolean _preserveBrackets) throws EvalError
 	{
 		Object value = null;
 		StringList tokens = Element.splitLexically(_expr, true);

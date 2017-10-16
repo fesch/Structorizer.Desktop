@@ -197,7 +197,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	                        hasFocus);
 	        if (icon != null) {
 	            setIcon(icon);
-	        } 
+	        }
 
 	        return this;
 	    }
@@ -784,6 +784,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				}});
 			this.treResults.setCellRenderer(new MyTreeCellRenderer());
 			this.treResults.addKeyListener(keyListener);
+			System.out.println("Normal tree row height: " + this.treResults.getRowHeight());
 			JScrollPane scrTree = new JScrollPane(this.treResults);
 
 			pnlOptions.add(scrTree, BorderLayout.CENTER);

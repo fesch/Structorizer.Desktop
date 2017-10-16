@@ -776,7 +776,7 @@ Control.msgTooManyLevels.text=
 Control.msgJumpOutParallel.text=
 Control.msgForLoopManipulation.text=
 Control.tblVar.header.0=
-Control.tblVar.header.1=
+Control.tblVar.header.2=
 
 -----[ OutputConsole ]-----
 OutputConsole.menu.text=

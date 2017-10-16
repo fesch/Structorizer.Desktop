@@ -105,6 +105,7 @@
  *      Kay Gürtzig         2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
  *      Kay Gürtzig         2017.06.19  Enh. #199, #415: Messages for toolbar and FindAndReplace
  *      Kay Gürtzig         2017.09.18  Enh. #423: New messages for record type handling introduced
+ *      Kay Gürtzig         2017.10.16  Issues #437-#438: New Control messages
  *
  ******************************************************************************************************
  *
@@ -1044,6 +1045,13 @@ Control.lbReturnedResult.text=Zurückgegebenes Resultat
 Control.lbOutput.text=Ausgabe
 Control.lbInput.text=Eingabe
 Control.lbAcknowledge.text=Zum Fortfahren bitte bestätigen.
+Control.lbOk.text=OK
+Control.lbPause.text=Pause
+Control.lbCommit.text=Änderungen übernehmen
+Control.lbDiscard.text=Änderungen verwerfen
+Control.ttlCompName.text=Name
+Control.ttlIndex.text=Index
+Control.ttlContent.text=Inhalt
 Control.msgTitleError.text=Fehler
 Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
@@ -1078,7 +1086,7 @@ Control.msgVarUpdateErrors.text=Problem beim Variablen-Update
 Control.msgVarUpdatesFailed.text=Diese Variablen-Änderungen scheiterten an syntaktischen Fehlern:\n\n%
 Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Enter oder Esc).
 Control.tblVar.header.0=Variablenname
-Control.tblVar.header.1=Inhalt
+Control.tblVar.header.2=Inhalt
 
 -----[ OutputConsole ]-----
 OutputConsole.menu.text=Eigenschaften

@@ -646,5 +646,5 @@ Control.msgExitCode.text=
 Control.msgIllegalJump.text=
 Control.msgTooManyLevels.text=
 Control.tblVar.header.0=
-Control.tblVar.header.1=
+Control.tblVar.header.2=
 

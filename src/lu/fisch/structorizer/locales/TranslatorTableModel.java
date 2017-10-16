@@ -19,14 +19,20 @@ public class TranslatorTableModel extends DefaultTableModel {
 
 	// START KGU 2016-08-04: Issue #220
 	private final Set<Integer> forbiddenRows = new HashSet<Integer>();
+	
 	/**
-	 * Disables editing in given row 
+	 * Disables editing in given row
+	 * @param row - row index
 	 */
 	public void forbidRowEditable(int row)
 	{
 		forbiddenRows.add(row);
 	}
 	// END KGU 2016-08-04
+	
+    /* (non-Javadoc)
+     * @see javax.swing.table.DefaultTableModel#isCellEditable(int, int)
+     */
     @Override
     public boolean isCellEditable(int row, int column){  
         return (column==2) && !forbiddenRows.contains(row);  

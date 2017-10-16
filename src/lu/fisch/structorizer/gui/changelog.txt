@@ -8,7 +8,7 @@
 Known issues:
 - Access irritations with deeply nested data structures (records/arrays)
 
-Current development version: 3.26-07 (2017.10.14)
+Current development version: 3.26-07 (2017.10.16)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -120,7 +120,8 @@ Current development version: 3.26-07 (2017.10.14)
 - 07: Issue #432: Attempt to speed up execution by reducing redraw calls on delay 0 <2>
 - 08: Issue #436: Reference consistency for array parameters (adding elements) <2>
 - 08: Issue #437: Defective variable modifications in paused state now reported <2>
-- 08: Issue #438: Pending variable editing now prevents to resume execution <2>
+- 08: Issue #438: Pending variable editing now prevents from resuming execution <2>
+- 08: Enh. #439: Tabular inspection/editing of array and record values in Executor <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
