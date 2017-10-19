@@ -8,7 +8,7 @@
 Known issues:
 - Access irritations with deeply nested data structures (records/arrays)
 
-Current development version: 3.26-07 (2017.10.16)
+Current development version: 3.26-07 (2017.10.20)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>

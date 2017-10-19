@@ -69,6 +69,9 @@ package lu.fisch.structorizer.parsers;
  *                                      Decisive improvements for SEARCH and SET statements
  *      Simon Sobisch   2017.10.10      Fixed numeric case items for alphanumeric variables in EVALUATE (TODO: needed for every expression)
  *                                      Fixed getContentToken_R to correctly replace SPACE/ZERO/NULL
+ *      Kay Gürtzig     2017.10.19      Mechanism to use Sections and Paragraphs as data-sharing subroutines
+ *                                      TODO: More efforts to distinguish functions from arrays variables needed
+ *                                      TODO: More sensible import for EXIT statements in sections, paragraphs
  *
  ******************************************************************************************************
  *
@@ -106,6 +109,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -4557,20 +4561,23 @@ public class COBOLParser extends CodeParser
 		// END KGU#407 2017-10-01
 		externalRoot = new Root(StringList.getNew(this.sourceName + "Externals"));
 		externalRoot.setInclude();
-		globalRoot = new Root(StringList.getNew(this.sourceName + "Globals"));
-		globalRoot.setInclude();
 	}
 	
 	private CobTools cobTools = new CobTools();
 	private CobProg currentProg = null;
 	final static String STRUCTORIZER_PARTIAL = "Structorizer Partial";
-	/** Remembers the declarations put to the globalRoot lest they should be defined twice */
-	private HashSet<String> declaredGlobals = new HashSet<String>();
-	/** An includable diagram for global definitions (only included from those diagrams, which request it) */
-	// FIXME: There could be more of them if we want to restrict the visibility to the ones locally declared as global   
-	private Root globalRoot = null;
-	/** An includable diagram for external definitions (to be included from al sub-diagrams) */
+	/** Remembers the declarations put to the externalRoot lest they should be defined twice */
+	private HashSet<String> declaredExternals = new HashSet<String>();
+	/** Remembers the declarations first put to some global Root (from {@link globaRoots}) */
+	private HashMap<Root, HashSet<String>> declaredGlobals = new HashMap<Root, HashSet<String>>();
+	/** Maps the CobProgs to a corresponding global Root */
+	private HashMap<CobProg, Root> globalMap = new HashMap<CobProg, Root>();
+	/** An includable diagram for external definitions (to be included from all sub-diagrams referring to some of the declarations) */
 	private Root externalRoot = null;
+	/** Maps programs and functions to their end element index of the data section */
+	private HashMap<Root, Integer> dataSectionEnds = new HashMap<Root, Integer>();
+	/** Maps programs and functions to the name of their includable Root representing the data shared with internal subroutines */
+	private HashMap<Root, String> dataSectionIncludes = new HashMap<Root, String>();
 	
 	private static Matcher mCopyFunction = Pattern.compile("^copy\\((.*),(.*),(.*)\\)$").matcher("");
 
@@ -4697,6 +4704,7 @@ public class COBOLParser extends CodeParser
 			// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
 			// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
 			//       to close the previous section and the previous paragraph
+			accomplishPrevSoP(_parentNode);
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 			// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
@@ -4715,6 +4723,7 @@ public class COBOLParser extends CodeParser
 		{
 			// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
 			// Note: this starts a new paragraph AND closes the previous paragraph
+			accomplishPrevSoP(_parentNode);
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 
@@ -4732,26 +4741,14 @@ public class COBOLParser extends CodeParser
 		}
 		break;
 //			deactivated as we get an ArrayIndexOutOfBoundsException sometimes
-//			case RuleConstants.PROD_PROCEDURE_TOK_DOT:
-//				// First process the statements then handle the TOK_DOT with the subsequent case
-//				buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
-//				// No break; here!
-//			case RuleConstants.PROD_PROCEDURE_TOK_DOT2:
-//			{
-//				// TODO close the last unsatisfied "procedure"
-//				Iterator<SectionOrParagraph> iter = procedureList.iterator();
-//				boolean found = false;
-//				while (!found && iter.hasNext()) {
-//					SectionOrParagraph sop = iter.next();
-//					if (sop.parent == _parentNode && sop.endsBefore < 0) {
-//						sop.endsBefore = _parentNode.getSize();
-//						sop.firstElement = _parentNode.getElement(sop.startsAt);
-//						sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
-//						found = true;
-//					}
-//				}
-//			}
-//			break;
+		case RuleConstants.PROD_PROCEDURE_TOK_DOT:
+			// First process the statements then handle the TOK_DOT with the subsequent case
+			buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
+			// No break; here!
+		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// This rule will never occur (falls through to TOKDOT!)
+			// TODO close the last unsatisfied "procedure"
+			accomplishPrevSoP(_parentNode);
+			break;
 		case RuleConstants.PROD_IF_STATEMENT_IF:
 			System.out.println("PROD_IF_STATEMENT_IF");
 			this.importIf(_reduction, _parentNode);
@@ -5025,7 +5022,7 @@ public class COBOLParser extends CodeParser
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_WORKING);
 			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
 			// FIXME! TEST ONLY - provide the correct diagram Subqueues!
-			this.buildDataSection(currentProg.getWorkingStorage(), _parentNode, _parentNode, _parentNode);
+			this.buildDataSection(currentProg.getWorkingStorage(), _parentNode);
 		}
 		break;
 		case RuleConstants.PROD__LOCAL_STORAGE_SECTION_LOCAL_STORAGE_SECTION_TOK_DOT:
@@ -5033,7 +5030,7 @@ public class COBOLParser extends CodeParser
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LOCAL);
 			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
 			// FIXME! TEST ONLY
-			this.buildDataSection(currentProg.getLocalStorage(), _parentNode, _parentNode, _parentNode);
+			this.buildDataSection(currentProg.getLocalStorage(), _parentNode);
 		}
 		break;
 		case RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT:
@@ -5076,6 +5073,29 @@ public class COBOLParser extends CodeParser
 					{
 						buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
 					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Accomplishes the element references of the preceding (and here-ending) unsatisfied section
+	 * or paragraph
+	 * @param _parentNode
+	 */
+	private void accomplishPrevSoP(Subqueue _parentNode) {
+		Iterator<SectionOrParagraph> iter = procedureList.iterator();
+		boolean found = false;
+		while (!found && iter.hasNext()) {
+			SectionOrParagraph sop = iter.next();
+			if (sop.parent == _parentNode && sop.endsBefore < 0) {
+				sop.endsBefore = _parentNode.getSize();
+				sop.firstElement = _parentNode.getElement(sop.startsAt);
+				sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+				found = true;
+				System.out.println("======== " + sop.name + " =======");
+				for (int i = sop.startsAt; i < sop.endsBefore; i++) {
+					System.out.println("\t" + _parentNode.getElement(i));
 				}
 			}
 		}
@@ -5293,7 +5313,7 @@ public class COBOLParser extends CodeParser
 				String[] vars = new String[3];
 				for (int i = 0; i < vars.length; i++) {
 					Reduction varRed = itemRed.get(i).asReduction();
-					int varRuleId = varRed.getParent().getTableIndex();
+//					int varRuleId = varRed.getParent().getTableIndex();
 					if (varRed.size() > 0) {
 						if (i == 0) {
 							vars[i] = this.getContent_R(varRed, "").trim();
@@ -6665,7 +6685,9 @@ public class COBOLParser extends CodeParser
 				level = Integer.parseInt(this.getContent_R(_reduction.get(0).asReduction(), ""));
 			} catch (Exception ex) {
 			}
-			String varName = this.getContent_R(_reduction.get(1).asReduction(), "");
+			// We must suppress automatic name qualification here
+			String varName = this.getWord(_reduction.get(1));
+			//String varName = this.getWord(_reduction.get(1));
 			// Picture clause: Find variable initializations and declarations
 			// as long as we don't use records there is no use in parsing FILLER
 			// items and as long as we do so group items that have no VALUE clause and
@@ -6673,7 +6695,7 @@ public class COBOLParser extends CodeParser
 //			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {
 				Reduction seqRed = _reduction.get(2).asReduction();
 				String value = null;
-				String valueFalse = null;
+//				String valueFalse = null;
 				String picture = null;
 				String redefines = null;
 				String occursString = null;
@@ -6986,16 +7008,16 @@ public class COBOLParser extends CodeParser
 			currentVar.setComment(this.retrieveComment(_reduction));
 			currentProg.insertVar(currentVar);
 			
-			String value = null;
-			String type = ""; // unused
-			if (values.count() == 1) {
-				value = values.get(0).trim();
-				type = Element.identifyExprType(null, value, true); // unused
-			}
-			else {
-				value = "{" + values.concatenate(", ") + "}";
-			}
-			// START KGU 2017-10-04 Now leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode); 
+//			String value = null;
+//			String type = ""; // unused
+//			if (values.count() == 1) {
+//				value = values.get(0).trim();
+//				type = Element.identifyExprType(null, value, true); // unused
+//			}
+//			else {
+//				value = "{" + values.concatenate(", ") + "}";
+//			}
+//			// START KGU 2017-10-04 Now leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode); 
 //			if (_parentNode != null && value != null) {
 //				// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 //				Instruction def = new Instruction("const " + currentVar.getName() + " <- " + value);
@@ -7170,7 +7192,13 @@ public class COBOLParser extends CodeParser
 		// identify the first token as comparison operator. (It seems rather simpler
 		// to inspect the prefix of the composed string.)
 		String thruExpr = "";
-		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_OBJECT) {
+		int ruleId = _reduction.getParent().getTableIndex();
+		if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 && (lastSubject == null || lastSubject.isEmpty())) {
+			// If the condition consists of just a qualified name then this is the result 
+			return this.getContent_R(_reduction, "");
+		}
+		
+		if (ruleId == RuleConstants.PROD_EVALUATE_OBJECT) {
 			Reduction thruRed = _reduction.get(1).asReduction();
 			if (thruRed.getParent().getTableIndex() == RuleConstants.PROD__EVALUATE_THRU_EXPR_THRU) {
 				thruExpr = this.getContent_R(thruRed.get(1).asReduction(), " .. ");
@@ -7187,7 +7215,7 @@ public class COBOLParser extends CodeParser
 		//		cond = (lastSubject + " " + cond).trim();
 		//	}
 		//}
-		int ruleId = -1;
+		ruleId = -1;
 		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
 			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
 		}
@@ -7260,7 +7288,7 @@ public class COBOLParser extends CodeParser
 		// TODO We currently don't resolve the cond-name of "NOT cond-name"
 		cond += thruExpr;
 		if (cond.matches("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)")) {
-			cond.replaceAll("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)", "$1 <> $2");
+			cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)", "$1 <> $2");
 		}
 		// bad check, the comparision can include the *text* " OF "!
 //		if (cond.contains(" OF ")) {
@@ -7306,7 +7334,7 @@ public class COBOLParser extends CodeParser
 			String ruleHead = red0.getParent().getHead().toString();
 //			switch (ruleId) {
 //			// FIXME: Check subscripts (<subref>)!
-//			// Ensure the processing of modrefs!
+//			// Ensure the processing of refmods!
 //			case RuleConstants.PROD_IDENTIFIER_1:
 //			case RuleConstants.PROD_IDENTIFIER_13:
 //			// Don't split qualified identifiers!
@@ -7367,9 +7395,9 @@ public class COBOLParser extends CodeParser
 	private static Matcher mIntLiteral = pIntLiteral.matcher("");
 	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
 	
-	private static final Matcher MTCH_SPACE = Pattern.compile("(^|.*?\\W)" + BString.breakup("space") + "($|\\W.*?)").matcher("");
-	private static final Matcher MTCH_SPACES = Pattern.compile("(^|.*?\\W)" + BString.breakup("spaces") + "($|\\W.*?)").matcher("");
-	private static final Matcher MTCH_ZERO = Pattern.compile("(^|.*?\\W)" + BString.breakup("zero") + "($|\\W.*?)").matcher("");
+//	private static final Matcher MTCH_SPACE = Pattern.compile("(^|.*?\\W)" + BString.breakup("space") + "($|\\W.*?)").matcher("");
+//	private static final Matcher MTCH_SPACES = Pattern.compile("(^|.*?\\W)" + BString.breakup("spaces") + "($|\\W.*?)").matcher("");
+//	private static final Matcher MTCH_ZERO = Pattern.compile("(^|.*?\\W)" + BString.breakup("zero") + "($|\\W.*?)").matcher("");
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#getContent_R(com.creativewidgetworks.goldparser.engine.Reduction, java.lang.String)
@@ -7450,7 +7478,7 @@ public class COBOLParser extends CodeParser
 					String indexStr = this.getContent_R(_reduction.get(posSub).asReduction(), "");
 					// For the case of a multidimensional table split the index iexpressions
 					StringList ixExprs = Element.splitExpressionList(indexStr.substring(1), ",");
-					// In case of indexing the qualName might just be an undeclared alias, so we may
+					// In case of indexing, the qualName might just be an undeclared alias, so we may
 					// have to identify the real table name from the index variable, presumably the
 					// last one
 					if (currentProg.getCobVar(qualName) == null) {
@@ -7743,6 +7771,32 @@ public class COBOLParser extends CodeParser
 		return _content;
 	}
 	
+	/**
+	 * Drastically simplified method to retrieve a name expected as (optional) content of the given {@link Token}
+	 * {@code _token}.
+	 * @param _token
+	 * @return
+	 */
+	private String getWord(Token _token)
+	{
+		String word = "";
+		if (_token.getType() == SymbolType.CONTENT) {
+			if (_token.getName().equals("COBOLWord")) {
+				word = _token.asString().replace('-', '_');
+			}
+			else if (_token.getName().equals("FILLER")) {
+				word = _token.getName();
+			}
+		}
+		else {
+			Reduction red = _token.asReduction();
+			if (red.size() > 0) {
+				return getWord(red.get(0));
+			}
+		}
+		return word;
+	}
+	
 	//------------------------- Data Conversion -------------------------
 	
 	// START KGU#388 2017-10-03: Enh.#423
@@ -7751,28 +7805,37 @@ public class COBOLParser extends CodeParser
 	 * inclusive if available) for the variables link with {@code varRoot}, which is supposed to be the first
 	 * top-level variable of a {@link CobProg} context.
 	 * @param varRoot - the root of the varaible tree
-	 * @param externalNode - the insertion node for external definitions (supposedly in {@link COBOLParser#externalRoot})
-	 * @param globalNode - the insertion node for global definitions (supposedly in {@link COBOLParser#globalRoot})
 	 * @param localNode - the insertion node for internal definitions (supposedly in {@link COBOLParser#root})
 	 */
-	private void buildDataSection(CobVar varRoot, Subqueue externalNode, Subqueue globalNode, Subqueue localNode)
+	private void buildDataSection(CobVar varRoot, Subqueue localNode)
 	{
 		// First gather all necessary record type definitions recursively.
 		// The typenames will be generic i.e. derived from the respective variable
 		// name and a hashcode.
 		// Simultaneously compose the deeclarations and initialisations
 		StringList declarations = new StringList();
+		boolean containsExternals = false;
 		boolean containsGlobals = false;
 		CobVar currentVar = varRoot;
+		Root globalRoot = new Root();
+		globalRoot.setText(currentProg.getName() + "_Globals");
+		globalRoot.setInclude();
+		Subqueue globalNode = globalRoot.children;
+		Subqueue externalNode = externalRoot.children;
 		while (currentVar != null) {
 			String varName = currentVar.forceName();
+			boolean isExternal = currentVar.isExternal();
 			boolean isGlobal = currentVar.isGlobal();
-			if (isGlobal && this.declaredGlobals .contains(varName)) {
-				// Don't declare it again...
+			if (isExternal && this.declaredExternals.contains(varName)) {
+				containsExternals = true;
+				// Don't add a declaration in case of a reference to a former external declaration
+				// (but make declarations must contain an empty entry for the final CobVar loop)) 
 				declarations.add("");
 			}
 			else {
-				String typeName = insertTypedefs(currentVar, externalRoot.children, globalRoot.children, localNode, 0);
+				String typeName = insertTypedefs(currentVar,
+						externalRoot.children, (globalRoot != null ? globalRoot.children : null),
+						localNode, 0);
 				String declaration = currentVar.forceName();
 				if (typeName != null && (this.optionImportVarDecl || currentVar.hasChild(true))) {
 					if (!typeName.isEmpty()) {
@@ -7786,7 +7849,15 @@ public class COBOLParser extends CodeParser
 					// If it's a constant then we better add it already in case following types
 					// might depend on it.
 					if (currentVar.isConstant(true)) {
-						addDeclToDiagram(localNode, currentVar, declaration, true);
+						if (isExternal) {
+							addDeclToDiagram(externalNode, currentVar, declaration, true);
+						}
+						else if (isGlobal) {
+							addDeclToDiagram(globalNode, currentVar, declaration, true);
+						}
+						else {
+							addDeclToDiagram(localNode, currentVar, declaration, true);
+						}
 						declaration = "";
 					}
 				}
@@ -7803,27 +7874,63 @@ public class COBOLParser extends CodeParser
 		int i = 0;
 		while (currentVar != null) {
 			String declaration = declarations.get(i++);
-			// If declaration is empty then the element has alrady been created
+			// If declaration is empty then the element has already been created
 			if (!declaration.isEmpty()) {
-				this.addDeclToDiagram(localNode, currentVar, declaration, currentVar.isConstant(true));
+				String varName = currentVar.getName();
+				boolean isConstant = currentVar.isConstant(false);
+				if (currentVar.isExternal()) {
+					addDeclToDiagram(externalNode, currentVar, declaration, isConstant);
+					declaredExternals.add(varName);
+				}
+				else if (currentVar.isGlobal()) {
+					addDeclToDiagram(globalNode, currentVar, declaration, isConstant);
+					declaredGlobals.get(globalRoot).add(varName);
+				}
+				else {
+					addDeclToDiagram(localNode, currentVar, declaration, isConstant);
+				}
 			}
 			currentVar = currentVar.getSister();
 		}
+		if (localNode.parent instanceof Root) {
+			this.dataSectionEnds.put((Root)localNode.parent, localNode.getSize());
+		}
+		if (containsExternals) {
+			root.addToIncludeList(externalRoot);
+		}
 		// Add the name of globalRoot to the include list of this Root if there are references
-		if (containsGlobals && root != externalRoot && root != globalRoot) {
+		if (containsGlobals) {
+			// If it is a new global definition and there is no global definition context then create
+			// a new diagram for these declarations and map the current cobProg to it
+			globalMap.put(currentProg, globalRoot);
 			root.addToIncludeList(globalRoot);
+		}
+		else {
+			// Prepares the recursive inclusion of super-globals 
+			globalRoot = root;
+		}
+		// Now check whether the current prog is a subprogram of another one defining global data ...
+		CobProg ancestor = currentProg.getParent();
+		while (ancestor != null) {
+			Root includable;
+			if ((includable = globalMap.get(ancestor)) != null) {
+				globalRoot.addToIncludeList(includable);
+				// All done
+				break;
+			}
+			ancestor = ancestor.getParent();
 		}
 	}
 
 	/**
 	 * @param externalNode
 	 * @param globalNode
-	 * @param localNode
+	 * @param targetNode
 	 * @param currentVar
 	 * @param varName
 	 * @param decl
 	 */
-	private void addDeclToDiagram(Subqueue localNode, CobVar currentVar, String text, boolean isConst) {
+	private void addDeclToDiagram(Subqueue targetNode, CobVar currentVar, String text, boolean isConst) {
 		Instruction decl = new Instruction(text);
 		String comment = currentVar.getComment();
 		if (comment != null) {
@@ -7838,17 +7945,7 @@ public class COBOLParser extends CodeParser
 		else if (currentVar.isGlobal() || currentVar.isExternal()) {
 			decl.setColor(colorGlobal);
 		}
-		if (currentVar.isExternal()) {
-			externalRoot.children.addElement(decl);
-		}
-		else if (currentVar.isGlobal()) {
-			// This is just a makeshift quick and dirty approach
-			globalRoot.children.addElement(decl);
-			declaredGlobals.add(currentVar.forceName());
-		}
-		else {
-			localNode.addElement(decl);
-		}
+		targetNode.addElement(decl);
 	}
 
 	/**
@@ -7892,9 +7989,13 @@ public class COBOLParser extends CodeParser
 				instr.setComment(var.getComment());
 			}
 			// FIXME: For global types we must not redefine this within a routine but refer to the globally defined name!!!
-			if (var.isGlobal() || var.isExternal()) {
+			if (var.isExternal()) {
 				instr.setColor(colorGlobal);
 				externalNode.addElement(instr);					
+			}
+			if (var.isGlobal()) {
+				instr.setColor(colorGlobal);
+				globalNode.addElement(instr);					
 			}
 			else {
 				localNode.addElement(instr);
@@ -7957,7 +8058,7 @@ public class COBOLParser extends CodeParser
 	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
 		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
 		if (aRoot.getMethodName().equals("???")) {
-			if (aRoot.getParameterNames().count() == 0) {
+			if (aRoot.getParameterNames().count() == 0) {	// How could there be arguments?
 				String fileName = new File(textToParse).getName();
 				if (fileName.contains(".")) {
 					fileName = fileName.substring(0, fileName.lastIndexOf('.'));
@@ -7970,11 +8071,12 @@ public class COBOLParser extends CodeParser
 				// FIXME: Might also become an includable diagram!
 				aRoot.setProgram(true);
 			}
-			// If there is an non-empty diagram with external definitions then refer to it
+			// If there is a non-empty diagram with external definitions then refer to it
 			// In case of a parsing error we may get here without build initialization!
-			if (externalRoot != null && aRoot != externalRoot && externalRoot.children.getSize() > 0) {
-				aRoot.addToIncludeList(externalRoot);
-			}
+			// FIXME Should alrady have been done.
+//			if (externalRoot != null && aRoot != externalRoot && externalRoot.children.getSize() > 0) {
+//				aRoot.addToIncludeList(externalRoot);
+//			}
 		}
 		// Force returning of the specified result
 		if (this.returnMap.containsKey(aRoot)) {
@@ -7996,51 +8098,105 @@ public class COBOLParser extends CodeParser
 		//HashMap<Subqueue, Subqueue> subqueueMap = new HashMap<Subqueue, Subqueue>();
 		for (SectionOrParagraph sop: this.procedureList) {
 			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
-			if (clients != null && sop.firstElement != null && sop.lastElement != null) {
+			if (sop.firstElement != null && sop.lastElement != null) {
 				Root owner = Element.getRoot(sop.firstElement);
 				Subqueue sq = (Subqueue)sop.firstElement.parent;
-				// We will have to copy the content of the replacing call. Therefor we must
+				// We will have to copy the content of the replacing call. Therefore we must
 				// have an opportunity to find the call. This should be feasible via the index
 				// of the first element of the subsequence. But we cannot be sure that sop.start
 				// is still correct - the original context may already have been outsourced itself
 				// so we search for it in the current context.
 				int callIndex = sq.getIndexOf(sop.firstElement);
 				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
-				Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
-				if (proc != null) {
-					// If we use includable diagrams then we don't use parameters... 
-					//proc.setText(sop.name + "()");
+				if (clients != null) {
+					// FIXME Not that we don't bother detecting arguments and results anymore we might just plainly move the elements
+					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
+					String callText = sop.name + "()";
+					Root proc = new Root();
+					proc.setText(callText);
+					proc.setProgram(false);
+					int nElements = elements.getSize();
+					for (int i = 0; i < nElements; i++) {
+						proc.children.addElement(elements.getElement(0));
+						elements.removeElement(0);
+					}
+					Call replacingCall = new Call(callText);
+					sq.insertElementAt(replacingCall, callIndex);
+					// Has the owner still shareable data at its beginning? Outsource them...
+					Root shared = null;
+					Integer endDataIx = dataSectionEnds.get(owner); 
+					if (endDataIx != null && endDataIx <= owner.children.getSize()) {
+						// Move all data declarations to a new shared includable 
+						String dataName = owner.getMethodName() + "_Shared";
+						shared = new Root();
+						shared.setText(dataName);
+						shared.setInclude();
+						for (int i = 0; i < endDataIx; i++) {
+							Element el = owner.children.getElement(0);
+							owner.children.removeElement(0);
+							shared.children.addElement(el);
+						}
+						subRoots.add(shared);			// Put the new diagram to the set of results
+						dataSectionEnds.remove(owner);	// Unregister the root from those holding their own data declarartions
+						dataSectionIncludes.put(owner, dataName);	// register the mapped includable
+						owner.addToIncludeList(dataName);	// ... and let the former owner include it
+					}
+					// Generalized step: If there is a mapped includable let the new proc Root include it as well
+					if (dataSectionIncludes.containsKey(owner)) {
+						proc.addToIncludeList(dataSectionIncludes.get(owner));
+					}
+					// Put the new subroutine daigram to the set of results as well
 					subRoots.add(proc);
-					Element replacingCall = sq.getElement(callIndex);
-					if (replacingCall instanceof Call) {
-						// FIXME
-						String callText = replacingCall.getText().getLongString();
-						String[] callParts = callText.split(" <- ", -1);
-						int ix = sq.getIndexOf(replacingCall);
-						Element resultDistribution = null;
-						if (callParts.length > 1 && ix > -1 && ix+1 < sq.getSize()) {
-							resultDistribution = sq.getElement(ix+1);
+					callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
+					// Now cleanup and get rid of place-holding dummy elements
+					boolean precededByJump = false;
+					if (callIndex > 0 && sq.getElement(callIndex-1) instanceof Call) {
+						// Get rid of the dummy Call now
+						Element dummyEl = sq.getElement(callIndex-1);
+						if (dummyEl.disabled && dummyEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
+							sq.removeElement(--callIndex);
 						}
-						// TODO
-						// Both the original proc text (now overwritten) and the replacingCall text contain
-						// all required variable names as parameters, so we might check whether we got all declarations
-						for (Call client: clients) {
-							// FIXME we must care for an includable Root that defines all necessary variables
-							// By the time we can't do this just copy the call context from original root
-							client.setText(callText);
-							client.setColor(colorMisc);	// No longer needs to be red
-							client.disabled = false;
-							if (resultDistribution != null) {
-								ix = ((Subqueue)client.parent).getIndexOf(client);
-								if (ix > -1) {
-									((Subqueue)client.parent).insertElementAt(resultDistribution.copy(), ix+1);
-								}
-							}
-						}
-						// At the original place we most likely won't need the call anymore.
+						// Check if that was preceded by a disabled jump
+						Element precEl = null;
+						precededByJump = callIndex > 0 && (precEl = sq.getElement(callIndex-1)) instanceof Jump && !precEl.disabled;
+					}
+					// Both the original proc text (now overwritten) and the replacingCall text contain
+					// no arguments anymore, so we don't need to check whether we got all declarations
+					for (Call client: clients) {
+						// We may have to care for an includable Root that defines all necessary variables
+						client.setText(callText);
+						client.setColor(colorMisc);	// No longer needs to be red
+						client.disabled = false;
+//						if (resultDistribution != null) {
+//							int ix = ((Subqueue)client.parent).getIndexOf(client);
+//							if (ix > -1) {
+//								((Subqueue)client.parent).insertElementAt(resultDistribution.copy(), ix+1);
+//							}
+//						}
+					}
+					// At the original place we most likely won't need the call anymore (not reachable).
+					if (precededByJump) {
+						sq.removeElement(replacingCall);
+					}
+					else {
 						replacingCall.disabled = true;
-						if (resultDistribution != null) {
-							resultDistribution.disabled =true;
+					}
+				}
+				// Not explicitly used anywhere and just consisting of a jump? 
+				else if (elements.getSize() == 1 && elements.getElement(0) instanceof Jump) {
+					Jump dummyJump = (Jump)elements.getElement(0);
+					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
+					// (then we will drop the two dummy elements now)
+					int ix = sq.getIndexOf(dummyJump);
+					if (ix > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && sq.getElement(ix-1) instanceof Call) {
+						Call dummyCall = (Call)sq.getElement(ix-1);
+						Element prev = null;
+						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name) &&
+								(ix == 1 || ix > 1 && (prev = sq.getElement(ix-2)) instanceof Jump && !prev.disabled)) {
+							sq.removeElement(ix-1);	// This is the dummyCall
+							if (ix > 1) {
+								sq.removeElement(ix-1);	// This is the dummyJump
+							}
 						}
 					}
 				}
@@ -8050,10 +8206,12 @@ public class COBOLParser extends CodeParser
 		if (externalRoot != null && externalRoot.children.getSize() > 0) {
 			this.subRoots.add(externalRoot);
 		}
-		if (globalRoot != null && globalRoot.children.getSize() > 0) {
-			this.subRoots.add(globalRoot);
-		}
 		// END KGU#376 2017-10-04
+		// START KGU#376 2017-10-19: Enh. #389
+		if (!declaredGlobals.isEmpty()) {
+			this.subRoots.addAll(declaredGlobals.keySet());
+		}
+		// END KGU#376 2017-10-19
 	}
 	// END KGU 2017-05-28
 }
@@ -9112,7 +9270,7 @@ class CobTools {
 			}
 			// Now revert the provisional index place holders
 			for (int i = 0; i < nArrayLevels; i++) {
-				qualName = qualName.replace("%r" + i, "%" + (nArrayLevels - i));
+				qualName = qualName.replace("%r" + (i+1), "%" + (nArrayLevels - i));
 			}
 			return qualName;
 		}
