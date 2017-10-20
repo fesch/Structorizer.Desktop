@@ -534,7 +534,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			if ((error = ex.getMessage()) == null) {
 				error = ex.toString();
 			}
-			error = ":\n" + error;
+			error = "Problems in postprocess:\n" + error;
 		}
 
 		log("\nBUILD PHASE COMPLETE.\n", true);

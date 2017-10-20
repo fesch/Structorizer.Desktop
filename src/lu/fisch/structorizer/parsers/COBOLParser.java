@@ -70,8 +70,9 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.10.10      Fixed numeric case items for alphanumeric variables in EVALUATE (TODO: needed for every expression)
  *                                      Fixed getContentToken_R to correctly replace SPACE/ZERO/NULL
  *      Kay Gürtzig     2017.10.19      Mechanism to use Sections and Paragraphs as data-sharing subroutines
- *                                      TODO: More efforts to distinguish functions from arrays variables needed
  *                                      TODO: More sensible import for EXIT statements in sections, paragraphs
+ *      Kay Gürtzig     2017.10.20      Function register introduced to tell array access from function calls,
+ *                                      loop condition transformation
  *
  ******************************************************************************************************
  *
@@ -4578,6 +4579,8 @@ public class COBOLParser extends CodeParser
 	private HashMap<Root, Integer> dataSectionEnds = new HashMap<Root, Integer>();
 	/** Maps programs and functions to the name of their includable Root representing the data shared with internal subroutines */
 	private HashMap<Root, String> dataSectionIncludes = new HashMap<Root, String>();
+	/** List of declared function names and aliases to distinguish them from e.g. array variables */
+	private StringList functionNames = new StringList();
 	
 	private static Matcher mCopyFunction = Pattern.compile("^copy\\((.*),(.*),(.*)\\)$").matcher("");
 
@@ -4597,17 +4600,23 @@ public class COBOLParser extends CodeParser
 		}
 
 		String rule = _reduction.getParent().toString();
-		System.out.println(rule);
+		//System.out.println(rule);
 		String ruleHead = _reduction.getParent().getHead().toString();
 		int ruleId = _reduction.getParent().getTableIndex();
 		log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
-		System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+		//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
+		for (SectionOrParagraph sop: this.procedureList) {
+			if (sop.firstElement != null && ((Subqueue)sop.firstElement.parent).getIndexOf(sop.firstElement) < 0) {
+				System.err.println("1st element of " + sop.name + " (" + sop.firstElement + ") vanished!");
+			}
+		}
+		
 		switch (ruleId) {
 		case RuleConstants.PROD_PROGRAM_DEFINITION:
 		case RuleConstants.PROD_FUNCTION_DEFINITION:
 		{
-			System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
+			//System.out.println("PROD_PROGRAM_DEFINITION or PROD_FUNCTION_DEFINITION");
 			Root prevRoot = root;	// Cache the original root
 			root = new Root();	// Prepare a new root for the (sub)routine
 			this.equipWithSourceComment(root, _reduction);
@@ -4652,9 +4661,25 @@ public class COBOLParser extends CodeParser
 //			{
 //			}
 //			break;
+		// START KGU 2017-10-20 To register function names should help to tell them from array variables
+		case RuleConstants.PROD_REPOSITORY_NAME_FUNCTION:
+		{
+			//System.out.println("PROD_REPOSITORY_NAME_FUNCTION");
+			String fctName = getWord(_reduction.get(1));
+			this.functionNames.addIfNew(fctName);
+			Reduction asRed = _reduction.get(2).asReduction();
+			if (asRed.size() > 0) {
+				fctName = this.getContent_R(asRed.get(1).asReduction(), "").trim();
+				if (fctName.startsWith("\"") && fctName.endsWith("\"")) {
+					fctName = fctName.substring(1, fctName.length()-1);
+				}
+				this.functionNames.addIfNew(fctName);
+			}
+		}
+		break;
 		case RuleConstants.PROD__PROCEDURE_USING_CHAINING_USING:
 		{
-			System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
+			//System.out.println("PROD__PROCEDURE_USING_CHAINING_USING");
 			//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
 			//root.setText(root.getText().getLongString() + "(" + arguments + ")");
 			StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
@@ -4750,24 +4775,24 @@ public class COBOLParser extends CodeParser
 			accomplishPrevSoP(_parentNode);
 			break;
 		case RuleConstants.PROD_IF_STATEMENT_IF:
-			System.out.println("PROD_IF_STATEMENT_IF");
+			//System.out.println("PROD_IF_STATEMENT_IF");
 			this.importIf(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_EVALUATE_STATEMENT_EVALUATE:
-			System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
+			//System.out.println("PROD_EVALUATE_STATEMENT_EVALUATE");
 			this.importEvaluate(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_PERFORM_STATEMENT_PERFORM:
-			System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
+			//System.out.println("PROD_PERFORM_STATEMENT_PERFORM");
 			this.importPerform(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_MOVE_STATEMENT_MOVE:
-			System.out.println("PROD_MOVE_STATEMENT_MOVE");
+			//System.out.println("PROD_MOVE_STATEMENT_MOVE");
 			this.importMove(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_SET_STATEMENT_SET:
 		{
-			System.out.println("PROD_SET_STATEMENT_SET");
+			//System.out.println("PROD_SET_STATEMENT_SET");
 			if (!importSet(_reduction, _parentNode)) {
 				String content = this.getContent_R(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -4780,7 +4805,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_COMPUTE_STATEMENT_COMPUTE:
 		{
-			System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
+			//System.out.println("PROD_COMPUTE_STATEMENT_COMPUTE");
 			Reduction secRed = _reduction.get(1).asReduction();
 			StringList targets = this.getExpressionList(secRed.get(0).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 			String expr = this.getContent_R(secRed.get(2).asReduction(), "");
@@ -4795,25 +4820,25 @@ public class COBOLParser extends CodeParser
 		}
 		break;
 		case RuleConstants.PROD_ADD_STATEMENT_ADD:
-			System.out.println("PROD_ADD_STATEMENT_ADD");
+			//System.out.println("PROD_ADD_STATEMENT_ADD");
 			this.importAdd(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_SUBTRACT_STATEMENT_SUBTRACT:
-			System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
+			//System.out.println("PROD_SUBTRACT_STATEMENT_SUBTRACT");
 			this.importSubtract(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_MULTIPLY_STATEMENT_MULTIPLY:
-			System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
+			//System.out.println("PROD_MULTIPLY_STATEMENT_MULTIPLY");
 			this.importMultiply(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_DIVIDE_STATEMENT_DIVIDE:
-			System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
+			//System.out.println("PROD_DIVIDE_STATEMENT_DIVIDE");
 			this.importDivide(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_ACCEPT_STATEMENT_ACCEPT:
 		{
 			// Input instruction
-			System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
+			//System.out.println("PROD_ACCEPT_STATEMENT_ACCEPT");
 			if (!this.importAccept(_reduction, _parentNode)) {
 				Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
 				dummy.setColor(Color.RED);
@@ -4827,7 +4852,7 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD_DISPLAY_STATEMENT_DISPLAY:
 		{
 			// Output instruction
-			System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
+			//System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
 			// TODO: Identify whether fileAPI s to be used.
 			Reduction secRed = _reduction.get(1).asReduction();	// display body
 			// TODO: Define a specific routine to extract the exressions
@@ -4849,7 +4874,7 @@ public class COBOLParser extends CodeParser
 			break;
 		case RuleConstants.PROD_FILE_DESCRIPTION:
 		{
-			System.out.println("PROD_FILE_DESCRIPTION");
+			//System.out.println("PROD_FILE_DESCRIPTION");
 			Reduction fdRed = _reduction.get(0).asReduction();	// <file_description_enry>
 			Reduction reclRed = _reduction.get(1).asReduction();	// <_record_description_list>
 			// TODO map the record names (if any) to the file descriptor name (and vice versa?)
@@ -4881,7 +4906,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_OPEN_STATEMENT_OPEN:
 		{
-			System.out.println("PROD_OPEN_STATEMENT_OPEN");
+			//System.out.println("PROD_OPEN_STATEMENT_OPEN");
 			if (!this.importOpen(_reduction, _parentNode)) {
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -4893,7 +4918,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_READ_STATEMENT_READ:
 		{
-			System.out.println("PROD_READ_STATEMENT_READ");
+			//System.out.println("PROD_READ_STATEMENT_READ");
 			if (!this.importRead(_reduction, _parentNode)) {
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -4905,7 +4930,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_WRITE_STATEMENT_WRITE:
 		{
-			System.out.println("PROD_WRITE_STATEMENT_WRITE");
+			//System.out.println("PROD_WRITE_STATEMENT_WRITE");
 			if (!this.importWrite(_reduction, _parentNode)) {
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -4927,7 +4952,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_CLOSE_STATEMENT_CLOSE:
 		{
-			System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
+			//System.out.println("PROD_CLOSE_STATEMENT_CLOSE");
 			String fileDescr = this.getContent_R(_reduction.get(1).asReduction().get(0).asReduction(), "").trim();
 			Instruction instr = null;
 			if (this.fileMap.containsKey(fileDescr)) {
@@ -4949,12 +4974,12 @@ public class COBOLParser extends CodeParser
 			this.importCall(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_EXIT_STATEMENT_EXIT:
-			System.out.println("PROD_EXIT_STATEMENT_EXIT");
+			//System.out.println("PROD_EXIT_STATEMENT_EXIT");
 			this.importExit(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD_GOBACK_STATEMENT_GOBACK:
 		{
-			System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
+			//System.out.println("PROD_GOBACK_STATEMENT_GOBACK");
 			Reduction secRed = _reduction.get(1).asReduction();
 			String content = CodeParser.getKeywordOrDefault("preReturn", "return");
 			if (secRed.getParent().getTableIndex() == RuleConstants.PROD_EXIT_PROGRAM_RETURNING2) {
@@ -4966,7 +4991,7 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD_STOP_STATEMENT_STOP:
 		case RuleConstants.PROD_STOP_STATEMENT_STOP_RUN:
 		{
-			System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
+			//System.out.println("PROD_STOP_STATEMENT_STOP[_RUN]");
 			int contentIx = (ruleId == RuleConstants.PROD_STOP_STATEMENT_STOP) ? 1 : 2;
 			Reduction secRed = _reduction.get(contentIx).asReduction();
 			String content = CodeParser.getKeywordOrDefault("preExit", "exit");
@@ -4977,7 +5002,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_GOTO_STATEMENT_GO:
 		{
-			System.out.println("PROD_GOTO_STATEMENT_GO");
+			//System.out.println("PROD_GOTO_STATEMENT_GO");
 			String content = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
 			if (content.toUpperCase().startsWith("TO ")) {
 				content = content.substring(3);
@@ -4990,7 +5015,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_STRING_STATEMENT_STRING:
 		{
-			System.out.println("PROD_STRING_STATEMENT_STRING");
+			//System.out.println("PROD_STRING_STATEMENT_STRING");
 			if (!this.importString(_reduction, _parentNode)) {
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -5003,7 +5028,7 @@ public class COBOLParser extends CodeParser
 		break;
 		case RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING:
 		{
-			System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
+			//System.out.println("PROD_UNSTRING_STATEMENT_UNSTRING");
 			if (!this.importUnstring(_reduction, _parentNode)) {
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
@@ -5014,7 +5039,7 @@ public class COBOLParser extends CodeParser
 		}
 		break;
 		case RuleConstants.PROD_SEARCH_STATEMENT_SEARCH:
-			System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
+			//System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
 			importSearch(_reduction, _parentNode);
 			break;
 		case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
@@ -5093,10 +5118,10 @@ public class COBOLParser extends CodeParser
 				sop.firstElement = _parentNode.getElement(sop.startsAt);
 				sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
 				found = true;
-				System.out.println("======== " + sop.name + " =======");
-				for (int i = sop.startsAt; i < sop.endsBefore; i++) {
-					System.out.println("\t" + _parentNode.getElement(i));
-				}
+//				System.out.println("======== " + sop.name + " =======");
+//				for (int i = sop.startsAt; i < sop.endsBefore; i++) {
+//					System.out.println("\t" + _parentNode.getElement(i));
+//				}
 			}
 		}
 	}
@@ -5526,7 +5551,7 @@ public class COBOLParser extends CodeParser
 
 	private void importIf(Reduction _reduction, Subqueue _parentNode) {
 		String content = this.transformCondition(_reduction.get(1).asReduction(), "");
-		System.out.println("\tCondition: " + content);
+		//System.out.println("\tCondition: " + content);
 		Reduction secRed = _reduction.get(3).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
 		Reduction trueRed = null;
@@ -5546,11 +5571,11 @@ public class COBOLParser extends CodeParser
 		}
 		Alternative alt = new Alternative(content);
 		if (trueRed != null) {
-			System.out.println("\tTHEN branch...");
+			//System.out.println("\tTHEN branch...");
 			this.buildNSD_R(trueRed, alt.qTrue);
 		}
 		if (falseRed != null) {
-			System.out.println("\tELSE branch...");
+			//System.out.println("\tELSE branch...");
 			this.buildNSD_R(falseRed, alt.qFalse);
 		}
 		if (alt.qTrue.getSize() == 0 && alt.qFalse.getSize() > 0) {
@@ -5560,7 +5585,7 @@ public class COBOLParser extends CodeParser
 			alt.setText(negateCondition(content));
 		}
 		_parentNode.addElement(this.equipWithSourceComment(alt, _reduction));
-		System.out.println("\tEND_IF");
+		//System.out.println("\tEND_IF");
 	}
 
 	/** Resolve SET var [var2,var3] TO TRUE | FLASE */
@@ -5656,7 +5681,7 @@ public class COBOLParser extends CodeParser
 	 * @param assignments
 	 */
 	private void addBoolAssignments(Reduction setRed, StringList assignments) {
-		String value = setRed.get(2).asString();	// gets "true" or "false"
+		String value = setRed.get(2).asString().toLowerCase();	// gets "true" or "false"
 		StringList targets = this.getExpressionList(setRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		for (int i = 0; i < targets.count(); i++) {
 			// resolve condName to get the original name and value assigned to the condition
@@ -5733,7 +5758,7 @@ public class COBOLParser extends CodeParser
 				this.fileMap.put(fileDescr, fileName);
 			}
 			else if (selHead.equals("<file_status_clause>")) {
-				System.out.println(this.getContent_R(selRed.get(0).asReduction(), ""));
+				//System.out.println(this.getContent_R(selRed.get(0).asReduction(), ""));
 				if (selRed.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD__FILE_OR_SORT_TOK_FILE) {
 					// map the status variable to the file descriptor!
 					String statusVar = this.getContent_R(selRed.get(3).asReduction(), "");
@@ -6165,7 +6190,7 @@ public class COBOLParser extends CodeParser
 		Reduction optRed = bodyRed.get(optionIx).asReduction();
 		String content = "";
 		ILoop loop = null;
-		System.out.println("\t" + optRed.getParent().toString());
+		//System.out.println("\t" + optRed.getParent().toString());
 		switch (optRed.getParent().getTableIndex()) {
 		case RuleConstants.PROD_PERFORM_OPTION_TIMES:
 			// FOR loop
@@ -6261,7 +6286,8 @@ public class COBOLParser extends CodeParser
 			// WHILE or REPEAT loop
 			{
 				// Get the condition itself
-				content = this.getContent_R(optRed.get(2).asReduction(), "");
+				//content = this.getContent_R(optRed.get(2).asReduction(), "");
+				content = this.transformCondition(optRed.get(2).asReduction(), null);
 				// Classify the test position
 				Reduction testRed = optRed.get(0).asReduction();
 				if (testRed.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_TEST
@@ -6348,7 +6374,7 @@ public class COBOLParser extends CodeParser
 		if (subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_LIST_ALSO) {
 			// TODO: merge this with the subsequent case!
 			// This can only be represented by nested alternatives
-			System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
+			//System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
 			StringList subjects = this.getExpressionList(subjlRed, "<evaluate_subject_list>", -1);
 			Reduction otherRed = null;
 			Element elseBranch = null;
@@ -6447,7 +6473,7 @@ public class COBOLParser extends CodeParser
 				) {
 			// Independent conditions, will be converted to nested alternatives
 			boolean negate = subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_FALSE;
-			System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_TOK_TRUE/FALSE");
+			//System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_TOK_TRUE/FALSE");
 			Reduction otherRed = null;
 			Element elseBranch = null;
 			if (condlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_CONDITION_LIST) {
@@ -6510,7 +6536,7 @@ public class COBOLParser extends CodeParser
 		}
 		else {
 			// Single discriminator expression - there might be a chance to convert this to a CASE element
-			System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
+			//System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
 			StringList caseText = StringList.getNew(this.getContent_R(subjlRed, ""));
 			int caseVarStringLength = 0;
 			if (caseText != null) {
@@ -6678,7 +6704,7 @@ public class COBOLParser extends CodeParser
 		if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
 		{
 			// NOTE: we can never get any constants here as there are seperate rules for them
-			System.out.println("PROD_DATA_DESCIPTION4");
+			//System.out.println("PROD_DATA_DESCIPTION4");
 
 			int level = 0;
 			try {
@@ -7142,6 +7168,17 @@ public class COBOLParser extends CodeParser
 		return null;
 	}
 
+	/**
+	 * Traverses the recursive rule {@code _paramRed} to obtain a left-to-right
+	 * list of argument declarations (e.g. for a function call), particularly
+	 * coping with omittable arguments.
+	 * @param _paramRed - the rule recursively comprising the argument list
+	 * @param _listHead - the rule head representing the recursive part
+	 * @param _ruleId - id of a rule terminating the exploration
+	 * @param _nameIx - index of the name token within the reduction  
+	 * @return list of expressions as strings
+	 * @see #getParameterList(Reduction, String, int, int)
+	 */
 	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) {
 		StringList args = new StringList();
 		do {
@@ -7163,6 +7200,15 @@ public class COBOLParser extends CodeParser
 		return args.reverse();
 	}
 
+	/**
+	 * Traverses the recursive rule to obtain a left-to-right list of expressions (e.g.
+	 * as argument list for a function call)
+	 * @param _exprlRed - the rule recursively comprising the expression
+	 * @param _listHead - the rule head representing the recursive part 
+	 * @param _exclRuleId - id of a rule terminating the exploration
+	 * @return list of expressions as strings
+	 * @see #getParameterList(Reduction, String, int, int)
+	 */
 	private final StringList getExpressionList(Reduction _exprlRed, String _listHead, int _exclRuleId) {
 		StringList exprs = new StringList();
 		do {
@@ -7183,8 +7229,17 @@ public class COBOLParser extends CodeParser
 		return exprs.reverse();
 	}
 
-	private final String transformCondition(Reduction _reduction, String lastSubject) {
-		// TODO We must resolve expressions like "expr1 = expr2 or > expr3".
+	/**
+	 * Derives an expression that makes some sense as Boolean condition from the given
+	 * {@link Reduction} {@code _reduction}. Tries to handle incomplete expressions,
+	 * condition names as variable attributes etc. 
+	 * @param _reduction - the top rule for the condition
+	 * @param _lastSubject - a comparison subject in case of an incomplete expression
+	 * (e.g. the discriminator in a CASE structure)
+	 * @return the derived expression in Structorizer-compatible syntax
+	 */
+	private final String transformCondition(Reduction _reduction, String _lastSubject) {
+		// We must resolve expressions like "expr1 = expr2 or > expr3".
 		// Unfortunately the <condition> node is not defined as hierarchical expression
 		// tree dominated by operator nodes but as left-recursive "list".
 		// We should transform the left-recursive <expr_tokens> list into a linear
@@ -7193,9 +7248,15 @@ public class COBOLParser extends CodeParser
 		// to inspect the prefix of the composed string.)
 		String thruExpr = "";
 		int ruleId = _reduction.getParent().getTableIndex();
-		if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 && (lastSubject == null || lastSubject.isEmpty())) {
-			// If the condition consists of just a qualified name then this is the result 
-			return this.getContent_R(_reduction, "");
+		// If the condition consists of just a qualified name then this may be the result ...
+		if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 && (_lastSubject == null || _lastSubject.isEmpty())) {
+			String qualName = this.getContent_R(_reduction, "");
+			CobVar var = currentProg.getCobVar(qualName);
+			// in case of a condition name resolve the comparison
+			if (var != null && var.isConditionName()) {
+				qualName = var.getValuesAsExpression(true);
+			}
+			return qualName;
 		}
 		
 		if (ruleId == RuleConstants.PROD_EVALUATE_OBJECT) {
@@ -7219,17 +7280,22 @@ public class COBOLParser extends CodeParser
 		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
 			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
 		}
-		if (lastSubject == null || lastSubject.isEmpty()) {
+		if (_lastSubject == null || _lastSubject.isEmpty()) {
 			Token tok = expr_tokens.getFirst();
 			if (!isComparisonOpRuleId(ruleId)) {
 				if (tok.getType() == SymbolType.CONTENT) {
-					lastSubject = tok.asString();
+					_lastSubject = tok.asString();
 					if (tok.getName().equals("COBOLWord")) {
-						lastSubject = lastSubject.replace("-", "_");
+						_lastSubject = _lastSubject.replace("-", "_");
 						// Try to identify a variable and if so, fetch its qualified name
-						CobVar var = currentProg.getCobVar(lastSubject);
+						CobVar var = currentProg.getCobVar(_lastSubject);
 						if (var != null) {
-							lastSubject = var.getQualifiedName();
+							if (var.isConditionName()) {
+								_lastSubject = var.getParent().getQualifiedName();
+							}
+							else {
+								_lastSubject = var.getQualifiedName();
+							}
 						}
 						/* FIXME: if the current word matches an internal register,
 						 * then check if it exists and create it otherwise.
@@ -7243,11 +7309,11 @@ public class COBOLParser extends CodeParser
 					}
 				}
 				else {
-					lastSubject = this.getContent_R(tok.asReduction(), "");
+					_lastSubject = this.getContent_R(tok.asReduction(), "");
 				}
 			}
 			else {
-				lastSubject = "";
+				_lastSubject = "";
 			}
 		}
 		boolean afterLogOpr = true;
@@ -7256,13 +7322,17 @@ public class COBOLParser extends CodeParser
 			if (tok.getType() == SymbolType.NON_TERMINAL) {
 				ruleId = tok.asReduction().getParent().getTableIndex();
 				tokStr = this.getContent_R(tok.asReduction(), "");
+				CobVar checkedVar = currentProg.getCobVar(tokStr);
+				if (checkedVar != null && checkedVar.isConditionName()) {
+					tokStr = checkedVar.getValuesAsExpression(true);
+				}
 			}
 			else {
 				tokStr = tok.asString();
 				// FIXME also address qualified names (rule PROD_QUALIFIED_WORD2)
 				if (tok.getName().equals("COBOLWord")) {
 					tokStr = tokStr.replace("-", "_");
-					CobVar checkedVar = currentProg.getCobVar(lastSubject);
+					CobVar checkedVar = currentProg.getCobVar(_lastSubject);
 					if (checkedVar != null) {
 						// First of all accomplish the name as fallback
 						tokStr = checkedVar.getQualifiedName();
@@ -7276,7 +7346,8 @@ public class COBOLParser extends CodeParser
 			}
 			if (!tokStr.trim().isEmpty()) {
 				if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
-					cond += " " + lastSubject;
+					// Place the last comparison subject to accomplish the next incomplete expression
+					cond += " " + _lastSubject;
 				}
 				afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
 				if (afterLogOpr) {
@@ -7395,10 +7466,6 @@ public class COBOLParser extends CodeParser
 	private static Matcher mIntLiteral = pIntLiteral.matcher("");
 	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
 	
-//	private static final Matcher MTCH_SPACE = Pattern.compile("(^|.*?\\W)" + BString.breakup("space") + "($|\\W.*?)").matcher("");
-//	private static final Matcher MTCH_SPACES = Pattern.compile("(^|.*?\\W)" + BString.breakup("spaces") + "($|\\W.*?)").matcher("");
-//	private static final Matcher MTCH_ZERO = Pattern.compile("(^|.*?\\W)" + BString.breakup("zero") + "($|\\W.*?)").matcher("");
-
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#getContent_R(com.creativewidgetworks.goldparser.engine.Reduction, java.lang.String)
 	 */
@@ -7478,10 +7545,17 @@ public class COBOLParser extends CodeParser
 					String indexStr = this.getContent_R(_reduction.get(posSub).asReduction(), "");
 					// For the case of a multidimensional table split the index iexpressions
 					StringList ixExprs = Element.splitExpressionList(indexStr.substring(1), ",");
+					if (this.functionNames.contains(qualName)) {
+						// We take all as arguments ...
+						qualName += indexStr;
+						// ... and prevent from indexing
+						ixExprs.clear();
+					}
 					// In case of indexing, the qualName might just be an undeclared alias, so we may
 					// have to identify the real table name from the index variable, presumably the
 					// last one
-					if (currentProg.getCobVar(qualName) == null) {
+					else if (currentProg.getCobVar(qualName) == null) {
+//					if (currentProg.getCobVar(qualName) == null) {
 						for (int i = 0; i < ixExprs.count(); i++) {
 							CobVar ixVar = currentProg.getCobVar(ixExprs.get(i));
 							if (ixVar != null && ixVar.isIndex()) {
@@ -7500,7 +7574,7 @@ public class COBOLParser extends CodeParser
 						}
 					}
 				}
-				// Okay, the index replacement done, we cater for the referencing
+				// Okay, the index replacement done, we cater for possible referencing (might even be applied to a function result)
 				if (hasRefMod) {
 					// The <refmod> is always the last token
 					Reduction refModRed = _reduction.get(_reduction.size() - 1).asReduction();
@@ -7657,6 +7731,9 @@ public class COBOLParser extends CodeParser
 		{
 			String toAdd = _token.asString();
 			String name = _token.getName();
+			if (toAdd.toLowerCase().matches(".*true.*") || toAdd.toLowerCase().matches(".*false.*") || name.toLowerCase().matches(".*true.*") || name.toLowerCase().matches(".*false.*")) {
+				System.out.println("getContentToken_R: " + name + " / " + toAdd);
+			}
 			final String trueName = name;
 			// just drop the "zero terminated" and "Unicode" parts here
 			if (name.equals("ZLiteral") || name.equals("NationalLiteral")) {
@@ -7753,8 +7830,12 @@ public class COBOLParser extends CodeParser
 				toAdd = "\'\\0\'";
 			}
 			else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
+				// FIXME This branch is never entered - how can we get hold of TRUE and FALSE? 
 				toAdd = toAdd.substring(4).toLowerCase();
 			}
+//			else {
+//				System.out.println("getContentToken_R: inudentified token: " + name + " / " + toAdd);
+//			}
 			// Keywords FUNCTION and IS are to be suppressed
 			if (!name.equalsIgnoreCase("FUNCTION") && !name.equalsIgnoreCase("IS")) {
 				String sepa = "";
@@ -7812,7 +7893,7 @@ public class COBOLParser extends CodeParser
 		// First gather all necessary record type definitions recursively.
 		// The typenames will be generic i.e. derived from the respective variable
 		// name and a hashcode.
-		// Simultaneously compose the deeclarations and initialisations
+		// Simultaneously compose the declarations and initialisations
 		StringList declarations = new StringList();
 		boolean containsExternals = false;
 		boolean containsGlobals = false;
@@ -8095,7 +8176,33 @@ public class COBOLParser extends CodeParser
 	 */
 	protected void subclassPostProcess(String _textToParse)
 	{
-		//HashMap<Subqueue, Subqueue> subqueueMap = new HashMap<Subqueue, Subqueue>();
+		// The automatic conversion of instructions to calls may have invalidated element references
+		// Hence update the procedureList before elements are moved.
+		for (SectionOrParagraph sop: this.procedureList) {
+			int i = 0;
+			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
+				int ix = (i == 0 ? sop.startsAt : sop.endsBefore - 1);
+				Subqueue sq = null;
+				Element newEl = null;
+				if (el instanceof Instruction && (sq = (Subqueue)el.parent).getIndexOf(el) < 0) {
+					if (ix < sq.getSize() && (newEl = sq.getElement(ix)) instanceof Call &&
+							newEl.getText().getText().equals(el.getText().getText())) {
+						if (i == 0) {
+							sop.firstElement = newEl;
+						}
+						else {
+							sop.lastElement = newEl;
+						}
+					}
+					else {
+						System.err.println("Instructions of Section/Paragraph " + sop.name + " got out of sight!");
+					}
+				}
+				i++;
+			}
+		}
+		
+		// Now the actual extraction of local procedures may begin.
 		for (SectionOrParagraph sop: this.procedureList) {
 			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
 			if (sop.firstElement != null && sop.lastElement != null) {
@@ -8107,17 +8214,23 @@ public class COBOLParser extends CodeParser
 				// is still correct - the original context may already have been outsourced itself
 				// so we search for it in the current context.
 				int callIndex = sq.getIndexOf(sop.firstElement);
+				if (callIndex < 0) {
+					System.err.println("Corrupt diagram: Parts of section or paragraph \"" + sop.name + "\" not detected!");
+					continue;
+				}
 				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
 				if (clients != null) {
-					// FIXME Not that we don't bother detecting arguments and results anymore we might just plainly move the elements
+					// No longer bothering to detect arguments and results, we may simply move the elements
 					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
 					String callText = sop.name + "()";
 					Root proc = new Root();
 					proc.setText(callText);
 					proc.setProgram(false);
 					int nElements = elements.getSize();
+					//System.out.println("==== Extracting " + sop.name + " ===...");
 					for (int i = 0; i < nElements; i++) {
 						proc.children.addElement(elements.getElement(0));
+						//System.out.println("\t" + (callIndex + i) + " " + elements.getElement(0)); 
 						elements.removeElement(0);
 					}
 					Call replacingCall = new Call(callText);
@@ -8127,6 +8240,7 @@ public class COBOLParser extends CodeParser
 					Integer endDataIx = dataSectionEnds.get(owner); 
 					if (endDataIx != null && endDataIx <= owner.children.getSize()) {
 						// Move all data declarations to a new shared includable 
+						//System.out.println("=== Removing " + endDataIx + " lines of shared data...");
 						String dataName = owner.getMethodName() + "_Shared";
 						shared = new Root();
 						shared.setText(dataName);
@@ -8150,15 +8264,16 @@ public class COBOLParser extends CodeParser
 					callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
 					// Now cleanup and get rid of place-holding dummy elements
 					boolean precededByJump = false;
-					if (callIndex > 0 && sq.getElement(callIndex-1) instanceof Call) {
+					Element doomedEl = null;
+					if (callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Call) {
 						// Get rid of the dummy Call now
-						Element dummyEl = sq.getElement(callIndex-1);
-						if (dummyEl.disabled && dummyEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
+						if (doomedEl.disabled && doomedEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
+							replacingCall.setComment(doomedEl.getComment());
+							//System.out.println("=== Cleanup Call: " + sq.getElement(callIndex-1));
 							sq.removeElement(--callIndex);
 						}
-						// Check if that was preceded by a disabled jump
-						Element precEl = null;
-						precededByJump = callIndex > 0 && (precEl = sq.getElement(callIndex-1)) instanceof Jump && !precEl.disabled;
+						// Check if that dummy call was preceded by a valid jump i.e. is unreachable
+						precededByJump = callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Jump && !doomedEl.disabled;
 					}
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
@@ -8167,36 +8282,33 @@ public class COBOLParser extends CodeParser
 						client.setText(callText);
 						client.setColor(colorMisc);	// No longer needs to be red
 						client.disabled = false;
-//						if (resultDistribution != null) {
-//							int ix = ((Subqueue)client.parent).getIndexOf(client);
-//							if (ix > -1) {
-//								((Subqueue)client.parent).insertElementAt(resultDistribution.copy(), ix+1);
-//							}
-//						}
 					}
 					// At the original place we most likely won't need the call anymore (not reachable).
 					if (precededByJump) {
+						//System.out.println("=== Remove unreachable Call " + replacingCall);
 						sq.removeElement(replacingCall);
 					}
 					else {
+						// Otherwise we just disable the call in case it might yet still be needed 
 						replacingCall.disabled = true;
 					}
 				}
-				// Not explicitly used anywhere and just consisting of a jump? 
+				// Not explicitly used anywhere and just consisting of a disabled dummy jump? 
 				else if (elements.getSize() == 1 && elements.getElement(0) instanceof Jump) {
+					Element dummyCall = null;
 					Jump dummyJump = (Jump)elements.getElement(0);
 					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
 					// (then we will drop the two dummy elements now)
 					int ix = sq.getIndexOf(dummyJump);
-					if (ix > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && sq.getElement(ix-1) instanceof Call) {
-						Call dummyCall = (Call)sq.getElement(ix-1);
-						Element prev = null;
+					if (ix > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(ix-1)) instanceof Call) {
+						Element prevEl = null;
 						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name) &&
-								(ix == 1 || ix > 1 && (prev = sq.getElement(ix-2)) instanceof Jump && !prev.disabled)) {
-							sq.removeElement(ix-1);	// This is the dummyCall
-							if (ix > 1) {
-								sq.removeElement(ix-1);	// This is the dummyJump
-							}
+								// is the code unreachable?
+								ix > 1 && (prevEl = sq.getElement(ix-2)) instanceof Jump && !prevEl.disabled) {
+							//System.out.println("=== Cleanup Jump: " + sq.getElement(ix));
+							sq.removeElement(ix);	// This is the dummyJump itself
+							//System.out.println("=== Cleanup Call: " + sq.getElement(ix-1));
+							sq.removeElement(ix-1);	// This is the preceding dummyCall
 						}
 					}
 				}
@@ -8612,7 +8724,10 @@ class CobTools {
 		private boolean constant = false;
 		
 		/**
-		 * @return the valuesAsExpression
+		 * In case of a condition name returns a Boolean expression suited for comparison
+		 * with unqualified component names.
+		 * @return the comparison expression
+		 * @see #getValuesAsExpression(boolean)
 		 */
 		public String getValuesAsExpression() {
 			return getValuesAsExpression(false);
@@ -8643,6 +8758,7 @@ class CobTools {
 		}
 
 		/**
+		 * In case of a condition name returns a Boolean expression suited for comparison
 		 * @param fullyQualified TODO
 		 * @return the valuesAsExpression
 		 */
@@ -8652,7 +8768,7 @@ class CobTools {
 					// CHECKME: generate kind of SWITCH statement?
 					String varName = this.parent.name;
 					if (fullyQualified) {
-						varName = this.parent.forceName();
+						varName = this.parent.getQualifiedName();
 					}
 					StringBuilder exprSB = new StringBuilder(this.values.length * (varName.length() + 10));
 					for (int i = 0; i < values.length; i++) {
@@ -8663,9 +8779,11 @@ class CobTools {
 							exprSB.append(" .. " + value);
 						} else {
 							if (i == 0) {
-								exprSB.append(varName + " == " + value);
+								//exprSB.append(varName + " == " + value);
+								exprSB.append(varName + " = " + value);
 							} else {
-								exprSB.append(" || \\\n" + varName + " == " + value);
+								//exprSB.append(" || \\\n" + varName + " == " + value);
+								exprSB.append(" or \\\n" + varName + " = " + value);
 							}
 						}
 					}
