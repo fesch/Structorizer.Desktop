@@ -64,7 +64,6 @@ package lu.fisch.structorizer.elements;
  */
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -919,5 +918,23 @@ public class Case extends Element implements IFork
     	}
 	}
 	// END KGU#258 2016-09-25
+
+	// START KGU 2017-10-21
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		// A Case selection may only pass control if being disabled or containing at least one
+		// passable branch. We don't check whether the discriminator is satisfiable.
+		boolean mayPass = disabled;
+		if (!mayPass) {
+			for (int i = 0; !mayPass && i < this.qs.size(); i++) {
+				mayPass = this.qs.get(i).mayPassControl();
+			}
+		}
+		return mayPass;
+	}
+	// END KGU 2017-10-21
 
 }

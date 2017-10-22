@@ -20,7 +20,6 @@
 
 package lu.fisch.structorizer.elements;
 
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 import java.util.Vector;

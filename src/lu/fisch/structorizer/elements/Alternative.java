@@ -64,7 +64,6 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
-import java.util.HashSet;
 
 import javax.swing.ImageIcon;
 
@@ -673,4 +672,15 @@ public class Alternative extends Element implements IFork {
 		return relevantParserKeys;
 	}
 	
+	// START KGU 2017-10-21
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		// An alternative may only pass control if being disabled or containing at least one
+		// passable branch. We don't check whether the condition is satisfiable.
+		return disabled || this.qTrue.mayPassControl() || this.qFalse.mayPassControl();
+	}
+	// END KGU 2017-10-21
 }

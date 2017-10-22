@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.elements;
 
-import java.util.HashSet;
-
 /*
  ******************************************************************************************************
  *
@@ -697,5 +695,23 @@ public class Parallel extends Element
 		// There is nothing to return
 		return null;
 	}
-
+	
+	// START KGU 2017-10-21
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		// A Case selection may only pass control if being disabled or containing only
+		// passable branches.
+		boolean mayPass = disabled;
+		if (!mayPass) {
+			mayPass = true;
+			for (int i = 0; mayPass && i < this.qs.size(); i++) {
+				mayPass = this.qs.get(i).mayPassControl();
+			}
+		}
+		return mayPass;
+	}
+	// END KGU 2017-10-21
 }

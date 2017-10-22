@@ -59,7 +59,6 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Point;
-import java.util.HashSet;
 
 import javax.swing.ImageIcon;
 
@@ -352,5 +351,17 @@ public class Forever extends Element implements ILoop {
 		// There is nothing to refactor
 		return null;
 	}
+
+	// START KGU 2017-10-21
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		// This may only pass control if being disabled or containing a reachable leave jump
+		// to exactly this level
+		return disabled || this.hasReachableLeave(true);
+	}
+	// END KGU 2017-10-21
 
 }

@@ -71,7 +71,6 @@ import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;

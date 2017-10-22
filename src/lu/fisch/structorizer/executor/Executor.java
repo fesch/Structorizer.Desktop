@@ -3059,7 +3059,7 @@ public class Executor implements Runnable
 		// START KGU#388 2017-09-14: Enh. #423
 		else if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			content = new HashMap<String, Object>((HashMap<String, ?>)content);
+			content = new HashMap<String, Object>((HashMap<String, Object>)content);
 		}
 		// END KGU#388 2017-09-14
 		

@@ -273,25 +273,25 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     			header0 = ttlIndex.getText();
     		}
     		tblFields.setModel(new javax.swing.table.DefaultTableModel(
-    	            new Object [][] {
-    	            },
-    	            new String [] {
-    	                header0, /* " ", */ ttlContent.getText()
-    	            }
-    	        ) {
-    	            Class<?>[] types = new Class<?> [] {
-    	                java.lang.String.class, /*JButton.class,*/ java.lang.Object.class
-    	            };
+    				new Object [][] {
+    				},
+    				new String [] {
+    						header0, /* " ", */ ttlContent.getText()
+    				}
+    				) {
+    			Class<?>[] types = new Class<?> [] {
+    				java.lang.String.class, /*JButton.class,*/ java.lang.Object.class
+    			};
 
-    	            public Class<?> getColumnClass(int columnIndex) {
-    	                return types [columnIndex];
-    	            }
-    	            // Disable editing of the first column
-    	            @Override
-    	            public boolean isCellEditable(int row, int column){  
-    	                return (editable && column>=1);  
-    	            }
-    	        });
+    			public Class<?> getColumnClass(int columnIndex) {
+    				return types [columnIndex];
+    			}
+    			// Disable editing of the first column
+    			@Override
+    			public boolean isCellEditable(int row, int column){  
+    				return (editable && column>=1);  
+    			}
+    		});
     		DefaultTableModel tm =(DefaultTableModel)tblFields.getModel();
     		if (array != null) {
     			for (int i = 0; i < array.size(); i++)
@@ -438,13 +438,13 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     //@SuppressWarnings("unchecked")
     private void initComponents() {
 
-    	// START KGU#89 2015-11-25
-    	this.setIconImage(IconLoader.ico004.getImage());
-    	// END KGU#89 2015-11-25
-    	// START KGU 2017-10-08
-    	this.setTitle("Executor Control");
-    	// END KGU 2017-10-08
-    	// START KGU#210 2016-07-25: Initialisation with min, max, and value
+        // START KGU#89 2015-11-25
+        this.setIconImage(IconLoader.ico004.getImage());
+        // END KGU#89 2015-11-25
+        // START KGU 2017-10-08
+        this.setTitle("Executor Control");
+        // END KGU 2017-10-08
+        // START KGU#210 2016-07-25: Initialisation with min, max, and value
         //slSpeed = new javax.swing.JSlider();
         slSpeed = new javax.swing.JSlider(0, 2000, 50);
         // END KGU#210 2016-07-25
@@ -503,12 +503,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // END KGU#201 2016-07-25
         // START KGU#210 2016-07-25: Issue #201 - Cursor key movements didn't immedialtely show
         slSpeed.addChangeListener(new ChangeListener() {
-        	public void stateChanged(ChangeEvent e) {
+            public void stateChanged(ChangeEvent e) {
                 javax.swing.JSlider source = (javax.swing.JSlider)e.getSource();
                 if (!source.getValueIsAdjusting()) {
-                	updateSpeed();
+                    updateSpeed();
                 }
-        	}    
+            }    
 
         });
         // END KGU#210 2016-07-25
@@ -531,11 +531,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // END KGU#89 2015-11-25
         
         // START KGU#437 2017-10-11: Bugfix #435 this triggers meddle with the GUI scaling and must be set thereafter
-//		// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+//        // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
 //        chkOutputToTextWindow.addItemListener(this);
-//		// END KGU#160 2016-04-12
+//        // END KGU#160 2016-04-12
 //
-//		// START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
+//        // START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
 //        chkCollectRuntimeData.addItemListener(this);
 //        // END KGU#117 2016-03-06
 //        // START KGU#165 2016-03-13: Enh. #124
@@ -604,10 +604,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             }
         ) {
             Class<?>[] types = new Class<?> [] {
-        		// START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
+                // START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
                 //java.lang.String.class, java.lang.Object.class
                 java.lang.String.class, JButton.class, java.lang.Object.class
-        		// END KGU#443 2017-10-16
+                // END KGU#443 2017-10-16
             };
 
             public Class<?> getColumnClass(int columnIndex) {
@@ -788,7 +788,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // END KGU#287 2017-01-09
        
         // START KGU#437 2017-10-11: Bugfix #435 this triggers meddle with the GUI scaling and must be set thereafter
-		// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+        // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
         chkOutputToTextWindow.addItemListener(this);
         // END KGU#160 2016-04-12
 
@@ -874,20 +874,20 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
         // START KGU#68 205-11-06: Enhancement - update edited values
-    	if (!varUpdates.isEmpty())
-    	{
-    		// START KGU#441 2017-10-13: Enh. #437 Report syntax problems to the user
-    		//Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
-    		StringList troubles = Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
-    		if (troubles.count() > 0) {
-    			JOptionPane.showMessageDialog(this, 
-    					msgVarUpdatesFailed.getText().replace("%",troubles.getText()),
-    					msgVarUpdateErrors.getText(), JOptionPane.WARNING_MESSAGE);
-    		}
-    		// END KGU#441 2017-10-13
-        	varUpdates.clear();
-    	}
-    	// END KGU#68 2015-11-06
+        if (!varUpdates.isEmpty())
+        {
+            // START KGU#441 2017-10-13: Enh. #437 Report syntax problems to the user
+            //Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+            StringList troubles = Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+            if (troubles.count() > 0) {
+                JOptionPane.showMessageDialog(this, 
+                        msgVarUpdatesFailed.getText().replace("%",troubles.getText()),
+                        msgVarUpdateErrors.getText(), JOptionPane.WARNING_MESSAGE);
+            }
+            // END KGU#441 2017-10-13
+            varUpdates.clear();
+        }
+        // END KGU#68 2015-11-06
         if(Executor.getInstance().isRunning()==false)
         {
             Executor.getInstance().start(false);
@@ -915,7 +915,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // START KGU#379 2017-04-12: Bugfix #391
         if (allButtons) {
         // END KGU#379 2017-04-12
-        	startButtonsEnabled = true;
+            startButtonsEnabled = true;
             btnPlay.setEnabled(startButtonsEnabled);
             btnStep.setEnabled(startButtonsEnabled);
             // START KGU#210 2016-07-25: Issue #201 - new Call stack display strategy
@@ -929,43 +929,43 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPauseActionPerformed
     {
-    	// START KGU 2015-10-12
+        // START KGU 2015-10-12
 //        btnPause.setEnabled(false);
 //        btnPlay.setEnabled(true);
 //        btnStep.setEnabled(true);
-    	// START KGU#379 2017-04-12: Bugfix #391 It's sufficient just to disable the pause button for now
-		setButtonsForPause(false);
-		// END KGU#379 2017-04-12
-    	// END KGU 2015-10-12
+        // START KGU#379 2017-04-12: Bugfix #391 It's sufficient just to disable the pause button for now
+        setButtonsForPause(false);
+        // END KGU#379 2017-04-12
+        // END KGU 2015-10-12
         Executor.getInstance().setPaus(!Executor.getInstance().getPaus());
     }
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStepActionPerformed
     {
-    	// START KGU#379 2017-04-12: Bugfix #391 - buttons weren't properly handled in step mode
-    	// Buttons will be switched back in Executor.waitForNext()
-    	// Attention: the pause button must not be enabled here because it has toggling effect, hence it
-    	// would turn step mode into run mode if pressed during step execution!
-    	startButtonsEnabled = false;
+        // START KGU#379 2017-04-12: Bugfix #391 - buttons weren't properly handled in step mode
+        // Buttons will be switched back in Executor.waitForNext()
+        // Attention: the pause button must not be enabled here because it has toggling effect, hence it
+        // would turn step mode into run mode if pressed during step execution!
+        startButtonsEnabled = false;
         btnStep.setEnabled(startButtonsEnabled);
         btnPlay.setEnabled(startButtonsEnabled);
         btnCallStack.setEnabled(false);
         // END KGU#379 2017-04-12
-    	// START KGU#68 2015-11-06: Enhancement - update edited values
-    	if (!varUpdates.isEmpty())
-    	{
-    		// START KGU#441 2017-10-13: Enh. #437 Report syntax problems to the user
-    		//Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
-    		StringList troubles = Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
-    		if (troubles.count() > 0) {
-    			JOptionPane.showMessageDialog(this, 
-    					msgVarUpdatesFailed.getText().replace("%",troubles.getText()),
-    					msgVarUpdateErrors.getText(), JOptionPane.WARNING_MESSAGE);
-    		}
-    		// END KG#441 2017-10-13
-    		varUpdates.clear();
-    	}
-    	// END KGU#68 2015-11-06
+        // START KGU#68 2015-11-06: Enhancement - update edited values
+        if (!varUpdates.isEmpty())
+        {
+            // START KGU#441 2017-10-13: Enh. #437 Report syntax problems to the user
+            //Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+            StringList troubles = Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+            if (troubles.count() > 0) {
+                JOptionPane.showMessageDialog(this, 
+                        msgVarUpdatesFailed.getText().replace("%",troubles.getText()),
+                        msgVarUpdateErrors.getText(), JOptionPane.WARNING_MESSAGE);
+            }
+            // END KG#441 2017-10-13
+            varUpdates.clear();
+        }
+        // END KGU#68 2015-11-06
         // START KGU#117 2016-03-06: Enh. #77
         chkCollectRuntimeData.setEnabled(false);
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
@@ -1016,7 +1016,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     	if (Executor.getInstance().getPaus())
     	{
     		Executor.getInstance().showStackTrace();
-    	}    	
+    	}
     }
     // END KGU#210 2016-07-25
     // END KGU#159 2016-03-17
@@ -1050,7 +1050,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     			//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
     		}
     		if (activeBtnEditor != null) {
-    			boolean test = activeBtnEditor.stopCellEditing();
+    			/*boolean test =*/ activeBtnEditor.stopCellEditing();
     		}
     	}
     }
@@ -1066,16 +1066,16 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
      * @return the modified value if the change was committed.
      */
     private Object editCompoundValue(String _varName, Object _value, boolean _editable, Component _refComponent) {
-		ValueEditor valueEditor = new ValueEditor(_varName, _value, _editable);
-		valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		valueEditor.setLocationRelativeTo(_refComponent);
-		valueEditor.setModal(true);
-		valueEditor.setVisible(true);
+    	ValueEditor valueEditor = new ValueEditor(_varName, _value, _editable);
+    	valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    	valueEditor.setLocationRelativeTo(_refComponent);
+    	valueEditor.setModal(true);
+    	valueEditor.setVisible(true);
     	if (valueEditor.wasModified()) {
     		return valueEditor.getValue();
     	}
-		return null;
-	}
+    	return null;
+    }
     // END KGU#443 2017-10-16
 
 	public void updateVars(Vector<Vector<Object>> vars)
@@ -1140,7 +1140,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // END KGU#443 2017-10-16
     }
 
-    // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
+	// START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
 	/**
 	 * Determines the required maximum rendering width for column {@code _colNo} of
 	 * {@link JTable} {@code _table} and fixes it as maximum and preferred width 
@@ -1209,10 +1209,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#443 2017-10-16: Enh. #439
     private ButtonEditor activeBtnEditor = null;
     private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
-		@Override
-		public void actionPerformed(ActionEvent evt) {
-			btnPullDownActionPerformed(evt);
-		}};
+    	@Override
+    	public void actionPerformed(ActionEvent evt) {
+    		btnPullDownActionPerformed(evt);
+    	}};
     // END KGU#443 2017-10-16
     // START KGU#89/KGU#157 2016-03-18: Bugfix #131 - Language support for Executor
     public LangTextHolder lbStopRunningProc;
@@ -1335,63 +1335,63 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 
     @Override
-	public void propertyChange(PropertyChangeEvent pcEv) {
-		// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
+    public void propertyChange(PropertyChangeEvent pcEv) {
+    	// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
     	// START KGU#442/KGU#443 2017-10-14: Issue #438 Prevent restart while the cell editor is active (neither quit nor committed)
     	//if (pcEv.getSource() == this.tblVar && pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
-        if (pcEv.getSource() == this.tblVar)
+    	if (pcEv.getSource() == this.tblVar)
     	// END KGU#442/KGU#443 2017-10-14
     	{
-        	// START KGU#442 2017-10-14: Issue #438 - Prevent restart while the cell editor is active (neither quit nor committed)
-        	if (pcEv.getNewValue() != null) {
-        		// Cell editor activated - disable start buttons and put a hint bubble
-        		// (The normative enabling state is still available in startButtonsEnabled)
-        		btnPlay.setEnabled(false);
-        		btnStep.setEnabled(false);
-        		if (startButtonsEnabled) {
-        			btnPlay.setToolTipText(msgEndEditing.getText());
-        			btnStep.setToolTipText(msgEndEditing.getText());
-        		}
-        	}
-        	else {
-            // END KGU#442 2017-10-14
-        		int rowNr = tblVar.getSelectedRow();
-        		DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
-        		// START KGU#443 2017-10-16: Enh. #439 new pulldown buttons next to compound variables
-        		//Object val = tm.getValueAt(rowNr, 1);
-        		Object val = tm.getValueAt(rowNr, 2);
-        		// END KGU#443 2017-10-16
-        		if (val != null)
-        		{
-        			varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
-        			//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
-        		}
-            	// START KGU#442 2017-10-14: Issue #438 - Re-enable restart
-        		btnPlay.setEnabled(startButtonsEnabled);
-        		btnStep.setEnabled(startButtonsEnabled);
-        		btnPlay.setToolTipText(null);
-        		btnStep.setToolTipText(null);
-            	// END KGU#442 2017-10-14
-        	}
+    		// START KGU#442 2017-10-14: Issue #438 - Prevent restart while the cell editor is active (neither quit nor committed)
+    		if (pcEv.getNewValue() != null) {
+    			// Cell editor activated - disable start buttons and put a hint bubble
+    			// (The normative enabling state is still available in startButtonsEnabled)
+    			btnPlay.setEnabled(false);
+    			btnStep.setEnabled(false);
+    			if (startButtonsEnabled) {
+    				btnPlay.setToolTipText(msgEndEditing.getText());
+    				btnStep.setToolTipText(msgEndEditing.getText());
+    			}
+    		}
+    		else {
+    		// END KGU#442 2017-10-14
+    			int rowNr = tblVar.getSelectedRow();
+    			DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
+    			// START KGU#443 2017-10-16: Enh. #439 new pulldown buttons next to compound variables
+    			//Object val = tm.getValueAt(rowNr, 1);
+    			Object val = tm.getValueAt(rowNr, 2);
+    			// END KGU#443 2017-10-16
+    			if (val != null)
+    			{
+    				varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
+    				//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
+    			}
+    			// START KGU#442 2017-10-14: Issue #438 - Re-enable restart
+    			btnPlay.setEnabled(startButtonsEnabled);
+    			btnStep.setEnabled(startButtonsEnabled);
+    			btnPlay.setToolTipText(null);
+    			btnStep.setToolTipText(null);
+    			// END KGU#442 2017-10-14
+    		}
     	}
-		
-	}
+
+    }
     // END KGU#68 2015-11-06
 
-	// START KGU#117 2016-03-08: Enh. #77
-	@Override
-	public void itemStateChanged(ItemEvent itEv) {
-		if (itEv.getSource() == this.chkCollectRuntimeData)
+    // START KGU#117 2016-03-08: Enh. #77
+    @Override
+    public void itemStateChanged(ItemEvent itEv) {
+    	if (itEv.getSource() == this.chkCollectRuntimeData)
     	{
     		if (itEv.getStateChange() == ItemEvent.SELECTED)
     		{
     			Element.E_COLLECTRUNTIMEDATA = true;
     			this.cbRunDataDisplay.setEnabled(this.chkCollectRuntimeData.isEnabled());
-        		if (Arranger.hasInstance())
-        		{
-        			Arranger.getInstance().redraw();
-        		}
-        		Executor.getInstance().redraw();
+    			if (Arranger.hasInstance())
+    			{
+    				Arranger.getInstance().redraw();
+    			}
+    			Executor.getInstance().redraw();
     		}
     		else if (itEv.getStateChange() == ItemEvent.DESELECTED)
     		{
@@ -1414,21 +1414,21 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		Element.E_RUNTIMEDATAPRESENTMODE = (RuntimeDataPresentMode)itEv.getItem();
     		if (oldShowMode != Element.E_RUNTIMEDATAPRESENTMODE)
     		{
-        		if (Arranger.hasInstance())
-        		{
-        			Arranger.getInstance().redraw();
-        		}
-        		Executor.getInstance().redraw();
+    			if (Arranger.hasInstance())
+    			{
+    				Arranger.getInstance().redraw();
+    			}
+    			Executor.getInstance().redraw();
     		}
     	}
-	    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+    	// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
     	else if (itEv.getSource() == this.chkOutputToTextWindow)
     	{
     		Executor.getInstance().setOutputWindowEnabled(this.chkOutputToTextWindow.isSelected());
     	}
-	    // END KGU#160 2016-04-12
-	}
-	// END KGU#117 2016-03-08
+    	// END KGU#160 2016-04-12
+    }
+    // END KGU#117 2016-03-08
 	
 	// START KGU#372 2017-03-27: Enh. #356
 	/**

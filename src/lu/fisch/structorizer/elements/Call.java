@@ -93,7 +93,6 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
@@ -103,7 +102,6 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.parsers.CodeParser;
 
 public class Call extends Instruction {
 	

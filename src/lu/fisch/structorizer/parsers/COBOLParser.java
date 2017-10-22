@@ -110,12 +110,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.freehep.graphicsio.swf.SWFAction.With;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -126,6 +123,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.IElementVisitor;
 import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
@@ -4516,7 +4514,34 @@ public class COBOLParser extends CodeParser
 			startsAt = _startIndex;
 			parent = _parentNode;
 		}
+		
+		public String toString()
+		{
+			return getClass().getSimpleName() + "(" + this.name + ":" + this.startsAt + ".." + this.endsBefore + ")";
+		}
 	}
+	
+	/** Visitor class responsible for updating disabled "EXIT *" elements to
+	 * "return" elements
+	 */
+	private final class JumpConverter implements IElementVisitor
+	{
+		@Override
+		public boolean visitPreOrder(Element _ele) {
+			String text = _ele.getText().getLongString();
+			if (_ele instanceof Jump && _ele.disabled && 
+					(text.contentEquals("EXIT SECTION") || text.contentEquals("EXIT PARAGRAPH"))) {
+				_ele.setText(getKeywordOrDefault("preReturn", "return"));
+				_ele.setColor(Color.WHITE);
+				_ele.disabled = false;
+			}
+			return true;
+		}
+		@Override
+		public boolean visitPostOrder(Element _ele) {
+			return true;
+		}
+	};
 	
 	/** During build phase, all detected sections and paragraphs are listed here for resolution of internal calls */
 	private LinkedList<SectionOrParagraph> procedureList = new LinkedList<SectionOrParagraph>();
@@ -4544,12 +4569,12 @@ public class COBOLParser extends CodeParser
 	 */
 	private HashMap<String, String> fileStatusMap = new HashMap<String, String>();
 
-	/**
-	 * Used to combine nested declarations within one element
-	 */
-	private Instruction previousDeclaration = null;
-	private int	previousDeclarationLevelDepth = 0;
-	private int	previousDeclarationLevelNumber = 0;
+//	/**
+//	 * Used to combine nested declarations within one element
+//	 */
+//	private Instruction previousDeclaration = null;
+//	private int	previousDeclarationLevelDepth = 0;
+//	private int	previousDeclarationLevelNumber = 0;
 	
 	/* (non-Javadoc)
 	 * @see CodeParser#initializeBuildNSD()
@@ -4601,7 +4626,7 @@ public class COBOLParser extends CodeParser
 
 		String rule = _reduction.getParent().toString();
 		//System.out.println(rule);
-		String ruleHead = _reduction.getParent().getHead().toString();
+		//String ruleHead = _reduction.getParent().getHead().toString();
 		int ruleId = _reduction.getParent().getTableIndex();
 		log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 		//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
@@ -6713,288 +6738,161 @@ public class COBOLParser extends CodeParser
 			}
 			// We must suppress automatic name qualification here
 			String varName = this.getWord(_reduction.get(1));
-			//String varName = this.getWord(_reduction.get(1));
-			// Picture clause: Find variable initializations and declarations
-			// as long as we don't use records there is no use in parsing FILLER
-			// items and as long as we do so group items that have no VALUE clause and
-			// only containing FILLER items which have a VALUE clause are not parsed correctly
-//			if (!varName.isEmpty() && !varName.equalsIgnoreCase("FILLER")) {
-				Reduction seqRed = _reduction.get(2).asReduction();
-				String value = null;
-//				String valueFalse = null;
-				String picture = null;
-				String redefines = null;
-				String occursString = null;
-				int occurs = 0;
-				StringList indexVars = null;
-				CobTools.Usage usage = null;
-				boolean isGlobal = false;
-				boolean isExternal = false;
-				int anyLength = 0;
-				// START KGU#427 2017-10-05: workaround for initialization bug (enh. #354)
-				cobTools.setProgram(currentProg);
-				// END KGU#427 2017-10-05
-				// We may not do anything if description is empty
-				while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
-					Reduction descrRed = seqRed.get(1).asReduction();
-					int descrRuleId = descrRed.getParent().getTableIndex();
-					switch (descrRuleId) {
-//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE4: // <picture_clause> --> type info
-//						// CHECKME: do we still need this?
-////						picture = descrRed.get(0).asReduction().get(0).asString();
-//						break;
-					case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
-						picture = descrRed.get(0).asString().split("\\s+", 3)[1];
-						// assume the first token to be PIC or PICTURE and a second token to be available
-						//(otherwise the grammar has a defect) 
-						break;
-//					the following goes directly to default	
-//					case RuleConstants.PROD_USAGE_CLAUSE: // <usage_clause> ::= <usage>
-//						usage = getUsageFromReduction(descrRed.get(0).asReduction());
-//						break;
-					case RuleConstants.PROD_USAGE_CLAUSE_USAGE: // <usage_clause> ::= USAGE <_is> <usage> --> type info
-						usage = getUsageFromReduction(descrRed.get(2).asReduction());
-						break;
-//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE5: // <usage_clause> --> type info
-//						{
-//							// CHECKME: do we still need this?
-//							String usageStr = this.getContent_R(descrRed.get(1).asReduction(), "").toLowerCase();
-////							final String[] binTypes = new String[]{"float", "double", "short", "int", "long"};
-////							for (String typeKey: binTypes) {
-////								if (usageStr.contains(typeKey)) {
-////									type = typeKey;
-////									break;
-////								}
-////							}
-//						}
-//						break;
-//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE12: // <value_clause> --> initialisation
-//						
-//						/	/ CHECKME: do we still need this?
-//						// FIXME: this is a quick and dirty hack
-//						value = this.getContent_R(descrRed.get(0).asReduction().get(2).asReduction(), "");
-//						break;
-					case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> ::= VALUE <_is_are> <value_item_list> <_false_is>
-						// note: only one entry for value clause of plain data items, no false clause
-						value = this.getContent_R(descrRed.get(2).asReduction(), "");
-						break;
-					case RuleConstants.PROD_REDEFINES_CLAUSE_REDEFINES: // <redefines_clause> ::= REDEFINES <identifier_1>
-						// shares the same memory area
-						// FIXME at least add a comment
-						redefines = this.getContent_R(descrRed.get(1).asReduction(), "");
-						break;
-					case RuleConstants.PROD_EXTERNAL_CLAUSE_EXTERNAL: // <external_clause>
-						// only occurs on level 01/77, this record or single variable shares the same value in *independent* programs
-						// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need to share this
-						// variable in a single IMPORT NSD (name: var name)
-						isExternal = true;
-						break;
-//					case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
-					case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:	//<global_clause> ::= <_is> GLOBAL
-						// only occurs on level 01/77, this record or single variable shares the same value in *nested* programs
-						// in general this is a rare case but to be "correct" we would need to share this
-						// variable in a single IMPORT NSD (name: first program's name that uses it + var name)
-						isGlobal = true;
-						break;
-					case RuleConstants.PROD_ANY_LENGTH_CLAUSE_ANY_LENGTH: // <any_length_clause> ::= ANY LENGTH
-						// only occurs on level 01/77, variable is alphanumeric and can have any length
-						anyLength = 1;
-						break;
-					case RuleConstants.PROD_ANY_LENGTH_CLAUSE_ANY_NUMERIC: // <any_length_clause> ::= ANY NUMERIC
-						// only occurs on level 01/77, variable is numeric, can have any usage and can have any length
-						anyLength = 2;
-						break;
+			Reduction seqRed = _reduction.get(2).asReduction();
+			String value = null;
+			//				String valueFalse = null;
+			String picture = null;
+			String redefines = null;
+			String occursString = null;
+			int occurs = 0;
+			StringList indexVars = null;
+			CobTools.Usage usage = null;
+			boolean isGlobal = false;
+			boolean isExternal = false;
+			int anyLength = 0;
+			// START KGU#427 2017-10-05: workaround for initialization bug (enh. #354)
+			cobTools.setProgram(currentProg);
+			// END KGU#427 2017-10-05
+			// We may not do anything if description is empty
+			while (seqRed.getParent().getTableIndex() == RuleConstants.PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2) {
+				Reduction descrRed = seqRed.get(1).asReduction();
+				int descrRuleId = descrRed.getParent().getTableIndex();
+				switch (descrRuleId) {
+				case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
+					picture = descrRed.get(0).asString().split("\\s+", 3)[1];
+					// assume the first token to be PIC or PICTURE and a second token to be available
+					//(otherwise the grammar has a defect) 
+					break;
+				case RuleConstants.PROD_USAGE_CLAUSE_USAGE: // <usage_clause> ::= USAGE <_is> <usage> --> type info
+					usage = getUsageFromReduction(descrRed.get(2).asReduction());
+					break;
+				case RuleConstants.PROD_VALUE_CLAUSE_VALUE: // <value_clause> ::= VALUE <_is_are> <value_item_list> <_false_is>
+					// note: only one entry for value clause of plain data items, no false clause
+					value = this.getContent_R(descrRed.get(2).asReduction(), "");
+					break;
+				case RuleConstants.PROD_REDEFINES_CLAUSE_REDEFINES: // <redefines_clause> ::= REDEFINES <identifier_1>
+					// shares the same memory area
+					// FIXME at least add a comment
+					redefines = this.getContent_R(descrRed.get(1).asReduction(), "");
+					break;
+				case RuleConstants.PROD_EXTERNAL_CLAUSE_EXTERNAL: // <external_clause>
+					// only occurs on level 01/77, this record or single variable shares the same value in *independent* programs
+					// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need to share this
+					// variable in a single IMPORT NSD (name: var name)
+					isExternal = true;
+					break;
+//				case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
+				case RuleConstants.PROD_GLOBAL_CLAUSE_GLOBAL:	//<global_clause> ::= <_is> GLOBAL
+					// only occurs on level 01/77, this record or single variable shares the same value in *nested* programs
+					// in general this is a rare case but to be "correct" we would need to share this
+					// variable in a single IMPORT NSD (name: first program's name that uses it + var name)
+					isGlobal = true;
+					break;
+				case RuleConstants.PROD_ANY_LENGTH_CLAUSE_ANY_LENGTH: // <any_length_clause> ::= ANY LENGTH
+					// only occurs on level 01/77, variable is alphanumeric and can have any length
+					anyLength = 1;
+					break;
+				case RuleConstants.PROD_ANY_LENGTH_CLAUSE_ANY_NUMERIC: // <any_length_clause> ::= ANY NUMERIC
+					// only occurs on level 01/77, variable is numeric, can have any usage and can have any length
+					anyLength = 2;
+					break;
 					// START KGU 2017-10-04: We should of course be aware of array structure, too
-						// FIXME handle the other types of OCCURS clause, too 
-					case RuleConstants.PROD_OCCURS_CLAUSE_OCCURS:
-					{
-						// FIXME: What about a possible integer-2 value?
-						String int1 = this.getContent_R(descrRed.get(1).asReduction(), "");
-						// It could be an integer literal, but be prepared to find a constant identifier instead
-						CobVar int1const = currentProg.getCobVar(int1); 
-						if (int1const != null && int1const.isConstant(true)) {
-							// This is quite nice but bad in practise: we lose the connection to the constant
-							int1 = int1const.getValueFirst();
-							// So we should store both the string and the value
-							occursString = int1const.getQualifiedName();
+					// FIXME handle the other types of OCCURS clause, too 
+				case RuleConstants.PROD_OCCURS_CLAUSE_OCCURS:
+				{
+					// FIXME: What about a possible integer-2 value?
+					String int1 = this.getContent_R(descrRed.get(1).asReduction(), "");
+					// It could be an integer literal, but be prepared to find a constant identifier instead
+					CobVar int1const = currentProg.getCobVar(int1); 
+					if (int1const != null && int1const.isConstant(true)) {
+						// This is quite nice but bad in practise: we lose the connection to the constant
+						int1 = int1const.getValueFirst();
+						// So we should store both the string and the value
+						occursString = int1const.getQualifiedName();
+					}
+					// If it is a variant array then fetch the upper bound
+					if (descrRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD__OCCURS_TO_INTEGER_TO) {
+						String int2 = this.getContent_R(descrRed.get(2).asReduction().get(1).asReduction(), "");
+						CobVar int2const = currentProg.getCobVar(int2);
+						if (int2const != null && int2const.isConstant(true)) {
+							occursString = int2const.getQualifiedName();
+							int2 = int2const.getValueFirst();
 						}
-						// If it is a variant array then fetch the upper bound
-						if (descrRed.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD__OCCURS_TO_INTEGER_TO) {
-							String int2 = this.getContent_R(descrRed.get(2).asReduction().get(1).asReduction(), "");
-							CobVar int2const = currentProg.getCobVar(int2);
-							if (int2const != null && int2const.isConstant(true)) {
-								occursString = int2const.getQualifiedName();
-								int2 = int2const.getValueFirst();
-							}
-							int1 = int2;
+						int1 = int2;
+					}
+					try {
+						occurs = Integer.parseInt(int1);
+						if (occursString == null) {
+							occursString = Integer.toString(occurs);
 						}
-						try {
-							occurs = Integer.parseInt(int1);
-							if (occursString == null) {
-								occursString = Integer.toString(occurs);
-							}
+					}
+					catch (NumberFormatException ex) {
+					}
+					// Get hold of a possible INDEXED BY clause, which may be needed for the
+					// correct import of SEARCH statements etc.
+					Reduction keyIxdRed = descrRed.get(5).asReduction();
+					int ixIxd = -1;	// Token index of the INDEXED clause (if any, -1 = none)
+					switch (keyIxdRed.getParent().getTableIndex()) {
+					case RuleConstants.PROD__OCCURS_KEYS_AND_INDEXED2:
+						ixIxd = 1;
+						break;
+					case RuleConstants.PROD__OCCURS_KEYS_AND_INDEXED3:
+					case RuleConstants.PROD__OCCURS_KEYS_AND_INDEXED4:
+						ixIxd = 2;
+						break;
+					}
+					if (ixIxd >= 0) {
+						keyIxdRed = keyIxdRed.get(ixIxd).asReduction();
+					}
+					if (keyIxdRed.getParent().getTableIndex() == RuleConstants.PROD_OCCURS_INDEXED_INDEXED) {
+						keyIxdRed = keyIxdRed.get(2).asReduction();
+						if (indexVars == null) {
+							// We will definitely have to register index variables now
+							//indexVars = new ArrayList<CobVar>();
+							indexVars = new StringList();
 						}
-						catch (NumberFormatException ex) {
-						}
-						// Get hold of a possible INDEXED BY clause, which may be needed for the
-						// correct import of SEARCH statements etc.
-						Reduction keyIxdRed = descrRed.get(5).asReduction();
-						int ixIxd = -1;	// Token index of the INDEXED clause (if any, -1 = none)
-						switch (keyIxdRed.getParent().getTableIndex()) {
-						case RuleConstants.PROD__OCCURS_KEYS_AND_INDEXED2:
-							ixIxd = 1;
-							break;
-						case RuleConstants.PROD__OCCURS_KEYS_AND_INDEXED3:
-						case RuleConstants.PROD__OCCURS_KEYS_AND_INDEXED4:
-							ixIxd = 2;
-							break;
-						}
-						if (ixIxd >= 0) {
-							keyIxdRed = keyIxdRed.get(ixIxd).asReduction();
-						}
-						if (keyIxdRed.getParent().getTableIndex() == RuleConstants.PROD_OCCURS_INDEXED_INDEXED) {
-							keyIxdRed = keyIxdRed.get(2).asReduction();
-							if (indexVars == null) {
-								// We will definitely have to register index variables now
-								//indexVars = new ArrayList<CobVar>();
-								indexVars = new StringList();
-							}
-							while (keyIxdRed.getParent().getTableIndex() == RuleConstants.PROD_OCCURS_INDEX_LIST2) {
-								String ixdName = this.getContent_R(keyIxdRed.get(0).asReduction(), "");
-								// If we created a CobVar object (at level 01!) now, this might compromise the table structure we are
-								// within, so we just register the names and good. An explicit declaration of such an index variable
-								// isn't necessary anyway because SEARCH requires a prior initialization, wich will implicitly introduce
-								// the variable in Structorizer
-								//indexVars.add(cobTools.new CobVar(1, ixdName, null, Usage.USAGE_INDEX, null, null, isGlobal, isExternal, 0, 0, null));
-								indexVars.add(ixdName.trim().toLowerCase());
-								keyIxdRed = keyIxdRed.get(1).asReduction();
-							}
-							// This should now be a COBOL Word
-							String ixdName = this.getContentToken_R(keyIxdRed.get(0), "", "", true);
+						while (keyIxdRed.getParent().getTableIndex() == RuleConstants.PROD_OCCURS_INDEX_LIST2) {
+							String ixdName = this.getContent_R(keyIxdRed.get(0).asReduction(), "");
 							// If we created a CobVar object (at level 01!) now, this might compromise the table structure we are
-							// within, so we just register the name and good. An explicit declaration of such an index variable
+							// within, so we just register the names and good. An explicit declaration of such an index variable
 							// isn't necessary anyway because SEARCH requires a prior initialization, wich will implicitly introduce
 							// the variable in Structorizer
 							//indexVars.add(cobTools.new CobVar(1, ixdName, null, Usage.USAGE_INDEX, null, null, isGlobal, isExternal, 0, 0, null));
 							indexVars.add(ixdName.trim().toLowerCase());
+							keyIxdRed = keyIxdRed.get(1).asReduction();
 						}
-						break;
+						// This should now be a COBOL Word
+						String ixdName = this.getContentToken_R(keyIxdRed.get(0), "", "", true);
+						// If we created a CobVar object (at level 01!) now, this might compromise the table structure we are
+						// within, so we just register the name and good. An explicit declaration of such an index variable
+						// isn't necessary anyway because SEARCH requires a prior initialization, wich will implicitly introduce
+						// the variable in Structorizer
+						//indexVars.add(cobTools.new CobVar(1, ixdName, null, Usage.USAGE_INDEX, null, null, isGlobal, isExternal, 0, 0, null));
+						indexVars.add(ixdName.trim().toLowerCase());
 					}
-					// END KGU 2017-10-04
-					default:
-						// a variable without USAGE explicit given (77 myvar COMP-2) goes here;
-						usage = getUsageFromReduction(descrRed);
-					}
-					seqRed = seqRed.get(0).asReduction();
+					break;
 				}
-				
-				CobVar currentVar = cobTools.new CobVar(level, varName, picture, usage, value, currentProg.getCobVar(redefines), isGlobal, isExternal, anyLength, occurs, occursString);
-				currentVar.setComment(this.retrieveComment(_reduction));
-				// START KGU 2017-10-06: Support for tables (OCCURS ... INDEXED BY clause)
-				if (indexVars != null) {
-					currentVar.setIndexedBy(indexVars, currentProg);
+				// END KGU 2017-10-04
+				default:
+					// a variable without USAGE explicit given (77 myvar COMP-2) goes here;
+					usage = getUsageFromReduction(descrRed);
 				}
-				// END KGU 2017-10-06
-				currentProg.insertVar(currentVar);
-				
-				// TODO: postpone generation of NSD elements until everything is parsed
-				//       we now can always get the start variable of each section with CobProg.getWorkingStorage(), CobProg.getLinkage(), ... 
-				//       and iterate by CobVar.sister, subs in CobVar.child, ... - with the complete type declarations! 
-//				String type;
-				// special case for Structorizer: record
-				// later (only possible if postponed)
-//				if (currentVar.hasChild()) {
-//					type = "record";
-//				} else {
-//					type = CobTools.getTypeString(currentVar);
-//				}
-					
-				
-//				// hack until then...
-//				if (type.equals("-unknown-type-")) {
-//					type = "record";
-//				}
-//				if (_parentNode != null && this.optionImportVarDecl) {
-//					// Add the declaration
-//					String declText = "var " + varName + ": " + type;
-//					// provide global/exernal redefines as comment
-//					String commentText = "";
-//					if (picture != null) {
-//						// START KGU 2017-06-24: Without the "pic" word the comment would be rather puzzling
-//						//commentText = picture;
-//						commentText = "pic " + picture;
-//						// END KGU 2017-06-24
-//					}
-//					if (isGlobal) {
-//						commentText += " (GLOBAL)";
-//					} else if (isExternal) {
-//						commentText += " (EXTERNAL)";
-//					} else if (redefines != null && !redefines.isEmpty()) {
-//						commentText += " REDEFINES " + redefines;
-//					}
-//					//if (level == 1 || this.previousDeclaration == null) {
-//					if (level == 1 || level == 77) {
-//						Instruction decl = new Instruction(declText);
-//						decl.setComment(commentText);
-//						decl.setColor(colorDecl);
-//						_parentNode.addElement(decl);
-//						this.previousDeclaration = decl;
-//						this.previousDeclarationLevelDepth = 1;
-//						this.previousDeclarationLevelNumber = 1;
-//					}
-//					else {
-//						// at least optically we show the nesting depth
-//						if (this.previousDeclarationLevelNumber > level) {
-//							this.previousDeclarationLevelDepth--;
-//						} else if (this.previousDeclarationLevelNumber < level) {
-//							this.previousDeclarationLevelDepth++;
-//						}
-//						this.previousDeclarationLevelNumber = level;
-//						String intend = new String(new char[this.previousDeclarationLevelDepth]).replace("\0", "  ");
-//						this.previousDeclaration.getText().add(intend + declText);
-//						this.previousDeclaration.getComment().add(intend + varName + ":\t" + commentText);
-//					}
-//				}
-//				if (_typeInfo != null) {
-//					_typeInfo.put(varName, type);
-//				}
-//				if (_parentNode != null && value != null && !value.isEmpty()) {
-//					// Add the assignment
-//					// Note: literal types like hexadecimal literals and the figurative constants SPACE/ZERO/NULL 
-//					//       are converted by getContent_R already
-//					
-//					String initVal = value; 
-//					if (currentVar.isNumeric()) {
-//						if (initVal.equals("0")) {
-//							initVal = "";
-//						} else if (!this.optionImportVarDecl && !type.startsWith("0") && !type.endsWith("f ")) {
-//							// Hack for now to force the Executor to use long/double data type,
-//							// only necessary if the info is missing in the Executor because we have no Declarations
-//							// and only done if literal hasn't type indicators already
-//							// FIXME: Shouldn't be necessary, the Executor should cater for this already
-//							if (type.equals("long")) {
-//								value = value + "L";
-//							} else if (type.equals("double")) {
-//								value = value + "d";
-//							}
-//						}
-//					} else if (value.equalsIgnoreCase("space") || value.matches("[\"\'] +[\"\']")) {
-//						initVal = "";
-//					}
-//					if (!initVal.isEmpty()) {
-//						String content = currentVar.getName() + " <- " + initVal;
-//						Instruction def = new Instruction(content);
-//						// FIXME: in case of isGlobal / IsExternal enforce the placement in a global diagram to be imported wherever needed
-//						_parentNode.addElement(def);
-//					}
-//				}
-//				//TODO stash the variables without a value clause somewhere to add
-//				// all definitions that are used as variables within the NSD later, otherwise
-//				// the executor may use the wrong data type
-////				else {
-////					stashVariable(varName, type);
-////				}
-////			}
+				seqRed = seqRed.get(0).asReduction();
+			}
+
+			CobVar currentVar = cobTools.new CobVar(level, varName, picture, usage, value, currentProg.getCobVar(redefines), isGlobal, isExternal, anyLength, occurs, occursString);
+			currentVar.setComment(this.retrieveComment(_reduction));
+			// START KGU 2017-10-06: Support for tables (OCCURS ... INDEXED BY clause)
+			if (indexVars != null) {
+				currentVar.setIndexedBy(indexVars, currentProg);
+			}
+			// END KGU 2017-10-06
+			currentProg.insertVar(currentVar);
+
+			// The generation of NSD elements is postponed until everything will heve been parsed.
+			// We may always get the start variable of each section via CobProg.getWorkingStorage(),
+			// CobProg.getLinkage(), ... 
+			// and iterate by CobVar.sister, subs in CobVar.child, ... - with the complete type declarations! 
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_CONSTANT) {
 			boolean isGlobal = _reduction.get(3).asReduction().getParent().getTableIndex() == RuleConstants.PROD_CONST_GLOBAL_GLOBAL;
@@ -7011,14 +6909,7 @@ public class COBOLParser extends CodeParser
 			if (!type.isEmpty() && _typeInfo != null) {
 				_typeInfo.put(constName, type);
 			}
-			// START KGU 2017-10-04 Now leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode); 
-//			// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
-//			if (_parentNode != null) {
-//				Instruction def = new Instruction("const " + currentVar.getName() + " <- " + value);
-//				def.setColor(colorConst);
-//				_parentNode.addElement(this.equipWithSourceComment(def, _reduction));
-//			}
-			// END KGU 2017-10-04
+			// Leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode); 
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_SEVENTY_EIGHT) {
 			// Note: Though the current grammar still doesn't allow it, we could have a constant expression here e.g.:
@@ -7081,7 +6972,6 @@ public class COBOLParser extends CodeParser
 	}
 
 	private Usage getUsageFromReduction(Reduction usageRed) {
-		// TODO Auto-generated method stub
 		int descrRuleId = usageRed.getParent().getTableIndex();
 		switch (descrRuleId) {
 //		Should not be needed as we check the sub-values directly
@@ -8176,8 +8066,175 @@ public class COBOLParser extends CodeParser
 	 */
 	protected void subclassPostProcess(String _textToParse)
 	{
-		// The automatic conversion of instructions to calls may have invalidated element references
-		// Hence update the procedureList before elements are moved.
+		// The automatic conversion of Instructions to Calls may have invalidated element references.
+		// Hence update the procedureList before elements are going to be moved.
+		refactorProcedureList();
+		
+		// Now the actual extraction of local procedures may begin.
+		for (SectionOrParagraph sop: this.procedureList) {
+			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
+			if (sop.firstElement != null && sop.lastElement != null) {
+				Root owner = Element.getRoot(sop.firstElement);
+				Subqueue sq = (Subqueue)sop.firstElement.parent;
+				// We will have to copy the content of the replacing call. Therefore we must
+				// have an opportunity to find the call. This should be feasible via the index
+				// of the first element of the subsequence. But we cannot be sure that sop.start
+				// is still correct - the original context may already have been outsourced itself
+				// so we search for it in the current context.
+				int callIndex = sq.getIndexOf(sop.firstElement);
+				if (callIndex < 0) {
+					this.log("Corrupt diagram: Parts of section or paragraph \"" + sop.name + "\" not detected!", true);
+					continue;
+				}
+				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
+				if (clients != null) {
+					// No longer bothering to detect arguments and results, we may simply move the elements
+					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
+					String callText = sop.name + "()";
+
+					// This the decisive step
+					Call replacingCall = extractSectionOrParagraph(owner, sq, callIndex, elements, callText);
+
+					callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
+					// Now cleanup and get rid of place-holding dummy elements
+					Element doomedEl = null;
+					if (callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Call) {
+						// Get rid of the dummy Call now
+						if (doomedEl.disabled && doomedEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
+							replacingCall.setComment(doomedEl.getComment());
+							//System.out.println("=== Cleanup Call: " + sq.getElement(callIndex-1));
+							sq.removeElement(--callIndex);
+						}
+					}
+					// Both the original proc text (now overwritten) and the replacingCall text contain
+					// no arguments anymore, so we don't need to check whether we got all declarations
+					for (Call client: clients) {
+						// We may have to care for an includable Root that defines all necessary variables
+						client.setText(callText);
+						client.setColor(colorMisc);	// No longer needs to be red
+						client.disabled = false;
+					}
+					// At the original place we most likely won't need the Call anymore (not reachable).
+					if (!sq.isReachable(callIndex, false)) {
+						sq.removeElement(replacingCall);
+					}
+				}
+				// Not explicitly used anywhere and just consisting of a disabled dummy jump? 
+				else if (elements.getSize() == 1 && elements.getElement(0) instanceof Jump) {
+					Element dummyCall = null;
+					Jump dummyJump = (Jump)elements.getElement(0);
+					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
+					// both being un-reachable; then we will drop the two dummy elements now
+					if (callIndex > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(callIndex-1)) instanceof Call) {
+						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name)) {
+							if (!sq.isReachable(callIndex-1, false)) {
+								//System.out.println("=== Cleanup Jump: " + sq.getElement(ix));
+								sq.removeElement(callIndex);	// This is the dummyJump itself
+								//System.out.println("=== Cleanup Call: " + sq.getElement(ix-1));
+								sq.removeElement(callIndex-1);	// This is the preceding dummyCall
+							}
+						}
+					}
+				}
+			}
+		}
+		// START KGU#376 2017-10-04: Enh. #389
+		if (externalRoot != null && externalRoot.children.getSize() > 0) {
+			this.subRoots.add(externalRoot);
+		}
+		// END KGU#376 2017-10-04
+		// START KGU#376 2017-10-19: Enh. #389
+		if (!declaredGlobals.isEmpty()) {
+			this.subRoots.addAll(declaredGlobals.keySet());
+		}
+		// END KGU#376 2017-10-19
+	}
+	// END KGU 2017-05-28
+
+	/**
+	 * Extracts the COBOL section or paragraph comprised by {@code elements} from {@link Subqueue} {@code sq}
+	 * to a new subdiagram, which is going to be registered in {@link CodeParser#subRoots}.
+	 * Usually this is accompanied by the extraction of all potentially shared data declarations (type
+	 * and constant definitions, variable declarations and initialisations) from {@link Root} {@code owner}
+	 * to a new includable diagram, which will be registered {@link #dataSectionIncludes} (if all that hadn't
+	 * already been done in relation with another extraction from {@code owner}). 
+	 * @param owner - the diagram {@code elements} belong to
+	 * @param sq - this direct parent {@link Subqueue} of {@code elements}
+	 * @param callIndex - the start position of {@code elements} within {@code sq} (hence the target index for
+	 * 		the replacing {@link Call}.
+	 * @param elements - the {@link Element}s to be outsourced.
+	 * @param callText
+	 * @return the {@link Call} element replacing the section or paragraph in {@code owner}. 
+	 */
+	private Call extractSectionOrParagraph(Root owner, Subqueue sq, int callIndex, SelectedSequence elements,
+			String callText) {
+		Root proc = new Root();
+		proc.setText(callText);
+		proc.setProgram(false);
+		int nElements = elements.getSize();
+		//System.out.println("==== Extracting " + sop.name + " ===...");
+		for (int i = 0; i < nElements; i++) {
+			proc.children.addElement(elements.getElement(0));
+			//System.out.println("\t" + (callIndex + i) + " " + elements.getElement(0)); 
+			elements.removeElement(0);
+		}
+		// Now we convert all EXIT SECTION or EXIT PARAGRAPH elements into return Jumps.
+		proc.traverse(new JumpConverter());
+
+		Call replacingCall = new Call(callText);
+		sq.insertElementAt(replacingCall, callIndex);
+		// Has the owner Root still shareable data at its beginning? Then outsource them...
+		extractShareableData(owner);
+		// If the owner has a mapped includable let the new proc include it as well
+		if (dataSectionIncludes.containsKey(owner)) {
+			proc.addToIncludeList(dataSectionIncludes.get(owner));
+		}
+		// Put the new subroutine daigram to the set of results as well
+		subRoots.add(proc);
+		
+		
+		return replacingCall;
+	}
+
+	/**
+	 * Extracts the possibly still contained data section from {@link Root} {@code owner} and
+	 * places the definitions, initializations etc. in a new includable diagram. Does nothing
+	 * otherwise.
+	 * Modifies {@link CodeParser#subRoots}, {@link #dataSectionIncludes}, and {@link #dataSectionEnds}
+	 * in case elements are outsourced.
+	 * @param owner - the diagram to ripped
+	 */
+	private void extractShareableData(Root owner) {
+		Integer endDataIx = dataSectionEnds.get(owner); 
+		if (endDataIx != null && endDataIx <= owner.children.getSize()) {
+			// Move all data declarations to a new shared includable 
+			//System.out.println("=== Removing " + endDataIx + " lines of shared data...");
+			String dataName = owner.getMethodName() + "_Shared";
+			Root shared = new Root();
+			shared.setText(dataName);
+			shared.setInclude();
+			for (int i = 0; i < endDataIx; i++) {
+				Element el = owner.children.getElement(0);
+				owner.children.removeElement(0);
+				shared.children.addElement(el);
+			}
+			subRoots.add(shared);			// Put the new diagram to the set of results
+			dataSectionEnds.remove(owner);	// Un-register the root from those holding their own data declarations
+			dataSectionIncludes.put(owner, dataName);	// register the mapped includable instead
+			owner.addToIncludeList(dataName);	// ... and let the former owner include it
+
+		}
+	}
+
+	/**
+	 * Checks and updates direct element references in all {@link SectioOrParagraph} entries of 
+	 * {@code this.}{@link #procedureList}. This is due before the extraction of sections and
+	 * paragraphs to subdiagrams after {@code super} has transmuted Instructions to Calls.
+	 * Requires that the index references still match, which they won't do any longer when elements
+	 * start to be moved around.
+	 * (Submethod of {@link #subclassPostProcess(String)}) 
+	 */
+	private void refactorProcedureList() {
 		for (SectionOrParagraph sop: this.procedureList) {
 			int i = 0;
 			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
@@ -8201,131 +8258,7 @@ public class COBOLParser extends CodeParser
 				i++;
 			}
 		}
-		
-		// Now the actual extraction of local procedures may begin.
-		for (SectionOrParagraph sop: this.procedureList) {
-			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
-			if (sop.firstElement != null && sop.lastElement != null) {
-				Root owner = Element.getRoot(sop.firstElement);
-				Subqueue sq = (Subqueue)sop.firstElement.parent;
-				// We will have to copy the content of the replacing call. Therefore we must
-				// have an opportunity to find the call. This should be feasible via the index
-				// of the first element of the subsequence. But we cannot be sure that sop.start
-				// is still correct - the original context may already have been outsourced itself
-				// so we search for it in the current context.
-				int callIndex = sq.getIndexOf(sop.firstElement);
-				if (callIndex < 0) {
-					System.err.println("Corrupt diagram: Parts of section or paragraph \"" + sop.name + "\" not detected!");
-					continue;
-				}
-				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
-				if (clients != null) {
-					// No longer bothering to detect arguments and results, we may simply move the elements
-					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
-					String callText = sop.name + "()";
-					Root proc = new Root();
-					proc.setText(callText);
-					proc.setProgram(false);
-					int nElements = elements.getSize();
-					//System.out.println("==== Extracting " + sop.name + " ===...");
-					for (int i = 0; i < nElements; i++) {
-						proc.children.addElement(elements.getElement(0));
-						//System.out.println("\t" + (callIndex + i) + " " + elements.getElement(0)); 
-						elements.removeElement(0);
-					}
-					Call replacingCall = new Call(callText);
-					sq.insertElementAt(replacingCall, callIndex);
-					// Has the owner still shareable data at its beginning? Outsource them...
-					Root shared = null;
-					Integer endDataIx = dataSectionEnds.get(owner); 
-					if (endDataIx != null && endDataIx <= owner.children.getSize()) {
-						// Move all data declarations to a new shared includable 
-						//System.out.println("=== Removing " + endDataIx + " lines of shared data...");
-						String dataName = owner.getMethodName() + "_Shared";
-						shared = new Root();
-						shared.setText(dataName);
-						shared.setInclude();
-						for (int i = 0; i < endDataIx; i++) {
-							Element el = owner.children.getElement(0);
-							owner.children.removeElement(0);
-							shared.children.addElement(el);
-						}
-						subRoots.add(shared);			// Put the new diagram to the set of results
-						dataSectionEnds.remove(owner);	// Unregister the root from those holding their own data declarartions
-						dataSectionIncludes.put(owner, dataName);	// register the mapped includable
-						owner.addToIncludeList(dataName);	// ... and let the former owner include it
-					}
-					// Generalized step: If there is a mapped includable let the new proc Root include it as well
-					if (dataSectionIncludes.containsKey(owner)) {
-						proc.addToIncludeList(dataSectionIncludes.get(owner));
-					}
-					// Put the new subroutine daigram to the set of results as well
-					subRoots.add(proc);
-					callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
-					// Now cleanup and get rid of place-holding dummy elements
-					boolean precededByJump = false;
-					Element doomedEl = null;
-					if (callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Call) {
-						// Get rid of the dummy Call now
-						if (doomedEl.disabled && doomedEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
-							replacingCall.setComment(doomedEl.getComment());
-							//System.out.println("=== Cleanup Call: " + sq.getElement(callIndex-1));
-							sq.removeElement(--callIndex);
-						}
-						// Check if that dummy call was preceded by a valid jump i.e. is unreachable
-						precededByJump = callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Jump && !doomedEl.disabled;
-					}
-					// Both the original proc text (now overwritten) and the replacingCall text contain
-					// no arguments anymore, so we don't need to check whether we got all declarations
-					for (Call client: clients) {
-						// We may have to care for an includable Root that defines all necessary variables
-						client.setText(callText);
-						client.setColor(colorMisc);	// No longer needs to be red
-						client.disabled = false;
-					}
-					// At the original place we most likely won't need the call anymore (not reachable).
-					if (precededByJump) {
-						//System.out.println("=== Remove unreachable Call " + replacingCall);
-						sq.removeElement(replacingCall);
-					}
-					else {
-						// Otherwise we just disable the call in case it might yet still be needed 
-						replacingCall.disabled = true;
-					}
-				}
-				// Not explicitly used anywhere and just consisting of a disabled dummy jump? 
-				else if (elements.getSize() == 1 && elements.getElement(0) instanceof Jump) {
-					Element dummyCall = null;
-					Jump dummyJump = (Jump)elements.getElement(0);
-					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
-					// (then we will drop the two dummy elements now)
-					int ix = sq.getIndexOf(dummyJump);
-					if (ix > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(ix-1)) instanceof Call) {
-						Element prevEl = null;
-						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name) &&
-								// is the code unreachable?
-								ix > 1 && (prevEl = sq.getElement(ix-2)) instanceof Jump && !prevEl.disabled) {
-							//System.out.println("=== Cleanup Jump: " + sq.getElement(ix));
-							sq.removeElement(ix);	// This is the dummyJump itself
-							//System.out.println("=== Cleanup Call: " + sq.getElement(ix-1));
-							sq.removeElement(ix-1);	// This is the preceding dummyCall
-						}
-					}
-				}
-			}
-		}
-		// START KGU#376 2017-10-04: Enh. #389
-		if (externalRoot != null && externalRoot.children.getSize() > 0) {
-			this.subRoots.add(externalRoot);
-		}
-		// END KGU#376 2017-10-04
-		// START KGU#376 2017-10-19: Enh. #389
-		if (!declaredGlobals.isEmpty()) {
-			this.subRoots.addAll(declaredGlobals.keySet());
-		}
-		// END KGU#376 2017-10-19
 	}
-	// END KGU 2017-05-28
 }
 
 

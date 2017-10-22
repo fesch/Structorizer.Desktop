@@ -111,7 +111,6 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -313,8 +312,8 @@ public class Jump extends Instruction {
 	 * In case of a leave jump returns the specified number of loop levels to leave,
 	 * otherwise 0.
 	 * If the returned level specification is not a positive integer value then a
-	 * negative value will be returned.  
-	 * @return number of loop levels > 0 or 0 (wrong JUmp type) or negative (wrong specification)
+	 * negative value will be returned.
+	 * @return number of loop levels > 0 or 0 (wrong Jump type) or negative (wrong specification)
 	 */
 	public int getLevelsUp()
 	{
@@ -422,4 +421,15 @@ public class Jump extends Instruction {
 	}
 	// END KGU#78/KGU#365 2017-04-14
 	
+	// START KGU 2017-10-21
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		// This may only pass control if being disabled
+		return disabled;
+	}
+	// END KGU 2017-10-21
+
 }

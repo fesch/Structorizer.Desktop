@@ -170,7 +170,7 @@ import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
-import lu.fisch.structorizer.generators.Generator;
+//import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
 
 import com.stevesoft.pat.*;
@@ -2174,7 +2174,7 @@ public class Root extends Element {
     	String[] keywords = CodeParser.getAllProperties();
     	for (int k = 0; k < keywords.length; k++)
     	{
-    		this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+    		splitKeywords.add(Element.splitLexically(keywords[k], false));
     	}
     	// END KGU#163 2016-03-25
 
@@ -2200,7 +2200,7 @@ public class Root extends Element {
     		{    				
     			if (keywords[kw].trim().length() > 0)
     			{
-    				StringList keyTokens = this.splitKeywords.elementAt(kw);
+    				StringList keyTokens = splitKeywords.elementAt(kw);
     				int keyLength = keyTokens.count();
     				int pos = -1;
     				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)

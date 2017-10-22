@@ -62,8 +62,6 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -617,7 +615,6 @@ public class Subqueue extends Element implements IElementSequence {
 
 	@Override
 	protected String[] getRelevantParserKeys() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -668,4 +665,45 @@ public class Subqueue extends Element implements IElementSequence {
 		}
 	}
 	// END KGU#401 2017-05-17
+	
+	// START KGU 2017-10-21
+	/**
+	 * Checks whether {@link Element} {@code _ele} is member of this and may be reached i.e.
+	 * is neither directly nor indirectly preceded by a {@link Jump} element. If {@code _deepCheck}
+	 * is true then preceding structured elements are also checked if they may be left.  
+	 * @param _ele - the {@link Element} the reachability of which is to be tested
+	 * @param _deepCheck - whether preceding structured elements are to be checked particularly 
+	 * @return true if {@code _ele} is potentially reachable within this.
+	 */
+	public boolean isReachable(Element _ele, boolean _deepCheck)
+	{
+		return isReachable(children.indexOf(_ele), _deepCheck); 
+	}
+
+	/**
+	 * Checks whether {@link Element} with index {@code _index} exists may be reached i.e.
+	 * is neither directly nor indirectly preceded by a {@link Jump} element. If {@code _deepCheck}
+	 * is true then preceding structured elements are also checked if they may be left.  
+	 * @param _ele - the {@link Element} the reachability of which is to be tested
+	 * @param _deepCheck - whether preceding structured elements are to be checked particularly 
+	 * @return true if {@code _ele} is potentially reachable within this.
+	 */
+	public boolean isReachable(int _index, boolean _deepCheck) {
+		boolean reachable = _index >= 0 && _index < this.children.size();
+		while (_index >= 0 && reachable) {
+			Element ele = children.get(_index--);
+			reachable = !_deepCheck && (ele.disabled || !(ele instanceof Jump)) || ele.mayPassControl();
+		}
+		return reachable;
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		int size = this.children.size();
+		return size == 0 || this.children.get(size-1).mayPassControl() && this.isReachable(size-1, true);
+	}
+	// END KGU 2017-10-21
 }

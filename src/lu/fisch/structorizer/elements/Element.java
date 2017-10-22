@@ -3284,12 +3284,25 @@ public abstract class Element {
 	// END KGU#301 2019-09-19
 
 	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
+	/**
+	 * Checks whether this element or one of its ancestors is disabled 
+	 * @return true if directly or indirectly disabled
+	 */
 	public boolean isDisabled()
 	{
 		return this.disabled || (this.parent != null && this.parent.isDisabled());
 	}
 	// END KGU#277 2016-10-13
-
+	
+	// START KGU 2017-10-21 New deep reachability check
+	/** @return whether an entered control flow may leave this element sequentially. */
+	public boolean mayPassControl()
+	{
+		// Normally, the control flow will leave every element.
+		return true;
+	}
+	// END KGU 2017-10-21
+	
 	// START KGU#261 2017-01-19: Enh. #259 (type map)
 	public Element findElementWithId(long _id)
 	{
