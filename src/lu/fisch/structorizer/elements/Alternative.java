@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *      Kay Gürtzig     2017.02.08      Bugfix #198 (KGU#346) rightward cursor navigation was flawed,
  *                                      Inheritance changed (IFork added)
+ *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
  *
  ******************************************************************************************************
  *
@@ -132,8 +133,6 @@ public class Alternative extends Element implements IFork {
 		rect0.top = 0;
 		rect0.left = 0;
 
-		rect0.right = 2 * (E_PADDING/2);
-
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 
 		rect0.right = 2 * E_PADDING;
@@ -143,7 +142,14 @@ public class Alternative extends Element implements IFork {
 		if (Element.E_COMMENTSPLUSTEXT)
 		{
 			// Get the space needed for the 1st comment line
-			commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
+			// START KGU#435 2017-10-22: Issue #128 revised
+			//commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
+			commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
+			if (commentRect.right != 0) {
+				commentRect.bottom += E_PADDING/6;
+				commentRect.right += 2 * (E_PADDING/2);
+			}
+			// END KGU#435 2017-10-22
 		}
 		// END KHU#227 2016-07-31
 		// prepare the sub-queues
@@ -154,8 +160,8 @@ public class Alternative extends Element implements IFork {
 		// the upper left corner
 		double cx = 0;
 		// START KGU#227 2016-07-31: Enh. #128 - we need additional space for the comment
-		//double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
-		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
+		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		//double cy = nLines*fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
 		// END KGU#227 2016-07-31
 		// the lowest point of the triangle
 		double ax =  rTrue.right - rTrue.left;
@@ -169,21 +175,21 @@ public class Alternative extends Element implements IFork {
 		//int choice = -1;
 		double lowest = 100000;	// dummy bound
 
-		// START KGU#227 2016-07-31: Enh. #128
-		int yOffset = 4*(E_PADDING/2) - (E_PADDING/3) + commentRect.bottom;
-		if (commentRect.bottom > 0)
-		{
-			// THis code is derived from the FOR loop body below. yOffset had to be reduced by the bias fm.getHeight().
-			// part on the left side
-			double by = yOffset - fm.getHeight() - commentRect.bottom;
-			double leftside = by/coeffleft + ax - ay/coeffleft;
-			double bx = commentRect.right + 2*(E_PADDING/2) + leftside;
-			double coeff = (by-ay)/(bx-ax);
-			if (coeff<lowest && coeff>0)
-			{
-				lowest = coeff;
-			}			
-		}
+		// START KGU#227 2016-07-31: Enh. #128 - withdrawn KGU#435 2017-10-22
+//		int yOffset = 4*(E_PADDING/2) - (E_PADDING/3) + commentRect.bottom;
+//		if (commentRect.bottom > 0)
+//		{
+//			// THis code is derived from the FOR loop body below. yOffset had to be reduced by the bias fm.getHeight().
+//			// part on the left side
+//			double by = yOffset - fm.getHeight() - commentRect.bottom;
+//			double leftside = by/coeffleft + ax - ay/coeffleft;
+//			double bx = commentRect.right + 2*(E_PADDING/2) + leftside;
+//			double coeff = (by-ay)/(bx-ax);
+//			if (coeff<lowest && coeff>0)
+//			{
+//				lowest = coeff;
+//			}			
+//		}
 		// END KGU#227 2016-07-31
 
 		for (int i = 0; i < nLines; i++)
@@ -197,9 +203,9 @@ public class Alternative extends Element implements IFork {
 			 */
 
 			// bottom line of the text
-			// START KGU#227 2016-07-31: Enh. #128
-			//double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1) * fm.getHeight();
-			double by = yOffset + (nLines-i-1) * fm.getHeight();
+			// START KGU#227 2016-07-31: Enh. #128 - withdrawn KGU#435 2017-10-22
+			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1) * fm.getHeight();
+			//double by = yOffset + (nLines-i-1) * fm.getHeight();
 			// END KGU#227 2016-07-31
 			// part on the left side
 			double leftside = by/coeffleft + ax - ay/coeffleft;
@@ -226,12 +232,15 @@ public class Alternative extends Element implements IFork {
 		if (lowest!=100000)
 		{
 			// the point height we need
-			// START KGU#227 2016-07-31: Enh. #128
-			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
-			double y = nLines * fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
+			// START KGU#227 2016-07-31: Enh. #128 - withdrawn KGU#435 2017-10-22
+			double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
+			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
 			// END KGU#227 2016-07-31
 			double x = y/lowest + ax - ay/lowest;
-			rect0.right = (int) Math.round(x);
+			// START KGU#435 2017-10-22: Enh. #128 revised
+			//rect0.right = (int) Math.round(x);
+			rect0.right = Math.max((int) Math.round(x), commentRect.right);
+			// END KGU#435 2017-10-22
 			//System.out.println("C => "+lowest+" ---> "+rect.right);
 		}
 		else
@@ -299,8 +308,8 @@ public class Alternative extends Element implements IFork {
 		// END KGU#227 2016-07-31
 
 		int remain = (_top_left.right - _top_left.left)
-				-(rTrue.right - rTrue.left)
-				-(rFalse.right - rFalse.left);
+				- (rTrue.right - rTrue.left)
+				- (rFalse.right - rFalse.left);
 		// START KGU#228 2016-07-31: Bugfix #212 - Condition was logically inverted
 		//if (Element.altPadRight == false) remain=0;
 		if (Element.altPadRight) remain=0;
@@ -313,7 +322,10 @@ public class Alternative extends Element implements IFork {
 		double cx = 0;
 		// START KGU#227 2016-07-31: Enh. #128 - we rely on the cached value
 		//double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
-		double cy = pt0Parting.y + 1;
+		// START KGU#435 2017-10-22: Enh. #128 revised
+		//double cy = pt0Parting.y + 1;
+		double cy = pt0Parting.y + 1 - commentRect.bottom;
+		// END KGU#435 2017-10-22
 		// END KGU#227 2016-07-31
 		// upper right corner
 		double dx = _top_left.right - _top_left.left;
@@ -326,20 +338,23 @@ public class Alternative extends Element implements IFork {
 		// coefficient of the right traverse line
 		double coeffright = (dy-ay)/(dx-ax);
 
-		// START KGU#227 2016-07-31: Enh. #128
-		int yOffset = 4*(E_PADDING/2) - (E_PADDING/3);
+		// START KGU#227 2016-07-31: Enh. #128 - revised KGU#435 2017-10-22
+		//int yOffset = 4*(E_PADDING/2) - (E_PADDING/3);
 		// draw comment if required
 		if (commentRect.bottom > 0)
 		{			
-			double by = yOffset - fm.getHeight();
-            double leftside = by/coeffleft + ax - ay/coeffleft;
-            double bx = by/coeffright + ax - ay/coeffright;
-            int boxWidth = (int) (bx-leftside);
-            writeOutCommentLines(_canvas, _top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - commentRect.right)/2,
-            		_top_left.top + (E_PADDING / 3), true, false);            
-			yOffset -= commentRect.bottom;
+//			double by = yOffset - fm.getHeight();
+//            double leftside = by/coeffleft + ax - ay/coeffleft;
+//            double bx = by/coeffright + ax - ay/coeffright;
+//            int boxWidth = (int) (bx-leftside);
+//            writeOutCommentLines(_canvas, _top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - commentRect.right)/2,
+//            		_top_left.top + (E_PADDING / 3), true, false);            
+//			yOffset -= commentRect.bottom;
+			writeOutCommentLines(_canvas,
+					_top_left.left + (E_PADDING/2),
+					_top_left.top + E_PADDING/2, true);
 		}
-		// END KGU#227 2016-07-31
+		// END KGU#227/KGU#435 2016-07-31 / 2017-10-22
 		
 		// draw text
 		for (int i=0; i < nLines; i++)
@@ -347,12 +362,15 @@ public class Alternative extends Element implements IFork {
 			String mytext = this.getText(false).get(i);
 
 			// bottom line of the text
-			double by = yOffset + (nLines-i-1)*fm.getHeight();
+			// START KGU#435 2017-10-22: Enh. #128 revised
+			//double by = yOffset + (nLines-i-1)*fm.getHeight();
+			double by = (nLines-i-1)*fm.getHeight();
+			// END KGU#435 2017-10-22
 			// part on the left side
 			double leftside = by/coeffleft + ax - ay/coeffleft;
 			// the the bottom right point of this text line
 			double bx = by/coeffright + ax - ay/coeffright;
-			/* dbugging output
+			/* debugging output
                         canvas.setColor(Color.RED);
                         canvas.fillRect(new Rect(
                                 myrect.left+(int) cx-2, myrect.bottom-(int) cy-2,
@@ -371,7 +389,7 @@ public class Alternative extends Element implements IFork {
 					//_top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
 					_top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fm.getHeight(),
 					// END KGU#227 2016-07-31
-					mytext,this
+					mytext, this
 					);
 
 			/*
@@ -413,16 +431,28 @@ public class Alternative extends Element implements IFork {
 		
 		// START KGU#156 2016-03-11: Enh. #124
 		// write the run-time info if enabled
+		// START KGU#435 2017-10-22: Enh. #128 revised
+		//this.writeOutRuntimeInfo(_canvas, 
+		//		_top_left.left + rect.right - (int)Math.round(fm.getHeight() / coeffright),
+		//		_top_left.top);
+		int rightOffset = (int)Math.round(fm.getHeight() / coeffright);
+		if (commentRect.right > 0) rightOffset = E_PADDING/2;
 		this.writeOutRuntimeInfo(_canvas, 
-				_top_left.left + rect.right - (int)Math.round(fm.getHeight() / coeffright),
+				_top_left.left + rect.right - rightOffset,
 				_top_left.top);
+		// END KGU#435 2017-10-22
 		// END KGU#156 2016-03-11
 				
 		// draw triangle
 		canvas.setColor(Color.BLACK);
-		canvas.moveTo(myrect.left, myrect.top);
+		// START KGU#435 2017-10-22: Enh. #128 revised
+		//canvas.moveTo(myrect.left, myrect.top);
+		//canvas.lineTo(myrect.left + rTrue.right-1 + remain, myrect.bottom-1);
+		//canvas.lineTo(myrect.right, myrect.top);
+		canvas.moveTo(myrect.left, myrect.top + commentRect.bottom);
 		canvas.lineTo(myrect.left + rTrue.right-1 + remain, myrect.bottom-1);
-		canvas.lineTo(myrect.right, myrect.top);
+		canvas.lineTo(myrect.right, myrect.top + commentRect.bottom);
+		// END KGU#435 2017-10-22
 		
 		// START KGU#277 2016-10-13: Enh. #270
 		if (this.disabled) {

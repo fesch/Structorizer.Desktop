@@ -122,6 +122,7 @@ Current development version: 3.26-07 (2017.10.22)
 - 08: Issue #437: Defective variable modifications in paused state now reported <2>
 - 08: Issue #438: Pending variable editing now prevents from resuming execution <2>
 - 08: Enh. #439: Tabular inspection/editing of array and record values in Executor <2>
+- 08: Enh. #128: Design of IF and CASE elements in mode "comments + text" changed <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

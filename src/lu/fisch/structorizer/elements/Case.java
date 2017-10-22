@@ -55,6 +55,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.11.24/25   Issue #294 refined (now distinguished among deep and shallow test coverage)
  *      Kay Gürtzig     2016.02.08      Issue #198: vertical cursor traversal fixed (failed in nested Calls)
  *                                      Inheritance changed to implement o more intuitive horizontal cursor navigation
+ *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
  *
  ******************************************************************************************************
  *
@@ -241,29 +242,37 @@ public class Case extends Element implements IFork
 //            	if (getText().get(nBranches).equals("%")) nBranches--;
 //            	rect0.right = Math.max(padding, getWidthOutVariables(_canvas, getText().get(0), this) + padding);
 //            }
-            StringList selectorLines = new StringList();
+            StringList discrLines = new StringList();
             if (nBranches > 0)
             {
             	if (getText().get(nBranches).equals("%")) nBranches--;
-            	selectorLines.add(getText().get(0));
+            	discrLines.add(getText().get(0));
             }
-        	if (this.isSwitchTextCommentMode())
-        	{
-        		selectorLines = this.getComment();
-        	}
-        	// FIXME: The required extra padding must be proportional to the fontsize
-        	int extrapadding = padding + (selectorLines.count()-1) * (3 * padding + fm.getHeight());
-        	// START KGU#227 2016-07-31: Enh. #128 - compute the dimensions of the comment area
-        	commentRect = new Rect();
-        	if (Element.E_COMMENTSPLUSTEXT)
-        	{
-        		commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
-        		rect0.right = Math.max(rect0.right, commentRect.right + extrapadding);
-        	}
+            if (this.isSwitchTextCommentMode())
+            {
+            	discrLines = this.getComment();
+            }
+            // FIXME: The required extra padding must be proportional to the font size
+            int extrapadding = padding + (discrLines.count()-1) * (3 * padding + fm.getHeight());
+            // START KGU#227 2016-07-31: Enh. #128 - compute the dimensions of the comment area
+            commentRect = new Rect();
+            if (Element.E_COMMENTSPLUSTEXT)
+            {
+            	// START KGU#435 2017-10-22: Enh. #128 revised
+            	//commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
+            	//rect0.right = Math.max(rect0.right, commentRect.right + extrapadding);
+          		commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
+          		if (commentRect.right > 0) {
+          			commentRect.bottom += E_PADDING/6;
+          			commentRect.right += 2 * (E_PADDING/2);
+          		}
+        		rect0.right = Math.max(rect0.right, commentRect.right);
+        		// END KGU#435 2017-10-22
+            }
         	// END KGU#227 2016-07-31
-        	for (int i = 0; i < selectorLines.count(); i++)
+        	for (int i = 0; i < discrLines.count(); i++)
         	{
-        		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, selectorLines.get(i), this) + extrapadding);
+        		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, discrLines.get(i), this) + extrapadding);
         	}
         	// END KGU#172 2016-04-01
             // Total width of the branches
@@ -283,7 +292,7 @@ public class Case extends Element implements IFork
 
         	// START KGU#172 2016-04-01: Bugfix #144: The header my contain more than one line if comments are visible
             //rect0.bottom = 2 * (padding) + 2 * fm.getHeight();
-            rect0.bottom = 2 * (padding) + (selectorLines.count() + 1) * fm.getHeight();
+            rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * fm.getHeight();
             // END KGU#172 2016-04-01
         	// START KGU#227 2016-07-31: Enh. #128 - add the height if the comment area
             rect0.bottom += commentRect.bottom;
@@ -384,14 +393,14 @@ public class Case extends Element implements IFork
 
     	int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
     	// START KGU#172 2016-04-01: Bugfix #145 - we might have to put several comment lines in here
-    	StringList headerText = StringList.getNew(this.getText().get(0));
+    	StringList discrLines = StringList.getNew(this.getText().get(0));
     	if (isSwitchMode)
     	{
-    		headerText = this.getComment();
+    		discrLines = this.getComment();
     	}
-    	if (headerText.count() > 1)
+    	if (discrLines.count() > 1)
     	{
-    		minHeight += (headerText.count() - 1) * fm.getHeight();
+    		minHeight += (discrLines.count() - 1) * fm.getHeight();
     	}
     	// END KGU#172 2016-04-01
     	// START KGU#227 2016-07-31: Enh. #128 - add the height of the embedded comment
@@ -416,7 +425,10 @@ public class Case extends Element implements IFork
     	int a = myrect.left + (myrect.right - myrect.left) / 2;
     	int b = myrect.top;
     	int c = myrect.left + fullWidth-1;
-    	int d = myrect.bottom-1;
+    	// START KGU#435 2017-10-22: Enh. #128 revised - triangle no longer includes comment
+    	//int d = myrect.bottom-1;
+    	int d = myrect.bottom-1 - commentRect.bottom;
+    	// END KGU#435 2017-10-22
     	// About the horizontal position of the cleave
     	int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
     	
@@ -425,17 +437,22 @@ public class Case extends Element implements IFork
     	// Draw the 1st line of the comment if requested
     	if (Element.E_COMMENTSPLUSTEXT)
     	{
-    		// Perfect right-bound position if there is no default branch
-    		int xStart = myrect.right - commentRect.right - E_PADDING/2;
-    		// Otherwise use the calculated weighted centre
-    		if (hasDefaultBranch)
-    		{
-    			xStart = Math.min(xStart, x - commentRect.right/2);
-    		}
+//    		// Perfect right-bound position if there is no default branch
+//    		int xStart = myrect.right - commentRect.right - E_PADDING/2;
+//    		// Otherwise use the calculated weighted centre
+//    		if (hasDefaultBranch)
+//    		{
+//    			xStart = Math.min(xStart, x - commentRect.right/2);
+//    		}
     		this.writeOutCommentLines(_canvas,
-    				xStart,
-    				myrect.top + E_PADDING / 3,
-    				true, false);
+    		    	// START KGU#435 2017-10-22: Enh. #128 revised - triangle no longer includes comment
+    				//xStart,
+    				//true, false);
+    				//myrect.top + E_PADDING / 3,
+    				myrect.left + E_PADDING / 2,
+    				myrect.top + E_PADDING / 2,
+    				true);
+    		    	// END KGU#435 2017-10-22
     	}
     	// END KGU#227 2016-07-31
 
@@ -487,14 +504,20 @@ public class Case extends Element implements IFork
 
     		// START KGU#156 2016-03-11: Enh. #124
     		// write the run-time info if enabled
-    		this.writeOutRuntimeInfo(canvas, myrect.right - (hasDefaultBranch ? Element.E_PADDING : Element.E_PADDING/2), myrect.top);
+    		// START KGU#435 2017-10-22: Enh. #128 revised
+    		int rightOffset = E_PADDING / 2;
+    		if (commentRect.right == 0 && hasDefaultBranch) {
+    			rightOffset = Element.E_PADDING;
+    		}
+    		this.writeOutRuntimeInfo(canvas, myrect.right - rightOffset, myrect.top);
+    		// END KGU#435 2017-10-22
     		// END KGU#156 2016-03-11
 
     	}
 
 
     	// draw comment
-    	if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+    	if(Element.E_SHOWCOMMENTS && !comment.getText().trim().equals(""))
     	{
     		this.drawCommentMark(canvas, myrect);
     	}
@@ -539,7 +562,10 @@ public class Case extends Element implements IFork
     	// END KGU#91 2015-12-01
 
     	int ax = myrect.left;
-    	int ay = myrect.top;
+    	// START KGU#435 2017-10-22: Enh. #128 revised - triangle no longer includes comment
+    	//int ay = myrect.top;
+    	int ay = myrect.top + commentRect.bottom;
+    	// END KGU#435 2017-10-22
     	int bx = myrect.left + lineWidth;
     	int by = myrect.bottom-1 - fm.getHeight() - E_PADDING / 2;
 
@@ -561,7 +587,7 @@ public class Case extends Element implements IFork
     	{
     		canvas.lineTo(bx, myrect.bottom-1);
     		canvas.lineTo(bx, by);
-    		canvas.lineTo(myrect.right, myrect.top);
+    		canvas.lineTo(myrect.right, ay);
     	}
 		// START KGU#277 2016-10-13: Enh. #270
 		if (this.disabled) {
@@ -609,7 +635,7 @@ public class Case extends Element implements IFork
     			// draw child
     			((Subqueue) qs.get(i)).draw(_canvas,myrect);
 
-    			// draw criterion text
+    			// draw criterion text (selector)
     			writeOutVariables(canvas,
     					// START KGU#91 2015-12-01: Performance may be improved here
     					//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),

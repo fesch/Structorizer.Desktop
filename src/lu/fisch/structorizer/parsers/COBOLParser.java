@@ -4531,6 +4531,8 @@ public class COBOLParser extends CodeParser
 			String text = _ele.getText().getLongString();
 			if (_ele instanceof Jump && _ele.disabled && 
 					(text.contentEquals("EXIT SECTION") || text.contentEquals("EXIT PARAGRAPH"))) {
+				// Replace the comment by the previous text
+				_ele.setComment(text);
 				_ele.setText(getKeywordOrDefault("preReturn", "return"));
 				_ele.setColor(Color.WHITE);
 				_ele.disabled = false;
