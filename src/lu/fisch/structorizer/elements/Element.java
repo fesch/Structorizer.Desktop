@@ -2784,11 +2784,6 @@ public abstract class Element {
 	 */
 	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw)
 	{
-		return writeOutCommentLines(_canvas, _x, _y, _actuallyDraw, true);
-	}
-
-	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw, boolean _allLines)
-	{
 		int height = 0;
 		int width = 0;
 		// smaller font
@@ -2801,22 +2796,16 @@ public abstract class Element {
 		_canvas.setFont(smallFont);
 		_canvas.setColor(Color.DARK_GRAY);
 		int nLines = this.getComment().count();
-		String appendix = "";
-		if (nLines > 1 && !_allLines)
-		{
-			nLines = 1;
-			appendix = "...";
-		}
 		for (int i = 0; i < nLines; i++)
 		{
 			String line = this.getComment().get(i).trim();
 			if (!line.isEmpty())
 			{
 				height += fontHeight;
-				width = Math.max(width, _canvas.stringWidth(line + appendix));
+				width = Math.max(width, _canvas.stringWidth(line));
 				if (_actuallyDraw)
 				{
-					_canvas.writeOut(_x, _y + height + extraHeight, line + appendix);
+					_canvas.writeOut(_x, _y + height + extraHeight, line);
 				}
 			}
 		}

@@ -6373,7 +6373,7 @@ public class COBOLParser extends CodeParser
 		Call dummyCall = new Call(content);
 		dummyCall.setColor(Color.RED);
 		this.equipWithSourceComment(dummyCall, _reduction);
-		dummyCall.getComment().add("This was a call of an internal section or paragraph, the support for which is still lacking");
+		dummyCall.getComment().add("This was a call of an internal section or paragraph");
 		_parentNode.addElement(dummyCall);
 		// Now we register the call for later linking
 		LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
@@ -7909,6 +7909,10 @@ public class COBOLParser extends CodeParser
 		if (comment != null) {
 			decl.setComment(comment);
 		}
+		CobVar redefined = currentVar.getRedefines();
+		if (redefined != null) {
+			decl.getComment().add("*** Redefines " + redefined.getQualifiedName());
+		}
 		if (isConst) {
 			decl.setColor(colorConst);
 		}
@@ -7943,11 +7947,8 @@ public class COBOLParser extends CodeParser
 		CobVar child = var.getChild();
 		String typeName = CobTools.getTypeString(var, true);
 		if (child != null && !child.isConditionName()) {
-			// At top-level a simple "_type" name suffix will be sufficient but at lower levels
-			// we cannot rule out name clashes with substructure of other record types.
 			// FIXME: For global types we must not redefine this within a routine but refer to the globally defined name!!!
-			typeName = var.forceName() + "_" + (declLevel == 0 ? "type" : "t" + Integer.toHexString(var.hashCode()));
-			typeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
+			typeName = var.deriveTypeName();
 			StringBuilder typedef = new StringBuilder("type " + typeName + " = record");
 			String sepa = "{\\\n";
 			do {
@@ -7961,7 +7962,11 @@ public class COBOLParser extends CodeParser
 			if (var.getComment() != null) {
 				instr.setComment(var.getComment());
 			}
-			// FIXME: For global types we must not redefine this within a routine but refer to the globally defined name!!!
+			CobVar redefined = var.getRedefines();
+			if (redefined != null) {
+				instr.getComment().add("*** Redefines type of var " + redefined.getQualifiedName() + " (type " + redefined.deriveTypeName() + "?)");
+			}
+			// FIXME: For global types we must not repeat this within a routine but refer to the globally defined name!!!
 			if (var.isExternal()) {
 				instr.setColor(colorGlobal);
 				externalNode.addElement(instr);					
@@ -8625,6 +8630,7 @@ class CobTools {
 		private CobVar child;
 		private CobVar sister;
 		private CobVar redefines;
+		private CobVar redefinedBy;	// FIXME: In theory, there might be several redefinitions...
 		
 		/** Array of COBOL values */
 		private String[] values;
@@ -8893,6 +8899,15 @@ class CobTools {
 			return this.comment;
 		}
 		
+		/** @return a corresponding type name for this variable respecting */
+		public String deriveTypeName() {
+			// At top-level a simple "_type" name suffix will be sufficient but at lower levels
+			// we cannot rule out name clashes with substructure of other record types.
+			String typeName = this.name + "_" + (this.parent == null ? "type" : "t" + Integer.toHexString(this.hashCode()));
+			typeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
+			return typeName;
+		}
+
 		/**
 		 * @return true if this variable/component was declared with an occurs clause
 		 * @see #getArraySize()
@@ -9053,6 +9068,9 @@ class CobTools {
 			}
 			
 			this.redefines = redefines;
+			if (redefines != null) {
+				redefines.redefinedBy = this;
+			}
 			this.isGlobal = isGlobal;
 			this.isExternal = isExternal;
 			this.anyLength = anyLength; 
