@@ -156,7 +156,7 @@ public class Alternative extends Element implements IFork {
 		rFalse = qFalse.prepareDraw(_canvas);
 		rTrue = qTrue.prepareDraw(_canvas);
 
-		// Compute the left traverse line (y coordinates reversed)
+		// Compute the left traverse line (y coordinates reversed) as if the triangle were always at top
 		// the upper left corner
 		double cx = 0;
 		// START KGU#227 2016-07-31: Enh. #128 - we need additional space for the comment
@@ -364,11 +364,11 @@ public class Alternative extends Element implements IFork {
 			// bottom line of the text
 			// START KGU#435 2017-10-22: Enh. #128 revised
 			//double by = yOffset + (nLines-i-1)*fm.getHeight();
-			double by = (nLines-i-1)*fm.getHeight();
+			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1)*fm.getHeight();
 			// END KGU#435 2017-10-22
 			// part on the left side
 			double leftside = by/coeffleft + ax - ay/coeffleft;
-			// the the bottom right point of this text line
+			// the bottom right point of this text line
 			double bx = by/coeffright + ax - ay/coeffright;
 			/* debugging output
                         canvas.setColor(Color.RED);

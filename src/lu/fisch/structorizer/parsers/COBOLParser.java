@@ -73,6 +73,7 @@ package lu.fisch.structorizer.parsers;
  *                                      TODO: More sensible import for EXIT statements in sections, paragraphs
  *      Kay Gürtzig     2017.10.20      Function register introduced to tell array access from function calls,
  *                                      loop condition transformation
+ *      Kay Gürtzig     2017.10.22      File status assignments added according to the proposal of Simon Sobisch 
  *
  ******************************************************************************************************
  *
@@ -4570,6 +4571,12 @@ public class COBOLParser extends CodeParser
 	 * Maps the file status variables to the respective file descriptor
 	 */
 	private HashMap<String, String> fileStatusMap = new HashMap<String, String>();
+	/**
+	 * Registers whether a file status evaluation function diagram was added to {@link CodeParser#subRoots}.
+	 */
+	private boolean fileStatusFctAdded = false;
+	private static final String fileStatusCaseText = "fileDescr\n0, -1\n-2\n-3\ndefault";
+	private static final String[] fileStatusCodes = {"39", "35", "37", "00"};
 
 //	/**
 //	 * Used to combine nested declarations within one element
@@ -5789,7 +5796,7 @@ public class COBOLParser extends CodeParser
 				if (selRed.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD__FILE_OR_SORT_TOK_FILE) {
 					// map the status variable to the file descriptor!
 					String statusVar = this.getContent_R(selRed.get(3).asReduction(), "");
-					this.fileStatusMap.put(statusVar, fileDescr);
+					this.fileStatusMap.put(fileDescr, statusVar);
 				}
 			}
 			else if (selHead.equals("<organization_clause>")) {
@@ -5810,6 +5817,30 @@ public class COBOLParser extends CodeParser
 				decl.comment.add("Unsuited for Structorizer FileAPI!");
 			}
 		}
+	}
+
+	private Element addStatusAssignment(Subqueue _parentNode, String fdName) {
+		String statName = this.fileStatusMap.get(fdName);
+		Call statusCheck = null;
+		if (statName != null && currentProg.getCobVar(statName) != null) {
+			statusCheck = new Call(statName + " <- fileStatusToCobol(" + fdName + ")");
+			_parentNode.addElement(statusCheck);
+			if (!this.fileStatusFctAdded) {
+				Root fileStatusFct = new Root();
+				fileStatusFct.setText("fileStatusToCobol(fileDescr: int): String");
+				fileStatusFct.setComment("Derives a COBOL file satus value from the file descriptor of the Structorizer File_API.");
+				fileStatusFct.setProgram(false);
+				Case fileStatusCase = new Case(StringList.explode(fileStatusCaseText, "\n"));
+				for (int i = 0; i < fileStatusCodes.length; i++) {
+					fileStatusCase.qs.get(i).addElement(new Instruction("file_status <- \"" + fileStatusCodes[i] + "\""));
+				}
+				fileStatusFct.children.addElement(fileStatusCase);
+				fileStatusFct.children.addElement(new Instruction(CodeParser.getKeywordOrDefault("preReturn", "return") + " file_status"));
+				subRoots.add(fileStatusFct);
+				this.fileStatusFctAdded = true;
+			}
+		}
+		return statusCheck;
 	}
 
 	private boolean importWrite(Reduction _reduction, Subqueue _parentNode) {
@@ -5843,6 +5874,7 @@ public class COBOLParser extends CodeParser
 			// TODO: try to consider types here.
 			Instruction writeInstr = new Instruction("fileWrite(" + fdName + ", " + dataStr + ")");
 			_parentNode.addElement(this.equipWithSourceComment(writeInstr, _reduction));
+			addStatusAssignment(_parentNode, fdName);
 			done = true;
 		}
 		return done;
@@ -5895,6 +5927,7 @@ public class COBOLParser extends CodeParser
 			Instruction instr = new Instruction(target + " <- " + fnName + "(" + fdName + ")");
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 			instr.getComment().add(this.getOriginalText(_reduction, ""));
+			addStatusAssignment(_parentNode, fdName);
 			done = true;
 		}
 		return done;
@@ -5950,6 +5983,10 @@ public class COBOLParser extends CodeParser
 				instr.setColor(Color.RED);
 			}
 			_parentNode.insertElementAt(instr, pos);
+			Element statusEl = addStatusAssignment(_parentNode, fileDescr); 
+			if (unsupportedMode) {
+				statusEl.disabled = true;
+			}
 			done = true;
 		} while (bodyRed != null);
 		return done;
