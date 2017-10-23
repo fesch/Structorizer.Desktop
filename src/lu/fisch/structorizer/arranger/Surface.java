@@ -57,7 +57,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
- *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diarams now trigger analyser updates
+ *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diagrams now trigger analyser updates
  *      Kay Gürtzig     2016.11.14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
  *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements
  *      Kay Gürtzig     2016.12.12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms
@@ -70,6 +70,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.01.13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
  *      Kay Gürtzig     2017.04.22      Enh. #62, #318: Confirmation before overwriting a file, shadow paths considered
  *      Kay Gürtzig     2017.05.26      Bugfix #414: Too large bounding boxes caused errors and made the GUI irresponsive
+ *      Kay Gürtzig     2017.10.23      Issue #417: Linear scrolling unit adaptation to reduce drawing time complexity
+ *                                      Enh. #35: Scrolling dimensioning mechanism revised (group layout dropped) 
  *
  ******************************************************************************************************
  *
@@ -90,7 +92,7 @@ package lu.fisch.structorizer.arranger;
  *        to be used instead - the bugfix realises this by new method Root.equals(). 
  *      2015.11.18 (Kay Gürtzig)
  *      - In order to achieve scrollability, autoscroll mode (on dragging) had to be enabled, used area has
- *        to be communicated (nothing better than resetting the layout found - see adapt_layout())
+ *        to be communicated (nothing better than resetting the layout found - see adaptLayout())
  *      - Method removeDiagram() added,
  *      - selection consistency improved (never select or unselect a diagram element other than root, don't
  *        select eclipsed diagrams, don't leave selection flag on diagrams no longer selected).
@@ -105,6 +107,8 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -226,7 +230,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     @Override
     public void paint(Graphics g)
     {
-		//System.out.println("Surface: " + System.currentTimeMillis());
+        //System.out.println("Surface: " + System.currentTimeMillis());
+        Dimension area = new Dimension(0, 0);
         super.paint(g);
         if(diagrams!=null)
         {
@@ -255,8 +260,22 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                 	//((Graphics2D)g).drawOval(rect.right - 15, rect.top + 5, 10, 10);
                 }
                 // END KGU#88 2015_11-24
+                // START KGU#85 2017-10-23: Enh. #35 - take advantage of this opportunity to check scroll dimensions
+                if (rect.right > area.width) area.width = rect.right;
+                if (rect.bottom > area.height) area.height = rect.bottom;
+                // END KGU#85 2017-10-23
             }
         }
+        // START KGU#85 2017-10-23: Enh. #35 - now make sure the scrolling area is up to date
+        area.width = Math.min(area.width, Short.MAX_VALUE);
+        area.height = Math.min(area.height, Short.MAX_VALUE);
+        Dimension oldArea = this.getPreferredSize();
+        // This check isn't only to improve performance but also to avoid endless recursion
+        if (area.width != oldArea.width || area.height != oldArea.height) {
+        	this.setPreferredSize(area);
+        	this.revalidate();
+        }
+        // END KGU#85 2017-10-23
     }
 
     private void create()
@@ -272,7 +291,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
 
-        // START KGU#85 2015-11-18
+        // START KGU#85 2015-11-18: Enh. #35
         this.setAutoscrolls(true);
         // END KGU#85 2015-11-18
 
@@ -1033,10 +1052,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         }
     }
 
+    /**
+     * Determines the union of bounds of all diagrams on this Surface.
+     * @return the bounding box als {@link Rect}
+     */
     public Rect getDrawingRect()
     {
         Rect r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-
 
         if(diagrams!=null)
         {
@@ -1080,27 +1102,57 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     private Rect adaptLayout()
     {
     	Rect rect = getDrawingRect();
+    	// START KGU#85 2017-10-23: Enh. #35 - without this superfluous group layout it's all pretty simple
     	// Didn't find anything else to effectively inform the scrollbars about current extension
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-        		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-        		// START KGU#411 2017-05-26: With huge diagrams the bouding boxx could exceed the Short value range
-        		//.add(0, rect.right, Short.MAX_VALUE)
-        		.add(0, Math.min(rect.right, Short.MAX_VALUE), Short.MAX_VALUE)
-        		// END KGU#411 2017-05-26
-        		);
-        layout.setVerticalGroup(
-        		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-        		// START KGU#411 2017-05-26: With huge diagrams the bouding boxx could exceed the Short value range
-        		//.add(0, rect.bottom, Short.MAX_VALUE)
-        		.add(0, Math.min(rect.bottom, Short.MAX_VALUE), Short.MAX_VALUE)
-        		// END KGU#411 2017-05-26
-        		);
+//        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+//        this.setLayout(layout);
+//        layout.setHorizontalGroup(
+//        		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//        		// START KGU#411 2017-05-26: With huge diagrams the bounding box could exceed the Short value range
+//        		//.add(0, rect.right, Short.MAX_VALUE)
+//        		.add(0, Math.min(rect.right, Short.MAX_VALUE), Short.MAX_VALUE)
+//        		// END KGU#411 2017-05-26
+//        		);
+//        layout.setVerticalGroup(
+//        		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//        		// START KGU#411 2017-05-26: With huge diagrams the bounding box could exceed the Short value range
+//        		//.add(0, rect.bottom, Short.MAX_VALUE)
+//        		.add(0, Math.min(rect.bottom, Short.MAX_VALUE), Short.MAX_VALUE)
+//        		// END KGU#411 2017-05-26
+//        		);
+    	System.out.println(rect);
+    	Dimension oldDim = this.getPreferredSize();
+    	if (rect.right != oldDim.width || rect.bottom != oldDim.height) {
+    		this.setPreferredSize(new Dimension(rect.right, rect.bottom));
+    		this.revalidate();
+    	}
+    	// END KGU#85 2017-10-23
+    	// START KGU#444 2017-10-23: Issue #417 - reduce polynomial scrolling time complexity
+        adaptScrollUnits(rect);
+    	// END KGU#444 2017-10-23
     	return rect;	// Just in case someone might need it
     }
 
-    public void addDiagram(Root root)
+	// START KGU#444 2017-10-23: Issue #417 - polynomial scrolling time complexity 
+	/**
+	 * Adapts the scroll units according to the size of the current {@link Root}. With standard scroll unit
+	 * of 1, large diagrams would take an eternity to get scrolled over because their redrawing time also
+	 * increases with the number of elements, of course, such that it's polynomial (at least square) time growth... 
+	 */
+	protected void adaptScrollUnits(Rect drawArea) {
+		Container parent = this.getParent();
+    	if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
+    			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
+    			int heightFactor = drawArea.bottom / scroll.getHeight() + 1;
+    			int widthFactor = drawArea.right / scroll.getWidth() + 1;
+    			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
+    			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
+    			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+    	    	}
+	}
+	// END KGU#444 2017-10-23
+
+	public void addDiagram(Root root)
     // START KGU#2 2015-11-19: Needed a possibility to register a related Mainform
     {
     	addDiagram(root, null, null);
@@ -1222,7 +1274,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		// END KGU 2016-12-12
     		repaint();
-    		getDrawingRect();		// What was this good for?
+    		//getDrawingRect();	// Desperate but ineffective approach to force scroll area update
     	// START KGU#2 2015-11-19
     	}
     	// START KGU#119 2016-01-02: Bugfix #78 - if a position is given then move the found diagram
@@ -1238,7 +1290,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		// END KGU 2016-12-12
     		repaint();
-    		getDrawingRect();    	// What was this good for?
+    		//getDrawingRect();	// Desperate but ineffective approach to force scroll area update
     	}
     	// END KGU#119 2016-01-02
     	if (form != null)
@@ -1439,16 +1491,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 300, Short.MAX_VALUE)
-        );
+//        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+//        this.setLayout(layout);
+//        layout.setHorizontalGroup(
+//            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//            .add(0, 400, Short.MAX_VALUE)
+//        );
+//        layout.setVerticalGroup(
+//            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//            .add(0, 300, Short.MAX_VALUE)
+//        );
+    	this.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+    	this.setPreferredSize(new Dimension(400, 300));
     }// </editor-fold>//GEN-END:initComponents
 
     /**

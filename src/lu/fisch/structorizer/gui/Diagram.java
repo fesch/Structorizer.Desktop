@@ -134,7 +134,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.09.12      Enh. #415: Find&Replace dialog properly re-packed after L&F change
  *      Kay Gürtzig     2017.10.10      Issue #432: Workaround for nasty synch problem in redraw()
  *      Kay Gürtzig     2017.10.12      Issue #432: redrawing made optional in two methods 
- *      Kay Gürtzig     2017.10.23      Positioning of sub-dialogs no longer depends on diagram size 
+ *      Kay Gürtzig     2017.10.23      Positioning of sub-dialogs no longer depends on diagram size
+ *                                      Issue #417: scroll units adapted to Root size to reduce time complexity
  *
  ******************************************************************************************************
  *
@@ -369,6 +370,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#149 2016-02-03: Bugfix #117
 			doButtons();
 			// END KGU#149 2016-02-03
+			// START KGU#444 2017-10-23: Issue #417
+			adaptScrollUnits();
+			// END KGU#44 2017-10-23
 		}
 		return true;
 	}
@@ -1273,8 +1277,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			redraw(g);
 		}
 	}
-        
-    // START KGU#155 2016-03-08: Some additional fixing for bugfix #97
+       
+	// START KGU#444 2017-10-23: Issue #417 - polynomial scrolling time complexity 
+	/**
+	 * Adapts the scroll units according to the size of the current {@link Root}. With standard scroll unit
+	 * of 1, large diagrams would take an eternity to get scrolled over because their redrawing time also
+	 * increases with the number of elements, of course, such that it's polynomial (at least square) time growth... 
+	 */
+	protected void adaptScrollUnits() {
+		Container parent = this.getParent();
+    	if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
+    			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
+    			int heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
+    			int widthFactor = root.getRect().right / scroll.getWidth() + 1;
+    			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
+    			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
+    			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+    	    	}
+	}
+	// END KGU#444 2017-10-23
+
+	// START KGU#155 2016-03-08: Some additional fixing for bugfix #97
 	/**
 	 * Invalidates the cached prepareDraw info of the current diagram (Root)
 	 * (to be called on events with global impact on the size or shape of Elements)
@@ -2394,6 +2417,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#182 2016-04-23
 			analyse();
+			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+			adaptScrollUnits();
+			// END KGU#444 2017-10-23
 		}
 	}
 
@@ -2431,6 +2457,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selected=nE;
 			redraw();
 			analyse();
+			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+			adaptScrollUnits();
+			// END KGU#444 2017-10-23
 		}
 	}
 
@@ -2583,6 +2612,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			analyse();
+			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+			adaptScrollUnits();
+			// END KGU#444 2017-10-23
 		}
 	}
 	
@@ -2699,6 +2731,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix#102 - disable element-based buttons
 		this.NSDControl.doButtons();
 		// END KGU#138 2016-01-11
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	
 	// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
@@ -2767,6 +2802,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		analyse();
 		this.NSDControl.doButtons();
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	
 	/*****************************************
@@ -2778,6 +2816,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		analyse();
 		this.NSDControl.doButtons();
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	// END KGU#123 2016-01-03
 	
@@ -2881,6 +2922,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#272 2016-10-06
 				redraw();
 				analyse();
+				// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+				adaptScrollUnits();
+				// END KGU#444 2017-10-23
 			}
 		}
 	}
@@ -2960,6 +3004,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selected.setSelected(true);
 				redraw();
 				analyse();
+				// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+				adaptScrollUnits();
+				// END KGU#444 2017-10-23
 			}
 		}
 	}
@@ -3061,6 +3108,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.doButtons();
 		redraw();
 		analyse();
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	
 	// START KGU#357 2017-03-10: Enh. #367
@@ -6530,9 +6580,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#183 2016-04-24
 	}
 
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+     */
     @Override
     public void mouseWheelMoved(MouseWheelEvent e)
     {
+    	// NOTE: This method will only be triggered if mode Element.E_WHEELCOLLAPSE is enabled.
 		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
     	//System.out.println("MouseWheelEvent: " + e.getModifiersEx() + " Rotation = " + e.getWheelRotation() + " Type = " + 
     	//		((e.getScrollType() == e.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
@@ -6577,6 +6631,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //        	
 //        }
     }
+
 
     void toggleTextComments() {
     	Element.E_TOGGLETC=!Element.E_TOGGLETC;

@@ -1504,7 +1504,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			diagramIndex.requestFocusInWindow();
 		}
 		else {
-			scrollarea.requestFocusInWindow();					
+			scrollarea.requestFocusInWindow();
 		}		
 	}
 	
