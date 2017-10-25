@@ -267,25 +267,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected abstract String getIndent();
 		
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-	/**
-	 * Returns a list of the most important reserved words in the target language.
-	 * These aren't relevant for he code export itself but fo the Analyser, if it
-	 * is to advise against the use of them for naming variables.
-	 * @see #isCaseSignificant()
-	 * @return collection of key strings
-	 */
-	@Deprecated
-	public abstract String[] getReservedWords();
-	
-	/**
-	 * Indicates whether case is significant in parsing of reserved words and
-	 * identifiers.
-	 * @see #getReservedWords()
-	 * @return true if case matters
-	 */
-	public abstract boolean isCaseSignificant();
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//	/**
+//	 * Returns a list of the most important reserved words in the target language.
+//	 * These aren't relevant for he code export itself but fo the Analyser, if it
+//	 * is to advise against the use of them for naming variables.
+//	 * @see #isCaseSignificant()
+//	 * @return collection of key strings
+//	 */
+//	@Deprecated
+//	public abstract String[] getReservedWords();
+//	
+//	/**
+//	 * Indicates whether case is significant in parsing of reserved words and
+//	 * identifiers.
+//	 * @see #getReservedWords()
+//	 * @return true if case matters
+//	 */
+//	public abstract boolean isCaseSignificant();
+//	// END KGU 2016-08-12
 	
 	// START KGU 2015-10-18: It seemed sensible to store the comment specification permanently
 	/**
@@ -814,8 +814,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#376/KGU#388 2017-09-25: Enh. #389, #423
 	/**
 	 * Tries to find the defining instruction for identifier {@code _id} within
-	 * the given Root {@code _root} or one of the identified includables and puts
-	 * inserts the element comment at the current position in this case.
+	 * the given Root {@code _root} or one of the identified includables and
+	 * appends the element comment at the current position in this case.
 	 * @param _root - the currently generated Root
 	 * @param _indent - the current indentation as String
 	 * @param _id - the declared identifier (const, var or type)
@@ -916,7 +916,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		else
 		{
-			// convert to tokens in an common intermediate language
+			// convert to tokens into a common intermediate language
 			tokens = Element.transformIntermediate(_input);
 		}
 		// END KGU#162 2016-03-31
@@ -969,7 +969,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			{
 				transformed = transformInput(transformed);
 			}
-			if (transformed.indexOf(CodeParser.getKeyword("output").trim()) >= 0)
+			else if (transformed.indexOf(CodeParser.getKeyword("output").trim()) >= 0)
 			{
 				transformed = transformOutput(transformed);
 			}
@@ -1041,7 +1041,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Creates a type description for the target language from the given
 	 * TypeMapEntry {@code typeInfo}.
-	 * For the case special treatment might be necessary within a nested type
+	 * For the case a special treatment might be necessary within a nested type
 	 * definition, the enclosing TypeInfo may be given as {@code definingType}
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
 	 * @param definingType - the enclosing type just being defined or null
@@ -1492,9 +1492,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//	// END KGU#189 2016-04-29
 		//}
 		//String[] typeNameIndex = {type, name, index};
-		String[] typeNameIndex = {type, name, index, comp};
+		//return typeNameIndex;
+		String[] typeNameIndexPath = {type, name, index, comp};
+		return typeNameIndexPath;
 		// END KGU#388 2017-09-27
-		return typeNameIndex;
 	}
 	// END KGU#109/KGU#141 2016-01-16
 	

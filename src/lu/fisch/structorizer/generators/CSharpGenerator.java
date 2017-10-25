@@ -149,26 +149,26 @@ public class CSharpGenerator extends CGenerator
 		return exts;
 	}
 
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"abstract", "as", "base", "bool", "break", "byte",
-		"case", "catch", "char", "checked", "class", "const", "continue",
-		"decimal", "default", "delegate", "do", "double",
-		"else", "enum", "event", "explicit", "extern",
-		"false", "finally", "fixed", "float", "for", "foreach", "goto",
-		"if", "implicit", "in", "int", "interface", "internal", "is",
-		"lock", "long", "namespace", "new", "null",
-		"object", "operator", "out", "override", "params", "private", "public",
-		"readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof",
-		"stackalloc", "static", "string", "struct", "switch",
-		"this", "throw", "true", "try", "typeof",
-		"uint", "ulong", "unchecked", "unsafe", "ushort", "using",
-		"virtual", "void", "volatile", "while"};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"abstract", "as", "base", "bool", "break", "byte",
+//		"case", "catch", "char", "checked", "class", "const", "continue",
+//		"decimal", "default", "delegate", "do", "double",
+//		"else", "enum", "event", "explicit", "extern",
+//		"false", "finally", "fixed", "float", "for", "foreach", "goto",
+//		"if", "implicit", "in", "int", "interface", "internal", "is",
+//		"lock", "long", "namespace", "new", "null",
+//		"object", "operator", "out", "override", "params", "private", "public",
+//		"readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof",
+//		"stackalloc", "static", "string", "struct", "switch",
+//		"this", "throw", "true", "try", "typeof",
+//		"uint", "ulong", "unchecked", "unsafe", "ushort", "using",
+//		"virtual", "void", "volatile", "while"};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	// END KGU 2016-08-12
 	
 	// START KGU#348 2017-02-24: Enh. #348: Support for Parallel section translation
 	private int subClassInsertionLine = 0;

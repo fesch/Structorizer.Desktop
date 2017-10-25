@@ -108,7 +108,6 @@ import lu.fisch.structorizer.parsers.*;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.regex.Pattern;
 
 import lu.fisch.structorizer.elements.*;
@@ -173,25 +172,25 @@ public class PasGenerator extends Generator
 	// END KGU#78 2015-12-18
 
 	
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"and", "array", "begin",
-		"case", "const", "div", "do", "downto",
-		"else", "end", "file", "for", "function", "goto",
-		"if", "in", "label", "mod", "nil", "not", "of", "or",
-		"packed", "procedure", "program", "record", "repeat",
-		"set", "shl", "shr", "then", "to", "type",
-		"until", "var", "while", "with"
-		};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	public boolean isCaseSignificant()
-	{
-		return false;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"and", "array", "begin",
+//		"case", "const", "div", "do", "downto",
+//		"else", "end", "file", "for", "function", "goto",
+//		"if", "in", "label", "mod", "nil", "not", "of", "or",
+//		"packed", "procedure", "program", "record", "repeat",
+//		"set", "shl", "shr", "then", "to", "type",
+//		"until", "var", "while", "with"
+//		};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	public boolean isCaseSignificant()
+//	{
+//		return false;
+//	}
+//	// END KGU 2016-08-12
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)
@@ -1555,7 +1554,7 @@ public class PasGenerator extends Generator
 	}
 
 	/**
-	 * Adds constant definitions for all non-complex constants in {@code _root.constants}.
+	 * Adds type definitions for all types in {@code _root.getTypeInfo()}.
 	 * @param _root - originating Root
 	 * @param _indent - current indentation level (as String)
 	 * @param _sectionBegun - whether the TYPE section had already been introduced by keyword CONST
@@ -1596,12 +1595,14 @@ public class PasGenerator extends Generator
 	}
 
 	/**
-	 * @param _root
-	 * @param _indent
-	 * @param _varNames
-	 * @param _complexConsts
-	 * @param _sectionBegun TODO
-	 * @return TODO
+	 * Adds declarations for the variables and complex constants in {@code _varNames} from
+	 * the given {@link Root} {@code _root}.  
+	 * @param _root - the owning {@link Root}
+	 * @param _indent - the current indentation (as string)
+	 * @param _varNames - list of occurring variable names
+	 * @param _complexConsts - list of constants with non-scalar type
+	 * @param _sectionBegun - whether the introducing keyword for this declaration section has already been placed
+	 * @return whether the type section has been opened.
 	 */
 	protected boolean generateVarDecls(Root _root, String _indent, StringList _varNames, StringList _complexConsts, boolean _sectionBegun) {
 		String indentPlus1 = _indent + this.getIndent();

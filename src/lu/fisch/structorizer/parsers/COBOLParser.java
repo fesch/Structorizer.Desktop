@@ -4577,6 +4577,7 @@ public class COBOLParser extends CodeParser
 	private boolean fileStatusFctAdded = false;
 	private static final String fileStatusCaseText = "fileDescr\n0, -1\n-2\n-3\ndefault";
 	private static final String[] fileStatusCodes = {"39", "35", "37", "00"};
+	private static final String[] fileStatusComments = {"General failure", "File not found", "File access denied", "Ok"};
 
 //	/**
 //	 * Used to combine nested declarations within one element
@@ -5828,11 +5829,13 @@ public class COBOLParser extends CodeParser
 			if (!this.fileStatusFctAdded) {
 				Root fileStatusFct = new Root();
 				fileStatusFct.setText("fileStatusToCobol(fileDescr: int): String");
-				fileStatusFct.setComment("Derives a COBOL file satus value from the file descriptor of the Structorizer File_API.");
+				fileStatusFct.setComment("Derives a COBOL file status value from the file descriptor of the Structorizer File_API.");
 				fileStatusFct.setProgram(false);
 				Case fileStatusCase = new Case(StringList.explode(fileStatusCaseText, "\n"));
 				for (int i = 0; i < fileStatusCodes.length; i++) {
-					fileStatusCase.qs.get(i).addElement(new Instruction("file_status <- \"" + fileStatusCodes[i] + "\""));
+					Instruction asgnmt = new Instruction("file_status <- \"" + fileStatusCodes[i] + "\"");
+					asgnmt.setComment(fileStatusComments[i]);
+					fileStatusCase.qs.get(i).addElement(asgnmt);
 				}
 				fileStatusFct.children.addElement(fileStatusCase);
 				fileStatusFct.children.addElement(new Instruction(CodeParser.getKeywordOrDefault("preReturn", "return") + " file_status"));

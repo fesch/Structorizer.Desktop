@@ -184,24 +184,24 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#16/#47 2015-11-30
 
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"abstract", "assert", "boolean", "break", "byte",
-		"case", "catch", "char", "class", "const", "continue",
-		"default", "do", "double",
-		"else", "enum", "extends",
-		"false", "final", "finally", "float", "for", "goto",
-		"if", "implements", "import", "instanceof", "int", "interface",
-		"long", "native", "new", "null",
-		"package", "private", "protected", "public",
-		"return", "short", "static", "super", "switch", "synchronised",
-		"this", "throw", "throws", "transient", "true", "try",
-		"void", "volatile", "while"};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"abstract", "assert", "boolean", "break", "byte",
+//		"case", "catch", "char", "class", "const", "continue",
+//		"default", "do", "double",
+//		"else", "enum", "extends",
+//		"false", "final", "finally", "float", "for", "goto",
+//		"if", "implements", "import", "instanceof", "int", "interface",
+//		"long", "native", "new", "null",
+//		"package", "private", "protected", "public",
+//		"return", "short", "static", "super", "switch", "synchronised",
+//		"this", "throw", "throws", "transient", "true", "try",
+//		"void", "volatile", "while"};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	// END KGU 2016-08-12
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)

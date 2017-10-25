@@ -1120,7 +1120,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //        		.add(0, Math.min(rect.bottom, Short.MAX_VALUE), Short.MAX_VALUE)
 //        		// END KGU#411 2017-05-26
 //        		);
-    	System.out.println(rect);
+    	//System.out.println(rect);
     	Dimension oldDim = this.getPreferredSize();
     	if (rect.right != oldDim.width || rect.bottom != oldDim.height) {
     		this.setPreferredSize(new Dimension(rect.right, rect.bottom));

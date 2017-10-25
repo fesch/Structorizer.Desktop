@@ -99,7 +99,6 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.parsers.CodeParser;
-import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 public class PerlGenerator extends Generator {
@@ -150,24 +149,24 @@ public class PerlGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 	
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"and", "cmp", "continue", "do",
-		"else", "elsif", "eq", "exp",
-		"for", "foreach", "ge", "gt",
-		"if", "le", "lock", "lt", "ne", "no", "or",
-		"package", "qq", "qr", "qw", "qx", 
-		"sub", "tr", "unless", "until", "while", "xor"
-		};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	public boolean isCaseSignificant()
-	{
-		return false;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"and", "cmp", "continue", "do",
+//		"else", "elsif", "eq", "exp",
+//		"for", "foreach", "ge", "gt",
+//		"if", "le", "lock", "lt", "ne", "no", "or",
+//		"package", "qq", "qr", "qw", "qx", 
+//		"sub", "tr", "unless", "until", "while", "xor"
+//		};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	public boolean isCaseSignificant()
+//	{
+//		return false;
+//	}
+//	// END KGU 2016-08-12
 	
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)

@@ -236,23 +236,23 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"auto", "break", "case", "char", "const", "continue",
-		"default", "do", "double", "else", "enum", "extern",
-		"float", "for", "goto", "if", "int", "long",
-		"register", "return",
-		"short", "signed", "sizeof", "static", "struct", "switch",
-		"typedef", "union", "unsigned", "void", "volatile", "while"};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	public boolean isCaseSignificant()
-	{
-		return true;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"auto", "break", "case", "char", "const", "continue",
+//		"default", "do", "double", "else", "enum", "extern",
+//		"float", "for", "goto", "if", "int", "long",
+//		"register", "return",
+//		"short", "signed", "sizeof", "static", "struct", "switch",
+//		"typedef", "union", "unsigned", "void", "volatile", "while"};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	public boolean isCaseSignificant()
+//	{
+//		return true;
+//	}
+//	// END KGU 2016-08-12
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)

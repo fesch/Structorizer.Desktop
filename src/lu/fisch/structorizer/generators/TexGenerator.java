@@ -385,15 +385,15 @@ public class TexGenerator extends Generator {
 		return code.getText();
 	}
 
-	@Override
-	public String[] getReservedWords() {
-		return null;
-	}
-
-	@Override
-	public boolean isCaseSignificant() {
-		return false;
-	}
+//	@Override - obsolete since 3.27
+//	public String[] getReservedWords() {
+//		return null;
+//	}
+//
+//	@Override
+//	public boolean isCaseSignificant() {
+//		return false;
+//	}
 	
 	
 }

@@ -73,6 +73,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig         2017.05.19      Issue #237: Expression transformation heuristics improved
  *      Kay Gürtzig         2017.10.05      Enh. #423: First incomplete approach to handle record variables
+ *      Kay Gürtzig         2017.10.24      Enh. #423: Record variable handling accomplished for release 3.27
  *
  ******************************************************************************************************
  *
@@ -114,7 +115,7 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
-
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.Alternative;
@@ -134,7 +135,6 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.CodeParser;
-import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 
@@ -205,22 +205,22 @@ public class BASHGenerator extends Generator {
 	protected StringList occurringFunctions = new StringList();
 	// END KGU#241 2015-09-01
 
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"if", "then", "else", "elif", "fi",
-		"select", "case", "in", "esac",
-		"for", "do", "done",
-		"while", "until",
-		"function", "return"};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	public boolean isCaseSignificant()
-	{
-		return true;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27 
+//    private static final String[] reservedWords = new String[]{
+//		"if", "then", "else", "elif", "fi",
+//		"select", "case", "in", "esac",
+//		"for", "do", "done",
+//		"while", "until",
+//		"function", "return"};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	public boolean isCaseSignificant()
+//	{
+//		return true;
+//	}
+//	// END KGU 2016-08-12
 	
 	/************ Code Generation **************/
 	
@@ -302,9 +302,49 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+    	// Trim the tokens at end (just for sure)
+    	int pos0 = 0;
+    	int posx = tokens.count();
+    	while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
+    	while (pos0 < posx && tokens.get(posx-1).equals(" ")) { posx--; }
+    	tokens.remove(posx, tokens.count());
+    	tokens.remove(0, pos0);
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
+		// START KGU#388 2017-10-24: Enh. #335, #389, #423
+		if (posAsgnOpr > 0) {
+			// FIXME: Consider using lValueToTypeNameIndexComp(String) rather than reinventing all
+			String token0 = tokens.get(0);
+			int posColon = -1;
+			if (token0.equalsIgnoreCase("var") || token0.equalsIgnoreCase("const")) {
+				tokens.remove(0);
+				posAsgnOpr--;
+				posColon = tokens.indexOf(":");
+			}
+			else if (token0.equalsIgnoreCase("dim")) {
+				tokens.remove(0);
+				posAsgnOpr--;
+				posColon = tokens.indexOf("as", false);
+			}
+			if (posColon > 0 && posColon < posAsgnOpr) {
+				tokens.remove(posColon, posAsgnOpr);
+				posAsgnOpr = posColon;
+			}
+			// START KGU#388 2017-10-05: Enh. #423
+			int posDot = -1;
+			while ((posDot = tokens.indexOf(".", posDot+1)) > 0 && posDot + 1 < posAsgnOpr) {
+				if (Function.testIdentifier(tokens.get(posDot+1), null))
+				{
+					// FIXME: Handle multi-level record access! We might also check type
+					tokens.set(posDot - 1, tokens.get(posDot-1) + "[" + tokens.get(posDot+1) + "]");
+					tokens.remove(posDot, posDot+2);
+					posAsgnOpr -= 2;
+				}
+			}
+			// END KGU#388 2017-10-05
+		}
+		// END KGU#388 2017-10-24
 		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
 		if (tokens.contains(CodeParser.getKeyword("input")))
 		{
@@ -330,49 +370,26 @@ public class BASHGenerator extends Generator {
     		transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
     	}
 
-		// Now we remove spaces around the assignment operator
+		// Position of the assignment operator may have changed now
     	posAsgnOpr = tokens.indexOf("<-");
-    	if (posAsgnOpr >= 0)
-    	{
-    		int pos = posAsgnOpr - 1;
-    		// Eliminate blanks preceding the assignment operator
-    		while (pos >= 0 && tokens.get(pos).equals(" "))
-    		{
-    			tokens.delete(pos--);
-    			posAsgnOpr--;
-    		}
-    		// Eliminate blanks following the assignment operator
-    		pos = posAsgnOpr + 1;
-    		while (pos < tokens.count() && tokens.get(pos).equals(" "))
-    		{
-    			tokens.delete(pos);
-    		}
-    	}
 		// END KGU#96 2016-01-08
 		// FIXME (KGU): Function calls, math expressions etc. will have to be put into brackets etc. pp.
 		tokens.replaceAll("div", "/");
-		tokens.replaceAll("<-", "=");
 		tokens.replaceAllCi("false", "0");	// FIXME: Is this correct?
 		tokens.replaceAllCi("true", "1");	// FIXME: Is this correct?
-		// START KGU#131 2015-01-08: Prepared for old-style test expressions, but disabled again
-//		tokens.replaceAll("<", " -lt ");
-//		tokens.replaceAll(">", " -gt ");
-//		tokens.replaceAll("==", " -eq ");
-//		tokens.replaceAll("!=", " -ne ");
-//		tokens.replaceAll("<=", " -le ");
-//		tokens.replaceAll(">=", " -ge ");
-		// END KGU#131 2016-01-08
 		// START KGU#164 2016-03-29: Bugfix #138 - function calls weren't handled
 		//return tokens.concatenate();
 		String lval = "";
 		if (posAsgnOpr > 0)
 		{
 			// Separate lval and assignment operator from the expression tokens
-			lval += tokens.concatenate("", 0, posAsgnOpr + 1);
+			lval += tokens.concatenate("", 0, posAsgnOpr).trim() + "=";
 			tokens = tokens.subSequence(posAsgnOpr+1, tokens.count());
 		}
 		else if (tokens.count() > 0)
 		{
+			// Since keywords have already been replaced by super.transform(String), this is quite fine
+			// 
 			String[] keywords = CodeParser.getAllProperties();
 			boolean startsWithKeyword = false;
 			String firstToken = tokens.get(0);
@@ -386,11 +403,19 @@ public class BASHGenerator extends Generator {
 				}
 			}
 		}
+    	// Trim the tokens at front
+    	pos0 = 0;
+    	posx = tokens.count();
+    	while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
+    	tokens.remove(0, pos0);
 		// Re-combine the rval expression to a string 
-		String expr = tokens.concatenate().trim();
+		String expr = tokens.concatenate();
 		// If the expression is a function call, then convert it to shell syntax
 		// (i.e. drop the parentheses and dissolve the argument list)
 		Function fct = new Function(expr);
+		// START KGU#388 2017-10-24: Enh. #423
+		HashMap<String, String> recordIni = null;
+		// END KGU#388 2017-10-24
 		if (fct.isFunction())
 		{
 			// START KGU#405 2017-05-19: Bugfix #237 - was too simple an analysis
@@ -429,6 +454,23 @@ public class BASHGenerator extends Generator {
 			// END KGU#405 2017-05-19
 			expr = "(" + items.getLongString() + ")";
 		}
+		// START KGU#388 2017-10-24: Enh. #423
+		else if (tokens.count() > 2 && Function.testIdentifier(tokens.get(0), null)
+				&& tokens.get(1).equals("{") && expr.endsWith("}")
+				&& (recordIni = Element.splitRecordInitializer(expr)) != null) {
+			StringBuilder sb = new StringBuilder(15 * recordIni.size());
+			String sepa = "(";
+			for (Entry<String, String> entry: recordIni.entrySet()) {
+				String key = entry.getKey();
+				if (!key.startsWith("§")) {
+					sb.append(sepa + '[' + key + "]=" + entry.getValue());
+					sepa = " ";
+				}
+			}
+			sb.append(")");
+			expr = sb.toString();
+		}
+		// END KGU#388 2017-10-24
 		// The following is a very rough and vague heuristics to support arithmetic expressions 
 		else if ( !(expr.startsWith("(") && expr.endsWith(")")
 				|| expr.startsWith("`") && expr.endsWith("`")
@@ -704,6 +746,11 @@ public class BASHGenerator extends Generator {
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
 				String line = text.get(i);
+				// START KGU#388 2017-10-24: Enh. #423 ignore type definitions
+				if (Instruction.isTypeDefinition(line)) {
+					continue;
+				}
+				// END KGU#388 2017-10-24
 				String codeLine = transform(line);
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 				if (this.usesFileAPI) {
@@ -1227,6 +1274,15 @@ public class BASHGenerator extends Generator {
 		insertComment("TODO: Check and revise the syntax of all expressions!", _indent);
 		code.add("");
 		// END KGU#129 2016-01-08
+		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
+		for (int i = 0; i < varNames.count(); i++) {
+			String varName = varNames.get(i);
+			TypeMapEntry typeEntry = typeMap.get(varName);
+			if (typeEntry != null && typeEntry.isRecord()) {
+				addCode("declare -A " + varName, _indent, false);
+			}
+		}
+		// END KGU#389 2017-10-23
 		generateCode(_root.children, indent);
 		
 		if( ! _root.isProgram() ) {

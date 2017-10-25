@@ -158,28 +158,28 @@ public class PythonGenerator extends Generator
 		}
 		// END KGU#78 2015-12-18
 		
-		// START KGU 2016-08-12: Enh. #231 - information for analyser
-	    private static final String[] reservedWords = new String[]{
-			"and", "assert", "break", "class", "continue",
-			"def", "del",
-			"else", "elif", "except", "exec",
-			"finally", "for", "from", "global",
-			"if", "import", "in", "is", "lambda", "not", "or",
-			"pass", "print", "raise", "return", 
-			"try", "while",
-			"Data", "Float", "Int", "Numeric", "Oxphys",
-			"array", "close", "float", "int", "input",
-			"open", "range", "type", "write", "zeros"
-			};
-		public String[] getReservedWords()
-		{
-			return reservedWords;
-		}
-		public boolean isCaseSignificant()
-		{
-			return false;
-		}
-		// END KGU 2016-08-12
+//		// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//	    private static final String[] reservedWords = new String[]{
+//			"and", "assert", "break", "class", "continue",
+//			"def", "del",
+//			"else", "elif", "except", "exec",
+//			"finally", "for", "from", "global",
+//			"if", "import", "in", "is", "lambda", "not", "or",
+//			"pass", "print", "raise", "return", 
+//			"try", "while",
+//			"Data", "Float", "Int", "Numeric", "Oxphys",
+//			"array", "close", "float", "int", "input",
+//			"open", "range", "type", "write", "zeros"
+//			};
+//		public String[] getReservedWords()
+//		{
+//			return reservedWords;
+//		}
+//		public boolean isCaseSignificant()
+//		{
+//			return false;
+//		}
+//		// END KGU 2016-08-12
 
 		// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 		/* (non-Javadoc)

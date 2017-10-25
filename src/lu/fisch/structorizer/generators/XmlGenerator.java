@@ -518,17 +518,17 @@ public class XmlGenerator extends Generator {
 		return content;	
 	}
 
-	@Override
-	public String[] getReservedWords() {
-		// Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isCaseSignificant() {
-		// Auto-generated method stub
-		return false;
-	}
+//	@Override - obsolete since 3.27
+//	public String[] getReservedWords() {
+//		// Auto-generated method stub
+//		return null;
+//	}
+//
+//	@Override
+//	public boolean isCaseSignificant() {
+//		// Auto-generated method stub
+//		return false;
+//	}
 	
 
 }

@@ -175,30 +175,30 @@ public class PHPGenerator extends Generator
 	}
 	// END KGU#78 2015-12-18
     
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"abstract", "and", "array", "as", "break",
-		"case", "catch", "class", "clone", "const", "continue",
-		"declare", "default", "do",
-		"echo", "else", "elseif", "enddeclare", "endfor", "endforeach",
-		"endif", "endswith", "endwhile", "exit", "extends",
-		"final", "finally", "for", "foreach", "function",
-		"global", "goto",
-		"if", "implements", "include", "instanceof", "insteadof",
-		"interface", "namespace", "new", "or",
-		"print", "private", "protected", "public",
-		"require", "return", "static", "switch", "throw", "trait", "try",
-		"use", "var", "while", "xor", "yield"
-		};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	public boolean isCaseSignificant()
-	{
-		return true;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"abstract", "and", "array", "as", "break",
+//		"case", "catch", "class", "clone", "const", "continue",
+//		"declare", "default", "do",
+//		"echo", "else", "elseif", "enddeclare", "endfor", "endforeach",
+//		"endif", "endswith", "endwhile", "exit", "extends",
+//		"final", "finally", "for", "foreach", "function",
+//		"global", "goto",
+//		"if", "implements", "include", "instanceof", "insteadof",
+//		"interface", "namespace", "new", "or",
+//		"print", "private", "protected", "public",
+//		"require", "return", "static", "switch", "throw", "trait", "try",
+//		"use", "var", "while", "xor", "yield"
+//		};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	public boolean isCaseSignificant()
+//	{
+//		return true;
+//	}
+//	// END KGU 2016-08-12
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)
