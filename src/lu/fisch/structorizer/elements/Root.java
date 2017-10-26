@@ -116,6 +116,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.07.02      Enh. #389: Analyser and execution mechanisms adapted to new include design
  *      Kay Gürtzig     2017.09.18      Enh. #423: Type retrieval and Analyser enhancement for record types
  *      Kay Gürtzig     2017.10.09      Enh. #423: Adjustments for Analyser check 24.
+ *      Kay Gürtzig     2017.10.26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
  *      
  ******************************************************************************************************
  *
@@ -2970,14 +2971,14 @@ public class Root extends Element {
 
 	/**
 	 * CHECK #3: non-initialised variables (except REPEAT)
-	 * @param ele - Element to be analysed
+	 * @param _ele - Element to be analysed
 	 * @param _errors - global error list
 	 * @param _vars - variables with certain initialisation 
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
 	 * @param _myUsedVars - variables used but not defined by this element
-	 * @param lineNo TODO
+	 * @param _lineNo - number of the originating code line
 	 */
-	private void analyse_3(Element ele, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, StringList _myUsedVars, int lineNo)
+	private void analyse_3(Element _ele, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, StringList _myUsedVars, int _lineNo)
 	{
 			for (int j=0; j<_myUsedVars.count(); j++)
 			{
@@ -2989,8 +2990,8 @@ public class Root extends Element {
 				// END KGU#343 2017-02-07
 				// START KGU##375 2017-04-05: Enh. #388
 				String lineRef = "";
-				if (lineNo >= 0) {
-					lineRef = Menu.errorLineReference.getText().replace("%", Integer.toString(lineNo+1));
+				if (_lineNo >= 0) {
+					lineRef = Menu.errorLineReference.getText().replace("%", Integer.toString(_lineNo+1));
 				}
 				// END KGU#375 2017-04-05
 				if (!_vars.contains(myUsed) && !_uncertainVars.contains(myUsed))
@@ -2998,7 +2999,7 @@ public class Root extends Element {
 					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
 					// START KGU##375 2017-04-05: Enh. #388
 					//addError(_errors, new DetectedError(errorMsg(Menu.error03_1, myUsed), ele), 3);
-					addError(_errors, new DetectedError(errorMsg(Menu.error03_1, new String[]{myUsed, lineRef}), ele), 3);
+					addError(_errors, new DetectedError(errorMsg(Menu.error03_1, new String[]{myUsed, lineRef}), _ele), 3);
 					// END KGU#375 2017-04-05
 				}
 				else if (_uncertainVars.contains(myUsed))
@@ -3006,7 +3007,7 @@ public class Root extends Element {
 					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
 					// START KGU##375 2017-04-05: Enh. #388
 					//addError(_errors, new DetectedError(errorMsg(Menu.error03_2, myUsed), ele), 3);
-					addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{myUsed, lineRef}), ele), 3);
+					addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{myUsed, lineRef}), _ele), 3);
 					// END KGU#375 2017-04-05
 				}
 			}
@@ -3822,7 +3823,7 @@ public class Root extends Element {
 							if (path.isEmpty()) {
 								path = before;
 							}
-							varType = typeMap.get(path);
+							varType = _types.get(path);
 						}
 						if (varType != null && posBrack > 0 && varType.isArray()) {
 							String arrTypeStr = varType.getCanonicalType(true, false);
@@ -3866,8 +3867,8 @@ public class Root extends Element {
 	 * @param _vars - variables with certain initialisation
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
 	 * @param _constants - incremental constant definition map
-	 * @param _importStack TODO
-	 * @param _analyzedImports TODO
+	 * @param _importStack - names of imported includables
+	 * @param _analysedImports - 
 	 * @param _types - type definitions and declarations
 	 */
 	private void analyse_23(Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, StringList _importStack, HashMap<String, StringList> _analysedImports, HashMap<String, TypeMapEntry> _types)
@@ -3956,7 +3957,7 @@ public class Root extends Element {
 					// Add analysis for name conflicts and uncertain variables - might still occur among includes!
 					// START KGU#388 2017-09-17: Enh. #423
 					for (String key: importedTypes.keySet()) {
-						if (key.startsWith("%") && _types.containsKey(key)) {
+						if (key.startsWith(":") && _types.containsKey(key)) {
 							//error  = new DetectedError("There is a name conflict between local and imported type definition «%»!",(Element) _node.getElement(i));
 							addError(_errors, new DetectedError(errorMsg(Menu.error23_7, key.substring(1)), this), 23);							
 						}
@@ -4593,7 +4594,7 @@ public class Root extends Element {
 	}
 	@Override
 	protected String[] getRelevantParserKeys() {
-		// TODO Auto-generated method stub
+		// There no relevant parser keys here
 		return null;
 	}
 	

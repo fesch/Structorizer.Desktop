@@ -202,6 +202,12 @@ import lu.fisch.turtle.TurtleBox;
 
 import org.freehep.graphicsio.svg.SVGGraphics2D;
 
+/**
+ * Represents the working area of the Structorizer. Holds the current Nassi-Shneiderman diagram and manages
+ * all editing ativities as well as loading, saving, import, export etc.
+ * @author Robert Fisch
+ * @author Kay Gürtzig
+ */
 @SuppressWarnings("serial")
 public class Diagram extends JPanel implements MouseMotionListener, MouseListener, Printable, MouseWheelListener, ClipboardOwner, ListSelectionListener
 {
@@ -218,9 +224,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#363 2017-03-28
 	
+	/** Fixed size limitation for the file history */
 	private static final int MAX_RECENT_FILES = 10;
 	
 	// START KGU#48 2015-10-18: We must be capable of preserving consistency when root is replaced by the Arranger
+	/**
+	 * The current Nassi-Shneiderman diagram
+	 * @see #getRoot()
+	 * @see #setRoot(Root, boolean, boolean)
+	 * @see #setIf
+	 */
     //public Root root = new Root();
     private Root root = new Root();
     // END KGU 2015-10-18

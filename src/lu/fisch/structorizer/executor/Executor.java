@@ -1263,7 +1263,7 @@ public class Executor implements Runnable
 		// START KGU#375 2017-03-30: Enh. #388: Keep track of constants
 		//this.constants.clear();	// KGU#384 2017-04-22 -> new context
 		// END KGU#375 2017-03-30
-		// START KGU 2016-12-18: Enh. #314
+		// START KGU#311 2016-12-18: Enh. #314
 		for (Closeable file: this.openFiles) {
 			if (file != null) {
 				try {
@@ -1274,7 +1274,7 @@ public class Executor implements Runnable
 			}
 		}
 		this.openFiles.clear();
-		// END KGU 2016-12-18
+		// END KGU#311 2016-12-18
 
 		if (Arranger.hasInstance())
 		{
@@ -3395,10 +3395,10 @@ public class Executor implements Runnable
 	}
 
 	/**
-	 * Checks if the name described by {@code varName} represents a record and if so
+	 * Checks if the name described by {@code typeOrVarName} represents a record and if so
 	 * returns the respective TypeMapEntry, otherwise null.
 	 * @param typeOrVarName - a string sequence of modifiers, ids, and possible selectors 
-	 * @param isTypeName TODO
+	 * @param isTypeName - must be true for a type name and false for a var/const name.
 	 * @return a TypeMapEntry for a record type or null
 	 */
 	private TypeMapEntry identifyRecordType(String typeOrVarName, boolean isTypeName)

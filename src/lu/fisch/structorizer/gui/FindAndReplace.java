@@ -36,7 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.17      JTree for multi-Root retrieval
  *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fixed
  *      Kay Gürtzig     2017.06.22      NullPointerException on replacing due to cleared currentNode fixed
- *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in puldown list and esc key without pulldown
+ *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in pulldown list and Esc key without pulldown
  *      Kay Gürtzig     2017.10.09      Internal consistency of For elements on replacement ensured (KGU#431)
  *
  ******************************************************************************************************
@@ -119,19 +119,37 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 
+	/** pattern history limitation */
 	private static final int MAX_RECENT_PATTERNS = 10;
+	/** maximum height of the text and the comment preview text areas */
 	private static final int MAX_PREVIEW_HEIGHT = 75;
+	/** little trick to achieve a sufficient text box width on packing the dialog */
 	private static final String patternPrototype = "This is just a string long enough to establish a sufficient width for the entire dialog";
+	/** Search pattern history */
 	private final LinkedList<String> searchPatterns = new LinkedList<String>();
+	/** Replacement pattern history */
 	private final LinkedList<String> replacePatterns = new LinkedList<String>();
+	/** recursion-stopping flag for the choice list update of pattern comboboxes */
 	private boolean fillingComboBox = false;
+	/**
+	 * treeIterator is only used with single-Root scope, traversing the diagram without prediction of matching elements
+	 * @see #currentNode
+	 */
 	private IElementSequence.Iterator treeIterator = null;
+	/** Currently focused diagram {@link Element} (caches the current position of {@link #treeIterator}) */
 	private Element currentElement = null;
-	private int currentPosition = -1;		// Position of the match within an element's text or comment
+	/** Position of the match within the virtual concatenation of an element's text and comment (as far as being subject) */
+	private int currentPosition = -1;
+	/** Fixed invisible top node of the tree view, root of the apparent search result forest */
 	private final DefaultMutableTreeNode resultTop = new DefaultMutableTreeNode("Search Results");
+	/**
+	 * currentNode is used with multi-Root scope to navigate in the pre-retrieved tree of matching elements
+	 * @see #treeIterator
+	 */
 	private DefaultMutableTreeNode currentNode = null;
 	private DefaultTreeModel resultModel = null;
 	
+	// Pre-compiled matchers for word separation
 	private static final Pattern PTRN_WORDL = Pattern.compile("(\\n|.)*?\\W");
 	private static final Pattern PTRN_WORDR = Pattern.compile("\\W(\\n|.)*?");
 	private static Matcher mtchWordL = PTRN_WORDL.matcher("");
@@ -143,7 +161,8 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	public enum ElementType { ROOT, INSTRUCTION, ALTERNATIVE, CASE, FOR, WHILE, REPEAT, FOREVER, CALL, JUMP, PARALLEL };
 	
 	/**
-	 * Specifies the search scope
+	 * Specifies the search scope (a selected element sequence, single diagram, or multiple diagrams).<br/>
+	 * Text attribute is subject to locale setting. 
 	 */
 	public enum Scope { CURRENT_SELECTION, CURRENT_DIAGRAM, OPENED_DIAGRAMS;
 		private String text = null;
@@ -158,6 +177,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 	};
 	
+	/** The commanding {@link Diagram} */
 	private Diagram diagram;
 	
 	private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
@@ -202,7 +222,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	        return this;
 	    }
 	};
-	// TODO We need:
+	// Needed GUI controls
 	protected JLabel lblSearchPattern;
 	protected JLabel lblReplacePattern;
 	protected JComboBox<String> cmbSearchPattern;
@@ -226,12 +246,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	protected JButton btnReplace;
 	protected JButton btnReplaceAll;
 	protected JButton btnClose;
-	// FIXME Should there be only one text pane alternatively used for texts or comments? (How to distinguish both?)
-	protected JTextPane txtText;			// For the find result / preview, editable
-	protected StyledDocument docText = null;	// Copy of the found element text / comment with markers
-	protected JTextPane txtComm;			// For the find result / preview, editable
-	protected StyledDocument docComm = null;	// Copy of the found element comment with markers
-	protected JTree treResults = null;		// Presentation of the search results over a diagram forest
+	/** Preview area for the current element text, may be editable */
+	protected JTextPane txtText;
+	/** Copy of the found element text with match markers */
+	protected StyledDocument docText = null;	// 
+	/** preview area for the current element comment, may be editable */
+	protected JTextPane txtComm;
+	/** Copy of the found element comment with match markers */
+	protected StyledDocument docComm = null;
+	/** Presentation of the search results over a diagram forest */
+	protected JTree treResults = null;
 	
 	protected JPanel pnlOptions;
 	protected JPanel pnlMode;
@@ -241,16 +265,21 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	protected JPanel pnlElements;
 	protected JPanel pnlResults;
 	protected JPanel pnlPreview;
-	private KeyListener cmbKeyListener;		// Key listener for ComboBoxEditors
+	/** Key listener for ComboBoxEditors */
+	private KeyListener cmbKeyListener;
 	
 	/**
-	 * @param owner - commanding Diagram object (needed for selection retrieval etc.)
+	 * Creates a new Find & Replace dialog associated with {@code _diagram}.
+	 * @param _diagram - commanding {@link Diagram} object (needed for selection retrieval etc.)
 	 */
 	public FindAndReplace(Diagram _diagram) {
 		diagram = _diagram;
 		initComponents();
 	}
 
+	/**
+	 * Creates and initializes the GUI
+	 */
 	private void initComponents()
 	{
 		// FIXME: There should rather be buttons FindAll, FindNext, FindPrev, ReplaceNext, ReplaceAll
@@ -888,6 +917,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		//this.addWindowListener(this);
 	}
 
+	/**
+	 * Clears the current element reference (including match position and preview fields),
+	 * unselects the element in the diagram (if selected).
+	 */
 	protected void clearCurrentElement() {
 		Element selected = diagram.getSelected();
 		if (currentElement != null) {
@@ -908,6 +941,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		doButtons();
 	}
 	
+	/**
+	 * Clears the given {@link StyledDocument} {@code doc} behind one of the preview text areas. 
+	 * @param doc - the document to be emptied
+	 */
 	private void clearDoc(StyledDocument doc) {
 		try {
 			doc.remove(0, doc.getLength());
@@ -917,6 +954,14 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 	}
 
+	/**
+	 * Sets {@link Element} {@code ele} as {@link #currentElement} (if it hadn't already been)
+	 * and {@code positionInElement} as the current match position inside the texts of {@code ele}.
+	 * Then fills the preview text ares accordingly.<br/>
+	 * Used as action callback and within the find action.
+	 * @param ele - the element to be made the current element.
+	 * @param positionInElement - number of the current match 
+	 */
 	private void setCurrentElement(Element ele, int positionInElement)
 	{
 		if (ele != currentElement) {
@@ -939,10 +984,20 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		doButtons();
 	}
 	
-	private int fillPreview(StringList stringLst, StyledDocument doc, JTextPane txtPane, int posOffset, boolean enable) {
+	/**
+	 * Fills the document {@code doc} associated to {@link JTextPane} {@code txtPane} with the match preview
+	 * for the original {@link StringList} {@code txtLines}. 
+	 * @param txtLines - source text broken to lines
+	 * @param doc - the target {@link StyledDocument} 
+	 * @param txtPane - the presenting {@link JTextPane}, to be enabled or disabled (according to {@code enable}) 
+	 * @param posOffset - the index of the current match
+	 * @param enable - whether the {@code txtPane} is to be enabled.
+	 * @return the number of matches found within the given source text {@code txtLines}
+	 */
+	private int fillPreview(StringList txtLines, StyledDocument doc, JTextPane txtPane, int posOffset, boolean enable) {
 		int nParts = 0;
 		int currPos = currentPosition - posOffset;
-		String text0 = stringLst.getText();
+		String text0 = txtLines.getText();
 		clearDoc(doc);
 		txtPane.setEnabled(enable);
 		String pattern = (String)cmbSearchPattern.getEditor().getItem();
@@ -956,11 +1011,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 		else {
 			// In non-regex mode it's relatively simple: We know the exact length
-			// of the seeked pattern. The actual match might only differ in case
+			// of the sought pattern. The actual match might only differ in case.
 			// So, having the split parts we can just copy the matches from the
-			// resective positions of the original text (text0).
-			// For whole word mode its more tricky - we must re-compose the erroneously
-			// slit parts first. All this is the task of splitText(). 
+			// respective positions of the original text (text0).
+			// For whole word mode it's more tricky - we must re-compose the erroneously
+			// split parts first. All this is the task of splitText(). 
 			StringList matches = new StringList();
 			String[] parts = splitText(text0, pattern, matches);
 			nParts = parts.length;
@@ -990,6 +1045,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	}
 
 	// FIXME: We might cache the split results for the currentElement
+	/**
+	 * Splits the source string {@code text} (may contain newlines) with respect to the
+	 * matching {@code pattern}, returns the split results and fills th matching substrings
+	 * into {@code realWords} (the name means that it contains the real strings matching
+	 * the patterns as needed for the preview highlighting.
+	 * @param text - the newline-separated source text as String
+	 * @param pattern - the search pattern as string
+	 * @param realWords - empty {@link StringList} to be filled with the matching substrings
+	 * @return array of splitting results (i.e. the substrings around the matches)
+	 */
 	private String[] splitText(String text, String pattern, StringList realWords) {
 		int lenPattern = pattern.length();
 		boolean caseSens = chkCaseSensitive.isSelected();
@@ -1072,6 +1137,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		return parts;
 	}
 
+	/**
+	 * Empties the result tree and unsets all navigation data ({@link #currentElement}, {@link #treeIterator},
+	 * {@link #currentNode}, {@link #currentPosition}). (part of the ItemListener for the scope choice, the StateChangeListener of the pattern combo boxes)
+	 */
 	private void resetResults()
 	{
 		treeIterator = null;
@@ -1084,6 +1153,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 	}
 
+	/**
+	 * Enables or disables all element types (selects or unselects the corresponding
+	 * checkboxes) and updates button visibility.
+	 * @param toBeSelected - whether to select or unselect the checkboxes.
+	 */
 	protected void selectAllElementTypes(boolean toBeSelected)
 	{
 		for (int i = 0; i < ElementType.values().length; i++) {
@@ -1097,6 +1171,18 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 	}
 
+	/**
+	 * Action method for find event {@code evt}. Performs a single action step, i.e.
+	 * jumps to the next matching position (if {@code gotoNext} is true) after having
+	 * possibly done a single replacement at the current matching position (if {@code replace} is true).
+	 * In case there is no {@link #currentNode} (with scope {@link #OPENED_DIAGRAMS})
+	 * or the {@link #treeIterator} is exhausted (other scopes), the result tree will be
+	 * refreshed according to the current criteria.
+	 * @param evt - the triggering {@link ActionEvent}
+	 * @param replace - are replacements to be performed?
+	 * @param gotoNext - is the position to be moved to the next matching hit?
+	 * @return indicates whether a requested replacement could be performed 
+	 */
 	protected boolean findActionPerformed(ActionEvent evt, boolean replace, boolean gotoNext) {
 		boolean done = false;
 		boolean up = rbUp.isSelected();
@@ -1104,6 +1190,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		Element selected = diagram.getSelected();
 		Scope scope = (Scope)cmbScope.getSelectedItem();
 		if (scope == Scope.OPENED_DIAGRAMS) {
+			// Previous search exhausted? Then retrieve results
 			if (currentNode == null) {
 				fillResultTree();
 				gotoNext = false;
@@ -1123,9 +1210,13 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				treeIterator = diagram.getRoot().children.iterator(true);
 			}
 			else if (selected instanceof IElementSequence) {
+				// We are on a Subqueue level, request a deep search iterator
 				treeIterator = ((IElementSequence) selected).iterator(true);
 			}
 			else if (selected.parent != null) {
+				// We are neither on Subqueue level nor on Root level, so concoct a
+				// pseudo-sequence only comprising just the selected element and
+				// request a deep search iterator (selected might be composed)
 				treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
 			}
 			else if (selected instanceof Root) {
@@ -1138,7 +1229,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				}
 				treeIterator = ((Root)selected).children.iterator(true);
 			}
-			// Go to last element if we are to go upwards
+			// Go to last element if we are to go upwards (looks awkward but works)
 			if (treeIterator != null && up) {
 				while (treeIterator.hasNext()) {
 					treeIterator.next();
@@ -1147,44 +1238,22 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 		int nMatches = 0;
 		if (currentElement != null) {
+			// Get the total number of (remaining) matches in the current element's interesting texts
 			nMatches = checkElementMatch(currentElement);
 		}
 		if (replace && nMatches > 0) {
-			// Replace according to the current pattern
+			// Replace next match according to the current pattern
 			Root root = Element.getRoot(currentElement);
 			if (root != null) {
+				// Every single replacement is to be undoable ...
 				root.addUndo();
 			}
 			StringList text = currentElement.getText();
 			StringList comment = currentElement.getComment();
-//			int matchesSeen = 0;
+			// Differentiate the matches according to the respective target text
 			int nMatchesComment = textMatches(comment);
 			int nMatchesText = textMatches(text);
-//			if (up && chkInComments.isSelected()) {
-//				if (nMatchesComment >= currentPosition) {
-//					comment = replacePattern(comment, elementwise, currentPosition);
-//					currentElement.setComment(comment);
-//					this.fillPreview(comment, docComm, txtComm, 0);
-//					done = true;
-//				}
-//				matchesSeen += nMatchesComment;
-//			}
-//			if ((elementwise || !done) && chkInTexts.isSelected()) {
-//				if (nMatchesText > currentPosition - matchesSeen) {
-//					text = replacePattern(text, elementwise, currentPosition - matchesSeen);
-//					currentElement.setText(text);
-//					this.fillPreview(text, docText, txtText, matchesSeen);
-//					done = true;
-//				}
-//				matchesSeen += nMatchesText;
-//			}
-//			if (rbDown.isSelected() && (elementwise || !done) && chkInComments.isSelected()
-//					&& nMatchesComment > currentPosition - matchesSeen) {
-//				comment = replacePattern(comment, elementwise, currentPosition - matchesSeen);
-//				currentElement.setComment(comment);
-//				this.fillPreview(comment, docComm, txtComm, matchesSeen);
-//				done = true;
-//			}
+			// Start with the element text (prioritized if included)
 			if ((elementwise || !done) && chkInTexts.isSelected() 
 					&& nMatchesText > currentPosition) {
 				text = replacePattern(text, elementwise, currentPosition);
@@ -1197,6 +1266,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				this.fillPreview(text, docText, txtText, 0, true);
 				done = true;
 			}
+			// Now cater for the comment if included
 			if ((elementwise || !done) && chkInComments.isSelected()
 					&& nMatchesComment > currentPosition - nMatchesText) {
 				comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
@@ -1205,33 +1275,45 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				done = true;
 			}
 			if (currentNode != null) {
-				// We better cache the current Node locally lest the reload actions should reset it.
+				// We better cache the current node locally lest the reload actions should reset it.
 				DefaultMutableTreeNode currNode = currentNode;
-				resultModel.reload(currentNode);
+				resultModel.reload(currentNode);	// update the element's presentation in the tree view
 				DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
+				// In case we are working on a Root make sure its representing top node is also updated
 				if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
 					resultModel.reload(parent);
+					// Restore the previously cached selection
 					currentNode = currNode;
 					treResults.setSelectionPath(new TreePath(currentNode.getPath()));
 				}
 			}
 			diagram.doButtons();
+			// Make sure the Structorizer working area is refreshed, too
 			diagram.redraw(currentElement);
 			if (done) {
 				if (elementwise) {
+					// after an elementwise replacement there can't be matches left (unless the
+					// replacement hasn't accidently induced new matches, which should NOT be
+					// involved during this cycle)
 					nMatches = 0;
 				}
 				else {
+					// One match has gone (it would be an issue, however, if the replacement
+					// accidently conjured up a new match like replacing "abc" with "ab" in text
+					// "xabccy")
 					nMatches--;
+					// Avoid a node change while the current node isn't exhausted (note that on
+					// downward search the currentPosition must not be incremented after the match
+					// having been replaced).
 					if (!up && currentPosition < nMatches || up && --currentPosition >= 0) {
 						gotoNext = false;
 					}
 				}
 			}
 		}
-		// Is there another matching position within this element?
+		// Is there another matching position within this element? (We might have come here in non-replacing mode!)
 		if (gotoNext && !elementwise && currentPosition >= 0 && (up && currentPosition > 0 || !up && currentPosition < nMatches-1)) {
-			// just update the preview
+			// yes: just update the preview
 			if (up) {
 				currentPosition--;
 			}
@@ -1241,7 +1323,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			setCurrentElement(currentElement, currentPosition);
 		}
 		else if (gotoNext && treeIterator != null) {
-			// find the next matching element within the current diagram
+			// no, single-Root scope: find the next matching element within the current diagram
 			boolean found = false;
 			clearCurrentElement();
 			if (rbUp.isSelected()) 
@@ -1295,6 +1377,12 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		return done;
 	}
 	
+	/**
+	 * Does nothing in case of an active multi-Root search (scope OPENED_DIAGRAMS). Otherwise
+	 * (i.e. in single-Root scope), the result tree is updated around the {@link #currentElement},
+	 * i.e. with dummy nodes before and/or after the node representing the current element. 
+	 * @see #fillResultTree()
+	 */
 	private void updateResultTree() {
 		if (currentNode == null) {
 			this.resultTop.removeAllChildren();
@@ -1320,8 +1408,8 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	}
 
 	/**
-	 * Initializes the result tree for scope OPENED_DIAGRAMS
-	 * Also sets this.currentNode (if possible)
+	 * Initializes the result tree for scope OPENED_DIAGRAMS and sets {@link #currentNode} (if possible)
+	 * @see #updateResultTree()
 	 */
 	private void fillResultTree() {
 		resultTop.removeAllChildren();
@@ -1370,8 +1458,17 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		while (findActionPerformed(evt, true, true));
 	}
 
+	/**
+	 * Replaces one (= {@code pos}-th) or all matches within the given {@link StringList} {@code text}
+	 * @param text - the target text, linewise.
+	 * @param all - whether all matches are to be replaced (then {@code pos} will be ignored)
+	 * @param pos - the number of the target match within the text otherwise
+	 * @return the replacement result as {@link StringList} of lines
+	 */
 	private StringList replacePattern(StringList text, boolean all, int pos) {
-		String brokenText = text.getText();
+		// We compose the StringList elements since there might be line-overlapping matches 
+		String brokenText = text.getText();	// the text lines concatenated with newlines
+		// Get the current settings
 		String searchPattern = (String)cmbSearchPattern.getEditor().getItem();
 		String replacePattern = (String)cmbReplacePattern.getEditor().getItem();
 		String resultText = brokenText;
@@ -1380,6 +1477,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		boolean wholeWord = chkWholeWord.isSelected(); 
 		if (all) {
 			if (!isRegex) {
+				// Patterns are no regular expressions. So form conservative regex patterns 
 				if (!caseSensitive) {
 					// KGU 2017-06-18: Method breakup now ensures quoting of regex meta symbols
 					searchPattern = BString.breakup(searchPattern);
@@ -1398,55 +1496,17 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			resultText = brokenText.replaceAll(searchPattern, replacePattern);
 		}
 		else {
-			//resultText = brokenText.replaceFirst(searchPattern, replacePattern);
-			StringList actualMatches = new StringList();
+			// In case of an individual replacement first split the text and count the matches
+			// The splitting function will collect the matches and return the parts around the matches 
+			StringList actualMatches = new StringList();	// to be filled by function splitText
 			String[] parts = splitText(brokenText, searchPattern, actualMatches);
-			String[] matches = actualMatches.toArray();
-			//String[] parts = brokenText.split(searchPattern, -1);
+			String[] matches = actualMatches.toArray();		// Should be one element shorter than parts
 			int nParts = parts.length;
-			// Restore all matched substrings.
-//			String[] matches = new String[nParts-1];
-//			int start = 0;
-//			for (int i = 0; i < nParts-1; i++) {
-//				String part = parts[i];
-//				matches[i] = brokenText.substring(start).replaceFirst("(\\n|.)*?(" + searchPattern + ")(\\n|.)*", "$2");
-//				start += part.length() + matches[i].length();
-//			}
-//			if (wholeWord) {
-//				StringList realParts = new StringList();
-//				StringList realWords = new StringList();
-//				String part = parts[0];
-//				for (int i = 0; i < nParts - 1; i++) {
-//					String nextPart = parts[i+1];
-//					if ((part.isEmpty() || part.matches(".*?\\W"))
-//							&& (i+2 == nParts && nextPart.isEmpty() || nextPart.matches("\\W.*?"))) {
-//						realParts.add(part);
-//						realWords.add(matches[i]);
-//						part = nextPart;
-//					}
-//					else {
-//						part += matches[i] + nextPart;
-//					}
-//				}
-//				realParts.add(part);
-//				nParts = realParts.count();
-//				parts = new String[nParts];
-//				matches = new String[realWords.count()];
-//				for (int i = 0; i < parts.length; i++) {
-//					parts[i] = realParts.get(i);
-//				}
-//				for (int i = 0; i < matches.length; i++) {
-//					matches[i] = realWords.get(i);
-//				}
-//			}
-			// Now we can work properly.
-//			if (rbUp.isSelected()) {
-//				pos = nParts - 2 - pos;
-//			}
 			resultText = "";
 			for (int i = 0; i < nParts; i++) {
 				resultText += parts[i];
 				if (i == pos) {
+					// At the very position replace the found match
 					if (isRegex) {
 						resultText += matches[i].replaceFirst(searchPattern, replacePattern);
 					}
@@ -1455,10 +1515,12 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					}
 				}
 				else if (i < nParts - 1) {
+					// at all other places re-insert the match without change
 					resultText += matches[i];
 				}
 			}
 		}
+		// Split the lines again
 		return StringList.explode(resultText, "\n");
 	}
 
