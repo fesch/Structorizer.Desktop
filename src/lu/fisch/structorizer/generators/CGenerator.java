@@ -912,7 +912,7 @@ public class CGenerator extends Generator {
 				if (codeLine != null) {
 					String lineEnd = ";";
 					if (Instruction.isTurtleizerMove(line)) {
-						codeLine += "; " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+						codeLine = this.enhanceWithColor(codeLine, _inst);
 						lineEnd = "";
 					}
 					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
@@ -929,6 +929,10 @@ public class CGenerator extends Generator {
 
 		}
 		
+	}
+
+	protected String enhanceWithColor(String _codeLine, Instruction _inst) {
+		return _codeLine + "; " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 	}
 
 	@Override
@@ -1520,8 +1524,11 @@ public class CGenerator extends Generator {
 				}
 				code.add("");
 			}
-			// STARTB KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
+			// START KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
 			this.insertUserIncludes("");
+			// START KGU#446 2017-10-27: Enh. #441
+			this.includeInsertionLine = code.count();
+			// END KGU#446 2017-10-27
 			code.add("");
 			// END KGU#351 2017-02-26
 			// START KGU#376 2017-09-26: Enh. #389 - definitions from all included diagrams will follow

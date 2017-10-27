@@ -285,6 +285,9 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import lu.fisch.diagrexec.DelayableDiagramController;
+import lu.fisch.diagrexec.DiagramController;
+import lu.fisch.diagrexec.FunctionProvidingDiagramController;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -4850,11 +4853,6 @@ public class Executor implements Runnable
 					cmd = procName.toLowerCase() + "(" + params + ")";
 					result = getExec(cmd, element.getColor());
 				} 
-//				else if (CodeParser.ignoreCase) {
-//					// Try as built-in subroutine with aligned case
-//					// FIXME: This does not recursively adapt the names! (So what for at all?)
-//					interpreter.eval(f.getInvokation(true));
-//				}
 				else	
 				{
 					// Try as built-in subroutine as is

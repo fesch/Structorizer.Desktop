@@ -32,12 +32,11 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import lu.fisch.structorizer.executor.DelayableDiagramController;
-import lu.fisch.structorizer.executor.FunctionProvidingDiagramController;
+import lu.fisch.diagrexec.DelayableDiagramController;
+import lu.fisch.diagrexec.FunctionProvidingDiagramController;
 import lu.fisch.turtle.elements.Element;
 import lu.fisch.turtle.elements.Line;
 import lu.fisch.turtle.elements.Move;
-import lu.fisch.utils.StringList;
 
 /**
  *
@@ -79,55 +78,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
     private boolean turtleHidden = false;
     private int delay = 10;
     private Vector<Element> elements = new Vector<Element>();
-    private JPanel panel = new JPanel()
-    {
-        @Override
-        public void paint(Graphics graphics)
-        {
-            Graphics2D g = (Graphics2D) graphics;
-            // set anti-aliasing rendering
-            ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // clear background
-            // START KGU#303 2016-12-02: Enh. #302
-            //g.setColor(Color.WHITE);
-            g.setColor(backgroundColor);
-            // END KGU#303 2016-12-02
-            g.fillRect(0,0,getWidth(),getHeight());
-            // START KGU#303 2016-12-03: Enh. #302
-            //g.setColor(Color.BLACK);
-            g.setColor(defaultPenColor);
-            // END KGU#303 2016-12-03
-
-            // draw all elements
-            for (Element ele : elements)
-            {
-                ele.draw(g);
-            }
-
-            if (!turtleHidden)
-            {
-            	// START #272 2016-10-16
-                // fix drawing point
-                //int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
-                //int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
-                // fix drawing point
-                //int xRot = x+image.getWidth(this)/2;
-                //int yRot = y+image.getHeight(this)/2;
-                // apply rotation
-                //g.rotate((270-angle)/180*Math.PI,xRot,yRot);
-                // fix drawing point
-                double x = posX - (image.getWidth(this)/2);
-                double y = posY - (image.getHeight(this)/2);
-                // apply rotation
-                g.rotate((270-angle)/180*Math.PI, posX, posY);
-                // END #272 2016-10-16
-                // draw the turtle
-                g.drawImage(image,(int)Math.round(x),(int)Math.round(y),this);
-            }
-        }
-    };
-
+    private JPanel panel; 
 
     public TurtleBox()
     {
@@ -179,6 +130,55 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
 
     private void init(int width, int height)
     {
+    	panel = new JPanel()
+        {
+            @Override
+            public void paint(Graphics graphics)
+            {
+                Graphics2D g = (Graphics2D) graphics;
+                // set anti-aliasing rendering
+                ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // clear background
+                // START KGU#303 2016-12-02: Enh. #302
+                //g.setColor(Color.WHITE);
+                g.setColor(backgroundColor);
+                // END KGU#303 2016-12-02
+                g.fillRect(0,0,getWidth(),getHeight());
+                // START KGU#303 2016-12-03: Enh. #302
+                //g.setColor(Color.BLACK);
+                g.setColor(defaultPenColor);
+                // END KGU#303 2016-12-03
+
+                // draw all elements
+                for (Element ele : elements)
+                {
+                    ele.draw(g);
+                }
+
+                if (!turtleHidden)
+                {
+                	// START #272 2016-10-16
+                    // fix drawing point
+                    //int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
+                    //int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
+                    // fix drawing point
+                    //int xRot = x+image.getWidth(this)/2;
+                    //int yRot = y+image.getHeight(this)/2;
+                    // apply rotation
+                    //g.rotate((270-angle)/180*Math.PI,xRot,yRot);
+                    // fix drawing point
+                    double x = posX - (image.getWidth(this)/2);
+                    double y = posY - (image.getHeight(this)/2);
+                    // apply rotation
+                    g.rotate((270-angle)/180*Math.PI, posX, posY);
+                    // END #272 2016-10-16
+                    // draw the turtle
+                    g.drawImage(image,(int)Math.round(x),(int)Math.round(y),this);
+                }
+            }
+        };
+
         this.setTitle(TITLE);
         this.setIconImage((new ImageIcon(this.getClass().getResource("turtle.png"))).getImage());
 
@@ -454,17 +454,20 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
 
     private String parseFunctionParam(String str, int count)
     {
-        String res = null;
-        if (str.trim().indexOf("(")!=-1)
-        {
-            String params = str.trim().substring(str.trim().indexOf("(")+1,str.trim().indexOf(")")).trim();
-            if(!params.equals(""))
-            {
-                StringList sl = StringList.explode(params,",");
-                res = sl.get(count);
-            }
-        }
-        return res;
+    	String res = null;
+    	int posParen1 = (str = str.trim()).indexOf("(");
+    	if (posParen1 > -1)
+    	{
+    		String params = str.substring(posParen1+1, str.indexOf(")")).trim();
+    		if (!params.isEmpty())
+    		{
+    			String[] args = params.split(",");
+    			if (count < args.length) {
+    				res = args[count];
+    			}
+    		}
+    	}
+    	return res;
     }
 
     private Double parseFunctionParamDouble(String str, int count)
@@ -526,8 +529,8 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
            // START KGU 20141007: Wrong type casting mended (led to rotation biases)
            //else if (name.equals("left") || name.equals("rl")) { left((int) param1); }
            //else if (name.equals("right") || name.equals("rr")) { right((int) param1); }
-           else if (name.equals("left") || name.equals("rl")) { left((double) param1); }
-           else if (name.equals("right") || name.equals("rr")) { right((double) param1); }
+           else if (name.equals("left") || name.equals("rl")) { left(param1); }
+           else if (name.equals("right") || name.equals("rr")) { right(param1); }
            // END KGU 20141007
            else if (name.equals("penup") || name.equals("up")) { penUp(); }
            else if (name.equals("pendown") || name.equals("down")) { penDown(); }

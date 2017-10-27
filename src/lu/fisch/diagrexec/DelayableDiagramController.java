@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package lu.fisch.structorizer.executor;
+package lu.fisch.diagrexec;
 
 /**
  * Introduced to allow immediate delay control on implementing classes 

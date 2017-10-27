@@ -71,6 +71,8 @@ import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
@@ -84,11 +86,14 @@ public class Instruction extends Element {
 	private static final String[] relevantParserKeys = {"input", "output", "preReturn"};
 	// END KGU#258 2016-09-25
 	// START KGU#413 2017-06-09: Enh. #416
-	protected static final String indentPattern = "(\\s*)(.*)";
+	//protected static final String indentPattern = "(\\s*)(.*)";
+	protected static final Matcher INDENT_MATCHER = Pattern.compile("(\\s*)(.*)").matcher("");
 	// END KGU#413 2017-06-09
 	// START KGU#388 2017-07-03: Enh. #423
-	protected static final String typeDefPattern = "^[tT][yY][pP][eE]\\s+\\w+\\s*=\\s*\\S*$";
+	//protected static final String TYPE_DEF_PATTERN = "^[tT][yY][pP][eE]\\s+\\w+\\s*=\\s*\\S*$";
 	// END KGU#413 2017-07-03
+	private static final StringList TURTLEIZER_MOVERS = StringList.explode("forward,backward,fd,bk", ",");
+	
 	
 	public Instruction()
 	{
@@ -143,8 +148,11 @@ public class Instruction extends Element {
 			//int lineWidth = getWidthOutVariables(_canvas, _text.get(i), _element) + Element.E_PADDING;
 			String line = _text.get(i);
 			if (isContinuation) {
-				String indent = line.replaceAll(indentPattern, "$1");
-				String rest = line.replaceAll(indentPattern, "$2");
+				//String indent = line.replaceAll(indentPattern, "$1");
+				//String rest = line.replaceAll(indentPattern, "$2");
+				INDENT_MATCHER.reset(line);
+				String indent = INDENT_MATCHER.group(1);
+				String rest = INDENT_MATCHER.group(2);
 				if (indent.length() < Element.E_INDENT) {
 					line = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
 				}
@@ -256,10 +264,15 @@ public class Instruction extends Element {
 			String text = _text.get(i);
 			// START KGU#413 2017-06-09: Enh. #416
 			if (isContinuation) {
-				String indent = text.replaceAll(indentPattern, "$1");
-				String rest = text.replaceAll(indentPattern, "$2");
-				if (indent.length() < Element.E_INDENT) {
-					text = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
+				//String indent = text.replaceAll(indentPattern, "$1");
+				//String rest = text.replaceAll(indentPattern, "$2");
+				INDENT_MATCHER.reset(text);
+				if (INDENT_MATCHER.matches()) {
+					String indent = INDENT_MATCHER.group(1);
+					String rest = INDENT_MATCHER.group(2);
+					if (indent.length() < Element.E_INDENT) {
+						text = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
+					}
 				}
 			}
 			isContinuation = text.trim().endsWith("\\");
@@ -468,9 +481,8 @@ public class Instruction extends Element {
 	// START #274 2016-10-16 (KGU): Improved support for Code export
 	public static boolean isTurtleizerMove(String line)
 	{
-		final StringList turtleizerMovers = StringList.explode("forward,backward,fd,bk", ",");
 		Function fct = new Function(line);
-		return fct.isFunction() && turtleizerMovers.contains(fct.getName()) && fct.paramCount() == 1;
+		return fct.isFunction() && TURTLEIZER_MOVERS.contains(fct.getName(), false) && fct.paramCount() == 1;
 	}
 	// END #274 2016-10-16
 	

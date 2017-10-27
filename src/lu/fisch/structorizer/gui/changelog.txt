@@ -6,9 +6,12 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
-- Access irritations with deeply nested data structures (records/arrays)
+- Races on startup may contort the initial view (scrollers stumble)
+- COBOL parsing may fail if certain single-letter identifiers are used (rename them!)
+- COBOL import doesn't cope with some statement variants and variable redefinitions
+- Some export generators haven't been enabled to support record type equivalents
 
-Current development version: 3.26-08 (2017.10.26)
+Current development version: 3.26-08 (2017.10.27)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -125,7 +128,8 @@ Current development version: 3.26-08 (2017.10.26)
 - 08: Enh. #128: Design of IF and CASE elements in mode "comments + text" changed <2>
 - 08: Positioning of dialog boxes no longer dependent on diagram size and selection <2>
 - 08: Issue #417: Scrolling detention with many / large diagrams alleviated <2>
-- 08: Enh. #423: Export support for records to Python, bash, Oberon <2> 
+- 08: Enh. #423: Export support for records to Python, bash, Oberon <2>
+- 08: Enh. #441: Java export now directly supports use of extracted Turtleizer <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

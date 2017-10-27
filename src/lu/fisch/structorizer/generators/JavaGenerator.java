@@ -64,6 +64,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
  *      Kay Gürtzig             2017.09.22      Bugfix #428 Defective replacement pattern for "short" in transformType(String)
  *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
+ *      Kay Gürtzig             2017.10.27      Enh. #441: Direct support for now extractable Turtleizer package 
  *
  ******************************************************************************************************
  *
@@ -107,6 +108,7 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.turtle.adapters.Turtleizer;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -114,6 +116,7 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 
 
 // START KGU#16 2015-11-30: Strong similarities made it sensible to reduce this class to the differences
@@ -210,7 +213,7 @@ public class JavaGenerator extends CGenerator
 	@Override
 	protected String getIncludePattern()
 	{
-		return "import %";
+		return "import %;";
 	}
 	// END KGU#351 2017-02-26
 
@@ -250,11 +253,11 @@ public class JavaGenerator extends CGenerator
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
-	 * Method preprocesses an include file name for the #include
+	 * Method pre-processes an include file name for the #include
 	 * clause. This version surrounds a string not enclosed in angular
 	 * brackets by quotes.
 	 * @param _includeFileName a string from the user include configuration
-	 * @return the preprocessed string as to be actually inserted
+	 * @return the pre-processed string as to be actually inserted
 	 */
 	protected String prepareIncludeItem(String _includeFileName)
 	{
@@ -287,18 +290,28 @@ public class JavaGenerator extends CGenerator
 //		return _interm.replace(" <- ", " = ");
 //	}
 
-	// START KGU#150 2016-04-04: No need to override CGenerator.tranformTokens()
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
-//	 */
-//	@Override
-//	protected String transformTokens(StringList tokens)
-//	{
-//		tokens.replaceAll("div", "/");
-//		tokens.replaceAll("<-", "=");
-//		return tokens.concatenate();
-//	}
-	// END KGU#150 2016-04-04
+	// START KGU#446 2017-10-27: Enh. #441 special support for Turtleizer
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String transformTokens(StringList tokens)
+	{
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			if (Function.testIdentifier(token, null)) {
+				int j = i;
+				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
+				String turtleMethod = null;
+				if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
+					tokens.set(i, turtleMethod);
+					this.usesTurtleizer = true;
+				}
+			}
+		}
+		return super.transformTokens(tokens);
+	}
+	// END KGU#446 2017-10-27
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
@@ -550,6 +563,21 @@ public class JavaGenerator extends CGenerator
 		}
 	}
 	// END KGU#388 2017-09-28
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#enhanceWithColor(java.lang.String, lu.fisch.structorizer.elements.Instruction)
+	 */
+	@Override
+	protected String enhanceWithColor(String _codeLine, Instruction _inst) {
+		int posParen2 = _codeLine.lastIndexOf(")");
+		if (posParen2 > 0) {
+			_codeLine = _codeLine.substring(0, posParen2) + 
+					", java.awt.Color.decode(\"0x" + _inst.getHexColor() + "\")" + _codeLine.substring(posParen2) + ";";
+		}
+		return _codeLine;
+	}
+
+
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -903,6 +931,9 @@ public class JavaGenerator extends CGenerator
 				// STARTB KGU#351 2017-02-26: Enh. #346
 				this.insertUserIncludes(_indent);
 				// END KGU#351 2017-02-26
+				// START KGU#446 2017-10-27: Enh. #441
+				this.includeInsertionLine = code.count();
+				// END KGU#446 2017-10-27
 			}
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
 			insertBlockHeading(_root, "public class " + _procName, _indent);
@@ -1059,6 +1090,12 @@ public class JavaGenerator extends CGenerator
 			this.insertFileAPI("java");
 		}
 		// END KGU#311 2016-12-22
+		// START KGU#446 2017-10-27: Enh. #441
+		if (topLevel && this.usesTurtleizer) {
+			code.insert("TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
+			code.insert("import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
+		}
+		// END KGU#446 2017-10-27
 	}
 	// END KGU 2015-12-15
 

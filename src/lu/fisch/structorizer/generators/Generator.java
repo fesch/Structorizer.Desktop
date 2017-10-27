@@ -215,9 +215,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#236 2016-12-22
 	// END KGU#236 2016-08-10
 	// START KGU#311 2016-12-22: Enh. #314 - File API support
+	/** Flag to indicate whether routines of the Structorizer File API are used */
 	protected boolean usesFileAPI = false;
 	// END KGU#311 2016-12-22
 	// START KGU#348 2017-02-19: Support for translation of Parallel elements
+	/** Flag to indicate whether the diagram contains Parallel elements */
 	protected boolean hasParallels = false;
 	// END KGU#348 2017-02-19
 	// START KGU#424 2017-09-25: We introduce a source mapping for declaration comments
@@ -228,12 +230,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#424 2017-09-25
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
-	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
+	/**
+	 * List of the names of (initialized) variables in the exported diagram
+	 * Some generators must prefix variables, for some generators it's important e.g. for FOR-IN loops
+	 */
 	protected StringList varNames = new StringList();
 	// END KGU#129/KGU#61 2015-01-22
 	// START KGU 2016-03-29: For keyword detection improvement
 	private Vector<StringList> splitKeywords = new Vector<StringList>();
 	// END KGU 2016-03-29
+	// START KGU#446 2017-10-27: Enh. #441
+	/** Flag to remember whether Turtleizer routine calls are in the code (to prepare support if possible) */
+	protected boolean usesTurtleizer = false;
+	protected int includeInsertionLine = -1;
+	// END KGU#446 2017-10-27
 	
 	/************ Abstract Methods *************/
 	/**
@@ -753,9 +763,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		String pattern = this.getIncludePattern();
 		String includes = this.optionIncludeFiles().trim();
 		if (pattern != null && includes != null && !includes.isEmpty()) {
+			// Collective (enumerative) include phrase available?
 			if (pattern.contains("%%")) {
 				code.add(_indent + pattern.replace("%%", includes));
 			}
+			// .. otherwise produce a single line for every item
 			else if (pattern.contains("%")) {
 				String[] items = includes.split(",");
 				for (int i = 0; i < items.length; i++) {
