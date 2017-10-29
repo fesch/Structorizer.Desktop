@@ -2076,7 +2076,7 @@ public class Executor implements Runnable
 		initInterpreter();
 		// END KGU#384 2017-04-22
 		
-		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls on delauy 0
+		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls on delay 0
 		//this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
 		// END KGU#430 2017-10-12
@@ -3660,6 +3660,14 @@ public class Executor implements Runnable
 			try {
 				Object oldValue = context.interpreter.get(varName);
 				Object newValue = entry.getValue();
+				// START KGU#443 2017-10-29: Issue #439 Precaution against unnecessary value overwriting
+				String oldValStr = prepareValueForDisplay(oldValue);
+				if (oldValStr.equals(newValue.toString())) {
+					// If there are no visible changes then we avoid reconstruction of the value
+					// from string because this might lead to broken references without need.
+					continue;
+				}
+				// END KGU#443 2017-10-29
 				// START KGU#160 2016-04-12: Enh. #137 - text window output
 				// START KGU#197 2016-05-05: Language support extended
 				//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
