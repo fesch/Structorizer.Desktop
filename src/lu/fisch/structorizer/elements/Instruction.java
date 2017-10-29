@@ -147,10 +147,9 @@ public class Instruction extends Element {
 			// START KGU#413 2017-06-09: Enh. #416
 			//int lineWidth = getWidthOutVariables(_canvas, _text.get(i), _element) + Element.E_PADDING;
 			String line = _text.get(i);
-			if (isContinuation) {
+			if (isContinuation && INDENT_MATCHER.reset(line).matches()) {
 				//String indent = line.replaceAll(indentPattern, "$1");
 				//String rest = line.replaceAll(indentPattern, "$2");
-				INDENT_MATCHER.reset(line);
 				String indent = INDENT_MATCHER.group(1);
 				String rest = INDENT_MATCHER.group(2);
 				if (indent.length() < Element.E_INDENT) {
@@ -263,16 +262,13 @@ public class Instruction extends Element {
 		{
 			String text = _text.get(i);
 			// START KGU#413 2017-06-09: Enh. #416
-			if (isContinuation) {
+			if (isContinuation && INDENT_MATCHER.reset(text).matches()) {
 				//String indent = text.replaceAll(indentPattern, "$1");
 				//String rest = text.replaceAll(indentPattern, "$2");
-				INDENT_MATCHER.reset(text);
-				if (INDENT_MATCHER.matches()) {
-					String indent = INDENT_MATCHER.group(1);
-					String rest = INDENT_MATCHER.group(2);
-					if (indent.length() < Element.E_INDENT) {
-						text = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
-					}
+				String indent = INDENT_MATCHER.group(1);
+				String rest = INDENT_MATCHER.group(2);
+				if (indent.length() < Element.E_INDENT) {
+					text = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
 				}
 			}
 			isContinuation = text.trim().endsWith("\\");

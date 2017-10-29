@@ -34,6 +34,7 @@ package lu.fisch.turtle;
  *      ------          ----            -----------
  *      Kay Gürtzig     2015.12.10      Inheritance change for enhancement request #48
  *      Kay Gürtzig     2016.10.16      Enh. #272: exact internal position (double coordinates)
+ *      Kay Gürtzig     2016.12.02      Enh. #302 Additional methods to set the pen and background color
  *      Kay Gürtzig     2017.06.29/30   Enh. #424: Inheritance extension to FunctionProvidingDiagramControl
  *                                      function map introduced, functions getX(), getY(), getOrientation() added
  *      Kay Gürtzig     2017.10.28      Enh. #443: interface FunctionProvidingDiagramControl now integrated,
