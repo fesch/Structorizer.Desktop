@@ -4296,7 +4296,7 @@ public class Executor implements Runnable
 			while ((pos = tokens.lastIndexOf("(", pos-1)) >= 0) {
 				String token = null;
 				while (pos > 0 && (token = tokens.get(--pos).trim()).isEmpty());
-				if (pos >= 0 && this.controllerFunctionNames.contains(token.toLowerCase())) {
+				if (pos >= 0 && token != null && this.controllerFunctionNames.contains(token.toLowerCase())) {
 					positions.addFirst(pos);
 				}
 			}
