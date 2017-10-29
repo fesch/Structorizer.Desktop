@@ -19,12 +19,47 @@
 
 package lu.fisch.turtle;
 
+/******************************************************************************************************
+ *
+ *      Author:         Robert Fisch
+ *
+ *      Description:    TurtleBox - a Turtle graphics window with an interface usable e.g. by Structorizer
+ *                      but also (with an appropriate adapter) by arbitrary Java applications
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2015.12.10      Inheritance change for enhancement request #48
+ *      Kay Gürtzig     2016.10.16      Enh. #272: exact internal position (double coordinates)
+ *      Kay Gürtzig     2017.06.29/30   Enh. #424: Inheritance extension to FunctionProvidingDiagramControl
+ *                                      function map introduced, functions getX(), getY(), getOrientation() added
+ *      Kay Gürtzig     2017.10.28      Enh. #443: interface FunctionProvidingDiagramControl now integrated,
+ *                                      structure of function map mofified, procedure map added, execution
+ *                                      mechanism fundamentally revised
+ *                                      Concurrency issue fixed (KGU#449).
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      To start the Turtleizer in an application, the following steps are recommended:
+ *      	{@code TurtleBox =	turtleBox = new TurtleBox(<width>, <height>);}
+ *			{@code turtleBox.setVisible(true);}
+ *			{@code turtleBox.setAnimationDelay(0, true);}
+ *      The API for employing applications is retrievable via {@link TurtleBox#getFunctionMap()} and
+ *      {@link TurtleBox#getProcedureMap}.
+ *
+ ******************************************************************************************************///
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -32,43 +67,92 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import lu.fisch.diagrexec.DelayableDiagramController;
-import lu.fisch.diagrexec.FunctionProvidingDiagramController;
+import lu.fisch.diagrcontrol.*;
 import lu.fisch.turtle.elements.Element;
 import lu.fisch.turtle.elements.Line;
 import lu.fisch.turtle.elements.Move;
 
 /**
- *
+ * TurtleBox - a Turtle graphics window with an interface usable e.g. by Structorizer
+ * but also (with an appropriate adapter) by arbitrary Java applications<br/>
+ * To start the Turtleizer in an application, the following steps are recommended:<br/>
+ * {@code TurtleBox =	turtleBox = new TurtleBox(<width>, <height>);}<br/>
+ * {@code turtleBox.setVisible(true);}<br/>
+ * {@code turtleBox.setAnimationDelay(0, true);}<br/>
+ * The API for employing applications is retrievable via {@link TurtleBox#getFunctionMap()}
+ * and {@link TurtleBox#getProcedureMap()}.
  * @author robertfisch
+ * @author Kay Gürtzig
  */
 // START KGU#97 2015-12-10: Inheritance change for enhancement request #48
 //public class TurtleBox extends JFrame implements DiagramController
 @SuppressWarnings("serial")
-// START KGU#417 2017-06-30: Inheritance change for enh. #424
+// START KGU#417 2017-06-30: Inheritance change for enh. #424 (2017-10-28 withdrawn)
 //public class TurtleBox extends JFrame implements DelayableDiagramController
-public class TurtleBox extends JFrame implements DelayableDiagramController,  FunctionProvidingDiagramController
+public class TurtleBox extends JFrame implements DelayableDiagramController
 // END KGU#417 2017-06-30
 // END KGU#97 2015-12-10
 {
-	// START KGU#417 2017-06-29: Enh. #424 Function capability map
-	private static final HashMap<String, Class<?>[]> definedFunctions = new HashMap<String, Class<?>[]>();
+//	// START KGU#417 2017-06-29: Enh. #424 Function capability map
+//	private static final HashMap<String, Class<?>[]> definedFunctions = new HashMap<String, Class<?>[]>();
+//	static {
+//		definedFunctions.put("getx", new Class<?>[]{Double.class});
+//		definedFunctions.put("gety", new Class<?>[]{Double.class});
+//		definedFunctions.put("getorientation", new Class<?>[]{Double.class});
+//	}
+//	// END KGU#417 2017-06-29
+	// START KGU#417/KGU#448 2017-10-28: Enh. #424, #443 Function capability map
+	private static final HashMap<String, Method> definedProcedures = new HashMap<String, Method>();
 	static {
-		definedFunctions.put("getx", new Class<?>[]{Double.class});
-		definedFunctions.put("gety", new Class<?>[]{Double.class});
-		definedFunctions.put("getorientation", new Class<?>[]{Double.class});
+		try {
+			definedProcedures.put("forward#1", TurtleBox.class.getMethod("forward", new Class<?>[]{Double.class}));
+			definedProcedures.put("forward#2", TurtleBox.class.getMethod("forward", new Class<?>[]{Double.class, Color.class}));
+			definedProcedures.put("backward#1", TurtleBox.class.getMethod("backward", new Class<?>[]{Double.class}));
+			definedProcedures.put("backward#2", TurtleBox.class.getMethod("backward", new Class<?>[]{Double.class, Color.class}));
+			definedProcedures.put("fd#1", TurtleBox.class.getMethod("fd", new Class<?>[]{Integer.class}));
+			definedProcedures.put("fd#2", TurtleBox.class.getMethod("fd", new Class<?>[]{Integer.class, Color.class}));
+			definedProcedures.put("bk#1", TurtleBox.class.getMethod("bk", new Class<?>[]{Integer.class}));
+			definedProcedures.put("bk#2", TurtleBox.class.getMethod("bk", new Class<?>[]{Integer.class, Color.class}));
+			definedProcedures.put("left#1", TurtleBox.class.getMethod("left", new Class<?>[]{Double.class}));
+			definedProcedures.put("right#1", TurtleBox.class.getMethod("right", new Class<?>[]{Double.class}));
+			definedProcedures.put("rl#1", TurtleBox.class.getMethod("rl", new Class<?>[]{Double.class}));
+			definedProcedures.put("rr#1", TurtleBox.class.getMethod("rr", new Class<?>[]{Double.class}));
+			definedProcedures.put("gotoxy#2", TurtleBox.class.getMethod("gotoXY", new Class<?>[]{Integer.class, Integer.class}));
+			definedProcedures.put("gotox#1", TurtleBox.class.getMethod("gotoX", new Class<?>[]{Integer.class}));
+			definedProcedures.put("gotoy#1", TurtleBox.class.getMethod("gotoY", new Class<?>[]{Integer.class}));
+			definedProcedures.put("penup#0", TurtleBox.class.getMethod("penUp", (Class<?>[])null));
+			definedProcedures.put("pendown#0", TurtleBox.class.getMethod("penDown", (Class<?>[])null));
+			definedProcedures.put("up#0", TurtleBox.class.getMethod("penUp", (Class<?>[])null));
+			definedProcedures.put("down#0", TurtleBox.class.getMethod("penDown", (Class<?>[])null));
+			definedProcedures.put("hideturtle#0", TurtleBox.class.getMethod("hideTurtle", (Class<?>[])null));
+			definedProcedures.put("showturtle#0", TurtleBox.class.getMethod("showTurtle", (Class<?>[])null));
+			definedProcedures.put("setpencolor#3", TurtleBox.class.getMethod("setPenColor", new Class<?>[]{Integer.class, Integer.class, Integer.class}));
+			definedProcedures.put("setbackground#3", TurtleBox.class.getMethod("setBackgroundColor", new Class<?>[]{Integer.class, Integer.class, Integer.class}));
+		} catch (NoSuchMethodException | SecurityException ex) {
+			ex.printStackTrace();
+		}
 	}
-	// END KGU#417 2017-06-29
+	private static final HashMap<String, Method> definedFunctions = new HashMap<String, Method>();
+	static {
+		try {
+			definedFunctions.put("getx#0", TurtleBox.class.getMethod("getx", (Class<?>[])null));
+			definedFunctions.put("gety#0", TurtleBox.class.getMethod("gety", (Class<?>[])null));
+			definedFunctions.put("getorientation#0", TurtleBox.class.getMethod("getOrientation", (Class<?>[])null));
+		} catch (NoSuchMethodException | SecurityException ex) {
+			ex.printStackTrace();
+		}
+	}
+	// END KGU#417/KGU#448 2017-10-28
     private final String TITLE = "Turtleizer";
 
     private Point pos;
-    // START #272 2016-10-16 (KGU)
+    // START KGU#282 2016-10-16: Enh. #272
     private double posX, posY;		// exact position
-    // END #272 2016-10-16
+    // END KGU#282 2016-10-16
     private Point home;
     private double angle = -90;		// upwards (north-bound)
     private Image image = (new ImageIcon(this.getClass().getResource("turtle.png"))).getImage();
-    private boolean penDown = true;
+    private boolean isPenDown = true;
     // START KGU#303 2016-12-02: Enh. #302
     //private Color penColor = Color.BLACK;
     private Color defaultPenColor = Color.BLACK;
@@ -90,6 +174,21 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
         init(width,height);
     }
 
+    /* (non-Javadoc)
+     * @see java.awt.Component#setName(java.lang.String)
+     */
+    @Override
+    public void setName(String name) {}
+    
+    /* (non-Javadoc)
+     * @see java.awt.Component#getName()
+     */
+    @Override
+    public String getName()
+    {
+    	return TITLE;
+    }
+    
     public double getAngle()
     {
         return 180+angle;
@@ -104,7 +203,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
      * negative is left/west
      * @return orientation in degrees.
      */
-    private double getOrientation() {
+    public double getOrientation() {
     	double orient = angle + 90.0;
     	while (orient > 180) { orient -= 360; }
     	while (orient < -180) { orient += 360; }
@@ -151,10 +250,19 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
                 // END KGU#303 2016-12-03
 
                 // draw all elements
-                for (Element ele : elements)
-                {
-                    ele.draw(g);
+                // START KGU#449 2017-10-28: The use of iterators may lead to lots of
+                //java.util.ConcurrentModificationException errors slowing down all.
+                // So we better avoid the iterator and loop against a snapshot size
+                // (which is safe because the elements Vector can't shrink during execution).
+                //for (Element ele : elements)
+                //{
+                //    ele.draw(g);
+                //}
+                int nElements = elements.size();
+                for (int i = 0; i < nElements; i++) {
+                	elements.get(i).draw(g);
                 }
+                // END KGU#449 2017-10-28
 
                 if (!turtleHidden)
                 {
@@ -230,7 +338,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
         penDown();
     }
     // END KGU#303 2016-12-03
-
+    
     private void delay()
     {
         //panel.repaint();
@@ -248,11 +356,11 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
         }
     }
 
-    public void fd(int pixels)
+    public void fd(Integer pixels)
     {
         Point newPos = new Point(pos.x-(int) Math.round(Math.cos(angle/180*Math.PI)*pixels),
                                  pos.y+(int) Math.round(Math.sin(angle/180*Math.PI)*pixels));
-        if (penDown==true)
+        if (isPenDown)
         {
             elements.add(new Line(pos,newPos,penColor));
         }
@@ -270,12 +378,12 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
 //    {
 //        fd(pixels);
 //    }
-    public void forward(double pixels)
+    public void forward(Double pixels)
     {
     	double newX = posX - Math.cos(angle/180*Math.PI) * pixels;
     	double newY = posY + Math.sin(angle/180*Math.PI) * pixels;
         Point newPos = new Point((int)Math.round(newX), (int)Math.round(newY));
-        if (penDown==true)
+        if (isPenDown)
         {
             elements.add(new Line(pos, newPos, penColor));
         }
@@ -290,7 +398,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
     }
     // END #272 2016-10-16
 
-    public void bk(int pixels)
+    public void bk(Integer pixels)
     {
         fd(-pixels);
     }
@@ -300,59 +408,103 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
     //{
     //    fd(-pixels);
     //}
-    public void backward(double pixels)
+    public void backward(Double pixels)
     {
         forward(-pixels);
     }
     // END #272 2016-10-16
-
-    public void rl(double angle)
+    
+    // START KGU#448 2017-10-28: Enh. #443 Wrappers with color argument
+    public void fd(Integer pixels, Color color)
     {
-        this.angle+=angle;
+    	this.setColorNonWhite(color);
+    	this.fd(pixels);
+    }
+    public void bk(Integer pixels, Color color)
+    {
+    	this.setColorNonWhite(color);
+    	this.fd(-pixels);
+    }
+    public void forward(Double pixels, Color color)
+    {
+    	this.setColorNonWhite(color);
+    	this.forward(pixels);
+    }
+    public void backward(Double pixels, Color color)
+    {
+    	this.setColorNonWhite(color);
+    	this.forward(-pixels);
+    }
+    // END KGU#448 2017-10-28
+
+    public void rl(Double degrees)
+    {
+        this.angle+=degrees;
         delay();
     }
 
-    public void left(double angle)
+    public void left(Double degrees)
     {
-        rl(angle);
+        rl(degrees);
     }
 
-    public void rr(double angle)
+    public void rr(Double degrees)
     {
-        rl(-angle);
+        rl(-degrees);
     }
 
-    public void right(double angle)
+    public void right(Double degrees)
     {
-        rr(angle);
+        rr(degrees);
     }
     
     // START KGU#303 2016-12-02: Enh. #302
+    /** Non-retarded method to set the background colour directly
+     * @param bgColor - the new background colour
+     */
     public void setBackgroundColor(Color bgColor)
     {
     	backgroundColor = bgColor;
     	panel.repaint();
     }
 
-    public void setBackgroundColor(int red, int green, int blue)
+    /** Delayed API method to set the background colour from RGB values
+     * @param red
+     * @param green
+     * @param blue
+     */
+    public void setBackgroundColor(Integer red, Integer green, Integer blue)
     {
     	backgroundColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
     	delay();
     }
 
+    /**
+     * Non-retarded method to set the default pen colour directly
+     * This colour is used whenever a move is carried out with colour WHITE
+     * @param bgColor - the new foreground colour
+     */
     public void setPenColor(Color penColor)
     {
     	defaultPenColor = penColor;
     	panel.repaint();
     }
 
-    public void setPenColor(int red, int green, int blue)
+    /**
+     * Delayed API method to set the default pen colour from RGB values
+     * This colour is used whenever a move is carried out with colour WHITE
+     * @param red
+     * @param green
+     * @param blue
+     */
+    public void setPenColor(Integer red, Integer green, Integer blue)
     {
     	defaultPenColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
     	delay();
     }
     // END KGU#303 2016-12-02
 
+    // KGU: Where is this method used?
     public double getAngleToHome()
     {
     	// START #272 2016-10-16 (KGU)
@@ -394,17 +546,28 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
         return alpha;
     }
 
+    /**
+     * Raises the pen, i.e. subsequent moves won't leave a trace
+     */
     public void penUp()
     {
-        penDown=false;
+        isPenDown=false;
     }
 
+    /**
+     * Pus the pen down, i.e. subsequent moves will leave a trace
+     */
     public void penDown()
     {
-        penDown=true;
+        isPenDown=true;
     }
 
-    public void gotoXY(int x, int y)
+    /**
+     * Direct positioning (without trace, without changing orientation)
+     * @param x - new horizontal pixel coordinate (from left window edge)
+     * @param y - new vertical pixel coordinate (from top window edge downwards)
+     */
+    public void gotoXY(Integer x, Integer y)
     {
         Point newPos = new Point(x,y);
         elements.add(new Move(pos,newPos));
@@ -412,38 +575,69 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
         delay();
    }
 
-    public void gotoY(int y)
+    /**
+     * Direct vertical positioning (without trace, without changing orientation,
+     * horizontal position remains unchanged)
+     * @param y - new vertical pixel coordinate (from top window edge downwards)
+     */
+    public void gotoY(Integer y)
     {
-        gotoXY(pos.x,y);
+        gotoXY(pos.x, y);
     }
 
-    public void gotoX(int x)
+    /**
+     * Direct horizontal positioning (without trace, without changing orientation,
+     * vertical position remains unchanged)
+     * @param x - new horizontal pixel coordinate (from left window edge)
+     */
+    public void gotoX(Integer x)
     {
-        gotoXY(x,pos.y);
+        gotoXY(x, pos.y);
     }
 
+    /** The turtle icon will no longer be shown, has no impact on the pen */
     public void hideTurtle()
     {
         turtleHidden=true;
         delay();
     }
 
+    /** The turtle icon will be shown again, has no impact on the pen */
     public void showTurtle()
     {
         turtleHidden=false;
         delay();
     }
 
+    /**
+     * Directly set the current pen colour (without delay), not part of the API, does not
+     * modify the default pen colour, does not avert colour WHITE.
+     * @param color - the new pen colour
+     * @see #setColorNonWhite(Color)
+     * @see #setPenColor(Color)
+     * @see #setBackground(Color)
+     */
     public void setColor(Color color)
     {
         this.penColor=color;
     }
 
-    public void setAnimationDelay(int delay)
+    // START KGU#448 2017-10-28: Enh. #443
+    //public void setAnimationDelay(int delay)
+    /* (non-Javadoc)
+     * @see lu.fisch.diagrcontrol.DelayableDiagramController#setAnimationDelay(int, boolean)
+     */
+    public void setAnimationDelay(int delay, boolean _reinit)
+    // END KGU#448 2017-10-28
     {
-       this.delay=delay;
+        if (_reinit) {
+        	reinit();
+        }
+        this.delay=delay;
     }
 
+
+    @Deprecated
     private String parseFunctionName(String str)
     {
         if (str.trim().indexOf("(")!=-1)
@@ -452,6 +646,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
             return null;
     }
 
+    @Deprecated
     private String parseFunctionParam(String str, int count)
     {
     	String res = null;
@@ -470,6 +665,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
     	return res;
     }
 
+    @Deprecated
     private Double parseFunctionParamDouble(String str, int count)
     {
         String res = parseFunctionParam(str, count);
@@ -477,9 +673,23 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
         return Double.valueOf(res);
     }
 
+    @Deprecated
     public String execute(String message, Color color)
     {
-        if(color.equals(Color.WHITE))
+        setColorNonWhite(color);
+        return execute(message);
+    }
+
+	/**
+	 * Sets the given color except in case of WHITE where the {@link #defaultPenColor} is used instead.
+	 * Does not influence the default pen colour.
+	 * @param color - the specified colour (where WHITE means default)
+	 * @see #setColor(Color)
+	 * @see #setPenColor(Color)
+	 * @see #setBackground(Color)
+	 */
+	private void setColorNonWhite(Color color) {
+		if(color.equals(Color.WHITE))
         {
         	// START KGU#303 2016-12-03: Enh. #302
             //this.setColor(Color.BLACK);
@@ -487,9 +697,9 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
             // END KGU#303 2016-12-03
         }
         else this.setColor(color);
-        return execute(message);
-    }
+	}
 
+	@Deprecated
     public String execute(String message)
     {
         String name = parseFunctionName(message);
@@ -514,9 +724,9 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
 //        	   // END KGU#3032016-12-03
 //        	   setPos(home.getLocation());
 //        	   penDown();
-        	   reinit();
+//        	   reinit();
 // END KGU#303 2016-12-03
-        	   setAnimationDelay((int) param1);
+        	   setAnimationDelay((int) param1, true);
            }
            // START #272 2016-10-16 (KGU): Now different types (to allow to study rounding behaviour)
            //else if (name.equals("forward") || name.equals("fd")) { forward((int) param1); }
@@ -549,40 +759,40 @@ public class TurtleBox extends JFrame implements DelayableDiagramController,  Fu
         return res;
     }
 
-    // START KGU#417 2017-06-29: Enh. #424 - Allow function getX(), getY(), getOrientation();
-    public HashMap<String, Class<?>[]> getFunctionMap()
+    // START KGU#448 2017-10-28: Enh. #443
+	/* (non-Javadoc)
+	 * @see lu.fisch.diagrcontrol.DiagramController#getProcedureMap()
+	 */
+	@Override
+	public HashMap<String, Method> getProcedureMap() {
+		return definedProcedures;
+	}
+	// END KGU#448 2017-10-28
+
+    // START KGU#417 2017-06-29: Enh. #424, #443 - Allow function getX(), getY(), getOrientation();
+    /* (non-Javadoc)
+     * @see lu.fisch.diagrcontrol.DiagramController#getFunctionMap()
+     */
+    public HashMap<String, Method> getFunctionMap()
     {
     	return definedFunctions;
     }
     
+    // START KGU#448 2017-10-28: Enh. #417, #443 - support the generic execute method
     /**
-     * Executes a provided function (by now only the following three
-     * are supported: getX(), getY(), getOrientation()). If the function signature isn't valid or some evaluation error occurs, a {@code FunctionException} will be thrown
-     * @param name - the function name
-     * @param arguments - function arguments as objects (number and types must match a signature specification provided by {@link #getFunctionMap()}) 
-     * @return the function's result (if valid)
+     * Returns the current horizontal pixel coordinate.
+     * @return the precise result of preceding moves, i.e. as double value
      */
-    @Override
-    public Object execute(String name, Object[] arguments) throws FunctionException
-    {
-    	Object result = null;
-        if (name != null && definedFunctions.containsKey(name) && arguments.length == definedFunctions.get(name).length-1)
-        {
-        	if (name.equals("getorientation")) {
-        		result = this.getOrientation();
-        	}
-        	else if (name.equals("getx")) {
-        		result = this.posX;
-        	}
-        	else if (name.equals("gety")) {
-        		result = this.posY;        		
-        	}
-        }
-        else {
-        	throw new FunctionException("TurtleBox: No function <" + name + "> with " + arguments.length + " arguments defined.");
-        }
-        return result;
+    public double getx() {
+    	return this.posX;
     }
-
+    /**
+     * Returns the current vertical pixel coordinate (from top downwards).
+     * @return the precise result of preceding moves, i.e. as double value
+     */
+    public double gety() {
+    	return this.posY;
+    }
+    // END KGU#448 2017-10-28
 
 }

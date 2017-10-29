@@ -46,6 +46,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017.03.31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
  *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore)
  *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
+ *      Kay Gürtzig     2017.10.28      Method trim() added.
  *
  ******************************************************************************************************
  *
@@ -69,10 +70,24 @@ public class StringList {
 
 	private Vector<String> strings = new Vector<String>();
 
+	/**
+	 * Constructs this as empty StringList
+	 * @param _strings
+	 * @see #StringList(String[])
+	 * @see #getNew(String)
+	 * @see #explode(String, String)
+	 */
 	public StringList()
 	{}
 	
 	// START KGU 2017-06-18: New constructor as pendant to toArray()
+	/**
+	 * Constructs this from the given String array
+	 * @param _strings
+	 * @see #StringList()
+	 * @see #getNew(String)
+	 * @see #explode(String, String)
+	 */
 	public StringList(String[] _strings)
 	{
 		for (String str: _strings) {
@@ -81,6 +96,13 @@ public class StringList {
 	}
 	// END KGU 2017-06-18
 	
+	/**
+	 * Returns a new StringList containing just the given {@code _string} 
+	 * @param _string - the single element
+	 * @return the created StringList
+	 * @see #StringList(String[])
+	 * @see #explode(String, String)
+	 */
 	public static StringList getNew(String _string)
 	{
 		StringList sl = new StringList();
@@ -1178,14 +1200,14 @@ public class StringList {
      * @param _stringOld - the searched string
      * @param _stringNew - the string to replace occurrences of _stringOld
      * @param _matchCase - whether or not letter case must match exactly
-     * @param _start - index of first token to be affected
-     * @param _end - index beyond the last token to be affected
+     * @param _fromIndex - index of first element to be affected
+     * @param _toIndex - index beyond the last element to be affected
      * @return number of replacements
      */
-    public int replaceAllBetween(String _stringOld, String _stringNew, boolean _matchCase, int _start, int _end)
+    public int replaceAllBetween(String _stringOld, String _stringNew, boolean _matchCase, int _fromIndex, int _toIndex)
     {
     	int nReplaced = 0;
-    	for (int i = Math.max(0, _start); i < Math.min(_end, count()); i++)
+    	for (int i = Math.max(0, _fromIndex); i < Math.min(_toIndex, count()); i++)
     	{
     		if (_matchCase && strings.get(i).equals(_stringOld) ||
     				!_matchCase && strings.get(i).equalsIgnoreCase(_stringOld))
@@ -1223,6 +1245,10 @@ public class StringList {
         return array;
     }
     
+    /**
+     * Removes the element at the given {@code index}.
+     * @param index - the index of the element to be removed
+     */
     public void remove(int index)
     {
         strings.remove(index);
@@ -1230,6 +1256,12 @@ public class StringList {
     // END BOB 2016-08-01
     
     // START KGU 2017-01-31
+    /**
+     * Removes all elements from position {@code fromIndex} to
+     * position {@code toIndex-1}.
+     * @param fromIndex - the beginning index (inclusive)
+     * @param toIndex - the ending index (exclusve) 
+     */
     public void remove(int fromIndex, int toIndex)
     {
     	for (int count = Math.min(toIndex, this.strings.size())-fromIndex; count > 0; count--) {
@@ -1238,6 +1270,30 @@ public class StringList {
     }
     // END KGU 2017-01-31
     
+    // START KGU 2017-10-29
+    /**
+     * Removes all elements at front and rear that contain only whitespace, such that
+     * this.concatenate().trim() and this.trim().concatenate() produce the same result.
+     * @return this StringList after having been trimmed.
+     * @see #removeAll(String)
+     * @see #removeAll(String, boolean)
+     * @see #remove(int)
+     * @see #remove(int, int)
+     * @see #subSequence(int, int)
+     */
+    public StringList trim()
+    {
+    	// Trim at front
+    	while (!strings.isEmpty() && strings.get(0).trim().isEmpty()) {
+    		strings.remove(0);
+    	}
+    	// Trim at rear
+    	while (!strings.isEmpty() && strings.get(strings.size()-1).trim().isEmpty()) {
+    		strings.remove(strings.size()-1);
+    	}
+    	return this;
+    }
+    // END KGU 2017-10-29
         
     public static void main(String[] args)
     {

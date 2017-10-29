@@ -136,6 +136,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.10.12      Issue #432: redrawing made optional in two methods 
  *      Kay Gürtzig     2017.10.23      Positioning of sub-dialogs no longer depends on diagram size
  *                                      Issue #417: scroll units adapted to Root size to reduce time complexity
+ *      Kay Gürtzig     2017.10.28      Enh. #443: Slight adaption for multiple DiagramControllers
  *
  ******************************************************************************************************
  *
@@ -187,6 +188,7 @@ import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
 import org.freehep.graphicsio.swf.*;
 
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -6839,15 +6841,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	}
     	turtle.setVisible(true);
     	// Activate the executor (getInstance() is supposed to do that)
-    	/*Executor executor =*/ Executor.getInstance(this,turtle);
-    	/*
-                 String str = JOptionPane.showInputDialog(null, "Please enter the animation delay!", "50");
-                if(str!=null)
-                {
-                    executor.setDelay(Integer.valueOf(str));
-                    executor.execute(this.root);
-                }
-    	 */
+    	// START KGU#448 2017-10-28: Enh. #443: Cop with potentially several controllers
+    	//Executor.getInstance(this,turtle);
+    	Executor.getInstance(this, new DiagramController[]{turtle});
+    	// END KGU#448 2017-10-28
 
     }
     

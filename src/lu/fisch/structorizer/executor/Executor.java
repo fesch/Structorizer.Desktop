@@ -142,10 +142,18 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.12      Issue #432: Attempt to improve performance by reducing redraw() calls on delay 0
  *      Kay Gürtzig     2017.10.14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
  *      Kay Gürtzig     2017.10.16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
+ *      Kay Gürtzig     2017.10.28      Enh. #443: First adaptations for multiple DiagramControllers
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2017-10-28 Issue #443
+ *      - Executor might potentially have to work with several DiagramControllers. So it is important
+ *        efficiently to findo out, what diagram controller routines are available and whether there are
+ *        potential signature conflicts.
+ *      - Therefore the field diagramController was replaced by a list diagramContrllers and several
+ *        retrieval mechanism had to be revised.
+ *      - The Interface DiagramController was also completely redesigned.  
  *      2017-10-13/14 Issue #436
  *      - The internal representations of Structorizer arrays as Object[] caused inconsistent behaviour when
  *        used as parameters: subroutines obtain a reference and replacements of elements are thus effective
@@ -263,9 +271,11 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -285,26 +295,10 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import lu.fisch.diagrexec.DelayableDiagramController;
-import lu.fisch.diagrexec.DiagramController;
-import lu.fisch.diagrexec.FunctionProvidingDiagramController;
+import lu.fisch.diagrcontrol.*;
+import lu.fisch.diagrcontrol.DiagramController.FunctionException;
 import lu.fisch.structorizer.arranger.Arranger;
-import lu.fisch.structorizer.elements.Alternative;
-import lu.fisch.structorizer.elements.Call;
-import lu.fisch.structorizer.elements.Case;
-import lu.fisch.structorizer.elements.Element;
-import lu.fisch.structorizer.elements.For;
-import lu.fisch.structorizer.elements.ILoop;
-import lu.fisch.structorizer.elements.Instruction;
-import lu.fisch.structorizer.elements.Jump;
-import lu.fisch.structorizer.elements.Parallel;
-import lu.fisch.structorizer.elements.Repeat;
-import lu.fisch.structorizer.elements.Root;
-import lu.fisch.structorizer.elements.Subqueue;
-import lu.fisch.structorizer.elements.TypeMapEntry;
-import lu.fisch.structorizer.elements.Updater;
-import lu.fisch.structorizer.elements.While;
-import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
@@ -666,37 +660,52 @@ public class Executor implements Runnable
 	};
 	
 	/**
-	 * Returns the singleton instance if there is one
+	 * Returns the singleton instance IF THERE IS ONE. Does NOT create an instance!
 	 * @return the existing instance or null.
+	 * @see #getInstance(Diagram, DiagramController)
 	 */
 	public static Executor getInstance()
 	{
 		return mySelf;
 	}
 
+	// START KGU#448 2017-10-28: Enh. #443
+	///**
+	// * Ensures there is a (singleton) instance and returns it
+	// * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
+	// * @param diagramController - facade of an additionally controllable module or device 
+	// * @return the sole instance of this class.
+	// */
+	//public static Executor getInstance(Diagram diagram,
+	//		DiagramController diagramController)
 	/**
 	 * Ensures there is a (singleton) instance and returns it
 	 * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
-	 * @param diagramController - possibly an additional effector for execution 
+	 * @param diagramController - facades of additionally controllable modules or devices 
 	 * @return the sole instance of this class.
 	 */
 	public static Executor getInstance(Diagram diagram,
-			DiagramController diagramController)
+			DiagramController[] diagramControllers)
+	// END KGU#448 2017-10-28
 	{
 		// START KGU#443 2017-10-16: It is annoying if control refuses to keep its place on restart
 		boolean setControlLocation = false;
 		// END KGU#443 2017-10-16
 		if (mySelf == null)
 		{
-			mySelf = new Executor(diagram, diagramController);
+			mySelf = new Executor(diagram);
+			// START KGU#448 2017-10-28: Enh. #443
+			// END KGU#448 2017-10-28
 			// START KGU#443 2017-10-16: It is annoying if control refuses to keep its place on restart
 			setControlLocation = true;
 			// END KGU#443 2017-10-16
 		}
-		if (diagramController != null)
-		{
-			mySelf.diagramController = diagramController;
-		}
+		// START KGU#448 2017-10-28: Enh. #443 This must not of course be done while Executor is running!
+		//if (diagramController != null)
+		//{
+		//	mySelf.diagramController = diagramController;
+		//}
+		// END KGU#448 2017-10-28
 		// START KGU#157 2016-03-16: Bugfix #131 - Don't init if there is a running thread
 		//if (diagram != null)
 		//{
@@ -730,6 +739,13 @@ public class Executor implements Runnable
 		}
 		if (doInitialise)
 		{
+			// START KGU#448 2017-10-28: Enh. #443
+			if (diagramControllers != null)
+			{
+				// Now configure the API look-up tables
+				mySelf.configureControllerLookUps(diagramControllers);
+			}
+			// END KGU#448 2017-10-28
 			if (diagram != null)
 			{
 				mySelf.diagram = diagram;
@@ -749,6 +765,50 @@ public class Executor implements Runnable
 
 		return mySelf;
 	}
+
+	// START KGU#448 2017-10-28: Enh. #443
+	/**
+	 * Sets up the DiagramController API tables for faster retrieval
+	 */
+	private void configureControllerLookUps(DiagramController[] controllers) {
+		this.diagramControllers = controllers;
+		this.controllerFunctions.clear();
+		this.controllerProcedures.clear();
+		this.controllerFunctionNames.clear();
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < controllers.length; i++) {
+			DiagramController controller = controllers[i];
+			for (String key: controller.getFunctionMap().keySet()) {
+				String name = key.substring(0, key.indexOf('#'));
+				DiagramController conflicting = null;
+				if ((conflicting = this.controllerFunctions.put(key, controller)) != null) {
+					sb.append(Control.msgFunctionConflict.getText().
+							replace("%1", name).
+							replace("%2", key.substring(key.indexOf('#')+1)).
+							replace("%3", conflicting.getName()).
+							replace("%4", controller.getName()));
+				}
+				this.controllerFunctionNames.add(name);
+			}
+			for (String key: controller.getProcedureMap().keySet()) {
+				String name = key.substring(0, key.indexOf('#'));
+				DiagramController conflicting = null;
+				if ((conflicting = this.controllerProcedures.put(key, controller)) != null) {
+					sb.append(Control.msgFunctionConflict.getText().
+							replace("%1", name).
+							replace("%2", key.substring(key.indexOf('#')+1)).
+							replace("%3", conflicting.getName()).
+							replace("%4", controller.getName()));
+				}
+			}				
+		}
+		if (sb.length() > 0) {
+			JOptionPane.showMessageDialog(null, 
+					Control.msgSignatureConflicts.getText().replace("%", sb.toString()),
+					Control.class.getSimpleName(), JOptionPane.WARNING_MESSAGE);
+		}
+	}
+	// END KGU#448 2017-10-28
 
 	private Control control = new Control();
 
@@ -787,7 +847,13 @@ public class Executor implements Runnable
 	//private StringList forLoopVars = new StringList();	// KGU#384 2017-04-22 -> context
 	// END KGU#307 2016-12-12
 
-	private DiagramController diagramController = null;
+	// START KGU#448 2017-10-28: Enh.#443
+	//private DiagramController diagramController = null;
+	private DiagramController[] diagramControllers = new DiagramController[]{};
+	private HashMap<String, DiagramController> controllerFunctions = new HashMap<String, DiagramController>();
+	private HashMap<String, DiagramController> controllerProcedures = new HashMap<String, DiagramController>();
+	private Set<String> controllerFunctionNames = new HashSet<String>(); 
+	// END KGU#448 2017-10-28
 	// START KGU#384 2017-04-22: Context redesign -> this.context
 	//private Interpreter interpreter;
 	//private boolean returned = false;
@@ -847,11 +913,16 @@ public class Executor implements Runnable
 	
 	private static final StringList OBJECT_ARRAY = StringList.explode("Object,[,]", ",");
 
-
-	private Executor(Diagram diagram, DiagramController diagramController)
+	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
+	//private Executor(Diagram diagram, DiagramController diagramController)
+	private Executor(Diagram diagram)
+	// END KGU#448 2017-10-28
 	{
 		this.diagram = diagram;
-		this.diagramController = diagramController;
+		
+		// START KGU#448 2017-10-28: Enh. #443
+		//this.diagramController = diagramController;
+		// END KGU#448 2017-10-28
 		// START KGU#372 2017-03-27: Enh. #356: Show at least an information on closing attempt
 		this.control.addWindowListener(new WindowListener() {
 
@@ -1377,7 +1448,7 @@ public class Executor implements Runnable
 		// START KGU#376 2017-04-11: Enh. #389 - Must no longer done here but in execute() and executeCall()
 		//initInterpreter();
 		// END KGU#376 2017-04-11
-		String result = "";
+		String trouble = "";
 		// START KGU#384 2017-04-22: Holding all execution context in this.context now
 		//returned = false;
 		// START KGU#78 2015-11-25
@@ -1387,11 +1458,11 @@ public class Executor implements Runnable
 		// END KGU#384 207-04-22
 		
 		// START KGU#376 2017-07-01: Enh. #389 - perform all specified includes
-		result = importSpecifiedIncludables(root);
+		trouble = importSpecifiedIncludables(root);
 		// END KGU#376 2017-07-01
 
 		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
-		if (root.isSubroutine() && result.isEmpty())
+		if (root.isSubroutine() && trouble.isEmpty())
 		{
 		// END KGU#39 2015-10-16 (1/2)
 			StringList params = root.getParameterNames();
@@ -1442,8 +1513,8 @@ public class Executor implements Runnable
 					{
 						//i = params.count();	// leave the loop
 						// START KGU#197 2016-07-27: Enhanced localization
-						//result = "Manual break!";
-						result = control.msgManualBreak.getText();
+						//trouble = "Manual break!";
+						trouble = control.msgManualBreak.getText();
 						// END KGU#197 2016-07-27
 						break;
 					}
@@ -1468,8 +1539,8 @@ public class Executor implements Runnable
 						// END KGU#160 2016-04-26
 					} catch (EvalError ex)
 					{
-						result = ex.getLocalizedMessage();
-						if (result == null) result = ex.getMessage();
+						trouble = ex.getLocalizedMessage();
+						if (trouble == null) trouble = ex.getMessage();
 						break;
 					}
 				// START KGU#2 (#9) 2015-11-13: If root was called then just assign the arguments
@@ -1490,8 +1561,8 @@ public class Executor implements Runnable
 					}
 					catch (EvalError ex)
 					{
-						result = ex.getLocalizedMessage();
-						if (result == null) result = ex.getMessage();
+						trouble = ex.getLocalizedMessage();
+						if (trouble == null) trouble = ex.getMessage();
 						break;
 					}
 				}
@@ -1510,18 +1581,18 @@ public class Executor implements Runnable
 		addToStackTrace(root, arguments);
 		// END KGU#159 2017-03-17
 	
-		if (result.equals(""))
+		if (trouble.equals(""))
 		{
 			/////////////////////////////////////////////////////
 			// Actual start of execution 
 			/////////////////////////////////////////////////////
-			result = step(root);
+			trouble = step(root);
 			
-			if (result.equals("") && (stop == true))
+			if (trouble.equals("") && (stop == true))
 			{
 				// START KGU#197 2016-07-27: Enhanced localization
-				//result = "Manual break!";
-				result = control.msgManualBreak.getText();
+				//trouble = "Manual break!";
+				trouble = control.msgManualBreak.getText();
 				// END KGU#197 2016-07-27
 			}
 		}
@@ -1532,7 +1603,7 @@ public class Executor implements Runnable
 			diagram.redraw();
 		}
 		// END KGU#430 2017-10-12
-		if (!result.equals(""))
+		if (!trouble.equals(""))
 		{
 			// START KGU#2 (#9) 2015-11-13
 			successful = false;
@@ -1540,27 +1611,27 @@ public class Executor implements Runnable
 			
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED ARRAY ERROR MSG
 			
-			String modifiedResult = result;
+			String modifiedResult = trouble;
 			// FIXME (KGU): If the interpreter happens to provide localized messages then this won't work anymore!
-			if (result.contains("Not an array"))
+			if (trouble.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
 						+ modifiedResult.substring(
 								modifiedResult.indexOf("[") + 1,
 								modifiedResult.indexOf("]"))
 						+ " is out of bounds (invalid index)");
-				result = modifiedResult;
+				trouble = modifiedResult;
 			}
 
 			// START KGU#2 2015-11-22: If we are on a subroutine level, then we must stop the show
-			//JOptionPane.showMessageDialog(diagram, result, "Error",
+			//JOptionPane.showMessageDialog(diagram, trouble, "Error",
 			//		JOptionPane.ERROR_MESSAGE);
 			if (!isErrorReported)
 			{
-				JOptionPane.showMessageDialog(diagram.getParent(), result, control.msgTitleError.getText(),
+				JOptionPane.showMessageDialog(diagram.getParent(), trouble, control.msgTitleError.getText(),
 						JOptionPane.ERROR_MESSAGE);
-				// START KGU#160 2016-07-27: Issue #137 - also log the result to the console
-				this.console.writeln("*** " + result, Color.RED);
+				// START KGU#160 2016-07-27: Issue #137 - also log the trouble to the console
+				this.console.writeln("*** " + trouble, Color.RED);
 				// END KGU#160 2016-07-27
 				isErrorReported = true;
 			}
@@ -1775,7 +1846,7 @@ public class Executor implements Runnable
 				else
 				{
 					// START KGU#197 2016-07-27: Now translatable message
-					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+					//trouble = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
 					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
 					errorString = control.msgNoInclDiagram.getText().
 							replace("%", diagrName);
@@ -2273,13 +2344,27 @@ public class Executor implements Runnable
     }
 	// END KGU#2 (#9) 2015-11-13
 
-	public String getExec(String cmd)
+    // KGU#448 2017-10-28: Replaced former method getExec(String) in the only remained reference 
+	public String initRootExecDelay()
 	{
-		String result = "";
-		if (diagramController != null)
-		{
-			result = diagramController.execute(cmd);
-		} else
+		String trouble = "";
+		// START KGU#448 2017-10-28: Enh. #443
+		//if (diagramController != null && diagramController instanceof DelayableDiagramController)
+		//{
+		//	((DelayableDiagramController)diagramController).setAnimationDelay(delay, true);
+		//}
+		//else
+		boolean delayed = false;
+		if (diagramControllers != null) {
+			for (DiagramController controller: diagramControllers) {
+				if (controller instanceof DelayableDiagramController) {
+					((DelayableDiagramController)controller).setAnimationDelay(delay, true);
+					delayed = true;
+				}
+			}
+		}
+		if (!delayed)
+		// END KGU#448 2017-10-28
 		{
 			delay();
 		}
@@ -2291,35 +2376,81 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println("Executor.getExec(\"" + cmd + "\"): " + e.getMessage());
+				System.err.println("Executor.initRootExec(): " + e.getMessage());
 			}
 		}
-		return result;
+		return trouble;
 	}
 
-	public String getExec(String cmd, Color color)
+//	// Replaced by getExec(DiagramController, String, Object[])
+//    @Deprecated
+//	public String getExec(String cmd, Color color)
+//	{
+//		String trouble = "";
+//		if (diagramController != null)
+//		{
+//			trouble = diagramController.execute(cmd, color);
+//		} else
+//		{
+//			delay();
+//		}
+//		if (delay != 0)
+//		{
+//			diagram.redraw();
+//			try
+//			{
+//				Thread.sleep(delay);
+//			} catch (InterruptedException e)
+//			{
+//				System.err.println("Executor.getExec(\"" + cmd + "\", " + color + "): " + e.getMessage());
+//			}
+//		}
+//		return trouble;
+//	}
+
+	// START KGU#448 2017-10-28: Enh. #443 replaces getExec(String) and getExec(String, Color)
+    /**
+     * Executes the procedure {@code procName} with arguments {@code arguments} on
+     * the given {@link DiagramController} {@code controller}.
+     * As the operation is regarded as a diagram step, the specified delay is applied.
+     * @param controller - the facade for the controlled device
+     * @param procName - the name of the operation
+     * @param arguments - the arguments for the operation
+     * @return
+     */
+	public String getExec(DiagramController controller, String procName, Object[] arguments)
 	{
-		String result = "";
-		if (diagramController != null)
-		{
-			result = diagramController.execute(cmd, color);
-		} else
-		{
-			delay();
+		String trouble = "";
+		try {
+			// We don't expect results here
+			controller.execute(procName, arguments);
+		}
+		catch (FunctionException ex) {
+			trouble = ex.getMessage();
 		}
 		if (delay != 0)
 		{
+			// Don't do a duplicate delay
+			if (!(controller instanceof DelayableDiagramController)) {
+				delay();
+			}
 			diagram.redraw();
 			try
 			{
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println("Executor.getExec(\"" + cmd + "\", " + color + "): " + e.getMessage());
+				StringList args = new StringList();
+				for (int i = 0; i < arguments.length; i++) {
+					args.add(arguments[i].toString());
+				}
+				System.err.println("Executor.getExec(" + controller + ", \"" + procName + "\", "
+						+ args.concatenate(", ") + "): " + e.getMessage());
 			}
 		}
-		return result;
+		return trouble;
 	}
+	// END KGU#448 2017-10-28
 
 	public boolean getPaus()
 	{
@@ -2636,13 +2767,17 @@ public class Executor implements Runnable
 		boolean delayChanged = aDelay != delay;
 		// END KGU#97 2015-12-10
 		delay = aDelay;
-		// START KGU#97 2015-12-10: Enh.Req. #48: Inform a delay-aware DiaramController A.S.A.P.
-		if (delayChanged && 
-				diagramController != null &&
-				diagramController instanceof DelayableDiagramController)
-		{
-			((DelayableDiagramController) diagramController).setAnimationDelay(aDelay);
+		// START KGU#97 2015-12-10: Enh.Req. #48: Inform delay-aware DiaramControllers A.S.A.P.
+		// START KGU#448 2017-10-28: Enh. #443 Revised to cope with several controllers
+		if (delayChanged && diagramControllers != null) {
+			for (DiagramController controller: diagramControllers) {
+				if (controller instanceof DelayableDiagramController)
+				{
+					((DelayableDiagramController) controller).setAnimationDelay(aDelay, false);
+				}
+			}
 		}
+		// END KGU#448 2017-10-28
 		// END KGU#97 2015-12-20
 	}
 
@@ -3658,10 +3793,10 @@ public class Executor implements Runnable
 	// START KGU 2015-10-13: Decomposed this "monster" method into Element-type-specific subroutines
 	private String step(Element element)
 	{
-		String result = new String();
+		String trouble = new String();
 		// START KGU#277 2016-10-13: Enh. #270: skip the element if disabled
 		if (element.disabled) {
-			return result;
+			return trouble;
 		}
 		// END KGU#277 2016-10-13
 		
@@ -3688,10 +3823,10 @@ public class Executor implements Runnable
 		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
-			result = stepRoot((Root)element);
+			trouble = stepRoot((Root)element);
 		} else if (element instanceof Repeat)
 		{
-			result = stepRepeat((Repeat)element);
+			trouble = stepRepeat((Repeat)element);
 		}
 		else 
 		{
@@ -3702,43 +3837,43 @@ public class Executor implements Runnable
 			//if (element instanceof Instruction)
 			if (element instanceof Call)
 			{
-				result = stepCall((Call)element);
+				trouble = stepCall((Call)element);
 			}
 			// START KGU#78 2015-11-25: Separate handling of JUMP instructions
 			else if (element instanceof Jump)
 			{
-				result = stepJump((Jump)element);
+				trouble = stepJump((Jump)element);
 			}
 			// END KGU#78 2015-11-25
 			else if (element instanceof Instruction)
 			// END KGU#2 2015-11-14
 			{
-				result = stepInstruction((Instruction)element);
+				trouble = stepInstruction((Instruction)element);
 			} else if (element instanceof Case)
 			{
-				result = stepCase((Case)element);
+				trouble = stepCase((Case)element);
 			} else if (element instanceof Alternative)
 			{
-				result = stepAlternative((Alternative)element);
+				trouble = stepAlternative((Alternative)element);
 			} else if (element instanceof While)
 			{
-				result = stepWhile(element, false);
+				trouble = stepWhile(element, false);
 			} else if (element instanceof For)
 			{
-				result = stepFor((For)element);
+				trouble = stepFor((For)element);
 			}
 			// START KGU#44/KGU#47 2015-10-13: Obviously, Forever loops and Parallel sections had been forgotten
 			else if (element instanceof Forever)
 			{
-				result = stepWhile(element, true);
+				trouble = stepWhile(element, true);
 			}
 			else if (element instanceof Parallel)
 			{
-				result = stepParallel((Parallel)element);
+				trouble = stepParallel((Parallel)element);
 			}
 			// END KGU#44/KGU#47 2015-10-13
 		}
-		if (result.equals("")) {
+		if (trouble.equals("")) {
 			element.executed = false;
 			// START KGU#117 2016-03-07: Enh. #77
 			element.checkTestCoverage(false);
@@ -3748,49 +3883,52 @@ public class Executor implements Runnable
 			element.countExecution();
 			// END KGU#156 2016-03-11
 		}
-		return result;
+		return trouble;
 	}
 
 	private String stepRoot(Root element)
 	{
 		// KGU 2015-11-25: Was very annoying to wait here in step mode
-		// and we MUST NOT re-initialise the Turtleizer on a subroutine!
-		if ((diagramController != null || !step) && callers.isEmpty())
+		// and we MUST NOT re-initialize the diagramControllers on a subroutine!
+		if ((diagramControllers != null || !step) && callers.isEmpty())
 		{
-			getExec("init(" + delay + ")");
+			// START KGU#448 2017-10-28: Enh. #443 use the internal interface not the diagram API
+			//getExec("init(" + delay + ")");
+			initRootExecDelay();
+			// END KGU#448 2017-10-28
 		}
 
 		element.waited = true;
 
 		// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
-//		String result = new String();
+//		String trouble = new String();
 //		int i = 0;
 //		// START KGU#77 2015-11-11: Leave if a return statement has been executed
 //		//while ((i < element.children.children.size())
-//		//		&& result.equals("") && (stop == false))
+//		//		&& trouble.equals("") && (stop == false))
 //		while ((i < element.children.getSize())
-//				&& result.equals("") && (stop == false) && !returned)
+//				&& trouble.equals("") && (stop == false) && !returned)
 //		// END KGU#77 2015-11-11
 //		{
-//			result = step(element.children.getElement(i));
+//			trouble = step(element.children.getElement(i));
 //			i++;
 //		}
-		String result = stepSubqueue(element.children, false);
+		String trouble = stepSubqueue(element.children, false);
 		// END KGU#117 2016-03-07
 
 		// START KGU#148 2016-01-29: Moved to execute
 //		delay();
-//		if (result.equals(""))
+//		if (trouble.equals(""))
 //		{
 //			element.clearExecutionStatus();
 //		}
 		// END KGU#148 2016-01-29
-		return result;
+		return trouble;
 	}
 
 	private String stepInstruction(Instruction element)
 	{
-		String result = new String();
+		String trouble = new String();
 
 		// START KGU#413 2017-06-09: Enh. #416 allow user-defined line concatenation
 		//StringList sl = element.getText();
@@ -3799,8 +3937,8 @@ public class Executor implements Runnable
 		int i = 0;
 
 		// START KGU#77/KGU#78 2015-11-25: Leave if some kind of leave statement has been executed
-		//while ((i < sl.count()) && result.equals("") && (stop == false))
-		while ((i < sl.count()) && result.equals("") && (stop == false) &&
+		//while ((i < sl.count()) && trouble.equals("") && (stop == false))
+		while ((i < sl.count()) && trouble.equals("") && (stop == false) &&
 				!context.returned && leave == 0)
 		// END KGU#77/KGU#78 2015-11-25
 		{
@@ -3832,7 +3970,7 @@ public class Executor implements Runnable
 					if (Element.splitLexically(cmd, true).contains("<-"))
 						// END KGU#377 2017-03-30: Bugfix
 					{
-						result = tryAssignment(cmd, element, i);
+						trouble = tryAssignment(cmd, element, i);
 					}
 					// input
 					// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
@@ -3841,7 +3979,7 @@ public class Executor implements Runnable
 							this.getKeywordPattern(CodeParser.getKeyword("input")) + "([\\W].*|$)"))
 						// END KGU#65 2015-11-04
 					{
-						result = tryInput(cmd);
+						trouble = tryInput(cmd);
 					}
 					// output
 					// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
@@ -3850,7 +3988,7 @@ public class Executor implements Runnable
 							this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
 						// END KGU#65 2015-11-04
 					{
-						result = tryOutput(cmd);
+						trouble = tryOutput(cmd);
 					}
 					// return statement
 					// START KGU 2015-11-28: The "return" keyword ought to be the first word of the instruction,
@@ -3861,7 +3999,7 @@ public class Executor implements Runnable
 							this.getKeywordPattern(CodeParser.getKeywordOrDefault("preReturn", "return")) + "([\\W].*|$)"))
 						// END KGU 2015-11-11
 					{		 
-						result = tryReturn(cmd.trim());
+						trouble = tryReturn(cmd.trim());
 					}
 					// START KGU#332 2017-01-17/19: Enh. #335 - tolerate a Pascal variable declaration
 					else if (cmd.matches("^var.*:.*")) {
@@ -3885,7 +4023,7 @@ public class Executor implements Runnable
 					// END KGU#332 2017-01-17/19
 					else
 					{
-						result = trySubroutine(cmd, element);
+						trouble = trySubroutine(cmd, element);
 					}
 					// START KGU#156 2016-03-11: Enh. #124
 					element.addToExecTotalCount(1, true);	// For the instruction line
@@ -3898,7 +4036,7 @@ public class Executor implements Runnable
 				}
 				// END KGU#388 2017-09-13
 				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
-				if ((i+1 < sl.count()) && result.equals("") && (stop == false)
+				if ((i+1 < sl.count()) && trouble.equals("") && (stop == false)
 						&& !context.returned && leave == 0)
 				{
 					delay();
@@ -3906,37 +4044,37 @@ public class Executor implements Runnable
 				// END KGU#271 2016-10-06
 			} catch (EvalError ex)
 			{
-				result = ex.getLocalizedMessage();
-				if (result == null) result = ex.getMessage();
-				if (result.endsWith("TargetError")) {
+				trouble = ex.getLocalizedMessage();
+				if (trouble == null) trouble = ex.getMessage();
+				if (trouble.endsWith("TargetError")) {
 					String errorText = ex.getErrorText();
 					int leftParPos = errorText.indexOf('(');
 					int rightParPos = errorText.lastIndexOf(')');
 					if (errorText.startsWith("throw") && leftParPos >= 0 && rightParPos > leftParPos) {
 						errorText = errorText.substring(leftParPos+1,  rightParPos).trim();
 					}
-					result = result.replace("TargetError", errorText);
+					trouble = trouble.replace("TargetError", errorText);
 				}
 			}
 			catch (Exception ex)
 			{
-				result = ex.getLocalizedMessage();
-				if (result == null) result = ex.getMessage();
-				if (result == null) result = ex.toString();
+				trouble = ex.getLocalizedMessage();
+				if (trouble == null) trouble = ex.getMessage();
+				if (trouble == null) trouble = ex.toString();
 			}
 			i++;
 		}
-		if (result.equals(""))
+		if (trouble.equals(""))
 		{
 			element.executed = false;
 		}
-		return result;
+		return trouble;
 	}
 	
 	// START KGU#2 2015-11-14: Separate dedicated implementation for "foreign calls"
 	private String stepCall(Call element)
 	{
-		String result = new String();
+		String trouble = new String();
 
 		// START KGU#413 2017-06-09: Enh. #416 allow user-defined line concatenation
 		//StringList sl = element.getText();
@@ -3951,8 +4089,8 @@ public class Executor implements Runnable
 		// END KGU#117 2016-03-10
 
 		// START KGU#77 2015-11-11: Leave if a return statement has been executed
-		//while ((i < sl.count()) && result.equals("") && (stop == false))
-		while ((i < sl.count()) && result.equals("") && (stop == false) && !context.returned)
+		//while ((i < sl.count()) && trouble.equals("") && (stop == false))
+		while ((i < sl.count()) && trouble.equals("") && (stop == false) && !context.returned)
 		// END KGU#77 2015-11-11
 		{
 			String cmd = sl.get(i);
@@ -3982,11 +4120,11 @@ public class Executor implements Runnable
 				if (Element.splitLexically(cmd, true).contains("<-"))
 				// END KGU#377 2017-03-30: Bugfix
 				{
-					result = tryAssignment(cmd, element, i);
+					trouble = tryAssignment(cmd, element, i);
 				}
 				else
 				{
-					result = trySubroutine(cmd, element);
+					trouble = trySubroutine(cmd, element);
 				}
 				
 				// START KGU#117 2016-03-08: Enh. #77
@@ -3994,14 +4132,14 @@ public class Executor implements Runnable
 				// END KGU#117 2016-03-08
 			} catch (EvalError ex)
 			{
-				result = ex.getLocalizedMessage();
-				if (result == null) result = ex.getMessage();
+				trouble = ex.getLocalizedMessage();
+				if (trouble == null) trouble = ex.getMessage();
 			}
 
 			i++;
 			// Among the lines of a single instruction element there is no further breakpoint check!
 		}
-		if (result.equals(""))
+		if (trouble.equals(""))
 		{
 			element.executed = false;
 			// START KGU#117 2016-03-08: Enh. #77
@@ -4014,14 +4152,14 @@ public class Executor implements Runnable
 			}
 			// END KGU#117 2016-03-08
 		}
-		return result;
+		return trouble;
 	}
 	// END KGU#2 2015-11-14
 
 	// START KGU#78 2015-11-25: Separate dedicated implementation for JUMPs
 	private String stepJump(Jump element)
 	{
-		String result = new String();
+		String trouble = new String();
 
 		// START KGU#413 2017-06-09: Enh. #416 allow user-defined line concatenation
 		//StringList sl = element.getText();
@@ -4035,7 +4173,7 @@ public class Executor implements Runnable
 			int nLevels = element.getLevelsUp();
 			if (nLevels < 1) {
 				String argument = sl.get(0).trim().substring(CodeParser.getKeyword("preLeave").length()).trim();
-				result = control.msgIllegalLeave.getText().replace("%1", argument);				
+				trouble = control.msgIllegalLeave.getText().replace("%1", argument);				
 			}
 			else {
 				this.leave += nLevels;
@@ -4046,17 +4184,17 @@ public class Executor implements Runnable
 		else if (element.isReturn()) {
 			try {
 				// START KGU#417 2017-06-30: Enh. #424
-				//result = tryReturn(convert(sl.get(0)));
+				//trouble = tryReturn(convert(sl.get(0)));
 				String cmd = convert(sl.get(0));
 				cmd = this.evaluateDiagramControllerFunctions(cmd);
-				result = tryReturn(cmd);
+				trouble = tryReturn(cmd);
 				// END KGU#417 2017-06-30
 				done = true;			
 			}
 			catch (Exception ex)
 			{
-				result = ex.getLocalizedMessage();
-				if (result == null) result = ex.getMessage();
+				trouble = ex.getLocalizedMessage();
+				if (trouble == null) trouble = ex.getMessage();
 			}
 		}
 		// Exit from entire program?
@@ -4084,8 +4222,8 @@ public class Executor implements Runnable
 				else
 				{
 					// START KGU#197 2016-07-27: More localization support
-					//result = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
-					result = control.msgWrongExit.getText().replace("%1",
+					//trouble = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
+					trouble = control.msgWrongExit.getText().replace("%1",
 							"<" + (n == null ? expr : n.toString()) + ">");
 					// END KGU#197 2016-07-27
 				}
@@ -4093,17 +4231,17 @@ public class Executor implements Runnable
 			catch (EvalError ex)
 			{
 				// START KGU#197 2016-07-27: More localization support (Updated 32016-09-17)
-				//result = "Wrong exit value: " + ex.getMessage();
+				//trouble = "Wrong exit value: " + ex.getMessage();
 				String exMessage = ex.getLocalizedMessage();
 				if (exMessage == null) exMessage = ex.getMessage();
-				result = control.msgWrongExit.getText().replace("%1", exMessage);
+				trouble = control.msgWrongExit.getText().replace("%1", exMessage);
 				// END KGU#197 2016-07-27
 			}
-			if (result.isEmpty())
+			if (trouble.isEmpty())
 			{
 				// START KGU#197 2016-07-27: More localization support
-				//result = "Program exited with code " + exitValue + "!";
-				result = control.msgExitCode.getText().replace("%1",
+				//trouble = "Program exited with code " + exitValue + "!";
+				trouble = control.msgExitCode.getText().replace("%1",
 						Integer.toString(exitValue));
 				// END KGU#197 2016-07-27
 				// START KGU#117 2016-03-07: Enh. #77
@@ -4116,8 +4254,8 @@ public class Executor implements Runnable
 		else
 		{
 			// START KGU#197 2016-07-27: More localization support
-			//result = "Illegal content of a Jump (i.e. exit) instruction: <" + cmd + ">!";
-			result = control.msgIllegalJump.getText().replace("%1", sl.concatenate(" <nl> "));
+			//trouble = "Illegal content of a Jump (i.e. exit) instruction: <" + cmd + ">!";
+			trouble = control.msgIllegalJump.getText().replace("%1", sl.concatenate(" <nl> "));
 			// END KGU#197 2016-07-27
 		}
 		// END KGU#380 2017-04-14
@@ -4125,27 +4263,27 @@ public class Executor implements Runnable
 		if (done && leave > context.loopDepth)
 		{
 			// START KGU#197 2016-07-27: More localization support
-			result = "Too many levels to leave (actual depth: " + context.loopDepth + " / specified: " + leave + ")!";
-			result = control.msgTooManyLevels.getText().
+			trouble = "Too many levels to leave (actual depth: " + context.loopDepth + " / specified: " + leave + ")!";
+			trouble = control.msgTooManyLevels.getText().
 					replace("%1", Integer.toString(context.loopDepth)).
 					replace("%2", Integer.toString(leave));
 			// END KGU#197 2016-07-27
 		}			
-		if (result.equals(""))
+		if (trouble.equals(""))
 		{
 			// START KGU#156 2016-03-11: Enh. #124
 			element.addToExecTotalCount(1, true);	// For the jump
 			//END KGU#156 2016-03-11
 			element.executed = false;
 		}
-		return result;
+		return trouble;
 	}
 	// END KGU#78 2015-11-25
 	
 	// START KGU#417 2017-06-29: Enh. #424 New mechanism to pre-evaluate Turtleizer functions
 	private String evaluateDiagramControllerFunctions(String expression) throws EvalError
 	{
-		if (diagramController != null && diagramController instanceof FunctionProvidingDiagramController) {
+		if (diagramControllers != null) {
 			// Now, several ones of the functions offered by diagramController might
 			// occur at different nesting depths in the expression. So we must find
 			// and evaluate them from innermost to outermost.
@@ -4154,53 +4292,43 @@ public class Executor implements Runnable
 			// Begin with collecting all possible occurrence positions
 			StringList tokens = Element.splitLexically(expression, true);
 			LinkedList<Integer> positions = new LinkedList<Integer>();
-			HashMap<String, Class<?>[]> funcMap = ((FunctionProvidingDiagramController)diagramController).getFunctionMap();
-			for (Entry<String, Class<?>[]> entry: funcMap.entrySet()) {
-				int pos = -1;
-				while ((pos = tokens.indexOf(entry.getKey(), pos+1, false)) >= 0) {
-					positions.add(pos);
+			int pos = tokens.count();
+			while ((pos = tokens.lastIndexOf("(", pos-1)) >= 0) {
+				String token = null;
+				while (pos > 0 && (token = tokens.get(--pos).trim()).isEmpty());
+				if (pos >= 0 && this.controllerFunctionNames.contains(token.toLowerCase())) {
+					positions.addFirst(pos);
 				}
 			}
-			// 
-			positions.sort(java.util.Collections.reverseOrder());
 			Iterator<Integer> iter = positions.iterator();
 			try {
 				while (iter.hasNext()) {
-					int pos = iter.next();
+					pos = iter.next();
 					String fName = tokens.get(pos).toLowerCase();
-					String exprTail = tokens.concatenate("", pos + 1).trim();
-					if (exprTail.startsWith("(")) {
-						StringList args = Element.splitExpressionList(exprTail.substring(1), ",");
-						Class<?>[] signature = funcMap.get(fName);
-						int nArgs = args.count();
-						if (nArgs == signature.length - 1) {
-							String tail = "";
-							StringList parts = Element.splitExpressionList(exprTail.substring(1), ",", true);
-							if (parts.count() > nArgs) {
-								tail = parts.get(parts.count()-1).trim();
-							}
-							Object argVals[] = new Object[nArgs];
-							for (int i = 0; i < nArgs; i++) {
-								Object val = this.evaluateExpression(args.get(i), false, false);
-								try {
-									signature[i].cast(val);
-								}
-								catch (Exception ex) {
-									EvalError err = new EvalError("Function <" + fName + "> argument "
-											+ (i+1) + ": <" + args.get(i) + "> could not be converted to "
-											+ signature[i].getSimpleName(), null, null);
-									err.setStackTrace(ex.getStackTrace());
-									throw err;
-								}
-							}
-							// Passed till here, we try to execute the function - this may throw a FunctionException
-							Object result = ((FunctionProvidingDiagramController)diagramController).execute(fName, argVals);
-							tokens.remove(pos, tokens.count());
-							tokens.add(signature[signature.length-1].cast(result).toString());
-							if (!tail.isEmpty()) {
-								tokens.add(Element.splitLexically(tail.substring(1), true));
-							}
-						}
+					StringList exprTail = tokens.subSequence(tokens.indexOf("(", pos+1)+1, tokens.count());
+					StringList args = Element.splitExpressionList(exprTail, ",", false);
+					int nArgs = args.count();
+					String fSign = fName + "#" + nArgs;
+					DiagramController controller = this.controllerFunctions.get(fSign);
+					Method function = controller.getFunctionMap().get(fSign);
+					// Now we must know what is beyond the function call (the tail)
+					String tail = "";
+					StringList parts = Element.splitExpressionList(exprTail, ",", true);
+					if (parts.count() > nArgs) {
+						tail = parts.get(parts.count()-1).trim();
+					}
+					Object argVals[] = new Object[nArgs];
+					for (int i = 0; i < nArgs; i++) {
+						// TODO While the known controller function haven't got (complex) arguments we may neglect initializers
+						argVals[i] = this.evaluateExpression(args.get(i), false, false);
+					}
+					// Passed till here, we try to execute the function - this may throw a FunctionException
+					Object result = controller.execute(fName, argVals);
+					tokens.remove(pos, tokens.count());
+					//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
+					tokens.add(result.toString());
+					if (!tail.isEmpty()) {
+						tokens.add(Element.splitLexically(tail.substring(1), true));
 					}
 				}
 			}
@@ -4232,7 +4360,7 @@ public class Executor implements Runnable
 	 */
 	private String tryAssignment(String cmd, Instruction instr, int lineNo) throws EvalError
 	{
-		String result = "";
+		String trouble = "";
 		Object value = null;
 		// KGU#2: In case of a Call element, we allow an assignment with just the subroutine call on the
 		// right-hand side. This makes it relatively easy to detect and prepare the very subroutine call,
@@ -4302,9 +4430,9 @@ public class Executor implements Runnable
 				else
 				{
 					// START KGU#197 2016-07-27: Now translatable
-					//result = "A function diagram " + f.getName() + " (" + f.paramCount() + 
+					//trouble = "A function diagram " + f.getName() + " (" + f.paramCount() + 
 					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
-					result = control.msgNoSubroutine.getText().
+					trouble = control.msgNoSubroutine.getText().
 							replace("%1", f.getName()).
 							replace("%2", Integer.toString(f.paramCount())).
 							replace("\\n", "\n");
@@ -4314,8 +4442,8 @@ public class Executor implements Runnable
 			else
 			{
 				// START KGU#197 2016-07-27: Now translatable
-				//result = "<" + expression + "> is not a correct function!";
-				result = control.msgIllFunction.getText().replace("%1", expression);
+				//trouble = "<" + expression + "> is not a correct function!";
+				trouble = control.msgIllFunction.getText().replace("%1", expression);
 				// END KGU#197 2016-07-27
 			}
 		}
@@ -4339,7 +4467,7 @@ public class Executor implements Runnable
 //			this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
 //			HashMap<String, String> components = Element.splitRecordInitializer(expression);
 //			if (components == null || components.containsKey("§TAIL§")) {
-//				result = control.msgInvalidExpr.getText().replace("%1", expression);
+//				trouble = control.msgInvalidExpr.getText().replace("%1", expression);
 //			}
 //			else {
 //				components.remove("§TYPENAME§");
@@ -4350,7 +4478,7 @@ public class Executor implements Runnable
 //						context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
 //					}
 //					else {
-//						result = control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName);
+//						trouble = control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName);
 //						break;
 //					}
 //				}
@@ -4400,27 +4528,27 @@ public class Executor implements Runnable
 			}
 			// END KGU#388 2017-09-14
 		}
-		// START KGU#2 2015-11-24: In case of an already detected problem don't fill the result
-		//else if (result.isEmpty())
-		else if (result.isEmpty() && !stop)
+		// START KGU#2 2015-11-24: In case of an already detected problem don't fill the trouble
+		//else if (trouble.isEmpty())
+		else if (trouble.isEmpty() && !stop)
 		// END KGU#2 2015-11-24
 		{
 			// START KGU#197 2016-07-27: Localization support
-			//result = "<"
+			//trouble = "<"
 			//		+ expression
 			//		+ "> is not a correct or existing expression.";
-			result = control.msgInvalidExpr.getText().replace("%1", expression);
+			trouble = control.msgInvalidExpr.getText().replace("%1", expression);
 			// END KGU#197 2016-07-27
 		}
 
-		return result;
+		return trouble;
 		
 	}
 	
 	// Submethod of stepInstruction(Instruction element), handling an input instruction
 	private String tryInput(String cmd) throws EvalError
 	{
-		String result = "";
+		String trouble = "";
 		String in = cmd.substring(CodeParser.getKeyword("input").trim().length()).trim();
 		// START KGU#281: Enh. #271: Input prompt handling
 		String prompt = null;
@@ -4495,21 +4623,21 @@ public class Executor implements Runnable
 				catch (Exception e)
 				{
 					// START KGU#141 2016-01-16: We MUST raise the error here.
-					result = e.getLocalizedMessage();
-					if (result == null) result = e.getMessage();
+					trouble = e.getLocalizedMessage();
+					if (trouble == null) trouble = e.getMessage();
 					// END KGU#141 2016-01-16
 				}
 			}
 			// END KGU#33 2014-12-05
 			// START KGU#375 2017-03-30: Enh. #388 - support of constants
 			if (this.isConstant(in)) {
-				result = control.msgConstantRedefinition.getText().replaceAll("%", in);
+				trouble = control.msgConstantRedefinition.getText().replaceAll("%", in);
 			}
 			// END KGU#375 2017-03-30
 			// START KGU#141 2016-01-16: Bugfix #112 - nothing more to do than exiting
-			if (!result.isEmpty())
+			if (!trouble.isEmpty())
 			{
-				return result;
+				return trouble;
 			}
 			// END KGU#141 2016-01-16
 			// START KGU#89 2016-03-18: More language support 
@@ -4576,13 +4704,13 @@ public class Executor implements Runnable
 		}
 		// END KGU#107 2015-12-13
 		
-		return result;
+		return trouble;
 	}
 
 	// Submethod of stepInstruction(Instruction element), handling an output instruction
 	private String tryOutput(String cmd) throws EvalError
 	{
-		String result = "";
+		String trouble = "";
 		// KGU 2015-12-11: Instruction is supposed to start with the output keyword!
 		String out = cmd.substring(/*cmd.indexOf(CodeParser.output) +*/
 						CodeParser.getKeyword("output").trim().length()).trim();
@@ -4593,14 +4721,14 @@ public class Executor implements Runnable
 		// END KGU#107 2015-12-13
 		// START KGU#101 2015-12-11: Fix #54 - Allow several expressions to be output in a line
 			StringList outExpressions = Element.splitExpressionList(out, ",");
-			for (int i = 0; i < outExpressions.count() && result.isEmpty(); i++)
+			for (int i = 0; i < outExpressions.count() && trouble.isEmpty(); i++)
 			{
 				out = outExpressions.get(i);
 		// END KGU#101 2015-12-11
 				Object n = this.evaluateExpression(out, false, false);
 				if (n == null)
 				{
-					result = control.msgInvalidExpr.getText().replace("%1", out);
+					trouble = control.msgInvalidExpr.getText().replace("%1", out);
 				} else
 				{
 		// START KGU#101 2015-12-11: Fix #54 (continued)
@@ -4614,7 +4742,7 @@ public class Executor implements Runnable
 //			str = "(empty line)";
 //		}
 		// END KGU#107 2015-12-13
-		if (result.isEmpty())
+		if (trouble.isEmpty())
 		{
 			String s = unconvert(str.trim());	// FIXME (KGU): What the heck is this good for?
 		// END KGU#101 2015-12-11
@@ -4670,27 +4798,27 @@ public class Executor implements Runnable
 			}
 			// END KGU#84 2015-11-23
 		}
-		return result;
+		return trouble;
 	}
 
 	// Submethod of stepInstruction(Instruction element), handling a return instruction
 	private String tryReturn(String cmd) throws EvalError
 	{
-		String result = "";
+		String trouble = "";
 		String header = control.lbReturnedResult.getText();
 		String out = cmd.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length()).trim();
 		// START KGU#77 (#21) 2015-11-13: We out to allow an empty return
 		//Object n = interpreter.eval(out);
 		//if (n == null)
 		//{
-		//	result = "<"
+		//	trouble = "<"
 		//			+ out
 		//			+ "> is not a correct or existing expression.";
 		//} else
 		//{
 		//	String s = unconvert(n.toString());
 		//	JOptionPane.showMessageDialog(diagram, s,
-		//			"Returned result", 0);
+		//			"Returned trouble", 0);
 		//}
 		Object resObj = null;
 		if (!out.isEmpty())
@@ -4703,7 +4831,7 @@ public class Executor implements Runnable
 			if (this.callers.empty())
 			{
 				if (resObj == null)	{
-					result = control.msgInvalidExpr.getText().replace("%1", out);
+					trouble = control.msgInvalidExpr.getText().replace("%1", out);
 				} 
 				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
 				// START KGU#439 2017-10-13: Issue 436 - Structorizer arrays now implemented as ArrayLists rather than Object[] 
@@ -4757,18 +4885,18 @@ public class Executor implements Runnable
 		context.returnedValue = resObj;
 		// END KGU#77 (#21) 2015-11-13
 		context.returned = true;
-		return result;
+		return trouble;
 	}
 
 	// Submethod of stepInstruction(Instruction element), handling a function call
 	private String trySubroutine(String cmd, Instruction element) throws EvalError
 	{
-		String result = "";
+		String trouble = "";
 		Function f = new Function(cmd);
 		if (f.isFunction())
 		{
 			String procName = f.getName();
-			String params = new String();	// List of evaluated arguments
+			//String params = new String();	// List of evaluated arguments
 			Object[] args = new Object[f.paramCount()];
 			for (int p = 0; p < f.paramCount(); p++)
 			{
@@ -4777,26 +4905,22 @@ public class Executor implements Runnable
 					args[p] = this.evaluateExpression(f.getParam(p), false, false);
 					if (args[p] == null)
 					{
-						if (!result.isEmpty())
+						if (!trouble.isEmpty())
 						{
-							result = result + "\n";
+							trouble = trouble + "\n";
 						}
-						// START KGU#197 2016-07-27: Localization support
-						//result = result + "PARAM " + (p+1) + ": <"
-						//		+ f.getParam(p)
-						//		+ "> is not a correct or existing expression.";
-						result = result + "PARAM " + (p+1) + ": "
+						trouble = trouble + "PARAM " + (p+1) + ": "
 								+ control.msgInvalidExpr.getText().replace("%1", f.getParam(p));
-						// END KGU#197 2016-07-27
-					} else
-					{
-						params += "," + args[p].toString();
 					}
+//					else
+//					{
+//						params += "," + args[p].toString();
+//					}
 				} catch (EvalError ex)
 				{
 					String exMessage = ex.getLocalizedMessage();
 					if (exMessage == null) exMessage = ex.getMessage();
-					result = result + (!result.isEmpty() ? "\n" : "") +
+					trouble = trouble + (!trouble.isEmpty() ? "\n" : "") +
 							"PARAM " + (p+1) + ": " + exMessage;
 				}
 			}
@@ -4804,7 +4928,7 @@ public class Executor implements Runnable
 			// corresponds to one of the NSD diagrams currently opened then try
 			// a sub-execution of that diagram.
 			// START KGU#2 2015-10-17: Check foreign call
-			if (result.isEmpty() && element instanceof Call)
+			if (trouble.isEmpty() && element instanceof Call)
 			{
 				// FIXME: Disable the output instructions for the release version
 				//System.out.println("Looking for SUBROUTINE NSD:");
@@ -4831,9 +4955,9 @@ public class Executor implements Runnable
 				else
 				{
 					// START KGU#197 2016-07-27: Now translatable message
-					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+					//trouble = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
 					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
-					result = control.msgNoSubroutine.getText().
+					trouble = control.msgNoSubroutine.getText().
 							replace("%1", procName).
 							replace("%2", Integer.toString(f.paramCount())).
 							replace("\\n", "\n");
@@ -4841,18 +4965,37 @@ public class Executor implements Runnable
 				}
 			}
 			// END KGU#2 2015-10-17
-			else if (result.isEmpty())
+			else if (trouble.isEmpty())
 			{
-				if (diagramController != null)
-				{
-					if (f.paramCount() > 0)
-					{
-						// Cut off the leading comma from the list of evaluated arguments
-						params = params.substring(1);
+				// START KGU#448 2017-10-28: Enh. #443
+//				if (diagramController != null)
+//				{
+//					if (f.paramCount() > 0)
+//					{
+//						// Cut off the leading comma from the list of evaluated arguments
+//						params = params.substring(1);
+//					}
+//					cmd = procName.toLowerCase() + "(" + params + ")";
+//					trouble = getExec(cmd, element.getColor());
+//				} 
+				procName = procName.toLowerCase();
+				String pSign = procName + "#" + args.length;
+				DiagramController controller = this.controllerProcedures.get(pSign);
+				if (controller != null) { 
+					HashMap<String, Method> procMap = controller.getProcedureMap(); 
+					// Check if the controller accepts a method with additional color argument, too
+					Method colMethod = procMap.get(procName + "#" + args.length + 1);
+					if (colMethod != null && colMethod.getParameterTypes()[args.length + 1] == Color.class) {
+						Object[] argsColor = new Object[args.length+1];
+						for (int i = 0; i < args.length; i++) {
+							argsColor[i] = args[i];
+							argsColor[args.length] = element.getColor();
+							args = argsColor;
+						}
 					}
-					cmd = procName.toLowerCase() + "(" + params + ")";
-					result = getExec(cmd, element.getColor());
-				} 
+					trouble = getExec(controller, procName, args);
+				}
+				// END KGU#448 2017-20-28
 				else	
 				{
 					// Try as built-in subroutine as is
@@ -4917,9 +5060,9 @@ public class Executor implements Runnable
 //			else
 //			{
 //				// START KGU#197 2016-07-27: Now translatable message
-//				//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+//				//trouble = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
 //				//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
-//				result = control.msgNoProgDiagram.getText().
+//				trouble = control.msgNoProgDiagram.getText().
 //						replace("%", diagrName);
 //				// END KGU#197 2016-07-27
 //			}
@@ -4928,11 +5071,11 @@ public class Executor implements Runnable
 		// END KGU#376 2017-04-11
 		else {
 			// START KGU#197 2017-06-06: Now translatable
-			//result = "<" + cmd + "> is not a correct function!";
-			result = control.msgIllFunction.getText().replace("%1", cmd);
+			//trouble = "<" + cmd + "> is not a correct function!";
+			trouble = control.msgIllFunction.getText().replace("%1", cmd);
 			// END KGU#197 2017-06-06
 		}
-		return result;
+		return trouble;
 	}
 	// END KGU 2015-11-11
 
@@ -4944,7 +5087,7 @@ public class Executor implements Runnable
 				CodeParser.getKeyword("postCase")
 				};
 		// END KGU 2016-09-25
-		String result = new String();
+		String trouble = new String();
 		try
 		{
 			StringList text = element.getText();
@@ -5014,17 +5157,17 @@ public class Executor implements Runnable
 				{
 					done = true;
 					element.waited = true;
-					if (result.isEmpty())
+					if (trouble.isEmpty())
 					{
-						result = stepSubqueue(element.qs.get(q - 1), false);
+						trouble = stepSubqueue(element.qs.get(q - 1), false);
 					}
-					if (result.equals(""))
+					if (trouble.equals(""))
 					{
 						element.waited = false;
 					}
 				}
 			}
-			if (result.equals(""))
+			if (trouble.equals(""))
 			{
 				// START KGU#296 2016-11-25: Issue #294 - special coverage treatment for default-less CASE
 				if (!done && !hasDefaultBranch) {
@@ -5038,16 +5181,16 @@ public class Executor implements Runnable
 			}
 		} catch (EvalError ex)
 		{
-			result = ex.getLocalizedMessage();
-			if (result == null) result = ex.getMessage();
+			trouble = ex.getLocalizedMessage();
+			if (trouble == null) trouble = ex.getMessage();
 		}
 		
-		return result;
+		return trouble;
 	}
 	
 	private String stepAlternative(Alternative element)
 	{
-		String result = new String();
+		String trouble = new String();
 		try
 		{
 			String s = element.getText().getText();
@@ -5088,9 +5231,9 @@ public class Executor implements Runnable
 			if (cond == null || !(cond instanceof Boolean))
 			{
 				// START KGU#197 2016-07-27: Localization support
-				//result = "<" + s
+				//trouble = "<" + s
 				//		+ "> is not a correct or existing expression.";
-				result = control.msgInvalidBool.getText().replace("%1", s);
+				trouble = control.msgInvalidBool.getText().replace("%1", s);
 				// END KGU#197 2016-07-27
 			}
 			// if(getExec(s).equals("OK"))
@@ -5116,41 +5259,41 @@ public class Executor implements Runnable
 //				int i = 0;
 //				// START KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 //				//while ((i < branch.children.size())
-//				//		&& result.equals("") && (stop == false))
+//				//		&& trouble.equals("") && (stop == false))
 //				while ((i < branch.getSize())
-//						&& result.equals("") && (stop == false) && !returned && leave == 0)
+//						&& trouble.equals("") && (stop == false) && !returned && leave == 0)
 //				// END KGU#78 2015-11-25
 //				{
-//					result = step(branch.getElement(i));
+//					trouble = step(branch.getElement(i));
 //					i++;
 //				}
-				if (result.isEmpty())
+				if (trouble.isEmpty())
 				{
-					result = stepSubqueue(branch, true);
+					trouble = stepSubqueue(branch, true);
 				}
 				// END KGU#117 2016-03-07
-				if (result.equals(""))
+				if (trouble.equals(""))
 				{
 					element.waited = false;
 				}
 			}
-			if (result.equals(""))
+			if (trouble.equals(""))
 			{
 				element.executed = false;
 				element.waited = false;
 			}
 		} catch (EvalError ex)
 		{
-			result = ex.getLocalizedMessage();
-			if (result == null) result = ex.getMessage();
+			trouble = ex.getLocalizedMessage();
+			if (trouble == null) trouble = ex.getMessage();
 		}
-		return result;
+		return trouble;
 	}
 	
 	// This executes While and Forever loops
 	private String stepWhile(Element element, boolean eternal)
 	{
-		String result = new String();
+		String trouble = new String();
 		try
 		{
 			String condStr = "true";	// Condition expression
@@ -5170,7 +5313,7 @@ public class Executor implements Runnable
 //					// FIXME: might damage variable names
 //					condStr = BString.replace(condStr, CodeParser.postWhile, "");
 //				}
-//				// START KGU#79 2015-11-12: Forgotten to write back the result!
+//				// START KGU#79 2015-11-12: Forgotten to write back the trouble!
 //				//convert(condStr, false);
 //				condStr = convert(condStr, false);
 //				// END KGU#79 2015-11-12
@@ -5202,9 +5345,9 @@ public class Executor implements Runnable
 			if (cond == null || !(cond instanceof Boolean))
 			{
 				// START KGU#197 2016-07-27: Localization support
-				//result = "<" + condStr
+				//trouble = "<" + condStr
 				//		+ "> is not a correct or existing expression.";
-				result = control.msgInvalidBool.getText().replace("%1", condStr);
+				trouble = control.msgInvalidBool.getText().replace("%1", condStr);
 				// END KGU#197 2016-07-27
 			} else
 			{
@@ -5213,10 +5356,10 @@ public class Executor implements Runnable
 				//END KGU#156 2016-03-11
 				
 				// START KGU#77/KGU#78 2015-11-25: Leave if any kind of Jump statement has been executed
-				//while (cond.toString().equals("true") && result.equals("")
+				//while (cond.toString().equals("true") && trouble.equals("")
 				//		&& (stop == false))
 				context.loopDepth++;
-				while (cond.toString().equals("true") && result.equals("")
+				while (cond.toString().equals("true") && trouble.equals("")
 						&& (stop == false) && !context.returned && leave == 0)
 				// END KGU#77/KGU#78 2015-11-25
 				{
@@ -5237,17 +5380,17 @@ public class Executor implements Runnable
 //					}
 //					// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 //					//while ((i < body.children.size())
-//					//		&& result.equals("") && (stop == false))
+//					//		&& trouble.equals("") && (stop == false))
 //					while ((i < body.getSize())
-//							&& result.equals("") && (stop == false) && !returned && leave == 0)
+//							&& trouble.equals("") && (stop == false) && !returned && leave == 0)
 //					// END KGU#77/KGU#78 2015-11-25
 //					{
-//						result = step(body.getElement(i));
+//						trouble = step(body.getElement(i));
 //						i++;
 //					}
-					if (result.isEmpty())
+					if (trouble.isEmpty())
 					{
-						result = stepSubqueue(((ILoop)element).getBody(), true);						
+						trouble = stepSubqueue(((ILoop)element).getBody(), true);						
 					}
 					// END KGU#117 2016-03-07
 
@@ -5255,7 +5398,7 @@ public class Executor implements Runnable
 					//element.executed = true;
 					//element.waited = false;
 					// END KGU#200 2016-06-07
-					if (result.equals(""))
+					if (trouble.equals(""))
 					{
 						// START KGU#200 2016-06-07: If body is done without error then show loop as active again
 						element.executed = true;
@@ -5275,10 +5418,10 @@ public class Executor implements Runnable
 					if (cond == null)
 					{
 						// START KGU#197 2016-07-27: Localization support
-						//result = "<"
+						//trouble = "<"
 						//		+ condStr
 						//		+ "> is not a correct or existing expression.";
-						result = control.msgInvalidExpr.getText().replace("%1", condStr);
+						trouble = control.msgInvalidExpr.getText().replace("%1", condStr);
 						// END KGU#197 2016-07-27
 					}
 					// START KGU#156 2016-03-11: Enh. #124
@@ -5297,26 +5440,26 @@ public class Executor implements Runnable
 				context.loopDepth--;
 				// END KGU#78 2015-11-25
 			}
-			if (result.equals(""))
+			if (trouble.equals(""))
 			{
 				element.executed = false;
 				element.waited = false;
 			}
 			/*
-			 * if (cw > 1000000) { element.selected = true; result =
+			 * if (cw > 1000000) { element.selected = true; trouble =
 			 * "Your loop ran a million times. I think there is a problem!";
 			 * }
 			 */
 		} catch (EvalError ex)
 		{
-			result = ex.getMessage();
+			trouble = ex.getMessage();
 		}
-		return result;
+		return trouble;
 	}
 	
 	private String stepRepeat(Repeat element)
 	{
-		String result = new String();
+		String trouble = new String();
 		try
 		{
 			element.waited = true;
@@ -5370,9 +5513,9 @@ public class Executor implements Runnable
 			if (cond == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
-				//result = "<" + condStr
+				//trouble = "<" + condStr
 				//		+ "> is not a correct or existing expression.";
-				result = control.msgInvalidExpr.getText().replace("%1", condStr);
+				trouble = control.msgInvalidExpr.getText().replace("%1", condStr);
 				// END KGU#197 2016-07-27
 			} else
 			{
@@ -5385,21 +5528,21 @@ public class Executor implements Runnable
 //					int i = 0;
 //					// START KGU#77/KGU#78 2015-11-25: Leave if some Jump statement has been executed
 //					//while ((i < element.q.children.size())
-//					//		&& result.equals("") && (stop == false))
+//					//		&& trouble.equals("") && (stop == false))
 //					while ((i < element.q.getSize())
-//							&& result.equals("") && (stop == false) && !returned && leave == 0)
+//							&& trouble.equals("") && (stop == false) && !returned && leave == 0)
 //					// END KGU#77/KGU#78 2015-11-25
 //					{
-//						result = step(element.q.getElement(i));
+//						trouble = step(element.q.getElement(i));
 //						i++;
 //					}
-					if (result.isEmpty())
+					if (trouble.isEmpty())
 					{
-						result = stepSubqueue(element.getBody(), true);
+						trouble = stepSubqueue(element.getBody(), true);
 					}
 					// END KGU#117 2016-03-07
 
-					if (result.equals(""))
+					if (trouble.equals(""))
 					{
 						//cw++;
 						element.executed = true;
@@ -5413,10 +5556,10 @@ public class Executor implements Runnable
 					if (cond == null || !(cond instanceof Boolean))
 					{
 						// START KGU#197 2016-07-27: Localization support
-						//result = "<"
+						//trouble = "<"
 						//		+ condStr
 						//		+ "> is not a correct or existing expression.";
-						result = control.msgInvalidBool.getText().replace("%1", condStr);
+						trouble = control.msgInvalidBool.getText().replace("%1", condStr);
 						// END KGU#197 2016-07-27
 					}
 
@@ -5433,10 +5576,10 @@ public class Executor implements Runnable
 					//END KGU#156 2016-03-11
 					
 				// START KGU#70 2015-11-09: Condition logically incorrect - execution often got stuck here 
-				//} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
+				//} while (!(n.toString().equals("true") && trouble.equals("") && (stop == false)));
 				// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
-				//} while (!(n.toString().equals("true")) && result.equals("") && (stop == false))
-				} while (!(cond.toString().equals("true")) && result.equals("") && (stop == false) &&
+				//} while (!(n.toString().equals("true")) && trouble.equals("") && (stop == false))
+				} while (!(cond.toString().equals("true")) && trouble.equals("") && (stop == false) &&
 						!context.returned && leave == 0);
 				// END KGU#77/KGU#78 2015-11-25
 				// END KGU#70 2015-11-09
@@ -5449,20 +5592,20 @@ public class Executor implements Runnable
 				// END KGU#78 2015-11-25
 			}
 
-			if (result.equals(""))
+			if (trouble.equals(""))
 			{
 				element.executed = false;
 				element.waited = false;
 			}
 			/*
-			 * if (cw > 100) { element.selected = true; result = "Problem!";
+			 * if (cw > 100) { element.selected = true; trouble = "Problem!";
 			 * }
 			 */
 		} catch (EvalError ex)
 		{
-			result = ex.getMessage();
+			trouble = ex.getMessage();
 		}
-		return result;
+		return trouble;
 	}
 	
 	private String stepFor(For element)
@@ -5473,7 +5616,7 @@ public class Executor implements Runnable
 			return stepForIn(element);
 		}
 		// END KGU#61 2016-03-21
-		String result = new String();
+		String trouble = new String();
 		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 		int forLoopLevel = context.forLoopVars.count();
 		// END KGU#307 2016-12-12
@@ -5535,8 +5678,8 @@ public class Executor implements Runnable
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
-				//result = "<"+s+"> is not a correct or existing expression.";
-				result = control.msgInvalidExpr.getText().replace("%1", s);
+				//trouble = "<"+s+"> is not a correct or existing expression.";
+				trouble = control.msgInvalidExpr.getText().replace("%1", s);
 				// END KGU#197 2016-07-27
 			}
 			int ival = 0;
@@ -5570,8 +5713,8 @@ public class Executor implements Runnable
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
-				//result = "<"+s+"> is not a correct or existing expression.";
-				result = control.msgInvalidExpr.getText().replace("%1", s);
+				//trouble = "<"+s+"> is not a correct or existing expression.";
+				trouble = control.msgInvalidExpr.getText().replace("%1", s);
 				// END KGU#197 2016-07-27
 			}
 			int fval = 0;
@@ -5598,9 +5741,9 @@ public class Executor implements Runnable
 			
 			int cw = ival;
 			// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
-			//while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false))
+			//while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && trouble.equals("") && (stop == false))
 			context.loopDepth++;
-			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") &&
+			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && trouble.equals("") &&
 					(stop == false) && !context.returned && leave == 0)
 			// END KGU#77/KGU#78 2015-11-25
 			{
@@ -5615,17 +5758,17 @@ public class Executor implements Runnable
 //				int i = 0;
 //				// START KGU#77/KGU#78 2015-11-25: Leave if a return statement has been executed
 //				//while ((i < element.q.children.size())
-//				//		&& result.equals("") && (stop == false))
+//				//		&& trouble.equals("") && (stop == false))
 //				while ((i < element.q.getSize())
-//						&& result.equals("") && (stop == false) && !returned && leave == 0)
+//						&& trouble.equals("") && (stop == false) && !returned && leave == 0)
 //				// END KGU#77/KGU#78 2015-11-25
 //				{
-//					result = step(element.q.getElement(i));
+//					trouble = step(element.q.getElement(i));
 //					i++;
 //				}
-				if (result.isEmpty())
+				if (trouble.isEmpty())
 				{
-					result = stepSubqueue(element.getBody(), true);
+					trouble = stepSubqueue(element.getBody(), true);
 				}
 				// END KGU#117 2016-03-07
                 
@@ -5664,28 +5807,28 @@ public class Executor implements Runnable
 			}
 			context.loopDepth--;
 			// END KGU#78 2015-11-25
-			if (result.equals(""))
+			if (trouble.equals(""))
 			{
 				element.executed = false;
 				element.waited = false;
 			}
 		} catch (EvalError ex)
 		{
-			result = ex.getMessage();
+			trouble = ex.getMessage();
 		}
 		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 		while (forLoopLevel < context.forLoopVars.count()) {
 			context.forLoopVars.remove(forLoopLevel);
 		}
 		// END KGU#307 2016-12-12
-		return result;
+		return trouble;
 	}
 	
 	// START KGU#61 2016-03-21: Enh. #84
 	// This executes FOR-IN loops
 	private String stepForIn(For element)
 	{
-		String result = new String();
+		String trouble = new String();
 		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 		int forLoopLevel = context.forLoopVars.count();
 		// END KGU#307 2016-12-12
@@ -5724,7 +5867,7 @@ public class Executor implements Runnable
 		// There are no other built-in functions returning an array and external function calls
 		// aren't allowed at this position, hence it's relatively safe to conclude
 		// an item enumeration from the occurrence of a comma. (If the comma IS an argument
-		// separator of a function call then the function result will be an element of the
+		// separator of a function call then the function trouble will be an element of the
 		// value list, such that it must be put in braces.)
 		if (value == null && valueListString.contains(","))
 		{
@@ -5807,11 +5950,11 @@ public class Executor implements Runnable
 
 		if (valueList == null)
 		{
-			result = control.msgBadValueList.getText().replace("%", valueListString);
+			trouble = control.msgBadValueList.getText().replace("%", valueListString);
 			// START KGU 2016-07-06: Privide the gathered information
 			if (!problem.isEmpty())
 			{
-				result += "\n" + control.msgBadValueListDetails.getText().replace("%", problem);
+				trouble += "\n" + control.msgBadValueListDetails.getText().replace("%", problem);
 			}
 			// END KGU 2016-07-06
 		}
@@ -5826,7 +5969,7 @@ public class Executor implements Runnable
 				context.loopDepth++;
 				int cw = 0;
 
-				while (cw < valueList.length && result.equals("")
+				while (cw < valueList.length && trouble.equals("")
 						&& (stop == false) && !context.returned && leave == 0)
 				{
 					try
@@ -5851,14 +5994,14 @@ public class Executor implements Runnable
 						element.executed = false;
 						element.waited = true;
 
-						if (result.isEmpty())
+						if (trouble.isEmpty())
 						{
-							result = stepSubqueue(((ILoop)element).getBody(), true);						
+							trouble = stepSubqueue(((ILoop)element).getBody(), true);						
 						}
 
 						element.executed = true;
 						element.waited = false;
-						if (result.equals(""))
+						if (trouble.equals(""))
 						{
 							cw++;
 							// Symbolizes the loop condition check 
@@ -5868,7 +6011,7 @@ public class Executor implements Runnable
 						element.addToExecTotalCount(1, true);	// For the condition evaluation
 					} catch (EvalError ex)
 					{
-						result = ex.getMessage();
+						trouble = ex.getMessage();
 					}
 				}
 				// If there are open leave requests then nibble one off
@@ -5883,23 +6026,23 @@ public class Executor implements Runnable
 				}
 				// END KGU#307 2016-12-12
 		}
-		if (result.equals(""))
+		if (trouble.equals(""))
 		{
 			element.executed = false;
 			element.waited = false;
 		}
 		/*
-		 * if (cw > 1000000) { element.selected = true; result =
+		 * if (cw > 1000000) { element.selected = true; trouble =
 		 * "Your loop ran a million times. I think there is a problem!";
 		 * }
 		 */
-		return result;
+		return trouble;
 	}
 	// END KGU#61 2016-03-21
 	
 	private String stepParallel(Parallel element)
 	{
-		String result = new String();
+		String trouble = new String();
 		try
 		{
 			int outerLoopDepth = context.loopDepth;
@@ -5918,9 +6061,9 @@ public class Executor implements Runnable
 
 			// The first condition holds if there is at least one unexhausted "thread"
 			// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
-			//while (!undoneThreads.isEmpty() && result.equals("") && (stop == false))
+			//while (!undoneThreads.isEmpty() && trouble.equals("") && (stop == false))
 			context.loopDepth = 0;	// Loop exits may not penetrate the Parallel section
-			while (!undoneThreads.isEmpty() && result.equals("") && (stop == false) &&
+			while (!undoneThreads.isEmpty() && trouble.equals("") && (stop == false) &&
 					!context.returned && leave == 0)
 			// END KGU#77/KGU#78 2015-11-25
 			{
@@ -5938,14 +6081,14 @@ public class Executor implements Runnable
 					Element instr = iter.next();
 					int oldExecCount = instr.getExecStepCount(true);
 					// END KGU#156 2016-03-11
-					result = step(instr);
+					trouble = step(instr);
 					// START KGU#117 2016-03-12: Enh. #77
 					element.addToExecTotalCount(instr.getExecStepCount(true) - oldExecCount, false);
 					// END KGU#117 2016-03-12
 					// In order to allow better tracking we put the executed instructions into `waited´ state...
 					instr.waited = true;
 					// START KGU#78 2015-11-25: Parallel sections are impermeable for leave requests!
-					if (result == "" && leave > 0)
+					if (trouble == "" && leave > 0)
 					{
 						// This should never happen (the leave instruction should have failed already)
 						// At least we will kill the causing thread...
@@ -5966,33 +6109,33 @@ public class Executor implements Runnable
 				}                
 			}
 			context.loopDepth = outerLoopDepth;	// Restore the original context
-			if (result.equals(""))
+			if (trouble.equals(""))
 			{
 				// Recursively reset all `waited´ flags of the subqueues now finished
 				element.clearExecutionStatus();
 			}
 		} catch (Error ex)
 		{
-			result = ex.getMessage();
+			trouble = ex.getMessage();
 		}
-		return result;
+		return trouble;
 	}
 
 	// START KGU#117 2016-03-07: Enh. #77 - to track test coverage a consistent subqueue handling is necessary
 	String stepSubqueue(Subqueue sq, boolean checkLeave)
 	{
-		String result = "";
+		String trouble = "";
 		
 		int i = 0;
 		while ((i < sq.getSize())
-				&& result.equals("") && (stop == false) && !context.returned
+				&& trouble.equals("") && (stop == false) && !context.returned
 				&& (!checkLeave || leave == 0))
 		{
 			// START KGU#156 2016-03-11: Enh. #124
-			//result = step(sq.getElement(i));
+			//trouble = step(sq.getElement(i));
 			Element ele = sq.getElement(i);
 			int oldExecCount = ele.getExecStepCount(true);
-			result = step(ele);
+			trouble = step(ele);
 			sq.parent.addToExecTotalCount(ele.getExecStepCount(true) - oldExecCount, false);
 			// END KGU#156 2016-03-11
 			i++;
@@ -6004,7 +6147,7 @@ public class Executor implements Runnable
 			sq.countExecution();
 			//END KGU#156 2016-03-11
 		}
-		return result;
+		return trouble;
 	}
 	
 	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access

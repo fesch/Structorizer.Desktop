@@ -17,13 +17,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package lu.fisch.diagrexec;
+package lu.fisch.diagrcontrol;
 
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Inteface providing an API for retrieving and executing DiagramContrller functions.
+ *      Description:    Inteface providing an API for retrieving and executing DiagramController functions.
  *
  ******************************************************************************************************
  *
@@ -31,16 +31,15 @@ package lu.fisch.diagrexec;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.06.29      First Issue
+ *      Kay Gürtzig     2017.06.29      First Issue (introduced for enhancement #424)
+ *      Kay Gürtzig     2017.10.28      Integrated in DiagramController and completely redesigned
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      
+ *      Superfluous now
  *
  ******************************************************************************************************///
-
-import java.util.HashMap;
 
 /**
  * Interface allowing a DiagramController to provide functions returning a result. Since
@@ -51,42 +50,4 @@ import java.util.HashMap;
  */
 public interface FunctionProvidingDiagramController extends DiagramController {
 
-	@SuppressWarnings("serial")
-	public class FunctionException extends RuntimeException {
-
-		public FunctionException() {
-	        super();
-	    }
-
-		public FunctionException(Throwable throwable) {
-	        super(throwable);
-	    }
-
-		public FunctionException(String msg) {
-	        super(msg);
-	    }
-
-	    public FunctionException(String msg, Throwable throwable) {
-	        super(msg, throwable);
-	    }
-	}
-	
-    /**
-     * Returns a map associating a (lower-case) function name to an array of
-     * argument classes and a result class if such a function is implemented.
-     * @param name - the function name
-     * @return Array containing the boxing classes of all arguments and of the result (or null
-     * if no such function is provided)
-     * @see #execute(String, Object[])
-     */
-    public HashMap<String, Class<?>[]> getFunctionMap();
-    /**
-     * Executes a function registered in the function map (obtainable by {@link #getFunctionMap()})
-     * @param name - the function name (lower-case)
-     * @param arguments - Array of the argument values
-     * @return the obtained result value (as Object) 
-     * @throws FunctionException
-     * @see #getFunctionMap()
-     */
-    public Object execute(String name, Object[] arguments) throws FunctionException;
 }

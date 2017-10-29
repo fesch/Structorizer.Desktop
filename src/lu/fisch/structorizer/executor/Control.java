@@ -1330,7 +1330,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public static final LangTextHolder lbCommit = new LangTextHolder("Commit changes");
     public static final LangTextHolder lbDiscard = new LangTextHolder("Discard changes");
     // END KGU#443 2017-10-16
-
+    // START KGU#448 2017-10-28: Enh. #443
+	public static final LangTextHolder msgFunctionConflict = new LangTextHolder("\nFunction «%1(%2)» of %3 overridden by %4");
+	public static final LangTextHolder msgProcedureConflict = new LangTextHolder("\nProcedure «%1(%2)» of %3 overridden by %4");
+	public static final LangTextHolder msgSignatureConflicts = new LangTextHolder("There are API conflicts among the chosen controller plugins:%");
+	// END KGU#448 2017-10-28
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 

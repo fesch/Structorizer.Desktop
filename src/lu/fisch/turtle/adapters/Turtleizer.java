@@ -33,6 +33,7 @@ public class Turtleizer {
 	
 	private static TurtleBox turtleBox = null;
 	/** maps different turtleizer function names in lower-case to the respective adapter method names */
+	@SuppressWarnings("serial")
 	private static final HashMap<String, String> supportedRoutines = new HashMap<String, String>() {{
 		put("forward", "forward");
 		put("backward", "backward");
@@ -61,7 +62,7 @@ public class Turtleizer {
 		if (turtleBox == null) {
 			turtleBox = new TurtleBox(500, 500);
 			turtleBox.setVisible(true);
-			turtleBox.execute("init(0)");
+			turtleBox.setAnimationDelay(0, true);
 		}
 		return turtleBox;
 	}
@@ -89,7 +90,7 @@ public class Turtleizer {
 	}
 	public static void forward(double pixels, Color color)
 	{
-		getTurtleBox().execute("forward(" + pixels + ")", color);
+		getTurtleBox().forward(pixels, color);
 	}
 	public static void backward(double pixels)
 	{
@@ -97,7 +98,7 @@ public class Turtleizer {
 	}
 	public static void backward(double pixels, Color color)
 	{
-		getTurtleBox().execute("backward(" + pixels + ")", color);
+		getTurtleBox().backward(pixels, color);
 	}
 	public static void fd(int pixels)
 	{
@@ -105,7 +106,7 @@ public class Turtleizer {
 	}
 	public static void fd(int pixels, Color color)
 	{
-		getTurtleBox().execute("fd(" + pixels + ")", color);
+		getTurtleBox().fd(pixels, color);
 	}
 	public static void bk(int pixels)
 	{
@@ -113,7 +114,7 @@ public class Turtleizer {
 	}
 	public static void bk(int pixels, Color color)
 	{
-		getTurtleBox().execute("bk(" + pixels + ")", color);
+		getTurtleBox().bk(pixels, color);
 	}
 	
 	// Rotation
@@ -172,12 +173,12 @@ public class Turtleizer {
     
     // Functions
     public static double getOrientation() {
-    	return (Double)getTurtleBox().execute("getorientation", new Object[]{});
+    	return (Double)getTurtleBox().getOrientation();
     }
     public static double getX() {
-    	return (Double)getTurtleBox().execute("getx", new Object[]{});
+    	return getTurtleBox().getx();
     }
     public static double getY() {
-    	return (Double)getTurtleBox().execute("gety", new Object[]{});
+    	return getTurtleBox().gety();
     }
 }

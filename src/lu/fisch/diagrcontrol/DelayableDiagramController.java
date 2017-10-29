@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package lu.fisch.diagrexec;
+package lu.fisch.diagrcontrol;
 
 /**
  * Introduced to allow immediate delay control on implementing classes 
@@ -29,6 +29,7 @@ public interface DelayableDiagramController extends DiagramController {
 	/**
 	 * Adopts the given delay for animation and execution purposes
 	 * @param _delay The new delay time (in ms) to be applied.
+	 * @param _reinit If on this occation an internal reinitialization is requested
 	 */
-	public void setAnimationDelay(int _delay);
+	public void setAnimationDelay(int _delay, boolean _reinit);
 }
