@@ -1088,6 +1088,9 @@ Control.msgBadValueListDetails.text=Detalles: %
 Control.msgVarUpdateErrors.text=Problemas poniendo nuevos valores
 Control.msgVarUpdatesFailed.text=Estas modificaciones de variables no valen por faltas sintacticas:\n\n%
 Control.msgEndEditing.text=Para continuar cesa editar variables (Enter o Esc).
+Control.msgFunctionConflict.text=\nFunción «%1(%2)» de %3 aplastada por %4
+Control.msgProcedureConflict.text=\nProcedura «%1(%2)» de %3 aplastada por %4
+Control.msgSignatureConflicts.text=Hay conflictos en el API entre los elegidos módulos de mando:%
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.2=Contenido
 

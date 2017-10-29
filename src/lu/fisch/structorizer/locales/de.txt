@@ -1085,6 +1085,9 @@ Control.msgBadValueListDetails.text=Details: %
 Control.msgVarUpdateErrors.text=Problem beim Variablen-Update
 Control.msgVarUpdatesFailed.text=Diese Variablen-Änderungen scheiterten an syntaktischen Fehlern:\n\n%
 Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Enter oder Esc).
+Control.msgFunctionConflict.text=\nFunktion «%1(%2)» von %3 verdrängt durch %4
+Control.msgProcedureConflict.text=\nProzedur «%1(%2)» von %3 vedrängt durch %4
+Control.msgSignatureConflicts.text=Es treten API-Konflikte zwischen den gewählten Steuerungs-Plugins auf:%
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.2=Inhalt
 

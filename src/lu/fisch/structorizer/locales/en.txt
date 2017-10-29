@@ -1089,6 +1089,9 @@ Control.msgBadValueListDetails.text=Details: %
 Control.msgVarUpdateErrors.text=Trouble updating variables
 Control.msgVarUpdatesFailed.text=These variable modifications failed because of evaluation errors:\n\n%
 Control.msgEndEditing.text=To continue, first release the variable cell editor (Enter or Esc).
+Control.msgFunctionConflict.text=\nFunction «%1(%2)» of %3 overridden by %4
+Control.msgProcedureConflict.text=\nProcedure «%1(%2)» of %3 overridden by %4
+Control.msgSignatureConflicts.text=There are API conflicts among the chosen controller plugins:%
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 

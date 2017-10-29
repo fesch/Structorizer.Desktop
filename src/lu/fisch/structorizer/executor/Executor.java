@@ -143,6 +143,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
  *      Kay Gürtzig     2017.10.16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
  *      Kay Gürtzig     2017.10.28      Enh. #443: First adaptations for multiple DiagramControllers
+ *      Kay Gürtzig     2017.10.29      Enh. #423: Workaround for evaluation error on converted actual object field access
  *
  ******************************************************************************************************
  *
@@ -912,6 +913,11 @@ public class Executor implements Runnable
 	private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
 	
 	private static final StringList OBJECT_ARRAY = StringList.explode("Object,[,]", ",");
+	
+	// START KGU#388 2017-10-29: Enh. #423 This EvalError message indicates that the record qualifier conversion may have overdone  
+	private static final String ERROR423MESSAGE = "Error in method invocation: Method get( java.lang.String ) not found in class";
+	private static final Matcher ERROR423MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\(\\\"(\\w+)\\\"\\)(.*?)'' : Error in method.*").matcher("");
+	// END KGU#388 2017-10-29
 
 	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
 	//private Executor(Diagram diagram, DiagramController diagramController)
@@ -6214,7 +6220,32 @@ public class Executor implements Runnable
 		// END KGU#100/KGU#388 2017-09-29
 		else
 		{
-			value = context.interpreter.eval(tokens.concatenate());
+			// Possibly our resolution of qualified names went too far. For this case give it some more tries
+			// with partially undone conversions. This should not noticeably slow down the evaluation in case
+			// no error occurs.
+			boolean error423 = false;
+			String expr = tokens.concatenate();
+			do {
+				error423 = false;
+				try {
+					value = context.interpreter.eval(expr);
+				}
+				catch (EvalError err) {
+					String error423message = err.getMessage(); 
+					if (error423message.contains(ERROR423MESSAGE)) {
+						if (ERROR423MATCHER.reset(error423message).matches()) {
+							// Restore the assumed original attribute access and try again
+							// (this will at least induce a less confusing message)
+							// Could still be improved as we obtain in the end of the message the very name
+							expr = ERROR423MATCHER.group(1) + ERROR423MATCHER.group(2) + ERROR423MATCHER.group(3);
+							error423 = true;
+						}
+					}
+					if (!error423) {
+						throw err;
+					}
+				}
+			} while (error423);
 		}
 		return value;
 	}
