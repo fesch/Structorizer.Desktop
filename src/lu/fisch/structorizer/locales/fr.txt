@@ -55,6 +55,7 @@
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified, InputBoxFor augmented
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -87,7 +88,7 @@ Menu.lbFileExportCodeFavorite.text=Exporter en tant que code %
 Menu.menuFileExportCodeFavorite.tooltip=Vous pouvez modifier votre langage de programmation d'export préféré dans les options.
 Menu.menuFileImport.text=Importer
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Code source Pascal ...
+Menu.menuFileImportCode.text=Code source ...
 Menu.menuFilePrint.text=Imprimer ...
 Menu.menuFileArrange.text=Arranger
 Menu.menuFileTranslator.text=Traducteur
@@ -225,20 +226,21 @@ Menu.error01_1.text=ATTENTION: Pas de variable de contrôle détectée
 Menu.error01_2.text=ATTENTION: Plus qu'une variable de contrôle détectée: «%»
 Menu.error01_3.text=Impossible de modifier la variable de contrôle «%» dans le corps de la boucle!
 Menu.error02.text=Pas de changement des variables de contrôles détecter. Boucle infinie très probable ...
-Menu.error03_1.text=La variable «%» n'a pas encore été initialisée!
-Menu.error03_2.text=La variable «%» n'a peut-être pas encore été initialisée!
+Menu.error03_1.text=La variable «%1» n'a pas encore été initialisée%2!
+Menu.error03_2.text=La variable «%1» n'a peut-être pas encore été initialisée%2!
 Menu.error04.text=Interdiction d'utiliser une structure alternative dont le bloc gauche est vide!
 Menu.error05.text=La variable «%» doit être écrite en majuscules!
 Menu.error06.text=Le nom du programme «%» doit être écrite en majuscules!
 Menu.error07_1.text=«%» n'est pas un nom valide pour un programme ou une méthode!
 Menu.error07_2.text=«%» n'est pas un nom valide pour un paramètre!
-Menu.error07_3.text=«%» n'est pas un nom valide pour une variable!
+Menu.error07_3.text=«%» n'est pas un nom valide pour une variable ou une constante!
 Menu.error08.text=Il est interdit de faire une assignation à l'intérieur d'une condition!
 Menu.error09.text=Le nom du programme («%») ne doit pas être identique au nom d'une variable ou d'un paramètre!
 Menu.error10_1.text=Une seule instruction ne doit pas contenir à la fois des entrées/sorties et des assignations!
 Menu.error10_2.text=Une seule instruction ne doit pas contenir à la fois des entrées et des sorties!
 Menu.error10_3.text=Une seule instruction ne doit pas contenir à la fois des entrées et des assignantions!
 Menu.error10_4.text=Une seule instruction ne doit pas contenir à la fois des sorties et des assignantions!
+Menu.error10_5.text=Une seul élément ne doit pas contenir à la fois des définitions de constantes et des autres instructions!
 Menu.error11.text=Faute d'assignantion probable. Instruction à revoir ...
 Menu.error12.text=Le paramètre «%» doit commencer avec la lettre "p" suivie de lettres en majuscules!
 Menu.error13_1.text=La fonction ne retourne pas de résultat!
@@ -256,7 +258,9 @@ Menu.error16_4.text=
 Menu.error16_5.text=
 Menu.error16_6.text=
 Menu.error16_7.text=
+Menu.error16_8.text=
 Menu.error17.text=
+Menu.errorLineReference.text= (ligne %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=
@@ -638,6 +642,7 @@ Control.lbOutput.text=
 Control.lbInput.text=
 Control.lbAcknowledge.text=
 Control.msgNoSubroutine.text=
+Control.msgNoInclDiagram.text=
 Control.msgInvalidExpr.text=
 Control.msgIllFunction.text=
 Control.msgManualBreak.text=

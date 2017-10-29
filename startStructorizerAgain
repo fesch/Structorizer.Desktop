@@ -12,18 +12,18 @@
 #      Author                                   Date            Description
 #      ------                                   ----            -----------
 #      Klaus-Peter Reimers      2008.06.04      First Issue
-#      Bob Fisch		2006.06.06      Script modified to work within
-#						an Eclipse project
+#      Bob Fisch                2006.06.06      Script modified to work within
+#                                               an Eclipse project
 #
 ################################################################################
 
 # changing into binary directory
-echo Changing into binary directory
-cd bin/
+echo "Changing into binary directory"
+pushd bin
 
 # run the application
-echo Running Structorier
+echo "Running Structorizer"
 java -cp .:../lib/AppleJavaExtensions.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar Structorizer
 
 # move back into the folder where we started
-cd ..
+popd

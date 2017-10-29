@@ -1,0 +1,411 @@
+﻿##LANGUAGE 'Java'
+##TEMPLATE-NAME 'Program and rule handler shell'
+##ENGINE-NAME 'Iden Java Engine'
+##SYSTEM-VERSION '5.0'
+##AUTHOR 'Kay Gürtzig' 
+##FILE-EXTENSION 'java'
+##NOTES
+This template creates a skeleton program for Ralph Iden's Java GOLD Parser Engine
+intended to be used for code import parsers of Structorizer.
+##END-NOTES
+##ID-CASE UPPERCASE
+##ID-SEPARATOR '_'
+##ID-SYMBOL-PREFIX 'Sym'
+##ID-RULE-PREFIX 'Prod'
+/*
+    Structorizer
+    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+
+    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package lu.fisch.structorizer.parsers;
+
+/******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+##PARAMETERS
+ *      Description:    Class to parse a %Name% file and build structograms from the reduction tree.
+##END-PARAMETERS
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2017.03.02      First Issue (generated with GOLDprog.exe)
+ *      Kay Gürtzig     2017.03.11      Parameter annotations and some comments corrected, indentation unified
+ *
+ ******************************************************************************************************
+ *
+ *     Comment:		
+ *     Licensed Material - Property of Ralph Iden (GOLDParser) and Mathew Hawkins (parts of the template)
+ *     GOLDParser - code downloaded from https://github.com/ridencww/goldengine on 2017-03-05.<br>
+ *     Modifications to this code are allowed as it is a helper class to use the engine.<br>
+ *     Template File:  StructorizerParserTemplate.pgt (with elements of both<br>
+ *                     Java-MatthewHawkins.pgt and Java-IdenEngine.pgt)<br>
+ *     Authors:        Ralph Iden, Matthew Hawkins, Bob Fisch, Kay Gürtzig<br>
+ *     Description:    A Sample class, takes in a file and runs the GOLDParser engine on it.<br>
+ *
+ ******************************************************************************************************/
+
+import java.io.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Stack;
+import java.util.regex.Matcher;
+
+import com.creativewidgetworks.goldparser.engine.*;
+import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
+
+import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Case;
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
+import lu.fisch.structorizer.elements.Repeat;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.While;
+import lu.fisch.utils.BString;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import com.creativewidgetworks.goldparser.engine.ParserException;
+import com.creativewidgetworks.goldparser.parser.GOLDParser;
+
+/**
+##PARAMETERS
+ * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the %Name% language.
+ * This file contains grammar-specific constants and individual routines to build
+ * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
+ * @author Kay Gürtzig
+ */
+public class %Name%Parser extends CodeParser
+##END-PARAMETERS
+{
+
+	//---------------------- Grammar specification ---------------------------
+
+	@Override
+	protected final String getCompiledGrammar()
+	{
+##PARAMETERS
+		return "%Name%.egt";
+##END-PARAMETERS
+	}
+	
+	@Override
+	protected final String getGrammarTableName()
+	{
+##PARAMETERS
+		return "%Name%";
+##END-PARAMETERS
+	}
+
+	/**
+	 * If this flag is set then program names derived from file name will be made uppercase
+	 * This default will be initialized in consistency with the Analyser check 
+	 */
+	private boolean optionUpperCaseProgName = false;
+
+	//------------------------------ Constructor -----------------------------
+
+	/**
+##PARAMETERS
+	 * Constructs a parser for language %Name%, loads the grammar as resource and
+	 * specifies whether to generate the parse tree as string
+	 */
+	public %Name%Parser() {
+##END-PARAMETERS
+	}
+
+	//---------------------- File Filter configuration ---------------------------
+	
+	@Override
+	public String getDialogTitle() {
+##PARAMETERS
+		return "%Name%";
+##END-PARAMETERS
+	}
+
+	@Override
+	protected String getFileDescription() {
+##PARAMETERS
+		return "%Name% Source Files";
+##END-PARAMETERS
+	}
+
+ 	@Override
+	public String[] getFileExtensions() {
+##PARAMETERS
+		// TODO specify the usual file name extensions for %Name% source files here!";
+##END-PARAMETERS
+		final String[] exts = { "c" };
+		return exts;
+	}
+
+	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
+
+	// Symbolic constants naming the table indices of the symbols of the grammar 
+	@SuppressWarnings("unused")
+	private interface SymbolConstants 
+	{
+##SYMBOLS
+		final int %ID.Padded% = %Value.Padded%;  // %Description%
+##END-SYMBOLS
+	};
+
+	// Symbolic constants naming the table indices of the grammar rules
+	@SuppressWarnings("unused")
+	private interface RuleConstants
+	{
+##RULES
+		final int %ID.Padded% = %Value.Padded%;  // %Description%
+##END-RULES
+	};
+
+	//----------------------------- Preprocessor -----------------------------
+
+	/**
+	 * Performs some necessary preprocessing for the text file. Actually opens the
+	 * file, filters it and writes a new temporary file "Structorizer&lt;random&gt;.{defaultExt}",
+	 * which is then actually parsed.
+	 * The preprocessed file will always be saved with UTF-8 encoding.
+	 * @param _textToParse - name (path) of the source file
+	 * @param _encoding - the expected encoding of the source file.
+	 * @return The File object associated with the preprocessed source file.
+	 */
+	@Override
+	protected File prepareTextfile(String _textToParse, String _encoding)
+	{
+		File interm = null;
+		try
+		{
+			File file = new File(_textToParse);
+			HashMap<String, String> defines = new LinkedHashMap<String, String>();
+			DataInputStream in = new DataInputStream(new FileInputStream(file));
+			// START KGU#193 2016-05-04
+			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
+			// END KGU#193 2016-05-04
+			String strLine;
+			String srcCode = new String();
+			//Read File Line By Line
+			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
+			// do the #define replacements (at least roughly...)
+			while ((strLine = br.readLine()) != null)   
+			{
+				// TODO: Place preprocessing of strLine here if necessary
+				srcCode += strLine + "\n";
+			}
+			//Close the input stream
+			in.close();
+
+			//System.out.println(srcCode);
+
+			// trim and save as new file
+			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
+			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
+			ow.write(srcCode.trim()+"\n");
+			ow.close();
+		}
+		catch (Exception e) 
+		{
+##PARAMETERS
+			System.err.println("%Name%Parser.prepareTextfile() -> " + e.getMessage());
+##END-PARAMETERS
+			e.printStackTrace();	
+		}
+		return interm;
+	}
+
+	//---------------------- Build methods for structograms ---------------------------
+
+//	/* (non-Javadoc)
+//	 * @see CodeParser#initializeBuildNSD()
+//	 */
+//	@Override
+//	protected void initializeBuildNSD()
+//	{
+//		// TODO insert initializations for the build phase if necessary ...
+//	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
+	 */
+	@Override
+	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
+	{
+		//String content = new String();
+	
+		if (_reduction.size() > 0)
+		{
+			String rule = _reduction.getParent().toString();
+			String ruleHead = _reduction.getParent().getHead().toString();
+			int ruleId = _reduction.getParent().getTableIndex();
+			//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+
+			/* -------- Begin code example for tree analysis and build -------- */
+//			if (
+//					// Assignment or procedure call?
+//					ruleId == RuleConstants.PROD_OPASSIGN_EQ
+//					||
+//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
+//					||
+//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
+//					||
+//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
+//					)
+//			{
+//				// Simply convert it as text and create an instruction. In case of a call
+//				// we'll try to transmute it after all subroutines will have been parsed.
+//				String content = new String();
+//				content = getContent_R(_reduction, content).trim();
+//				//System.out.println(ruleName + ": " + content);
+//				// In case of a variable declaration get rid of the trailing semicolon
+//				//if (content.endsWith(";")) {
+//				//	content = content.substring(0, content.length() - 1).trim();
+//				//}
+//				_parentNode.addElement(new Instruction(translateContent(content)));
+//			}
+//			else if (ruleHead.equals("<Decls>") {
+//				...
+//			}
+//			/* -------- End code example for tree analysis and build -------- */
+//			// Block...?
+//			else
+			{
+				if (_reduction.size()>0)
+				{
+					for(int i=0; i<_reduction.size(); i++)
+					{
+						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
+						{
+							buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
+	 * assembled string _content and adapt it to syntactical conventions of Structorizer. Finally return
+	 * the text phrase.
+	 * @param _content - A string already assembled, may be used as prefix, ignored or combined in another
+	 * way 
+	 * @return composed and translated text.
+	 */
+	private String translateContent(String _content)
+	{
+		String output = getKeyword("output");
+		String input = getKeyword("input");
+		_content = _content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+"$1");
+		_content = _content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+"$2");
+		
+		//System.out.println(_content);
+		
+		/*
+		 _content:=ReplaceEntities(_content);
+		*/
+		
+		// Convert the pseudo function back to array initializers
+//		int posIni = _content.indexOf(arrayIniFunc);
+//		if (posIni >= 0) {
+//			StringList items = Element.splitExpressionList(_content.substring(posIni + arrayIniFunc.length()), ",", true);
+//			_content = _content.substring(0, posIni) + "{" + items.subSequence(0, items.count()-1).concatenate(", ") +
+//					"}" + items.get(items.count()-1).substring(1);
+//		}
+		
+		//_content = BString.replace(_content, ":="," \u2190 ");
+		//_content = BString.replace(_content, " = "," <- "); already done by getContent_R()!
+
+		return _content.trim();
+	}
+	
+	@Override
+	protected String getContent_R(Reduction _reduction, String _content)
+	{
+		for(int i=0; i<_reduction.size(); i++)
+		{
+			Token token = _reduction.get(i);
+			/* -------- Begin code example for text retrieval and translation -------- */
+			switch (token.getType()) 
+			{
+			case NON_TERMINAL:
+//				int ruleId = _reduction.getParent().getTableIndex();
+//				_content = getContent_R(token.asReduction(), _content);	
+				break;
+			case CONTENT:
+//				{
+//					String toAdd = "";
+//					int idx = token.getTableIndex();
+//					switch (idx) {
+//					case SymbolConstants.SYM_EXCLAM:
+//						_content += " not ";
+//						break;
+//					...
+//					}
+//				}
+				break;
+			default:
+				break;
+			}
+			/* -------- End code example for text retrieval and translation -------- */
+		}
+		
+		return _content;
+	}
+
+	@Override
+	protected void subclassUpdateRoot(Root root, String sourceFileName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	//------------------------- Postprocessor ---------------------------
+
+	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
+//	 */
+//	@Override
+//	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
+//		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
+//		if (aRoot.getMethodName().equals("main")) {
+//			if (aRoot.getParameterNames().count() == 0) {
+//				String fileName = new File(textToParse).getName();
+//				if (fileName.contains(".")) {
+//					fileName = fileName.substring(0, fileName.indexOf('.'));
+//				}
+//				if (this.optionUpperCaseProgName) {
+//					fileName = fileName.toUpperCase();
+//				}
+//				aRoot.setText(fileName);
+//			}
+//			aRoot.isProgram = true;
+//		}
+//	}
+
+}

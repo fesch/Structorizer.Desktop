@@ -60,6 +60,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
  *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
  *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
+ *      Kay Gürtzig     2017.03.15      Enh. #300: turned retrieveVersion to static
+ *      Kay Gürtzig     2017.10.06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
  *
  ******************************************************************************************************
  *
@@ -227,7 +229,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             {
                                     // START KGU#287 2017-01-11: Issue #81/#330
                                     if (isStandalone) {
-                                            preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                                    	if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
+                                    		Element.E_NEXT_SCALE_FACTOR = 1.0;
+                                    	}
+                                    	preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
                                     }
                                     // END KGU#287 2017-01-11
                                     saveToINI();
@@ -309,7 +314,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
 			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
 			// START KGU#287 2017-01-09 
-			//if (scaleFactor < 1) scaleFactor = 1.0;
+			if (scaleFactor <= 0.5) scaleFactor = 1.0;	// Pathologic value...
 			//IconLoader.setScaleFactor(scaleFactor.intValue());
 			IconLoader.setScaleFactor(scaleFactor);	// The IconLoader doesn't scale down anyway
 			Element.E_NEXT_SCALE_FACTOR = scaleFactor;
@@ -356,7 +361,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			updateColors();
 
 			// parser
-			D7Parser.loadFromINI();
+			CodeParser.loadFromINI();
 
 			// look & feel
 			laf=ini.getProperty("laf","Mac OS X");
@@ -371,6 +376,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			setLocation(new Point(top,left));
 			validate();
 
+			// START KGU#300 2016-12-02: Enh. #300
+			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
+			// END KGU#300 2016-12-02
 			if (diagram!=null) 
 			{
 				// current directory
@@ -378,9 +386,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
 				// END KGU#95 2015-12-04
-				// START KGU#300 2016-12-02: Enh. #300
-				diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
-				// END KGU#300 2016-12-02
+				// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+				diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
+				diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
+				diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+				// END KGU#354 2017-04-26
 				
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -429,6 +439,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
 			// END KGU#331 2017-01-15
+			
+			// START KGU#428 2017-10-06: Enh. #430
+			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
+			// END KGU#428 2017-10-06
 			
 			// recent files
 			try
@@ -488,21 +502,29 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("Width",Integer.toString(getWidth()));
 			ini.setProperty("Height",Integer.toString(getHeight()));
 
-			// current directory, version retrieval
-			if(diagram!=null)
+			// current directory, version retrieval, recent files, find settings
+			if (diagram != null)
 			{
-				if(diagram.currentDirectory!=null)
-				{
-					ini.setProperty("currentDirectory",diagram.currentDirectory.getAbsolutePath());
-				}
-				// START KGU#300 2016-12-02: Enh. #300
-				ini.setProperty("retrieveVersion", Boolean.toString(diagram.retrieveVersion));
-				// END KGU#300 2016-12-02
-				// START KGU#305 2016-12-15: Enh. #305
-				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));
-				// END KGU#305 2016-12-15
+				// START KGU#324 2017-06-16: Enh. #415 Let diagram cache it itself
+//				if(diagram.currentDirectory!=null)
+//				{
+//					ini.setProperty("currentDirectory", diagram.currentDirectory.getAbsolutePath());
+//					// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+//					ini.setProperty("lastExportDirectory", diagram.lastCodeExportDir.getAbsolutePath());
+//					ini.setProperty("lastImportDirectory", diagram.lastCodeImportDir.getAbsolutePath());
+//					ini.setProperty("lastImportFilter", diagram.lastImportFilter);
+//					// END KGU#354 2017-04-26
+//				}
+//				// START KGU#305 2016-12-15: Enh. #305
+//				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));
+//				// END KGU#305 2016-12-15
+				diagram.cacheIniProperties(ini);
+				// END KGU#324 2017-06-16
 			}
-			
+			// START KGU#300 2016-12-02: Enh. #300
+			ini.setProperty("retrieveVersion", Boolean.toString(Diagram.retrieveVersion));
+			// END KGU#300 2016-12-02
+		
 			// language
 			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleFilename());
 			
@@ -542,23 +564,31 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
 			// END KGU#287 2017-01-11
 			
+			// START KGU#428 2017-10-06: Enh. #430
+			if (InputBox.FONT_SIZE > 0) {
+				ini.setProperty("editorFontSize", Float.toString(InputBox.FONT_SIZE));
+			}
+			// END KGU#428 2017-10-06
+
 			// START KGU#300 2016-12-02: Enh. #300
 			// Update hint suppression
 			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);
 			// END KGU#300 2016-12-02
-			
-			// recent files
-			if(diagram!=null)
-			{
-				if(diagram.recentFiles.size()!=0)
-				{
-					for(int i=0;i<diagram.recentFiles.size();i++)
-					{
-						//System.out.println(i);
-						ini.setProperty("recent"+String.valueOf(i),(String) diagram.recentFiles.get(i));
-					} 
-				}
-			}
+
+			// START KGU#324 2017-06-16: Enh. #415: Now done by diagram.cacheIniProperties(ini) above
+//			// recent files
+//			if (diagram!=null)
+//			{
+//				if (diagram.recentFiles.size()!=0)
+//				{
+//					for(int i=0;i<diagram.recentFiles.size();i++)
+//					{
+//						//System.out.println(i);
+//						ini.setProperty("recent"+String.valueOf(i),(String) diagram.recentFiles.get(i));
+//					} 
+//				}
+//			}
+			// END KGU#324 2017-06-16
 			
 			ini.save();
 		}
@@ -629,6 +659,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 						// START KGU#233 2016-08-08: Issue #220
 						Translator.updateLookAndFeel();
 						// END KGU#233 2016-08-08
+						// START #324 2017-06-16: Enh. #415 - we let diagram update the find&replace dialog
+						if (diagram != null) {
+							diagram.updateLookAndFeel();
+						}
+						// END KGU #324 2017-06-16
 					}
 					catch (Exception e)
 					{
@@ -647,7 +682,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     {
             //System.out.println("Saving");
             saveToINI();
-            D7Parser.saveToINI();
+            CodeParser.saveToINI();
             Element.saveToINI();
             Root.saveToINI();
     }
@@ -786,7 +821,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     // START KGU#305 2016-12-16: Code revision
 	@Override
 	public void routinePoolChanged(IRoutinePool _source) {
-		if (_source instanceof Arranger) {
+		if (_source instanceof Arranger && this.editor != null) {
 			this.editor.updateArrangerIndex(Arranger.getSortedRoots());
 		}
 		updateAnalysis();

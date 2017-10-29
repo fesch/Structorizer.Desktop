@@ -46,6 +46,11 @@ import java.util.Set;
 
 import lu.fisch.structorizer.elements.Root;
 
+/**
+ * Entry class for a topological map of called subroutines or required includables in {@link Generator}.
+ * Contains references to dependents and a reference counter (i.e. the number of Roots this routine
+ * depends on).
+ */
 final class SubTopoSortEntry {
 	public Set<Root> callers = new HashSet<Root>();
 	public int nReferingTo = 0;	// number of different(!) routines being called

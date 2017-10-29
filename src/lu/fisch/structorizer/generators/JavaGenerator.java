@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -52,7 +51,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.04      transforTokens() disabled due to missing difference to super 
  *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
@@ -60,6 +59,12 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
  *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with java.utils.concurrent.Callable
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
+ *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
+ *      Kay Gürtzig             2017.09.22      Bugfix #428 Defective replacement pattern for "short" in transformType(String)
+ *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
+ *      Kay Gürtzig             2017.10.27      Enh. #441: Direct support for now extractable Turtleizer package 
  *
  ******************************************************************************************************
  *
@@ -99,16 +104,19 @@ package lu.fisch.structorizer.generators;
  *      2009.08.10
  *        - writeln() => System.out.println()
  * 
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.turtle.adapters.Turtleizer;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 
 
 // START KGU#16 2015-11-30: Strong similarities made it sensible to reduce this class to the differences
@@ -179,24 +187,24 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#16/#47 2015-11-30
 
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"abstract", "assert", "boolean", "break", "byte",
-		"case", "catch", "char", "class", "const", "continue",
-		"default", "do", "double",
-		"else", "enum", "extends",
-		"false", "final", "finally", "float", "for", "goto",
-		"if", "implements", "import", "instanceof", "int", "interface",
-		"long", "native", "new", "null",
-		"package", "private", "protected", "public",
-		"return", "short", "static", "super", "switch", "synchronised",
-		"this", "throw", "throws", "transient", "true", "try",
-		"void", "volatile", "while"};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"abstract", "assert", "boolean", "break", "byte",
+//		"case", "catch", "char", "class", "const", "continue",
+//		"default", "do", "double",
+//		"else", "enum", "extends",
+//		"false", "final", "finally", "float", "for", "goto",
+//		"if", "implements", "import", "instanceof", "int", "interface",
+//		"long", "native", "new", "null",
+//		"package", "private", "protected", "public",
+//		"return", "short", "static", "super", "switch", "synchronised",
+//		"this", "throw", "throws", "transient", "true", "try",
+//		"void", "volatile", "while"};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	// END KGU 2016-08-12
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)
@@ -205,7 +213,7 @@ public class JavaGenerator extends CGenerator
 	@Override
 	protected String getIncludePattern()
 	{
-		return "import %";
+		return "import %;";
 	}
 	// END KGU#351 2017-02-26
 
@@ -245,11 +253,11 @@ public class JavaGenerator extends CGenerator
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
-	 * Method preprocesses an include file name for the #include
+	 * Method pre-processes an include file name for the #include
 	 * clause. This version surrounds a string not enclosed in angular
 	 * brackets by quotes.
 	 * @param _includeFileName a string from the user include configuration
-	 * @return the preprocessed string as to be actually inserted
+	 * @return the pre-processed string as to be actually inserted
 	 */
 	protected String prepareIncludeItem(String _includeFileName)
 	{
@@ -282,18 +290,28 @@ public class JavaGenerator extends CGenerator
 //		return _interm.replace(" <- ", " = ");
 //	}
 
-	// START KGU#150 2016-04-04: No need to override CGenerator.tranformTokens()
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
-//	 */
-//	@Override
-//	protected String transformTokens(StringList tokens)
-//	{
-//		tokens.replaceAll("div", "/");
-//		tokens.replaceAll("<-", "=");
-//		return tokens.concatenate();
-//	}
-	// END KGU#150 2016-04-04
+	// START KGU#446 2017-10-27: Enh. #441 special support for Turtleizer
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String transformTokens(StringList tokens)
+	{
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			if (Function.testIdentifier(token, null)) {
+				int j = i;
+				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
+				String turtleMethod = null;
+				if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
+					tokens.set(i, turtleMethod);
+					this.usesTurtleizer = true;
+				}
+			}
+		}
+		return super.transformTokens(tokens);
+	}
+	// END KGU#446 2017-10-27
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
@@ -313,13 +331,15 @@ public class JavaGenerator extends CGenerator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		String outputKey = D7Parser.getKeyword("output").trim(); 
+		String outputKey = CodeParser.getKeyword("output").trim(); 
 		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 
 					Element.splitExpressionList(_input.substring(outputKey.length()), ",");
 			// Some of the expressions might be sums, so better put parentheses around them
-			_input = outputKey + " (" + expressions.getText().replace("\n", ") + (") + ")";
+			if (expressions.count() > 1) {
+				_input = outputKey + " (" + expressions.concatenate(") + (") + ")";
+			}
 		}
 		// END KGU#101 2015-12-12
 
@@ -379,27 +399,185 @@ public class JavaGenerator extends CGenerator
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
 			_type = _default;
-		_type = _type.toLowerCase();
-		_type = _type.replace("short int", "int");
-		_type = _type.replace("short", "int");
-		_type = _type.replace("unsigned int", "int");
-		_type = _type.replace("unsigned long", "long");
-		_type = _type.replace("unsigned char", "char");
-		_type = _type.replace("unsigned", "int");
-		_type = _type.replace("longreal", "double");
-		_type = _type.replace("real", "double");
-		//_type = _type.replace("boole", "boolean");
-		//_type = _type.replace("bool", "boolean");
-		if (_type.matches("(^|.*\\W+)bool(\\W+.*|$)")) {
-			_type = _type.replaceAll("(^|.*\\W+)bool(\\W+.*|$)", "$1boolean$2");
+		// START KGU 2017-04-12: We must not generally flatten the case (consider user types!)
+//		_type = _type.toLowerCase();
+//		_type = _type.replace("short int", "int");
+//		_type = _type.replace("short", "int");
+//		_type = _type.replace("unsigned int", "int");
+//		_type = _type.replace("unsigned long", "long");
+//		_type = _type.replace("unsigned char", "char");
+//		_type = _type.replace("unsigned", "int");
+//		_type = _type.replace("longreal", "double");
+//		_type = _type.replace("real", "double");
+//		//_type = _type.replace("boole", "boolean");
+//		//_type = _type.replace("bool", "boolean");
+//		if (_type.matches("(^|.*\\W)bool(\\W.*|$)")) {
+//			_type = _type.replaceAll("(^|.*\\W)bool(\\W.*|$)", "$1boolean$2");
+//		}
+//		_type = _type.replace("character", "Character");
+//		_type = _type.replace("integer", "Integer");
+//		_type = _type.replace("string", "String");
+//		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$1short$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1Character$3");
+		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean") + ")($|\\W.*)", "$1boolean$3");
+		if (_type.matches("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)")) {
+			_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)", "$1boolean$3");
 		}
-		_type = _type.replace("character", "Character");
-		_type = _type.replace("integer", "Integer");
-		_type = _type.replace("string", "String");
-		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1String$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("array") + "\\s*?\\[[0-9]*\\]\\s*?" + BString.breakup("of") + "\\s+char)(\\W.*)", "$1String$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("const") + ")($|\\W.*)", "$1final$3");
+		// END KGU 2017-04-12
 		return _type;
 	}
 	// END KGU#16 2015-11-29
+
+	// START KGU#388 2017-09-28: Enh. #423 struct type support
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordInit(java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
+	 */
+	@Override
+	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
+		// This is practically identical to C#
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
+		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
+		String recordInit = "new " + typeInfo.typeName + "(";
+		boolean isFirst = true;
+		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
+			String compName = compEntry.getKey();
+			String compVal = comps.get(compName);
+			if (isFirst) {
+				isFirst = false;
+			}
+			else {
+				recordInit += ", ";
+			}
+			if (!compName.startsWith("§")) {
+				if (compVal == null) {
+					recordInit += "null";
+				}
+				else if (compEntry.getValue().isRecord()) {
+					recordInit += transformRecordInit(compVal, compEntry.getValue());
+				}
+				else {
+					recordInit += transform(compVal);
+				}
+			}
+		}
+		recordInit += ")";
+		return recordInit;
+	}
+
+	/**
+	 * Generates code that either allows direct assignment or decomposes the record
+	 * initializer into separate component assignments
+	 * @param _lValue - the left side of the assignment (without modifiers!)
+	 * @param _recordValue - the record initializier according to Structorizer syntax
+	 * @param _indent - current indentation level (as String)
+	 * @param _isDisabled - indicates whether the code is o be commented out
+	 */
+	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
+		// This is practically identical to C#
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue);
+		String typeName = comps.get("§TYPENAME§");
+		TypeMapEntry recordType = null;
+		if (typeName == null || (recordType = typeMap.get(":"+typeName)) == null || !recordType.isRecord()) {
+			// Just decompose it (requires that the target variable has been initialized before).
+			super.generateRecordInit(_lValue, _recordValue, _indent, _isDisabled);
+		}
+		// This way has the particular advantage not to fail with an uninitialized variable (important for Java!). 
+		addCode(_lValue + " = " + this.transformRecordInit(_recordValue, recordType) + ";", _indent, _isDisabled);
+	}
+	// END KGU#388 2017-09-28
+
+	// START KGU#332 2017-04-13: Enh. #335
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#isInternalDeclarationAllowed()
+	 */
+	@Override
+	protected boolean isInternalDeclarationAllowed()
+	{
+		return true;
+	}
+	// END KGU#332 2017-04-13
+
+	// START KGU#388 2017-09-28: Enh. #423
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#generateTypeDef(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry, java.lang.String, boolean)
+	 */
+	@Override
+	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String typeKey = ":" + _typeName;
+		if (this.wasDefHandled(_root, typeKey, true)) {
+			return;
+		}
+		insertDeclComment(_root, _indent, typeKey);
+		if (_type.isRecord()) {
+			String indentPlus1 = _indent + this.getIndent();
+			String indentPlus2 = indentPlus1 + this.getIndent();
+			addCode("class " + _typeName + "{", _indent, _asComment);
+			boolean isFirst = true;
+			StringBuffer constructor = new StringBuffer();
+			StringList constrBody = new StringList();
+			constructor.append("public " + _typeName + "(");
+			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+				String compName = compEntry.getKey();
+				String typeStr = transformTypeFromEntry(compEntry.getValue(), null);
+				addCode("public " + typeStr + "\t" + compName + ";",
+						indentPlus1, _asComment);
+				if (!isFirst) constructor.append(", ");
+				constructor.append(typeStr + " p_" + compName);
+				constrBody.add(compName + " = p_" + compName + ";");
+				isFirst = false;
+			}
+			constructor.append(")");
+			addCode(constructor.toString(), indentPlus1, _asComment);
+			addCode("{", indentPlus1, _asComment);
+			for (int i = 0; i < constrBody.count(); i++) {
+				addCode(constrBody.get(i), indentPlus2, _asComment);
+			}
+			addCode("}", indentPlus1, _asComment);
+			addCode("};", _indent, _asComment);
+		}
+		else {
+			// FIXME: What do we here in Java? Replace this type name all over the code?
+			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
+					_indent, true);					
+		}
+	}
+	// END KGU#388 2017-09-28
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#enhanceWithColor(java.lang.String, lu.fisch.structorizer.elements.Instruction)
+	 */
+	@Override
+	protected String enhanceWithColor(String _codeLine, Instruction _inst) {
+		int posParen2 = _codeLine.lastIndexOf(")");
+		if (posParen2 > 0) {
+			_codeLine = _codeLine.substring(0, posParen2) + 
+					", java.awt.Color.decode(\"0x" + _inst.getHexColor() + "\")" + _codeLine.substring(posParen2) + ";";
+		}
+		return _codeLine;
+	}
+
+
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -424,12 +602,17 @@ public class JavaGenerator extends CGenerator
 		{
 			valueList = "{" + items.concatenate(", ") + "}";
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will just try three types: int,
-			// double and String, and if none of them match we add a TODO comment.
+			// do if items are heterogeneous? We will just try four ways: int,
+			// double, String, and derived type name. If none of them match we use
+			// Object and add a TODO comment.
 			int nItems = items.count();
 			boolean allInt = true;
 			boolean allDouble = true;
 			boolean allString = true;
+			// START KGU#388 2017-09-28: Enh. #423
+			boolean allCommon = true;
+			String commonType = null;
+			// END KGU#388 2017-09-28
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
@@ -458,8 +641,24 @@ public class JavaGenerator extends CGenerator
 					allString = item.startsWith("\"") && item.endsWith("\"") &&
 							!item.substring(1, item.length()-1).contains("\"");
 				}
+				// START KGU#388 2017-09-28: Enh. #423
+				if (allCommon)
+				{
+					String itType = Element.identifyExprType(this.typeMap, item, true);
+					if (i == 0) {
+						commonType = itType;
+					}
+					if (!commonType.equals(itType)) {
+						allCommon = false;
+					}
+				}
+				// END KGU#388 2017-09-28
 			}
-			if (allInt) itemType = "int";
+			// START KGU#388 2017-09-28: Enh. #423
+			//if (allInt) itemType = "int";
+			if (allCommon) itemType = commonType;
+			else if (allInt) itemType = "int";
+			// END KGU#388 2017-09-28
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
 			String arrayName = "array20160322";
@@ -481,8 +680,20 @@ public class JavaGenerator extends CGenerator
 		}
 		else
 		{
-			itemType = "Object";
-			this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+			// START KGU#388 2017-09-28 #423
+			//itemType = "Object";
+			//this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+			TypeMapEntry listType = this.typeMap.get(valueList);
+			if (listType != null && listType.isArray() && (itemType = listType.getCanonicalType(true, false)) != null
+					&& itemType.startsWith("@"))
+			{
+				itemType = this.transformType(itemType.substring(1), "Object");	
+			}
+			else {
+				itemType = "Object";
+				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+			}
+			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
 		}
 
@@ -514,6 +725,7 @@ public class JavaGenerator extends CGenerator
 		String indentPlusOne = _indent + this.getIndent();
 		int nThreads = _para.qs.size();
 		StringList[] asgnd = new StringList[nThreads];
+		String suffix = Integer.toHexString(_para.hashCode());
 
 		insertComment(_para, _indent);
 
@@ -528,8 +740,8 @@ public class JavaGenerator extends CGenerator
 			addCode("", _indent, isDisabled);
 			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
 			Subqueue sq = _para.qs.get(i);
-			String future = "future" + _para.hashCode() + "_" + i;
-			String worker = "Worker" + _para.hashCode() + "_" + i;
+			String future = "future" + suffix + "_" + i;
+			String worker = "Worker" + suffix + "_" + i;
 			StringList used = root.getUsedVarNames(sq, false, false).reverse();
 			asgnd[i] = root.getVarNames(sq, false, false).reverse();
 			for (int v = 0; v < asgnd[i].count(); v++) {
@@ -544,14 +756,14 @@ public class JavaGenerator extends CGenerator
 		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
 		for (int i = 0; i < nThreads; i++) {
 			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
-			String future = "future" + _para.hashCode() + "_" + i;
+			String future = "future" + suffix + "_" + i;
 			addCode("results = " + future + ".get();", indentPlusOne, isDisabled);
 			for (int v = 0; v < asgnd[i].count(); v++) {
 				String varName = asgnd[i].get(v);
 				TypeMapEntry typeEntry = typeMap.get(varName);
 				String typeSpec = "/*type?*/";
 				if (typeEntry != null) {
-					StringList typeSpecs = this.getTransformedTypes(typeEntry);
+					StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 					if (typeSpecs.count() == 1) {
 						typeSpec = typeSpecs.get(0);
 					}
@@ -589,10 +801,12 @@ public class JavaGenerator extends CGenerator
 				return true;
 			}
 		});
-		insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+		if (!containedParallels.isEmpty()) {
+			insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+		}
 		for (Parallel par: containedParallels) {
 			boolean isDisabled = par.isDisabled();
-			String workerNameBase = "Worker" + par.hashCode() + "_";
+			String workerNameBase = "Worker" + Integer.toHexString(par.hashCode()) + "_";
 			Root root = Element.getRoot(par);
 			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
 			int i = 0;
@@ -636,8 +850,10 @@ public class JavaGenerator extends CGenerator
 				i++;
 			}
 		}
-		insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
-		code.add(_indent);		
+		if (!containedParallels.isEmpty()) {
+			insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+			code.add(_indent);
+		}
 	}
 	
 	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
@@ -648,7 +864,7 @@ public class JavaGenerator extends CGenerator
 			TypeMapEntry typeEntry = typeMap.get(varName);
 			String typeSpec = "/*type?*/";
 			if (typeEntry != null) {
-				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
 					typeSpec = typeSpecs.get(0);
 				}
@@ -674,10 +890,20 @@ public class JavaGenerator extends CGenerator
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
+		String indentPlus1 = _indent + this.getIndent();
+		String indentPlus2 = indentPlus1 + this.getIndent();
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
 			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			// START KGU#363 2017-05-16: Enh. #372
+			insertCopyright(_root, _indent, true);
+			// END KGU#363 2017-05-16
+			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
+			if (!_root.isProgram()) {
+				insertGlobalDefinitions(_root, indentPlus1, true);
+			}
+			// END KGU#376 2017-09-28
 			code.add("");
 			subroutineInsertionLine = code.count();	// default position for subroutines
 			subroutineIndent = _indent;
@@ -687,7 +913,7 @@ public class JavaGenerator extends CGenerator
 			code.add("");
 		}
 		// END KGU#178 2016-07-20
-		if (_root.isProgram==true) {
+		if (_root.isProgram()) {
 			if (topLevel) {
 				if (this.hasInput()) {
 					code.add(_indent + "import java.util.Scanner;");
@@ -705,25 +931,31 @@ public class JavaGenerator extends CGenerator
 				// STARTB KGU#351 2017-02-26: Enh. #346
 				this.insertUserIncludes(_indent);
 				// END KGU#351 2017-02-26
+				// START KGU#446 2017-10-27: Enh. #441
+				this.includeInsertionLine = code.count();
+				// END KGU#446 2017-10-27
 			}
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
 			insertBlockHeading(_root, "public class " + _procName, _indent);
 
 			code.add("");
-			insertComment("TODO Declare and initialise class variables here", this.getIndent());
+			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
+			//insertComment("TODO Declare and initialise class variables here", this.getIndent());
+			insertGlobalDefinitions(_root, indentPlus1, true);
+			// END KGU#376 2017-09-28
 			code.add("");
-			code.add(_indent+this.getIndent() + "/**");
-			code.add(_indent+this.getIndent() + " * @param args");
-			code.add(_indent+this.getIndent() + " */");
+			code.add(indentPlus1 + "/**");
+			code.add(indentPlus1 + " * @param args");
+			code.add(indentPlus1 + " */");
 
-			insertBlockHeading(_root, "public static void main(String[] args)", _indent+this.getIndent());
+			insertBlockHeading(_root, "public static void main(String[] args)", indentPlus1);
 		}
 		else {
-			insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
-			insertBlockComment(_paramNames, _indent+this.getIndent(), null, " * @param ", null);
+			insertBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
+			insertBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				code.add(_indent+this.getIndent() + " * @return ");
+				code.add(indentPlus1 + " * @return ");
 				_resultType = transformType(_resultType, "int");
 				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
 				_resultType = this.transformArrayDeclaration(_resultType, "");
@@ -732,7 +964,7 @@ public class JavaGenerator extends CGenerator
 			else {
 				_resultType = "void";		        	
 			}
-			code.add(_indent+this.getIndent() + " */");
+			code.add(indentPlus1 + " */");
 			// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private
 			//String fnHeader = "public static " + _resultType + " " + _procName + "(";
 			String fnHeader = (topLevel ? "public" : "private") + " static "
@@ -747,10 +979,14 @@ public class JavaGenerator extends CGenerator
 				// END KGU#140 2017-02-01
 			}
 			fnHeader += ")";
-			insertBlockHeading(_root, fnHeader,  _indent + this.getIndent());
+			insertBlockHeading(_root, fnHeader,  indentPlus1);
 		}
 
-		return _indent + this.getIndent() + this.getIndent();
+		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
+		insertGlobalInitialisations(indentPlus2);
+		// END KGU#376 2017-09-26
+
+		return indentPlus2;
 	}
 
 	// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
@@ -770,6 +1006,13 @@ public class JavaGenerator extends CGenerator
 		return super.generatePreamble(_root, _indent, varNames);
 	}
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
+	 */
+	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
+		return structName;
+	}
+
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
@@ -830,7 +1073,7 @@ public class JavaGenerator extends CGenerator
 		super.generateFooter(_root, _indent + this.getIndent());
 
 		// Don't close class block if we haven't opened any
-		if (_root.isProgram)
+		if (_root.isProgram())
 		{
 			// START KGU#178 2016-07-20: Enh. #160
 			// Modify the subroutine insertion position
@@ -847,6 +1090,12 @@ public class JavaGenerator extends CGenerator
 			this.insertFileAPI("java");
 		}
 		// END KGU#311 2016-12-22
+		// START KGU#446 2017-10-27: Enh. #441
+		if (topLevel && this.usesTurtleizer) {
+			code.insert("TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
+			code.insert("import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
+		}
+		// END KGU#446 2017-10-27
 	}
 	// END KGU 2015-12-15
 

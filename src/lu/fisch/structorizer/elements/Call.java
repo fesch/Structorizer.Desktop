@@ -46,6 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.19      Enh. #160: New method getSignatureString()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
  *
  ******************************************************************************************************
  *
@@ -54,21 +55,30 @@ package lu.fisch.structorizer.elements;
  *      changed by enhancement requests #9.
  *      Though chiefly the Executor (and perhaps some code generators) is concerned, this class file
  *      seems to be a good place to state the general ideas behind the Call element as now being handled.
- *      1. In order to get a Call working, it must refer to a function defined by another Nassi-
- *         Shneiderman diagram or just the diagram itself (recursive routine).
- *      2. The called diagram is required to be a function diagram and must match the "method name"
- *         (case-sensitive!) and parameter count of the call.
+ *      1. In order to get a Call working, it must refer to a another Nassi-Shneiderman diagram or
+ *         just the diagram itself (recursive routine).
+ *         There are thre flavours of a Call:
+ *         a) procedure call: <proc_name>(<param_list>)
+ *         b) function call: <var_name> <- <func_name>(<param_list>)
+ *         c) code import: import <prog_name>
+ *      2. The called diagram is required to be
+ *         a, b) a function diagram and must match the "method name" (case-sensitive!) and parameter
+ *               count of the call.
+ *         c)    a program diagram
  *      3. To keep things simple, the call text must consist of a single instruction line,
- *         either being a procedure call:
+ *         being
+ *         a) a procedure call:
  *             <proc_name> ( <value1>, <value2>, ... , <value_n> )
- *         or a variable assignment with a single function call as expression:
+ *         b) a variable assignment with a single function call as expression:
  *             <var_name> <- <func_name> ( <value1>, <value2>, ... , <value_n> )
- *      4. A direct output instruction is not supported like in:
+ *         c) an import instruction (aiming in a kind of macro execution within the current root's context):
+ *             import <prog_name>
+ *      4. A direct output instruction with a function result is not supported like in:
  *             OUT foreign(something).
  *         Hence to use the results of a foreign call, first assign the value to a variable within
  *         a Call element, then use the variable as part of some expression in an ordinary
  *         Instruction element.
- *      5. Nested or multiple subroutine calls as in the following examples are not allowed
+ *      5. Nested or multiple subroutine calls as in the following examples are not supported
  *             foreign(x, foreign(y, a))
  *             result <- foreign(a) + foreign(b)
  *         Workaround: analogous to 4.)
@@ -177,7 +187,7 @@ public class Call extends Instruction {
 	
 	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
 	@Override
-	protected ImageIcon getIcon()
+	public ImageIcon getIcon()
 	{
 		return IconLoader.ico058;
 	}
@@ -191,12 +201,40 @@ public class Call extends Instruction {
 		// END KGU#199 2016-07-07
 	}
 	
+//	// START KGU#376 2017-04-11: Enh. #389 - secific support for import calls / KGU#376 2017-07-01 withdrawn
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+//	 */
+//	@Override
+//    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
+//    {
+//		if (!this.isDisabled()) {
+//			if (this.isImportCall()) {
+//				// Get all lines of the called routine
+//				String name = this.getSignatureString();
+//				if (Arranger.hasInstance()) {
+//					Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+//					if (roots.size() == 1) {
+//						roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
+//					}
+//				}		
+//			}
+//			else {
+//				super.addFullText(_lines, _instructionsOnly, _implicatedRoots);
+//			}
+//		}
+//    }
+//    // END KGU#376 2017-04-11
+
+	
 	// START #178 2016-07-19: Enh. #160
 	/**
 	 * Returns a string of form "&lt;function_name&gt;(&lt;parameter_count&gt;)"
 	 * describing the signature of the called routine if the text is conform to
-	 * the call syntax described in the user guide. Otherwise null will be returned.
-	 * @return signature string, e.g. "factorial#1", or null
+	 * a procedure or function call syntax as described in the user guide. If the
+	 * call text matches the syntax of an import call then the returned signature
+	 * will just be a program name. Otherwise null will be returned.
+	 * @return signature string, e.g. "factorial(1)", "globalDefs", or null
 	 */
 	public String getSignatureString()
 	{
@@ -242,8 +280,10 @@ public class Call extends Instruction {
 	 */
 	@Override
 	protected String[] getRelevantParserKeys() {
-		// There is nothing to refactor
+		// START KGU#376 2017-04-11: Enh. #389 Now there is...
 		return null;
+		//return relevantParserKeys;
+		// END KGU#376 2017-04-11
 	}
 
 	// START KGU#261 2017-02-20: Enh. #259 - Allow to retrieve return type info

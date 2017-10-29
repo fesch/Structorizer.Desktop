@@ -53,6 +53,7 @@
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -71,12 +72,12 @@ Menu.menuFileOpen.text=Openen ...
 Menu.menuFileSave.text=Opslaan
 Menu.menuFileSaveAs.text=Opslaan als ...
 Menu.menuFileExport.text=Exporteren
-Menu.menuFileExportCode.text=Code ...
 // Submenu of "File -> Export"
+Menu.menuFileExportCode.text=Code ...
 Menu.menuFileExportPicture.text=Afbeelding ...
 Menu.menuFileImport.text=Importeren
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal code ...
+Menu.menuFileImportCode.text=Code ...
 Menu.menuFilePrint.text=Afdrukken ...
 Menu.menuFileQuit.text=Afsluiten
 // Menu "Edit"
@@ -165,29 +166,32 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Over ...
 Menu.menuHelpUpdate.text=Update ...
+
 // Error messages for analyser
 Menu.error01_1.text=WAARSCHUWING: Geen loop variabele gevonden ...
 Menu.error01_2.text=WAARSCHUWING: Meer dan één variabele gevonden: «%»
 Menu.error01_3.text=Het is niet toegestaan om de loop variabele «%» te bewerken in de loop!
 Menu.error02.text=Geen verandering van variabelen in de conditie gevonden. Mogelijk eindeloze loop ...
-Menu.error03_1.text=De variabele «%» is nog niet geinitialiseerd!
-Menu.error03_2.text=De variabele «%» is waarschijnlijk nog niet geinitialiseerd!
+Menu.error03_1.text=De variabele «%1» is nog niet geinitialiseerd%2!
+Menu.error03_2.text=De variabele «%1» is waarschijnlijk nog niet geinitialiseerd%2!
 Menu.error04.text=Het is niet toegestaan om een IF-statement te gebruiken in een lege TRUE-blok!
 Menu.error05.text=De variabele «%» moet in hoofdletters geschreven zijn!
 Menu.error06.text=Het programmanaam «%» moet in hoofdletters geschreven zijn!
 Menu.error07_1.text=«%» is geen geldige naam voor een programma of functie!
 Menu.error07_2.text=«%» is geen geldige naam voor een parameter!
-Menu.error07_3.text=«%» is geen geldige naam voor een variabele!
+Menu.error07_3.text=«%» is geen geldige naam voor een variabele of constante!
 Menu.error08.text=Het is niet toegestaan een assignment te maken in een conditie.
 Menu.error09.text=Uw programma («%») mag niet dezelfde naam hebben als een variabele of parameter!
 Menu.error10_1.text=Een enkele instructie element kan geen input/output instructies en assignments bevatten!
 Menu.error10_2.text=Een enkele instructie element kan geen input en output instructies bevatten!
 Menu.error10_3.text=Een enkele instructie element kan geen input instructies en assignments bevatten!
 Menu.error10_4.text=Een enkele instructie element kan geen output instructies en assignments bevatten!
+Menu.error10_5.text=Een enkele element kan geen constant definitie en andere instructies bevatten!
 Menu.error11.text=U heeft waarschijnlijk een assignment fout gemaakt. Controleer a.u.b. deze instructie!
 Menu.error12.text=De parameter «%» moet starten met de letter "p" gevolgd door alleen hoofdletters!
 Menu.error13_1.text=Uw functie geeft geen enkel resultaat!
 Menu.error13_2.text=Uw functie geeft waarschijnlijk geen resultaat!
+Menu.errorLineReference.text= (regel %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.checkboxes.1.text=Controle voor gewijzigde loop variabele.

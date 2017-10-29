@@ -20,6 +20,8 @@
 
 package lu.fisch.structorizer.parsers;
 
+import javax.xml.XMLConstants;
+
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -44,6 +46,13 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.10.13      Enh. #270: New Element property "disabled" integrated
  *      Kay Gürtzig     2016.12.21      Bugfix #317: Awareness of color attributes in subqueue nodes
  *      Kay Gürtzig     2017.03.10      Enh. #372: Additional attributes (Simon Sobisch)
+ *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements handled (Simon Sobisch)
+ *      Kay Gürtzig     2017.03.28      Issue #370: Default value of refactorKeywords turned to true,
+ *                                      mechanism to preserve storedParserPrefs otherwise
+ *      Kay Gürtzig     2017.05.17      Issue #389: Call elements may now also have to be refactored
+ *      Kay Gürtzig     2017.05.21      Enh. #372: More intelligent Root attribute retrieval
+ *      Kay Gürtzig     2017.05.22      Enh. #372: Attribute "origin" added.
+ *      Kay Gürtzig     2017.06.20      Issue #404: Attempt to improve validation by providing a schema - in vain
  *
  ******************************************************************************************************
  *
@@ -53,13 +62,18 @@ package lu.fisch.structorizer.parsers;
 
 
 import javax.xml.parsers.*;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
 import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Stack;
 
@@ -68,6 +82,8 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.io.Ini;
 
 public class NSDParser extends DefaultHandler {
+	
+	private static Schema nsdSchema = null;
 
 	private Root root = null;
 	
@@ -87,10 +103,34 @@ public class NSDParser extends DefaultHandler {
 	// START KGU#258 2016-09-25: Enh. #253 holds the parser preferences saved with the file (3.25-01)
 	private HashMap<String, StringList> savedParserPrefs = new HashMap<String, StringList>();
 	private boolean ignoreCase = false;
-	private boolean refactorKeywords = false;
+	// START KGU#362 2017-03-28: Issue #370 - default value flipped
+	//private boolean refactorKeywords = false;
+	private boolean refactorKeywords = true;
+	// END KGU#362 2017-03-28
 	// END KGU#258 2016-09-25
 
-        @Override
+	// START KGU#400 2017-06-20: Issue #404
+	public boolean validationError = false;  
+	public SAXParseException saxParseException = null; 
+	public void error(SAXParseException exception) throws SAXException
+	{
+		validationError = true;
+		saxParseException = exception;
+	}
+
+	public void fatalError(SAXParseException exception) throws SAXException
+	{
+		validationError = true;	    
+		saxParseException = exception;
+	}
+
+	public void warning(SAXParseException exception) throws SAXException
+	{
+		System.out.println(exception);
+	}
+	// END KGU#400 2017-06-20
+	
+	@Override
 	public void startElement(String namespaceUri, String localName, String qualifiedName, Attributes attributes) throws SAXException 
 	{
 		// --- ELEMENTS ---
@@ -114,10 +154,12 @@ public class NSDParser extends DefaultHandler {
 			// END KGU 2016-01-08
 			
 			// START KGU#258 2016-09-25: Enh. #253 - read the saved parser preferences if any
-			
-			if (fileVersion.compareTo("3.25") > 0 && refactorKeywords)
+			// START KGU#362 2017-03-28: Issue #370 - avoid to lose original keyword information
+			//if (fileVersion.compareTo("3.25") > 0 && refactorKeywords)
+			if (fileVersion.compareTo("3.25") > 0)
+			// END KGU#362 2017-03-28
 			{
-				for (String key: D7Parser.keywordSet())
+				for (String key: CodeParser.keywordSet())
 				{
 					if (attributes.getIndex(key) != -1)
 					{
@@ -130,13 +172,41 @@ public class NSDParser extends DefaultHandler {
 					ignoreCase = attributes.getValue("ignoreCase").equals("true");
 				}
 				// If no stored keywords were found then we don't need to refactor anything
-				refactorKeywords = !savedParserPrefs.isEmpty();
+				if (savedParserPrefs.isEmpty()) {
+					refactorKeywords = false;
+				}
 			}
 			// END KGU#258 2016-09-25
+			// START KGU#362 2017-03-28: Issue #370 - avoid to lose original keyword information
+			if (!refactorKeywords && !savedParserPrefs.isEmpty()) {
+				for (String key: CodeParser.keywordSet()) {
+					String current = CodeParser.getKeyword(key);
+					StringList loaded = savedParserPrefs.get(key);
+					if (loaded != null) {
+						String loadedStr = loaded.concatenate();
+						if (!(CodeParser.ignoreCase && loadedStr.equalsIgnoreCase(current) || loadedStr.equals(current))) {
+							savedParserPrefs.put("ignoreCase", StringList.getNew(Boolean.toString(ignoreCase)));
+							root.storedParserPrefs = savedParserPrefs;
+							break;
+						}
+					}
+				}
+			}
+			// END KGU#362 2017-03-28
 			
 			// read attributes
-			root.isProgram = true;
-			if(attributes.getIndex("type")!=-1)  {if (attributes.getValue("type").equals("sub")) {root.isProgram=false;}}
+			root.setProgram(true);
+			// START KGU#376 2017-05-06: Enh. #389 (third diagram t<pe)
+			if(attributes.getIndex("type")!=-1)  {
+				String type = attributes.getValue("type"); 
+				if (type.equals("sub")) {
+					root.setProgram(false);
+				}
+				else if (type.equals("includable")) {
+					root.setInclude();
+				}
+			}
+			// END KGU#376 2017-05-16
 			root.isNice=true;
 			if(attributes.getIndex("style")!=-1)  {if (!attributes.getValue("style").equals("nice")) {root.isNice=false;}}
 			// START KGU 2015-12-04: The following line was nonsense
@@ -146,13 +216,33 @@ public class NSDParser extends DefaultHandler {
 			root.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			if(attributes.getIndex("text")!=-1)  {root.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {root.getComment().setCommaText(attributes.getValue("comment"));}
+			// START KGU#376 2017-06-30: Enh. #389: Includable now directly managed by Root
+			if (attributes.getIndex("includeList") != -1) {
+				String includeString = attributes.getValue("includeList").trim();
+				if (!includeString.isEmpty()) {
+					root.includeList = StringList.explode(includeString, ",");
+				}
+			}
+			// END KGU#376 2017-06-30
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
+			// START KGU#363 2017-03-13: Enh. #372: License stuff
+			if (attributes.getIndex("licenseName") != -1) {
+				root.licenseName = attributes.getValue("licenseName");
+			}
+			if (attributes.getIndex("license") != -1) {
+				root.licenseText = attributes.getValue("license");
+			}
+			// END KGU#363 2017-03-13
+			// START KGU#363 2017-05-22: Enh. #372
+			if (attributes.getIndex("origin") != -1) {
+				root.origin = attributes.getValue("origin");
+			}
+			// END KGU#363 2017-05-22
 			
 			// START KGU#363 2017-03-10: Enh. #372
 			root.fetchAuthorDates(attributes);
 			// END KGU#363 3017-03-10
+			
 			
 			// place stack
 			lastE = root;
@@ -171,9 +261,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
@@ -201,9 +288,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-						
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
@@ -229,10 +313,12 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-			
-			// Enh. #253: In a Call element, there isn't anything to refactor
+			// START KGU#258/KGU#376 2017-05-17: Enh. #253, #389: Now we have to rafctor at least one keyword
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258/KGU#376 2017-05-17
 			
 			// place stack
 			lastE=ele;
@@ -252,9 +338,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
@@ -284,9 +367,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
@@ -390,7 +470,7 @@ public class NSDParser extends DefaultHandler {
 			if (!reliable)
 			{
 				// This is now done with the current parser preferences - might fail.
-				ele.style = ((For)ele).classifyStyle();
+				ele.style = ele.classifyStyle();
 			}
 			if (ele.style == For.ForLoopStyle.TRAVERSAL)
 			{
@@ -421,9 +501,6 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#61 2016-03-21
 			// END KGU#3 2015-11-08
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-			
 			// set children
 			ele.q.setColor(ele.getColor());
 			
@@ -444,9 +521,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
 			// Enh. #253: In a Forever loop, there isn't anything to refactor
 
@@ -471,9 +545,6 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
 			
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
-					
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
@@ -502,9 +573,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
@@ -549,9 +617,6 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#277 2016-10-13: Enh. #270
 			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
 			// END KGU#277 2016-10-13
-
-			// set system attribute - NO!
-			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 
 			// place stack
 			lastE=ele;
@@ -719,12 +784,35 @@ public class NSDParser extends DefaultHandler {
 	{
 		//String dataString =	new String(chars, startIndex, endIndex).trim();
 	}
-	
-	public Root parse(String _filename) throws SAXException, IOException
+    
+    // START KGU#363 2017-05-21: Issue #372 It was sensible to change this signature
+//    /**
+//     * Parses the NSD file specified by the URI (!) {@code _filename} and returns the composed Root if possible
+//     * @param _filename a URI specifying the file path. CAUTION: This string is not expected to be usable for e.g.
+//     * {@code new File(_filename)}. It may be derived e.g. from a {@code File} object f by {@code f.toURI().toString()}.  
+//     * @return the built diagram
+//     * @throws SAXException
+//     * @throws IOException
+//     */
+//	public Root parse(String _filename) throws SAXException, IOException
+    /**
+     * Parses the NSD file specified by the given {@code File} object and returns the composed Root (if possible),
+     * otherwise raises exceptions. 
+     * @param _file - a {@code File} object representing the NSD file to be parsed.  
+     * @return the built diagram
+     * @throws SAXException
+     * @throws IOException
+     */
+	public Root parse(File _file) throws SAXException, IOException
+	// END KGU#363 2017-05-21
 	{
 		// setup a new root
-		root=new Root();
+		root = new Root();
 		
+    	// START KGU#363 2017-05-21: Enh. #372: Fetch the default modification data from the file
+		root.fetchAuthorDates(_file);
+		// END KGU#363 2017-05-21
+
 		// clear stacks
 		stack.clear();
 		ifStack.clear();
@@ -735,18 +823,36 @@ public class NSDParser extends DefaultHandler {
 		// START KGU#258 2016-09-26: Enhancement #253
 		Ini ini = Ini.getInstance();
 		ini.load();
-		this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// START KGU#362 2017-03-28: Issue #370 - default value set to true
+		//this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		this.refactorKeywords = !ini.getProperty("impRefactorOnLoading","true").equals("false");
+		// END KGU#362 2017-03-28
 		// END KGU#258 2016-09-26
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
+		// START KGU#400 2017-06-20: Issue #404
+		if (nsdSchema == null) {
+			URL schemaLocal = this.getClass().getResource("structorizer.xsd");
+			SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			try {
+				nsdSchema = sFactory.newSchema(schemaLocal);
+			} catch (SAXException ex) {
+				System.out.println(ex);
+			}
+		}
+		// FIXME: This doesn't work properly -maybe it requires full tag qualification
+		//factory.setNamespaceAware(true);
+//		factory.setValidating(true);
+//		factory.setSchema(nsdSchema);
+		// END KGU#400 2017-06-20
 		try		
 		{
 			SAXParser saxParser = factory.newSAXParser();
-			saxParser.parse(_filename,this);
+			saxParser.parse(_file/*.toURI().toString()*/, this);
 		} 
 		catch(Exception e) 
 		{
-			String errorMessage = "Error parsing " + _filename + ": " + e;
+			String errorMessage = "Error parsing " + _file + ": " + e;
 			System.err.println(errorMessage);
 			e.printStackTrace();
 			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
@@ -785,10 +891,29 @@ public class NSDParser extends DefaultHandler {
 		// START KGU#258 2016-09-26: Enh. #253
 		Ini ini = Ini.getInstance();
 		ini.load();
-		refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// START KGU#362 2017-03-28: Issue #370 - default value set to true
+		//this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		this.refactorKeywords = !ini.getProperty("impRefactorOnLoading","true").equals("false");
+		// END KGU#362 2017-03-28
 		// END KGU#258 2016-09-26
 				
 		SAXParserFactory factory = SAXParserFactory.newInstance();
+		// START KGU#400 2017-06-20: Issue #404
+		if (nsdSchema == null) {
+			URL schemaLocal = this.getClass().getResource("structorizer.xsd");
+			SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			try {
+				nsdSchema = sFactory.newSchema(schemaLocal);
+			}
+			catch (SAXException ex) {
+				System.out.println(ex);
+			}
+		}
+		// FIXME: This doesn't work properly
+		factory.setNamespaceAware(true);
+		factory.setValidating(true);
+		factory.setSchema(nsdSchema);
+		// END KGU#400 2017-06-20
 		try		
 		{
 			SAXParser saxParser = factory.newSAXParser();

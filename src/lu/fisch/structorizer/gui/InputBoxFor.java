@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
@@ -48,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.22  stepFor label mended; issue #284: Font resizing buttons added
  *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.07.01  Issue #413 FOR-IN value list check made aware of built-in split function
  *
  ******************************************************************************************************
  *
@@ -62,8 +62,7 @@ package lu.fisch.structorizer.gui;
  *      - The user may actively switch between mode 1 and 2, usually losing most of the data, though. From mode
  *        1 to mode 2 a conversion of the number sequence to a number list is attempted.   
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -89,12 +88,12 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
 /**
- * @author kay
- *
+ * Enhanced and specialized element editor for FOR loops
+ * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
 public class InputBoxFor extends InputBox implements ItemListener {
@@ -112,10 +111,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	protected JLabel lblFirstValueLabel/* = new JLabel("Start value")*/;
 	protected JLabel lblEndVal/* = new JLabel("End value")*/;
 	protected JLabel lblIncr/* = new JLabel("Increment")*/;
-	//protected JLabel lblPreFor/* = new JLabel(D7Parser.keywordMap.get("preFor"))*/;
-	protected JLabel lblPostFor/* = new JLabel(D7Parser.keywordMap.get("postFor"))*/;
+	//protected JLabel lblPreFor/* = new JLabel(CodeParser.keywordMap.get("preFor"))*/;
+	protected JLabel lblPostFor/* = new JLabel(CodeParser.keywordMap.get("postFor"))*/;
 	protected JLabel lblAsgnmt/* = new JLabel(" <- ")*/;
-	protected JLabel lblStepFor/* = new JLabel(D7Parser.keywordMap.get("steptFor"))*/;
+	protected JLabel lblStepFor/* = new JLabel(CodeParser.keywordMap.get("steptFor"))*/;
 	protected JTextField txtParserInfo/* = new JTextField("")*/;
 	protected JTextField txtVariable/* = new JTextField(20)*/;
 	protected JTextField txtStartVal/* = new JTextField(10)*/;
@@ -123,8 +122,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	protected JTextField txtIncr/* = new JTextField(10)*/;
 	protected JCheckBox chkTextInput/* = new JCheckBox("Full Text Editing")*/;
 	// START KGU#61 2016-09-23: Enh. #250 -Additional field set for FOR-IN loops
-	//protected JLabel lblPreForIn/* = new JLabel(D7Parser.keywordMap.get("preFor")In)*/;
-	protected JLabel lblpostForIn/* = new JLabel(D7Parser.keywordMap.get("postFor")In)*/;
+	//protected JLabel lblPreForIn/* = new JLabel(CodeParser.keywordMap.get("preFor")In)*/;
+	protected JLabel lblpostForIn/* = new JLabel(CodeParser.keywordMap.get("postFor")In)*/;
 	protected JTextField txtVariableIn/* = new JTextField(20)*/;
 	protected JTextField txtValueList/* = new JTextField(60)*/;	
 	// END KGU#61 2016-09-23
@@ -183,10 +182,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		lblFirstValueLabel = new JLabel("Start value");
 		lblEndVal = new JLabel("End value");
 		lblIncr = new JLabel("Increment");
-		//lblPreFor = new JLabel(D7Parser.keywordMap.get("preFor"));
-		lblPostFor = new JLabel(D7Parser.getKeyword("postFor"));
+		//lblPreFor = new JLabel(CodeParser.keywordMap.get("preFor"));
+		lblPostFor = new JLabel(CodeParser.getKeyword("postFor"));
 		lblAsgnmt = new JLabel(" <- ");
-		lblStepFor = new JLabel(D7Parser.getKeyword("stepFor"));
+		lblStepFor = new JLabel(CodeParser.getKeyword("stepFor"));
 		txtParserInfo = new JTextField(300);
 		txtParserInfo.setEditable(false);
 		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
@@ -202,8 +201,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtIncr = new JTextField(20);	// Width 10
 		chkTextInput = new JCheckBox("Full Text Editing");
 		// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
-		//lblPreForIn = new JLabel(D7Parser.keywordMap.get("preFor")In);
-		lblpostForIn = new JLabel(D7Parser.getKeyword("postForIn"));
+		//lblPreForIn = new JLabel(CodeParser.keywordMap.get("preFor")In);
+		lblpostForIn = new JLabel(CodeParser.getKeyword("postForIn"));
 		txtVariableIn = new JTextField(50);
 		txtValueList = new JTextField(120);
 		txtVariableIn.setEnabled(false);
@@ -234,11 +233,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
         // END KGU#294 2016-11-21
 		
 		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
-		rbCounting = new JRadioButton(D7Parser.getKeyword("preFor"));
+		rbCounting = new JRadioButton(CodeParser.getKeyword("preFor"));
 		rbCounting.setActionCommand("FOR");
 		rbCounting.setToolTipText("Select this if you want to count through a range of numbers.");
 		
-		rbTraversing = new JRadioButton(D7Parser.getKeyword("preForIn").isEmpty() ? D7Parser.getKeyword("postFor") : D7Parser.getKeyword("preForIn"));
+		rbTraversing = new JRadioButton(CodeParser.getKeyword("preForIn").isEmpty() ? CodeParser.getKeyword("postFor") : CodeParser.getKeyword("preForIn"));
 		rbTraversing.setActionCommand("FOR-IN");
 		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
 
@@ -613,7 +612,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 			//			lblEndVal.setVisible(false);
 			//			lblIncr.setVisible(false);
 			//			lblPostFor.setForeground(Color.GRAY);
-			//			lblAsgnmt.setText(D7Parser.keywordMap.get("postFor")In);
+			//			lblAsgnmt.setText(CodeParser.keywordMap.get("postFor")In);
 			//			lblStepFor.setForeground(Color.GRAY);
 			txtVariable.setText("");
 			txtStartVal.setText("");
@@ -696,11 +695,18 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		}
 		else if (Function.isFunction(forInValueList))
 		{
-			txtParserInfo.setForeground(Color.BLUE);
-			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
-			//lblParserInfo.setText("Ensure the function returns an array.");			
-			txtParserInfo.setText(msgEnsureReturnedArray.getText());
-			// END KGU#247 2016-09-23
+			// START KGU#410 2017-07-01: Enh. #413 - for the split function we know that it returns an array
+			Function fct = new Function(forInValueList);
+			if (!fct.getName().equals("split") || fct.paramCount() != 2) {
+			// END KGU#410 2017-07-01
+				txtParserInfo.setForeground(Color.BLUE);
+				// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
+				//lblParserInfo.setText("Ensure the function returns an array.");			
+				txtParserInfo.setText(msgEnsureReturnedArray.getText());
+				// END KGU#247 2016-09-23
+			// START KGU#410 2017-07-01: Enh. #413 (2)
+			}
+			// END KGU#410 2017-07-01
 		}
 		else if (forInValueList.isEmpty())
 		{

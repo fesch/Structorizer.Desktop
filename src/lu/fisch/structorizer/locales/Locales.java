@@ -43,6 +43,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
  *      Kay Gürtzig     2016.02.03  Issue #340: registration without immediate update launch
  *      Kay Gürtzig     2017.02.27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
+ *      Kay Gürtzig     2017.10.02  Enh. #415: The title localization wasn't done for JFrame offsprings 
  *
  ******************************************************************************************************
  *
@@ -61,6 +62,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
@@ -522,6 +524,7 @@ public class Locales {
         
         for (int i = 0; i < lines.count(); i++) {
             parts = StringList.explodeFirstOnly(lines.get(i), "=");
+        	//System.out.println(parts.get(0));
             pieces = StringList.explode(parts.get(0), "\\.");
             
             if (pieces.get(0).equalsIgnoreCase(component.getClass().getSimpleName()) && 
@@ -565,6 +568,11 @@ public class Locales {
                         if (component instanceof JDialog) {
                             ((JDialog) component).setTitle(parts.get(1));
                         }
+                        // START KGU#324 2017-10-02: Enh. #415 JFrames should also be able to get the title localized
+                        else if (component instanceof JFrame) {
+                            ((JFrame) component).setTitle(parts.get(1));
+                        }
+                        // END KGU#324 2017-10-02
                     } 
                     else {
                         Field field = null;
@@ -654,18 +662,22 @@ public class Locales {
                                 {
                                 	String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
                                 	Method method = fieldClass.getMethod("get", new Class[]{Object.class});
-                                	try {
-                                		target = method.invoke(target, piece2);
-                                		if (target == null)
-                                		{
-                                			System.err.println("LANG: No Element <" + pieces.get(0) + "." + piece1_2 + "> found!");
-                                		}
-                                	}
-                                	catch (Exception e) {
-                                		// FIXME: No idea why this always goes off just on startup
-                                		//System.err.println("LANG: Trouble accessing <" + pieces.get(0) + "." + piece1_2 + ">");
-                                	}
-                                	if (target != null)
+                                	// On startup we might be faster here than the initialization of the components, such
+                                	// that we must face nasty NullPointerExceptions if we don't prevent
+                            		if (target != null) {
+                            			try {
+                            				target = method.invoke(target, piece2);
+                            				if (target == null)
+                            				{
+                            					System.err.println("LANG: No Element <" + pieces.get(0) + "." + piece1_2 + "> found!");
+                            				}
+                            			}
+                            			catch (Exception e) {
+                            				// FIXME: No idea why this always goes off just on startup
+                            				System.err.println("LANG: Trouble accessing <" + pieces.get(0) + "." + piece1_2 + ">");
+                            			}
+                            		}
+                            		if (target != null)
                                 	{
                                 		fieldClass = target.getClass();
                                 		pieces.remove(2);	// Key no longer needed

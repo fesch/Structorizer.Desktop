@@ -92,6 +92,17 @@
  *      Kay Gürtzig     2017.01.07      Enh. #329: Messages for Analyser check 21
  *      Kay Gürtzig     2017.01.11      Issue #81/#330: Messages for scaling Preview
  *      Kay Gürtzig     2017.02.26      Enh. #346: Additions for ExportOptionDialoge
+ *      Kay Gürtzig     2017.03.08      Enh. #354, #368: New checkbox labels for ImportOptionDialog
+ *      Kay Gürtzig     2017.03.12      Enh. #372: New saving options
+ *      Kay Gürtzig     2017.03.14      Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig     2017.03.27      Enh. #380: Messages for outsourcing of element sequences
+ *      Kay Gürtzig     2017.03.28      Issue #370: New Menu messages for enhanced refactoring options
+ *      Kay Gürtzig     2017.03.30      Enh. #388: Constancy violation messages for Control added
+ *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017.05.21      Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig     2017.06.18      Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig     2017.09.18      Enh. #423: New messages for record type handling introduced
+ *      Kay Gürtzig     2017.10.14/16   Issues #437-#438: New Control messages
  *
  ******************************************************************************************************
  *
@@ -115,6 +126,7 @@ Menu.menuFileOpen.text=Open ...
 Menu.menuFileOpenRecent.text=Open Recent File
 Menu.menuFileSave.text=Save
 Menu.menuFileSaveAs.text=Save As ...
+Menu.menuFileSaveAll.text=Save All
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Picture ...
@@ -129,11 +141,13 @@ Menu.lbFileExportCodeFavorite.text=Export as % code
 Menu.menuFileExportCodeFavorite.tooltip=You may alter the favourite target language in the export preferences.
 Menu.menuFileImport.text=Import
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal Code ...
+Menu.menuFileImportCode.text=Source Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
+Menu.menuFileAttributes.text=Inspect attributes ...
 Menu.menuFileTranslator.text=Translator
 Menu.menuFileQuit.text=Quit
+
 // Menu "Edit"
 Menu.menuEdit.text=Edit
 Menu.menuEdit.mnemonic=e
@@ -143,6 +157,7 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
+Menu.menuEditFindReplace.text=Find/Replace ...
 Menu.menuEditUpgradeTurtle.text=To fine graphics
 Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
 Menu.menuEditDowngradeTurtle.text=To integer graphics
@@ -185,12 +200,15 @@ Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
+Menu.menuDiagramOutsource.text=Outsource
+Menu.menuDiagramOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
 // Diagram Appearance
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
+Menu.menuDiagramTypeInclude.text=Includable
 Menu.menuDiagramNice.text=Boxed diagram?
 Menu.menuDiagramComment.text=Show comments?
 Menu.menuDiagramSwitchComments.text=Switch text/comments?
@@ -258,6 +276,7 @@ Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
+Menu.menuHelpOnline.tooltip=Open the online User Guide in the browser
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -275,6 +294,7 @@ Menu.msgOpenLangFile.text=Open language file
 Menu.msgLangFile.text=Structorizer language file
 Menu.msgGotoHomepage.text=Go to % to look for updates<br>and news about Structorizer.
 Menu.msgTitleError.text=Error
+Menu.msgTitleWarning.text=WARNING
 Menu.msgTitleLoadingError.text=Loading Error
 Menu.msgTitleParserError.text=Parser Error
 Menu.msgTitleURLError.text=URL Error
@@ -282,7 +302,8 @@ Menu.msgTitleQuestion.text=Question
 Menu.msgTitleOpen.text=Open file ...
 Menu.msgTitleSave.text=Save file ...
 Menu.msgTitleSaveAs.text=Save file as ...
-Menu.msgTitleImport.text=Import % code ...
+Menu.msgTitleImport.text=Code import - choose source file (mind the file filter) ...
+Menu.msgTitleNSDImport.text=Import a diagram file from % ...
 Menu.msgTitleWrongInput.text=Wrong Input
 Menu.msgSaveChanges.text=Do you want to save the current NSD file?
 Menu.msgErrorImageSave.text=Error on saving the image(s)!
@@ -293,13 +314,34 @@ Menu.msgRefactoringOffer.text=Keywords configured in the Parser Preferences were
 Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=current diagram
 Menu.lblRefactorAll.text=all diagrams
+Menu.msgDiscardParserPrefs.text=Sure to discard new parser preferences?
+Menu.msgAdaptStructPrefs.text=Adapt Structure preferences to Parser preferences?
+Menu.msgKeywordsDiffer.text=This is a diagram, the original keyword context of which differs from current Parser Preferences:%1\nYou have opted against automatic refactoring on import.\n\nNow you have the following opportunities:\n%2
+Menu.msgRefactorNow.text=The diagram may be refactored now (recommended)
+Menu.msgAdoptPreferences.text=You may adopt the keywords loaded with the diagram as new Parser Preferences\n   (which would induce refactoring of all other open diagrams!)
+Menu.msgLeaveAsIs.text=You may leave the diagram as is, which may prevent its\n   debugging and cause defective export (you may refactor it later, though)
+Menu.msgAllowChanges.text=Allow the modification, thus losing the original keyword information irreversibly
+Menu.lblRefactorNow.text=Refactor diagram
+Menu.lblAdoptPreferences.text=Adopt keywords
+Menu.lblLeaveAsIs.text=Leave diagram as is
+Menu.lblAllowChanges.text=Allow to change now
 Menu.msgReplacementsDone.text=% instructions replaced.
 Menu.msgNewerVersionAvail.text=Newer version % available for download.
 Menu.msgUpdateInfoHint.text=If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" > "%2".
 Menu.lblOk.text=OK
+Menu.lblYes.text=Yes, continue
+Menu.lblNo.text=No, cancel
 Menu.lblSuppressUpdateHint.text=Don't show this window again
 Menu.lblHint.text=Hint
-
+Menu.lblCopyToClipBoard.text=OK + Copy to Clipboard
+Menu.msgSelectParser.text=The source file type of "%2" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.
+Menu.msgImportCancelled.text=Code import for file "%" cancelled.
+Menu.msgSubroutineName.text=Name of the new subroutine
+Menu.msgJumpsOutwardsScope.text=There are JUMP instructions among the selected elements targeting outwards.\nTo outsource them would compromise the logic of the program or result in defective code!\nThe respective JUMPs are listed below and shown RED in the diagram:\n%\n\nDo you really still insist on continuing?
+Menu.msgImportTooltip.text=Diagram files generated by the Nassi-Shneiderman editor from %
+Menu.msgImportFileReadError.text=File "%" does not exist or cannot be read.
+Menu.msgUnsupportedFileFormat.text=These files couldn't be loaded because their format is not known or not supported:\n%
+	
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "Diagram > Switch text/comments".
@@ -307,20 +349,22 @@ Menu.error01_1.text=WARNING: No loop variable detected ...
 Menu.error01_2.text=WARNING: More than one loop variable detected: «%»
 Menu.error01_3.text=You are not allowed to modify the loop variable «%» inside the loop!
 Menu.error02.text=No change of the variables in the condition detected. Possible endless loop ...
-Menu.error03_1.text=The variable «%» has not yet been initialized!
-Menu.error03_2.text=The variable «%» may not have been initialized!
+Menu.error03_1.text=The variable «%1» has not yet been initialized%2!
+Menu.error03_2.text=The variable «%1» may not have been initialized%2!
 Menu.error04.text=You are not allowed to use an IF-statement with an empty TRUE-block!
 Menu.error05.text=The variable «%» must be written in uppercase!
 Menu.error06.text=The program name «%» must be written in uppercase!
 Menu.error07_1.text=«%» is not a valid name for a program or method!
 Menu.error07_2.text=«%» is not a valid name for a parameter!
-Menu.error07_3.text=«%» is not a valid name for a variable!
+Menu.error07_3.text=«%» is not a valid name for a variable or constant!
 Menu.error08.text=It is not allowed to make an assignment inside a condition.
 Menu.error09.text=Your program («%») may not share its name with a variable or parameter!
 Menu.error10_1.text=A single instruction element should not contain input/output instructions and assignments!
 Menu.error10_2.text=A single instruction element should not contain input and output instructions!
 Menu.error10_3.text=A single instruction element should not contain input instructions and assignments!
 Menu.error10_4.text=A single instruction element should not contain output instructions and assignments!
+Menu.error10_5.text=A single instruction element should not mix constant definitions with other instructions!
+Menu.error10_6.text=A single instruction element should not mix type definitions with other instructions!
 Menu.error11.text=You probably made an assignment error. Please check this instruction!
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function does not return any result!
@@ -330,20 +374,40 @@ Menu.error14_1.text=The FOR loop parameters are not consistent to the loop headi
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
 Menu.error15_1.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
-Menu.error15_2.text=The called subroutine «%» is currently not available.
-Menu.error15_3.text=There are several matching subroutines for «%».
+Menu.error15_2.text=The called subroutine diagram «%» is currently not available.
+Menu.error15_3.text=There are several subroutine diagrams matching signature «%».
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
-Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
-Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
+Menu.error16_2.text=A % instruction, unless at final position, must form a JUMP element!
+Menu.error16_3.text=A %1 or %2 instruction is only allowed as JUMP element!
 Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
-Menu.error16_5.text=You must not directly return out of a parallel thread!
-Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
+Menu.error16_5.text=You must not directly jump (%1, %2) out of a parallel thread!
+Menu.error16_6.text=Illegal argument for a «%» JUMP (must be an integer constant)!
 Menu.error16_7.text=Instruction isn't reachable after a JUMP!
+Menu.error16_8.text=The argument for this «%» JUMP might be unsuited (should be an integer value).
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
 Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in case-indifferent languages!
-Menu.error19.text=Variable name «%1» may collide with reserved names in languages like %2!
+Menu.error19_1.text=Variable name «%1» may collide with reserved names in languages like %2!
+Menu.error19_2.text=Variable name «%» is reserved in Structorizer and is likely to cause trouble on execution!
 Menu.error20.text=A subroutine header must have a (possibly empty) parameter list within parentheses.
 Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
+Menu.error22_1.text=Constant «%1» depends on apparently non-constant value(s): «%2».
+Menu.error22_2.text=Attempt to modify the value of constant «%»!
+Menu.error23_1.text=Diagram «%» is rather unsuited for an import call as it makes use of return.
+Menu.error23_2.text=Import of diagram «%» is recursive!
+Menu.error23_3.text=Import will be ignored here because diagram «%1» had already been imported: %2.
+Menu.error23_4.text=Name conflict between local and imported variable or constant «%»!
+Menu.error23_5.text=An includable diagram «%» is currently not available!
+Menu.error23_6.text=More than one includable diagrams with name «%» found!
+Menu.error23_7.text=There is a name conflict between local and imported type definition «%»!
+Menu.error24_1.text=Type definition in (composed) line % is malformed.
+Menu.error24_2.text=Type name «%» is illegal or colliding with another identifier.
+Menu.error24_3.text=Component name «%» is illegal or duplicate.
+Menu.error24_4.text=Component type «%» is undefined or unknown.
+Menu.error24_5.text=There is no defined record type «%»!
+Menu.error24_6.text=Record component «%» will not be modified/initialized!
+Menu.error24_7.text=Record type «%1» hasn't got a component «%2»!
+Menu.error24_8.text=Variable «%1» hasn't got a component «%2»!
+Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
@@ -370,6 +434,9 @@ AnalyserPreferences.checkboxes.18.text=Check that identifiers don't differ only 
 AnalyserPreferences.checkboxes.19.text=Check if an identifier might collide with reserved words.
 AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a parameter list.
 AnalyserPreferences.checkboxes.21.text=Discourage use of mistakable variable names «I», «l», and «O».
+AnalyserPreferences.checkboxes.22.text=Check for possible violations of constants.
+AnalyserPreferences.checkboxes.23.text=Check against faulty diagram imports.
+AnalyserPreferences.checkboxes.24.text=Check type definitions.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -379,7 +446,8 @@ AnalyserPreferences.okButton.text=OK
 // I/O
 Editor.btnNew.tooltip=Create a new blank diagram.
 Editor.btnOpen.tooltip=Open an existing diagram.
-Editor.btnSave.tooltip=Save the actual diagram.
+Editor.btnSave.tooltip=Save the current diagram.
+Editor.btnSaveAll.tooltip=Save all diagrams with unsaved changes.
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Insert a new instruction before the selected element. 
 Editor.btnBeforeAlt.tooltip=Insert a new IF statement before the selected element.
@@ -405,6 +473,8 @@ Editor.btnAfterPara.tooltip=Insert a new PARALLEL statement after the selected e
 // undo & redo
 Editor.btnUndo.tooltip=Undo the last action.
 Editor.btnRedo.tooltip=Redo the last action.
+// find & replace
+Editor.btnFindReplace.tooltip=Open the Find & Replace dialog.
 // copy & paste
 Editor.btnCut.tooltip=Cut the selected element.
 Editor.btnCopy.tooltip=Copy the selected element.
@@ -413,20 +483,23 @@ Editor.btnPaste.tooltip=Paste the copied or cut element after the selected eleme
 Editor.btnNice.tooltip=Toggle the visual style of the diagram.
 Editor.btnFunction.tooltip=Sub diagram (rounded corners).
 Editor.btnProgram.tooltip=Main diagram (square corners).
+Editor.btnInclude.tooltip=Includable diagram (2 bevelled corners).
 // editing
 Editor.btnEdit.tooltip=Edit the selected element.
 Editor.btnDelete.tooltip=Delete the selected element.
 Editor.btnMoveUp.tooltip=Move the selected element one position up.
 Editor.btnMoveDown.tooltip=Move the selected element one position down.
 Editor.btnTransmute.tooltip=Transmute instructions to Calls or Jumps, merge or split sequences
+Editor.btnOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 //printing
 Editor.btnPrint.tooltip=Print the diagram.
 Editor.btnArrange.tooltip=Add the diagram to the Arranger panel
 // font
 Editor.btnFontUp.tooltip=Increase the font size.
 Editor.btnFontDown.tooltip=Decrease the font size.
-// copyright 
+// copyright & help
 Editor.btnAbout.tooltip=Show the information message about Structorizer.
+Editor.btnHelp.tooltip=Show the Online User Guide in the browser.
 // colors
 Editor.btnColor0.tooltip=Colorize the selected element with this color.
 Editor.btnColor1.tooltip=Colorize the selected element with this color.
@@ -441,11 +514,11 @@ Editor.btnColor9.tooltip=Colorize the selected element with this color.
 // collapsing
 Editor.btnCollapse.tooltip=Collapse the selected element.
 Editor.btnExpand.tooltip=Expand the selected element.
-Editor.btnDisable.tooltip=Disable/enable the selected element(s).
-// turtleizer & executor
+// debug
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
 Editor.btnDropBrk.tooltip=Remove all breakpoints.
+Editor.btnDisable.tooltip=Disable/enable the selected element(s).
 // Popup menu
 Editor.popupCut.text=Cut
 Editor.popupCopy.text=Copy
@@ -483,11 +556,13 @@ Editor.popupDelete.text=Delete
 Editor.popupMoveUp.text=Move up
 Editor.popupMoveDown.text=Move down
 Editor.popupTransmute.text=Transmute
+Editor.popupOutsource.text=Outsource
+Editor.popupOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 // Collapsing
 Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
 Editor.popupDisable.text=Disable/enable
-// Breakpoint
+// Debug
 Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
 // Arranger index
@@ -571,6 +646,99 @@ InputBoxFor.msgEnterValueList.text=Enter the value list for the loop.
 InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of the data!\nDo you really want to discard the data?
 InputBoxFor.msgAttention.text=ATTENTION!
 
+-----[ InputBox Root ]-----
+InputBoxRoot.title=
+InputBoxRoot.lblIncludeList.text=Diagrams to be included
+InputBoxRoot.txtIncludeList.tooltip=Names of diagrams to be included on execution start (separated by commas or newlines).
+InputBoxRoot.lblText.text=Diagram name / function signature
+InputBoxRoot.txtText.tooltip=Enter the diagram name (for main or includable diagrams) or the subroutine signature (name, parameter list, result type if any)
+InputBoxRoot.lblComment.text=Comment
+InputBoxRoot.txtComment.tooltip=
+InputBoxRoot.btnOK.text=OK
+InputBoxRoot.btnOK.tooltip=
+InputBoxRoot.btnCancel.text=Cancel
+InputBoxRoot.btnCancel.tooltip=
+InputBoxRoot.btnAttributes.text=Attributes
+InputBoxRoot.btnAttributes.tooltip=Opens a dialog to inspect attributes and properties of this diagram.
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=Diagram Attributes
+AttributeInspector.lblCreatedBy.text=Author
+AttributeInspector.lblCreatedOn.text=Created on
+AttributeInspector.lblModifiedBy.text=Last changed by
+AttributeInspector.lblModifiedOn.text=Last changed on
+AttributeInspector.lblFilePath.text=File path
+AttributeInspector.lblShadowPath.text=Shadow file path
+AttributeInspector.txtShadowPath.tooltip=This path (usually into a temporary files directory) is used for packing/unpacking if the diagram resides in a packed archive.
+AttributeInspector.lblOrigin.text=Origin
+AttributeInspector.btnClearOrigin.text=Clear
+AttributeInspector.btnClearOrigin.tooltip=Clears the origin entry
+AttributeInspector.lblElements.text=Elements total
+AttributeInspector.lblInstrs.text=Instructions
+AttributeInspector.lblAlts.text=Alternatives
+AttributeInspector.lblCases.text=Case selections
+AttributeInspector.lblLoops.text=Loops
+AttributeInspector.lblCalls.text=Calls
+AttributeInspector.lblJumps.text=Jumps
+AttributeInspector.lblPars.text=Parallel sections
+AttributeInspector.btnShowLicense.text=License text
+AttributeInspector.btnShowLicense.tooltip=Press this button to open edit or review the text for the selected license.
+AttributeInspector.cbLicenseName.tooltip=Select an available license from the personal license pool or the current one to edit it.
+AttributeInspector.lblPrefsAlt.text=IF statement
+AttributeInspector.lblPrefsCase.text=CASE statement
+AttributeInspector.lblPrefsFor.text=FOR loop
+AttributeInspector.lblPrefsForIn.text=FOR-IN loop
+AttributeInspector.lblPrefsWhile.text=WHILE loop
+AttributeInspector.lblPrefsRepeat.text=REPEAT loop
+AttributeInspector.lblPrefsIO.text=Input/Output
+AttributeInspector.lblPrefsJump.text=Jump (Exit)
+AttributeInspector.lblPrefsPre.text=Pre
+AttributeInspector.lblPrefsPost.text=Post
+AttributeInspector.lblPrefsMore.text=(More)
+AttributeInspector.btnParserPrefs.text=Compare parser keys
+AttributeInspector.btnOk.text=OK
+AttributeInspector.btnOk.tooltip=Commit changes and close dialog.
+AttributeInspector.btnCancel.text=Cancel
+AttributeInspector.btnCancel.tooltip=Leave the dialog without committing changes.
+AttributeInspector.lblMain.text=Main program
+AttributeInspector.lblSub.text=Subroutine
+AttributeInspector.lblIncl.text=Includable
+AttributeInspector.pnCopyrights.border=Copyrights
+AttributeInspector.pnStatistics.border=Statistics (counts)
+AttributeInspector.pnKeywordSet.border=Cached differing keyword set
+AttributeInspector.msgOverrideLicense.text=Override license text by the selected default license "%"?
+AttributeInspector.msgLicenseChange.text=License Modification
+AttributeInspector.msgLicenseLoadError.text=Error on loading license text for license "%1":\n%2!
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=Structorizer License Editor: %
+LicenseEditor.menuFile.text=File
+LicenseEditor.menuFile.mnemonic=f
+LicenseEditor.menuEdit.text=Edit
+LicenseEditor.menuEdit.mnemonic=e
+LicenseEditor.menuProp.text=Properties
+LicenseEditor.menuProp.mnemonic=p
+LicenseEditor.menuFileCommit.text=Commit
+LicenseEditor.menuFileSave.text=Save (to pool)
+LicenseEditor.menuFileSaveAs.text=Save as ...
+LicenseEditor.menuFileRename.text=Rename ...
+LicenseEditor.menuFileReload.text=Reload/Revert
+LicenseEditor.menuFileDelete.text=Delete
+LicenseEditor.menuFileQuit.text=Quit
+LicenseEditor.menuEditUndo.text=Undo
+LicenseEditor.menuEditRedo.text=Redo
+LicenseEditor.menuEditClear.text=Clear
+LicenseEditor.menuPropFont.text=Font ...
+LicenseEditor.menuPropFontUp.text=Enlarge font
+LicenseEditor.menuPropFontDown.text=Diminish font
+LicenseEditor.msgNewLicName.text=New license name
+LicenseEditor.msgCouldntWriteLicense.text=Could not write license "%1" to file!\nReason: %2
+LicenseEditor.msgCouldntRenameLicense.text=Could not rename license "%1" to "%2"!\nA license with the new name may already exist.
+LicenseEditor.msgSureToDelete.text=Are you sure to delete license "%"? This is not undoable!
+LicenseEditor.msgSureToDiscard.text=Are you sure to discard all unsaved changes for license "%"?
+LicenseEditor.msgPendingChanges.text=There are unsaved changes for license "%".\nShall they be saved before you leave?
+LicenseEditor.msgOverwriteExisting.text=License "%" already exists in the pool.\nContinue to overwrite it?
+
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences
 Preferences.pnlAlt.border=IF statement
@@ -586,6 +754,11 @@ Preferences.pnlCase.border=CASE statement
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Default content
 Preferences.lblCase.tooltip=The default content of a CASE statement.
+Preferences.lblCaseRot.text=Min. branches for rotation
+Preferences.lblCaseRot.tooltip=Branch count threshold for attempts to reduce width by rotating elements (0 = off) 
+Preferences.pnlRoot.border=Diagram Header
+Preferences.lblRoot.text=Include List Caption
+Preferences.lblRoot.tooltip=The caption for the list of includable diagrams when being drawn.
 Preferences.pnlFor.border=FOR loop
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Default content
@@ -721,9 +894,12 @@ ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
 ExportOptionDialoge.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generate line numbers on export to BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Involve called subroutines.
+ExportOptionDialoge.chkExportLicenseInfo.text=Export author and license attributes.
 ExportOptionDialoge.lbPrefGenerator.text=Favorite Code Export:
 ExportOptionDialoge.lbCharset.text=Character set:
 ExportOptionDialoge.chkCharsetAll.text=List all?
+ExportOptionDialoge.btnPluginOptions.text=Language-specific Options
+ExportOptionDialoge.msgOptionsForPlugin.text=Options for % Generator
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
@@ -739,6 +915,17 @@ ImportOptionDialog.lbCharset.text=Character set:
 ImportOptionDialog.chkCharsetAll.text=List all?
 ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagram (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the diagram are to be adapted to the current parser preferences.
+ImportOptionDialog.chkVarDeclarations.text=Import variable declarations
+ImportOptionDialog.chkVarDeclarations.tooltip=With this option enabled, parsers will make instruction elements from variable declarations.
+ImportOptionDialog.chkCommentImport.text=Import source code comments
+ImportOptionDialog.chkSaveParseTree.text=Save parse tree as text file after import
+ImportOptionDialog.chkSaveParseTree.tooltip=After a successful import you may obtain the syntax tree saved to a text file "*.parsetree.txt".
+ImportOptionDialog.chkLogDir.text=Log to folder
+ImportOptionDialog.chkLogDir.tooltip=Enable saving a log file during import
+ImportOptionDialog.txtLogDir.tooltip=The empty path stands for the home directory of the source code file, "." for the current directory.
+ImportOptionDialog.btnLogDir.tooltip=Select a path via dialog.
+ImportOptionDialog.btnPluginOptions.text=Language-specific Options
+ImportOptionDialog.msgOptionsForPlugin.text=Options for % Parser
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
 
@@ -747,11 +934,24 @@ SaveOptionDialog.title=Options for saving diagrams ...
 SaveOptionDialog.lbIntro.text=Please select the options you want to activate...
 SaveOptionDialog.pnlAutoSave.border=Auto-save options
 SaveOptionDialog.pnlBackup.border=Backup options
+SaveOptionDialog.pnlFileInfo.border=File info defaults
 SaveOptionDialog.chkAutoSaveExecute.text=Auto-save during execution?
 SaveOptionDialog.chkAutoSaveClose.text=Auto-save when going to be closed?
 SaveOptionDialog.chkBackupFile.text=Create backup file on re-saving?
+SaveOptionDialog.lblAuthorName.text=Author name
+SaveOptionDialog.btnLicenseFile.text=License file
+SaveOptionDialog.btnLicenseFile.tooltip=Open the editor for the text of this license 
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Accept these settings.
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=Value for '%' must be an integral number!
+PluginOptionDialog.msgNoValidUnsigned.text=Value for '%' must be a cardinal number (unsigned integer)!
+PluginOptionDialog.msgNoValidCharacter.text=Value for '%' must be a single character!
+PluginOptionDialog.msgNoValidDouble.text=Value for '%' must be a number
+PluginOptionDialog.msgVerificationError.text=Input verification failed
+PluginOptionDialog.btnOk.text=OK
+PluginOptionDialog.btnCancel.text=Cancel
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI Scale
@@ -762,6 +962,40 @@ GUIScaleChooser.lblIcon.text=Icon Preview
 GUIScaleChooser.chkTest.text=CheckBox Preview
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Validate your choice for next start.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Find / Replace
+FindAndReplace.lblSearchPattern.text=Find:
+FindAndReplace.lblReplacePattern.text=Replace with:
+FindAndReplace.pnlMode.border=Mode
+FindAndReplace.chkCaseSensitive.text=Case sensitive
+FindAndReplace.chkWholeWord.text=Whole word
+FindAndReplace.chkRegEx.text=Regular expressions
+FindAndReplace.rbDown.text=Down
+FindAndReplace.rbUp.text=Up
+FindAndReplace.pnlScope.border=Scope
+FindAndReplace.cmbScope.item.0=Current selection
+FindAndReplace.cmbScope.item.1=Current diagram
+FindAndReplace.cmbScope.item.2=Opened diagrams
+FindAndReplace.pnlRootTypes.border=Diagram types
+FindAndReplace.chkRootTypes.0.text=Main programs
+FindAndReplace.chkRootTypes.1.text=Subroutines
+FindAndReplace.chkRootTypes.2.text=Includables
+FindAndReplace.chkInTexts.text=In texts
+FindAndReplace.chkInComments.text=In comments
+FindAndReplace.pnlElements.border=Element Types
+FindAndReplace.btnAll.text=All
+FindAndReplace.btnNone.text=None
+FindAndReplace.chkDisabled.text=Disabled elements
+FindAndReplace.pnlPreview.border=Contents
+FindAndReplace.txtText.border=Text
+FindAndReplace.txtComm.border=Comment
+FindAndReplace.chkElementwise.text=Element-wise
+FindAndReplace.btnFind.text=Find
+FindAndReplace.btnReplace.text=Replace
+FindAndReplace.btnReplaceFind.text=Replace/Find
+FindAndReplace.btnReplaceAll.text=Replace All
+FindAndReplace.btnClose.text=Close
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:
@@ -786,9 +1020,12 @@ Surface.titleDiagramConflict.text=Diagram conflict
 Surface.msgInsertionConflict.0.text=There is another version of diagram "%2",\nat least one of them has unsaved changes.
 Surface.msgInsertionConflict.1.text=There is an equivalent copy of diagram "%1"\nwith different path "%2".
 Surface.msgInsertionConflict.2.text=There is a differing diagram with signature "%1"\nand path "%2".
+Surface.msgOverwriteFile.text=Overwrite existing file "%"?
+Surface.msgConfirmOverwrite.text=Confirm Overwrite
 
 -----> Executor
 -----[ Control ]-----
+Control.title=Executor Control
 Control.lblSpeed.text= Delay: 
 Control.btnCallStack.text=Call Stack
 Control.lblCallLevel.text=Call depth:
@@ -812,10 +1049,18 @@ Control.lbReturnedResult.text=Returned result
 Control.lbOutput.text=Output
 Control.lbInput.text=Input
 Control.lbAcknowledge.text=Please acknowledge to continue.
+Control.lbOk.text=OK
+Control.lbPause.text=Pause
+Control.lbCommit.text=Commit changes
+Control.lbDiscard.text=Discard changes
+Control.ttlCompName.text=Name
+Control.ttlIndex.text=Index
+Control.ttlContent.text=Content
 Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Question
 Control.msgTitleParallel.text=Parallel Execution Problem
 Control.msgNoSubroutine.text=A subroutine diagram "%1" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.
+Control.msgNoInclDiagram.text=An includable diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.
 Control.msgAmbiguousCall.text=Ambiguous CALL: Different subroutine diagrams "%1" (%2 parameters) found!
 Control.msgInvalidExpr.text=<%1> is not a correct or existing expression.
 Control.msgInvalidBool.text=<%1> is not a valid Boolean expression.
@@ -832,9 +1077,23 @@ Control.msgInvalidFileNumberRead.text=Invalid file number or file not open for r
 Control.msgInvalidFileNumberWrite.text=Invalid file number or file not open for writing.
 Control.msgNoIntLiteralOnFile.text=No integer value readable from file!
 Control.msgNoDoubleLiteralOnFile.text=No floating-point value readable from file!    
-Control.msgEndOfFile.text=Attempt to read data past end of file!    
+Control.msgEndOfFile.text=Attempt to read data past end of file!
+Control.msgUseStopButton.text=There is a running or pending execution!\nUse the STOP button to abort and close.
+Control.msgConstantRedefinition.text=Illegal attempt to redefine or modify constant «%»!
+Control.msgConstantArrayElement.text=An array element «%» may not be made a constant by assignment!
+Control.msgInvalidComponent.text=There is no component «%1» in record type or variable «%2»!
+Control.msgConstantRecordComponent.text=A record component «%» may not be made a constant by assignment!
+Control.msgTypeMismatch.text=Value type «%1» is incompatible with type «%2» of variable/component «%3»!
+Control.msgBadValueList.text=<%> cannot be interpreted as value list.
+Control.msgBadValueListDetails.text=Details: %
+Control.msgVarUpdateErrors.text=Trouble updating variables
+Control.msgVarUpdatesFailed.text=These variable modifications failed because of evaluation errors:\n\n%
+Control.msgEndEditing.text=To continue, first release the variable cell editor (Enter or Esc).
+Control.msgFunctionConflict.text=\nFunction «%1(%2)» of %3 overridden by %4
+Control.msgProcedureConflict.text=\nProcedure «%1(%2)» of %3 overridden by %4
+Control.msgSignatureConflicts.text=There are API conflicts among the chosen controller plugins:%
 Control.tblVar.header.0=Variable Name
-Control.tblVar.header.1=Content
+Control.tblVar.header.2=Content
 
 -----[ OutputConsole ]-----
 OutputConsole.menu.text=Properties

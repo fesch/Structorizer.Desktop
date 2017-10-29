@@ -40,6 +40,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.21      Enh. #84: Field modification to support FOR-IN loops (KGU#61)
  *      Kay Gürtzig     2016.08.01      Enh. #215: Breakpoint trigger counters added (KGU#213)
  *      Kay Gürtzig     2016.10.13      Enh. #270: Disabling control added (KGU#277)
+ *      Kay Gürtzig     2017.03.14      Enh. #372: Additional Root fields (author, license)
+ *      Kay Gürtzig     2017.05.20      Enh. #372: Structure of the passed license info changed
+ *      Kay Gürtzig     2017.07.01      Enh. #389: Attribute diagramRefs added
  *
  ******************************************************************************************************
  *
@@ -49,6 +52,7 @@ package lu.fisch.structorizer.gui;
  */
 
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.utils.*;
 
 public class EditData {
@@ -64,6 +68,9 @@ public class EditData {
 	public For.ForLoopStyle forLoopStyle = For.ForLoopStyle.FREETEXT;
 	// END KGU#61 2016-03-21
 	// END KGU#3 2015-10-25
+	// START KGU#376 2017-07-01: Enh. #389 Support for includable diagram references
+	public StringList diagramRefs = new StringList();
+	// END KGU#376 2017-07-01
 	
 	// START KGU#43 2015-10-12
 	public boolean breakpoint = false;
@@ -74,6 +81,14 @@ public class EditData {
 	// START KGU#277 2016-10-13: Enh #270
 	public boolean disabled = false;
 	// END KGU#277 2016-10-13
+	// START KGU#363 2017-03-14: Enh. #372 Author name and license infor for Root
+	// START KGU#363 2017-05-20
+//	public String authorName = null;
+//	public String licenseName = null;
+//	public String licenseText = null;
+	public RootAttributes licInfo = null;
+	// END KGU#363 2017-05-20
+	// END KGU#363 2017-03-14
 	
 	public boolean result = false;
 	

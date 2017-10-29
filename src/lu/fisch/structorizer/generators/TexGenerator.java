@@ -38,8 +38,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.11.01      KGU#18/KGU#23 Transformation decomposed
  *      Kay Gürtzig     2015.12.18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
  *      Kay Gürtzig     2016.07.20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
+ *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done.
  *      Kay Gürtzig     2016.10.14      Enh. #270: Disabled elements are skipped here now
+ *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
  *
  ******************************************************************************************************
  *
@@ -49,7 +50,7 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 
 public class TexGenerator extends Generator {
 	
@@ -148,20 +149,20 @@ public class TexGenerator extends Generator {
 		_input = transformAssignment(_input);
 		
 		// Leerzeichen
-		_input=BString.replace(_input," ","\\ ");
+		_input = _input.replace(" ","\\ ");
 		
 		// Umlaute (UTF-8 -> LaTeX)
-		_input=BString.replace(_input,"\u00F6","\"o");
-		_input=BString.replace(_input,"\u00D6","\"O");
-		_input=BString.replace(_input,"\u00E4","\"a");
-		_input=BString.replace(_input,"\u00C4","\"A");
-		_input=BString.replace(_input,"\u00FC","\"u");
-		_input=BString.replace(_input,"\u00DC","\"U");
-		_input=BString.replace(_input,"\u00E9","\"e");
-		_input=BString.replace(_input,"\u00CB","\"E");
+		_input = _input.replace("\u00F6","\"o");
+		_input = _input.replace("\u00D6","\"O");
+		_input = _input.replace("\u00E4","\"a");
+		_input = _input.replace("\u00C4","\"A");
+		_input = _input.replace("\u00FC","\"u");
+		_input = _input.replace("\u00DC","\"U");
+		_input = _input.replace("\u00E9","\"e");
+		_input = _input.replace("\u00CB","\"E");
 		
 		// scharfes "S"
-		_input=BString.replace(_input,"\u00DF","\\ss{}");
+		_input = _input.replace("\u00DF","\\ss{}");
 
 		return _input;
 	}
@@ -170,9 +171,10 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Instruction _inst, String _indent)
 	{
     	if (!_inst.disabled) {
-    		for(int i=0;i<_inst.getText().count();i++)
+    		StringList lines = _inst.getUnbrokenText();
+    		for(int i=0;i<lines.count();i++)
     		{
-    			code.add(_indent+"\\assign{\\("+transform(_inst.getText().get(i))+"\\)}");
+    			code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
     		}
     	}
 	}
@@ -192,7 +194,7 @@ public class TexGenerator extends Generator {
 */
 		
     	if (!_alt.disabled) {
-    		code.add(_indent+"\\ifthenelse{"+Math.max(1,8-2*_alt.getText().count())+"}{"+Math.max(1,8-2*_alt.getText().count())+"}{\\("+BString.replace(transform(_alt.getText().getText()),"\n","")+"\\)}{"+Element.preAltT+"}{"+Element.preAltF+"}");
+    		code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
     		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
     		if(_alt.qFalse.getSize()!=0)
     		{
@@ -232,27 +234,27 @@ public class TexGenerator extends Generator {
 	protected void generateCode(For _for, String _indent)
 	{
 		if (!_for.disabled) {
-			code.add(_indent+"\\while{\\("+BString.replace(transform(_for.getText().getText()),"\n","")+"\\)}");
-			generateCode(_for.q,_indent+_indent.substring(0,1));
-			code.add(_indent+"\\whileend");
+			code.add(_indent + "\\while{\\(" + transform(_for.getUnbrokenText().getLongString()) + "\\)}");
+			generateCode(_for.q, _indent + _indent.substring(0,1));
+			code.add(_indent + "\\whileend");
 		}
 	}
 	
 	protected void generateCode(While _while, String _indent)
 	{
 		if (!_while.disabled) {
-			code.add(_indent+"\\while{\\("+BString.replace(transform(_while.getText().getText()),"\n","")+"\\)}");
-			generateCode(_while.q,_indent+_indent.substring(0,1));
-			code.add(_indent+"\\whileend");
+			code.add(_indent + "\\while{\\(" + transform(_while.getUnbrokenText().getLongString()) + "\\)}");
+			generateCode(_while.q, _indent + _indent.substring(0,1));
+			code.add(_indent + "\\whileend");
 		}
 	}
 	
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
 		if (!_repeat.disabled) {
-			code.add(_indent+"\\until{\\("+BString.replace(transform(_repeat.getText().getText()),"\n","")+"\\)}");
-			generateCode(_repeat.q,_indent+_indent.substring(0,1));
-			code.add(_indent+"\\untilend");
+			code.add(_indent + "\\until{\\(" + transform(_repeat.getUnbrokenText().getLongString()) + "\\)}");
+			generateCode(_repeat.q, _indent + _indent.substring(0,1));
+			code.add(_indent + "\\untilend");
 		}
 	}
 	
@@ -267,11 +269,12 @@ public class TexGenerator extends Generator {
 
 	protected void generateCode(Call _call, String _indent)
 	{
-		for(int i=0; !_call.disabled && i<_call.getText().count(); i++)
+		StringList lines = _call.getUnbrokenText();
+		for(int i=0; !_call.disabled && i<lines.count(); i++)
 		{
 			// START KGU#2 2015-12-19: Wrong command, should be \sub
 			//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
-			code.add(_indent+"\\sub{\\("+transform(_call.getText().get(i))+"\\)}");
+			code.add(_indent+"\\sub{\\("+transform(lines.get(i))+"\\)}");
 			// END KGU#2 2015-12-19
 		}
 	}
@@ -279,9 +282,10 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Jump _jump, String _indent)
 	{
 		if (!_jump.disabled) {
+			StringList lines = _jump.getUnbrokenText();
 			// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 			//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
-			if (_jump.getText().count() == 0 || _jump.getText().getText().trim().isEmpty())
+			if (lines.count() == 0 || lines.getText().trim().isEmpty())
 			{
 				code.add(_indent+ "\\exit{}");
 			}
@@ -289,8 +293,8 @@ public class TexGenerator extends Generator {
 				// END KGU#78 2015-12-19
 			{
 				// FIXME (KGU 2015-12-19): This should not be split into several blocks
-				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-				for(int i=0; i<_jump.getText().count(); i++)
+				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+				for(int i=0; i<lines.count(); i++)
 				{
 					// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 					//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
@@ -345,17 +349,24 @@ public class TexGenerator extends Generator {
 		if (topLevel)
 		{
 		// END KGU#178 2016-07-20
-		code.add("\\documentclass[a4paper,10pt]{article}");
-		code.add("");
-		code.add("\\usepackage{struktex}");
-		code.add("\\usepackage{german}");
-		code.add("");
-		code.add("\\title{Structorizer StrukTeX Export}");
-		code.add("\\author{Structorizer "+Element.E_VERSION+"}");
-		code.add("");
-		code.add("\\begin{document}");
+			code.add("\\documentclass[a4paper,10pt]{article}");
+			code.add("");
+			code.add("\\usepackage{struktex}");
+			code.add("\\usepackage{german}");
+			code.add("");
+			code.add("\\title{Structorizer StrukTeX Export}");
+			// START KGU#363 2017-05-16: Enh. #372
+			code.add("\\author{Structorizer "+Element.E_VERSION+"}");
+			if (this.optionExportLicenseInfo()) {
+				code.add("\\author{" + _root.getAuthor() + "}");
+			} else {
+				code.add("\\author{Structorizer "+Element.E_VERSION+"}");
+			}
+			// END KGU#363 2017-05-16
+			code.add("");
+			code.add("\\begin{document}");
 		// START KGU#178 2016-07-20: Enh. #160
-		subroutineInsertionLine = code.count();
+			subroutineInsertionLine = code.count();
 		}
 		// END KGU#178 2016-07-20
 		code.add("");
@@ -374,15 +385,15 @@ public class TexGenerator extends Generator {
 		return code.getText();
 	}
 
-	@Override
-	public String[] getReservedWords() {
-		return null;
-	}
-
-	@Override
-	public boolean isCaseSignificant() {
-		return false;
-	}
+//	@Override - obsolete since 3.27
+//	public String[] getReservedWords() {
+//		return null;
+//	}
+//
+//	@Override
+//	public boolean isCaseSignificant() {
+//		return false;
+//	}
 	
 	
 }

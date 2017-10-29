@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -112,7 +111,32 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
  *      Kay Gürtzig     2017.02.08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
  *      Kay Gürtzig     2017.02.27      Enh. #346: Export option dialog changes for user-specific include directives
+ *      Kay Gürtzig     2017.03.04      Enh. #354: Code import generalized
+ *      Kay Gürtzig     2017.03.06      Enh. #368: New import option: code import of variable declarations
+ *      Kay Gürtzig     2017.03.08      Enh. #354: file dropping generalized, new import option to save parseTree
  *      Kay Gürtzig     2017.03.10      Enh. #367: IF transmutation added: Swapping of the branches
+ *      Kay Gürtzig     2017.03.12      Enh. #372: Author name configurable in save options
+ *      Kay Gürtzig     2017.03.14      Enh. #372: Author name and license info editable now
+ *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FilChooser
+ *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
+ *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
+ *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
+ *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
+ *      Kay Gürtzig     2017.05.09      Issue #400: Proper check whether preference changes were committed
+ *      Kay Gürtzig     2017.05.11      Enh. #357: Mechanism to retrieve plugin-specified generator options
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Support for third diagram type (include/import)
+ *      Kay Gürtzig     2017.05.18      Issue #405: New preference for width shrinking of CASE elements 
+ *      Kay Gürtzig     2017.05.21      Enh. #372: AttributeInspector integrated, undo mechanism adapted
+ *      Kay Gürtzig     2017.05.23      Enh. #354: On multiple-root code import now all roots go to Arranger
+ *      Kay Gürtzig     2017.06.20      Enh. #354,#357: GUI Support for configuration of plugin-specific options
+ *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism transferred from CALL to ROOT
+ *      Kay Gürtzig     2017.07.02      Enh. #357: plugin-specific option retrieval for code import
+ *      Kay Gürtzig     2017.09.12      Enh. #415: Find&Replace dialog properly re-packed after L&F change
+ *      Kay Gürtzig     2017.10.10      Issue #432: Workaround for nasty synch problem in redraw()
+ *      Kay Gürtzig     2017.10.12      Issue #432: redrawing made optional in two methods 
+ *      Kay Gürtzig     2017.10.23      Positioning of sub-dialogs no longer depends on diagram size
+ *                                      Issue #417: scroll units adapted to Root size to reduce time complexity
+ *      Kay Gürtzig     2017.10.28      Enh. #443: Slight adaption for multiple DiagramControllers
  *
  ******************************************************************************************************
  *
@@ -127,8 +151,7 @@ package lu.fisch.structorizer.gui;
  *        margin now, giving pause for consideration.
  *        Moving inwards the diagram from the selected Root will still work.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.awt.*;
 import java.awt.image.*;
@@ -147,6 +170,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -158,16 +182,20 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileFilter;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
 import org.freehep.graphicsio.swf.*;
 
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
+import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -176,11 +204,38 @@ import lu.fisch.turtle.TurtleBox;
 
 import org.freehep.graphicsio.svg.SVGGraphics2D;
 
+/**
+ * Represents the working area of the Structorizer. Holds the current Nassi-Shneiderman diagram and manages
+ * all editing ativities as well as loading, saving, import, export etc.
+ * @author Robert Fisch
+ * @author Kay Gürtzig
+ */
 @SuppressWarnings("serial")
 public class Diagram extends JPanel implements MouseMotionListener, MouseListener, Printable, MouseWheelListener, ClipboardOwner, ListSelectionListener
 {
-
+	// START KGU#363 2017-03-28: Enh. #370 - allow to break a Root-modifying activity
+	/**
+	 * Exception may be raised if a Root-modifying action was denied
+	 * @author Kay Gürtzig
+	 */
+	public class CancelledException extends Exception
+	{
+		public CancelledException() {
+			super("Cancelled");
+		}
+	}
+	// END KGU#363 2017-03-28
+	
+	/** Fixed size limitation for the file history */
+	private static final int MAX_RECENT_FILES = 10;
+	
 	// START KGU#48 2015-10-18: We must be capable of preserving consistency when root is replaced by the Arranger
+	/**
+	 * The current Nassi-Shneiderman diagram
+	 * @see #getRoot()
+	 * @see #setRoot(Root, boolean, boolean)
+	 * @see #setIf
+	 */
     //public Root root = new Root();
     private Root root = new Root();
     // END KGU 2015-10-18
@@ -220,12 +275,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public File currentDirectory = new File(System.getProperty("user.home"));
     public File lastExportDir = null;
+    // START KGU#354 2017-04-26: Enh. #354 also remember the last import folder
+    public File lastCodeExportDir = null;
+    public File lastCodeImportDir = null;
+    public String lastImportFilter = "";
+    // END KGU#354 2017-04-26
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
+    // START KGU#354 2017-03-15: Enh. #354 CodeParser cache
+	private static Vector<CodeParser> parsers = null;
+	// This map contains a string array (key, type, caption, tooltip) per option per parser
+	private static Vector<GENPlugin> parserPlugins = null;
+	// END KGU#354 2017-03-15
     
     // START KGU#300 2016-12-02: Enh. #300 - update notification settings
-    public boolean retrieveVersion = false;
+    // KGU#300 2017-03-15: turned static
+    public static boolean retrieveVersion = false;
     // END KGU#300 2016-12-02
 	// START KGU#305 2016-12-12: Enh. #305
 	private boolean show_ARRANGER_INDEX = false;	// Arranger index visible?
@@ -240,6 +306,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     // toolbar management
     public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();
+
+	private FindAndReplace findDialog = null;
     
 	/*****************************************
 	 * CONSTRUCTOR
@@ -278,10 +346,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!this.checkRunning()) return false;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
 
-		return setRoot(root, true);
+		return setRoot(root, true, true);
 	}
 	
-	public boolean setRoot(Root root, boolean askToSave) {
+	// START KGU#430 2017-10-12: Issue #432 allow to set the root without immediate redrawing
+	//public boolean setRoot(Root root, boolean askToSave)
+	public boolean setRoot(Root root, boolean askToSave, boolean draw)
+	// END KGU#430 2017-10-12
+	{
 		if (root != null)
 		{
 			// Save if something has been changed
@@ -290,7 +362,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// Abort this if the user cancels the save request
 				return false;
 			}
-			this.unselectAll();
+			this.unselectAll(draw);
 
 			boolean hil = this.root.hightlightVars;
 			this.root = root;
@@ -306,11 +378,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				root.setSelected(true);
 			}
 			// END KGU#183 2016-04-23
-			redraw();
-			analyse();
+			if (draw) {
+				redraw();
+				analyse();
+			}
 			// START KGU#149 2016-02-03: Bugfix #117
 			doButtons();
 			// END KGU#149 2016-02-03
+			// START KGU#444 2017-10-23: Issue #417
+			adaptScrollUnits();
+			// END KGU#44 2017-10-23
 		}
 		return true;
 	}
@@ -334,7 +411,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     {
 		// load different things from INI-file
 		Element.loadFromINI();
-		D7Parser.loadFromINI();
+		CodeParser.loadFromINI();
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
@@ -353,6 +430,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
 					if (!checkRunning()) return;	// Don't proceed if the root is being executed
 					// END KGU#157 2016-03-16
+					// START KGU#392 2017-05-07: Enh. #399
+					String unsuitedFiles = "";
+					// END KGU#392 2017-05-07
 					//boolean found = false;
 					for (int i = 0; i < files.length; i++)
 					{
@@ -381,41 +461,146 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							loadArrangement(files[i]);
 						}
 						// END KGU#289 2016-11-15
-						else if (
-								filenameLower.endsWith(".mod")
-								||
-								filenameLower.endsWith(".pas")
-								||
-								filenameLower.endsWith(".dpr")
-								||
-								filenameLower.endsWith(".lpr")
-								)
-						{
-							// save (only if something has been changed)
-							saveNSD(true);
-							// load and parse source-code
-							D7Parser d7 = new D7Parser("D7Grammar.cgt");
-							Root rootNew = d7.parse(filename);
-							if (d7.error.equals(""))
-							{
-								setRootIfNotRunning(rootNew);
-								currentDirectory = new File(filename);
-								//System.out.println(root.getFullText().getText());
+						// FIXME: Find a way to go over all the parser plugins
+						else {
+							Ini ini = Ini.getInstance();
+							String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
+							// START KGU#354 2017-04-27: Enh. #354
+							boolean isVerbose = ini.getProperty("impLogToDir", "false").equals("true");
+							String logPath = null;
+							if (isVerbose) {
+								logPath = ini.getProperty("impLogDir", "");
 							}
-							else
+							// END KGU#354 2017-04-27				
+							// START KGU#354 2017-03-08: go over all the parser plugins
+							CodeParser parser = null;
+							File theFile = new File(filename);
+							parser = findParserForFileExtension(theFile);
+							if (parser != null)
 							{
-								// show error
-								JOptionPane.showMessageDialog(null,
-										d7.error,
-										Menu.msgTitleParserError.getText(),
-										JOptionPane.ERROR_MESSAGE);
-							}
+								// save (only if something has been changed)
+								saveNSD(true);
+								// START KGU#354 2017-04-27: Enh. #354
+								if (isVerbose) {
+									if (logPath.isEmpty()) {
+										logPath = theFile.getParent();
+									}
+									else if (logPath.equals(".")) {
+										if (currentDirectory != null) {
+											if (!currentDirectory.isDirectory()) {
+												logPath = currentDirectory.getParent();
+											}
+											else {
+												logPath = currentDirectory.getPath();
+											}
+										}
+									}
+								}
+								// END KGU#354 2017-04-27				
+								// load and parse source-code
+								// START KGU#354 2017-05-03: Enh. #354 - we needed more safety here
+								String parserError = null;
+								try {
+								// END KGU#354 2017-05-03
+									// START KGU#354 2017-05-12: Enh. #354 - we better use a new instance instead of statically sharing it
+									parser = parser.getClass().newInstance();
+									// END KGU#354 2017-05-12
+									// START KGU#395 2017-07-02: Enh. #357
+									String parserClassName = parser.getClass().getSimpleName();
+									for (int j = 0; j < parserPlugins.size(); j++) {
+										GENPlugin plug = parserPlugins.get(i);
+										if (plug.getKey().equals(parserClassName)) 
+										setPluginSpecificOptions(parser, parserClassName, plug.options);
+									}
+									// END KGU#395 2017-07-02
+									List<Root> newRoots = parser.parse(filename, charSet, logPath);
+									if (parser.error.equals("")) {
+										boolean arrange = false;
+										for (Root rootNew: newRoots) {
+											if (arrange) {
+												arrangeNSD();
+											}
+											setRootIfNotRunning(rootNew);
+											currentDirectory = new File(filename);
+											arrange = true;
+											//System.out.println(root.getFullText().getText());
+										}
+										// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
+										if (newRoots.size() > 2 || !root.isProgram()) {
+											arrangeNSD();
+										}
+										// END KGU#354 2017-05-23
+										for (Root rootNew: newRoots) {
+											rootNew.setChanged();
+										}
+									}
+									else {
+								// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
+									parserError = parser.error;
+									}
+								}
+								catch (Exception ex) {
+									parserError = ex.toString();
+									ex.printStackTrace();
+								}
+								if (parserError != null)
+								// END KGU#354 2017-05-03
+								{
+									// show error
+									// START KGU#364 2017-03-09: Allow to copy the content
+									//JOptionPane.showMessageDialog(null,
+									//		parser.error,
+									//		Menu.msgTitleParserError.getText(),
+									//		JOptionPane.ERROR_MESSAGE);
+									String[] options = {
+											Menu.lblOk.getText(),
+											Menu.lblCopyToClipBoard.getText()
+									};
+									int chosen = JOptionPane.showOptionDialog(null,
+											// START KGU#354 2017-05-03: Enh. #354 - Safety addition part 3
+											//parser.error,
+											parserError,
+											// END KGU#354 2017-05-03
+											Menu.msgTitleParserError.getText(),
+											JOptionPane.ERROR_MESSAGE,
+											JOptionPane.YES_NO_OPTION,
+											null, options, 0);
+									if (chosen == 1) {
+										Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+										StringSelection toClip = new StringSelection(parser.error);
+										clipboard.setContents(toClip, null);									
+									}
+								}
+								redraw();
+						        // START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
+						        doButtons();
+						        // END KGU#354 2017-05-02
 
-							redraw();
+								Container cont = getParent();
+								while (cont != null && !(cont instanceof JFrame)) {
+									cont = cont.getParent();
+								}
+								if (cont != null) {
+									((JFrame)cont).toFront();
+								}
+							}
+							// START KGU#392 2017-05-07: Enh. #399: Gather unsuited files
+							else {
+								unsuitedFiles += "\n\u2022 " + filename;
+							}
+							// END KGU#392 2017-05-07
+
 						}
-
-
+						// END KGU#354 2017-03-08
+					} // for (int i = 0; i < files.length; i++)
+					// START KGU#392 2017-05-07: Enh. #399 Inform about unsuited files
+					if (!unsuitedFiles.isEmpty()) {
+						JOptionPane.showMessageDialog(null,
+								Menu.msgUnsupportedFileFormat.getText().replace("%", unsuitedFiles),
+								Menu.msgTitleLoadingError.getText(),
+								JOptionPane.INFORMATION_MESSAGE);
 					}
+					// END KGU#392 2017-05-07
 				}
 			}
 				);
@@ -441,6 +626,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
 	}
+    
+	// START KGU#354 2017-03-08: go over all the parser plugins
+    private CodeParser findParserForFileExtension(File file)
+    {
+    	CodeParser parser = null;
+		this.retrieveParsers();
+		for (int i=0; i < parsers.size() && parser == null; i++)
+		{
+			if (parsers.get(i).accept(file)) {
+				parser = parsers.get(i);
+			}
+		}
+
+		return parser;
+    }
+	// END KGU#354 2017-03-08
 
 	public void hideComments()
 	{
@@ -472,7 +673,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         			StringList comment = StringList.explode(selEle.getComment(false), "\n");
         			comment.removeAll("");	// Don't include empty lines here
         			// END KGU#199 2016-07-07
-        			String htmlComment = "<html>"+BString.replace(BString.encodeToHtml(comment.getText()),"\n","<br>")+"</html>";
+        			String htmlComment = "<html>" + BString.encodeToHtml(comment.getText()).replace("\n", "<br>") + "</html>";
         			if(!lblPop.getText().equals(htmlComment))
         			{
         				lblPop.setText(htmlComment);
@@ -731,8 +932,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						   !selectedUp.isDescendantOf(selectedDown)
 						   )
 						{
-							root.addUndo();
+							//root.addUndo();
+							try {
+								addUndoNSD();
+							} catch (CancelledException ex) {
+								return;
+							}
 							NSDControl.doButtons();
+							
+							// START KGU401 2017-05-17: Issue #405
+							selectedDown.resetDrawingInfoDown();
+							// END KGU#401 2017-05-17
 
 							// START KGU#87 2015-11-22: Subqueues should never be moved but better prevent...
 							//root.removeElement(selectedDown);
@@ -973,16 +1183,33 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		rect.height = visibleRect.height;
     	}
     	// END KGU#276 2016-11-21
-    	scrollRectToVisible(rect);
+    	try {
+    		scrollRectToVisible(rect);
+    	}
+    	catch (Exception ex) {
+    		System.err.println("*** Executor.draw(" + element + "):" + ex);
+    	}
     	redraw();	// This is to make sure the drawing rectangles are correct
     }
     // END KGU#276 2016-10-09
     
     public void redraw()
     {
-    	if (root.hightlightVars==true)
+    	boolean wasHighLight = root.hightlightVars; 
+    	if (wasHighLight)
     	{
-    		root.getVarNames();
+        	// START KGU#430 2017-10-10: Issue #432
+    		//root.getVarNames();
+    		try {
+    			root.getVarNames();
+    		}
+    		catch (Exception ex) {
+    			System.out.println("*** Possible sync problem in diagram.redraw(): " + ex.toString());
+    			ex.printStackTrace(System.out);
+    			// Avoid trouble
+    			root.hightlightVars = false;
+    		}
+    		// END KGU#430 2017-10-10
     	}
 
     	Rect rect = root.prepareDraw(this.getGraphics());
@@ -998,6 +1225,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     	//redraw(this.getGraphics());
     	this.repaint();
+    	
+    	// START KGU#430 2017-10-10: Issue #432
+    	root.hightlightVars = wasHighLight;
+		// END KGU#430 2017-10-10
     }
 
 	public void redraw(Graphics _g)
@@ -1057,11 +1288,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		super.paintComponent(g);
 		if(root!=null)
 		{
+			//System.out.println("Diagram: " + System.currentTimeMillis());
 			redraw(g);
 		}
 	}
-        
-    // START KGU#155 2016-03-08: Some additional fixing for bugfix #97
+       
+	// START KGU#444 2017-10-23: Issue #417 - polynomial scrolling time complexity 
+	/**
+	 * Adapts the scroll units according to the size of the current {@link Root}. With standard scroll unit
+	 * of 1, large diagrams would take an eternity to get scrolled over because their redrawing time also
+	 * increases with the number of elements, of course, such that it's polynomial (at least square) time growth... 
+	 */
+	protected void adaptScrollUnits() {
+		Container parent = this.getParent();
+    	if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
+    			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
+    			int heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
+    			int widthFactor = root.getRect().right / scroll.getWidth() + 1;
+    			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
+    			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
+    			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+    	    	}
+	}
+	// END KGU#444 2017-10-23
+
+	// START KGU#155 2016-03-08: Some additional fixing for bugfix #97
 	/**
 	 * Invalidates the cached prepareDraw info of the current diagram (Root)
 	 * (to be called on events with global impact on the size or shape of Elements)
@@ -1090,17 +1341,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#87 2015-11-22
 	
     // START KGU#41 2015-10-11: Unselecting, e.g. before export, had left the diagram status inconsistent:
-    // Though the selected status of the elements was unset, the references of the formerly selected
-    // elements invisibly remained in the respective diagram attributes, possibly causing unwanted effects.
-    // So this new method was introduced to replace the selectElementByCoord(-1,-1) calls.
-    public void unselectAll()
+	// Though the selected status of the elements was unset, the references of the formerly selected
+	// elements invisibly remained in the respective diagram attributes, possibly causing unwanted effects.
+	// So this new method was introduced to replace the selectElementByCoord(-1,-1) calls.
+	/**
+	 * Resets the selected state on all elements of the current {@link Root} and redraws
+	 * the diagram.
+	 * @see #unselectAll(boolean)
+	 */
+	public void unselectAll()
+	// START KGU#430 2017-10-12: Issue #432 allow to suppress redrawing
+	{
+		unselectAll(true);
+	}
+
+	/**
+	 * Resets the selected state on all elements of the current {@link Root} and redraws
+	 * the diagram if {@code refresh} is true.
+	 */
+    public void unselectAll(boolean refresh)
+    // END KGU#430 2017-10-12
     {
     	if (root != null)
     	{
     		root.selectElementByCoord(-1, -1);
     	}
     	selected = selectedUp = selectedDown = selectedMoved = null;
-    	redraw();
+    	if (refresh) {
+    		redraw();
+    	}
     }
 	// END KGU#41 2015-10-11
 
@@ -1159,7 +1428,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
 		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
-
+		
 		// START KGU#48 2015-10-17: Arranger support
 		Root oldRoot = root;
 		// END KGU#48 2015-10-17
@@ -1233,7 +1502,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		dlgOpen.setFileFilter(filter);
 		// END KGU 2016-01-15
 		// show & get result
-		int result = dlgOpen.showOpenDialog(this);
+		int result = dlgOpen.showOpenDialog(this.NSDControl.getFrame());
 		// react on result
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -1277,7 +1546,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			File f = new File(_filename);
 			//System.out.println(f.toURI().toString());
-			if(f.exists()==true)
+			if (f.exists()==true)
 			{
 				// save current diagram (only if something has been changed)
 				saveNSD(true);
@@ -1285,11 +1554,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// open an existing file
 				NSDParser parser = new NSDParser();
 				boolean hil = root.hightlightVars;
-				root = parser.parse(f.toURI().toString());
+				// START KGU#363 2017-05-21: Issue #372 API change
+				//root = parser.parse(f.toURI().toString());
+				root = parser.parse(f);
+				// END KGU#363 2017-05-21
 				root.hightlightVars = hil;
 				root.filename = _filename;
 				currentDirectory = new File(root.filename);
 				addRecentFile(root.filename);
+				
 				// START KGU#183 2016-04-23: Issue #169
 				selected = root;
 				root.setSelected(true);
@@ -1305,10 +1578,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 				errorMessage = null;
 				// END KGU#111 2015-12-16
+
+				// START KGU#362 2017-03-28: Issue #370
+				if (root.storedParserPrefs != null) {
+					this.handleKeywordDifferences(false);
+				}
+				// END KGU#362 2017-03-28
 			}
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 			//System.out.println(e.getMessage());
 			errorMessage = e.getLocalizedMessage();
@@ -1322,12 +1602,107 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 		if (errorMessage != null)
 		{
-			JOptionPane.showMessageDialog(this, "\"" + _filename + "\": " + errorMessage, 
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), "\"" + _filename + "\": " + errorMessage, 
 					Menu.msgTitleLoadingError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
 		// END KGU#111 2015-12-16
 	}
+
+	// START KGU#362 2017-03-28: Issue #370
+	private boolean handleKeywordDifferences(boolean isChangeRequest) {
+		StringList ignoreCaseInfo = root.storedParserPrefs.get("ignoreCase");
+		boolean wasCaseIgnored = ignoreCaseInfo != null && ignoreCaseInfo.getText().equals("true");
+		StringList replacements = new StringList();
+		for (HashMap.Entry<String,StringList> entry: root.storedParserPrefs.entrySet())
+		{
+			String storedValue = entry.getValue().concatenate();
+			// START KGU#288 2016-11-06: Issue #279 - Method getOrDefault() missing in OpenJDK
+			//String newValue = CodeParser.getKeywordOrDefault(entry.getKey(), "");
+			String currentValue = (entry.getKey().equals("ignoreCase"))
+					? Boolean.toString(CodeParser.ignoreCase)
+					: CodeParser.getKeywordOrDefault(entry.getKey(), "");
+			// END KGU#288 2016-11-06
+			if (!storedValue.equals(currentValue))
+			{
+				replacements.add("   " + entry.getKey() + ": \"" + storedValue + "\"  ≠  \"" + currentValue + "\"");
+			}
+		}
+		String[] options = {
+				Menu.lblRefactorNow.getText(),
+				(isChangeRequest ? Menu.lblAllowChanges : Menu.lblAdoptPreferences).getText(),
+				Menu.lblLeaveAsIs.getText()
+		};
+		String[] optionTexts = {
+				Menu.msgRefactorNow.getText(),
+				(isChangeRequest ? Menu.msgAllowChanges : Menu.msgAdoptPreferences).getText(),
+				Menu.msgLeaveAsIs.getText()
+		};
+		String menuText = "";
+		for (int i = 0; i < optionTexts.length; i++) {
+			menuText += (char)('a' + i) + ") " + optionTexts[i] + (i+1 < optionTexts.length ? "," : ".") + "\n";
+		}
+		int answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+				Menu.msgKeywordsDiffer.getText().replace("%1", "\n" + replacements.getText() + "\n").replace("%2", menuText),
+				Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null,
+				options, options[0]);
+		boolean goAhead = false;
+		switch (answer) {
+		case 0:
+			// Refactor the current diagram
+		{
+			HashMap<String, StringList> storedParserPrefs = root.storedParserPrefs; 
+			root.storedParserPrefs = null;
+			refactorDiagrams(storedParserPrefs, false, wasCaseIgnored);
+			goAhead = true;
+		}
+			break;
+		case 1:
+			if (isChangeRequest) {
+				// drop the old keyword information
+				root.storedParserPrefs = null;
+			}
+			else {
+				// Refactor all the other diagrams
+				// Cache the current parser preferences
+				HashMap<String, StringList> splitPrefs = new HashMap<String, StringList>();
+				// and adopt the stored preferences of the diagram
+				for (String key: CodeParser.keywordSet()) {
+					splitPrefs.put(key, Element.splitLexically(CodeParser.getKeywordOrDefault(key, ""), false));
+					StringList stored = root.storedParserPrefs.get(key);
+					if (stored != null) {
+						CodeParser.setKeyword(key, stored.concatenate());
+					}
+				}
+				boolean tmpIgnoreCase = CodeParser.ignoreCase;
+				CodeParser.ignoreCase = wasCaseIgnored;
+				try {
+					Ini.getInstance().save();
+				} catch (Exception ex) {
+					System.err.println("*** Diagram.handleKeywordDifferences(): " + ex.getMessage());
+				}
+				// Refactor the diagrams
+				refactorDiagrams(splitPrefs, true, tmpIgnoreCase);
+				root.storedParserPrefs = null;
+				if (Arranger.hasInstance()) {
+					Arranger.getInstance().redraw();
+				}
+				
+				offerStructPrefAdaptation(splitPrefs);
+			}
+			goAhead = true;
+			break;
+		case 2:
+			if (!isChangeRequest) {
+				goAhead = true;
+			}
+			break;
+		}
+		return goAhead;
+	}
+	// END KGU#362 2017-03-28
 
 	// START KGU#289 2016-11-15: Enh. #290 (Aranger file support
 	private void loadArrangement(File arrFile)
@@ -1335,7 +1710,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Arranger arr = Arranger.getInstance();
 		String errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());
 		if (!errorMsg.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "\"" + arrFile + "\": " + errorMsg, 
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), "\"" + arrFile + "\": " + errorMsg, 
 					Menu.msgTitleLoadingError.getText(),
 					JOptionPane.ERROR_MESSAGE);			
 		}
@@ -1349,6 +1724,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#289 2016-11-15
 
+	/*****************************************
+	 * SaveAll method
+	 *****************************************/
+	public void saveAllNSD()
+	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
+	{
+		saveNSD(false);
+		if (Arranger.hasInstance()) {
+			Arranger.getInstance().saveAll();
+		}
+	}
+	
 	/*****************************************
 	 * SaveAs method
 	 *****************************************/
@@ -1386,7 +1773,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//int result = dlgSave.showSaveDialog(this);
 		int result = JFileChooser.ERROR_OPTION;
 		do {
-			result = dlgSave.showSaveDialog(this);
+			result = dlgSave.showSaveDialog(this.NSDControl.getFrame());
 		// END KGU#248 2016-9-15
 			if (result == JFileChooser.APPROVE_OPTION)
 			{
@@ -1402,7 +1789,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					writeNow=false;
 					int res = JOptionPane.showConfirmDialog(
-							this,
+							this.NSDControl.getFrame(),
 							Menu.msgOverwriteFile.getText(),
 							Menu.btnConfirmOverwrite.getText(),
 							JOptionPane.YES_NO_OPTION);
@@ -1481,7 +1868,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					filename = root.proposeFileName();
 				}
-				res = JOptionPane.showOptionDialog(this,
+				res = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
 												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
 				// END KGU#49 2015-10-18
 												   Menu.msgTitleQuestion.getText(),
@@ -1600,7 +1987,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //        			}
 //        		}
 //        		filename = tempDir + System.getProperty("file.separator") + "Structorizer.tmp";
-				File tmpFile = File.createTempFile("Structorizer", "nsd");
+				File tmpFile = File.createTempFile("Structorizer", ".nsd");
 				filename = tmpFile.getAbsolutePath();
 				// END KGU#316 2016-12-28
 			}
@@ -1659,7 +2046,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
-			JOptionPane.showMessageDialog(this,
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 					Menu.msgErrorFileSave.getText().replace("%", message),
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE, null);
@@ -1739,7 +2126,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		if (error != null) {
-			JOptionPane.showMessageDialog(this,
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 					error,
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE, null);
@@ -1747,6 +2134,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return isDone;
 	}
 	// END KGU#316 2016-12-28
+
+	/*****************************************
+	 * addUndo method
+	 *****************************************/
+	/**
+	 * Creates an undo entry on .root, if the action wasn't cancelled. (Otherwise
+	 * a CancelledException is thrown.)
+	 * @throws CancelledException 
+	 */
+	public void addUndoNSD() throws CancelledException
+	{
+		if (root.storedParserPrefs != null) {
+			// This is an un-refactored Root!
+			// So care for consistency
+			if (!this.handleKeywordDifferences(true)) {
+				throw new CancelledException();
+			}
+		}
+		root.addUndo();
+	}
 
 	/*****************************************
 	 * Undo method
@@ -1888,7 +2295,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (selected instanceof Instruction)
 			{
 				Instruction instr = (Instruction)selected;
-				isConvertible = instr.getText().count() > 1
+				isConvertible = instr.getUnbrokenText().count() > 1
 						|| instr.isJump()
 						|| instr.isFunctionCall()
 						|| instr.isProcedureCall();
@@ -1926,6 +2333,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#199 2016-07-06
 	
+	// START KGU#373 2017-03-28: Enh. #387
+	public boolean canSave(boolean any)
+	{
+		boolean cond = this.root.hasChanged();
+		if (!cond && any && Arranger.hasInstance()) {
+			Set<Root> roots = Arranger.getInstance().getAllRoots();
+			for (Root aRoot: roots) {
+				if (aRoot.hasChanged()) {
+					cond = true;
+					break;
+				}
+			}
+		}
+		return cond;
+	}
+	// END KGU#373 2017-03-28
+	
 	/*****************************************
 	 * setColor method
 	 *****************************************/
@@ -1934,7 +2358,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if(getSelected()!=null)
 		{
 			// START KGU#38 2016-01-11 Setting of colour wasn't undoable though recorded as change
-			root.addUndo();
+			//root.addUndo();
+			try {
+				addUndoNSD();
+			} catch (CancelledException e) {
+				return;
+			}
 			// END KGU#38 2016-01-11
 			getSelected().setColor(_color);
 			//getSelected().setSelected(false);
@@ -1983,7 +2412,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element newSel = getSelectionHeir();
 			// END KGU#182 2016-04-23
 			eCopy.setSelected(false);
-			root.addUndo();
+			//root.addUndo();
+			try {
+				addUndoNSD();
+			} catch (CancelledException e) {
+				return;
+			}
 			root.removeElement(selected);
 			// START KGU#137 2016-01-11: Already prepared by addUndo()
 			//root.hasChanged=true;
@@ -1998,6 +2432,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#182 2016-04-23
 			analyse();
+			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+			adaptScrollUnits();
+			// END KGU#444 2017-10-23
 		}
 	}
 
@@ -2008,7 +2445,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (selected!=null && eCopy!=null)
 		{
-			root.addUndo();
+			//root.addUndo();
+			try {
+				addUndoNSD();
+			} catch (CancelledException e) {
+				return;
+			}
 			selected.setSelected(false);
 			Element nE = eCopy.copy();
 			nE.setSelected(true);	// FIXME (KGU#87): Looks fine but is misleading with a pasted Subqueue
@@ -2030,6 +2472,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selected=nE;
 			redraw();
 			analyse();
+			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+			adaptScrollUnits();
+			// END KGU#444 2017-10-23
 		}
 	}
 
@@ -2066,7 +2511,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
 					//ele.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
-					root.addUndo();
+					//root.addUndo();
+					try {
+						addUndoNSD();
+					} catch (CancelledException e) {
+						return;
+					}
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
@@ -2104,18 +2554,34 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#61 2016-03-21
 				}
 				// END KGU#3 2015-10-25
+				// START KGU#363 2017-03-14: Enh. #372
+				else if (element instanceof Root)
+				{
+//					data.authorName = ((Root)element).getAuthor();
+//					data.licenseName = ((Root)element).licenseName;
+//					data.licenseText = ((Root)element).licenseText;
+					data.licInfo = new RootAttributes((Root)element);
+					// START KGU#376 2017-07-01: Enh. #389
+					data.diagramRefs = ((Root)element).includeList;
+					// END KGU#376 2017-07-01
+				}
+				// END KGU#363 2017-03-14
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
 				showInputBox(data, element.getClass().getSimpleName(), false);
 				// END KGU#42 2015-10-14
 
-				if(data.result==true)
+				if (data.result==true)
 				{
 					// START KGU#120 2016-01-02: Bugfix #85 - StringList changes of Root are to be undoable, too!
 					//if (!element.getClass().getSimpleName().equals("Root"))
 					// END KGU#120 2016-01-02
-						root.addUndo();
+					// START KGU#363 2017-05-21: Enh. #372:
+					// Also cache root attributes if the edited element is a Root
+					//root.addUndo();
+					root.addUndo(element instanceof Root);
+					// END KGU#363 2017-05-21
 					if (!(element instanceof Forever))
 					{
 						element.setText(data.text.getText());
@@ -2141,6 +2607,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// END KGU#61 2016-03-21
 					}
 					// END KGU#3 2015-10-25
+					// START KGU#363 2017-03-14: Enh. #372
+					else if (element instanceof Root) {
+						((Root)element).adoptAttributes(data.licInfo);
+						// START KGU#376 2017-07-01: Enh. #389
+						((Root)element).includeList = data.diagramRefs;
+						// END KGU#376 2017-07-01
+					}
+					// END KGU#363 2017-03-14
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
@@ -2153,6 +2627,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			analyse();
+			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+			adaptScrollUnits();
+			// END KGU#444 2017-10-23
 		}
 	}
 	
@@ -2212,7 +2689,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void moveUpNSD()
 	{
-		root.addUndo();
+		//root.addUndo();
+		try {
+			addUndoNSD();
+		} catch (CancelledException e) {
+			return;
+		}
 		root.moveUp(getSelected());
 		redraw();
 		analyse();
@@ -2223,7 +2705,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void moveDownNSD()
 	{
-		root.addUndo();
+		//root.addUndo();
+		try {
+			addUndoNSD();
+		} catch (CancelledException e) {
+			return;
+		}
 		root.moveDown(getSelected());
 		redraw();
 		analyse();
@@ -2234,7 +2721,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void deleteNSD()
 	{
-		root.addUndo();
+		//root.addUndo();
+		try {
+			addUndoNSD();
+		} catch (CancelledException e) {
+			return;
+		}
 		// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
 		Element newSel = getSelectionHeir();
 		// END KGU#181 2016-04-19
@@ -2254,6 +2746,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix#102 - disable element-based buttons
 		this.NSDControl.doButtons();
 		// END KGU#138 2016-01-11
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	
 	// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
@@ -2322,6 +2817,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		analyse();
 		this.NSDControl.doButtons();
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	
 	/*****************************************
@@ -2333,6 +2831,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		analyse();
 		this.NSDControl.doButtons();
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	// END KGU#123 2016-01-03
 	
@@ -2343,7 +2844,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void disableNSD()
 	{
 		boolean allDisabled = true;
-		root.addUndo();
+		//root.addUndo();
+		try {
+			addUndoNSD();
+		} catch (CancelledException e) {
+			return;
+		}
 		if (getSelected() instanceof IElementSequence)
 		{
 			IElementSequence elements = (IElementSequence)getSelected();
@@ -2410,7 +2916,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#61 2016-03-21
 				}
 				// END KGU#3 2015-10-25
-				root.addUndo();
+				//root.addUndo();
+				try {
+					addUndoNSD();
+				} catch (CancelledException e) {
+					return;
+				}
 				if(_after==true)
 				{
 					root.addAfter(getSelected(),_ele);
@@ -2426,10 +2937,139 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#272 2016-10-06
 				redraw();
 				analyse();
+				// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+				adaptScrollUnits();
+				// END KGU#444 2017-10-23
 			}
 		}
 	}
 	
+	/*****************************************
+	 * subroutine derivation method(s)
+	 *****************************************/
+	// START KGU#365 2017-03-19: Enh. #380 - perform the possible conversion
+	public void outsourceNSD()
+	{
+		if (this.selected != null) {
+			IElementSequence elements = null;
+			if (!this.selectedIsMultiple()) {
+				elements = new SelectedSequence(this.selected, this.selected);
+			}
+			else {
+				elements = (IElementSequence)this.selected;
+			}
+			// START KGU#365 2017-04-14: We must at least warn if return or unmatched leave instructins are contained
+			List<Jump> jumps = findUnsatisfiedJumps(elements);
+			if (!jumps.isEmpty()) {
+				String jumpTexts = "";
+				for (Jump jmp: jumps) {
+					String jumpLine = jmp.getUnbrokenText().getLongString().trim();
+					if (jumpLine.isEmpty()) {
+						jumpLine = "(" + CodeParser.getKeywordOrDefault("preLeave", "leave") + ")";
+					}
+					jumpTexts += "\n \u25CF " + jumpLine;
+				}
+				Element.troubleMakers.addAll(jumps);
+				int answer = JOptionPane.YES_OPTION;
+				try {
+					redraw();
+					String[] options = new String[]{Menu.lblYes.getText(), Menu.lblNo.getText()};
+					answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+							Menu.msgJumpsOutwardsScope.getText().replace("%", jumpTexts), 
+							Menu.msgTitleWarning.getText(),
+							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+							null,
+							options,
+							options[1]
+							);
+				}
+				finally {
+					Element.troubleMakers.clear();
+					redraw();
+				}
+				if (answer != JOptionPane.YES_OPTION) {
+					return;
+				}
+			}
+			// END KGU#365 2017-04-14
+			String subroutineName = JOptionPane.showInputDialog(Menu.msgSubroutineName.getText() + ": ");
+			if (subroutineName != null) {
+				try {
+					addUndoNSD();
+				} catch (CancelledException e) {
+					return;
+				}
+				selected.setSelected(false);
+				// FIXME May we involve the user in argument and result value identification?
+				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
+				if (sub != null) {
+					// adopt presentation properties from root
+					sub.hightlightVars = root.hightlightVars;
+					sub.isNice = root.isNice;
+					sub.getVarNames();	// just to prepare proper drawing.
+					sub.setChanged();
+					Arranger arr = Arranger.getInstance();
+					arr.addToPool(sub, NSDControl.getFrame());
+					arr.setVisible(true);
+				}
+				else {
+					// Something failed, so undo the temporary changes without redo option
+					root.undo(false);
+				}
+				selected.setSelected(true);
+				redraw();
+				analyse();
+				// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+				adaptScrollUnits();
+				// END KGU#444 2017-10-23
+			}
+		}
+	}
+	// END KGU#365 2017-03-19
+
+	// START KGU#365 2017-04-14: Enh. #380
+	private List<Jump> findUnsatisfiedJumps(IElementSequence elements) {
+		final class JumpFinder implements IElementVisitor {
+			
+			private Subqueue scope = null;
+			private List<Jump> foundJumps = new LinkedList<Jump>();
+
+			public JumpFinder(Subqueue scope)
+			{
+				this.scope = scope;
+			}
+			
+			public List<Jump> getJumps() {
+				return foundJumps;
+			}
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Jump) {
+					Jump jmp = (Jump)_ele;
+					if (jmp.isReturn() || jmp.isLeave() && jmp.getLeftLoop(scope) == null) {
+						this.foundJumps.add(jmp);
+					}
+				}
+				return true;
+			}
+
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+			
+		}
+		
+		Subqueue scope = elements.getSubqueue();
+		JumpFinder finder = new JumpFinder(scope);
+		scope.traverse(finder);
+		return finder.getJumps();
+		
+	}
+	// END KGU#65 2017-04-14
+
+
 	/*****************************************
 	 * transmute method(s)
 	 *****************************************/
@@ -2439,8 +3079,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Subqueue parent = (Subqueue)selected.parent;
 		if (selected instanceof Instruction)
 		{
-			root.addUndo();
-			if (selected.getText().count() > 1)
+			//root.addUndo();
+			try {
+				addUndoNSD();
+			} catch (CancelledException e) {
+				return;
+			}
+			if (selected.getUnbrokenText().count() > 1)
 			{
 				transmuteToSequence(parent);
 			}
@@ -2478,33 +3123,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.doButtons();
 		redraw();
 		analyse();
+		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
+		adaptScrollUnits();
+		// END KGU#444 2017-10-23
 	}
 	
 	// START KGU#357 2017-03-10: Enh. #367
 	private void swapBranches(Alternative _alt) {
 		String condition = _alt.getText().getText();
-		String negCondition = null;
-		StringList condTokens = Element.splitLexically(condition, true);
-		int length = condTokens.count();
-		String first = condTokens.get(0);
-		// Already explicitly negated?
-		if (first.equals("not") || first.equals("!")) {
-			int i = 1;
-			while (i < length && condTokens.get(i).matches("^\\s+$")) i++;
-			if (i == length-1) {
-				// Obviously a single negated token, so drop the operator
-				negCondition = condTokens.get(i); 
-			}
-			else if (i < length && Element.isParenthesized(condTokens.subSequence(i, length).concatenate())) {
-				negCondition = condTokens.subSequence(i+1, length-1).concatenate();
-			}
-		}
-		if (negCondition == null) {
-			if (!Element.isParenthesized(condition)) {
-				condition = "(" + condition + ")";
-			}
-			negCondition = "not " + condition;
-		}
+		String negCondition = Element.negateCondition(condition);
 		_alt.setText(negCondition);
 		Subqueue temp = _alt.qFalse;
 		_alt.qFalse = _alt.qTrue;
@@ -2524,12 +3151,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// otherwise the first instruction will get all comment.
 		int index = parent.getIndexOf(selected);
 		StringList comment = selected.getComment();
-		int count = selected.getText().count();
+		StringList text = selected.getBrokenText();
+		int count = text.count();
 		boolean distributeComment = (count == comment.count());
 		for (int i = 0; i < count; i++)
 		{
 			Instruction instr = (Instruction)selected.copy();
-			instr.setText(selected.getText().get(i));
+			instr.setText(StringList.explode(text.get(i), "\n"));
 			if (distributeComment)
 			{
 				instr.setComment(StringList.explode(comment.get(i), "\n"));
@@ -2670,12 +3298,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#229 2016-09-09: Take care of the configured prefix and postfix
 		//While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
 		String prefix = "", postfix = "";
-		if (!D7Parser.getKeyword("preWhile").trim().isEmpty()) {
-			prefix = D7Parser.getKeyword("preWhile");
+		if (!CodeParser.getKeyword("preWhile").trim().isEmpty()) {
+			prefix = CodeParser.getKeyword("preWhile");
 			if (!prefix.endsWith(" ")) prefix += " ";
 		}
-		if (!D7Parser.getKeyword("postWhile").trim().isEmpty()) {
-			postfix = D7Parser.getKeyword("postWhile");
+		if (!CodeParser.getKeyword("postWhile").trim().isEmpty()) {
+			postfix = CodeParser.getKeyword("postWhile");
 			if (!postfix.startsWith(" ")) postfix = " " + postfix;
 		}
 		While whileLoop = new While(prefix + forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue() + postfix);
@@ -2728,14 +3356,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// tokenized selection expression
 		StringList selTokens = Element.splitLexically(caseElem.getText().get(0), true);
 		// Eliminate parser preference keywords
-		String[] redundantKeywords = {D7Parser.getKeyword("preCase"), D7Parser.getKeyword("postCase")};
+		String[] redundantKeywords = {CodeParser.getKeyword("preCase"), CodeParser.getKeyword("postCase")};
 		for (String keyword: redundantKeywords)
 		{
 			if (!keyword.trim().isEmpty())
 			{
 				StringList tokenizedKey = Element.splitLexically(keyword, false);
 				int pos = -1;
-				while ((pos = selTokens.indexOf(tokenizedKey, pos+1, !D7Parser.ignoreCase)) >= 0)
+				while ((pos = selTokens.indexOf(tokenizedKey, pos+1, !CodeParser.ignoreCase)) >= 0)
 				{
 					for (int i = 0; i < tokenizedKey.count(); i++)
 					{
@@ -2757,12 +3385,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		
 		// Take care of the configured prefix and postfix
 		String prefix = "", postfix = "";
-		if (!D7Parser.getKeyword("preAlt").trim().isEmpty()) {
-			prefix = D7Parser.getKeyword("preAlt");
+		if (!CodeParser.getKeyword("preAlt").trim().isEmpty()) {
+			prefix = CodeParser.getKeyword("preAlt");
 			if (!prefix.endsWith(" ")) prefix += " ";
 		}
-		if (!D7Parser.getKeyword("postAlt").trim().isEmpty()) {
-			postfix = D7Parser.getKeyword("postAlt");
+		if (!CodeParser.getKeyword("postAlt").trim().isEmpty()) {
+			postfix = CodeParser.getKeyword("postAlt");
 			if (!postfix.startsWith(" ")) postfix = " " + postfix;
 		}
 		
@@ -2791,8 +3419,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					cond += " || (" + discriminator + " = " + selConst.trim() + ")";
 				}
 				// START KGU#288 2016-11-06: Issue #279
-				//cond = cond.substring(4).replace("||", D7Parser.getKeywordOrDefault("oprOr", "or"));
-				cond = cond.substring(4).replace("||", D7Parser.getKeywordOrDefault("oprOr", "or"));
+				//cond = cond.substring(4).replace("||", CodeParser.getKeywordOrDefault("oprOr", "or"));
+				cond = cond.substring(4).replace("||", CodeParser.getKeywordOrDefault("oprOr", "or"));
 				// END KGU#288 2016-11-06
 				Alternative newAlt = new Alternative(prefix + cond + postfix);
 				newAlt.qTrue = caseElem.qs.get(lineNo-1);
@@ -2917,11 +3545,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int nReplaced = switcher.getNumberOfReplacements();
 		if (nReplaced > 0) {
 			// There will be substitutions, so get dangerous.
-			root.addUndo();
+			//root.addUndo();
+			try {
+				addUndoNSD();
+			} catch (CancelledException e) {
+				return;
+			}
 			switcher.activate();
 			selected.traverse(switcher);			
 		}
-		JOptionPane.showMessageDialog(this, Menu.msgReplacementsDone.getText().replace("%", Integer.toString(nReplaced)));
+		JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+				Menu.msgReplacementsDone.getText().replace("%", Integer.toString(nReplaced)));
 		// END #272 2016-10-17
 		
 	}
@@ -2949,7 +3583,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			int trigger = ele.getBreakTriggerCount();
 			// FIXME: Replace this quick-and-dirty approach by something more functional
-			String str = JOptionPane.showInputDialog(this,
+			String str = JOptionPane.showInputDialog(this.NSDControl.getFrame(),
 					Menu.msgBreakTriggerPrompt.getText(),
 					Integer.toString(trigger));
 			if (str != null)
@@ -2980,7 +3614,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
 				if (!isDone) {
-					JOptionPane.showMessageDialog(this,
+					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 						Menu.msgBreakTriggerIgnored.getText(),
 						Menu.msgTitleWrongInput.getText(),
 						JOptionPane.ERROR_MESSAGE);
@@ -3049,6 +3683,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * arrange method
 	 *****************************************/
+	/**
+	 * Push the current root to the Arranger and pin it there. If Arranger wasn't visible then
+	 * it will be (re-)opened. 
+	 */
 	public void arrangeNSD()
 	{
 		//System.out.println("Arranger button pressed!");
@@ -3101,7 +3739,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as Multi-PNG ...");
@@ -3246,7 +3884,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showMessageDialog(this,
+					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 							Menu.msgErrorImageSave.getText(),
 							Menu.msgTitleError.getText(), 
 							JOptionPane.ERROR_MESSAGE);
@@ -3272,7 +3910,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
@@ -3347,7 +3985,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showMessageDialog(this,
+					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 							Menu.msgErrorImageSave.getText(),
 							Menu.msgTitleError.getText(),
 							JOptionPane.ERROR_MESSAGE);
@@ -3373,7 +4011,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as EMF ...");
@@ -3474,7 +4112,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SVG ...");
@@ -3596,7 +4234,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
@@ -3697,7 +4335,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PDF ...");
@@ -3791,109 +4429,455 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 
 	/*****************************************
+	 * Import method
+	 * @param _specificOptions 
+	 *****************************************/
+	public void importNSD(String _className, Vector<HashMap<String, String>> _specificOptions)
+	{
+		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
+		// only save if something has been changed
+		//saveNSD(true);
+		// END KGU 2015-10-17
+
+		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
+
+		// open an existing file
+		// create dialog
+		JFileChooser dlgOpen = new JFileChooser();
+		// Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgOpen);
+		INSDImporter parser = null;
+		try {
+			Class<?> impClass = Class.forName(_className);
+			parser = (INSDImporter) impClass.newInstance();
+
+			dlgOpen.setDialogTitle(Menu.msgTitleNSDImport.getText().replace("%", parser.getDialogTitle()));
+			// set directory
+			dlgOpen.setCurrentDirectory(currentDirectory);
+			// config dialogue
+			FileFilter filter = parser.getFileFilter();
+			dlgOpen.addChoosableFileFilter(filter);
+			dlgOpen.setFileFilter(filter);
+			// show & get result
+			int result = dlgOpen.showOpenDialog(this);
+			// react to result
+			if (result == JFileChooser.APPROVE_OPTION)
+			{
+				boolean hil = root.hightlightVars;
+				// FIXME: Replace this with a generalized version of openNSD(String)
+				root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
+				root.hightlightVars = hil;
+				currentDirectory = dlgOpen.getSelectedFile();
+				redraw();
+			}
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), ex.getMessage(),
+					Menu.msgTitleError.getText(), JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
+		}
+	}
+	
+	/*****************************************
 	 * import code methods
 	 *****************************************/
-	public void importPAS()
+
+	// START KGU#354 2017-03-04: Enh. #354
+//	public void importPAS()
+//	{
+//		// only save if something has been changed
+//		saveNSD(true);
+//
+//		String filename = "";
+//
+//		JFileChooser dlgOpen = new JFileChooser();
+//		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+//		GUIScaler.rescaleComponents(dlgOpen);
+//		// END KGU#287 2017-01-09
+//		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", "Pascal"));
+//		// set directory
+//		if(root.getFile()!=null)
+//		{
+//			dlgOpen.setCurrentDirectory(root.getFile());
+//		}
+//		else
+//		{
+//			dlgOpen.setCurrentDirectory(currentDirectory);
+//		}
+//
+//		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+//		//dlgOPen.addChoosableFileFilter(new PascalFilter());
+//		PascalFilter filter = new PascalFilter();
+//		dlgOpen.addChoosableFileFilter(filter);
+//		dlgOpen.setFileFilter(filter);
+//		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+//		// END KGU 2016-04-01
+//		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
+//		filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+//
+//		if (result == JFileChooser.APPROVE_OPTION)
+//		{
+//			// load and parse source-code
+//			D7Parser d7 = new D7Parser("D7Grammar.cgt");
+//			// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
+//			//Root rootNew = d7.parse(filename);
+//			// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
+//			//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+//			Ini ini = Ini.getInstance();
+//			List<Root> newRoots = d7.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
+//			// END KGU#265 2016-09-28
+//			// END KGU#194 2016-05-08
+//			if (d7.error.equals(""))
+//			{
+//				boolean hil = root.hightlightVars;
+//				// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
+//				Root firstRoot = null;
+//				//root = rootNew;
+//				Iterator<Root> iter = newRoots.iterator();
+//				if (iter.hasNext()){
+//					firstRoot = iter.next();
+//				}
+//				while (iter.hasNext())
+//				{
+//					root = iter.next();
+//					root.hightlightVars = hil;
+//					// The Root must be marked for saving
+//					root.setChanged();
+//					// ... and be added to the Arranger
+//					this.arrangeNSD();
+//				}
+//				if (firstRoot != null)
+//				{
+//					root = firstRoot;
+//				// END KGU#194 2016-05-08
+//					root.hightlightVars = hil;
+//					// START KGU#183 2016-04-24: Enh. #169
+//					selected = root;
+//					selected.setSelected(true);
+//					// END KGU#183 2016-04-24
+//					// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
+//					root.setChanged();
+//					// END KGU#192 2016-05-02
+//				// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
+//				}
+//				// END KGU#194 2016-05-08
+//			}
+//			else
+//			{
+//				// show error
+//				// START KGU 2016-01-11: Yes and No buttons somewhat strange...
+//				//JOptionPane.showOptionDialog(null,d7.error,
+//				//							 "Parser Error",
+//				//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+//				JOptionPane.showMessageDialog(null, d7.error,
+//						Menu.msgTitleParserError.getText(),
+//						JOptionPane.ERROR_MESSAGE, null);
+//				// END KGU 2016-01-11
+//			}
+//
+//			redraw();
+//			analyse();
+//		}
+//	} 
+
+	/**
+	 * Gets an instance of the given parser class, interactively selects a source file
+	 * for the chosen language parses the file and tries to build a structogram from
+	 * it.
+	 * @param options 
+	 */
+	public void importCode(/*String _parserClassName,*/)
 	{
 		// only save if something has been changed
 		saveNSD(true);
 
-		String filename = "";
+		CodeParser parser = null;
+
+		// START KGU#354 2017-03-14: Enh. #354
+		this.retrieveParsers();
+		// END KGU#354 2017-03-14
 
 		JFileChooser dlgOpen = new JFileChooser();
 		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
 		GUIScaler.rescaleComponents(dlgOpen);
 		// END KGU#287 2017-01-09
-		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", "Pascal"));
+		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText());
 		// set directory
-		if(root.getFile()!=null)
+		// START KGU#354 2017-04-26: Enh. #354
+		//if(root.getFile()!=null)
+		//{
+		//	dlgOpen.setCurrentDirectory(root.getFile());
+		//}
+		File importDir = this.lastCodeImportDir;
+		if (importDir != null || (importDir = root.getFile()) != null)
 		{
-			dlgOpen.setCurrentDirectory(root.getFile());
+			dlgOpen.setCurrentDirectory(importDir);
 		}
+		// END KGU#354 2017-04-26
 		else
 		{
 			dlgOpen.setCurrentDirectory(currentDirectory);
 		}
 
-		// START KGU 2016-04-01: Enh. #110 - select the provided filter
-		//dlgOPen.addChoosableFileFilter(new PascalFilter());
-		PascalFilter filter = new PascalFilter();
-		dlgOpen.addChoosableFileFilter(filter);
-		dlgOpen.setFileFilter(filter);
+		for (CodeParser psr: parsers) {
+			dlgOpen.addChoosableFileFilter(psr);
+			// START KGU#354 2017-04-26: Enh. #354 GUI improvement 
+			if (psr.getDialogTitle().equals(this.lastImportFilter)) {
+				dlgOpen.setFileFilter(psr);
+			}
+		}
+		//dlgOpen.setFileFilter(parser);
+
 		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
-		// END KGU 2016-04-01
 		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
-		filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
 
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-			// load and parse source-code
-			D7Parser d7 = new D7Parser("D7Grammar.cgt");
-			// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
-			//Root rootNew = d7.parse(filename);
-			// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
-			//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
-			Ini ini = Ini.getInstance();
-			List<Root> newRoots = d7.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
-			// END KGU#265 2016-09-28
-			// END KGU#194 2016-05-08
-			if (d7.error.equals(""))
-			{
-				boolean hil = root.hightlightVars;
-				// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
-				Root firstRoot = null;
-				//root = rootNew;
-				Iterator<Root> iter = newRoots.iterator();
-				if (iter.hasNext()){
-					firstRoot = iter.next();
-				}
-				while (iter.hasNext())
-				{
-					root = iter.next();
-					root.hightlightVars = hil;
-					// The Root must be marked for saving
-					root.setChanged();
-					// ... and be added to the Arranger
-					this.arrangeNSD();
-				}
-				if (firstRoot != null)
-				{
-					root = firstRoot;
-				// END KGU#194 2016-05-08
-					root.hightlightVars = hil;
-					// START KGU#183 2016-04-24: Enh. #169
-					selected = root;
-					selected.setSelected(true);
-					// END KGU#183 2016-04-24
-					// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
-					root.setChanged();
-					// END KGU#192 2016-05-02
-				// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
-				}
-				// END KGU#194 2016-05-08
-			}
-			else
-			{
-				// show error
-				// START KGU 2016-01-11: Yes and No buttons somewhat strange...
-				//JOptionPane.showOptionDialog(null,d7.error,
-				//							 "Parser Error",
-				//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-				JOptionPane.showMessageDialog(null, d7.error,
-						Menu.msgTitleParserError.getText(),
-						JOptionPane.ERROR_MESSAGE, null);
-				// END KGU 2016-01-11
+			File file = dlgOpen.getSelectedFile().getAbsoluteFile();
+			
+			if (!file.canRead()) {
+				JOptionPane.showMessageDialog(this.NSDControl.getFrame(), 
+						Menu.msgImportFileReadError.getText().replace("%", file.getPath()));
+				return;
 			}
 
-			redraw();
-			analyse();
+			// Identify a suited or the selected parser
+			javax.swing.filechooser.FileFilter filter = dlgOpen.getFileFilter();
+
+			parser = identifyParser(file, filter);
+			
+			if (parser == null) {
+				JOptionPane.showMessageDialog(this.NSDControl.getFrame(), 
+						Menu.msgImportCancelled.getText().replace("%", file.getPath()));
+				return;
+			}
+			
+			// START KGU#354 2017-04-26: Enh. #354
+			this.lastImportFilter = parser.getDialogTitle();
+			this.lastCodeImportDir = file.getParentFile();
+			// END KGU#354 2017-04-26
+
+			try
+			{
+
+				// load and parse source-code
+				//CParser cp = new CParser("C-ANSI.cgt");
+				// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
+				//Root rootNew = d7.parse(filename);
+				// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
+				//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+				Ini ini = Ini.getInstance();
+				// START KGU#354 2017-04-27: Enh. #354
+				boolean isVerbose = ini.getProperty("impLogToDir", "false").equals("true");
+				String logPath = null;
+				if (isVerbose) {
+					logPath = ini.getProperty("impLogDir", "");
+					if (logPath.isEmpty()) {
+						logPath = file.getParent();
+					}
+					else if (logPath.equals(".")) {
+						if (currentDirectory != null) {
+							if (!currentDirectory.isDirectory()) {
+								logPath = currentDirectory.getParent();
+							}
+							else {
+								logPath = currentDirectory.getPath();
+							}
+						}
+					}
+				}
+				// END KGU#354 2017-04-27
+				// START KGU#354 2017-05-11: Enh. #354 - we better use a new instance instead of statically sharing it
+				parser = parser.getClass().newInstance();
+				// END KGU#354 2017-05-11
+				// START KGU#395 2017-07-02: Enh. #357
+				String parserClassName = parser.getClass().getSimpleName();
+				for (int i = 0; i < parserPlugins.size(); i++) {
+					GENPlugin plug = parserPlugins.get(i);
+					if (plug.getKey().equals(parserClassName)) 
+					this.setPluginSpecificOptions(parser, parserClassName, plug.options);
+				}
+				// END KGU#395 2017-07-02
+				List<Root> newRoots = parser.parse(file.getAbsolutePath(),
+						ini.getProperty("impImportCharset", "ISO-8859-1"),
+						// START KGU#354 2017-04-27: Enh. #354
+						logPath
+						// END KGU#354 2017-04-27
+						);
+				// END KGU#265 2016-09-28
+				// END KGU#194 2016-05-08
+				if (parser.error.equals(""))
+				{
+					boolean hil = root.hightlightVars;
+					// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
+					Root firstRoot = null;
+					//root = rootNew;
+					Iterator<Root> iter = newRoots.iterator();
+					if (iter.hasNext()){
+						firstRoot = iter.next();
+					}
+					while (iter.hasNext())
+					{
+						root = iter.next();
+						root.hightlightVars = hil;
+						// The Root must be marked for saving
+						root.setChanged();
+						// ... and be added to the Arranger
+						this.arrangeNSD();
+					}
+					if (firstRoot != null)
+					{
+						root = firstRoot;
+						// END KGU#194 2016-05-08
+						root.hightlightVars = hil;
+						// START KGU#183 2016-04-24: Enh. #169
+						selected = root;
+						selected.setSelected(true);
+						// END KGU#183 2016-04-24
+						// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
+						root.setChanged();
+						// END KGU#192 2016-05-02
+						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
+						if (newRoots.size() > 2 || !root.isProgram()) {
+							this.arrangeNSD();
+						}
+						// END KGU#354 2017-05-23
+					// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
+					}
+					// END KGU#194 2016-05-08
+				}
+				else
+				{
+					// show error
+					// START KGU 2016-01-11: Yes and No buttons somewhat strange...
+					//JOptionPane.showOptionDialog(null,d7.error,
+					//							 "Parser Error",
+					//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+					JOptionPane.showMessageDialog(null, parser.error,
+							Menu.msgTitleParserError.getText(),
+							JOptionPane.ERROR_MESSAGE, null);
+					// END KGU 2016-01-11
+				}
+			}
+			catch(Exception ex)
+			{
+				String message = ex.getLocalizedMessage();
+				if (message == null) {
+					message = ex.getMessage();
+					ex.printStackTrace();
+				}
+				if (message == null) message = ex.toString();
+				JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+						Menu.msgErrorUsingParser.getText().replace("%", parser.getDialogTitle())+"\n" + message,
+						Menu.msgTitleError.getText(),
+						JOptionPane.ERROR_MESSAGE);
+			}
+			finally {
+				doButtons();
+				redraw();
+				analyse();
+			}
 		}
 	} 
 
+	// START KGU#354 2017-03-15: Enh. #354 - auxiliary methods
+	
+	// Tries to disambiguate the parser for the given file
+	private CodeParser identifyParser(File file, FileFilter usedFilter) {
+		CodeParser parser = null;
+		
+		Vector<CodeParser> candidates = new Vector<CodeParser>();
+
+		// We are better prepared for the ambiguous case...
+		int nr0 = 1, nr = 1;
+		final String format = "\n    %2d: %s";
+		String choice0 = "";	// Choice among all available parsers
+		String choice = "";		// Choice over concurrent parsers
+		for (CodeParser psr: parsers)
+		{
+			String descr = psr.getDescription();
+			choice0 += String.format(format, nr0++, descr);
+			if (usedFilter == psr) {
+				parser = psr;
+				break;
+			}
+			else if (psr.accept(file)) {
+				candidates.add(psr);
+				choice += String.format(format, nr++, descr);
+			}
+		}
+
+		if (parser == null) {
+			if (candidates.size() == 1) {
+				parser = candidates.get(0);
+			}
+			else {
+				if (candidates.isEmpty()) {
+					choice = choice0;
+					candidates = parsers;
+				}
+				int index = -1;
+				choice = Menu.msgSelectParser.getText().replace("%1", choice).replaceAll("%2", file.getName());
+				do {
+					String sel = JOptionPane.showInputDialog(null, choice, null);
+					if (sel == null) {
+						index = 0;
+					}
+					try {
+						index = Integer.parseInt(sel);
+						if (index < 0 || index > candidates.size()) {
+							index = -1;
+						}
+					}
+					catch (NumberFormatException ex) {}
+				} while (index < 0);
+				if (index > 0) {
+					parser = candidates.get(index-1);
+				}
+			}
+		}
+		return parser;
+	}
+
+	// Lazy initialization method for static field parsers
+	private void retrieveParsers() {
+		if (parsers != null) {
+			return;
+		}
+		parsers = new Vector<CodeParser>();
+		String errors = "";
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
+		GENParser genp = new GENParser();
+		parserPlugins = genp.parse(buff);
+		try { buff.close(); } catch (IOException e1) {}
+		for (int i = 0; i < parserPlugins.size(); i++)
+		{
+			GENPlugin plugin = parserPlugins.get(i);
+			final String className = plugin.className;
+			try {
+				Class<?> genClass = Class.forName(className);
+				parsers.add((CodeParser) genClass.newInstance());
+			} catch (Exception ex) {
+				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
+			}
+		}
+		try {
+			buff.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (!errors.isEmpty()) {
+			errors = Menu.msgTitleLoadingError.getText() + errors;
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), errors, 
+					Menu.msgTitleParserError.getText(), JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	// END KGU#354 2017-03-15
+
 	/*****************************************
 	 * export code methods
+	 * @param options 
 	 *****************************************/
-	public void export(String _generatorClassName)
+	public void export(String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
 	{
 		try
 		{
@@ -3902,23 +4886,84 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#170 2016-04-01: Issue #143
 			pop.setVisible(false);	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
-			gen.exportCode(root,currentDirectory,NSDControl.getFrame());
+			// START KGU#395 2017-05-11: Enh. #357
+			this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
+			// END KGU#395 2017-05-11
+			// START KGU 2017-04-26: Remember the export directory
+			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
+			this.lastCodeExportDir = 
+					gen.exportCode(root,
+							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
+							NSDControl.getFrame());
+			// END KGU 2017-04-26
 		}
 		catch(Exception ex)
 		{
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
-			JOptionPane.showMessageDialog(this,
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n" + message,
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
+	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20
+	private void setPluginSpecificOptions(IPluginClass _gen, String _generatorClassName,
+			Vector<HashMap<String, String>> _specificOptions)
+	{
+		Ini ini = Ini.getInstance();
+		for (HashMap<String, String> optionSpec: _specificOptions) {
+			String optionKey = optionSpec.get("name");
+			String valueStr = ini.getProperty(_generatorClassName + "." + optionKey, "");
+			Object value = null;
+			String type = optionSpec.get("type");
+			String items = optionSpec.get("items");
+			// Now convert the option into the specified type
+			if (!valueStr.isEmpty() && type != null || items != null) {
+				// Better we fail with just a single option than with the entire method
+				try {
+					if (items != null) {
+						value = valueStr;
+					}
+					else if (type.equalsIgnoreCase("character")) {
+						value = valueStr.charAt(0);
+					}
+					else if (type.equalsIgnoreCase("boolean")) {
+						value = Boolean.parseBoolean(valueStr);
+					}
+					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
+						value = Integer.parseInt(valueStr);
+					}
+					else if (type.equalsIgnoreCase("unsiged")) {
+						value = Integer.parseUnsignedInt(valueStr);
+					}
+					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
+						value = Double.parseDouble(valueStr);
+					}
+					else if (type.equalsIgnoreCase("string")) {
+						value = valueStr;
+					}
+				}
+				catch (NumberFormatException ex) {
+					System.err.println("Diagram.setPluginSpecificOptions("
+							+ _gen.getClass().getSimpleName()
+							+ "): " + ex.getMessage() + " on converting \""
+							+ valueStr + "\" to " + type + " for " + optionKey);
+				}
+			}
+			if (value != null) {
+				_gen.setPluginOption(optionKey, value);
+			}
+		}
+	}
+	// END KGU#395 2017-05-11
+
 	// START KGU#208 2016-07-22: Enh. #199
 	/*****************************************
 	 * help method
 	 *****************************************/
+
 
 	/**
 	 * Tries to open the online User Guide in the browser
@@ -4050,7 +5095,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			JLabel label = new JLabel();
 			ep.setBackground(label.getBackground());
 
-			JOptionPane.showMessageDialog(this, ep);
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), ep);
 		}
 		catch(Exception e)
 		{
@@ -4064,7 +5109,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		final String http_url = "http://structorizer.fisch.lu/version.txt";
 
 		String version = null;
-		if (this.retrieveVersion) {
+		if (retrieveVersion) {
 			try {
 
 				URL url = new URL(http_url);
@@ -4087,9 +5132,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 
 			} catch (MalformedURLException e) {
-				System.err.println("Diagram.retrievaLatestVersion: " + e.toString());
+				System.err.println("Diagram.retrieveLatestVersion(): " + e.toString());
 			} catch (IOException e) {
-				System.err.println("Diagram.retrievaLatestVersion: " + e.toString());
+				System.out.println("Diagram.retrieveLatestVersion(): " + e.toString());
 			}
 		}
 		return version;
@@ -4139,9 +5184,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return (cmp > 0 ? latestVerStr : null);
 	}
 	
-	public void setRetrieveVersion(boolean retrieveVersion)
+	public void setRetrieveVersion(boolean _retrieveVersion)
 	{
-		this.retrieveVersion = retrieveVersion;
+		retrieveVersion = _retrieveVersion;
 	}
 	// END KGU#300 2016-12-02
 
@@ -4171,22 +5216,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		colors.pack();
 		colors.setVisible(true);
 
-		// get fields
-		Element.color0=colors.color0.getBackground();
-		Element.color1=colors.color1.getBackground();
-		Element.color2=colors.color2.getBackground();
-		Element.color3=colors.color3.getBackground();
-		Element.color4=colors.color4.getBackground();
-		Element.color5=colors.color5.getBackground();
-		Element.color6=colors.color6.getBackground();
-		Element.color7=colors.color7.getBackground();
-		Element.color8=colors.color8.getBackground();
-		Element.color9=colors.color9.getBackground();
+		// START KGU#393 2017-05-09: Issue #400 - check whether changes were committed
+		if (colors.OK) {
+		// END KGU#393 2017-05-09		
+			// get fields
+			Element.color0=colors.color0.getBackground();
+			Element.color1=colors.color1.getBackground();
+			Element.color2=colors.color2.getBackground();
+			Element.color3=colors.color3.getBackground();
+			Element.color4=colors.color4.getBackground();
+			Element.color5=colors.color5.getBackground();
+			Element.color6=colors.color6.getBackground();
+			Element.color7=colors.color7.getBackground();
+			Element.color8=colors.color8.getBackground();
+			Element.color9=colors.color9.getBackground();
 
-		NSDControl.updateColors();
+			NSDControl.updateColors();
 
-		// save fields to ini-file
-		Element.saveToINI();
+			// save fields to ini-file
+			Element.saveToINI();
+		// START KGU#393 2017-05-09: Issue #400
+		}
+		// END KGU#393 2017-05-09		
 
 	}
 
@@ -4207,23 +5258,51 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		preferences.edtRepeat.setText(Element.preRepeat);
                 
 		preferences.altPadRight.setSelected(Element.altPadRight);
+		
+		// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+		preferences.spnCaseRot.setValue(Element.caseShrinkByRot);
+		// END KGU#401 2017-05-18
+		// START KGU#376 2017-07-02: Enh. #389
+		preferences.edtRoot.setText(Element.preImport);
+		// END KGU#376 2017-07-02
 
 		preferences.pack();
 		preferences.setVisible(true);
 
-		// get fields
-		Element.preAltT=preferences.edtAltT.getText();
-		Element.preAltF=preferences.edtAltF.getText();
-		Element.preAlt=preferences.edtAlt.getText();
-		Element.preCase=preferences.txtCase.getText();
-		Element.preFor=preferences.edtFor.getText();
-		Element.preWhile=preferences.edtWhile.getText();
-		Element.preRepeat=preferences.edtRepeat.getText();
-		Element.altPadRight=preferences.altPadRight.isSelected();
+		// START KGU#393 2017-05-09: Issue #400 - check whether changes were committed
+		if (preferences.OK) {
+		// END KGU#393 2017-05-09		
+			// get fields
+			Element.preAltT     = preferences.edtAltT.getText();
+			Element.preAltF     = preferences.edtAltF.getText();
+			Element.preAlt      = preferences.edtAlt.getText();
+			Element.preCase     = preferences.txtCase.getText();
+			Element.preFor      = preferences.edtFor.getText();
+			Element.preWhile    = preferences.edtWhile.getText();
+			Element.preRepeat   = preferences.edtRepeat.getText();
+			Element.altPadRight = preferences.altPadRight.isSelected();
+			// START KGU#376 2017-07-02: Enh. #389
+			String newImportCaption = preferences.edtRoot.getText();
+			// END KGU#376 2017-07-02
+			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+			int newShrinkThreshold = (Integer)preferences.spnCaseRot.getModel().getValue();
+			//if (newShrinkThreshold != Element.caseShrinkByRot) {
+			if (newShrinkThreshold != Element.caseShrinkByRot
+					|| !newImportCaption.equals(Element.preImport)) {
+				root.resetDrawingInfoDown();
+			}
+			Element.caseShrinkByRot = newShrinkThreshold;
+			// END KGU#401 2017-05-18
+			// START KGU#376 2017-07-02: Enh. #389
+			Element.preImport   = preferences.edtRoot.getText();
+			// END KGU#376 2017-07-02
 
-		// save fields to ini-file
-		Element.saveToINI();
-                redraw();
+			// save fields to ini-file
+			Element.saveToINI();
+			redraw();
+		// START KGU#393 2017-05-09: Issue #400
+		}
+		// END KGU#393 2017-05-09		
 	}
 
 	public void parserNSD()
@@ -4234,32 +5313,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								Math.round(p.y+(getVisibleRect().height-parserPreferences.getHeight())/2+this.getVisibleRect().y));
 		
 		// set fields
-		parserPreferences.edtAltPre.setText(D7Parser.getKeyword("preAlt"));
-		parserPreferences.edtAltPost.setText(D7Parser.getKeyword("postAlt"));
-		parserPreferences.edtCasePre.setText(D7Parser.getKeyword("preCase"));
-		parserPreferences.edtCasePost.setText(D7Parser.getKeyword("postCase"));
-		parserPreferences.edtForPre.setText(D7Parser.getKeyword("preFor"));
-		parserPreferences.edtForPost.setText(D7Parser.getKeyword("postFor"));
+		parserPreferences.edtAltPre.setText(CodeParser.getKeyword("preAlt"));
+		parserPreferences.edtAltPost.setText(CodeParser.getKeyword("postAlt"));
+		parserPreferences.edtCasePre.setText(CodeParser.getKeyword("preCase"));
+		parserPreferences.edtCasePost.setText(CodeParser.getKeyword("postCase"));
+		parserPreferences.edtForPre.setText(CodeParser.getKeyword("preFor"));
+		parserPreferences.edtForPost.setText(CodeParser.getKeyword("postFor"));
 		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-		parserPreferences.edtForStep.setText(D7Parser.getKeyword("stepFor"));
+		parserPreferences.edtForStep.setText(CodeParser.getKeyword("stepFor"));
 		// END KGU#3 2015-11-08
 		// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-		parserPreferences.edtForInPre.setText(D7Parser.getKeyword("preForIn"));
-		parserPreferences.edtForInPost.setText(D7Parser.getKeyword("postForIn"));
+		parserPreferences.edtForInPre.setText(CodeParser.getKeyword("preForIn"));
+		parserPreferences.edtForInPost.setText(CodeParser.getKeyword("postForIn"));
 		// END KGU#61 2016-03-21
-		parserPreferences.edtWhilePre.setText(D7Parser.getKeyword("preWhile"));
-		parserPreferences.edtWhilePost.setText(D7Parser.getKeyword("postWhile"));
-		parserPreferences.edtRepeatPre.setText(D7Parser.getKeyword("preRepeat"));
-		parserPreferences.edtRepeatPost.setText(D7Parser.getKeyword("postRepeat"));
+		parserPreferences.edtWhilePre.setText(CodeParser.getKeyword("preWhile"));
+		parserPreferences.edtWhilePost.setText(CodeParser.getKeyword("postWhile"));
+		parserPreferences.edtRepeatPre.setText(CodeParser.getKeyword("preRepeat"));
+		parserPreferences.edtRepeatPost.setText(CodeParser.getKeyword("postRepeat"));
 		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-		parserPreferences.edtJumpLeave.setText(D7Parser.getKeyword("preLeave"));
-		parserPreferences.edtJumpReturn.setText(D7Parser.getKeyword("preReturn"));
-		parserPreferences.edtJumpExit.setText(D7Parser.getKeyword("preExit"));
+		parserPreferences.edtJumpLeave.setText(CodeParser.getKeyword("preLeave"));
+		parserPreferences.edtJumpReturn.setText(CodeParser.getKeyword("preReturn"));
+		parserPreferences.edtJumpExit.setText(CodeParser.getKeyword("preExit"));
 		// END KGU#78 2016-03-25
-		parserPreferences.edtInput.setText(D7Parser.getKeyword("input"));
-		parserPreferences.edtOutput.setText(D7Parser.getKeyword("output"));
+		parserPreferences.edtInput.setText(CodeParser.getKeyword("input"));
+		parserPreferences.edtOutput.setText(CodeParser.getKeyword("output"));
 		// START KGU#165 2016-03-25: We need a transparent decision here
-		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
+		parserPreferences.chkIgnoreCase.setSelected(CodeParser.ignoreCase);
 		// END KGU#165 2016-03-25
 		
 		parserPreferences.pack();
@@ -4269,18 +5348,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			// START KGU#258 2016-09-26: Enh. #253 - prepare the old settings for a refactoring
 			HashMap<String, StringList> oldKeywordMap = null;
-			boolean wasCaseIgnored = D7Parser.ignoreCase;
+			boolean wasCaseIgnored = CodeParser.ignoreCase;
 			boolean considerRefactoring = root.children.getSize() > 0
 					|| isArrangerOpen() && Arranger.getInstance().getAllRoots().size() > 0;
-			if (considerRefactoring)
-			{
+//			if (considerRefactoring)
+//			{
 				oldKeywordMap = new LinkedHashMap<String, StringList>();
-				for (String key: D7Parser.keywordSet())
+				for (String key: CodeParser.keywordSet())
 				{
 					// START KGU#288 2016-11-06: Issue #279 - method getOrDefault may not be available
-					//String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+					//String keyword = CodeParser.keywordMap.getOrDefault(key, "");
 					//if (!keyword.trim().isEmpty())
-					String keyword = D7Parser.getKeyword(key);
+					String keyword = CodeParser.getKeyword(key);
 					if (keyword != null && !keyword.trim().isEmpty())
 					// END KGU#288 2016-11-06
 					{
@@ -4288,40 +5367,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						oldKeywordMap.put(key, Element.splitLexically(keyword,  false));
 					}
 				}
-			}
+//			}
 			// END KGU#258 2016-09-26
 
 			// get fields
-			D7Parser.setKeyword("preAlt", parserPreferences.edtAltPre.getText());
-			D7Parser.setKeyword("postAlt", parserPreferences.edtAltPost.getText());
-			D7Parser.setKeyword("preCase", parserPreferences.edtCasePre.getText());
-			D7Parser.setKeyword("postCase", parserPreferences.edtCasePost.getText());
-			D7Parser.setKeyword("preFor", parserPreferences.edtForPre.getText());
-			D7Parser.setKeyword("postFor", parserPreferences.edtForPost.getText());
+			CodeParser.setKeyword("preAlt", parserPreferences.edtAltPre.getText());
+			CodeParser.setKeyword("postAlt", parserPreferences.edtAltPost.getText());
+			CodeParser.setKeyword("preCase", parserPreferences.edtCasePre.getText());
+			CodeParser.setKeyword("postCase", parserPreferences.edtCasePost.getText());
+			CodeParser.setKeyword("preFor", parserPreferences.edtForPre.getText());
+			CodeParser.setKeyword("postFor", parserPreferences.edtForPost.getText());
 			// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-			D7Parser.setKeyword("stepFor", parserPreferences.edtForStep.getText());
+			CodeParser.setKeyword("stepFor", parserPreferences.edtForStep.getText());
 			// END KGU#3 2015-11-08
 			// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-			D7Parser.setKeyword("preForIn", parserPreferences.edtForInPre.getText());
-			D7Parser.setKeyword("postForIn", parserPreferences.edtForInPost.getText());
+			CodeParser.setKeyword("preForIn", parserPreferences.edtForInPre.getText());
+			CodeParser.setKeyword("postForIn", parserPreferences.edtForInPost.getText());
 			// END KGU#61 2016-03-21
-			D7Parser.setKeyword("preWhile", parserPreferences.edtWhilePre.getText());
-			D7Parser.setKeyword("postWhile", parserPreferences.edtWhilePost.getText());
-			D7Parser.setKeyword("preRepeat", parserPreferences.edtRepeatPre.getText());
-			D7Parser.setKeyword("postRepeat", parserPreferences.edtRepeatPost.getText());
+			CodeParser.setKeyword("preWhile", parserPreferences.edtWhilePre.getText());
+			CodeParser.setKeyword("postWhile", parserPreferences.edtWhilePost.getText());
+			CodeParser.setKeyword("preRepeat", parserPreferences.edtRepeatPre.getText());
+			CodeParser.setKeyword("postRepeat", parserPreferences.edtRepeatPost.getText());
     		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-    		D7Parser.setKeyword("preLeave", parserPreferences.edtJumpLeave.getText());
-    		D7Parser.setKeyword("preReturn", parserPreferences.edtJumpReturn.getText());
-    		D7Parser.setKeyword("preExit", parserPreferences.edtJumpExit.getText());
+    		CodeParser.setKeyword("preLeave", parserPreferences.edtJumpLeave.getText());
+    		CodeParser.setKeyword("preReturn", parserPreferences.edtJumpReturn.getText());
+    		CodeParser.setKeyword("preExit", parserPreferences.edtJumpExit.getText());
     		// END KGU#78 2016-03-25
-			D7Parser.setKeyword("input", parserPreferences.edtInput.getText());
-			D7Parser.setKeyword("output", parserPreferences.edtOutput.getText());
+			CodeParser.setKeyword("input", parserPreferences.edtInput.getText());
+			CodeParser.setKeyword("output", parserPreferences.edtOutput.getText());
 			// START KGU#165 2016-03-25: We need a transparent decision here
-			D7Parser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
+			CodeParser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
 			// END KGU#165 2016-03-25
 
 			// save fields to ini-file
-			D7Parser.saveToINI();
+			CodeParser.saveToINI();
 			
 			// START KGU#258 2016-09-26: Enh. #253 - now try a refactoring if specified
 			boolean redrawn = false;
@@ -4331,6 +5410,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				redrawn = refactorDiagrams(oldKeywordMap, refactorAll, wasCaseIgnored);
 			}
 			// END KGU#258 2016-09-26
+			
+			// START KGU#362 2017-03-28: Issue #370
+			offerStructPrefAdaptation(oldKeywordMap);
+			// END KGU#362 2017-03-28
 
 			// START KGU#136 2016-03-31: Bugfix #97 - cached bounds may have to be invalidated
 			if (Element.E_VARHIGHLIGHT && !redrawn)
@@ -4359,6 +5442,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * the changes and offering to refactor the current or all diagrams. If the user
 	 * agrees then the respective code will be added to the refactoringData and true
 	 * will be returned, otherwise false.
+	 * If the user cancels then the original parser preferences will be restored and
+	 * false will be returned.
 	 * @param refactoringData - tokenized previous non-empty parser preferences
 	 * @return true if a refactoring makes sense, false otherwise
 	 */
@@ -4378,8 +5463,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			String oldValue = entry.getValue().concatenate();
 			// START KGU#288 2016-11-06: Issue #279 - Method getOrDefault() missing in OpenJDK
-			//String newValue = D7Parser.getKeywordOrDefault(entry.getKey(), "");
-			String newValue = D7Parser.getKeywordOrDefault(entry.getKey(), "");
+			//String newValue = CodeParser.getKeywordOrDefault(entry.getKey(), "");
+			String newValue = CodeParser.getKeywordOrDefault(entry.getKey(), "");
 			// END KGU#288 2016-11-06
 			if (!oldValue.equals(newValue))
 			{
@@ -4394,15 +5479,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Menu.lblRefactorCurrent.getText(),
 					Menu.lblRefactorAll.getText()
 			};
-			int answer = JOptionPane.showOptionDialog(this,
-					Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
-					Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
-					JOptionPane.QUESTION_MESSAGE,
-					null,
-					options, options[0]);
-			if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
+			// START KGU#362 2017-03-28: Issue #370: Restore old settings if user backed off
+			//int answer = JOptionPane.showOptionDialog(this,
+			//		Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+			//		Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
+			//		JOptionPane.QUESTION_MESSAGE,
+			//		null,
+			//		options, options[0]);
+			//if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
+			int answer = JOptionPane.CLOSED_OPTION;
+			do {
+				answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+						Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+						Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						null,
+						options, options[2]);
+				if (answer == JOptionPane.CLOSED_OPTION && JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+						Menu.msgDiscardParserPrefs.getText()) == JOptionPane.OK_OPTION) {
+					// Revert the changes
+					for (Map.Entry<String, StringList> refEntry: refactoringData.entrySet()) {
+						CodeParser.setKeyword(refEntry.getKey(), refEntry.getValue().concatenate());
+					}
+					answer = 2;
+				}
+			} while (answer == JOptionPane.CLOSED_OPTION);
+			if (answer != 0)
+			// END KGU#362 2017-03-28
 			{
-				if (D7Parser.ignoreCase)
+				if (CodeParser.ignoreCase)
 				{
 					refactoringData.put("ignoreCase", StringList.getNew("true"));
 				}
@@ -4416,6 +5521,125 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return false;
 	}
 	
+	// START KGU#362 2017-03-28: Issue #370 - helper methods for preference consistency 
+	private void offerStructPrefAdaptation(HashMap<String, StringList> refactoringData)
+	{
+		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+				Menu.msgAdaptStructPrefs.getText(), Menu.msgTitleQuestion.getText(),
+				JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+			Element.preAlt = replacePref(Element.preAlt,
+					refactoringData, "preAlt", "postAlt");
+			Element.preWhile = replacePref(Element.preWhile,
+					refactoringData, "preWhile", "postWhile");
+			Element.preRepeat = replacePref(Element.preRepeat,
+					refactoringData, "preRepeat", "postRepeat");
+			Element.preCase = replacePrefCase(Element.preCase,
+					refactoringData);
+			Element.preFor = replacePrefFor(Element.preFor,
+					refactoringData);
+		}
+	}
+	
+	private String replacePref(String structPref, HashMap<String, StringList> refactoringData,
+			String prefixKey, String postfixKey)
+	{
+		StringList old = refactoringData.get(prefixKey);
+		if (old != null) {
+			String oldPrefix = old.concatenate();
+			String newPrefix = CodeParser.getKeywordOrDefault(prefixKey, "");
+			if (!oldPrefix.trim().isEmpty() && structPref.startsWith(oldPrefix)) {
+				structPref = newPrefix + structPref.substring(oldPrefix.length());
+			}
+		}
+		old = refactoringData.get(postfixKey);
+		if (old != null) {
+			String oldPostfix = old.concatenate();
+			String newPostfix = CodeParser.getKeywordOrDefault(postfixKey, "");
+			if (!oldPostfix.trim().isEmpty() && structPref.endsWith(oldPostfix)) {
+				structPref = structPref.trim().substring(0, structPref.length() - oldPostfix.length()) + newPostfix;
+			}
+		}
+		return structPref;
+	}
+	
+	private String replacePrefCase(String preCase, HashMap<String, StringList> refactoringData) {
+		StringList structPrefLines = StringList.explode(preCase, "\n");
+		String oldPrefix = "";
+		String oldPostfix = "";
+		String newPrefix = CodeParser.getKeywordOrDefault("preCase", "");
+		String newPostfix = CodeParser.getKeywordOrDefault("postCase", "");
+		StringList old = refactoringData.get("preCase");
+		if (old != null) {
+			oldPrefix = old.concatenate();
+		}
+		old = refactoringData.get("postCase");
+		if (old != null) {
+			oldPostfix = old.concatenate();
+		}
+		for (int i = 0; i < structPrefLines.count() - 1; i++) {
+			String structPref = structPrefLines.get(i);
+			if (!oldPrefix.trim().isEmpty() && structPref.startsWith(oldPrefix)) {
+				structPref = newPrefix + structPref.substring(oldPrefix.length());
+			}
+			if (!oldPostfix.trim().isEmpty() && structPref.endsWith(oldPostfix)) {
+				structPref = structPref.trim().substring(0, structPref.length() - oldPostfix.length()) + newPostfix;
+			}
+			structPrefLines.set(i, structPref);
+		}
+		return structPrefLines.getText();
+	}
+
+	private String replacePrefFor(String structPref, HashMap<String, StringList> refactoringData) {
+		String oldPrefix1 = "";
+		String oldPrefix2 = "";
+		String oldInfix1 = "";
+		String oldInfix1a = "";
+		String oldInfix2 = "";
+		String newPrefix1 = CodeParser.getKeywordOrDefault("preFor", "");
+		String newPrefix2 = CodeParser.getKeywordOrDefault("preForIn", "");
+		String newInfix1 = CodeParser.getKeywordOrDefault("postFor", "");
+		String newInfix1a = CodeParser.getKeywordOrDefault("stepFor", "");
+		String newInfix2 = CodeParser.getKeywordOrDefault("postForIn", "");
+		StringList old = null;
+		if ((old = refactoringData.get("preFor")) != null) {
+			oldPrefix1 = old.concatenate();
+		}
+		if ((old = refactoringData.get("preForIn")) != null) {
+			oldPrefix2 = old.concatenate();
+		}
+		if ((old = refactoringData.get("postFor")) != null) {
+			oldInfix1 = old.concatenate();
+		}
+		if ((old = refactoringData.get("stepFor")) != null) {
+			oldInfix1a = old.concatenate();
+		}
+		if ((old = refactoringData.get("postForIn")) != null) {
+			oldInfix2 = old.concatenate();
+		}
+		if (!oldPrefix1.trim().isEmpty() && !oldInfix1.trim().isEmpty() &&
+				structPref.startsWith(oldPrefix1) && structPref.contains(oldInfix1)) {
+			structPref = newPrefix1 + structPref.substring(oldPrefix1.length());
+			if (structPref.matches(".*?\\W+" + oldInfix1 + "\\W+.*?")) {
+				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix1 + "(\\W+.*?)",
+						"$1" + Matcher.quoteReplacement(newInfix1) + "$2");
+			}
+			if (structPref.matches(".*?\\W+" + oldInfix1a + "\\W+.*?")) {
+				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix1a + "(\\W+.*?)",
+						"$1" + Matcher.quoteReplacement(newInfix1a) + "$2");
+			}
+		}
+		else if (!oldPrefix2.trim().isEmpty() && !oldInfix2.trim().isEmpty() &&
+				structPref.startsWith(oldPrefix2) && structPref.contains(oldInfix2)) {
+			structPref = newPrefix2 + structPref.substring(oldPrefix2.length());
+			if (structPref.matches(".*?\\W+" + oldInfix2 + "\\W+.*?")) {
+				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix2 + "(\\W+.*?)",
+						"$1" + Matcher.quoteReplacement(newInfix2) + "$2");
+			}
+		}
+		return structPref;
+	}
+	// END KGU#362 2017-03-28
+
 	public void refactorNSD(HashMap<String, StringList> refactoringData)
 	{
 		if (refactoringData != null)
@@ -4454,14 +5678,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					ignoreCase = _caseIndifferent;
 				}
 			};
-			root.addUndo();
-			root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+			// START KGU#362 2017-03-28: Issue #370 avoid frozen diagrams
+			//root.addUndo();
+			//root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+			if (root.storedParserPrefs == null) {
+				root.addUndo();
+				root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+			}
+			// END KGU#362 2017-03-28
 			if (refactorAll && isArrangerOpen())
 			{
 				// Well, we hope that the roots won't change the hash code on refactoring...
 				for (Root aRoot: Arranger.getInstance().getAllRoots())
 				{
-					if (root != aRoot) {
+					// START KGU#362 2017-03-28: Issue #370 avoid frozen diagrams
+					//if (root != aRoot) {
+					if (root != aRoot && aRoot.storedParserPrefs == null) {
+					// END KGU#362 2017-03-28
 						aRoot.addUndo();
 						aRoot.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
 					}
@@ -4506,19 +5739,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyserPreferences.setVisible(true);
 
 		// get fields
-		// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
-		for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
-		{
-			Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
+		// START KGU#393 2017-05-09: Issue #400 - check whether changes were actually committed
+		if (analyserPreferences.OK) {
+		// END KGU#393 2017-05-09		
+			// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
+			for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
+			{
+				Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
+			}
+			// END KGU#239 2016-08-12
+
+			// save fields to ini-file
+			Root.saveToINI();
+
+			// re-analyse
+			root.getVarNames();
+			analyse();
+		// START KGU#393 2017-05-09: Issue #400
 		}
-		// END KGU#239 2016-08-12
-
-		// save fields to ini-file
-		Root.saveToINI();
-
-		// re-analyse
-		root.getVarNames();
-		analyse();
+		// END KGU#393 2017-05-09		
 	}
 
     public void exportOptions()
@@ -4527,7 +5766,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
+            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame(), Menu.generatorPlugins);
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
@@ -4542,18 +5781,29 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#162 2016-03-31: Enh. #144
             eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
             // END KGU#162 2016-03-31
+            // START KGU#363/KGU#395 2017-05-11: Enh. #372, #357
+            eod.chkExportLicenseInfo.setSelected(ini.getProperty("genExportLicenseInfo", "0").equals("true"));
+            // END KGU#363/KGU#395 2017-05-11
             // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
             eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
             // END KGU#170 2016-04-01
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
             // END KGU#168 2016-04-04 
-            // START KGU#351 2017-02-26: Enh. #346
-            if (eod.generatorKeys != null) {
-                for (int i = 0; i < eod.targetLabels.length; i++) {
-                    String propertyName = "genExportIncl" + eod.generatorKeys.get(i);
-                    eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
-                }
+            // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
+            for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
+            	GENPlugin plugin = Menu.generatorPlugins.get(i);
+            	String propertyName = "genExportIncl" + plugin.getKey();
+            	eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
+            	// START KGU#416 2017-06-20: Enh. #354,#357
+            	HashMap<String, String> optionValues = new HashMap<String, String>();
+            	for (HashMap<String, String> optionSpec: plugin.options) {
+            		String optKey = optionSpec.get("name");
+            		propertyName = plugin.getKey() + "." + optKey;
+            		optionValues.put(optKey, ini.getProperty(propertyName, ""));
+            	}
+            	eod.generatorOptions.add(optionValues);
+            	// END KGU#416 2017-06-20
             }
             // END KGU#351 2017-02-26
 
@@ -4572,6 +5822,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#162 2016-03-31: Enh. #144
                 ini.setProperty("genExportnoConversion", String.valueOf(eod.noConversionCheckBox.isSelected()));
                 // END KGU#162 2016-03-31
+                // START KGU#363/KGU#395 2017-05-11: Enh. #372, #357
+                ini.setProperty("genExportLicenseInfo", String.valueOf(eod.chkExportLicenseInfo.isSelected()));
+                // END KGU#363/KGU#395 2017-05-11
                 // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
                 this.prefGeneratorName = (String)eod.cbPrefGenerator.getSelectedItem();
                 ini.setProperty("genExportPreferred", this.prefGeneratorName);
@@ -4580,12 +5833,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#168 2016-04-04: Issue #149 Charset for export
                 ini.setProperty("genExportCharset", (String)eod.cbCharset.getSelectedItem());
                 // END KGU#168 2016-04-04
-                // START KGU#351 2017-02-26: Enh. #346
-                if (eod.generatorKeys != null) {
-                    for (int i = 0; i < eod.targetLabels.length; i++) {
-                        String propertyName = "genExportIncl" + eod.generatorKeys.get(i);
-                        ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
-                    }
+                // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
+                for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
+                	GENPlugin plugin = Menu.generatorPlugins.get(i);
+                	String propertyName = "genExportIncl" + plugin.getKey();
+                	ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
+                	// START KGU#416 2017-06-20: Enh. #354,#357
+                	for (Map.Entry<String, String> entry: eod.generatorOptions.get(i).entrySet()) {
+                		propertyName = plugin.getKey() + "." + entry.getKey();
+                		ini.setProperty(propertyName, entry.getValue());
+                	}
+                	// END KGU#416 2017-06-20
                 }
                 // END KGU#351 2017-02-26
                 ini.save();
@@ -4608,15 +5866,73 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
-            iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
+            // START KGU#416 2017-06-20: Enh. #354,#357
+            //ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
+        	this.retrieveParsers();
+            ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame(), parserPlugins);
+            // END KGU#416 2017-06-20
+            // START KGU#362 2017-03-28: Issue #370 - default turned to true
+            //iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
+            iod.chkRefactorOnLoading.setSelected(!ini.getProperty("impRefactorOnLoading", "true").equals("false"));
+            // END KGU#362 2017-03-28
             iod.charsetListChanged(ini.getProperty("impImportCharset", Charset.defaultCharset().name()));
+            // START KGU#358 2017-03-06: Enh. #368
+            iod.chkVarDeclarations.setSelected(ini.getProperty("impVarDeclarations", "false").equals("true"));
+            // END KGU#358 2017-03-06
+            // START KGU#407 2017-06-22: Enh. #420
+            iod.chkCommentImport.setSelected(ini.getProperty("impComments", "false").equals("true"));
+            // END KGU#407 2017-06-22
+            // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+            iod.chkSaveParseTree.setSelected(ini.getProperty("impSaveParseTree", "false").equals("true"));
+            // END KGU#354 2017-03-08
+            // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
+            iod.chkLogDir.setSelected(ini.getProperty("impLogToDir", "false").equals("true"));
+            iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));            
+            // START KGU#416 2017-06-20: Enh. #354,#357
+            if (parserPlugins != null) {
+                for (int i = 0; i < parserPlugins.size(); i++) {
+                	GENPlugin plugin = parserPlugins.get(i);
+                    HashMap<String, String> optionValues = new HashMap<String, String>();
+                    for (HashMap<String, String> optionSpec: plugin.options) {
+                    	String optKey = optionSpec.get("name");
+                    	String propertyName = plugin.getKey() + "." + optKey;
+                    	optionValues.put(optKey, ini.getProperty(propertyName, ""));
+                    }
+                    iod.parserOptions.add(optionValues);
+                }
+            }
+            // END KGU#416 2017-06-20
+            iod.doLogButtons();
+            // END KGU#354 2017-04-27
+            
             iod.setVisible(true);
             
             if(iod.goOn==true)
             {
                 ini.setProperty("impRefactorOnLoading", String.valueOf(iod.chkRefactorOnLoading.isSelected()));
                 ini.setProperty("impImportCharset", (String)iod.cbCharset.getSelectedItem());
+                // START KGU#358 2017-03-06: Enh. #368
+                ini.setProperty("impVarDeclarations", String.valueOf(iod.chkVarDeclarations.isSelected()));
+                // END KGU#358 2017-03-06
+                // START KGU#407 2017-06-22: Enh. #420
+                ini.setProperty("impComments", String.valueOf(iod.chkCommentImport.isSelected()));
+                // END KGU#407 2017-06-22
+                // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+                ini.setProperty("impSaveParseTree", String.valueOf(iod.chkSaveParseTree.isSelected()));
+                // END KGU#354 2017-03-08
+                // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
+                ini.setProperty("impLogToDir", String.valueOf(iod.chkLogDir.isSelected()));
+                ini.setProperty("impLogDir", iod.txtLogDir.getText());
+                // END KGU#354 2017-04-27
+                // START KGU#416 2017-02-26: Enh. #354, #357
+                for (int i = 0; i < parserPlugins.size(); i++) {
+                	GENPlugin plugin = parserPlugins.get(i);
+                	for (Map.Entry<String, String> entry: iod.parserOptions.get(i).entrySet()) {
+                		String propertyName = plugin.getKey() + "." + entry.getKey();
+                		ini.setProperty(propertyName, entry.getValue());
+                	}
+                }
+            	// END KGU#416 2017-06-20
                 ini.save();
             }
         } 
@@ -4634,17 +5950,41 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#309 2016-12-15: Enh. #310
     public void savingOptions()
     {
-    	SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
-    	sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
-    	sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
-    	sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
-    	sod.setVisible(true);
+    	try {
+    		SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
+    		Ini ini = Ini.getInstance();
+    		sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
+    		sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
+    		sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
+    		// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+    		sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
+    		sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
+    		// END KGU#363 2017-03-12
+    		sod.setVisible(true);
 
-    	if(sod.goOn==true)
-    	{
-    		Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
-    		Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
-    		Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    		if(sod.goOn==true)
+    		{
+    			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
+    			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
+    			Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+    			ini.setProperty("authorName", sod.txtAuthorName.getText());
+    			String licName = (String)sod.cbLicenseFile.getSelectedItem();
+    			if (licName == null) {
+    				ini.setProperty("licenseName", "");
+    			}
+    			else {
+    				ini.setProperty("licenseName", licName);
+    			}
+    			// END KGU#363 2017-03-12
+    			ini.save();
+    		}
+    	} catch (FileNotFoundException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    	} catch (IOException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
     	}
     }
     // END KGU#258 2016-09-26
@@ -4660,18 +6000,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		fontChooser.setFont(Element.getFont());
 		fontChooser.setVisible(true);
 
-		// get fields
-		Element.setFont(fontChooser.getCurrentFont());
+		// START KGU#393 2017-05-09: Issue #400 - make sure the changes were committed
+		if (fontChooser.OK) {
+		// END KGU#393 2017-05-09		
+			// get fields
+			Element.setFont(fontChooser.getCurrentFont());
 
-		// save fields to ini-file
-		Element.saveToINI();
-		
-		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		this.resetDrawingInfo(true);
-		// END KGU#136 2016-03-02
+			// save fields to ini-file
+			Element.saveToINI();
 
-		// redraw diagram
-		redraw();
+			// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
+			this.resetDrawingInfo(true);
+			// END KGU#136 2016-03-02
+
+			// redraw diagram
+			redraw();
+		// START KGU#393 2017-05-09: Issue #400
+		}
+		// END KGU#393 2017-05-09		
+
 	}
 
 	public void fontUpNSD()
@@ -4758,12 +6105,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setFunction()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && root.isProgram)
+		if (!root.isNice && root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
 		// END KGU#221 2016-07-28
-		root.isProgram=false;
+		root.setProgram(false);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
 		root.setChanged();
@@ -4777,12 +6124,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setProgram()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && !root.isProgram)
+		if (!root.isNice && !root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
 		// END KGU#221 2016-07-28
-		root.isProgram=true;
+		root.setProgram(true);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
 		root.setChanged();
@@ -4793,11 +6140,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	// START KGU#376 2017-05-16: Enh. #389
+	public void setInclude()
+	{
+		// START KGU#221 2016-07-28: Bugfix #208
+		if (!root.isNice && root.isProgram())
+		{
+			root.resetDrawingInfoUp();
+		}
+		// END KGU#221 2016-07-28
+		root.setInclude();
+		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
+		//root.hasChanged=true;
+		root.setChanged();
+		// END KGU#137 2016-01-11
+		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		analyse();
+		// END KGU#253 2016-09-22
+		redraw();
+	}
+	// END KGU #376 2017-05-16
+
 	public boolean isProgram()
 	{
-		return root.isProgram;
+		return root.isProgram();
 	}
-
+	public boolean isSubroutine()
+	{
+		return root.isSubroutine();
+	}
+	public boolean isInclude()
+	{
+		return root.isInclude();
+	}
 
 	public void setComments(boolean _comments)
 	{
@@ -4973,6 +6348,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //				}
 				inputbox = ipbFor;
 			}
+			// START KGU#363 2017-03-13: Enh. #372
+			else if (_elementType.equals("Root")) {
+				InputBoxRoot ipbRt = new InputBoxRoot(NSDControl.getFrame(), true);
+//				ipbRt.licenseInfo.rootName = root.getMethodName();
+//				ipbRt.licenseInfo.licenseName = _data.licenseName;
+//				ipbRt.licenseInfo.licenseText = _data.licenseText;
+//				String author = _data.authorName;
+//				String user = System.getProperty("user.name");
+//				ipbRt.txtAuthorName.setText(author);
+//				if (author != null && 
+//						!author.equalsIgnoreCase(Ini.getInstance().getProperty("author", user)) &&
+//						!author.equalsIgnoreCase(user)) {
+//					ipbRt.txtAuthorName.setEditable(false);
+//				}
+				ipbRt.licenseInfo = _data.licInfo;
+				// START KGU#376 2017-07-01: Enh. #389
+				ipbRt.setIncludeList(_data.diagramRefs);
+				// END KGU#376 2017-07-01
+				inputbox = ipbRt;
+			}
+			// END KGU#363 2017-03-13 
 			else
 			{
 				inputbox = new InputBox(NSDControl.getFrame(), true);
@@ -5043,6 +6439,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#61 2016-03-21
 			inputbox.setVisible(true);
 
+			// -------------------------------------------------------------------------------------
+			
 			// get fields
 			_data.text.setText(inputbox.txtText.getText());
 			_data.comment.setText(inputbox.txtComment.getText());
@@ -5099,6 +6497,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				
 			}
 			// END KGU#3 2015-10-25
+			// START KGU#363 2017-03-13: Enh. 372
+			else if (inputbox instanceof InputBoxRoot) {
+				// START KGU#363 2017-05-20
+//				_data.authorName = ((InputBoxRoot)inputbox).txtAuthorName.getText();
+//				_data.licenseName = ((InputBoxRoot)inputbox).licenseInfo.licenseName;
+//				_data.licenseText = ((InputBoxRoot)inputbox).licenseInfo.licenseText;
+				_data.licInfo = ((InputBoxRoot)inputbox).licenseInfo;
+				// END KGU#363 2017-05-20
+				// START KGU#376 2017-07-01: Enh. #389
+				_data.diagramRefs = ((InputBoxRoot)inputbox).getIncludeList();
+				// END KGU#376 2017-07-01
+			}
+			// END KGU#363 2017-03-13
 			_data.result = inputbox.OK;
 
 			inputbox.dispose();
@@ -5117,7 +6528,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -5150,7 +6561,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
-		unselectAll();
+		unselectAll(true);
 		// END KGU 2015-10-11
 
 		Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -5184,9 +6595,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#183 2016-04-24
 	}
 
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+     */
     @Override
     public void mouseWheelMoved(MouseWheelEvent e)
     {
+    	// NOTE: This method will only be triggered if mode Element.E_WHEELCOLLAPSE is enabled.
 		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
     	//System.out.println("MouseWheelEvent: " + e.getModifiersEx() + " Rotation = " + e.getWheelRotation() + " Type = " + 
     	//		((e.getScrollType() == e.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
@@ -5231,6 +6646,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //        	
 //        }
     }
+
 
     void toggleTextComments() {
     	Element.E_TOGGLETC=!Element.E_TOGGLETC;
@@ -5392,7 +6808,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			recentFiles.remove(_filename);
 		}
 		recentFiles.insertElementAt(_filename,0);
-		while(recentFiles.size()>10)	// FIXME (KGU 2014-11-25) hard-coded "magic number"
+		while (recentFiles.size() > MAX_RECENT_FILES)
 		{
 			recentFiles.removeElementAt(recentFiles.size()-1);
 		}
@@ -5425,15 +6841,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	}
     	turtle.setVisible(true);
     	// Activate the executor (getInstance() is supposed to do that)
-    	/*Executor executor =*/ Executor.getInstance(this,turtle);
-    	/*
-                 String str = JOptionPane.showInputDialog(null, "Please enter the animation delay!", "50");
-                if(str!=null)
-                {
-                    executor.setDelay(Integer.valueOf(str));
-                    executor.execute(this.root);
-                }
-    	 */
+    	// START KGU#448 2017-10-28: Enh. #443: Cop with potentially several controllers
+    	//Executor.getInstance(this,turtle);
+    	Executor.getInstance(this, new DiagramController[]{turtle});
+    	// END KGU#448 2017-10-28
 
     }
     
@@ -5715,5 +7126,75 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	// END KGU#305
+
+	// START KGU#363 2017-05-19: Enh. #372
+	public void attributesNSD() {
+		RootAttributes licInfo = new RootAttributes(root);
+		AttributeInspector attrInsp = new AttributeInspector(
+				this.NSDControl.getFrame(), licInfo);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		attrInsp.setVisible(true);
+		if (attrInsp.isCommitted()) {
+			root.addUndo(true);
+			root.adoptAttributes(attrInsp.licenseInfo);
+		}
+	}
+	// END KGU#363 2017-05-17
+	
+	// START KGU#324 2017-05-30: Enh. #415
+	public void findAndReplaceNSD() {
+		if (this.findDialog == null) {
+			findDialog = new FindAndReplace(this);
+		}
+		pop.setVisible(false);
+		// FIXME: Should be avoided, but then we need we must cache it or listen to its closing
+		// And the FindAndReplace dialog must listen to all important changes here!
+		if (!findDialog.isVisible()) {
+			findDialog.setVisible(true);
+		}
+	}
+	
+	/**
+	 * This only cares for the look and feel update of the Find&Replace dialog if it is open.
+	 */
+	protected void updateLookAndFeel()
+	{
+		if (this.findDialog != null) {
+            try {
+                javax.swing.SwingUtilities.updateComponentTreeUI(this.findDialog);
+                // Restore sub-component listeners which might have got lost by the previous operation.
+                this.findDialog.adaptToNewLaF();
+            }
+            catch (Exception ex) {}
+		}
+	}
+	// END KGU#324 2017-05-30
+
+
+	public void cacheIniProperties(Ini ini) {
+		if(this.currentDirectory!=null)
+		{
+			ini.setProperty("currentDirectory", this.currentDirectory.getAbsolutePath());
+			// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+			ini.setProperty("lastExportDirectory", this.lastCodeExportDir.getAbsolutePath());
+			ini.setProperty("lastImportDirectory", this.lastCodeImportDir.getAbsolutePath());
+			ini.setProperty("lastImportFilter", this.lastImportFilter);
+			// END KGU#354 2017-04-26
+		}
+		// START KGU#305 2016-12-15: Enh. #305
+		ini.setProperty("index", (this.showArrangerIndex() ? "1" : "0"));
+		// END KGU#305 2016-12-15
+		if (this.recentFiles.size()!=0)
+		{
+			for(int i=0; i < this.recentFiles.size(); i++)
+			{
+				//System.out.println(i);
+				ini.setProperty("recent"+String.valueOf(i),(String)this.recentFiles.get(i));
+			} 
+		}
+		if (this.findDialog != null) {
+			this.findDialog.cacheToIni(ini);
+		}
+	}
 
 }

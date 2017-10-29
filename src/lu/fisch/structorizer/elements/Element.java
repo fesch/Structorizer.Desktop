@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -58,7 +57,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
  *      Kay Gürtzig     2016.03.10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
- *      Kay Gürtzig     2016.03.26      KGU#165: New option D7Parser.ignoreCase introduced
+ *      Kay Gürtzig     2016.03.26      KGU#165: New option CodeParser.ignoreCase introduced
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
  *                                      Enh. #185: new abstract method convertToCalls() for code import
@@ -68,15 +67,25 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
  *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactored
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
- *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
+ *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to CodeParser.keywordMap
  *      Kay Gürtzig     2017.01.06      Issue #327: French default structure preferences replaced by English ones
  *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
  *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
  *      Kay Gürtzig     2017.02.01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
  *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
+ *      Kay Gürtzig     2017.03.30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
+ *      Kay Gürtzig     2017.04.14      Enh. #380: New highlighting mechanism troubleMakers / E_TROUBLECOLOR
+ *      Kay Gürtzig     2017.05.22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals
+ *      Kay Gürtzig     2017.06.09      Enh. #416: Methods getUnbrokenText(), getBrokenText() introduced
+ *      Kay Gürtzig     2017.07.02      Enh. #389: Signature of addFullText() reverted to two arguments
+ *      Kay Gürtzig     2017.09.13      Enh. #423: New methods supporting type definitions
+ *      Kay Gürtzig     2017.09.17      Enh. #423: Type name highlighting
+ *      Kay Gürtzig     2017.09.18      Enh. #423: Recursive record definitions, splitLexically() improved
+ *      Kay Gürtzig     2017.09.29      Enh. #423: splitLexically() debugged, now ellipses are tokens too
+ *      Kay Gürtzig     2017.10.02      Enh. #423: Method extractDeclarationsFromList() and regex mechanisms revised
  *
  ******************************************************************************************************
  *
@@ -154,8 +163,7 @@ package lu.fisch.structorizer.elements;
  *        writeOutVariables() and getWidthOutVariables(),
  *      - minor code revision respecting 2- and 3-character operator symbols
  *
- ******************************************************************************************************
- */
+ ****************************************************************************************************///
 
 
 import java.awt.Color;
@@ -174,16 +182,20 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.26-05";
+	public static String E_VERSION = "3.27";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -200,12 +212,16 @@ public abstract class Element {
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
+	"Import grammars and parsers written and maintained by\n"+
+	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>"+
+	" - COBOL: Simon Sobisch, Kay Gürtzig"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
 	" - Stephan <clauwn@freenet.de>\n"+
+	" - Simon Sobisch (https://github.com/Gitmensch)\n"+
 	"\n"+
-	"User manual edited by\n"+
+	"User manual edited and updated by\n"+
 	" - David Morais <narutodc@hotmail.com>\n"+
 	" - Praveen Kumar <praveen_sonal@yahoo.com>\n"+
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
@@ -238,7 +254,8 @@ public abstract class Element {
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - David Tremain <DTremain@omnisource.com>\n"+
 	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
-	" - Benjamin Neuberg (newboerg)\n"+
+	" - Benjamin Neuberg (https://github.com/newboerg)\n"+
+	" - Simon Sobisch (https://github.com/Gitmensch)\n"+
 	
 	"\n"+
 	"File dropper class by\n"+
@@ -266,7 +283,10 @@ public abstract class Element {
 
 	// some static constants
 	protected static int E_PADDING = 20;
-	public static int E_INDENT = 2;
+	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
+	//public static int E_INDENT = 2;
+	public static int E_INDENT = 4;	// Used as minimum indentation for continuationn lines (after lines ending with backslash)
+	// END KGU#412 2017-06-09
 	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
@@ -277,6 +297,9 @@ public abstract class Element {
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
 	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
+	// START KGU#365 2017-04-14: Enh. #380 Introduced to highlight trouble-making elements during GUI activities
+	public static final Color E_TROUBLECOLOR = Color.RED;
+	// END KGU#365 2017-04-14
 	// START KGU#117 2016-03-06: Test coverage colour and mode for Enh. #77
 	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;
 	public static boolean E_COLLECTRUNTIMEDATA = false;
@@ -326,12 +349,66 @@ public abstract class Element {
 	public static String preFor = "for ? <- ? to ?";
 	public static String preWhile = "while (?)";
 	public static String preRepeat = "until (?)";
+	// START KGU#376 2017-07-01: Enh #389 - Configurable caption for the includes box of Root
+	public static String preImport = "Included diagrams:";
+	// END KGU#376 2017-07-01
 	
 	// used font
 	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
 
 	public static final String COLLAPSED =  "...";
 	public static boolean altPadRight = true;
+	// START KGU#401 2017-05-17: Issue #405
+	public static int caseShrinkByRot = 8;			// Number of CASE branches to trigger the attempt to shrink width by rotating branches
+	// END KGU#401 2017-05-17
+	
+	// START KGU 2017-09-19: Performance tuning for syntax analysis
+	private static final java.util.regex.Pattern FLOAT_PATTERN1 = java.util.regex.Pattern.compile("[0-9]+([eE][0-9]+)?");
+	private static final java.util.regex.Pattern FLOAT_PATTERN2 = java.util.regex.Pattern.compile("[0-9]+[eE]");
+	private static final java.util.regex.Pattern INT_PATTERN = java.util.regex.Pattern.compile("[0-9]+");
+	private static final java.util.regex.Pattern BIN_PATTERN = java.util.regex.Pattern.compile("0b[01]+");
+	private static final java.util.regex.Pattern OCT_PATTERN = java.util.regex.Pattern.compile("0[0-7]+");
+	private static final java.util.regex.Pattern HEX_PATTERN = java.util.regex.Pattern.compile("0x[0-9A-Fa-f]+");
+	private static final java.util.regex.Pattern SIGN_PATTERN = java.util.regex.Pattern.compile("[+-]");
+	//private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("(\\w.*)(\\[.*\\])$"); // seems to have been wrong
+	private static final Matcher RECORD_MATCHER = java.util.regex.Pattern.compile("([A-Za-z]\\w*)\\s*\\{.*\\}").matcher("");
+	// END KGU 2017-09-19
+	// START KGU#425 2017-09-29: Lexical core mechanisms revised
+	private static final String[] LEXICAL_DELIMITERS = new String[] {
+			" ",
+			"\t",
+			"\n",
+			".",
+			",",
+			";",
+			"(",
+			")",
+			"[",
+			"]",
+			// START KGU#100 2016-01-14: We must also catch the initialiser delimiters
+			"{",
+			"}",
+			// END KGU#100 2016-01-14
+			"-",
+			"+",
+			"/",
+			"*",
+			">",
+			"<",
+			"=",
+			":",
+			"!",
+			"'",
+			"\"",
+			"\\",
+			"%",
+			// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
+			"\u2260",
+			"\u2264",
+			"\u2265"
+			// END KGU#331 2017-01-13
+	};
+	// END KGU#425 2017-09-29
 
 	// START KGU#156 2016-03-10; Enh. #124
 	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
@@ -349,7 +426,15 @@ public abstract class Element {
 	protected static Map<Integer, Integer> breakTriggersTemp = new Hashtable<Integer, Integer>();
 	// END KGU#213 2016-08-2
 
-	// element attributes
+	// START KGU#365 2017-04-14: Enh. #380 - New mechanism to mark trouble-making elements
+	/**
+	 * Set for quick highlighting element that cause trouble in some complex GUI activities.
+	 * Intended to be highlighted in the E_TROUBLECOLOR with high fill color priority
+	 */
+	public static final Set<Element> troubleMakers = new HashSet<Element>();
+	// END KGU#365 2017-04-14
+	
+//	element attributes
 	protected StringList text = new StringList();
 	public StringList comment = new StringList();
         
@@ -457,6 +542,9 @@ public abstract class Element {
 	protected final void resetDrawingInfo()
 	{
 		this.isRectUpToDate = false;
+		// START KGU#401 2017-05-17: Issue #405
+		this.rotated = false;
+		// END KGU#401 2017-05-17
 	}
 	/**
 	 * Resets my drawing info and that of all of my ancestors
@@ -707,6 +795,49 @@ public abstract class Element {
 		sl.add(COLLAPSED);
 		return sl;
 	}
+	
+	// START KGU#413 2017-06-09: Enh. #416 Cope with line continuations
+	/**
+	 * Returns the text of this element but with re-concatenated and trimmed lines if some
+	 * lines were deliberately broken (i.e. ended with backslash)
+	 * @return a StringList consisting of unbroken text lines
+	 */
+	public StringList getUnbrokenText()
+	{
+		return getBrokenText(" ");
+	}
+	/**
+	 * Returns the text of this element as a new StringList where each broken line (by means
+	 * of backslashes) will form together an element with newlines.
+	 * @return a StringList consisting of possibly broken text lines
+	 */
+	public StringList getBrokenText()
+	{
+		return getBrokenText("\\\n");
+	}
+	/**
+	 * Returns the text of this element as a new StringList where each broken line (by means
+	 * of backslashes) will be glued together such that instead of the delimiting backslashes
+	 * the given separator will be inserted.
+	 * @param separator - an arbitrary string working as separator instead of the original backslash
+	 * @return a StringList consisting of possibly broken text lines
+	 */
+	private StringList getBrokenText(String separator)
+	{
+		StringList sl = new StringList();
+		int nLines = text.count();
+		int i = 0;
+		while (i < nLines) {
+			String line = text.get(i).trim();
+			while (line.endsWith("\\") && (i + 1 < nLines)) {
+				line = line.substring(0, line.length()-1) + separator + text.get(++i).trim();
+			}
+			sl.add(line);
+			i++;
+		}
+		return sl;
+	}
+	// END KGU#413 2017-06-09
 
 	public void setComment(String _comment)
 	{
@@ -1088,6 +1219,11 @@ public abstract class Element {
 		else if (this.executed) {
 			return Element.E_RUNNINGCOLOR;
 		}
+		// START KGU#365 2017-04-14: Enh. #380
+		else if (troubleMakers.contains(this)) {
+			return Element.E_TROUBLECOLOR;
+		}
+		// END KGU#365 2017-04-14
 		else if (this.selected) {
 			return Element.E_DRAWCOLOR;
 		}
@@ -1614,10 +1750,16 @@ public abstract class Element {
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"default\""));
 			preCase=sl.getText();
+			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "0"));
+			// END KGU#401 2017-05-18
 			preFor=ini.getProperty("For","for ? <- ? to ?");
 			preWhile=ini.getProperty("While","while ()");
 			preRepeat=ini.getProperty("Repeat","until ()");
 			// END KGU 2017-01-06 #327
+			// START KGU#376 2017-07-02: Enh. #389
+			preImport = ini.getProperty("Import", "Included diagrams:");
+			// END KGU#376 2017-07-02
 			// font
 			// START KGU#264 2016-09-28: key Name replaced by the more expressive "Font"
 			//setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
@@ -1657,9 +1799,15 @@ public abstract class Element {
 			StringList sl = new StringList();
 			sl.setText(preCase);
 			ini.setProperty("Case",sl.getCommaText());
+			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+			ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
+			// END KGU#401 2017-05-18
 			ini.setProperty("For",preFor);
 			ini.setProperty("While",preWhile);
 			ini.setProperty("Repeat",preRepeat);
+			// START KGU#376 2017-07-02: Enh. #389
+			ini.setProperty("Import", preImport);
+			// END KGU#376 2017-07-02
 			// font
 			// START KGU#264 2016-09-28: font name property renamed 
 			//ini.setProperty("Name",getFont().getFamily());
@@ -1711,12 +1859,17 @@ public abstract class Element {
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**
 	 * Splits the given _text into lexical morphemes (lexemes). This will possibly overdo
-	 * somewhat (e. g. split float literal 123.45 into "123", ".", "45").
-	 * By setting _restoreStrings true, at least string literals can be reassambled again,
-	 * consuming more time, of course. 
+	 * somewhat (e. g. signs of number literals will be separated, but floating-point literals
+	 * like 123.45 or .09e-8 will properly be preserved as contiguous tokens).<br>
+	 * By setting {@code _restoreStrings} true, string literals will be re-assembled, too, consuming
+	 * a little more time, of course.<br>
+	 * Note that inter-lexeme whitespace will NOT be eliminated but forms elements of the result,
+	 * more precisely: a sequence of whitespace characters (like {@code "    "}) will form a series of
+	 * 1-character whitespace strings (here: " ", " ", " ", " "). So they can easily be removed
+	 * with removeAll(" ").
 	 * @param _text - String to be exploded into lexical units
 	 * @param _restoreLiterals - if true then accidently split numeric and string literals will be reassembled 
-	 * @return StringList consisting ofvthe separated lexemes including isolated spaces etc.
+	 * @return StringList consisting of the separated lexemes including isolated spaces etc.
 	 */
 	public static StringList splitLexically(String _text, boolean _restoreStrings)
 	{
@@ -1724,40 +1877,39 @@ public abstract class Element {
 		parts.add(_text);
 		
 		// split
-		parts=StringList.explodeWithDelimiter(parts," ");	// FIXME: Should we omit the delimiters here? 
-		parts=StringList.explodeWithDelimiter(parts,"\t");
-		parts=StringList.explodeWithDelimiter(parts,"\n");
-		parts=StringList.explodeWithDelimiter(parts,".");
-		parts=StringList.explodeWithDelimiter(parts,",");
-		parts=StringList.explodeWithDelimiter(parts,";");
-		parts=StringList.explodeWithDelimiter(parts,"(");
-		parts=StringList.explodeWithDelimiter(parts,")");
-		parts=StringList.explodeWithDelimiter(parts,"[");
-		parts=StringList.explodeWithDelimiter(parts,"]");
-		// START KGU#100 2016-01-14: We must also catch the initialiser delimiters
-		parts=StringList.explodeWithDelimiter(parts,"{");
-		parts=StringList.explodeWithDelimiter(parts,"}");
-		// END KGU#100 2016-01-14
-		parts=StringList.explodeWithDelimiter(parts,"-");
-		parts=StringList.explodeWithDelimiter(parts,"+");
-		parts=StringList.explodeWithDelimiter(parts,"/");
-		parts=StringList.explodeWithDelimiter(parts,"*");
-		parts=StringList.explodeWithDelimiter(parts,">");
-		parts=StringList.explodeWithDelimiter(parts,"<");
-		parts=StringList.explodeWithDelimiter(parts,"=");
-		parts=StringList.explodeWithDelimiter(parts,":");
-		parts=StringList.explodeWithDelimiter(parts,"!");
-		parts=StringList.explodeWithDelimiter(parts,"'");
-		parts=StringList.explodeWithDelimiter(parts,"\"");
-
-		parts=StringList.explodeWithDelimiter(parts,"\\");
-		parts=StringList.explodeWithDelimiter(parts,"%");
-		
-		// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
-		parts=StringList.explodeWithDelimiter(parts,"\u2260");
-		parts=StringList.explodeWithDelimiter(parts,"\u2264");
-		parts=StringList.explodeWithDelimiter(parts,"\u2265");
-		// END KGU#331 2017-01-13
+		// START KGU#425 2017-09-29: Code revision
+		//parts=StringList.explodeWithDelimiter(parts," ");
+		//parts=StringList.explodeWithDelimiter(parts,"\t");
+		//parts=StringList.explodeWithDelimiter(parts,"\n");
+		//parts=StringList.explodeWithDelimiter(parts,".");
+		//parts=StringList.explodeWithDelimiter(parts,",");
+		//parts=StringList.explodeWithDelimiter(parts,";");
+		//parts=StringList.explodeWithDelimiter(parts,"(");
+		//parts=StringList.explodeWithDelimiter(parts,")");
+		//parts=StringList.explodeWithDelimiter(parts,"[");
+		//parts=StringList.explodeWithDelimiter(parts,"]");
+		//parts=StringList.explodeWithDelimiter(parts,"{");
+		//parts=StringList.explodeWithDelimiter(parts,"}");
+		//parts=StringList.explodeWithDelimiter(parts,"-");
+		//parts=StringList.explodeWithDelimiter(parts,"+");
+		//parts=StringList.explodeWithDelimiter(parts,"/");
+		//parts=StringList.explodeWithDelimiter(parts,"*");
+		//parts=StringList.explodeWithDelimiter(parts,">");
+		//parts=StringList.explodeWithDelimiter(parts,"<");
+		//parts=StringList.explodeWithDelimiter(parts,"=");
+		//parts=StringList.explodeWithDelimiter(parts,":");
+		//parts=StringList.explodeWithDelimiter(parts,"!");
+		//parts=StringList.explodeWithDelimiter(parts,"'");
+		//parts=StringList.explodeWithDelimiter(parts,"\"");
+		//parts=StringList.explodeWithDelimiter(parts,"\\");
+		//parts=StringList.explodeWithDelimiter(parts,"%");
+		//parts=StringList.explodeWithDelimiter(parts,"\u2260");
+		//parts=StringList.explodeWithDelimiter(parts,"\u2264");
+		//parts=StringList.explodeWithDelimiter(parts,"\u2265");
+		for (int i = 0; i < LEXICAL_DELIMITERS.length; i++) {
+			parts = StringList.explodeWithDelimiter(parts, LEXICAL_DELIMITERS[i]);
+		}
+		// END KGU#425 2017-09-29
 
 		// reassemble symbols
 		int i = 0;
@@ -1767,6 +1919,9 @@ public abstract class Element {
 			if (i < parts.count()-1)
 			{
 				String nextPart = parts.get(i+1);
+				boolean isInt = false;
+				boolean isSign = false;
+				boolean isEllipse = false;
 				if (thisPart.equals("<") && nextPart.equals("-"))
 				{
 					parts.set(i,"<-");
@@ -1875,23 +2030,74 @@ public abstract class Element {
 					parts.set(i, ">=");
 				}
 				// END KGU#331 2017-01-13
-				// START KGU#335 2017-02-01: Recompose floating-point literals (except those starting or ending with ".")
-				else if (thisPart.matches("[0-9]+") && nextPart.equals(".") && i+2 < parts.count()) {
-					if (parts.get(i+2).matches("[0-9]+([eE][0-9]+)?")) {
-						parts.set(i, thisPart + nextPart + parts.get(i+2));
-						parts.delete(i+1);
-						parts.delete(i+1);
-					}
-					else if (parts.get(i+2).matches("[0-9]+[eE]") &&
-							i+4 < parts.count() && parts.get(i+3).matches("[+-]") && parts.get(i+4).matches("[0-9]+")) {
-						for (int j = 1; j <= 4; j++) {
-							thisPart += parts.get(i+1);
-							parts.delete(i+1);
+				// START KGU#335/KGU#425 2017-09-29: Re-compose floating-point literals (including those starting or ending with ".")
+				// These are legal cases ($ = line end, ? = don't care):
+				// i             i+1             i+2           i+3        comment
+				// .              .               ?             ?         two-dot-ellipse (Pascal range)
+				// .              .               .             ?         three-dot-ellipse (rarely used)
+				// .            FLOAT1            ?             ?         float literal
+				// .            FLOAT2           [+-]        [0-9]+       float literal
+				// [+-]           .            FLOAT1           ?         float literal - reduce this case the the one -2
+				// [+-]           .            FLOAT2         [+-] [0-9]+ float literal - reduce this case the the one -2
+				// [0-9]+         .            FLOAT1           ?         float literal - reduce this case the the one -4
+				// [0-9]+         .            FLOAT2         [+-] [0-9]+ float literal - reduce this case the the one -4
+				// These are the illegal cases:
+				// [+-]           .               $
+				// [+-]           .               ?
+				// [0-9]+         .               .
+				// So we will first do the necessary lookahead before we manipulate parts
+				else if ( (isEllipse = thisPart.equals("."))	// a single dot might merge with another one or a float pattern
+						|| (	// Otherwise a digit sequence might melt with a dot
+								(isInt = INT_PATTERN.matcher(thisPart).matches())
+								|| (isSign = (thisPart.equals("+") || thisPart.equals("-"))	// a sign with a dot requires more...
+										&& i+2 < parts.count())
+								&& nextPart.equals(".")) 
+						) {
+					int nDelete = 0;
+					// Glue the two together - the only pathologic case would be 
+					if (nextPart.equals(".")) {
+						thisPart += nextPart;
+						nDelete = 1;
+						// Is there anything left at all?
+						if (i+2 < parts.count()) {
+							nextPart = parts.get(i+2);
 						}
+						if (isEllipse && nextPart.equals(".")) {
+							// Okay, then be it a three-point ellipse "..."
+							thisPart += nextPart;
+							nDelete++;
+						}
+						// In case of an ellipse we are done here
+					}
+					else {
+						isEllipse = false;
+					}
+					// nextPart.matches("[0-9]+([eE][0-9]+)?")
+					if (!isEllipse && FLOAT_PATTERN1.matcher(nextPart).matches()) {
+						thisPart += nextPart;
+						nDelete++;
+					}
+					// nextPart.matches("[0-9]+[eE]")
+					else if (!isEllipse && FLOAT_PATTERN2.matcher(nextPart).matches()
+							&& i+nDelete+3 < parts.count()
+							&& SIGN_PATTERN.matcher(parts.get(i+nDelete+2)).matches()
+							&& INT_PATTERN.matcher(parts.get(i+nDelete+3)).matches()) {
+						for (int j = 1; j <= 3; j++) {
+							nDelete++;
+							thisPart += parts.get(i+nDelete);
+						}
+					}
+					else if (isSign || isInt && i+2 < parts.count() && parts.get(i+2).equals(".")) {
+						// In this case the amalgamation may not take place
+						nDelete = 0;
+					}
+					// Now carry out the amalgamation if sensible
+					if (nDelete > 0) {
 						parts.set(i, thisPart);
+						parts.remove(i+1, i+nDelete+1);
 					}
 				}
-				// END KGU#335 2017-02-01
+				// END KGU#335/KGU#425 2017-09-29
 			}
 			i++;
 		}
@@ -1979,9 +2185,9 @@ public abstract class Element {
 	// START KGU#101 2015-12-11: Enhancement #54: We need to split expression lists (might go to a helper class)
 	/**
 	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings representing one of the listed expressions each.
+	 * into strings comprising one of the listed expressions each.
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. These must not be broken.
+	 * of function calls etc. (These must not be broken.)
 	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
 	 * bracket, or the like).
 	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
@@ -1998,9 +2204,9 @@ public abstract class Element {
 	
 	/**
 	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings representing one of the listed expressions each.
+	 * into strings comprising one of the listed expressions each.
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. These must not be broken.
+	 * of function calls etc. (These must not be broken.)
 	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
 	 * bracket, or the like).
 	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
@@ -2013,20 +2219,47 @@ public abstract class Element {
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
-	// END KU#93 2015-12-21
+	// END KGU#93 2015-12-21
 	{
+		//StringList expressionList = new StringList();
+		//if (_listSeparator == null) _listSeparator = ",";
+		
+	// START KGU#388 2017-09-13: New subroutine
+		//StringList tokens = Element.splitLexically(_text, true);
+		return splitExpressionList(Element.splitLexically(_text.trim(), true), _listSeparator, _appendTail);
+	}
+	
+	/**
+	 * Splits the tokenized list {@code _tokens} of expressions separated by {@code _listSeparator}
+	 * into strings comprising one of the listed expressions each.
+	 * This is aware of string literals, argument lists of function calls etc. (These must not be broken.)
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
+	 * bracket, or the like).
+	 * The remaining tokens from the unsatisfied closing parenthesis, bracket, or brace on will
+	 * be concatenated and added as last element to the result if _appendRemainder is true.
+	 * If the last result element is empty in mode {@code _appedTail} then the expression list was syntactically
+	 * "clean".
+	 * FIXME If the expression was given without some parentheses as delimiters then a tail won't be added.
+	 * @param _text - string containing one or more expressions
+	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
+	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
+	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
+	 */
+	public static StringList splitExpressionList(StringList _tokens, String _listSeparator, boolean _appendTail)
+	{
+
 		StringList expressionList = new StringList();
 		if (_listSeparator == null) _listSeparator = ",";
-		StringList tokens = Element.splitLexically(_text, true);
-		
+	// END KGU#388 2017-09-13
 		int parenthDepth = 0;
 		boolean isWellFormed = true;
 		Stack<String> enclosings = new Stack<String>();
-		int tokenCount = tokens.count();
+		int tokenCount = _tokens.count();
 		String currExpr = "";
+		String tail = "";
 		for (int i = 0; isWellFormed && parenthDepth >= 0 && i < tokenCount; i++)
 		{
-			String token = tokens.get(i);
+			String token = _tokens.get(i);
 			if (token.equals(_listSeparator) && enclosings.isEmpty())
 			{
 				// store the current expression and start a new one
@@ -2062,38 +2295,197 @@ public abstract class Element {
 				else if (_appendTail)
 				{
 					expressionList.add(currExpr.trim());
-					currExpr = tokens.concatenate("", i);
+					currExpr = "";
+					tail = _tokens.concatenate("", i).trim();
 				}
 			}
 		}
 		// add the last expression if it's not empty
-		if (!currExpr.trim().isEmpty() || _appendTail)
+		if (!(currExpr = currExpr.trim()).isEmpty())
 		{
-			expressionList.add(currExpr.trim());
+			expressionList.add(currExpr);
+		}
+		// Add the tail if requested. Empty if there is no bad tail
+		if (_appendTail) {
+			expressionList.add(tail);
 		}
 		return expressionList;
 	}
 	// END KGU#101 2015-12-11
+	
+	// START KGU#388 2017-09-13: Enh. #423
+	/**
+	 * Extracts the parameter or component declarations from the parameter list (or
+	 * record type definition, respectively) given by {@code declText} and adds their names
+	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.
+	 * @param declText - the text of the declaration inside the parentheses or braces
+	 * @param declNames - the names of the declared parameters or record components (in order of occurrence)
+	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence)
+	 */
+	protected void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes) {
+		StringList declGroups = StringList.explode(declText,";");
+		for(int i = 0; i < declGroups.count(); i++)
+		{
+			// common type for parameter / component group
+			String type = null;
+			String group = declGroups.get(i);
+			int posColon = group.indexOf(":");
+			if (posColon >= 0)
+			{
+				type = group.substring(posColon + 1).trim();
+				group = group.substring(0, posColon).trim();
+			}
+			// START KGU#109 2016-01-15 Bugfix #61/#107 - was wrong, must first split by ','
+//			else if ((posColon = group.indexOf(" as ")) >= 0)
+//			{
+//				type = group.substring(posColon + " as ".length()).trim();
+//				group = group.substring(0, posColon).trim();
+//			}
+			// END KGU#109 2016-01-15
+			StringList vars = StringList.explode(group,",");
+			for (int j=0; j < vars.count(); j++)
+			{
+				String decl = vars.get(j).trim();
+				if (!decl.isEmpty())
+				{
+					String prefix = "";	// KGU#375 2017-03-30: New for enh. #388 (constants)
+					// START KGU#109 2016-01-15: Bugfix #61/#107 - we must split every "varName" by ' '.
+					if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
+					{
+						type = decl.substring(posColon + " as ".length()).trim();
+						decl = decl.substring(0, posColon).trim();
+					}
+					StringList tokens = splitLexically(decl, true);
+					tokens.removeAll(" ");
+					if (tokens.count() > 1) {
+						// Is a C or Java array type involved? 
+						if (declGroups.count() == 1 && posColon < 0 || type == null) {
+							int posBrack1 = tokens.indexOf("[");
+							int posBrack2 = tokens.lastIndexOf("]");
+							if (posBrack1 > 0 && posBrack2 > posBrack1) {
+								String indices = tokens.concatenate(null, posBrack1, posBrack2+1);
+								if (posBrack2 == tokens.count()-1) {
+									// C-style: brackets right of the variable id
+									decl = tokens.get(posBrack1-1);
+									if (posBrack1 > 1 && type == null) {
+										type = tokens.concatenate(null, 0, posBrack1-1);
+										type += indices;
+									}
+								}
+								else {
+									// Java style: brackets between element type and variable id
+									decl = tokens.concatenate(null, posBrack2+1, tokens.count());
+									if (type == null) {
+										type = tokens.concatenate(null, 0, posBrack2+1);
+									}
+								}
+							}
+							else {
+								type = tokens.concatenate(null, 0, tokens.count()-1);
+								decl = tokens.get(tokens.count()-1);
+							}
+						}
+						// START KGU#375 2017-03-30: New for enh. #388 (constants)
+						else if (tokens.get(0).equals("const")) {
+							prefix = "const ";
+						}
+						// END KGU#375 2017-03-30
+					}
+					//System.out.println("Adding parameter: " + vars.get(j).trim());
+					if (declNames != null) declNames.add(decl);
+					// START KGU#375 2017-03-30: New for enh. #388 (constants)
+					//if (declTypes != null)	declTypes.add(type);
+					if (declTypes != null){
+						if (!prefix.isEmpty() || type != null) {
+							declTypes.add(prefix + type);
+						}
+						else {
+							declTypes.add(type);
+						}
+					}
+					// END KGU#375 2017-03-30
+				}
+			}
+		}
+	}
+
+	/**
+	 * Decomposes the interior of a record initializer of the form
+	 * [typename]{compname1: value1, compname2: value2, ...} into a hash table
+	 * mapping the component names to the corresponding value strings.
+	 * If there is text following the closing brace it will be mapped to key "§TAIL§".
+	 * If the typename is given then it will be provided mapped to key "§TYPENAME§".
+	 * @param _text - the initializer expression with or without typename but with braces.
+	 * @return the component map (or null if there are no braces).
+	 */
+	public static HashMap<String, String> splitRecordInitializer(String _text)
+	{
+		// Version 
+		HashMap<String, String> components = new HashMap<String, String>();
+		int posBrace = _text.indexOf("{");
+		if (posBrace < 0) {
+			return null;
+		}
+		String typename = _text.substring(0, posBrace);
+		if (!typename.isEmpty()) {
+			components.put("§TYPENAME§", typename);
+		}
+		StringList parts = splitExpressionList(_text.substring(posBrace+1).trim(), ",", true);
+		String tail = parts.get(parts.count()-1);
+		if (!tail.startsWith("}")) {
+			return null;
+		}
+		else if (!(tail = tail.substring(1).trim()).isEmpty()) {
+			components.put("§TAIL§", tail);
+		}
+		for (int i = 0; i < parts.count()-1; i++) {
+			StringList tokens = splitLexically(parts.get(i), true);
+			int posColon = tokens.indexOf(":");
+			if (posColon >= 0) {
+				String name = tokens.subSequence(0, posColon).concatenate().trim();
+				String expr = tokens.subSequence(posColon + 1, tokens.count()).concatenate().trim();
+				if (Function.testIdentifier(name, null)) {
+					components.put(name, expr);
+				}
+			}
+		}
+		return components;
+	}
+	// END KGU#388 2017-09-13
 
 	// START KGU#261 2017-02-01: Enh. #259 (type map) - moved from Instruction hitherto
+	// KGU 2017-04-14: signature enhanced by argument canonicalizeTypeNames
 	/**
-	 * Tries to derive the data type of expression expr by means of analysing literal
+	 * Tries to derive the data type of expression {@code expr} by means of analysing literal
 	 * syntax, built-in functions and the types associated to variables registered in
-	 * the typeMap.
-	 * @param typeMap - current mapping of variable names to statically concluded type information 
+	 * the {@code typeMap}.<br/>
+	 * The returned type description (if not empty) will be structurally canonicalized (i.e. array
+	 * levels will be symbolized by a sequence of "@" prefixes, the element type names may also be
+	 * heuristically canonicalized to assumed Java equivalents.
+	 * Record (struct) initializers will be replaced by their respective type name (which must have
+	 * been declared before). 
+	 * @param typeMap - current mapping of variable names to statically concluded type information (may be null)
 	 * @param expr - the expression to be categorized
+	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalized
+	 * (i.e. replaced by guessed Java equivalents) 
 	 * @return a type description if available and unambiguous or an empty string otherwise
 	 */
-	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr)
+	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr, boolean canonicalizeTypeNames)
 	{
 		String typeSpec = "";	// This means no info
-		// 1. Check whether its a known typed variable
-		TypeMapEntry typeEntry = typeMap.get(expr);
+		// 1. Check whether it's a known typed variable
+		TypeMapEntry typeEntry = null;
+		if (typeMap != null) {
+			typeEntry = typeMap.get(expr);
+		}
 		if (typeEntry != null) {
-			StringList types = typeEntry.getTypes();
-			if (types.count() == 1) {
-				typeSpec = typeEntry.getTypes().get(0);
-			}
+			// START KGU#388 2017-07-12: Enh. #423
+			//StringList types = typeEntry.getTypes(canonicalizeTypeNames);
+			//if (types.count() == 1) {
+			//	typeSpec = typeEntry.getTypes().get(0);
+			//}
+			typeSpec = typeEntry.getCanonicalType(canonicalizeTypeNames, true);
+			// END KGU#388 2017-07-12
 		}
 		// Otherwise check if it's a built-in function with unambiguous type
 		else if (Function.isFunction(expr)) {
@@ -2102,6 +2494,21 @@ public abstract class Element {
 		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
 			typeSpec = "String";
 		}
+		// START KGU#388 2017-09-12: Enh. #423: Record initializer support (name-prefixed!)
+		else if ((RECORD_MATCHER.reset(expr)).matches() && typeMap != null){
+			typeSpec = RECORD_MATCHER.group(1);
+			if (!typeMap.containsKey(":" + typeSpec)) {
+				// It's hardly a valid prefixed record initializer...
+				typeSpec = "";
+			}
+		}
+		// END KGU#388 2017-09-12
+		// START KGU#354 2017-05-22: Enh. #354
+		// These literals cause errors with Double.parseDouble(expr) and Integer.parseInt(expr)
+		else if (BIN_PATTERN.matcher(expr).matches() || OCT_PATTERN.matcher(expr).matches() || HEX_PATTERN.matcher(expr).matches()) {
+			typeSpec = "int";
+		}
+		// END KGU#354 2017-05-22
 		// 2. If none of the approaches above succeeded check for a numeric literal
 		if (typeSpec.isEmpty()) {
 			try {
@@ -2159,7 +2566,11 @@ public abstract class Element {
 				if (specialSigns == null)	// lazy initialisation
 				{
 					specialSigns = new StringList();
-					// ENDU KGU#64 2015-11-03
+				// END KGU#64 2015-11-03
+					// START KGU#425 2017-09-29: Add the possible ellipses, too
+					specialSigns.add("...");
+					specialSigns.add("..");					
+					// END KGU#425 2017-09-29
 					specialSigns.add(".");
 					specialSigns.add("[");
 					specialSigns.add("]");
@@ -2180,12 +2591,21 @@ public abstract class Element {
 					// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
 					specialSigns.add("dim");
 					// END KGU#332 2017-01-27
+					// START KGU#375 2017-03-30: Enh. #388 "const" as declaration keyword
+					specialSigns.add("const");
+					// END KGU#375 2017-03-30
+					// START KGU#388 2017-09-13: Enh. #423 "type", "record", and "struct" as type definition keywords
+					specialSigns.add("type");
+					specialSigns.add("record");
+					specialSigns.add("struct");
+					// END KGU#388 2017-09-13
 					specialSigns.add("mod");
 					specialSigns.add("div");
-					specialSigns.add("<=");
-					specialSigns.add(">=");
-					specialSigns.add("<>");
 					// START KGU#331 2017-01-13: Enh. #333
+					//specialSigns.add("<=");
+					//specialSigns.add(">=");
+					//specialSigns.add("<>");
+					//specialSigns.add("!=");
 					specialSigns.add("\u2260");
 					specialSigns.add("\u2264");
 					specialSigns.add("\u2265");
@@ -2195,7 +2615,6 @@ public abstract class Element {
 					specialSigns.add("<");
 					specialSigns.add(">");
 					specialSigns.add("==");
-					specialSigns.add("!=");
 					specialSigns.add("=");
 					specialSigns.add("!");
 					// START KGU#24 2014-10-18
@@ -2228,28 +2647,41 @@ public abstract class Element {
 
 				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.getKeywordOrDefault("input", "").trim());
-				ioSigns.add(D7Parser.getKeywordOrDefault("output", "").trim());
+				ioSigns.add(CodeParser.getKeywordOrDefault("input", "").trim());
+				ioSigns.add(CodeParser.getKeywordOrDefault("output", "").trim());
 				// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
 				StringList jumpSigns = new StringList();
-				jumpSigns.add(D7Parser.getKeywordOrDefault("preLeave", "leave").trim());
-				jumpSigns.add(D7Parser.getKeywordOrDefault("preReturn", "return").trim());
-				jumpSigns.add(D7Parser.getKeywordOrDefault("preExit", "exit").trim());
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
 				// END KGU#116 2015-12-23
-				
+
+				// START KGU#377 2017-03-30: Bugfix #333
+				parts.replaceAll("<-","\u2190");
+				if (E_SHOW_UNICODE_OPERATORS) {
+					parts.replaceAll("<>","\u2260");
+					parts.replaceAll("!=","\u2260");
+					parts.replaceAll("<=","\u2264");
+					parts.replaceAll(">=","\u2265");						
+				}
+				// END KGU#377 2017-03-30
+
 				for(int i=0; i < parts.count(); i++)
 				{
 					String display = parts.get(i);
 
-					display = BString.replace(display, "<-","\u2190");
-					// START KGU#331 2017-01-13: Enh. #333
-					if (E_SHOW_UNICODE_OPERATORS) {
-						display = BString.replace(display, "<>","\u2260");
-						display = BString.replace(display, "!=","\u2260");
-						display = BString.replace(display, "<=","\u2264");
-						display = BString.replace(display, ">=","\u2265");						
-					}
+					// START KGU#377 2017-03-30: Bugfix #333
+//					display = BString.replace(display, "<-","\u2190");
+//					// START KGU#331 2017-01-13: Enh. #333
+//					if (E_SHOW_UNICODE_OPERATORS) {
+//						display = BString.replace(display, "<>","\u2260");
+//						display = BString.replace(display, "!=","\u2260");
+//						display = BString.replace(display, "<=","\u2264");
+//						display = BString.replace(display, ">=","\u2265");						
+//					}
 					// END KGU#331 2017-01-13
+					// END KGU#331 2017-01-13
+					// END KGU#377 2017-03-30
 
 					if(!display.equals(""))
 					{
@@ -2261,6 +2693,12 @@ public abstract class Element {
 							// set font
 							_canvas.setFont(boldFont);
 						}
+						// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
+						else if (root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
+							// set font
+							_canvas.setFont(boldFont);
+						}
+						// END KGU#388 2017-09-17
 						// if this part has to be colored with special color
 						else if(specialSigns.contains(display))
 						{
@@ -2272,7 +2710,7 @@ public abstract class Element {
 						// if this part has to be colored with io color
 						// START KGU#165 2016-03-25: consider the new option
 						//else if(ioSigns.contains(display))
-						else if(ioSigns.contains(display, !D7Parser.ignoreCase))
+						else if(ioSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
 							// set color
@@ -2284,7 +2722,7 @@ public abstract class Element {
 						// START KGU#116 2015-12-23: Enh. #75
 						// START KGU#165 2016-03-25: cosider the new option
 						//else if(jumpSigns.contains(display))
-						else if(jumpSigns.contains(display, !D7Parser.ignoreCase))
+						else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
 							// set color
@@ -2347,11 +2785,6 @@ public abstract class Element {
 	 */
 	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw)
 	{
-		return writeOutCommentLines(_canvas, _x, _y, _actuallyDraw, true);
-	}
-
-	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw, boolean _allLines)
-	{
 		int height = 0;
 		int width = 0;
 		// smaller font
@@ -2364,22 +2797,16 @@ public abstract class Element {
 		_canvas.setFont(smallFont);
 		_canvas.setColor(Color.DARK_GRAY);
 		int nLines = this.getComment().count();
-		String appendix = "";
-		if (nLines > 1 && !_allLines)
-		{
-			nLines = 1;
-			appendix = "...";
-		}
 		for (int i = 0; i < nLines; i++)
 		{
 			String line = this.getComment().get(i).trim();
 			if (!line.isEmpty())
 			{
 				height += fontHeight;
-				width = Math.max(width, _canvas.stringWidth(line + appendix));
+				width = Math.max(width, _canvas.stringWidth(line));
 				if (_actuallyDraw)
 				{
-					_canvas.writeOut(_x, _y + height + extraHeight, line + appendix);
+					_canvas.writeOut(_x, _y + height + extraHeight, line);
 				}
 			}
 		}
@@ -2462,7 +2889,7 @@ public abstract class Element {
     }
     
     // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
-    protected ImageIcon getIcon()
+    public ImageIcon getIcon()
     {
     	return IconLoader.ico057;
     }
@@ -2579,9 +3006,10 @@ public abstract class Element {
     public StringList getIntermediateText()
     {
     	StringList interSl = new StringList();
-    	for (int i = 0; i < text.count(); i++)
+    	StringList lines = this.getUnbrokenText();
+    	for (int i = 0; i < lines.count(); i++)
     	{
-    		interSl.add(transformIntermediate(text.get(i)));
+    		interSl.add(transformIntermediate(lines.get(i)));
     	}
     	return interSl;
     }
@@ -2658,18 +3086,18 @@ public abstract class Element {
     {
     	// Collect redundant placemarkers to be deleted from the text
         StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.getKeyword("preAlt"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("preCase"));
-        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.getKeyword("preWhile"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("preRepeat"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("preAlt"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("preCase"));
+        //redundantMarkers.addByLength(CodeParser.preFor);	// will be handled separately
+        redundantMarkers.addByLength(CodeParser.getKeyword("preWhile"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("preRepeat"));
 
-        redundantMarkers.addByLength(D7Parser.getKeyword("postAlt"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("postCase"));
-        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
-        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.getKeyword("postWhile"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("postRepeat"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("postAlt"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("postCase"));
+        //redundantMarkers.addByLength(CodeParser.postFor);	// will be handled separately
+        //redundantMarkers.addByLength(CodeParser.stepFor);	// will be handled separately
+        redundantMarkers.addByLength(CodeParser.getKeyword("postWhile"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("postRepeat"));
         
         for (int i = 0; i < redundantMarkers.count(); i++)
         {
@@ -2679,7 +3107,7 @@ public abstract class Element {
         		StringList markerTokens = Element.splitLexically(marker, false);
         		int markerLen = markerTokens.count();
         		int pos = -1;
-        		while ((pos = _tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
+        		while ((pos = _tokens.indexOf(markerTokens, 0, !CodeParser.ignoreCase)) >= 0)
         		{
         			for (int j = 0; j < markerLen; j++)
         			{
@@ -2706,7 +3134,7 @@ public abstract class Element {
     /**
      * Returns a fixed array of names of parser preferences being relevant for
      * the current type of Element (e.g. in case of refactoring)
-     * @return Arrays of key strings for D7Parser.keywordMap
+     * @return Arrays of key strings for CodeParser.keywordMap
      */
     protected abstract String[] getRelevantParserKeys();
     
@@ -2751,7 +3179,7 @@ public abstract class Element {
 			StringList splitKey = _splitOldKeys.get(_prefNames[i]);
 			if (splitKey != null)
 			{
-				String subst = D7Parser.getKeyword(_prefNames[i]);
+				String subst = CodeParser.getKeyword(_prefNames[i]);
 				// line shouldn't be inflated ...
 				if (!splitKey.get(0).equals(" ")) {
 					while (subst.startsWith(" ")) subst = subst.substring(1); 
@@ -2793,8 +3221,8 @@ public abstract class Element {
 	/**
 	 * Helper method to detect exactly whether the given {@code expression} is enclosed in parentheses.
 	 * Simply check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
-	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a parenthesis without
-	 * being parenthesized.  
+	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with parentheses without
+	 * being parenthesized.
 	 * @param expression - the expression to be analysed as string
 	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
 	 * in C and derived languages.
@@ -2804,29 +3232,67 @@ public abstract class Element {
 		boolean isEnclosed = expression.startsWith("(") && expression.endsWith(")");
 		if (isEnclosed) {
 			StringList tokens = Element.splitLexically(expression, true);
-			int level = 0;
-			for (int i = 1; level >= 0 && i < tokens.count()-1; i++) {
-				String token = tokens.get(i);
-				if (token.equals("(")) {
-					level++;
-				}
-				else if (token.equals(")")) {
-					level--;
-				}
-			}
-			isEnclosed = level == 0;
+			isEnclosed = isParenthesized0(tokens);
 		}
 		return isEnclosed;
 	}
 	// END KGU#301 2016-12-01
+	
+	// START KGU#301 2017-09-19: Issue #302: Method isParenthesized(String expression) decomposed
+	/**
+	 * Helper method to detect exactly whether expression represented by the given {@code tokens} is enclosed
+	 * in parentheses.<br>
+	 * Simply to check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
+	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with parentheses without
+	 * being parenthesized.
+	 * @param tokens - the tokenised expression to be analysed as StringList
+	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
+	 * in C and derived languages.
+	 */
+	public static boolean isParenthesized(StringList tokens)
+	{
+		return tokens.count() > 1 && tokens.get(0).equals("(") && tokens.get(tokens.count()-1).equals(")")
+				&& isParenthesized0(tokens);
+	}
+	
+	// Internal check for both public isParenthesized() methods
+	private static boolean isParenthesized0(StringList tokens) {
+		boolean isEnclosed;
+		int level = 0;
+		for (int i = 1; level >= 0 && i < tokens.count()-1; i++) {
+			String token = tokens.get(i);
+			if (token.equals("(")) {
+				level++;
+			}
+			else if (token.equals(")")) {
+				level--;
+			}
+		}
+		isEnclosed = level == 0;
+		return isEnclosed;
+	}
+	// END KGU#301 2019-09-19
 
 	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
+	/**
+	 * Checks whether this element or one of its ancestors is disabled 
+	 * @return true if directly or indirectly disabled
+	 */
 	public boolean isDisabled()
 	{
 		return this.disabled || (this.parent != null && this.parent.isDisabled());
 	}
 	// END KGU#277 2016-10-13
-
+	
+	// START KGU 2017-10-21 New deep reachability check
+	/** @return whether an entered control flow may leave this element sequentially. */
+	public boolean mayPassControl()
+	{
+		// Normally, the control flow will leave every element.
+		return true;
+	}
+	// END KGU 2017-10-21
+	
 	// START KGU#261 2017-01-19: Enh. #259 (type map)
 	public Element findElementWithId(long _id)
 	{
@@ -2871,20 +3337,155 @@ public abstract class Element {
 	}
 	// END KGU#261 2017-01-19
 	
-	// START KGU#261 2017-01-26: Enh. #259 
-	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean isCStyle)
+	// START KGU#261 2017-01-26: Enh. #259
+	/**
+	 * Analyses the given {@code typeSpec} string and adds a derived {@code TypeMapEntry.VarDeclaration}
+	 * to the {@code typeMap} associated to the given {@code varName}.
+	 * @param typeMap - maps variable and type names to gathered detailed type information 
+	 * @param varName - name of a variable being declared
+	 * @param typeSpec - a type-describing string (might be a type name or a type construction)
+	 * @param lineNo - number of the element text line containing the type description
+	 * @param isAssigned - is to indicate whether a value is assigned here
+	 * @param explicitly - whether the type association was an explicit declaration or just guessed
+	 * @param isCStyle - additional indication whether the type description a C-like syntax
+	 */
+	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly, boolean isCStyle)
 	{
 		if (varName != null && !typeSpec.isEmpty()) {
 			TypeMapEntry entry = typeMap.get(varName);
-			if (entry == null) {
-				// Add a new entry to the type map
-				typeMap.put(varName, new TypeMapEntry(typeSpec, this, lineNo, isAssigned, isCStyle));
+			// Get the referred type entry in case typeSpec is a previously defined type
+			TypeMapEntry typeEntry = null;
+			if (Function.testIdentifier(typeSpec, null)) {
+				typeEntry = typeMap.get(":" + typeSpec);
 			}
-			else {
+			if (entry == null) {
+				if (typeEntry != null) {
+					typeMap.put(varName, typeEntry);
+				}
+				else {
+					// Add a new entry to the type map
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, this, lineNo, isAssigned, explicitly, isCStyle));
+				}
+			}
+			else if (typeEntry == null || !typeEntry.isRecord()) {
 				// add an alternative declaration to the type map entry
 				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
 			}
 		}				
+	}
+	
+	// START KGU#388 2017-09-13: Enh. #423
+	/**
+	 * Adds a record type definition with name {@code typeName} and component definitions
+	 * from lists {@code compNames} and {@code compTypes} to the {@code typeMap}.
+	 * @param typeMap - maps variable and type names to gathered detailed type information 
+	 * @param typeName - name of the new defined type
+	 * @param typeSpec - a type-describing string as found in the definition
+	 * @param compNames - list of the component identifiers (strings)
+	 * @param compTypes - list of type-describing strings (a type name or a type construction)
+	 * @param lineNo - number of the element text line containing the type description
+	 * @param isAssigned - is to indicate whether a value is assigned here
+	 * @param isCStyle - additional indication whether the type description a C-like syntax
+	 * @return true if the {@code typeName} was new and could be placed in the {@code typeMap}.
+	 */
+	protected boolean addRecordTypeToTypeMap(HashMap<String,TypeMapEntry> typeMap, String typeName, String typeSpec, StringList compNames, StringList compTypes, int lineNo)
+	{
+		boolean done = false;
+		if (typeName != null && compNames.count() > 0 && compTypes.count() == compNames.count()) {
+			TypeMapEntry entry = typeMap.get(":" + typeName);
+			// Get the referred type entry in case typeSpec is a previously defined type
+			if (entry == null) {
+				// Add a new entry to the type map
+				boolean isRecursive = false;
+				LinkedHashMap<String, TypeMapEntry> components = new LinkedHashMap<String, TypeMapEntry>();
+				for (int i = 0; i < compNames.count(); i++) {
+					TypeMapEntry compEntry = null; 
+					if (i < compTypes.count()) {
+						String type = compTypes.get(i);
+						if (type != null) {
+							if (Function.testIdentifier(type, null)) {
+								// Try to find an existing type entry with this name
+								compEntry = typeMap.get(":" + type);
+								if (compEntry == null) {
+									if (type.equals(typeName)) {
+										isRecursive = true;
+										// We postpone the completion of this self-referencing component 
+									}
+									else {
+										// Create a named dummy entry
+										compEntry = new TypeMapEntry(type, type, this, lineNo, false, true, false);
+									}
+								}
+							}
+							else {
+								// Create an unnamed dummy entry
+								compEntry = new TypeMapEntry(type, null, this, lineNo, false, true, false);
+							}
+						}
+					}
+					// Note that compEntry may be null here
+					if (compEntry == null) compEntry = TypeMapEntry.getDummy();
+					components.put(compNames.get(i), compEntry);
+				}
+				entry = new TypeMapEntry(typeSpec, typeName, components, this, lineNo);
+				// In case of self-references map the respective component names to the created TypeMapEntry 
+				if (isRecursive) {
+					for (int i = 0; i < compNames.count(); i++) {
+						if (i < compTypes.count() && typeName.equals(compTypes.get(i))) {
+							components.put(compNames.get(i), entry);
+						}
+					}
+				}
+				// Now register the accomplished type entry
+				typeMap.put(":" + typeName, entry);
+				done = true;
+			}
+			else {
+				System.out.println("*** Type redefinition attempt for \"" + typeName + "\"!");
+			}
+		}
+		return done;
+	}
+	// END KGU#388 2017-09-13
+
+	/**
+	 * Negates the given condition as intelligently as possible.
+	 * @param condition - a boolean expression (in Structorizer-conform syntax)
+	 * @return an expression reprsenting the logical opposite of {@code condition}
+	 */
+	public static String negateCondition(String condition)
+	{
+		String negCondition = null;
+		StringList condTokens = Element.splitLexically(condition, true);
+		int length = condTokens.count();
+		String first = condTokens.get(0);
+		// Already explicitly negated?
+		if (first.equals("not") || first.equals("!")) {
+			int i = 1;
+			while (i < length && condTokens.get(i).trim().isEmpty()) i++;
+			if (i == length-1) {
+				// Obviously a single negated token, so just drop the operator
+				negCondition = condTokens.get(i); 
+			}
+			else if (i < length && Element.isParenthesized(condTokens.subSequence(i, length))) {
+				negCondition = condTokens.subSequence(i+1, length-1).concatenate();
+			}
+		}
+		if (negCondition == null) {
+			if (!Element.isParenthesized(condTokens)) {
+				condition = "(" + condition + ")";
+			}
+			negCondition = "not " + condition;
+		}
+		return negCondition;
+	}
+	
+	public void setRotated(boolean _rotated)
+	{
+		if (rotated != _rotated) {
+			// Flip the stored rectangle
+			this.rect0 = new Rect(rect0.left, rect0.top, rect0.bottom, rect0.right);
+		}
 	}
 
 }

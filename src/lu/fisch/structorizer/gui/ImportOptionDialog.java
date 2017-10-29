@@ -19,8 +19,7 @@
  */
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
@@ -36,29 +35,46 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
  *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.03.06  Enh. #368: New code option to import variable declarations
+ *      Kay Gürtzig     2017.04.27  Enh. #354: New option logDir, all layouts fundamentally revised
+ *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls 
+ *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
  *
- ******************************************************************************************************/
-//
+ ******************************************************************************************************///
 
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Set;
+import java.util.Vector;
 
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
+import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.parsers.GENParser;
 
 /**
  * This Dialog allows to control certain settings for the file import.
@@ -76,12 +92,18 @@ public class ImportOptionDialog extends LangDialog {
         setModal(true);
     }
 
-    public ImportOptionDialog(Frame frame)
+    // START KGU#416 2017-06-20: Enh. #354, #357: Signature changed
+    //public ImportOptionDialog(Frame frame)
+    //{
+    public ImportOptionDialog(Frame _frame, Vector<GENPlugin> _plugins)
     {
+    	plugins = _plugins;
+    // END KGU#416 2017-06-20
         initComponents();
         setModal(true);
-        setLocationRelativeTo(frame);
+        setLocationRelativeTo(_frame);
     }
+    // END KGU416 2017-06-20
 
     /**
      * This method is called from within the constructor to
@@ -91,10 +113,8 @@ public class ImportOptionDialog extends LangDialog {
     private void initComponents() {
 
         pnlTop = new javax.swing.JPanel();
-        pnlCharSet = new javax.swing.JPanel();
         pnlButtons = new javax.swing.JPanel();
         pnlOptions = new javax.swing.JPanel();
-        pnlWrapper = new javax.swing.JPanel();
         pnlCode = new javax.swing.JPanel();
         pnlNSD = new javax.swing.JPanel();
         pnlPreference = new javax.swing.JPanel();
@@ -105,19 +125,26 @@ public class ImportOptionDialog extends LangDialog {
         lbCharset = new javax.swing.JLabel();
         cbCharset = new javax.swing.JComboBox<String>();
         chkCharsetAll = new javax.swing.JCheckBox();
+        // START KGU#354 2017-04-27: Enh. #354 Specify a log directory
+        chkLogDir = new javax.swing.JCheckBox();
+        txtLogDir = new javax.swing.JTextField(20);
+        btnLogDir = new javax.swing.JButton("<<");
+        // END KGU#354 2017-04-27
+        // START KGU#358 2017-03-06: Enh. #368
+        chkVarDeclarations = new javax.swing.JCheckBox();
+        // END KGU#358 2017-03-06
+        // START KGU#407 2017-06-22: Enh. #420 - new option to import statement comments
+        chkCommentImport = new javax.swing.JCheckBox();
+        // END KGU#407 2017-06-22
+        // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+        chkSaveParseTree = new javax.swing.JCheckBox();
+        // END KGU#354 2017-03-08
+        // START KGU#416 2017-06-20: Enh. #354,#357
+        btnPluginOptions = new javax.swing.JButton();
+        cbOptionPlugins = new javax.swing.JComboBox<String>(this.getCodeParserNames(true));
+        // END KGU#416 2017-06-20
 
         setTitle("Import options ...");
-
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
-        pnlTop.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
 
         lbCharset.setText("Character Set: ");
         lbCharset.setMinimumSize(
@@ -134,14 +161,67 @@ public class ImportOptionDialog extends LangDialog {
         		charsetListChanged((String)cbCharset.getSelectedItem());
         	}
         });
+        
+        // START KGU#354 2017-04-27: Enh. #354 Specify a log directory
+        chkLogDir.setText("Log to folder");
+        chkLogDir.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                doLogButtons();
+            }
+        });
+        btnLogDir.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jlogDirButtonActionPerformed(evt);
+            }
+        });
+        // END KGU#354 2017-04-27
+
+        // START KGU#358 2017-03-06: Enh. #368
+        chkVarDeclarations.setText("Import variable declarations");
+        chkVarDeclarations.setToolTipText("With this option enabled, parser will make instruction elements from variable declarations.");
+        // END KGU#358 2017-03-06
+        // START KGU#407 2017-06-22: Enh. #420
+        chkCommentImport.setText("Import source code comments");
+        chkCommentImport.setToolTipText("With this option enabled, parser may equip derived elements with comments found closest in the source code.");
+        // END KGU#407 2017-06-22
+        // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+        chkSaveParseTree.setText("Write parse tree to file after import");
+        chkSaveParseTree.setToolTipText("After a successful import you may obtain the syntax tree saved to a text file \"*.parsetree.txt\".");
+        // END KGU#354 2017-03-08
+
+        // START KGU#416 2017-06-20: Enh. #354,#357
+        btnPluginOptions.setText("Language-specific Options");
+        btnPluginOptions.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+            	String pluginTitle = (String) cbOptionPlugins.getSelectedItem();
+            	// Identify the plugin by its title
+            	int pluginIndex = -1;
+            	for (int i = 0; pluginIndex < 0 && i < plugins.size(); i++) {
+            		GENPlugin plugin = plugins.get(i);
+            		if (pluginTitle.equals(plugin.title)) {
+            			pluginIndex = i;
+            		}
+            	}
+            	// If found then we can open the dialog
+            	if (pluginIndex >= 0) {
+            		openSpecificOptionDialog(
+            				msgOptionsForPlugin.getText(),
+            				plugins.get(pluginIndex),
+            				parserOptions.get(pluginIndex));
+            	}
+			}});
+        cbOptionPlugins.setMaximumSize(
+        		new Dimension(cbOptionPlugins.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
+        if (cbOptionPlugins.getItemCount() == 0) {
+        	btnPluginOptions.setVisible(false);
+        	cbOptionPlugins.setVisible(false);
+        }
+        // END KGU#416 2017-06-20
 
         chkRefactorOnLoading.setText("Replace keywords on loading a diagram (refactoring).");
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
         chkRefactorOnLoading.setAlignmentX(LEFT_ALIGNMENT);
-
-        //chkOfferRefactoringIni.setText("Offer refactoring on loading preferences from file.");
-        //chkOfferRefactoringIni.setToolTipText("Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.");
-        //chkOfferRefactoringIni.setAlignmentX(LEFT_ALIGNMENT);
 
         lbIntro.setText("Please select the options you want to activate ...");
 
@@ -155,42 +235,171 @@ public class ImportOptionDialog extends LangDialog {
         Container content = getContentPane();
         content.setLayout(new BorderLayout());
         
-        pnlTop.setLayout(new GridLayout(1,1,4,4));
-        pnlTop.setBorder(new EmptyBorder(12,12,0,12));
-        pnlTop.add(lbIntro);
-        
-        pnlCharSet.setLayout(new GridLayout(1, 3, 8, 8));
-        pnlCharSet.add(lbCharset);
-        pnlCharSet.add(cbCharset);
-        pnlCharSet.add(chkCharsetAll);
+        org.jdesktop.layout.GroupLayout pnlTopLayout = new org.jdesktop.layout.GroupLayout(pnlTop);
+        pnlTop.setLayout(pnlTopLayout);
+        pnlTopLayout.setHorizontalGroup(
+        		pnlTopLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        				.add(pnlTopLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        		        		.add(pnlTopLayout.createSequentialGroup()
+        		        				.addContainerGap()
+        		        				.add(lbIntro)
+        		        				.addContainerGap()
+        		        				)
+        		        		.add(pnlOptions)
+        						)
+        		);
+        pnlTopLayout.setVerticalGroup(
+        		pnlTopLayout.createSequentialGroup()
+        		.addContainerGap()
+        		.add(lbIntro)
+        		.add(pnlOptions)
+        		);
         
         pnlCode.setBorder(new TitledBorder("Code Files"));
-        pnlCode.setLayout(new GridLayout(0, 1, 0 , 1));
-        pnlCode.add(pnlCharSet);
+        org.jdesktop.layout.GroupLayout pnlCodeLayout = new org.jdesktop.layout.GroupLayout(pnlCode);
+        pnlCode.setLayout(pnlCodeLayout);
+        pnlCodeLayout.setHorizontalGroup(
+        		pnlCodeLayout.createParallelGroup()
+        		.add(pnlCodeLayout.createSequentialGroup()
+        				.add(pnlCodeLayout.createParallelGroup()
+        						.add(pnlCodeLayout.createSequentialGroup()
+        								.addContainerGap()
+        								.add(lbCharset)
+        						)
+                				.add(chkLogDir)
+				        		// START KGU#416 2017-06-20: Enh. #354, #357
+								.add(btnPluginOptions)
+				        		// END KGU#416 2017-06-20
+                				)
+        				.add(pnlCodeLayout.createParallelGroup()
+        						.add(pnlCodeLayout.createSequentialGroup()
+        		        				.add(cbCharset)
+        		        				.add(chkCharsetAll)
+        								)
+        						.add(pnlCodeLayout.createSequentialGroup()
+        		        				.add(txtLogDir)
+        		        				.add(btnLogDir)
+        								)
+		                		// START KGU#416 2017-06-20: Enh. #354, #357
+		        				.add(cbOptionPlugins)
+		                		// END KGU#416 2017-06-20
+        						)
+        				)
+        		.add(chkVarDeclarations)
+        		.add(chkCommentImport)
+        		.add(chkSaveParseTree)
+        		);
+        pnlCodeLayout.setVerticalGroup(
+        		pnlCodeLayout.createSequentialGroup()
+        		.add(pnlCodeLayout.createParallelGroup()
+        				.add(pnlCodeLayout.createSequentialGroup()
+        						.add(lbCharset)
+        						.addContainerGap()
+        						.add(chkLogDir)
+        						)
+        				.add(pnlCodeLayout.createSequentialGroup()
+        						.add(pnlCodeLayout.createParallelGroup()
+        								.add(cbCharset)
+        								.add(chkCharsetAll)
+        								)
+        						.addContainerGap()
+           						.add(pnlCodeLayout.createParallelGroup()
+        								.add(txtLogDir)
+        								.add(btnLogDir)
+        								)
+        						)
+        				)
+        		.add(chkVarDeclarations)
+        		.add(chkCommentImport)
+        		.add(chkSaveParseTree)
+        		// START KGU#416 2017-06-20: Enh. #354, #357
+        		.add(pnlCodeLayout.createParallelGroup()
+                		.add(btnPluginOptions)
+                		.add(cbOptionPlugins)
+                		)
+        		// END KGU#416 2017-06-20
+        		);
         
         pnlNSD.setBorder(new TitledBorder("NSD Files"));
-        pnlNSD.setLayout(new GridLayout(0, 1, 0, 1));
-        pnlNSD.add(chkRefactorOnLoading);
+//        pnlNSD.setLayout(new GridLayout(0, 1, 0, 1));
+        org.jdesktop.layout.GroupLayout pnlNSDLayout = new org.jdesktop.layout.GroupLayout(pnlNSD);
+        pnlNSD.setLayout(pnlNSDLayout);
+        //pnlNSD.add(chkRefactorOnLoading);
+        pnlNSDLayout.setHorizontalGroup(
+        		pnlNSDLayout.createParallelGroup()
+        		.add(chkRefactorOnLoading)
+        		);
+        pnlNSDLayout.setVerticalGroup(
+        		pnlNSDLayout.createSequentialGroup()
+        		.add(chkRefactorOnLoading)
+        		);
         
         pnlPreference.setBorder(new TitledBorder("Preference Files"));
         pnlPreference.setLayout(new GridLayout(0, 1, 0, 1));
         //pnlPreference.add(chkOfferRefactoringIni);
 
-        pnlOptions.setLayout(new GridLayout(0,1,4,4));
-        pnlOptions.setBorder(new EmptyBorder(12,12,12,12));
-        pnlOptions.add(pnlCode, BorderLayout.CENTER);
-        pnlOptions.add(pnlNSD, BorderLayout.CENTER);
-        //pnlOptions.add(pnlPreference, BorderLayout.CENTER);
-        
+        GridBagLayout gbOptions = new GridBagLayout();
+        GridBagConstraints gbcOptions = new GridBagConstraints();
+        gbcOptions.insets = new Insets(12, 12, 12, 12);
+        pnlOptions.setLayout(gbOptions);
+        gbcOptions.gridx = 1;
+        gbcOptions.gridy = 1;
+        gbcOptions.gridwidth = 1;
+        gbcOptions.gridheight = 1;
+        gbcOptions.fill = GridBagConstraints.BOTH;
+        gbcOptions.weightx = 1;
+        gbcOptions.weighty = 1;
+        gbcOptions.anchor = GridBagConstraints.NORTH;
+        gbOptions.setConstraints(pnlCode, gbcOptions);
+        pnlOptions.add(pnlCode);
+        gbcOptions.gridy = 2;
+        gbOptions.setConstraints(pnlNSD, gbcOptions);
+        pnlOptions.add(pnlNSD);
+        //pnlOptions.add(pnlPreference);
+         
         pnlButtons.setLayout(new BorderLayout());
         pnlButtons.setBorder(new EmptyBorder(12,12,12,12));
         pnlButtons.add(btnOk, BorderLayout.EAST);
         
-        pnlWrapper.add(pnlOptions);
-        
         content.add(pnlTop, BorderLayout.NORTH);
-        content.add(pnlWrapper, BorderLayout.CENTER);
         content.add(pnlButtons, BorderLayout.SOUTH);
+        
+        // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent e) 
+			{
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					setVisible(false);
+				}
+				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				{
+					goOn = true;
+					setVisible(false);
+				}
+			}
+			
+			public void keyReleased(KeyEvent ke) {} 
+			public void keyTyped(KeyEvent kevt) {}
+		};
+		btnOk.addKeyListener(keyListener);
+		cbCharset.addKeyListener(keyListener);
+		chkCharsetAll.addKeyListener(keyListener);
+		chkLogDir.addKeyListener(keyListener);
+		chkSaveParseTree.addKeyListener(keyListener);
+		chkVarDeclarations.addKeyListener(keyListener);
+		chkCommentImport.addKeyListener(keyListener);
+		chkRefactorOnLoading.addKeyListener(keyListener);
+		// END KGU#393 2017-05-09		
+	    // START KGU#416 2017-06-20: Enh. #354. #357
+		btnPluginOptions.addKeyListener(keyListener);
+		cbOptionPlugins.addKeyListener(keyListener);
+	    // END KGU#416 2017-06-20
+
+		// START KGU#354 2017-04-27
+        doLogButtons();
+        // END KGU#354 2017-04-27
         
         // START KGU#287 2017-01-09: Issues #81, #330
         GUIScaler.rescaleComponents(this);
@@ -201,11 +410,70 @@ public class ImportOptionDialog extends LangDialog {
         
     }// </editor-fold>//GEN-END:initComponents
 
+    // START KGU#416 2017-06-20: Enh. #354,#357
+    protected void openSpecificOptionDialog(String TitleFormat, GENPlugin plugin, HashMap<String, String> optionValues) {
+    	PluginOptionDialog pod = new PluginOptionDialog(plugin, optionValues);
+    	pod.setTitle(TitleFormat.replace("%", plugin.title));
+    	pod.setVisible(true);
+    }
+    // END KGU#416 2017-06-20
+
     private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
     {//GEN-HEADEREND:event_jButton1ActionPerformed
+        // START KGU#354 2017-04-27: Enh. #354 Specify a log directory
+        String logPath = txtLogDir.getText().trim();
+        if (chkLogDir.isSelected() && !logPath.isEmpty() && !logPath.equals(".")) {
+    	    File logDir = new File(logPath);
+    	    String errMsg = null;
+    	    if (!logDir.isDirectory()) {
+    	        errMsg = this.msgDirDoesntExist.getText();
+    	    }
+    	    else {
+    	    	File test = new File(logDir, "###test###.txt");
+    	    	try {
+    	    		test.createNewFile();
+    	    		test.delete();
+    	    	}
+    	    	catch (IOException ex) {
+    	    		errMsg = this.msgDirNotWritable.getText();
+    	    	}
+    	    }
+    	    if (errMsg != null) {
+    	        JOptionPane.showMessageDialog(this,
+    	                errMsg.replace("%", logPath),
+    	                chkLogDir.getText(), JOptionPane.ERROR_MESSAGE);
+    	        txtLogDir.requestFocusInWindow();
+    	        return;
+    	    }
+        }
+        // END KGU#354 2017-04-27
         goOn = true;
         this.setVisible(false);
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    // START KGU#354 2017-04-27: Enh. #354
+    private void jlogDirButtonActionPerformed(ActionEvent evt)
+    {
+    	String path = txtLogDir.getText();
+    	JFileChooser logDirChooser = new JFileChooser();
+    	logDirChooser.setDialogTitle(chkLogDir.getText());
+    	if (!path.isEmpty()) {
+    		logDirChooser.setCurrentDirectory(new File(path));
+    	}
+    	logDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    	int answer = logDirChooser.showOpenDialog(this);
+    	if (answer == JFileChooser.APPROVE_OPTION) {
+    		txtLogDir.setText(logDirChooser.getSelectedFile().getAbsolutePath());
+    	}
+    }
+    
+    public void doLogButtons()
+    {
+		boolean isLogEnabled = chkLogDir.isSelected();
+		txtLogDir.setEnabled(isLogEnabled);
+		btnLogDir.setEnabled(isLogEnabled);    	
+    }
+    // END KGU#354 2017-04-27
 
     public void charsetListChanged(String favouredCharset)
     {
@@ -243,61 +511,87 @@ public class ImportOptionDialog extends LangDialog {
     		cbCharset.setSelectedItem(favouredCharset);
     	}
     }
-    
+
     /**
-     * @param args the command line arguments
+     * Returns a vector of the titles of all available Code Parsers. The list may be
+     * restricted to those that provide specific options by {@code withOptionsOnly}
+     * @param withOptionsOnly - if true then only the titles of parsers with options will be returned
+     * @return The parser titles (actually rather language names)
      */
-    public static void main(String args[])
+    private Vector<String> getCodeParserNames(boolean withOptionsOnly)
     {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try
-        {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
-            {
-                if ("Nimbus".equals(info.getName()))
-                {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex)
-        {
-            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex)
-        {
-            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex)
-        {
-            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex)
-        {
-            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable()
-        {
-
-            public void run()
-            {
-                new ImportOptionDialog().setVisible(true);
-            }
-        });
+    	if (this.plugins == null) {
+    		// read generators from file
+    		// and add them to the Vector
+    		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
+    		GENParser genp = new GENParser();
+    		this.plugins = genp.parse(buff);
+    		try { buff.close();	} catch (IOException e) {}
+    	}
+    	Vector<String> parserTitles = new Vector<String>();
+		for(int i = 0; i < plugins.size(); i++)
+		{
+			if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
+				parserTitles.add(plugins.get(i).title);
+			}
+		}
+		return parserTitles;
     }
+
+//    /**
+//     * @param args the command line arguments
+//     */
+//    public static void main(String args[])
+//    {
+//        /* Set the Nimbus look and feel */
+//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+//         */
+//        try
+//        {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
+//            {
+//                if ("Nimbus".equals(info.getName()))
+//                {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+//        } catch (ClassNotFoundException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (InstantiationException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (IllegalAccessException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (javax.swing.UnsupportedLookAndFeelException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        }
+//        //</editor-fold>
+//
+//        /* Create and display the form */
+//        java.awt.EventQueue.invokeLater(new Runnable()
+//        {
+//
+//            public void run()
+//            {
+//                new ImportOptionDialog().setVisible(true);
+//            }
+//        });
+//    }
     
     public static String[] standardCharsets = {"ISO-8859-1", "UTF-8", "UTF-16", "windows-1250", "windows-1252", "US-ASCII"};
     
     // Variables declaration
     private javax.swing.JPanel pnlTop;
-    private javax.swing.JPanel pnlCharSet;
+    // START KGU#354 2017-04-27: Enh. #354 Specify a log directory
+    // END KGU#354 2017-04-27
     private javax.swing.JPanel pnlButtons;
     private javax.swing.JPanel pnlOptions;
-    private javax.swing.JPanel pnlWrapper;
     public javax.swing.JPanel pnlNSD;
     public javax.swing.JPanel pnlPreference;
     public javax.swing.JPanel pnlCode;
@@ -319,6 +613,29 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JLabel lbCharset;
     public javax.swing.JComboBox<String> cbCharset;
     public javax.swing.JCheckBox chkCharsetAll;
+    public final LangTextHolder msgDirDoesntExist = new LangTextHolder("The selected log directory % doesn't exist!"); 
+    public final LangTextHolder msgDirNotWritable = new LangTextHolder("The selected log directory % is not writable!"); 
+    // START KGU#358 2017-03-06: Enh. #368 - new option to import mere declarations
+    public javax.swing.JCheckBox chkVarDeclarations;
+    // END KGU#358 2017-03-06
+    // START KGU#407 2017-06-22: Enh. #420 - new option to import statement comments
+    public javax.swing.JCheckBox chkCommentImport;
+    // END KGU#407 2017-06-22
+    // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+    public javax.swing.JCheckBox chkSaveParseTree;
+    // END KGU#354 2017-03-08
+    // START KGU#354 2017-04-27: Enh. #354 Specify a log directory
+    public javax.swing.JCheckBox chkLogDir;
+    public javax.swing.JTextField txtLogDir;
+    public javax.swing.JButton btnLogDir;
+    // END KGU#354 2017-04-27
     // End of variables declaration
-
+	// START KGU#416 2017-06-20: Enh. #354, #357
+	public Vector<GENPlugin> plugins = null;
+	// In order of plugins there is an option value map per parser plugin
+	public Vector<HashMap<String, String>> parserOptions = new Vector<HashMap<String, String>>();
+	public javax.swing.JButton btnPluginOptions;
+	public javax.swing.JComboBox<String> cbOptionPlugins;
+	public final LangTextHolder msgOptionsForPlugin = new LangTextHolder("Options for % Parser");
+	// END KGU#416 2017-06-20
 }

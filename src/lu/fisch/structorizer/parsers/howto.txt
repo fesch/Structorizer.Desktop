@@ -1,0 +1,151 @@
+This is just a little file that explains
+ __ __   ___   __    __    ______   ___  
+|  |  | /   \ |  |__|  |  |      | /   \ 
+|  |  ||     ||  |  |  |  |      ||     |
+|  _  ||  O  ||  |  |  |  |_|  |_||  O  |
+|  |  ||     ||  `  '  |    |  |  |     |
+|  |  ||     | \      /     |  |  |     |
+|__|__| \___/   \_/\_/      |__|   \___/
+
+ADD A NEW LANGUAGE TO STRUCTORIZER IMPORT
+=========================================
+Author:      Kay Gürtzig
+Last update: 2017-06-22
+
+Structorizer uses the GOLD Parser version 5.0 (http://www.goldparser.org) in
+combination with a compiled grammar for the source language to derive a structogram
+from source code.
+
+You should be familiar with the concepts of grammars, parsers, and compilers and you
+should have understood the tree structure Structorizer uses to represent Nassi-
+Shneiderman diagrams.
+
+All information you need for GOLD Parser can be found on the GOLDParser website
+(http://www.goldparser.org).
+
+1. GRAMMAR FILE
+First you need a grammar for the programming language you want to add an import for.
+A grammar file as required for GOLD Parser (grm file) is to be written in an easy-to-
+understand dialect of EBNF (Enhanced Backus-Naur Form).
+Before the grammar rules begin, some preceding lines will have to define the lexical
+tokens used by the grammar rules (e.g. number literals, identifiers etc.). These are
+(according to the Chomsky type 3 of lexic) defined by some sort of regular expressions.
+The documentation is around here: http://goldparser.org/doc/grammars/index.htm.
+Be aware that the GOLD Parser is a LALR(1) parser which makes it performant but imposes
+some restrictions to the way grammar rules are to be formed.
+In general, it is a good idea to start with some grammar for a very similar language,
+which GOLD Parser is known to work with. You may find examples in this directory and
+on the GOLD Parser homepage (http://goldparser.org/grammars/index.htm). 
+To set up the grammar, the graphical GOLD Builder tool is recommended. It provides
+excellent diagnostics for conflicting rules.
+
+2. COMPILED GRAMMAR TABLE
+Convert the grammar file to a set of compiled grammar tables. For Windows, you can
+download a command-line tool GOLDbuild.exe with the following URL:
+http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip
+Make sure to unzip all the dat files together with the GOLDbuild.exe into the same folder.
+The GOLDbuild tool analyzes the grammar and constructs the decision tables for the parser
+from them. This takes some seconds and results in an egt file, which contains the tables
+for the state-driven LALR(1) parsing engine. If your grammar is for language XYZ then the
+command line will simply look like:
+GOLDbuild.exe XYZ.grm
+This will create a file XYZ.egt by default.
+If the grammar is not suited for LALR(1) parsing, however, then you will get some dozens
+or more conflict messages but no egt file. In this case you will have to reformulate the
+rules until the grammar passes the GOLDbuild process. This may get tricky if the language
+itself is intrinsically ambiguous.
+
+3. PARSER CLASS SKELETON
+If you have luckily obtained an egt file (or have downloaded an also suited cgt file -
+which is just an older file format for GOLD parser compiled grammar tables) then you
+will have to generate a Parser skeleton for this grammar.
+Again you may use a command-line tool GOLDprog.exe downloaded together with GOLDbuild
+from http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
+In order to create a meaningful parser class you should use StructorizerParserTemplate.pgt
+as the template file for GOLDprog.exe:
+GOLDprog.exe XYZ.egt StructorizerParserTemplate.pgt XYZParser.java
+The states and patterns in the tables are linked to the rules. The command-line tool
+GOLDprog derives more or less mnemonic constants for the table indices of symbols and
+rules and places them as interface members in the target Java file (XYZParser.java).
+(The template file practically contains the Java skeleton of the aimed Parser class,
+where certain ## markers specify the insertion places and the syntax according to which
+the table index references are generated into the code.)
+You will also find some hooks where to add the Nassi-Shneiderman diagram synthesis
+(methods initializeBuildNSD(...), buildNSD_R(...), getContent_R(...),
+subclassUpdateRoots(...), subclassPostProcess(...)).
+
+4. FILE PREPARATION
+Before the parsing begins, usually some file preparations will have to be done. You should
+overwrite method prepareTextfile(String _textToParse, String _encoding).
+For the comment processing you will need to call registerStatementRuleIds(...) here.
+
+5. DIAGRAM SYNTHESIS FROM SYNTAX TREE
+This all done, the diagram synthesis must be written. This is very dependent on the
+rules of the used grammar. Whereas the parsing process works bottom up, i.e. from the
+input token to the start symbol of the grammar, the diagram synthesis works top down.
+When the parsing terminated successfully, i.e. in state ACCEPT, then at first method
+initializeBuildNSD is called in order to give you the opportunity to do some language-
+specific preparation. Just override this method if there is something to prepare.
+Usually you should call method setStatement
+Next the recursive method buildNSD_R will be called with the top Reduction of the
+grammar and the empty element sub-queue of the new diagram root as arguments. The usual
+way to implement it is to pick all Reductions representing some algorithmic entities
+to be converted in diagram elements and handle them correspondingly, skip all Reductions
+being meaningless for Structorizer, and just recursively traverse the remaining Reductions
+with buildNSD_R (else branch).
+Where you need the mere parsed text you may call getContent_R on a Reduction instead,
+which you will also have to implement for the respective rule-specific Reduction.
+The analysis of the element Tokens of the Reduction class is pretty straight-forward.
+With method getParent() you obtain the corresponding production rule (including its text,
+e.g. "<WhileStatement> ::= WHILE <expression> DO <StatementSequence> END"). The left-
+hand side of the rule, here "<WhileStatment>" can be obtained with getHead().
+The table index of the rule can be obtained with getTableIndex() on the production rule.
+This index may be compared with the generated members of interface RuleConstants to
+identify the rule and conclude its structure:
+The right-hand side of the production rule determines the structure of the Reduction
+elements. In the example above it consists of 5 Tokens (three of type CONTENT (terminal)
+and and two of type NON_TERMINAL, in the rule-defined order, i.e. "WHILE", <expression>,
+"DO", <StatementSequence>, "END"), hence method size() on the Reduction object would
+return 5. You obtain the respective tokens via the get() method, providing the respective
+index (0...4). From the identified rule you will know which tokens are terminals and which
+are non-terminals. For further analysis, you typically fetch the child reduction of non-
+terminal tokens by method asReduction() (on the token), for terminal tokens you will
+retrieve their string content by making use of method asString().
+The initial diagram Root is held in the member variable root of your Parser class. If you
+bump into some subroutine code (a routine declaration Reduction) then you will temporarily
+have to move root into the collection subRoots and add an new Root object, putting it
+into slot root.
+Ideally, you have a look at the already existing language-specific parser classes (which
+are rather diagram synthesis classes by the way) how they make use of the Reduction tree
+generated by the actual generic parser.
+
+Import options are available via members named "option..." of the parent class CodeParser:
+- optionImportVarDecl indicates whether variable declarations are to be imported or not
+- optionCommentImport specifies whether comments from source are to be passed to the elements
+- optionSaveParseTree() indicates whether the parse tree is to be saved (no action needed,
+  already handled by the parent class!).
+Language-dependent options can be configured within the respective <plugin> tag in file
+parsers.xml. Each <option> tag is supposed to have the following attributes:
+- name: an identifier string used as internal key,
+- type: one of "Boolean", "Integer", "Unsigned", "Double", "Character", or "String",
+- title: the external caption for the import option dialog (should be English)
+- help: A short (English) description used as tooltip popup in the import option dialog.
+If the option values are enumerable then instead of the type attribute, a sequence of
+<item> subtags should be placed within the <option> tag, each specifying one of the
+selectable values in its value attribute.
+In order to obtain the value, the parser must use method
+	getPluginOption(String key, Object default)
+
+The parent class, CodeParser, provides some standard colors that may be used to mark up
+certain kinds of elements:
+- colorConst for constant definitions
+- colorDecl for mere variable declarations (if imported at all)
+- colorGlobal for global definitions (in case of files with multiple routines)
+- colorMisc for miscellaneous source language-specific mark-ups (e.g. for related elements
+  emerging from a single source code construct like a for(...;...;...) loop in C).
+  
+5. BATCH MODE TEST
+It may facilitate the final tests to run the parser in batch mode (i.e. from command line):
+	Linux:	 	structorizer.sh  -p -v <logDir> <sourceFile> ...
+	Windows: 	structorizer.bat -p -v <logDir> <sourceFile> ...
+

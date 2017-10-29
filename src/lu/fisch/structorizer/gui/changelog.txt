@@ -5,7 +5,14 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-05 (2017.03.15)
+Known issues:
+- Races on startup may contort the initial diagram view (scrollbars stumble)
+- COBOL parsing may fail if certain single-letter identifiers are used (rename them!)
+- COBOL import doesn't cope with some statement variants and variable redefinitions
+- Some export generators haven't been enabled to support record type equivalents yet
+- The many functional enhancements have further slowed down execution speed.
+
+Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -44,13 +51,87 @@ Current development version: 3.26-05 (2017.03.15)
 - 04: Perl export: variable prefixing improved w.r.t. arrays and references <2>
 - 04: Enh. #346: Configuration of include directives to be exported [Rolf Schmidt]2
 - 05: Some typos in the locale file keys mended
-- 05: Bugfix #365: Improved FOR-IN loop export to C (also more conform with early C) <2>
+- 05: Bugfix #365: Improved FOR-IN loop export to C <2>
 - 05: Enh. #367: Transmutation (swapping) of IF branches introduced [Simon Sobisch]2
-- 05: Enh. #372: Date and author attributes in the NSD files [Simon Sobisch]2
+- 05: Enh. #372: Date and author attributes in he NSD files [Simon Sobisch]2
 - 05: Enh. #376: Opportunity to move elements among diagrams [Simon Sobisch]2
 - 05: Issue #378: Charset indication in exported Python header [Rolf Schmidt]2
 - 05: Bugfix #379: Inequality operator symbol was wrong in Python export <2>
 - 05: Bugfix #382: defective value list conversion on FOR-IN loop export <2>
+- 06: Issue #346: Specified includes for C weren't always exported <2>
+- 06: Enh. #354: Plugin system for code import (in analogy to generators) [S. Sobisch]2
+- 06: Enh. #354: ANSI-C parser added to code import plugins <2>
+- 06: Enh. #356: Sensible reaction on the attempt to close the Executor [S. Sobisch]2
+- 06: Enh. #368: New import option to load variable declarations <2>
+- 06: Issue #368: Analyser no longer blames declarations of lacking initialization <2>
+- 06: Issue #369: Executor got C-style array definitions wrong (int a[2] <- {5, 2}) <2>
+- 06: Issue #354: GOLDParser update to version 5.0, unique menu item for import <2>
+- 06: Enh. #370: Improved refactoring functionality on loading files [Simon Sobisch]2 
+- 06: Issue #372: Author name now configurable, license editor added [Simon Sobisch]2
+- 06: Enh. #380: New function to derive subroutines from sequences [Simon Sobisch]2
+- 06: Enh. #387: "Save All" menu item and toolbar button <2>
+- 06: Bugfix #365: FOR-IN loop export fix (to C) revised again <2>
+- 06: Enh. #388: Concept of constants introduced (executor, import, analyser) <2>
+- 06: Enh. #389: Mechanism to "include" diagrams on execution [Simon Sobisch]2
+- 06: Enh. #390: Improved variable initialization check in multi-line instructions <2>
+- 06: Bugfix #391: Debugger button control was defective in step mode <2>
+- 06: Enh. #335/#388/#389: generators for Pascal, C, C++, and Java revised <2>
+- 06: Bugfix #394: Defective export of "leave" jumps in CASE elements (to C etc.) <2>
+- 06: Enh. #394: Loosened parameter restriction for exit instructions <2>
+- 06: Enh. #259: Type detection for loop variables of FOR-IN loops improved <2>
+- 06: Enh. #354: ANSI-C grammar accomplished, CParser revised <2>
+- 06: Bugfix #386: BASH export of No-Op branches or loop bodies [Rolf Schmidt]2
+- 06: Enh. #389: New analyser option "check against faulty diagram imports" <2>
+- 06: Issue #62: Arranger should ask before an existing arr(z) file is overwritten <2>
+- 06: Issue #318: Saving arrangements failed if some diagrams reside in an arrz <2>
+- 06: Importer for "Struktogrammeditor" (http://whiledo.de) files added <2>
+- 06: Enh. #354: New import option: file logging to a directory <2>
+- 06: Enh. #354: gnuCOBOL import (still incomplete) <Simon Sobisch, 2>
+- 06: Issue #354: Missing exception handling for code import added. <2>
+- 06: Issue #396: Bash export now encloses function calls in $(...) [Rolf Schmidt]2
+- 06: Bugfix #397: Wrong paste position with multiple selection as target <2>
+- 06: Enh. #398: New built-in functions sgn (int result) and signum (float result) <2>
+- 06: Enh. #399: Unsuited files dragged into Structorizer now induce a message <2>
+- 06: Issue #400: Consistent behaviour of preferences dialogs [Simon Sobisch]2
+- 06: Enh. #372: New export option to store author and license information <2>
+- 06: Bugfix #403: Export of input/output instructions with parentheses [S. Sobisch]2
+- 06: Bugfix #51: Export of empty input instructions to C# needed fixing <2>
+- 06: Enh. #389: Third diagram type "includable" for importable definitons etc. <2>
+- 06: Issue #405: Preference for width-reducing in CASE elements [Simon Sobisch]2
+- 06: Issue #237: Efforts to improve expression transformation on BASH export <2>
+- 06: Enh. #372: New dialog to inspect diagram attributes [Simon Sobisch]2
+- 06: Bugfix: 411: Some unicode escape sequences caused trouble in Executor <2> 
+- 06: Bugfix: 412: Code generators might produce defective unique identifiers <2>
+- 06: Enh. #413: New built-in function split(strg, part) introduced <2>
+- 06: Bugfix #414: Too large bounding boxes in Arranger caused GUI degrading <2>
+- 06: Enh. #416: Line continuation by backslash at line end [Simon Sobisch]2
+- 06: Enh. #415: Find & Replace dialog added and refined <2>
+- 06: Enh. #354/#357: plugin-defined options for import/export [Simon Sobisch]2
+- 06: Enh. #420: Comment import enabled for source code parsing [Simon Sobisch]2
+- 06: Enh. #424: Turtleizer functions getX(), getY(), getOrientation() [newboerg]2
+- 06: Enh. #423: Support for record types (structs) in Executor and Analyser <2>
+- 06: Enh. #388,#389,#423: Export of Includables, records and constants to Pascal <2>
+- 06: Enh. #428: Structorizer got stuck on using type name "short" <2>
+- 06: Bugfix #429: Array/record literals in result statements fail in Executor <2>
+- 07: Issue 430: Element editor font size now sustained in ini file [A. Poschinger]2
+- 07: Execution Control frame now got a title string <2>
+- 07: Issue #431: Modified handling of strings by FOR-IN loop <2>
+- 07: Enh. #174/#423: Structorizer now understands nested initializers <2>
+- 07: Bugfix #432: Precaution against possible sync problem on drawing diagrams <2>
+- 07: Bugfix #433: Ghost results shown for procedures named like Java classes <2>
+- 07: Bugfix #434: Pre-compilation of comparisons in loop conditions caused errors <2>
+- 07: Bugfix #435: Executor checkboxes didn't show selected icons in scaled GUI mode <2>
+- 07: Issue #432: Attempt to speed up execution by reducing redraw calls on delay 0 <2>
+- 08: Issue #436: Reference consistency for array parameters (adding elements) <2>
+- 08: Issue #437: Defective variable modifications in paused state now reported <2>
+- 08: Issue #438: Pending variable editing now prevents from resuming execution <2>
+- 08: Enh. #439: Tabular inspection/editing of array and record values in Executor <2>
+- 08: Enh. #128: Design of IF and CASE elements in mode "comments + text" changed <2>
+- 08: Positioning of dialog boxes no longer dependent on diagram size and selection <2>
+- 08: Issue #417: Scrolling detention with many / large diagrams alleviated <2>
+- 08: Enh. #423: Export support for records to Python, bash, Oberon <2>
+- 08: Enh. #441: Java export now directly supports use of extracted Turtleizer <2>
+- 08: Enh. #443: Preparations for multiple controller plugins like Turtleizer <2>  
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

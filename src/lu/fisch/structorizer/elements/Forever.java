@@ -179,7 +179,7 @@ public class Forever extends Element implements ILoop {
 	
 	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
 	@Override
-	protected ImageIcon getIcon()
+	public ImageIcon getIcon()
 	{
 		return IconLoader.ico061;
 	}
@@ -302,7 +302,9 @@ public class Forever extends Element implements ILoop {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-		this.q.addFullText(_lines, _instructionsOnly);
+		if (!this.isDisabled()) {
+			this.q.addFullText(_lines, _instructionsOnly);
+		}
     }
     // END KGU 2015-10-16
 
@@ -349,5 +351,17 @@ public class Forever extends Element implements ILoop {
 		// There is nothing to refactor
 		return null;
 	}
+
+	// START KGU 2017-10-21
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		// This may only pass control if being disabled or containing a reachable leave jump
+		// to exactly this level
+		return disabled || this.hasReachableLeave(true);
+	}
+	// END KGU 2017-10-21
 
 }

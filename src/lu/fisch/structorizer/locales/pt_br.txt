@@ -56,6 +56,7 @@
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 renamed into Menu.error15_1
  *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -91,7 +92,8 @@ Menu.menuFileExportCodeFavorite.tooltip=É possível escolher a linguagem nas pr
 Menu.menuFileImport.text=Importar
 
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal ...
+Menu.menuFileImportCode.text=Código ...
+
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Organizar
 Menu.menuFileQuit.text=Sair
@@ -225,20 +227,21 @@ Menu.error01_1.text=AVISO: Variável de controle não detectada ...
 Menu.error01_2.text=AVISO: Mais de uma variável de controle detectada: «%»
 Menu.error01_3.text=Não é permitido modificar a variável de controle "%" dentro da repetição!
 Menu.error02.text=Nenhuma variação detectada nas variáveis na condição. Possível repetição infita ...
-Menu.error03_1.text=A variável «%» ainda não recebeu valor inicial!
-Menu.error03_2.text=A variável «%» pode não ter recebido valor inicial!
+Menu.error03_1.text=A variável «%1» ainda não recebeu valor inicial%2!
+Menu.error03_2.text=A variável «%1» pode não ter recebido valor inicial%2!
 Menu.error04.text=Não é permitido usar uma alternativa vazia (IF) sem instrução!
 Menu.error05.text=A variável «%» deve ser escrita em maiúsculas!
 Menu.error06.text=O nome do programa «%» deve ser escrito em maiúsculas!
 Menu.error07_1.text=«%» não é um nome válido para um programa ou método!
 Menu.error07_2.text=«%» não é um nome válido para um parâmetro!
-Menu.error07_3.text=«%» não é um nome válido para uma variável!
+Menu.error07_3.text=«%» não é um nome válido para uma variável ou constante!
 Menu.error08.text=Não é permitido fazer uma atribuição dentro de uma condição.
-Menu.error09.text=Seu programa («%») não pode ter o mesmo nome que uma variável or parâmetro!
-Menu.error10_1.text=Uma instrução simples não deverá conter entradas/saídas ou atribuições!
-Menu.error10_2.text=Uma instrução simples não deverá conter entradas ou saídas!
-Menu.error10_3.text=Uma instrução simples não deverá conter entradas ou atribuições!
-Menu.error10_4.text=Uma instrução simples não deverá conter saídas ou atribuições!
+Menu.error09.text=Seu programa («%») não pode ter o mesmo nome que uma variável ou parâmetro!
+Menu.error10_1.text=Uma instrução simples não deverá conter entradas/saídas e atribuições!
+Menu.error10_2.text=Uma instrução simples não deverá conter entradas e saídas!
+Menu.error10_3.text=Uma instrução simples não deverá conter entradas e atribuições!
+Menu.error10_4.text=Uma instrução simples não deverá conter saídas e atribuições!
+Menu.error10_5.text=Uma instrução simples não deverá conter definições de constantes e outras instruções!
 Menu.error11.text=Provavelmente houve um erro de atribuição. Favor verificar a instrução!
 Menu.error12.text=O parâmetro «%» deve iniciar-se pela letra "p" seguida por letras maiúsculas apenas!
 Menu.error13_1.text=A função não retorna qualquer resultado!
@@ -247,15 +250,17 @@ Menu.error13_3.text=Suas funções parecem usar vários mecanismos de retorno co
 Menu.error14_1.text=Os parâmetros da repetição (FOR) não são consistentes com o texto do cabeçalho!
 Menu.error14_2.text=A valor da variação na repetição («%») não é constante inteira válida!
 Menu.error14_3.text=A variável «%» pode coincidir com outra já configurada como palavra-chave no cabeçalho da repetição (FOR)!
-Menu.error15_1.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)» ou «import <prog_name>»!
 Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!	
-Menu.error16_2.text=A instrução para retorno, fora da última posição, deve ter o formato de um desvio (JUMP)!
-Menu.error16_3.text=Uma instrução de escape (exit, leave, break) somente é permitida como desvio (JUMP)!
+Menu.error16_2.text=A instrução «%» para retorno, fora da última posição, deve ter o formato de um desvio (JUMP)!
+Menu.error16_3.text=Uma instrução «%1» ou «%2» somente é permitida como desvio (JUMP)!
 Menu.error16_4.text=Não é possível interromper ou abandonar mais de nível aninhado em (%)!
-Menu.error16_5.text=Não se deve retornar diretamente de uma thread paralela!
-Menu.error16_6.text=Argumento impróprio para esse tipo de desvio (JUMP) (deve ser constante inteira)!
+Menu.error16_5.text=Não se deve desviar (%1, %2) diretamente de uma thread paralela!
+Menu.error16_6.text=Argumento impróprio para desvio do tipo «%» (tene que ser constante inteira)!
 Menu.error16_7.text=Instrução fora de alcance após desvio (JUMP)!
+Menu.error16_8.text=Argumento possivelmente impróprio para desvio do tipo «%» (deve ser constante inteira)!
 Menu.error17.text=Risco de inconsistência devido a acesso concorrente à variável «%» por várias threads paralelas!
+Menu.errorLineReference.text= (linha %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferências do analisador

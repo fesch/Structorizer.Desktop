@@ -372,7 +372,7 @@ public class ParserPreferences extends LangDialog {
 				}
 				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
 				{
-                                    done();
+					done();
 				}
 			}
 			

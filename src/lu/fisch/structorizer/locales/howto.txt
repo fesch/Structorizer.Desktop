@@ -1,13 +1,16 @@
 ﻿This is just a little file that explains
- __ __   ___   __    __  ______   ___  
-|  |  | /   \ |  |__|  ||      | /   \ 
-|  |  ||     ||  |  |  ||      ||     |
-|  _  ||  O  ||  |  |  ||_|  |_||  O  |
-|  |  ||     ||  `  '  |  |  |  |     |
-|  |  ||     | \      /   |  |  |     |
-|__|__| \___/   \_/\_/    |__|   \___/
+ __ __   ___   __    __    ______   ___  
+|  |  | /   \ |  |__|  |  |      | /   \ 
+|  |  ||     ||  |  |  |  |      ||     |
+|  _  ||  O  ||  |  |  |  |_|  |_||  O  |
+|  |  ||     ||  `  '  |    |  |  |     |
+|  |  ||     | \      /     |  |  |     |
+|__|__| \___/   \_/\_/      |__|   \___/
 
-use Structorizer locales.
+USE STRUCTORIZER LOCALES
+========================
+Author:      Bob Fisch
+Last Update: 2017-02-27
 
 1) All language files ...
     - reside inside the package lu.fisch.structorizer.locales

@@ -54,6 +54,7 @@
  *      Kay Gürtzig         2016.09.22      AnalyserPreferences numbering modified
  *      Kay Gürtzig         2016.10.11      Enh. 267: Menu.error15 renamed into Menu.error15_1
  *      Kay Gürtzig         2016.12.14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig         2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -77,7 +78,7 @@ Menu.menuFileExportPicture.text=Biller...
 Menu.menuFileExportCode.text=Code ...
 Menu.menuFileImport.text=Importéieren
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal Code...
+Menu.menuFileImportCode.text=Code ...
 Menu.menuFilePrint.text=Drécken...
 Menu.menuFileQuit.text=Verloossen
 // Menu "Edit"
@@ -182,25 +183,27 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Iwwert ...
 Menu.menuHelpUpdate.text=Update. ..
+
 // Error messages for analyser
 Menu.error01_1.text=WARNUNG: Keng Schläifvariabel fonnt
 Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt: «%»
 Menu.error01_3.text=D'Schläifvariabel «%» dierf net geännert ginn!
 Menu.error02.text=Keng Variabelännerung an der Konditioun fonnt. Méiglech endlos Schläif ...
-Menu.error03_1.text=D'Variabel «%» ass nach net initialiséiert ginn!
-Menu.error03_2.text=D'Variabel «%» ass méiglecherweis nach net initialiséiert ginn!
+Menu.error03_1.text=D'Variabel «%1» ass nach net initialiséiert ginn%2!
+Menu.error03_2.text=D'Variabel «%1» ass méiglecherweis nach net initialiséiert ginn%2!
 Menu.error04.text=En IF-statement dierf net mat engem eidelen TRUE-Block benotzt ginn!
 Menu.error05.text=D'Variabel «%» muss grouss geschriwwen sinn!
 Menu.error06.text=Den Programmnumm «%» muss grouss geschriwwen sinn!
 Menu.error07_1.text=«%» ass keen validen Numm fir en Programm oder eng Method!
 Menu.error07_2.text=«%» ass keen validen Numm fir en Parameter!
-Menu.error07_3.text=«%» ass keen validen Numm fir eng Variabel
+Menu.error07_3.text=«%» ass keen validen Numm fir eng Variabel oder eng Konstant!
 Menu.error08.text=Et dierf keng Zouwäisung an enger Konditioun gemaach ginn.
 Menu.error09.text=Den Programm («%») dierf net den selwechten Numm wei eng Variabel oder en Parameter hunn!
 Menu.error10_1.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen oder Zouwäisungen enthalen!
 Menu.error10_2.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen enthalen!
 Menu.error10_3.text=En eenzelt Instruktiouns Element sollt keng Agang Instruktiounen oder Zouwäisungen enthalen!
 Menu.error10_4.text=En eenzelt Instruktiouns Element sollt keng Ausgang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error10_5.text=En eenzelt Instruktiouns Element sollt keng Konstant Definitiounen an anere Instruktiounen enthalen!
 Menu.error11.text=Wahrscheinlech Zouwäisungsfehler! W.E.G. d'Instruktioun kontrolléieren!
 Menu.error12.text=Den Parameter muss mat engem "p" ufänken an dierf ab dann nëmmen nach Grouss buchstaawen enthalen!
 Menu.error13_1.text=Funktioun gëtt keen Resultat zréck!
@@ -209,14 +212,17 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15_1.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=The CALL has neither form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)» nor «import <progr_name>»!
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!
-Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
-Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
+Menu.error16_2.text=A «%» instruction, unless at final position, must form a JUMP element!
+Menu.error16_3.text=A «%1» or «%2» instruction is only allowed as JUMP element!
 Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
-Menu.error16_5.text=You must not directly return out of a parallel thread!
-Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
+Menu.error16_5.text=You must not directly jump (%1, %2) out of a parallel thread!
+Menu.error16_6.text=Illegal argument for a «%» JUMP (must be an integer constant)!
+Menu.error16_7.text=Instruction isn't reachable after a JUMP!
+Menu.error16_8.text=The argument for this «%» JUMP might be unsuited (should be an integer value)!
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
+Menu.errorLineReference.text= (Zeil %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser Astellungen

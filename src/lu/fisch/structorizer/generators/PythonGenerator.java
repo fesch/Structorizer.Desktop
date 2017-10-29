@@ -48,7 +48,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              bugfix for routine calls (superfluous parentheses dropped)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
@@ -58,6 +58,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.02.23      Issue #350: getOutputReplacer() and Parallel export revised again
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig             2017.03.10      Bugfix #378, #379: charset annotation / wrong inequality operator
+ *      Kay Gürtzig             2017.05.16      Bugfix #51: an empty output instruction produced "print(, sep='')"
+ *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017.05.24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
+ *      Kay Gürtzig             2017.10.02/03   Enh. #389, #423: Export of globals and mutable record types implemented
  *
  ******************************************************************************************************
  *
@@ -97,12 +101,17 @@ package lu.fisch.structorizer.generators;
  * 
  ******************************************************************************************************///
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 
 
 public class PythonGenerator extends Generator 
@@ -149,28 +158,28 @@ public class PythonGenerator extends Generator
 		}
 		// END KGU#78 2015-12-18
 		
-		// START KGU 2016-08-12: Enh. #231 - information for analyser
-	    private static final String[] reservedWords = new String[]{
-			"and", "assert", "break", "class", "continue",
-			"def", "del",
-			"else", "elif", "except", "exec",
-			"finally", "for", "from", "global",
-			"if", "import", "in", "is", "lambda", "not", "or",
-			"pass", "print", "raise", "return", 
-			"try", "while",
-			"Data", "Float", "Int", "Numeric", "Oxphys",
-			"array", "close", "float", "int", "input",
-			"open", "range", "type", "write", "zeros"
-			};
-		public String[] getReservedWords()
-		{
-			return reservedWords;
-		}
-		public boolean isCaseSignificant()
-		{
-			return false;
-		}
-		// END KGU 2016-08-12
+//		// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//	    private static final String[] reservedWords = new String[]{
+//			"and", "assert", "break", "class", "continue",
+//			"def", "del",
+//			"else", "elif", "except", "exec",
+//			"finally", "for", "from", "global",
+//			"if", "import", "in", "is", "lambda", "not", "or",
+//			"pass", "print", "raise", "return", 
+//			"try", "while",
+//			"Data", "Float", "Int", "Numeric", "Oxphys",
+//			"array", "close", "float", "int", "input",
+//			"open", "range", "type", "write", "zeros"
+//			};
+//		public String[] getReservedWords()
+//		{
+//			return reservedWords;
+//		}
+//		public boolean isCaseSignificant()
+//		{
+//			return false;
+//		}
+//		// END KGU 2016-08-12
 
 		// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 		/* (non-Javadoc)
@@ -184,6 +193,14 @@ public class PythonGenerator extends Generator
 		// END KGU#351 2017-02-26
 
 		/************ Code Generation **************/
+		
+		// START KGU#388 2017-10-02: Enh. #423 - Support for recordtypes
+		/** cache for the type map of the current Root */
+		private HashMap<String, TypeMapEntry> typeMap = null;
+		/** Pattern for type name extraction from a type definition */
+		private static final Pattern PTRN_TYPENAME = Pattern.compile("type (\\w+)\\s*=.*");
+		private static Matcher mtchTypename = PTRN_TYPENAME.matcher("");
+		// END KGU#388 2017-10-02
 	    
 		// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 		/**
@@ -253,6 +270,9 @@ public class PythonGenerator extends Generator
 			// END KGU 2014-11-16
 			tokens.replaceAll("div", "/");
 			tokens.replaceAll("<-", "=");
+			// START KGU#388 2017-10-02: Enh. #423 - convert Structorizer record initializers to Python
+			transformRecordInitializers(tokens);
+			// END KGU#388 2017-10-02
 			// START KGU#100 2016-01-14: Enh. #84 - convert C/Java initialisers to lists
 			tokens.replaceAll("{", "[");
 			tokens.replaceAll("}", "]");
@@ -260,6 +280,52 @@ public class PythonGenerator extends Generator
 			return tokens.concatenate();
 		}
 		// END KGU#93 2015-12-21
+
+		// START KGU#388 2017-10-02: Enh. #423 Record support
+		/**
+		 * Recursively looks for record initializers in the tokens and if there are some replaces
+		 * the respective type name token by the entire transformed record initializer as single
+		 * string element and hence immune against further token manipulations.
+		 * @param tokens - the token list of the split line, will be modified.
+		 */
+		private void transformRecordInitializers(StringList tokens) {
+			int posLBrace = -1;
+			while ((posLBrace = tokens.indexOf("{", posLBrace+1)) > 0) {
+				String prevToken = "";
+				TypeMapEntry typeEntry = null;
+				// Go back to the last non-empty token
+				int pos = posLBrace - 1;
+				while (pos >= 0 && (prevToken = tokens.get(pos).trim()).isEmpty()) pos--;
+				if (pos >= 0 && Function.testIdentifier(prevToken, null)
+						&& (typeEntry = this.typeMap.get(":" + prevToken)) != null
+						// Should be a record type but we better make sure.
+						&& typeEntry.isRecord()) {
+					// We will now reorder the elements and drop the names
+					HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace));
+					LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);
+					String tail = comps.get("§TAIL§");	// String part beyond the initializer
+					String sepa = "(";	// initial "separator" is the opening parenthesis, then it will be comma
+					for (String compName: compDefs.keySet()) {
+						if (comps.containsKey(compName)) {
+							prevToken += sepa + transformTokens(Element.splitLexically(comps.get(compName), true));
+						}
+						else {
+							prevToken += sepa + "None";
+						}
+						sepa = ", ";
+					}
+					prevToken += ")";
+					tokens.set(pos, prevToken);
+					tokens.remove(pos+1, tokens.count());
+					if (tail != null) {
+						// restore the tokens of the remaining text.
+						tokens.add(Element.splitLexically(tail, true));
+					}
+					posLBrace = pos;
+				}
+			}
+		}
+		// END KGU#388 2017-10-02
 
 		// END KGU#18/KGU#23 2015-11-01
 
@@ -278,6 +344,20 @@ public class PythonGenerator extends Generator
 			return transformed;
 		}
 		// END KGU#108 2015-12-22
+		
+		// START KGU#399 2017-05-16: Bugfix #51
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#transformOutput(java.lang.String)
+		 */
+		protected String transformOutput(String _interm)
+		{
+			String transf = super.transformOutput(_interm);
+			if (this.getOutputReplacer().replace("$1", "").equals(transf)) {
+				transf = "print(\"\")";
+			}
+			return transf;
+		}
+		// END KGU#399 2017-05-16		
 		
 		// START KGU#18/KGU#23 2015-11-01: Obsolete    
 //	    private String transform(String _input)
@@ -300,10 +380,13 @@ public class PythonGenerator extends Generator
 				{
 					String lval = _input.substring(0, asgnPos).trim();
 					String expr = _input.substring(asgnPos + "<-".length()).trim();
-					String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
+					String[] typeNameIndex = this.lValueToTypeNameIndexComp(lval);
 					String index = typeNameIndex[2];
 					if (!index.isEmpty()) index = "[" + index + "]";
-					_input = typeNameIndex[1] + index + " <- " + expr;
+					// START KGU#388 2017-09-27: Enh. #423
+					//_input = typeNameIndex[1] + index + " <- " + expr;
+					_input = typeNameIndex[1] + index + typeNameIndex[3] + " <- " + expr;
+					// END KGU#388 2017-09-27: Enh. #423
 				}
 				// END KGU#109 2016-01-17
 			// START KGU#162 2016-04-01: Enh. #144 - hands off in "no conversion" mode!
@@ -331,30 +414,30 @@ public class PythonGenerator extends Generator
 //
 //			s = _input;
 			// Math function
-			s=s.replace("cos(", "math.cos(");
-			s=s.replace("sin(", "math.sin(");
-			s=s.replace("tan(", "math.tan(");
+			s = s.replace("cos(", "math.cos(");
+			s = s.replace("sin(", "math.sin(");
+			s = s.replace("tan(", "math.tan(");
 			// START KGU 2014-11-16: After the previous replacements the following 3 strings would never be found!
 			//s=s.replace("acos(", "math.acos(");
 			//s=s.replace("asin(", "math.asin(");
 			//s=s.replace("atan(", "math.atan(");
 			// This is just a workaround; A clean approach would require a genuine lexical scanning in advance
-			s=s.replace("amath.cos(", "math.acos(");
-			s=s.replace("amath.sin(", "math.asin(");
-			s=s.replace("amath.tan(", "math.atan(");
+			s = s.replace("amath.cos(", "math.acos(");
+			s = s.replace("amath.sin(", "math.asin(");
+			s = s.replace("amath.tan(", "math.atan(");
 			// END KGU 2014-11-16
 			//s=s.replace("abs(", "abs(");
 			//s=s.replace("round(", "round(");
 			//s=s.replace("min(", "min(");
 			//s=s.replace("max(", "max(");
-			s=s.replace("ceil(", "math.ceil(");
-			s=s.replace("floor(", "math.floor(");
-			s=s.replace("exp(", "math.exp(");
-			s=s.replace("log(", "math.log(");
-			s=s.replace("sqrt(", "math.sqrt(");
-			s=s.replace("pow(", "math.pow(");
-			s=s.replace("toRadians(", "math.radians(");
-			s=s.replace("toDegrees(", "math.degrees(");
+			s = s.replace("ceil(", "math.ceil(");
+			s = s.replace("floor(", "math.floor(");
+			s = s.replace("exp(", "math.exp(");
+			s = s.replace("log(", "math.log(");
+			s = s.replace("sqrt(", "math.sqrt(");
+			s = s.replace("pow(", "math.pow(");
+			s = s.replace("toRadians(", "math.radians(");
+			s = s.replace("toDegrees(", "math.degrees(");
 			// clean up ... if needed
 			//s=s.replace("Math.Math.", "math.");
 
@@ -368,16 +451,28 @@ public class PythonGenerator extends Generator
 				// START KGU 2014-11-16
 				insertComment(_inst, _indent);
 				// END KGU 2014-11-16
-				for(int i=0;i<_inst.getText().count();i++)
+				StringList lines = _inst.getUnbrokenText();
+				for(int i = 0; i < lines.count(); i++)
 				{
 					// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 					//code.add(_indent + transform(_inst.getText().get(i)));
-					String line = _inst.getText().get(i);
+					String line = lines.get(i);
 					String codeLine = transform(line);
+					boolean done = false;
 					if (Instruction.isTurtleizerMove(line)) {
 						codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+						done = true;
 					}
-					addCode(codeLine, _indent, isDisabled);
+					// START KGU#388 2017-10-02: Enh. #423 translate record types into mutable recordtype
+					else if (Instruction.isTypeDefinition(line)) {
+						mtchTypename.reset(line).matches();
+						String typeName = mtchTypename.group(1);
+						done = this.generateTypeDef(Element.getRoot(_inst), typeName, null, _indent, isDisabled);
+					}
+					// END KGU#388 2017-10-02
+					if (!done) {
+						addCode(codeLine, _indent, isDisabled);
+					}
 					// END KGU#277/KGU#284 2016-10-13/16
 				}
 			}
@@ -391,7 +486,7 @@ public class PythonGenerator extends Generator
 			insertComment(_alt, _indent);
 			// END KGU 2014-11-16
 
-			String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+			String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 			// START KGU#301 2016-12-01: Bugfix #301
 			//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 			if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -498,7 +593,7 @@ public class PythonGenerator extends Generator
 			insertComment(_while, _indent);
 			// END KGU 2014-11-16
 			
-			String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+			String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 			// START KGU#301 2016-12-01: Bugfix #301
 			//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 			if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -528,8 +623,8 @@ public class PythonGenerator extends Generator
             //code.delete(code.count()-1); // delete empty row
             //code.delete(code.count()-1); // delete empty row
             // END KGU#54 2015-10-19
-            addCode("if "+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+":",
-            		_indent+this.getIndent(), isDisabled);
+            addCode("if " + transform(_repeat.getUnbrokenText().getLongString()).trim()+":",
+            		_indent + this.getIndent(), isDisabled);
             addCode("break", _indent+this.getIndent()+this.getIndent(), isDisabled);
 			// START KGU#54 2015-10-19: Add an empty line, but void accumulation of empty lines!
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
@@ -565,11 +660,12 @@ public class PythonGenerator extends Generator
 				// START KGU 2014-11-16
 				insertComment(_call, _indent);
 				// END KGU 2014-11-16
-				for(int i=0; i<_call.getText().count(); i++)
+				StringList lines = _call.getText();
+				for(int i=0; i<lines.count(); i++)
 				{
 					// START KGU 2016-07-20: Bugfix the extra parentheses were nonsense
 					//code.add(_indent+transform(_call.getText().get(i))+"()");
-					addCode(transform(_call.getText().get(i)), _indent, isDisabled);
+					addCode(transform(lines.get(i)), _indent, isDisabled);
 					// END KGU 2016-07-20
 				}
 			}
@@ -591,9 +687,9 @@ public class PythonGenerator extends Generator
 				// In case of an empty text generate a break instruction by default.
 				boolean isEmpty = true;
 
-				StringList lines = _jump.getText();
-				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-				String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
+				StringList lines = _jump.getUnbrokenText();
+				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+				String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
 				String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 				String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
 				for (int i = 0; isEmpty && i < lines.count(); i++) {
@@ -642,6 +738,7 @@ public class PythonGenerator extends Generator
 		{
 			boolean isDisabled = _para.isDisabled();
 			Root root = Element.getRoot(_para);
+			String suffix = Integer.toHexString(_para.hashCode());
 			
 			//String indentPlusOne = _indent + this.getIndent();
 			//String indentPlusTwo = indentPlusOne + this.getIndent();
@@ -659,8 +756,8 @@ public class PythonGenerator extends Generator
 				// START KGU#348 2017-02-19: Enh. #348 Actual translation
 				//generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
 				Subqueue sq = _para.qs.get(i);
-				String threadVar = "thr" + _para.hashCode() + "_" + i;
-				String threadFunc = "thread" + _para.hashCode() + "_" + i;
+				String threadVar = "thr" + suffix + "_" + i;
+				String threadFunc = "thread" + suffix + "_" + i;
 				StringList used = root.getUsedVarNames(sq, false, false);
 				StringList asgnd = root.getVarNames(sq, false);
 				for (int v = 0; v < asgnd.count(); v++) {
@@ -685,7 +782,7 @@ public class PythonGenerator extends Generator
 			}
 
 			for (int i = 0; i < _para.qs.size(); i++) {
-				String threadVar = "thr" + _para.hashCode() + "_" + i;
+				String threadVar = "thr" + suffix + "_" + i;
 				addCode(threadVar + ".join()", _indent, isDisabled);
 			}
 			insertComment("==========================================================", _indent);
@@ -717,7 +814,7 @@ public class PythonGenerator extends Generator
 			});
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
-				String functNameBase = "thread" + par.hashCode() + "_";
+				String functNameBase = "thread" + Integer.toHexString(par.hashCode()) + "_";
 				int i = 0;
 				// We still don't care for synchronisation, mutual exclusion etc.
 				for (Subqueue sq: par.qs) {
@@ -756,6 +853,98 @@ public class PythonGenerator extends Generator
 		}
 		// END KGU#47/KGU#348 2017-02-19
 
+		// START KGU#388 2017-10-02: Enh. #423 Translate record types to mutable recordtypes
+		/**
+		 * Inserts a typedef or struct definition for the type passed in by {@code _typeEnry}
+		 * if it hadn't been defined globally or in the preamble before.
+		 * @param _root - the originating Root
+		 * @param _type - the type map entry the definition for which is requested here
+		 * @param _indent - the current indentation
+		 * @param _asComment - if the type deinition is only to be added as comment (disabled)
+		 */
+		protected boolean generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+			boolean done = false;
+			String typeKey = ":" + _typeName;
+			if (_type == null) {
+				_type = this.typeMap.get(typeKey);
+			}
+			if (this.wasDefHandled(_root, typeKey, false)
+					|| _type != null && _type.isNamed() && this.wasDefHandled(_root, ":" + _type.typeName, false)) {
+				// It was not done now and here again but there's nothing more to do, so it's "done"
+				return true;
+			}
+			else if (_type == null) {
+				// We leave it to the caller what to do
+				return false;
+			}
+			setDefHandled(_root.getSignatureString(false), typeKey);
+			if (_type.isRecord()) {
+				String typeDef = _type.typeName + " = recordtype(\"" + _type.typeName + "\" \"";
+				for (String compName: _type.getComponentInfo(false).keySet()) {
+					typeDef += compName + " ";
+				}
+				typeDef = typeDef.trim() + "\")";
+				addCode(typeDef, _indent, _asComment);
+				done = true;
+			}
+			return done;
+		}
+	
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#insertGlobalInitialisations(java.lang.String)
+		 */
+		protected void insertGlobalInitialisations(String _indent) {
+			if (topLevel) {
+				int startLine = code.count();
+				for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+					insertComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
+					typeMap = incl.getTypeInfo();	// This line is the difference to Generator!
+					generateCode(incl.children, _indent);
+					insertComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
+				}
+				if (code.count() > startLine) {
+					code.add(_indent);
+				}
+			}
+		}
+
+		/**
+		 * Declares imported names as global
+		 * @param _root - the Root being exported
+		 * @param _indent - the current indentation level
+		 * @see #insertGlobalInitialisations(String)
+		 */
+		private void insertGlobalDeclarations(Root _root, String _indent) {
+			if (_root.includeList != null) {
+				HashSet<String> declared = new HashSet<String>();
+				for (Root incl: this.includedRoots) {
+					if (_root.includeList.contains(incl.getMethodName())) {
+						// Start with the types
+						for (String name: incl.getTypeInfo().keySet()) {
+							if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
+								addCode("global " + name, _indent, false);
+								declared.add(name);								
+							}
+						}
+						// Now add the variables (including constants)
+						StringList names = incl.getVarNames();
+						for (int i = 0; i < names.count(); i++)
+						{
+							String name = names.get(i);
+							if (!declared.contains(name)) {
+								addCode("global " + name, _indent, false);
+								declared.add(name);
+							}
+						}
+					}
+				}
+				if (!declared.isEmpty()) {
+					addCode("", _indent, false);
+				}
+			}
+		}
+		// END KGU#388 2017-10-02
+		
 		/* (non-Javadoc)
 		 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
 		 */
@@ -764,16 +953,6 @@ public class PythonGenerator extends Generator
 				StringList _paramNames, StringList _paramTypes, String _resultType)
 		{
 			String indent = "";
-			// START KGU#178 2016-07-20: Enh. #160 -option to involve called functions
-//			if (_root.isProgram) {
-//				code.add(_indent + "#!/usr/bin/env python");
-//				insertComment(_root.getText().get(0), _indent);
-//				// START KGU 2016-01-14: Enhanced, as a help for bugfixing etc.
-//				insertComment("generated by Structorizer " + Element.E_VERSION, _indent);
-//				// END KGU 2016-01-14
-//				code.add("");
-//				insertComment(_root, _indent);
-//			}
 			if (topLevel)
 			{
 				code.add(_indent + "#!/usr/bin/env python");
@@ -782,6 +961,9 @@ public class PythonGenerator extends Generator
 				// END KGU#366 2017-03-10
 				insertComment(_root.getText().get(0), _indent);
 				insertComment("generated by Structorizer " + Element.E_VERSION, _indent);
+				// START KGU#363 2017-05-16: Enh. #372
+				insertCopyright(_root, _indent, true);
+				// END KGU#363 2017-05-16
 				// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 				if (this.hasParallels) {
 					code.add(_indent);
@@ -791,6 +973,9 @@ public class PythonGenerator extends Generator
 				// STARTB KGU#351 2017-02-26: Enh. #346
 				this.insertUserIncludes(indent);
 				// END KGU#351 2017-02-26
+				// START KGU#376 2017-10-02: Enh. #389 - insert the code of the includables first
+				this.insertGlobalInitialisations(_indent);
+				// END KGU#376 2017-10-02
 				subroutineInsertionLine = code.count();
 				// START KGU#311 2016-12-27: Enh. #314: File API support
 				if (this.usesFileAPI) {
@@ -799,15 +984,18 @@ public class PythonGenerator extends Generator
 				// END KGU#311 2016-12-27
 			}
 			code.add("");
-			if (_root.isProgram) {
+			// FIXME: How to handle includables here?
+			if (!_root.isSubroutine()) {
 				insertComment(_root, _indent);
 			}
-			// END KGU#178 2016-07-20
 			else {
 				indent = _indent + this.getIndent();
 				insertComment(_root, _indent);
 				code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
 			}
+			// START KGU#388 2017-10-02: Enh. #423 type info will now be needed in deep contexts
+			this.typeMap = _root.getTypeInfo();
+			// END KGU#388 2017-10-02
 			return indent;
 		}
 
@@ -817,6 +1005,9 @@ public class PythonGenerator extends Generator
 		@Override
 		protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 		{
+			// START KGU#376 2017-10-03: Enh. #389 - Variables and types of the included diagrams must be marked as global here
+			insertGlobalDeclarations(_root, _indent);
+			// END KGU#376 2017-10-03
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			generateParallelThreadFunctions(_root, _indent);
 			// END KGU#348 2017-02-19
@@ -829,7 +1020,7 @@ public class PythonGenerator extends Generator
 		@Override
 		protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 		{
-			if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+			if (_root.isSubroutine() && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 			{
 				String result = "0";
 				if (isFunctionNameSet)

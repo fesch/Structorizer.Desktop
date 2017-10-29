@@ -482,7 +482,7 @@ public class Parallel extends Element
 
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
     @Override
-    protected ImageIcon getIcon()
+    public ImageIcon getIcon()
     {
     	return IconLoader.ico091;
     }
@@ -645,7 +645,7 @@ public class Parallel extends Element
 //		{
 //			_lines.add(this.getText());
 //		}
-    	if (qs!= null)
+    	if (qs!= null && !this.isDisabled())
     	{
     		for (int i = 0; i < qs.size(); i++)
     		{
@@ -695,5 +695,23 @@ public class Parallel extends Element
 		// There is nothing to return
 		return null;
 	}
-
+	
+	// START KGU 2017-10-21
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		// A Case selection may only pass control if being disabled or containing only
+		// passable branches.
+		boolean mayPass = disabled;
+		if (!mayPass) {
+			mayPass = true;
+			for (int i = 0; mayPass && i < this.qs.size(); i++) {
+				mayPass = this.qs.get(i).mayPassControl();
+			}
+		}
+		return mayPass;
+	}
+	// END KGU 2017-10-21
 }

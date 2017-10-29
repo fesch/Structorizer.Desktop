@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -72,17 +71,27 @@ package lu.fisch.structorizer.gui;
  *                                      KGU#310: New Debug menu
  *      Kay Gürtzig     2016.12.17      Enh. #267: New Analyser error15_3
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21
+ *      Kay Gürtzig     2017.03.15      Enh. #354: All code import merged to a single menu item
+ *      Kay Gürtzig     2017.03.23      Enh. #380: New menu entry to convert a sequence in a subroutine
+ *      Kay Gürtzig     2017.03.28      Enh. #387: New menu entry "Save All"
+ *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser error for constant definitions (no. 22)
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Additional messages for analysis of import calls
+ *      Kay Gürtzig     2017.04.20      Enh. #388: Second error (error22_2) for constant analysis
+ *      Kay Gürtzig     2017.04.26/28   Enh. KGU#386: Method for plugin menu items, diagram file import
+ *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added
+ *      Kay Gürtzig     2017.05.21      Enh. #372: New menu entry and accelerator for AttribeInspector
+ *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 
 import java.util.*;
 import java.io.*;
+import java.net.URL;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -102,6 +111,8 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class Menu extends LangMenuBar implements NSDController
 {
+	public enum PluginType { GENERATOR, PARSER, IMPORTER };
+	
 	private Diagram diagram = null;
 	private NSDController NSDControl = null;
 
@@ -111,6 +122,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuFileNew = new JMenuItem("New", IconLoader.ico001);
 	protected final JMenuItem menuFileSave = new JMenuItem("Save", IconLoader.ico003);
 	protected final JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico003);
+	// START KGU#373 2017-03-28: Enh. #387
+	protected final JMenuItem menuFileSaveAll = new JMenuItem("Save All", IconLoader.ico069);
+	//  END KGU#373 2017-03-28
 	protected final JMenuItem menuFileOpen = new JMenuItem("Open ...", IconLoader.ico002);
 	protected final JMenuItem menuFileOpenRecent = new JMenu("Open Recent File");
 	protected final JMenu menuFileExport = new JMenu("Export");
@@ -129,8 +143,16 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#171 2016-04-01
 	protected final JMenu menuFileImport = new JMenu("Import");
 	// Submenu of "File -> Import"
-	protected final JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
+	// START KGU#354 2017-03-14: Enh. #354 We use one unified menu item for all code import now
+	//protected final JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
+	protected final JMenuItem menuFileImportCode = new JMenuItem("Source Code ...", IconLoader.ico004);
+	// END KGU#354 2017-03-14
+	protected final JMenuItem menuFileImportNSDEd = new JMenuItem("Foreign NSD editor file ...", IconLoader.ico074);
 
+	
+	// START KGU#363 2017-05-19: Enh. #372
+	protected final JMenuItem menuFileAttributes = new JMenuItem("Inspect attributes");
+	// END KGU#363 2017-05-19
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
 	// END KGU#2 2015-11-19
@@ -148,6 +170,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuEditCut = new JMenuItem("Cut",IconLoader.ico044);
 	protected final JMenuItem menuEditCopy = new JMenuItem("Copy",IconLoader.ico042);
 	protected final JMenuItem menuEditPaste = new JMenuItem("Paste",IconLoader.ico043);
+	// START KGU#324 2017-05-30: Enh. #415
+	protected final JMenuItem menuEditFindReplace = new JMenuItem("Find/Replace", IconLoader.ico073);
+	// END KGU#324 2017-05-30
 	protected final JMenuItem menuEditCopyDiagramPNG = new JMenuItem("Copy bitmap diagram to clipboard",IconLoader.ico032);
 	protected final JMenuItem menuEditCopyDiagramEMF = new JMenuItem("Copy vector diagram to clipboard",IconLoader.ico032);
 	// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
@@ -196,6 +221,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 	protected final JMenuItem menuDiagramTransmute = new JMenuItem("Transmute", IconLoader.ico109);
 	// END KGU#199 2016-07-06
+	// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
+	protected final JMenuItem menuDiagramOutsource = new JMenuItem("Outsource", IconLoader.ico068);
+	// END KGU#365 2017-03-23
 	// START KGU#123 2016-01-03: New menu items for collapsing/expanding (addresses #65)
 	protected final JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
 	protected final JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
@@ -215,6 +243,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenu menuDiagramType = new JMenu("Type");
 	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
 	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub",IconLoader.ico021);
+	//START KGU#376 2017-05-16: Enh. #389
+	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable",IconLoader.ico071);
+	//END KGU#376 2017-05-16
 	protected final JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.ico040);
 	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.ico077);
 	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.ico079);
@@ -285,7 +316,7 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
 	// START KGU#239 2016-08-12: Enh. #231
-	// Generator plugins accessible for Analyser
+	// Generator plugins accessible for Analyser, Diagram, ExportOptionDialoge etc.
 	public static Vector<GENPlugin> generatorPlugins = new Vector<GENPlugin>();
 	// END KGU#239 2016-08-12
 	// Error messages for Analyser
@@ -296,8 +327,12 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
 	public static final LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
 	public static final LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
-	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
-	public static final LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
+	// START KGU#375 2017-04-05: Enh. #390 Mor precise informaton for multi-line instructions
+	//public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
+	//public static final LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
+	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%1» has not yet been initialized%2!");
+	public static final LangTextHolder error03_2 = new LangTextHolder("The variable «%1» may not have been initialized%2!");
+	// END KGU#375 2017-04-05
 	public static final LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
 	public static final LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
 	public static final LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
@@ -310,6 +345,12 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error10_2 = new LangTextHolder("A single instruction element should not contain input and output instructions!");
 	public static final LangTextHolder error10_3 = new LangTextHolder("A single instruction element should not contain input instructions and assignments!");
 	public static final LangTextHolder error10_4 = new LangTextHolder("A single instruction element should not contain ouput instructions and assignments!");
+	// START KGU#375 2017-04-05: Enh. #388
+	public static final LangTextHolder error10_5 = new LangTextHolder("A single instruction element should not mix constant definitions with other instructions!");
+	// END KGU#375 2017-04-05
+	// START KGU#388 2017-09-13: Enh. #423
+	public static final LangTextHolder error10_6 = new LangTextHolder("A single instruction element should not mix type definitions with other instructions!");
+	// END KGU#388 2017-09-13
 	public static final LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
 	public static final LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
 	public static final LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
@@ -328,32 +369,60 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#278 2016-10-11: Enh. #267: Check for subroutine availability
 	//public static final LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
 	public static final LangTextHolder error15_1 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
-	public static final LangTextHolder error15_2 = new LangTextHolder("The called subroutine «%» is currently not available.");
+	public static final LangTextHolder error15_2 = new LangTextHolder("The called diagram «%» is currently not available.");
 	// END KGU#278 2016-10-11
 	// START KGU 2016-12-17
-	public static final LangTextHolder error15_3 = new LangTextHolder("There are several matching subroutines for «%».");
+	public static final LangTextHolder error15_3 = new LangTextHolder("There are several diagrams matching signature «%».");
 	// END KGU 2016-12-17
 	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
-	public static final LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
-	public static final LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
+	public static final LangTextHolder error16_2 = new LangTextHolder("A % instruction, unless at final position, must form a JUMP element!");
+	public static final LangTextHolder error16_3 = new LangTextHolder("A %1 or %2 instruction is only allowed as JUMP element!");
 	public static final LangTextHolder error16_4 = new LangTextHolder("Cannot leave or break more loop levels than being nested in («%»)!");
-	public static final LangTextHolder error16_5 = new LangTextHolder("You must not directly return out of a parallel thread!");
-	public static final LangTextHolder error16_6 = new LangTextHolder("Wrong argument for this kind of JUMP (should be an integer constant)!");
+	public static final LangTextHolder error16_5 = new LangTextHolder("You must not directly jump (%1, %2) out of a parallel thread!");
+	public static final LangTextHolder error16_6 = new LangTextHolder("Illegal argument for a «%» JUMP (must be an integer constant)!");
 	public static final LangTextHolder error16_7 = new LangTextHolder("Instruction isn't reachable after a JUMP!");
+	public static final LangTextHolder error16_8 = new LangTextHolder("The argument for this «%» JUMP might be unsuited (should be an integer value).");
 	// END KGU#2 2015-11-25
 	// START KGU#47 2015-11-28: New check for concurrency problems
 	public static final LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
 	// END KGU#47 2015-11-28
 	// START KGU#239 2016-08-12: Enh. #231 - New checks for variable name collisions
 	public static final LangTextHolder error18 = new LangTextHolder("Variable name «%1» may be confused with variable(s) «%2» in some case-indifferent languages!");
-	public static final LangTextHolder error19 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
+	public static final LangTextHolder error19_1 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
+	public static final LangTextHolder error19_2 = new LangTextHolder("Variable name «%» is reserved in Structorizer and is likely to cause trouble on execution!");
 	// END KGU#239 2016-08-12
 	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
 	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
 	// END KGU#253 2016-09-21
 	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
 	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
-	// END KGU#253 2016-09-21
+	// END KGU#327 2017-01-07
+	// START KGU#375 2017-04-04: Enh. #388 - New check for constants depending on non-constant values or be redefined.
+	public static final LangTextHolder error22_1 = new LangTextHolder("Constant «%1» depends on apparently non-constant value(s) %2.");
+	public static final LangTextHolder error22_2 = new LangTextHolder("Attempt to modify the value of constant «%»!");
+	public static final LangTextHolder errorLineReference = new LangTextHolder(" (line %)");
+	// END KGU#375 2017-04-04
+	// START KGU#376 2017-04-11/21: Enh. #389 
+	public static final LangTextHolder error23_1 = new LangTextHolder("Diagram «%» is rather unsuited for an import call as it makes use of return.");
+	public static final LangTextHolder error23_2 = new LangTextHolder("Import of diagram «%» is recursive!");
+	public static final LangTextHolder error23_3 = new LangTextHolder("Import of diagram «%1» will be ignored here because it had already been imported: %2");
+	public static final LangTextHolder error23_4 = new LangTextHolder("Name conflict between local and imported variable or constant «%»!");
+	public static final LangTextHolder error23_5 = new LangTextHolder("An includable diagram «%» is currently not available!");
+	public static final LangTextHolder error23_6 = new LangTextHolder("More than one includable diagrams with name «%» found!");
+	// END KGU#376 2017-04-11/21
+	// START KGU#388 2017-09-17: Enh. #423: imported record type definitions
+	public static final LangTextHolder error23_7 = new LangTextHolder("There is a name conflict between local and imported type definition «%»!");
+	// END KGU#388 2017-09-17
+	// START KGU#388 2017-09-13: Enh. #423
+	public static final LangTextHolder error24_1 = new LangTextHolder("Type definition in (composed) line % is malformed.");
+	public static final LangTextHolder error24_2 = new LangTextHolder("Type name «%» is illegal or colliding with another identifier.");
+	public static final LangTextHolder error24_3 = new LangTextHolder("Component name «%» is illegal or duplicate.");
+	public static final LangTextHolder error24_4 = new LangTextHolder("Component type «%» is undefined or unknown.");
+	public static final LangTextHolder error24_5 = new LangTextHolder("There is no defined record type «%»!");
+	public static final LangTextHolder error24_6 = new LangTextHolder("Record component «%» will not be modified/initialized!");
+	public static final LangTextHolder error24_7 = new LangTextHolder("Record type «%1» hasn't got a component «%2»!");
+	public static final LangTextHolder error24_8 = new LangTextHolder("Variable «%1» hasn't got a component «%2»!");
+	// END KGU#388 2017-09-13
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
@@ -378,6 +447,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#232 2016-08-02
 	// START KGU#247 2016-09-15: Issue #243: Forgotten message box translations
 	public static final LangTextHolder msgTitleError = new LangTextHolder("Error");
+	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
 	public static final LangTextHolder msgTitleLoadingError = new LangTextHolder("Loading Error");
 	public static final LangTextHolder msgTitleParserError = new LangTextHolder("Parser Error");
 	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
@@ -386,11 +456,15 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgTitleOpen = new LangTextHolder("Open file ...");
 	public static final LangTextHolder msgTitleSave = new LangTextHolder("Save file ...");
 	public static final LangTextHolder msgTitleSaveAs = new LangTextHolder("Save file as ...");
-	public static final LangTextHolder msgTitleImport = new LangTextHolder("Import % code ...");
+	public static final LangTextHolder msgTitleImport = new LangTextHolder("Code import - choose source file (mind the file filter!) ...");
+	public static final LangTextHolder msgTitleNSDImport = new LangTextHolder("Import a diagram file from % ...");
 	public static final LangTextHolder msgSaveChanges = new LangTextHolder("Do you want to save the current NSD file?");
 	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
 	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
 	// END KGU#247 2016-09-15
+	// START KGU#354 2017-03-04
+	public static final LangTextHolder msgErrorUsingParser = new LangTextHolder("Error while using % parser");
+	// END KGU#354 2017-03-04
 	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
 	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates and news about Structorizer.");
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
@@ -402,6 +476,23 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblRefactorCurrent = new LangTextHolder("current diagram");
 	public static final LangTextHolder lblRefactorAll = new LangTextHolder("all diagrams");
 	// END KGU#258 2016-10-03
+	// START KGU#362 2017-03-28: Enh. #370
+	public static final LangTextHolder msgDiscardParserPrefs = new LangTextHolder("Sure to discard new parser preferences?");
+	public static final LangTextHolder msgAdaptStructPrefs = new LangTextHolder("Adapt Structure preferences to Parser preferences?");
+	public static final LangTextHolder msgKeywordsDiffer = new LangTextHolder("This is a diagram, the original keyword context of which differs from current Parser Preferences:%1\n"
+			+ "You have opted against automatic refactoring on loading.\n\n"
+			+ "Now you have the following opportunities:\n%2");
+	public static final LangTextHolder msgRefactorNow = new LangTextHolder("The diagram may be refactored now (recommended)");
+	public static final LangTextHolder msgAdoptPreferences = new LangTextHolder("You may adopt the keywords loaded with the diagram as new Parser Preferences\n"
+			+ "   (which would induce refactoring of all other open diagrams!)");
+	public static final LangTextHolder msgLeaveAsIs = new LangTextHolder("You may leave the diagram as is, which may prevent its\n"
+			+ "   debugging and cause defective export");
+	public static final LangTextHolder msgAllowChanges = new LangTextHolder("Allow the modification, thus losing the original keyword information");
+	public static final LangTextHolder lblRefactorNow = new LangTextHolder("Refactor diagram");
+	public static final LangTextHolder lblAdoptPreferences = new LangTextHolder("Adopt keywords");
+	public static final LangTextHolder lblLeaveAsIs = new LangTextHolder("Leave diagram as is");
+	public static final LangTextHolder lblAllowChanges = new LangTextHolder("Allow to change now");
+	// END KGU#362 2017-03-28
 	// START KGU#282 2016-10-17: Enh. #272
 	public static final LangTextHolder msgReplacementsDone = new LangTextHolder("% instructions replaced.");	
 	// END KGU#282 2016-10-17
@@ -412,6 +503,30 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblSuppressUpdateHint = new LangTextHolder("Don't show this window again");
 	public static final LangTextHolder lblHint = new LangTextHolder("Hint");
 	// END KGU#300 2016-12-02
+	// START KGU#354 2017-03-04: Enh. #354 Now generic import menu
+	//public static final LangTextHolder lblImportCode = new LangTextHolder("% Code ...");
+	public static final LangTextHolder lblCopyToClipBoard = new LangTextHolder("OK + Copy to Clipboard");
+	public static final LangTextHolder msgSelectParser = new LangTextHolder("The source file type of \"%2\" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.");
+	public static final LangTextHolder msgImportCancelled = new LangTextHolder("Code import for file \"%\" cancelled.");
+	public static final LangTextHolder msgImportFileReadError = new LangTextHolder("File \"%\" does not exist or cannot be read.");
+	// END KGU#354 2017-03-04
+	// START KGU#392 2017-05-07: Enh. #354, #399
+	public static final LangTextHolder msgUnsupportedFileFormat = new LangTextHolder("These files couldn't be loaded because their format is not known or not supported:\n%");
+	// END KGU#392 2017-05-07
+	// START KGU#365 2017-03-27: Enh. #380
+	public static final LangTextHolder msgSubroutineName = new LangTextHolder("Name of the subroutine");
+	public static final LangTextHolder msgJumpsOutwardsScope = new LangTextHolder(
+			"There are JUMP instructions among the selected elements targeting outwards.\n"
+			+ "To outsource them would compromise the logic of the program or result in defective code!\n"
+			+ "The respective JUMPs are listed below and shown RED in the diagram:\n"
+			+ "%\n\n"
+			+ "Do you really still insist on continuing?");
+	public static final LangTextHolder lblYes = new LangTextHolder("Yes");
+	public static final LangTextHolder lblNo = new LangTextHolder("No");
+	// END KGU#365 2017-03-27
+    // START KGU#386 2017-04-28
+	public static final LangTextHolder msgImportTooltip = new LangTextHolder("Diagram files generated by the Nassi-Shneiderman editor from %");
+    // END KGU#386 2017-04-28
 
 	public void create()
 	{
@@ -434,8 +549,14 @@ public class Menu extends LangMenuBar implements NSDController
 		menuFileSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveNSD(false); doButtons(); } } );
 
 		menuFile.add(menuFileSaveAs);
-		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK)));
 		menuFileSaveAs.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAsNSD(); doButtons(); } } );
+
+		// START KGU#373 2017-03-28: Enh. #387
+		menuFile.add(menuFileSaveAll);
+		menuFileSaveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileSaveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAllNSD(); doButtons(); } } );
+		//  END KGU#373 2017-03-28
 
 		menuFile.add(menuFileOpen);
 		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -448,8 +569,21 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuFile.add(menuFileImport);
 
-		menuFileImport.add(menuFileImportPascal);
-		menuFileImportPascal.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importPAS(); doButtons(); } } );
+		// START KGU#354 2017-03-04: Enh. #354 / KGU#354 2017-03-14 Dropped again - one menu item for all now
+		//menuFileImport.add(menuFileImportPascal);
+		//menuFileImportPascal.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importPAS(); doButtons(); } } );
+//		// Read parsers from configuration file and add them to the menu
+		//addPluginMenuItems(menuFileImportCode, "parsers.xml", IconLoader.ico004, PluginType.PARSER);
+		// END KGU#354 2017-03-04
+		// START KGU#354 2017-03-14: Enh. #354 We turn back to a single menu entry and leave selection to the FileChooser
+		menuFileImport.add(menuFileImportCode);
+		menuFileImportCode.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(); } });
+		menuFileImportCode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,(java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		// END KGU#354 2017-03-14
+
+		// START KGU#386 2017-04-26
+		addPluginMenuItems(menuFileImport, PluginType.IMPORTER, IconLoader.ico074);
+		// END KGU#386 2017-04-26
 
 		menuFile.add(menuFileExport);
 
@@ -477,27 +611,41 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuFileExport.add(menuFileExportCode);
 		menuFileExportCode.setIcon(IconLoader.ico004);
-
-		// read generators from file
-		// and add them to the menu
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
-		GENParser genp = new GENParser();
-		// START KGU#239 2016-08-12: Enh. #231
-		//Vector<GENPlugin> plugins = genp.parse(buff);
-		//for(int i=0;i<plugins.size();i++)
-		generatorPlugins = genp.parse(buff);
-		for (int i=0; i < generatorPlugins.size(); i++)
-		// END KGU#239 2016-08-12
-		{
-			// START KGU#239 2016-08-12: Enh. #231
-			//GENPlugin plugin = (GENPlugin) plugins.get(i);
-			GENPlugin plugin = generatorPlugins.get(i);
-			// END KGU#239 2016-08-12
-			JMenuItem pluginItem = new JMenuItem(plugin.title, IconLoader.ico004);
-			menuFileExportCode.add(pluginItem);
-			final String className = plugin.className;
-			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
-		}
+		// START KGU#386 2017-04-26: Plugin evaluation outsourced
+//		// read generators from file
+//		// and add them to the menu
+//		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
+//		GENParser genp = new GENParser();
+//		// START KGU#239 2016-08-12: Enh. #231
+//		//Vector<GENPlugin> plugins = genp.parse(buff);
+//		//for(int i=0;i<plugins.size();i++)
+//		generatorPlugins = genp.parse(buff);
+//		for (int i=0; i < generatorPlugins.size(); i++)
+//		// END KGU#239 2016-08-12
+//		{
+//			// START KGU#239 2016-08-12: Enh. #231
+//			//GENPlugin plugin = (GENPlugin) plugins.get(i);
+//			GENPlugin plugin = generatorPlugins.get(i);
+//			// END KGU#239 2016-08-12
+//			// START KGU 2017-04-23
+//			//JMenuItem pluginItem = new JMenuItem(plugin.title, IconLoader.ico004);
+//			ImageIcon icon = IconLoader.ico004;	// The default icon
+//			if (plugin.icon != null && !plugin.icon.isEmpty()) {
+//				try {
+//					URL iconFile = this.getClass().getResource(plugin.icon);
+//					if (iconFile != null) {
+//						icon = new ImageIcon(this.getClass().getResource(plugin.icon));
+//					}
+//				}
+//				catch (Exception ex) {}
+//			}
+//			JMenuItem pluginItem = new JMenuItem(plugin.title, icon);
+//			// END KGU 2017-04-23
+//			menuFileExportCode.add(pluginItem);
+//			final String className = plugin.className;
+//			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
+//		}
+		generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.ico004);
 		
 		// START KGU#171 2016-04-01: Enh. #144 - accelerated export to favourite target language
 		menuFile.add(menuFileExportCodeFavorite);
@@ -535,6 +683,14 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#2 2015-11-19
                 
         menuFile.addSeparator();
+
+        // START KGU#363 2017-05-19: Enh. #372
+    	menuFile.add(menuFileAttributes);
+    	menuFileAttributes.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.attributesNSD(); doButtons(); } } );
+		menuFileAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (java.awt.event.InputEvent.ALT_MASK /*| (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())*/)));
+
+    	menuFile.addSeparator();
+    	// END KGU#363 2017-05-19
 
         // START BOB 2016-08-02
 		menuFile.add(menuFileTranslator);
@@ -586,6 +742,13 @@ public class Menu extends LangMenuBar implements NSDController
 		menuEditPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
 
 		menuEdit.addSeparator();
+		
+		// START KGU#324 2017-05-30: Enh. #415
+		menuEdit.add(menuEditFindReplace);
+		menuEditFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditFindReplace.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.findAndReplaceNSD(); doButtons(); } } );
+		menuEdit.addSeparator();
+		// END KGU#324 2017-05-30
 
 		// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
 		menuEdit.add(menuEditUpgradeTurtle);
@@ -735,6 +898,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramTransmute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuDiagramTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } );;
 		// END KGU#199 2016-07-06
+		// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
+		menuDiagram.add(menuDiagramOutsource);
+		menuDiagramOutsource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, KeyEvent.CTRL_DOWN_MASK));
+		menuDiagramOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } );;
+		// END KGU#365 2017-03-23
 		
 		menuDiagram.addSeparator();
 
@@ -782,6 +950,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuDiagramType.add(menuDiagramTypeFunction);
 		menuDiagramTypeFunction.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setFunction(); doButtons(); } } );
+
+		//START KGU#376 2017-05-16: Enh. #389
+		menuDiagramType.add(menuDiagramTypeInclude);
+		menuDiagramTypeInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
+		// END KGU#376 2017-05-16
 
 		menuDiagram.add(menuDiagramNice);
 		menuDiagramNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(menuDiagramNice.isSelected()); doButtons(); } } );
@@ -953,11 +1126,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 						// START KGU#258 2016-09-26: Enh. #253
 						HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
-						for (String key: D7Parser.keywordSet())
+						for (String key: CodeParser.keywordSet())
 						{
 							// START KGU#288 2016-11-06: Issue #279 - getOrDefault() may not be available
-							//String keyword = D7Parser.keywordMap.getOrDefault(key, "");
-							String keyword = D7Parser.getKeywordOrDefault(key, "");
+							//String keyword = CodeParser.keywordMap.getOrDefault(key, "");
+							String keyword = CodeParser.getKeywordOrDefault(key, "");
 							// END KGU#288 2016-11-06
 							if (!keyword.trim().isEmpty())
 							{
@@ -1129,8 +1302,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
 			// save
-			menuFileSave.setEnabled(diagram.getRoot().hasChanged());
+			menuFileSave.setEnabled(diagram.canSave(false));
 			// END KGU#137 2016-01-11
+		    // START KGU#373 2017-03-28: Enh. #387
+			menuFileSaveAll.setEnabled(diagram.canSave(true));
+		    // END KGU#373 2017-03-38
 			// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
 			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
 			this.menuFileExportCodeFavorite.setText(itemText);
@@ -1146,9 +1322,10 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditDowngradeTurtle.setEnabled(conditionAny);
 			// END KGU#282 2016-10-16
 
-			// style
-			menuDiagramTypeFunction.setSelected(!diagram.isProgram());
+			// style / type
+			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
+			menuDiagramTypeInclude.setSelected(diagram.isInclude());
 			menuDiagramNice.setSelected(diagram.getRoot().isNice);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 			// START KGU#305 2016-12-14: Enh. #305
@@ -1199,6 +1376,9 @@ public class Menu extends LangMenuBar implements NSDController
 			// START KGU#199 2016-07-07: Enh. #188 - We allow instruction conversion
 			menuDiagramTransmute.setEnabled(diagram.canTransmute());
 			// END KGU#199 2016-07-07
+			// START KGU#365 2017-03-26: Enh. #380 - We allow subroutine generation
+			menuDiagramOutsource.setEnabled(diagram.canCut());
+			// END KGU#365 2017-03-26
 			
 			
 			// START KGU#123 2016-01-03: We allow multiple selection for collapsing
@@ -1391,4 +1571,78 @@ public class Menu extends LangMenuBar implements NSDController
         // END KGU#235 2016-08-09
     }
     // END KGU#232 2016-08-03
+    
+    // START KGU#386 2017-04-26
+    private Vector<GENPlugin> addPluginMenuItems(JMenu _menu, PluginType _type, ImageIcon _defaultIcon)
+    {
+		// read generators from file
+    	String fileName = "void.xml";
+		String tooltip = "%";
+    	switch (_type) {
+    	case GENERATOR:
+    		fileName = "generators.xml";
+    		break;
+    	case PARSER:	// This isn't used anymore - we still leave it in the code for regularity
+    		fileName = "parsers.xml";
+    		break;
+    	case IMPORTER:
+    		fileName = "importers.xml";
+			tooltip = msgImportTooltip.getText();
+    		break;
+    	}
+		// and add them to the menu
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream(fileName));
+		GENParser genp = new GENParser();
+		Vector<GENPlugin> plugins = genp.parse(buff);
+		try { buff.close();	} catch (IOException e) {}
+		for (int i = 0; i < plugins.size(); i++)
+		{
+			GENPlugin plugin = plugins.get(i);
+			ImageIcon icon = _defaultIcon;	// The default icon
+			if (plugin.icon != null && !plugin.icon.isEmpty()) {
+				try {
+					URL iconFile = this.getClass().getResource(plugin.icon);
+					if (iconFile != null) {
+						icon = new ImageIcon(this.getClass().getResource(plugin.icon));
+					}
+				}
+				catch (Exception ex) {}
+			}
+			JMenuItem pluginItem = new JMenuItem(plugin.title, icon);
+			_menu.add(pluginItem);
+			if (plugin.info != null) {
+				pluginItem.setToolTipText(tooltip.replace("%", plugin.info));
+			}
+			final String className = plugin.className;
+			// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
+			final Vector<HashMap<String, String>> options = plugin.options;
+			// END KGU#354/KGU#395 2017-05-11
+			
+			ActionListener listener = null;
+			switch (_type) {
+			case GENERATOR:
+				// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
+				//listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } };
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className, options); doButtons(); } };
+				// END KGU#354/KGU#395 2017-05-11
+				break;
+			case PARSER:	// This isn't used anymore - we still leave in the code for regularity
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(/*className*/); doButtons(); } };
+				break;
+			case IMPORTER:
+				// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
+				//listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className); doButtons(); } };
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className, options); doButtons(); } };
+				// END KGU#354/KGU#395 2017-05-11
+				break;
+			}
+			if (listener != null) {
+				pluginItem.addActionListener(listener);
+			}
+		}
+		
+		return plugins;
+    }
+    // END KGU#386 2017-04-26
+    
 }

@@ -48,6 +48,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
  *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Basic scaling outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.03.14  Enh. #372: Additional hook for subclass InputBoxRoot.
+ *      Kay Gürtzig     2017.10.06  Enh. #430: The scaled TextField font size (#284) is now kept during the session
  *
  ******************************************************************************************************
  *
@@ -70,6 +72,11 @@ import lu.fisch.structorizer.elements.Element;
 
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
+	
+	// START KGU#428 2017-10-06: Issue #430 Modified editor font size should be maintained
+	/** font size for the text fields, 0 = default, may be overridden by keys or from ini */
+	public static float FONT_SIZE = 0;	// Default value
+	// END KGU#428 2017-10-06
 
     public boolean OK = false;
 
@@ -177,6 +184,14 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         scalableComponents.addElement(txtText);
         scalableComponents.addElement(txtComment);
         // END KGU#294 2016-11-21
+        // START KGU#428 2017-10-06: Enh. #430
+        if (FONT_SIZE > 0) {
+        	for (JComponent comp: scalableComponents) {
+            	Font font = comp.getFont();
+            	comp.setFont(font.deriveFont(FONT_SIZE));
+        	}
+        }
+        // END KGU#428 2017-10-06
         
         JPanel pnPanel0 = new JPanel();
         GridBagLayout gbPanel0 = new GridBagLayout();
@@ -228,25 +243,18 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbPanel1.setConstraints(lblComment, gbcPanel1);
         pnPanel1.add(lblComment);
 
-        // START KGU#277 2016-10-13: Enh. #270
-        gbcPanel1.gridx = 1;
+        // START KGU#363 2017-03-13: Enh. #372 new hook for InputBoxRoot
         gbcPanel1.gridy = 17;
-        gbcPanel1.gridwidth = 7;
-        gbcPanel1.gridheight = 1;
-        gbcPanel1.fill = GridBagConstraints.BOTH;
-        gbcPanel1.weightx = 1;
-        gbcPanel1.weighty = 0;
-        gbcPanel1.anchor = GridBagConstraints.NORTH;
-        gbPanel1.setConstraints(chkDisabled, gbcPanel1);
-        pnPanel1.add(chkDisabled);
-        // END KGU#277 2016-10-13
+        gbcPanel1.gridx = this.createExtrasBottom(pnPanel1, gbcPanel1, 12);
+        // END KGU#363 2017-03-13
         
         // START KGU#294 2016-11-22: Issue #284 - visible font-resizing buttons
         JPanel fontPanel = new JPanel();
         fontPanel.setLayout(new GridLayout(0,2));
         fontPanel.add(btnFontUp);
         fontPanel.add(btnFontDown);
-        gbcPanel1.gridx = 12;
+        
+        //gbcPanel1.gridx = 12;
         gbcPanel1.gridy = 17;
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
@@ -318,7 +326,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         pnPanel1.add(btnCancel);
 
         // START KGU#3 2015-10-31: The new gridx causes no difference here but fits better for InputBoxFor
-        gbcPanel1.gridx = 12;
+        gbcPanel1.gridx = 11;
             //gbcPanel1.gridx = 8;
         // END KGU#3 2015-10-31
         // START KGU#277 2016-10-13: Enh. #270
@@ -326,7 +334,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.gridy = 19;
         // END KGU#277 2016-10-13
         // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
-        gbcPanel1.gridwidth = 7;
+        gbcPanel1.gridwidth = 8;
     		//gbcPanel1.gridwidth = GridBagConstraints.REMAINDER;
         // END KGU#3 2015-10-31
         gbcPanel1.gridheight = 1;
@@ -357,12 +365,12 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#91+KGU#169 2016-07-14
     }
 
-    // START KGU#3 2015-10-24: Hook for subclasses
+	// START KGU#3 2015-10-24: Hook for subclasses
     /**
      * Subclassable method to add specific stuff to the Panel top
      *
      * @param _panel the panel to be enhanced
-     * @param _gb
+     * @param _gb a usable GridBagLayout object
      * @param _gbc the layout constraints
      * @return number of lines (y units) inserted
      */
@@ -381,6 +389,30 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         return 1;
     }
     // END KGU#3 2015-10-24
+
+    /**
+     * Allows a subclass to add additional controls to the left of the font button
+     * panel. Must return the number of columns created.
+     * @param _panel - the panel where the extra controls may be added
+     * @param _gbc - the layout constraints
+     * @param _maxGridX - the gridX value InputBox will claim (we must stay left of it)
+     * @return the next unused gridx value
+     */
+    protected int createExtrasBottom(JPanel _panel, GridBagConstraints _gbc, int _maxGridX) {
+        // START KGU#277 2016-10-13: Enh. #270
+        _gbc.gridx = 1;
+        _gbc.gridwidth = 7;
+        _gbc.gridheight = 1;
+        _gbc.fill = GridBagConstraints.BOTH;
+        _gbc.weightx = 1;
+        _gbc.weighty = 0;
+        _gbc.anchor = GridBagConstraints.NORTH;
+        ((GridBagLayout)_panel.getLayout()).setConstraints(chkDisabled, _gbc);
+        _panel.add(chkDisabled);
+        // END KGU#277 2016-10-13
+        
+        return _gbc.gridx + _gbc.gridwidth;
+	}
 
     // listen to actions
     @Override
@@ -485,7 +517,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     	if (!up) {
     		increment = font.getSize() > 8 ? -2.0f : 0.0f;
     	}
-    	Font newFont = font.deriveFont(font.getSize()+increment);
+    	// START KGU#428 2017-10-06: Enh. #430
+    	//Font newFont = font.deriveFont(font.getSize()+increment);
+    	FONT_SIZE = font.getSize()+increment;
+    	Font newFont = font.deriveFont(FONT_SIZE);
+    	// END KGU#428 2017-10-06
     	for (JComponent comp: scalableComponents) {
     		comp.setFont(newFont);
     	}

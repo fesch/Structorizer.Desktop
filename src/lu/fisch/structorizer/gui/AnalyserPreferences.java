@@ -47,6 +47,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21 (variable names I, l, O)
  *                                      bugfix #330: Checkbox status visibility in "Nimbus" look & feel
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling stuff outsourced to GUIScaler
+ *      Kay Gürtzig     2017.04.04      Enh. #388: New check for constant definitions (no. 22)
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
+ *      Kay Gürtzig     2017.09.13      Enh. #423: New Analyser error24 (type definitions) 
  *
  ******************************************************************************************************
  *
@@ -92,7 +95,10 @@ public class AnalyserPreferences extends LangDialog {
 		/*18*/"Check that identifiers don't differ only by upper/lower case.",
 		/*19*/"Check if an identifier might collide with reserved words.",
 		/*20*/"Check that a subroutine header has a parameter list.",
-		/*21*/"Discourage use of mistakable variable names «I», «l», and «O»."
+		/*21*/"Discourage use of mistakable variable names «I», «l», and «O».",
+		/*22*/"Check for possible violations of constants.",
+		/*23*/"Check against faulty diagram includes",
+		/*24*/"Check type definitions"
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -105,13 +111,13 @@ public class AnalyserPreferences extends LangDialog {
 	static {
 		checkboxTabs.put("Algorithmic", new int[]{
 				// instructions
-				3, 11,
+				3, 11, 22, 24,
 				0,// alternatives
 				8, 4,
 				0,// loops
 				1, 14, 2,
 				0,// functions and calls
-				20, 13,	15,
+				20, 13,	15, 23,
 				0,// jumps and parallel sections
 				16, 17
 		});
@@ -125,7 +131,11 @@ public class AnalyserPreferences extends LangDialog {
 		});
 	}
 	// END KGU#290 2016-11-10
-			
+	
+	// START KGU#393 2017-05-09: Issue #400 - indicate whether changes are committed
+	public boolean OK = false;
+	// END KGU#393 2017-05-09
+	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Bob Fisch
 	private JPanel dialogPane;
@@ -181,6 +191,27 @@ public class AnalyserPreferences extends LangDialog {
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
 
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent e) 
+			{
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					setVisible(false);
+				}
+				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				{
+					// START KGU#393 2017-05-09: Issue #400
+					OK = true;
+					// END KGU#393 2017-05-09		
+					setVisible(false);
+				}
+			}
+			
+			public void keyReleased(KeyEvent ke) {} 
+			public void keyTyped(KeyEvent kevt) {}
+		};
+
 		//======== dialogPane ========
 		{
 			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
@@ -217,6 +248,8 @@ public class AnalyserPreferences extends LangDialog {
 						}
 						else {
 							panel.add(checkboxes[checkIndex]);
+							// START KGU#
+							checkboxes[checkIndex].addKeyListener(keyListener);
 						}
 					}
 					wrapper.setLayout(new BorderLayout());
@@ -256,23 +289,6 @@ public class AnalyserPreferences extends LangDialog {
 		// Bob-thinks
 		// add the KEY-listeners
 		okButton.requestFocus(true);
-		KeyListener keyListener = new KeyListener()
-		{
-			public void keyPressed(KeyEvent e) 
-			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
-				{
-					setVisible(false);
-				}
-				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
-				{
-					setVisible(false);
-				}
-			}
-			
-			public void keyReleased(KeyEvent ke) {} 
-			public void keyTyped(KeyEvent kevt) {}
-		};
 		okButton.addKeyListener(keyListener);
 		
 		// add the ACTION-listeners
@@ -280,6 +296,9 @@ public class AnalyserPreferences extends LangDialog {
 		{
 			public void actionPerformed(ActionEvent event)
 			{
+				// START KGU#393 2017-05-09: Issue #400
+				OK = true;
+				// END KGU#393 2017-05-09		
 				setVisible(false);
 			}
 		};

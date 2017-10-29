@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -53,15 +52,16 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signature too)
  *      Kay Gürtzig     2016.11.25      Issue #294: Method isTestCovered adapted to refined CASE coverage rules
  *      Kay Gürtzig     2016.12.20      Bugfix KGU#315: Flawed selection and cursor navigation after element shifts
+ *      Kay Gürtzig     2016.04.18      Bugfix #386: New method isNoOP().
+ *      Kay Gürtzig     2017.05.21      Enh. #372: Additional field for RootAttributes to be cached on undoing/redoing
+ *      Kay Gürtzig     2017.07.01      Enh. #389: Additional field for caching the includeList on undoing/redoing 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
-import java.util.Iterator;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -92,6 +92,12 @@ public class Subqueue extends Element implements IElementSequence {
 	// START KGU#136 2016-03-01: Bugfix #97
 	private Vector<Integer> y0Children = new Vector<Integer>();
 	// END KGU#136 2016-03-01
+	// START KGU#363 2017-05-21: Enh. #372 - for the undo/redo list we need to cache Root attributes
+	public RootAttributes rootAttributes = null;
+	// END KGU#363 2017-05-21
+	// START KGU#376 2017-07-01: Enh. #389: comma-separated diagram names
+	public String diagramRefs = null;
+	// END KGU#376 2017-07-01
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -308,7 +314,7 @@ public class Subqueue extends Element implements IElementSequence {
 		clear();
 	}
 	
-	public Iterator<Element> getIterator()
+	public java.util.Iterator<Element> getIterator()
 	{
 		return children.iterator();
 	}
@@ -556,7 +562,7 @@ public class Subqueue extends Element implements IElementSequence {
 	@Override
     public void setCollapsed(boolean collapsed) {
         super.setCollapsed(false);	// the Subqueue itself will never be collapsed
-        Iterator<Element> iter = getIterator();
+        java.util.Iterator<Element> iter = getIterator();
         while (iter.hasNext())
         {
         	iter.next().setCollapsed(collapsed);
@@ -609,7 +615,6 @@ public class Subqueue extends Element implements IElementSequence {
 
 	@Override
 	protected String[] getRelevantParserKeys() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -620,4 +625,85 @@ public class Subqueue extends Element implements IElementSequence {
 			this.getElement(i).disabled = disable;
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.IElementSequence#getSubqueue()
+	 */
+	@Override
+	public Subqueue getSubqueue() {
+		return this;
+	}
+	
+	// START KGU#383 2017-04-18: Bugfix #386
+	/**
+	 * Returns true if this contains only insructions with empty text (e.g. mere
+	 * comments without implementation). This may be important to know for code
+	 * export.
+	 * @return true if no substantial instruction is contained.
+	 */
+	public boolean isNoOp()
+	{
+		for (int i = 0; i < this.getSize(); i++) {
+			Element ele = this.getElement(i);
+			if (!ele.isDisabled() && (
+					!(ele instanceof Instruction)
+					|| (ele instanceof Jump)
+					|| !ele.getText().getLongString().trim().isEmpty())
+					) {
+				return false;
+			}
+		}
+		return true;
+	}
+	// END KGU#383 2017-04-18
+
+	// START KGU#3401 2017-05-17: Issue #405
+	public void setRotated(boolean _rotated) {
+		super.setRotated(_rotated);
+		for (int i = 0; i < this.getSize(); i++) {
+			this.getElement(i).rotated = _rotated;
+		}
+	}
+	// END KGU#401 2017-05-17
+	
+	// START KGU 2017-10-21
+	/**
+	 * Checks whether {@link Element} {@code _ele} is member of this and may be reached i.e.
+	 * is neither directly nor indirectly preceded by a {@link Jump} element. If {@code _deepCheck}
+	 * is true then preceding structured elements are also checked if they may be left.  
+	 * @param _ele - the {@link Element} the reachability of which is to be tested
+	 * @param _deepCheck - whether preceding structured elements are to be checked particularly 
+	 * @return true if {@code _ele} is potentially reachable within this.
+	 */
+	public boolean isReachable(Element _ele, boolean _deepCheck)
+	{
+		return isReachable(children.indexOf(_ele), _deepCheck); 
+	}
+
+	/**
+	 * Checks whether {@link Element} with index {@code _index} exists may be reached i.e.
+	 * is neither directly nor indirectly preceded by a {@link Jump} element. If {@code _deepCheck}
+	 * is true then preceding structured elements are also checked if they may be left.  
+	 * @param _ele - the {@link Element} the reachability of which is to be tested
+	 * @param _deepCheck - whether preceding structured elements are to be checked particularly 
+	 * @return true if {@code _ele} is potentially reachable within this.
+	 */
+	public boolean isReachable(int _index, boolean _deepCheck) {
+		boolean reachable = _index >= 0 && _index < this.children.size();
+		while (_index >= 0 && reachable) {
+			Element ele = children.get(_index--);
+			reachable = !_deepCheck && (ele.disabled || !(ele instanceof Jump)) || ele.mayPassControl();
+		}
+		return reachable;
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
+	 */
+	public boolean mayPassControl()
+	{
+		int size = this.children.size();
+		return size == 0 || this.children.get(size-1).mayPassControl() && this.isReachable(size-1, true);
+	}
+	// END KGU 2017-10-21
 }

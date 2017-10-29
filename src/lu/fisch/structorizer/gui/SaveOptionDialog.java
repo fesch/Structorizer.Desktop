@@ -33,7 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2016.12.15      First Issue for enh. #310
- *      Kay Gürtzig     2016.01.09      Issue #81 - DPI awareness workaround implemented
+ *      Kay Gürtzig     2017.03.12      Enh. #372 (name attribute choosable)
  *
  ******************************************************************************************************
  *
@@ -48,10 +48,19 @@ import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.IOException;
 
+import javax.swing.JOptionPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
+import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.locales.LangDialog;
 
 /**
@@ -60,9 +69,10 @@ import lu.fisch.structorizer.locales.LangDialog;
  *
  */
 @SuppressWarnings("serial")
-public class SaveOptionDialog extends LangDialog {
+public class SaveOptionDialog extends LangDialog implements ActionListener, WindowListener {
 	
     public boolean goOn = false;
+    private Frame frame;
 
 	public SaveOptionDialog()
 	{
@@ -72,6 +82,7 @@ public class SaveOptionDialog extends LangDialog {
 	
 	public SaveOptionDialog(Frame frame)
 	{
+		this.frame = frame;
 	    initComponents();
 	    setModal(true);
 	    setLocationRelativeTo(frame);
@@ -90,12 +101,23 @@ public class SaveOptionDialog extends LangDialog {
 	    pnlWrapper = new javax.swing.JPanel();
 	    pnlAutoSave = new javax.swing.JPanel();
 	    pnlBackup = new javax.swing.JPanel();
+		// START KGU#363 2017-03-12: Enh. #372 Author name field
+		pnlFileInfo = new javax.swing.JPanel();
+		// END KGU#363 2017-03-12
 	    lbIntro = new javax.swing.JLabel();
 	    btnOk = new javax.swing.JButton();
 
 		chkAutoSaveExecute = new javax.swing.JCheckBox("Auto-save during execution?");
 		chkAutoSaveClose  = new javax.swing.JCheckBox("Auto-save when going to be closed?");
 		chkBackupFile = new javax.swing.JCheckBox("Create backup file on re-saving?") ;
+		// START KGU#363 2017-03-12: Enh. #372 Author name field
+		lblAuthorName = new javax.swing.JLabel("Author name");
+		txtAuthorName = new javax.swing.JTextField();
+		btnLicenseFile = new javax.swing.JButton("License file") ;
+		btnLicenseFile.addActionListener(this);
+		cbLicenseFile = new javax.swing.JComboBox<String>();
+		cbLicenseFile.setEditable(true);
+		// END KGU#363 2017-03-12
 
 	    setTitle("Preferences for Saving ...");
 
@@ -114,11 +136,7 @@ public class SaveOptionDialog extends LangDialog {
 	    lbIntro.setText("Please select the options you want to activate ...");
 
 	    btnOk.setText("OK");
-	    btnOk.addActionListener(new ActionListener() {
-	        public void actionPerformed(ActionEvent evt) {
-	            btnOkActionPerformed(evt);
-	        }
-	    });
+	    btnOk.addActionListener(this);
 
 	    Container content = getContentPane();
 	    content.setLayout(new BorderLayout());
@@ -128,7 +146,7 @@ public class SaveOptionDialog extends LangDialog {
 	    pnlTop.add(lbIntro);
 	    
 	    pnlAutoSave.setBorder(new TitledBorder("Auto-save options"));
-	    pnlAutoSave.setLayout(new GridLayout(0, 1, 0 , 1));
+	    pnlAutoSave.setLayout(new GridLayout(0, 1, 0, 1));
 	    pnlAutoSave.add(this.chkAutoSaveExecute);
 	    pnlAutoSave.add(this.chkAutoSaveClose);
 	    
@@ -136,11 +154,22 @@ public class SaveOptionDialog extends LangDialog {
 	    pnlBackup.setLayout(new GridLayout(0, 1, 0, 1));
 	    pnlBackup.add(this.chkBackupFile);
 	    
+		// START KGU#363 2017-03-12: Enh. #372 Author name field
+		pnlFileInfo.setBorder(new TitledBorder("File info defaults"));
+		pnlFileInfo.setLayout(new GridLayout(0, 2, 1, 1));
+		pnlFileInfo.add(this.lblAuthorName);
+		pnlFileInfo.add(this.txtAuthorName);
+		pnlFileInfo.add(this.btnLicenseFile);
+		pnlFileInfo.add(this.cbLicenseFile);
+		// END KGU#363 2017-03-12
 
 	    pnlOptions.setLayout(new GridLayout(0,1,4,4));
 	    pnlOptions.setBorder(new EmptyBorder(12,12,12,12));
 	    pnlOptions.add(pnlAutoSave, BorderLayout.CENTER);
 	    pnlOptions.add(pnlBackup, BorderLayout.CENTER);
+		// START KGU#363 2017-03-12: Enh. #372 Author name field
+	    pnlOptions.add(pnlFileInfo, BorderLayout.CENTER);
+		// END KGU#363 2017-03-12
 	    //pnlOptions.add(pnlPreference, BorderLayout.CENTER);
 	    
 	    pnlButtons.setLayout(new BorderLayout());
@@ -152,21 +181,69 @@ public class SaveOptionDialog extends LangDialog {
 	    content.add(pnlTop, BorderLayout.NORTH);
 	    content.add(pnlWrapper, BorderLayout.CENTER);
 	    content.add(pnlButtons, BorderLayout.SOUTH);
-	    
-	    // START KGU#287 2017-01-09: Issue #81 - DPI awareness workaround
-	    GUIScaler.rescaleComponents(this);
-	    // END KGU#287 2017-01-09
 
-	    pack();
+		try
+		{
+			File dir = getLicenseDirectory();
+		    File[] licFiles = dir.listFiles(new LicFilter());
+		    String prefix = LicFilter.getNamePrefix();
+		    String ext = "." + LicFilter.acceptedExtension();
+			for (File f: licFiles) {
+				String fname = f.getName();
+				this.cbLicenseFile.addItem(fname.substring(prefix.length(), fname.lastIndexOf(ext)));
+			}
+			
+		} catch (Error e)
+		{
+			System.err.println("SaveOptionDialog: " + e.getMessage());
+		} catch (Exception e)
+		{
+			System.err.println("SaveOptionDialog: " + e.getMessage());
+		}
+
+        // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
+		KeyListener keyListener = new KeyListener()
+		{
+			public void keyPressed(KeyEvent e) 
+			{
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					setVisible(false);
+				}
+				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				{
+					goOn = true;
+					setVisible(false);
+				}
+			}
+			
+			public void keyReleased(KeyEvent ke) {} 
+			public void keyTyped(KeyEvent kevt) {}
+		};
+		this.btnOk.addKeyListener(keyListener);
+		this.chkBackupFile.addKeyListener(keyListener);
+		this.chkAutoSaveClose.addKeyListener(keyListener);
+		this.chkAutoSaveExecute.addKeyListener(keyListener);
+		this.cbLicenseFile.addKeyListener(keyListener);
+		this.btnLicenseFile.addKeyListener(keyListener);
+		this.txtAuthorName.addKeyListener(keyListener);
+		// END KGU#393 2017-05-09		
+
+		pack();
 	    
 	    
 	}
+	
+	/**
+	 * Returns a File object for the license directory (which is identical to the
+	 * ini directory)
+	 * @return the File object of the directory for license files
+	 */
+	private File getLicenseDirectory()
+	{
+		return Ini.getIniDirectory();
+	}
 
-    private void btnOkActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
-    {
-        goOn = true;
-        this.setVisible(false);
-    }
 
 //    /**
 //     * @param args the command line arguments
@@ -215,17 +292,118 @@ public class SaveOptionDialog extends LangDialog {
 //    }
 
     // Variables declaration
+	private LicenseEditor editor = null;
 	private javax.swing.JPanel pnlTop;
 	private javax.swing.JPanel pnlButtons;
 	private javax.swing.JPanel pnlOptions;
 	private javax.swing.JPanel pnlWrapper;
 	public javax.swing.JPanel pnlAutoSave;
 	public javax.swing.JPanel pnlBackup;
+	// START KGU#363 2017-03-12: Enh. #372 Author name field
+	public javax.swing.JPanel pnlFileInfo;
+	// END KGU#363 2017-03-12
 	public javax.swing.JButton btnOk;
 	public javax.swing.JLabel lbIntro;
 	public javax.swing.JCheckBox chkAutoSaveExecute;
 	public javax.swing.JCheckBox chkAutoSaveClose;
 	public javax.swing.JCheckBox chkBackupFile;
+	// START KGU#363 2017-03-12: Enh. #372 Author name field
+	public javax.swing.JLabel lblAuthorName;
+	public javax.swing.JTextField txtAuthorName;
+	public javax.swing.JButton btnLicenseFile;
+	public javax.swing.JComboBox<String> cbLicenseFile;
+	public static LangTextHolder msgNoFile = new LangTextHolder("No file name selected or entered!");
+	public static LangTextHolder msgCantEdit = new LangTextHolder("Cannot open an editor for the selected file!");
+	// END KGU#363 2017-03-12
+
+	@Override
+	public void actionPerformed(ActionEvent evt) {
+		if (evt.getSource() == this.btnLicenseFile) {
+			String prefix = LicFilter.getNamePrefix();
+			String ext = "." + LicFilter.acceptedExtension();
+			String licName = (String)this.cbLicenseFile.getSelectedItem();
+			File licDir = this.getLicenseDirectory();
+			if (licName == null || licName.trim().isEmpty()) {
+				JOptionPane.showMessageDialog(this, msgNoFile.getText());
+				return;
+			}
+			File licFile = new File(licDir.getAbsolutePath() + File.separator + prefix + licName + ext);
+			try {
+				licFile.createNewFile();
+			} catch (IOException e) {
+				System.out.println("SaveOptionDialog: " + e.getMessage());
+			}
+			editor = new LicenseEditor(frame, licFile);
+			editor.addWindowListener(this);
+			editor.setVisible(true);
+		}
+		else if (evt.getSource() == this.btnOk) {
+	        goOn = true;
+	        this.setVisible(false);
+		}
+	}
+
+	@Override
+	public void windowActivated(WindowEvent e) {
+	}
+
+	@Override
+	public void windowClosed(WindowEvent e) {
+	}
+
+	@Override
+	public void windowClosing(WindowEvent evt) {
+		Object source = evt.getSource();
+		if (source instanceof LicenseEditor) {
+			this.cbLicenseFile.setSelectedIndex(-1);
+			this.cbLicenseFile.removeAllItems();
+			try
+			{
+				File dir = getLicenseDirectory();
+				File[] licFiles = dir.listFiles(new LicFilter());
+				String prefix = LicFilter.getNamePrefix();
+				String ext = "." + LicFilter.acceptedExtension();
+				for (File f: licFiles) {
+					String fname = f.getName();
+					this.cbLicenseFile.addItem(fname.substring(prefix.length(), fname.lastIndexOf(ext)));
+				}
+			} catch (Error ex)
+			{
+				System.err.println("SaveOptionDialog: " + ex.getMessage());
+			} catch (Exception ex)
+			{
+				System.err.println("SaveOptionDialog: " + ex.getMessage());
+			}
+			String licName = ((LicenseEditor)source).getLicenseName(true); 
+			if (!licName.equals("???")) {
+				this.cbLicenseFile.setSelectedItem(licName);
+			}
+		}
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent e) {
+	}
+
+	@Override
+	public void windowDeiconified(WindowEvent e) {
+	}
+
+	@Override
+	public void windowIconified(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void windowOpened(WindowEvent evt) {
+		Object source = evt.getSource();
+		//System.out.println(source + " opened...");
+		if (source instanceof LicenseEditor) {
+			LicenseEditor led = (LicenseEditor)source;
+			led.setSize(LicenseEditor.PREFERRED_WIDTH, LicenseEditor.PREFERRED_HEIGHT);
+		}
+	}
 	
 }
 

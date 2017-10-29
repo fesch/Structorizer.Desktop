@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -50,13 +49,14 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                          though this is only provisional for the line numbering mode
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
+ *      Kay Gürtzig         2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
  *      Kay Gürtzig         2016.10.13      Enh. #270: Handling of disabled elements added.
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.11.20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
  *      Kay Gürtzig         2017.02.27      Enh. #346: Formal adaptation
  *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
+ *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
  *
  ******************************************************************************************************
  *
@@ -71,7 +71,7 @@ package lu.fisch.structorizer.generators;
  *      - Enhancement #10 (KGU#3): FOR loops now provide more reliable loop parameters 
  *      - Enhancement KGU#15: Support for the gathering of several case values in CASE instructions
  *
- ******************************************************************************************************/
+ ******************************************************************************************************///
 
 import java.util.regex.Matcher;
 
@@ -126,28 +126,28 @@ public class BasGenerator extends Generator
     }
     // END KGU 2015-10-18
 
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"FUNCTION", "SUB",
-		"REM", "LET", "AS", "DIM",
-		"IF", "THEN", "ELSE", "END",
-		"SELECT", "CASE",
-		"FOR", "TO", "STEP", "NEXT",
-		"DO", "WHILE", "UNTIL", "LOOP",
-		"CALL", "RETURN", "GOTO", "GOSUB", "STOP",
-		// START KGU#293 2016-11-20
-		"INPUT", "PRINT", "READ", "DATA", "RESTORE",
-		// END KGU#293 2016-11-20
-		"AND", "OR", "NOT"};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	public boolean isCaseSignificant()
-	{
-		return false;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser
+//    private static final String[] reservedWords = new String[]{
+//		"FUNCTION", "SUB",
+//		"REM", "LET", "AS", "DIM",
+//		"IF", "THEN", "ELSE", "END",
+//		"SELECT", "CASE",
+//		"FOR", "TO", "STEP", "NEXT",
+//		"DO", "WHILE", "UNTIL", "LOOP",
+//		"CALL", "RETURN", "GOTO", "GOSUB", "STOP",
+//		// START KGU#293 2016-11-20
+//		"INPUT", "PRINT", "READ", "DATA", "RESTORE",
+//		// END KGU#293 2016-11-20
+//		"AND", "OR", "NOT"};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	public boolean isCaseSignificant()
+//	{
+//		return false;
+//	}
+//	// END KGU 2016-08-12
 
 	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
 	/* (non-Javadoc)
@@ -243,7 +243,7 @@ public class BasGenerator extends Generator
 		pos = -1;
 		while ((pos = tokens.indexOf("chr", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
 		{
-			if (this.optionBasicLineNumbering())
+			if (this.optionCodeLineNumbering())
 			{
 				tokens.set(pos, "Chr$");
 			}
@@ -253,14 +253,14 @@ public class BasGenerator extends Generator
 			}
 		}
 		// END KGU#150 2016-04-04
-		if (tokens.contains("<-") && this.optionBasicLineNumbering())
+		if (tokens.contains("<-") && this.optionCodeLineNumbering())
 		{
 			// Insert a "LET" keyword but ensure a separating blank between it and the variable name
 			if (!tokens.get(0).equals(" "))	tokens.insert(" ", 0);
 			tokens.insert("LET", 0);
 		}
 		// START KGU#100 2016-01-22: Enh #84 - Array initialisiation for Visual/modern BASIC
-		if (!this.optionBasicLineNumbering())
+		if (!this.optionCodeLineNumbering())
 		{
 			tokens.replaceAll("{", "Array(");
 			tokens.replaceAll("}", ")");
@@ -276,7 +276,7 @@ public class BasGenerator extends Generator
 	protected String getLineNumber()
 	{
 		String prefix = "";
-		if (this.optionBasicLineNumbering())
+		if (this.optionCodeLineNumbering())
 		{
 			prefix += this.lineNumber + " ";
 			this.lineNumber += this.lineIncrement;
@@ -288,7 +288,7 @@ public class BasGenerator extends Generator
 	{
         if (this.jumpTable.containsKey(_loop))
         {
-        	if (this.optionBasicLineNumbering())
+        	if (this.optionCodeLineNumbering())
         	{
         		// Associate label number with line number of the following dummy comment 
         		this.labelMap[this.jumpTable.get(_loop).intValue()] = this.lineNumber;
@@ -331,7 +331,7 @@ public class BasGenerator extends Generator
 		int oldSize = code.count();
 		super.insertBlockComment(_sl, _indent, _start, _cont, _end);
 		// Set the line numbers afterwards, the super method wouldn't have done it
-		if (this.optionBasicLineNumbering())
+		if (this.optionCodeLineNumbering())
 		{
 			for (int i = oldSize; i < code.count(); i++)
 			{
@@ -347,12 +347,12 @@ public class BasGenerator extends Generator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-19: Enh. #54 - support lists of output expressions
-		if (_input.matches("^" + getKeywordPattern(D7Parser.getKeyword("output").trim()) + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(CodeParser.getKeyword("output").trim()) + "[ ](.*?)"))
 		{
 			// Replace commas by semicolons to avoid tabulation
 			StringList expressions = 
-					Element.splitExpressionList(_input.substring(D7Parser.getKeyword("output").trim().length()), ",");
-			_input = D7Parser.getKeyword("output").trim() + " " + expressions.getText().replace("\n", "; ");
+					Element.splitExpressionList(_input.substring(CodeParser.getKeyword("output").trim().length()), ",");
+			_input = CodeParser.getKeyword("output").trim() + " " + expressions.getText().replace("\n", "; ");
 		}
 		// END KGU#101 2015-12-19
 
@@ -430,7 +430,7 @@ public class BasGenerator extends Generator
 				boolean isArrayInit = false;
 				// START KGU#171 2016-03-31: Enh. #144
 				//if (this.optionBasicLineNumbering())
-				if (!this.suppressTransformation && this.optionBasicLineNumbering())
+				if (!this.suppressTransformation && this.optionCodeLineNumbering())
 				// END KGU#171 2016-03-31
 				{
 					// The crux is: we don't know the index range!
@@ -494,7 +494,8 @@ public class BasGenerator extends Generator
     protected void generateCode(Alternative _alt, String _indent)
     {
 
-    	String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
     	String indentPlusOne = _indent + this.getIndent();
 
     	// START KGU 2015-11-02
@@ -842,8 +843,8 @@ public class BasGenerator extends Generator
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn  = D7Parser.getKeywordOrDefault("preReturn", "return");
-			String preExit    = D7Parser.getKeywordOrDefault("preExit", "exit");
+			String preReturn  = CodeParser.getKeywordOrDefault("preReturn", "return");
+			String preExit    = CodeParser.getKeywordOrDefault("preExit", "exit");
 			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
@@ -988,6 +989,9 @@ public class BasGenerator extends Generator
         {
             insertComment(_root, _indent);
         	insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			// START KGU#363 2017-05-16: Enh. #372
+			insertCopyright(_root, _indent, true);
+			// END KGU#363 2017-05-16
         	subroutineInsertionLine = code.count();	// (this will be revised in line nmbering mode)
         	insertComment("", _indent);
         }
@@ -999,13 +1003,13 @@ public class BasGenerator extends Generator
         // END KGU#178 2016-07-20
         
         String signature = _root.getMethodName();
-        if (!_root.isProgram) {
+        if (_root.isSubroutine()) {
         	boolean isFunction = _resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet; 
         	pr = isFunction ? "FUNCTION" : "SUB";
         		
 			// Compose the function header
         	signature += "(";
-        	if (this.optionBasicLineNumbering())
+        	if (this.optionCodeLineNumbering())
         	{
         		insertComment("TODO: Add type-specific suffixes where necessary!", _indent);
         	}
@@ -1044,7 +1048,7 @@ public class BasGenerator extends Generator
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
 		// Old BASIC dialocts with line numbers usually don't support declarations
-		if (!this.optionBasicLineNumbering())
+		if (!this.optionCodeLineNumbering())
 		{
 			String indentPlusOne = _indent + this.getIndent();
 			insertComment("TODO: declare your variables here:", _indent );
@@ -1066,7 +1070,7 @@ public class BasGenerator extends Generator
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		if (_root.isSubroutine() && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
 			String result = "0";
 			if (isFunctionNameSet)
@@ -1090,7 +1094,7 @@ public class BasGenerator extends Generator
 	protected void generateFooter(Root _root, String _indent)
 	{
 		String endPhrase = "END";
-        if (!_root.isProgram)
+        if (_root.isSubroutine())
         {
         	if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet)
         	{
@@ -1103,7 +1107,7 @@ public class BasGenerator extends Generator
         }
 		code.add(_indent + this.getLineNumber() + endPhrase);
 		
-		if (this.optionBasicLineNumbering())
+		if (this.optionCodeLineNumbering())
 		{
 			// Okay now, in line numbering mode, we will have to replace the generic labels by line numbers
 			for (int i = 0; i < code.count(); i++)

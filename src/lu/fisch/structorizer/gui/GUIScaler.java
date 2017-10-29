@@ -32,6 +32,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.01.09      First Issue
+ *      Kay Gürtzig     2017.10.15      Scaling for JTree rows added
  *
  ******************************************************************************************************
  *
@@ -59,6 +60,7 @@ import javax.swing.JMenu;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
+import javax.swing.JTree;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -177,6 +179,11 @@ public class GUIScaler {
 					}
 				}
 			}
+			// START KGU#324 2017-10-15: Enh. #415
+			else if (comp instanceof JTree && scaleFactor > 1) {
+				((JTree)comp).setRowHeight((int)(((JTree)comp).getRowHeight() * scaleFactor));
+			}
+			// END KGU#324 2017-10-15
 			else if (alternativeLaf != null) {
 				if (comp instanceof JLabel) {
 					comp.setFont(UIManager.getFont("Label.font"));

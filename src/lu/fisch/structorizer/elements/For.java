@@ -55,8 +55,11 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
  *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check
- *                                      Enh. #253: D7Parser.keywordMap refactored
- *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised 
+ *                                      Enh. #253: CodeParser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised
+ *      Kay Gürtzig     2017.01.26      Enh. #259: Type retrieval support added (for counting loops)
+ *      Kay Gürtzig     2017.04.14      Enh. #259: Approach to guess FOR-IN loop variable type too
+ *      Kay Gürtzig     2017.04.30      Enh. #354: New structured constructors
  *
  ******************************************************************************************************
  *
@@ -73,8 +76,9 @@ import java.util.Vector;
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.*;
 
 
@@ -163,6 +167,36 @@ public class For extends Element implements ILoop {
 		q.parent=this;
 		setText(_strings);
 	}
+	
+	// START KGU#354 2017-04-30: Enh. #354 Further facilitation of import
+	/**
+	 * This is a high-level structured constructor version and produces a fully classified
+	 * counting loop. 
+	 * @param varName - the counter variable name
+	 * @param startValStr - the expression for the initial counting value
+	 * @param endValStr - the exression for the final counting value
+	 * @param stepVal - increment or decrement constant
+	 */
+	public For(String varName, String startValStr, String endValStr, int stepVal)
+	{
+		this(CodeParser.getKeywordOrDefault("preFor", "for") + " " + varName
+				+ " <- " + startValStr + " "
+				+ CodeParser.getKeywordOrDefault("postFor", "to") + " " + endValStr
+				+ (stepVal != 1 ? (CodeParser.getKeywordOrDefault("stepFor", " by ") + stepVal) : ""));
+	}
+	
+	/**
+	 * This is a high-level structured constructor version and produces a fully classified
+	 * traversing loop. 
+	 * @param varName - the loop variable name
+	 * @param startValStr - the expression representing the value list
+	 */
+	public For(String varName, String valueList)
+	{
+		this(CodeParser.getKeywordOrDefault("preForIn", "foreach") + " " + varName + " "
+				+ CodeParser.getKeywordOrDefault("postForIn", "in") + " " + valueList);
+	}
+	// END KGU#354 2017-04-30
 	
 //	// START KGU#64 2015-11-03: Is to improve drawing performance
 //	/**
@@ -255,7 +289,7 @@ public class For extends Element implements ILoop {
 	
 	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
 	@Override
-	protected ImageIcon getIcon()
+	public ImageIcon getIcon()
 	{
 		if (Element.E_DIN)
 		{
@@ -393,14 +427,16 @@ public class For extends Element implements ILoop {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-		// START KGU#3 2015-11-30: Fine tuning
-		//_lines.add(this.getText());
-		if (!_instructionsOnly)
-		{
-			_lines.add(this.getText());
+		if (!this.isDisabled()) {
+			// START KGU#3 2015-11-30: Fine tuning
+			//_lines.add(this.getText());
+			if (!_instructionsOnly)
+			{
+				_lines.add(this.getText());
+			}
+			// END KGU#3 2015-11-30
+			this.q.addFullText(_lines, _instructionsOnly);
 		}
-		// END KGU#3 2015-11-30
-		this.q.addFullText(_lines, _instructionsOnly);
     }
     // END KGU 2015-10-16
 
@@ -497,7 +533,7 @@ public class For extends Element implements ILoop {
 	
 	// START KGU#61 2016-03-22: Enh. #84/#135
 	/**
-	 * Retrieves the set or list of values to be traversed (For-In style)
+	 * Retrieves the string representing the set or list of values to be traversed (For-In style)
 	 * @return string representing the array variable or literal
 	 */
 	public String getValueList()
@@ -516,6 +552,43 @@ public class For extends Element implements ILoop {
 	}
 	// END KGU#61 2016-03-22
 	
+	// START KGU 2017-04-14
+	/**
+	 * Tries to identify  the string representing the set or list of values to be traversed (For-In style)
+	 * @return a StringList containing string representations of the items of the value list - or null
+	 */
+	public StringList getValueListItems()
+	{
+		StringList valueItems = null;
+		String valueListString = this.getValueList();
+		if (valueListString != null) {
+			valueListString = valueListString.trim();
+			boolean hadBraces = valueListString.startsWith("{") && valueListString.endsWith("}");
+			StringList valueListTokens = splitLexically(valueListString, true);
+			// There are no built-in functions returning an array and external function calls
+			// aren't allowed at this position, hence it's relatively safe to conclude
+			// an item enumeration from the occurrence of a comma.
+			if (valueListTokens.contains(",")) {
+				if (hadBraces)
+				{
+					valueListTokens = valueListTokens.subSequence(1, valueListTokens.count()-1);
+				}
+				valueItems = splitExpressionList(valueListTokens, ",", false);
+			}
+			else if (valueListTokens.contains(" ")) {
+				valueItems = splitExpressionList(valueListTokens, " ", false);
+			}
+			
+			if (valueItems != null && valueItems.count() == 1 && !hadBraces && Function.testIdentifier(valueItems.get(0), ".")) {
+				// Now we get into trouble: It ought to be an array variable, which we cannot evaluate here
+				// So what do we return?
+				// We just return null to avoid misunderstandings
+				valueItems = null;
+			}
+		}
+		return valueItems;
+	}
+	// END KGU 2017-04-14
     
 	/**
 	 * @param counterVar the counterVar to set
@@ -583,16 +656,16 @@ public class For extends Element implements ILoop {
 
 		// START KGU#61 2016-03-20: Enh. #84/#135
 		// First collect the placemarkers of the for loop header ...
-		//String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor};
+		//String[] forMarkers = {CodeParser.preFor, CodeParser.postFor, CodeParser.stepFor};
 		// ... and their replacements (in same order!)
 		//String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
 		// First collect the placemarkers of the for loop header ...
 		String[] forMarkers = {
-				D7Parser.getKeyword("preFor"),
-				D7Parser.getKeyword("postFor"),
-				D7Parser.getKeyword("stepFor"),
-				(D7Parser.getKeyword("preForIn").trim().isEmpty() ? D7Parser.getKeyword("preFor") : D7Parser.getKeyword("preForIn")),
-				D7Parser.getKeyword("postForIn")
+				CodeParser.getKeyword("preFor"),
+				CodeParser.getKeyword("postFor"),
+				CodeParser.getKeyword("stepFor"),
+				(CodeParser.getKeyword("preForIn").trim().isEmpty() ? CodeParser.getKeyword("preFor") : CodeParser.getKeyword("preForIn")),
+				CodeParser.getKeyword("postForIn")
 				};
 		// ... and their replacements (in same order!)
 		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
@@ -617,7 +690,7 @@ public class For extends Element implements ILoop {
 				StringList markerTokens = Element.splitLexically(marker, false);
 				int markerLen = markerTokens.count();
 				int pos = -1;
-				while ((pos = tokens.indexOf(markerTokens, pos+1, !D7Parser.ignoreCase)) >= 0)
+				while ((pos = tokens.indexOf(markerTokens, pos+1, !CodeParser.ignoreCase)) >= 0)
 				{
 					// Replace the first token of the parser keyword by the separator 
 					tokens.set(pos, forSeparators[i]);
@@ -783,7 +856,7 @@ public class For extends Element implements ILoop {
 	 * Intended to be used in the constructor with String argument.
 	 * @return the identified style of the loop (counting, traversing, or "freestyle")
 	 */
-	private ForLoopStyle updateFromForClause()
+	public ForLoopStyle updateFromForClause()
 	{
 		String[] forParts = this.splitForClause();
 		this.setCounterVar(forParts[0]);
@@ -854,17 +927,17 @@ public class For extends Element implements ILoop {
 		{
 			asgnmtOpr = " := ";
 		}
-		String forClause = D7Parser.getKeyword("preFor").trim() + " " +
+		String forClause = CodeParser.getKeyword("preFor").trim() + " " +
 				_counter + asgnmtOpr + _start + " " +
-				D7Parser.getKeyword("postFor").trim() + " " + _end;
+				CodeParser.getKeyword("postFor").trim() + " " + _end;
 		if (_step != 1 || _forceStep)
 		{
-			forClause = forClause + " " + D7Parser.getKeyword("stepFor").trim() + " " +
+			forClause = forClause + " " + CodeParser.getKeyword("stepFor").trim() + " " +
 					Integer.toString(_step);
 		}
 		// Now get rid of multiple blanks
-		forClause = BString.replace(forClause, "  ", " ");
-		forClause = BString.replace(forClause, "  ", " ");
+		forClause = forClause.replace("  ", " ");
+		forClause = forClause.replace("  ", " ");
 		return forClause;
 	}
 	
@@ -891,10 +964,10 @@ public class For extends Element implements ILoop {
 
 	public static String composeForInClause(String _iterator, String _valueList)
 	{
-		String preForIn = D7Parser.getKeyword("preForIn").trim();
-		if (preForIn.isEmpty()) { preForIn = D7Parser.getKeyword("preFor").trim(); }
+		String preForIn = CodeParser.getKeyword("preForIn").trim();
+		if (preForIn.isEmpty()) { preForIn = CodeParser.getKeyword("preFor").trim(); }
 		String forClause = preForIn + " " + _iterator + " " +
-				D7Parser.getKeyword("postForIn").trim() + " " + _valueList;
+				CodeParser.getKeyword("postForIn").trim() + " " + _valueList;
 		return forClause;
 	}
 	
@@ -918,7 +991,7 @@ public class For extends Element implements ILoop {
 		// END KGU#256 2016-09-25
 		//System.out.println(thisText + " <-> " + this.composeForClause() + " <-> " + this.composeForInClause());
 		
-		if (D7Parser.ignoreCase)
+		if (CodeParser.ignoreCase)
 		{
 			// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
 			//if (thisText.equalsIgnoreCase(this.composeForClause()) ||
@@ -1072,8 +1145,41 @@ public class For extends Element implements ILoop {
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
 		if (!this.isForInLoop()) {
-			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false);
+			// This may be regarded as an explicit type declaration
+			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, true, false);
 		}
+		// START KGU#261 2017-04-14: Enh. #259 Try to make as much sense of the value list as possible
+		else {
+			StringList valueItems = this.getValueListItems();
+			String typeSpec = "";
+			if (valueItems != null) {
+				// Try to identify the element type(s)
+				for (int i = 0; !typeSpec.contains("???") && i < valueItems.count(); i++) {
+					String itemType = identifyExprType(typeMap, valueItems.get(i), true);
+					if (typeSpec.isEmpty()) {
+						typeSpec = itemType;
+					}
+					else if (!itemType.isEmpty() && !typeSpec.equalsIgnoreCase(itemType)) {
+						typeSpec = TypeMapEntry.combineTypes(itemType, typeSpec, true);
+					}
+				}
+				if (!typeSpec.isEmpty() && !typeSpec.equals("???")) {
+					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false, false);
+				}
+			}
+			else {
+				String valueListString = this.getValueList();
+				if (valueListString != null) {
+					// Try to derive the type from the expression
+					typeSpec = identifyExprType(typeMap, valueListString, false);
+					if (!typeSpec.isEmpty() && typeSpec.startsWith("@")) {
+						// nibble one array level off as the loop variable is of the element type
+						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false, false);						
+					}
+				}
+			}
+		}
+		// END KGU#261 2017-04-14
 	}
 	// END KGU#261 2017-01-26
 

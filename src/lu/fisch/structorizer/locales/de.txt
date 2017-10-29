@@ -95,6 +95,17 @@
  *      Kay Gürtzig         2017.01.07  Enh. #329: Messages for Analyser check 21
  *      Kay Gürtzig         2017.01.11  Issue #81/#330: Messages for scaling Preview
  *      Kay Gürtzig         2017.02.26  Enh. #346: Additions for ExportOptionDialoge
+ *      Kay Gürtzig         2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
+ *      Kay Gürtzig         2017.03.12  Enh. #372: New saving options
+ *      Kay Gürtzig         2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig         2017.03.27  Enh. #380: Messages for outsourcing of element sequences
+ *      Kay Gürtzig         2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
+ *      Kay Gürtzig         2017.03.30  Enh. #388: Constancy violation messages for Control added
+ *      Kay Gürtzig         2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig         2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig         2017.06.19  Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig         2017.09.18  Enh. #423: New messages for record type handling introduced
+ *      Kay Gürtzig         2017.10.16  Issues #437-#438: New Control messages
  *
  ******************************************************************************************************
  *
@@ -113,6 +124,7 @@ Menu.menuFileOpen.text=Öffnen ...
 Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileSave.text=Speichern
 Menu.menuFileSaveAs.text=Speichern unter ...
+Menu.menuFileSaveAll.text=Alle speichern
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
@@ -127,9 +139,10 @@ Menu.lbFileExportCodeFavorite.text=Exportieren nach %
 Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
 Menu.menuFileImport.text=Importieren
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal Code ...
+Menu.menuFileImportCode.text=Quell-Code ...
 Menu.menuFilePrint.text=Drucken ...
 Menu.menuFileArrange.text=Im Arranger anordnen
+Menu.menuFileAttributes.text=Eigenschaften anzeigen ...
 Menu.menuFileTranslator.text=Übersetzer
 Menu.menuFileQuit.text=Beenden
 // Menu "Edit"
@@ -141,9 +154,10 @@ Menu.menuEditRedo.text=Wiederholen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
-Menu.menuEditUpgradeTurtle.text=Reelle Turtlebefehle
+Menu.menuEditFindReplace.text=Suchen/Ersetzen ...
+Menu.menuEditUpgradeTurtle.text=Reelle Turtle-Befehle
 Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
-Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtlebefehle
+Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtle-Befehle
 Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
 Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
@@ -183,12 +197,15 @@ Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
 Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
+Menu.menuDiagramOutsource.text=Auslagern
+Menu.menuDiagramOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
 // Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hauptprogramm
 Menu.menuDiagramTypeFunction.text=Unterprogramm
+Menu.menuDiagramTypeInclude.text=Include-Diagramm
 Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
@@ -256,6 +273,7 @@ Menu.menuHelp.text=Hilfe
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
+Menu.menuHelpOnline.tooltip=Öffnen des Online-Nutzerhandbuchs
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
 
@@ -273,6 +291,7 @@ Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
 Menu.msgLangFile.text=Structorizer-Übersetzungsdatei
 Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br>und Neuigkeiten über Structorizer.
 Menu.msgTitleError.text=Fehler
+Menu.msgTitleWarning.text=WARNUNG
 Menu.msgTitleLoadingError.text=Fehler beim Laden
 Menu.msgTitleParserError.text=Parser-Fehler
 Menu.msgTitleURLError.text=URL-Fehler
@@ -280,7 +299,8 @@ Menu.msgTitleQuestion.text=Frage
 Menu.msgTitleOpen.text=Öffnen ...
 Menu.msgTitleSave.text=Speicher ...
 Menu.msgTitleSaveAs.text=Speichern unter ...
-Menu.msgTitleImport.text=%-Quellcode importieren ...
+Menu.msgTitleImport.text=Code-Import - Quelldatei auswählen (Dateityp-Filter beachten) ...
+Menu.msgTitleNSDImport.text=Diagrammdatei von % importieren ...
 Menu.msgTitleWrongInput.text=Falsche Eingabe
 Menu.msgSaveChanges.text=Möchten Sie die aktuelle Diagramm-Datei speichern?
 Menu.msgErrorImageSave.text=Fehler beim Speichern als Bild(er)!
@@ -291,12 +311,33 @@ Menu.msgRefactoringOffer.text=Schlüsselwörter in den Parser-Einstellungen wurd
 Menu.lblRefactorNone.text=nein
 Menu.lblRefactorCurrent.text=aktuelles
 Menu.lblRefactorAll.text=alle
+Menu.msgDiscardParserPrefs.text=Wirklich alle neuen Parser-Einstellungen verwerfen?
+Menu.msgAdaptStructPrefs.text=Struktur-Einstellungen (Default-Texte) an neue Parser-Einstellungen anpassen?
+Menu.msgKeywordsDiffer.text=Ursprünglicher Schlüsselwortkontext des geladenen Diagramms wich von den aktuellen Parser-Einstellungen ab:%1\nDas automatische Anpassen beim Laden ist ausgestellt.\n\nSie haben nun folgende Möglichkeiten:\n%2
+Menu.msgRefactorNow.text=Das Diagramm kann jetzt an die Parser-Einstellungen angepasst werden (empfohlen)
+Menu.msgAdoptPreferences.text=Sie können die mit dem Diagramm geladenen Schlüsselwörter als neue Parser-Einstellungen übernehmen\n   (was allerdings das Anpassen aller anderen geladenen Diagramme bewirkt!)
+Menu.msgLeaveAsIs.text=Sie können das Diagramm unverändert lassen, wodurch jedoch das Debuggen behindert wird\n   und Exporte fehlerhaft werden können (Anpassen kann nachgeholt werden)
+Menu.msgAllowChanges.text=Sie können die Veränderung des Diagramms zulassen, wobei allerdings die Schlüsselwortinformationen unwiederbringlich verloren gehen
+Menu.lblRefactorNow.text=Diagram angleichen
+Menu.lblAdoptPreferences.text=Schlüsselwörter übernehmen
+Menu.lblLeaveAsIs.text=Diagramm so belassen
+Menu.lblAllowChanges.text=Diagrammänderung erlauben
 Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
 Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
 Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" > "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
 Menu.lblOk.text=OK
+Menu.lblYes.text=Ja, fortsetzen
+Menu.lblNo.text=Nein, abbrechen
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 Menu.lblHint.text=Tipp
+Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
+Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
+Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
+Menu.msgSubroutineName.text=Name des neuen Unterprogramms
+Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es Aussprunganweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
+Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagrammdateien
+Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
+Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -305,20 +346,22 @@ Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden ...
 Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden: «%»
 Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
 Menu.error02.text=Es wurde keine Veränderung der Kontrollvariablen festgestellt. Wahrscheinlich handelt es sich um eine Endlosschleife ...
-Menu.error03_1.text=Die Variable «%» wurde nicht initialisiert!
-Menu.error03_2.text=Die Variable «%» wurde nicht in jedem Fall initialisiert!
+Menu.error03_1.text=Die Variable «%1»%2 wurde nicht initialisiert!
+Menu.error03_2.text=Die Variable «%1»%2 wurde nicht in jedem Fall initialisiert!
 Menu.error04.text=Der linke Zweig einer Alternativenstruktur darf nicht leer sein!
-Menu.error05.text=Die Variable «%» muss großgeschrieben werden!
-Menu.error06.text=Der Programmname «%» muss großgeschrieben werden!
+Menu.error05.text=Die Variable «%» soll großgeschrieben werden!
+Menu.error06.text=Der Programmname «%» soll großgeschrieben werden!
 Menu.error07_1.text=«%» ist kein korrekter Name für ein Programm oder eine Funktion/Methode!
 Menu.error07_2.text=«%» ist kein korrekter Name für einen Parameter!
-Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable!
+Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable oder Konstante!
 Menu.error08.text=In einer Bedingung darf keine Wertzuweisung erfolgen!
 Menu.error09.text=Der Programmname («%») darf nicht identisch mit dem Namen einer Variablen oder eines Parameters sein!
 Menu.error10_1.text=Eine Anweisung soll nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
 Menu.error10_2.text=Eine Anweisung soll nicht zugleich Eingaben und Ausgaben beinhalten!
 Menu.error10_3.text=Eine Anweisung soll nicht zugleich Eingaben und Wertzuweisungen beinhalten!
 Menu.error10_4.text=Eine Anweisung soll nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
+Menu.error10_5.text=Ein Anweisungselement sollte Konstantendefinitonen nicht mit anderen Anweisungen mischen!
+Menu.error10_6.text=Ein Anweisungselement sollte Typdefinitonen nicht mit anderen Anweisungen mischen!
 Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
 Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
@@ -327,21 +370,41 @@ Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
 Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
-Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
-Menu.error15_2.text=Die aufgerufene Routine «%» ist z.Z. nicht verfügbar.
-Menu.error15_3.text=Mehr als eine Routine passt zu Aufruf «%».
+Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=Das Diagramm der aufgerufenen Routine «%» ist z.Z. nicht verfügbar.
+Menu.error15_3.text=Mehr als ein Diagramm passt zu Routinenaufruf «%».
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
-Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
-Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
+Menu.error16_2.text=Eine «%»-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
+Menu.error16_3.text=«%1»- oder «%2»-Anweisungen sind nur als Aussprung-Elemente zulässig!
 Menu.error16_4.text=Ein Aussprung ist nur um höchstens die Anzahl der umgebenden Schleifen (%) zulässig!
-Menu.error16_5.text=Ein direkter Rücksprung (return) aus einem Parallelzweig ist unzulässig!
-Menu.error16_6.text=Falscher Parameter für diese Art von Aussprung - hier sollte eine Ganzzahlkonstante stehen.
+Menu.error16_5.text=Ein direkter Aussprung (%1, %2) aus einem Parallelzweig ist unzulässig!
+Menu.error16_6.text=Unzulässiger Parameter für Schleifenaussprung - nur Ganzzahlkonstante erlaubt.
 Menu.error16_7.text=Anweisungen nach einem Aussprung sind nicht erreichbar.
+Menu.error16_8.text=Möglicherweise ungeeigneter Parameter für «%»-Befehl (solle ein Ganzzahlwert sein)!
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
-Menu.error19.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
+Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
+Menu.error19_2.text=Der Variablenname «%» ist in Structrizer reserviert und dürfte Probleme beim Ausführen bewirken!
 Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
 Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
+Menu.error22_1.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten ab: «%2».
+Menu.error22_2.text=Unzulässiger Versuch, die Konstante «%» zu ändern bzw. neu zu setzen.
+Menu.error23_1.text=Diagramm «%» ist als einbeziehbares eher ungeeignet, da es Rücksprünge verwendet.
+Menu.error23_2.text=Import von Diagramm «%» ist rekursiv!
+Menu.error23_3.text=Import hier wird ignoriert, da Diagram «%1» bereits einbezogen ist: %2.
+Menu.error23_4.text=Namenskonflikt zwischen lokaler und importierter Variable oder Konstante «%»!
+Menu.error23_5.text=Kein einbeziehbares Diagram «%» gefunden.
+Menu.error23_6.text=Mehrere einbeziehbare Diagramme «%» gefunden!
+Menu.error23_7.text=Namenskonflikt zwischen lokaler and importierter Typedefinition «%»!
+Menu.error24_1.text=Form der Typdefinition in (zusammengesetzter) Zeile % nicht korrekt.
+Menu.error24_2.text=Typname «%» ist unzulässig oder kollidiert mit anderem Bezeichner.
+Menu.error24_3.text=Komponentenname «%» ist unzulässig oder doppelt.
+Menu.error24_4.text=Komponententyp «%» ist undefiniert oder unbekannt.
+Menu.error24_5.text=Es gibt keinen definierten Verbund-Typ «%»!
+Menu.error24_6.text=Verbund-Komponente «%» wird nicht geändert bzw. initialisiert!
+Menu.error24_7.text=Verbundtyp «%1» besitzt keine Komponente «%2»!
+Menu.error24_8.text=Variable «%1» besitzt keine Komponente «%2»!
+Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
@@ -368,6 +431,9 @@ AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablen sich nur durch Gro�
 AnalyserPreferences.checkboxes.19.text=Prüfen, ob Variablennamen mit reservierten Wörtern kollidieren könnten.
 AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeile) eine Parameterliste besitzt.
 AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variablennamen «I», «l» und «O» warnen.
+AnalyserPreferences.checkboxes.22.text=Prüfen, dass der Schutz von Konstanten nicht unterlaufen wird.
+AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehenden Diagramme korrekt ist.
+AnalyserPreferences.checkboxes.24.text=Typedefinitionen überprüfen.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -378,6 +444,7 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagrammes.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagrammes.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagrammmes.
+Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme sichern.
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element.
 Editor.btnBeforeAlt.tooltip=Einfügen einer neuen IF-Anweisung vor dem ausgewählten Element.
@@ -403,6 +470,8 @@ Editor.btnAfterPara.tooltip=Einfügen einer neuen PARALLEL-Anweisung nach dem au
 // undo & redo
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
+// find & replace
+Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Erseiten.
 // copy & paste
 Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
@@ -411,20 +480,23 @@ Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements n
 Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=Unterprogramm-Diagramm (gerundete Ecken).
 Editor.btnProgram.tooltip=Hauptprogramm-Diagram (kantige Ecken).
+Editor.btnInclude.tooltip=Include-Diagram (2 abgeschrägte Ecken).
 // editing
 Editor.btnEdit.tooltip=Bearbeiten des ausgewählten Elements.
 Editor.btnDelete.tooltip=Löschen des ausgewählten Elements.
 Editor.btnMoveUp.tooltip=Bewegen des ausgewählten Elements um eine Position nach oben.
 Editor.btnMoveDown.tooltip=Bewegen des ausgewählten Elements um eine Position nach unten.
 Editor.btnTransmute.tooltip=Anweisung in Aufruf oder Aussprung wandeln, zusammenfassen oder zerlegen.
+Editor.btnOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 //printing
 Editor.btnPrint.tooltip=Drucken des Diagramms.
 Editor.btnArrange.tooltip=Diagram zum Arranger-Tableau hinzufügen.
 // font
 Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
 Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
-// copyright
+// copyright and help
 Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
+Editor.btnHelp.tooltip=Öffnen des Online-Nutzerhandbuchs
 // colors
 Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor1.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
@@ -481,6 +553,8 @@ Editor.popupDelete.text=Löschen
 Editor.popupMoveUp.text=Nach oben bewegen
 Editor.popupMoveDown.text=Nach unten bewegen
 Editor.popupTransmute.text=Umwandeln
+Editor.popupOutsource.text=Auslagern
+Editor.popupOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
@@ -514,7 +588,6 @@ InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung
 InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
 InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
 InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
-InputBox.title[elementType:Root]=Programmnamen bearbeiten...
 InputBox.title[elementType:Function]=Funktionssignatur bearbeiten...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue Anweisungen hinzufügen...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Neue Verzweigung hinzufügen...
@@ -569,6 +642,99 @@ InputBoxFor.msgEnterValueList.text=Bitte Wertliste für die Schleife eingeben.
 InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die meisten Schleifendaten verloren gehen!\nDaten wirklich opfern?
 InputBoxFor.msgAttention.text=ACHTUNG!
 
+-----[ InputBox Root ]-----
+InputBoxRoot.title=Angaben zum Diagramm bearbeiten...
+InputBoxRoot.lblIncludeList.text=Einzubeziehende Diagramme
+InputBoxRoot.txtIncludeList.tooltip=Namen von Diagrammen, die vor dem Start einzubinden sind (durch Kommas oder Zeilenschaltung getrennt).
+InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
+InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur (Name, Parameterliste, ggf. Rückggabetyp) eingeben
+InputBoxRoot.lblComment.text=Einzugebender Kommentar
+InputBoxRoot.txtComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
+InputBoxRoot.btnOK.text=Speichern
+InputBoxRoot.btnOK.tooltip=Speichern der Eintragungen.
+InputBoxRoot.btnCancel.text=Abbrechen
+InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxRoot.btnAttributes.text=Attribute
+InputBoxRoot.btnAttributes.tooltip=Öffnet ein Fenster zur Anzeige der Attribute und Eigenschaften dieses Diagramms.
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=Diagrammeigenschaften
+AttributeInspector.lblCreatedBy.text=Autor
+AttributeInspector.lblCreatedOn.text=Erstellt am
+AttributeInspector.lblModifiedBy.text=Zuletzt geändert von
+AttributeInspector.lblModifiedOn.text=Zuletzt geändert am
+AttributeInspector.lblFilePath.text=Dateipfad
+AttributeInspector.lblShadowPath.text=Schatten-Dateipfad
+AttributeInspector.txtShadowPath.tooltip=Dieser Pfad (meist in einem Temp.-Verzeichnis) wird zum Packen/Entpacken benutzt, wenn das Diagram aus einem komprimierten Archiv stammt.
+AttributeInspector.lblOrigin.text=Herkunft
+AttributeInspector.btnClearOrigin.text=Säubern
+AttributeInspector.btnClearOrigin.tooltip=Löscht den Herkunftseintrag
+AttributeInspector.lblElements.text=Elemente insges.
+AttributeInspector.lblInstrs.text=Anweisungen
+AttributeInspector.lblAlts.text=Alternativen
+AttributeInspector.lblCases.text=Fallauswahl
+AttributeInspector.lblLoops.text=Schleifen
+AttributeInspector.lblCalls.text=Routinenaufrufe
+AttributeInspector.lblJumps.text=Aussprünge
+AttributeInspector.lblPars.text=Parallelabschnitte
+AttributeInspector.btnShowLicense.text=Lizenztext
+AttributeInspector.btnShowLicense.tooltip=Diese Schaltfläche drücken, um den Text der gewählten Lizenz einzusehen, zu kopieren oder zu bearbeiten.
+AttributeInspector.cbLicenseName.tooltip=Eine verfügbare Lizenz unter den persönlichen Lizenz-Vorlagen oder die aktuelle wählen.
+AttributeInspector.lblPrefsAlt.text=IF-Anweisung
+AttributeInspector.lblPrefsCase.text=CASE-Anweisung
+AttributeInspector.lblPrefsFor.text=Zählschleife
+AttributeInspector.lblPrefsForIn.text=FOR-IN-Schleife
+AttributeInspector.lblPrefsWhile.text=WHILE-Schleife
+AttributeInspector.lblPrefsRepeat.text=REPEAT-Schleife
+AttributeInspector.lblPrefsIO.text=Ein-/Ausgabe
+AttributeInspector.lblPrefsJump.text=Aussprung
+AttributeInspector.lblPrefsPre.text=Vor
+AttributeInspector.lblPrefsPost.text=Nach
+AttributeInspector.lblPrefsMore.text=(Zusatz)
+AttributeInspector.btnParserPrefs.text=Parser-Einstellungen
+AttributeInspector.btnOk.text=OK
+AttributeInspector.btnOk.tooltip=Eventuelle Änderungen übernehmen und Dialog schließen.
+AttributeInspector.btnCancel.text=Abbruch
+AttributeInspector.btnCancel.tooltip=Dialog ohne Übernahme von Änderungen verlassen.
+AttributeInspector.lblMain.text=Hauptprogramm
+AttributeInspector.lblSub.text=Unterprogramm
+AttributeInspector.lblIncl.text=Include-Diagramm
+AttributeInspector.pnCopyrights.border=Copyrights
+AttributeInspector.pnStatistics.border=Statistik
+AttributeInspector.pnKeywordSet.border=Abweichender Schlüsselwort-Satz
+AttributeInspector.msgOverrideLicense.text=Lizenztext durch den der gewählten Lizenzvorlage "%" überschreiben?
+AttributeInspector.msgLicenseChange.text=Lizenz-Modifikation
+AttributeInspector.msgLicenseLoadError.text=Fehler beim Laden des Lizenztexts für Lizenz "%1":\n%2!
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=Structorizer Lizenz-Editor: %
+LicenseEditor.menuFile.text=Datei
+LicenseEditor.menuFile.mnemonic=d
+LicenseEditor.menuEdit.text=Bearbeiten
+LicenseEditor.menuEdit.mnemonic=e
+LicenseEditor.menuProp.text=Eigenschaften
+LicenseEditor.menuProp.mnemonic=s
+LicenseEditor.menuFileCommit.text=Übernehmen
+LicenseEditor.menuFileSave.text=Speichern (im Pool)
+LicenseEditor.menuFileSaveAs.text=Speichern unter ...
+LicenseEditor.menuFileRename.text=Umbenennen ...
+LicenseEditor.menuFileReload.text=Erneut laden/Verwerfen
+LicenseEditor.menuFileDelete.text=Löschen
+LicenseEditor.menuFileQuit.text=Beenden
+LicenseEditor.menuEditUndo.text=Rückgängig
+LicenseEditor.menuEditRedo.text=Wiederholen
+LicenseEditor.menuEditClear.text=Säubern
+LicenseEditor.menuPropFont.text=Schriftart ...
+LicenseEditor.menuPropFontUp.text=Schrift vergrößern
+LicenseEditor.menuPropFontDown.text=Schrift verkleinern
+LicenseEditor.msgNewLicName.text=Neuer Lizenzname
+LicenseEditor.msgCouldntWriteLicense.text=Lizenz "%1" konnte nicht in Datei gesichert werden!\nUrsache: %2
+LicenseEditor.msgCouldntRenameLicense.text=Lizenz "%1" konnte nicht in "%2" umbenannt werden!\nMöglicherweise ist schon eine Lizenz mit dem neuen Namen vorhanden.
+LicenseEditor.msgSureToDelete.text=Wollen Sie wirklich die Lizenz "%" unwiderruflich löschen? Die Aktion ist nicht rücknehmbar!
+LicenseEditor.msgSureToDiscard.text=Wollen Sie wirklich alle ungesicherten Änderungen für Lizenz "%" verwerfen?
+LicenseEditor.msgPendingChanges.text=Es gibt ungesicherte Änderungen zur Lizenz "%".\Sollen diese vor dem Verlassen gespeichert werden?
+LicenseEditor.msgOverwriteExisting.text=Lizenz "%" existiert bereits im Pool.\nSoll sie überschrieben werden?
+
 -----[ Preferences ]-----
 Preferences.title=Struktogramm-Einstellungen
 Preferences.pnlAlt.border=IF-Anweisung
@@ -583,7 +749,12 @@ Preferences.altPadRight.text=Verbreitere FALSCH-Zweig
 Preferences.pnlCase.border=CASE-Anweisung
 Preferences.pnlCase.tooltip=Einstellungen zur CASE-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text
-Preferences.lblCase.tooltip=Der Voreinstellungs-Text im CASE-Anweisungs-Kopf.
+Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der CASE-Anweisung.
+Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
+Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des CASE-Elements verringern (0 = aus) 
+Preferences.pnlRoot.border=Diagrammkopf
+Preferences.lblRoot.text=Beschriftung der Importliste
+Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.
 Preferences.pnlFor.border=FOR-Schleife
 Preferences.pnlFor.tooltip=Einstellungen zur FOR-Schleife
 Preferences.lblFor.text=Voreinstellungs-Text
@@ -595,7 +766,7 @@ Preferences.lblWhile.tooltip=Der Voreinstellungs-Text im WHILE-Schleifen-Kopf.
 Preferences.pnlRepeat.border=REPEAT-Schleife
 Preferences.pnlRepeat.tooltip=Einstellungen zur REPEAT-Schleife.
 Preferences.lblRepeat.text=Voreinstellungs-Text
-Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im REPEAT-Schleifen-Kopf.
+Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im REPEAT-Schleifen-Fuß.
 Preferences.btnOK.text=Speichern
 Preferences.btnOK.tooltip=Speichern der Einstellungen.
 
@@ -719,9 +890,12 @@ ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren
 ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Aufgerufene Unterprogramme mit exportieren.
+ExportOptionDialoge.chkExportLicenseInfo.text=Autorenschafts- and Lizenzattribute exportieren.
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
 ExportOptionDialoge.lbCharset.text=Zeichensatz (Codierung):
 ExportOptionDialoge.chkCharsetAll.text=Alle auflisten?
+ExportOptionDialoge.btnPluginOptions.text=Sprachspezifische Optionen
+ExportOptionDialoge.msgOptionsForPlugin.text=Generator-Optionen für %
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
@@ -737,6 +911,17 @@ ImportOptionDialog.lbCharset.text=Zeichensatz (Codierung):
 ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
 ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagrammen beim Laden ersetzen (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
+ImportOptionDialog.chkVarDeclarations.text=Variablendeklarationen mit importieren
+ImportOptionDialog.chkVarDeclarations.tooltip=Ist dies Option gewählt, können Parser gefundene Variablendeklarationen in inaktive Anweisungselemente legen.
+ImportOptionDialog.chkCommentImport.text=Quellcode-Kommentare mit importieren
+ImportOptionDialog.chkSaveParseTree.text=Nach dem Import Syntaxbaum als Textdatei speichern.
+ImportOptionDialog.chkSaveParseTree.tooltip=Nach erfolgreichem Code-Import kann der Syntaxbaum der Quelldatei in eine Textdatei "*.parsetree.txt" gesichert werden.
+ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
+ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Protokolldatei je Import erlauben
+ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
+ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
+ImportOptionDialog.btnPluginOptions.text=Sprachspezifische Optionen
+ImportOptionDialog.msgOptionsForPlugin.text=Parser-Optionen für %
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
 
@@ -745,11 +930,24 @@ SaveOptionDialog.title=Optionen für das Sichern von Diagrammen ...
 SaveOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 SaveOptionDialog.pnlAutoSave.border=Automatisches Speichern
 SaveOptionDialog.pnlBackup.border=Backup-Dateien
+SaveOptionDialog.pnlFileInfo.border=Dateiinfo-Standardwerte
 SaveOptionDialog.chkAutoSaveExecute.text=Automatisch sichern beim Debuggen?
 SaveOptionDialog.chkAutoSaveClose.text=Automatisch sichern beim Beenden?
 SaveOptionDialog.chkBackupFile.text=Beim Überschreiben Backup-Dateien erstellen?
+SaveOptionDialog.lblAuthorName.text=Autorname
+SaveOptionDialog.btnLicenseFile.text=Lizenzdatei
+SaveOptionDialog.btnLicenseFile.tooltip=Editor für den Text dieser Lizenz öffnen
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=Der Wert für '%' muss eine ganze Zahl sein!
+PluginOptionDialog.msgNoValidUnsigned.text=Der Wert für '%' muss eine natürliche (positive) Zahl sein!
+PluginOptionDialog.msgNoValidCharacter.text=Der Wert für '%' muss ein einzelnes Zeichen sein!
+PluginOptionDialog.msgNoValidDouble.text=Der Wert für '%' muss eine Zahl sein (ggf. mit DezimalPUNKT)!
+PluginOptionDialog.msgVerificationError.text=Fehler bei Eingabeprüfung
+PluginOptionDialog.btnOk.text=OK
+PluginOptionDialog.btnCancel.text=Abbrechen
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI-Skalierung
@@ -760,6 +958,40 @@ GUIScaleChooser.lblIcon.text=Voransicht Icon-Größe
 GUIScaleChooser.chkTest.text=Voransicht Optionselement
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Suchen / Ersetzen
+FindAndReplace.lblSearchPattern.text=Suche:
+FindAndReplace.lblReplacePattern.text=Ersetze durch:
+FindAndReplace.pnlMode.border=Modus
+FindAndReplace.chkCaseSensitive.text=Beachte Groß/klein
+FindAndReplace.chkWholeWord.text=Ganzes Wort
+FindAndReplace.chkRegEx.text=Reguläre Ausdrücke
+FindAndReplace.rbDown.text=Abwärts
+FindAndReplace.rbUp.text=Aufwärts
+FindAndReplace.pnlScope.border=Suchbereich
+FindAndReplace.cmbScope.item.0=Ausgewählte Elemente
+FindAndReplace.cmbScope.item.1=Aktuelles Diagramm
+FindAndReplace.cmbScope.item.2=Geöffnete Diagramme
+FindAndReplace.pnlRootTypes.border=Diagrammtypen
+FindAndReplace.chkRootTypes.0.text=Hauptprogramme
+FindAndReplace.chkRootTypes.1.text=Unterprogramme
+FindAndReplace.chkRootTypes.2.text=Include-Diagramme
+FindAndReplace.chkInTexts.text=In Texten
+FindAndReplace.chkInComments.text=In Kommentaren
+FindAndReplace.pnlElements.border=Elementtypen
+FindAndReplace.btnAll.text=Alle
+FindAndReplace.btnNone.text=Keine
+FindAndReplace.chkDisabled.text=Deaktivierte Elemente
+FindAndReplace.pnlPreview.border=Inhalt
+FindAndReplace.txtText.border=Text
+FindAndReplace.txtComm.border=Kommentar
+FindAndReplace.chkElementwise.text=Elementweise
+FindAndReplace.btnFind.text=Suchen
+FindAndReplace.btnReplace.text=Ersetzen
+FindAndReplace.btnReplaceFind.text=Ersetzen/Weiter
+FindAndReplace.btnReplaceAll.text=Alle ersetzen
+FindAndReplace.btnClose.text=Schließen
 
 -----> Arranger
 Surface.msgFileLoadError.text=Dateiladefehler:
@@ -784,9 +1016,12 @@ Surface.titleDiagramConflict.text=Diagramm-Konflikt
 Surface.msgInsertionConflict.0.text=Es gibt bereits eine Version von Diagramm "%2",\nwenigstens eine davon hat ungesicherte Änderungen.
 Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des Diagramms "%1"\nmit unterschiedlichem Dateipfad "%2".
 Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
+Surface.msgOverwriteFile.text=Bestehende Datei "%" überschreiben?
+Surface.msgConfirmOverwrite.text=Überschreiben bestätigen
 
 -----> Executor
 -----[ Control ]-----
+Control.title=Diagramm-Test
 Control.lblSpeed.text=Verzögerung:
 Control.btnCallStack.text=Aufrufstapel
 Control.lblCallLevel.text=Aufruftiefe:
@@ -810,10 +1045,18 @@ Control.lbReturnedResult.text=Zurückgegebenes Resultat
 Control.lbOutput.text=Ausgabe
 Control.lbInput.text=Eingabe
 Control.lbAcknowledge.text=Zum Fortfahren bitte bestätigen.
+Control.lbOk.text=OK
+Control.lbPause.text=Pause
+Control.lbCommit.text=Änderungen übernehmen
+Control.lbDiscard.text=Änderungen verwerfen
+Control.ttlCompName.text=Name
+Control.ttlIndex.text=Index
+Control.ttlContent.text=Inhalt
 Control.msgTitleError.text=Fehler
 Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
 Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
+Control.msgNoInclDiagram.text=Ein einbeziehbares Diagramm \"%\" wurde nicht gefunden!\nPlatzieren Sie einzubeziehende Diagramme zunächst im Arranger.
 Control.msgAmbiguousCall.text=Mehrdeutiger Aufruf: Verschiedene Unterprogramm-Diagramme "%1" (%2 Parameter) gefunden!
 Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
 Control.msgInvalidBool.text=<%1> ist kein gültiger logischer Ausdruck.
@@ -830,9 +1073,23 @@ Control.msgInvalidFileNumberRead.text=Ungültige Dateinummer bzw. Datei nicht ge
 Control.msgInvalidFileNumberWrite.text=Ungülige Dateinummer bzw. Datei nicht geöffnet zum Schreiben.
 Control.msgNoIntLiteralOnFile.text=Kein Ganzzahlwert lesbar von der Datei!
 Control.msgNoDoubleLiteralOnFile.text=Kein Gleitkommawert lesbar von der Datei!    
-Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!    
+Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!
+Control.msgUseStopButton.text=Ein Debugging ist in Ausführung oder pausierend!\nZum Abbrechen und Schließen bitte STOP-Taste verwenden.
+Control.msgConstantRedefinition.text=Unzulässiger Versuch, Konstante «%» neu zu setzen oder zu ändern!
+Control.msgConstantArrayElement.text=Ein Array-Element «%» kann nicht per Zuweisung zur Konstanten gemacht werden!
+Control.msgInvalidComponent.text=Es gibt keine Komponente «%1» in Verbundtyp oder -Variable «%2»!
+Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht mittels Zuweisung konstant gemacht werden!
+Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!
+Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
+Control.msgBadValueListDetails.text=Details: %
+Control.msgVarUpdateErrors.text=Problem beim Variablen-Update
+Control.msgVarUpdatesFailed.text=Diese Variablen-Änderungen scheiterten an syntaktischen Fehlern:\n\n%
+Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Enter oder Esc).
+Control.msgFunctionConflict.text=\nFunktion «%1(%2)» von %3 verdrängt durch %4
+Control.msgProcedureConflict.text=\nProzedur «%1(%2)» von %3 vedrängt durch %4
+Control.msgSignatureConflicts.text=Es treten API-Konflikte zwischen den gewählten Steuerungs-Plugins auf:%
 Control.tblVar.header.0=Variablenname
-Control.tblVar.header.1=Inhalt
+Control.tblVar.header.2=Inhalt
 
 -----[ OutputConsole ]-----
 OutputConsole.menu.text=Eigenschaften

@@ -1,5 +1,16 @@
-How To Write a Generator
-========================
+This is just a little file that explains
+ __ __   ___   __    __    ______   ___  
+|  |  | /   \ |  |__|  |  |      | /   \ 
+|  |  ||     ||  |  |  |  |      ||     |
+|  _  ||  O  ||  |  |  |  |_|  |_||  O  |
+|  |  ||     ||  `  '  |    |  |  |     |
+|  |  ||     | \      /     |  |  |     |
+|__|__| \___/   \_/\_/      |__|   \___/
+
+WRITE A NEW CODE GENERATOR FOR STRUCTORIZER
+===========================================
+Author:      Kay G�rtzig
+Last update: 2017-03-30
 
 There are two possible approaches to add a new generator to Structorizer:
 You might start from scratch or copy an existing generator for a language
@@ -18,6 +29,7 @@ better into the syntax of the target language. This way you may improve
 and accomplish the outcome step by step, consider more export options etc.
 
 1	Derive a new subclass of lu.fisch.structorizer.generators.Generator.
+
 2	Implement the abstract configuration methods:
 	2.1	String getDialogTitle()
 		Return a title string for the FileChooser dialog (in English!),
@@ -66,10 +78,15 @@ and accomplish the outcome step by step, consider more export options etc.
 	2.9	String[] getReservedWords()
 		Return a string array (type String[]) containing the reserved
 		words of the target language (also see isCaseSignificant()).
+		You may return an empty String array if you provide the set of
+		words in the plugin file generators.xml instead (see 7).
 	2.10	boolean isCaseSignificant()
 		Return true if case matters for identifying reserved words
 		(also see getReservedWords() above) in the target language 
 		(e.g. true for Java, false for Pascal).
+		If the reserved words (see 2.9) are configured in the plugin file
+		(see 7) then you should also configure the handling of letter
+		case in the plugin file generators.xml (see 7).
 	2.11	boolean breakMatchesCase()
 		Specify whether an instruction to leave a loop (the innermost
 		enclosing loop) like "break;" in C is available in the target
@@ -77,11 +94,12 @@ and accomplish the outcome step by step, consider more export options etc.
 		Return true if and only if there is an instruction that does both.
 	2.12	String getIncludePattern()
 		Return a code line for an include / import / use directive where
-		a placeholder "%%" inidcates that a comma-separated list of file
+		a placeholder "%%" indicates that a comma-separated list of file
 		names or module names etc. can be inserted here, or otherwise a "%"
 		placeholder is to indicate that only a single item may be inserted
 		at that very position (such that several lines will have to be
-		generated fromthis template for a list of items).
+		generated from this template for a list of items).
+		
 3	Override the substantial generator methods.
 	3.0	General remarks
 		There is a method for each structogram element type, obtaining
@@ -101,7 +119,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		existing Generator subclasses.
 	3.1	void generateCode(Instruction _inst, String _indent)
 		Is to generate the code for the given basic instruction element.
-		The code schould be enclosed by the following construct:
+		The code should be enclosed by the following construct:
 		if (!insertAsComment(_inst, _indent)) {
 			// place actual generator code here
 		}
@@ -114,14 +132,14 @@ and accomplish the outcome step by step, consider more export options etc.
 		boolean isEmptyInput(String line),
 		boolean isOutput(String line), or
 		boolean isTurtleizerMove(String line).
-	3.2	void generateCode(Alternative _alt, Strin _indent)
+	3.2	void generateCode(Alternative _alt, String _indent)
 		Is to generate the code for the given alternative element,
 		including its branches (_alt.qTrue, _alt.qFalse), which are
 		to handled by recursive calls of generateCode() at the
 		appropriate place.
 	3.3	void generateCode(Case _case, String _indent)
 		Is to generate the code for the given alternative element,
-		including its branches, which are elements of the Subqueue
+		including its branches, which are elements of the sub-queue
 		Vector _case.qs and to be handled by recursive calls of
 		generateCode(). For the structure of the element text see
 		Structorizer User Guide and compare the existing Generator
@@ -149,7 +167,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		StringList Generator.extractForInListItems(For _for)
 		To replace a non-supported FOR-IN list by an equivalent
 		algorithm structure may be tricky, but there are several
-		elaborate code examples in various Generater subclasses.
+		elaborate code examples in various Generator subclasses.
 	3.5	void generateCode(While _while, String _insert)
 		A specific support for exit jumps is provided by the jumpTable
 		inherited and prepared by the base Generator class. It may be
@@ -174,7 +192,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		boolean isExit() - returns true if it's a program exit.
 		The generator may still have to analyse the code lines and
 		identify the respective keywords in order to isolate values.
-		See section 4.1 how to get the configured keywords.
+		See section 4.1 how to getb the configured keywords.
 		Even more important is the jumpTable member inherited from
 		and automatically prepared by the Generator base class: it
 		maps Jump elements and elements left by a jump (loops) to
@@ -197,12 +215,13 @@ and accomplish the outcome step by step, consider more export options etc.
 			whole if the substructure template doesn't suit your
 			target language needs,
 		b)	or you may leave the base method as is and override the
-			submethods (see their Java doc and the exaples you may
+			submethods (see their Java doc and the examples you may
 			find in various Generator subclasses):
 			String generateHeader(Root, ...),
 			String generatePreamble(Root, ...),
 			String generateResult(Root, ...),
 			void generateFooter(Root, ...).
+			
 4.	Export options and other preferences to be considered
 	4.1	Parser Preferences
 		For certain kinds of analysis (e.g. in generateCode(Jump,...))
@@ -224,13 +243,14 @@ and accomplish the outcome step by step, consider more export options etc.
 		"input", "output" for input and output instructions.
 	4.2	Export options
 		(TODO)
+		
 5.	Helper methods for element text transformation
 	The most important helper methods are:
 	5.1	String transform(String) with several submethods
 		Either this method or its submethods (like transformTokens())
 		or both should be overridden in order to do he necessary
 		transformations of the expression syntax. It is recommended
-		to do as much as possible wth the transformTokens() method
+		to do as much as possible with the transformTokens() method
 		which obtains and manipulates a list of lexical tokens allowing
 		more precise manipulation than e.g. with regular expressions
 		or mere string replacements.
@@ -245,28 +265,29 @@ and accomplish the outcome step by step, consider more export options etc.
 		This inserts the _commentLines as a multi-line comment block
 		with indentation _indent, where _start is the opening delimiter
 		(e.g. "/*" for C or "/**" for JavaDoc), _cont an optional
-		continuation marker for the beginnings of the intemediate comment
+		continuation marker for the beginnings of the intermediate comment
 		lines (e.g. " *"), and _end is the closing delimiter (e.g. "*/").
-	5.4	boolean insertAsComment(Element _ele, String _indent)
+	5.5	boolean insertAsComment(Element _ele, String _indent)
 		This inserts the instruction text as a comment if the respective
 		export option (see section 4) requires so. The result is true in
-		this case (such that no forther export activity is necessary for
+		this case (such that no further export activity is necessary for
 		this element) or false otherwise, meaning that a regular export
 		is to be done.
-	5.5	void code.add(String line)
+	5.6	void code.add(String line)
 		The raw line export, the indentation must be prefix part of line,
 		a newline will automatically be added.
-	5.6	void addCode(String text, String _indent, boolean asComment)
+	5.7	void addCode(String text, String _indent, boolean asComment)
 		Like code.add() but with separate indentation parameter (such that
 		text shall NOT contain the indentation) and an integrated opportunity
-		to add the code in translated, but "outcomented" form. The last
+		to add the code in translated, but "outcommented" form. The last
 		argument should typically be set with the isDisabled() property of
 		the element to be exported (method addCode has no own access to the
 		element). The comment delimiters will be placed at the line beginnings
-		wheras the outcommented code itself will be properly indented within
+		whereas the outcommented code itself will be properly indented within
 		the comment.
 	...
 	(TODO to be continued and explained)
+	
 6.	Setup to support the FileAPI
 	Structorizer provides an executable proprietary API for text files.
 	You may want either to replace the FileAPI routine calls by equi-
@@ -278,12 +299,22 @@ and accomplish the outcome step by step, consider more export options etc.
 	into a file with name "FileAPI.xxx.txt" where "xxx" is to be replaced
 	by the file name extension of your target language. Mark the code
 	range to be inserted into the export file with
+	
 7.	Add the generator to the plugin configuration
 	Find the resource file generators.xml in the ...structorizer.gui
 	package directory and add a new <plugin> entry with a title string
 	for the export menu and the fully qualified class name of the new
-	generator. (For future enhancement, an icon attribute is prepared
-	but still not used for the menu. So best is to leave it empty.)
+	generator. (If you like, you may also provide the file path for a
+	16x16 pixel icon file.)
+	You may use the attribute reserved_words to provide a comma-separated
+	list of reserved words for this language. It will only be used by the
+	Analyser, though. The configuration in the plugin file is favourized
+	upon the configuration in the Generator class (cf. 2.9).
+	If letter case does NOT matter (like in Pascal) you ought to provide
+	an attribute case_matters="0"; the default is that case matters (as
+	in C, Java etc.), so you may omit the attribute or write:
+	case_matters="1".  
+	
 8.	Batch Mode test
 	Make sure the generator also works fine in batch mode (i.e. from
 	command line):

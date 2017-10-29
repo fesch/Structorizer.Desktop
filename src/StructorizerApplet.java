@@ -35,8 +35,7 @@ import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.Locales;
-import lu.fisch.structorizer.parsers.D7Parser;
-import lu.fisch.utils.StringList;
+import lu.fisch.structorizer.parsers.CodeParser;
 
 public class StructorizerApplet extends JApplet  implements NSDController
 {
@@ -161,7 +160,7 @@ public class StructorizerApplet extends JApplet  implements NSDController
                         updateColors();
                         
                         // parser
-                        D7Parser.loadFromINI();
+                        CodeParser.loadFromINI();
 
                         // look & feel
 			laf=ini.getProperty("laf","Mac OS X");
@@ -169,8 +168,13 @@ public class StructorizerApplet extends JApplet  implements NSDController
 			
 			if(diagram!=null) 
 			{
-				// current directory
+				// current directories
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
+				// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+				diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("file.separator")));
+				diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("file.separator")));
+				diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+				// END KGU#354 2017-04-26
 				
 				// din
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0

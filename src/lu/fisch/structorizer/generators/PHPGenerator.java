@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -54,7 +53,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.07.19      Bugfix #191 (= KGU#204): Wrong comparison operator in FOR loops 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done. 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
@@ -62,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.12.30      Issues #22, #23, KGU#62 fixed (see comment)
  *      Kay Gürtzig             2017.01.03      Enh. #314: File API extension, bugfix #320 (CALL elements)
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *
  ******************************************************************************************************
  *
@@ -115,8 +115,7 @@ package lu.fisch.structorizer.generators;
  *      - Implementation of FOR loop
  *      - Indent replaced from 2 spaces to TAB-character (TAB configurable in IDE)
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.util.regex.Matcher;
 
@@ -176,30 +175,30 @@ public class PHPGenerator extends Generator
 	}
 	// END KGU#78 2015-12-18
     
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"abstract", "and", "array", "as", "break",
-		"case", "catch", "class", "clone", "const", "continue",
-		"declare", "default", "do",
-		"echo", "else", "elseif", "enddeclare", "endfor", "endforeach",
-		"endif", "endswith", "endwhile", "exit", "extends",
-		"final", "finally", "for", "foreach", "function",
-		"global", "goto",
-		"if", "implements", "include", "instanceof", "insteadof",
-		"interface", "namespace", "new", "or",
-		"print", "private", "protected", "public",
-		"require", "return", "static", "switch", "throw", "trait", "try",
-		"use", "var", "while", "xor", "yield"
-		};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	public boolean isCaseSignificant()
-	{
-		return true;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"abstract", "and", "array", "as", "break",
+//		"case", "catch", "class", "clone", "const", "continue",
+//		"declare", "default", "do",
+//		"echo", "else", "elseif", "enddeclare", "endfor", "endforeach",
+//		"endif", "endswith", "endwhile", "exit", "extends",
+//		"final", "finally", "for", "foreach", "function",
+//		"global", "goto",
+//		"if", "implements", "include", "instanceof", "insteadof",
+//		"interface", "namespace", "new", "or",
+//		"print", "private", "protected", "public",
+//		"require", "return", "static", "switch", "throw", "trait", "try",
+//		"use", "var", "while", "xor", "yield"
+//		};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	public boolean isCaseSignificant()
+//	{
+//		return true;
+//	}
+//	// END KGU 2016-08-12
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)
@@ -288,17 +287,18 @@ public class PHPGenerator extends Generator
 			
 			insertComment(_inst, _indent);
 
-			for (int i=0; i<_inst.getText().count(); i++)
+			StringList lines = _inst.getUnbrokenText();
+			for (int i=0; i<lines.count(); i++)
 			{
 				// START KGU#281 2016-10-16: Enh. #271
 				//addCode(transform(_inst.getText().get(i))+";",
 				//		_indent, isDisabled);
-				String transf = transform(_inst.getText().get(i)) + ";";
+				String transf = transform(lines.get(i)) + ";";
 				if (transf.startsWith("= $_GET[")) {
 					transf = "dummyInputVar " + transf;
 				}
 				// START KGU#284 2016-10-16: Enh. #274
-				else if (Instruction.isTurtleizerMove(_inst.getText().get(i))) {
+				else if (Instruction.isTurtleizerMove(lines.get(i))) {
 					transf += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 				}
 				// END KGU#284 2016-10-16
@@ -319,7 +319,7 @@ public class PHPGenerator extends Generator
 		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
 
-    	String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
     	// START KGU#301 2016-12-01: Bugfix #301
     	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
     	if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -453,7 +453,7 @@ public class PHPGenerator extends Generator
     	insertComment(_while, _indent);
     	// END KGU 2014-11-16
 
-    	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+    	String condition = transform(_while.getUnbrokenText().getLongString()).trim();
     	// START KGU#301 2016-12-01: Bugfix #301
     	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
     	if (!isParenthesized(condition)) condition = "(" + condition + ")";
@@ -479,7 +479,7 @@ public class PHPGenerator extends Generator
         generateCode(_repeat.q,_indent+this.getIndent());
         // START KGU#162 2016-04-01: Enh. #144 - more tentative approach
         //code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
-        String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+        String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
         // START KGU#301 2016-12-01: Bugfix #301
         //if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
         if (!this.suppressTransformation || !isParenthesized(condition))
@@ -515,11 +515,12 @@ public class PHPGenerator extends Generator
 		insertComment(_call, _indent);
 		// END KGU 2014-11-16
 
-        for(int i=0;i<_call.getText().count();i++)
+		StringList lines = _call.getUnbrokenText();
+        for(int i=0;i<lines.count();i++)
         {
         	// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
         	//addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
-        	addCode(transform(_call.getText().get(i))+";", _indent, isDisabled);
+        	addCode(transform(lines.get(i))+";", _indent, isDisabled);
         	// END KGU#319 2017-01-03
         }
     }
@@ -541,12 +542,12 @@ public class PHPGenerator extends Generator
 		// In case of an empty text generate a continue instruction by default.
 		boolean isEmpty = true;
 		
-		StringList lines = _jump.getText();
-		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-		String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+		StringList lines = _jump.getUnbrokenText();
+		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 		String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 		String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
-		String preLeaveMatch  = Matcher.quoteReplacement(D7Parser.getKeywordOrDefault("preLeave", "leave"))+"([\\W].*|$)";
+		String preLeaveMatch  = Matcher.quoteReplacement(CodeParser.getKeywordOrDefault("preLeave", "leave"))+"([\\W].*|$)";
 		for (int i = 0; isEmpty && i < lines.count(); i++) {
 			String line = transform(lines.get(i)).trim();
 			if (!line.isEmpty())
@@ -608,7 +609,12 @@ public class PHPGenerator extends Generator
         this.isFunctionNameSet = varNames.contains(procName);
         // END KGU#74/KGU#78 2016-12-30
         
-        String pr = _root.isProgram ? "program" : "function";
+        String pr = "program";
+        if (_root.isSubroutine()) {
+        	pr = "function";
+        } else if (_root.isInclude()) {
+        	pr = "includable";
+        }
         // START KGU#178 2016-07-20: Enh. #160
         //code.add("<?php");
         //insertComment(pr+" "+_root.getMethodName() + " (generated by Structorizer)", _indent);
@@ -616,7 +622,10 @@ public class PHPGenerator extends Generator
         {
             code.add("<?php");
             insertComment(pr+" "+ procName + " (generated by Structorizer " + Element.E_VERSION + ")", _indent);
-			// STARTB KGU#351 2017-02-26: Enh. #346
+			// START KGU#363 2017-05-16: Enh. #372
+			insertCopyright(_root, _indent, true);
+			// END KGU#363 2017-05-16
+			// START KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes("");
 			// END KGU#351 2017-02-26
             subroutineInsertionLine = code.count();
@@ -635,7 +644,7 @@ public class PHPGenerator extends Generator
         // START KGU 2014-11-16
         insertComment(_root, "");
         // END KGU 2014-11-16
-        if (_root.isProgram == true)
+        if (_root.isProgram() == true)
         {
             code.add("");
             insertComment("TODO declare your variables here if necessary", _indent);
@@ -708,7 +717,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		if (_root.isSubroutine() && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
 			String result = "0";
 			if (isFunctionNameSet)

@@ -41,7 +41,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
  *      Kay Gürtzig     2016.08.10      Issue #227: <iostream> only included if needed 
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig     2016.11.08      Collateral damage of #271 to getOutputReplacer() mended
  *      Kay Gürtzig     2016.12.25      Enh. #314: Support for File API added.
@@ -50,6 +50,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig     2017.02.21      Enh. #348: Parallel sections translated with <thread> library
  *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig     2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
+ *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig     2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
+ *      Kay Gürtzig     2017.09.27      Enh. #423: Handling of struct definitions and access
  *
  ******************************************************************************************************
  *
@@ -64,6 +68,7 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -73,7 +78,8 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Executor;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
+import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 public class CPlusPlusGenerator extends CGenerator {
@@ -95,24 +101,24 @@ public class CPlusPlusGenerator extends CGenerator {
             return exts;
     }
 
-	// START KGU 2016-08-12: Enh. #231 - information for analyser
-    private static final String[] reservedWords = new String[]{
-		"auto", "break", "case", "char", "const", "continue",
-		"default", "do", "double", "else", "enum", "extern",
-		"float", "for", "goto", "if", "int", "long",
-		"register", "return",
-		"short", "signed", "sizeof", "static", "struct", "switch",
-		"typedef", "union", "unsigned", "void", "volatile", "while",
-		"asm", "bool", "catch", "calss", "const_cast", "delete", "dynamic_cast",
-		"explicit", "false", "friend", "inline", "mutable", "namespace", "new", "nullptr",
-		"operator", "private", "public", "protected", "reinterpret_cast",
-		"staic_cast", "template", "this", "throw", "true", "try", "typeid", "typename",
-		"using", "virtual", "wchar_t"};
-	public String[] getReservedWords()
-	{
-		return reservedWords;
-	}
-	// END KGU 2016-08-12
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//    private static final String[] reservedWords = new String[]{
+//		"auto", "break", "case", "char", "const", "continue",
+//		"default", "do", "double", "else", "enum", "extern",
+//		"float", "for", "goto", "if", "int", "long",
+//		"register", "return",
+//		"short", "signed", "sizeof", "static", "struct", "switch",
+//		"typedef", "union", "unsigned", "void", "volatile", "while",
+//		"asm", "bool", "catch", "calss", "const_cast", "delete", "dynamic_cast",
+//		"explicit", "false", "friend", "inline", "mutable", "namespace", "new", "nullptr",
+//		"operator", "private", "public", "protected", "reinterpret_cast",
+//		"static_cast", "template", "this", "throw", "true", "try", "typeid", "typename",
+//		"using", "virtual", "wchar_t"};
+//	public String[] getReservedWords()
+//	{
+//		return reservedWords;
+//	}
+//	// END KGU 2016-08-12
 
 	/************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -156,7 +162,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-11: Enh. #54 - support lists of expressions
-		String outputKey = D7Parser.getKeyword("output").trim();
+		String outputKey = CodeParser.getKeyword("output").trim();
 		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 
@@ -199,17 +205,76 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
 			_type = _default;
-		_type = _type.toLowerCase();
-		_type = _type.replace("integer", "int");
-		_type = _type.replace("real", "double");
-		_type = _type.replace("boolean", "bool");
-		_type = _type.replace("boole", "bool");
-		_type = _type.replace("character", "char");
-		_type = _type.replace("String", "string");
-		_type = _type.replace("char[]", "string");
+		// START KGU 2017-04-12: We must not generally flatten the case (consider user types!)
+		//_type = _type.toLowerCase();
+		//_type = _type.replace("integer", "int");
+		//_type = _type.replace("real", "double");
+		//_type = _type.replace("boolean", "bool");
+		//_type = _type.replace("boole", "bool");
+		//_type = _type.replace("character", "char");
+		//_type = _type.replace("String", "string");
+		//_type = _type.replace("char[]", "string");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boolean") + "($|\\W.*)", "bool");
+		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boole") + "($|\\W.*)", "bool");
+		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("ool") + ")($|\\W.*)", "$1bool$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("String") + ")($|\\W.*)", "$1string$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("char") + "\\[\\])($|\\W.*)", "$1string$3");
+		// END KGU 2017-04-12
 		return _type;
 	}
 	// END KGU#16 2016-01-14
+	
+	// START KGU#332 2017-04-12: Enh. #335
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#isInternalDeclarationAllowed()
+	 */
+	@Override
+	protected boolean isInternalDeclarationAllowed()
+	{
+		return true;
+	}
+	// END KGU#332 2017-04-12
+
+	// START KGU#388 2017-09-27: Enh.#423
+	/**
+	 * Inserts a typedef for the type passed in by {@code _typeEnry} if it hadn't been defined
+	 * globally or in the preamble before.
+	 * @param _root - the originating Root
+	 * @param _type - the type map entry the definition for which is requested here
+	 * @param _indent - the current indentation
+	 * @param _asComment - if the type deinition is only to be added as comment (disabled)
+	 */
+	@Override
+	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String typeKey = ":" + _typeName;
+		if (this.wasDefHandled(_root, typeKey, true)) {
+			return;
+		}
+		insertDeclComment(_root, _indent, typeKey);
+		if (_type.isRecord()) {
+			String indentPlus1 = _indent + this.getIndent();
+			addCode("struct " + _typeName + " {", _indent, _asComment);
+			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
+						indentPlus1, _asComment);
+			}
+			addCode("};", _indent, _asComment);
+		}
+		else {
+			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
+					_indent, _asComment);					
+		}
+	}
+	// END KGU#388 2017-09-27
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -257,6 +322,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		boolean isDisabled = _para.isDisabled();
 		Root root = Element.getRoot(_para);
 		String indentPlusOne = _indent + this.getIndent();
+		String suffix = Integer.toHexString(_para.hashCode());
 
 		insertComment(_para, _indent);
 
@@ -266,8 +332,8 @@ public class CPlusPlusGenerator extends CGenerator {
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			Subqueue sq = _para.qs.get(i);
-			String threadVar = "thr" + _para.hashCode() + "_" + i;
-			String threadFunc = "ThrFunc" + _para.hashCode() + "_" + i;
+			String threadVar = "thr" + suffix + "_" + i;
+			String threadFunc = "ThrFunc" + suffix + "_" + i;
 			String threadFuncInst = threadFunc.toLowerCase();
 			StringList used = root.getUsedVarNames(sq, false, false).reverse();
 			StringList asgnd = root.getVarNames(sq, false, false).reverse();
@@ -283,7 +349,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		}
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			String threadVar = "thr" + _para.hashCode() + "_" + i;
+			String threadVar = "thr" + suffix + "_" + i;
 			addCode(threadVar + ".join();", indentPlusOne, isDisabled);
 		}
 
@@ -312,7 +378,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		});
 		for (Parallel par: containedParallels) {
 			boolean isDisabled = par.isDisabled();
-			String functNameBase = "ThrFunc" + par.hashCode() + "_";
+			String functNameBase = "ThrFunc" + Integer.toHexString(par.hashCode()) + "_";
 			Root root = Element.getRoot(par);
 			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
 			int i = 0;
@@ -365,7 +431,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			boolean isArray = false;
 			if (typeEntry != null) {
 				isArray = typeEntry.isArray();
-				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
 					typeSpec = typeSpecs.get(0);
 				}
@@ -403,6 +469,9 @@ public class CPlusPlusGenerator extends CGenerator {
 		if (topLevel)
 		{
 			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			// START KGU#363 2017-05-16: Enh. #372
+			insertCopyright(_root, _indent, true);
+			// END KGU#363 2017-05-16
 			// START KGU#236 2016-08-10: Issue #227
 	        //code.add("#include <iostream>");
 			// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
@@ -421,6 +490,9 @@ public class CPlusPlusGenerator extends CGenerator {
 			// STARTB KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes("");
 			// END KGU#351 2017-02-26
+			// START KGU#376 2017-09-27: Enh. #389 - definitions from all included diagrams will follow
+			insertGlobalDefinitions(_root, _indent, true);
+			// END KGU#376 2017-09-27
 			// START KGU#311 2016-12-22: Enh. #314 - support for file API
 			if (this.usesFileAPI) {
 		        this.insertFileAPI("cpp", code.count(), "", 0);
@@ -439,10 +511,15 @@ public class CPlusPlusGenerator extends CGenerator {
         // add comment
     	insertComment(_root, _indent);
 
-        String pr = _root.isProgram ? "program" : "function";
+        String pr = "program";
+        if (_root.isSubroutine()) {
+        	pr = "function";
+        } else if (_root.isInclude()) {
+        	pr = "includable";
+        }
         insertComment(pr + " " + _root.getText().get(0), _indent);
         
-        if (_root.isProgram)
+        if (_root.isProgram())
         	code.add(_indent + "int main(void)");
         else {
         	// Start with the result type
@@ -476,6 +553,11 @@ public class CPlusPlusGenerator extends CGenerator {
         }
 		
 		code.add("{");
+
+		// START KGU#376 2017-09-28: Enh. #389 - insert the initialization code of the includables
+		insertGlobalInitialisations(_indent + this.getIndent());
+		// END KGU#376 2017-09-28
+
 		return _indent + this.getIndent();
 	}
 
@@ -489,6 +571,14 @@ public class CPlusPlusGenerator extends CGenerator {
 		return super.generatePreamble(_root, _indent, varNames);
 	}
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
+	 */
+	@Override
+	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
+		return structName + (isRecursive ? " * " : "");
+	}
+
 	@Override
 	protected void generateIOComment(Root _root, String _indent)
 	{

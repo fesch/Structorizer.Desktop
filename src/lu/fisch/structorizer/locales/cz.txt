@@ -55,6 +55,7 @@
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -87,7 +88,7 @@ Menu.lbFileExportCodeFavorite.text=
 Menu.menuFileExportCodeFavorite.tooltip=
 Menu.menuFileImport.text=Import
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal ...
+Menu.menuFileImportCode.text=Programovací Kod ...
 Menu.menuFilePrint.text=Tisk ...
 Menu.menuFileArrange.text=
 Menu.menuFileTranslator.text=
@@ -225,20 +226,21 @@ Menu.error01_1.text=WARNING: Nenalezena proměnná cyklu ...
 Menu.error01_2.text=WARNING: Více než jedna proměnná cyklu nalezena: «%»
 Menu.error01_3.text=Není povoleno měnit proměnnou cyklu  «%» uvnitř cyklu!
 Menu.error02.text=Žádná změna proměnné v podmínce. Je možné zacyklení ...
-Menu.error03_1.text=Proměnná «%» nebyla nastavena!
-Menu.error03_2.text=Proměnná «%» možná nebyla nastavena!
+Menu.error03_1.text=Proměnná «%1» nebyla nastavena%2!
+Menu.error03_2.text=Proměnná «%1» možná nebyla nastavena%2!
 Menu.error04.text=Není možné použít IF-podmínku s prázdným TRUE-blokem!
 Menu.error05.text=Proměnná «%» musí být napsána velkými písmeny!
 Menu.error06.text=Název programu «%» musí být napsán velkými písmeny!
 Menu.error07_1.text=«%» není povolené jméno pro program nebo metodu!
 Menu.error07_2.text=«%» není povolené jméno pro parametr!
-Menu.error07_3.text=«%» není povolené jméno pro proměnnou!
+Menu.error07_3.text=«%» není povolené jméno pro proměnnou nebo konstantu!
 Menu.error08.text=Není povoleno přiřazení uvnitř podmínky.
 Menu.error09.text=Program («%») nemůže mít stejné jméno jako proměnná nebo parametr!
 Menu.error10_1.text=Jeden element nemůže obsahovat současně instrukci vstupu/výstupu a přiřazení!
 Menu.error10_2.text=Jeden element nemůže obsahovat současně instrukci vstupu a výstupu!
 Menu.error10_3.text=Jeden element nemůže obsahovat současně instrukci vstupu a přiřazení!
 Menu.error10_4.text=Jeden element nemůže obsahovat současně instrukci výstupu a přiřazení!
+Menu.error10_5.text=Jeden element nemůže obsahovat současně definice konstant y jiný instrukci!
 Menu.error11.text=Možná chyba v přiřazení. Prosím zkontrolujte tuto instrukci!
 Menu.error12.text=Parametr «%» musí začínat písmenem "p" následovaný velkými písmeny!
 Menu.error13_1.text=Funkce nevrací žádnou hodnotu!
@@ -256,7 +258,9 @@ Menu.error16_4.text=
 Menu.error16_5.text=
 Menu.error16_6.text=
 Menu.error16_7.text=
+Menu.error16_8.text=
 Menu.error17.text=
+Menu.errorLineReference.text= (řádek %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=
@@ -642,5 +646,5 @@ Control.msgExitCode.text=
 Control.msgIllegalJump.text=
 Control.msgTooManyLevels.text=
 Control.tblVar.header.0=
-Control.tblVar.header.1=
+Control.tblVar.header.2=
 
