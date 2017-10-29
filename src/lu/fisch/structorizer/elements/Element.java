@@ -195,7 +195,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.26-08";
+	public static String E_VERSION = "3.27";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -219,8 +219,9 @@ public abstract class Element {
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
 	" - Stephan <clauwn@freenet.de>\n"+
+	" - Simon Sobisch (https://github.com/Gitmensch)\n"+
 	"\n"+
-	"User manual edited by\n"+
+	"User manual edited and updated by\n"+
 	" - David Morais <narutodc@hotmail.com>\n"+
 	" - Praveen Kumar <praveen_sonal@yahoo.com>\n"+
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+

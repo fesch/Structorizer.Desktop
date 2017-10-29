@@ -238,7 +238,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 		private boolean editable = false; 
     	
     	@SuppressWarnings("unchecked")
-		public ValueEditor(String _varName, Object _value, boolean _editable)
+    	public ValueEditor(String _varName, Object _value, boolean _editable)
     	{
     		this.setTitle(_varName);
     		if (_value instanceof ArrayList<?>) {
@@ -253,6 +253,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     	
     	private void initComponents()
     	{
+    		tblFields.setGridColor(Color.LIGHT_GRAY);
+    		tblFields.setShowGrid(true);
     		if (this.editable) {
     			// Use pencil symbol if editable
     			this.setIconImage(IconLoader.ico084.getImage());
@@ -426,9 +428,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 				}
 			}
 		}
-    }
-    // END KGU#443 2017-10-16
-    
+	}
+	// END KGU#443 2017-10-16
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -1021,18 +1023,18 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU#210 2016-07-25
     // END KGU#159 2016-03-17
     
-    // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
-    private void btnPullDownActionPerformed(java.awt.event.ActionEvent evt)
-    {
-    	Object evtSource = evt.getSource();
-    	if (evtSource instanceof JButton) {
-    		String varName = ((JButton)evtSource).getName();
-    		int rowNr = tblVar.getSelectedRow();
-    		DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
-    		Object val = tm.getValueAt(rowNr, 2);
-    		if (val != null)
-    		{
-    			try {
+	// START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
+	private void btnPullDownActionPerformed(java.awt.event.ActionEvent evt)
+	{
+		Object evtSource = evt.getSource();
+		if (evtSource instanceof JButton) {
+			String varName = ((JButton)evtSource).getName();
+			int rowNr = tblVar.getSelectedRow();
+			DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
+			Object val = tm.getValueAt(rowNr, 2);
+			if (val != null)
+			{
+				try {
 					val = Executor.getInstance().evaluateExpression((String)val, true, false);
 					if (val != null) {
 						val = editCompoundValue(varName, val,
@@ -1046,14 +1048,14 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 					JOptionPane.showMessageDialog((JButton)evtSource,
 							msgStructureCorrupt.getText().replace("%", er.toString()), varName, JOptionPane.ERROR_MESSAGE);
 				}
-    			//varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
-    			//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
-    		}
-    		if (activeBtnEditor != null) {
-    			/*boolean test =*/ activeBtnEditor.stopCellEditing();
-    		}
-    	}
-    }
+				//varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
+				//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
+			}
+			if (activeBtnEditor != null) {
+				/*boolean test =*/ activeBtnEditor.stopCellEditing();
+			}
+		}
+	}
 
     /**
      * Opens a dialog with editable JTable for the given complex value {@code val},
@@ -1167,7 +1169,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 		return width0;
 	}
 	// END KGU#443 2017-10-16
-    
+
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
     public void updateCallLevel(int level)
     {
@@ -1284,13 +1286,13 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		new LangTextHolder("An array element «%» may not be made a constant by assignment!");
     // END KGU#375 2017-03-30
     // START KGU#388 2017-09-14: Enh. #423 - support for record types
-	public final LangTextHolder msgInvalidComponent =
-			new LangTextHolder("There is no component «%1» in record type or variable «%2»!");
+    public final LangTextHolder msgInvalidComponent =
+    		new LangTextHolder("There is no component «%1» in record type or variable «%2»!");
     public final LangTextHolder msgConstantRecordComponent =
     		new LangTextHolder("A record component «%» may not be made a constant by assignment!");
-	public final LangTextHolder msgTypeMismatch =
-			new LangTextHolder("Value type «%1» is incompatible with type «%2» of variable/component «%3»!");
-	// END KGU#388 2017-09-14
+    public final LangTextHolder msgTypeMismatch =
+    		new LangTextHolder("Value type «%1» is incompatible with type «%2» of variable/component «%3»!");
+    // END KGU#388 2017-09-14
     // START KGU 2017-10-08
     public final LangTextHolder msgBadValueList =
     		new LangTextHolder("<%> cannot be interpreted as value list.");
@@ -1331,10 +1333,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public static final LangTextHolder lbDiscard = new LangTextHolder("Discard changes");
     // END KGU#443 2017-10-16
     // START KGU#448 2017-10-28: Enh. #443
-	public static final LangTextHolder msgFunctionConflict = new LangTextHolder("\nFunction «%1(%2)» of %3 overridden by %4");
-	public static final LangTextHolder msgProcedureConflict = new LangTextHolder("\nProcedure «%1(%2)» of %3 overridden by %4");
-	public static final LangTextHolder msgSignatureConflicts = new LangTextHolder("There are API conflicts among the chosen controller plugins:%");
-	// END KGU#448 2017-10-28
+    public static final LangTextHolder msgFunctionConflict = new LangTextHolder("\nFunction «%1(%2)» of %3 overridden by %4");
+    public static final LangTextHolder msgProcedureConflict = new LangTextHolder("\nProcedure «%1(%2)» of %3 overridden by %4");
+    public static final LangTextHolder msgSignatureConflicts = new LangTextHolder("There are API conflicts among the chosen controller plugins:%");
+    // END KGU#448 2017-10-28
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 

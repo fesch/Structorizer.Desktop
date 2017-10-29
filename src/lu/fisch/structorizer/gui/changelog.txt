@@ -9,10 +9,10 @@ Known issues:
 - Races on startup may contort the initial diagram view (scrollbars stumble)
 - COBOL parsing may fail if certain single-letter identifiers are used (rename them!)
 - COBOL import doesn't cope with some statement variants and variable redefinitions
-- Some export generators haven't been enabled to support record type equivalents
+- Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version: 3.26-08 (2017.10.29)
+Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>

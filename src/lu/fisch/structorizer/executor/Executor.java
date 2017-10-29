@@ -4073,8 +4073,8 @@ public class Executor implements Runnable
 			catch (Exception ex)
 			{
 				trouble = ex.getLocalizedMessage();
-				if (trouble == null) trouble = ex.getMessage();
-				if (trouble == null) trouble = ex.toString();
+				if (trouble == null || trouble.length() < 5) trouble = ex.getMessage();
+				if (trouble == null || trouble.length() < 5) trouble = ex.toString();
 			}
 			i++;
 		}
@@ -4998,14 +4998,14 @@ public class Executor implements Runnable
 				if (controller != null) { 
 					HashMap<String, Method> procMap = controller.getProcedureMap(); 
 					// Check if the controller accepts a method with additional color argument, too
-					Method colMethod = procMap.get(procName + "#" + args.length + 1);
-					if (colMethod != null && colMethod.getParameterTypes()[args.length + 1] == Color.class) {
+					Method colMethod = procMap.get(procName + "#" + (args.length + 1));
+					if (colMethod != null && colMethod.getParameterTypes()[args.length] == Color.class) {
 						Object[] argsColor = new Object[args.length+1];
 						for (int i = 0; i < args.length; i++) {
 							argsColor[i] = args[i];
-							argsColor[args.length] = element.getColor();
-							args = argsColor;
 						}
+						argsColor[args.length] = element.getColor();
+						args = argsColor;
 					}
 					trouble = getExec(controller, procName, args);
 				}
