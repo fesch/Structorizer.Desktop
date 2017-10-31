@@ -63,6 +63,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.13      Enh. #437: Message box on failed interactive variable setting
  *      Kay Gürtzig     2017.10.14      Enh. #438: Execution can no longer be resumed with pending variable editing
  *      Kay Gürtzig     2017.10.16      Enh. #439: Opportunity to inspect/edit structured values via tabular editor.
+ *      Kay Gürtzig     2017.10.31      Enh. #439: Internal class ValueEditor outsourced as ValuePresenter
  *
  ******************************************************************************************************
  *
@@ -95,6 +96,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import javax.swing.AbstractCellEditor;
 import javax.swing.DefaultCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -174,263 +176,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     }
     // END KGU#375 2017-03-30
     
-    // START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
-    /**
-     * Specific table cell editor for the pulldown buttons in the variable display
-     * @author Kay Gürtzig
-     */
-    private class ButtonEditor extends DefaultCellEditor {
-    	protected JButton button;
-
-    	public ButtonEditor(javax.swing.JCheckBox checkBox) {
-    		super(checkBox);
-    	}
-
-    	public Component getTableCellEditorComponent(JTable table, Object value,
-    			boolean isSelected, int row, int column) {
-    		if (value instanceof JButton) {
-    			button = (JButton)value;
-    			if (isSelected) {
-    				button.setForeground(table.getSelectionForeground());
-    				button.setBackground(table.getSelectionBackground());
-    			} else {
-    				button.setForeground(table.getForeground());
-    				button.setBackground(table.getBackground());
-    			}
-    		}
-    		else {
-    			button = null;
-    		}
-    		activeBtnEditor = this;
-    		return button;
-    	}
-
-    	public Object getCellEditorValue() {
-    		return button;
-    	}
-
-    	public boolean stopCellEditing() {
-    		return super.stopCellEditing();
-    	}
-
-    	protected void fireEditingStopped() {
-    		super.fireEditingStopped();
-    	}
-    }
-    
-    /**
-     * Sub-editor for the inspection and modification of components in structured data (arrays and
-     * records), opened from the pulldown button in the main variable table
-     * @author Kay Gürtzig
-     */
-    private class ValueEditor extends JDialog implements ActionListener, WindowListener, PropertyChangeListener
-    {
-    	javax.swing.JScrollPane pnlTable = new javax.swing.JScrollPane();
-		javax.swing.JPanel pnlButtons = new javax.swing.JPanel();    	
-		JButton btnCommit = new JButton(lbOk.getText());
-		JButton btnDiscard = new JButton(lbDiscard.getText());
-		JTable tblFields = new JTable();
-		
-		/** Ought to be either an {@link ArrayList} or a {@link HashMap} */
-		private HashMap<String, Object> record = null;
-		private ArrayList<Object> array = null;
-		private HashSet<Integer> editedLines = new HashSet<Integer>();
-		private boolean editable = false; 
-    	
-    	@SuppressWarnings("unchecked")
-    	public ValueEditor(String _varName, Object _value, boolean _editable)
-    	{
-    		this.setTitle(_varName);
-    		if (_value instanceof ArrayList<?>) {
-    			this.array = (ArrayList<Object>)_value;
-    		}
-    		else if (_value instanceof HashMap<?,?>) {
-    			this.record = (HashMap<String, Object>)_value;
-    		}
-    		this.editable = _editable;
-    		initComponents();
-    	}
-    	
-    	private void initComponents()
-    	{
-    		tblFields.setGridColor(Color.LIGHT_GRAY);
-    		tblFields.setShowGrid(true);
-    		if (this.editable) {
-    			// Use pencil symbol if editable
-    			this.setIconImage(IconLoader.ico084.getImage());
-    		}
-    		else {
-    			// Use a magnifying glass if not editable
-    			this.setIconImage(IconLoader.ico083.getImage());    			
-    		}
-    		this.getContentPane().setLayout(new BorderLayout());
-    		pnlButtons.setLayout(new java.awt.GridLayout(0, 2));
-    		btnCommit.addActionListener(this);
-    		btnDiscard.addActionListener(this);
-    		String header0 = "";
-    		if (record != null) {
-    			header0 = ttlCompName.getText();
-    		}
-    		else {
-    			header0 = ttlIndex.getText();
-    		}
-    		tblFields.setModel(new javax.swing.table.DefaultTableModel(
-    				new Object [][] {
-    				},
-    				new String [] {
-    						header0, /* " ", */ ttlContent.getText()
-    				}
-    				) {
-    			Class<?>[] types = new Class<?> [] {
-    				java.lang.String.class, /*JButton.class,*/ java.lang.Object.class
-    			};
-
-    			public Class<?> getColumnClass(int columnIndex) {
-    				return types [columnIndex];
-    			}
-    			// Disable editing of the first column
-    			@Override
-    			public boolean isCellEditable(int row, int column){  
-    				return (editable && column>=1);  
-    			}
-    		});
-    		DefaultTableModel tm =(DefaultTableModel)tblFields.getModel();
-    		if (array != null) {
-    			for (int i = 0; i < array.size(); i++)
-    			{
-    				Object[] rowData = {"[" + i + "]", Executor.prepareValueForDisplay(array.get(i))};
-    				tm.addRow(rowData);    				
-    			}
-    		}
-    		else if (record != null) {
-    			for (Entry<String, Object> entry: record.entrySet())
-    			{
-    				if (!entry.getKey().startsWith("§")) {
-    					Object[] rowData = {entry.getKey(), Executor.prepareValueForDisplay(entry.getValue())};
-    					tm.addRow(rowData);
-    				}
-    			}
-    		}
-    		Control.optimizeColumnWidth(tblFields, 0);
-    		tblFields.addPropertyChangeListener("tableCellEditor", this);
-    		tblFields.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-    		tblFields.setRowHeight((int)(tblFields.getRowHeight() * Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"))));
-    		pnlTable.setViewportView(tblFields);
-    		if (this.editable) {
-    			btnDiscard.setEnabled(false);
-    			pnlButtons.add(btnDiscard);
-    		}
-    		else {
-    			pnlButtons.add(new javax.swing.JLabel(""));
-    			btnCommit.setText(lbOk.getText());
-    		}
-    		pnlButtons.add(btnCommit);
-    		this.getContentPane().add(pnlTable, BorderLayout.CENTER);
-    		this.getContentPane().add(pnlButtons, BorderLayout.SOUTH);
-    		this.addWindowListener(this);
-    		pack();
-    	}
-    	
-    	protected boolean wasModified()
-    	{
-    		return !editedLines.isEmpty();
-    	}
-    	
-    	protected Object getValue()
-    	{
-    		if (record != null) {
-    			return record;
-    		}
-    		return array;
-    	}
-
-		@Override
-		public void actionPerformed(ActionEvent evt) {
-			if (evt.getSource() == btnDiscard) {
-				this.editedLines.clear();
-				this.dispose();
-			}
-			else if (evt.getSource() == btnCommit) {
-				updateValueFromTable();
-				this.dispose();
-			}
-		}
-
-		private void updateValueFromTable() {
-			DefaultTableModel tm = (DefaultTableModel)tblFields.getModel();
-			Executor executor = Executor.getInstance();
-			StringList errors = new StringList();
-			for (Integer lineNo: this.editedLines) {
-				String keyStr = (String)tm.getValueAt(lineNo, 0);
-				String valueStr = (String)tm.getValueAt(lineNo, 1);
-				try {
-					Object value = executor.evaluateExpression(valueStr, true, false);
-					if (array != null) {
-						array.set(lineNo, value);
-					}
-					else if (record != null) {
-						record.put(keyStr, value);
-					}
-				} catch (EvalError err) {
-					errors.add(keyStr + ": " + err.toString());
-				}
-			}
-			if (errors.count() > 0) {
-				JOptionPane.showInternalMessageDialog(this, 
-						msgVarUpdatesFailed.getText().replace("%", errors.getText()),
-						msgVarUpdateErrors.getText(),
-						JOptionPane.WARNING_MESSAGE);
-			}
-		}
-
-		@Override
-		public void windowActivated(WindowEvent arg0) {
-		}
-
-		@Override
-		public void windowClosed(WindowEvent arg0) {
-		}
-
-		@Override
-		public void windowClosing(WindowEvent arg0) {
-			this.updateValueFromTable();
-		}
-
-		@Override
-		public void windowDeactivated(WindowEvent arg0) {
-		}
-
-		@Override
-		public void windowDeiconified(WindowEvent arg0) {
-		}
-
-		@Override
-		public void windowIconified(WindowEvent arg0) {
-		}
-
-		@Override
-		public void windowOpened(WindowEvent arg0) {
-		}
-
-		@Override
-		public void propertyChange(PropertyChangeEvent evt) {
-			if (evt.getSource() == tblFields) {
-				if (evt.getNewValue() == null) {
-					// Editing finished, identify the edited cell
-					int rowNo = tblFields.getSelectedRow();
-					editedLines.add(rowNo);
-					btnDiscard.setEnabled(true);
-					btnCommit.setText(lbCommit.getText());
-					btnCommit.setEnabled(true);
-				}
-				else {
-					btnCommit.setEnabled(false);
-				}
-			}
-		}
-	}
-	// END KGU#443 2017-10-16
-
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -617,14 +362,24 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             }
             // START KGU#269 2016-10-05: Bugfix #260 - disable editing of the name column
             @Override
-            public boolean isCellEditable(int row, int column){  
-                return (column>=1);  
+            public boolean isCellEditable(int row, int column){
+            	// START KGU#443 2017-10-31: Enh. #439
+                //return (column>=1);  
+            	if (column == 1) {
+            		return true;	// Pulldown button always enabled if there is one
+            	}
+            	else if (column > 1) {
+            		String name = (String)this.getValueAt(row, column);
+            		return !Executor.getInstance().isConstant(name);
+            	}
+            	return false;
+            	// END KGU#443 2017-10-31
             }
             // END KGU#269 2016-10-05
         });
         // START KGU#443 2017-10-16: Enh. #439
         int pulldownWidth = IconLoader.ico080.getIconWidth();
-        tblVar.getColumnModel().getColumn(1).setCellEditor(new ButtonEditor(new javax.swing.JCheckBox()));
+        tblVar.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
         tblVar.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
         tblVar.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
         tblVar.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -1052,7 +807,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 				//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
 			}
 			if (activeBtnEditor != null) {
-				/*boolean test =*/ activeBtnEditor.stopCellEditing();
+				activeBtnEditor.stopCellEditing();
 			}
 		}
 	}
@@ -1068,7 +823,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
      * @return the modified value if the change was committed.
      */
     private Object editCompoundValue(String _varName, Object _value, boolean _editable, Component _refComponent) {
-    	ValueEditor valueEditor = new ValueEditor(_varName, _value, _editable);
+    	ValuePresenter valueEditor = new ValuePresenter(_varName, _value, _editable, null);
     	valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     	valueEditor.setLocationRelativeTo(_refComponent);
     	valueEditor.setModal(true);
@@ -1080,7 +835,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     }
     // END KGU#443 2017-10-16
 
-	public void updateVars(Vector<Vector<Object>> vars)
+	public void updateVars(Vector<String[]> vars)
     {
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
@@ -1106,14 +861,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             //tm.setValueAt(vars.get(i).get(0), i, 0);
             //tm.setValueAt(vars.get(i).get(1), i, 1);
             JButton pulldown = null;
-            Object value = vars.get(i).get(1);
-            if (value instanceof String && ((String)value).endsWith("}")) {
+            String name = vars.get(i)[0];
+            String value = vars.get(i)[1];
+            if (value.endsWith("}")) {
             	pulldown = new JButton();
-            	pulldown.setName((String)vars.get(i).get(0));
+            	pulldown.setName(name);
             	pulldown.setIcon(pulldownIcon);
             	pulldown.addActionListener(this.pulldownActionListener);
             }
-            tm.setValueAt(vars.get(i).get(0), i, 0);
+            tm.setValueAt(name, i, 0);
             tm.setValueAt(pulldown, i, 1);
             tm.setValueAt(value, i, 2);
             // END KGU#443 2017-10-16
@@ -1123,52 +879,25 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
             //tm.addRow(vars.get(i));
             JButton pulldown = null;
-            Object value = vars.get(i).get(1);
-            if (value instanceof String && ((String)value).endsWith("}")) {
+            String name = vars.get(i)[0];
+            String value = vars.get(i)[1];
+            if (value.endsWith("}")) {
             	pulldown = new JButton();
-            	pulldown.setName((String)vars.get(i).get(0));
+            	pulldown.setName(name);
             	pulldown.setIcon(pulldownIcon);
             	pulldown.addActionListener(this.pulldownActionListener);
             }
-            Object[] rowData = {vars.get(i).get(0), pulldown, vars.get(i).get(1)};
+            Object[] rowData = {name, pulldown, value};
             tm.addRow(rowData);
             // END KGU#443 2017-10-16
         }
         // END KGU#274 2016-10-08
         // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
         if (vars.size() > 0) {
-            optimizeColumnWidth(tblVar, 0);
+            ValuePresenter.optimizeColumnWidth(tblVar, 0);
         }
         // END KGU#443 2017-10-16
     }
-
-	// START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
-	/**
-	 * Determines the required maximum rendering width for column {@code _colNo} of
-	 * {@link JTable} {@code _table} and fixes it as maximum and preferred width 
-	 * @param _table - the {@link JTable} to be optimized
-	 * @param _colNo - index of the intersting column (typically 0)
-	 * @return the determined width 
-	 */
-	private static int optimizeColumnWidth(JTable _table, int _colNo) {
-		TableColumn tabCol = _table.getTableHeader().getColumnModel().getColumn(_colNo);
-		TableCellRenderer renderer = tabCol.getHeaderRenderer();
-		if (renderer == null) {
-			renderer = _table.getTableHeader().getDefaultRenderer();
-		}
-		Component comp = renderer.getTableCellRendererComponent(_table,
-				tabCol.getHeaderValue(), false, false, -1, _colNo);
-		int width0 = comp.getPreferredSize().width;
-		for (int row = 0; row < _table.getRowCount(); row++) {
-			renderer = _table.getCellRenderer(row, _colNo);
-			comp = _table.prepareRenderer(renderer, row, _colNo);
-			width0 = Math.max(comp.getPreferredSize().width, width0);
-		}
-		_table.getColumnModel().getColumn(_colNo).setMaxWidth(width0 + 3);
-		_table.getColumnModel().getColumn(_colNo).setPreferredWidth(width0 + 3);
-		return width0;
-	}
-	// END KGU#443 2017-10-16
 
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
     public void updateCallLevel(int level)
@@ -1209,7 +938,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     private boolean startButtonsEnabled = true;
     // END KGU#442 2017-10-14
     // START KGU#443 2017-10-16: Enh. #439
-    private ButtonEditor activeBtnEditor = null;
+    private AbstractCellEditor activeBtnEditor = null;
     private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
     	@Override
     	public void actionPerformed(ActionEvent evt) {
@@ -1230,8 +959,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public LangTextHolder lbInput;
     public LangTextHolder lbAcknowledge;
     // START KGU 2017-04-21
-    public final LangTextHolder lbOk = new LangTextHolder("OK");
-    public final LangTextHolder lbPause = new LangTextHolder("Pause");
+    public static final LangTextHolder lbOk = new LangTextHolder("OK");
+    public static final LangTextHolder lbPause = new LangTextHolder("Pause");
     // END KGU 2017-04-21
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
@@ -1349,9 +1078,13 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     	// END KGU#442/KGU#443 2017-10-14
     	{
     		// START KGU#442 2017-10-14: Issue #438 - Prevent restart while the cell editor is active (neither quit nor committed)
-    		if (pcEv.getNewValue() != null) {
+    		Object cellEditor = pcEv.getNewValue(); 
+    		if (cellEditor != null) {
     			// Cell editor activated - disable start buttons and put a hint bubble
     			// (The normative enabling state is still available in startButtonsEnabled)
+    			if (cellEditor instanceof PulldownButtonCellEditor) {
+    				activeBtnEditor = (PulldownButtonCellEditor)cellEditor;
+    			}
     			btnPlay.setEnabled(false);
     			btnStep.setEnabled(false);
     			if (startButtonsEnabled) {
@@ -1445,4 +1178,5 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 		this.btnStop.doClick();
 	}
 	// END KGU#372 2017-03-27
+
 }

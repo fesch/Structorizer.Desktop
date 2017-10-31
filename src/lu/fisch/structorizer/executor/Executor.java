@@ -144,6 +144,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
  *      Kay Gürtzig     2017.10.28      Enh. #443: First adaptations for multiple DiagramControllers
  *      Kay Gürtzig     2017.10.29      Enh. #423: Workaround for evaluation error on converted actual object field access
+ *      Kay Gürtzig     2017.10.31      Enh. #439: showCompoundValue() now more comfortable with ValuePresenter
  *
  ******************************************************************************************************
  *
@@ -1924,31 +1925,37 @@ public class Executor implements Runnable
 	// START KGU#439 2017-10-13: Enh. #436
 	private void showCompoundValue(Object _arrayOrRecord, String _title, boolean withPauseButton)
 	{	
-		JDialog arrayView = new JDialog();
-		arrayView.setTitle(_title);
-		arrayView.setIconImage(IconLoader.ico004.getImage());
-		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//		JDialog arrayView = new JDialog();
+//		arrayView.setTitle(_title);
+//		arrayView.setIconImage(IconLoader.ico004.getImage());
+//		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		// START KGU#147 2016-01-29: Enh. #84 (continued)
-		JButton btnPause = new JButton("Pause");
-		btnPause.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) 
-			{
-				step = true; paus = true; control.setButtonsForPause(true);
-				if (event.getSource() instanceof JButton)
+		//JButton btnPause = new JButton("Pause");
+		JButton btnPause = null;
+		if (withPauseButton) {
+			btnPause = new JButton();
+			btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+			btnPause.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) 
 				{
-					Container parent = ((JButton)(event.getSource())).getParent();
-					while (parent != null && !(parent instanceof JDialog))
+					step = true; paus = true; control.setButtonsForPause(true);
+					if (event.getSource() instanceof JButton)
 					{
-						parent = parent.getParent();
-					}
-					if (parent != null) {
-						((JDialog)parent).dispose();
+						Container parent = ((JButton)(event.getSource())).getParent();
+						while (parent != null && !(parent instanceof JDialog))
+						{
+							parent = parent.getParent();
+						}
+						if (parent != null) {
+							((JDialog)parent).dispose();
+						}
 					}
 				}
-			}
-		});
-		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
-		btnPause.setVisible(withPauseButton);
+			});
+		}
+//		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
+//		btnPause.setVisible(withPauseButton);
+		
 		// END KGU#147 2016-01-29
 		// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
 		this.console.writeln("*** " + _title + ":", Color.CYAN);
@@ -1988,8 +1995,10 @@ public class Executor implements Runnable
 			this.console.writeln("\t" + valLine, Color.CYAN);
 			arrayContent.add(valLine);
 		}
-		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
-		arrayView.setSize(300, 300);
+//		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
+//		arrayView.setSize(300, 300);
+		ValuePresenter arrayView = new ValuePresenter(_title, _arrayOrRecord, false, btnPause);
+    	arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		arrayView.setLocationRelativeTo(control);
 		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
 		arrayView.setVisible(true);
@@ -3563,18 +3572,16 @@ public class Executor implements Runnable
 	 */
 	private void updateVariableDisplay() throws EvalError
 	{
-		Vector<Vector<Object>> vars = new Vector<Vector<Object>>();
+		Vector<String[]> vars = new Vector<String[]>();
 		for (int i = 0; i < context.variables.count(); i++)
 		{
-			Vector<Object> myVar = new Vector<Object>();
-			myVar.add(context.variables.get(i));	// Variable name
+			String varName = context.variables.get(i);
 			// START KGU#67 2015-11-08: We had to find a solution for displaying arrays in a sensible way
 			//myVar.add(this.interpreter.get(this.variables.get(i)));
-			Object val = context.interpreter.get(context.variables.get(i));
+			Object val = context.interpreter.get(varName);
 			String valStr = prepareValueForDisplay(val);
-			myVar.add(valStr);					// Variable value as string
 			// END KGU#67 2015-11-08
-			vars.add(myVar);
+			vars.add(new String[]{varName, valStr});
 		}
 		this.control.updateVars(vars);
 		// START KGU#2 (#9) 2015-11-14
@@ -3774,7 +3781,7 @@ public class Executor implements Runnable
 		// START KGU#384 2017-04-22: execution context redesign - no longer an attribute
 		//this.variables = new StringList();
 		// END KGU#384 2017-04-22
-		control.updateVars(new Vector<Vector<Object>>());
+		control.updateVars(new Vector<String[]>());
 		
 		running = true;
 		Thread runner = new Thread(this, "Player");

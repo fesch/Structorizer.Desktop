@@ -14,6 +14,7 @@ Known issues:
 
 Current development version 3.27-01 (2017.10.31)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
+- 01: Enh. #439: Structured value presenter with pull-down buttons now recursive <2> 
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
@@ -56,7 +57,7 @@ Version 3.27 (2017.10.30)
 - 05: Some typos in the locale file keys mended
 - 05: Bugfix #365: Improved FOR-IN loop export to C <2>
 - 05: Enh. #367: Transmutation (swapping) of IF branches introduced [Simon Sobisch]2
-- 05: Enh. #372: Date and author attributes in he NSD files [Simon Sobisch]2
+- 05: Enh. #372: Date and author attributes in the NSD files [Simon Sobisch]2
 - 05: Enh. #376: Opportunity to move elements among diagrams [Simon Sobisch]2
 - 05: Issue #378: Charset indication in exported Python header [Rolf Schmidt]2
 - 05: Bugfix #379: Inequality operator symbol was wrong in Python export <2>
