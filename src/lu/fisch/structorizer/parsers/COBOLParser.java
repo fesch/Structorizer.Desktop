@@ -5133,8 +5133,14 @@ public class COBOLParser extends CodeParser
 			SectionOrParagraph sop = iter.next();
 			if (sop.parent == _parentNode && sop.endsBefore < 0) {
 				sop.endsBefore = _parentNode.getSize();
-				sop.firstElement = _parentNode.getElement(sop.startsAt);
-				sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+				// START KGU#452 2017-10-30: Bugfix #445 - We must face empty Subqueues or SoPs
+				//sop.firstElement = _parentNode.getElement(sop.startsAt);
+				//sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+				if (sop.startsAt < sop.endsBefore) {
+					sop.firstElement = _parentNode.getElement(sop.startsAt);
+					sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+				}
+				// END KGU#452 2017-10-30
 				found = true;
 //				System.out.println("======== " + sop.name + " =======");
 //				for (int i = sop.startsAt; i < sop.endsBefore; i++) {
@@ -8266,6 +8272,12 @@ public class COBOLParser extends CodeParser
 	 */
 	private void refactorProcedureList() {
 		for (SectionOrParagraph sop: this.procedureList) {
+			// START KGU#452 2017-10-30: Bugfix #445 - There may be empty sections or paragraphs
+			if (sop.firstElement == null) {
+				// We can't do here anything
+				continue;
+			}
+			// END KGU#453 2017-10-30
 			int i = 0;
 			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
 				int ix = (i == 0 ? sop.startsAt : sop.endsBefore - 1);
