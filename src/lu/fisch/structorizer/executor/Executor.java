@@ -144,6 +144,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
  *      Kay Gürtzig     2017.10.28      Enh. #443: First adaptations for multiple DiagramControllers
  *      Kay Gürtzig     2017.10.29      Enh. #423: Workaround for evaluation error on converted actual object field access
+ *      Kay Gürtzig     2017.11.01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
  *
  ******************************************************************************************************
  *
@@ -5207,7 +5208,10 @@ public class Executor implements Runnable
 		String trouble = new String();
 		try
 		{
-			String s = element.getText().getText();
+			// START KGU#453 2017-11-01: Bugfix #447 - get rid of possible line continuator backslashes
+			//String s = element.getText().getText();
+			String s = element.getUnbrokenText().getLongString();
+			// END KGU#453 2017-11-01
 			// START KGU#150 2016-04-03: More precise processing
 //			if (!CodeParser.preAlt.equals(""))
 //			{
@@ -5314,7 +5318,7 @@ public class Executor implements Runnable
 			if (!eternal) {
 				// START KGU#413 2017-06-09: Enh. #416: Cope with user-inserted line breaks
 				//condStr = element.getText().getText();
-				condStr = element.getUnbrokenText().getText();
+				condStr = element.getUnbrokenText().getLongString();
 				// END KGU#413 2017-06-09
 				// START KGU#150 2016-04-03: More precise processing
 //				if (!CodeParser.preWhile.equals(""))
@@ -5488,7 +5492,7 @@ public class Executor implements Runnable
 			// which is sound with scope rules in C or Java.
 			// START KGU#413 2017-06-09: Enh. #416: Cope with user-inserted line breaks
 			//String condStr = element.getText().getText();
-			String condStr = element.getUnbrokenText().getText();
+			String condStr = element.getUnbrokenText().getLongString();
 			// END KGU#413 2017-06-09
 			// START KGU#150 2016-04-03: More precise processing
 //			if (!CodeParser.preRepeat.equals(""))
