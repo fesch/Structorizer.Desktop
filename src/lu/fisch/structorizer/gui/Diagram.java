@@ -1303,11 +1303,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Container parent = this.getParent();
     	if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
     			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
-    			int heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
-    			int widthFactor = root.getRect().right / scroll.getWidth() + 1;
-    			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
-    			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
-    			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+                        if(scroll.getHeight()!=0 && scroll.getWidth()!=0)
+                        {
+                            int heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
+                            int widthFactor = root.getRect().right / scroll.getWidth() + 1;
+                            //System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
+                            scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
+                            scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+                        }
     	    	}
 	}
 	// END KGU#444 2017-10-23
