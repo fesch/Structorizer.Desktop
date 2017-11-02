@@ -57,6 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.02.27      Enh. #346: Formal adaptation
  *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
  *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
  *
  ******************************************************************************************************
  *
@@ -494,7 +495,6 @@ public class BasGenerator extends Generator
     protected void generateCode(Alternative _alt, String _indent)
     {
 
-    	//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
     	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
     	String indentPlusOne = _indent + this.getIndent();
 
@@ -525,8 +525,11 @@ public class BasGenerator extends Generator
     @Override
     protected void generateCode(Case _case, String _indent)
     {
-
-    	String selection = transform(_case.getText().get(0));
+    	// START KGU#453 2017-11-02: Issue #447 - consider line continuation now
+    	//String discriminator = transform(_case.getText().get(0));
+    	StringList unbrokenText = _case.getUnbrokenText();
+    	String discriminator = transform(unbrokenText.get(0));
+    	// END KGU #453 2017-11-02
         String indentPlusOne = _indent + this.getIndent();
         String indentPlusTwo = indentPlusOne + this.getIndent();
 
@@ -537,21 +540,27 @@ public class BasGenerator extends Generator
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "SELECT CASE " + selection);
     	boolean disabled =_case.isDisabled(); 
-    	addCode("SELECT CASE " + selection, _indent, disabled);
+    	addCode("SELECT CASE " + discriminator, _indent, disabled);
     	// END KGU#277 2016-10-13
 
-    	for(int i=0; i<_case.qs.size()-1; i++)
+    	for (int i=0; i<_case.qs.size()-1; i++)
     	{
         	// START KGU#277 2016-10-13: Enh. #270
     		//code.add(this.getLineNumber() + indentPlusOne + "CASE " + _case.getText().get(i+1).trim());
-    		addCode("CASE " + _case.getText().get(i+1).trim(), indentPlusOne, disabled);
+    		// START KGU#453 2017-11-02: Issue #447
+    		//addCode("CASE " + _case.getText().get(i+1).trim(), indentPlusOne, disabled);
+    		addCode("CASE " + unbrokenText.get(i+1).trim(), indentPlusOne, disabled);
+    		// END KGU#453 2017-11-02
     		// END KGU#277 2016-10-13
     		//    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
     		generateCode((Subqueue) _case.qs.get(i), indentPlusTwo);
     		//    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
     	}
 
-    	if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+		// START KGU#453 2017-11-02: Issue #447
+    	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    	if (!unbrokenText.get(_case.qs.size()).trim().equals("%"))
+    	// END KGU#453 2017-11-02
     	{
         	// START KGU#277 2016-10-13: Enh. #270
     		//code.add(this.getLineNumber() + indentPlusOne + "CASE ELSE");

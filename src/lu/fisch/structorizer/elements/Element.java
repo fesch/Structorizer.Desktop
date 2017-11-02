@@ -878,7 +878,7 @@ public abstract class Element {
 	 * @param separator - an arbitrary string working as separator instead of the original backslash
 	 * @return a StringList consisting of possibly broken text lines
 	 */
-	private StringList getBrokenText(String separator)
+	protected StringList getBrokenText(String separator)
 	{
 		StringList sl = new StringList();
 		int nLines = text.count();

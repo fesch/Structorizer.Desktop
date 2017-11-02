@@ -5105,7 +5105,10 @@ public class Executor implements Runnable
 		String trouble = new String();
 		try
 		{
-			StringList text = element.getText();
+			// START KGU#453 2017-11-02: Issue #447 - face line continuation
+			//StringList text = element.getText();
+			StringList text = element.getUnbrokenText();
+			// START KGU#453 2017-11-02
 			// START KGU#259 2016-09-25: Bugfix #254
 			//String expression = text.get(0) + " = ";
 			StringList tokens = Element.splitLexically(text.get(0), true);

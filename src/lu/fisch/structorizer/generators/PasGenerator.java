@@ -73,6 +73,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.09.19      Enh. #423: Export of record types
  *      Kay Gürtzig         2017.09.21      Enh. #388, #389: Export strategy for Includables and structured constants
  *      Kay Gürtzig         2017.09.25      Enh. #388, #423: Positioning of declaration comments revised
+ *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
  *
  ******************************************************************************************************
  *
@@ -763,23 +764,35 @@ public class PasGenerator extends Generator
     	insertComment(_case, _indent);
     	// END KGU 2014-11-16
 
-    	String condition = transform(_case.getText().get(0));
-    	if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+    	// START KGU#453 2017-11-02: Issue #447
+    	//String condition = transform(_case.getText().get(0));
+    	StringList unbrokenText = _case.getUnbrokenText();
+    	String condition = transform(unbrokenText.get(0));
+    	// END KGU#453 2017-11-02
+    	if (!condition.startsWith("(") && !condition.endsWith(")")) {
+    		condition = "("+condition+")";
+    	}
 
     	addCode("case "+condition+" of", _indent, isDisabled);
 
     	for(int i=0;i<_case.qs.size()-1;i++)
     	{
-    		addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
+        	// START KGU#453 2017-11-02: Issue #447
+    		//addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
+    		addCode(unbrokenText.get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
+        	// END KGU#453 2017-11-02
     		addCode("begin", _indent+this.getIndent()+this.getIndent(), isDisabled);
-    		generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
+    		generateCode(_case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
     		addCode("end;", _indent+this.getIndent()+this.getIndent(), isDisabled);
     	}
 
-    	if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    	// START KGU#453 2017-11-02: Issue #447
+    	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    	if(!unbrokenText.get(_case.qs.size()).trim().equals("%"))
+        // END KGU#453 2017-11-02
     	{
     		addCode("else", _indent+this.getIndent(), isDisabled);
-    		generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
+    		generateCode(_case.qs.get(_case.qs.size()-1), _indent+this.getIndent()+this.getIndent());
     	}
     	addCode("end;", _indent, isDisabled);
     }

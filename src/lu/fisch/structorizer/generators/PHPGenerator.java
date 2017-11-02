@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.01.03      Enh. #314: File API extension, bugfix #320 (CALL elements)
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Case elements supported
  *
  ******************************************************************************************************
  *
@@ -347,7 +348,10 @@ public class PHPGenerator extends Generator
     	insertComment(_case, _indent);
     	// END KGU 2014-11-16
 
-    	StringList lines = _case.getText();
+    	// START KGU#453 2017-11-02: Issue #447
+    	//StringList lines = _case.getText();
+    	StringList lines = _case.getUnbrokenText();
+    	// END KGU#453 2017-11-02
     	String condition = transform(_case.getText().get(0));
     	// START KGU#301 2016-12-01: Bugfix #301
     	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
@@ -371,7 +375,10 @@ public class PHPGenerator extends Generator
     		addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
     	}
 
-    	if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    	// START KGU#453 2017-11-02: Issue #447
+    	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    	if(!lines.get(_case.qs.size()).trim().equals("%"))
+    	// END KGU#453 2017-11-02
     	{
     		addCode("default:", _indent+this.getIndent(), isDisabled);
     		generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());

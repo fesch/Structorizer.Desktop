@@ -12,9 +12,9 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-01 (2017.11.01)
+Current development version 3.27-01 (2017.11.02)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
-- 01: Bugfix #447: Line continuation backslashes in Alternatives defanged <2>
+- 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged. <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

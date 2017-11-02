@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.02.27  Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig         2017.05.16  Enh. #372: Export of copyright information
  *      Kay Gürtzig         2017.05.24  Bugfix #412: The hash codes used to generate unique identifiers could get negative
+ *      Kay Gürtzig         2017.11.02  Issue #447: Line continuation in Case elements supported
  *
  ******************************************************************************************************
  *
@@ -542,7 +543,11 @@ public class PerlGenerator extends Generator {
 		// Since Perl release 5.8.0, switch is a standard module...
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"switch ( "+transform(_case.getText().get(0))+" ) {");
-		String discriminator = transform(_case.getText().get(0));
+		// START KGU#453 2017-11-02: Issue #447
+		//String discriminator = transform(_case.getText().get(0));
+		StringList unbrokenText = _case.getUnbrokenText();
+		String discriminator = transform(unbrokenText.get(0));
+		// END KGU#453 2017-11-02
 		// START KGU#301 2016-12-01: Bugfix #301
 		//if (!this.suppressTransformation || !(selector.startsWith("(") && selector.endsWith(")")))
 		if (!this.suppressTransformation || !isParenthesized(discriminator))
@@ -558,7 +563,10 @@ public class PerlGenerator extends Generator {
 			addCode("", "", isDisabled);
 			// START KGU#15 2015-11-02: Support multiple constants per branch
 			//code.add(_indent+this.getIndent()+"case ("+_case.getText().get(i+1).trim()+") {");
-			String selectors = _case.getText().get(i+1).trim();
+			// START KGU#453 2017-11-02: Issue #447
+			//String selectors = _case.getText().get(i+1).trim();
+			String selectors = unbrokenText.get(i+1).trim();
+			// END KGU#453 2017-11-02
 			if (Element.splitExpressionList(selectors, ",").count() > 1)	// Is it an enumeration of values? 
 			{
 				selectors = "[" + selectors + "]";
@@ -574,7 +582,10 @@ public class PerlGenerator extends Generator {
 			addCode("}", _indent + this.getIndent(), isDisabled);
 		}
 		
-		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+		// START KGU#453 2017-11-02: Issue #447
+		//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+		if (!unbrokenText.get(_case.qs.size()).trim().equals("%"))
+		// END KGU#453 2017-11-02
 		{
 
 			addCode("", "", isDisabled);

@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017.05.24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
  *      Kay Gürtzig             2017.10.02/03   Enh. #389, #423: Export of globals and mutable record types implemented
+ *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation and Case elements supported
  *
  ******************************************************************************************************
  *
@@ -516,7 +517,10 @@ public class PythonGenerator extends Generator
 			insertComment(_case, _indent);
 			// END KGU 2014-11-16
 
-			StringList lines = _case.getText();
+			// START KGU#453 2017-11-02: Issue #447
+			//StringList lines = _case.getText();
+			StringList lines = _case.getUnbrokenText();
+			// END KGU#453 2017-11-02
 			String condition = transform(lines.get(0));
 
 			for(int i=0; i<_case.qs.size()-1; i++)
@@ -534,7 +538,10 @@ public class PythonGenerator extends Generator
 				generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent());
 			}
 			
-			if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+			// START KGU#453 2017-11-02: Issue #447
+			//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+			if (!lines.get(_case.qs.size()).trim().equals("%"))
+			// END KGU#453 2017-11-02
 			{
 				addCode("else:", _indent, isDisabled);
 				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent + this.getIndent());

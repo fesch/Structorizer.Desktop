@@ -77,6 +77,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017.09.26      Enh. #389/#423: Export with includable diagrams (as global definitions)
  *      Kay Gürtzig             2017.09.30      Enh. #423: struct export fixed.
+ *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
  *
  ******************************************************************************************************
  *
@@ -940,8 +941,10 @@ public class CGenerator extends Generator {
 		
 		insertComment(_alt, _indent);
 		
-		String condition = transform(_alt.getText().getLongString(), false)
-				.trim();
+		// START KGU#453 2017-11-02: Issue #447
+		//String condition = transform(_alt.getText().getLongString(), false).trim();
+		String condition = transform(_alt.getUnbrokenText().getLongString(), false).trim();
+		// END KGU#453 2017-11-02
 		// START KGU#301 2016-12-01: Bugfix #301
 		//if (!condition.startsWith("(") || !condition.endsWith(")"))
 		if (!isParenthesized(condition))
@@ -965,7 +968,10 @@ public class CGenerator extends Generator {
 		boolean isDisabled = _case.isDisabled();
 		insertComment(_case, _indent);
 		
-		StringList lines = _case.getText();
+		// START KGU#453 2017-11-02: Issue #447
+		//StringList lines = _case.getText();
+		StringList lines = _case.getUnbrokenText();
+		// END KGU#453 2017-11-02
 		String condition = transform(lines.get(0), false);
 		// START KGU#301 2016-12-01: Bugfix #301
 		//if (!condition.startsWith("(") || !condition.endsWith(")")) {
