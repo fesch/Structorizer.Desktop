@@ -16,6 +16,7 @@ Current development version 3.27-01 (2017.11.03)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
+- 01: Bugfix #448: Endless loop and regex exceptions in Find & Replace fixed <2>
 - 01: Enh. #439: Structured value presenter with pull-down buttons now recursive <2> 
 
 Version 3.27 (2017.10.30)

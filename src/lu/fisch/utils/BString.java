@@ -40,6 +40,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017.06.18      Method breakup refined to cope with meta symbols in the string to
  *                                      be broken up for regex matching. Code revision, several redundant
  *                                      methods declared as deprecated
+ *      Kay Gürtzig     2017.11.03      Bugfix #448: Method breakup(String) revised again
  *
  ******************************************************************************************************
  *
@@ -445,10 +446,16 @@ public abstract class BString
 				if (ch1 != ch2) {
 					result += "[" + ch1 + ch2 + "]";
 				}
-				else if ("[]^$".contains(ch1+"")) {
+				// START KGU#454 2017-11-03: Bugfix #448 regex syntax errors occurred e.g. with breakup("\\\\n+")
+				//else if ("[]^$".contains(ch1+"")) {
+				else if ("\\[]^$".contains(ch1+"")) {
+				// END KGU#4545 2017-11-03
 					result += "\\" + ch1;
 					// The character following to a backslash is to be adopted as is
-					if (ch1 == '\\' && i < _replace.length() - 1) {
+					// START KGU#454 2017-11-03: Bugfix #448 ... unless it is a backslash itself!
+					//if (ch1 == '\\' && i < _replace.length() - 1) {
+					if (ch1 == '\\' && i < _replace.length() - 1 && _replace.charAt(i+1) != '\\') {
+					// END KGU#4545 2017-11-03
 						result += _replace.charAt(++i);
 					}
 				}
