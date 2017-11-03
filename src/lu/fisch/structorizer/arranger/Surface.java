@@ -72,6 +72,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.05.26      Bugfix #414: Too large bounding boxes caused errors and made the GUI irresponsive
  *      Kay Gürtzig     2017.10.23      Issue #417: Linear scrolling unit adaptation to reduce drawing time complexity
  *                                      Enh. #35: Scrolling dimensioning mechanism revised (group layout dropped) 
+ *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
  *
  ******************************************************************************************************
  *
@@ -1139,18 +1140,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * of 1, large diagrams would take an eternity to get scrolled over because their redrawing time also
 	 * increases with the number of elements, of course, such that it's polynomial (at least square) time growth... 
 	 */
-	protected void adaptScrollUnits(Rect drawArea) {
-		Container parent = this.getParent();
+    protected void adaptScrollUnits(Rect drawArea) {
+    	Container parent = this.getParent();
     	if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
-    			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
-    			int heightFactor = drawArea.bottom / scroll.getHeight() + 1;
-    			int widthFactor = drawArea.right / scroll.getWidth() + 1;
-    			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
-    			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
-    			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
-    	    	}
-	}
-	// END KGU#444 2017-10-23
+    		javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
+    		// START KGU#444 2017-11-03: Bugfix #417
+    		//int unitsVertical = drawArea.bottom / scroll.getHeight() + 1;
+    		//int unitsHorizontal = drawArea.right / scroll.getWidth() + 1;
+    		int unitsVertical = 1;
+    		int unitsHorizontal = 1;
+    		if (scroll.getHeight() > 0) {
+    			unitsVertical = drawArea.bottom / scroll.getHeight() + 1;
+    		}
+    		if (scroll.getWidth() > 0) {
+    			unitsHorizontal = drawArea.right / scroll.getWidth() + 1;
+    		}
+    		// END KGU#444 2017-11-03
+    		//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
+    		scroll.getHorizontalScrollBar().setUnitIncrement(unitsHorizontal);
+    		scroll.getVerticalScrollBar().setUnitIncrement(unitsVertical);
+    	}
+    }
+    // END KGU#444 2017-10-23
 
 	public void addDiagram(Root root)
     // START KGU#2 2015-11-19: Needed a possibility to register a related Mainform

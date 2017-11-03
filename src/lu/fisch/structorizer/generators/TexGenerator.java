@@ -194,7 +194,13 @@ public class TexGenerator extends Generator {
 */
 		
     	if (!_alt.disabled) {
-    		code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+    		// START KGU#453 2017-11-02: Issue #447 - line continuation support was inconsistent
+    		//code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+    		StringList condLines = _alt.getCuteText();
+    		int nCondLines = condLines.count();
+    		int gradient = Math.max(1, 8 - 2 * nCondLines);
+    		code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+    		// END KGU#453 2017-11-02
     		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
     		if(_alt.qFalse.getSize()!=0)
     		{

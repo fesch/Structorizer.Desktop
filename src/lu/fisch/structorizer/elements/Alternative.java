@@ -53,6 +53,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.02.08      Bugfix #198 (KGU#346) rightward cursor navigation was flawed,
  *                                      Inheritance changed (IFork added)
  *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
+ *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
  *
  ******************************************************************************************************
  *
@@ -103,7 +104,7 @@ public class Alternative extends Element implements IFork {
 		super(_strings);
 		qFalse.parent=this;
 		qTrue.parent=this;
-		setText(_strings);
+		//setText(_strings);	// Already done
 	}
 	
 	public Alternative(StringList _strings)
@@ -111,9 +112,9 @@ public class Alternative extends Element implements IFork {
 		super(_strings);
 		qFalse.parent=this;
 		qTrue.parent=this;
-		setText(_strings);
+		//setText(_strings);	// Already done
 	}
-
+	
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -129,7 +130,12 @@ public class Alternative extends Element implements IFork {
 			return rect0;
 		}
 
-		int nLines = getText(false).count();
+		// START KGU#453 2017-11-01: Bugfix #447 - don't show end-standing backslashes
+		//int nLines = getText(false).count();
+		StringList myText = getCuteText(false);
+		int nLines = myText.count();
+		// END KGU#453 2017-11-01
+		
 		rect0.top = 0;
 		rect0.left = 0;
 
@@ -210,7 +216,10 @@ public class Alternative extends Element implements IFork {
 			// part on the left side
 			double leftside = by/coeffleft + ax - ay/coeffleft;
 			// the bottom right point of this text line
-			int textWidth = getWidthOutVariables(_canvas, getText(false).get(i), this);
+			// START KGU#453 2017-11-01: Bugfix #447
+			//int textWidth = getWidthOutVariables(_canvas, getText(false).get(i), this);
+			int textWidth = getWidthOutVariables(_canvas, myText.get(i), this);
+			// END KGU#453 2017-11-01
 			double bx = textWidth + 2*(E_PADDING/2) + leftside;
 			//System.out.println("LS : "+leftside);
 
@@ -288,7 +297,11 @@ public class Alternative extends Element implements IFork {
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 		
-		int nLines = getText(false).count();
+		// START KGU#453 2017-11-01: Bugfix #447 - don't show end-standing backslashes
+		//int nLines = getText(false).count();
+		StringList myText = getCuteText(false);
+		int nLines = myText.count();
+		// END KGU#453 2017-11-01
 
 		myrect.bottom -= 1;
 		canvas.fillRect(myrect);
@@ -359,7 +372,10 @@ public class Alternative extends Element implements IFork {
 		// draw text
 		for (int i=0; i < nLines; i++)
 		{
-			String mytext = this.getText(false).get(i);
+			// START KGU#453 2017-11-01: Bugfix #447 - don't show end-standing backslashes
+			//String myLine = this.getText(false).get(i);
+			String myLine = myText.get(i);
+			// END KGU#453 2017-11-01
 
 			// bottom line of the text
 			// START KGU#435 2017-10-22: Enh. #128 revised
@@ -380,7 +396,7 @@ public class Alternative extends Element implements IFork {
                         canvas.lineTo(myrect.left+(int) bx, myrect.bottom-(int) by);
 			 */
 			int boxWidth = (int) (bx-leftside);
-			int textWidth = getWidthOutVariables(_canvas,getText(false).get(i),this);
+			int textWidth = getWidthOutVariables(_canvas, myLine, this);
 
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
@@ -389,7 +405,7 @@ public class Alternative extends Element implements IFork {
 					//_top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
 					_top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fm.getHeight(),
 					// END KGU#227 2016-07-31
-					mytext, this
+					myLine, this
 					);
 
 			/*
@@ -658,7 +674,10 @@ public class Alternative extends Element implements IFork {
     {
 		if (!this.isDisabled()) {
 			if (!_instructionsOnly) {
-				_lines.add(this.getText());	// Text of the condition
+				// START KGU#453 2017-11-01: Bugfix 447 Someone might have placed line continuation backslashes...
+				//_lines.add(this.getText());	// Text of the condition
+				_lines.add(this.getUnbrokenText().getLongString());	// Text of the condition as a single line
+				// END KGU#453 2017-11-01
 			}
 			this.qTrue.addFullText(_lines, _instructionsOnly);
 			this.qFalse.addFullText(_lines, _instructionsOnly);

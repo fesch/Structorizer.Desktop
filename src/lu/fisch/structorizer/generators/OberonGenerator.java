@@ -67,6 +67,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017-10-24      Enh. #389, #423: Export strategy for includables and records
+ *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
  *
  ******************************************************************************************************
  *
@@ -712,7 +713,10 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_alt, _indent);
         // END KGU 2014-11-16
-		addCode("IF "+ transform(_alt.getText().getLongString()) + " THEN",
+        // START KGU#453 2017-11-02: Issue #447
+		//addCode("IF "+ transform(_alt.getText().getLongString()) + " THEN",
+		addCode("IF "+ transform(_alt.getUnbrokenText().getLongString()) + " THEN",
+		// END KGU#453 2017-1102
 				_indent, isDisabled);
 		generateCode(_alt.qTrue, _indent+this.getIndent());
 		if (_alt.qFalse.getSize()!=0)
@@ -730,11 +734,18 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_case, _indent);
         // END KGU 2014-11-16
-		addCode("CASE "+transform(_case.getText().get(0))+" OF", _indent, isDisabled);
+        // START KGU#453 2017-11-02: Issue #447
+		//addCode("CASE "+transform(_case.getText().get(0))+" OF", _indent, isDisabled);
+        StringList unbrokenText = _case.getUnbrokenText();
+		addCode("CASE " + transform(unbrokenText.get(0)) + " OF", _indent, isDisabled);
+		// END KGU#453 2017-11-02
 		
 		for (int i=0; i<_case.qs.size()-1; i++)
 		{
-			addCode(this.getIndent() + _case.getText().get(i+1).trim() + ":",
+			// START KGU#453 2017-11-02: Issue #447
+			//addCode(this.getIndent() + _case.getText().get(i+1).trim() + ":",
+			addCode(this.getIndent() + unbrokenText.get(i+1).trim() + ":",
+			// END KGU#453 2017-11-02
 					_indent, isDisabled);
 			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent());
 			// START KGU 2014-11-16: Wrong case separator replaced
@@ -743,7 +754,10 @@ public class OberonGenerator extends Generator {
 			// END KGU 2014-11-16
 		}
 		
-		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+		// START KGU#453 2017-11-02: Issue #447
+		//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+		if (!unbrokenText.get(_case.qs.size()).trim().equals("%"))
+		// END KGU#453 2017-11-02
 		{
 			addCode("ELSE", _indent+this.getIndent(), isDisabled);
 			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());

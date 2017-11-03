@@ -195,7 +195,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.27";
+	public static String E_VERSION = "3.27-01";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -753,8 +753,10 @@ public abstract class Element {
 	// START KGU#91 2015-12-01: We need a way to get the true value
 	/**
 	 * Returns the content of the text field no matter if mode isSwitchedTextAndComment
-	 * is active, use getText(false) for a mode-sensitive effect.
+	 * is active.<br/>
+	 * Use {@code getText(false)} for a mode-sensitive effect.
 	 * @return the text StringList (in normal mode) the comment StringList otherwise
+	 * @see #getText(boolean)
 	 */
 	public StringList getText()
 	{
@@ -785,6 +787,59 @@ public abstract class Element {
         }
 	}
 
+	// START KGU#453 2017-11-01: Bugfix #447 - we need a cute representationon broken lines in some cases
+	/**
+	 * Returns the content of the text field no matter if mode {@code isSwitchedTextAndComment}
+	 * is active.<br/>
+	 * In contrast to {@link #getText()}, end-standing backslashes will be wiped
+	 * off. This is for cases where the deliberate breaking of lines is of no importance
+	 * and would unnecessarily spoil the presentation.<br/>
+	 * Use {@code getCuteText(false)} for a mode-sensitive effect.
+	 * @return the text StringList (in normal mode) the comment StringList otherwise
+	 * @see #getText()
+	 * @see #getCuteText(boolean)
+	 * @see #isSwitchTextCommentMode()
+	 */
+	public StringList getCuteText()
+	{
+    	StringList cute = new StringList();
+    	for (int i = 0; i < text.count(); i++) {
+    		String line = text.get(i);
+    		if (line.endsWith("\\")) {
+    			line = line.substring(0, line.length() - 1);
+    		}
+    		cute.add(line);
+    	}
+    	return cute;
+	}
+	/**
+	 * Returns the content of the text field unless {@code _alwaysTrueText} is false and
+	 * mode {@code isSwitchedTextAndComment} is active, in which case the comment field
+	 * is returned instead.<br/>
+	 * In contrast to {@link #getText(boolean)}, end-standing backslashes will be wiped
+	 * off. This is for cases where the deliberate breaking of lines is of no importance
+	 * and would unnecessarily spoil the presentation. 
+	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
+	 * @return either the text or the comment
+	 * @see #getCuteText()
+	 * @see #getText(boolean)
+	 * @see #isSwitchTextCommentMode()
+	 */
+	protected StringList getCuteText(boolean _alwaysTrueText)
+	{
+        if (!_alwaysTrueText && this.isSwitchTextCommentMode())
+        {
+        	// START KGU#199 2016-07-07: Enh. #188
+        	// Had to be altered since the combination of instructions may produce
+        	// multi-line string elements which would compromise drawing
+        	//return comment;
+        	return StringList.explode(comment, "\n");
+        	// END KGU#199 2016-07-07
+        }
+        return getCuteText();
+	}
+	// END KGU#453 2017-11-01
+
 	public StringList getCollapsedText()
 	{
 		StringList sl = new StringList();
@@ -799,7 +854,7 @@ public abstract class Element {
 	// START KGU#413 2017-06-09: Enh. #416 Cope with line continuations
 	/**
 	 * Returns the text of this element but with re-concatenated and trimmed lines if some
-	 * lines were deliberately broken (i.e. ended with backslash)
+	 * lines were deliberately broken (i.e. ended with backslash).
 	 * @return a StringList consisting of unbroken text lines
 	 */
 	public StringList getUnbrokenText()
@@ -813,16 +868,17 @@ public abstract class Element {
 	 */
 	public StringList getBrokenText()
 	{
+		// The separator is actually just a newline character but escaped for regular expression syntax
 		return getBrokenText("\\\n");
 	}
 	/**
 	 * Returns the text of this element as a new StringList where each broken line (by means
 	 * of backslashes) will be glued together such that instead of the delimiting backslashes
-	 * the given separator will be inserted.
+	 * the given {@code separator} will be inserted.
 	 * @param separator - an arbitrary string working as separator instead of the original backslash
 	 * @return a StringList consisting of possibly broken text lines
 	 */
-	private StringList getBrokenText(String separator)
+	protected StringList getBrokenText(String separator)
 	{
 		StringList sl = new StringList();
 		int nLines = text.count();
@@ -838,6 +894,7 @@ public abstract class Element {
 		return sl;
 	}
 	// END KGU#413 2017-06-09
+	
 
 	public void setComment(String _comment)
 	{

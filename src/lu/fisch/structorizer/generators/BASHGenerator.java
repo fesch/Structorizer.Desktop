@@ -74,6 +74,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.05.19      Issue #237: Expression transformation heuristics improved
  *      Kay Gürtzig         2017.10.05      Enh. #423: First incomplete approach to handle record variables
  *      Kay Gürtzig         2017.10.24      Enh. #423: Record variable handling accomplished for release 3.27
+ *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
  *
  ******************************************************************************************************
  *
@@ -790,7 +791,10 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"if "+BString.replace(transform(_alt.getText().getText()),"\n","").trim());
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
 		//code.add(_indent+"if (( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim() + " ))");
-		String condition = transform(_alt.getText().getLongString()).trim();
+		// START KGU#453 2017-11-02: Issue #447
+		//String condition = transform(_alt.getText().getLongString()).trim();
+		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+		// END KGU#453 2017-11-02
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -847,7 +851,11 @@ public class BASHGenerator extends Generator {
 		// END KGU 2014-11-16
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent+"case "+transform(_case.getText().get(0))+" in");
-		addCode("case "+transform(_case.getText().get(0))+" in", _indent, disabled);
+		// START KGU#453 2017-11-02: Issue #447
+		//addCode("case "+transform(_case.getText().get(0))+" in", _indent, disabled);
+		StringList unbrokenText = _case.getUnbrokenText();
+		addCode("case "+transform(unbrokenText.get(0))+" in", _indent, disabled);
+		// END KGU#453 2017-11-02
 		// END KGU#277 2016-10-14
 		
 		for (int i=0; i<_case.qs.size()-1; i++)
@@ -856,7 +864,10 @@ public class BASHGenerator extends Generator {
 			//code.add("");
 			//code.add(_indent + this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")");
 			addCode("", "", disabled);
-			addCode(this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			// START KGU#453 2017-11-02: Issue #447
+			//addCode(this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			// END KGU#453 2017-11-02
 			// END KGU#277 2016-10-14
 			// START KGU#15 2015-11-02
 			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());

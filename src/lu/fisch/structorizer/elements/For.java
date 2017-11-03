@@ -60,6 +60,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.26      Enh. #259: Type retrieval support added (for counting loops)
  *      Kay Gürtzig     2017.04.14      Enh. #259: Approach to guess FOR-IN loop variable type too
  *      Kay Gürtzig     2017.04.30      Enh. #354: New structured constructors
+ *      Kay Gürtzig     2017.11.02      Issue #447: Precaution against line-continuating backslashes 
  *
  ******************************************************************************************************
  *
@@ -432,7 +433,10 @@ public class For extends Element implements ILoop {
 			//_lines.add(this.getText());
 			if (!_instructionsOnly)
 			{
-				_lines.add(this.getText());
+				// START KGU#453 2017-11-02: Issue #447 - Consider deliberate line continuation
+				//_lines.add(this.getText());
+				_lines.add(this.getUnbrokenText());
+				// END KGU#453 2017-11-02
 			}
 			// END KGU#3 2015-11-30
 			this.q.addFullText(_lines, _instructionsOnly);
@@ -640,7 +644,10 @@ public class For extends Element implements ILoop {
 	 */
 	public void setValueList(String valueList) {
 		this.valueList = valueList;
-		if (this.getText().getLongString().trim().equals(this.composeForInClause()))
+		// START KGU#453 2017-11-02: Issue #447 - consider line continuation backslashes
+		//if (this.getText().getLongString().trim().equals(this.composeForInClause()))
+		if (this.getUnbrokenText().getLongString().trim().equals(this.composeForInClause()))
+		// END KGU#453 2017-11-02
 		{
 			this.style = ForLoopStyle.TRAVERSAL;
 		}
@@ -711,31 +718,32 @@ public class For extends Element implements ILoop {
 
 	/**
 	 * Splits the contained text (after operator unification, see unifyOperators for details)
-	 * into an array consisting of six strings meant to have following meaning:
-	 * 0. counter variable name 
-	 * 1. expression representing the initial value
-	 * 2. expression representing the final value
-	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)
-	 * 4. Substring for increment section as found on splitting (no integer coercion done)
-	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null
-	 * 
-	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
+	 * into an array consisting of six strings meant to have following meaning:<br/>
+	 * 0. counter variable name<br/>
+	 * 1. expression representing the initial value<br/>
+	 * 2. expression representing the final value<br/>
+	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)<br/>
+	 * 4. Substring for increment section as found on splitting (no integer coercion done)<br/>
+	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null<br/>
 	 * @return String array consisting of the four parts explained above
 	 */
 	public String[] splitForClause()
 	{
-		return splitForClause(this.getText().getText());
+		// START KGU#453 2017-11-02: Issue #447 - eliminate line continuation backslashes 
+		//return splitForClause(this.getText().getText());
+		return splitForClause(this.getUnbrokenText().getLongString());
+		// END KGU#453 2017-11-02
 	}
 	
 	/**
 	 * Splits a potential FOR clause (after operator unification, see unifyOperators for details)
-	 * into an array consisting of six strings meant to have following meaning:
-	 * 0. counter variable name 
-	 * 1. expression representing the initial value
-	 * 2. expression representing the final value
-	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)
-	 * 4. Substring for increment section as found on splitting (no integer coercion done)
-	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null
+	 * into an array consisting of six strings meant to have following meaning:<br/>
+	 * 0. counter variable name<br/>
+	 * 1. expression representing the initial value<br/>
+	 * 2. expression representing the final value<br/>
+	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)<br/>
+	 * 4. Substring for increment section as found on splitting (no integer coercion done)<br/>
+	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null<br/>
 	 * 
 	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
 	 * @return String array consisting of the four parts explained above
@@ -872,6 +880,8 @@ public class For extends Element implements ILoop {
 	 * Returns the FOR loop header resulting from the stored structured fields,
 	 * not forcing a step section
 	 * @return the composed For loop header
+	 * @see #composeForClause(boolean)
+	 * @see #composeForInClause()
 	 */
 	public String composeForClause()
 	{
@@ -882,6 +892,10 @@ public class For extends Element implements ILoop {
 	 * Returns the FOR loop header resulting from the stored structured fields
 	 * @param _forceStep - if a step section is to be produced even in case step==1
 	 * @return the composed For loop header
+	 * @see #composeForClause()
+	 * @see #composeForClause(String, String, String, int, boolean)
+	 * @see #composeForClause(String, String, String, String, boolean)
+	 * @see #composeForInClause()
 	 */
 	public String composeForClause(boolean _forceStep)
 	{
@@ -897,6 +911,7 @@ public class For extends Element implements ILoop {
 	 * @param _step - increment literal (integer constant)
 	 * @param _forceStep - if a step section is to be produced even in case step==1
 	 * @return the composed For loop header
+	 * @see #composeForClause(String, String, String, int, boolean)
 	 */
 	public static String composeForClause(String _counter, String _start, String _end, String _step, boolean _forceStep)
 	{
@@ -918,6 +933,7 @@ public class For extends Element implements ILoop {
 	 * @param _step - increment integer constant
 	 * @param _forceStep - if a step section is to be produced even in case step==1
 	 * @return the composed For loop header
+	 * @see #composeForClause(String, String, String, String, boolean)
 	 */
 	public static String composeForClause(String _counter, String _start, String _end, int _step, boolean _forceStep)
 	{
@@ -953,6 +969,12 @@ public class For extends Element implements ILoop {
 	// END KGU#3 2015-11-04
 
 	// START KGU#61 2016-03-20: Enh. #84/#135
+	/**
+	 * Returns the FOR-IN loop header resulting from the stored structured fields
+	 * @return the composed For-In loop header
+	 * @see #composeForClause()
+	 * @see #composeForInClause(String, String)
+	 */
 	public String composeForInClause()
 	{
 		String valueList = this.valueList;
@@ -962,6 +984,14 @@ public class For extends Element implements ILoop {
 		return composeForInClause(this.counterVar, valueList);
 	}
 
+	/**
+	 * Returns the FOR-IN loop header resulting from the given arguments.
+	 * @param _iterator - the variable name for the iterating variable
+	 * @param _valueList - an expression describing the list of things to be iterated over
+	 * @return the composed For-In loop header
+	 * @see #composeForClause()
+	 * @see #composeForInClause()
+	 */
 	public static String composeForInClause(String _iterator, String _valueList)
 	{
 		String preForIn = CodeParser.getKeyword("preForIn").trim();
@@ -987,7 +1017,10 @@ public class For extends Element implements ILoop {
 		ForLoopStyle style = ForLoopStyle.FREETEXT;
 		// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
 		//String thisText = this.getText().getLongString().trim();
-		String thisText = this.getText().getLongString().trim().replace(":=", "<-");
+		// START KGU#453 2017-11-02: Issue #447 - get rid of end-standing backslashes
+		//String thisText = this.getText().getLongString().trim().replace(":=", "<-");
+		String thisText = this.getUnbrokenText().getLongString().trim().replace(":=", "<-");
+		// END KGU#453 2017-11-02
 		// END KGU#256 2016-09-25
 		//System.out.println(thisText + " <-> " + this.composeForClause() + " <-> " + this.composeForInClause());
 		

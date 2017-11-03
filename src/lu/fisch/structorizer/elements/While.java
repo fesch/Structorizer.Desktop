@@ -48,6 +48,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
  *
  ******************************************************************************************************
  *
@@ -116,9 +117,11 @@ public class While extends Element implements ILoop {
 			return rect0;
 		}
 		
-		// START KGU#227 2016-07-30: Enh. #128 - Just delegate the basics to Instruction
-		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
-		// END KGU#227 2016-07-30
+		// Just delegate the basics to Instruction
+		// START KGU#453 2017-11-01: Bugfix #447 - no need to show possible backslashes at end
+		//rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		rect0 = Instruction.prepareDraw(_canvas, this.getCuteText(false), this);
+		// END KGU#453 2017-11-01
 		
 		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
 		this.pt0Body.x = E_PADDING - 1;		// FIXME: Fine tuning!
@@ -149,9 +152,11 @@ public class While extends Element implements ILoop {
 			return;
 		}
 
-		// START KGU#227 2016-07-30: Enh. #128 - on this occasion delegate as much as possible
-		Instruction.draw(_canvas, _top_left, this.getText(false), this);
-		// END KGU#227 2016-07-30
+		// delegate as much as possible
+		// START KGU#453 2017-11-01: Bugfix #447 - no need to show possible backslashes at end
+		//Instruction.draw(_canvas, _top_left, this.getText(false), this);
+		Instruction.draw(_canvas, _top_left, this.getCuteText(false), this);
+		// END KGU#453 2017-11-01
 		
 		// draw children
 		Rect myrect = _top_left.copy();
@@ -303,7 +308,7 @@ public class While extends Element implements ILoop {
 			{
 				// START KGU#413 2017-06-09: Enh. #416: Cope with user-inserted line breaks
 				//_lines.add(this.getText());
-				_lines.add(this.getUnbrokenText());
+				_lines.add(this.getUnbrokenText().getLongString());
 				// END KGU#413 2017-06-09
 			}
 			this.q.addFullText(_lines, _instructionsOnly);

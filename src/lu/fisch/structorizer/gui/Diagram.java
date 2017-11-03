@@ -137,6 +137,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.10.23      Positioning of sub-dialogs no longer depends on diagram size
  *                                      Issue #417: scroll units adapted to Root size to reduce time complexity
  *      Kay Gürtzig     2017.10.28      Enh. #443: Slight adaption for multiple DiagramControllers
+ *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
  *
  ******************************************************************************************************
  *
@@ -1301,17 +1302,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	protected void adaptScrollUnits() {
 		Container parent = this.getParent();
-    	if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
-    			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
-                        if(scroll.getHeight()!=0 && scroll.getWidth()!=0)
-                        {
-                            int heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
-                            int widthFactor = root.getRect().right / scroll.getWidth() + 1;
-                            //System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
-                            scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
-                            scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
-                        }
-    	    	}
+
+		if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
+			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
+			// START KGU#444 2017-11-03: Bugfix #417 - in rare cases a division by 0 exception could occur
+			//int heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
+			//int widthFactor = root.getRect().right / scroll.getWidth() + 1;
+			int heightFactor = 1;
+			int widthFactor = 1;
+			if (scroll.getHeight() > 0) {
+				heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
+			}
+			if (scroll.getWidth() > 0) {
+				widthFactor = root.getRect().right / scroll.getWidth() + 1;
+			}
+			// END KGU#444 2017-11-03
+			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
+			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
+			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+		}
+
 	}
 	// END KGU#444 2017-10-23
 

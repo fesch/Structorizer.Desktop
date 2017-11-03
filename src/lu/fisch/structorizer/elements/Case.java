@@ -56,6 +56,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.02.08      Issue #198: vertical cursor traversal fixed (failed in nested Calls)
  *                                      Inheritance changed to implement o more intuitive horizontal cursor navigation
  *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
+ *      Kay Gürtzig     2017.11.01/02   Issue #447: Line continuation (backslash at line end) is to be supported
  *
  ******************************************************************************************************
  *
@@ -81,6 +82,10 @@ public class Case extends Element implements IFork
 {
 	
     public Vector<Subqueue> qs = new Vector<Subqueue>();
+    
+    // START KGU#453 2017-11-01: Issue #447 - cope with line continuation
+    private static final String SOFT_LINE_BREAK = "\u00B6";
+    // END KGU#453 2017-11-01
 
     //private Rect r = new Rect();
     private int fullWidth = 0;
@@ -89,6 +94,12 @@ public class Case extends Element implements IFork
     private Vector<Integer> x0Branches = new Vector<Integer>();
     private int y0Branches = 0;
     // END KGU#136 2016-03-01
+    // START KGU#453 2017-11-01: Performance improvement - we cache the text width in prepareDraw() for draw()
+    /** Widths of the selector texts per branch */
+    private int[] textWidths;
+    /** meximum number of the selector lines over all branch selectors */
+    private int nSelectorLines = 1;
+    // END KGU#453 2017-11-01
     // START KGU#227 2016-07-31: Enh. #128
     private Rect commentRect = new Rect();
     // END KGU#227 2016-07-31
@@ -134,6 +145,7 @@ public class Case extends Element implements IFork
     {
 // START KGU#91 2015-12-01: D.R.Y. - just employ setText(StringList)
     	text.setText(_text);	// Convert to a StringList
+    	// This call seems redundant but is essential since it is the overridden method 
     	this.setText(text);
     	
 // END KGU#91 2015-12-01
@@ -145,7 +157,7 @@ public class Case extends Element implements IFork
     {
             Subqueue s = null;
 
-            text=_textList;
+            text = _textList;
 
             if (qs==null)
             {
@@ -156,7 +168,10 @@ public class Case extends Element implements IFork
             // And don't use method getText() here!
             // There is always a Subqueue for the default branch, even if the default branch
             // is suppressed. Many methods, particularly in the generators, rely upon this!
-            while (text.count() < 3)
+            // START KGU#453 2017-11-02: Issue #447
+            //while (text.count() < 3)
+            while (this.getUnbrokenText().count() < 3)
+            // END KGU#453 2017-11-02
             {
                 text.add("?");
             }
@@ -165,13 +180,20 @@ public class Case extends Element implements IFork
                 text.set(0, "???");
             }
             // END KGU#91 2015-12-01
-            while (text.count()-1 > qs.size())
+            // START KGU#453 2017-11-02: Issue #447
+            //while (text.count()-1 > qs.size())
+            StringList unbrokenText = this.getUnbrokenText(); 
+            while (unbrokenText.count()-1 > qs.size())
+            // END KGU#453 2017-11-02
             {
                 s = new Subqueue();
                 s.parent = this;
                 qs.add(s);
             }
-            while (text.count()-1 < qs.size())
+            // START KGU#453 2017-11-02: Issue #447
+            //while (text.count()-1 < qs.size())
+            while (unbrokenText.count()-1 < qs.size())
+            // END KGU#453 2017-11-02
             {
                 qs.removeElementAt(qs.size()-1);
             }
@@ -232,7 +254,11 @@ public class Case extends Element implements IFork
             int padding = 2 * (E_PADDING/2);
             rect0.right = padding;
 
-            int nBranches = getText().count() - 1;
+            // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
+            //int nBranches = getText().count() - 1;
+            StringList unbrokenText = getBrokenText(SOFT_LINE_BREAK);
+            int nBranches = unbrokenText.count() - 1;
+            // END KGU#453 2017-11-01
 
             // Width of the header
             // KGU#91 2015-12-01: Bugfix #39. Though an empty Case text doesn't make sense, the code shouldn't run havoc
@@ -246,7 +272,10 @@ public class Case extends Element implements IFork
             if (nBranches > 0)
             {
             	if (getText().get(nBranches).equals("%")) nBranches--;
-            	discrLines.add(getText().get(0));
+                // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
+            	//discrLines.add(getText().get(0));
+            	discrLines = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);
+            	// END KGU#453 2017-11-01
             }
             if (this.isSwitchTextCommentMode())
             {
@@ -263,7 +292,7 @@ public class Case extends Element implements IFork
             	//rect0.right = Math.max(rect0.right, commentRect.right + extrapadding);
           		commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
           		if (commentRect.right > 0) {
-          			commentRect.bottom += E_PADDING/6;
+          			commentRect.bottom += E_PADDING/4;
           			commentRect.right += 2 * (E_PADDING/2);
           		}
         		rect0.right = Math.max(rect0.right, commentRect.right);
@@ -277,12 +306,28 @@ public class Case extends Element implements IFork
         	// END KGU#172 2016-04-01
             // Total width of the branches
             int width = 0;
-            int[] textWidths = new int[nBranches];
+            //int[] textWidths = new int[nBranches];
+            textWidths = new int[nBranches];
+            nSelectorLines = 1;
             for(int i = 0; i < nBranches; i++)
             {
             	// Instead of computing the text width three times (!?) we just store the result the first time
             	// FIXME (KGU): By the way, why don't we do it right (i.e. including substructure) in the first place?
-            	textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2; 
+                // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
+            	//textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2;
+            	String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+            	if (brokenLine.length > nSelectorLines) {
+            		nSelectorLines = brokenLine.length; 
+            	}
+            	textWidths[i] = 0;
+            	for (int j = 0; j < brokenLine.length; j++) {
+            		int widthJ = getWidthOutVariables(_canvas, unbrokenText.get(i+1), this);
+            		if (widthJ > textWidths[i]) {
+            			textWidths[i] = widthJ;
+            		}
+            	}
+            	textWidths[i] += padding/2; 
+            	// END KGU#453 2017-11-01
             	width += textWidths[i];
             }
         	if (rect0.right < width)
@@ -292,7 +337,10 @@ public class Case extends Element implements IFork
 
         	// START KGU#172 2016-04-01: Bugfix #144: The header my contain more than one line if comments are visible
             //rect0.bottom = 2 * (padding) + 2 * fm.getHeight();
-            rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * fm.getHeight();
+        	// START KGU#453 2017-11-01: Issue #447 - there may also be more selector lines
+            //rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * fm.getHeight();
+            rect0.bottom = 2 * (padding) + (discrLines.count() + nSelectorLines) * fm.getHeight();
+            // END KGU#453 2017-11-01
             // END KGU#172 2016-04-01
         	// START KGU#227 2016-07-31: Enh. #128 - add the height if the comment area
             rect0.bottom += commentRect.bottom;
@@ -391,16 +439,23 @@ public class Case extends Element implements IFork
     	this.topLeft.y = _top_left.top - ref.y;
     	// END KGU#136 2016-03-01
 
-    	int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
+    	// START KGU#453 2017-11-02: Issue #447
+    	//int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
+    	int minHeight = (1 + nSelectorLines) * fm.getHeight() + 4 * (E_PADDING / 2);
+    	// END KGU#453 2017-11-02
     	// START KGU#172 2016-04-01: Bugfix #145 - we might have to put several comment lines in here
-    	StringList discrLines = StringList.getNew(this.getText().get(0));
+    	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
+    	//StringList discrLines = StringList.getNew(this.getText().get(0));
+    	StringList unbrokenText = this.getBrokenText(SOFT_LINE_BREAK);
+    	StringList discrLines = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);
+    	// END KGU#453 2017-11-01
     	if (isSwitchMode)
     	{
     		discrLines = this.getComment();
     	}
     	if (discrLines.count() > 1)
     	{
-    		minHeight += (discrLines.count() - 1) * fm.getHeight();
+    		minHeight += (discrLines.count()-1) * fm.getHeight();
     	}
     	// END KGU#172 2016-04-01
     	// START KGU#227 2016-07-31: Enh. #128 - add the height of the embedded comment
@@ -459,7 +514,10 @@ public class Case extends Element implements IFork
     	// draw the selection expression (text 0)
     	// START KGU#91 2015-12-01: Bugfix #39 Nonsense replaced
     	//for (int i=0; i<1; i++)
-    	int nLines = this.getText().count();
+    	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
+    	//int nLines = this.getText().count();
+    	int nLines = unbrokenText.count();
+    	// END KGU#453 2017-11-01
     	if (nLines > 0)
     	// END KGU#91 2015-12-01
     	{
@@ -473,11 +531,19 @@ public class Case extends Element implements IFork
 //    				myrect.top + E_PADDING / 3 + fm.getHeight(),
 //    				text,this
 //    				);
-    		StringList text = StringList.getNew(this.getText().get(0));	// Text can't be empty, see setText()
+    		// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
+    		//StringList text = StringList.getNew(this.getText().get(0));	// Text can't be empty, see setText()
+    		StringList text;
+    		// END KGU#354 2017-11-01
     		if (isSwitchMode)
     		{
     			text = this.getComment();
     		}
+    		// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
+    		else {
+    			text = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);	// Text can't be empty, see setText()
+    		}
+    		// END KGU#354 2017-11-01
       		int divisor = 2;
     		if (nLines > 1 && hasDefaultBranch) divisor = nLines;
     		for (int ln = 0; ln < text.count(); ln++)
@@ -535,17 +601,22 @@ public class Case extends Element implements IFork
     	Rect rtt = null;
 
     	// START KGU#91 2015-12-01: Performance optimisation on occasion of bugfix #39
-    	int[] textWidths = new int[count+1];
+    	// FIXME: Why don't we just cache the array in prepareDraw() and re-use it here?
+    	//int[] textWidths = new int[count+1];
     	// END KGU#91 2015-12-01
 
     	for(int i = 0; i < count; i++)
     	{
-    		rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
+    		// Doesn't cost time if the drawing info is still up-to-date
+    		rtt = qs.get(i).prepareDraw(_canvas);
     		// START KGU#91 2015-12-01: Once to calculate it is enough
     		//lineWidth = lineWidth + Math.max(rtt.right, getWidthOutVariables(_canvas, getText().get(i+1), this) + Math.round(E_PADDING / 2));
-    		textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this);
-    		lineWidth += Math.max(rtt.right, textWidths[i] + E_PADDING / 2);
-    		// END KGU#91 2015-12-01
+    		// START KGU#453 2017-11-01 - We should have calculated this already
+    		//textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this);
+    		//lineWidth += Math.max(rtt.right, textWidths[i] + E_PADDING / 2);
+      		lineWidth += Math.max(rtt.right, textWidths[i]);
+      		// END KGU#453 2017-11-01
+      		// END KGU#91 2015-12-01
     	}
 
     	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
@@ -557,7 +628,9 @@ public class Case extends Element implements IFork
     	}
     	// START KGU#91 2015-12-01
     	else {
-    		textWidths[count] = getWidthOutVariables(_canvas, getText().get(count+1), this);
+    		// START KGU#453 2017-11-01: Should already have been calculated by prpareDraw()
+    		//textWidths[count] = getWidthOutVariables(_canvas, getText().get(count+1), this);
+    		// END KGU#453 2017-11-01
     	}
     	// END KGU#91 2015-12-01
 
@@ -567,7 +640,8 @@ public class Case extends Element implements IFork
     	int ay = myrect.top + commentRect.bottom;
     	// END KGU#435 2017-10-22
     	int bx = myrect.left + lineWidth;
-    	int by = myrect.bottom-1 - fm.getHeight() - E_PADDING / 2;
+    	//int by = myrect.bottom-1 - fm.getHeight() - E_PADDING / 2;
+    	int by = myrect.bottom-1 - (nSelectorLines * fm.getHeight()) - E_PADDING / 2;
 
     	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
     	//if(  ((String) getText().get(getText().count()-1)).equals("%") )
@@ -598,7 +672,8 @@ public class Case extends Element implements IFork
 
     	// draw children
     	myrect = _top_left.copy();
-    	myrect.top = _top_left.top + minHeight -1;
+    	//myrect.top = _top_left.top + minHeight -1;
+    	myrect.top = _top_left.top + this.y0Branches;
 
     	if (qs.size()!=0)
     	{
@@ -617,8 +692,8 @@ public class Case extends Element implements IFork
     		//myrect.bottom = _top_left.bottom;
     		for(int i = 0; i < count ; i++)
     		{
-
-    			rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
+    			// Should already have been cached, so it won't cost time
+    			rtt = qs.get(i).prepareDraw(_canvas);
 
     			if (i==count-1)
     			{
@@ -628,7 +703,10 @@ public class Case extends Element implements IFork
     			{
     				// START KGU#91 2015-12-01
     				//myrect.right=myrect.left+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2))+1;
-    				myrect.right = myrect.left + Math.max(rtt.right, textWidths[i] + E_PADDING / 2) + 1;
+    				// START KGU#453 2017-11-01: The textwidths caculated by prepareDraw() should already contain the padding
+    				//myrect.right = myrect.left + Math.max(rtt.right, textWidths[i] + E_PADDING / 2) + 1;
+    				myrect.right = myrect.left + Math.max(rtt.right, textWidths[i]) + 1;
+    				// END KGU#453 2017-11-01
     				// END KGU#91-12-01
     			}
 
@@ -636,18 +714,27 @@ public class Case extends Element implements IFork
     			((Subqueue) qs.get(i)).draw(_canvas,myrect);
 
     			// draw criterion text (selector)
-    			writeOutVariables(canvas,
-    					// START KGU#91 2015-12-01: Performance may be improved here
-    					//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
-    					myrect.right + (myrect.left-myrect.right) / 2 - textWidths[i] / 2,
-    					// END KGU#91 2915-12-01
-    					myrect.top - E_PADDING / 4, //+fm.getHeight(),
-    					getText().get(i+1),this);
+				// START KGU#453 2017-11-01: Cached textwidths contained padding
+    			//writeOutVariables(canvas,
+    			//		// START KGU#91 2015-12-01: Performance may be improved here
+    			//		//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
+    			//		myrect.right + (myrect.left-myrect.right) / 2 - textWidths[i] / 2,
+    			//		// END KGU#91 2915-12-01
+    			//		myrect.top - E_PADDING / 4, //+fm.getHeight(),
+    			//		getText().get(i+1),this);
+    			String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+    			for (int j = 0; j < brokenLine.length; j++) {
+    				writeOutVariables(canvas,
+    						myrect.right + (myrect.left-myrect.right) / 2 - (textWidths[i] - E_PADDING/2)/ 2,
+    						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * fm.getHeight(),
+    						brokenLine[j], this);
+    			}
+				// END KGU#354 2017-11-01
 
     			// draw bottom up line
-    			if((i != qs.size()-2) && (i != count-1))
+    			if ((i != qs.size()-2) && (i != count-1))
     			{
-    				canvas.moveTo(myrect.right-1,myrect.top);
+    				canvas.moveTo(myrect.right-1, myrect.top);
     				int mx = myrect.right-1;
     				//int my = myrect.top-fm.getHeight();
     				int sx = mx;
@@ -864,9 +951,12 @@ public class Case extends Element implements IFork
     {
 		if (!this.isDisabled()) {
 			if (!_instructionsOnly) {
-				_lines.add(this.getText());	// Text of the condition
+				// START KGU#453 2017-11-01
+				//_lines.add(this.getText());
+				_lines.add(this.getUnbrokenText());	// Text of the discriminator and all selectors
+				// END KGU#453 2017-11-01
 			}
-			if (qs!= null)
+			if (qs != null)
 			{
 				int nBranches = qs.size();
 				if (!hasDefaultBranch()) nBranches--;
@@ -933,13 +1023,23 @@ public class Case extends Element implements IFork
     	if (text.count() > 0)
     	{
     		text.set(0, refactorLine(text.get(0), _splitOldKeywords, relevantKeywords, _ignoreCase));
+    		// START KGU#453 2017-11-02: Issue #447
+    		boolean isContinuation = text.get(0).endsWith("\\");
+    		// END KGU#453 2017-11-02
     		relevantKeywords = new String[]{"postCase"};
     		for (int i = 1; i < text.count(); i++)
     		{
-    			if (!text.get(i).equals("%"))
+    			String line = text.get(i).trim();
+        		// START KGU#453 2017-11-02: Issue #447
+    			//if (!line.equals("%"))
+    			if (!isContinuation && !line.equals("%"))
+    	    	// END KGU#453 2017-11-02
     			{
-    				text.set(i, refactorLine(text.get(i), _splitOldKeywords, relevantKeywords, _ignoreCase));
+    				text.set(i, refactorLine(line, _splitOldKeywords, relevantKeywords, _ignoreCase));
     			}
+        		// START KGU#453 2017-11-02: Issue #447
+    			isContinuation = line.endsWith("\\");
+        		// END KGU#453 2017-11-02
     		}
     	}
 	}
