@@ -179,7 +179,19 @@ public class PrintPreview extends LangDialog implements Runnable{
 				{
 					// Use default printer, no dialog
 					PrinterJob prnJob = PrinterJob.getPrinterJob();
-					prnJob.setPrintable(m_target,pp_pf);
+                                        
+                                        // get the default page format
+                                        PageFormat pf0 = prnJob.defaultPage();
+                                        // clone it
+                                        PageFormat pf1 = (PageFormat) pf0.clone();
+                                        Paper p = pf0.getPaper();
+                                        // set to zero margin
+                                        p.setImageableArea(0, 0, pf0.getWidth(), pf0.getHeight());
+                                        pf1.setPaper(p);
+                                        // let the printer validate it
+                                        PageFormat pf2 = prnJob.validatePage(pf1);
+                                        
+					prnJob.setPrintable(m_target,pf2);
 					if (prnJob.printDialog()) 
 					{
 						setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

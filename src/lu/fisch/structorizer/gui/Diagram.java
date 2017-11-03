@@ -1302,6 +1302,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	protected void adaptScrollUnits() {
 		Container parent = this.getParent();
+
 		if (parent != null && (parent = parent.getParent()) instanceof javax.swing.JScrollPane) {
 			javax.swing.JScrollPane scroll = (javax.swing.JScrollPane)parent;
 			// START KGU#444 2017-11-03: Bugfix #417 - in rare cases a division by 0 exception could occur
@@ -1320,6 +1321,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
 			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
 		}
+
 	}
 	// END KGU#444 2017-10-23
 
