@@ -62,6 +62,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
  *      Kay Gürtzig     2017.03.15      Enh. #300: turned retrieveVersion to static
  *      Kay Gürtzig     2017.10.06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
+ *      Kay Gürtzig     2017.11.05      Issue #452: Differentiated initial setting for Analyser preferences 
  *
  ******************************************************************************************************
  *
@@ -126,13 +127,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	private static int instanceCount = 0;
 	private int instanceNo;
 	// END KGU#326 #2017-01-07
+    // START KGU#456 2017-11-05: Enh. #452
+	/** Indicates whether Structorizer may have been started the first time */
+    boolean isNew = false;
+    // END KGU#456 2017-11-05
 		
 	/******************************
  	 * Setup the Mainform
 	 ******************************/
 	private void create()
 	{
-            Ini.getInstance();
+            // START KGU#456 2017-11-05: Enh. #452
+            //Ini.getInstance();
+	        isNew = Ini.getInstance().wasFirstStart();
+            // END KGU#456 2017-11-05
             /*
             try {
                     ClassPathHacker.addFile("Structorizer.app/Contents/Resources/Java/quaqua-filechooser-only.jar");
@@ -428,6 +436,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
 				diagram.setWheelCollapses(ini.getProperty("wheelToCollapse", "0").equals("1"));
 				// END KGU#123 2016-01-04
+				// START KGU#456 2017-11-05: Issue #452
+				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
+				// END KGU#452 2017-11-05
 			}
 
 			// START KGU#309 2016-12-15: Enh. #310 new saving options
@@ -471,7 +482,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#239 2016-08-12: Code redesign
 			for (int i = 1; i <= Root.numberOfChecks(); i++)
 			{
-				Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
+				// START KGU#456 2017-11-05: Issue #452 - use initial Root.analyserChecks as defaults 
+				//Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
+				Root.setCheck(i, ini.getProperty("check" + i, Root.check(i) ? "1" : "0").equals("1"));
+				// END KGU#456 2017-11-05
 			}
 			// END KGU#2/KGU#78 2016-08-12
 			
@@ -548,6 +562,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		    ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
 		    // END KGU#309 20161-12-15
 
+		    // START KGU#456 2017-11-05: Issue #452
+		    ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));
+		    // END KGU#456 2017-11-05
+		    
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 		    ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
 			// END KGU#331 2017-01-15
@@ -792,9 +810,27 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     // END KGU#278 2016-10-11
     
     // START KGU#300 2016-12-02: Enh. #300
-    public void notifyNewerVersion()
+    public void popupWelcomePane()
     {
-    	if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
+    	if (this.isNew) {
+    		int chosen = JOptionPane.showOptionDialog(this,
+					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
+					Menu.lblHint.getText(),
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
+					null,
+					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
+			if (chosen == JOptionPane.OK_OPTION) {
+				Root.setCheck(26, true);
+				if (diagram != null) {
+					diagram.setSimplifiedGUI(true);
+				}
+				else {
+					// The essence of diagram.setSimplifiedGUI() but without immediate visibility switch
+					Element.E_REDUCED_TOOLBARS = true;
+				}
+			}
+    	}
+    	else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
     		if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
     			int chosen = JOptionPane.showOptionDialog(this,
     					Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),

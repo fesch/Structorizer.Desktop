@@ -251,8 +251,7 @@ Menu.msgErrorNoFile.text=
 Menu.msgBrowseFailed.text=
 
 // Error messages for analyser
-// warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
-Menu.warning_1.text=Attenzione: ¡TESTI E COMMENTI SONO CAMBIATI! → Menu "Diagramma > Cambia testi/commenti?".
+Menu.warning_1.text=Attenzione: ¡TESTI E COMMENTI SONO CAMBIATI! → Menu "%1 > %2".
 Menu.error01_1.text=Attenzione: Variabile di ciclo non trovate ...
 Menu.error01_2.text=Attenzione: Trovate più di una variabile di ciclo: «%»
 Menu.error01_3.text=Non ti è permesso modificare la variabile del cilco «%» all'interno di esso!

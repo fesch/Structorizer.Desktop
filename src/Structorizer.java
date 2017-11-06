@@ -259,7 +259,7 @@ public class Structorizer
 		}/**/
 
 		// START KGU#300 2016-12-02
-		mainform.notifyNewerVersion();
+		mainform.popupWelcomePane();
 		// END KGU#300 2016-12-02
 	}
 	

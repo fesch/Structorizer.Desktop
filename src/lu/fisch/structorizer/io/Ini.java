@@ -38,6 +38,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2016.07.22      Bugfix: save() method now immediately closes the file
  *      Kay Gürtzig         2016.09.28      First comment line modified (KGU#264)
  *      Kay Gürtzig         2017.03.13      Method getIniDirectory() added to support issue #372
+ *      Kay Gürtzig         2017.11.05      Issue #452: Method wasFirstStart() added. 
  *
  ******************************************************************************************************
  *
@@ -67,6 +68,10 @@ public class Ini
 
 	private static Ini ini = null;
 	private static boolean useAppData = false;
+	// START KGU#456 2017-11-05: Issue #452
+	/** remembers whether the ini file had to be created. */
+	private boolean iniFileCreated = false;
+	// END KGU#456 2017-11-05
 
 	public static String getDirname()
 	{
@@ -282,6 +287,9 @@ public class Ini
 					{
 						// setProperty("dummy","dummy");
 						saveRegular();
+						// START KGU#456 2017-11-05: Issue #452
+						this.iniFileCreated = true;
+						// END KGU#456 2017-11-05
 					} catch (Exception e)
 					{
 						e.printStackTrace();
@@ -467,5 +475,16 @@ public class Ini
 	{
 		p.setProperty(_name, _value);
 	}
+	
+	// START KGU#456 2017-11-05: Issue #452
+	/**
+	 * Returns true if there are indicators for a first use.
+	 * @return true if the INI file had to be created.
+	 */
+	public boolean wasFirstStart()
+	{
+		return this.iniFileCreated;
+	}
+	// END KGU#456 2017-11-05
 
 }

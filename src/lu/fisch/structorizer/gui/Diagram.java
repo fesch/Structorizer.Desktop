@@ -306,7 +306,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private JPopupMenu pop = new JPopupMenu();
 
     // toolbar management
-    public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();
+    public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();    
+    /** Toolbars that are to be disabled in simplified mode */
+    public Vector<MyToolbar> expertToolbars = new Vector<MyToolbar>();    
 
 	private FindAndReplace findDialog = null;
     
@@ -1855,7 +1857,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public boolean saveNSD(boolean _askToSave)
 	// START KGU#320 2017-01-04: Bugfix (#321)
 	{
-		return saveNSD(this.root, _askToSave);
+		// START KGU#456 2017-11-05: Enh. #452
+		//return saveNSD(this.root, _askToSave);
+		boolean needsSave =  !root.isEmpty() && root.hasChanged();
+		if (saveNSD(this.root, _askToSave)) {
+			if (needsSave && Root.advanceTutorialState(26, root)) {
+				analyse();
+			}
+			return true;
+		}
+		return false;
+		// END KGU#456 2017-11-05
 	}
 	
 	public boolean saveNSD(Root root, boolean _askToSave)
@@ -3910,6 +3922,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
+		// START KGU#456 2017-11-05: Enh. #452
+		if (Root.advanceTutorialState(26, root)) {
+			analyse();
+		}
+		// END KGU#456 2017-11-05
 	}
         
 	public void exportPNG()
@@ -4011,6 +4028,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
+		// START KGU#456 2017-11-05: Enh. #452
+		if (Root.advanceTutorialState(26, root)) {
+			analyse();
+		}
+		// END KGU#456 2017-11-05
 	}
 
 	public void exportEMF()
@@ -4112,6 +4134,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
+		// START KGU#456 2017-11-05: Enh. #452
+		if (Root.advanceTutorialState(26, root)) {
+			analyse();
+		}
+		// END KGU#456 2017-11-05
 	}
 
 	public void exportSVG() // does not work!!
@@ -4234,6 +4261,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
+		// START KGU#456 2017-11-05: Enh. #452
+		if (Root.advanceTutorialState(26, root)) {
+			analyse();
+		}
+		// END KGU#456 2017-11-05
 	}
 
 	public void exportSWF()
@@ -4335,6 +4367,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
+		// START KGU#456 2017-11-05: Enh. #452
+		if (Root.advanceTutorialState(26, root)) {
+			analyse();
+		}
+		// END KGU#456 2017-11-05
 	}
 
 	public void exportPDF()
@@ -4436,6 +4473,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
+		// START KGU#456 2017-11-05: Enh. #452
+		if (Root.advanceTutorialState(26, root)) {
+			analyse();
+		}
+		// END KGU#456 2017-11-05
 	}
 
 
@@ -4888,6 +4930,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * export code methods
 	 * @param options 
 	 *****************************************/
+	/**
+	 * Export the current diagram to the programming language associated to the generator {@code _generatorClassName}
+	 * @param _generatorClassName - class name of he generator to be used
+	 * @param _specificOptions - generator-specific options 
+	 */
 	public void export(String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
 	{
 		try
@@ -4907,6 +4954,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
 							NSDControl.getFrame());
 			// END KGU 2017-04-26
+			// START KGU#456 2017-11-05: Enh. #452
+			if (Root.advanceTutorialState(26, root)) {
+				analyse();
+			}
+			// END KGU#456 2017-11-05
 		}
 		catch(Exception ex)
 		{
@@ -6842,6 +6894,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     executor.execute(this.root);
                 }
     	 */
+    	if (Root.advanceTutorialState(26, this.root)) {
+    		analyse();
+    	}
     }
 
     public void goTurtle()
@@ -7205,6 +7260,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		if (this.findDialog != null) {
 			this.findDialog.cacheToIni(ini);
+		}
+	}
+	
+	public void setSimplifiedGUI(boolean _simplified)
+	{
+		if (Element.E_REDUCED_TOOLBARS != _simplified) {
+			Element.E_REDUCED_TOOLBARS = _simplified;
+			for (MyToolbar toolbar: toolbars) {
+				if (expertToolbars.contains(toolbar)) {
+					toolbar.setVisible(!_simplified);
+				}
+				else {
+					toolbar.setExpertVisibility(!_simplified);
+				}
+			}
 		}
 	}
 

@@ -797,7 +797,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#277 2016-10-13: Enh. #270
 	/**
-	 * Depending on asComment, adds the given text either as comment or as active
+	 * Depending on {@code asComment}, adds the given text either as comment or as active
 	 * source code to the code lines.
 	 * This is a convenient wrapper for {@code this.code.add(String)}.
 	 * @see #insertComment(Element, String)
