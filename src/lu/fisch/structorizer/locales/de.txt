@@ -899,6 +899,8 @@ PrintPreview.btnCancel.text=Abbruch
 PrintPreview.btnCancel.tooltip=Druckvorgang abbrechen.
 PrintPreview.btnOK.text=Drucken.
 PrintPreview.btnOK.tooltip=Das Diagram ausdrucken.
+PrintPreview.lblMarginX.text=horiz. Rand:
+PrintPreview.lblMarginY.text=vert. Rand:
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Einstellungen für den Code-Export

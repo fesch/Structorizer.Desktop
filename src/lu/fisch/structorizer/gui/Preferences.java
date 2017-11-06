@@ -435,9 +435,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		edtFor.addKeyListener(this);
 		edtWhile.addKeyListener(this);
 		edtRepeat.addKeyListener(this);
-		// START KGU#394/KGU#401 2017-07-02: Issue #401, #405
-		spnCaseRot.addKeyListener(this);
-		// END KGU#394/KGU#401 2017-07-02
+		// START KGU#394/KGU#401 2017-11-06: Issue #401, #405
+		((JSpinner.DefaultEditor)spnCaseRot.getEditor()).getTextField().addKeyListener(this);
+		// END KGU#394/KGU#401 2017-11-06
 		// START KGU#394/KGU#376 2017-07-01: Enh. #389, #401
 		edtRoot.addKeyListener(this);
 		// END KGU#376 2017-07-01

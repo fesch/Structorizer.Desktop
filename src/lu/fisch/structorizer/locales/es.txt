@@ -903,6 +903,8 @@ PrintPreview.btnCancel.text=Cancelar
 PrintPreview.btnCancel.tooltip=Cancelar impresión.
 PrintPreview.btnOK.text=Imprimir
 PrintPreview.btnOK.tooltip=Imprimir el diagrama.
+PrintPreview.lblMarginX.text=Margen horiz.:
+PrintPreview.lblMarginY.text=Margen vert.:
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Preferencias de Exportación de código

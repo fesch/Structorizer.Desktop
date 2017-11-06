@@ -62,7 +62,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
  *      Kay Gürtzig     2017.03.15      Enh. #300: turned retrieveVersion to static
  *      Kay Gürtzig     2017.10.06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
- *      Kay Gürtzig     2017.11.05      Issue #452: Differentiated initial setting for Analyser preferences 
+ *      Kay Gürtzig     2017.11.05      Issue #452: Differentiated initial setting for Analyser preferences
+ *      Kay Gürtzig     2017.11.06      Issue #455: Drastic measures against races on startup.
  *
  ******************************************************************************************************
  *
@@ -84,6 +85,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -195,7 +197,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             /******************************
              * Setup the editor
              ******************************/
-            editor = new Editor(this);
+            //System.out.println("* Setup the editor ...");
+            try {
+            	EventQueue.invokeAndWait(new Runnable() {
+            		@Override
+            		public void run() {
+            			editor = new Editor(Mainform.this);
+            		}
+            	});
+            } catch (InvocationTargetException e1) {
+            	e1.printStackTrace();
+            } catch (InterruptedException e1) {
+            	e1.printStackTrace();
+            }
+            //System.out.println("* editor done.");
             // get reference to the diagram
             diagram = getEditor().diagram;
             Container container = getContentPane();
@@ -205,13 +220,39 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             /******************************
              * Setup the menu
              ******************************/
-            menu = new Menu(diagram,this);
+            //System.out.println("* Setup the menu ...");
+            try {
+				EventQueue.invokeAndWait(new Runnable() {
+					@Override
+					public void run() {
+						menu = new Menu(diagram, Mainform.this);
+					}
+				});
+			} catch (InvocationTargetException e1) {
+				e1.printStackTrace();
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+            //System.out.println("* menu done.");
             setJMenuBar(menu);		
 
             /******************************
              * Update the buttons and menu
              ******************************/
-            doButtons();
+            //System.out.println("* Update the buttons and menu ...");
+            try {
+            	EventQueue.invokeAndWait(new Runnable() {
+            		@Override
+            		public void run() {
+            			doButtons();
+            		}
+            	});
+            } catch (InvocationTargetException e1) {
+            	e1.printStackTrace();
+            } catch (InterruptedException e1) {
+            	e1.printStackTrace();
+            }
+            //System.out.println("* Buttons and menu done.");
 
             /******************************
              * Set onClose event
@@ -288,7 +329,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Load values from INI
              ******************************/
             // This has to be done a second time now, after all components were put in place
+            //System.out.println("* Load from Ini ...");
             loadFromINI();
+            //System.out.println("* Load from Ini done.");
             // START KGU#337 2017-02-03: Issue #340 - setLocale has already been done by loadFromIni()
             //Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
             // END KGU#337 2017-02-03
@@ -297,13 +340,53 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Resize the toolbar
              ******************************/
             //editor.componentResized(null);
-            getEditor().revalidate();
+            //System.out.println("* Revalidate editor ...");
+            try {
+            	EventQueue.invokeAndWait(new Runnable() {
+            		@Override
+            		public void run() {
+            			getEditor().revalidate();
+            		}
+            	});
+            } catch (InvocationTargetException e1) {
+            	e1.printStackTrace();
+            } catch (InterruptedException e1) {
+            	e1.printStackTrace();
+            }
+            //System.out.println("* Repaint ...");
             repaint();
-            diagram.redraw();
+            //System.out.println("* Redraw ...");
+            //System.out.println("* Revalidate editor ...");
+            try {
+            	EventQueue.invokeAndWait(new Runnable() {
+            		@Override
+            		public void run() {
+            			diagram.setInitialized();
+            		}
+            	});
+            } catch (InvocationTargetException e1) {
+            	e1.printStackTrace();
+            } catch (InterruptedException e1) {
+            	e1.printStackTrace();
+            }
             // START KGU#305 2016-12-16
-            getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            //System.out.println("* Update Arranger index ...");
+            try {
+            	EventQueue.invokeAndWait(new Runnable() {
+            		@Override
+            		public void run() {
+            			getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            		}
+            	});
+            } catch (InvocationTargetException e1) {
+            	e1.printStackTrace();
+            } catch (InterruptedException e1) {
+            	e1.printStackTrace();
+            }
+            //System.out.println("* Arranger index done.");
             // END KGU#305 2016-12-16
             // START KGU#325 2017-01-06: Issue #312 ensure the work area getting initial focus
+            //System.out.println("* scrollarea.requestFocus ...");
             getEditor().scrollarea.requestFocusInWindow();
             // END KGU#325 2017-01-06
 	}
@@ -362,7 +445,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			if (localeFileName.equals("chs.txt")) localeFileName = "zh-cn.txt";
 			else if (localeFileName.equalsIgnoreCase("cht.txt")) localeFileName = "zh-tw.txt";
 			// END temporary backwards compatibility precaution towards release 3.25
+			//System.out.println("* setLocale(" + localeFileName + ")");
 			Locales.getInstance().setLocale(localeFileName);
+			//System.out.println("* Locale is set.");
 			
 			// colors
 			Element.loadFromINI();
@@ -373,9 +458,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
 			// look & feel
 			laf=ini.getProperty("laf","Mac OS X");
+			//System.out.println("* setLookAndFeel(" + laf + ")");
 			setLookAndFeel(laf);
+			//System.out.println("* LookAndFeel is set.");
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			//System.out.println("* scaleDefaultFontSize(" + scaleFactor + ")");
 			GUIScaler.scaleDefaultFontSize(scaleFactor);
+			//System.out.println("* defaultFontSize is scaled.");
 			// END KGU#287 2016-11-01
 			
 			// size
@@ -431,7 +520,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				}
                  * */
 				// START KGU#305 2016-12-14: Enh. #305
+				//System.out.println("* setArrangerIndex() ...");
 				diagram.setArrangerIndex(ini.getProperty("index", "1").equals("1"));	// default = 1
+				//System.out.println("* ArrangerIndex is set.");
 				// END KGU#305 2016-12-14
 				// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
 				diagram.setWheelCollapses(ini.getProperty("wheelToCollapse", "0").equals("1"));

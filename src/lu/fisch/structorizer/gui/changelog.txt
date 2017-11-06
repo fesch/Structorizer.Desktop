@@ -6,7 +6,6 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
-- Races on startup may contort the initial diagram view (scrollbars stumble)
 - COBOL parsing may fail if certain single-letter identifiers are used (rename them!)
 - COBOL import doesn't cope with some statement variants and variable redefinitions
 - Some export generators haven't been enabled to support record type equivalents yet
@@ -21,6 +20,8 @@ Current development version 3.27-01 (2017.11.06)
 - 01: Enh. #452: Welcome message on first start with beginner mode and guides <2>
 - 01: Enh. #453: C export: format strings now with "TODO" content [Rolf Schmidt]2
 - 01: Enh. #454: Analyser check now complains blanks in program names <2>
+- 01: Enh. #456: Print preview now allows to customize orientation and margins <2>
+- 01: Issue #455: Startup races and mis-drawing of initial diagrams reduced <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

@@ -311,6 +311,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public Vector<MyToolbar> expertToolbars = new Vector<MyToolbar>();    
 
 	private FindAndReplace findDialog = null;
+	
+	// START KGU#440 2017-11-06: Bugfix #455 - allow to suppress drawing on initialisation
+	private boolean isInitialized = false;
+	// END KGU#440 2017-11-06
     
 	/*****************************************
 	 * CONSTRUCTOR
@@ -1198,6 +1202,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     
     public void redraw()
     {
+    	// START KGU#440 2017-11-06: Bugfix #455 - supprss drawing unless Structorizer is fully initialized
+    	if (!this.isInitialized) {
+    		return;
+    	}
+    	// END KGU#440 2017-11-06
     	boolean wasHighLight = root.hightlightVars; 
     	if (wasHighLight)
     	{
@@ -1223,7 +1232,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	this.setMinimumSize(d);
     	//this.setSize(new Dimension(rect.right-rect.left,rect.bottom-rect.top));
     	//this.validate();
-
+    	
     	((JViewport) this.getParent()).revalidate();
 
     	//redraw(this.getGraphics());
@@ -6827,7 +6836,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
      *****************************************/
 	protected void analyse()
 	{
-		if(Element.E_ANALYSER==true && errorlist!=null)
+		if (Element.E_ANALYSER && errorlist != null && isInitialized)
 		{
 			//System.out.println("Analysing ...");
 
@@ -7276,6 +7285,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		}
+	}
+
+
+	/**
+	 * Sets this instance initialized and has it redraw all.
+	 */
+	public void setInitialized() {
+		this.isInitialized = true;
+		redraw();
+		analyse();
 	}
 
 }
