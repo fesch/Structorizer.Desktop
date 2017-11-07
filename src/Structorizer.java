@@ -43,6 +43,7 @@
  *      Kay Gürtzig     2017.03.04      Enh. #354: Configurable set of import parsers supported now
  *      Kay Gürtzig     2017.04.27      Enh. #354: Verbose option (-v with log directory) for batch import
  *      Kay Gürtzig     2017.07.02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
+ *      Kay Gürtzig     2017.11.06      Issue #455: Loading of argument files put in a sequential thread to overcome races
  *
  ******************************************************************************************************
  *
@@ -51,6 +52,7 @@
  ******************************************************************************************************///
 
 
+import java.awt.EventQueue;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,6 +60,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -172,35 +175,41 @@ public class Structorizer
 		// load the mainform
 		final Mainform mainform = new Mainform();
 
-		try
-		{
-			//String s = new String();
-			int start = 0;
-			if (args.length > 0 && args[0].equals("-open")) {
-				start = 1;
-			}
-			// FIXME (KGU 2016-12-12): This concatenation still doesn't make sense...
-			// (If the file name contained blanks then the OS should have quoted it,
-			// if the command line contained several file names, on the other hand, then
-			// they would have to be loaded separately - this could be done by moving
-			// the previously loaded one to the Arranger on each consecutive load.)
-			for (int i=start; i<args.length; i++)
-			{
-				// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
-				//s += args[i];
-				String s = args[i].trim();
-				String lastExt = "";	// Last file extension
-				if (!s.isEmpty())
-				{
-					if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
-						// Push the previously loaded diagram to Arranger
-						mainform.diagram.arrangeNSD();
-					}
-					lastExt = mainform.diagram.openNsdOrArr(s);
-				}
-				// END KGU#306 2016-12-12/2017-01-27
-			}
-			// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
+		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
+        try {
+        	EventQueue.invokeAndWait(new Runnable() {
+        		@Override
+        		public void run() {
+        // END KGU#440 2017-11-06
+        			//String s = new String();
+        			int start = 0;
+        			if (args.length > 0 && args[0].equals("-open")) {
+        				start = 1;
+        			}
+        			// FIXME (KGU 2016-12-12): This concatenation still doesn't make sense...
+        			// (If the file name contained blanks then the OS should have quoted it,
+        			// if the command line contained several file names, on the other hand, then
+        			// they would have to be loaded separately - this could be done by moving
+        			// the previously loaded one to the Arranger on each consecutive load.)
+        			for (int i=start; i<args.length; i++)
+        			{
+        				// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
+        				//s += args[i];
+        				String s = args[i].trim();
+        				String lastExt = "";	// Last file extension
+        				if (!s.isEmpty())
+        				{
+        					if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
+        						// Push the previously loaded diagram to Arranger
+        						mainform.diagram.arrangeNSD();
+        					}
+        					lastExt = mainform.diagram.openNsdOrArr(s);
+        				}
+        				// END KGU#306 2016-12-12/2017-01-27
+        			}
+       	// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
+        		}
+        		// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
 //			s = s.trim();
 //			// START KGU#111 2015-12-16: Bugfix #63 - no open attempt without need
 //			//mainform.diagram.openNSD(s);
@@ -209,12 +218,15 @@ public class Structorizer
 //				mainform.diagram.openNSD(s);
 //			}
 //			// END KGU#111 2015-12-16
-			// END KGU#306 2016-12-12
-			mainform.diagram.redraw();
-		}
-		catch (Exception e)
-		{
-		}
+        	// END KGU#306 2016-12-12
+        	});
+        } catch (InvocationTargetException e1) {
+        	e1.printStackTrace();
+        } catch (InterruptedException e1) {
+        	e1.printStackTrace();
+        }
+        // END KGU#440 2017-11-06
+        mainform.diagram.redraw();
 
 
 		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
@@ -259,7 +271,7 @@ public class Structorizer
 		}/**/
 
 		// START KGU#300 2016-12-02
-		mainform.notifyNewerVersion();
+		mainform.popupWelcomePane();
 		// END KGU#300 2016-12-02
 	}
 	

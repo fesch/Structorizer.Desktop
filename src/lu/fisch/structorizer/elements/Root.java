@@ -117,6 +117,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.09.18      Enh. #423: Type retrieval and Analyser enhancement for record types
  *      Kay Gürtzig     2017.10.09      Enh. #423: Adjustments for Analyser check 24.
  *      Kay Gürtzig     2017.10.26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
+ *      Kay Gürtzig     2017.11.04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
+ *      Kay Gürtzig     2017.11.05      Issue #454: logic of getMethodName() modified
  *      
  ******************************************************************************************************
  *
@@ -169,6 +171,8 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
+import lu.fisch.structorizer.locales.Locale;
+import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
@@ -432,12 +436,14 @@ public class Root extends Element {
 
 	// error checks for analyser (see also addError(), saveToIni(), Diagram.analyserNSD() and Mainform.loadFromIni())
 	// START KGU#239 2016-08-12: Inh. #231 + Partial redesign
+	// KGU#456 2017-11-05: Now used as initial defaults
 	private static boolean[] analyserChecks = {
-		false, false, false, false, false,	// 1 .. 5
-		false, false, false, false, false,	// 6 .. 10
-		false, false, false, false, false,	// 11 .. 15
-		false, false, false, false, false,	// 16 .. 20
-		false, false, false, false          // 21 .. 24
+		true,	true,	true,	true,	false,	// 1 .. 5
+		false,	true,	true,	true,	true,	// 6 .. 10
+		true,	false,	true,	true,	true,	// 11 .. 15
+		true,	true,	true,	true,	true,	// 16 .. 20
+		true,	true,	true,	true,	false,	// 21 .. 25
+		false									// 26
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -462,9 +468,39 @@ public class Root extends Element {
 		if (checkNo >= 1 && checkNo <= analyserChecks.length)
 		{
 			analyserChecks[checkNo-1] = enable;
+			tutorialStates.remove(checkNo);
 		}
 	}
-	// END KGU#239 2016-08-12 
+	// END KGU#239 2016-08-12
+	// START KGU#456 2017-11-05: Issue #452
+	/** Current state of analyser guides */
+	private static final HashMap<Integer,Integer> tutorialStates = new HashMap<Integer, Integer>();
+	public static int getTutorialState(int checkNo) {
+		int state = -1;
+		if (check(checkNo) && tutorialStates.containsKey(checkNo)) {
+			state = tutorialStates.get(checkNo);
+		}
+		return state;
+	}
+	public static boolean startTutorial(int checkNo)
+	{
+		if (check(checkNo)) {
+			tutorialStates.put(checkNo, 0);
+		}
+		return check(checkNo);
+	}
+	public static boolean advanceTutorialState(int checkNo, Root root)
+	{
+		Integer prevStep = tutorialStates.get(checkNo);
+		if (prevStep != null &&
+				(root == null && check(checkNo) ||
+				root != null && root.isTutorialReadyForStep(checkNo, prevStep+1))) {
+			tutorialStates.put(checkNo,  prevStep + 1);
+			return true;
+		}
+		return false;
+	}
+	// END KGU#456 2017-11-05
 	// Mapping keyword -> generator titles
 	private static Hashtable<String, StringList> caseAwareKeywords = null;
 	private static Hashtable<String, StringList> caseUnawareKeywords = null;
@@ -3997,6 +4033,161 @@ public class Root extends Element {
 		// END KGU#376 2017-07-01
 
 	}
+	
+	/**
+	 * Reports the active guides and performs the specified checks and steps
+	 * @param _errors - global error list to be appended to
+	 */
+	private void analyseGuides(Vector<DetectedError> _errors)
+	{
+		final int[] guideCodes = {25, 26};
+		final String[] menuPath = Menu.getLocalizedMenuPath(
+				new String[]{"menuPreferences", "menuPreferencesAnalyser"},
+				new String[]{"Preferences", "Analyser ..."});
+		for (int code: guideCodes) {
+			if (check(code)) {
+				String[] analyserCaptions = AnalyserPreferences.getCheckTabAndDescription(code);
+				StringList strings = new StringList(menuPath);
+				strings.add(new StringList(analyserCaptions));
+				addError(_errors, new DetectedError(errorMsg(Menu.warning_2, strings.toArray()), null), 0);
+			}
+			// Define the actual guide actions here 
+			switch (code) {
+			case 25:
+				guide_25(_errors);
+				break;
+			case 26:
+				guide_26(_errors);
+				break;
+			}
+		}
+	}
+	
+	// START KGU#456 2017-11-04: Enh. #452 - charm initiative
+	/**
+	 * CHECK #25: General diagram construction hints according to the IPO paradigm
+	 * @param _errors - global error list to be appended to
+	 */
+	private void guide_25(Vector<DetectedError> _errors)
+	{
+		class detectorIO implements IElementVisitor
+		{
+			private boolean[] m_flags;
+			
+			/**
+			 * Fills the {@code elementFlags} (must contain at least three elements!) by traversing
+			 * the diagram tree as follows.<br/>
+			 * [0] true if there is at least one input instruction
+			 * [1] true if there is at least one output instruction
+			 * [2] true if there is any element other than input and output
+			 * @param elementFlags - at least three boolean flags for input instruction, output instruction, other elements
+			 */
+			public detectorIO(boolean[] elementFlags)
+			{
+				m_flags = elementFlags;
+			}
+
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Instruction && ((Instruction)_ele).isInput()) {
+					m_flags[0] = true;
+				}
+				if (_ele instanceof Instruction && ((Instruction)_ele).isOutput()) {
+					m_flags[1] = true;
+				}
+				else {
+					m_flags[2] = true;
+				}
+				// Go on unless elements of all kinds are found
+				return !m_flags[0] || !m_flags[1] || !m_flags[2];
+			}
+
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				// Go on unless elements of all kinds are found
+				return !m_flags[0] || !m_flags[1] || !m_flags[2];
+			}
+			
+		}
+		if (check(25) && this.isProgram() && children.getSize() > 0) {
+			final boolean[] hasIO = {false, false, false};
+			this.traverse(new detectorIO(hasIO));
+			if (!hasIO[0]) {
+				addError(_errors, new DetectedError(errorMsg(Menu.hint25_2, CodeParser.getKeywordOrDefault("input", "INPUT")), this), 25);    						    								
+			}
+			else if (!hasIO[1]) {
+				addError(_errors, new DetectedError(errorMsg(Menu.hint25_3, CodeParser.getKeywordOrDefault("output", "OUTPUT")), this), 25);    						    												
+			}
+			else if (!hasIO[2]) {
+				addError(_errors, new DetectedError(errorMsg(Menu.hint25_6, "y <- 15.5 * x + 7.9"), this), 25);    						    																
+			}
+		}
+	}
+	
+	/**
+	 * GUIDED TOUR #26: Hello world
+	 * @param _errors - global error list to be appended to
+	 */
+	private void guide_26(Vector<DetectedError> _errors)
+	{
+		final String[][] menuSpecs = {
+				{"menuDebug", "menuDebugExecute"},
+				{"menuFile", "menuFileSave"},
+				{"menuFile", "menuFileExport", "menuFileExportCode"},
+				{"menuFile", "menuFileExport", "menuFileExportPicture"}		
+		};
+		final String[][] menuDefaults = {
+				{"Debug", "Executor ..."},
+				{"File", "Save"},
+				{"File", "Export", "Code ..."},
+				{"File", "Export", "Picture ..."}		
+		};
+		int state = getTutorialState(26);
+		if (state == 0 && advanceTutorialState(26, this)) {
+			state++;
+		}
+		if (state > 0) {
+			if (state < menuSpecs.length) {
+				String[] menuNames = Menu.getLocalizedMenuPath(menuSpecs[state-1], menuDefaults[state-1]);
+				addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this), 26);
+			}
+			else {
+				setCheck(26, false);
+				if (Element.E_REDUCED_TOOLBARS) {
+					setCheck(25, true);
+				}
+			}
+		}
+		
+	}
+	
+	/**
+	 * Checks whether the prerequisites for stage {@code _step} of guide {@code checkNo} are
+	 * fulfilled. Will return false if not or if the check isn't active or hasn't been started.
+	 * @param _checkNo - code of the tutorial guide (among the Analyser checks)
+	 * @param _step - the interesting step next to be gone to
+	 * @return true if step {@code state} can be gone to.
+	 */
+	public boolean isTutorialReadyForStep(int _checkNo, int _step)
+	{
+		boolean isOk = false;
+		int prevState = getTutorialState(_checkNo); 
+		if (prevState < 0) {
+			// Not even started
+			return false;
+		}
+		switch (_checkNo) {
+		case 26:
+		{
+			Element elem = null;
+			isOk = children.getSize() == 1 && (elem = children.getElement(0)) instanceof Instruction && ((Instruction)elem).isOutput();
+		}
+			break;
+			// default is always false
+		}
+		return isOk;
+	}
+	// END KGU#456 2017-11-04
 
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
@@ -4028,24 +4219,78 @@ public class Root extends Element {
     }
     // END KGU 2015-11-29
     
+    /**
+     * Extracts the diagram name from the Root text. Contained blanks are replaced with underscores.
+     * @return the program/subroutine name
+     * @see #getMethodName(boolean)
+     * @see #getSignatureString(boolean)
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #getResultType()
+     * @see #isProgram()
+     * @see #isSubroutine()
+     * @see #isInclude()
+     */
     public String getMethodName()
+    // START KGU#456 2017-11-04
+    {
+    	return getMethodName(true);
+    }
+    
+    /**
+     * Extracts the diagram name from the Root text.
+     * @param _replaceBlanks - specifies whether contained blanks are to be replaced with underscores.
+     * @return the program/subroutine name
+     * @see #getMethodName()
+     * @see #getSignatureString(boolean)
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #getResultType()
+     * @see #isProgram()
+     * @see #isSubroutine()
+     * @see #isInclude()
+     */
+    public String getMethodName(boolean _replaceBlanks)
+    // END KGU#456 2017-11-04
     {
     	String rootText = getText().getLongString();
     	int pos;
 
-    	pos = rootText.indexOf("(");
-    	if (pos!=-1) rootText=rootText.substring(0,pos);
-    	pos = rootText.indexOf("[");	// FIXME: this might be part of a return type specification!
-    	if (pos!=-1) rootText=rootText.substring(0,pos);
-    	pos = rootText.indexOf(":");	// Omitted argument list?
-    	if (pos!=-1) rootText=rootText.substring(0,pos);
+    	// START KGU#457 2017-11-05: Issue #454 We should check for Pascal-style result type in advance
+    	boolean returnTypeFollows = false;
+    	if ((pos = rootText.lastIndexOf(')')) > 0 && rootText.indexOf(':', pos+1) > 0) {
+    		returnTypeFollows = true;
+    	}
+    	// END KGU#457 2017-11-05
+    	if ((pos = rootText.indexOf('(')) > -1) rootText = rootText.substring(0, pos);
+    	// START KGU#457 2017-11-05: Issue #454
+    	if (this.isSubroutine() && !returnTypeFollows && (pos = rootText.indexOf(']')) > 0) {
+    		// This seems to be part of a return type specification
+    		rootText = rootText.substring(pos+1);
+    	}
+    	// END KGU#457 2017-11-05
+    	// Whatever this may mean here now...
+    	if ((pos = rootText.indexOf('[')) > -1) rootText=rootText.substring(0,pos);
+    	// Omitted argument list?
+    	if ((pos = rootText.indexOf(':')) > -1) {
+    		// START KGU#457 2017-11-05: Issue #454
+    		if (pos < rootText.length() - 1) {
+    			returnTypeFollows = true;
+    		}
+    		// END KGU#457 2017-11-05
+    		rootText=rootText.substring(0, pos);
+    	}
 
     	String programName = rootText.trim();
 
     	// START KGU#2 2015-11-25: Type-specific handling:
     	// In case of a function, the last identifier will be the name, preceding ones may be type specifiers
+    	// unless the return type specification follows the argument list
     	// With a program or include, we just concatenate the strings by underscores
-    	if (isSubroutine())
+    	// START KGU#457 2017-11-05: Issue #454
+    	//if (isSubroutine())
+    	if (isSubroutine() && !returnTypeFollows)
+    	// END KGU#457 2017-11-05
     	{
     		String[] tokens = rootText.split(" ");
     		// It won't be that many strings, so we just go forward and keep the last acceptable one
@@ -4062,7 +4307,12 @@ public class Root extends Element {
     	}
     	// END KGU#2 2015-11-25
     	// START KGU 2015-10-16: Just in case...
-    	programName = programName.replace(' ', '_');
+    	// START KGU#457 2017-11-04: Issue #454
+		//programName = programName.replace(' ', '_');
+    	if (_replaceBlanks) {
+    		programName = programName.replace(' ', '_');
+    	}
+    	// END KGU#457 2017-11-04
     	// END KGU 2015-10-16
 
     	return programName;
@@ -4072,6 +4322,10 @@ public class Root extends Element {
     /**
      * Returns a string representing a detected result type if this is a subroutine diagram. 
      * @return null or a string possibly representing some data type
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #getMethodName()
+     * @see #isSubroutine()
      */
     public String getResultType()
     {
@@ -4125,10 +4379,16 @@ public class Root extends Element {
 
     /**
      *  Extracts parameter names and types from the parenthesis content of the Root text
-     *  and adds them synchronously to paramNames and paramTypes (if not null).
-     * @param paramNames - StringList to be expanded by the found parameter names
-     * @param paramTypes - StringList to be expanded by the found parameter types
+     *  and adds them synchronously to {@code paramNames} and {@code paramTypes} (if not null).
+     * @param paramNames - {@link StringList} to be expanded by the found parameter names
+     * @param paramTypes - {@link StringList} to be expanded by the found parameter types
      * @return true iff the text contains a parameter list at all
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #getResultType()
+     * @see #getMethodName()
+     * @see #getSignatureString(boolean)
+     * @see #isSubroutine()
      */
     // START KGU#253 2016-09-22: Enh. #249 - Find out whether there is a parameter list
     //public void collectParameters(StringList paramNames, StringList paramTypes)
@@ -4179,6 +4439,10 @@ public class Root extends Element {
      * the file path appendix is only added if _addPath is true 
      * @param _addPath - whether or not the file path is to be aded t the signature string
      * @return the composed string
+     * @see #getMethodName()
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #getResultType()
      */
     public String getSignatureString(boolean _addPath) {
     	String presentation = this.getMethodName();
@@ -4204,8 +4468,10 @@ public class Root extends Element {
      * by a hyphen, e.g. if the diagram header is DEMO and the type is program then
      * the result will also be "DEMO". If the diagram is a function diagram, however,
      * and the text contains "func(x, name)" or "int func(double x, String name)" or
-     * "func(x: REAL; name: STRING): INTEGER" then the resul would be "func-2".
-     * @return
+     * "func(x: REAL; name: STRING): INTEGER" then the result would be "func-2".
+     * @return a file base name (i.e. without path and extension)
+     * @see #getSignatureString(boolean)
+     * @see #getMethodName()
      */
     public String proposeFileName()
     {
@@ -4217,7 +4483,7 @@ public class Root extends Element {
     	return fname;
     }
     // END KGU#205 2016-07-19
-
+    
     public Vector<DetectedError> analyse()
     {
     	structorizerKeywords.clear();
@@ -4247,7 +4513,9 @@ public class Root extends Element {
         HashMap<String, TypeMapEntry> typeDefinitions = new HashMap<String, TypeMapEntry>(); 
         // END KGU#388 2017-09-17
 
-        String programName = getMethodName();
+        // START KGU#456 2017-11-04: For anaysis purposes we shouldn't mend spaces
+        String programName = getMethodName(false);
+        // END KGU#456 2017-11-04
 
         DetectedError error;
 
@@ -4255,8 +4523,10 @@ public class Root extends Element {
         // Warn in case of switched text/comments as first report
         if (this.isSwitchTextAndComments())
         {
+        	String[] menuPath = {"menuDiagram", "menuDiagramSwitchComments"};
+        	String[] defaultNames = {"Diagram", "Switch text/comments?"};
             // This is a general warning without associated element - put at top
-            error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
+            error = new DetectedError(errorMsg(Menu.warning_1, Menu.getLocalizedMenuPath(menuPath, defaultNames)), null);
             // Category 0 is not restricted to configuration (cannot be switched off)
             addError(errors, error, 0);
         }
@@ -4318,9 +4588,56 @@ public class Root extends Element {
         // END KGU#61 2016-03-22
         {
             //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
-            error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
+        	// START KGU#456/KGU#457 2017-11-04: Enh. #452, #454 - charm initiative
+            //error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
+        	if (programName.equals("???") && this.children.getSize() == 0) {
+        		// "What is your algorithm to do? Replace «???» with a good name for it!"
+                error  = new DetectedError(errorMsg(Menu.hint07_1, programName), this);
+        	}
+        	else if (programName.contains(" ") && Function.testIdentifier(programName.replace(' ', '_'), null)) {
+        		// "Program names should not contain spaces, better place underscores between the words:"
+        		error  = new DetectedError(errorMsg(Menu.error07_4, programName.replace(' ', '_')), this);        		
+        	}
+        	else {
+        		// "«"+programName+"» is not a valid name for a program or function!"
+        		error  = new DetectedError(errorMsg(Menu.error07_1, programName), this);
+        	}
+            // END KGU#456/KGU#457 2017-11-04
             addError(errors,error,7);
         }
+        // START KGU#456 2017-11-04: Enh. #452 - charm initiative
+        else if (this.children.getSize() == 0) {
+        	String text = null;
+        	if (check(26)) {
+        		text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
+        		addError(errors, new DetectedError(text, this), 26);
+        		if (getTutorialState(26) < 0) {
+        			startTutorial(26);
+        		}
+        	}
+        	else if (check(25)) {
+        		switch (this.diagrType) {
+        		case DT_INCL:
+        			text = errorMsg(Menu.hint25_5, "");
+        			break;
+        		case DT_MAIN:
+        			text = errorMsg(Menu.hint25_1, CodeParser.getKeyword("input"));
+        			startTutorial(25);
+        			break;
+        		case DT_SUB:
+        			text = errorMsg(Menu.hint25_4, "");
+        			break;
+        		default:
+        			break;
+        		}
+        		if (text != null) {
+            		addError(errors, new DetectedError(text, this), 25);
+        		}
+        	}
+        }
+        
+        analyseGuides(errors);
+        // END KGU#456 2017-11-04
 
         // START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
         // CHECK: subroutine header syntax (#20 - new!)

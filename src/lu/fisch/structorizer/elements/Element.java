@@ -195,7 +195,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.27-01";
+	public static String E_VERSION = "3.27-02";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -328,6 +328,9 @@ public abstract class Element {
     // START KGU#331 2017-01-13:
     public static boolean E_SHOW_UNICODE_OPERATORS = true;
     // END KGU#331 2017-01-13
+	// START KGU#456 2017-11-05: Enh. #452
+	public static boolean E_REDUCED_TOOLBARS = false;
+	// END KGU#456 2017-11-05
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");

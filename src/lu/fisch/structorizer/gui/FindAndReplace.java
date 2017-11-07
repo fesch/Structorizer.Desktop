@@ -38,6 +38,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.22      NullPointerException on replacing due to cleared currentNode fixed
  *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in pulldown list and Esc key without pulldown
  *      Kay Gürtzig     2017.10.09      Internal consistency of For elements on replacement ensured (KGU#431)
+ *      Kay Gürtzig     2017.11.03      Bugfix #448: endless self-replacement averted, performance improved
+ *                                      (minimum-invasive revision)  
  *
  ******************************************************************************************************
  *
@@ -70,6 +72,7 @@ import java.util.ListIterator;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -79,6 +82,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
@@ -138,6 +142,18 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	private IElementSequence.Iterator treeIterator = null;
 	/** Currently focused diagram {@link Element} (caches the current position of {@link #treeIterator}) */
 	private Element currentElement = null;
+	// START KGU#454 2017-11-03: Bugfix #448
+	/**
+	 * Parts of the split text of the {@link #currentElement}
+	 * The matches are at the uneven index positions
+	 */
+	private final StringList partsText = new StringList();
+	/**
+	 * Parts of the split comment of the {@link #currentElement}
+	 * The matches are at the uneven index positions
+	 */
+	private final StringList partsComment = new StringList();
+	// END KGU#454 2017-11-03
 	/** Position of the match within the virtual concatenation of an element's text and comment (as far as being subject) */
 	private int currentPosition = -1;
 	/** Fixed invisible top node of the tree view, root of the apparent search result forest */
@@ -222,6 +238,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	        return this;
 	    }
 	};
+		
 	// Needed GUI controls
 	protected JLabel lblSearchPattern;
 	protected JLabel lblReplacePattern;
@@ -267,6 +284,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	protected JPanel pnlPreview;
 	/** Key listener for ComboBoxEditors */
 	private KeyListener cmbKeyListener;
+	
+	// START KGU#454 2017-11-03: Bugfix #448
+	public static final LangTextHolder msgRegexCorrupt = new LangTextHolder("Regular expression «%1» seems invalid: %2");
+	public static final LangTextHolder ttlSearchError = new LangTextHolder("Search Error");
+	// END KGU#454 2017-11-03
 	
 	/**
 	 * Creates a new Find & Replace dialog associated with {@code _diagram}.
@@ -813,7 +835,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				}});
 			this.treResults.setCellRenderer(new MyTreeCellRenderer());
 			this.treResults.addKeyListener(keyListener);
-			System.out.println("Normal tree row height: " + this.treResults.getRowHeight());
 			JScrollPane scrTree = new JScrollPane(this.treResults);
 
 			pnlOptions.add(scrTree, BorderLayout.CENTER);
@@ -930,6 +951,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				currentElement.setSelected(false);
 			}
 			currentElement = null;
+			// START KGU#454 2017-11-03: Bugfix #448
+			this.partsText.clear();
+			this.partsComment.clear();
+			// EN KGU#454 2017-11-03
 			currentPosition = -1;
 			if (docText != null && docComm != null) {
 				clearDoc(docText);
@@ -966,8 +991,15 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	{
 		if (ele != currentElement) {
 			clearCurrentElement();
+			// START KGU#454 2017-11-03: Bugfix #448
+			currentElement = ele;
+			this.splitTextToList(ele.getText(), this.partsText);
+			this.splitTextToList(ele.getComment(), this.partsComment);
+			// END KGU#454 2017-11-03
 		}
-		currentElement = ele;
+		// START KGU#454 2017-11-03: Bugfix #448
+		//currentElement = ele;	// Moved into the alternative above (otherwise redundant)
+		// END KGU#454 2017-11-03
 		currentPosition = positionInElement;
 		ele.setSelected(true);
 		diagram.redraw(ele);
@@ -975,32 +1007,43 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		int nMatches = 0;
 		boolean enable = false;
 		if (chkInTexts.isSelected()) {
-			nMatches = this.textMatches(ele.getText());
+			// START KGU#454 2017-11-03: Bugfix #448
+			//nMatches = this.textMatches(ele.getText());
+			nMatches = (this.partsText.count() - 1) / 2;
+			// END KGU#454 2017-11-03
 			enable = nMatches > 0;
 		}
-		fillPreview(ele.getText(), docText, txtText, 0, enable);
-		enable = chkInComments.isSelected() && this.textMatches(ele.getComment()) > 0;
-		fillPreview(ele.getComment(), docComm, txtComm, nMatches, enable);
+		// START KGU#454 2017-11-03: Bugfix #448
+		//fillPreview(ele.getText(), docText, txtText, 0, enable);
+		//enable = chkInComments.isSelected() && this.textMatches(ele.getComment()) > 0;
+		//fillPreview(ele.getComment(), docComm, txtComm, nMatches, enable);
+		fillPreview(partsText, docText, txtText, 0, enable);
+		enable = chkInComments.isSelected() && this.partsComment.count() > 1;
+		fillPreview(this.partsComment, docComm, txtComm, nMatches, enable);
+		// END KGU#454 2017-11-03
 		doButtons();
 	}
 	
 	/**
 	 * Fills the document {@code doc} associated to {@link JTextPane} {@code txtPane} with the match preview
 	 * for the original {@link StringList} {@code txtLines}. 
-	 * @param txtLines - source text broken to lines
+	 * @param txtParts - source text split to matchs and sourrounding parts
 	 * @param doc - the target {@link StyledDocument} 
 	 * @param txtPane - the presenting {@link JTextPane}, to be enabled or disabled (according to {@code enable}) 
 	 * @param posOffset - the index of the current match
 	 * @param enable - whether the {@code txtPane} is to be enabled.
 	 * @return the number of matches found within the given source text {@code txtLines}
 	 */
-	private int fillPreview(StringList txtLines, StyledDocument doc, JTextPane txtPane, int posOffset, boolean enable) {
-		int nParts = 0;
+	private int fillPreview(StringList textParts, StyledDocument doc, JTextPane txtPane, int posOffset, boolean enable) {
+		//int nParts = 0;
 		int currPos = currentPosition - posOffset;
-		String text0 = txtLines.getText();
+		// START KGU#454 2017-11-03: Bugfix #448
+		//String text0 = txtLines.getText();
+		String text0 = textParts.concatenate();
+		// END KGU#454 2017-11-03
 		clearDoc(doc);
 		txtPane.setEnabled(enable);
-		String pattern = (String)cmbSearchPattern.getEditor().getItem();
+		//String pattern = (String)cmbSearchPattern.getEditor().getItem();
 		if (!enable) {
 			// Simply show the text without highlighting etc.
 			try {
@@ -1010,38 +1053,55 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 		}
 		else {
-			// In non-regex mode it's relatively simple: We know the exact length
-			// of the sought pattern. The actual match might only differ in case.
-			// So, having the split parts we can just copy the matches from the
-			// respective positions of the original text (text0).
-			// For whole word mode it's more tricky - we must re-compose the erroneously
-			// split parts first. All this is the task of splitText(). 
-			StringList matches = new StringList();
-			String[] parts = splitText(text0, pattern, matches);
-			nParts = parts.length;
-			int emphPos = -1;
-			for (int i = 0; i < nParts; i++) {
-		    	try {
-		    		doc.insertString(doc.getLength(), parts[i], doc.getStyle("default"));
-		    		if (i < nParts-1) {
-		    			if (i == currPos) {
-		    				emphPos = doc.getLength();
-		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("emphasis"));
-		    			}
-		    			else {
-		    				if (emphPos < 0) emphPos = doc.getLength();
-		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("highlight"));
-		    			}
-		    		}
-		    	} catch (BadLocationException e) {
-		    		e.printStackTrace();
-		    	}
+			// START KGU#454 2017-11-03: Bugfix #448
+//			StringList matches = new StringList();
+//			String[] parts = splitText(text0, pattern, matches);
+//			nParts = parts.length;
+//			int emphPos = -1;
+//			for (int i = 0; i < nParts; i++) {
+//		    	try {
+//		    		doc.insertString(doc.getLength(), parts[i], doc.getStyle("default"));
+//		    		if (i < nParts-1) {
+//		    			if (i == currPos) {
+//		    				emphPos = doc.getLength();
+//		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("emphasis"));
+//		    			}
+//		    			else {
+//		    				if (emphPos < 0) emphPos = doc.getLength();
+//		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("highlight"));
+//		    			}
+//		    		}
+//		    	} catch (BadLocationException e) {
+//		    		e.printStackTrace();
+//		    	}
+//			}
+			// Once having the split parts it's extremely simple: Show the text parts
+			// alternatingly in normal and highlighted style.
+			try {
+				int emphPos = -1;
+				for (int i = 0; i < textParts.count(); i++) {
+					String styleName = "default";
+					if (i % 2 != 0) {
+						styleName = "highlight";
+						if ((i - 1) / 2 == currPos) {
+							styleName = "emphasis";
+							emphPos = doc.getLength();
+						}
+					}
+					doc.insertString(doc.getLength(), textParts.get(i), doc.getStyle(styleName));
+				}
+				if (emphPos > -1) {
+					txtPane.setCaretPosition(emphPos);
+				}
+			} catch (BadLocationException e) {
+				e.printStackTrace();
 			}
-			if (emphPos > -1) {
-				txtPane.setCaretPosition(emphPos);
-			}
+			// END KGU#454 2017-11-03
 		}
-		return nParts - 1;
+		// START KGU#454 2017-11-03: Bugfix #448
+//		return nParts - 1;
+		return (textParts.count() - 1) / 2;
+		// END KGU#454 2017-11-03
 	}
 
 	// FIXME: We might cache the split results for the currentElement
@@ -1066,6 +1126,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 			else {
 				splitter = BString.breakup(splitter);
+				// We must care for metasymbols lest the regex mechanism should run havoc
 			}
 		}
 		String[] parts = text.split(splitter, -1);
@@ -1137,6 +1198,35 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		return parts;
 	}
 
+	// START KGU#454 2017-11-03: Bugfix #448 - helper to cache the splitting results
+	/**
+	 * Splits the source string {@code text} (may contain newlines) with respect to the
+	 * matching {@code pattern} and fills the {@link StringList} {@code partList} with the
+	 * splitting results where the elements with even indices are the parts between the
+	 * matches and the elements with uneven indices are the matches themselves.
+	 * @param text - the newline-separated source text as String
+	 * @param partList - empty {@link StringList} to be filled with the splitting results
+	 * @return array of splitting results (i.e. the substrings around the matches)
+	 */
+	private int splitTextToList(StringList text, StringList partList) {
+		String brokenText = text.getText();
+		StringList matches = new StringList();
+		if (chkInTexts.isSelected()) {
+			String pattern = (String)cmbSearchPattern.getEditor().getItem();
+			String[] parts = this.splitText(brokenText, pattern, matches);
+			for (int i = 0; i < parts.length - 1; i++) {
+				partList.add(parts[i]);
+				partList.add(matches.get(i));
+			}
+			partList.add(parts[parts.length-1]);
+		}
+		else {
+			partList.add(brokenText);
+		}
+		return matches.count();
+	}
+	// END KGU#454 2017-11-03
+
 	/**
 	 * Empties the result tree and unsets all navigation data ({@link #currentElement}, {@link #treeIterator},
 	 * {@link #currentNode}, {@link #currentPosition}). (part of the ItemListener for the scope choice, the StateChangeListener of the pattern combo boxes)
@@ -1189,104 +1279,137 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		boolean elementwise = chkElementwise.isSelected();
 		Element selected = diagram.getSelected();
 		Scope scope = (Scope)cmbScope.getSelectedItem();
-		if (scope == Scope.OPENED_DIAGRAMS) {
-			// Previous search exhausted? Then retrieve results
-			if (currentNode == null) {
-				fillResultTree();
-				gotoNext = false;
-				replace = false;
+		// START KGU#454 2017-11-03: Bugfix #448 Check regex patterns in advance
+		if (this.chkRegEx.isSelected()) {
+			String patternString = (String)this.cmbSearchPattern.getEditor().getItem();
+			try {
+				Pattern.compile(patternString);
+			}
+			catch (PatternSyntaxException ex) {
+				JOptionPane.showMessageDialog(this,
+						msgRegexCorrupt.getText().replace("%1", patternString).replace("%2", ex.getMessage()),
+						ttlSearchError.getText(),
+						JOptionPane.ERROR_MESSAGE);
+				this.doButtons();
+				return false;
 			}
 		}
-		else if (treeIterator == null) {
-			// Reinitialize iterator for incremental search
-			if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
-				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-				int nMatches = checkElementMatch(diagram.getRoot()); 
-				if (nMatches > 0) {
-					setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
-					replace = false;
+		// END KGU#4545 2017-11-03
+			// PHASE 1: Identify and set up the element traversing strategy 
+			if (scope == Scope.OPENED_DIAGRAMS) {
+				// Previous search exhausted? Then retrieve results
+				if (currentNode == null) {
+					fillResultTree();
 					gotoNext = false;
-				}
-				treeIterator = diagram.getRoot().children.iterator(true);
-			}
-			else if (selected instanceof IElementSequence) {
-				// We are on a Subqueue level, request a deep search iterator
-				treeIterator = ((IElementSequence) selected).iterator(true);
-			}
-			else if (selected.parent != null) {
-				// We are neither on Subqueue level nor on Root level, so concoct a
-				// pseudo-sequence only comprising just the selected element and
-				// request a deep search iterator (selected might be composed)
-				treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
-			}
-			else if (selected instanceof Root) {
-				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-				int nMatches = checkElementMatch(selected); 
-				if (nMatches > 0) {
-					setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
 					replace = false;
-					gotoNext = false;
-				}
-				treeIterator = ((Root)selected).children.iterator(true);
-			}
-			// Go to last element if we are to go upwards (looks awkward but works)
-			if (treeIterator != null && up) {
-				while (treeIterator.hasNext()) {
-					treeIterator.next();
 				}
 			}
-		}
-		int nMatches = 0;
-		if (currentElement != null) {
-			// Get the total number of (remaining) matches in the current element's interesting texts
-			nMatches = checkElementMatch(currentElement);
-		}
-		if (replace && nMatches > 0) {
-			// Replace next match according to the current pattern
-			Root root = Element.getRoot(currentElement);
-			if (root != null) {
-				// Every single replacement is to be undoable ...
-				root.addUndo();
-			}
-			StringList text = currentElement.getText();
-			StringList comment = currentElement.getComment();
-			// Differentiate the matches according to the respective target text
-			int nMatchesComment = textMatches(comment);
-			int nMatchesText = textMatches(text);
-			// Start with the element text (prioritized if included)
-			if ((elementwise || !done) && chkInTexts.isSelected() 
-					&& nMatchesText > currentPosition) {
-				text = replacePattern(text, elementwise, currentPosition);
-				currentElement.setText(text);
-				// START KGU#431 2017-10-09: We must handle the structured fields of For elements				
-				if (currentElement instanceof For) {
-					((For)currentElement).updateFromForClause();					
+			else if (treeIterator == null) {
+				// Reinitialize iterator for incremental search
+				if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
+					// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
+					int nMatches = checkElementMatch(diagram.getRoot()); 
+					if (nMatches > 0) {
+						setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
+						replace = false;
+						gotoNext = false;
+					}
+					treeIterator = diagram.getRoot().children.iterator(true);
 				}
-				// END KGU#431 2017-10-09
-				this.fillPreview(text, docText, txtText, 0, true);
-				done = true;
-			}
-			// Now cater for the comment if included
-			if ((elementwise || !done) && chkInComments.isSelected()
-					&& nMatchesComment > currentPosition - nMatchesText) {
-				comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
-				currentElement.setComment(comment);
-				this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
-				done = true;
-			}
-			if (currentNode != null) {
-				// We better cache the current node locally lest the reload actions should reset it.
-				DefaultMutableTreeNode currNode = currentNode;
-				resultModel.reload(currentNode);	// update the element's presentation in the tree view
-				DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
-				// In case we are working on a Root make sure its representing top node is also updated
-				if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
-					resultModel.reload(parent);
-					// Restore the previously cached selection
-					currentNode = currNode;
-					treResults.setSelectionPath(new TreePath(currentNode.getPath()));
+				else if (selected instanceof IElementSequence) {
+					// We are on a Subqueue level, request a deep search iterator
+					treeIterator = ((IElementSequence) selected).iterator(true);
+				}
+				else if (selected.parent != null) {
+					// We are neither on Subqueue level nor on Root level, so concoct a
+					// pseudo-sequence only comprising just the selected element and
+					// request a deep search iterator (selected might be composed)
+					treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
+				}
+				else if (selected instanceof Root) {
+					// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
+					int nMatches = checkElementMatch(selected); 
+					if (nMatches > 0) {
+						setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
+						replace = false;
+						gotoNext = false;
+					}
+					treeIterator = ((Root)selected).children.iterator(true);
+				}
+				// Go to last element if we are to go upwards (looks awkward but works)
+				if (treeIterator != null && up) {
+					while (treeIterator.hasNext()) {
+						treeIterator.next();
+					}
 				}
 			}
+
+			// PHASE 2: Look into the currentElement (if there is one)
+			int nMatches = 0;
+			if (currentElement != null) {
+				// Get the total number of (remaining) matches in the current element's interesting texts
+				// START KGU#454 2017-11-03: Bugfix #448 - It must not be done by new matching!
+				//nMatches = checkElementMatch(currentElement);
+				nMatches = checkElementMatch();
+				// END KGU#4545 2017-11-03
+			}
+			if (replace && nMatches > 0) {
+				// Replace next match according to the current pattern
+				Root root = Element.getRoot(currentElement);
+				if (root != null) {
+					// Every single replacement is to be undoable ...
+					root.addUndo();
+				}
+				StringList text = currentElement.getText();
+				StringList comment = currentElement.getComment();
+				// START KGU#454 2017-11-03: Bugfix #448
+//				int nMatchesComment = textMatches(comment);
+//				int nMatchesText = textMatches(text);
+				int nMatchesComment = (partsComment.count() - 1) / 2;
+				int nMatchesText = (partsText.count() - 1) / 2;
+				// END KGU#454 2017-11-03
+				// Start with the element text (prioritized if included)
+				if ((elementwise || !done) && chkInTexts.isSelected() 
+						&& nMatchesText > currentPosition) {
+					// START KGU#454 2017-11-03: Bugfix #448
+					//text = replacePattern(text, elementwise, currentPosition);
+					text = replacePattern(partsText, elementwise, currentPosition);
+					// END KGU#454 2017-11-03 
+					currentElement.setText(text);
+					// START KGU#431 2017-10-09: We must handle the structured fields of For elements				
+					if (currentElement instanceof For) {
+						((For)currentElement).updateFromForClause();					
+					}
+					// END KGU#431 2017-10-09
+					currentElement.resetDrawingInfoUp();
+					this.fillPreview(text, docText, txtText, 0, true);
+					done = true;
+				}
+				// Now cater for the comment if included
+				if ((elementwise || !done) && chkInComments.isSelected()
+						&& nMatchesComment > currentPosition - nMatchesText) {
+					// START KGU#454 2017-11-03: Bugfix #448
+					//comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
+					comment = replacePattern(partsComment, elementwise, currentPosition - nMatchesText);
+					// END KGU#454 2017-11-03 
+					currentElement.setComment(comment);
+					currentElement.resetDrawingInfoUp();
+					this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
+					done = true;
+				}
+				if (currentNode != null) {
+					// We better cache the current node locally lest the reload actions should reset it.
+					DefaultMutableTreeNode currNode = currentNode;
+					resultModel.reload(currentNode);	// update the element's presentation in the tree view
+					DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
+					// In case we are working on a Root make sure its representing top node is also updated
+					if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
+						resultModel.reload(parent);
+						// Restore the previously cached selection
+						currentNode = currNode;
+						treResults.setSelectionPath(new TreePath(currentNode.getPath()));
+					}
+				}
 			diagram.doButtons();
 			// Make sure the Structorizer working area is refreshed, too
 			diagram.redraw(currentElement);
@@ -1312,6 +1435,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 		}
 		// Is there another matching position within this element? (We might have come here in non-replacing mode!)
+		// Remember that "up" in the tree means backward in the text and "down" means forward in the text here
 		if (gotoNext && !elementwise && currentPosition >= 0 && (up && currentPosition > 0 || !up && currentPosition < nMatches-1)) {
 			// yes: just update the preview
 			if (up) {
@@ -1454,76 +1578,138 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 	}
 
+	/**
+	 * Action listener method for the "Replace All" button. Executes the find cycle
+	 * with replacement.
+	 * @param evt - the inducing event
+	 */
 	protected void replaceAllActionPerformed(ActionEvent evt) {
 		while (findActionPerformed(evt, true, true));
 	}
 
+	// START KGU#454 2017-11-03: Bugfix #448 signature meaning changed, implementation revised
+//	/**
+//	 * Replaces one (= {@code pos}-th) or all matches within the given {@link StringList} {@code text}
+//	 * @param text - the target text, broken into lines.
+//	 * @param all - whether all matches are to be replaced (then {@code pos} will be ignored)
+//	 * @param pos - the number of the target match within the text otherwise
+//	 * @return the replacement result as {@link StringList} of lines
+//	 */
+//	private StringList replacePattern(StringList text, boolean all, int pos) {
+//		// We compose the StringList elements since there might be line-overlapping matches 
+//		String brokenText = text.getText();	// the text lines concatenated with newlines
+//		// Get the current settings
+//		String searchPattern = (String)cmbSearchPattern.getEditor().getItem();
+//		String replacePattern = (String)cmbReplacePattern.getEditor().getItem();
+//		String resultText = brokenText;
+//		boolean caseSensitive = chkCaseSensitive.isSelected();
+//		boolean isRegex = chkRegEx.isSelected();
+//		boolean wholeWord = chkWholeWord.isSelected(); 
+//		if (all) {
+//			if (!isRegex) {
+//				// Patterns are no regular expressions. So form conservative regex patterns 
+//				if (!caseSensitive) {
+//					// KGU 2017-06-18: Method breakup now ensures quoting of regex meta symbols
+//					searchPattern = BString.breakup(searchPattern);
+//				}
+//				else {
+//					searchPattern = Pattern.quote(searchPattern);
+//				}
+//				replacePattern = "$1" + Matcher.quoteReplacement(replacePattern) + "$2";
+//				if (wholeWord) {
+//					searchPattern = "(^|.*?\\W)" + searchPattern + "($|\\W.*?)";
+//				}
+//				else {
+//					searchPattern = "(.*?)" + searchPattern + "(.*?)";
+//				}
+//			}
+//			resultText = brokenText.replaceAll(searchPattern, replacePattern);
+//		}
+//		else {
+//			// In case of an individual replacement first split the text and count the matches
+//			// The splitting function will collect the matches and return the parts around the matches 
+//			StringList actualMatches = new StringList();	// to be filled by function splitText
+//			String[] parts = splitText(brokenText, searchPattern, actualMatches);
+//			String[] matches = actualMatches.toArray();		// Should be one element shorter than parts
+//			int nParts = parts.length;
+//			resultText = "";
+//			for (int i = 0; i < nParts; i++) {
+//				resultText += parts[i];
+//				if (i == pos) {
+//					// At the very position replace the found match
+//					if (isRegex) {
+//						resultText += matches[i].replaceFirst(searchPattern, replacePattern);
+//					}
+//					else {
+//						resultText += replacePattern;
+//					}
+//				}
+//				else if (i < nParts - 1) {
+//					// at all other places re-insert the match without change
+//					resultText += matches[i];
+//				}
+//			}
+//		}
+//		// Split the lines again
+//		return StringList.explode(resultText, "\n");
+//	}
+
 	/**
 	 * Replaces one (= {@code pos}-th) or all matches within the given {@link StringList} {@code text}
-	 * @param text - the target text, linewise.
+	 * @param splitText - the target text, already split.
 	 * @param all - whether all matches are to be replaced (then {@code pos} will be ignored)
 	 * @param pos - the number of the target match within the text otherwise
 	 * @return the replacement result as {@link StringList} of lines
 	 */
-	private StringList replacePattern(StringList text, boolean all, int pos) {
-		// We compose the StringList elements since there might be line-overlapping matches 
-		String brokenText = text.getText();	// the text lines concatenated with newlines
+	private StringList replacePattern(StringList splitText, boolean all, int pos) {
 		// Get the current settings
 		String searchPattern = (String)cmbSearchPattern.getEditor().getItem();
 		String replacePattern = (String)cmbReplacePattern.getEditor().getItem();
-		String resultText = brokenText;
-		boolean caseSensitive = chkCaseSensitive.isSelected();
+		//boolean caseSensitive = chkCaseSensitive.isSelected();
 		boolean isRegex = chkRegEx.isSelected();
-		boolean wholeWord = chkWholeWord.isSelected(); 
-		if (all) {
+		//boolean wholeWord = chkWholeWord.isSelected(); 
+		if (all && splitText.count() > 1) {
 			if (!isRegex) {
-				// Patterns are no regular expressions. So form conservative regex patterns 
-				if (!caseSensitive) {
-					// KGU 2017-06-18: Method breakup now ensures quoting of regex meta symbols
-					searchPattern = BString.breakup(searchPattern);
+				StringBuilder sb = new StringBuilder(10 * splitText.count());
+				for (int i = 0; i < splitText.count(); i++) {
+					if (i % 2 == 0) {
+						sb.append(splitText.get(i));
+					}
+					else {
+						sb.append(replacePattern);
+					}
 				}
-				else {
-					searchPattern = Pattern.quote(searchPattern);
-				}
-				replacePattern = "$1" + Matcher.quoteReplacement(replacePattern) + "$2";
-				if (wholeWord) {
-					searchPattern = "(^|.*?\\W)" + searchPattern + "($|\\W.*?)";
-				}
-				else {
-					searchPattern = "(.*?)" + searchPattern + "(.*?)";
-				}
+				splitText.set(0, sb.toString());
 			}
-			resultText = brokenText.replaceAll(searchPattern, replacePattern);
+			else {
+				splitText.set(0, splitText.concatenate().replaceAll(searchPattern, replacePattern));
+			}
+			splitText.remove(1, splitText.count());
 		}
 		else {
 			// In case of an individual replacement first split the text and count the matches
-			// The splitting function will collect the matches and return the parts around the matches 
-			StringList actualMatches = new StringList();	// to be filled by function splitText
-			String[] parts = splitText(brokenText, searchPattern, actualMatches);
-			String[] matches = actualMatches.toArray();		// Should be one element shorter than parts
-			int nParts = parts.length;
-			resultText = "";
-			for (int i = 0; i < nParts; i++) {
-				resultText += parts[i];
-				if (i == pos) {
-					// At the very position replace the found match
-					if (isRegex) {
-						resultText += matches[i].replaceFirst(searchPattern, replacePattern);
-					}
-					else {
-						resultText += replacePattern;
-					}
+			// The splitting function will collect the matches and return the parts around the matches
+			pos = pos * 2 + 1;
+			if (pos+1 < splitText.count()) {
+				// At the very position replace the found match
+				if (isRegex) {
+					replacePattern = splitText.get(pos).replaceFirst(searchPattern, replacePattern);
 				}
-				else if (i < nParts - 1) {
-					// at all other places re-insert the match without change
-					resultText += matches[i];
-				}
+				// We must now concatenate the replaced part with both its neighbours
+				splitText.set(pos - 1, splitText.get(pos-1) + replacePattern + splitText.get(pos+1));
+				splitText.remove(pos, pos+2);
 			}
 		}
-		// Split the lines again
-		return StringList.explode(resultText, "\n");
+		// Split the concatenated result into lines
+		return StringList.explode(splitText.concatenate(), "\n");
 	}
 
+	/**
+	 * Checks whether and how many matches of the configured search criteria are in the
+	 * given {@link Element} {@code _ele}.
+	 * @param _ele - the Structorizer element to be scrutinized.
+	 * @return number of matches within the relevant text fields.
+	 */
 	private int checkElementMatch(Element _ele)
 	{
 		int nMatches = 0;
@@ -1540,6 +1726,28 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		return nMatches;
 	}
 
+	/**
+	 * Specific version of {@link #checkElementMatch(Element)} for the {@link #currentElement}
+	 * (which must be enabled)
+	 * @return numbe of matches in the current element (depending on current target settings)
+	 */
+	private int checkElementMatch()
+	{
+		int nMatches = 0;
+		if (chkInTexts.isSelected()) {
+			nMatches += (partsText.count() - 1) / 2;
+		}
+		if (chkInComments.isSelected()) {
+			nMatches += (partsComment.count() - 1) / 2;
+		}
+		return nMatches;
+	}
+
+	/**
+	 * Determines the number of matches in the given {@link StringList} {@code text}
+	 * @param text - an element text or comment split into lines.
+	 * @return the number of matches
+	 */
 	private int textMatches(StringList text) {
 		int nMatches = 0;
 		boolean caseSensi = chkCaseSensitive.isSelected();
@@ -1547,7 +1755,20 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		String brokenText = text.getText();
 		if (chkRegEx.isSelected()) {
 			//doesMatch = brokenText.matches(searchPattern);
-			nMatches = brokenText.split(searchPattern, -1).length - 1;
+			// START KGU#454 2017-11-03: Bugfix #448 - the pattern might be corrupt!
+			//nMatches = brokenText.split(searchPattern, -1).length - 1;
+			try {
+				nMatches = brokenText.split(searchPattern, -1).length - 1;
+			}
+			catch (Exception ex) {
+				JOptionPane.showMessageDialog(this,
+						msgRegexCorrupt.getText().replace("%1", searchPattern).replace("%2", ex.getMessage()),
+						ttlSearchError.getText(),
+						JOptionPane.ERROR_MESSAGE);
+				// TODO: What to do to achieve clean status?
+				throw ex;
+			}
+			// END KGU#454 2017-11-03
 		}
 		else if (chkWholeWord.isSelected()) {
 			// FIXME: Maybe we should rather tokenize the string!?
@@ -1572,6 +1793,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		return nMatches;
 	}
 
+	/**
+	 * Item state change listener method for both the pattern combo boxes.
+	 * Ensures the new selected item is cached in the history
+	 * @param evt - the inducing event
+	 */
 	protected void patternChanged(ItemEvent evt) {
 		Object comp = evt.getSource();
 		if (fillingComboBox || !(comp instanceof JComboBox<?>)) return;	// Avoid stack overflow
@@ -1593,7 +1819,9 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	}
 
 	/**
-	 * @param box
+	 * Updates the respective pattern history for the originating {@link JComboBox} {@code box}
+	 * and resets the find results if {@code box} is the combo box for the search patterns.
+	 * @param box - the originating {@link JComboBox} 
 	 */
 	private void updatePatternList(JComboBox<String> box) {
 		LinkedList<String> patternList = replacePatterns;
@@ -1623,9 +1851,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 	}
 
+	/**
+	 * Refreshes the choice list of the given {@link JComboBox} {@code box} from
+	 * the cached history for that combobox.
+	 * @param _box the target combo-box or null if both comboboxes are to be filled.
+	 */
 	private void refillPatternCombos(JComboBox<String> _box)
 	{
+		// Recursion protection
 		fillingComboBox = true;
+		// Cater for the search pattern box
 		if (_box == null || _box == cmbSearchPattern) {
 			cmbSearchPattern.removeAllItems();
 			cmbSearchPattern.addItem("");
@@ -1635,6 +1870,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				}
 			}
 		}
+		// Cater for the replace pattern box
 		if (_box == null || _box == cmbReplacePattern) {
 			cmbReplacePattern.removeAllItems();
 			cmbReplacePattern.addItem("");
@@ -1647,6 +1883,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		fillingComboBox = false;
 	}
 	
+	/**
+	 * Updates the visibility or accessibility of the buttons held in the button bar,
+	 * depending on the current state.
+	 */
 	protected void doButtons() {
 		boolean anythingSelected = false;
 		if (chkElementTypes != null) {
@@ -1664,6 +1904,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			btnReplaceAll.setEnabled(anythingSelected);
 	}
 
+	/**
+	 * Updates the visibility or accessibility of the search scope ad result controls depending
+	 * on the current state
+	 */
 	protected void doButtonsScope()
 	{
 		boolean allRoots = cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS;
@@ -1677,6 +1921,13 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 	}
 	
+	/**
+	 * Retrieves the matching elements in the given subsequence {@code _scope} and links them to a list.
+	 * THe restrieval is restricted to elements of one and the same {@link Root}.
+	 * @param _scope - linear subsequence of elements limiting the search scope
+	 * @param _deeply - whether the searh is to comprise all substructure (otherwise: flat)
+	 * @return ordered list of the elements matching the search criteria
+	 */
 	private LinkedList<Element> findElements(IElementSequence _scope, boolean _deeply)
 	{
 		LinkedList<Element> elements = new LinkedList<Element>();
@@ -1732,6 +1983,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 //		
 //	}
 	
+	/**
+	 * Has the given {@link Ini} instance {@code ini} save all relevant search criteria and
+	 * settings to the associated structorizer.ini file.
+	 * @param ini - instance of the {@link Ini} instance
+	 */
 	public void cacheToIni(Ini ini)
 	{
 		int i = 1;
