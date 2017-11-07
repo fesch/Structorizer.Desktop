@@ -389,7 +389,6 @@ public class PrintPreview extends LangDialog implements Runnable{
 		{
 			while (true)
 			{
-				// FIXME (KGU): What exactly is going on here? This often multiplies pages (even without loop!)
 				BufferedImage img = new BufferedImage(m_wPage, m_hPage, BufferedImage.TYPE_INT_RGB);
 				Graphics g = img.getGraphics();
 				g.setColor(Color.white);
@@ -472,7 +471,6 @@ public class PrintPreview extends LangDialog implements Runnable{
 			// END KGU#458 2017-11-06
 			while (true)
 			{
-				// FIXME (KGU): What exactly is going on here? This often multiplies pages (even without loop!)
 				BufferedImage img = new BufferedImage(m_wPage, m_hPage, BufferedImage.TYPE_INT_RGB);
 				Graphics g = img.getGraphics();
 				g.setColor(Color.white);
