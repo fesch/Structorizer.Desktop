@@ -106,6 +106,7 @@
  *      Kay Gürtzig         2017.06.19  Enh. #199, #415: Messages for toolbar and FindAndReplace
  *      Kay Gürtzig         2017.09.18  Enh. #423: New messages for record type handling introduced
  *      Kay Gürtzig         2017.10.16  Issues #437-#438: New Control messages
+ *      Kay Gürtzig         2017.11.05  New texts for issues #448, #452, #454 added.
  *
  ******************************************************************************************************
  *
@@ -220,8 +221,9 @@ Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
 // Submenu of "Preferences"
-Menu.menuPreferencesNotifyUpdate.text=Neue Versionen melden
+Menu.menuPreferencesNotifyUpdate.text=Neue Versionen melden?
 Menu.menuPreferencesNotifyUpdate.tooltip=Structorizer erlauben, auf der Structorizer-Homepage nach Updates zu suchen und auf neue Versionen hinzuweisen.
+Menu.menuPreferencesSimplified.text=Vereinfachte Symbolleisten?
 Menu.menuPreferencesFont.text=Zeichensätze ...
 Menu.menuPreferencesColors.text=Farben ...
 Menu.menuPreferencesOptions.text=Strukturen ...
@@ -325,12 +327,15 @@ Menu.lblAllowChanges.text=Diagrammänderung erlauben
 Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
 Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
 Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" > "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
+Menu.msgWelcomeMessage.text=Willkommen beim Structorizer, Ihrem Struktogramm-Editor.\nMit diesem Programm können Sie Algorithmen entwerfen, testen, analysieren, in Programmiersprachen exportieren und vieles mehr.\nEs wurde für einfache Handhabung entwickelt, ist aber schon um viele Extras erweitert.\n\nHaben Sie noch wenig Erfahrung mit Algorithmen und Entwicklungsumgebungen?\nDann können Sie mit vereinfachter Werkzeugleiste beginnen und «%» aktivieren.\nWollen Sie zunächst im vereinfachten Einsteigermodus arbeiten?
 Menu.lblOk.text=OK
 Menu.lblYes.text=Ja, fortsetzen
 Menu.lblNo.text=Nein, abbrechen
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 Menu.lblHint.text=Tipp
 Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
+Menu.lblReduced.text=Ja, Einsteigerodus
+Menu.lblNormal.text=Nein, normaler Modus
 Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
 Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
@@ -340,8 +345,8 @@ Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
 
 // Error messages for analyser
-// warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
-Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "Diagramme > Tausche Text/Kommentare".
+Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 > %2".
+Menu.warning_2.text=BEACHTE: «%4» ist aktiv. Zum Ausschalten → Menu "%1 > %2 > %3".
 Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden ...
 Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden: «%»
 Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
@@ -354,6 +359,7 @@ Menu.error06.text=Der Programmname «%» soll großgeschrieben werden!
 Menu.error07_1.text=«%» ist kein korrekter Name für ein Programm oder eine Funktion/Methode!
 Menu.error07_2.text=«%» ist kein korrekter Name für einen Parameter!
 Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable oder Konstante!
+Menu.error07_4.text=Diagrammnamen sollten keine Leerzeichen enthalten, besser Unterstriche einfügen: «%».
 Menu.error08.text=In einer Bedingung darf keine Wertzuweisung erfolgen!
 Menu.error09.text=Der Programmname («%») darf nicht identisch mit dem Namen einer Variablen oder eines Parameters sein!
 Menu.error10_1.text=Eine Anweisung soll nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
@@ -364,8 +370,8 @@ Menu.error10_5.text=Ein Anweisungselement sollte Konstantendefinitonen nicht mit
 Menu.error10_6.text=Ein Anweisungselement sollte Typdefinitonen nicht mit anderen Anweisungen mischen!
 Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
-Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
-Menu.error13_2.text=Die Funktion hat nicht in jedem Fall einen Rückgabewert!
+Menu.error13_1.text=Die Funktion gibt keinen Wert zurück!
+Menu.error13_2.text=Die Funktion gibt nicht in jedem Fall einen Wert zurück!
 Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen zugleich: «%»!
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
@@ -404,12 +410,24 @@ Menu.error24_5.text=Es gibt keinen definierten Verbund-Typ «%»!
 Menu.error24_6.text=Verbund-Komponente «%» wird nicht geändert bzw. initialisiert!
 Menu.error24_7.text=Verbundtyp «%1» besitzt keine Komponente «%2»!
 Menu.error24_8.text=Variable «%1» besitzt keine Komponente «%2»!
+Menu.hint25_1.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine Eingabeanweisung wie «% x»
+Menu.hint25_2.text=Sie könnten Daten eingeben lassen, z.B. mit einer Anweisung wie «% var_name»
+Menu.hint25_3.text=Sie könnten Resultate ausgeben wollen, z.B. mit einer Anweisung wie «% result_value»
+Menu.hint25_4.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine Anweisung.
+Menu.hint25_5.text=Wählem Sie die Mitte des Diagramms aus fügen Sie z.B. ein Anweisungselement mit einer Typ- oder Konstantendefinition ein.
+Menu.hint25_6.text=Sie könnten eine Verarbeitungsanweisung wie «%» zwischen Eingabe und Ausgabe platzieren.
+Menu.hint26.0.text=Wählen Sie die Mitte des Diagramms aus, dann doppelklicken, Enter oder F5 drücken und den Enweisungstext «% \"Hallo Welt!\"» eingeben.");
+Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 > %2".
+Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 > %2"
+Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 > %2 > %3"
+Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 > %2 > %3"
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
 AnalyserPreferences.contentPanel.tab.0=Algorithmisch
 AnalyserPreferences.contentPanel.tab.1=Bezeichner / Konventionen
+AnalyserPreferences.contentPanel.tab.2=Hinweise / Anleitungen
 AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von FOR-Schleifen melden.
 AnalyserPreferences.checkboxes.2.text=Schleifen auf Endloszyklen untersuchen. (So weit möglich!)
 AnalyserPreferences.checkboxes.3.text=Nicht initialisierte Variablen feststellen.
@@ -434,6 +452,8 @@ AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variab
 AnalyserPreferences.checkboxes.22.text=Prüfen, dass der Schutz von Konstanten nicht unterlaufen wird.
 AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehenden Diagramme korrekt ist.
 AnalyserPreferences.checkboxes.24.text=Typedefinitionen überprüfen.
+AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisungen (EVA-Prinzip)
+AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
 AnalyserPreferences.okButton.text=OK
 
 
@@ -879,6 +899,8 @@ PrintPreview.btnCancel.text=Abbruch
 PrintPreview.btnCancel.tooltip=Druckvorgang abbrechen.
 PrintPreview.btnOK.text=Drucken.
 PrintPreview.btnOK.tooltip=Das Diagram ausdrucken.
+PrintPreview.lblMarginX.text=horiz. Rand:
+PrintPreview.lblMarginY.text=vert. Rand:
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Einstellungen für den Code-Export
@@ -992,6 +1014,8 @@ FindAndReplace.btnReplace.text=Ersetzen
 FindAndReplace.btnReplaceFind.text=Ersetzen/Weiter
 FindAndReplace.btnReplaceAll.text=Alle ersetzen
 FindAndReplace.btnClose.text=Schließen
+FindAndReplace.msgRegexCorrupt.text=Der reguläre Ausdruck «%1» scheint inkorrekt: %2
+FindAndReplace.ttlSearchError.text=Suchfehler
 
 -----> Arranger
 Surface.msgFileLoadError.text=Dateiladefehler:

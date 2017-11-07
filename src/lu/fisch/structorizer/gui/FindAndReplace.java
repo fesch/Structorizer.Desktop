@@ -286,7 +286,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	private KeyListener cmbKeyListener;
 	
 	// START KGU#454 2017-11-03: Bugfix #448
-	public static final LangTextHolder msgRegexCorrupt = new LangTextHolder("Regular expression \"%1\" seems invalid: %2");
+	public static final LangTextHolder msgRegexCorrupt = new LangTextHolder("Regular expression «%1» seems invalid: %2");
 	public static final LangTextHolder ttlSearchError = new LangTextHolder("Search Error");
 	// END KGU#454 2017-11-03
 	

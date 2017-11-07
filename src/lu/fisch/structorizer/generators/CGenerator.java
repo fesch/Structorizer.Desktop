@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.09.26      Enh. #389/#423: Export with includable diagrams (as global definitions)
  *      Kay Gürtzig             2017.09.30      Enh. #423: struct export fixed.
  *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig             2017.11.06      Issue #453: Modifications for string type and input and output instructions
  *
  ******************************************************************************************************
  *
@@ -282,9 +283,9 @@ public class CGenerator extends Generator {
 	//}
 	protected String getInputReplacer(boolean withPrompt) {
 		if (withPrompt) {
-			return "printf($1); scanf(\"\", &$2)";
+			return "printf($1); scanf(\"TODO: specify format\", &$2)";
 		}
-		return "scanf(\"\", &$1)";
+		return "scanf(\"TODO: specify format\", &$1)";
 	}
 	// END KGU#281 2016-10-15
 
@@ -294,7 +295,7 @@ public class CGenerator extends Generator {
 	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
 	 */
 	protected String getOutputReplacer() {
-		return "printf(\"\", $1); printf(\"\\\\n\")";
+		return "printf(\"TODO: specify format\", $1); printf(\"\\\\n\")";
 	}
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
@@ -453,8 +454,8 @@ public class CGenerator extends Generator {
 		_input = super.transform(_input);
 
 		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
-		_input = _input.replace("scanf(\"\", &)", "getchar()");
-		_input = _input.replace("printf(\"\", ); ", "");
+		_input = _input.replace("scanf(\"TODO: specify format\", &)", "getchar()");
+		_input = _input.replace("printf(\"TODO: specify format\", ); ", "");
 		// END KGU#108 2015-12-13
 
 		return _input.trim();
@@ -492,6 +493,7 @@ public class CGenerator extends Generator {
 		// START KGU#332 2017-01-30: Enh. #335 - more sophisticated type info
 		if (this.getClass().getSimpleName().equals("CGenerator")) {
 			_type = _type.replace("string", "char*");
+			_type = _type.replace("String", "char*");
 		}
 		// END KGU#332 2017-01-30
 		return _type;

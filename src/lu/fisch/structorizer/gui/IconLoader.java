@@ -188,7 +188,9 @@ public class IconLoader {
 	// END KGU#324 2017-06-13
 	
 	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
-	//public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
+	// START KGU#456 2017-11-05: Issue #452
+	public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_beginner.png"));
+	// END KGU#456 2017-11-05
 	public static ImageIcon ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
 	public static ImageIcon ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
 	public static ImageIcon ico078 = getIconImage(getURI(from+"icons/078_java.png"));
@@ -353,7 +355,9 @@ public class IconLoader {
         	ico073 = getIconImage(getURI(from+"icons/073_binoculars.png"));
         	// END KGU#324 2017-06-13
         	ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
-            //ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
+        	// START KGU#456 2017-11-05: Issue #452
+            ico075 = getIconImage(getURI(from+"icons/075_beginner.png"));
+        	// END KGU#456 2017-11-05
             ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
             ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
             ico078 = getIconImage(getURI(from+"icons/078_java.png"));

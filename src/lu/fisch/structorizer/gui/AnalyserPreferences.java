@@ -49,7 +49,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling stuff outsourced to GUIScaler
  *      Kay Gürtzig     2017.04.04      Enh. #388: New check for constant definitions (no. 22)
  *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
- *      Kay Gürtzig     2017.09.13      Enh. #423: New Analyser error24 (type definitions) 
+ *      Kay Gürtzig     2017.09.13      Enh. #423: New Analyser error24 (type definitions)
+ *      Kay Gürtzig     2017.11.04      Enh. #452: Charm initiative: start hints tab 
  *
  ******************************************************************************************************
  *
@@ -58,6 +59,8 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.Locale;
+import lu.fisch.structorizer.locales.Locales;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -97,8 +100,10 @@ public class AnalyserPreferences extends LangDialog {
 		/*20*/"Check that a subroutine header has a parameter list.",
 		/*21*/"Discourage use of mistakable variable names «I», «l», and «O».",
 		/*22*/"Check for possible violations of constants.",
-		/*23*/"Check against faulty diagram includes",
-		/*24*/"Check type definitions"
+		/*23*/"Check against faulty diagram includes.",
+		/*24*/"Check type definitions.",
+		/*25*/"Recommendations for first program instructions.",
+		/*26*/"Short \"hello world\" tour."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -129,6 +134,11 @@ public class AnalyserPreferences extends LangDialog {
 				0,// multiple command types
 				10
 		});
+		// START KGU#456 2017-11-04: Enh. #452
+		checkboxTabs.put("Hints / Tutoring", new int[]{
+				26, 25
+		});
+		// END KGU#456 2017-11-04
 	}
 	// END KGU#290 2016-11-10
 	
@@ -303,6 +313,45 @@ public class AnalyserPreferences extends LangDialog {
 			}
 		};
 		okButton.addActionListener(actionListener);
+	}
+	
+	/**
+	 * Retrieves the tab caption and the current description of check number {@code checkNo} from
+	 * the current locale if possible and returns them as String array in element 0 and 1, respectively. 
+	 * @param checkNo - the code for an analyser check or tutorial
+	 * @return a String array with tab caption at [0] and check description at [1].
+	 */
+	public static String[] getCheckTabAndDescription(int checkNo)
+	{
+		String[] captions = {null, null};
+		if (checkNo > 0 && checkNo <= checkCaptions.length) {
+			captions[1] = checkCaptions[checkNo-1];
+			String localeName = Locales.getInstance().getLoadedLocaleName();
+			Locale locale = Locales.getInstance().getLocale(localeName);
+			String transl = locale.getValue("Structorizer", "AnalyserPreferences.checkboxes." + (checkNo) + ".text");
+			if (!transl.isEmpty()) {
+				captions[1] = transl;
+			}
+			int tabIndex = 0;
+			for (Entry<String, int[]> tabSpec: checkboxTabs.entrySet()) {
+				int[] codes = tabSpec.getValue();
+				boolean found = false;
+				for (int i = 0; !found && i < codes.length; i++) {
+					if (codes[i] == checkNo) {
+						captions[0] = tabSpec.getKey();
+						if (!(transl = locale.getValue("Structorizer", "AnalyserPreferences.contentPanel.tab." + tabIndex)).isEmpty()) {
+							captions[0] = transl;
+						}
+						found = true;
+					}
+				}
+				if (found) {
+					break;
+				}
+				tabIndex++;
+			}
+		}
+		return captions;
 	}
 	
 }

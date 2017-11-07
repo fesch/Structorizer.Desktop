@@ -246,9 +246,10 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 				public void keyTyped(KeyEvent kevt) {}
 			};
 			btnOK.addKeyListener(keyListener);
-			spnScale.addKeyListener(keyListener);
+			((JSpinner.DefaultEditor)spnScale.getEditor()).getTextField().addKeyListener(keyListener);
 			// START KGU#393 2017-05-09: Issue #400 - involve all controls
 			txtComment.addKeyListener(keyListener);
+			this.chkTest.addKeyListener(keyListener);
 			spnScale.requestFocusInWindow();
 			// END KGU#393 2017-05-09
 			

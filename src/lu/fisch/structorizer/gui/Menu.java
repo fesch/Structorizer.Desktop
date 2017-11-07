@@ -81,6 +81,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added
  *      Kay Gürtzig     2017.05.21      Enh. #372: New menu entry and accelerator for AttribeInspector
  *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
+ *      Kay Gürtzig     2017.11.05      Enh. #452: Preference reduced mode introduced
  *
  ******************************************************************************************************
  *
@@ -103,6 +104,7 @@ import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangMenuBar;
+import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
@@ -268,6 +270,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#300 2016-12-02: Enh. #300
 	protected final JCheckBoxMenuItem menuPreferencesNotifyUpdate = new JCheckBoxMenuItem("Notify of new versions?",IconLoader.ico052);
 	// END KGU#2016-12-02
+	// START KGU#456 2017-11-05: Enh. #452
+	protected final JCheckBoxMenuItem menuPreferencesSimplified = new JCheckBoxMenuItem("Simplified toolbars?",IconLoader.ico075);
+	// END KGU#456 2017-11-05
 	protected final JMenuItem menuPreferencesFont = new JMenuItem("Font ...",IconLoader.ico023);
 	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
 	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
@@ -321,8 +326,11 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#239 2016-08-12
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
-	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
+	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu \"%1 > %2\".");
 	// END KGU#220 2016-07-27
+	// START KGU#456 2017-11-05: Enh. #452
+	public static final LangTextHolder warning_2 = new LangTextHolder("NOTE: «%4» is active. To switch it off → Menu \"%1 > %2 > %3\".");	
+	// END KGU#456 2017-11-05
 	public static final LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
 	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
 	public static final LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
@@ -339,6 +347,10 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error07_1 = new LangTextHolder("«%» is not a valid name for a program or function!");
 	public static final LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
 	public static final LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
+	public static final LangTextHolder error07_4 = new LangTextHolder("Program names should not contain spaces, better put underscores between the words: «%».");
+	// START KGU#456 2017-11-04: Enh. #452 - Be more friendly to newbees
+	public static final LangTextHolder hint07_1 = new LangTextHolder("What is your algorithm to do? Replace «%» with a good name for it!");
+	// END KGU#456 2017-11-01
 	public static final LangTextHolder error08 = new LangTextHolder("It is not allowed to make an assignment inside a condition.");
 	public static final LangTextHolder error09 = new LangTextHolder("Your program («%») cannot have the same name as a variable or parameter!");
 	public static final LangTextHolder error10_1 = new LangTextHolder("A single instruction element should not contain input/output instructions and assignments!");
@@ -423,6 +435,21 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error24_7 = new LangTextHolder("Record type «%1» hasn't got a component «%2»!");
 	public static final LangTextHolder error24_8 = new LangTextHolder("Variable «%1» hasn't got a component «%2»!");
 	// END KGU#388 2017-09-13
+	// START KGU#456 2017-11-04: Enh. #452 - Be more helpful to newbees
+	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «% x»");
+	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «% var_name»");
+	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «% result_value»");
+	public static final LangTextHolder hint25_4 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an Instruction.");
+	public static final LangTextHolder hint25_5 = new LangTextHolder("Select the diagram centre and place e.g. an Instruction element with a type or constant definition.");
+	public static final LangTextHolder hint25_6 = new LangTextHolder("You might want to place some processing instruction like «%» between input and output.");
+	public static final LangTextHolder[] hint26 = {
+			new LangTextHolder("Select the diagram centre, double-click, press Enter or F5, and put in the instruction text «% \"Hello world!\"»"),
+			new LangTextHolder("Now you may e.g. test your diagram → Menu \"%1 > %2\"."),
+			new LangTextHolder("Now you may e.g. save your diagram → Menu \"%1 > %2\""),
+			new LangTextHolder("Now you may e.g. export your diagram to some programming language → Menu \"%1 > %2 > %3\""),
+			new LangTextHolder("Now you may e.g. export your diagram as graphics file → Menu \"%1 > %2 > %3\"")
+	};
+	// END KGU#456 2017-11-01
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
@@ -503,6 +530,15 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblSuppressUpdateHint = new LangTextHolder("Don't show this window again");
 	public static final LangTextHolder lblHint = new LangTextHolder("Hint");
 	// END KGU#300 2016-12-02
+	// START KGU#456 2017-11-05: Enh. #452
+	public static final LangTextHolder msgWelcomeMessage = new LangTextHolder("Welcome to Structorizer, your Nassi-Shneiderman diagram editor.\n"
+			+ "With this tool you may design, test, analyse, export algorithms and many things more.\n"
+			+ "It was designed for easy handling but has already gained a lot of functions.\n\n"
+			+ "If you are an absolute beginner then you may start with a reduced toolbar and a \"%\".\n"
+			+ "Do you want to start in the simplified and guided mode? (You can always switch to full mode.)");
+	public static final LangTextHolder lblReduced = new LangTextHolder("Yes, reduced mode");
+	public static final LangTextHolder lblNormal = new LangTextHolder("No, normal mode");
+	// END KGU#456 2017-11-05
 	// START KGU#354 2017-03-04: Enh. #354 Now generic import menu
 	//public static final LangTextHolder lblImportCode = new LangTextHolder("% Code ...");
 	public static final LangTextHolder lblCopyToClipBoard = new LangTextHolder("OK + Copy to Clipboard");
@@ -1004,6 +1040,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); } } );
 		menuPreferencesNotifyUpdate.setToolTipText("Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.");
 		// END KGU#2016-12-02
+		
+		// START KGU#456 2017-11-05. Issue #452
+		menuPreferences.add(menuPreferencesSimplified);
+		menuPreferencesSimplified.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setSimplifiedGUI(menuPreferencesSimplified.isSelected()); doButtons();} } );
+		// END KGU#456 2017-11-05
 
 		menuPreferences.add(menuPreferencesFont);
 		menuPreferencesFont.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontNSD(); doButtons(); } } );
@@ -1456,6 +1497,10 @@ public class Menu extends LangMenuBar implements NSDController
 			// START KGU#300 2016-12-02: Enh. #300
 			menuPreferencesNotifyUpdate.setSelected(Ini.getInstance().getProperty("retrieveVersion", "false").equals("true"));
 			// END KGU#300 2016-12-02
+			
+			// START KGU#456 2017-11-06. Enh. #452
+			this.menuPreferencesSimplified.setSelected(Element.E_REDUCED_TOOLBARS);
+			// END KGU#456 2017-11-06
 
 			// Look and Feel submenu
 			//System.out.println("Having: "+UIManager.getLookAndFeel().getName());
@@ -1519,6 +1564,33 @@ public class Menu extends LangMenuBar implements NSDController
 		create();
 	}
 
+    // START KGU#456 2017-11-05: Enh. #452 Support for uato-documentation
+	/**
+	 * Tries to retrieve the current captions for the menus and items named by {@code menuItemKeys}
+	 * and returns the localized captions as string array.<br/>
+	 * If {@code defaultStrings} are given (must have same length as {@code menuItemKeys} then the
+	 * respective default string will be used if retrieval fails for some of the given keys
+	 * @param menuItemKeys - an array of names
+	 * @param defaultStrings
+	 * @return
+	 */
+	public static String[] getLocalizedMenuPath(String[] menuItemKeys, String[] defaultStrings)
+	{
+		String[] names = new String[menuItemKeys.length];
+    	String localeName = Locales.getInstance().getLoadedLocaleName();
+    	Locale locale = Locales.getInstance().getLocale(localeName);
+    	if (locale != null) {
+    		for (int i = 0; i < menuItemKeys.length; i++) {
+    			String text = locale.getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
+    			if (text.isEmpty() && defaultStrings != null && i < defaultStrings.length) {
+    				text = defaultStrings[i];
+    			}
+    			names[i] = text;
+    		}
+    	}
+    	return names;
+	}
+    // END KGU#456
 	
 	@Override
 	public void savePreferences() {};

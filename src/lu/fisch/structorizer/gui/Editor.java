@@ -391,12 +391,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     }    
     // END KGGU#305 2016-12-15
     
-    private MyToolbar newToolBar(String name)
+    private MyToolbar newToolBar(String name, boolean indispensable)
     {
         MyToolbar toolbar = new MyToolbar();
         toolbar.setName(name);
         diagram.toolbars.add(toolbar);
-        this.add(toolbar,AKDockLayout.NORTH);
+        // START KGU#456 2017-11-05: Enh. #452
+        if (!indispensable) {
+        	diagram.expertToolbars.add(toolbar);
+        	if (Element.E_REDUCED_TOOLBARS) {
+        		toolbar.setVisible(false);
+        	}
+        }
+        // END KGU#456 2017-11-05
+        this.add(toolbar, AKDockLayout.NORTH);
         toolbar.setFloatable(true);
         toolbar.setRollover(true);
         //toolbar.addSeparator();
@@ -561,7 +569,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
         this.setLayout(new AKDockLayout());
         // FIXME (KGU): Why is the static variable holding MyToolbar overwritten?
-        toolbar = newToolBar("New, open, save");
+        toolbar = newToolBar("New, open, save", true);
 		
         // Setting up the toolbar with all buttons and actions
 		// I/O
@@ -576,12 +584,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnSave.setFocusable(false);
 		btnSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveNSD(false); doButtons(); } } );
 	    // START KGU#373 2017-03-28: Enh. #387
-        toolbar.add(btnSaveAll);
+        toolbar.add(btnSaveAll, false);
 		btnSaveAll.setFocusable(false);
 		btnSaveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAllNSD(); doButtons(); } } );
 	    // END KGU#373 2017-03-38
 		
-		toolbar = newToolBar("Print");
+		toolbar = newToolBar("Print", true);
 
 		// printing
 		//toolbar.addSeparator();
@@ -589,13 +597,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnPrint.setFocusable(false);
 		btnPrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
 		// START KGU#2 2015-11-24: Arranger launcher (now action correctly attached)
-        toolbar.add(btnArrange);
+        toolbar.add(btnArrange, false);
         btnArrange.setToolTipText("Add the diagram to the Arranger panel");
 		btnArrange.setFocusable(false);
 		btnArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-24
 		
-		toolbar = newToolBar("Undo, redo");
+		toolbar = newToolBar("Undo, redo", true);
 
 		// undo & redo
 		//toolbar.addSeparator();
@@ -607,7 +615,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnRedo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); } } );
 		
         // START KGU#324 2017-06-14: Enh. #415
-		toolbar = newToolBar("Find & Replace");
+		toolbar = newToolBar("Find & Replace", false);
 		
 		// find & replace
 		toolbar.add(btnFindReplace);
@@ -615,7 +623,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnFindReplace.addActionListener(new ActionListener() {	public void actionPerformed(ActionEvent arg0) { diagram.findAndReplaceNSD(); } });
 		// END KGU#324 2017-06-14
 		
-		toolbar = newToolBar("Copy, cut, paste");
+		toolbar = newToolBar("Copy, cut, paste", true);
 
 		// copy & paste
 		//toolbar.addSeparator();
@@ -629,7 +637,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnPaste.setFocusable(false);
 		btnPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
 		
-		toolbar = newToolBar("Edit, delete, move");
+		toolbar = newToolBar("Edit, delete, move", true);
 
 		// editing
 		//toolbar.addSeparator();
@@ -646,17 +654,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnMoveDown.setFocusable(false);
 		btnMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
 		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
-        toolbar.add(btnTransmute);
+        toolbar.add(btnTransmute, false);
         btnTransmute.setFocusable(false);
 		btnTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } ); 
 		// END KGU#199 2016-07-06
 		// START KGU#365 2017-03-27: Enh. #380 - We allow subroutine generation
-        toolbar.add(btnOutsource);
+        toolbar.add(btnOutsource, false);
         btnOutsource.setFocusable(false);
 		btnOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } ); 
 		// END KGU#199 2016-07-06
 		
-		toolbar = newToolBar("Method, program");
+		toolbar = newToolBar("Method, program", false);
 
 		// style
 		//toolbar.addSeparator();
@@ -672,14 +680,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
 	    // END KGU#376 2017-05-16
 
-		toolbar = newToolBar("Nice");
+		toolbar = newToolBar("Nice", false);
 		
 		//toolbar.addSeparator();
         toolbar.add(btnNice);
 		btnNice.setFocusable(false);
 		btnNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(btnNice.isSelected()); doButtons(); } } );
 		
-		toolbar = newToolBar("Add before ...");
+		toolbar = newToolBar("Add before ...", false);
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
 		
@@ -703,20 +711,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnBeforeRepeat);
 		btnBeforeRepeat.setFocusable(false);
 		btnBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
-        toolbar.add(btnBeforeForever);
+        toolbar.add(btnBeforeForever, false);
 		btnBeforeForever.setFocusable(false);
 		btnBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
         toolbar.add(btnBeforeCall);
 		btnBeforeCall.setFocusable(false);
 		btnBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
-        toolbar.add(btnBeforeJump);
+        toolbar.add(btnBeforeJump, false);
 		btnBeforeJump.setFocusable(false);
 		btnBeforeJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",false); doButtons(); } } );
-        toolbar.add(btnBeforePara);
+        toolbar.add(btnBeforePara, false);
 		btnBeforePara.setFocusable(false);
 		btnBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
 
-		toolbar = newToolBar("Add after ...");
+		toolbar = newToolBar("Add after ...", true);
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
 
@@ -740,20 +748,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnAfterRepeat);
 		btnAfterRepeat.setFocusable(false);
 		btnAfterRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,true); doButtons(); } } );
-        toolbar.add(btnAfterForever);
+        toolbar.add(btnAfterForever, false);
 		btnAfterForever.setFocusable(false);
 		btnAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",true); doButtons(); } } );
         toolbar.add(btnAfterCall);
 		btnAfterCall.setFocusable(false);
 		btnAfterCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",true); doButtons(); } } );
-        toolbar.add(btnAfterJump);
+        toolbar.add(btnAfterJump, false);
 		btnAfterJump.setFocusable(false);
 		btnAfterJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",true); doButtons(); } } );
-        toolbar.add(btnAfterPara);
+        toolbar.add(btnAfterPara, false);
 		btnAfterPara.setFocusable(false);
 		btnAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
 		
-		toolbar = newToolBar("Colors ...");
+		toolbar = newToolBar("Colors ...", false);
 
 		// Colors
 		//toolbar.addSeparator();
@@ -789,7 +797,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnColor9.setFocusable(false);
 
 		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
-		toolbar = newToolBar("Collapsing");
+		toolbar = newToolBar("Collapsing", false);
 
 		// Collapse & Expand
 		//toolbar.addSeparator();
@@ -806,7 +814,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 //		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
 		// END KGU#123 2016-01-04
 
-		toolbar = newToolBar("Debug");
+		toolbar = newToolBar("Debug", true);
 
 		// Turtle
 		//toolbar.addSeparator();
@@ -816,16 +824,16 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnMake);
 		btnMake.setFocusable(false);
 		btnMake.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goRun(); } } );
-        toolbar.add(btnDropBrk);
+        toolbar.add(btnDropBrk, false);
 		btnDropBrk.setFocusable(false);
 		btnDropBrk.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
 		// START KGU#310 2016-12-14: Moved hitherto from toolbar "Collapsing"
-        toolbar.add(btnDisable);
+        toolbar.add(btnDisable, false);
 		btnDisable.setFocusable(false);
 		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
 		// END KGU#310 2016-12-14
 
-		toolbar = newToolBar("Font ...");
+		toolbar = newToolBar("Font ...", true);
 
 		// Font
 		//toolbar.addSeparator();
@@ -836,7 +844,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnFontDown.setFocusable(false);
 		btnFontDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontDownNSD(); doButtons(); } } );
 		
-		toolbar = newToolBar("About, help");
+		toolbar = newToolBar("About, help", true);
 
 		// About
 		//toolbar.addSeparator();
