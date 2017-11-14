@@ -141,6 +141,20 @@ public class Parser {
     private void consumeBuffer(int count) {
         if (count > 0 && count <= lookaheadBuffer.length()) {
             // Adjust position
+        	// START SSO 2017-06-26 - line counts were wrong
+            //for (int i = 0; i < count; i++) {
+            //    char c = lookaheadBuffer.charAt(i);
+            //    if (c == 0x0A) {
+            //        if (sysPosition.getColumn() > 1) {
+            //            // Increment row if Unix EOLN (LF)
+            //            sysPosition.incrementLine();
+            //        }
+            //    } else if (c == 0x0D) {
+            //        sysPosition.incrementLine();
+            //    } else {
+            //        sysPosition.incrementColumn();
+            //    }
+            //}
             int lines = 0, columns = 0;
             for (int i = 0; i < count; i++) {
                 char c = lookaheadBuffer.charAt(i);
@@ -165,6 +179,7 @@ public class Parser {
             } else {
                 sysPosition.incrementColumn(columns);
             }
+            // END SSO 2017-06-26
             
             // Remove the characters
             lookaheadBuffer.delete(0, count);

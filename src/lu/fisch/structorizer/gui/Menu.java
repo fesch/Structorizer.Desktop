@@ -81,7 +81,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added
  *      Kay Gürtzig     2017.05.21      Enh. #372: New menu entry and accelerator for AttribeInspector
  *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
- *      Kay Gürtzig     2017.11.05      Enh. #452: Preference reduced mode introduced
+ *      Kay Gürtzig     2017.11.05      Enh. #452: Preference "simplified toolbars" introduced
+ *      Kay Gürtzig     2017.11.09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
  *
  ******************************************************************************************************
  *
@@ -805,7 +806,10 @@ public class Menu extends LangMenuBar implements NSDController
 		if(!System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
 			menuEdit.add(menuEditCopyDiagramEMF);
-			menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+			// START KGU#324 2017-11-09: Enh. #415 Ctrl-F now needed for Find & Replace
+			//menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+			menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, (java.awt.event.InputEvent.SHIFT_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+			// END KGU#324 2017-11-09
 			menuEditCopyDiagramEMF.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardEMF(); doButtons(); } } );
 		}
 

@@ -156,7 +156,9 @@ public class CGT {
      * Closes the inputstream being processed
      */
     public void close() {
+        // START SSO 2017-06-26
         if (is != null) {
+        // END SSO 2017-06-26
            try {
                is.close();
            } catch (Throwable t) {
@@ -164,7 +166,9 @@ public class CGT {
            }
            
            is = null;
+        // START SSO 2017-06-26
         }
+        // END SSO 2017-06-26
         eofReached = true;
     }
     

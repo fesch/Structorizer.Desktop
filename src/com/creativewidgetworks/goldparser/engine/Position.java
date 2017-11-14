@@ -36,6 +36,7 @@ public class Position {
         this.column++;
     }
 
+    // START SSO 2017-06-26 - Added as convenience for Parser.consumeBuffer(int) fix
     /** increment current position by given lines, reset column to 1 */
     public void incrementLine(int lines) {
         this.line += lines;
@@ -46,6 +47,7 @@ public class Position {
     public void incrementColumn(int columns) {
         this.column += columns;
     }
+    // END SSO 2017-06-26
     
     public void set(Position newPosition) {
         if (newPosition != null) {
