@@ -315,6 +315,7 @@ public class AnalyserPreferences extends LangDialog {
 		okButton.addActionListener(actionListener);
 	}
 	
+	// START KGU#456 2017-11-04 Enh. #452
 	/**
 	 * Retrieves the tab caption and the current description of check number {@code checkNo} from
 	 * the current locale if possible and returns them as String array in element 0 and 1, respectively. 
@@ -353,5 +354,16 @@ public class AnalyserPreferences extends LangDialog {
 		}
 		return captions;
 	}
+	// END KGU#456 2017-11-04
+	
+	// START KGU#456 2017-11-14: Enh. #452
+	/**
+	 * @return the didactically sorted array of check numbers representing guide tours
+	 */
+	public static int[] getOrderedGuideCodes()
+	{
+		return checkboxTabs.get("Hints / Tutoring").clone();
+	}
+	// END KGU#456 2017-11-14
 	
 }

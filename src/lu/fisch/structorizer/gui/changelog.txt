@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-03 (2017.11.14)
+Current development version 3.27-03 (2017.11.16)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -23,8 +23,8 @@ Current development version 3.27-03 (2017.11.14)
 - 02: Enh. #456: Print preview now allows to customize orientation and margins <2>
 - 02: Issue #455: Startup races and mis-drawing of initial diagrams reduced <2>
 - 03: Enh. #415: New accelerator key Ctrl-Shift-d for "copy EMF image" <2>
-- 03: Enh. #452: Typos in English messages for new user guides corrected <2>
-- 03: Bugfix #465: Arranger couldn't open Structorizer sub-instances anymore <2>  
+- 03: Enh. #452: Guide tours slightly improved, typos corrected [Rolf Schmidt]2
+- 03: Bugfix #465: Arranger couldn't open Structorizer sub-instances anymore <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

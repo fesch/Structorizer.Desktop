@@ -1870,7 +1870,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//return saveNSD(this.root, _askToSave);
 		boolean needsSave =  !root.isEmpty() && root.hasChanged();
 		if (saveNSD(this.root, _askToSave)) {
-			if (needsSave && Root.advanceTutorialState(26, root)) {
+			if (needsSave && root.advanceTutorialState(26, root)) {
 				analyse();
 			}
 			return true;
@@ -3826,7 +3826,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             
 			if(file.exists())
 			{
-				int response = JOptionPane.showConfirmDialog (null,
+				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
 						Menu.msgOverwriteFiles.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
@@ -3932,7 +3932,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		// END KGU#183 2016-04-24
 		// START KGU#456 2017-11-05: Enh. #452
-		if (Root.advanceTutorialState(26, root)) {
+		if (root.advanceTutorialState(26, root)) {
 			analyse();
 		}
 		// END KGU#456 2017-11-05
@@ -4038,7 +4038,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		// END KGU#183 2016-04-24
 		// START KGU#456 2017-11-05: Enh. #452
-		if (Root.advanceTutorialState(26, root)) {
+		if (root.advanceTutorialState(26, root)) {
 			analyse();
 		}
 		// END KGU#456 2017-11-05
@@ -4105,7 +4105,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(file.exists())
 			{
-				int response = JOptionPane.showConfirmDialog (null,
+				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
 						Menu.msgOverwriteFile.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
@@ -4144,7 +4144,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		// END KGU#183 2016-04-24
 		// START KGU#456 2017-11-05: Enh. #452
-		if (Root.advanceTutorialState(26, root)) {
+		if (root.advanceTutorialState(26, root)) {
 			analyse();
 		}
 		// END KGU#456 2017-11-05
@@ -4211,7 +4211,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(file.exists())
 			{
-				int response = JOptionPane.showConfirmDialog (null,
+				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
 						Menu.msgOverwriteFile.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
@@ -4271,7 +4271,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		// END KGU#183 2016-04-24
 		// START KGU#456 2017-11-05: Enh. #452
-		if (Root.advanceTutorialState(26, root)) {
+		if (root.advanceTutorialState(26, root)) {
 			analyse();
 		}
 		// END KGU#456 2017-11-05
@@ -4338,7 +4338,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(file.exists())
 			{
-				int response = JOptionPane.showConfirmDialog (null,
+				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
 						Menu.msgOverwriteFile.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
@@ -4377,7 +4377,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		// END KGU#183 2016-04-24
 		// START KGU#456 2017-11-05: Enh. #452
-		if (Root.advanceTutorialState(26, root)) {
+		if (root.advanceTutorialState(26, root)) {
 			analyse();
 		}
 		// END KGU#456 2017-11-05
@@ -4444,7 +4444,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(file.exists())
 			{
-				int response = JOptionPane.showConfirmDialog (null,
+				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
 						Menu.msgOverwriteFile.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
@@ -4483,7 +4483,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		// END KGU#183 2016-04-24
 		// START KGU#456 2017-11-05: Enh. #452
-		if (Root.advanceTutorialState(26, root)) {
+		if (root.advanceTutorialState(26, root)) {
 			analyse();
 		}
 		// END KGU#456 2017-11-05
@@ -4814,7 +4814,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//JOptionPane.showOptionDialog(null,d7.error,
 					//							 "Parser Error",
 					//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-					JOptionPane.showMessageDialog(null, parser.error,
+					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+							parser.error,
 							Menu.msgTitleParserError.getText(),
 							JOptionPane.ERROR_MESSAGE, null);
 					// END KGU 2016-01-11
@@ -4964,7 +4965,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							NSDControl.getFrame());
 			// END KGU 2017-04-26
 			// START KGU#456 2017-11-05: Enh. #452
-			if (Root.advanceTutorialState(26, root)) {
+			if (root.advanceTutorialState(26, root)) {
 				analyse();
 			}
 			// END KGU#456 2017-11-05
@@ -5806,6 +5807,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			analyserPreferences.checkboxes[i].setSelected(Root.check(i));
 		}
 		// END KGU#239 2016-08-12
+		// START KGU#459 2017-11-15: Enh. #459-1
+		boolean hadActiveTutorials = false;
+		for (int code: AnalyserPreferences.getOrderedGuideCodes()) {
+			if (hadActiveTutorials = Root.check(code)) {
+				break;
+			}
+		}
+		// END KGU#459 2017-11-15
 
 		analyserPreferences.pack();
 		analyserPreferences.setVisible(true);
@@ -5824,6 +5833,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// save fields to ini-file
 			Root.saveToINI();
 
+			// START KGU#456/KGU#459 2017-11-15: Enh. #452, #459-1
+			updateTutorialQueues();
+			if (!hadActiveTutorials) {
+				for (int code: AnalyserPreferences.getOrderedGuideCodes()) {
+					if (Root.check(code)) {
+						showTutorialHint();
+						break;
+					}
+				}
+			}
+			// END KGU#456 2017-11-15
 			// re-analyse
 			root.getVarNames();
 			analyse();
@@ -5832,7 +5852,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#393 2017-05-09		
 	}
 
-    public void exportOptions()
+	// START KGU#456 2017-11-15: Enh. #452
+    protected void updateTutorialQueues() {
+    	int[] guideCodes = AnalyserPreferences.getOrderedGuideCodes();
+    	root.updateTutorialQueue(guideCodes);
+    	if (Arranger.hasInstance()) {
+    		for (Root aRoot: Arranger.getInstance().getAllRoots()) {
+    			aRoot.updateTutorialQueue(guideCodes);
+    		}
+    	}
+	}
+    // END KGU#456 2017-11-15
+
+	public void exportOptions()
     {
         try
         {
@@ -6903,7 +6935,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     executor.execute(this.root);
                 }
     	 */
-    	if (Root.advanceTutorialState(26, this.root)) {
+    	if (root.advanceTutorialState(26, this.root)) {
     		analyse();
     	}
     }
@@ -7278,9 +7310,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.E_REDUCED_TOOLBARS = _simplified;
 			for (MyToolbar toolbar: toolbars) {
 				if (expertToolbars.contains(toolbar)) {
+					// The toolbar is to be hidden completely
 					toolbar.setVisible(!_simplified);
 				}
 				else {
+					// Some speed buttons of the toolbar may have to be hidden
 					toolbar.setExpertVisibility(!_simplified);
 				}
 			}
@@ -7296,5 +7330,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		analyse();
 	}
+
+	// START KGU#459 2017-11-14: Enh. #459-1
+	public void showTutorialHint() {
+		JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+				Menu.msgGuidedTours.getText(),
+				Menu.ttlGuidedTours.getText(),
+				JOptionPane.INFORMATION_MESSAGE,
+				IconLoader.getIconImage(getClass().getResource("icons/AnalyserHint.png")));
+		analyse();
+		repaint();
+	}
+	// END KGU#459 2017-11-14
 
 }
