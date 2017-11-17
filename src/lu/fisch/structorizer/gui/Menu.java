@@ -81,7 +81,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added
  *      Kay Gürtzig     2017.05.21      Enh. #372: New menu entry and accelerator for AttribeInspector
  *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
- *      Kay Gürtzig     2017.11.05      Enh. #452: Preference reduced mode introduced
+ *      Kay Gürtzig     2017.11.05      Enh. #452: Preference "simplified toolbars" introduced
+ *      Kay Gürtzig     2017.11.09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
  *
  ******************************************************************************************************
  *
@@ -437,8 +438,8 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#388 2017-09-13
 	// START KGU#456 2017-11-04: Enh. #452 - Be more helpful to newbees
 	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «% x»");
-	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «% var_name»");
-	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «% result_value»");
+	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «% x»");
+	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «% y»");
 	public static final LangTextHolder hint25_4 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an Instruction.");
 	public static final LangTextHolder hint25_5 = new LangTextHolder("Select the diagram centre and place e.g. an Instruction element with a type or constant definition.");
 	public static final LangTextHolder hint25_6 = new LangTextHolder("You might want to place some processing instruction like «%» between input and output.");
@@ -450,6 +451,10 @@ public class Menu extends LangMenuBar implements NSDController
 			new LangTextHolder("Now you may e.g. export your diagram as graphics file → Menu \"%1 > %2 > %3\"")
 	};
 	// END KGU#456 2017-11-01
+	// START KGU#459 2017-11-14: Enh. #459
+	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list).");
+	public static final LangTextHolder ttlGuidedTours = new LangTextHolder("Guided Tours");
+	// END KGU#459 2017-11-14
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
@@ -805,7 +810,10 @@ public class Menu extends LangMenuBar implements NSDController
 		if(!System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
 			menuEdit.add(menuEditCopyDiagramEMF);
-			menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+			// START KGU#324 2017-11-09: Enh. #415 Ctrl-F now needed for Find & Replace
+			//menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+			menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, (java.awt.event.InputEvent.SHIFT_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+			// END KGU#324 2017-11-09
 			menuEditCopyDiagramEMF.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardEMF(); doButtons(); } } );
 		}
 

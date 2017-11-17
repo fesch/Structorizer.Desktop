@@ -64,10 +64,15 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.10.06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
  *      Kay Gürtzig     2017.11.05      Issue #452: Differentiated initial setting for Analyser preferences
  *      Kay Gürtzig     2017.11.06      Issue #455: Drastic measures against races on startup.
+ *      Kay Gürtzig     2017.11.14      Bugfix #465: invokeAndWait must be suppressed if not standalone
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      2017.11.06 Drastic measures against races on start
+ *      - If opened stand-alone (i.e. unless being opened from Arranger), races on startup of caused lots
+ *        of NullPointerExceptions in the background and a diagram initially to be loaded looking contorted
+ *        and bizarrely prolonged. So the steps on creation where put in invokeAndWait blocks.
  *      2015.11.14 New approach to solve the Window Closing problem (Kay Gürtzig, #6 = KGU#49 / #16 = KGU#66)
  *      - A new boolean field isStandalone (addressed by a new parameterized constructor) is introduced in
  *        order to decide whether to exit or only to dispose on Window Closing event. So if the Mainform is
@@ -129,10 +134,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	private static int instanceCount = 0;
 	private int instanceNo;
 	// END KGU#326 #2017-01-07
-    // START KGU#456 2017-11-05: Enh. #452
+	// START KGU#456 2017-11-05: Enh. #452
 	/** Indicates whether Structorizer may have been started the first time */
-    boolean isNew = false;
-    // END KGU#456 2017-11-05
+	boolean isNew = false;
+	// END KGU#456 2017-11-05
 		
 	/******************************
  	 * Setup the Mainform
@@ -141,7 +146,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	{
             // START KGU#456 2017-11-05: Enh. #452
             //Ini.getInstance();
-	        isNew = Ini.getInstance().wasFirstStart();
+            isNew = Ini.getInstance().wasFirstStart();
             // END KGU#456 2017-11-05
             /*
             try {
@@ -198,17 +203,23 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Setup the editor
              ******************************/
             //System.out.println("* Setup the editor ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			editor = new Editor(Mainform.this);
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				editor = new Editor(Mainform.this);
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	// Already in an event dispatcher thread
+            	editor = new Editor(Mainform.this);
             }
             //System.out.println("* editor done.");
             // get reference to the diagram
@@ -221,18 +232,23 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Setup the menu
              ******************************/
             //System.out.println("* Setup the menu ...");
-            try {
-				EventQueue.invokeAndWait(new Runnable() {
-					@Override
-					public void run() {
-						menu = new Menu(diagram, Mainform.this);
-					}
-				});
-			} catch (InvocationTargetException e1) {
-				e1.printStackTrace();
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				menu = new Menu(diagram, Mainform.this);
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	menu = new Menu(diagram, Mainform.this);
+            }
             //System.out.println("* menu done.");
             setJMenuBar(menu);		
 
@@ -240,17 +256,22 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Update the buttons and menu
              ******************************/
             //System.out.println("* Update the buttons and menu ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			doButtons();
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				doButtons();
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	doButtons();
             }
             //System.out.println("* Buttons and menu done.");
 
@@ -341,47 +362,62 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              ******************************/
             //editor.componentResized(null);
             //System.out.println("* Revalidate editor ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			getEditor().revalidate();
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				getEditor().revalidate();
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	getEditor().revalidate();
             }
             //System.out.println("* Repaint ...");
             repaint();
             //System.out.println("* Redraw ...");
             //System.out.println("* Revalidate editor ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			diagram.setInitialized();
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				diagram.setInitialized();
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	diagram.setInitialized();
             }
             // START KGU#305 2016-12-16
             //System.out.println("* Update Arranger index ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			getEditor().updateArrangerIndex(Arranger.getSortedRoots());
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	getEditor().updateArrangerIndex(Arranger.getSortedRoots());
             }
             //System.out.println("* Arranger index done.");
             // END KGU#305 2016-12-16
@@ -900,9 +936,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     }
     // END KGU#278 2016-10-11
     
-    // START KGU#300 2016-12-02: Enh. #300
+    // START KGU#300 2016-12-02: Enh. #300 (KGU#456 2017-11-06: renamed for enh. #452)
     public void popupWelcomePane()
     {
+    	// START KGU#456 2017-11-06: Enh. #452
+    	//if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
     	if (this.isNew) {
     		int chosen = JOptionPane.showOptionDialog(this,
 					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
@@ -912,8 +950,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
 			if (chosen == JOptionPane.OK_OPTION) {
 				Root.setCheck(26, true);
+				Root.setCheck(25, true);
 				if (diagram != null) {
 					diagram.setSimplifiedGUI(true);
+					// START KGU#459 2017-11-14: Enh. #459-1
+					diagram.updateTutorialQueues();
+					diagram.getRoot().startNextTutorial();
+					diagram.showTutorialHint();
+					// END KGU#459 2017-11-14
 				}
 				else {
 					// The essence of diagram.setSimplifiedGUI() but without immediate visibility switch
@@ -922,6 +966,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
     	}
     	else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
+    	// END KGU#456 2017-11-06
     		if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
     			int chosen = JOptionPane.showOptionDialog(this,
     					Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),

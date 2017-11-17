@@ -75,6 +75,7 @@ package lu.fisch.structorizer.parsers;
  *                                      loop condition transformation
  *      Kay Gürtzig     2017.10.22      File status assignments added according to the proposal of Simon Sobisch
  *      Kay Gürtzig     2017.10.26      File maps moved to CobProg to avoid name clashes
+ *      Kay Gürtzig     2017.10.31      Bugfix #445: Face empty sections / paragraphs on refactoring
  *
  ******************************************************************************************************
  *
@@ -8274,10 +8275,10 @@ public class COBOLParser extends CodeParser
 		for (SectionOrParagraph sop: this.procedureList) {
 			// START KGU#452 2017-10-30: Bugfix #445 - There may be empty sections or paragraphs
 			if (sop.firstElement == null) {
-				// We can't do here anything
+				// We can't do anything here
 				continue;
 			}
-			// END KGU#453 2017-10-30
+			// END KGU#452 2017-10-30
 			int i = 0;
 			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
 				int ix = (i == 0 ? sop.startsAt : sop.endsBefore - 1);

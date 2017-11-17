@@ -141,8 +141,10 @@ package lu.fisch.structorizer.elements;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Stack;
@@ -468,34 +470,95 @@ public class Root extends Element {
 		if (checkNo >= 1 && checkNo <= analyserChecks.length)
 		{
 			analyserChecks[checkNo-1] = enable;
-			tutorialStates.remove(checkNo);
 		}
 	}
 	// END KGU#239 2016-08-12
 	// START KGU#456 2017-11-05: Issue #452
 	/** Current state of analyser guides */
-	private static final HashMap<Integer,Integer> tutorialStates = new HashMap<Integer, Integer>();
-	public static int getTutorialState(int checkNo) {
+	private Queue<Integer> tutorialQueue = new LinkedList<Integer>();
+	/**
+	 * Step number of the current tutorial (-1 = not begun)
+	 * @see #getTutorialState(int)
+	 * @see #startNextTutorial()
+	 * @see #advanceTutorialState(int, Root)
+	 */
+	private int tutorialState = -1;
+	public int getCurrentTutorial()
+	{
+		Integer checkNo = tutorialQueue.peek();
+		while (checkNo != null && !check(checkNo)) {
+			tutorialQueue.remove();
+			checkNo = tutorialQueue.peek();
+		}
+		if (checkNo == null) {
+			checkNo = -1;
+		}
+		return checkNo;
+	}
+	public int getTutorialState(int checkNo) {
 		int state = -1;
-		if (check(checkNo) && tutorialStates.containsKey(checkNo)) {
-			state = tutorialStates.get(checkNo);
+		if (check(checkNo) && tutorialQueue.peek() == checkNo) {
+			state = tutorialState;
 		}
 		return state;
 	}
-	public static boolean startTutorial(int checkNo)
+	/**
+	 * Review the {@code tutorialQueue} according to the given ordered array
+	 * of available tutorial numbers.
+	 * @param tutorials - numbers of available tutorials in didactic order
+	 */
+	public void updateTutorialQueue(int[] tutorials)
 	{
-		if (check(checkNo)) {
-			tutorialStates.put(checkNo, 0);
+		// First check whether the first guide in the queue has begun and is still valid
+		Integer started = tutorialQueue.poll();
+		if (started != null && (!check(started) || tutorialState < 0)) {
+			// obsolete, so drop it
+			started = null;
 		}
-		return check(checkNo);
+		tutorialQueue.clear();
+		if (started != null) {
+			// Re-insert the started guide
+			tutorialQueue.add(started);
+		}
+		else {
+			started = -1;
+			tutorialState = -1;
+		}
+		// Now add all currently activated tutorials
+		for (int guideCode : tutorials) {
+			if (guideCode != started && check(guideCode)) {
+				tutorialQueue.add(guideCode);
+			}
+		}
 	}
-	public static boolean advanceTutorialState(int checkNo, Root root)
+	/**
+	 * Starts the next tutorial in the queue that is not disabled (disabled
+	 * tutorial numbers will be dropped from the queue)
+	 * @return - the number of the started tutorial
+	 */
+	public int startNextTutorial()
 	{
-		Integer prevStep = tutorialStates.get(checkNo);
-		if (prevStep != null &&
-				(root == null && check(checkNo) ||
-				root != null && root.isTutorialReadyForStep(checkNo, prevStep+1))) {
-			tutorialStates.put(checkNo,  prevStep + 1);
+		Integer checkNo = null;
+		while ((checkNo = tutorialQueue.peek()) != null && !check(checkNo)) {
+			tutorialQueue.remove();
+		}
+		if (checkNo != null) {
+			tutorialState = 0;
+		}
+		else {
+			checkNo = -1;
+			tutorialState = -1;
+		}
+		return checkNo;
+	}
+	public boolean advanceTutorialState(int checkNo, Root root)
+	{
+		if (!check(checkNo) || tutorialQueue.isEmpty() || tutorialQueue.peek() != checkNo) {
+			return false;
+		}
+		if	(root == null ||
+				root != null && root.isTutorialReadyForStep(checkNo, tutorialState+1)) {
+			tutorialState++;
 			return true;
 		}
 		return false;
@@ -4034,23 +4097,22 @@ public class Root extends Element {
 
 	}
 	
+	// START KGU#456 2017-11-06: Enh. #452
 	/**
-	 * Reports the active guides and performs the specified checks and steps
+	 * Reports the active guide and performs the specified checks and steps
 	 * @param _errors - global error list to be appended to
 	 */
 	private void analyseGuides(Vector<DetectedError> _errors)
 	{
-		final int[] guideCodes = {25, 26};
 		final String[] menuPath = Menu.getLocalizedMenuPath(
 				new String[]{"menuPreferences", "menuPreferencesAnalyser"},
 				new String[]{"Preferences", "Analyser ..."});
-		for (int code: guideCodes) {
-			if (check(code)) {
-				String[] analyserCaptions = AnalyserPreferences.getCheckTabAndDescription(code);
-				StringList strings = new StringList(menuPath);
-				strings.add(new StringList(analyserCaptions));
-				addError(_errors, new DetectedError(errorMsg(Menu.warning_2, strings.toArray()), null), 0);
-			}
+		int code = getCurrentTutorial();
+		if (code >= 0) {
+			String[] analyserCaptions = AnalyserPreferences.getCheckTabAndDescription(code);
+			StringList strings = new StringList(menuPath);
+			strings.add(new StringList(analyserCaptions));
+			addError(_errors, new DetectedError(errorMsg(Menu.warning_2, strings.toArray()), null), 0);
 			// Define the actual guide actions here 
 			switch (code) {
 			case 25:
@@ -4062,6 +4124,7 @@ public class Root extends Element {
 			}
 		}
 	}
+	// END KGU#456 2017-11-06
 	
 	// START KGU#456 2017-11-04: Enh. #452 - charm initiative
 	/**
@@ -4089,14 +4152,17 @@ public class Root extends Element {
 
 			@Override
 			public boolean visitPreOrder(Element _ele) {
-				if (_ele instanceof Instruction && ((Instruction)_ele).isInput()) {
-					m_flags[0] = true;
-				}
-				if (_ele instanceof Instruction && ((Instruction)_ele).isOutput()) {
-					m_flags[1] = true;
-				}
-				else {
-					m_flags[2] = true;
+				if (_ele instanceof Instruction) {
+					Instruction instr = (Instruction)_ele;
+					if (instr.isInput()) {
+						m_flags[0] = true;
+					}
+					else if (instr.isOutput()) {
+						m_flags[1] = true;
+					}
+					else if (instr.isAssignment()) {
+						m_flags[2] = true;
+					}
 				}
 				// Go on unless elements of all kinds are found
 				return !m_flags[0] || !m_flags[1] || !m_flags[2];
@@ -4109,7 +4175,7 @@ public class Root extends Element {
 			}
 			
 		}
-		if (check(25) && this.isProgram() && children.getSize() > 0) {
+		if (this.isProgram() && children.getSize() > 0) {
 			final boolean[] hasIO = {false, false, false};
 			this.traverse(new detectorIO(hasIO));
 			if (!hasIO[0]) {
@@ -4121,6 +4187,14 @@ public class Root extends Element {
 			else if (!hasIO[2]) {
 				addError(_errors, new DetectedError(errorMsg(Menu.hint25_6, "y <- 15.5 * x + 7.9"), this), 25);    						    																
 			}
+			else {
+				setCheck(25, false);
+				startNextTutorial();
+			}
+		}
+		else {
+			setCheck(25, false);
+			startNextTutorial();
 		}
 	}
 	
@@ -4153,9 +4227,7 @@ public class Root extends Element {
 			}
 			else {
 				setCheck(26, false);
-				if (Element.E_REDUCED_TOOLBARS) {
-					setCheck(25, true);
-				}
+				startNextTutorial();
 			}
 		}
 		
@@ -4177,10 +4249,10 @@ public class Root extends Element {
 			return false;
 		}
 		switch (_checkNo) {
-		case 26:
+		case 26:	// hello world tour 
 		{
 			Element elem = null;
-			isOk = children.getSize() == 1 && (elem = children.getElement(0)) instanceof Instruction && ((Instruction)elem).isOutput();
+			isOk = _step == 0 || children.getSize() == 1 && (elem = children.getElement(0)) instanceof Instruction && ((Instruction)elem).isOutput();
 		}
 			break;
 			// default is always false
@@ -4608,21 +4680,20 @@ public class Root extends Element {
         // START KGU#456 2017-11-04: Enh. #452 - charm initiative
         else if (this.children.getSize() == 0) {
         	String text = null;
-        	if (check(26)) {
+        	int tutorialCode = getCurrentTutorial();
+        	switch (tutorialCode) {
+        	case 26: // hello world tour 
         		text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
-        		addError(errors, new DetectedError(text, this), 26);
-        		if (getTutorialState(26) < 0) {
-        			startTutorial(26);
-        		}
-        	}
-        	else if (check(25)) {
+        		addError(errors, new DetectedError(text, this.children), 26);
+        		break;
+        	case 25: // first IPO guide 
         		switch (this.diagrType) {
         		case DT_INCL:
         			text = errorMsg(Menu.hint25_5, "");
         			break;
         		case DT_MAIN:
         			text = errorMsg(Menu.hint25_1, CodeParser.getKeyword("input"));
-        			startTutorial(25);
+        			startNextTutorial();
         			break;
         		case DT_SUB:
         			text = errorMsg(Menu.hint25_4, "");
@@ -4631,8 +4702,9 @@ public class Root extends Element {
         			break;
         		}
         		if (text != null) {
-            		addError(errors, new DetectedError(text, this), 25);
+            		addError(errors, new DetectedError(text, this.children), 25);
         		}
+        		break;
         	}
         }
         
