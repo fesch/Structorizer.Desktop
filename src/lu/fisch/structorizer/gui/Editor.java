@@ -55,7 +55,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
  *      Kay Gürtzig     2017.03.28      Enh. #387: New "Save All" button
  *      Kay Gürtzig     2017.05.16      Enh. #389: Button for third diagram type (includable)
- *      Kay Gürtzig     2017.06.15      Enh. #415: Toolbar additions for find & replace
+ *      Kay Gürtzig     2017.06.15      Enh. #415, #199: Toolbar additions for find & replace as well as help
+ *      Kay Gürtzig     2017.11.05      Issue #452: Mechanisms for simplified toolbar (beginners' mode)
+ *      Kay Gürtzig     2017.11.19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button   
  *
  ******************************************************************************************************
  *
@@ -182,17 +184,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// font
     protected final JButton btnFontUp = new JButton(IconLoader.ico033); 
     protected final JButton btnFontDown = new JButton(IconLoader.ico034);
-	// copyright 
+	// copyright / help
     protected final JButton btnAbout = new JButton(IconLoader.ico017);
+	// START KGU#414 2017-06-14: Enh. #199
+	protected final JButton btnHelp = new JButton(IconLoader.ico110);
+	// END KGU#414 2017-06-14
     // executing / testing
     protected final JButton btnMake = new JButton(IconLoader.ico004);
     protected final JButton btnTurtle = new JButton(IconLoader.turtle);
     // START KGU 2015-10-12: Breakpoint wiping
     protected final JButton btnDropBrk = new JButton(IconLoader.ico104);
     // END KGU 2015-10-12
-	// START KGU#414 2017-06-14: Enh. #199
-	protected final JButton btnHelp = new JButton(IconLoader.ico110);
-	// END KGU#414 2017-06-14
 	// colors
     protected ColorButton btnColor0 = new ColorButton(Element.color0);
     protected ColorButton btnColor1 = new ColorButton(Element.color1);
@@ -854,7 +856,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#414 2017-06-14: Enh. #199
 		toolbar.add(btnHelp);
 		btnHelp.setFocusable(false);
-		btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.helpNSD(); } } );
+		// START KGU#462 2017-11-19: Issues #199, #468
+		//btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.helpNSD(); } } );
+		btnHelp.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.helpNSD(); } } );
+		// END KGU#462 2017-11-19
 		// END KGU#414 2017-06-14
 
 		sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
