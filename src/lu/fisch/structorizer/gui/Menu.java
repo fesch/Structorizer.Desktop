@@ -83,6 +83,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
  *      Kay Gürtzig     2017.11.05      Enh. #452: Preference "simplified toolbars" introduced
  *      Kay Gürtzig     2017.11.09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
+ *      Kay Gürtzig     2017.11.20      Enh. #452/#459: Revisions for guided tours, enh. #469: Accelerators for debug menu
  *
  ******************************************************************************************************
  *
@@ -327,10 +328,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#239 2016-08-12
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
-	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu \"%1 > %2\".");
+	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu \"%1 ► %2\".");
 	// END KGU#220 2016-07-27
 	// START KGU#456 2017-11-05: Enh. #452
-	public static final LangTextHolder warning_2 = new LangTextHolder("NOTE: «%4» is active. To switch it off → Menu \"%1 > %2 > %3\".");	
+	public static final LangTextHolder warning_2 = new LangTextHolder("NOTE: «%4» is active. To switch it off → Menu \"%1 ► %2 ► %3\".");	
 	// END KGU#456 2017-11-05
 	public static final LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
 	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
@@ -438,21 +439,23 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#388 2017-09-13
 	// START KGU#456 2017-11-04: Enh. #452 - Be more helpful to newbees
 	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «% x»");
-	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «% x»");
-	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «% y»");
+	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «%1 x». → Menu \"%2\"");
+	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «%1 y». → Menu \"%2\"");
 	public static final LangTextHolder hint25_4 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an Instruction.");
 	public static final LangTextHolder hint25_5 = new LangTextHolder("Select the diagram centre and place e.g. an Instruction element with a type or constant definition.");
-	public static final LangTextHolder hint25_6 = new LangTextHolder("You might want to place some processing instruction like «%» between input and output.");
+	public static final LangTextHolder hint25_6 = new LangTextHolder("You might want to place some processing instruction like «%1» between input and output. → Menu \"%2\"");
 	public static final LangTextHolder[] hint26 = {
 			new LangTextHolder("Select the diagram centre, double-click, press Enter or F5, and put in the instruction text «% \"Hello world!\"»"),
-			new LangTextHolder("Now you may e.g. test your diagram → Menu \"%1 > %2\"."),
-			new LangTextHolder("Now you may e.g. save your diagram → Menu \"%1 > %2\""),
-			new LangTextHolder("Now you may e.g. export your diagram to some programming language → Menu \"%1 > %2 > %3\""),
-			new LangTextHolder("Now you may e.g. export your diagram as graphics file → Menu \"%1 > %2 > %3\"")
+			new LangTextHolder("Now you may e.g. test your diagram: → Menu \"%1 ► %2\""),
+			new LangTextHolder("Now you may e.g. save your diagram: → Menu \"%1 ► %2\""),
+			new LangTextHolder("Now you may e.g. export your diagram to some programming language: → Menu \"%1 ► %2 ► %3\""),
+			new LangTextHolder("Now you may e.g. export your diagram as graphics file: → Menu \"%1 ► %2 ► %3\"")
 	};
 	// END KGU#456 2017-11-01
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list).");
+	public static final LangTextHolder msgGuidedTourDone = new LangTextHolder("Congratulations - you finished the tutorial «%».");
+	public static final LangTextHolder msgGuidedTourNext = new LangTextHolder("%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first via menu \"%3\"");
 	public static final LangTextHolder ttlGuidedTours = new LangTextHolder("Guided Tours");
 	// END KGU#459 2017-11-14
 
@@ -1221,9 +1224,15 @@ public class Menu extends LangMenuBar implements NSDController
 		
 		menuDebug.add(menuDebugTurtle);
 		menuDebugTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goTurtle(); } } );
+		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
+		menuDebugTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		// START KGU#463 2017-11-2
 
 		menuDebug.add(menuDebugExecute);
 		menuDebugExecute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goRun(); } } );
+		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
+		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+		// START KGU#463 2017-11-2
 
 		menuDebug.add(menuDebugDropBrkpts);
 		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );

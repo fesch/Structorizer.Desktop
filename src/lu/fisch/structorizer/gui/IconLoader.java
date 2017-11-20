@@ -111,6 +111,9 @@ public class IconLoader {
 	public static ImageIcon ico021 = getIconImage(getURI(from+"icons/021_function.png"));
 	public static ImageIcon ico022 = getIconImage(getURI(from+"icons/022_program.png"));
 	public static ImageIcon ico023 = getIconImage(getURI(from+"icons/023_font.png"));
+	// START KGU#459 2017-11-19: Issue #459
+	public static ImageIcon ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
+	// END KGU#459 2017-11-19
 	
 	// START KGU#258 2016-09-25: Enh. #253
 	public static ImageIcon ico025 = getIconImage(getURI(from+"icons/025_import.png"));
@@ -279,6 +282,9 @@ public class IconLoader {
             ico021 = getIconImage(getURI(from+"icons/021_function.png"));
             ico022 = getIconImage(getURI(from+"icons/022_program.png"));
             ico023 = getIconImage(getURI(from+"icons/023_font.png"));
+        	// START KGU#459 2017-11-19: Issue #459
+        	ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
+        	// END KGU#459 2017-11-19
 
         	// START KGU#258 2016-09-25: Enh. #253
             ico025 = getIconImage(getURI(from+"icons/025_import.png"));

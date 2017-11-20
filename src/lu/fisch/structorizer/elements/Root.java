@@ -155,6 +155,7 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 import org.xml.sax.Attributes;
 
@@ -479,7 +480,7 @@ public class Root extends Element {
 	/**
 	 * Step number of the current tutorial (-1 = not begun)
 	 * @see #getTutorialState(int)
-	 * @see #startNextTutorial()
+	 * @see #startNextTutorial(boolean)
 	 * @see #advanceTutorialState(int, Root)
 	 */
 	private int tutorialState = -1;
@@ -530,24 +531,49 @@ public class Root extends Element {
 				tutorialQueue.add(guideCode);
 			}
 		}
+		if (started == -1) {
+			this.startNextTutorial(false);
+		}
 	}
 	/**
 	 * Starts the next tutorial in the queue that is not disabled (disabled
 	 * tutorial numbers will be dropped from the queue)
+	 * @param _disableCurrent - if true then the current guide will be switched off and a success message is popped up
 	 * @return - the number of the started tutorial
 	 */
-	public int startNextTutorial()
+	public int startNextTutorial(boolean _disableCurrent)
 	{
-		Integer checkNo = null;
+		Integer checkNo = tutorialQueue.peek();
+		String message = null;
+		if (checkNo != null && _disableCurrent) {
+			setCheck(checkNo, false);
+			String[] checkDescr = AnalyserPreferences.getCheckTabAndDescription(checkNo);
+			message = Menu.msgGuidedTourDone.getText().replace("%", checkDescr[1]);
+		}
 		while ((checkNo = tutorialQueue.peek()) != null && !check(checkNo)) {
 			tutorialQueue.remove();
 		}
 		if (checkNo != null) {
 			tutorialState = 0;
+			if (_disableCurrent) {
+				String[] checkDescr = AnalyserPreferences.getCheckTabAndDescription(checkNo);
+				StringList menuNew = new StringList(Menu.getLocalizedMenuPath(new String[]{"menuFile", "menuFileNew"}, new String[]{"File", "New"}));
+				message = Menu.msgGuidedTourNext.getText().
+						replace("%1", message).
+						replace("%2", checkDescr[1]).
+						replace("%3", menuNew.concatenate(" \u25BA "));
+			}
 		}
 		else {
 			checkNo = -1;
 			tutorialState = -1;
+		}
+		if (message != null) {
+			JOptionPane.showMessageDialog(null, 
+					message, 
+					Menu.ttlGuidedTours.getText(), 
+					JOptionPane.INFORMATION_MESSAGE,
+					IconLoader.ico024);
 		}
 		return checkNo;
 	}
@@ -4101,8 +4127,9 @@ public class Root extends Element {
 	/**
 	 * Reports the active guide and performs the specified checks and steps
 	 * @param _errors - global error list to be appended to
+	 * @param _isNameValid TODO
 	 */
-	private void analyseGuides(Vector<DetectedError> _errors)
+	private void analyseGuides(Vector<DetectedError> _errors, boolean _isNameValid)
 	{
 		final String[] menuPath = Menu.getLocalizedMenuPath(
 				new String[]{"menuPreferences", "menuPreferencesAnalyser"},
@@ -4114,6 +4141,35 @@ public class Root extends Element {
 			strings.add(new StringList(analyserCaptions));
 			addError(_errors, new DetectedError(errorMsg(Menu.warning_2, strings.toArray()), null), 0);
 			// Define the actual guide actions here 
+	        // START KGU#456 2017-11-04: Enh. #452 - charm initiative
+	        if (_isNameValid && this.children.getSize() == 0) {
+	        	String text = null;
+	        	switch (code) {
+	        	case 26: // hello world tour 
+	        		text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
+	        		addError(_errors, new DetectedError(text, this.children), 26);
+	        		break;
+	        	case 25: // first IPO guide 
+	        		switch (this.diagrType) {
+	        		case DT_INCL:
+	        			text = errorMsg(Menu.hint25_5, "");
+	        			break;
+	        		case DT_MAIN:
+	        			text = errorMsg(Menu.hint25_1, CodeParser.getKeyword("input"));
+	        			//startNextTutorial(true);
+	        			break;
+	        		case DT_SUB:
+	        			text = errorMsg(Menu.hint25_4, "");
+	        			break;
+	        		default:
+	        			break;
+	        		}
+	        		if (text != null) {
+	            		addError(_errors, new DetectedError(text, this.children), 25);
+	        		}
+	        		break;
+	        	}
+	        }
 			switch (code) {
 			case 25:
 				guide_25(_errors);
@@ -4175,26 +4231,43 @@ public class Root extends Element {
 			}
 			
 		}
+		// empty body had already been handled in analyseGuides()
 		if (this.isProgram() && children.getSize() > 0) {
 			final boolean[] hasIO = {false, false, false};
 			this.traverse(new detectorIO(hasIO));
 			if (!hasIO[0]) {
-				addError(_errors, new DetectedError(errorMsg(Menu.hint25_2, CodeParser.getKeywordOrDefault("input", "INPUT")), this), 25);    						    								
+				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
+						new String[]{"menuDiagram","menuDiagramAdd", "menuDiagramAddBefore", "menuDiagramAddBeforeInst"},
+						new String[]{"Diagram", "Add", "Before", "Instruction"}));
+				addError(_errors, 
+						new DetectedError(
+								errorMsg(Menu.hint25_2, new String[]{CodeParser.getKeywordOrDefault("input", "INPUT"), menuPath.concatenate(" \u25BA ")}),
+								this.children.getElement(0)), 25);    						    								
 			}
 			else if (!hasIO[1]) {
-				addError(_errors, new DetectedError(errorMsg(Menu.hint25_3, CodeParser.getKeywordOrDefault("output", "OUTPUT")), this), 25);    						    												
+				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
+						new String[]{"menuDiagram","menuDiagramAdd", "menuDiagramAddAfter", "menuDiagramAddAfterInst"},
+						new String[]{"Diagram", "Add", "After", "Instruction"}));
+				addError(_errors,
+						new DetectedError(
+								errorMsg(Menu.hint25_3, new String[]{CodeParser.getKeywordOrDefault("output", "OUTPUT"), menuPath.concatenate(" \u25BA ")}),
+								this.children.getElement(this.children.getSize()-1)), 25);    						    												
 			}
 			else if (!hasIO[2]) {
-				addError(_errors, new DetectedError(errorMsg(Menu.hint25_6, "y <- 15.5 * x + 7.9"), this), 25);    						    																
+				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
+						new String[]{"menuDiagram","menuDiagramAdd", "menuDiagramAddAfter", "menuDiagramAddAfterInst"},
+						new String[]{"Diagram", "Add", "After", "Instruction"}));
+				addError(_errors,
+						new DetectedError(
+								errorMsg(Menu.hint25_6, new String[]{"y <- 15.5 * x + 7.9", menuPath.concatenate(" \u25BA ")}),
+								this.children.getElement(0)), 25);    						    																
 			}
 			else {
-				setCheck(25, false);
-				startNextTutorial();
+				startNextTutorial(true);
 			}
 		}
-		else {
-			setCheck(25, false);
-			startNextTutorial();
+		else if (!this.isProgram() && children.getSize() > 0) {
+			startNextTutorial(true);
 		}
 	}
 	
@@ -4208,26 +4281,25 @@ public class Root extends Element {
 				{"menuDebug", "menuDebugExecute"},
 				{"menuFile", "menuFileSave"},
 				{"menuFile", "menuFileExport", "menuFileExportCode"},
-				{"menuFile", "menuFileExport", "menuFileExportPicture"}		
+				{"menuFile", "menuFileExport", "menuFileExportPicture"}
 		};
 		final String[][] menuDefaults = {
 				{"Debug", "Executor ..."},
 				{"File", "Save"},
 				{"File", "Export", "Code ..."},
-				{"File", "Export", "Picture ..."}		
+				{"File", "Export", "Picture ..."}
 		};
 		int state = getTutorialState(26);
 		if (state == 0 && advanceTutorialState(26, this)) {
 			state++;
 		}
 		if (state > 0) {
-			if (state < menuSpecs.length) {
+			if (state <= menuSpecs.length) {
 				String[] menuNames = Menu.getLocalizedMenuPath(menuSpecs[state-1], menuDefaults[state-1]);
 				addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this), 26);
 			}
 			else {
-				setCheck(26, false);
-				startNextTutorial();
+				startNextTutorial(true);
 			}
 		}
 		
@@ -4656,6 +4728,7 @@ public class Root extends Element {
         // CHECK: correct identifier for program name (#7)
         // START KGU#61 2016-03-22: Method outsourced
         //if(testidentifier(programName)==false)
+        boolean hasValidName = true;
         if (!Function.testIdentifier(programName, null))
         // END KGU#61 2016-03-22
         {
@@ -4674,41 +4747,13 @@ public class Root extends Element {
         		// "«"+programName+"» is not a valid name for a program or function!"
         		error  = new DetectedError(errorMsg(Menu.error07_1, programName), this);
         	}
+        	hasValidName = false;
             // END KGU#456/KGU#457 2017-11-04
-            addError(errors,error,7);
-        }
-        // START KGU#456 2017-11-04: Enh. #452 - charm initiative
-        else if (this.children.getSize() == 0) {
-        	String text = null;
-        	int tutorialCode = getCurrentTutorial();
-        	switch (tutorialCode) {
-        	case 26: // hello world tour 
-        		text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
-        		addError(errors, new DetectedError(text, this.children), 26);
-        		break;
-        	case 25: // first IPO guide 
-        		switch (this.diagrType) {
-        		case DT_INCL:
-        			text = errorMsg(Menu.hint25_5, "");
-        			break;
-        		case DT_MAIN:
-        			text = errorMsg(Menu.hint25_1, CodeParser.getKeyword("input"));
-        			startNextTutorial();
-        			break;
-        		case DT_SUB:
-        			text = errorMsg(Menu.hint25_4, "");
-        			break;
-        		default:
-        			break;
-        		}
-        		if (text != null) {
-            		addError(errors, new DetectedError(text, this.children), 25);
-        		}
-        		break;
-        	}
+            addError(errors, error, 7);
         }
         
-        analyseGuides(errors);
+        // START KGU#456 2017-11-04: Enh. #452 - charm initiative
+        analyseGuides(errors, hasValidName);
         // END KGU#456 2017-11-04
 
         // START KGU#253 2016-09-22: Enh. #249: subroutine header syntax

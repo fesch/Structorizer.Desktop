@@ -1471,6 +1471,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selected = root;
 		root.setSelected(true);
 		// END KGU#183 2016-04-23
+		// START KGU#456 2017-11-20: Issue #452
+		root.updateTutorialQueue(AnalyserPreferences.getOrderedGuideCodes());
+		// END KGU#456 2017-11-20
 		redraw();
 		analyse();
 		// START KGU#48 2015-10-17: Arranger support
@@ -1591,6 +1594,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#183 2016-04-23
 				redraw();
 				analyse();
+				// START KGU#456 2017-11-20: Issue #452
+				root.updateTutorialQueue(AnalyserPreferences.getOrderedGuideCodes());
+				// END KGU#456 2017-11-20
 				// START KGU#48 2015-10-17: Arranger support
 				if (oldRoot != null)
 				{

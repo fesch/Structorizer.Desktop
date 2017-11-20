@@ -326,7 +326,7 @@ Menu.lblLeaveAsIs.text=Diagramm so belassen
 Menu.lblAllowChanges.text=Diagrammänderung erlauben
 Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
 Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
-Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" > "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
+Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" ► "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
 Menu.msgWelcomeMessage.text=Willkommen beim Structorizer, Ihrem Struktogramm-Editor.\nMit diesem Programm können Sie Algorithmen entwerfen, testen, analysieren, in Programmiersprachen exportieren und vieles mehr.\nEs wurde für einfache Handhabung entwickelt, ist aber schon um viele Extras erweitert.\n\nHaben Sie noch wenig Erfahrung mit Algorithmen und Entwicklungsumgebungen?\nDann können Sie mit vereinfachter Werkzeugleiste beginnen und «%» aktivieren.\nWollen Sie zunächst im vereinfachten Einsteigermodus arbeiten?
 Menu.lblOk.text=OK
 Menu.lblYes.text=Ja, fortsetzen
@@ -344,11 +344,13 @@ Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagr
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
 Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).
+Menu.msgGuidedTourDone.text=Gratulation - Sie haben den Kurs «%» geschafft.
+Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten dazu ein neues Diagramm starten → Menü "%3"
 Menu.ttlGuidedTours.text=Geführte Kurse
 
 // Error messages for analyser
-Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 > %2".
-Menu.warning_2.text=BEACHTE: «%4» ist aktiv. Zum Ausschalten → Menu "%1 > %2 > %3".
+Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 ► %2".
+Menu.warning_2.text=BEACHTE: «%4» ist aktiv. Zum Ausschalten → Menu "%1 ► %2 ► %3".
 Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden ...
 Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden: «%»
 Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
@@ -419,10 +421,10 @@ Menu.hint25_4.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein er
 Menu.hint25_5.text=Wählem Sie die Mitte des Diagramms aus fügen Sie z.B. ein Anweisungselement mit einer Typ- oder Konstantendefinition ein.
 Menu.hint25_6.text=Sie könnten eine Verarbeitungsanweisung wie «%» zwischen Eingabe und Ausgabe platzieren.
 Menu.hint26.0.text=Wählen Sie die Mitte des Diagramms aus, dann doppelklicken, Enter oder F5 drücken und den Enweisungstext «% \"Hallo Welt!\"» eingeben.");
-Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 > %2".
-Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 > %2"
-Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 > %2 > %3"
-Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 > %2 > %3"
+Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 ► %2".
+Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 ► %2"
+Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 ► %2 ► %3"
+Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 ► %2 ► %3"
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----

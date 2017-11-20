@@ -946,7 +946,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
 					Menu.lblHint.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
-					null,
+					IconLoader.ico024,
 					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
 			if (chosen == JOptionPane.OK_OPTION) {
 				Root.setCheck(26, true);
@@ -955,7 +955,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					diagram.setSimplifiedGUI(true);
 					// START KGU#459 2017-11-14: Enh. #459-1
 					diagram.updateTutorialQueues();
-					diagram.getRoot().startNextTutorial();
+					diagram.getRoot().startNextTutorial(false);
 					diagram.showTutorialHint();
 					// END KGU#459 2017-11-14
 				}

@@ -328,7 +328,7 @@ Menu.lblLeaveAsIs.text=Dejar diagrama así
 Menu.lblAllowChanges.text=Permitir cambios
 Menu.msgReplacementsDone.text=% instrucciones sustituidos.
 Menu.msgNewerVersionAvail.text=Versión más nueva % lista para descaragar.
-Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" > "%2".
+Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" ► "%2".
 Menu.msgWelcomeMessage.text=¡Bienvenido/-a en Structorizer, su editor para diagramas Nassi-Shneiderman!\nCon este programa puedes diseñar, probar, analisar, exportar algoritms y mucho más.\nStructorizer fue hecho para el uso simple pero ha sido aumentado con muchas funcionas adicionales.\n\nSi crees tener poca experiencia con algoritmos y su desarollo puedes comenzar con menú reducido y una «%».\n¿Quieres comenzar en el modo simplificado con guía?
 Menu.lblOk.text=Visto
 Menu.lblYes.text=Si, continuar
@@ -346,11 +346,13 @@ Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman desd
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
 Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
+Menu.msgGuidedTourDone.text=Congratulaciones - Has acabado el curso «%».
+Menu.msgGuidedTourNext.text=%1\nCurso «%2» va a empezar ahora.\nTal vez quieres iniciar nuevo diagrama: → Menú "%3"
 Menu.ttlGuidedTours.text=Cursos guiados
 
 // Error messages for analyser
-Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 > %2".
-Menu.warning_2.text=Fíjate: «%4» está activado. Para desactivarlo → Menú "%1 > %2 > %3".
+Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 ► %2".
+Menu.warning_2.text=Fíjate: «%4» está activado. Para desactivarlo: → Menú "%1 ► %2 ► %3"
 Menu.error01_1.text=ADVERTENCIA: Ninguna variable de bucle detectada ...
 Menu.error01_2.text=ADVERTENCIA: Más de una variable de bucle detectada: «%»
 Menu.error01_3.text=¡No tienes permiso modificar la variable del bucle «%» dentro del bucle!
@@ -422,10 +424,10 @@ Menu.hint25_4.text=Selecciona el centro del diagrama e inserta el primer element
 Menu.hint25_5.text=Selecciona el centro del diagrama e inserta p.ej. una instrucción con la definición de un tipo o una constante.
 Menu.hint25_6.text=¿Tal vez quieres insertar una instrucción de procesamiento como «%» entre entrada y salida?
 Menu.hint26.0.text=Selecciona el centro del diagrama, doble-click, toca Enter o F5, y entra el text de instrucción «% \"Hello world!\"»");
-Menu.hint26.1.text=Ahora puedes p.ej. probar tu diagrama → Menú "%1 > %2".
-Menu.hint26.2.text=Ahora puedes p.ej. grabar tu diagrama → Menú "%1 > %2"
-Menu.hint26.3.text=Ahore puedes p.ej. exportar tu diagrama a un código → Menu "%1 > %2 > %3"
-Menu.hint26.4.text=Ahore puedes p.ej. exportar tu diagrama como imágen → Menu "%1 > %2 > %3"
+Menu.hint26.1.text=Ahora puedes p.ej. probar tu diagrama: → Menú "%1 ► %2"
+Menu.hint26.2.text=Ahora puedes p.ej. grabar tu diagrama: → Menú "%1 ► %2"
+Menu.hint26.3.text=Ahora puedes p.ej. exportar tu diagrama a un código: → Menu "%1 ► %2 ► %3"
+Menu.hint26.4.text=Ahora puedes p.ej. exportar tu diagrama como imágen: → Menu "%1 ► %2 ► %3"
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
