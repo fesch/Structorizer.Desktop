@@ -12,7 +12,7 @@ The website can be found at http://structorizer.fisch.lu
 
 # Why having started this project?
 
-In fact, I was not satisfied by the result of other NSD-editors, so I started writing my own one. I think I started drawing the first schemes and thinking about it\'s internal structure in july 2006. The first lines of code were written during the summer and for September a first more or less functional version was available.
+In fact, I was not satisfied by the result of other NSD-editors, so I started writing my own one. I think I started drawing the first schemes and thinking about it\'s internal structure in July 2006. The first lines of code were written during the summer and for September a first more or less functional version was available.
 
 
 # Project history
