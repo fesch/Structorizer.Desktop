@@ -953,11 +953,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				Root.setCheck(25, true);
 				if (diagram != null) {
 					diagram.setSimplifiedGUI(true);
-					// START KGU#459 2017-11-14: Enh. #459-1
-					diagram.updateTutorialQueues();
-					diagram.getRoot().startNextTutorial(false);
-					diagram.showTutorialHint();
-					// END KGU#459 2017-11-14
 				}
 				else {
 					// The essence of diagram.setSimplifiedGUI() but without immediate visibility switch
@@ -982,6 +977,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     	else if (diagram != null) {
     		diagram.updateNSD(false);
     	}
+		// START KGU#459 2017-11-20: Enh. #459-1
+    	if (diagram != null) {
+			diagram.updateTutorialQueues();
+			if (diagram.getRoot().startNextTutorial(false) > -1) {
+				diagram.showTutorialHint();
+			}
+    	}
+		// END KGU#459 2017-11-20
     }
     // END KGU#300 2016-12-02
     

@@ -4155,7 +4155,7 @@ public class Root extends Element {
 	        			text = errorMsg(Menu.hint25_5, "");
 	        			break;
 	        		case DT_MAIN:
-	        			text = errorMsg(Menu.hint25_1, CodeParser.getKeyword("input"));
+	        			text = errorMsg(Menu.hint25_1, new String[]{CodeParser.getKeyword("input"), (check(5) ? "X" : "x")});
 	        			//startNextTutorial(true);
 	        			break;
 	        		case DT_SUB:
@@ -4234,6 +4234,13 @@ public class Root extends Element {
 		// empty body had already been handled in analyseGuides()
 		if (this.isProgram() && children.getSize() > 0) {
 			final boolean[] hasIO = {false, false, false};
+			String varName1 = "x";
+			String varName2 = "y";
+			if (check(5)) {
+				varName1 = varName1.toUpperCase();
+				varName2 = varName2.toUpperCase();
+				}
+			String asgnmt = varName2 + " <- 15.5 * " + varName1 + " + 7.9";
 			this.traverse(new detectorIO(hasIO));
 			if (!hasIO[0]) {
 				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
@@ -4241,7 +4248,7 @@ public class Root extends Element {
 						new String[]{"Diagram", "Add", "Before", "Instruction"}));
 				addError(_errors, 
 						new DetectedError(
-								errorMsg(Menu.hint25_2, new String[]{CodeParser.getKeywordOrDefault("input", "INPUT"), menuPath.concatenate(" \u25BA ")}),
+								errorMsg(Menu.hint25_2, new String[]{CodeParser.getKeywordOrDefault("input", "INPUT"), varName1, menuPath.concatenate(" \u25BA ")}),
 								this.children.getElement(0)), 25);    						    								
 			}
 			else if (!hasIO[1]) {
@@ -4250,7 +4257,7 @@ public class Root extends Element {
 						new String[]{"Diagram", "Add", "After", "Instruction"}));
 				addError(_errors,
 						new DetectedError(
-								errorMsg(Menu.hint25_3, new String[]{CodeParser.getKeywordOrDefault("output", "OUTPUT"), menuPath.concatenate(" \u25BA ")}),
+								errorMsg(Menu.hint25_3, new String[]{CodeParser.getKeywordOrDefault("output", "OUTPUT"), varName2, menuPath.concatenate(" \u25BA ")}),
 								this.children.getElement(this.children.getSize()-1)), 25);    						    												
 			}
 			else if (!hasIO[2]) {
@@ -4259,7 +4266,7 @@ public class Root extends Element {
 						new String[]{"Diagram", "Add", "After", "Instruction"}));
 				addError(_errors,
 						new DetectedError(
-								errorMsg(Menu.hint25_6, new String[]{"y <- 15.5 * x + 7.9", menuPath.concatenate(" \u25BA ")}),
+								errorMsg(Menu.hint25_6, new String[]{asgnmt, menuPath.concatenate(" \u25BA ")}),
 								this.children.getElement(0)), 25);    						    																
 			}
 			else {

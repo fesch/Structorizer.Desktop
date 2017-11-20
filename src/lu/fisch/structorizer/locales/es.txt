@@ -417,17 +417,17 @@ Menu.error24_6.text=El componente «%» no será modificado/inicializado!
 Menu.error24_7.text=El tipo «%1» no tiene ningún componente «%2»!
 Menu.error24_8.text=La variable «%1» no tiene ningún componente «%2»!
 Menu.hint07_1.text=¿Que debe hacer tu algoritmo? Reemplaza «%» con un buen nombre para eso.
-Menu.hint25_1.text=Selecciona el centro del diagrama e inserta un primer elemento, p.ej. una instrucción de entrada como «% x»
-Menu.hint25_2.text=¿Tal vez quieres entrar datos, p.ej. usando una instrucción como «% x»?
-Menu.hint25_3.text=¿Tal vez quieres salir resultados, p.ej. usando una instrucción como «% y»?
+Menu.hint25_1.text=Selecciona el centro del diagrama e inserta un primer elemento, p.ej. una instrucción de entrada como «%1 %2»
+Menu.hint25_2.text=¿Tal vez quieres entrar datos, p.ej. usando una instrucción como «%1 %2»? → Menú "%3"
+Menu.hint25_3.text=¿Tal vez quieres salir resultados, p.ej. usando una instrucción como «%1 %2»? → Menú "%3"
 Menu.hint25_4.text=Selecciona el centro del diagrama e inserta el primer elemento, p.ej. una instrucción.
 Menu.hint25_5.text=Selecciona el centro del diagrama e inserta p.ej. una instrucción con la definición de un tipo o una constante.
-Menu.hint25_6.text=¿Tal vez quieres insertar una instrucción de procesamiento como «%» entre entrada y salida?
+Menu.hint25_6.text=¿Tal vez quieres insertar una instrucción de procesamiento como «%1» entre entrada y salida? → Menu "%2"
 Menu.hint26.0.text=Selecciona el centro del diagrama, doble-click, toca Enter o F5, y entra el text de instrucción «% \"Hello world!\"»");
 Menu.hint26.1.text=Ahora puedes p.ej. probar tu diagrama: → Menú "%1 ► %2"
 Menu.hint26.2.text=Ahora puedes p.ej. grabar tu diagrama: → Menú "%1 ► %2"
-Menu.hint26.3.text=Ahora puedes p.ej. exportar tu diagrama a un código: → Menu "%1 ► %2 ► %3"
-Menu.hint26.4.text=Ahora puedes p.ej. exportar tu diagrama como imágen: → Menu "%1 ► %2 ► %3"
+Menu.hint26.3.text=Ahora puedes p.ej. exportar tu diagrama a un código: → Menú "%1 ► %2 ► %3"
+Menu.hint26.4.text=Ahora puedes p.ej. exportar tu diagrama como imágen: → Menú "%1 ► %2 ► %3"
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----

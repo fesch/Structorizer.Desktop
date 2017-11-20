@@ -438,9 +438,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error24_8 = new LangTextHolder("Variable «%1» hasn't got a component «%2»!");
 	// END KGU#388 2017-09-13
 	// START KGU#456 2017-11-04: Enh. #452 - Be more helpful to newbees
-	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «% x»");
-	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «%1 x». → Menu \"%2\"");
-	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «%1 y». → Menu \"%2\"");
+	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «%1 %2»");
+	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «%1 %2». → Menu \"%3\"");
+	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «%1 %2». → Menu \"%3\"");
 	public static final LangTextHolder hint25_4 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an Instruction.");
 	public static final LangTextHolder hint25_5 = new LangTextHolder("Select the diagram centre and place e.g. an Instruction element with a type or constant definition.");
 	public static final LangTextHolder hint25_6 = new LangTextHolder("You might want to place some processing instruction like «%1» between input and output. → Menu \"%2\"");
