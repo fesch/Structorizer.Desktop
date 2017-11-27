@@ -8338,18 +8338,27 @@ class CobTools {
 		USAGE_FP_BIN64,
 		USAGE_FP_BIN128,
 		USAGE_LONG_DOUBLE,
-		USAGE_DISPLAY_NUMERIC /* calculated from picture: usage DISPLAY with only numeric values */,
-		USAGE_NOT_SET /* no explicit usage given, handle as USAGE_DISPLAY */,
+		/** calculated picture: usage DISPLAY with only numeric values */
+		USAGE_DISPLAY_NUMERIC,
+		/** no explicit usage given, handle as USAGE_DISPLAY */
+		USAGE_NOT_SET
 	};
 
 	/** COBOL storages */
 	public static enum Storage {
+		/** WORKING-STORAGE section (permanent storage) */
 		STORAGE_WORKING,
+		/** LOCAL-STORAGE section (temporary storage per instance) */
 		STORAGE_LOCAL,
+		/** LINKAGE section (arguments passed by caller)*/
 		STORAGE_LINKAGE,
+		/** SCREEN section (user interaction) */
 		STORAGE_SCREEN,
+		/** REPORT section */
 		STORAGE_REPORT,
+		/** No storage set */
 		STORAGE_UNKNOWN,
+		/** FILE section */
 		STORAGE_FILE
 	};
 	
@@ -9053,35 +9062,35 @@ class CobTools {
 				this.name = "filler";
 			}
 			if (this.name.equals("filler")) {
-				fillerCount++;
+				CobTools.this.fillerCount++;
 				// START KGU#388 2017-10-04: Enh. #423 - we need a valid identifier
-				//this.name += "_$" + fillerCount;
-				this.name += "_" + String.format("%1$02d", fillerCount);
+				// this.name += "_$" + fillerCount;
+				this.name += "_" + String.format("%1$02d", CobTools.this.fillerCount);
 				// END KGU#388_2017-10-04
 			}
 			if (picture != null && !picture.isEmpty()) {
 				this.picture = picture.trim();
-				setVarAttributesFromPic(this, picture);
+				CobTools.this.setVarAttributesFromPic(this, picture);
 			} else {
 				this.picture = "";
 			}
 
 			/* set relation to other fields */
 			this.parent = null;
-			if (lastVar != null && lastVar.level < level) {
-				this.parent = lastVar;
-				if (lastVar.child == null) {
-					lastVar.child = this;
+			if (CobTools.this.lastVar != null && CobTools.this.lastVar.level < level) {
+				this.parent = CobTools.this.lastVar;
+				if (CobTools.this.lastVar.child == null) {
+					CobTools.this.lastVar.child = this;
 				}
 			} else {
-				for (CobVar v = lastVar; v != null; v = v.parent) {
+				for (CobVar v = CobTools.this.lastVar; v != null; v = v.parent) {
 					if (level == v.level || level == 1 && v.level == 78) {
 						this.parent = v.parent;
 						v.sister = this;
 						break;
 					} else if (v.level < level) {
 						this.parent = v;
-						insertFiller(v, this);
+						this.insertFiller(v, this);
 						break;
 					}
 				}
@@ -9112,7 +9121,7 @@ class CobTools {
 			}
 
 			if (value != null) {
-				this.values = new String[] {value};
+				this.values = new String[] { value };
 				this.valueFirst = value;
 			}
 			
@@ -9125,12 +9134,13 @@ class CobTools {
 			this.anyLength = anyLength; 
 			this.occurs = times;
 			this.occursString = timesString;
-//			lastRealVar = this;
-			lastVar = this;
+			// lastRealVar = this;
+			CobTools.this.lastVar = this;
 		}
 
 		/**
 		 * Special constructor for creating condition-names (level 88 variables)
+		 *
 		 * @param name
 		 * @param values
 		 * @param valueFalse
@@ -9147,30 +9157,30 @@ class CobTools {
 			}
 
 			if (values != null) {
-				ArrayList<String> sortList = new ArrayList<String>(Arrays.asList(values));
+				ArrayList<String> sortList = new ArrayList<>(Arrays.asList(values));
 				Collections.reverse(sortList);
 				this.values = sortList.toArray(new String[sortList.size()]);
 				this.valueFirst = this.values[0];
 			}
 			this.valueFalse = valueFalse;
 
-			if (lastVar == null) {
+			if (CobTools.this.lastVar == null) {
 				// create "correct" picture first
-				String picString = createPicStringFromValues(values);
+				String picString = CobTools.this.createPicStringFromValues(values);
 				// partial code import, generate implicit filler
-				lastVar = new CobVar (1, null, picString, null, null, null, false, false, 0, 0, null);
+				CobTools.this.lastVar = new CobVar(1, null, picString, null, null, null, false, false, 0, 0, null);
 			}
 			
 			this.picture = null;
 
 			/* set relation to other fields */
-			if (lastVar.level == 88) {
-				this.parent = lastVar.parent;
-				lastVar.sister = this;
+			if (CobTools.this.lastVar.level == 88) {
+				this.parent = CobTools.this.lastVar.parent;
+				CobTools.this.lastVar.sister = this;
 			} else {
-				this.parent = lastVar;
-				if (lastVar.child == null) {
-					lastVar.child = this;
+				this.parent = CobTools.this.lastVar;
+				if (CobTools.this.lastVar.child == null) {
+					CobTools.this.lastVar.child = this;
 				}
 			}
 			this.child = null;
@@ -9180,7 +9190,7 @@ class CobTools {
 			/* set usage from parent */
 			this.usage = this.parent.usage;
 			
-			lastVar = this;
+			CobTools.this.lastVar = this;
 		}
 
 		/**
@@ -9202,25 +9212,24 @@ class CobTools {
 			}
 
 			if (value != null) {
-				this.values = new String[] {value};
+				this.values = new String[] { value };
 				this.valueFirst = value;
 			}
 			this.valueFalse = null;
 
 			// create assumed picture first
-			this.picture = createPicStringFromValues(this.values);
+			this.picture = CobTools.this.createPicStringFromValues(this.values);
 
-			if (lastVar == null) {
-				lastVar = this;
-			}
-			else {
+			if (CobTools.this.lastVar == null) {
+				CobTools.this.lastVar = this;
+			} else {
 			/* set relation to other fields */
-				if (lastVar.level == level) {
-					this.parent = lastVar.parent;
-					lastVar.sister = this;
+				if (CobTools.this.lastVar.level == level) {
+					this.parent = CobTools.this.lastVar.parent;
+					CobTools.this.lastVar.sister = this;
 				} else { 
 					/* set relation to other fields */
-					for (CobVar v = lastVar; v != null; v = v.parent) {
+					for (CobVar v = CobTools.this.lastVar; v != null; v = v.parent) {
 						if (v.level == 01 || v.level == 78) {
 							this.parent = v.parent;
 							v.sister = this;
@@ -9233,13 +9242,12 @@ class CobTools {
 			this.sister = null;
 			
 			/* set usage from picture */
-			// FIXME: Does this mean we should call setVarAttributesFromPic(this, ths.picture) now?
-			this.usage = null;
+			CobTools.this.setVarAttributesFromPic(this, this.picture);
 			
 			this.isGlobal = isGlobal;
 			this.constant = true;
 			
-			lastVar = this;
+			CobTools.this.lastVar = this;
 		}
 
 		/**
@@ -9371,8 +9379,7 @@ class CobTools {
 		 * to bottom), such that "%i" can be replaced by the respective i-th index expression.
 		 * @return fully qualified name (e.g. "top.foo.bar").
 		 */
-		public String getQualifiedName()
-		{
+		public String getQualifiedName() {
 			String qualName = this.forceName();
 			CobVar ancestor = this.parent;
 			int nArrayLevels = 0;
@@ -9382,7 +9389,7 @@ class CobTools {
 					if (ancestor.isArray()) {
 						nArrayLevels++;
 						// put an index bracket with reverse level first
-						index = "[%r"+ nArrayLevels + "]";
+						index = "[%r" + nArrayLevels + "]";
 					}
 					qualName = ancestor.forceName() + index + "." + qualName;
 					ancestor = ancestor.parent;
@@ -9390,7 +9397,7 @@ class CobTools {
 			}
 			// Now revert the provisional index place holders
 			for (int i = 0; i < nArrayLevels; i++) {
-				qualName = qualName.replace("%r" + (i+1), "%" + (nArrayLevels - i));
+				qualName = qualName.replace("%r" + (i + 1), "%" + (nArrayLevels - i));
 			}
 			return qualName;
 		}
@@ -9416,7 +9423,7 @@ class CobTools {
 		public String getValueComparisonString() {
 			boolean firstValue = true;
 			String valueComparison = "";
-			for (Object value : values) {
+			for (Object value : this.values) {
 				if (firstValue) {
 					firstValue = false;
 				} else {
@@ -9516,7 +9523,7 @@ class CobTools {
 			}
 		} else if (picString.matches("9*")) {
 			variable.usage = Usage.USAGE_DISPLAY_NUMERIC;
-		} else  if (picString.matches("[XA]*")){
+		} else if (picString.matches("[XA]*")) {
 			variable.usage = Usage.USAGE_DISPLAY;
 		} else {
 			variable.usage = Usage.USAGE_DISPLAY;
@@ -9524,7 +9531,8 @@ class CobTools {
 		}
 	}
 	
-	// START KGU#427 2017-10-05: Quick hack as workaround for the NullPointerException in setVarAttributesFromPic()
+	// START KGU#427 2017-10-05: Quick hack as workaround for the
+	// NullPointerException in setVarAttributesFromPic()
 	public void setProgram(CobProg currentProg) {
 		this.currentProgram = currentProg;
 	}
@@ -9537,20 +9545,34 @@ class CobTools {
 			// really bad code...
 			picString = "X";
 		} else {
-			if (values[0].startsWith("\'")
-			|| values[0].startsWith("\"")) {
+			boolean isNumeric = false;
+			char first = values[0].charAt(0);
+			if (first == '\'' || first == '\"') {
+				if (values[0].substring(1).startsWith("\\u00")) {
 				picString = "X";
 			} else {
-				if (values[0].startsWith("-")) {
-					picString = "S9";
+					picString = "N";
+				}
 				} else {
+				if (first == '-' || (first >= '0' && first <= '9')) {
 					picString = "9";
+					isNumeric = true;
+				} else {
+					picString = "X";
 				}
 			}
 			for (String value : values) {
 				if (value.length() > len) {
 					len = value.length();
+					if (isNumeric && value.charAt(0) == '-') {
+						len--;
+						picString = "S9";
+					}
 				}
+				}
+			// don't count quotes and "\\u", count as non-unicode
+			if (!isNumeric) {
+				len = (len - 4) / 4;
 			}
 			picString += "(" + len + ")";
 			
