@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-04 (2017.11.20)
+Current development version 3.27-04 (2017.11.27)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -27,7 +27,8 @@ Current development version 3.27-04 (2017.11.20)
 - 03: Bugfix #465: Arranger couldn't open Structorizer sub-instances anymore <2>
 - 04: Bugfix #468: User guide action was associated to wrong toolbar button <2>
 - 04: Enh. #452/#459: Further revision to the mechanisms of the guided tours <2>
-- 04: Enh. #469: Accelerator keys for Executor (Ctrl-R) and Turtleizer <2> 
+- 04: Enh. #469: Accelerator keys for Executor (Ctrl-R) and Turtleizer <2>
+- 04: Bugfixes in COBOL import (USAGE parsing, SEARCH, EXIT) <Simon Sobisch>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
