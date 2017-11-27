@@ -52,6 +52,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -66,6 +69,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Vector;
 
+import javax.swing.Action;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
@@ -607,6 +611,44 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private void initComponents(double scaleFactor)
     // END KGU#287 2016-11-02
     {
+        
+        // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
+        KeyListener myKeyListener = new KeyListener() {
+
+            @Override
+            public void keyPressed(KeyEvent evt) {
+                switch (evt.getKeyCode()) {
+                case KeyEvent.VK_ESCAPE:
+                {
+                    dispatchEvent(new WindowEvent(Translator.this, WindowEvent.WINDOW_CLOSING));
+                }
+                break;
+                case KeyEvent.VK_ENTER:
+                {
+                    Object source = evt.getSource();
+                    if (source instanceof JButton) {
+                        JButton button = (JButton)source;
+                        ActionListener[] actLsnrs = button.getActionListeners();
+                        for (ActionListener al: actLsnrs) {
+                            al.actionPerformed(new ActionEvent(button, ActionEvent.ACTION_PERFORMED, loadedLocaleName));;
+                        }
+                    }
+                }
+                case (KeyEvent.VK_F | KeyEvent.CTRL_DOWN_MASK):
+                {
+                    // TODO Open search dialog (non-modal, persistant)
+                }
+                break;
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent evt) {}
+            @Override
+            public void keyTyped(KeyEvent evt) {}
+            
+        };
+        // END KGU#393/KGU#418 2017-11-20
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -644,6 +686,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                         button_localeActionPerformed(evt, localeName);
                     }
                 });
+                // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
+                button.addKeyListener(myKeyListener);
+                // END KGU#393/KGU#418 2017-11-20
                 localeButtons.add(button);
             }
         }
@@ -664,6 +709,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 button_saveActionPerformed(evt);
             }
         });
+        // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
+        button_save.addKeyListener(myKeyListener);
+        // END KGU#393/KGU#418 2017-11-20
 
         // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
         //button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
@@ -675,6 +723,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 button_emptyActionPerformed(evt);
             }
         });
+        // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
+        button_empty.addKeyListener(myKeyListener);
+        // END KGU#393/KGU#418 2017-11-20
 
         // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
         //button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
@@ -686,6 +737,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 button_previewActionPerformed(evt);
             }
         });
+        // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
+        button_preview.addKeyListener(myKeyListener);
+        // END KGU#393/KGU#418 2017-11-20
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);

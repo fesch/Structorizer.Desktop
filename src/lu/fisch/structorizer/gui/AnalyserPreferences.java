@@ -203,13 +203,14 @@ public class AnalyserPreferences extends LangDialog {
 
 		KeyListener keyListener = new KeyListener()
 		{
-			public void keyPressed(KeyEvent e) 
+			@Override
+			public void keyPressed(KeyEvent kevt) 
 			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				if(kevt.getKeyCode() == KeyEvent.VK_ESCAPE)
 				{
 					setVisible(false);
 				}
-				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				else if(kevt.getKeyCode() == KeyEvent.VK_ENTER && (kevt.isShiftDown() || kevt.isControlDown()))
 				{
 					// START KGU#393 2017-05-09: Issue #400
 					OK = true;
@@ -218,7 +219,7 @@ public class AnalyserPreferences extends LangDialog {
 				}
 			}
 			
-			public void keyReleased(KeyEvent ke) {} 
+			public void keyReleased(KeyEvent kevt) {} 
 			public void keyTyped(KeyEvent kevt) {}
 		};
 

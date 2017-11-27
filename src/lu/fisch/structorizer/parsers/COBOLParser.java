@@ -76,6 +76,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.10.22      File status assignments added according to the proposal of Simon Sobisch
  *      Kay Gürtzig     2017.10.26      File maps moved to CobProg to avoid name clashes
  *      Kay Gürtzig     2017.10.31      Bugfix #445: Face empty sections / paragraphs on refactoring
+ *      Simon Sobisch   2017.11.27      Some fixes for USAGE, SEARCH and EXIT
+ *      Kay Gürtzig     2017.11.27      Bugfix #475: A paragraph starting just after the section header closed the section
  *
  ******************************************************************************************************
  *
@@ -4748,7 +4750,7 @@ public class COBOLParser extends CodeParser
 			// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
 			// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
 			//       to close the previous section and the previous paragraph
-			accomplishPrevSoP(_parentNode);
+			accomplishPrevSoP(_parentNode, true);
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 			// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
@@ -4766,8 +4768,11 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
 		{
 			// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
-			// Note: this starts a new paragraph AND closes the previous paragraph
-			accomplishPrevSoP(_parentNode);
+			// Note: this starts a new paragraph AND closes the previous paragraph (if existent)
+			// START KGU#464 2017-11-27: Bugfix #475
+			//accomplishPrevSoP(_parentNode);
+			accomplishPrevSoP(_parentNode, false);
+			// END KGU#464 2017-11-27
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 
@@ -4791,7 +4796,7 @@ public class COBOLParser extends CodeParser
 			// No break; here!
 		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// This rule will never occur (falls through to TOKDOT!)
 			// TODO close the last unsatisfied "procedure"
-			accomplishPrevSoP(_parentNode);
+			accomplishPrevSoP(_parentNode, true);
 			break;
 		case RuleConstants.PROD_IF_STATEMENT_IF:
 			//System.out.println("PROD_IF_STATEMENT_IF");
@@ -5125,13 +5130,22 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Accomplishes the element references of the preceding (and here-ending) unsatisfied section
 	 * or paragraph
-	 * @param _parentNode
+	 * @param _parentNode - the Subqueue to add elements to
+	 * @param _closeSection - wheher it is allowed to close a section here (only paragraph else)
 	 */
-	private void accomplishPrevSoP(Subqueue _parentNode) {
+	// START KGU#464 2017-11-27: Bugfix #475
+	//private void accomplishPrevSoP(Subqueue _parentNode) {
+	private void accomplishPrevSoP(Subqueue _parentNode, boolean _closeSection) {
+	// END KGU#464 2017-11-27
 		Iterator<SectionOrParagraph> iter = procedureList.iterator();
 		boolean found = false;
 		while (!found && iter.hasNext()) {
 			SectionOrParagraph sop = iter.next();
+			// START KGU#464 2017-11-27: Bugfix #475 don't close an empty section with a paragrpah
+			if (sop.isSection && !_closeSection) {
+				break;
+			}
+			// END KGU#464 2017-11-27
 			if (sop.parent == _parentNode && sop.endsBefore < 0) {
 				sop.endsBefore = _parentNode.getSize();
 				// START KGU#452 2017-10-30: Bugfix #445 - We must face empty Subqueues or SoPs

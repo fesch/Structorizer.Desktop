@@ -29,6 +29,7 @@ Current development version 3.27-04 (2017.11.27)
 - 04: Enh. #452/#459: Further revision to the mechanisms of the guided tours <2>
 - 04: Enh. #469: Accelerator keys for Executor (Ctrl-R) and Turtleizer <2>
 - 04: Bugfixes in COBOL import (USAGE parsing, SEARCH, EXIT) <Simon Sobisch>
+- 04: Bugfix #475: Import of COBOL paragraphs broke sections [Simon Sobisch]2 
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
