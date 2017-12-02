@@ -78,6 +78,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.10.31      Bugfix #445: Face empty sections / paragraphs on refactoring
  *      Simon Sobisch   2017.11.27      Some fixes for USAGE, SEARCH and EXIT
  *      Kay Gürtzig     2017.11.27      Bugfix #475: A paragraph starting just after the section header closed the section
+ *      Kay Gürtzig     2017.12.01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
  *
  ******************************************************************************************************
  *
@@ -4794,8 +4795,9 @@ public class COBOLParser extends CodeParser
 			// First process the statements then handle the TOK_DOT with the subsequent case
 			buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
 			// No break; here!
-		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// This rule will never occur (falls through to TOKDOT!)
+		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// Astonishingly this rule does NOT fall through to TOK-DOT!
 			// TODO close the last unsatisfied "procedure"
+			this.log("===> PROD_PROCEDURE_TOK_DOT2\n", false);
 			accomplishPrevSoP(_parentNode, true);
 			break;
 		case RuleConstants.PROD_IF_STATEMENT_IF:
@@ -5141,12 +5143,12 @@ public class COBOLParser extends CodeParser
 		boolean found = false;
 		while (!found && iter.hasNext()) {
 			SectionOrParagraph sop = iter.next();
-			// START KGU#464 2017-11-27: Bugfix #475 don't close an empty section with a paragrpah
-			if (sop.isSection && !_closeSection) {
-				break;
-			}
-			// END KGU#464 2017-11-27
 			if (sop.parent == _parentNode && sop.endsBefore < 0) {
+				// START KGU#464 2017-11-27: Bugfix #475 don't close an empty section with a paragrpah
+				if (sop.isSection && !_closeSection) {
+					break;
+				}
+				// END KGU#464 2017-11-27
 				sop.endsBefore = _parentNode.getSize();
 				// START KGU#452 2017-10-30: Bugfix #445 - We must face empty Subqueues or SoPs
 				//sop.firstElement = _parentNode.getElement(sop.startsAt);
@@ -5156,7 +5158,12 @@ public class COBOLParser extends CodeParser
 					sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
 				}
 				// END KGU#452 2017-10-30
-				found = true;
+				if (_closeSection == sop.isSection) {
+					found = true;
+				}
+				else {
+					this.log("===> " + sop + " (" + _closeSection + ")\n" , false);
+				}
 //				System.out.println("======== " + sop.name + " =======");
 //				for (int i = sop.startsAt; i < sop.endsBefore; i++) {
 //					System.out.println("\t" + _parentNode.getElement(i));
@@ -6823,8 +6830,8 @@ public class COBOLParser extends CodeParser
 					break;
 				case RuleConstants.PROD_EXTERNAL_CLAUSE_EXTERNAL: // <external_clause>
 					// only occurs on level 01/77, this record or single variable shares the same value in *independent* programs
-					// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need to share this
-					// variable in a single IMPORT NSD (name: var name)
+					// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need
+					// to share this variable in a single IMPORT NSD (name: var name)
 					isExternal = true;
 					break;
 //				case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
@@ -6920,7 +6927,7 @@ public class COBOLParser extends CodeParser
 				}
 				// END KGU 2017-10-04
 				default:
-					// a variable without USAGE explicit given (77 myvar COMP-2) goes here;
+					// a variable without explicitly given USAGE (77 myvar COMP-2) goes here;
 					usage = getUsageFromReduction(descrRed);
 				}
 				seqRed = seqRed.get(0).asReduction();
@@ -7393,11 +7400,16 @@ public class COBOLParser extends CodeParser
 		return _content;
 	}
 
+	// START KGU#467 2017-12-02: Bugfix #480
+	/** Maximum number of characters for concatenation of nested multi-line initializer expressions */
+	private static final int MAX_INITIALIZER_LINE_LENGTH = 80;
+	// END KGU#467 2017-12-02
 	// Patterns and Matchers needed for getContent_R()
 	// (reusable, otherwise both get created and compiled over and over again)
 	private static final Pattern pHexLiteral = Pattern.compile("^[Nn]?[Xx][\"']([0-9A-Fa-f]+)[\"']");
 	private static final Pattern pIntLiteral = Pattern.compile("^0+([0-9]+)");
 	private static final Pattern pAcuNumLiteral = Pattern.compile("^[BbOoXxHh]#([0-9A-Fa-f]+)");
+
 	private static Matcher mHexLiteral = pHexLiteral.matcher("");
 	private static Matcher mIntLiteral = pIntLiteral.matcher("");
 	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
@@ -8047,8 +8059,7 @@ public class COBOLParser extends CodeParser
 			initialization = "{" + var.getValueList(", ", null) + "}";
 		}
 		if (child != null && !child.isConditionName()) {
-			// FIXME: What to do with an array of records here? How would the values be organized in CobVar then?
-			String typeName = var.forceName() + "_" + (declLevel == 0 ? "type" : Integer.toHexString(var.hashCode()));
+			String typeName = var.forceName() + "_" + (declLevel == 0 ? "type" : "t" + Integer.toHexString(var.hashCode()));
 			typeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
 			StringBuilder init = new StringBuilder(typeName);
 			String sepa = "{\\\n";
@@ -8064,12 +8075,29 @@ public class COBOLParser extends CodeParser
 			// Anything added at all? (In this case the initial separator would have changed)
 			if (!sepa.equals("{\\\n")) {
 				initialization = init.toString();
+				// START KGU#467 2017-12-01: Bugfix #480 - in case of an array of sub-records multiply the initialization
+				int arraySize = var.getArraySize();
+				// FIXME: Should we restrict the array size for this approach (but how to communicate it then?)
+				if (arraySize > 0) {
+					if (initialization.length() < MAX_INITIALIZER_LINE_LENGTH) {
+						initialization = initialization.replace("\\\n", " ");
+					}
+					StringBuilder arrayInit = new StringBuilder("{\\\n");
+					sepa = "";
+					for (int i = 0; i < arraySize; i++) {
+						arrayInit.append(sepa + initialization);
+						sepa = ",\\\n";
+					}
+					arrayInit.append("\\\n}");
+					initialization = arrayInit.toString();
+				}
+				// END KGU#467 2017-12-01
 			}
 		}
 		return initialization;
 	}
 	// END KGU#388 2017-10-03
-
+	
 	//------------------------- Postprocessor ---------------------------
 
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
@@ -9070,6 +9098,12 @@ class CobTools {
 			}
 			
 			this.level = level;
+			// START KGU#467 2017-12-01: Bugfix #480 - level 77 data had been handled in a wrong way
+			// Handle level 77 data as if they had level 1 (we avoid further consistency checks here)
+			if (level == 77) {
+				level = 1;
+			}
+			// END KGU#467 2017-12-01
 			if (name != null && !name.isEmpty()) {
 				this.name = name.trim().toLowerCase();
 			} else {
@@ -9098,7 +9132,10 @@ class CobTools {
 				}
 			} else {
 				for (CobVar v = CobTools.this.lastVar; v != null; v = v.parent) {
-					if (level == v.level || level == 1 && v.level == 78) {
+					// START KGU#467 2017-12-01: Bugfix #480 - level 77 data had been handled in a wrong way
+					//if (level == v.level || level == 1 && v.level == 78) {
+					if (level == v.level || level == 1 && (v.level == 77 || v.level == 78)) {
+					// END KGU#467 2017-12-01
 						this.parent = v.parent;
 						v.sister = this;
 						break;
