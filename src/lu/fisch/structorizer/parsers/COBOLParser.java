@@ -79,7 +79,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.11.27      Some fixes for USAGE, SEARCH and EXIT
  *      Kay Gürtzig     2017.11.27      Bugfix #475: A paragraph starting just after the section header closed the section
  *      Kay Gürtzig     2017.12.01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
- *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling fundamentally revised.
+ *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling revised, bugfix #473 approach
  *
  ******************************************************************************************************
  *
@@ -4589,9 +4589,6 @@ public class COBOLParser extends CodeParser
 	
 	private LinkedHashMap< String, LinkedList<Call> > internalCalls = new LinkedHashMap< String, LinkedList<Call> >();
 	
-	/** Maps the names of function parameters to their type specifications */
-	private HashMap<Root, HashMap<String, String>> paramTypeMap = new HashMap<Root, HashMap<String, String>>();
-
 	/**
 	 * Associates the name of the result variable to the respective function Root
 	 */
@@ -4746,19 +4743,17 @@ public class COBOLParser extends CodeParser
 			//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
 			//root.setText(root.getText().getLongString() + "(" + arguments + ")");
 			StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
-//			HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-//			if (paramTypes != null && paramTypes.size() > 0) {
-//				for (int i = 0; i < arguments.count(); i++) {
-//					String type = paramTypes.get(arguments.get(i));
-//					if (type != null && !type.isEmpty() && !type.equals("???")) {
-//						arguments.set(i, type + " " + arguments.get(i)) ;
-//					}
-//				}
-//			}
 			if (arguments.count() > 0) {
 				for (int i = 0; i < arguments.count(); i++) {
 					String varName = arguments.get(i);
-					String type = CobTools.getTypeString(currentProg.getCobVar(varName), false);
+					// START KGU#465 2017-12-04: Bugfix #473
+					//String type = CobTools.getTypeString(currentProg.getCobVar(varName), false);
+					String type = null;
+					CobVar var = currentProg.getCobVar(varName);	// Variables retrieved with COPY may be missing
+					if (var != null) {
+						type = CobTools.getTypeName(currentProg.getCobVar(varName), true);
+					}
+					// END KGU#465 2017-12-04
 					if (type != null) {
 						arguments.set(i, type + " " + varName) ;
 					}
@@ -4773,17 +4768,15 @@ public class COBOLParser extends CodeParser
 			// Debug....
 			String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
 			this.returnMap.put(root, resultVar);
-			if (this.paramTypeMap.containsKey(root)) {	// FIXME!
-				StringList rootText = root.getText();
-				//HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-				//if (paramTypes.containsKey(resultVar)
-				String resultType = CobTools.getTypeString(currentProg.getCobVar(resultVar), false);
-				if (resultType != null
+			StringList rootText = root.getText();
+			// START KGU#465 2017-12-04: Bugfix #473
+			//String resultType = CobTools.getTypeString(currentProg.getCobVar(resultVar), false);
+			String resultType = CobTools.getTypeName(currentProg.getCobVar(resultVar), true);
+			// END KGU#564 2017-12-04
+			if (resultType != null
 					&& rootText.count() >= 1
 					&& rootText.getLongString().trim().endsWith(")")) {
-					//rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
-					rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + resultType);
-				}
+				rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + resultType);
 			}
 		}
 		break;
@@ -4964,7 +4957,7 @@ public class COBOLParser extends CodeParser
 					HashMap<String, String> typeMap = new HashMap<String, String>();
 					// START KGU 2017-05-24: We do not only want the type info here but also create declarations 
 					//this.processDataDescriptions(datRed, null, typeMap);
-					this.processDataDescriptions(datRed, _parentNode, typeMap);
+					this.processDataDescriptions(datRed, typeMap);
 					// END KGU 2017-05-24
 					for (String recName: typeMap.keySet()) {
 						currentProg.fileRecordMap.put(recName, fdName);
@@ -5114,7 +5107,7 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
 		{
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_WORKING);
-			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null);
 			// FIXME! TEST ONLY - provide the correct diagram Subqueues!
 			this.buildDataSection(currentProg.getWorkingStorage(), _parentNode);
 		}
@@ -5122,7 +5115,7 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD__LOCAL_STORAGE_SECTION_LOCAL_STORAGE_SECTION_TOK_DOT:
 		{
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LOCAL);
-			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null);
 			// FIXME! TEST ONLY
 			this.buildDataSection(currentProg.getLocalStorage(), _parentNode);
 		}
@@ -5130,13 +5123,38 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT:
 		{
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LINKAGE);
-			if (!this.paramTypeMap.containsKey(root)) {
-				this.paramTypeMap.put(root, new HashMap<String, String>());
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null);
+			// START KGU#465 2017-12-04: Bugfix #473 - produce an includable diagram for record definitions?
+			boolean hasRecordTypes = false;
+			CobVar arg = currentProg.getLinkageStorage();
+			while (arg != null && !hasRecordTypes) {
+				System.out.println(arg.getName() + ": " + arg.deriveTypeName());
+				if (arg.hasChild()) {
+					hasRecordTypes = true;
+				}
+				arg = arg.getSister();
 			}
-			// FIXME KGU#465 2017-12-04: We must ensure an includable diagram containing the definitions if not provided by main program
-			// This is not to produce elements but to accomplish the type map, therefore we
-			// don't pass the _parentNode.
-			this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
+			if (hasRecordTypes) {
+				// FIXME (KGU 2017-12-04): How can we find out if the types have already been generated e.g. by the main program?
+				Root incl = new Root();
+				incl.setText(root.getMethodName() + "_ArgTypes");
+				incl.setComment("Argument type definitions for routine " + root.getMethodName());
+				incl.setInclude();
+				this.buildDataSection(currentProg.getLinkageStorage(), incl.children);
+				int i = 0;
+				while (i < incl.children.getSize()) {
+					Element el = incl.children.getElement(i);
+					if (!(el instanceof Instruction) || !(((Instruction)el).isTypeDefinition() || ((Instruction)el).getText().get(0).startsWith("const "))) {
+						incl.children.removeElement(i);
+					}
+					else i++;
+				}
+				if (incl.children.getSize() > 0) {
+					subRoots.add(incl);
+					root.addToIncludeList(incl);
+				}
+			}
+			// END KGU#465 2017-12-04
 		}
 		break;
 		case RuleConstants.PROD__FILE_SECTION_HEADER_TOK_FILE_SECTION_TOK_DOT:
@@ -6871,7 +6889,7 @@ public class COBOLParser extends CodeParser
 		return pattern;
 	}
 
-	private final void processDataDescriptions(Reduction _reduction, Subqueue _parentNode, HashMap<String, String> _typeInfo)
+	private final void processDataDescriptions(Reduction _reduction, HashMap<String, String> _typeInfo)
 	{
 		int ruleId = _reduction.getParent().getTableIndex();
 		if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
@@ -7113,7 +7131,7 @@ public class COBOLParser extends CodeParser
 		else {
 			for (int i = 0; i < _reduction.size(); i++) {
 				if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL) {
-					this.processDataDescriptions(_reduction.get(i).asReduction(), _parentNode, _typeInfo);
+					this.processDataDescriptions(_reduction.get(i).asReduction(), _typeInfo);
 				}
 			}
 		}
@@ -8594,7 +8612,12 @@ class CobTools {
 		STORAGE_UNKNOWN,
 		/** FILE section */
 		STORAGE_FILE
-	};
+	}
+
+	// START KGU#465 2017-12-04: Bugfix #473
+	/** A dummy string specifying an un-recognized type (neither pic nor usage) */
+	private static final String UNKNOWN_TYPE = "-unknown-type-";
+	// END KGU#465 2017-12-04
 	
 	/**
 	 * Current node in the CobProg tree 
@@ -9341,7 +9364,7 @@ class CobTools {
 			this.child = null;
 			this.sister = null;
 			
-			// usage explicit given overrides usage calculated from PICTURE
+			// usage explicitly given overrides usage calculated from PICTURE
 			if (usage != null) {
 				this.usage = usage;
 			} else {
@@ -9826,18 +9849,20 @@ class CobTools {
 	/**
 	 * Returns the Java type of a given CobVar depending on its attributes including
 	 * usage, picture and length.<br/>
-	 * Note that in case of an array only the ELEMENT TYPE String!
+	 * Note that in case of an array only the ELEMENT TYPE String will be returned
+	 * unless {@code withArraySize} is set!
 	 * @param CobVar - variable (or component) to return the type string for
 	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
 	 * @return Java type representation as string
 	 * @see CobVar#isArray()
 	 * @see CobVar#getArraySize()
 	 */
-	public static String getTypeString (CobVar variable, boolean withArraySize) {
+	public static String getTypeString(CobVar variable, boolean withArraySize) {
 		if (variable == null) {
 			return null;
 		}
 		// START KGU#388 2017-10-04: Enh. #423
+		// usage can be null if this CobVar was created via CobVar(String, String[], String)
 		else if (variable.usage == null) {
 			System.err.println("getTypeString(" + variable + "): variable has unset usage field!");
 			return "";
@@ -9847,7 +9872,6 @@ class CobTools {
 		if (withArraySize && variable.isArray()) {
 			arraySuffix = "[" + variable.getArraySize() + "]";
 		}
-		// FIXME: usage can be null if this CobVar was created via CobVar(String, String[], String)
 		switch (variable.usage) {
 		case USAGE_BIT: // CHECKME
 			return "";
@@ -9929,11 +9953,21 @@ class CobTools {
 			} else {
 				// CHECKME: does this happen? if not raise a warning or at least log a warning
 				//return "";
-				return "-unknown-type-";
+				return UNKNOWN_TYPE;
 			}
 		// we explicitly don't want a default, allowing to check if all USAGEs have a value assigned
 		}
 		return "";
 	}
+	
+	// START KGU#465 2017-12-04: Bugfix #473 - For hierarchical arguments we need a type name
+	public static String getTypeName (CobVar variable, boolean withArraySize) {
+		String typeName = getTypeString(variable, withArraySize);
+		if (typeName.equals(UNKNOWN_TYPE)) {
+			typeName = variable.deriveTypeName();
+		}
+		return typeName;
+	}
+	// END KGU#465 2017-12-04
 	
 }

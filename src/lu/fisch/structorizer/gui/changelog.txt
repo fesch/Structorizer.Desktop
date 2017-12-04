@@ -31,6 +31,7 @@ Current development version 3.27-04 (2017.12.04)
 - 04: Bugfixes in COBOL import (USAGE parsing, SEARCH, EXIT) <Simon Sobisch>
 - 04: Bugfix #475: Import of COBOL paragraphs broke sections [Simon Sobisch]2
 - 04: Bugfix #480: Import of COBOL level-77 data and record array initialization <2>
+- 04: Bugfix #473: Complex argument types failed to be generated [Simon Sobisch]2
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
