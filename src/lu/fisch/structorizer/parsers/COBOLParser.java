@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+ ",   A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
     Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
@@ -79,7 +79,8 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.11.27      Some fixes for USAGE, SEARCH and EXIT
  *      Kay Gürtzig     2017.11.27      Bugfix #475: A paragraph starting just after the section header closed the section
  *      Kay Gürtzig     2017.12.01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
- *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling revised, bugfix #473 approach
+ *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling revised, bugfix #473 approach,
+ *                                      issue #485 workaround (prefixing intrinsic functions with FUNCTION)
  *
  ******************************************************************************************************
  *
@@ -145,9 +146,6 @@ import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
-
-import java.io.File;
-import java.io.FileInputStream;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the GnuCOBOL language.
@@ -4118,6 +4116,451 @@ public class COBOLParser extends CodeParser
 	// line length for source if source format is VARIABLE
 	private static final int TEXTCOLUMN_VARIABLE = 500;
 	
+	// START KGU#473 2017-12-04: Bugfix #485
+	/** Names of all known intrinsic functions to be prefixed with "FUNCTION" for the parser */
+	private static final String[] INTRINSIC_FUNCTION_NAMES = {
+		"ABS",
+		"ABSOLUTE-VALUE",
+		"ACOS",
+		"ANNUITY",
+		"ASIN",
+		"ATAN",
+		"BOOLEAN-OF-INTEGER",
+		"BYTE-LENGTH",
+		"CHAR",
+		"CHAR-NATIONAL",
+		"COMBINED-DATETIME",
+		"CONCATENATE",
+		"COS",
+		"CURRENCY-SYMBOL",
+		"CURRENT-DATE",
+		"DATE-OF-INTEGER",
+		"DATE-TO-YYYYMMDD",
+		"DAY-OF-INTEGER",
+		"DAY-TO-YYYYDDD",
+		"DISPLAY-OF",
+		"E",
+		"EXCEPTION-FILE",
+		"EXCEPTION-FILE-N",
+		"EXCEPTION-LOCATION",
+		"EXCEPTION-LOCATION-N",
+		"EXCEPTION-STATEMENT",
+		"EXCEPTION-STATUS",
+		"EXP",
+		"EXP10",
+		"FACTORIAL",
+		"FORMATTED-CURRENT-DATE",
+		"FORMATTED-DATE",
+		"FORMATTED-DATETIME",
+		"FORMATTED-TIME",
+		"FRACTION-PART",
+		"HIGHEST-ALGEBRAIC",
+		"INTEGER",
+		"INTEGER-OF-BOOLEAN",
+		"INTEGER-OF-DATE",
+		"INTEGER-OF-DAY",
+		"INTEGER-OF-FORMATTED-DATE",
+		"INTEGER-PART",
+		"LENGTH",
+		"LENGTH-AN",
+		"LOCALE-COMPARE",
+		"LOCALE-DATE",
+		"LOCALE-TIME",
+		"LOCALE-TIME-FROM-SECONDS",
+		"LOG",
+		"LOG10",
+		"LOWER-CASE",
+		"LOWEST-ALGEBRAIC",
+		"MAX",
+		"MEAN",
+		"MEDIAN",
+		"MIDRANGE",
+		"MIN",
+		"MOD",
+		"MODULE-CALLER-ID",
+		"MODULE-DATE",
+		"MODULE-FORMATTED-DATE",
+		"MODULE-ID",
+		"MODULE-PATH",
+		"MODULE-SOURCE",
+		"MODULE-TIME",
+		"MONETARY-DECIMAL-POINT",
+		"MONETARY-THOUSANDS-SEPARATOR",
+		"NATIONAL-OF",
+		"NUMERIC-DECIMAL-POINT",
+		"NUMERIC-THOUSANDS-SEPARATOR",
+		"NUMVAL",
+		"NUMVAL-C",
+		"NUMVAL-F",
+		"ORD",
+		"ORD-MAX",
+		"ORD-MIN",
+		"PI",
+		"PRESENT-VALUE",
+		"RANDOM",
+		"RANGE",
+		"REM",
+		"REVERSE",
+		"SECONDS-FROM-FORMATTED-TIME",
+		"SECONDS-PAST-MIDNIGHT",
+		"SIGN",
+		"SIN",
+		"SQRT",
+		"STANDARD-COMPARE",
+		"STANDARD-DEVIATION",
+		"STORED-CHAR-LENGTH",
+		"SUBSTITUTE",
+		"SUBSTITUTE-CASE",
+		"SUM",
+		"TAN",
+		"TEST-DATE-YYYYMMDD",
+		"TEST-DAY-YYYYDDD",
+		"TEST-FORMATTED-DATETIME",
+		"TEST-NUMVAL",
+		"TEST-NUMVAL-C",
+		"TEST-NUMVAL-F",
+		"TRIM",
+		"UPPER-CASE",
+		"VARIANCE",
+		"WHEN-COMPILED",
+		"YEAR-TO-YYYY"
+	};
+	private static class RepositoryAutomaton {
+		enum State {
+			RA_START,
+			RA_DIV0, RA_SECT0, RA_SECT1,
+			RA_ENV0, RA_ENV1, RA_ENV,
+			RA_CONF0, RA_CONF1, RA_CONF,
+			RA_REP0, RA_REP1, RA_REP2, RA_REP3a, RA_REP3b, RA_REP4a, RA_REP4b, RA_REP5b,
+			RA_READY,
+			RA_PROC0, RA_PROC1, RA_PROC2, RA_PROC,
+			RA_END
+			};
+		
+		private State state = State.RA_START;
+		private static HashSet<String> intrinsicFunctions = new HashSet<String>();
+		static {
+			for (String fn: INTRINSIC_FUNCTION_NAMES) {
+				intrinsicFunctions.add(fn);
+			}
+		}
+		private HashSet<String> privilegedFunctions = new HashSet<String>();
+		private String pendingName = null;
+		
+		public String process(String line)
+		{
+			boolean replacementsDone = false;
+//			StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(line));
+//			tokenizer.quoteChar('"');
+//			tokenizer.quoteChar('\'');
+//			tokenizer.slashStarComments(false);
+//			tokenizer.slashSlashComments(false);
+//			tokenizer.commentChar('*');
+//			tokenizer.parseNumbers();
+//			// Underscore must be added to word characters!
+//			tokenizer.wordChars('_', '_');
+//			tokenizer.wordChars('-', '-');
+			
+			StringList tokens = StringList.explodeWithDelimiter(line.trim(), ".");
+			tokens = StringList.explode(tokens, "\\s+");
+			if (tokens.count() == 0 || tokens.get(0).startsWith("*") || state == State.RA_END) {
+				// Nothing to do here
+				return line;
+			}
+			int pos = -1;
+			boolean followsFUNCTION = false;
+			// FIXME We must find a way to skip string literals
+			while (pos+1 < tokens.count() && state != State.RA_END) {
+				int pos1 = -1;
+				switch (state) {
+				case RA_START:	// No repository section seen
+					if ((pos1 = tokens.indexOf("ENVIRONMENT", pos+1, false)) >= 0) {
+						// Might be the begin of the ENVIRONMENT DIVISION
+						pos = pos1;
+						state = State.RA_ENV0;
+					}
+					else if ((pos1 = tokens.indexOf("DATA", pos+1, false)) >= 0) {
+						// We assume to enter the DATA division instead -> no repository
+						pos = pos1;
+						state = State.RA_DIV0;
+					}
+					else if ((pos1 = tokens.indexOf("PROCEDURE", pos+1, false)) >= 0) {
+						// We assume to enter the PROCEDURE division instead -> no repository
+						pos = pos1;
+						state = State.RA_DIV0;
+					}
+					else {
+						pos++;
+					}
+					break;
+				case RA_DIV0:	// Waitig for "DIVISION" - to end - or to fall back otherwise
+					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
+						// No REPOSITORY SECTION...
+						state = State.RA_END;
+					}
+					else {
+						// Fall back, was something else
+						state = State.RA_START;
+					}
+					break;
+					
+				case RA_ENV0:	// "ENVIRONMENT" seen, waiting for "DIVISION"
+					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
+						// ENVIRONMENT SECTION beginning?
+						state = State.RA_ENV1;
+					}
+					else {
+						// Was something else
+						state = State.RA_START;
+					}
+					break;
+				case RA_ENV1:	// "ENVIRONMENT DIVISION" seen, waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_ENV;
+					}
+					else {
+						// Was likely a syntax error
+						state = State.RA_START;
+					}
+					break;
+				case RA_ENV:	// "ENVIRONMENT DIVISION." seen, waiting for "CONFIGURATION"
+					if ((pos1 = tokens.indexOf("CONFIGURATION", ++pos, false)) >= 0) {
+						state = State.RA_CONF0;
+						pos = pos1;
+					}
+					else if ((pos1 = tokens.indexOf("INPUT-OUTPUT", ++pos, false)) >= 0) {
+						state = State.RA_SECT0;
+						pos = pos1;
+					}
+					break;
+				case RA_SECT0:	// Waiting for "SECTION" - to end - or to fall back otherwise
+					if (tokens.get(++pos).equalsIgnoreCase("SECTION")) {
+						// No REPOSITORY SECTION...
+						state = State.RA_END;
+					}
+					else {
+						// Fall back, was something else
+						state = State.RA_ENV;
+					}
+					break;
+					
+				case RA_CONF0:	// "CONFIGURATION" seen, waiting for "SECTION"
+					if (tokens.get(++pos).equalsIgnoreCase("SECTION")) {
+						state = State.RA_CONF1;
+					}
+					else {
+						// Not a CONFIGURATION SECTION, fall back
+						state = State.RA_ENV;
+					}
+					break;
+				case RA_CONF1:	// "CONFIGURATION SECTION" seen, waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_CONF;
+					}
+					else {
+						// Was likely a syntax error
+						state = State.RA_ENV;
+					}
+					break;
+				case RA_CONF:	// in CONFIGURATION SECTION, waiting for "REPOSITORY"
+					if ((pos1 = tokens.indexOf("REPOSITORY", pos+1, false)) >= 0) {
+						state = State.RA_REP0;
+						pos = pos1;
+					}
+					else if ((pos1 = tokens.indexOf("INPUT-OUTPUT", pos+1, false)) >= 0) {
+						state = State.RA_SECT1;
+						pos = pos1;
+					}
+					else {
+						pos++;
+					}
+					break;
+				case RA_SECT1:	// Waitig for "SECTION" - to end - or to fall back otherwise
+					if (tokens.get(++pos).equalsIgnoreCase("SECTION")) {
+						// No REPOSITORY SECTION...
+						state = State.RA_END;
+					}
+					else {
+						// Fall back, was something else
+						state = State.RA_CONF;
+					}
+					break;
+					
+				case RA_REP0:	// Seen "REPOSITORY", waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_REP1;
+					}
+					else {
+						// Must have been something else
+						state = State.RA_CONF;
+					}
+					break;
+				case RA_REP1:	// Inside REPOSITORY, awaiting a FUNCTION clause
+					if (tokens.get(++pos).equalsIgnoreCase("FUNCTION")) {
+						state = State.RA_REP2;
+					}
+					else {
+						// We are done with REPOSITORY
+						state = State.RA_READY;
+					}
+					break;
+				case RA_REP2:	// Seen "FUNCTION", expecting a function name or "ALL"
+				{
+					String word = tokens.get(++pos).toUpperCase();
+					if (word.equals("ALL") || intrinsicFunctions.contains(word)) {
+						pendingName = word;
+						state = State.RA_REP3a;
+					}
+					else {
+						// Ignore the name, wait for "AS" or TOK_DOT
+						state = State.RA_REP3b;
+					}
+					break;
+				}
+				case RA_REP3a:	// Seen "FUNCTION <name>", waiting for "INTRINSIC" or "AS"
+				{
+					String word = tokens.get(++pos).toUpperCase();
+					if (word.equals("INTRINSIC")) {
+						if (pendingName.equals("ALL")) {
+							privilegedFunctions.addAll(intrinsicFunctions);
+						}
+						else {
+							privilegedFunctions.add(pendingName);
+						}
+						// Okay, now there MAY be a TOK_DOT
+						state = State.RA_REP4a;
+					}
+					else if (word.equals("AS")) {
+						// Now wait for the alias
+						state = State.RA_REP4b;
+					}
+					else {
+						// Looks like a syntax error
+						pendingName = null;
+						state = State.RA_READY;
+					}
+					break;
+				}
+				case RA_REP4a:	// Seen "FUNCTION <name> INTRINSIC", waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						// Clause is ready, another one might come...
+						state = State.RA_REP1;
+					}
+					else if (tokens.get(pos).equalsIgnoreCase("FUNCTION")) {
+						// Another FUNCTION clause without TOK-DOT
+						state = State.RA_REP2;
+					}
+					else {
+						// Looks like a syntax error
+						state = State.RA_READY;
+					}
+					pendingName = null;
+					break;
+				case RA_REP3b:	// Seen "FUNCTION <name>", waiting for "AS" or TOK-DOT
+				{
+					String word = tokens.get(++pos).toUpperCase();
+					if (word.equals("AS")) {
+						state = State.RA_REP4b;
+					}
+					else if (word.equals(".")) {
+						// Ready for next FUNCTION clause
+						state = State.RA_REP1;
+					}
+					else if (word.equalsIgnoreCase("FUNCTION")) {
+						// Another FUNCTION clause without TOK-DOT
+						state = State.RA_REP2;
+					}
+					pendingName = null;
+					break;
+				}
+				case RA_REP4b:	// Having seen "FUNCTION <name> AS", waiting for alias 
+					privilegedFunctions.add(tokens.get(++pos));
+					// Still wait for the TOK-DOT
+					state = State.RA_REP5b;
+					break;
+				case RA_REP5b:
+					if (tokens.get(++pos).equals(".")) {
+						// Ready for next FUNCTION clause
+						state = State.RA_REP1;
+					}
+					else if (tokens.get(pos).equalsIgnoreCase("FUNCTION")) {
+						// Another FUNCTION clause without TOK-DOT
+						state = State.RA_REP2;
+					}
+					else {
+						// Apparently syntax error
+						state = State.RA_READY;
+					}
+					
+				case RA_READY:	// Ready with REPOSITORY, waiting for PROCEDURE DIVISION
+					if ((pos1 = tokens.indexOf("PROCEDURE", ++pos, false)) >= 0) {
+						pos = pos1;
+						state = State.RA_PROC0;
+					}
+					break;
+					
+				case RA_PROC0:	// Seen "PROCEDURE", waiting for "DIVISION"
+					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
+						state = State.RA_PROC1;
+					}
+					else {
+						// Must have been something different
+						state = State.RA_READY;
+					}
+					break;
+				case RA_PROC1:	// Seen "PROCEDURE DIVISION", awaiting TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_PROC;
+					}
+					break;
+				case RA_PROC:	// The only state where there may be replacements
+				{
+					// FIXME: Do a proper tokenization here (aware of String literals etc.)
+					String token = tokens.get(++pos);
+					if (token.equalsIgnoreCase("FUNCTION")) {
+						followsFUNCTION = true;
+						break;
+					}
+					StringList parts = StringList.explodeWithDelimiter(token, "("); 
+					parts = StringList.explodeWithDelimiter(parts, ")");
+					for (int i = 0; i < parts.count(); i++) {
+						String part = parts.get(i);
+						if (followsFUNCTION) {
+							followsFUNCTION = part.equalsIgnoreCase("FUNCTION");
+							continue;
+						}
+						if (part.equalsIgnoreCase("FUNCTION")) {
+							followsFUNCTION = true;
+							continue;
+						}
+						// FIXME: We might have looked for a following parenthesis
+						if (privilegedFunctions.contains(part.toUpperCase())) {
+							parts.set(i, "FUNCTION " + part);
+							replacementsDone = true;
+						}
+					}
+					tokens.set(pos, parts.concatenate());
+					break;
+				}
+				default:
+					// Something must have gone wrong
+					state = State.RA_END;
+					break;
+				}
+				while (pos+1 < tokens.count() && tokens.get(pos+1).trim().isEmpty()) {
+					pos++;
+				}
+			}
+			// Build a new line if replacements have been done
+			if (replacementsDone) {
+				int leftOffs = line.indexOf(line.trim());
+				line = line.substring(0, leftOffs) + tokens.concatenate(" ");
+			}
+			return line;
+		}
+	};
+	// END KGU#473 2017-12-04
+	
 	/* configuration settings */
 	// reference-format with column aware-parts
 	private boolean settingFixedForm;
@@ -4171,7 +4614,12 @@ public class COBOLParser extends CodeParser
 		 * remove ';' and ',' that are not part of a string/integer - cater also for ";;,,;"
 		 * recognize and store constants (78 name value [is] literal | 01 name constant as literal)
 		 * and replace them by tokens (must be redone during parsing)
+		 * Register all intrinsic functions named in the repository
 		 */
+		
+		// START KGU#473 2017-12-04: Bugfix #485
+		RepositoryAutomaton repAuto = new RepositoryAutomaton();
+		// END KGU#473 2017-12-04
 		
 		File interm = null;
 		try
@@ -4198,9 +4646,7 @@ public class COBOLParser extends CodeParser
 			}
 			
 			int srcCodeLastPos = 0;
-			int srcLastCodeLenght = settingCodeLength;
-			
-			// 
+			int srcLastCodeLength = settingCodeLength;
 			
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
@@ -4256,17 +4702,17 @@ public class COBOLParser extends CodeParser
 						// work on "clean" sources)
 						// and if the same literal symbol was used
 						if (srcCodeLastPos != 0) {
-							while (srcLastCodeLenght < settingCodeLength) {
+							while (srcLastCodeLength < settingCodeLength) {
 								srcCode.insert(srcCodeLastPos - 1, " ");
 								srcCodeLastPos++;
-								srcLastCodeLenght++;
+								srcLastCodeLength++;
 							}
 							srcCode.insert(srcCodeLastPos - 1, firstNonSpaceInLine + " &");
 							srcCodeLastPos += 4;
 						}
 						strLine = srcLineCode;
-						srcLastCodeLenght = strLine.length();
-						srcCodeLastPos += srcLastCodeLenght;
+						srcLastCodeLength = strLine.length();
+						srcCodeLastPos += srcLastCodeLength;
 					} else {
 						String resultLine = checkForDirectives(srcLineCode);
 						if (resultLine != null) {
@@ -4300,12 +4746,12 @@ public class COBOLParser extends CodeParser
 							// }
 							if (srcLineCode.trim().length() != 0) {
 								strLine = srcLineCode;
-								srcLastCodeLenght = strLine.length();
+								srcLastCodeLength = strLine.length();
 							} else {
 								strLine = "";
-								srcLastCodeLenght = 0;
+								srcLastCodeLength = 0;
 							}
-							srcCodeLastPos = srcCode.length() + srcLastCodeLenght;
+							srcCodeLastPos = srcCode.length() + srcLastCodeLength;
 							srcCodeLastPos += 1; // counting newline
 						}
 					}
@@ -4326,6 +4772,9 @@ public class COBOLParser extends CodeParser
 
 				}
 				//srcCodeLastPos += 1;   // really needed for free-form reference-format?
+				// START KGU#473 2017-12-04: Bugfix #485
+				strLine = repAuto.process(strLine);
+				// END KGU#473 2017-12-04
 				srcCode.append (strLine + "\n");
 			}
 			//Close the input stream
