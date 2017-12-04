@@ -79,6 +79,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.11.27      Some fixes for USAGE, SEARCH and EXIT
  *      Kay Gürtzig     2017.11.27      Bugfix #475: A paragraph starting just after the section header closed the section
  *      Kay Gürtzig     2017.12.01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
+ *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling fundamentally revised.
  *
  ******************************************************************************************************
  *
@@ -4498,6 +4499,11 @@ public class COBOLParser extends CodeParser
 
 	//---------------------- Build fields and methods for structograms ---------------------------
 
+	// START KGU#464 2017-12-03: Bugfix #475
+	/** Target type for accomplishment of a {@link SectionOrParagraph} object */
+	private static enum SoPTarget {SOP_SECTION, SOP_PARAGRAPH, SOP_ANY};
+	// END KGU#464 2017-12-03
+	
 	/** Record for detected sections and paragraphs if needed as reference for possible calls */ 
 	private class SectionOrParagraph {
 		public String name;
@@ -4505,45 +4511,78 @@ public class COBOLParser extends CodeParser
 		public int startsAt = -1;		// Element index of first statement within parent
 		public int endsBefore = -1;	// Element index beyond closing TOK_DOT within parent
 		public Subqueue parent = null;
-		public Element firstElement = null, lastElement = null;
+		// START KGU#464 2017-12-03: Bugfix #475
+		//public Element firstElement = null, lastElement = null;
+		public SectionOrParagraph containedBy = null;
+		public LinkedList<Jump> sectionExits = new LinkedList<Jump>();
+		public LinkedList<Jump> paragraphExits = new LinkedList<Jump>();
+		// END KGU#464 2017-12-03
 		
-		public SectionOrParagraph(String _name, boolean _isSection, int _startIndex, Subqueue _parentNode)
+		public SectionOrParagraph(String _name, boolean _isSection, int _startIndex, Subqueue _parentNode, SectionOrParagraph _containingSoP)
 		{
 			name = _name;
 			isSection = _isSection;
 			startsAt = _startIndex;
 			parent = _parentNode;
+			containedBy = _containingSoP;
 		}
 		
 		public String toString()
 		{
-			return getClass().getSimpleName() + "(" + this.name + ":" + this.startsAt + ".." + this.endsBefore + ")";
+			return getClass().getSimpleName() + "(" + (this.isSection ? "SECTION " : "") + this.name + ":" + this.startsAt + ".." + this.endsBefore + ")";
 		}
-	}
-	
-	/** Visitor class responsible for updating disabled "EXIT *" elements to
-	 * "return" elements
-	 */
-	private final class JumpConverter implements IElementVisitor
-	{
-		@Override
-		public boolean visitPreOrder(Element _ele) {
-			String text = _ele.getText().getLongString();
-			if (_ele instanceof Jump && _ele.disabled && 
-					(text.contentEquals("EXIT SECTION") || text.contentEquals("EXIT PARAGRAPH"))) {
-				// Replace the comment by the previous text
-				_ele.setComment(text);
-				_ele.setText(getKeywordOrDefault("preReturn", "return"));
-				_ele.setColor(Color.WHITE);
-				_ele.disabled = false;
+		
+		// START KGU#464 2017-12-03: Bugfix #475 - these methods replace the former fields
+		public Element getFirstElement()
+		{
+			Element element = null;
+			if (this.parent != null && this.startsAt > -1 && this.startsAt < this.parent.getSize()) {
+				element = this.parent.getElement(this.startsAt);
 			}
-			return true;
+			return element;
 		}
-		@Override
-		public boolean visitPostOrder(Element _ele) {
-			return true;
+		public Element getLastElement()
+		{
+			Element element = null;
+			int lastIndex = this.endsBefore ;
+			if (this.parent != null && (lastIndex == -1 || lastIndex > this.startsAt) && lastIndex <= this.parent.getSize()) {
+				if (lastIndex == -1) lastIndex = this.parent.getSize();
+				element = this.parent.getElement(lastIndex - 1);
+			}
+			return element;
 		}
-	};
+		public int getSize()
+		{
+			return (this.endsBefore < 0 ? this.parent.getSize() : this.endsBefore) - this.startsAt; 
+		}
+		// END KGU#464 2017-12-03
+	}
+
+	// START KGU#464 2017-12-04: Bugfix #475 - Now obsolete
+//	/** Visitor class responsible for updating disabled "EXIT *" elements to
+//	 * "return" elements (might have become superfluous by bugfix #475)
+//	 */
+//	private final class JumpConverter implements IElementVisitor
+//	{
+//		@Override
+//		public boolean visitPreOrder(Element _ele) {
+//			String text = _ele.getText().getLongString();
+//			if (_ele instanceof Jump && _ele.disabled && 
+//					(text.equalsIgnoreCase("EXIT SECTION") || text.equalsIgnoreCase("EXIT PARAGRAPH"))) {
+//				// Replace the comment by the previous text
+//				_ele.setComment(text);
+//				_ele.setText(getKeywordOrDefault("preReturn", "return"));
+//				_ele.setColor(Color.WHITE);
+//				_ele.disabled = false;
+//			}
+//			return true;
+//		}
+//		@Override
+//		public boolean visitPostOrder(Element _ele) {
+//			return true;
+//		}
+//	};
+	// END KGU#464 2017-12-04
 	
 	/** During build phase, all detected sections and paragraphs are listed here for resolution of internal calls */
 	private LinkedList<SectionOrParagraph> procedureList = new LinkedList<SectionOrParagraph>();
@@ -4628,11 +4667,13 @@ public class COBOLParser extends CodeParser
 		log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 		//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
-		for (SectionOrParagraph sop: this.procedureList) {
-			if (sop.firstElement != null && ((Subqueue)sop.firstElement.parent).getIndexOf(sop.firstElement) < 0) {
-				System.err.println("1st element of " + sop.name + " (" + sop.firstElement + ") vanished!");
-			}
-		}
+//		// FIXME KGU#464 2027-12-03: DEBUG check for issue #475
+//		for (SectionOrParagraph sop: this.procedureList) {
+//			if (sop.getFirstElement() == null || sop.getLastElement() == null) {
+//				System.out.println("!!!" + sop + " still open!");
+//			}
+//		}
+//		// END KGU#464 2017-12-03
 		
 		switch (ruleId) {
 		case RuleConstants.PROD_PROGRAM_DEFINITION:
@@ -4751,7 +4792,7 @@ public class COBOLParser extends CodeParser
 			// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
 			// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
 			//       to close the previous section and the previous paragraph
-			accomplishPrevSoP(_parentNode, true);
+			accomplishPrevSoP(_parentNode, SoPTarget.SOP_SECTION);
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 			// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
@@ -4763,16 +4804,15 @@ public class COBOLParser extends CodeParser
 			sec.getComment().insert("Definition of section " + name, 0);
 			
 			// add to procedureList for later handling
-			this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
+			addProcedureToList(_parentNode, name, true);
 		}
 		break;
 		case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
 		{
 			// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
 			// Note: this starts a new paragraph AND closes the previous paragraph (if existent)
-			// START KGU#464 2017-11-27: Bugfix #475
-			//accomplishPrevSoP(_parentNode);
-			accomplishPrevSoP(_parentNode, false);
+			// START KGU#464 2017-11-27: Bugfix #475 
+			accomplishPrevSoP(_parentNode, SoPTarget.SOP_PARAGRAPH);
 			// END KGU#464 2017-11-27
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
@@ -4787,18 +4827,21 @@ public class COBOLParser extends CodeParser
 			if (Character.isDigit(name.charAt(0))) {
 				name = "sub" + name;
 			}
-			this.procedureList.addFirst(new SectionOrParagraph(name, false, _parentNode.getSize(), _parentNode));
+			addProcedureToList(_parentNode, name, false);
 		}
 		break;
 //			deactivated as we get an ArrayIndexOutOfBoundsException sometimes
-		case RuleConstants.PROD_PROCEDURE_TOK_DOT:
+		case RuleConstants.PROD_PROCEDURE_TOK_DOT:	// <procedure> ::= <statements> 'TOK_DOT'
 			// First process the statements then handle the TOK_DOT with the subsequent case
 			buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
 			// No break; here!
-		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// Astonishingly this rule does NOT fall through to TOK-DOT!
-			// TODO close the last unsatisfied "procedure"
-			this.log("===> PROD_PROCEDURE_TOK_DOT2\n", false);
-			accomplishPrevSoP(_parentNode, true);
+		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// This case should never occur since the rule is supposed to fall through to TOK-DOT!
+			// FIXME: Remove this DEBUG logging!
+			if (ruleId == RuleConstants.PROD_PROCEDURE_TOK_DOT2) this.log("===> PROD_PROCEDURE_TOK_DOT2\n", false);
+			// START KGU#464 2017-12-03: Bugfix #475
+			// DON't close the last unsatisfied "procedure" here unless a SECTION ends (which is detected otherwise)
+			//accomplishPrevSoP(_parentNode, SoPTarget.SOP_ANY);
+			// END KGU#464 2017-12-03
 			break;
 		case RuleConstants.PROD_IF_STATEMENT_IF:
 			//System.out.println("PROD_IF_STATEMENT_IF");
@@ -5130,46 +5173,57 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Accomplishes the element references of the preceding (and here-ending) unsatisfied section
-	 * or paragraph
-	 * @param _parentNode - the Subqueue to add elements to
-	 * @param _closeSection - wheher it is allowed to close a section here (only paragraph else)
+	 * Inserts a new {@link SectionOrParagraph} object at the front of {@link #procedureList}.
+	 * The new procedure reference object will start at the current end of @{@link Subqueue} {@code _parentNode}.   
+	 * @param _parentNode - the {@link Subqueue} we are referrung to
+	 * @param _name - name of the section or paragraph starting here
+	 * @param _asSection - whether it is a SECTION.
 	 */
-	// START KGU#464 2017-11-27: Bugfix #475
-	//private void accomplishPrevSoP(Subqueue _parentNode) {
-	private void accomplishPrevSoP(Subqueue _parentNode, boolean _closeSection) {
-	// END KGU#464 2017-11-27
+	protected void addProcedureToList(Subqueue _parentNode, String _name, boolean _asSection) {
+		SectionOrParagraph containingSoP = null;
+		for (SectionOrParagraph sop: this.procedureList) {
+			// Same Subqueue and not closed? Then we will link it
+			if (sop.parent == _parentNode && sop.endsBefore < 0) {
+				containingSoP = sop;
+				break;
+			}
+		}
+		this.procedureList.addFirst(new SectionOrParagraph(_name, _asSection, _parentNode.getSize(), _parentNode, containingSoP));
+	}
+
+	/**
+	 * Accomplishes the element references of the preceding (and here-ending) unsatisfied paragraphs
+	 * until to the first occurring unsaturated section entry.
+	 * @param _parentNode - the Subqueue to add elements to
+	 * @param _what - whether a section is to be accomplished (involves closing of all begun paragraphs),
+	 * or just a paragraph will be accomplished (if there is an open one) or just the last open entry.
+	 * @return whether a matching open entry was found.
+	 */
+	private boolean accomplishPrevSoP(Subqueue _parentNode, SoPTarget _what) {
 		Iterator<SectionOrParagraph> iter = procedureList.iterator();
 		boolean found = false;
 		while (!found && iter.hasNext()) {
 			SectionOrParagraph sop = iter.next();
-			if (sop.parent == _parentNode && sop.endsBefore < 0) {
-				// START KGU#464 2017-11-27: Bugfix #475 don't close an empty section with a paragrpah
-				if (sop.isSection && !_closeSection) {
+			if (sop.parent == _parentNode) {
+				// START KGU#464 2017-12-03: Bugfix #475
+				//sop.endsBefore = _parentNode.getSize();
+				if (_what != SoPTarget.SOP_SECTION && sop.endsBefore >= 0) {
+					// Leave if we are not to satisfy a section but the last entry isn't open anymore
 					break;
 				}
-				// END KGU#464 2017-11-27
-				sop.endsBefore = _parentNode.getSize();
-				// START KGU#452 2017-10-30: Bugfix #445 - We must face empty Subqueues or SoPs
-				//sop.firstElement = _parentNode.getElement(sop.startsAt);
-				//sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
-				if (sop.startsAt < sop.endsBefore) {
-					sop.firstElement = _parentNode.getElement(sop.startsAt);
-					sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+				if (_what != SoPTarget.SOP_PARAGRAPH || !sop.isSection) {
+					// This definitively ends the section or paragraph - it will no longer be found as open entity
+					sop.endsBefore = _parentNode.getSize();
 				}
-				// END KGU#452 2017-10-30
-				if (_closeSection == sop.isSection) {
+				// If we are to close a section, then we must close all open paragraphs first until we find the
+				// last open section and may leave. Otherwise we may leave just now.
+				if (_what != SoPTarget.SOP_SECTION || sop.isSection) {
 					found = true;
 				}
-				else {
-					this.log("===> " + sop + " (" + _closeSection + ")\n" , false);
-				}
-//				System.out.println("======== " + sop.name + " =======");
-//				for (int i = sop.startsAt; i < sop.endsBefore; i++) {
-//					System.out.println("\t" + _parentNode.getElement(i));
-//				}
+				// END KGU#464 2017-12-03
 			}
 		}
+		return found;
 	}
 
 	/**
@@ -6212,6 +6266,7 @@ public class COBOLParser extends CodeParser
 		Color color = null;
 		Reduction secRed = _reduction.get(1).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
+		SoPTarget exitTarget = SoPTarget.SOP_ANY;
 		switch (secRuleId) {
 		case RuleConstants.PROD_EXIT_BODY:	// (empty)
 			content = "(exit from paragraph)";
@@ -6230,12 +6285,21 @@ public class COBOLParser extends CodeParser
 			content = CodeParser.getKeywordOrDefault("preLeave", "leave");
 			break;
 		case RuleConstants.PROD_EXIT_BODY_PERFORM_CYCLE: // <exit_body> ::= PERFORM CYCLE
-		case RuleConstants.PROD_EXIT_BODY_SECTION:	// <exit_body> ::= SECTION
-		case RuleConstants.PROD_EXIT_BODY_PARAGRAPH:// <exit_body> ::= PARAGRAPH
 			content = this.getContent_R(_reduction, "");
 			color = Color.RED;
 			comment = "Unsupported kind of JUMP";
 			break;
+		case RuleConstants.PROD_EXIT_BODY_SECTION:	// <exit_body> ::= SECTION
+		case RuleConstants.PROD_EXIT_BODY_PARAGRAPH:// <exit_body> ::= PARAGRAPH
+			// START KGU#464 2017-12-04: Bugfix #475 - If we are in an appropriate context, we may generate Return instruction
+			//content = this.getContent_R(_reduction, "");
+			//color = Color.RED;
+			//comment = "Unsupported kind of JUMP";
+			content = CodeParser.getKeywordOrDefault("preReturn", "return");
+			comment = "EXIT " + secRed.get(0).asString();
+			exitTarget = (secRuleId == RuleConstants.PROD_EXIT_BODY_SECTION) ? SoPTarget.SOP_SECTION : SoPTarget.SOP_PARAGRAPH;
+			break;
+			// END KGU#464 2017-12-04
 		}
 		if (content != null) {
 			Jump jmp = new Jump(content.trim());
@@ -6248,6 +6312,36 @@ public class COBOLParser extends CodeParser
 				jmp.disabled = true;
 			}
 			_parentNode.addElement(jmp);
+			// START KGU#464 201-12-04: Bugfix #475
+			if (exitTarget != SoPTarget.SOP_ANY) {
+				registerExitInProcedureContext(jmp, exitTarget);
+			}
+			// END KGU#464 2017-12-04
+		}
+	}
+
+	/**
+	 * Checks whether there is a open section or paragraph context and if so marks it as
+	 * containing an EXIT statement. Returns true if the category of the innermost context
+	 * matches the argument. 
+	 * @param _exitSection - true if the EXIT statement was an EXIT SECTION 
+	 * @return true if the current procedure context is a section and {@code _exitSection} is true or
+	 * if the context is a paragraph and {@code _exitSection} is false 
+	 */
+	private void registerExitInProcedureContext(Jump _jump, SoPTarget _target) {
+		if (!this.procedureList.isEmpty()) {
+			for (SectionOrParagraph sop: this.procedureList) {
+
+				if (sop.endsBefore < 0) {
+					if (_target == SoPTarget.SOP_SECTION) {
+						sop.sectionExits.add(_jump);
+					}
+					else {
+						sop.paragraphExits.add(_jump);
+					}
+					return;
+				}
+			}
 		}
 	}
 
@@ -8147,34 +8241,42 @@ public class COBOLParser extends CodeParser
 	{
 		// The automatic conversion of Instructions to Calls may have invalidated element references.
 		// Hence update the procedureList before elements are going to be moved.
-		refactorProcedureList();
+		finishProcedureList();
 		
 		// Now the actual extraction of local procedures may begin.
 		for (SectionOrParagraph sop: this.procedureList) {
 			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
-			if (sop.firstElement != null && sop.lastElement != null) {
-				Root owner = Element.getRoot(sop.firstElement);
-				Subqueue sq = (Subqueue)sop.firstElement.parent;
+			Element firstElement = sop.getFirstElement();
+			Element lastElement = sop.getLastElement();
+			if (firstElement != null && lastElement != null) {
+				Subqueue sq = sop.parent;
 				// We will have to copy the content of the replacing call. Therefore we must
 				// have an opportunity to find the call. This should be feasible via the index
 				// of the first element of the subsequence. But we cannot be sure that sop.start
 				// is still correct - the original context may already have been outsourced itself
 				// so we search for it in the current context.
-				int callIndex = sq.getIndexOf(sop.firstElement);
+				int callIndex = sop.startsAt;
+				int nextIndex = sop.endsBefore;
 				if (callIndex < 0) {
 					this.log("Corrupt diagram: Parts of section or paragraph \"" + sop.name + "\" not detected!", true);
 					continue;
 				}
-				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
-				if (clients != null) {
+				// START KGU#464 2017-12-04: Bugfix #475 - Check if there are EXIT PARAGRAPH or EXIT SECTION Jumps
+				//if (clients != null) {
+				if (clients != null || sop.isSection && !sop.sectionExits.isEmpty() || !sop.isSection && !sop.paragraphExits.isEmpty()) {
+				// END KGU#464 2017-12-04
 					// No longer bothering to detect arguments and results, we may simply move the elements
 					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
 					String callText = sop.name + "()";
 
 					// This the decisive step
-					Call replacingCall = extractSectionOrParagraph(owner, sq, callIndex, elements, callText);
+					Call replacingCall = extractSectionOrParagraph(sop, callText);
+					// START KGU#464 2017-12-04: Bugfix #475 - extractSectionOrParagraph now updates indices
+					callIndex = sop.startsAt;
+					nextIndex = sop.endsBefore;
+					// END KGU#464 2017-12-04
 
-					callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
+					//callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
 					// Now cleanup and get rid of place-holding dummy elements
 					Element doomedEl = null;
 					if (callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Call) {
@@ -8182,9 +8284,21 @@ public class COBOLParser extends CodeParser
 						if (doomedEl.disabled && doomedEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
 							replacingCall.setComment(doomedEl.getComment());
 							//System.out.println("=== Cleanup Call: " + sq.getElement(callIndex-1));
-							sq.removeElement(--callIndex);
+							sq.removeElement(callIndex-1);
+							// START KGU#464 2017-12-03: Bugfix #475
+							sop.startsAt--;
+							sop.endsBefore--;
+							// END KGU#464 2017-12-03
 						}
 					}
+					// START KGU#464 2017-12-03: Bugfix #475 - mark inappropriate multi-level returns
+					if (!sop.isSection) {
+						for (Jump jp: sop.sectionExits) {
+							jp.setColor(Color.RED);
+							jp.getComment().add("UNSUPPORTED: Cannot exit the calling subroutine!");
+						}
+					}
+					// END KGU#464 2017-12-03
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
 					for (Call client: clients) {
@@ -8194,14 +8308,17 @@ public class COBOLParser extends CodeParser
 						client.disabled = false;
 					}
 					// At the original place we most likely won't need the Call anymore (not reachable).
-					if (!sq.isReachable(callIndex, false)) {
+					if (!sq.isReachable(sop.startsAt, false)) {
 						sq.removeElement(replacingCall);
+						// START KGU#464 2017-12-03: Bugfix #475
+						sop.endsBefore--;
+						// END KGU#464 2017-12-03
 					}
 				}
 				// Not explicitly used anywhere and just consisting of a disabled dummy jump? 
-				else if (elements.getSize() == 1 && elements.getElement(0) instanceof Jump) {
+				else if (sop.getSize() == 1 && firstElement instanceof Jump) {
 					Element dummyCall = null;
-					Jump dummyJump = (Jump)elements.getElement(0);
+					Jump dummyJump = (Jump)firstElement;
 					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
 					// both being un-reachable; then we will drop the two dummy elements now
 					if (callIndex > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(callIndex-1)) instanceof Call) {
@@ -8211,10 +8328,28 @@ public class COBOLParser extends CodeParser
 								sq.removeElement(callIndex);	// This is the dummyJump itself
 								//System.out.println("=== Cleanup Call: " + sq.getElement(ix-1));
 								sq.removeElement(callIndex-1);	// This is the preceding dummyCall
+								// START KGU#464 2017-12-03: Bugfix #475
+								sop.startsAt--;
+								sop.endsBefore -= 2;
+								// END KGU#464 2017-12-03
 							}
 						}
 					}
 				}
+				// START KGU#464 2017-12-03: Bugfix #475
+				else if (!sop.isSection) {
+					SectionOrParagraph contSoP = sop.containedBy;
+					while (contSoP != null && !contSoP.isSection) {
+						contSoP = contSoP.containedBy;
+					}
+					if (contSoP != null && contSoP.endsBefore < 0) {
+						for (Jump jp: sop.sectionExits) {
+							contSoP.sectionExits.add(jp);
+						}
+					}
+				}
+				refactorProcedureList(sop, callIndex, nextIndex);
+				// END KGU#464 2017-12-03
 			}
 		}
 		// START KGU#376 2017-10-04: Enh. #389
@@ -8231,46 +8366,46 @@ public class COBOLParser extends CodeParser
 	// END KGU 2017-05-28
 
 	/**
-	 * Extracts the COBOL section or paragraph comprised by {@code elements} from {@link Subqueue} {@code sq}
+	 * Extracts the COBOL section or paragraph comprised by {@code sop} from its {@link Subqueue}
 	 * to a new subdiagram, which is going to be registered in {@link CodeParser#subRoots}.
 	 * Usually this is accompanied by the extraction of all potentially shared data declarations (type
-	 * and constant definitions, variable declarations and initialisations) from {@link Root} {@code owner}
-	 * to a new includable diagram, which will be registered {@link #dataSectionIncludes} (if all that hadn't
-	 * already been done in relation with another extraction from {@code owner}). 
-	 * @param owner - the diagram {@code elements} belong to
-	 * @param sq - this direct parent {@link Subqueue} of {@code elements}
-	 * @param callIndex - the start position of {@code elements} within {@code sq} (hence the target index for
-	 * 		the replacing {@link Call}.
-	 * @param elements - the {@link Element}s to be outsourced.
-	 * @param callText
+	 * and constant definitions, variable declarations and initialisations) from the owning {@link Root}
+	 * to a new includable diagram, which will be registered in {@link #dataSectionIncludes} (if all that hadn't
+	 * already been done in relation with another extraction from the owning {@link Root}). 
+	 * @param sop - the {@link SectionOrParagraph} to be outsourced.
+	 * @param callText - the text to be placed in the substituting Call.
 	 * @return the {@link Call} element replacing the section or paragraph in {@code owner}. 
 	 */
-	private Call extractSectionOrParagraph(Root owner, Subqueue sq, int callIndex, SelectedSequence elements,
-			String callText) {
+	private Call extractSectionOrParagraph(SectionOrParagraph sop, String callText) {
+		Root owner = Element.getRoot(sop.parent);
 		Root proc = new Root();
 		proc.setText(callText);
 		proc.setProgram(false);
-		int nElements = elements.getSize();
+		int nElements = sop.getSize();
 		//System.out.println("==== Extracting " + sop.name + " ===...");
 		for (int i = 0; i < nElements; i++) {
-			proc.children.addElement(elements.getElement(0));
+			proc.children.addElement(sop.parent.getElement(sop.startsAt));
 			//System.out.println("\t" + (callIndex + i) + " " + elements.getElement(0)); 
-			elements.removeElement(0);
+			sop.parent.removeElement(sop.startsAt);
+			sop.endsBefore--;
 		}
+		// START KGU#464 2017-12-04): Bugfix #475 This became obsolete now
 		// Now we convert all EXIT SECTION or EXIT PARAGRAPH elements into return Jumps.
-		proc.traverse(new JumpConverter());
+		//proc.traverse(new JumpConverter());
+		// END KGU#464 2017-12-04
 
 		Call replacingCall = new Call(callText);
-		sq.insertElementAt(replacingCall, callIndex);
+		sop.parent.insertElementAt(replacingCall, sop.startsAt);
+		sop.endsBefore++;
 		// Has the owner Root still shareable data at its beginning? Then outsource them...
 		extractShareableData(owner);
 		// If the owner has a mapped includable let the new proc include it as well
 		if (dataSectionIncludes.containsKey(owner)) {
 			proc.addToIncludeList(dataSectionIncludes.get(owner));
 		}
-		// Put the new subroutine daigram to the set of results as well
-		subRoots.add(proc);
 		
+		// Put the new subroutine diagram to the set of results as well
+		subRoots.add(proc);	
 		
 		return replacingCall;
 	}
@@ -8301,49 +8436,106 @@ public class COBOLParser extends CodeParser
 			dataSectionEnds.remove(owner);	// Un-register the root from those holding their own data declarations
 			dataSectionIncludes.put(owner, dataName);	// register the mapped includable instead
 			owner.addToIncludeList(dataName);	// ... and let the former owner include it
-
+			// START KGU#464 2017-12-03: Bugfix #475 - adapt all section or paragraph references affected from this extraction
+			for (SectionOrParagraph sop: this.procedureList) {
+				if (sop.parent == owner.children && sop.startsAt >= endDataIx) {
+					if (sop.endsBefore >= sop.startsAt) {
+						sop.endsBefore -= endDataIx;
+					}
+					sop.startsAt -= endDataIx;
+				}
+			}
+			// END KGU#464 2017-12-03
 		}
 	}
 
+	// START KGU#464 2017-12-03: Bugfix #475 - we have to face nested paragraphs with require reference modifications
 	/**
-	 * Checks and updates direct element references in all {@link SectioOrParagraph} entries of 
-	 * {@code this.}{@link #procedureList}. This is due before the extraction of sections and
-	 * paragraphs to subdiagrams after {@code super} has transmuted Instructions to Calls.
-	 * Requires that the index references still match, which they won't do any longer when elements
-	 * start to be moved around.
+	 * Checks all {@link SectioOrParagraph} entries in {@code this.}{@link #procedureList} for open
+	 * ends and sets the size of the respective parent {@link Subqueue} as end index in these cases. 
+	 * This is due before the extraction of sections and paragraphs to subdiagrams.
 	 * (Submethod of {@link #subclassPostProcess(String)}) 
 	 */
-	private void refactorProcedureList() {
+	private void finishProcedureList() {
 		for (SectionOrParagraph sop: this.procedureList) {
 			// START KGU#452 2017-10-30: Bugfix #445 - There may be empty sections or paragraphs
-			if (sop.firstElement == null) {
+			if (sop.getFirstElement() == null) {
 				// We can't do anything here
 				continue;
 			}
 			// END KGU#452 2017-10-30
-			int i = 0;
-			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
-				int ix = (i == 0 ? sop.startsAt : sop.endsBefore - 1);
-				Subqueue sq = null;
-				Element newEl = null;
-				if (el instanceof Instruction && (sq = (Subqueue)el.parent).getIndexOf(el) < 0) {
-					if (ix < sq.getSize() && (newEl = sq.getElement(ix)) instanceof Call &&
-							newEl.getText().getText().equals(el.getText().getText())) {
-						if (i == 0) {
-							sop.firstElement = newEl;
-						}
-						else {
-							sop.lastElement = newEl;
-						}
-					}
-					else {
-						System.err.println("Instructions of Section/Paragraph " + sop.name + " got out of sight!");
-					}
-				}
-				i++;
+			// START KGU#464 2017-12-03: Bugfix #475 - close open SoPs (usually not closed at EOF)
+			else if (sop.endsBefore < 0) {
+				sop.endsBefore = sop.parent.getSize();
 			}
+//			int i = 0;
+//			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
+//				int ix = (i == 0 ? sop.startsAt : sop.endsBefore - 1);
+//				Subqueue sq = null;
+//				Element newEl = null;
+//				// Was the element an Instruction and has it vanished?
+//				if (el instanceof Instruction && (sq = (Subqueue)el.parent).getIndexOf(el) < 0) {
+//					if (ix < sq.getSize() && (newEl = sq.getElement(ix)) instanceof Call &&
+//							newEl.getText().getText().equals(el.getText().getText())) {
+//						if (i == 0) {
+//							sop.firstElement = newEl;
+//						}
+//						else {
+//							sop.lastElement = newEl;
+//						}
+//					}
+//					else {
+//						System.err.println("Instructions of Section/Paragraph " + sop.name + " got out of sight!");
+//					}
+//				}
+//				i++;
+//			}
+			// END KGU#464 2017-12-03
 		}
 	}
+
+	/**
+	 * Checks and updates element index ranges in all {@link SectionOrParagraph} entries directly or
+	 * indirectly including the given {@code _sop} along the containdBy links in 
+	 * {@code this.}{@link #procedureList}. This is due whenever a modification (subroutine extraction or
+	 * elimination of dummy calls or jumps) was done.
+	 * Ensures that the index references will match again.
+	 * @param _sop - the {@link SectionOrParagraph} object just manipulated
+	 * @param _formerStartIndex - its former start index
+	 * @param _formerNextIndex - its former end index
+	 */
+	private void refactorProcedureList(SectionOrParagraph _sop, int _formerStartIndex, int _formerNextIndex)
+	{
+		int startChange = _sop.startsAt - _formerStartIndex;	// usually <= 0
+		int sizeChange =  _sop.getSize() - (_formerNextIndex - _formerStartIndex);	// usually <= 0
+		if (startChange == 0 && sizeChange == 0) {
+			// Nothing to do
+			return;
+		}
+		SectionOrParagraph nextSop = _sop.containedBy;
+		while (nextSop != null) {
+			// It will always hold that nextSop.startsAt >= _sop.startsAt (otherwise they wouldn't have been
+			// linked).
+			// If the size has changed and the linked (containing) sector or paragraph had ended at or after
+			// the old end of _sop then index endsBefore will have to be adapted accordingly
+			if (sizeChange != 0 && nextSop.endsBefore >= 0 && nextSop.endsBefore >= _formerNextIndex) {
+				nextSop.endsBefore += sizeChange;
+			}
+			// If both _sop and nextSop shared the start index and _sop.startsAt has decreased
+			// then nextSop will also be moved the same distance.
+			if (startChange < 0) {
+				if (nextSop.startsAt == _formerStartIndex) {
+					nextSop.startsAt += startChange;
+				}
+				if (nextSop.endsBefore >= 0) {
+					nextSop.endsBefore += startChange;
+				}
+			}
+			nextSop = nextSop.containedBy;
+		}
+	}
+	// END KGU#464 2017-12-03
+
 }
 
 
