@@ -5133,6 +5133,7 @@ public class COBOLParser extends CodeParser
 			if (!this.paramTypeMap.containsKey(root)) {
 				this.paramTypeMap.put(root, new HashMap<String, String>());
 			}
+			// FIXME KGU#465 2017-12-04: We must ensure an includable diagram containing the definitions if not provided by main program
 			// This is not to produce elements but to accomplish the type map, therefore we
 			// don't pass the _parentNode.
 			this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
@@ -8255,9 +8256,9 @@ public class COBOLParser extends CodeParser
 				// of the first element of the subsequence. But we cannot be sure that sop.start
 				// is still correct - the original context may already have been outsourced itself
 				// so we search for it in the current context.
-				int callIndex = sop.startsAt;
+				int startIndex = sop.startsAt;
 				int nextIndex = sop.endsBefore;
-				if (callIndex < 0) {
+				if (startIndex < 0) {
 					this.log("Corrupt diagram: Parts of section or paragraph \"" + sop.name + "\" not detected!", true);
 					continue;
 				}
@@ -8269,14 +8270,13 @@ public class COBOLParser extends CodeParser
 					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
 					String callText = sop.name + "()";
 
-					// This the decisive step
+					// This the decisive step (bugfix #475: now already refactors indices)
 					Call replacingCall = extractSectionOrParagraph(sop, callText);
-					// START KGU#464 2017-12-04: Bugfix #475 - extractSectionOrParagraph now updates indices
-					callIndex = sop.startsAt;
-					nextIndex = sop.endsBefore;
-					// END KGU#464 2017-12-04
 
-					//callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
+					int callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing
+					if (callIndex != sop.startsAt) {
+						System.err.println("*** Refactoring of " + sop + " faild!");
+					}
 					// Now cleanup and get rid of place-holding dummy elements
 					Element doomedEl = null;
 					if (callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Call) {
@@ -8321,13 +8321,13 @@ public class COBOLParser extends CodeParser
 					Jump dummyJump = (Jump)firstElement;
 					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
 					// both being un-reachable; then we will drop the two dummy elements now
-					if (callIndex > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(callIndex-1)) instanceof Call) {
+					if (startIndex > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(startIndex-1)) instanceof Call) {
 						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name)) {
-							if (!sq.isReachable(callIndex-1, false)) {
+							if (!sq.isReachable(startIndex-1, false)) {
 								//System.out.println("=== Cleanup Jump: " + sq.getElement(ix));
-								sq.removeElement(callIndex);	// This is the dummyJump itself
+								sq.removeElement(startIndex);	// This is the dummyJump itself
 								//System.out.println("=== Cleanup Call: " + sq.getElement(ix-1));
-								sq.removeElement(callIndex-1);	// This is the preceding dummyCall
+								sq.removeElement(startIndex-1);	// This is the preceding dummyCall
 								// START KGU#464 2017-12-03: Bugfix #475
 								sop.startsAt--;
 								sop.endsBefore -= 2;
@@ -8348,7 +8348,7 @@ public class COBOLParser extends CodeParser
 						}
 					}
 				}
-				refactorProcedureList(sop, callIndex, nextIndex);
+				refactorProcedureList(sop, startIndex, nextIndex);
 				// END KGU#464 2017-12-03
 			}
 		}
