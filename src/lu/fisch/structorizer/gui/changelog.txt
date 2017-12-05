@@ -29,10 +29,12 @@ Current development version 3.27-04 (2017.12.05)
 - 04: Enh. #452/#459: Further revision to the mechanisms of the guided tours <2>
 - 04: Enh. #469: Accelerator keys for Executor (Ctrl-R) and Turtleizer <2>
 - 04: Bugfixes in COBOL import (USAGE parsing, SEARCH, EXIT) <Simon Sobisch>
+- 04: Bugfix #473: COBOL argument types failed to be generated [Simon Sobisch]2
 - 04: Bugfix #475: Import of COBOL paragraphs broke sections [Simon Sobisch]2
 - 04: Bugfix #480: Import of COBOL level-77 data and record array initialization <2>
-- 04: Bugfix #473: COBOL argument types failed to be generated [Simon Sobisch]2
+- 04: Bugfix #483: Option to suppress mere variable declarations on COBOL import <2>
 - 04: Bugfix #485: Workaround for intrinsic COBOL functions [Simon Sobisch]2
+- 04: Bugfix #486: Return mechanism in imported COBOL functions enforced <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

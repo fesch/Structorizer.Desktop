@@ -81,6 +81,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.12.01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
  *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling revised, bugfix #473 approach,
  *                                      issue #485 workaround (prefixing intrinsic functions with FUNCTION)
+ *      Kay Gürtzig     2017.12.05      Bugfix #483: mild version of disabled optionImportVarDecl,
+ *                                      Bugfix #486: Return mechanism in imported functions enforced
  *
  ******************************************************************************************************
  *
@@ -5032,11 +5034,46 @@ public class COBOLParser extends CodeParser
 //		}
 //	};
 	// END KGU#464 2017-12-04
+	// START KGU#475 2017-12-05: Bugfix #486 - New mechanism to enforce value return
+	/** 
+	 * Visitor class responsible for adding the result variable name to otherwise
+	 * empty return Jumps
+	 */
+	private final class ReturnEnforcer implements IElementVisitor
+	{
+		String resultVar;
+		
+		ReturnEnforcer(String _resultVar)
+		{
+			resultVar = _resultVar;
+		}
+		
+		@Override
+		public boolean visitPreOrder(Element _ele) {
+			String text = _ele.getText().getLongString();
+			if (_ele instanceof Jump && ((Jump)_ele).isReturn()) {
+				if (text.trim().equalsIgnoreCase(getKeywordOrDefault("preReturn", "return"))) {
+					_ele.setText(text + " " + resultVar);
+				};
+				_ele.setColor(Color.WHITE);
+				_ele.disabled = false;
+			}
+			return true;
+		}
+		@Override
+		public boolean visitPostOrder(Element _ele) {
+			return true;
+		}
+	};
+	// END KGU#475 2017-12-05
 	
 	/** During build phase, all detected sections and paragraphs are listed here for resolution of internal calls */
 	private LinkedList<SectionOrParagraph> procedureList = new LinkedList<SectionOrParagraph>();
 	
 	private LinkedHashMap< String, LinkedList<Call> > internalCalls = new LinkedHashMap< String, LinkedList<Call> >();
+	// START KGU#476 2017-12-05: Try to distinguish superfluous paragraph labels
+	private LinkedHashMap< String, HashSet<Root> > internalGotos = new LinkedHashMap< String, HashSet<Root> >();
+	// END KGU#476 2017-12-05
 	
 	/**
 	 * Associates the name of the result variable to the respective function Root
@@ -5222,10 +5259,19 @@ public class COBOLParser extends CodeParser
 			//String resultType = CobTools.getTypeString(currentProg.getCobVar(resultVar), false);
 			String resultType = CobTools.getTypeName(currentProg.getCobVar(resultVar), true);
 			// END KGU#564 2017-12-04
-			if (resultType != null
-					&& rootText.count() >= 1
+			if (resultType != null) {
+				// START KGU#475 2017-12-05: Bugfix #486
+				if (!root.getParameterNames().contains(resultVar) && this.optionImportVarDecl) {
+					Instruction decl = new Instruction("var " + resultVar + ": " + resultType);
+					decl.setComment("Result variable");
+					decl.setColor(colorDecl);
+					_parentNode.addElement(decl);
+				}
+				// END KGU#475 2017-12-05
+				if (rootText.count() >= 1
 					&& rootText.getLongString().trim().endsWith(")")) {
-				rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + resultType);
+					rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + resultType);
+				}
 			}
 		}
 		break;
@@ -5518,6 +5564,13 @@ public class COBOLParser extends CodeParser
 			if (content.toUpperCase().startsWith("TO ")) {
 				content = content.substring(3);
 			}
+			// START KGU#476 2017-12-05
+			String contentLower = content.toLowerCase();
+			if (!this.internalGotos.containsKey(contentLower)) {
+				this.internalGotos.put(content, new HashSet<Root>());
+			}
+			this.internalGotos.get(content).add(root);
+			// END KGU#476 2017-12-05
 			Jump jmp = new Jump("goto " + content);
 			jmp.setColor(Color.RED);
 			_parentNode.addElement(this.equipWithSourceComment(jmp, _reduction));
@@ -5573,7 +5626,7 @@ public class COBOLParser extends CodeParser
 		{
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LINKAGE);
 			this.processDataDescriptions(_reduction.get(3).asReduction(), null);
-			// START KGU#465 2017-12-04: Bugfix #473 - produce an includable diagram for record definitions?
+			// START KGU#465 2017-12-04: Bugfix #473 - produce an includable diagram for record definitions
 			boolean hasRecordTypes = false;
 			CobVar arg = currentProg.getLinkageStorage();
 			while (arg != null && !hasRecordTypes) {
@@ -5584,7 +5637,7 @@ public class COBOLParser extends CodeParser
 				arg = arg.getSister();
 			}
 			if (hasRecordTypes) {
-				// FIXME (KGU 2017-12-04): How can we find out if the types have already been generated e.g. by the main program?
+				// FIXME (KGU 2017-12-04): The lacking type support in COBOL forces us to unify types in a postprocess
 				Root incl = new Root();
 				incl.setText(root.getMethodName() + "_ArgTypes");
 				incl.setComment("Argument type definitions for routine " + root.getMethodName());
@@ -8420,7 +8473,7 @@ public class COBOLParser extends CodeParser
 			if (isExternal && this.declaredExternals.contains(varName)) {
 				containsExternals = true;
 				// Don't add a declaration in case of a reference to a former external declaration
-				// (but make declarations must contain an empty entry for the final CobVar loop)) 
+				// (but declarations list must contain an empty entry for the final CobVar loop)) 
 				declarations.add("");
 			}
 			else {
@@ -8452,6 +8505,11 @@ public class COBOLParser extends CodeParser
 						declaration = "";
 					}
 				}
+				// START KGU#471 2017-12-05: Bugfix #483 - suppress unshared non-complex mere declarations
+				else if (!currentVar.hasChild(true) && !this.optionImportVarDecl && !isGlobal && !isExternal) {
+					declaration = "";
+				}
+				// END KGU#471 2017-12-05
 				// We postpone all other declarations
 				declarations.add(declaration);
 			}
@@ -8514,12 +8572,14 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * @param externalNode
-	 * @param globalNode
-	 * @param targetNode
-	 * @param currentVar
-	 * @param varName
-	 * @param decl
+	 * Adds an instruction with text {@code text} declaring variable {@code currentVar} to
+	 * the {@link Subqueue} {@code targetNode}.<br/>
+	 * Note that option {@link #optionImportVarDecl} has no effect here as this method
+	 * doesn't know whether the element is to be shared.
+	 * @param externalNode - the element sequence to append to
+	 * @param currentVar - the variable object to create a declaration for
+	 * @param text - the prepared instruction text
+	 * @param isConst - whether it is a constant definition
 	 */
 	private void addDeclToDiagram(Subqueue targetNode, CobVar currentVar, String text, boolean isConst) {
 		Instruction decl = new Instruction(text);
@@ -8694,9 +8754,13 @@ public class COBOLParser extends CodeParser
 		if (this.returnMap.containsKey(aRoot)) {
 			String resultVar = this.returnMap.get(aRoot);
 			int nElements = aRoot.children.getSize();
-			if (!aRoot.getMethodName().equals(resultVar) && !resultVar.equalsIgnoreCase("RESULT")
-					&& (nElements == 0 || !(aRoot.children.getElement(nElements-1) instanceof Jump))) {
-				aRoot.children.addElement(new Instruction(getKeywordOrDefault("preReturn", "return") + " " + this.returnMap.get(aRoot)));
+			if (!aRoot.getMethodName().equals(resultVar) && !resultVar.equalsIgnoreCase("RESULT")) {
+				// Revise all return elements (make sure there isn't any without value)
+				aRoot.traverse(new ReturnEnforcer(resultVar));
+				// Now make sure that the routine ends with a return element
+				if (nElements == 0 || !(aRoot.children.getElement(nElements-1) instanceof Jump)) {
+					aRoot.children.addElement(new Instruction(getKeywordOrDefault("preReturn", "return") + " " + this.returnMap.get(aRoot)));
+				}
 			}
 		}
 	}
