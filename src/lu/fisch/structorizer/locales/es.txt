@@ -214,6 +214,7 @@ Menu.menuDiagramComment.text=¿Mostrar comentarios?
 Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
 Menu.menuDiagramCommentsPlusText.text=¿Ambos commentarios y textos?
 Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto de menú
+Menu.menuDiagramHideDeclarations.text=¿Esconder puras declaraciónes?
 Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?

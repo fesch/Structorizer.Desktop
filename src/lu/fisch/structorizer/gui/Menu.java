@@ -84,6 +84,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.05      Enh. #452: Preference "simplified toolbars" introduced
  *      Kay Gürtzig     2017.11.09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
  *      Kay Gürtzig     2017.11.20      Enh. #452/#459: Revisions for guided tours, enh. #469: Accelerators for debug menu
+ *      Kay Gürtzig     2017.12.06      Enh. #487: New menu items for hiding of declaration sequences 
  *
  ******************************************************************************************************
  *
@@ -262,6 +263,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#227 2016-07-31: Enh. #128
 	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
 	// END KGU#227 2016-07-31
+	// START KGU#477 2017-12-06: Enh. #487
+	protected final JCheckBoxMenuItem menuDiagramHideDeclarations = new JCheckBoxMenuItem("Hide declarations?",IconLoader.ico085);
+	// END KGU#477 2017-12-06
 	// START KGU#305 2016-12-14: Enh. #305
 	protected final JCheckBoxMenuItem menuDiagramIndex = new JCheckBoxMenuItem("Show Arranger index?",IconLoader.ico029);
 	// END KGU#305 2016-12-14
@@ -1020,6 +1024,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
 		// START KGU#169 2016-04-01
 
+		// START KGU#477 2017-12-06: Enh. #487
+		menuDiagram.add(menuDiagramHideDeclarations);
+		menuDiagramHideDeclarations.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHideDeclarations(menuDiagramHideDeclarations.isSelected()); doButtons(); } } );
+		// END KGU#477 2016-12-06
+
 		menuDiagram.add(menuDiagramMarker);
 		menuDiagramMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuDiagramMarker.isSelected()); doButtons(); } } );
 		menuDiagramMarker.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
@@ -1441,8 +1450,8 @@ public class Menu extends LangMenuBar implements NSDController
 			
 			// START KGU#123 2016-01-03: We allow multiple selection for collapsing
 			// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
-			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
-			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
+			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 			// END KGU#123 2016-01-03
 			// START KGU#277 2016-10-13: Enh. #270
 			menuDebugDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());

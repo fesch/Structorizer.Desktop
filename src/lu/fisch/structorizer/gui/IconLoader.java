@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -57,14 +56,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.29      Enh. #319/#389: New icon 070_program_green for Arranger index
  *      Kay Gürtzig     2017.05.16      Enh. #389: New icons 071_include, 072_include_green
  *      Kay Gürtzig     2017.06.13      Enh. #415: New icon 073_binoculars for Find & Replace dialog
- *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced 
+ *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced
+ *      Kay Gürtzig     2017.12.06      Enh. #487: New icon 085_hide_decl for hiding declarations 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.awt.*;
 import java.awt.image.*;
@@ -203,7 +202,9 @@ public class IconLoader {
 	public static ImageIcon ico082 = getIconImage(getURI(from+"icons/082_din.png"));
 	public static ImageIcon ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
 	public static ImageIcon ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
-	//public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
+	// START KGU#477 2017-12-06: Enh. #487
+	public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
+	// END KGU#477 2017-12-06
 	//public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_it.png"));
 	//public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
 	//public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
@@ -373,7 +374,9 @@ public class IconLoader {
             ico082 = getIconImage(getURI(from+"icons/082_din.png"));
             ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
             ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
-            //ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
+        	// START KGU#477 2017-12-06: Enh. #487
+            ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
+        	// END KGU#477 2017-12-06
             //ico086 = getIconImage(getURI(from+"icons/086_it.png"));
             //ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
             //ico088 = getIconImage(getURI(from+"icons/088_cz.png"));

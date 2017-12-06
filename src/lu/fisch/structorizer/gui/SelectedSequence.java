@@ -122,7 +122,6 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 */
 	public SelectedSequence(Subqueue _owner, int _index1, int _index2) {
 		super("");
-		// _child1 and _child2 should have got a common parent (in particualr, a Subqueue
 		this.parent = _owner;
 		this.firstIndex = Math.max(0, _index1);
 		this.lastIndex = Math.min(_owner.getSize()-1, _index2);

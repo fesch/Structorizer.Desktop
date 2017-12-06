@@ -312,6 +312,9 @@ public abstract class Element {
 	// START KGU#227 2016-07-29: Enh. #128
 	public static boolean E_COMMENTSPLUSTEXT = false;	// Draw elements with both text and comments?
 	// END KGU#227 2016-07-29
+	// START KGU#477 2017-12-06: Enh. #487
+	public static boolean E_HIDE_DECL = false;
+	// END KGU#477 2017-12-06
 	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
 	public static boolean E_ANALYSER = true;		// Analyser enabled?
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
@@ -1302,8 +1305,8 @@ public abstract class Element {
 			}
 		}
 		// END KGU#117 2016-03-06
-		else if (this.collapsed) {
-			// NOTE: If the backround colour for collapsed elements should once be discarded, then
+		else if (this.isCollapsed(true)) {
+			// NOTE: If the background colour for collapsed elements should once be discarded, then
 			// for Instruction subclasses the icon is to be activated in Instruction.draw() 
 			return Element.E_COLLAPSEDCOLOR;
 		}
@@ -2931,13 +2934,16 @@ public abstract class Element {
 	 */
 	protected String getRuntimeInfoString()
 	{
-		return this.getExecCount() + " / " + this.getExecStepCount(this.isCollapsed());
+		return this.getExecCount() + " / " + this.getExecStepCount(this.isCollapsed(true));
 	}
 	// END KGU#156 2016-03-11
 	
-
-
-    public boolean isCollapsed() {
+    /**
+     * Detect whether the element is currently collapsed (or to be shown as collapsed by other reasons)
+     * @param _orHidden - if some additional element-specific hiding criterion is to be considered, too  
+     * @return true if element is to be shown in collapsed shape
+     */
+    public boolean isCollapsed(boolean _orHidden) {
         return collapsed;
     }
 
@@ -2948,7 +2954,11 @@ public abstract class Element {
     	// END KGU#136 2016-03-01
     }
     
-    // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+    // START KGU#122 2016-01-03: Enh. #87
+    /**
+     * @return the element-type-specific icon image intended to be placed in the upper left
+     * corner of the drawn element if being collapsed.
+     */
     public ImageIcon getIcon()
     {
     	return IconLoader.ico057;

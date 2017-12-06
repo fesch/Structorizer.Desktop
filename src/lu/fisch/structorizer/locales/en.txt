@@ -215,6 +215,7 @@ Menu.menuDiagramComment.text=Show comments?
 Menu.menuDiagramSwitchComments.text=Switch text/comments?
 Menu.menuDiagramCommentsPlusText.text=Comments plus texts?
 Menu.menuDiagramSwitchTCTooltip.text=Unselect "%1" to enable this item
+Menu.menuDiagramHideDeclarations.text=Hide mere declarations?
 Menu.menuDiagramMarker.text=Highlight variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyse structogram?

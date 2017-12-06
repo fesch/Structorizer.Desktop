@@ -1155,6 +1155,10 @@ public class Root extends Element {
     // END KGU#376 2017-05-16
     
     // START KGU#324 2017-06-16: Enh. #415 we need an icon for the find result tree
+    /**
+     * @return a type-specific image icon e.g. to be used in the {@link FindAndReplace} result
+     * tree. 
+     */
     @Override
     public ImageIcon getIcon()
     {

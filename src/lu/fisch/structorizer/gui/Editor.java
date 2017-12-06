@@ -1159,8 +1159,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
-		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
-		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
+		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
 		// START KGU#277 2016-10-13: Enh. #270
 		btnDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
@@ -1208,8 +1208,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
-		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
-		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
+		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
 		// START KGU#277 2016-10-13: Enh. #270
 		popupDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());

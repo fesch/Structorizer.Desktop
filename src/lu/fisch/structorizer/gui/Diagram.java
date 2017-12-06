@@ -138,6 +138,7 @@ package lu.fisch.structorizer.gui;
  *                                      Issue #417: scroll units adapted to Root size to reduce time complexity
  *      Kay Gürtzig     2017.10.28      Enh. #443: Slight adaption for multiple DiagramControllers
  *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
+ *      Kay Gürtzig     2017.12.06      Enh. #487: Support for hiding declaration sequences (still defective) 
  *
  ******************************************************************************************************
  *
@@ -3358,7 +3359,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		whileLoop.q = forLoop.getBody();
 		whileLoop.q.parent = whileLoop;
 		whileLoop.q.addElement(elements[2]);
-		whileLoop.setCollapsed(forLoop.isCollapsed());
+		whileLoop.setCollapsed(forLoop.isCollapsed(true));
 		for (int i = 0; i < elements.length; i++)
 		{
 			Element elem = elements[i];
@@ -3485,7 +3486,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			alt.deeplyCovered = caseElem.deeplyCovered;
 			alt.simplyCovered = caseElem.simplyCovered;
 		}
-		alternatives.get(0).setCollapsed(caseElem.isCollapsed());
+		alternatives.get(0).setCollapsed(caseElem.isCollapsed(true));
 
 		int index = parent.getIndexOf(caseElem);
 		parent.removeElement(index);
@@ -7348,5 +7349,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		repaint();
 	}
 	// END KGU#459 2017-11-14
+
+	// START KGU#477 2017-12-06: Enh. #487
+	/**
+	 * Sets the display mode for hiding of mere declarartory element sequences according to
+	 * the argument.
+	 * @param _activate - whether to enable or disable the hiding mode.
+	 */
+	public void setHideDeclarations(boolean _activate) {
+		Element selectedElement = this.selected;
+    	Element.E_HIDE_DECL = _activate;
+    	this.resetDrawingInfo(true);
+    	analyse();
+		repaint();
+    	if (selectedElement != null) {
+    		if (selectedElement instanceof Instruction) {
+    			selectedElement.setSelected(false);
+    			selected = selectedElement = ((Instruction)selectedElement).getDrawingSurrogate();
+    			selectedElement.setSelected(true);
+    		}
+    		redraw(selectedElement);
+    	}
+    	else {
+    		redraw();
+    	}
+    	// FIXME: The diagram will not always have been scrolled to the selected element by now...
+	}
+	// END KGU#477 2017-12-06
 
 }

@@ -212,6 +212,7 @@ Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
 Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
 Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
+Menu.menuDiagramHideDeclarations.text=Bloße Deklarationen verbergen?
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?

@@ -542,11 +542,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				{
 					diagram.setToggleTC(true);
 				}
-				// comments
+				// syntax highlighting
 				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
 				{
 					diagram.setHightlightVars(true);
 				}
+				// START KGU#477 2017-12-06: Enh. #487
+				diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
+				// END KGU#227 2017-12-06
 				// analyser
 				// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
                 /*
@@ -677,6 +680,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#227 2016-08-01
 			ini.setProperty("switchTextComments", (Element.E_TOGGLETC ? "1" : "0"));
 			ini.setProperty("varHightlight", (Element.E_VARHIGHLIGHT ? "1" : "0"));
+			// START KGU#477 2017-12-06: Enh. #487
+			ini.setProperty("hideDeclarations", Element.E_HIDE_DECL ? "1" : "0");
+			// END KGU#227 2016-12-06
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
 			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
 			// START KGU#123 2016-01-04: Enh. #87
