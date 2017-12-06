@@ -1249,13 +1249,13 @@ public class Root extends Element {
 
     private void insertElement(Element _ele, Element _new, boolean _after)
     {
-            if(_ele!=null && _new!=null)
+            if (_ele != null && _new != null)
             {
                     if (_ele.getClass().getSimpleName().equals("Subqueue"))
                     {
                             ((Subqueue) _ele).addElement(_new);
-                            _ele.selected=false;
-                            _new.selected=true;
+                            _ele.selected = false;
+                            _new.selected = true;
                         	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
                         	// END KGU#137 2016-01-11
@@ -1279,8 +1279,8 @@ public class Root extends Element {
                             // END KGU#389 2017-05-06
                             if (_after) i++;
                             ((Subqueue) _ele.parent).insertElementAt(_new, i);
-                            _ele.selected=false;
-                            _new.selected=true;
+                            _ele.selected = false;
+                            _new.selected = true;
                         	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
                         	// END KGU#137 2016-01-11
@@ -1294,6 +1294,9 @@ public class Root extends Element {
                     }
 
             }
+            // START KGU#477 2017-12-06: Enh. #487
+            _ele.resetDrawingInfoUp();
+            // END KGU#477 2017-12-06
     }
     
     public void addAfter(Element _ele, Element _new)

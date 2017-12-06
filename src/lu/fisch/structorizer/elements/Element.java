@@ -963,9 +963,15 @@ public abstract class Element {
 		return selected;
 	}
 
-	public void setSelected(boolean _sel)
+	/**
+	 * Sets the selection flag on this element
+	 * @param _sel - if the element is to be selected or not
+	 * @return the element(s) actually being selected (null if _sel = false).
+	 */
+	public Element setSelected(boolean _sel)
 	{
-		selected=_sel;
+		selected = _sel;
+		return _sel ? this : null;
 	}
 
 	// START KGU#183 2016-04-24: Issue #169 

@@ -1401,29 +1401,29 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// elements
 			// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
-			menuDiagramAdd.setEnabled(conditionNoMult);
+			menuDiagramAdd.setEnabled(condition);
 			// END KGU#87 2015-11-22
-			menuDiagramAddBeforeInst.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeAlt.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeCase.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeFor.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeWhile.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeRepeat.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeForever.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeCall.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeJump.setEnabled(conditionNoMult);
-			menuDiagramAddBeforePara.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeInst.setEnabled(condition);
+			menuDiagramAddBeforeAlt.setEnabled(condition);
+			menuDiagramAddBeforeCase.setEnabled(condition);
+			menuDiagramAddBeforeFor.setEnabled(condition);
+			menuDiagramAddBeforeWhile.setEnabled(condition);
+			menuDiagramAddBeforeRepeat.setEnabled(condition);
+			menuDiagramAddBeforeForever.setEnabled(condition);
+			menuDiagramAddBeforeCall.setEnabled(condition);
+			menuDiagramAddBeforeJump.setEnabled(condition);
+			menuDiagramAddBeforePara.setEnabled(condition);
 
-			menuDiagramAddAfterInst.setEnabled(conditionNoMult);
-			menuDiagramAddAfterAlt.setEnabled(conditionNoMult);
-			menuDiagramAddAfterCase.setEnabled(conditionNoMult);
-			menuDiagramAddAfterFor.setEnabled(conditionNoMult);
-			menuDiagramAddAfterWhile.setEnabled(conditionNoMult);
-			menuDiagramAddAfterRepeat.setEnabled(conditionNoMult);
-			menuDiagramAddAfterForever.setEnabled(conditionNoMult);
-			menuDiagramAddAfterCall.setEnabled(conditionNoMult);
-			menuDiagramAddAfterJump.setEnabled(conditionNoMult);
-			menuDiagramAddAfterPara.setEnabled(conditionNoMult);
+			menuDiagramAddAfterInst.setEnabled(condition);
+			menuDiagramAddAfterAlt.setEnabled(condition);
+			menuDiagramAddAfterCase.setEnabled(condition);
+			menuDiagramAddAfterFor.setEnabled(condition);
+			menuDiagramAddAfterWhile.setEnabled(condition);
+			menuDiagramAddAfterRepeat.setEnabled(condition);
+			menuDiagramAddAfterForever.setEnabled(condition);
+			menuDiagramAddAfterCall.setEnabled(condition);
+			menuDiagramAddAfterJump.setEnabled(condition);
+			menuDiagramAddAfterPara.setEnabled(condition);
 
 
 			// editing

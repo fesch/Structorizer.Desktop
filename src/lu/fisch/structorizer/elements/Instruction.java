@@ -352,6 +352,7 @@ public class Instruction extends Element {
 		
 		// START KGU#477 2017-12-06: Enh. #487: Don't draw at all if there is a drawing surrogate
 		if (E_HIDE_DECL && this != this.getDrawingSurrogate()) {
+			rect = new Rect(0,0,0,0);
 			return;
 		}
 		// END KGU#477 2017-12-06
@@ -372,12 +373,32 @@ public class Instruction extends Element {
         // END KGU#124 2016-01-03
 	}
 	
+	// START KGU#477 2017-12-06: Enh. #487
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#setSelected(boolean)
+	 */
+	@Override
+	public Element setSelected(boolean _sel)
+	{
+		if (this.isMereDeclaratory()) {
+			SelectedSequence flock = (SelectedSequence)this.getDrawingSurrogate().getHiddenDeclarations();
+			return flock.setSelected(_sel);
+		}
+		return super.setSelected(_sel);
+	}
+	// END KGU#477 2017-12-06
+
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
 	public Element findSelected()
 	{
+		// START KGU#477 2017-12-06: Enh. #487
+		if (this.hidesDeclarations()) {
+			return (SelectedSequence)this.getHiddenDeclarations();
+		}
+		// END KGU#477 2017-12-06
 		return selected ? this : null;
 	}
 	// END KGU#183 2016-04-24
@@ -1161,7 +1182,7 @@ public class Instruction extends Element {
 					&& ((Instruction)succ).isMereDeclaratory()) {
 				index++;
 			}
-			hidden = new SelectedSequence(myParent, myIndex, index);
+			hidden = new SelectedSequence(myParent, myIndex, index-1);
 		}
 		return hidden;
 	}

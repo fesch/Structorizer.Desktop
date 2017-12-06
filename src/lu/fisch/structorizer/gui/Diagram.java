@@ -810,13 +810,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				//ele.setSelected(false);
 				if (ele != null) ele.setSelected(false);
 				// END KGU 2016-01-09
-				selected.setSelected(true);
+				selected = selected.setSelected(true);
 				redraw();
 			}
 			else if (ele != null)
 			{
 				// START KGU#136 2016-03-02: Bugfix #97 - Selection wasn't reliable
-				ele.setSelected(true);
+				ele = ele.setSelected(true);
 				// END KGU#136 2016-03-02
 				mX = mouseX;
 				mY = mouseY;
@@ -907,6 +907,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public void mouseReleased(MouseEvent e)
 	{
+    	// FIXME: What about hidden declarations?
     	if (e.getSource()==this)
     	{
     		//System.out.println("Released");
@@ -1355,6 +1356,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		return selected;
 	}
+
+	// START KGU#477 2017-12-07: Enh. #487
+	public Element getFirstSelected()
+	{
+		if (selected instanceof IElementSequence) {
+			return ((IElementSequence)selected).getElement(0);
+		}
+		return selected;
+	}
+	public Element getLastSelected()
+	{
+		if (selected instanceof IElementSequence) {
+			return ((IElementSequence)selected).getElement(((IElementSequence)selected).getSize()-1);
+		}
+		return selected;
+	}
+	// END KGU#477 2017-12-07
 	
 	// START KGU#87 2015-11-22: 
 	public boolean selectedIsMultiple()
@@ -2444,7 +2462,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void cutNSD()
 	{
-		if (selected!=null)
+		if (selected != null)
 		{
 			eCopy = selected.copy();
 			// START KGU#182 2016-04-23: Issue #168	- pass the selection to the "next" element
@@ -2467,7 +2485,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			this.selected = newSel;
 			if (newSel != null)
 			{
-				newSel.setSelected(true);
+				// START KGU#477 2017-12-06: Enh. #487 - consider hidden declaration sequences
+				//newSel.setSelected(true);
+				this.selected = newSel.setSelected(true);
+				// END KGU#477 2017-12-06
 			}
 			// END KGU#182 2016-04-23
 			analyse();
@@ -2482,7 +2503,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void pasteNSD()
 	{
-		if (selected!=null && eCopy!=null)
+		if (selected != null && eCopy!=null)
 		{
 			//root.addUndo();
 			try {
@@ -2490,14 +2511,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} catch (CancelledException e) {
 				return;
 			}
+			// START KGU#477 2017-12-06: Enh, #487 - declaration stuff might be collapsed
+			selected = selected.setSelected(true);
+			// END KGU#477 2017-12-06
 			selected.setSelected(false);
 			Element nE = eCopy.copy();
 			nE.setSelected(true);	// FIXME (KGU#87): Looks fine but is misleading with a pasted Subqueue
-			root.addAfter(selected,nE);
+			// START KGU#477 2017-12-06: Enh, #487 - declaration stuff might be collapsed
+			//root.addAfter(selected, nE);
+			root.addAfter(getLastSelected(), nE);
+			// END KGU#477 2017-12-06
 			// START KGU#137 2016-01-11: Already prepared by addUndo()
 			//root.hasChanged=true;
 			// END KGU#137 2016-01-11
 			// START KGU#87 2015-11-22: In case of a copied Subqueue the copy shouldn't be selected!
+			//selected=nE;
 			if (nE instanceof Subqueue)
 			{
 				// If the target was a Subqueue then it had been empty and contains all nE had contained,
@@ -2506,9 +2534,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					selected = null;
 				((Subqueue)nE).clear();
 			}
-			else
+			else {
+				selected = nE;
+			}
 			// END KGU#87 2015-11-22
-				selected=nE;
 			redraw();
 			analyse();
 			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
@@ -2564,8 +2593,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
-					ele.setSelected(true);
-					selected=ele;
+					selected = ele.setSelected(true);
 					redraw();
 				}
 			}
@@ -2776,7 +2804,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selected = newSel;
 		if (newSel != null)
 		{
-			newSel.setSelected(true);
+			// START KGU#477 2017-12-06: Enh. #487 - consider hidden declaration sequences
+			//newSel.setSelected(true);
+			this.selected = newSel.setSelected(true);
+			// END KGU#477 2017-12-06
 		}
 		// END KGU#181 2016-04-19
 		// END KGU#138 2016-01-11
@@ -2961,16 +2992,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				} catch (CancelledException e) {
 					return;
 				}
+				selected.setSelected(false);
 				if(_after==true)
 				{
-					root.addAfter(getSelected(),_ele);
+					// START KGU#477 2017-12-06: Enh. #487
+					//root.addAfter(getSelected(),_ele);
+					root.addAfter(getLastSelected(), _ele);
+					// END KGU#477 2017-12-06
 				}
 				else
 				{
-					root.addBefore(getSelected(),_ele);
+					// START KGU#477 2017-12-06: Enh. #487
+					//root.addBefore(getSelected(),_ele);
+					root.addBefore(getFirstSelected(), _ele);
+					// END KGU#477 2017-12-06
 				}
-				_ele.setSelected(true);	// FIXME: should already have been done by Root.insertElement()
-				selected=_ele;
+				selected = _ele.setSelected(true);
 				// START KGU#272 2016-10-06: Bugfix #262
 				selectedDown = selectedUp = selected;
 				// END KGU#272 2016-10-06
@@ -7138,7 +7175,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //    			selected = root;
 //    		}
     		// END KGU#214 2016-07-25
-    		selected.setSelected(true);
+    		selected = selected.setSelected(true);
 			
     		// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element
 			//redraw();

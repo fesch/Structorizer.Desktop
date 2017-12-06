@@ -1098,52 +1098,52 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnRedo.setEnabled(diagram.getRoot().canRedo());
 		
 		// elements
-		btnBeforeInst.setEnabled(conditionNoMult);
-		btnBeforeAlt.setEnabled(conditionNoMult);
-		btnBeforeCase.setEnabled(conditionNoMult);
-		btnBeforeFor.setEnabled(conditionNoMult);
-		btnBeforeWhile.setEnabled(conditionNoMult);
-		btnBeforeRepeat.setEnabled(conditionNoMult);
-		btnBeforeForever.setEnabled(conditionNoMult);
-		btnBeforeCall.setEnabled(conditionNoMult);
-		btnBeforeJump.setEnabled(conditionNoMult);
-		btnBeforePara.setEnabled(conditionNoMult);
+		btnBeforeInst.setEnabled(condition);
+		btnBeforeAlt.setEnabled(condition);
+		btnBeforeCase.setEnabled(condition);
+		btnBeforeFor.setEnabled(condition);
+		btnBeforeWhile.setEnabled(condition);
+		btnBeforeRepeat.setEnabled(condition);
+		btnBeforeForever.setEnabled(condition);
+		btnBeforeCall.setEnabled(condition);
+		btnBeforeJump.setEnabled(condition);
+		btnBeforePara.setEnabled(condition);
 
-		btnAfterInst.setEnabled(conditionNoMult);
-		btnAfterAlt.setEnabled(conditionNoMult);
-		btnAfterCase.setEnabled(conditionNoMult);
-		btnAfterFor.setEnabled(conditionNoMult);
-		btnAfterWhile.setEnabled(conditionNoMult);
-		btnAfterRepeat.setEnabled(conditionNoMult);
-		btnAfterForever.setEnabled(conditionNoMult);
-		btnAfterCall.setEnabled(conditionNoMult);
-		btnAfterJump.setEnabled(conditionNoMult);
-		btnAfterPara.setEnabled(conditionNoMult);
+		btnAfterInst.setEnabled(condition);
+		btnAfterAlt.setEnabled(condition);
+		btnAfterCase.setEnabled(condition);
+		btnAfterFor.setEnabled(condition);
+		btnAfterWhile.setEnabled(condition);
+		btnAfterRepeat.setEnabled(condition);
+		btnAfterForever.setEnabled(condition);
+		btnAfterCall.setEnabled(condition);
+		btnAfterJump.setEnabled(condition);
+		btnAfterPara.setEnabled(condition);
 
 		// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
-		popupAdd.setEnabled(conditionNoMult);
+		popupAdd.setEnabled(condition);
 		// END KGU#87 2015-11-22
-		popupAddBeforeInst.setEnabled(conditionNoMult);
-		popupAddBeforeAlt.setEnabled(conditionNoMult);
-		popupAddBeforeCase.setEnabled(conditionNoMult);
-		popupAddBeforeFor.setEnabled(conditionNoMult);
-		popupAddBeforeWhile.setEnabled(conditionNoMult);
-		popupAddBeforeRepeat.setEnabled(conditionNoMult);
-		popupAddBeforeForever.setEnabled(conditionNoMult);
-		popupAddBeforeCall.setEnabled(conditionNoMult);
-		popupAddBeforeJump.setEnabled(conditionNoMult);
-		popupAddBeforePara.setEnabled(conditionNoMult);
+		popupAddBeforeInst.setEnabled(condition);
+		popupAddBeforeAlt.setEnabled(condition);
+		popupAddBeforeCase.setEnabled(condition);
+		popupAddBeforeFor.setEnabled(condition);
+		popupAddBeforeWhile.setEnabled(condition);
+		popupAddBeforeRepeat.setEnabled(condition);
+		popupAddBeforeForever.setEnabled(condition);
+		popupAddBeforeCall.setEnabled(condition);
+		popupAddBeforeJump.setEnabled(condition);
+		popupAddBeforePara.setEnabled(condition);
 
-		popupAddAfterInst.setEnabled(conditionNoMult);
-		popupAddAfterAlt.setEnabled(conditionNoMult);
-		popupAddAfterCase.setEnabled(conditionNoMult);
-		popupAddAfterFor.setEnabled(conditionNoMult);
-		popupAddAfterWhile.setEnabled(conditionNoMult);
-		popupAddAfterRepeat.setEnabled(conditionNoMult);
-		popupAddAfterForever.setEnabled(conditionNoMult);
-		popupAddAfterCall.setEnabled(conditionNoMult);
-		popupAddAfterJump.setEnabled(conditionNoMult);
-		popupAddAfterPara.setEnabled(conditionNoMult);
+		popupAddAfterInst.setEnabled(condition);
+		popupAddAfterAlt.setEnabled(condition);
+		popupAddAfterCase.setEnabled(condition);
+		popupAddAfterFor.setEnabled(condition);
+		popupAddAfterWhile.setEnabled(condition);
+		popupAddAfterRepeat.setEnabled(condition);
+		popupAddAfterForever.setEnabled(condition);
+		popupAddAfterCall.setEnabled(condition);
+		popupAddAfterJump.setEnabled(condition);
+		popupAddAfterPara.setEnabled(condition);
 		
 		// colors
 		btnColor0.setEnabled(condition);
