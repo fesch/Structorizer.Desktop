@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-04 (2017.12.06)
+Current development version 3.27-04 (2017.12.07)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -36,6 +36,7 @@ Current development version 3.27-04 (2017.12.06)
 - 04: Bugfix #485: Workaround for intrinsic COBOL functions [Simon Sobisch]2
 - 04: Bugfix #486: Return mechanism in imported COBOL functions enforced <2>
 - 04: Enh. #487: New display mode to hide (collapse) declaration sequences <2>
+- 04: Enh. #87: Insertion of elements enabled on multiple selections <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

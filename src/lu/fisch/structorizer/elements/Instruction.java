@@ -382,7 +382,9 @@ public class Instruction extends Element {
 	{
 		if (this.isMereDeclaratory()) {
 			SelectedSequence flock = (SelectedSequence)this.getDrawingSurrogate().getHiddenDeclarations();
-			return flock.setSelected(_sel);
+			if (flock != null) {
+				return flock.setSelected(_sel);
+			}
 		}
 		return super.setSelected(_sel);
 	}
