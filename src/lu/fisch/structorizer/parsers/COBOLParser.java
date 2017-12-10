@@ -83,6 +83,7 @@ package lu.fisch.structorizer.parsers;
  *                                      issue #485 workaround (prefixing intrinsic functions with FUNCTION)
  *      Kay Gürtzig     2017.12.05      Bugfix #483: mild version of disabled optionImportVarDecl,
  *                                      Bugfix #486: Return mechanism in imported functions enforced
+ *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled 
  *
  ******************************************************************************************************
  *
@@ -8882,6 +8883,14 @@ public class COBOLParser extends CodeParser
 				refactorProcedureList(sop, startIndex, nextIndex);
 				// END KGU#464 2017-12-03
 			}
+			// START KGU#478 2017-12-10: Issue #475 - S. Sobisch wanted calls to empty or corrupt sections be disabled
+			else if (clients != null) {
+				for (Call client: clients) {
+					client.getComment().add("The called " + (sop.isSection ? "section" : "paragraph") + " seems to be empty, corrupt, or vanished.");
+					client.disabled = true;
+				}
+			}
+			// END KGU#478 2017-12-10
 		}
 		// START KGU#376 2017-10-04: Enh. #389
 		if (externalRoot != null && externalRoot.children.getSize() > 0) {
