@@ -25,6 +25,7 @@ Current development version 3.27-03 (2017.11.16)
 - 03: Enh. #415: New accelerator key Ctrl-Shift-d for "copy EMF image" <2>
 - 03: Enh. #452: Guide tours slightly improved, typos corrected [Rolf Schmidt]2
 - 03: Bugfix #465: Arranger couldn't open Structorizer sub-instances anymore <2>
+- 04: Enh.: new DE locale [Andreas Brusinsky]
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
