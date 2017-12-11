@@ -59,6 +59,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.07.03      Enh. #423: Type definition concept for record/struct types begun
  *      Kay Gürtzig     2017.09.15-28   Enh. #423: Record type definition concept nearly accomplished
  *      Kay Gürtzig     2017.12.06      Enh. #487: Drawing supports hiding of declaration sequences 
+ *      Kay Gürtzig     2017.12.10/11   Enh. #487: Run data support for new display mode "Hide declarations"
  *
  ******************************************************************************************************
  *
@@ -187,7 +188,7 @@ public class Instruction extends Element {
 		// END KGU#136 2016-03-01
 
 		// START KGU#477 2017-12-06: Enh. #487 - if being a hidden declaration, don't show
-		if (this != this.getDrawingSurrogate()) {
+		if (this != this.getDrawingSurrogate(false)) {
 			rect0 = new Rect(0, 0, 0, 0);
 			isRectUpToDate = true;
 			return rect0;
@@ -332,7 +333,7 @@ public class Instruction extends Element {
 		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
 		// START KGU#477 2017-12-06: Enh. #487 - option to hide mere declarations
 		//if (_element.isCollapsed() && !(_element instanceof Instruction))
-		if (_element.isCollapsed(true) && (!(_element instanceof Instruction) || ((Instruction)_element).hidesDeclarations()))
+		if (_element.isCollapsed(true) && (!(_element instanceof Instruction) || ((Instruction)_element).eclipsesDeclarations(false)))
 		// END KGU#477 2017-12-06
 		{
 //			canvas.draw(_element.getIcon().getImage(), _top_left.left, _top_left.top);
@@ -351,7 +352,7 @@ public class Instruction extends Element {
 		// be called from Elements of different types when those are collapsed
 		
 		// START KGU#477 2017-12-06: Enh. #487: Don't draw at all if there is a drawing surrogate
-		if (E_HIDE_DECL && this != this.getDrawingSurrogate()) {
+		if (E_HIDE_DECL && this != this.getDrawingSurrogate(false)) {
 			rect = new Rect(0,0,0,0);
 			return;
 		}
@@ -381,7 +382,7 @@ public class Instruction extends Element {
 	public Element setSelected(boolean _sel)
 	{
 		if (this.isMereDeclaratory()) {
-			SelectedSequence flock = (SelectedSequence)this.getDrawingSurrogate().getHiddenDeclarations();
+			SelectedSequence flock = (SelectedSequence)this.getEclipsedDeclarations(false);
 			if (flock != null) {
 				return flock.setSelected(_sel);
 			}
@@ -397,8 +398,8 @@ public class Instruction extends Element {
 	public Element findSelected()
 	{
 		// START KGU#477 2017-12-06: Enh. #487
-		if (this.hidesDeclarations()) {
-			return (SelectedSequence)this.getHiddenDeclarations();
+		if (this.eclipsesDeclarations(false)) {
+			return (SelectedSequence)this.getEclipsedDeclarations(false);
 		}
 		// END KGU#477 2017-12-06
 		return selected ? this : null;
@@ -838,9 +839,9 @@ public class Instruction extends Element {
 	
 	// START KGU#47 2017-12-06: Enh. #487 - compound check for hidable content
 	/** @return true iff this Instruction contains nothing but type definitions and
-	 * (uninitialized) variable declarations, i.e. hideable stuff. 
+	 * (uninitialized) variable declarations, i.e. hidable stuff. 
 	 */
-	private boolean isMereDeclaratory()
+	public boolean isMereDeclaratory()
 	{
 		boolean isHideable = true;
 		StringList lines = this.getUnbrokenText();
@@ -1134,30 +1135,39 @@ public class Instruction extends Element {
 	@Override
     public ImageIcon getIcon()
     {
-    	if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate()) {
+    	if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate(false)) {
     		return IconLoader.ico085;
     	}
     	return super.getIcon();
     }
-	private boolean hidesDeclarations()
+	/**
+	 * In active mode {@link Element#E_HIDE_DECL} detects whether this is a mere declaration element and
+	 * would be the first of a contiguous sequence of such elements (no matter if actually other declarations
+	 * follow). In all other cases returns false 
+	 * @param _modeIndependent - if true then an existing declaration sequence will also be detected if mode
+	 * {@link Element#E_HIDE_DECL} is off
+	 * @return true if declarations are to be hidden and this is the drawing surrogate of declaration sequence
+	 */
+	public boolean eclipsesDeclarations(boolean _modeIndependent)
 	{
-		return E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate();
+		return (_modeIndependent || E_HIDE_DECL) && this.isMereDeclaratory() && this == this.getDrawingSurrogate(_modeIndependent);
 	}
     /* (non-Javadoc)
      * @see lu.fisch.structorizer.elements.Element#isCollapsed(boolean)
      */
 	@Override
     public boolean isCollapsed(boolean _orHidden) {
-        return super.isCollapsed(_orHidden) || _orHidden && hidesDeclarations();
+        return super.isCollapsed(_orHidden) || _orHidden && eclipsesDeclarations(false);
     }
 	/**
+	 * @param _modeIndependent TODO
 	 * @return either this or a preceding declaration if mode {@link Element#E_HIDE_DECL}
 	 * is active and this is a mere declaration but not the first one in a series.
 	 */
-	public final Instruction getDrawingSurrogate()
+	public final Instruction getDrawingSurrogate(boolean _modeIndependent)
 	{
 		Instruction surrogate = this;
-		if (E_HIDE_DECL && this.isMereDeclaratory()) {
+		if ((_modeIndependent || E_HIDE_DECL) && this.isMereDeclaratory()) {
 			Subqueue myParent = (Subqueue)this.parent;
 			int myIndex = (myParent).getIndexOf(this);
 			Element pred = null;
@@ -1170,24 +1180,161 @@ public class Instruction extends Element {
 		}
 		return surrogate;
 	}
-	public IElementSequence getHiddenDeclarations()
+	/**
+	 * If this is part of a sequence of mere declaration elements and display mode {@link Element#E_HIDE_DECL}
+	 * is active or {@code _force} is true then the complete declaration sequence virtually amalgamated under
+	 * its first member will be returned, otherwise null.
+	 * @param _modeIndependent - if true then an existing declaration sequence will also be returned if mode
+	 * {@link Element#E_HIDE_DECL} is off.
+	 * @return the sequence of hidden declaration elements including its surrogate element or null.
+	 */
+	public IElementSequence getEclipsedDeclarations(boolean _modeIndependent)
 	{
 		IElementSequence hidden = null;
-		Instruction surrogate = this.getDrawingSurrogate();
-		if (this.hidesDeclarations() || this != surrogate) {
+		Instruction surrogate = this.getDrawingSurrogate(_modeIndependent);
+		if (this.eclipsesDeclarations(_modeIndependent) || this != surrogate) {
 			Subqueue myParent = (Subqueue)this.parent;
-			int myIndex = (myParent).getIndexOf(this);
-			int index = myIndex+1;
+			int firstIndex = (myParent).getIndexOf(surrogate);
+			int index = firstIndex+1;
 			Element succ = null;
 			while (index < myParent.getSize()
 					&& (succ = myParent.getElement(index)).getClass().getSimpleName().equals("Instruction")
 					&& ((Instruction)succ).isMereDeclaratory()) {
 				index++;
 			}
-			hidden = new SelectedSequence(myParent, myIndex, index-1);
+			hidden = new SelectedSequence(myParent, firstIndex, index-1);
 		}
 		return hidden;
 	}
 	// END KGU#477 2017-12-06
+	
+	// START KGU#477 2017-12-10: Enh. #487 - We may have to aggregate information of hidden declarations
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRuntimeInfoString()
+	 */
+	@Override
+	protected String getRuntimeInfoString()
+	{
+		// Only if display mode "Hide mere declarations?" is active we will have to aggregate flock data
+		if (!this.eclipsesDeclarations(false)) {
+			return super.getRuntimeInfoString();
+		}
+		// Now we need the minimum execution count and the total step count of the entire declaration flock
+		// Since we must override this method anyway in order to enclose the combined step count, we do it
+		// in a compound loop rather than by calling this.getExecCount() and this.getExecStepCount(_combined)
+		IElementSequence flock = this.getEclipsedDeclarations(false);
+		int nExec = this.getExecCount();
+		int nSteps = this.getExecStepCount(false);
+		for (int i = 1; i < flock.getSize(); i++) {
+			Element decl = flock.getElement(i);
+			nExec = Math.min(nExec, decl.getExecCount());
+			nSteps += decl.getExecStepCount(false);
+		}
+		return nExec + " / (" + nSteps + ")";
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getScaleColorForRTDPM()
+	 */
+	@Override
+	protected Color getScaleColorForRTDPM()
+	{
+		int maxValue = 0;
+		int value = 0;
+		boolean logarithmic = false;
+		switch (Element.E_RUNTIMEDATAPRESENTMODE) {
+		case EXECCOUNTS:
+			maxValue = Element.maxExecCount;
+			value = this.getMinExecCount();
+			break;
+		case EXECSTEPS_LOG:
+			logarithmic = true;
+		case EXECSTEPS_LIN:
+			maxValue = Element.maxExecStepCount;
+			if (Element.E_HIDE_DECL && Element.maxExecStepsEclCount > Element.maxExecStepCount) {
+				maxValue = Element.maxExecStepsEclCount;
+			}
+			value = this.execStepCount;
+			if (this.eclipsesDeclarations(false)) {
+				value += this.execSubCount;
+			}
+			break;
+		case TOTALSTEPS_LOG:
+			logarithmic = true;
+		case TOTALSTEPS_LIN:
+			maxValue = Element.maxExecTotalCount;
+			if (Element.E_HIDE_DECL && Element.maxExecStepsEclCount > Element.maxExecTotalCount) {
+				maxValue = Element.maxExecStepsEclCount;
+			}
+			value = this.execStepCount;
+			if (this.eclipsesDeclarations(false)) {
+				value += this.execSubCount;
+			}
+			break;
+		default:
+				;
+		}
+		if (logarithmic) {
+			// We scale the logarithm a little up lest there should be too few
+			// discrete possible values
+			if (maxValue > 0) maxValue = (int) Math.round(25 * Math.log(maxValue));
+			if (value > 0) value = (int) Math.round(25 * Math.log(value));
+		}
+		return getScaleColor(value, maxValue);
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addToExecTotalCount(int, boolean)
+	 */
+	@Override
+	public void addToExecTotalCount(int _growth, boolean _directly)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			if (!_directly && this.eclipsesDeclarations(true))
+			{
+				this.execSubCount += _growth;
+				Element.maxExecStepsEclCount = 
+						Math.max(this.execStepCount + this.execSubCount,
+								Element.maxExecStepsEclCount);			
+			}
+			else {
+				super.addToExecTotalCount(_growth, _directly);
+			}
+		}
+	}
+	private int getMinExecCount()
+	{
+		// Only if display mode "Hide mere declarations?" is active we will have to aggregate flock data
+		if (!this.eclipsesDeclarations(false)) {
+			return super.getExecCount();
+		}
+		// Now we need the minimum execution count and the total step count of the entire declaration flock
+		// Since we must override this method anyway in order to enclose the combined step count, we do it
+		// in a compound loop rather than by calling this.getExecCount() and this.getExecStepCount(_combined)
+		IElementSequence flock = this.getEclipsedDeclarations(false);
+		int nExec = this.getExecCount();
+		for (int i = 1; i < flock.getSize(); i++) {
+			Element decl = flock.getElement(i);
+			nExec = Math.min(nExec, decl.getExecCount());
+		}
+		return nExec;
+		
+	}
+	/**
+	 * Returns the summed up execution steps of this element and - if {@code _combined} is true and
+	 * this is not an eclipsing declaration - all its substructure.
+	 * @param _combined - ignored
+	 * @return the requested step count
+	 */
+	@Override
+	public int getExecStepCount(boolean _combined)
+	{
+		if (this.eclipsesDeclarations(true)) {
+			return this.execStepCount;
+		}
+		else {
+			return super.getExecStepCount(_combined);
+		}
+	}
+	// END KGU#477 2017-12-10
 
 }

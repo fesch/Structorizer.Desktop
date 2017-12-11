@@ -1498,9 +1498,13 @@ public class Menu extends LangMenuBar implements NSDController
 				menuDiagramSwitchComments.setToolTipText(null);
 			}
 			// END KGU#227 2016-07-31
-
+			
 			// swap texts against comments?
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
+
+			// START KGU#477 2017-12-11: Enh. #487
+			menuDiagramHideDeclarations.setSelected(Element.E_HIDE_DECL);
+			// END KGU#477 2017-12-11
 
 			// DIN 66261
 			menuDiagramDIN.setSelected(Element.E_DIN);

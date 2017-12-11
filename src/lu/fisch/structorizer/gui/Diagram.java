@@ -7402,7 +7402,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	if (selectedElement != null) {
     		if (selectedElement instanceof Instruction) {
     			selectedElement.setSelected(false);
-    			selected = selectedElement = ((Instruction)selectedElement).getDrawingSurrogate();
+    			selected = selectedElement = ((Instruction)selectedElement).getDrawingSurrogate(false);
     			selectedElement.setSelected(true);
     		}
     		redraw(selectedElement);
