@@ -117,7 +117,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.10      Enh. #367: IF transmutation added: Swapping of the branches
  *      Kay Gürtzig     2017.03.12      Enh. #372: Author name configurable in save options
  *      Kay Gürtzig     2017.03.14      Enh. #372: Author name and license info editable now
- *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FilChooser
+ *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FileChooser
  *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
  *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
  *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
@@ -138,7 +138,8 @@ package lu.fisch.structorizer.gui;
  *                                      Issue #417: scroll units adapted to Root size to reduce time complexity
  *      Kay Gürtzig     2017.10.28      Enh. #443: Slight adaption for multiple DiagramControllers
  *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
- *      Kay Gürtzig     2017.12.06      Enh. #487: Support for hiding declaration sequences (still defective) 
+ *      Kay Gürtzig     2017.12.06      Enh. #487: Support for hiding declaration sequences (still defective)
+ *      Kay Gürtzig     2017.12.12      Issue #471: Option to copy error message to clipboard in importCode()
  *
  ******************************************************************************************************
  *
@@ -555,7 +556,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								// END KGU#354 2017-05-03
 								{
 									// show error
-									// START KGU#364 2017-03-09: Allow to copy the content
+									// START KGU#364 2017-03-09: Issues #182, #354 - Allow to copy the content
 									//JOptionPane.showMessageDialog(null,
 									//		parser.error,
 									//		Menu.msgTitleParserError.getText(),
@@ -4858,10 +4859,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//JOptionPane.showOptionDialog(null,d7.error,
 					//							 "Parser Error",
 					//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+					// START KGU#364 2017-12-12: Issue #471 - Allow to copy the content
+					//JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+					//		parser.error,
+					//		Menu.msgTitleParserError.getText(),
+					//		JOptionPane.ERROR_MESSAGE, null);
+					String[] options = {Menu.lblOk.getText(), Menu.lblCopyToClipBoard.getText()};
+					int chosen = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
 							parser.error,
 							Menu.msgTitleParserError.getText(),
-							JOptionPane.ERROR_MESSAGE, null);
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.ERROR_MESSAGE, null,
+							options, 0);
+					if (chosen == 1) {
+						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+						StringSelection toClip = new StringSelection(parser.error);
+						clipboard.setContents(toClip, null);									
+					}
+					// END KGU#364 2017-12-12
 					// END KGU 2016-01-11
 				}
 			}
