@@ -57,7 +57,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.16      Enh. #389: New icons 071_include, 072_include_green
  *      Kay Gürtzig     2017.06.13      Enh. #415: New icon 073_binoculars for Find & Replace dialog
  *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced
- *      Kay Gürtzig     2017.12.06      Enh. #487: New icon 085_hide_decl for hiding declarations 
+ *      Kay Gürtzig     2017.12.06      Enh. #487: New icon 085_hide_decl for hiding declarations
+ *      Kay Gürtzig     2017.12.11      Enh. #425: New icons 114_down and 115_up for Translator 
  *
  ******************************************************************************************************
  *
@@ -243,9 +244,10 @@ public class IconLoader {
 	public static ImageIcon ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
 	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
 	// END KGU#213 2016-08-02
-	// START KGU#232 2016-08-03: Enh. #222
-	//public static ImageIcon ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
-	// END KGU#232 2016-08-03
+	// START KGU#418 2017-12-11: Enh. #425
+	public static ImageIcon ico114 = getIconImage(getURI(from+"icons/114_down.png"));
+	public static ImageIcon ico115 = getIconImage(getURI(from+"icons/115_up.png"));
+	// END KGU#213 2017-12-11
 
 	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 	
@@ -423,9 +425,10 @@ public class IconLoader {
             ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
             // END KGU#287 2016-11-01
 
-        	// START KGU#232 2016-08-02: Enh. #222 - more flexible language export
-        	//ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
-        	// END KGU#232 2016-08-02
+        	// START KGU#418 2017-12-11: Enh. #425
+        	ico114 = getIconImage(getURI(from+"icons/114_down.png"));
+        	ico115 = getIconImage(getURI(from+"icons/115_up.png"));
+        	// END KGU#213 2017-12-11
 
         	turtle = getIconImage(getURI(from+"icons/turtle.png"));
         	

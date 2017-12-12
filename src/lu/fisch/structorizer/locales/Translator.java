@@ -25,7 +25,7 @@ package lu.fisch.structorizer.locales;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class is responsible for setting up the entire menubar.
+ *      Description:    This class represents the frame of the Translator tool for Structorizer.
  *
  ******************************************************************************************************
  *
@@ -40,6 +40,8 @@ package lu.fisch.structorizer.locales;
  *                                      command line parameter "-test" introduced to re-allow full consistency check
  *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as DPI awareness workaround
  *      Kay Gürtzig     2016.11.09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
+ *      Kay Gürtzig     2017.11.20      Issue #400: Ensures key listeners on buttons (also preparing enh. #425)
+ *      Kay Gürtzig     2017.12.11/12   Enh. #425: Support for Find mechanism
  *
  ******************************************************************************************************
  *
@@ -114,6 +116,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private static Translator instance = null;
     
     private NSDController NSDControl = null;
+
+    // START KGU#418 2017-12-11: Enh. #425
+    private TranslatorFindDialog searchDialog = null;
+    // END KGU#418 2017-12-11
     
     public static Translator getInstance() 
     {
@@ -208,7 +214,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             ArrayList<String> keys = locales.getDefaultLocale().getKeyValues(sectionName);
             for (int j = 0; j < keys.size(); j++) {
                 String key = keys.get(j);
-                StringList parts = StringList.explode(key.trim(),"=");
+                StringList parts = StringList.explodeFirstOnly(key.trim(),"=");
                 model.addRow(parts.toArray());
             }
         }
@@ -615,37 +621,53 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
         KeyListener myKeyListener = new KeyListener() {
 
-            @Override
+			@Override
             public void keyPressed(KeyEvent evt) {
-                switch (evt.getKeyCode()) {
+            	int keyCode = evt.getKeyCode();
+            	int modifiers = evt.getModifiers();
+            	char key = evt.getKeyChar();
+                switch (keyCode) {
                 case KeyEvent.VK_ESCAPE:
                 {
                     dispatchEvent(new WindowEvent(Translator.this, WindowEvent.WINDOW_CLOSING));
                 }
                 break;
                 case KeyEvent.VK_ENTER:
+                case KeyEvent.VK_ENTER | KeyEvent.SHIFT_DOWN_MASK:
                 {
+                	boolean shiftDown = (keyCode & KeyEvent.SHIFT_DOWN_MASK) != 0 || modifiers == KeyEvent.SHIFT_MASK;
                     Object source = evt.getSource();
                     if (source instanceof JButton) {
                         JButton button = (JButton)source;
                         ActionListener[] actLsnrs = button.getActionListeners();
+                        int actionCode = ActionEvent.ACTION_PERFORMED;
+                        if (shiftDown) {
+                        	actionCode |= ActionEvent.SHIFT_MASK;
+                        }
                         for (ActionListener al: actLsnrs) {
-                            al.actionPerformed(new ActionEvent(button, ActionEvent.ACTION_PERFORMED, loadedLocaleName));;
+                            al.actionPerformed(new ActionEvent(button, actionCode, loadedLocaleName));;
                         }
                     }
                 }
+                case KeyEvent.VK_F:
                 case (KeyEvent.VK_F | KeyEvent.CTRL_DOWN_MASK):
                 {
-                    // TODO Open search dialog (non-modal, persistant)
+                	boolean ctrlDown = (keyCode & KeyEvent.CTRL_DOWN_MASK) != 0 || (modifiers == KeyEvent.CTRL_MASK);
+                	if (ctrlDown) {
+                		if (searchDialog == null) {
+                			searchDialog = new TranslatorFindDialog(Translator.this);
+                		}
+                		searchDialog.setVisible(true);
+                	}
                 }
                 break;
                 }
             }
 
             @Override
-            public void keyReleased(KeyEvent evt) {}
-            @Override
             public void keyTyped(KeyEvent evt) {}
+            @Override
+            public void keyReleased(KeyEvent evt) {}
             
         };
         // END KGU#393/KGU#418 2017-11-20
@@ -955,11 +977,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                Translator translater = getInstance();
-                translater.setNSDControl(NSDControl);
-                translater.setVisible(true);
+                Translator translator = getInstance();
+                translator.setNSDControl(NSDControl);
+                translator.setVisible(true);
                 // START KGU 2016-08-04: Issue #220
-                //translater.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                //translator.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 // END KGU 2016-8-04
             }
         });
@@ -1022,6 +1044,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                         tbl.setShowGrid(true);
                     }
                 }
+                // START KGU#418 2017-12-11: Enh. #425
+                if (instance.searchDialog != null) {
+                	javax.swing.SwingUtilities.updateComponentTreeUI(instance.searchDialog);
+                	instance.searchDialog.adaptToNewLaF();;
+                }
+                // END KGU#418 2017-12-11
             }
             catch (Exception ex) {}
         }
@@ -1126,4 +1154,87 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     public void removeUpdate(DocumentEvent ev) {
         this.flagAsUnsaved();
     }
+
+    // START GU#418 2017-12-11: Enh. #425 - Navigation callback for TranslatorFindPattern
+	/**
+	 * Navigates to the next row downwards (if {@code _forward} is true) or upwards (otherwise)
+	 * that has a substring matching the given {@code _pattern} in one of the columns enabled by
+	 * {@code _columns} of the current tab. 
+	 * @param _pattern - the substring to be searched for (plain string, not a regular expression!)
+	 * @param _forward - whether the search direction is downwards
+	 * @param _wrapAround - whether the search is be continued at the first (last) row if end (or
+	 * beginning) of the tabel is reached without match (otherwise a message box would pop up. 
+	 * @param _caseSensitive - whether upper/lower case spelling is to matter (default: false)
+	 * @param _columns - flag array specifying which of the table columns are to be searched. 
+	 */
+	public void gotoNextMatch(String _pattern, boolean _forward, boolean _wrapAround, boolean _caseSensitive, boolean[] _columns) {
+		int tabIx = tabs.getSelectedIndex();
+		String tabTitle = tabs.getTitleAt(tabIx);
+		JTable table = tables.get(tabTitle);
+		if (!_caseSensitive) {
+			_pattern = _pattern.toLowerCase();
+		}
+		if (table != null) {
+			DefaultTableModel tableModel = (DefaultTableModel)table.getModel();
+			int nRows = table.getRowCount();
+			int nCols = table.getColumnCount();
+			int currRowIx = table.getSelectedRow();
+			boolean found = false;
+			int row = currRowIx;
+			int lastRow = _forward ? nRows : 0;
+			int nCycles = _wrapAround ? 2 : 1;
+			do {
+				if (_forward) {
+					while (!found && ++row < lastRow) {
+						for (int col = 0; !found && col < nCols; col++) {
+							if (!_columns[col]) {
+								continue;
+							}
+							String val = ((String)tableModel.getValueAt(row, col));
+							if (val != null) {
+								if (!_caseSensitive) {
+									val = val.toLowerCase();
+								}
+								found = val.contains(_pattern);
+							}
+						}
+					}
+					// Prepare wrapAraound mode!
+					lastRow = currRowIx + 1;
+					if (!found) {
+						row = -1;
+					}
+				}
+				else {
+					while (!found && --row >= lastRow) {
+						for (int col = 0; !found && col < nCols; col++) {
+							if (!_columns[col]) {
+								continue;
+							}
+							String val = ((String)tableModel.getValueAt(row, col));
+							if (val != null) {
+								if (!_caseSensitive) {
+									val = val.toLowerCase();
+								}
+								found = val.contains(_pattern);
+							}
+						}
+					}
+					// Prepare wrapAraound mode!
+					lastRow = currRowIx + 1;
+					if (!found) {
+						row = nRows;
+					}
+				}
+			} while (!found && --nCycles > 0);
+			if (found) {
+				table.changeSelection(row, nCols-1, false, false);
+			}
+			else {
+				JOptionPane.showMessageDialog(this,
+						"No further occurrance of \"" + _pattern + "\" found.",
+						"Find failed", JOptionPane.INFORMATION_MESSAGE);
+			}
+		}
+	}
 }

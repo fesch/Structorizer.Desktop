@@ -32,7 +32,7 @@ import lu.fisch.turtle.TurtleBox;
 public class Turtleizer {
 	
 	private static TurtleBox turtleBox = null;
-	/** maps different turtleizer function names in lower-case to the respective adapter method names */
+	/** maps different Turtleizer function names in lower-case to the respective adapter method names */
 	@SuppressWarnings("serial")
 	private static final HashMap<String, String> supportedRoutines = new HashMap<String, String>() {{
 		put("forward", "forward");
@@ -69,8 +69,8 @@ public class Turtleizer {
 	
 	/**
 	 * Checks whether a routine with the {@code candidateName} is supported by Turtleizer, and if so
-	 * returns the qualified method name, otherwise null. Note that {@code candidateName} will be looked
-	 * up case-ignorantly.
+	 * returns the qualified method name, otherwise null. Note that {@code candidateName} will be
+	 * looked up case-ignorantly.
 	 * @param candidateName - a procedure or function identifier 
 	 * @return the qualified method name or null
 	 */
