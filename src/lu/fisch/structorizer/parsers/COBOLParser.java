@@ -3293,7 +3293,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SORT_OUTPUT                                                           = 1506;  // <sort_output> ::= 
 //		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
 //		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
-//		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
+		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
 //		final int PROD_START_BODY                                                            = 1510;  // <start_body> ::= <file_name> <start_key> <sizelen_clause> <_invalid_key_phrases>
 //		final int PROD_SIZELEN_CLAUSE                                                        = 1511;  // <sizelen_clause> ::= 
 //		final int PROD_SIZELEN_CLAUSE2                                                       = 1512;  // <sizelen_clause> ::= <_with> <size_or_length> <exp>
@@ -5474,6 +5474,16 @@ public class COBOLParser extends CodeParser
 			}
 		}
 		break;
+		case RuleConstants.PROD_START_STATEMENT_START:
+		{
+			//System.out.println("PROD_START_STATEMENT_START
+			String content = this.getOriginalText(_reduction, "");
+			Instruction instr = new Instruction(content);
+			instr.setColor(Color.RED);
+			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			instr.getComment().add("TODO: Structorizer File API does not support indexed or other non-text files");
+		}
+		break;
 		case RuleConstants.PROD_READ_STATEMENT_READ:
 		{
 			//System.out.println("PROD_READ_STATEMENT_READ");
@@ -5750,36 +5760,60 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Builds an equivalent loop structure for a SEARCH statement
+	 *
 	 * @param _reduction - the statement reduction
-	 * @param _parentNode - the 
+	 * @param _parentNode - the
 	 */
 	private void importSearch(Reduction _reduction, Subqueue _parentNode) {
-		// FIXME: At least add variable name parsing the same way we have in other places
-		//        and add some line breaks
+		/*
+		 * FIXME: At least add variable name parsing the same way we have in
+		 * other places and add some line breaks
+		 */
 		Reduction redBody = _reduction.get(1).asReduction();
 		if (redBody.getParent().getTableIndex() == RuleConstants.PROD_SEARCH_BODY) {
 			String varName = this.getContent_R(redBody.get(0).asReduction(), "");
-			CobVar table = currentProg.getCobVar(varName);
-			CobVar indexVar = null;
-			if (redBody.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD_SEARCH_VARYING_VARYING) {
-				String indexName = this.getContent_R(redBody.get(1).asReduction().get(1).asReduction(), "");
-				indexVar = currentProg.getCobVar(indexName);
+			CobVar table = this.currentProg.getCobVar(varName);
+			if (table == null) {
+//				String content = this.getOriginalText(_reduction, "");
+//				Instruction instr = new Instruction(content);
+//				instr.setColor(Color.RED);
+//				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+//				instr.getComment().add("FIXME: Couldn't identify the table variable!");
+//				return;
+				System.out.println("Warning, couldn't identify the table variable \"" + varName + "\"!");
+				// create table and its index for rest of the function
+				table = this.cobTools.new CobVar(1, varName, null, null, null, null, false, false, 0, 99, null);
 			}
-			else {
-				// We just try the first available index variable ... FIXME: is this okay? (might depend on the WHEN clauses?)
-				indexVar = table.getIndexedBy(0);
-			}
-			// In case we could identify an index variable we might possibly use a FOR-IN loop?
+			// Note: SEARCH *allways* changes and searches with the first index,
+			//       this does NOT change depending on the WHEN
+			//       VARYING identifier-2 does an *additional* increase of identifier-2
+			CobVar indexVar = table.getIndexedBy(0);
 			if (indexVar == null) {
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
-				instr.getComment().add("FIXME: Couldn't identify an index variable!");
-				return;
+				System.out.println("Warning, couldn't get the index variable for \"" + table.getName() + "\"!");
+				indexVar = this.cobTools.new CobVar(varName + "MissingIdx", table);
 			}
-			// Sometimes the COBOL programmer didn't specify the actual array component but some ancestor...
-			else if (!table.isArray() && indexVar.isIndex()) {
+			CobVar indexAdditionalVar = null;
+			if (redBody.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD_SEARCH_VARYING_VARYING) {
+				String indexAdditionalName = this.getContent_R(redBody.get(1).asReduction().get(1).asReduction(), "");
+				indexAdditionalVar = this.currentProg.getCobVar(indexAdditionalName);
+				if (indexAdditionalVar == null) {
+					System.out.println("Warning, couldn't get the index variable \"" + indexAdditionalName + "\"!");
+					indexAdditionalVar = this.cobTools.new CobVar(indexAdditionalName, table);
+				}
+			}
+			// In case we could identify an index variable we might possibly use
+			// a FOR-IN loop?
+//			if (indexVar == null) {
+//				String content = this.getOriginalText(_reduction, "");
+//				Instruction instr = new Instruction(content);
+//				instr.setColor(Color.RED);
+//				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+//				instr.getComment().add("FIXME: Couldn't identify an index variable!");
+//				return;
+//			} else
+			// Sometimes the COBOL programmer didn't specify the actual array
+			// component but some ancestor...
+			if (!table.isArray() && indexVar.isIndex()) {
 				// If the subscript is actually an index then we can mend it.
 				CobVar actTable = indexVar.getParent();
 				if (actTable.isComponentOf(table)) {
@@ -5795,7 +5829,7 @@ public class COBOLParser extends CodeParser
 			testInit.setColor(colorMisc);
 			wLoop.setColor(colorMisc);
 			_parentNode.addElement(testInit);
-			_parentNode.addElement(equipWithSourceComment(wLoop, _reduction));
+			_parentNode.addElement(this.equipWithSourceComment(wLoop, _reduction));
 			// Now convert the WHEN clauses and add the resulting Alternatives to the loop body
 			Reduction redWhens = redBody.get(3).asReduction();
 			// Alternatively, we could use a Jump "leave" here (advantage: index won't be incremented, drawback: unstructured code)
@@ -5805,31 +5839,33 @@ public class COBOLParser extends CodeParser
 				if (redWhens.getParent().getTableIndex() == RuleConstants.PROD_SEARCH_WHENS2) {
 					redWhen = redWhen.get(0).asReduction();
 					redWhens = redWhens.get(1).asReduction();
-				}
-				else {
+				} else {
 					redWhens = null;
 				}
 				String cond = this.transformCondition(redWhen.get(1).asReduction(), null);
 				Alternative when = new Alternative(cond);
 				when.setColor(colorMisc);
-				wLoop.getBody().addElement(equipWithSourceComment(when, redWhen));
+				wLoop.getBody().addElement(this.equipWithSourceComment(when, redWhen));
 				this.buildNSD_R(redWhen.get(2).asReduction(), when.qTrue);
 				when.qTrue.addElement(new Instruction(stopStmt));
 			} while (redWhens != null);
 			// Now add the increment to the loop body
-			Instruction incr = new Instruction("inc(" + indexVar.getName() + ")");
+			String InstrString = "inc(" + indexVar.getName() + ")";
+			if (indexAdditionalVar != null) {
+				InstrString += "\n inc(" + indexAdditionalVar.getName() + ")";
+			}
+			Instruction incr = new Instruction(InstrString);
 			incr.setColor(colorMisc);
 			wLoop.getBody().addElement(incr);
 			// Finally convert and add the AT END clause after the loop.
 			redWhens = redBody.get(2).asReduction();
 			if (redWhens.getParent().getTableIndex() == RuleConstants.PROD_SEARCH_AT_END_END) {
-				Alternative endTest = new Alternative("not " + testVarName); 
+				Alternative endTest = new Alternative("not " + testVarName);
 				endTest.setColor(colorMisc);
-				_parentNode.addElement(equipWithSourceComment(endTest, redWhens));
-				this.buildNSD_R(redWhens.get(1).asReduction(),endTest.qTrue);
+				_parentNode.addElement(this.equipWithSourceComment(endTest, redWhens));
+				this.buildNSD_R(redWhens.get(1).asReduction(), endTest.qTrue);
 			}
-		}
-		else {
+		} else {
 			// This is a SEARCH ALL statement - we haven't got a strategy yet
 			String content = this.getOriginalText(_reduction, "");
 			Instruction instr = new Instruction(content);
@@ -6807,9 +6843,9 @@ public class COBOLParser extends CodeParser
 			content = CodeParser.getKeywordOrDefault("preLeave", "leave");
 			break;
 		case RuleConstants.PROD_EXIT_BODY_PERFORM_CYCLE: // <exit_body> ::= PERFORM CYCLE
-			content = this.getContent_R(_reduction, "");
+			content = "continue";	// may even work in some code exports, can be understood
 			color = Color.RED;
-			comment = "Unsupported kind of JUMP";
+			comment = "Unsupported kind of JUMP, was: " + this.getContent_R(_reduction, "");
 			break;
 		case RuleConstants.PROD_EXIT_BODY_SECTION:	// <exit_body> ::= SECTION
 		case RuleConstants.PROD_EXIT_BODY_PARAGRAPH:// <exit_body> ::= PARAGRAPH
