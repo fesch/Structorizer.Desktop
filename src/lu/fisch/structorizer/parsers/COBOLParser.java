@@ -83,7 +83,8 @@ package lu.fisch.structorizer.parsers;
  *                                      issue #485 workaround (prefixing intrinsic functions with FUNCTION)
  *      Kay Gürtzig     2017.12.05      Bugfix #483: mild version of disabled optionImportVarDecl,
  *                                      Bugfix #486: Return mechanism in imported functions enforced
- *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled 
+ *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled
+ *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed. 
  *
  ******************************************************************************************************
  *
