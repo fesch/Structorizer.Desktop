@@ -73,6 +73,8 @@ public class ElementNamePreferences extends LangDialog {
 	public boolean OK = false;
 	
 	private JLabel lblExplanation;
+	private JLabel lblLocalized;
+	private JLabel lblIndividual;
 	public JCheckBox chkUseConfNames;
 	private JLabel[] lblElements;
 	public JTextField[] txtElements;
@@ -101,6 +103,8 @@ public class ElementNamePreferences extends LangDialog {
 		
 		lblExplanation = new JLabel("Re-label the Element types for display");
 		chkUseConfNames = new JCheckBox("Enable the configured labels");
+		lblLocalized = new JLabel("Localized label");
+		lblIndividual = new JLabel("Configured label");
 		lblElements = new JLabel[ElementNames.configuredNames.length];
 		txtElements = new JTextField[ElementNames.configuredNames.length];
 		btnOK = new JButton("OK");
@@ -126,6 +130,9 @@ public class ElementNamePreferences extends LangDialog {
 			//======== contentPanel ========
 			{
 				configPanel.setLayout(new GridLayout(0, 2, 8, 8));
+				
+				configPanel.add(lblLocalized);
+				configPanel.add(lblIndividual);
 
 				for (int i = 0; i < ElementNames.configuredNames.length; i++) {
 					String descr = ElementNames.localizedNames[i].getText();
