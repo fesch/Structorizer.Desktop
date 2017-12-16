@@ -66,10 +66,42 @@
  *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs; About tab translations modified
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017.12.16      Element name place holders introduced
  *
  ******************************************************************************************************
  *
  *      Comment:	
+ *
+ *          >>>         indicates the end of the header
+ *          ----->      indicates the start of a top-level section
+ *          -----[      indicates the start of a second-level section
+ *
+ *      The texts may contain two kinds of place holders that should be preserved at
+ *      appropriate positions in the translations:
+ *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
+ *        element names. The localized element names are defined in (and retrieved
+ *        from) section / tab "Elements" with the following convention, where the
+ *        respective short and long place holders are equivalent (the short one is
+ *        more performant, the long one more readable):
+ *  
+ *        short long                    referenced key sequence
+ *        @a  = @{Instruction}      ->  ElementNames.localizedNames.0.text
+ *        @b  = @{Alternative}      ->  ElementNames.localizedNames.1.text
+ *        @c  = @{Case}             ->  ElementNames.localizedNames.2.text
+ *        @d  = @{For}              ->  ElementNames.localizedNames.3.text
+ *        @e  = @{For.COUNTER}      ->  ElementNames.localizedNames.4.text
+ *        @f  = @{For.TRAVERSAL}    ->  ElementNames.localizedNames.5.text
+ *        @g  = @{While}            ->  ElementNames.localizedNames.6.text
+ *        @h  = @{Repeat}           ->  ElementNames.localizedNames.7.text
+ *        @i  = @{Forever}          ->  ElementNames.localizedNames.8.text
+ *        @j  = @{Call}             ->  ElementNames.localizedNames.9.text
+ *        @k  = @{Jump}             ->  ElementNames.localizedNames.10.text
+ *        @l  = @{Parallel}         ->  ElementNames.localizedNames.11.text
+ *        @m  = @{Root}             ->  ElementNames.localizedNames.12.text
+ *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
+ *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
+ *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
  *
  ******************************************************************************************************/
 >>>
@@ -122,29 +154,29 @@ Menu.menuDiagramAdd.text=Aggiungi
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Prima
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Istruzione
-Menu.menuDiagramAddBeforeAlt.text=Selezione
-Menu.menuDiagramAddBeforeCase.text=Selezione multipla
-Menu.menuDiagramAddBeforeFor.text=Ciclo FOR
-Menu.menuDiagramAddBeforeWhile.text=Ciclo WHILE
-Menu.menuDiagramAddBeforeRepeat.text=Ciclo REPEAT
-Menu.menuDiagramAddBeforeForever.text=Ciclo ENDLESS
-Menu.menuDiagramAddBeforeCall.text=Chiamata
-Menu.menuDiagramAddBeforeJump.text=Salto
-Menu.menuDiagramAddBeforePara.text=Parallelo
+Menu.menuDiagramAddBeforeInst.text=@{Instruction}
+Menu.menuDiagramAddBeforeAlt.text=@{Alternative}
+Menu.menuDiagramAddBeforeCase.text=@{Case}
+Menu.menuDiagramAddBeforeFor.text=Ciclo @{For}
+Menu.menuDiagramAddBeforeWhile.text=Ciclo @{While}
+Menu.menuDiagramAddBeforeRepeat.text=Ciclo @{Repeat}
+Menu.menuDiagramAddBeforeForever.text=Ciclo @{Forever}
+Menu.menuDiagramAddBeforeCall.text=@{Call}
+Menu.menuDiagramAddBeforeJump.text=@{Jump}
+Menu.menuDiagramAddBeforePara.text=@{Parallel}
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Dopo
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Istruzione
-Menu.menuDiagramAddAfterAlt.text=Selezione
-Menu.menuDiagramAddAfterCase.text=Selezione multipla
-Menu.menuDiagramAddAfterFor.text=Ciclo FOR
-Menu.menuDiagramAddAfterWhile.text=Ciclo WHILE
-Menu.menuDiagramAddAfterRepeat.text=Ciclo REPEAT
-Menu.menuDiagramAddAfterForever.text=Ciclo ENDLESS
-Menu.menuDiagramAddAfterCall.text=Chiamata
-Menu.menuDiagramAddAfterJump.text=Salto
-Menu.menuDiagramAddAfterPara.text=Parallelo
+Menu.menuDiagramAddAfterInst.text=@{Instruction}
+Menu.menuDiagramAddAfterAlt.text=@{Alternative}
+Menu.menuDiagramAddAfterCase.text=@{Case}
+Menu.menuDiagramAddAfterFor.text=Ciclo @{For}
+Menu.menuDiagramAddAfterWhile.text=Ciclo @{While}
+Menu.menuDiagramAddAfterRepeat.text=Ciclo @{Repeat}
+Menu.menuDiagramAddAfterForever.text=Ciclo @{Forever}
+Menu.menuDiagramAddAfterCall.text=@{Call}
+Menu.menuDiagramAddAfterJump.text=@{Jump}
+Menu.menuDiagramAddAfterPara.text=@{Parallel}
 Menu.menuDiagramEdit.text=Modifica
 Menu.menuDiagramDelete.text=Cancella
 Menu.menuDiagramMoveUp.text=Sposta in alto
@@ -154,8 +186,8 @@ Menu.menuDiagramCollapse.text=Collassa
 Menu.menuDiagramExpand.text=Espandi
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
-Menu.menuDiagramTypeProgram.text=Principale
-Menu.menuDiagramTypeFunction.text=Funzione
+Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
+Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramNice.text=Stile box?
 Menu.menuDiagramComment.text=Mostra commenti?
 Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
@@ -258,7 +290,7 @@ Menu.error01_3.text=Non ti è permesso modificare la variabile del cilco «%» a
 Menu.error02.text=Cambio del valore di verità della condizione non trovato. Possibile ciclo infinito ...
 Menu.error03_1.text=La variabile «%1» non è ancora stata inizializzata%2!
 Menu.error03_2.text=La variabile «%1» può non essere stata ancora inizializzata%2!
-Menu.error04.text=Non ti è permesso usare una Selezione con un blocco di istruzioni V vuoto!
+Menu.error04.text=Non ti è permesso usare una @{Alternative} con un blocco di istruzioni V vuoto!
 Menu.error05.text=La variabile «%» deve essere scritta in maiuscolo!
 Menu.error06.text=Il nome del programma «%» deve essere scritta in maiuscolo!
 Menu.error07_1.text=«%» non è un nome valido per un programma o un metodo!
@@ -266,22 +298,22 @@ Menu.error07_2.text=«%» non è un nome valido per un parametero!
 Menu.error07_3.text=«%» non è un nome valido per una variabile o una costante!
 Menu.error08.text=Non ti è permesso fare un assegnamento dentro una condizione!
 Menu.error09.text=Il tuo programma («%») non può avere lo stesso nome di una variabile o di un parametero!
-Menu.error10_1.text=Una singola istruzione non potrebbe contenere istruzioni di input/output e assegnamenti!
-Menu.error10_2.text=Una singola istruzione non potrebbe contenere più istruzioni di input e output!
-Menu.error10_3.text=Una singola istruzione non potrebbe contenere istruzioni di input e assegnamenti!
-Menu.error10_4.text=Una singola istruzione non potrebbe contenere istruzioni di output e assegnamenti!
-Menu.error10_5.text=Una singola istruzione non potrebbe contenere definizioni di costanti e altri istruzioni!
-Menu.error11.text=Hai probabilmente commesso un errore di assegnamento. Leggi questa istruzione!
+Menu.error10_1.text=Una singola @{Instruction} non potrebbe contenere istruzioni di input/output e assegnamenti!
+Menu.error10_2.text=Una singola @{Instruction} non potrebbe contenere più istruzioni di input e output!
+Menu.error10_3.text=Una singola @{Instruction} non potrebbe contenere istruzioni di input e assegnamenti!
+Menu.error10_4.text=Una singola @{Instruction} non potrebbe contenere istruzioni di output e assegnamenti!
+Menu.error10_5.text=Una singola @{Instruction} non potrebbe contenere definizioni di costanti e altri istruzioni!
+Menu.error11.text=Hai probabilmente commesso un errore di assegnamento. Leggi questa @{Instruction}!
 Menu.error12.text=Il parametro «%» deve iniziare con la lettera "p" seguita da sole lettere maiuscole!
 Menu.error13_1.text=La tua funzione non ritorna alcun valore!
 Menu.error13_2.text=La tua funzione potrebbe non ritornare alcun risultato!
 Menu.error13_3.text=La tua funzione sembra usare diversi meccanismi di return in competizione: «%»!
-Menu.error14_1.text=Parametri del ciclo FOR non sono consistenti con la intestazione dello medesimo!
-Menu.error14_2.text=Il passo del ciclo FOR non è una costante intera!
-Menu.error14_3.text=Il nome della variabile «%» potrebbe collidere con una delle parole chiave di un ciclo FOR
+Menu.error14_1.text=Parametri del ciclo @{For} non sono consistenti con la intestazione dello medesimo!
+Menu.error14_2.text=Il passo del ciclo @{For} non è una costante intera!
+Menu.error14_3.text=Il nome della variabile «%» potrebbe collidere con una delle parole chiave di un ciclo @{For}
 Menu.error15_1.text=La CALL non è partita da «[ <var> <- ] <routine_name>(<arg_list>)»
 Menu.error15_2.text=Il diagramma chiamato «%» no è reperibile per il momento.
-Menu.error15_3.text=Chiamata ambigua: Ci sono più programmi o sottoprogrammi «%».
+Menu.error15_3.text=@{Call} ambigua: Ci sono più programmi o sottoprogrammi «%».
 Menu.error16_1.text=Un elemento JUMP potrebbe essere vuoto o partire con uno di %, possibilmente seguito da un argomento!
 Menu.error16_2.text=Un'istruzione di «%», a meno che non sia  in posizione finale, deve formare un elemento JUMP!
 Menu.error16_3.text=Un'istruzione di «%1» o «%2» è consentita solo come elemento di JUMP!
@@ -307,7 +339,7 @@ AnalyserPreferences.contentPanel.tab.1=Nomi e convenzioni
 AnalyserPreferences.checkboxes.1.text=Controlla variabile di ciclo modificata.
 AnalyserPreferences.checkboxes.2.text=Controlla cicli infiniti (finchè e rilevabile!)
 AnalyserPreferences.checkboxes.3.text=Controlla variabili non inizializzate.
-AnalyserPreferences.checkboxes.4.text=Controlla errori nell'uso della Selezione.
+AnalyserPreferences.checkboxes.4.text=Controlla errori nell'uso della @{Alternative}.
 AnalyserPreferences.checkboxes.5.text=Controlla nomi delle variabili in maiuscolo. (LUX/MEN)
 AnalyserPreferences.checkboxes.6.text=Controlla nomi del programma e dei sottoprogrammi in maiuscolo. (LUX/MEN)
 AnalyserPreferences.checkboxes.7.text=Controlla identificatori validi.
@@ -317,7 +349,7 @@ AnalyserPreferences.checkboxes.10.text=Controlla istruzioni con comandi multipli
 AnalyserPreferences.checkboxes.11.text=Controlla errori di assegnamento.
 AnalyserPreferences.checkboxes.12.text=Controlla nomi dei parametri standardizzati. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Controlla se una funzione ritorna un risultato.
-AnalyserPreferences.checkboxes.14.text=Controlla se parametri del ciclo FOR si confan con la intestazione dello medesimo.
+AnalyserPreferences.checkboxes.14.text=Controlla se parametri del ciclo @{For} si confan con la intestazione dello medesimo.
 AnalyserPreferences.checkboxes.15.text=Controlla que CALL è appropiata e subroutine chiamata è conseguibile.
 AnalyserPreferences.checkboxes.16.text=Controlla usi impropri di un elemento JUMP.
 AnalyserPreferences.checkboxes.17.text=Controlla rischi di inconsistenza nelle sezioni in PARALLEL.
@@ -335,27 +367,27 @@ Editor.btnNew.tooltip=Crea un nuovo diagramma vuoto.
 Editor.btnOpen.tooltip=Apri un diagramma esistente.
 Editor.btnSave.tooltip=Sava il diagramma attuale.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Inserisci una nuova istruzione prima dell'elemento selezionato.
-Editor.btnBeforeAlt.tooltip=Inserisci una nuova Selezione prima dell'elemento selezionato.
-Editor.btnBeforeFor.tooltip=Inserisci un nuovo ciclo FOR prima dell'elemento selezionato.
-Editor.btnBeforeWhile.tooltip=Inserisci un nuovo cilo WHILE prima dell'elemento selezionato.
-Editor.btnBeforeRepeat.tooltip=Inserisci un nuovo ciclo REPEAT prima dell'elemento selezionato.
-Editor.btnBeforeForever.tooltip=Inserisci un nuovo ciclo ENDLESS prima dell'elemento selezionato.
-Editor.btnBeforeCall.tooltip=Inserisci una nuova chiamata prima dell'elemento selezionato.
-Editor.btnBeforeJump.tooltip=Inserisci un nuovo salto prima dell'elemento selezionato.
-Editor.btnBeforeCase.tooltip=Inserisci una nuova Selezione Multipla prima dell'elemento selezionato.
-Editor.btnBeforePara.tooltip=Inserisci un nuovo passaggio Parallelo prima dell'elemento selezionato.
+Editor.btnBeforeInst.tooltip=Inserisci una nuova @{Instruction} prima dell'elemento selezionato.
+Editor.btnBeforeAlt.tooltip=Inserisci una nuova @{Alternative} prima dell'elemento selezionato.
+Editor.btnBeforeFor.tooltip=Inserisci un nuovo ciclo @{For} prima dell'elemento selezionato.
+Editor.btnBeforeWhile.tooltip=Inserisci un nuovo cilo @{While} prima dell'elemento selezionato.
+Editor.btnBeforeRepeat.tooltip=Inserisci un nuovo ciclo @{Repeat} prima dell'elemento selezionato.
+Editor.btnBeforeForever.tooltip=Inserisci un nuovo ciclo @{Forever} prima dell'elemento selezionato.
+Editor.btnBeforeCall.tooltip=Inserisci una nuova @{Call} prima dell'elemento selezionato.
+Editor.btnBeforeJump.tooltip=Inserisci un nuovo @{Jump} prima dell'elemento selezionato.
+Editor.btnBeforeCase.tooltip=Inserisci una nuova @{Case} prima dell'elemento selezionato.
+Editor.btnBeforePara.tooltip=Inserisci un nuovo passaggio @{Parallel} prima dell'elemento selezionato.
 // InsertAfter
-Editor.btnAfterInst.tooltip=Inserisci una nuova istruzione dopo l'elemento selezionato.
-Editor.btnAfterAlt.tooltip=Inserisci una nuova Selezione dopo l'elemento selezionato.
-Editor.btnAfterFor.tooltip=Inserisci un nuovo ciclo FOR dopo l'elemento selezionato.
-Editor.btnAfterWhile.tooltip=Inserisci un nuovo ciclo WHILE dopo l'elemento selezionato.
-Editor.btnAfterRepeat.tooltip=Inserisci un nuovo ciclo REPEAT dopo l'elemento selezionato.
-Editor.btnAfterForever.tooltip=Inserisci un nuovo ciclo ENDLESS dopo l'elemento selezionato.
-Editor.btnAfterCall.tooltip=Inserisci una nuova Chiamata dopo l'elemento selezionato.
-Editor.btnAfterJump.tooltip=Inserisci un nuovo Salto dopo l'elemento selezionato.
-Editor.btnAfterCase.tooltip=Inserisci una nuova Selezione Multipla dopo l'elemento selezionato.
-Editor.btnAfterPara.tooltip=Inserisci un nuovo passaggio Parallelo dopo l'elemento selezionato.
+Editor.btnAfterInst.tooltip=Inserisci una nuova @{Instruction} dopo l'elemento selezionato.
+Editor.btnAfterAlt.tooltip=Inserisci una nuova @{Alternative} dopo l'elemento selezionato.
+Editor.btnAfterFor.tooltip=Inserisci un nuovo ciclo @{For} dopo l'elemento selezionato.
+Editor.btnAfterWhile.tooltip=Inserisci un nuovo ciclo @{While} dopo l'elemento selezionato.
+Editor.btnAfterRepeat.tooltip=Inserisci un nuovo ciclo @{Repeat} dopo l'elemento selezionato.
+Editor.btnAfterForever.tooltip=Inserisci un nuovo ciclo @{Forever} dopo l'elemento selezionato.
+Editor.btnAfterCall.tooltip=Inserisci una nuova @{Call} dopo l'elemento selezionato.
+Editor.btnAfterJump.tooltip=Inserisci un nuovo @{Jump} dopo l'elemento selezionato.
+Editor.btnAfterCase.tooltip=Inserisci una nuova @{Case} dopo l'elemento selezionato.
+Editor.btnAfterPara.tooltip=Inserisci un nuovo passaggio @{Parallel} dopo l'elemento selezionato.
 // undo & redo
 Editor.btnUndo.tooltip=Annulla l'ultima azione.
 Editor.btnRedo.tooltip=Ripeti l'ultima azione.
@@ -408,29 +440,29 @@ Editor.popupAdd.text=Aggiungi
 // Submenu of "Add"
 Editor.popupAddBefore.text=Prima
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Istruzione
-Editor.popupAddBeforeAlt.text=Selezione
-Editor.popupAddBeforeCase.text=Selezione Multipla
-Editor.popupAddBeforeFor.text=Ciclo FOR
-Editor.popupAddBeforeWhile.text=Ciclo WHILE
-Editor.popupAddBeforeRepeat.text=Ciclo REPEAT
-Editor.popupAddBeforeForever.text=Ciclo ENDLESS
-Editor.popupAddBeforeCall.text=Chiamata
-Editor.popupAddBeforeJump.text=Salto
-Editor.popupAddBeforePara.text=Parallelo
+Editor.popupAddBeforeInst.text=@{Instruction}
+Editor.popupAddBeforeAlt.text=@{Alternative}
+Editor.popupAddBeforeCase.text=@{Case}
+Editor.popupAddBeforeFor.text=Ciclo @{For}
+Editor.popupAddBeforeWhile.text=Ciclo @{While}
+Editor.popupAddBeforeRepeat.text=Ciclo @{Repeat}
+Editor.popupAddBeforeForever.text=Ciclo @{Forever}
+Editor.popupAddBeforeCall.text=@{Call}
+Editor.popupAddBeforeJump.text=@{Jump}
+Editor.popupAddBeforePara.text=@{Parallel}
 // After
 Editor.popupAddAfter.text=Dopo
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Istruzione
-Editor.popupAddAfterAlt.text=Selezione
-Editor.popupAddAfterCase.text=Selezione Multipla
-Editor.popupAddAfterFor.text=Ciclo FOR
-Editor.popupAddAfterWhile.text=Ciclo WHILE
-Editor.popupAddAfterRepeat.text=Ciclo REPEAT
-Editor.popupAddAfterForever.text=Ciclo ENDLESS
-Editor.popupAddAfterCall.text=Chiamata
-Editor.popupAddAfterJump.text=Salto
-Editor.popupAddAfterPara.text=Parallelo
+Editor.popupAddAfterInst.text=@{Instruction}
+Editor.popupAddAfterAlt.text=@{Alternative}
+Editor.popupAddAfterCase.text=@{Case}
+Editor.popupAddAfterFor.text=Ciclo @{For}
+Editor.popupAddAfterWhile.text=Ciclo @{While}
+Editor.popupAddAfterRepeat.text=Ciclo @{Repeat}
+Editor.popupAddAfterForever.text=Ciclo @{Forever}
+Editor.popupAddAfterCall.text=@{Call}
+Editor.popupAddAfterJump.text=@{Jump}
+Editor.popupAddAfterPara.text=@{Parallel}
 // Edit
 Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
@@ -462,32 +494,32 @@ InputBox.lblBreakTriggerText.text=Fermare a esecuzione: %
 InputBox.lblText.text[elementType:Alternative]=Inserisci la condicione
 InputBox.lblText.text[elementType:While]=Inserisci la condicione para entrar y quedar
 InputBox.lblText.text[elementType:Repeat]=Inserisci la conditione para salir
-InputBox.lblText.text[elementType:Case]=Inserisci l'espressione e le costanti della selezione
+InputBox.lblText.text[elementType:Case]=Inserisci l'espressione e le costanti della @{Alternative}
 InputBox.lblText.text[elementType:Parallel]=Nummero dei rami paralleli
 InputBox.title[elementType:Root]=
 InputBox.title[elementType:Function]=
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Inseriscire istruzioni...
-InputBox.title[elementType:Alternative,getInsertionType():insert]=Inseriscire nuova Selezione...
-InputBox.title[elementType:Case,getInsertionType():insert]=Inseriscire nuova Selezione Multipla...
-InputBox.title[elementType:Forever,getInsertionType():insert]=Inseriscire nuovo ciclo ENDLESS...
-InputBox.title[elementType:Repeat,getInsertionType():insert]=Inseriscire nuovo ciclo REPEAT...
-InputBox.title[elementType:While,getInsertionType():insert]=Inseriscire nuovo ciclo WHILE...
-InputBox.title[elementType:Call,getInsertionType():insert]=Inseriscire nuova chiamata...
-InputBox.title[elementType:Jump,getInsertionType():insert]=Inseriscire nuovo salto...
-InputBox.title[elementType:Parallel,getInsertionType():insert]=Inseriscire passaggio Parallelo...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Inseriscire nuova @{Alternative}...
+InputBox.title[elementType:Case,getInsertionType():insert]=Inseriscire nuova @{Case}...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Inseriscire nuovo ciclo @{Forever}...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Inseriscire nuovo ciclo @{Repeat}...
+InputBox.title[elementType:While,getInsertionType():insert]=Inseriscire nuovo ciclo @{While}...
+InputBox.title[elementType:Call,getInsertionType():insert]=Inseriscire nuova @{Call}...
+InputBox.title[elementType:Jump,getInsertionType():insert]=Inseriscire nuovo @{Jump}...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Inseriscire passaggio @{Parallel}...
 InputBox.title[elementType:Instruction,getInsertionType():update]=Modificare istruzioni...
-InputBox.title[elementType:Alternative,getInsertionType():update]=Modificare Selezione...
-InputBox.title[elementType:Case,getInsertionType():update]=Modificare Selezione Multipla...
-InputBox.title[elementType:Forever,getInsertionType():update]=Modificare ciclo ENDLESS...
-InputBox.title[elementType:Repeat,getInsertionType():update]=Modificare ciclo REPEAT...
-InputBox.title[elementType:While,getInsertionType():update]=Modificare ciclo WHILE...
-InputBox.title[elementType:Call,getInsertionType():update]=Modificare chiamata...
-InputBox.title[elementType:Jump,getInsertionType():update]=Modificare salto...
-InputBox.title[elementType:Parallel,getInsertionType():update]=Modificare passaggio Parallelo...
+InputBox.title[elementType:Alternative,getInsertionType():update]=Modificare @{Alternative}...
+InputBox.title[elementType:Case,getInsertionType():update]=Modificare @{Case}...
+InputBox.title[elementType:Forever,getInsertionType():update]=Modificare ciclo @{Forever}...
+InputBox.title[elementType:Repeat,getInsertionType():update]=Modificare ciclo @{Repeat}...
+InputBox.title[elementType:While,getInsertionType():update]=Modificare ciclo @{While}...
+InputBox.title[elementType:Call,getInsertionType():update]=Modificare @{Call}...
+InputBox.title[elementType:Jump,getInsertionType():update]=Modificare @{Jump}...
+InputBox.title[elementType:Parallel,getInsertionType():update]=Modificare passaggio @{Parallel}...
 
 -----[ InputBox For ]-----
-InputBoxFor.title[getInsertionType():insert]=Inseriscire ciclo FOR...
-InputBoxFor.title[getInsertionType():update]=Modificare ciclo FOR...
+InputBoxFor.title[getInsertionType():insert]=Inseriscire ciclo @{For}...
+InputBoxFor.title[getInsertionType():update]=Modificare ciclo @{For}...
 InputBoxFor.lblVariable.text=Variable contatora
 InputBoxFor.lblStartVal.text=Valore iniziale
 InputBoxFor.lblEndVal.text=Valore finale
@@ -509,31 +541,31 @@ InputBoxFor.lblBreakTriggerText.text=Fermare a esecuzione: %
 
 -----[ Preferences ]-----
 Preferences.title=Preferenze di struttura
-Preferences.pnlAlt.border=Selezione
+Preferences.pnlAlt.border=@{Alternative}
 Preferences.pnlAlt.tooltip=
 Preferences.lblAltT.text=Etichietta V
 Preferences.lblAltT.tooltip=L'etichetta per il lato sinistro.
 Preferences.lblAltF.text=Etichetta F
 Preferences.lblAltF.tooltip=Etichetta per il lato destro.
 Preferences.lblAltContent.text=Contenuto di Default
-Preferences.lblAltContent.tooltip=Il contenuto di default per la Selezione.
+Preferences.lblAltContent.tooltip=Il contenuto di default per la @{Alternative}.
 Preferences.altPadRight.text=Allarga FALSE
-Preferences.pnlCase.border=Selezione multipla
+Preferences.pnlCase.border=@{Case}
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Contenuto di default
-Preferences.lblCase.tooltip=Il contenuto di default di una Selezione Multipla.
-Preferences.pnlFor.border=Ciclo FOR
+Preferences.lblCase.tooltip=Il contenuto di default di una @{Case}.
+Preferences.pnlFor.border=Ciclo @{For}
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Contenuto di default
-Preferences.lblFor.tooltip=Il contenuto di default per il ciclo FOR.
-Preferences.pnlWhile.border=Ciclp WHILE
+Preferences.lblFor.tooltip=Il contenuto di default per il ciclo @{For}.
+Preferences.pnlWhile.border=Ciclo @{While}
 Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=Contenuto di default
-Preferences.lblWhile.tooltip=Il contenuto di default del ciclo WHILE
-Preferences.pnlRepeat.border=Ciclo REPEAT
+Preferences.lblWhile.tooltip=Il contenuto di default del ciclo @{While}
+Preferences.pnlRepeat.border=Ciclo @{Repeat}
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Contenuto di default
-Preferences.lblRepeat.tooltip=Il contenuto di default del ciclo REPEAT.
+Preferences.lblRepeat.tooltip=Il contenuto di default del ciclo @{Repeat}.
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Valida le tue scelte.
 
@@ -608,21 +640,21 @@ ParserPreferences.lblPre.text=Pre
 ParserPreferences.lblPre.tooltip=Aggiungi la stringa davanti alla main entry
 ParserPreferences.lblPost.text=Post
 ParserPreferences.lblPost.tooltip=Aggiungi la stringa dopo la main entry
-ParserPreferences.lblAlt.text=Selezione
+ParserPreferences.lblAlt.text=@{Alternative}
 ParserPreferences.lblAlt.tooltip=Stringhe intorno alla condizione nell'instestazione dell'IF
-ParserPreferences.lblCase.text=Selezione Multipla
+ParserPreferences.lblCase.text=@{Case}
 ParserPreferences.lblCase.tooltip=Stringhe intorno alla condizione nell'instestazione del CASE
-ParserPreferences.lblFor.text=Ciclo FOR
-ParserPreferences.lblFor.tooltip=Stringhe intorno alla condizione nell'instestazione del ciclo FOR
-ParserPreferences.lblForStep.text=Separatore step
-ParserPreferences.lblForIn.text=Ciclo FOR-IN
-ParserPreferences.lblForIn.tooltip=Stringhe per separare le intestazioni dei cicli FOR-IN
-ParserPreferences.edtForInPre.tooltip=Potrebbe essere uguale ai cicli FOR (o rimanere vuto, con lo stesso effetto).
+ParserPreferences.lblFor.text=Ciclo @{For.COUNTER}
+ParserPreferences.lblFor.tooltip=Stringhe intorno alla condizione nell'instestazione del ciclo @{For.COUNTER}
+ParserPreferences.lblForStep.text=Separatore pas
+ParserPreferences.lblForIn.text=Ciclo @{For.TRAVERSAL}
+ParserPreferences.lblForIn.tooltip=Stringhe per separare le intestazioni dei cicli @{For.TRAVERSAL}
+ParserPreferences.edtForInPre.tooltip=Potrebbe essere iguale ai cicli @{For.COUNTER} (o rimanere vuto, con lo stesso effetto).
 ParserPreferences.edtForInPost.tooltip=Deve esere diverso da tutte le parole chiave selezionate qua!
-ParserPreferences.lblWhile.text=Ciclo WHILE
-ParserPreferences.lblWhile.tooltip=Stringhe intorno alla condizione nell'instestazione del ciclo WHILE
-ParserPreferences.lblRepeat.text=Ciclo REPEAT
-ParserPreferences.lblRepeat.tooltip=Stringhe intorno alla condizione nell'instestazione del ciclo REPEAT
+ParserPreferences.lblWhile.text=Ciclo @{While}
+ParserPreferences.lblWhile.tooltip=Stringhe intorno alla condizione nell'instestazione del ciclo @{While}
+ParserPreferences.lblRepeat.text=Ciclo @{Repeat}
+ParserPreferences.lblRepeat.tooltip=Stringhe intorno alla condizione nell'instestazione del ciclo @{Repeat}
 ParserPreferences.lblJump.text=Istruzione JUMP
 ParserPreferences.lblJump.tooltip=Classifica le parole chiave per le istruzioni per uscire da un'unità.
 ParserPreferences.lblJumpLeave.text=Dal ciclo (o i cicli)
@@ -636,7 +668,7 @@ ParserPreferences.chkIgnoreCase.text=Ignora parentesi
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Valida la tua scelta.
 ParserPreferences.lblErrorSign.text=Non è possibile usare il carattere ':' in nessuna stringa del parser!
-ParserPreferences.lblErrorSign2.text=La seconda stringa del ciclo FOR-IN deve essere diversa da ogni altro parser token!
+ParserPreferences.lblErrorSign2.text=La seconda stringa del ciclo @{For.TRAVERSAL} deve essere diversa da ogni altro parser token!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Anteprima di stampa
@@ -728,3 +760,21 @@ OutputConsole.menu.text=Impostazione
 OutputConsole.menuFont.text=Caratteri ...
 OutputConsole.menuFontUp.text=Aumenta caratteri
 OutputConsole.menuFontDown.text=Diminuisci caratteri
+
+-----> Elements
+ElementNames.localizedNames.0.text=Istruzione
+ElementNames.localizedNames.1.text=Selezione
+ElementNames.localizedNames.2.text=Selezione multipla
+ElementNames.localizedNames.3.text=FOR
+ElementNames.localizedNames.4.text=FOR-TO
+ElementNames.localizedNames.5.text=FOR-IN
+ElementNames.localizedNames.6.text=WHILE
+ElementNames.localizedNames.7.text=REPEAT
+ElementNames.localizedNames.8.text=ENDLESS
+ElementNames.localizedNames.9.text=Chiamata
+ElementNames.localizedNames.10.text=Salto
+ElementNames.localizedNames.11.text=Parallelo
+ElementNames.localizedNames.12.text=Diagram
+ElementNames.localizedNames.13.text=Principale
+ElementNames.localizedNames.14.text=Funzione
+ElementNames.localizedNames.15.text=Includable

@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-04 (2017.12.13)
+Current development version 3.27-04 (2017.12.16)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -40,7 +40,8 @@ Current development version 3.27-04 (2017.12.13)
 - 04: Enh. #87: Insertion of elements enabled on multiple selections <2>
 - 04: Enh. #425: Simple find mechanism in Translator and key sensitivity <2>
 - 04: Enh. #491: Translator: tooltips show master texts too long for the column <2>
-- 04: Enh. #492: new DE locale [Andreas Brusinsky]
+- 04: Enh. #492: Configurable designations of element types [A. Brusinsky]2
+- 04: Issues #493, #494: COBOL import improved w.r.t. SEARCH <Simon Sobisch>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

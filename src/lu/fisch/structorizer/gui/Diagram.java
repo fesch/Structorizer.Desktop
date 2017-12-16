@@ -140,6 +140,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
  *      Kay Gürtzig     2017.12.06      Enh. #487: Support for hiding declaration sequences (still defective)
  *      Kay Gürtzig     2017.12.12      Issue #471: Option to copy error message to clipboard in importCode()
+ *      Kay Gürtzig     2017.12.15      Issue #492: Element type name configuration
  *
  ******************************************************************************************************
  *
@@ -196,6 +197,7 @@ import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
+import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.helpers.IPluginClass;
@@ -1361,14 +1363,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#477 2017-12-07: Enh. #487
 	public Element getFirstSelected()
 	{
-		if (selected instanceof IElementSequence) {
+		if (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 0) {
 			return ((IElementSequence)selected).getElement(0);
 		}
 		return selected;
 	}
 	public Element getLastSelected()
 	{
-		if (selected instanceof IElementSequence) {
+		if (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 0) {
 			return ((IElementSequence)selected).getElement(((IElementSequence)selected).getSize()-1);
 		}
 		return selected;
@@ -7428,5 +7430,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// FIXME: The diagram will not always have been scrolled to the selected element by now...
 	}
 	// END KGU#477 2017-12-06
+
+	// START KGU#479 2017-12-14: Enh. #492
+	/**
+	 * Opens an element designation configurator - this is to allow to discouple element names from
+	 * localization. 
+	 */
+	public void elementNamesNSD() {
+		ElementNamePreferences namePrefs = new ElementNamePreferences(this.NSDControl.getFrame());
+		for (int i = 0; i < namePrefs.txtElements.length; i++) {
+			namePrefs.txtElements[i].setText(ElementNames.configuredNames[i]);
+		}
+		namePrefs.chkUseConfNames.setSelected(ElementNames.useConfiguredNames);
+		namePrefs.setVisible(true);
+		if (namePrefs.OK) {
+			for (int i = 0; i < namePrefs.txtElements.length; i++) {
+				ElementNames.configuredNames[i] = namePrefs.txtElements[i].getText();
+			}
+			ElementNames.useConfiguredNames = namePrefs.chkUseConfNames.isSelected();
+		}
+		ElementNames.saveToINI();
+		Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
+	}
+	// END KGU#479 2017-12-14
 
 }

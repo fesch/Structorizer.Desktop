@@ -484,6 +484,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			//System.out.println("* setLocale(" + localeFileName + ")");
 			Locales.getInstance().setLocale(localeFileName);
 			//System.out.println("* Locale is set.");
+			// START KGU#479 2017-12-15: Enh. #492 - preparation for configurable element names
+			Locales.getInstance().setLocale(ElementNames.getInstance());
+			ElementNames.getFromIni(ini);
+			// END KGU#479 2017-12-15
 			
 			// colors
 			Element.loadFromINI();
@@ -740,6 +744,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 //				}
 //			}
 			// END KGU#324 2017-06-16
+			
+			// START KGU#479 2017-12-15: Enh. #492
+			ElementNames.putToIni(ini);
+			// END KGU#479 2017-12-15
 			
 			ini.save();
 		}

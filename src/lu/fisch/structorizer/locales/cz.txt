@@ -33,7 +33,7 @@
 
     Please use the built-in tool "Translator" (File -> Translator) to edit your
     preferred language, then save your work and send it to me (bob@fisch.lu) for
-    integration into the next release.
+    integration into the next release.    
 */
 
 /******************************************************************************************************
@@ -56,10 +56,41 @@
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017.12.16      Element name place holders introduced
  *
  ******************************************************************************************************
  *
  *      Comment:	
+ *          >>>         indicates the end of the header
+ *          ----->      indicates the start of a top-level section
+ *          -----[      indicates the start of a second-level section
+ *
+ *      The texts may contain two kinds of place holders that should be preserved at
+ *      appropriate positions in the translations:
+ *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
+ *        element names. The localized element names are defined in (and retrieved
+ *        from) section / tab "Elements" with the following convention, where the
+ *        respective short and long placeholders are equivalent (the short one is
+ *        more performant, the long one more readable):
+ *  
+ *        short long                    referenced key sequence
+ *        @a  = @{Instruction}      ->  ElementNames.localizedNames.0.text
+ *        @b  = @{Alternative}      ->  ElementNames.localizedNames.1.text
+ *        @c  = @{Case}             ->  ElementNames.localizedNames.2.text
+ *        @d  = @{For}              ->  ElementNames.localizedNames.3.text
+ *        @e  = @{For.COUNTER}      ->  ElementNames.localizedNames.4.text
+ *        @f  = @{For.TRAVERSAL}    ->  ElementNames.localizedNames.5.text
+ *        @g  = @{While}            ->  ElementNames.localizedNames.6.text
+ *        @h  = @{Repeat}           ->  ElementNames.localizedNames.7.text
+ *        @i  = @{Forever}          ->  ElementNames.localizedNames.8.text
+ *        @j  = @{Call}             ->  ElementNames.localizedNames.9.text
+ *        @k  = @{Jump}             ->  ElementNames.localizedNames.10.text
+ *        @l  = @{Parallel}         ->  ElementNames.localizedNames.11.text
+ *        @m  = @{Root}             ->  ElementNames.localizedNames.12.text
+ *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
+ *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
+ *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
  *
  ******************************************************************************************************/
 >>>
@@ -112,28 +143,28 @@ Menu.menuDiagramAdd.text=Přidat
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Před
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Příkaz
-Menu.menuDiagramAddBeforeAlt.text=IF podmínka
-Menu.menuDiagramAddBeforeCase.text=CASE rozhodování
-Menu.menuDiagramAddBeforeFor.text=FOR cyklus
-Menu.menuDiagramAddBeforeWhile.text=WHILE cyklus
-Menu.menuDiagramAddBeforeRepeat.text=REPEAT cyklus
-Menu.menuDiagramAddBeforeForever.text=ENDLESS cyklus
-Menu.menuDiagramAddBeforeCall.text=Volání
-Menu.menuDiagramAddBeforeJump.text=Skok
+Menu.menuDiagramAddBeforeInst.text=@{Instruction}
+Menu.menuDiagramAddBeforeAlt.text=@{Alternative} podmínka
+Menu.menuDiagramAddBeforeCase.text=@{Case} rozhodování
+Menu.menuDiagramAddBeforeFor.text=@{For} cyklus
+Menu.menuDiagramAddBeforeWhile.text=@{While} cyklus
+Menu.menuDiagramAddBeforeRepeat.text=@{Repeat} cyklus
+Menu.menuDiagramAddBeforeForever.text=@{Forever} cyklus
+Menu.menuDiagramAddBeforeCall.text=@{Call}
+Menu.menuDiagramAddBeforeJump.text=@{Jump}
 Menu.menuDiagramAddBeforePara.text=
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Po
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Příkaz
-Menu.menuDiagramAddAfterAlt.text=IF podmínka
-Menu.menuDiagramAddAfterCase.text=CASE rozhodování
-Menu.menuDiagramAddAfterFor.text=FOR cyklus
-Menu.menuDiagramAddAfterWhile.text=WHILE cyklus
-Menu.menuDiagramAddAfterRepeat.text=REPEAT cyklus
-Menu.menuDiagramAddAfterForever.text=ENDLESS cyklus
-Menu.menuDiagramAddAfterCall.text=Volání
-Menu.menuDiagramAddAfterJump.text=Skok
+Menu.menuDiagramAddAfterInst.text=@{Instruction}
+Menu.menuDiagramAddAfterAlt.text=@{Alternative} podmínka
+Menu.menuDiagramAddAfterCase.text=@{Case} rozhodování
+Menu.menuDiagramAddAfterFor.text=@{For} cyklus
+Menu.menuDiagramAddAfterWhile.text=@{While} cyklus
+Menu.menuDiagramAddAfterRepeat.text=@{Repeat} cyklus
+Menu.menuDiagramAddAfterForever.text=@{Forever} cyklus
+Menu.menuDiagramAddAfterCall.text=@{Call}
+Menu.menuDiagramAddAfterJump.text=@{Jump}
 Menu.menuDiagramAddAfterPara.text=
 Menu.menuDiagramEdit.text=Editovat
 Menu.menuDiagramDelete.text=Smazat
@@ -144,8 +175,8 @@ Menu.menuDiagramCollapse.text=
 Menu.menuDiagramExpand.text=
 // Diagram Appearance
 Menu.menuDiagramType.text=Typ
-Menu.menuDiagramTypeProgram.text=Hlavní program
-Menu.menuDiagramTypeFunction.text=Podprogram
+Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
+Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramNice.text=Hranatý diagram?
 Menu.menuDiagramComment.text=Ukazovat komentáře?
 Menu.menuDiagramSwitchComments.text=
@@ -227,7 +258,7 @@ Menu.error01_3.text=Není povoleno měnit proměnnou cyklu  «%» uvnitř cyklu!
 Menu.error02.text=Žádná změna proměnné v podmínce. Je možné zacyklení ...
 Menu.error03_1.text=Proměnná «%1» nebyla nastavena%2!
 Menu.error03_2.text=Proměnná «%1» možná nebyla nastavena%2!
-Menu.error04.text=Není možné použít IF-podmínku s prázdným TRUE-blokem!
+Menu.error04.text=Není možné použít @{Alternative}-podmínku s prázdným TRUE-blokem!
 Menu.error05.text=Proměnná «%» musí být napsána velkými písmeny!
 Menu.error06.text=Název programu «%» musí být napsán velkými písmeny!
 Menu.error07_1.text=«%» není povolené jméno pro program nebo metodu!
@@ -266,7 +297,7 @@ AnalyserPreferences.title=
 AnalyserPreferences.checkboxes.1.text=Kontrola proměnné cyklu.
 AnalyserPreferences.checkboxes.2.text=Kontrola zacyklení. (pokud to jde!))
 AnalyserPreferences.checkboxes.3.text=Kontrola nenastavené proměnné.
-AnalyserPreferences.checkboxes.4.text=Kontrola správnosti IF-podmínky.
+AnalyserPreferences.checkboxes.4.text=Kontrola správnosti @{Alternative}-podmínky.
 AnalyserPreferences.checkboxes.5.text=Kontrola VELKÝCH PÍSMEN u proměnných. (LUX/MEN)
 AnalyserPreferences.checkboxes.6.text=Kontrola VELKÝCH PÍSMEN u programů a podprogramů. (LUX/MEN)
 AnalyserPreferences.checkboxes.7.text=Kontrola správnosti identifikátorů.
@@ -294,26 +325,26 @@ Editor.btnNew.tooltip=Vytvořit nový prázdný diagram.
 Editor.btnOpen.tooltip=Otevřít existující diagram.
 Editor.btnSave.tooltip=Uložit aktuální diagram.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Vložit nový příkaz před vybraný element.
-Editor.btnBeforeAlt.tooltip=Vložit novou IF podmínku před vybraný element.
-Editor.btnBeforeFor.tooltip=Vložit nový FOR cyklus před vybraný element.
-Editor.btnBeforeWhile.tooltip=Vložit nový WHILE cyklus před vybraný element.
-Editor.btnBeforeRepeat.tooltip=Vložit nový REPEAT cyklus před vybraný element.
-Editor.btnBeforeForever.tooltip=Vložit nový nekonečný ENDLESS cyklus před vybraný element.
+Editor.btnBeforeInst.tooltip=Vložit nový @{Instruction} před vybraný element.
+Editor.btnBeforeAlt.tooltip=Vložit novou @{Alternative} podmínku před vybraný element.
+Editor.btnBeforeFor.tooltip=Vložit nový @{For} cyklus před vybraný element.
+Editor.btnBeforeWhile.tooltip=Vložit nový @{While} cyklus před vybraný element.
+Editor.btnBeforeRepeat.tooltip=Vložit nový @{Repeat} cyklus před vybraný element.
+Editor.btnBeforeForever.tooltip=Vložit nový nekonečný @{Forever} cyklus před vybraný element.
 Editor.btnBeforeCall.tooltip=Vložit nové volání CALL před vybraný element.
 Editor.btnBeforeJump.tooltip=Vložit nový skok JUMP před vybraný element.
-Editor.btnBeforeCase.tooltip=Vložit nové CASE rozhodování před vybraný element.
+Editor.btnBeforeCase.tooltip=Vložit nové @{Case} rozhodování před vybraný element.
 Editor.btnBeforePara.tooltip=
 // InsertAfter
-Editor.btnAfterInst.tooltip=Vložit nový příkaz po vybraném elementu.
-Editor.btnAfterAlt.tooltip=Vložit novou IF podmínku po vybraném elementu.
-Editor.btnAfterFor.tooltip=Vložit nový FOR cyklus po vybraném elementu.
-Editor.btnAfterWhile.tooltip=Vložit nový WHILE cyklus po vybraném elementu.
-Editor.btnAfterRepeat.tooltip=Vložit nový REPEAT cyklus po vybraném elementu.
-Editor.btnAfterForever.tooltip=Vložit nový nekonečný ENDLESS cyklus po vybraném elementu.
+Editor.btnAfterInst.tooltip=Vložit nový @{Instruction} po vybraném elementu.
+Editor.btnAfterAlt.tooltip=Vložit novou @{Alternative} podmínku po vybraném elementu.
+Editor.btnAfterFor.tooltip=Vložit nový @{For} cyklus po vybraném elementu.
+Editor.btnAfterWhile.tooltip=Vložit nový @{While} cyklus po vybraném elementu.
+Editor.btnAfterRepeat.tooltip=Vložit nový @{Repeat} cyklus po vybraném elementu.
+Editor.btnAfterForever.tooltip=Vložit nový nekonečný @{Forever} cyklus po vybraném elementu.
 Editor.btnAfterCall.tooltip=Vložit nové volání CALL po vybraném elementu.
 Editor.btnAfterJump.tooltip=Vložit nový skok JUMP po vybraném elementu.
-Editor.btnAfterCase.tooltip=Vložit nové CASE po vybraném elementu.
+Editor.btnAfterCase.tooltip=Vložit nové @{Case} po vybraném elementu.
 Editor.btnAfterPara.tooltip=
 // undo & redo
 Editor.btnUndo.tooltip=Odvolat poslední akci.
@@ -366,26 +397,26 @@ Editor.popupAdd.text=Přidat
 // Submenu of "Add"
 Editor.popupAddBefore.text=Před
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Příkaz
-Editor.popupAddBeforeAlt.text=IF podmínka
-Editor.popupAddBeforeCase.text=CASE rozhodování
-Editor.popupAddBeforeFor.text=FOR cyklus
-Editor.popupAddBeforeWhile.text=WHILE cyklus
-Editor.popupAddBeforeRepeat.text=REPEAT cyklus
-Editor.popupAddBeforeForever.text=ENDLESS cyklus
+Editor.popupAddBeforeInst.text=@{Instruction}
+Editor.popupAddBeforeAlt.text=@{Alternative} podmínka
+Editor.popupAddBeforeCase.text=@{Case} rozhodování
+Editor.popupAddBeforeFor.text=@{For} cyklus
+Editor.popupAddBeforeWhile.text=@{While} cyklus
+Editor.popupAddBeforeRepeat.text=@{Repeat} cyklus
+Editor.popupAddBeforeForever.text=@{Forever} cyklus
 Editor.popupAddBeforeCall.text=Call volání
 Editor.popupAddBeforeJump.text=Jump skok
 Editor.popupAddBeforePara.text=
 // After
 Editor.popupAddAfter.text=Po
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Příkaz
-Editor.popupAddAfterAlt.text=IF podmínka
-Editor.popupAddAfterCase.text=CASE rozhodování
-Editor.popupAddAfterFor.text=FOR cyklus
-Editor.popupAddAfterWhile.text=WHILE cyklus
-Editor.popupAddAfterRepeat.text=REPEAT cyklus
-Editor.popupAddAfterForever.text=ENDLESS cyklus
+Editor.popupAddAfterInst.text=@{Instruction}
+Editor.popupAddAfterAlt.text=@{Alternative} podmínka
+Editor.popupAddAfterCase.text=@{Case} rozhodování
+Editor.popupAddAfterFor.text=@{For} cyklus
+Editor.popupAddAfterWhile.text=@{While} cyklus
+Editor.popupAddAfterRepeat.text=@{Repeat} cyklus
+Editor.popupAddAfterForever.text=@{Forever} cyklus
 Editor.popupAddAfterCall.text=Call volání
 Editor.popupAddAfterJump.text=Jump skok
 Editor.popupAddAfterPara.text=
@@ -419,8 +450,8 @@ InputBox.chkBreakpoint.text=
 
 
 -----[ InputBox For ]-----
-InputBoxFor.title[getInsertionType():insert]=Vložit nový FOR cyklus...
-InputBoxFor.title[getInsertionType():update]=Editovat FOR cyklus...
+InputBoxFor.title[getInsertionType():insert]=Vložit nový @{For} cyklus...
+InputBoxFor.title[getInsertionType():update]=Editovat @{For} cyklus...
 InputBoxFor.lblVariable.text=
 InputBoxFor.lblStartVal.text=
 InputBoxFor.lblEndVal.text=
@@ -439,31 +470,31 @@ InputBoxFor.chkBreakpoint.text=
 
 -----[ Preferences ]-----
 Preferences.title=Nastavení struktur
-Preferences.pnlAlt.border=Podmínka IF
+Preferences.pnlAlt.border=Podmínka @{Alternative}
 Preferences.pnlAlt.tooltip=
 Preferences.lblAltT.text=Označení PRAVDA
 Preferences.lblAltT.tooltip=Označení pro levou stranu.
 Preferences.lblAltF.text=Označení NEPRAVDA
 Preferences.lblAltF.tooltip=Označení pro pravou stranu.
 Preferences.lblAltContent.text=Přednastavený obsah
-Preferences.lblAltContent.tooltip=Přednastavený obsah podmínky IF.
+Preferences.lblAltContent.tooltip=Přednastavený obsah podmínky @{Alternative}.
 Preferences.altPadRight.text=
-Preferences.pnlCase.border=CASE rozhodování
+Preferences.pnlCase.border=@{Case} rozhodování
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Přednastavený obsah
-Preferences.lblCase.tooltip=Přednastavený obsah CASE rozhodování.
-Preferences.pnlFor.border=FOR loop
+Preferences.lblCase.tooltip=Přednastavený obsah @{Case} rozhodování.
+Preferences.pnlFor.border=@{For} cyklus
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Přednastavený obsah
-Preferences.lblFor.tooltip=Přednastavený obsah pro FOR cyklus.
-Preferences.pnlWhile.border=WHILE cyklus
+Preferences.lblFor.tooltip=Přednastavený obsah pro @{For} cyklus.
+Preferences.pnlWhile.border=@{While} cyklus
 Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=Přednastavený obsah
-Preferences.lblWhile.tooltip=Přednastavený obsah pro WHILE cyklus.
-Preferences.pnlRepeat.border=REPEAT cyklus
+Preferences.lblWhile.tooltip=Přednastavený obsah pro @{While} cyklus.
+Preferences.pnlRepeat.border=@{Repeat} cyklus
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Přednastavený obsah
-Preferences.lblRepeat.tooltip=Přednastavený obsah pro REPEAT cyklus.
+Preferences.lblRepeat.tooltip=Přednastavený obsah pro @{Repeat} cyklus.
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Potvrďte svou volbu.
 
@@ -538,20 +569,20 @@ ParserPreferences.lblPre.text=Před
 ParserPreferences.lblPre.tooltip=
 ParserPreferences.lblPost.text=Po
 ParserPreferences.lblPost.tooltip=
-ParserPreferences.lblAlt.text=IF podmínka
+ParserPreferences.lblAlt.text=@{Alternative} podmínka
 ParserPreferences.lblAlt.tooltip=
-ParserPreferences.lblCase.text=CASE rozhodování
+ParserPreferences.lblCase.text=@{Case} rozhodování
 ParserPreferences.lblCase.tooltip=
-ParserPreferences.lblFor.text=FOR cyklus
+ParserPreferences.lblFor.text=@{For} cyklus
 ParserPreferences.lblFor.tooltip=
 ParserPreferences.lblForStep.text=
 ParserPreferences.lblForIn.text=
 ParserPreferences.lblForIn.tooltip=
 ParserPreferences.edtForInPre.tooltip=
 ParserPreferences.edtForInPost.tooltip=
-ParserPreferences.lblWhile.text=WHILE cyklus
+ParserPreferences.lblWhile.text=@{While} cyklus
 ParserPreferences.lblWhile.tooltip=
-ParserPreferences.lblRepeat.text=REPEAT cyklus
+ParserPreferences.lblRepeat.text=@{Repeat} cyklus
 ParserPreferences.lblRepeat.tooltip=
 ParserPreferences.lblJump.text=
 ParserPreferences.lblJump.tooltip=
@@ -647,3 +678,18 @@ Control.msgTooManyLevels.text=
 Control.tblVar.header.0=
 Control.tblVar.header.2=
 
+-----> Elements
+ElementNames.localizedNames.0.text=Příkaz
+ElementNames.localizedNames.1.text=IF
+ElementNames.localizedNames.2.text=CASE
+ElementNames.localizedNames.3.text=FOR
+ElementNames.localizedNames.4.text=FOR-TO
+ElementNames.localizedNames.5.text=FOR-IN
+ElementNames.localizedNames.6.text=WHILE
+ElementNames.localizedNames.7.text=REPEAT
+ElementNames.localizedNames.8.text=ENDLESS
+ElementNames.localizedNames.9.text=Volání
+ElementNames.localizedNames.10.text=Skok
+ElementNames.localizedNames.11.text=Paralelní
+ElementNames.localizedNames.13.text=Hlavní program
+ElementNames.localizedNames.14.text=Podprogram

@@ -107,10 +107,43 @@
  *      Kay Gürtzig         2017.09.18  Enh. #423: New messages for record type handling introduced
  *      Kay Gürtzig         2017.10.16  Issues #437-#438: New Control messages
  *      Kay Gürtzig         2017.11.05  New texts for issues #448, #452, #454 added.
+ *      Andreas Brusinsky   2017.12.10  Element names translated into German
+ *      Kay Gürtzig         2017.12.14  German element name translation adapted
+ *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
  *
  ******************************************************************************************************
  *
  *      Comment:	
+ *          >>>         indicates the end of the header
+ *          ----->      indicates the start of a top-level section
+ *          -----[      indicates the start of a second-level section
+ *
+ *      The texts may contain two kinds of place holders that should be preserved at
+ *      appropriate positions in the translations:
+ *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
+ *        element names. The localized element names are defined in (and retrieved
+ *        from) section / tab "Elements" with the following convention, where the
+ *        respective short and long place holders are equivalent (the short one is
+ *        more performant, the long one more readable):
+ *  
+ *        short long                    referenced key sequence
+ *        @a  = @{Instruction}      ->  ElementNames.localizedNames.0.text
+ *        @b  = @{Alternative}      ->  ElementNames.localizedNames.1.text
+ *        @c  = @{Case}             ->  ElementNames.localizedNames.2.text
+ *        @d  = @{For}              ->  ElementNames.localizedNames.3.text
+ *        @e  = @{For.COUNTER}      ->  ElementNames.localizedNames.4.text
+ *        @f  = @{For.TRAVERSAL}    ->  ElementNames.localizedNames.5.text
+ *        @g  = @{While}            ->  ElementNames.localizedNames.6.text
+ *        @h  = @{Repeat}           ->  ElementNames.localizedNames.7.text
+ *        @i  = @{Forever}          ->  ElementNames.localizedNames.8.text
+ *        @j  = @{Call}             ->  ElementNames.localizedNames.9.text
+ *        @k  = @{Jump}             ->  ElementNames.localizedNames.10.text
+ *        @l  = @{Parallel}         ->  ElementNames.localizedNames.11.text
+ *        @m  = @{Root}             ->  ElementNames.localizedNames.12.text
+ *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
+ *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
+ *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
  *
  ******************************************************************************************************/
 >>>
@@ -161,8 +194,8 @@ Menu.menuEditUpgradeTurtle.text=Reelle Turtle-Befehle
 Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
 Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtle-Befehle
 Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
-Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
-Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
+Menu.menuEditCopyDiagramPNG.text=Als PNG-Grafik kopieren
+Menu.menuEditCopyDiagramEMF.text=Als EMF-Grafik kopieren
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagramme
 Menu.menuDiagram.mnemonic=g
@@ -171,29 +204,29 @@ Menu.menuDiagramAdd.text=Hinzufügen
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Davor
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Anweisungen
-Menu.menuDiagramAddBeforeAlt.text=WENN-Anweisung
-Menu.menuDiagramAddBeforeCase.text=AUSWAHL-Anweisung
-Menu.menuDiagramAddBeforeFor.text=VON-Schleife
-Menu.menuDiagramAddBeforeWhile.text=SOLANGE-Schleife
-Menu.menuDiagramAddBeforeRepeat.text=BIS-Schleife
-Menu.menuDiagramAddBeforeForever.text=ENDLOS-Schleife
-Menu.menuDiagramAddBeforeCall.text=Aufruf-Anweisung
-Menu.menuDiagramAddBeforeJump.text=Aussprung-Anweisung
-Menu.menuDiagramAddBeforePara.text=Parallel-Abschnitt
+Menu.menuDiagramAddBeforeInst.text=@a
+Menu.menuDiagramAddBeforeAlt.text=@b-Anweisung
+Menu.menuDiagramAddBeforeCase.text=@c-Anweisung
+Menu.menuDiagramAddBeforeFor.text=@d-Schleife
+Menu.menuDiagramAddBeforeWhile.text=@g-Schleife
+Menu.menuDiagramAddBeforeRepeat.text=@h-Schleife
+Menu.menuDiagramAddBeforeForever.text=@i-Schleife
+Menu.menuDiagramAddBeforeCall.text=@j-Anweisung
+Menu.menuDiagramAddBeforeJump.text=@k-Anweisung
+Menu.menuDiagramAddBeforePara.text=@l-Abschnitt
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Danach
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Anweisungen
-Menu.menuDiagramAddAfterAlt.text=WENN-Anweisung
-Menu.menuDiagramAddAfterCase.text=AUSWAHL-Anweisung
-Menu.menuDiagramAddAfterFor.text=VON-Schleife
-Menu.menuDiagramAddAfterWhile.text=SOLANGE-Schleife
-Menu.menuDiagramAddAfterRepeat.text=BIS-Schleife
-Menu.menuDiagramAddAfterForever.text=ENDLOS-Schleife
-Menu.menuDiagramAddAfterCall.text=Aufruf-Anweisung
-Menu.menuDiagramAddAfterJump.text=Aussprung-Anweisung
-Menu.menuDiagramAddAfterPara.text=Parallel-Abschnitt
+Menu.menuDiagramAddAfterInst.text=@a
+Menu.menuDiagramAddAfterAlt.text=@b-Anweisung
+Menu.menuDiagramAddAfterCase.text=@c-Anweisung
+Menu.menuDiagramAddAfterFor.text=@d-Schleife
+Menu.menuDiagramAddAfterWhile.text=@g-Schleife
+Menu.menuDiagramAddAfterRepeat.text=@h-Schleife
+Menu.menuDiagramAddAfterForever.text=@i-Schleife
+Menu.menuDiagramAddAfterCall.text=@j-Anweisung
+Menu.menuDiagramAddAfterJump.text=@k-Anweisung
+Menu.menuDiagramAddAfterPara.text=@l-Abschnitt
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
@@ -205,9 +238,9 @@ Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
 // Diagram Appearance
 Menu.menuDiagramType.text=Typ
-Menu.menuDiagramTypeProgram.text=Hauptprogramm
-Menu.menuDiagramTypeFunction.text=Unterprogramm
-Menu.menuDiagramTypeInclude.text=Include-Diagramm
+Menu.menuDiagramTypeProgram.text=@n
+Menu.menuDiagramTypeFunction.text=@o
+Menu.menuDiagramTypeInclude.text=@p-Diagramm
 Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
@@ -341,7 +374,7 @@ Menu.lblNormal.text=Nein, normaler Modus
 Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
 Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
-Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es Aussprunganweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
+Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es @k-Anweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
 Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagrammdateien
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
@@ -381,17 +414,17 @@ Menu.error13_2.text=Die Funktion gibt nicht in jedem Fall einen Wert zurück!
 Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen zugleich: «%»!
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
-Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für VON-Schleifen!
+Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FÜR-Schleifen!
 Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form «[ <var> <- ] <routine_name>(<arg_list>)»!
 Menu.error15_2.text=Das Diagramm der aufgerufenen Routine «%» ist zzt. nicht verfügbar.
 Menu.error15_3.text=Mehr als ein Diagramm passt zu Routinenaufruf «%».
-Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
-Menu.error16_2.text=Eine «%»-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
-Menu.error16_3.text=«%1»- oder «%2»-Anweisungen sind nur als Aussprung-Elemente zulässig!
-Menu.error16_4.text=Ein Aussprung ist nur um höchstens die Anzahl der umgebenden Schleifen (%) zulässig!
-Menu.error16_5.text=Ein direkter Aussprung (%1, %2) aus einem Parallelzweig ist unzulässig!
+Menu.error16_1.text=Der @k muss leer sein oder mit einem der Schlüsselwörter % beginnen!
+Menu.error16_2.text=Eine «%»-Anweisung muss (außer am Diagrammende) ein @k-Element sein!
+Menu.error16_3.text=«%1»- oder «%2»-Anweisungen sind nur als @k-Elemente zulässig!
+Menu.error16_4.text=Ein @k ist nur um höchstens die Anzahl der umgebenden Schleifen (%) zulässig!
+Menu.error16_5.text=Ein direkter @k (%1, %2) aus einem Parallelzweig ist unzulässig!
 Menu.error16_6.text=Unzulässiger Parameter für Schleifenaussprung - nur Ganzzahlkonstante erlaubt.
-Menu.error16_7.text=Anweisungen nach einem Aussprung sind nicht erreichbar.
+Menu.error16_7.text=Anweisungen nach einem @k sind nicht erreichbar.
 Menu.error16_8.text=Möglicherweise ungeeigneter Parameter für «%»-Befehl (solle ein Ganzzahlwert sein)!
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
@@ -416,6 +449,7 @@ Menu.error24_5.text=Es gibt keinen definierten Verbund-Typ «%»!
 Menu.error24_6.text=Verbund-Komponente «%» wird nicht geändert bzw. initialisiert!
 Menu.error24_7.text=Verbundtyp «%1» besitzt keine Komponente «%2»!
 Menu.error24_8.text=Variable «%1» besitzt keine Komponente «%2»!
+Menu.hint07_1.text=Was soll Ihr Algorithmus tun? Ersetzen Sie «%» durch einen griffigen Namen dafür!
 Menu.hint25_1.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine Eingabeanweisung wie «%1 %2»
 Menu.hint25_2.text=Sie könnten Daten eingeben lassen, z.B. mit einer Anweisung wie «%1 %2». → Menü "%3"
 Menu.hint25_3.text=Sie könnten Resultate ausgeben wollen, z.B. mit einer Anweisung wie «%1 %2». → Menü "%3"
@@ -434,7 +468,7 @@ AnalyserPreferences.title=Überprüfungs-Einstellungen
 AnalyserPreferences.contentPanel.tab.0=Algorithmisch
 AnalyserPreferences.contentPanel.tab.1=Bezeichner / Konventionen
 AnalyserPreferences.contentPanel.tab.2=Hinweise / Anleitungen
-AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von VON-Schleifen melden.
+AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von @d-Schleifen melden.
 AnalyserPreferences.checkboxes.2.text=Schleifen auf Endloszyklen untersuchen. (So weit möglich!)
 AnalyserPreferences.checkboxes.3.text=Nicht initialisierte Variablen feststellen.
 AnalyserPreferences.checkboxes.4.text=Unkorrekt verwendete Alternativenstrukturen melden.
@@ -447,13 +481,13 @@ AnalyserPreferences.checkboxes.10.text=Mehrzeilige Anweisungen mit verschiedenen
 AnalyserPreferences.checkboxes.11.text=Nach fehlerhaften Wertzuweisungen suchen.
 AnalyserPreferences.checkboxes.12.text=Prüfen, ob Parameternamen den Vorgaben entsprechen. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
-AnalyserPreferences.checkboxes.14.text=Prüfen, ob die Angaben von VON-Schleifen konsistent sind.
-AnalyserPreferences.checkboxes.15.text=Prüfen der Korrektheit von Aufruf-Elementen und der Verfügbarkeit der Routine.
-AnalyserPreferences.checkboxes.16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
+AnalyserPreferences.checkboxes.14.text=Prüfen, ob die Angaben von @d-Schleifen konsistent sind.
+AnalyserPreferences.checkboxes.15.text=Prüfen der Korrektheit von @j-Elementen und der Verfügbarkeit der Routine.
+AnalyserPreferences.checkboxes.16.text=Prüfen, ob @k-Elemente korrekt benutzt sind.
 AnalyserPreferences.checkboxes.17.text=Prüfen, ob in parallelen Zweigen konkurrierende Wertzuweisungen vorkommen.
 AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablen sich nur durch Groß-/Kleinschreibung unterscheiden.
 AnalyserPreferences.checkboxes.19.text=Prüfen, ob Variablennamen mit reservierten Wörtern kollidieren könnten.
-AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeile) eine Parameterliste besitzt.
+AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein @o (Kopfzeile) eine Parameterliste besitzt.
 AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variablennamen «I», «l» und «O» warnen.
 AnalyserPreferences.checkboxes.22.text=Prüfen, dass der Schutz von Konstanten nicht unterlaufen wird.
 AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehenden Diagramme korrekt ist.
@@ -472,27 +506,27 @@ Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagrammes.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagrammmes.
 Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme sichern.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeAlt.tooltip=Einfügen einer neuen WENN-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeFor.tooltip=Einfügen einer neuen VON-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeWhile.tooltip=Einfügen einer neuen SOLANGE-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeRepeat.tooltip=Einfügen einer neuen BIS-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeForever.tooltip=Einfügen einer neuen ENDLOS-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeCall.tooltip=Einfügen einer neuen Aufruf-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeJump.tooltip=Einfügen einer neuen Aussprung-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeCase.tooltip=Einfügen einer neuen AUSWAHL-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforePara.tooltip=Einfügen einer neuen PARALLEL-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeInst.tooltip=Einfügen einer neuen @a vor dem ausgewählten Element.
+Editor.btnBeforeAlt.tooltip=Einfügen einer neuen @b-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeFor.tooltip=Einfügen einer neuen @d-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeWhile.tooltip=Einfügen einer neuen @g-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeRepeat.tooltip=Einfügen einer neuen @h-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeForever.tooltip=Einfügen einer neuen @i-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeCall.tooltip=Einfügen einer neuen @j-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeJump.tooltip=Einfügen einer neuen @k-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeCase.tooltip=Einfügen einer neuen @c-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforePara.tooltip=Einfügen eines neuen @l-Abschnitts vor dem ausgewählten Element.
 // InsertAfter
-Editor.btnAfterInst.tooltip=Einfügen einer neuen Anweisung nach dem ausgewählten Element.
-Editor.btnAfterAlt.tooltip=Einfügen einer neuen WENN-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterFor.tooltip=Einfügen einer neuen VON-Schleife nach dem ausgewählten Element.
-Editor.btnAfterWhile.tooltip=Einfügen einer neuen SOLANGE-Schleife nach dem ausgewählten Element.
-Editor.btnAfterRepeat.tooltip=Einfügen einer neuen BIS-Schleife nach dem ausgewählten Element.
-Editor.btnAfterForever.tooltip=Einfügen einer neuen ENDLOS-Schleife nach dem ausgewählten Element.
-Editor.btnAfterCall.tooltip=Einfügen einer neuen Aufruf-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterJump.tooltip=Einfügen einer neuen Aussprung-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterCase.tooltip=Einfügen einer neuen AUSWAHL-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterPara.tooltip=Einfügen einer neuen PARALLEL-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterInst.tooltip=Einfügen einer neuen @a nach dem ausgewählten Element.
+Editor.btnAfterAlt.tooltip=Einfügen einer neuen @b-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterFor.tooltip=Einfügen einer neuen @d-Schleife nach dem ausgewählten Element.
+Editor.btnAfterWhile.tooltip=Einfügen einer neuen @g-Schleife nach dem ausgewählten Element.
+Editor.btnAfterRepeat.tooltip=Einfügen einer neuen @h-Schleife nach dem ausgewählten Element.
+Editor.btnAfterForever.tooltip=Einfügen einer neuen @i-Schleife nach dem ausgewählten Element.
+Editor.btnAfterCall.tooltip=Einfügen einer neuen @j-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterJump.tooltip=Einfügen einer neuen @k-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterCase.tooltip=Einfügen einer neuen @c-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach dem ausgewählten Element.
 // undo & redo
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
@@ -504,15 +538,15 @@ Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
 Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements nach dem ausgewählten Element.
 // style
 Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
-Editor.btnFunction.tooltip=Unterprogramm-Diagramm (gerundete Ecken).
-Editor.btnProgram.tooltip=Hauptprogramm-Diagram (kantige Ecken).
-Editor.btnInclude.tooltip=Include-Diagram (2 abgeschrägte Ecken).
+Editor.btnFunction.tooltip=@o-Diagramm (gerundete Ecken).
+Editor.btnProgram.tooltip=@n-Diagram (kantige Ecken).
+Editor.btnInclude.tooltip=@p-Diagram (2 abgeschrägte Ecken).
 // editing
 Editor.btnEdit.tooltip=Bearbeiten des ausgewählten Elements.
 Editor.btnDelete.tooltip=Löschen des ausgewählten Elements.
 Editor.btnMoveUp.tooltip=Bewegen des ausgewählten Elements um eine Position nach oben.
 Editor.btnMoveDown.tooltip=Bewegen des ausgewählten Elements um eine Position nach unten.
-Editor.btnTransmute.tooltip=Anweisung in Aufruf oder Aussprung wandeln, zusammenfassen oder zerlegen.
+Editor.btnTransmute.tooltip=Anweisung in @j oder @k wandeln, zusammenfassen oder zerlegen.
 Editor.btnOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 //printing
 Editor.btnPrint.tooltip=Drucken des Diagramms.
@@ -550,29 +584,29 @@ Editor.popupAdd.text=Hinzufügen
 // Submenu of "Add"
 Editor.popupAddBefore.text=Davor
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Anweisungen
-Editor.popupAddBeforeAlt.text=WENN-Anweisung
-Editor.popupAddBeforeCase.text=AUSWAHL-Anweisung
-Editor.popupAddBeforeFor.text=VON-Schleife
-Editor.popupAddBeforeWhile.text=SOLANGE-Schleife
-Editor.popupAddBeforeRepeat.text=BIS-Schleife
-Editor.popupAddBeforeForever.text=ENDLOS-Schleife
-Editor.popupAddBeforeCall.text=Aufruf-Anweisung
-Editor.popupAddBeforeJump.text=Aussprung-Anweisung
-Editor.popupAddBeforePara.text=PARALLEL-Abschnitt
+Editor.popupAddBeforeInst.text=@a
+Editor.popupAddBeforeAlt.text=@b-Anweisung
+Editor.popupAddBeforeCase.text=@c-Anweisung
+Editor.popupAddBeforeFor.text=@d-Schleife
+Editor.popupAddBeforeWhile.text=@g-Schleife
+Editor.popupAddBeforeRepeat.text=@h-Schleife
+Editor.popupAddBeforeForever.text=@i-Schleife
+Editor.popupAddBeforeCall.text=@j-Anweisung
+Editor.popupAddBeforeJump.text=@k-Anweisung
+Editor.popupAddBeforePara.text=@l-Abschnitt
 // After
 Editor.popupAddAfter.text=Danach
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Anweisungen
-Editor.popupAddAfterAlt.text=WENN-Anweisung
-Editor.popupAddAfterCase.text=AUSWAHL-Anweisung
-Editor.popupAddAfterFor.text=VON-Schleife
-Editor.popupAddAfterWhile.text=SOLANGE-Schleife
-Editor.popupAddAfterRepeat.text=BIS-Schleife
-Editor.popupAddAfterForever.text=ENDLOS-Schleife
-Editor.popupAddAfterCall.text=Aufruf-Anweisung
-Editor.popupAddAfterJump.text=Aussprung-Anweisung
-Editor.popupAddAfterPara.text=PARALLEL-Abschnitt
+Editor.popupAddAfterInst.text=@a
+Editor.popupAddAfterAlt.text=@b-Anweisung
+Editor.popupAddAfterCase.text=@c-Anweisung
+Editor.popupAddAfterFor.text=@d-Schleife
+Editor.popupAddAfterWhile.text=@g-Schleife
+Editor.popupAddAfterRepeat.text=@h-Schleife
+Editor.popupAddAfterForever.text=@i-Schleife
+Editor.popupAddAfterCall.text=@j-Anweisung
+Editor.popupAddAfterJump.text=@k-Anweisung
+Editor.popupAddAfterPara.text=@l-Abschnitt
 // Edit
 Editor.popupEdit.text=Bearbeiten
 Editor.popupDelete.text=Löschen
@@ -580,7 +614,7 @@ Editor.popupMoveUp.text=Nach oben bewegen
 Editor.popupMoveDown.text=Nach unten bewegen
 Editor.popupTransmute.text=Umwandeln
 Editor.popupOutsource.text=Auslagern
-Editor.popupOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
+Editor.popupOutsource.tooltip=Ausgewählte Elementfolge in neues @o auslagern.
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
@@ -616,28 +650,28 @@ InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fal
 InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
 InputBox.title[elementType:Root]=
 InputBox.title[elementType:Function]=Funktionssignatur bearbeiten...
-InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue Anweisungen hinzufügen...
-InputBox.title[elementType:Alternative,getInsertionType():insert]=Neue Verzweigung hinzufügen...
-InputBox.title[elementType:Case,getInsertionType():insert]=Neue Fallauswahl hinzufügen...
-InputBox.title[elementType:Forever,getInsertionType():insert]=Neue ENDLOS-Schleife hinzufügen...
-InputBox.title[elementType:Repeat,getInsertionType():insert]=Neue BIS-Schleife hinzufügen...
-InputBox.title[elementType:While,getInsertionType():insert]=Neue SOLANGE-Schleife hinzufügen...
-InputBox.title[elementType:Call,getInsertionType():insert]=Unterprogramm-CALL hinzufügen...
-InputBox.title[elementType:Jump,getInsertionType():insert]=Aussprung- bzw. Austrittsanweisung hinzufügen...
-InputBox.title[elementType:Parallel,getInsertionType():insert]=Neues PARALLEL-Element hinzufügen...
-InputBox.title[elementType:Instruction,getInsertionType():update]=Anweisungen bearbeiten...
-InputBox.title[elementType:Alternative,getInsertionType():update]=Verzweigung bearbeiten...
-InputBox.title[elementType:Case,getInsertionType():update]=Fallauswahl bearbeiten...
-InputBox.title[elementType:Forever,getInsertionType():update]=ENDLOS-Schleife bearbeiten...
-InputBox.title[elementType:Repeat,getInsertionType():update]=BIS-Schleife bearbeiten...
-InputBox.title[elementType:While,getInsertionType():update]=SOLANGE-Schleife bearbeiten...
-InputBox.title[elementType:Call,getInsertionType():update]=Unterprogramm-CALL bearbeiten...
-InputBox.title[elementType:Jump,getInsertionType():update]=Aussprung- bzw. Austrittsanweisung bearbeiten...
-InputBox.title[elementType:Parallel,getInsertionType():update]=PARALLEL-Element bearbeiten...
+InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue @a hinzufügen...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Neue @b-Anweisung hinzufügen...
+InputBox.title[elementType:Case,getInsertionType():insert]=Neue @c hinzufügen...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Neue @i-Schleife hinzufügen...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Neue @h-Schleife hinzufügen...
+InputBox.title[elementType:While,getInsertionType():insert]=Neue @g-Schleife hinzufügen...
+InputBox.title[elementType:Call,getInsertionType():insert]=@o-@j hinzufügen...
+InputBox.title[elementType:Jump,getInsertionType():insert]=@k-Anweisung hinzufügen...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Neues @l-Element hinzufügen...
+InputBox.title[elementType:Instruction,getInsertionType():update]=@a bearbeiten...
+InputBox.title[elementType:Alternative,getInsertionType():update]=@b-Anweisung bearbeiten...
+InputBox.title[elementType:Case,getInsertionType():update]=@c bearbeiten...
+InputBox.title[elementType:Forever,getInsertionType():update]=@i-Schleife bearbeiten...
+InputBox.title[elementType:Repeat,getInsertionType():update]=@h-Schleife bearbeiten...
+InputBox.title[elementType:While,getInsertionType():update]=@g-Schleife bearbeiten...
+InputBox.title[elementType:Call,getInsertionType():update]=@o-@j bearbeiten...
+InputBox.title[elementType:Jump,getInsertionType():update]=@k-Anweisung bearbeiten...
+InputBox.title[elementType:Parallel,getInsertionType():update]=@l-Element bearbeiten...
 
 -----[ InputBox For ]-----
-InputBoxFor.title[getInsertionType():insert]=Neue VON-Schleife hinzufügen...
-InputBoxFor.title[getInsertionType():update]=VON-Schleife bearbeiten...
+InputBoxFor.title[getInsertionType():insert]=Neue @d-Schleife hinzufügen...
+InputBoxFor.title[getInsertionType():update]=@d-Schleife bearbeiten...
 InputBoxFor.rbCounting.tooltip=Wählen Sie dies, um von einem Anfangs- zu einem Endwert zu zählen.
 InputBoxFor.rbTraversing.tooltip=Wählen Sie dies, um alle Elemente einer Liste von Werten zu durchlaufen.
 InputBoxFor.lblVariable.text=Zählvariable
@@ -697,24 +731,24 @@ AttributeInspector.lblOrigin.text=Herkunft
 AttributeInspector.btnClearOrigin.text=Säubern
 AttributeInspector.btnClearOrigin.tooltip=Löscht den Herkunftseintrag
 AttributeInspector.lblElements.text=Elemente insges.
-AttributeInspector.lblInstrs.text=Anweisungen
-AttributeInspector.lblAlts.text=Alternativen
-AttributeInspector.lblCases.text=Fallauswahl
+AttributeInspector.lblInstrs.text=@a
+AttributeInspector.lblAlts.text=@b-Anweisungen
+AttributeInspector.lblCases.text=@c
 AttributeInspector.lblLoops.text=Schleifen
-AttributeInspector.lblCalls.text=Routinenaufrufe
-AttributeInspector.lblJumps.text=Aussprünge
-AttributeInspector.lblPars.text=Parallelabschnitte
+AttributeInspector.lblCalls.text=@j
+AttributeInspector.lblJumps.text=@k
+AttributeInspector.lblPars.text=@l-Abschnitte
 AttributeInspector.btnShowLicense.text=Lizenztext
 AttributeInspector.btnShowLicense.tooltip=Diese Schaltfläche drücken, um den Text der gewählten Lizenz einzusehen, zu kopieren oder zu bearbeiten.
 AttributeInspector.cbLicenseName.tooltip=Eine verfügbare Lizenz unter den persönlichen Lizenz-Vorlagen oder die aktuelle wählen.
-AttributeInspector.lblPrefsAlt.text=WENN-Anweisung
-AttributeInspector.lblPrefsCase.text=AUSWAHL-Anweisung
-AttributeInspector.lblPrefsFor.text=Zählschleife
-AttributeInspector.lblPrefsForIn.text=VON-IN-Schleife
-AttributeInspector.lblPrefsWhile.text=SOLANGE-Schleife
-AttributeInspector.lblPrefsRepeat.text=BIS-Schleife
+AttributeInspector.lblPrefsAlt.text=@b-Anweisung
+AttributeInspector.lblPrefsCase.text=@c-Anweisung
+AttributeInspector.lblPrefsFor.text=@e-Schleife
+AttributeInspector.lblPrefsForIn.text=@f-Schleife
+AttributeInspector.lblPrefsWhile.text=@g-Schleife
+AttributeInspector.lblPrefsRepeat.text=@h-Schleife
 AttributeInspector.lblPrefsIO.text=Ein-/Ausgabe
-AttributeInspector.lblPrefsJump.text=Aussprung
+AttributeInspector.lblPrefsJump.text=@k
 AttributeInspector.lblPrefsPre.text=Vor
 AttributeInspector.lblPrefsPost.text=Nach
 AttributeInspector.lblPrefsMore.text=(Zusatz)
@@ -723,9 +757,9 @@ AttributeInspector.btnOk.text=OK
 AttributeInspector.btnOk.tooltip=Eventuelle Änderungen übernehmen und Dialog schließen.
 AttributeInspector.btnCancel.text=Abbruch
 AttributeInspector.btnCancel.tooltip=Dialog ohne Übernahme von Änderungen verlassen.
-AttributeInspector.lblMain.text=Hauptprogramm
-AttributeInspector.lblSub.text=Unterprogramm
-AttributeInspector.lblIncl.text=Include-Diagramm
+AttributeInspector.lblMain.text=@n
+AttributeInspector.lblSub.text=@o
+AttributeInspector.lblIncl.text=@p
 AttributeInspector.pnCopyrights.border=Copyrights
 AttributeInspector.pnStatistics.border=Statistik
 AttributeInspector.pnKeywordSet.border=Abweichender Schlüsselwort-Satz
@@ -764,36 +798,36 @@ LicenseEditor.msgOverwriteExisting.text=Lizenz "%" existiert bereits im Pool.\nS
 
 -----[ Preferences ]-----
 Preferences.title=Struktogramm-Einstellungen
-Preferences.pnlAlt.border=WENN-Anweisung
-Preferences.pnlAlt.tooltip=Einstellungen zur WENN-Anweisung.
+Preferences.pnlAlt.border=@b-Anweisung
+Preferences.pnlAlt.tooltip=Einstellungen zur @b-Anweisung.
 Preferences.lblAltT.text=WAHR
 Preferences.lblAltT.tooltip=Die Markierung für den (linken) WAHR-Zweig.
 Preferences.lblAltF.text=FALSCH
 Preferences.lblAltF.tooltip=Die Markierung für den (rechten) FALSCH-Zweig.
 Preferences.lblAltContent.text=Voreinstellungs-Text
-Preferences.lblAltContent.tooltip=Der Voreinstellungs-Text im WENN-Anweisungs-Kopf.
+Preferences.lblAltContent.tooltip=Der Voreinstellungs-Text im @b-Anweisungs-Kopf.
 Preferences.altPadRight.text=Verbreitere FALSCH-Zweig
-Preferences.pnlCase.border=AUSWAHL-Anweisung
-Preferences.pnlCase.tooltip=Einstellungen zur AUSWAHL-Anweisung.
+Preferences.pnlCase.border=@c-Anweisung
+Preferences.pnlCase.tooltip=Einstellungen zur @c-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text
-Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der AUSWAHL-Anweisung.
+Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der @c-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
-Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des AUSWAHL-Elements verringern (0 = aus)
+Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements verringern (0 = aus)
 Preferences.pnlRoot.border=Diagrammkopf
 Preferences.lblRoot.text=Beschriftung der Importliste
 Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.
-Preferences.pnlFor.border=VON-Schleife
-Preferences.pnlFor.tooltip=Einstellungen zur VON-Schleife
+Preferences.pnlFor.border=@d-Schleife
+Preferences.pnlFor.tooltip=Einstellungen zur @d-Schleife
 Preferences.lblFor.text=Voreinstellungs-Text
-Preferences.lblFor.tooltip=Der Voreinstellungs-Text im VON-Schleifen-Kopf.
-Preferences.pnlWhile.border=SOLANGE-Schleife
-Preferences.pnlWhile.tooltip=Einstellungen zur SOLANGE-Schleife.
+Preferences.lblFor.tooltip=Der Voreinstellungs-Text im @d-Schleifen-Kopf.
+Preferences.pnlWhile.border=@g-Schleife
+Preferences.pnlWhile.tooltip=Einstellungen zur @g-Schleife.
 Preferences.lblWhile.text=Voreinstellungs-Text
-Preferences.lblWhile.tooltip=Der Voreinstellungs-Text im SOLANGE-Schleifen-Kopf.
-Preferences.pnlRepeat.border=BIS-Schleife
-Preferences.pnlRepeat.tooltip=Einstellungen zur BIS-Schleife.
+Preferences.lblWhile.tooltip=Der Voreinstellungs-Text im @g-Schleifen-Kopf.
+Preferences.pnlRepeat.border=@h-Schleife
+Preferences.pnlRepeat.tooltip=Einstellungen zur @h-Schleife.
 Preferences.lblRepeat.text=Voreinstellungs-Text
-Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im BIS-Schleifen-Fuß.
+Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im @h-Schleifen-Fuß.
 Preferences.btnOK.text=Speichern
 Preferences.btnOK.tooltip=Speichern der Einstellungen.
 
@@ -868,23 +902,23 @@ ParserPreferences.lblPre.text=Vor
 ParserPreferences.lblPre.tooltip=Kennwörter (im Anweisungskopf) vor der Haupteintragung.
 ParserPreferences.lblPost.text=Nach
 ParserPreferences.lblPost.tooltip=Kennwörter (im Anweisungskopf) nach der Haupteintragung.
-ParserPreferences.lblAlt.text=WENN-Anweisung
-ParserPreferences.lblAlt.tooltip=Kennwörter um die Bedingung herum im WENN-Anweisungskopf.
-ParserPreferences.lblCase.text=AUSWAHL-Anweisung
-ParserPreferences.lblCase.tooltip=Kennwörter im AUSWAHL-Anweisungskopf.
-ParserPreferences.lblFor.text=VON-Schleife
-ParserPreferences.lblFor.tooltip=Gliedernde Kennwörter im VON-Schleifenkopf.
+ParserPreferences.lblAlt.text=@b-Anweisung
+ParserPreferences.lblAlt.tooltip=Kennwörter um die Bedingung herum im @b-Anweisungskopf.
+ParserPreferences.lblCase.text=@c-Anweisung
+ParserPreferences.lblCase.tooltip=Kennwörter im @c-Anweisungskopf.
+ParserPreferences.lblFor.text=@e-Schleife
+ParserPreferences.lblFor.tooltip=Gliedernde Kennwörter im @e-Schleifenkopf.
 ParserPreferences.lblForStep.text=Schrittweite
-ParserPreferences.lblForIn.text=VON-IN-Schleife
-ParserPreferences.lblForIn.tooltip=Gliedernde Kennwörter im Schleifenkopf von VON-IN-Schleifen.
-ParserPreferences.edtForInPre.tooltip=Kann gleich dem der VON-Schleife sein (oder leer bleiben mit gleicher Wirkung)
+ParserPreferences.lblForIn.text=@f-Schleife
+ParserPreferences.lblForIn.tooltip=Gliedernde Kennwörter im Schleifenkopf von @f-Schleifen.
+ParserPreferences.edtForInPre.tooltip=Kann gleich dem der @e-Schleife sein (oder leer bleiben mit gleicher Wirkung)
 ParserPreferences.edtForInPost.tooltip=muss sich von allen anderen Kennwörtern unterscheiden!
-ParserPreferences.lblWhile.text=SOLANGE-Schleife
-ParserPreferences.lblWhile.tooltip=Kennwörter im SOLANGE-Schleifenkopf.
-ParserPreferences.lblRepeat.text=BIS-Schleife
+ParserPreferences.lblWhile.text=@g-Schleife
+ParserPreferences.lblWhile.tooltip=Kennwörter im @g-Schleifenkopf.
+ParserPreferences.lblRepeat.text=@h-Schleife
 ParserPreferences.lblRepeat.tooltip=Die Austrittsbedingung einrahmende Kennwörter.
-ParserPreferences.lblJump.text=Aussprung-Anweisung
-ParserPreferences.lblJump.tooltip=Klassifizierende Kennwörter für die Aussprung-Arten.
+ParserPreferences.lblJump.text=@k-Anweisung
+ParserPreferences.lblJump.tooltip=Klassifizierende Kennwörter für die @k-Arten.
 ParserPreferences.lblJumpLeave.text=aus Schleifen
 ParserPreferences.lblJumpReturn.text=aus Routinen
 ParserPreferences.lblJumpExit.text=aus dem Programm
@@ -896,7 +930,7 @@ ParserPreferences.chkIgnoreCase.text=Ignoriere Gr./Kl.-Schreibung
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
-ParserPreferences.lblErrorSign2.text=Das Nach-Kennwort für VON-IN-Schleifen darf keinem anderen Parser-Kennwort gleichen!
+ParserPreferences.lblErrorSign2.text=Das Nach-Kennwort für @f-Schleifen darf keinem anderen Parser-Kennwort gleichen!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht
@@ -977,6 +1011,13 @@ PluginOptionDialog.msgNoValidDouble.text=Der Wert für '%' muss eine Zahl sein (
 PluginOptionDialog.msgVerificationError.text=Fehler bei Eingabeprüfung
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Abbrechen
+
+-----[ ElementNamesPreferences ]-----
+ElementNamesPreferences.title=Elementnamen einstellen
+ElementNamesPreferences.lblExplanation.text=Elementtypen für Anzeige umbezeichnen
+ElementNamesPreferences.chkUseConfNames.text=Konfigurierte Bezeichnungen erlauben
+ElementNamesPreferences.btnOK.text=OK
+ElementNamesPreferences.btnOK.tooltip=Einstellungen übernehmen.
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI-Skalierung
@@ -1088,7 +1129,7 @@ Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
 Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
 Control.msgNoInclDiagram.text=Ein einbeziehbares Diagramm \"%\" wurde nicht gefunden!\nPlatzieren Sie einzubeziehende Diagramme zunächst im Arranger.
-Control.msgAmbiguousCall.text=Mehrdeutiger Aufruf: Verschiedene Unterprogramm-Diagramme "%1" (%2 Parameter) gefunden!
+Control.msgAmbiguousCall.text=Mehrdeutiger @j: Verschiedene @o-Diagramme "%1" (%2 Parameter) gefunden!
 Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
 Control.msgInvalidBool.text=<%1> ist kein gültiger logischer Ausdruck.
 Control.msgIllFunction.text=<%1> ist keine korrekte Funktion!
@@ -1096,7 +1137,7 @@ Control.msgManualBreak.text=Nutzer-Abbruch!
 Control.msgIllegalLeave.text=Unzulässiger LEAVE-Parameter: %1
 Control.msgWrongExit.text=Falscher EXIT-Wert: %1
 Control.msgExitCode.text=Programm abgebrochen mit Code %1!
-Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>!
+Control.msgIllegalJump.text=Unzulässiger Inhalt einer @k-Anweisung: <%1>!
 Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!
 Control.msgJumpOutParallel.text=Unzulässiger Aussprung aus Parallelzweig:%Thread beendet!
 Control.msgForLoopManipulation.text=Unzulässige Manipulation der Zählschleifenvariablen «%»!
@@ -1128,3 +1169,20 @@ OutputConsole.menuFont.text=Schriftart ...
 OutputConsole.menuFontUp.text=Schrift vergrößern
 OutputConsole.menuFontDown.text=Schrift verkleinern
 
+-----> Elements
+ElementNames.localizedNames.0.text=Verarbeitung
+ElementNames.localizedNames.1.text=WENN
+ElementNames.localizedNames.2.text=AUSWAHL
+ElementNames.localizedNames.3.text=FÜR
+ElementNames.localizedNames.4.text=FÜR-BIS
+ElementNames.localizedNames.5.text=FÜR-ALLE
+ElementNames.localizedNames.6.text=SOLANGE
+ElementNames.localizedNames.7.text=BIS
+ElementNames.localizedNames.8.text=ENDLOS
+ElementNames.localizedNames.9.text=AUFRUF
+ElementNames.localizedNames.10.text=AUSSPRUNG
+ElementNames.localizedNames.11.text=PARALLEL
+ElementNames.localizedNames.12.text=Diagramm
+ElementNames.localizedNames.13.text=Hauptprogramm
+ElementNames.localizedNames.14.text=Unterprogramm
+ElementNames.localizedNames.15.text=Einbeziehbar

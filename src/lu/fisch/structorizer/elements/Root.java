@@ -4078,7 +4078,7 @@ public class Root extends Element {
 					}
 					// END KGU#376 2017-04-20
 					if (subResultFlags[0]) {
-						//error  = new DetectedError("Diagram «%» is rather unsuited for an import call as it makes use of return.",(Element) _node.getElement(i));
+						//error  = new DetectedError("Diagram «%» is rather unsuited to be included as it makes use of return.",(Element) _node.getElement(i));
 						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);    				
 					}
 					// Now associate all sub-analysis results with the Call element
