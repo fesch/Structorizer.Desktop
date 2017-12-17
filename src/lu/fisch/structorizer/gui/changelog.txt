@@ -37,7 +37,7 @@ Current development version 3.27-04 (2017.12.16)
 - 04: Bugfix #485: Workaround for intrinsic COBOL functions [Simon Sobisch]2
 - 04: Bugfix #486: Return mechanism in imported COBOL functions enforced <2>
 - 04: Enh. #487: New display mode to hide (collapse) declaration sequences <2>
-- 04: Enh. #87: Insertion of elements enabled on multiple selections <2>
+- 04: Enh. #38: Insertion of elements enabled on multiple selections <2>
 - 04: Enh. #425: Simple find mechanism in Translator and key sensitivity <2>
 - 04: Enh. #491: Translator: tooltips show master texts too long for the column <2>
 - 04: Enh. #492: Configurable designations of element types [A. Brusinsky]2
