@@ -109,10 +109,43 @@
  *      Kay Gürtzig     2017.09.18  Enh. #423: New messages for record type handling introduced
  *      Kay Gürtzig     2017.10.16  Issues #437-#438: New Control messages
  *      Kay Gürtzig     2017.11.05  New texts for issues #448, #452, #454 added.
+ *      Kay Gürtzig     2017.12.15  Element name placeholders introduced
  *
  ******************************************************************************************************
  *
- *      Comment: IF..etc, CASE statements must be translated? No "beautiful" single word for CASE & ENDLESS.
+ *      Comment:
+ *          >>>         indicates the end of the header
+ *          ----->      indicates the start of a top-level section
+ *          -----[      indicates the start of a second-level section
+ *
+ *      The texts may contain two kinds of place holders that should be preserved at
+ *      appropriate positions in the translations:
+ *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
+ *        element names. The localized element names are defined in (and retrieved
+ *        from) section / tab "Elements" with the following convention, where the
+ *        respective short and long place holders are equivalent (the short one is
+ *        more performant, the long one more readable):
+ *  
+ *        short long                    referenced key sequence
+ *        @a  = @{Instruction}      ->  ElementNames.localizedNames.0.text
+ *        @b  = @{Alternative}      ->  ElementNames.localizedNames.1.text
+ *        @c  = @{Case}             ->  ElementNames.localizedNames.2.text
+ *        @d  = @{For}              ->  ElementNames.localizedNames.3.text
+ *        @e  = @{For.COUNTER}      ->  ElementNames.localizedNames.4.text
+ *        @f  = @{For.TRAVERSAL}    ->  ElementNames.localizedNames.5.text
+ *        @g  = @{While}            ->  ElementNames.localizedNames.6.text
+ *        @h  = @{Repeat}           ->  ElementNames.localizedNames.7.text
+ *        @i  = @{Forever}          ->  ElementNames.localizedNames.8.text
+ *        @j  = @{Call}             ->  ElementNames.localizedNames.9.text
+ *        @k  = @{Jump}             ->  ElementNames.localizedNames.10.text
+ *        @l  = @{Parallel}         ->  ElementNames.localizedNames.11.text
+ *        @m  = @{Root}             ->  ElementNames.localizedNames.12.text
+ *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
+ *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
+ *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *
+ *        Must IF..etc, CASE statements be translated? No "beautiful" single word for CASE & ENDLESS.
  *
  ******************************************************************************************************/
 >>>
@@ -172,29 +205,29 @@ Menu.menuDiagramAdd.text=Agregar
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Antes
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Instrucción
-Menu.menuDiagramAddBeforeAlt.text=declaración SI
-Menu.menuDiagramAddBeforeCase.text=declaración CASE
-Menu.menuDiagramAddBeforeFor.text=bucle PARA
-Menu.menuDiagramAddBeforeWhile.text=bucle MIENTRAS
-Menu.menuDiagramAddBeforeRepeat.text=bucle REPETIR
-Menu.menuDiagramAddBeforeForever.text=bucle SINFIN
-Menu.menuDiagramAddBeforeCall.text=LLAMADA
-Menu.menuDiagramAddBeforeJump.text=SALTO
-Menu.menuDiagramAddBeforePara.text=sección PARALELA
+Menu.menuDiagramAddBeforeInst.text=@a
+Menu.menuDiagramAddBeforeAlt.text=declaración @b
+Menu.menuDiagramAddBeforeCase.text=declaración @c
+Menu.menuDiagramAddBeforeFor.text=bucle @d
+Menu.menuDiagramAddBeforeWhile.text=bucle @g
+Menu.menuDiagramAddBeforeRepeat.text=bucle @h
+Menu.menuDiagramAddBeforeForever.text=bucle @i
+Menu.menuDiagramAddBeforeCall.text=@j
+Menu.menuDiagramAddBeforeJump.text=@k
+Menu.menuDiagramAddBeforePara.text=sección @l
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Después
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Instrucción
-Menu.menuDiagramAddAfterAlt.text=declaración SI
-Menu.menuDiagramAddAfterCase.text=declaración CASE
-Menu.menuDiagramAddAfterFor.text=bucle PARA
-Menu.menuDiagramAddAfterWhile.text=bucle MIENTRAS
-Menu.menuDiagramAddAfterRepeat.text=bucle REPETIR
-Menu.menuDiagramAddAfterForever.text=bucle SINFIN
-Menu.menuDiagramAddAfterCall.text=LLAMADA
-Menu.menuDiagramAddAfterJump.text=SALTO
-Menu.menuDiagramAddAfterPara.text=sección PARALELA
+Menu.menuDiagramAddAfterInst.text=@a
+Menu.menuDiagramAddAfterAlt.text=declaración @b
+Menu.menuDiagramAddAfterCase.text=declaración @c
+Menu.menuDiagramAddAfterFor.text=bucle @d
+Menu.menuDiagramAddAfterWhile.text=bucle @g
+Menu.menuDiagramAddAfterRepeat.text=bucle @h
+Menu.menuDiagramAddAfterForever.text=bucle @i
+Menu.menuDiagramAddAfterCall.text=@j
+Menu.menuDiagramAddAfterJump.text=@k
+Menu.menuDiagramAddAfterPara.text=sección @l
 Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Borrar
 Menu.menuDiagramMoveUp.text=Desplazar arriba
@@ -206,14 +239,15 @@ Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
-Menu.menuDiagramTypeProgram.text=Main
-Menu.menuDiagramTypeFunction.text=Sub
-Menu.menuDiagramTypeInclude.text=Incluible
+Menu.menuDiagramTypeProgram.text=@n
+Menu.menuDiagramTypeFunction.text=@o
+Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramNice.text=¿Diagrama en caja?
 Menu.menuDiagramComment.text=¿Mostrar comentarios?
 Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
 Menu.menuDiagramCommentsPlusText.text=¿Ambos commentarios y textos?
 Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto de menú
+Menu.menuDiagramHideDeclarations.text=¿Esconder puras declaraciónes?
 Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
@@ -230,6 +264,7 @@ Menu.menuPreferencesFont.text=Fuente ...
 Menu.menuPreferencesColors.text=Colores ...
 Menu.menuPreferencesOptions.text=Estructuras ...
 Menu.menuPreferencesParser.text=Analizador ...
+Menu.menuPreferencesElements.text=Nombres de elementos ...
 Menu.menuPreferencesAnalyser.text=Comprobador ...
 Menu.menuPreferencesSaving.text=Guardar ...
 Menu.menuPreferencesExport.text=Exportación ...
@@ -328,7 +363,7 @@ Menu.lblLeaveAsIs.text=Dejar diagrama así
 Menu.lblAllowChanges.text=Permitir cambios
 Menu.msgReplacementsDone.text=% instrucciones sustituidos.
 Menu.msgNewerVersionAvail.text=Versión más nueva % lista para descaragar.
-Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" > "%2".
+Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" ► "%2".
 Menu.msgWelcomeMessage.text=¡Bienvenido/-a en Structorizer, su editor para diagramas Nassi-Shneiderman!\nCon este programa puedes diseñar, probar, analisar, exportar algoritms y mucho más.\nStructorizer fue hecho para el uso simple pero ha sido aumentado con muchas funcionas adicionales.\n\nSi crees tener poca experiencia con algoritmos y su desarollo puedes comenzar con menú reducido y una «%».\n¿Quieres comenzar en el modo simplificado con guía?
 Menu.lblOk.text=Visto
 Menu.lblYes.text=Si, continuar
@@ -341,16 +376,18 @@ Menu.lblCopyToClipBoard.text=Copiar en el portapapeles
 Menu.msgSelectParser.text=Tipo de código del fichero "%2" es ambiguo. Escoge el idioma para el importe de código, por favor:%1\nIngresa el número más apropiado, por favor.
 Menu.msgImportCancelled.text=Importe de código para fichero "%" cancelado.
 Menu.msgSubroutineName.text=Nombre del nuevo subprograma 
-Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay SALTOs que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
+Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay @ks que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
 Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman desde %
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
 Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
+Menu.msgGuidedTourDone.text=Congratulaciones - Has acabado el curso «%».
+Menu.msgGuidedTourNext.text=%1\nCurso «%2» va a empezar ahora.\nTal vez quieres iniciar nuevo diagrama: → Menú "%3"
 Menu.ttlGuidedTours.text=Cursos guiados
 
 // Error messages for analyser
-Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 > %2".
-Menu.warning_2.text=Fíjate: «%4» está activado. Para desactivarlo → Menú "%1 > %2 > %3".
+Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 ► %2".
+Menu.warning_2.text=Fíjate: «%4» está activado. Para desactivarlo: → Menú "%1 ► %2 ► %3"
 Menu.error01_1.text=ADVERTENCIA: Ninguna variable de bucle detectada ...
 Menu.error01_2.text=ADVERTENCIA: Más de una variable de bucle detectada: «%»
 Menu.error01_3.text=¡No tienes permiso modificar la variable del bucle «%» dentro del bucle!
@@ -366,31 +403,31 @@ Menu.error07_3.text=¡«%» no es un nombre válido para la variable o constante
 Menu.error07_4.text=El nombre del diagrama no debe contener espacios, mejor pon '_' entre las palabras: «%».
 Menu.error08.text=¡No está permitido hacer una asignación dentro de una condición!
 Menu.error09.text=Tu programa («%») no debe tener el mismo nombre que una variable o parametro.
-Menu.error10_1.text=Un solo elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones.
-Menu.error10_2.text=Un solo elemento de instrucción no debe contener instrucciones de entrada y salida.
-Menu.error10_3.text=Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones.
-Menu.error10_4.text=Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones.
-Menu.error10_5.text=Un elemento de instrucción no debe mezclar definiciones de constantes con otras instrucciones.
-Menu.error10_6.text=Un elemento de instrucción no debe mezclar definiciones de tipos con otras instrucciones.
+Menu.error10_1.text=Un solo elemento de @a no debe contener instrucciones de entrada/salida y asignaciones.
+Menu.error10_2.text=Un solo elemento de @a no debe contener instrucciones de entrada y salida.
+Menu.error10_3.text=Un solo elemento de @a no debe contener instrucciones de entrada y asignaciones.
+Menu.error10_4.text=Un solo elemento de @a no debe contener instrucciones de salida y asignaciones.
+Menu.error10_5.text=Un elemento de @a no debe mezclar definiciones de constantes con otras instrucciones.
+Menu.error10_6.text=Un elemento de @a no debe mezclar definiciones de tipos con otras instrucciones.
 Menu.error11.text=Probablemente cometiste un error de asignación. ¡Por favor comprueba esta instrucción!
 Menu.error12.text=El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS.
 Menu.error13_1.text=¡La función no retorna ningún resultado!
 Menu.error13_2.text=¡Su función no siempre retorna un resultado!
 Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un valor a la vez: «%»!
 Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
-Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
+Menu.error14_2.text=¡El paso «%» del bucle @e no es una constante entera!
 Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
-Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=¡La @j no tiene ninguna de las formas aceptadas: «[ <var> <- ] <routine_name>(<arg_list>)»!
 Menu.error15_2.text=El diagrama de la llamada subrutina «%» no está disponible.
 Menu.error15_3.text=Llamada ambigua: Hay más de un diagrama con signatura «%».
-Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
-Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
-Menu.error16_3.text=¡Instrucciones «%1» o «%2» solo están permitidos en elementos del tipo SALTO!
+Menu.error16_1.text=¡Un elemento de @k (salida) debe ser vacío o empezar con uno de los comandos %!
+Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento @k si no es la última instrucción del diagrama!
+Menu.error16_3.text=¡Instrucciones «%1» o «%2» solo están permitidos en elementos del tipo @k!
 Menu.error16_4.text=¡Un elemento de salto (salida) no puede salir más ciclos que está anidado en (%)!
-Menu.error16_5.text=¡Saltar afuera de una sección paralela (con %1 o %2) no es permitido!
-Menu.error16_6.text=¡Parámetro ilegal para SALTO de tipo «%» - debería ser una constante entera.
+Menu.error16_5.text=¡Saltar afuera de una sección @l (con %1 o %2) no es permitido!
+Menu.error16_6.text=¡Parámetro ilegal para @k de tipo «%» - debería ser una constante entera.
 Menu.error16_7.text=Instrucciones después de un Salto no son alcanzables!
-Menu.error16_8.text=¡Parámetro posíblemente inadecuado para SALTO de tipo «%» - debe ser un valor entero.
+Menu.error16_8.text=¡Parámetro posíblemente inadecuado para @k de tipo «%» - debe ser un valor entero.
 Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia!
 Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en lenguages sin distincción entre mayúsculas y minúsculas!
 Menu.error19_1.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
@@ -415,17 +452,17 @@ Menu.error24_6.text=El componente «%» no será modificado/inicializado!
 Menu.error24_7.text=El tipo «%1» no tiene ningún componente «%2»!
 Menu.error24_8.text=La variable «%1» no tiene ningún componente «%2»!
 Menu.hint07_1.text=¿Que debe hacer tu algoritmo? Reemplaza «%» con un buen nombre para eso.
-Menu.hint25_1.text=Selecciona el centro del diagrama e inserta un primer elemento, p.ej. una instrucción de entrada como «% x»
-Menu.hint25_2.text=¿Tal vez quieres entrar datos, p.ej. usando una instrucción como «% x»?
-Menu.hint25_3.text=¿Tal vez quieres salir resultados, p.ej. usando una instrucción como «% y»?
+Menu.hint25_1.text=Selecciona el centro del diagrama e inserta un primer elemento, p.ej. una instrucción de entrada como «%1 %2»
+Menu.hint25_2.text=¿Tal vez quieres entrar datos, p.ej. usando una instrucción como «%1 %2»? → Menú "%3"
+Menu.hint25_3.text=¿Tal vez quieres salir resultados, p.ej. usando una instrucción como «%1 %2»? → Menú "%3"
 Menu.hint25_4.text=Selecciona el centro del diagrama e inserta el primer elemento, p.ej. una instrucción.
 Menu.hint25_5.text=Selecciona el centro del diagrama e inserta p.ej. una instrucción con la definición de un tipo o una constante.
-Menu.hint25_6.text=¿Tal vez quieres insertar una instrucción de procesamiento como «%» entre entrada y salida?
+Menu.hint25_6.text=¿Tal vez quieres insertar una instrucción de procesamiento como «%1» entre entrada y salida? → Menu "%2"
 Menu.hint26.0.text=Selecciona el centro del diagrama, doble-click, toca Enter o F5, y entra el text de instrucción «% \"Hello world!\"»");
-Menu.hint26.1.text=Ahora puedes p.ej. probar tu diagrama → Menú "%1 > %2".
-Menu.hint26.2.text=Ahora puedes p.ej. grabar tu diagrama → Menú "%1 > %2"
-Menu.hint26.3.text=Ahore puedes p.ej. exportar tu diagrama a un código → Menu "%1 > %2 > %3"
-Menu.hint26.4.text=Ahore puedes p.ej. exportar tu diagrama como imágen → Menu "%1 > %2 > %3"
+Menu.hint26.1.text=Ahora puedes p.ej. probar tu diagrama: → Menú "%1 ► %2"
+Menu.hint26.2.text=Ahora puedes p.ej. grabar tu diagrama: → Menú "%1 ► %2"
+Menu.hint26.3.text=Ahora puedes p.ej. exportar tu diagrama a un código: → Menú "%1 ► %2 ► %3"
+Menu.hint26.4.text=Ahora puedes p.ej. exportar tu diagrama como imágen: → Menú "%1 ► %2 ► %3"
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -448,7 +485,7 @@ AnalyserPreferences.checkboxes.12.text=Comprobar por nombre de parámetro están
 AnalyserPreferences.checkboxes.13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
 AnalyserPreferences.checkboxes.14.text=Comprobar si los parámetros de bucles FOR están consistentes.
 AnalyserPreferences.checkboxes.15.text=Comprobar que llamadas tienen forma correcta y que las subrutinas están presentes.
-AnalyserPreferences.checkboxes.16.text=Comprobar si el uso de elementos SALTO es corrrecto.
+AnalyserPreferences.checkboxes.16.text=Comprobar si el uso de elementos @k es corrrecto.
 AnalyserPreferences.checkboxes.17.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
 AnalyserPreferences.checkboxes.18.text=Comprobar si variables difieren no solo por empleo de mayúsculas o minúsculas.
 AnalyserPreferences.checkboxes.19.text=Comprobar que no habrá colisiones de nombre entre variables y palabras claves.
@@ -471,27 +508,27 @@ Editor.btnOpen.tooltip=Abrir un diagrama existente.
 Editor.btnSave.tooltip=Guardar diagrama actual.
 Editor.btnSaveAll.tooltip=Guardar todos diagramas nuevos o cambiados.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Insertar nueva instrucción antes del elemento seleccionado.
-Editor.btnBeforeAlt.tooltip=Insertar nueva declaración SI antes del elemento seleccionado.
-Editor.btnBeforeFor.tooltip=Insertar nuevo bucle PARA antes del elemento seleccionado.
-Editor.btnBeforeWhile.tooltip=Insertar nuevo bucle MIENTRAS antes del elemento seleccionado.
-Editor.btnBeforeRepeat.tooltip=Insertar nuevo bucle REPETIR antes del elemento seleccionado.
-Editor.btnBeforeForever.tooltip=Insertar nuevo bucle SINFIN antes del elemento seleccionado.
-Editor.btnBeforeCall.tooltip=Insertar nueva LLAMADA antes del elemento seleccionado.
-Editor.btnBeforeJump.tooltip=Insertar nuevo SALTO antes del elemento seleccionado.
-Editor.btnBeforeCase.tooltip=Insertar nueva declaración CASE antes del elemento seleccionado.
-Editor.btnBeforePara.tooltip=Insertar nueva sección PARALELA antes del elemento seleccionado.
+Editor.btnBeforeInst.tooltip=Insertar nueva @a antes del elemento seleccionado.
+Editor.btnBeforeAlt.tooltip=Insertar nueva declaración @b antes del elemento seleccionado.
+Editor.btnBeforeFor.tooltip=Insertar nuevo bucle @d antes del elemento seleccionado.
+Editor.btnBeforeWhile.tooltip=Insertar nuevo bucle @g antes del elemento seleccionado.
+Editor.btnBeforeRepeat.tooltip=Insertar nuevo bucle @h antes del elemento seleccionado.
+Editor.btnBeforeForever.tooltip=Insertar nuevo bucle @i antes del elemento seleccionado.
+Editor.btnBeforeCall.tooltip=Insertar nueva @j antes del elemento seleccionado.
+Editor.btnBeforeJump.tooltip=Insertar nuevo @k antes del elemento seleccionado.
+Editor.btnBeforeCase.tooltip=Insertar nueva declaración @c antes del elemento seleccionado.
+Editor.btnBeforePara.tooltip=Insertar nueva sección @l antes del elemento seleccionado.
 // InsertAfter
-Editor.btnAfterInst.tooltip=Insertar nueva instrucción después del elemento seleccionado.
-Editor.btnAfterAlt.tooltip=Insertar nueva declaración SI después del elemento seleccionado.
-Editor.btnAfterFor.tooltip=Insertar nuevo bucle PARA después del elemento seleccionado.
-Editor.btnAfterWhile.tooltip=Insertar nuevo bucle MIENTRAS después del elemento seleccionado.
-Editor.btnAfterRepeat.tooltip=Insertar nuevo bucle REPETIR después del elemento seleccionado.
-Editor.btnAfterForever.tooltip=Insertar nuevo bucle SINFIN después del elemento seleccionado.
-Editor.btnAfterCall.tooltip=Insertar nueva LLAMADA después del elemento seleccionado.
-Editor.btnAfterJump.tooltip=Insertar nuevo SALTO después del elemento seleccionado.
-Editor.btnAfterCase.tooltip=Insertar nueva instrucción CASE después del elemento seleccionado.
-Editor.btnAfterPara.tooltip=Insertar nueva sección PARALELA después del elemento seleccionado.
+Editor.btnAfterInst.tooltip=Insertar nueva @a después del elemento seleccionado.
+Editor.btnAfterAlt.tooltip=Insertar nueva declaración @b después del elemento seleccionado.
+Editor.btnAfterFor.tooltip=Insertar nuevo bucle @d después del elemento seleccionado.
+Editor.btnAfterWhile.tooltip=Insertar nuevo bucle @g después del elemento seleccionado.
+Editor.btnAfterRepeat.tooltip=Insertar nuevo bucle @h después del elemento seleccionado.
+Editor.btnAfterForever.tooltip=Insertar nuevo bucle @i después del elemento seleccionado.
+Editor.btnAfterCall.tooltip=Insertar nueva @j después del elemento seleccionado.
+Editor.btnAfterJump.tooltip=Insertar nuevo @k después del elemento seleccionado.
+Editor.btnAfterCase.tooltip=Insertar nueva instrucción @c después del elemento seleccionado.
+Editor.btnAfterPara.tooltip=Insertar nueva sección @l después del elemento seleccionado.
 // undo & redo
 Editor.btnUndo.tooltip=Deshacer la ultima acción.
 Editor.btnRedo.tooltip=Rehacer la ultima acción.
@@ -549,29 +586,29 @@ Editor.popupAdd.text=Agregar
 // Submenu of "Add"
 Editor.popupAddBefore.text=Antes
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Instrucción
-Editor.popupAddBeforeAlt.text=declaración SI
-Editor.popupAddBeforeCase.text=declaración CASE
-Editor.popupAddBeforeFor.text=bucle PARA
-Editor.popupAddBeforeWhile.text=bucle MIENTRAS
-Editor.popupAddBeforeRepeat.text=bucle REPETIR
-Editor.popupAddBeforeForever.text=bucle SINFIN
-Editor.popupAddBeforeCall.text=LLAMADA
-Editor.popupAddBeforeJump.text=SALTO
-Editor.popupAddBeforePara.text=sección PARALELA
+Editor.popupAddBeforeInst.text=@a
+Editor.popupAddBeforeAlt.text=declaración @b
+Editor.popupAddBeforeCase.text=declaración @c
+Editor.popupAddBeforeFor.text=bucle @d
+Editor.popupAddBeforeWhile.text=bucle @g
+Editor.popupAddBeforeRepeat.text=bucle @h
+Editor.popupAddBeforeForever.text=bucle @i
+Editor.popupAddBeforeCall.text=@j
+Editor.popupAddBeforeJump.text=@k
+Editor.popupAddBeforePara.text=sección @l
 // After
 Editor.popupAddAfter.text=Después
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Instrucción
-Editor.popupAddAfterAlt.text=declaración SI
-Editor.popupAddAfterCase.text=declaración CASE
-Editor.popupAddAfterFor.text=bucle PARA
-Editor.popupAddAfterWhile.text=bucle MIENTRAS
-Editor.popupAddAfterRepeat.text=bucle REPETIR
-Editor.popupAddAfterForever.text=bucle SINFIN
-Editor.popupAddAfterCall.text=LLAMADA
-Editor.popupAddAfterJump.text=SALTO
-Editor.popupAddAfterPara.text=sección PARALELA
+Editor.popupAddAfterInst.text=@a
+Editor.popupAddAfterAlt.text=declaración @b
+Editor.popupAddAfterCase.text=declaración @c
+Editor.popupAddAfterFor.text=bucle @d
+Editor.popupAddAfterWhile.text=bucle @g
+Editor.popupAddAfterRepeat.text=bucle @h
+Editor.popupAddAfterForever.text=bucle @i
+Editor.popupAddAfterCall.text=@j
+Editor.popupAddAfterJump.text=@k
+Editor.popupAddAfterPara.text=sección @l
 // Edit
 Editor.popupEdit.text=Editar
 Editor.popupDelete.text=Borrar
@@ -616,27 +653,27 @@ InputBox.lblText.text[elementType:Parallel]=Número de brazos paralelos
 InputBox.title[elementType:Root]=Editar nombre de programa...
 InputBox.title[elementType:Function]=Editar signatura de función...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Insertar instrucciones...
-InputBox.title[elementType:Alternative,getInsertionType():insert]=Insertar declaración SI...
-InputBox.title[elementType:Case,getInsertionType():insert]=Insertar declaración CASE...
-InputBox.title[elementType:Forever,getInsertionType():insert]=Insertar bucle SINFIN...
-InputBox.title[elementType:Repeat,getInsertionType():insert]=Insertar bucle REPETIR...
-InputBox.title[elementType:While,getInsertionType():insert]=Insertar bucle MIENTRAS...
-InputBox.title[elementType:Call,getInsertionType():insert]=Insertar LLAMADA...
-InputBox.title[elementType:Jump,getInsertionType():insert]=Insertar SALTO...
-InputBox.title[elementType:Parallel,getInsertionType():insert]=Insertar sección PARALELA...
-InputBox.title[elementType:Instruction,getInsertionType():update]=Editar instrucciones...
-InputBox.title[elementType:Alternative,getInsertionType():update]=Editar declaración SI...
-InputBox.title[elementType:Case,getInsertionType():update]=Editar declaración CASE...
-InputBox.title[elementType:Forever,getInsertionType():update]=Editar bucle SINFIN...
-InputBox.title[elementType:Repeat,getInsertionType():update]=Editar bucle REPETIR...
-InputBox.title[elementType:While,getInsertionType():update]=Editar bucle MIENTRAS...
-InputBox.title[elementType:Call,getInsertionType():update]=Editar LLAMADA...
-InputBox.title[elementType:Jump,getInsertionType():update]=Editar SALTO...
-InputBox.title[elementType:Parallel,getInsertionType():update]=Editar sección PARALELA...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Insertar declaración @b...
+InputBox.title[elementType:Case,getInsertionType():insert]=Insertar declaración @c...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Insertar bucle @i...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Insertar bucle @h...
+InputBox.title[elementType:While,getInsertionType():insert]=Insertar bucle @g...
+InputBox.title[elementType:Call,getInsertionType():insert]=Insertar @j...
+InputBox.title[elementType:Jump,getInsertionType():insert]=Insertar @k...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Insertar sección @l...
+InputBox.title[elementType:Instruction,getInsertionType():update]=Editar @a...
+InputBox.title[elementType:Alternative,getInsertionType():update]=Editar declaración @b...
+InputBox.title[elementType:Case,getInsertionType():update]=Editar declaración @c...
+InputBox.title[elementType:Forever,getInsertionType():update]=Editar bucle @i...
+InputBox.title[elementType:Repeat,getInsertionType():update]=Editar bucle @h...
+InputBox.title[elementType:While,getInsertionType():update]=Editar bucle @g...
+InputBox.title[elementType:Call,getInsertionType():update]=Editar @j...
+InputBox.title[elementType:Jump,getInsertionType():update]=Editar @k...
+InputBox.title[elementType:Parallel,getInsertionType():update]=Editar sección @l...
 
 -----[ InputBox For ]-----
-InputBoxFor.title[getInsertionType():insert]=Insertar bucle PARA...
-InputBoxFor.title[getInsertionType():update]=Editar bucle PARA...
+InputBoxFor.title[getInsertionType():insert]=Insertar bucle @d...
+InputBoxFor.title[getInsertionType():update]=Editar bucle @d...
 InputBoxFor.rbCounting.tooltip=Elige esto para contar de un número inicial hacia un número final.
 InputBoxFor.rbTraversing.tooltip=Elige esto para recorrer una colección (lista, fila) de datos.
 InputBoxFor.lblVariable.text=Variable contadora
@@ -673,7 +710,7 @@ InputBoxRoot.title=Editar diagrama...
 InputBoxRoot.lblIncludeList.text=Diagramas a ser incluídos:
 InputBoxRoot.txtIncludeList.tooltip=Nombres de diagramas que deben ser incluídos antes de ejecutar este diagrama (sepáralos con coma o salto de linea).
 InputBoxRoot.lblText.text=Nombre de diagrama / signatura de función
-InputBoxRoot.txtText.tooltip=Nombre de diagrama (programa principal o incluíble) o signatura de función (nombre, lista de parámetros y tipo de resultado)
+InputBoxRoot.txtText.tooltip=Nombre de diagrama (@n o @p) o signatura de función (nombre, lista de parámetros y tipo de resultado)
 InputBoxRoot.lblComment.text=Comentario
 InputBoxRoot.txtComment.tooltip=Por ejemplo: Que debe hacer el diagrama, como se utiliza, quién lo ha creado, ...
 InputBoxRoot.btnOK.text=Aceptar
@@ -696,24 +733,24 @@ AttributeInspector.lblOrigin.text=Origen
 AttributeInspector.btnClearOrigin.text=Borrar
 AttributeInspector.btnClearOrigin.tooltip=Quita la información del origen
 AttributeInspector.lblElements.text=Número total de elementos
-AttributeInspector.lblInstrs.text=Instrucciones
-AttributeInspector.lblAlts.text=Declaraciones SI
-AttributeInspector.lblCases.text=Declaraciones CASE
+AttributeInspector.lblInstrs.text@aes
+AttributeInspector.lblAlts.text=Declaraciones @b
+AttributeInspector.lblCases.text=Declaraciones @c
 AttributeInspector.lblLoops.text=Bucles
-AttributeInspector.lblCalls.text=Llamadas
-AttributeInspector.lblJumps.text=Saltos
-AttributeInspector.lblPars.text=Secciones Paralelas
+AttributeInspector.lblCalls.text=@js
+AttributeInspector.lblJumps.text=@ks
+AttributeInspector.lblPars.text=Secciones @ls
 AttributeInspector.btnShowLicense.text=Texto de licencia
 AttributeInspector.btnShowLicense.tooltip=Toca este botón para mirar, editar o revisar el texto de la licencia seleccionaada.
 AttributeInspector.cbLicenseName.tooltip=Selecciona una licencia ofrecida desde su colección o la designada para modificarla.
-AttributeInspector.lblPrefsAlt.text=Declaración SI
-AttributeInspector.lblPrefsCase.text=Declaración CASE
-AttributeInspector.lblPrefsFor.text=Bucle FOR
-AttributeInspector.lblPrefsForIn.text=Bucle FOR-IN
-AttributeInspector.lblPrefsWhile.text=Bucle MIENTRAS
-AttributeInspector.lblPrefsRepeat.text=Bucle REPITIR HASTA
+AttributeInspector.lblPrefsAlt.text=Declaración @b
+AttributeInspector.lblPrefsCase.text=Declaración @c
+AttributeInspector.lblPrefsFor.text=Bucle @d
+AttributeInspector.lblPrefsForIn.text=Bucle @f
+AttributeInspector.lblPrefsWhile.text=Bucle @g
+AttributeInspector.lblPrefsRepeat.text=Bucle @h
 AttributeInspector.lblPrefsIO.text=Entrada / Salida
-AttributeInspector.lblPrefsJump.text=Salto
+AttributeInspector.lblPrefsJump.text=@k
 AttributeInspector.lblPrefsPre.text=Antes
 AttributeInspector.lblPrefsPost.text=Después
 AttributeInspector.lblPrefsMore.text=(Demás)
@@ -722,9 +759,9 @@ AttributeInspector.btnOk.text=Aceptar
 AttributeInspector.btnOk.tooltip=Aceptar los cambios y cerrar el diálogo
 AttributeInspector.btnCancel.text=Cancelar
 AttributeInspector.btnCancel.tooltip=Cerrar el diálogo sin guardar los cambios
-AttributeInspector.lblMain.text=Programa principal
-AttributeInspector.lblSub.text=Subrutina
-AttributeInspector.lblIncl.text=Incluíble
+AttributeInspector.lblMain.text=@n
+AttributeInspector.lblSub.text=@o
+AttributeInspector.lblIncl.text=@p
 AttributeInspector.pnCopyrights.border=Copyrights
 AttributeInspector.pnStatistics.border=Cantidades (estadística)
 AttributeInspector.pnKeywordSet.border=Juego diferente de palabras claves  
@@ -763,36 +800,36 @@ LicenseEditor.msgOverwriteExisting.text=Licencia "%" ya existe en el deposito. �
 
 -----[ Preferences ]-----
 Preferences.title=Preferencias de estructura
-Preferences.pnlAlt.border=declaración SI
+Preferences.pnlAlt.border=declaración @b
 Preferences.pnlAlt.tooltip=
 Preferences.lblAltT.text=Etiqueta VERDADERO
 Preferences.lblAltT.tooltip=La etiqueta de la izquierda.
 Preferences.lblAltF.text=Etiqueta FALSO
 Preferences.lblAltF.tooltip=La etiqueta de la derecha.
 Preferences.lblAltContent.text=Contenido por defecto
-Preferences.lblAltContent.tooltip=El contenido por defecto de una declaración SI.
+Preferences.lblAltContent.tooltip=El contenido por defecto de una declaración @b.
 Preferences.altPadRight.text=Engorda el brazo FALSO.
-Preferences.pnlCase.border=declaración CASE
+Preferences.pnlCase.border=declaración @c
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Contenido por defecto
-Preferences.lblCase.tooltip=El contenido por defecto de una declaración CASE.
+Preferences.lblCase.tooltip=El contenido por defecto de una declaración @c
 Preferences.lblCaseRot.text=Min. brazos para rotar
 Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca) 
 Preferences.pnlRoot.border=Encabezamiento del diagrama
 Preferences.lblRoot.text=Rótulo de la lista de incluíbles
 Preferences.lblRoot.tooltip=El rótulo debajo del cual la lista de diagramas a ser incluidos debe ser dibujada.
-Preferences.pnlFor.border=bucle PARA
+Preferences.pnlFor.border=bucle @d
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Contenido por defecto
-Preferences.lblFor.tooltip=El contenido por defecto de un bucle FOR.
-Preferences.pnlWhile.border=bucle MIENTRAS
+Preferences.lblFor.tooltip=El contenido por defecto de un bucle @d.
+Preferences.pnlWhile.border=bucle @g
 Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=Contenido por defecto
-Preferences.lblWhile.tooltip=El contenido por defecto de un bucle WHILE.
-Preferences.pnlRepeat.border=bucle REPETIR
+Preferences.lblWhile.tooltip=El contenido por defecto de un bucle @g.
+Preferences.pnlRepeat.border=bucle @h
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Contenido por defecto
-Preferences.lblRepeat.tooltip=El contenido por defecto de un bucle REPEAT
+Preferences.lblRepeat.tooltip=El contenido por defecto de un bucle @h
 Preferences.btnOK.text=Aceptar
 Preferences.btnOK.tooltip=Aceptar los cambios.
 
@@ -867,23 +904,23 @@ ParserPreferences.lblPre.text=Pre
 ParserPreferences.lblPre.tooltip=Palabra clave anterior del contenido principal
 ParserPreferences.lblPost.text=Post
 ParserPreferences.lblPost.tooltip=Palabra clave posterior del contenido principal
-ParserPreferences.lblAlt.text=declaración SI
-ParserPreferences.lblAlt.tooltip=Palabras encerrando la condición de la declaración SI
-ParserPreferences.lblCase.text=declaración CASE
+ParserPreferences.lblAlt.text=declaración @b
+ParserPreferences.lblAlt.tooltip=Palabras encerrando la condición de la declaración @b
+ParserPreferences.lblCase.text=declaración @c
 ParserPreferences.lblCase.tooltip=Palabras encerrando la expresión de selección
-ParserPreferences.lblFor.text=bucle PARA
-ParserPreferences.lblFor.tooltip=Palabras claves separando los parametros del bucle PARA.
+ParserPreferences.lblFor.text=bucle @e
+ParserPreferences.lblFor.tooltip=Palabras claves separando los parametros del bucle @d
 ParserPreferences.lblForStep.text=Paso
-ParserPreferences.lblForIn.text=bucle PARA-EN
-ParserPreferences.lblForIn.tooltip=Palabras claves separando los parametros del bucle PARA ... EN ....
-ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle PARA (o quedar vacío - con mismo efecto).
+ParserPreferences.lblForIn.text=bucle @df
+ParserPreferences.lblForIn.tooltip=Palabras claves separando los parametros del bucle @f.
+ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle @d (o quedar vacío - con mismo efecto).
 ParserPreferences.edtForInPost.tooltip=¡Tiene que diferir de todas las restantes palabras claves del Analizador!
-ParserPreferences.lblWhile.text=bucle MIENTRAS
-ParserPreferences.lblWhile.tooltip=Palabras encerrando la condición del bucle MIENTRAS
-ParserPreferences.lblRepeat.text=bucle REPETIR
-ParserPreferences.lblRepeat.tooltip=Palabras encerrando la condición del bucle REPETIR HASTA
-ParserPreferences.lblJump.text=Instrucción SALTO
-ParserPreferences.lblJump.tooltip=Palabras claves clasificando SALTOs para salir de una entidad...
+ParserPreferences.lblWhile.text=bucle @g
+ParserPreferences.lblWhile.tooltip=Palabras encerrando la condición del bucle @g
+ParserPreferences.lblRepeat.text=bucle @h
+ParserPreferences.lblRepeat.tooltip=Palabras encerrando la condición del bucle @h
+ParserPreferences.lblJump.text=Instrucción @k
+ParserPreferences.lblJump.tooltip=Palabras claves clasificando @ks para salir de una entidad...
 ParserPreferences.lblJumpLeave.text=del bucle
 ParserPreferences.lblJumpReturn.text=de subprograma
 ParserPreferences.lblJumpExit.text=de programa
@@ -895,7 +932,7 @@ ParserPreferences.chkIgnoreCase.text=Ignorar mayúsc./minúsc.
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
 ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de un texto del Analizador!
-ParserPreferences.lblErrorSign2.text=¡El segundo texto clave para el bucle PARA-EN no debe ser igual a ningún otro texto del Analizador!
+ParserPreferences.lblErrorSign2.text=¡El segundo texto clave para el bucle @f no debe ser igual a ningún otro texto del Analizador!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Previsualizar impresión
@@ -976,6 +1013,15 @@ PluginOptionDialog.msgNoValidDouble.text=¡El valor para '%' tiene que ser un n�
 PluginOptionDialog.msgVerificationError.text=Error de verificación
 PluginOptionDialog.btnOk.text=Aceptar
 PluginOptionDialog.btnCancel.text=Cancelar
+
+-----[ ElementNamesPreferences ]-----
+ElementNamesPreferences.title=Preferidos nombres de elementos
+ElementNamesPreferences.lblExplanation.text=Renombra tipos de elementos para el display
+ElementNamesPreferences.chkUseConfNames.text=Permite las designaciones preferidas
+ElementNamesPreferences.lblLocalized.text=Nombre localizado
+ElementNamesPreferences.lblIndividual.text=Nombre preferido
+ElementNamesPreferences.btnOK.text=Aceptar
+ElementNamesPreferences.btnOK.tooltip=Aceptar los cambios.
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=Calibración de interfaz gráfica
@@ -1085,7 +1131,7 @@ Control.msgTitleQuestion.text=Pregunta
 Control.msgTitleParallel.text=Problema en ejecución paralela
 Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parámetros) encontrado!\n¿Has olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
 Control.msgNoInclDiagram.text=¡No diagrama incluíble con nombre "%" encontrado!\n¿Has olvidado a abrir el Arranger y colocar diagramas referidos ahí?
-Control.msgAmbiguousCall.text=¡Llamada ambigua! Diferentes diagramas (subroutinas) "%1" con %2 parámetros encontrados.
+Control.msgAmbiguousCall.text=¡@k ambigua! Diferentes diagramas (subroutinas) "%1" con %2 parámetros encontrados.
 Control.msgInvalidExpr.text=¡<%1> no es una expresión correcta o existente!
 Control.msgInvalidBool.text=¡<%1> no es una válida expresión lógica!
 Control.msgIllFunction.text=¡<%1> no es una función correcta!
@@ -1093,10 +1139,10 @@ Control.msgManualBreak.text=¡Abortado manuálmente!
 Control.msgIllegalLeave.text=Argumento ilegal del salto de tipo SALIR: %1
 Control.msgWrongExit.text=Valor ilegal en abortar el programa: %1
 Control.msgExitCode.text=¡Programa abortado con código %1!
-Control.msgIllegalJump.text=¡Contenido ilegal del SALTO (instruction para salir): <%1>!
+Control.msgIllegalJump.text=¡Contenido ilegal del @k (instruction para salir): <%1>!
 Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / especificados: %2)!
 Control.msgJumpOutParallel.text=Tentativa ilegal de saltar afuera de un brazo paralelo:%¡Brazo terminado!
-Control.msgForLoopManipulation.text=¡Manipulación ilegal de la variable «%» de un bucle PARA!
+Control.msgForLoopManipulation.text=¡Manipulación ilegal de la variable «%» de un bucle @d!
 Control.msgInvalidFileNumberRead.text=Nombre de archivo es inválido o archivo no es abierto para leer.
 Control.msgInvalidFileNumberWrite.text=Nombre de archivo es inválido o archivo no es abierto para escribir.
 Control.msgNoIntLiteralOnFile.text=¡No valor integral leible desde el archivo!
@@ -1125,3 +1171,20 @@ OutputConsole.menuFont.text=Fuente ...
 OutputConsole.menuFontUp.text=Aumentar grado de letra
 OutputConsole.menuFontDown.text=Disminuir grado de letra
 
+-----> Elements
+ElementNames.localizedNames.0.text=Instrucción
+ElementNames.localizedNames.1.text=SI
+ElementNames.localizedNames.2.text=CASE
+ElementNames.localizedNames.3.text=PARA/POR
+ElementNames.localizedNames.4.text=PARA-HASTA
+ElementNames.localizedNames.5.text=POR CADA
+ElementNames.localizedNames.6.text=MIENTRAS
+ElementNames.localizedNames.7.text=REPETIR
+ElementNames.localizedNames.8.text=SINFIN
+ElementNames.localizedNames.9.text=LLAMADA
+ElementNames.localizedNames.10.text=SALTO
+ElementNames.localizedNames.11.text=PARALELA
+ElementNames.localizedNames.12.text=Diagrama
+ElementNames.localizedNames.13.text=Programa principal
+ElementNames.localizedNames.14.text=Subrutina
+ElementNames.localizedNames.15.text=Incluíble

@@ -129,18 +129,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	// START KGU#407 2017-06-22: Enh. #420 Optional comment import
 	/**
 	 * Value of the import option to import source code comments
+	 * The option is supported by method {@link #retrieveComment(Reduction)}
 	 * @see #optionSaveParseTree()
 	 * @see #optionImportVarDecl
+	 * @see #retrieveComment(Reduction)
 	 */
 	protected boolean optionImportComments = false;
 	// END KGU#407 2017-06-22
 	// START KGU#358 2017-03-06: Enh. #354, #368 - new import options
 	/**
 	 * Value of the import option to import mere variable declarations
-	 * The option is supported by method {@link #retrieveComment(Reduction)}
 	 * @see #optionImportComments
 	 * @see #optionSaveParseTree()
-	 * @see #retrieveComment(Reduction)
 	 */
 	protected boolean optionImportVarDecl = false;
 	/**

@@ -484,6 +484,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			//System.out.println("* setLocale(" + localeFileName + ")");
 			Locales.getInstance().setLocale(localeFileName);
 			//System.out.println("* Locale is set.");
+			// START KGU#479 2017-12-15: Enh. #492 - preparation for configurable element names
+			Locales.getInstance().setLocale(ElementNames.getInstance());
+			ElementNames.getFromIni(ini);
+			// END KGU#479 2017-12-15
 			
 			// colors
 			Element.loadFromINI();
@@ -542,11 +546,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				{
 					diagram.setToggleTC(true);
 				}
-				// comments
+				// syntax highlighting
 				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
 				{
 					diagram.setHightlightVars(true);
 				}
+				// START KGU#477 2017-12-06: Enh. #487
+				diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
+				// END KGU#227 2017-12-06
 				// analyser
 				// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
                 /*
@@ -677,6 +684,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#227 2016-08-01
 			ini.setProperty("switchTextComments", (Element.E_TOGGLETC ? "1" : "0"));
 			ini.setProperty("varHightlight", (Element.E_VARHIGHLIGHT ? "1" : "0"));
+			// START KGU#477 2017-12-06: Enh. #487
+			ini.setProperty("hideDeclarations", Element.E_HIDE_DECL ? "1" : "0");
+			// END KGU#227 2016-12-06
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
 			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
 			// START KGU#123 2016-01-04: Enh. #87
@@ -734,6 +744,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 //				}
 //			}
 			// END KGU#324 2017-06-16
+			
+			// START KGU#479 2017-12-15: Enh. #492
+			ElementNames.putToIni(ini);
+			// END KGU#479 2017-12-15
 			
 			ini.save();
 		}
@@ -946,18 +960,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
 					Menu.lblHint.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
-					null,
+					IconLoader.ico024,
 					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
 			if (chosen == JOptionPane.OK_OPTION) {
 				Root.setCheck(26, true);
 				Root.setCheck(25, true);
 				if (diagram != null) {
 					diagram.setSimplifiedGUI(true);
-					// START KGU#459 2017-11-14: Enh. #459-1
-					diagram.updateTutorialQueues();
-					diagram.getRoot().startNextTutorial();
-					diagram.showTutorialHint();
-					// END KGU#459 2017-11-14
 				}
 				else {
 					// The essence of diagram.setSimplifiedGUI() but without immediate visibility switch
@@ -982,6 +991,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     	else if (diagram != null) {
     		diagram.updateNSD(false);
     	}
+		// START KGU#459 2017-11-20: Enh. #459-1
+    	if (diagram != null) {
+			diagram.updateTutorialQueues();
+			if (diagram.getRoot().startNextTutorial(false) > -1) {
+				diagram.showTutorialHint();
+			}
+    	}
+		// END KGU#459 2017-11-20
     }
     // END KGU#300 2016-12-02
     

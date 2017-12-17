@@ -58,6 +58,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.06.09      Enh. #416: drawing support for broken lines and is...() method adaptation
  *      Kay Gürtzig     2017.07.03      Enh. #423: Type definition concept for record/struct types begun
  *      Kay Gürtzig     2017.09.15-28   Enh. #423: Record type definition concept nearly accomplished
+ *      Kay Gürtzig     2017.12.06      Enh. #487: Drawing supports hiding of declaration sequences 
+ *      Kay Gürtzig     2017.12.10/11   Enh. #487: Run data support for new display mode "Hide declarations"
  *
  ******************************************************************************************************
  *
@@ -74,8 +76,12 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.ImageIcon;
+
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.SelectedSequence;
 import lu.fisch.structorizer.parsers.CodeParser;
 //import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
@@ -130,7 +136,10 @@ public class Instruction extends Element {
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 
 		// START KGU#227 2016-07-30: Enh. #128
-		if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())
+		// START KGU#477 2017-12-06: Enh. #487
+		//if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())
+		if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed(true))
+		// END KGU#477 2017-12-06
 		{
 			Rect commentRect = _element.writeOutCommentLines(_canvas,
 					0, 0, false);
@@ -178,22 +187,33 @@ public class Instruction extends Element {
 		if (this.isRectUpToDate) return rect0;
 		// END KGU#136 2016-03-01
 
+		// START KGU#477 2017-12-06: Enh. #487 - if being a hidden declaration, don't show
+		if (this != this.getDrawingSurrogate(false)) {
+			rect0 = new Rect(0, 0, 0, 0);
+			isRectUpToDate = true;
+			return rect0;
+		}
+		// END KGU#477 2017-12-06
+
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-		
+
 		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
-        //rect = prepareDraw(_canvas, getText(false), this);
+		//rect = prepareDraw(_canvas, getText(false), this);
 		StringList text = getText(false);
-        if (isCollapsed() && text.count() > 2) 
-        {
-        	text = getCollapsedText();
-        }
-        rect0 = prepareDraw(_canvas, text, this);
-        // END KGU#124 2016-01-03
-        
+		// START KGU#477 2017-12-06: Enh. #487 - if being a hidden declaration, don't show
+		//if (isCollapsed() && text.count() > 2) 
+		if (isCollapsed(true) && text.count() > 2) 
+		// END KGU#477 2017-12-06
+		{
+			text = getCollapsedText();
+		}
+		rect0 = prepareDraw(_canvas, text, this);
+		// END KGU#124 2016-01-03
+
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01
-        return rect0;
+		return rect0;
 	}
 
 	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
@@ -242,7 +262,9 @@ public class Instruction extends Element {
 		
 		// START KGU#227 2016-07-30: Enh. #128
 		int commentHeight = 0;
-		if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())
+		//if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())
+		if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed(true))
+		// END KGU#477 2017-12-06
 		{
 			Rect commentRect = _element.writeOutCommentLines(canvas,
 //					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
@@ -309,7 +331,10 @@ public class Instruction extends Element {
 		}
 		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
 		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
-		if (_element.isCollapsed() && !(_element instanceof Instruction))
+		// START KGU#477 2017-12-06: Enh. #487 - option to hide mere declarations
+		//if (_element.isCollapsed() && !(_element instanceof Instruction))
+		if (_element.isCollapsed(true) && (!(_element instanceof Instruction) || ((Instruction)_element).eclipsesDeclarations(false)))
+		// END KGU#477 2017-12-06
 		{
 //			canvas.draw(_element.getIcon().getImage(), _top_left.left, _top_left.top);
 			canvas.draw(_element.getIcon().getImage(), myrect.left, myrect.top);
@@ -326,9 +351,19 @@ public class Instruction extends Element {
 		// Now delegates all stuff to the static method above, which may also
 		// be called from Elements of different types when those are collapsed
 		
+		// START KGU#477 2017-12-06: Enh. #487: Don't draw at all if there is a drawing surrogate
+		if (E_HIDE_DECL && this != this.getDrawingSurrogate(false)) {
+			rect = new Rect(0,0,0,0);
+			return;
+		}
+		// END KGU#477 2017-12-06
+		
 		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
         //draw(_canvas, _top_left, getText(false), this);
-        if (isCollapsed() && getText(false).count() > 2) 
+		// START KGU#477 2017-12-06: Enh. #487
+        //if (isCollapsed() && getText(false).count() > 2)
+        if (isCollapsed(true) && getText(false).count() > 2)
+        // END KGU#477 2017-12-06
         {
         	draw(_canvas, _top_left, getCollapsedText(), this);
         }
@@ -339,12 +374,34 @@ public class Instruction extends Element {
         // END KGU#124 2016-01-03
 	}
 	
+	// START KGU#477 2017-12-06: Enh. #487
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#setSelected(boolean)
+	 */
+	@Override
+	public Element setSelected(boolean _sel)
+	{
+		if (this.isMereDeclaratory()) {
+			SelectedSequence flock = (SelectedSequence)this.getEclipsedDeclarations(false);
+			if (flock != null) {
+				return flock.setSelected(_sel);
+			}
+		}
+		return super.setSelected(_sel);
+	}
+	// END KGU#477 2017-12-06
+
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
 	public Element findSelected()
 	{
+		// START KGU#477 2017-12-06: Enh. #487
+		if (this.eclipsesDeclarations(false)) {
+			return (SelectedSequence)this.getEclipsedDeclarations(false);
+		}
+		// END KGU#477 2017-12-06
 		return selected ? this : null;
 	}
 	// END KGU#183 2016-04-24
@@ -702,24 +759,28 @@ public class Instruction extends Element {
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a), b), c)
 	 * @see #isTypeDefinition(String, HashMap)
+	 * @see #isTypeDefinition()
 	 */
 	public static boolean isTypeDefinition(String line)
 	{
 		return isTypeDefinition(line, null);
 	}
-
-	// START KGU#388 2017-07-03: Enh. #423
 	/**
-	 * Returns true if the current line of code is a type definition of one of the following forms:<br>
+	 * Returns true if the given {@code line} of code is a type definition (with possibly registered type, see argument {@code typeMap})
+	 * of one of the following forms:<br>
 	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br/>
 	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br/>
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br/>
 	 * d)...f) same as a)...c) but with struct instead of record.<br/>
 	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
-	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap}.
+	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap} if given.
 	 * @param line - String comprising one line of code
-	 * @param typeMap TODO
+	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
+	 * an appropriate syntax is okay.
 	 * @return true iff line is of one of the forms a), b), c)
+	 * @see #isTypeDefinition(String)
+	 * @see #isTypeDefinition(HashMap, boolean)
+	 * @see #isTypeDefinition()
 	 */
 	public static boolean isTypeDefinition(String line, HashMap<String, TypeMapEntry> typeMap)
 	{
@@ -746,9 +807,10 @@ public class Instruction extends Element {
 		return isTypeDefinition(null, true);
 	}
 
-	/** @param typeMap TODO
+	/**
+	 * @param typeMap TODO
 	 * @param allLines TODO
-	 * @return true if all non-empty lines are type definitions */
+	 * @return true if this elemet contains type definitions */
 	public boolean isTypeDefinition(HashMap<String, TypeMapEntry> typeMap, boolean allLines)
 	{
 		boolean isTypeDef = false;
@@ -774,6 +836,22 @@ public class Instruction extends Element {
 		return isTypeDefinition(null, false);
 	}
 	// END KGU#388 2017-07-03
+	
+	// START KGU#47 2017-12-06: Enh. #487 - compound check for hidable content
+	/** @return true iff this Instruction contains nothing but type definitions and
+	 * (uninitialized) variable declarations, i.e. hidable stuff. 
+	 */
+	public boolean isMereDeclaratory()
+	{
+		boolean isHideable = true;
+		StringList lines = this.getUnbrokenText();
+		for (int i = 0; isHideable && i < lines.count(); i++) {
+			String line = lines.get(i);
+			isHideable = line.isEmpty() || isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
+		}
+		return isHideable;
+	}
+	// END KGU#477 2017-12-06
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed
@@ -1049,5 +1127,214 @@ public class Instruction extends Element {
 		return typeSpec;
 	}
 	// END KGU#388 2017-08-07
+	
+	// START KGU#477 2017-12-06: Enh. #487 - new mode to hide declarations
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#getIcon()
+     */
+	@Override
+    public ImageIcon getIcon()
+    {
+    	if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate(false)) {
+    		return IconLoader.ico085;
+    	}
+    	return super.getIcon();
+    }
+	/**
+	 * In active mode {@link Element#E_HIDE_DECL} detects whether this is a mere declaration element and
+	 * would be the first of a contiguous sequence of such elements (no matter if actually other declarations
+	 * follow). In all other cases returns false 
+	 * @param _modeIndependent - if true then an existing declaration sequence will also be detected if mode
+	 * {@link Element#E_HIDE_DECL} is off
+	 * @return true if declarations are to be hidden and this is the drawing surrogate of declaration sequence
+	 */
+	public boolean eclipsesDeclarations(boolean _modeIndependent)
+	{
+		return (_modeIndependent || E_HIDE_DECL) && this.isMereDeclaratory() && this == this.getDrawingSurrogate(_modeIndependent);
+	}
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#isCollapsed(boolean)
+     */
+	@Override
+    public boolean isCollapsed(boolean _orHidden) {
+        return super.isCollapsed(_orHidden) || _orHidden && eclipsesDeclarations(false);
+    }
+	/**
+	 * @param _modeIndependent TODO
+	 * @return either this or a preceding declaration if mode {@link Element#E_HIDE_DECL}
+	 * is active and this is a mere declaration but not the first one in a series.
+	 */
+	public final Instruction getDrawingSurrogate(boolean _modeIndependent)
+	{
+		Instruction surrogate = this;
+		if ((_modeIndependent || E_HIDE_DECL) && this.isMereDeclaratory()) {
+			Subqueue myParent = (Subqueue)this.parent;
+			int myIndex = (myParent).getIndexOf(this);
+			Element pred = null;
+			while (myIndex > 0
+					&& (pred = myParent.getElement(myIndex-1)).getClass().getSimpleName().equals("Instruction")
+					&& ((Instruction)pred).isMereDeclaratory()) {
+				surrogate = (Instruction)pred;
+				myIndex--;
+			}
+		}
+		return surrogate;
+	}
+	/**
+	 * If this is part of a sequence of mere declaration elements and display mode {@link Element#E_HIDE_DECL}
+	 * is active or {@code _force} is true then the complete declaration sequence virtually amalgamated under
+	 * its first member will be returned, otherwise null.
+	 * @param _modeIndependent - if true then an existing declaration sequence will also be returned if mode
+	 * {@link Element#E_HIDE_DECL} is off.
+	 * @return the sequence of hidden declaration elements including its surrogate element or null.
+	 */
+	public IElementSequence getEclipsedDeclarations(boolean _modeIndependent)
+	{
+		IElementSequence hidden = null;
+		Instruction surrogate = this.getDrawingSurrogate(_modeIndependent);
+		if (this.eclipsesDeclarations(_modeIndependent) || this != surrogate) {
+			Subqueue myParent = (Subqueue)this.parent;
+			int firstIndex = (myParent).getIndexOf(surrogate);
+			int index = firstIndex+1;
+			Element succ = null;
+			while (index < myParent.getSize()
+					&& (succ = myParent.getElement(index)).getClass().getSimpleName().equals("Instruction")
+					&& ((Instruction)succ).isMereDeclaratory()) {
+				index++;
+			}
+			hidden = new SelectedSequence(myParent, firstIndex, index-1);
+		}
+		return hidden;
+	}
+	// END KGU#477 2017-12-06
+	
+	// START KGU#477 2017-12-10: Enh. #487 - We may have to aggregate information of hidden declarations
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRuntimeInfoString()
+	 */
+	@Override
+	protected String getRuntimeInfoString()
+	{
+		// Only if display mode "Hide mere declarations?" is active we will have to aggregate flock data
+		if (!this.eclipsesDeclarations(false)) {
+			return super.getRuntimeInfoString();
+		}
+		// Now we need the minimum execution count and the total step count of the entire declaration flock
+		// Since we must override this method anyway in order to enclose the combined step count, we do it
+		// in a compound loop rather than by calling this.getExecCount() and this.getExecStepCount(_combined)
+		IElementSequence flock = this.getEclipsedDeclarations(false);
+		int nExec = this.getExecCount();
+		int nSteps = this.getExecStepCount(false);
+		for (int i = 1; i < flock.getSize(); i++) {
+			Element decl = flock.getElement(i);
+			nExec = Math.min(nExec, decl.getExecCount());
+			nSteps += decl.getExecStepCount(false);
+		}
+		return nExec + " / (" + nSteps + ")";
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getScaleColorForRTDPM()
+	 */
+	@Override
+	protected Color getScaleColorForRTDPM()
+	{
+		int maxValue = 0;
+		int value = 0;
+		boolean logarithmic = false;
+		switch (Element.E_RUNTIMEDATAPRESENTMODE) {
+		case EXECCOUNTS:
+			maxValue = Element.maxExecCount;
+			value = this.getMinExecCount();
+			break;
+		case EXECSTEPS_LOG:
+			logarithmic = true;
+		case EXECSTEPS_LIN:
+			maxValue = Element.maxExecStepCount;
+			if (Element.E_HIDE_DECL && Element.maxExecStepsEclCount > Element.maxExecStepCount) {
+				maxValue = Element.maxExecStepsEclCount;
+			}
+			value = this.execStepCount;
+			if (this.eclipsesDeclarations(false)) {
+				value += this.execSubCount;
+			}
+			break;
+		case TOTALSTEPS_LOG:
+			logarithmic = true;
+		case TOTALSTEPS_LIN:
+			maxValue = Element.maxExecTotalCount;
+			if (Element.E_HIDE_DECL && Element.maxExecStepsEclCount > Element.maxExecTotalCount) {
+				maxValue = Element.maxExecStepsEclCount;
+			}
+			value = this.execStepCount;
+			if (this.eclipsesDeclarations(false)) {
+				value += this.execSubCount;
+			}
+			break;
+		default:
+				;
+		}
+		if (logarithmic) {
+			// We scale the logarithm a little up lest there should be too few
+			// discrete possible values
+			if (maxValue > 0) maxValue = (int) Math.round(25 * Math.log(maxValue));
+			if (value > 0) value = (int) Math.round(25 * Math.log(value));
+		}
+		return getScaleColor(value, maxValue);
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addToExecTotalCount(int, boolean)
+	 */
+	@Override
+	public void addToExecTotalCount(int _growth, boolean _directly)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			if (!_directly && this.eclipsesDeclarations(true))
+			{
+				this.execSubCount += _growth;
+				Element.maxExecStepsEclCount = 
+						Math.max(this.execStepCount + this.execSubCount,
+								Element.maxExecStepsEclCount);			
+			}
+			else {
+				super.addToExecTotalCount(_growth, _directly);
+			}
+		}
+	}
+	private int getMinExecCount()
+	{
+		// Only if display mode "Hide mere declarations?" is active we will have to aggregate flock data
+		if (!this.eclipsesDeclarations(false)) {
+			return super.getExecCount();
+		}
+		// Now we need the minimum execution count and the total step count of the entire declaration flock
+		// Since we must override this method anyway in order to enclose the combined step count, we do it
+		// in a compound loop rather than by calling this.getExecCount() and this.getExecStepCount(_combined)
+		IElementSequence flock = this.getEclipsedDeclarations(false);
+		int nExec = this.getExecCount();
+		for (int i = 1; i < flock.getSize(); i++) {
+			Element decl = flock.getElement(i);
+			nExec = Math.min(nExec, decl.getExecCount());
+		}
+		return nExec;
+		
+	}
+	/**
+	 * Returns the summed up execution steps of this element and - if {@code _combined} is true and
+	 * this is not an eclipsing declaration - all its substructure.
+	 * @param _combined - ignored
+	 * @return the requested step count
+	 */
+	@Override
+	public int getExecStepCount(boolean _combined)
+	{
+		if (this.eclipsesDeclarations(true)) {
+			return this.execStepCount;
+		}
+		else {
+			return super.getExecStepCount(_combined);
+		}
+	}
+	// END KGU#477 2017-12-10
 
 }

@@ -122,7 +122,6 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 */
 	public SelectedSequence(Subqueue _owner, int _index1, int _index2) {
 		super("");
-		// _child1 and _child2 should have got a common parent (in particualr, a Subqueue
 		this.parent = _owner;
 		this.firstIndex = Math.max(0, _index1);
 		this.lastIndex = Math.min(_owner.getSize()-1, _index2);
@@ -518,8 +517,12 @@ public class SelectedSequence extends Element implements IElementSequence {
         }
     }
 	
+    /**
+     * Sets this element sequence as a whole and also all individual members to selected
+     * (if {@code _sel} is true) or unselected (otherwise).
+     */
 	@Override
-	public void setSelected(boolean _sel)
+	public Element setSelected(boolean _sel)
 	{
 		//System.out.println(this + ".setSelected(" + _sel + ")");
 		selected = _sel;
@@ -528,6 +531,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 			// This must not be recursive!
 			((Subqueue)parent).getElement(i).selected = _sel;
 		}
+		return _sel ? this : null;
 	}
 
 	// START KGU#183 2016-04-24: Issue #169 
@@ -542,6 +546,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 	// END KGU#183 2016-04-24
 	    
 	// START KGU#123 2016-01-03: We need a collective collapsing/expansion now
+	/**
+	 * Sets all members individually collapsed (true) or expanded (false). 
+	 */
 	@Override
     public void setCollapsed(boolean collapsed) {
         super.setCollapsed(false);	// the Subqueue itself will never be collapsed

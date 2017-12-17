@@ -547,14 +547,15 @@ public class Subqueue extends Element implements IElementSequence {
 
 	// START KGU#87 2015-11-22: Allow the selection flagging of all immediate children
 	@Override
-	public void setSelected(boolean _sel)
+	public Element setSelected(boolean _sel)
 	{
-		selected=_sel;
+		selected = _sel;
 		for (int i = 0; i < getSize(); i++)
 		{
 			// This must not be recursive!
 			children.get(i).selected = _sel;
 		}
+		return _sel ? this : null;
 	}
 	// END KGU#87 2015-11-22
 

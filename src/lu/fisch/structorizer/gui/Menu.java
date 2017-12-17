@@ -83,6 +83,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
  *      Kay Gürtzig     2017.11.05      Enh. #452: Preference "simplified toolbars" introduced
  *      Kay Gürtzig     2017.11.09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
+ *      Kay Gürtzig     2017.11.20      Enh. #452/#459: Revisions for guided tours, enh. #469: Accelerators for debug menu
+ *      Kay Gürtzig     2017.12.06      Enh. #487: New menu items for hiding of declaration sequences
+ *      Kay Gürtzig     2017.12.14/15   Enh. #492: Configuration of external element names added 
  *
  ******************************************************************************************************
  *
@@ -261,6 +264,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#227 2016-07-31: Enh. #128
 	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
 	// END KGU#227 2016-07-31
+	// START KGU#477 2017-12-06: Enh. #487
+	protected final JCheckBoxMenuItem menuDiagramHideDeclarations = new JCheckBoxMenuItem("Hide declarations?",IconLoader.ico085);
+	// END KGU#477 2017-12-06
 	// START KGU#305 2016-12-14: Enh. #305
 	protected final JCheckBoxMenuItem menuDiagramIndex = new JCheckBoxMenuItem("Show Arranger index?",IconLoader.ico029);
 	// END KGU#305 2016-12-14
@@ -278,6 +284,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
 	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
 	protected final JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
+	// START KGU#479 2017-12-14: Enh. #492
+	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...",IconLoader.ico057);
+	// END KGU#479 2017-12-14
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	// START KGU#309 2016-12-15: Enh. #310 - new options for saving diagrams
 	protected final JMenuItem menuPreferencesSaving = new JMenuItem("Saving ...",IconLoader.ico003);
@@ -327,10 +336,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#239 2016-08-12
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
-	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu \"%1 > %2\".");
+	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu \"%1 ► %2\".");
 	// END KGU#220 2016-07-27
 	// START KGU#456 2017-11-05: Enh. #452
-	public static final LangTextHolder warning_2 = new LangTextHolder("NOTE: «%4» is active. To switch it off → Menu \"%1 > %2 > %3\".");	
+	public static final LangTextHolder warning_2 = new LangTextHolder("NOTE: «%4» is active. To switch it off → Menu \"%1 ► %2 ► %3\".");	
 	// END KGU#456 2017-11-05
 	public static final LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
 	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
@@ -416,7 +425,7 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder errorLineReference = new LangTextHolder(" (line %)");
 	// END KGU#375 2017-04-04
 	// START KGU#376 2017-04-11/21: Enh. #389 
-	public static final LangTextHolder error23_1 = new LangTextHolder("Diagram «%» is rather unsuited for an import call as it makes use of return.");
+	public static final LangTextHolder error23_1 = new LangTextHolder("Diagram «%» is rather unsuited to be included as it makes use of return.");
 	public static final LangTextHolder error23_2 = new LangTextHolder("Import of diagram «%» is recursive!");
 	public static final LangTextHolder error23_3 = new LangTextHolder("Import of diagram «%1» will be ignored here because it had already been imported: %2");
 	public static final LangTextHolder error23_4 = new LangTextHolder("Name conflict between local and imported variable or constant «%»!");
@@ -437,22 +446,24 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error24_8 = new LangTextHolder("Variable «%1» hasn't got a component «%2»!");
 	// END KGU#388 2017-09-13
 	// START KGU#456 2017-11-04: Enh. #452 - Be more helpful to newbees
-	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «% x»");
-	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «% x»");
-	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «% y»");
+	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «%1 %2»");
+	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «%1 %2». → Menu \"%3\"");
+	public static final LangTextHolder hint25_3 = new LangTextHolder("You might want to print results, e.g. with an instruction like «%1 %2». → Menu \"%3\"");
 	public static final LangTextHolder hint25_4 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an Instruction.");
 	public static final LangTextHolder hint25_5 = new LangTextHolder("Select the diagram centre and place e.g. an Instruction element with a type or constant definition.");
-	public static final LangTextHolder hint25_6 = new LangTextHolder("You might want to place some processing instruction like «%» between input and output.");
+	public static final LangTextHolder hint25_6 = new LangTextHolder("You might want to place some processing instruction like «%1» between input and output. → Menu \"%2\"");
 	public static final LangTextHolder[] hint26 = {
 			new LangTextHolder("Select the diagram centre, double-click, press Enter or F5, and put in the instruction text «% \"Hello world!\"»"),
-			new LangTextHolder("Now you may e.g. test your diagram → Menu \"%1 > %2\"."),
-			new LangTextHolder("Now you may e.g. save your diagram → Menu \"%1 > %2\""),
-			new LangTextHolder("Now you may e.g. export your diagram to some programming language → Menu \"%1 > %2 > %3\""),
-			new LangTextHolder("Now you may e.g. export your diagram as graphics file → Menu \"%1 > %2 > %3\"")
+			new LangTextHolder("Now you may e.g. test your diagram: → Menu \"%1 ► %2\""),
+			new LangTextHolder("Now you may e.g. save your diagram: → Menu \"%1 ► %2\""),
+			new LangTextHolder("Now you may e.g. export your diagram to some programming language: → Menu \"%1 ► %2 ► %3\""),
+			new LangTextHolder("Now you may e.g. export your diagram as graphics file: → Menu \"%1 ► %2 ► %3\"")
 	};
 	// END KGU#456 2017-11-01
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list).");
+	public static final LangTextHolder msgGuidedTourDone = new LangTextHolder("Congratulations - you finished the tutorial «%».");
+	public static final LangTextHolder msgGuidedTourNext = new LangTextHolder("%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first via menu \"%3\"");
 	public static final LangTextHolder ttlGuidedTours = new LangTextHolder("Guided Tours");
 	// END KGU#459 2017-11-14
 
@@ -1017,6 +1028,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
 		// START KGU#169 2016-04-01
 
+		// START KGU#477 2017-12-06: Enh. #487
+		menuDiagram.add(menuDiagramHideDeclarations);
+		menuDiagramHideDeclarations.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHideDeclarations(menuDiagramHideDeclarations.isSelected()); doButtons(); } } );
+		// END KGU#477 2016-12-06
+
 		menuDiagram.add(menuDiagramMarker);
 		menuDiagramMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuDiagramMarker.isSelected()); doButtons(); } } );
 		menuDiagramMarker.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
@@ -1065,6 +1081,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuPreferences.add(menuPreferencesParser);
 		menuPreferencesParser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.parserNSD(); doButtons(); } } );
+
+		// START KGU#479 2017-12-14: Enh. #492
+		menuPreferences.add(menuPreferencesElements);
+		menuPreferencesElements.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.elementNamesNSD(); doButtons(); } } );;
+		// END KGU#479 2017-12-14
 
 		menuPreferences.add(menuPreferencesAnalyser);
 		menuPreferencesAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.analyserNSD(); doButtons(); } } );
@@ -1221,9 +1242,15 @@ public class Menu extends LangMenuBar implements NSDController
 		
 		menuDebug.add(menuDebugTurtle);
 		menuDebugTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goTurtle(); } } );
+		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
+		menuDebugTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		// START KGU#463 2017-11-2
 
 		menuDebug.add(menuDebugExecute);
 		menuDebugExecute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goRun(); } } );
+		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
+		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+		// START KGU#463 2017-11-2
 
 		menuDebug.add(menuDebugDropBrkpts);
 		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
@@ -1383,29 +1410,29 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// elements
 			// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
-			menuDiagramAdd.setEnabled(conditionNoMult);
+			menuDiagramAdd.setEnabled(condition);
 			// END KGU#87 2015-11-22
-			menuDiagramAddBeforeInst.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeAlt.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeCase.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeFor.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeWhile.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeRepeat.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeForever.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeCall.setEnabled(conditionNoMult);
-			menuDiagramAddBeforeJump.setEnabled(conditionNoMult);
-			menuDiagramAddBeforePara.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeInst.setEnabled(condition);
+			menuDiagramAddBeforeAlt.setEnabled(condition);
+			menuDiagramAddBeforeCase.setEnabled(condition);
+			menuDiagramAddBeforeFor.setEnabled(condition);
+			menuDiagramAddBeforeWhile.setEnabled(condition);
+			menuDiagramAddBeforeRepeat.setEnabled(condition);
+			menuDiagramAddBeforeForever.setEnabled(condition);
+			menuDiagramAddBeforeCall.setEnabled(condition);
+			menuDiagramAddBeforeJump.setEnabled(condition);
+			menuDiagramAddBeforePara.setEnabled(condition);
 
-			menuDiagramAddAfterInst.setEnabled(conditionNoMult);
-			menuDiagramAddAfterAlt.setEnabled(conditionNoMult);
-			menuDiagramAddAfterCase.setEnabled(conditionNoMult);
-			menuDiagramAddAfterFor.setEnabled(conditionNoMult);
-			menuDiagramAddAfterWhile.setEnabled(conditionNoMult);
-			menuDiagramAddAfterRepeat.setEnabled(conditionNoMult);
-			menuDiagramAddAfterForever.setEnabled(conditionNoMult);
-			menuDiagramAddAfterCall.setEnabled(conditionNoMult);
-			menuDiagramAddAfterJump.setEnabled(conditionNoMult);
-			menuDiagramAddAfterPara.setEnabled(conditionNoMult);
+			menuDiagramAddAfterInst.setEnabled(condition);
+			menuDiagramAddAfterAlt.setEnabled(condition);
+			menuDiagramAddAfterCase.setEnabled(condition);
+			menuDiagramAddAfterFor.setEnabled(condition);
+			menuDiagramAddAfterWhile.setEnabled(condition);
+			menuDiagramAddAfterRepeat.setEnabled(condition);
+			menuDiagramAddAfterForever.setEnabled(condition);
+			menuDiagramAddAfterCall.setEnabled(condition);
+			menuDiagramAddAfterJump.setEnabled(condition);
+			menuDiagramAddAfterPara.setEnabled(condition);
 
 
 			// editing
@@ -1432,8 +1459,8 @@ public class Menu extends LangMenuBar implements NSDController
 			
 			// START KGU#123 2016-01-03: We allow multiple selection for collapsing
 			// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
-			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
-			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
+			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 			// END KGU#123 2016-01-03
 			// START KGU#277 2016-10-13: Enh. #270
 			menuDebugDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
@@ -1480,9 +1507,13 @@ public class Menu extends LangMenuBar implements NSDController
 				menuDiagramSwitchComments.setToolTipText(null);
 			}
 			// END KGU#227 2016-07-31
-
+			
 			// swap texts against comments?
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
+
+			// START KGU#477 2017-12-11: Enh. #487
+			menuDiagramHideDeclarations.setSelected(Element.E_HIDE_DECL);
+			// END KGU#477 2017-12-11
 
 			// DIN 66261
 			menuDiagramDIN.setSelected(Element.E_DIN);
@@ -1617,6 +1648,11 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#235 2016-08-09: Bugfix #225
     public void chooseLang(String localeName)
     {
+    	// START KGU#479 2017-12-15: Enh. #492
+    	Locales.getInstance().setLocale((Component)ElementNames.getInstance(), localeName);
+    	// Better reset the use of personally configured names on changing the language
+    	ElementNames.useConfiguredNames = false;
+    	// END KGU#479 2017-12-15
     	Locales.getInstance().setLocale(localeName);
     	doButtons();
     	diagram.analyse();

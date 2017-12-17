@@ -236,7 +236,7 @@ public class Case extends Element implements IFork
             // END KGU#136 2016-03-01
             
             // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-            if (isCollapsed()) 
+            if (isCollapsed(true)) 
             {
             	rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
         		// START KGU#136 2016-03-01: Bugfix #97
@@ -377,7 +377,7 @@ public class Case extends Element implements IFork
             		// START KGU#401 2017-05-17: Issue #405
             		boolean rotatable = rtt.bottom < rtt.right
             				&& sq.getSize() == 1 && (sq.getElement(0) instanceof Instruction ||
-            						sq.getElement(0).isCollapsed());
+            						sq.getElement(0).isCollapsed(true));
             		rotX0Branches.addElement(rotatedWidth);
             		int rotWidth = (rotatable ? rtt.bottom : rtt.right);
             		int rotHeight = (rotatable ? rtt.right : rtt.bottom);
@@ -411,7 +411,7 @@ public class Case extends Element implements IFork
 
     public void draw(Canvas _canvas, Rect _top_left)
     {
-    	if(isCollapsed()) 
+    	if(isCollapsed(true)) 
     	{
     		Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
     		return;
@@ -752,13 +752,13 @@ public class Case extends Element implements IFork
     }
 
     // START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#getIcon()
+     */
     @Override
     public ImageIcon getIcon()
     {
-    	// START KGU#217 2016-07-25: Issue #87 - Was wrong icon number
-    	//return IconLoader.ico057;
     	return IconLoader.ico064;
-    	// END KGU#217 2016-07-25
     }
     // END KGU#122 2016-01-03
 
@@ -769,7 +769,7 @@ public class Case extends Element implements IFork
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
     	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
 		//if (!this.isCollapsed())
-		if (!this.isCollapsed() && (selMe != null || _forSelection))
+		if (!this.isCollapsed(true) && (selMe != null || _forSelection))
 		// START KGU#207 2016-07-21
 		{
 		// END KGU#121 2016-01-03
@@ -903,12 +903,12 @@ public class Case extends Element implements IFork
 		case TOTALSTEPS_LIN:
 		case TOTALSTEPS_LOG:
 			stepInfo = Integer.toString(this.getExecStepCount(true));
-			if (!this.isCollapsed()) {
+			if (!this.isCollapsed(true)) {
 				stepInfo = "(" + stepInfo + ")";
 			}
 			break;
 		default:
-			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed(true)));
 		}
 		return info + stepInfo;
 	}

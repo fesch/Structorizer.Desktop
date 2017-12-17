@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -57,14 +56,15 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.04.29      Enh. #319/#389: New icon 070_program_green for Arranger index
  *      Kay Gürtzig     2017.05.16      Enh. #389: New icons 071_include, 072_include_green
  *      Kay Gürtzig     2017.06.13      Enh. #415: New icon 073_binoculars for Find & Replace dialog
- *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced 
+ *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced
+ *      Kay Gürtzig     2017.12.06      Enh. #487: New icon 085_hide_decl for hiding declarations
+ *      Kay Gürtzig     2017.12.11      Enh. #425: New icons 114_down and 115_up for Translator 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.awt.*;
 import java.awt.image.*;
@@ -111,6 +111,9 @@ public class IconLoader {
 	public static ImageIcon ico021 = getIconImage(getURI(from+"icons/021_function.png"));
 	public static ImageIcon ico022 = getIconImage(getURI(from+"icons/022_program.png"));
 	public static ImageIcon ico023 = getIconImage(getURI(from+"icons/023_font.png"));
+	// START KGU#459 2017-11-19: Issue #459
+	public static ImageIcon ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
+	// END KGU#459 2017-11-19
 	
 	// START KGU#258 2016-09-25: Enh. #253
 	public static ImageIcon ico025 = getIconImage(getURI(from+"icons/025_import.png"));
@@ -200,7 +203,9 @@ public class IconLoader {
 	public static ImageIcon ico082 = getIconImage(getURI(from+"icons/082_din.png"));
 	public static ImageIcon ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
 	public static ImageIcon ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
-	//public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
+	// START KGU#477 2017-12-06: Enh. #487
+	public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
+	// END KGU#477 2017-12-06
 	//public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_it.png"));
 	//public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
 	//public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
@@ -239,9 +244,10 @@ public class IconLoader {
 	public static ImageIcon ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
 	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
 	// END KGU#213 2016-08-02
-	// START KGU#232 2016-08-03: Enh. #222
-	//public static ImageIcon ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
-	// END KGU#232 2016-08-03
+	// START KGU#418 2017-12-11: Enh. #425
+	public static ImageIcon ico114 = getIconImage(getURI(from+"icons/114_down.png"));
+	public static ImageIcon ico115 = getIconImage(getURI(from+"icons/115_up.png"));
+	// END KGU#213 2017-12-11
 
 	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 	
@@ -279,6 +285,9 @@ public class IconLoader {
             ico021 = getIconImage(getURI(from+"icons/021_function.png"));
             ico022 = getIconImage(getURI(from+"icons/022_program.png"));
             ico023 = getIconImage(getURI(from+"icons/023_font.png"));
+        	// START KGU#459 2017-11-19: Issue #459
+        	ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
+        	// END KGU#459 2017-11-19
 
         	// START KGU#258 2016-09-25: Enh. #253
             ico025 = getIconImage(getURI(from+"icons/025_import.png"));
@@ -367,7 +376,9 @@ public class IconLoader {
             ico082 = getIconImage(getURI(from+"icons/082_din.png"));
             ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
             ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
-            //ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
+        	// START KGU#477 2017-12-06: Enh. #487
+            ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
+        	// END KGU#477 2017-12-06
             //ico086 = getIconImage(getURI(from+"icons/086_it.png"));
             //ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
             //ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
@@ -414,9 +425,10 @@ public class IconLoader {
             ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
             // END KGU#287 2016-11-01
 
-        	// START KGU#232 2016-08-02: Enh. #222 - more flexible language export
-        	//ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
-        	// END KGU#232 2016-08-02
+        	// START KGU#418 2017-12-11: Enh. #425
+        	ico114 = getIconImage(getURI(from+"icons/114_down.png"));
+        	ico115 = getIconImage(getURI(from+"icons/115_up.png"));
+        	// END KGU#213 2017-12-11
 
         	turtle = getIconImage(getURI(from+"icons/turtle.png"));
         	

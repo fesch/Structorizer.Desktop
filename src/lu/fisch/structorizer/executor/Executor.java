@@ -146,6 +146,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.29      Enh. #423: Workaround for evaluation error on converted actual object field access
  *      Kay Gürtzig     2017.10.31      Enh. #439: showCompoundValue() now more comfortable with ValuePresenter
  *      Kay Gürtzig     2017.11.01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
+ *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
  *
  ******************************************************************************************************
  *
@@ -884,6 +885,10 @@ public class Executor implements Runnable
 	// START KGU 2016-12-18: Enh. #314: Stream table for Simple file API
 	private final Vector<Closeable> openFiles = new Vector<Closeable>();
 	// END KGU 2016-12-18
+	// START KGU#477 2017-12-10: Enh. #487
+	/** The first element of a currently executed mere declaration sequence */
+	private Instruction lastDeclarationSurrogate = null;
+	// END KGU#477 2017-12-10
 	
 	// Constant set of matchers for unicode literals that cause harm in interpreter
 	private static final Matcher[] MTCHs_BAD_UNICODE = new Matcher[]{
@@ -3841,7 +3846,18 @@ public class Executor implements Runnable
 		// START KGU#43 2015-10-12: If there is a breakpoint switch to step mode before delay
 		checkBreakpoint(element);
 		// END KGU#43 2015-10-12
-		
+
+		// START KGU#477 2017-12-10: Enh. #487 - check continuation of 
+		if (!(element instanceof Instruction) || !((Instruction)element).isMereDeclaratory()) {
+			this.lastDeclarationSurrogate = null;
+		}
+		else if (this.lastDeclarationSurrogate == null) {
+			this.lastDeclarationSurrogate = (Instruction)element;
+		}
+		else if (Element.E_HIDE_DECL) {
+			this.lastDeclarationSurrogate.executed = true;
+		}
+		// END KGU#477 2017-12-10
 		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
@@ -3956,6 +3972,9 @@ public class Executor implements Runnable
 		//StringList sl = element.getText();
 		StringList sl = element.getUnbrokenText();
 		// END KGU#413 2017-06-09
+		// START KGU#477 2017-12-10: Enh. #487 - special treatment for declaration sequences
+		int initialStepCount = element.getExecStepCount(false);
+		// END KGU#477 2017-12-10
 		int i = 0;
 
 		// START KGU#77/KGU#78 2015-11-25: Leave if some kind of leave statement has been executed
@@ -4055,6 +4074,7 @@ public class Executor implements Runnable
 				}
 				else {
 					element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
+					// We don't increment the total execution count here - this is regarded as a non-operation
 				}
 				// END KGU#388 2017-09-13
 				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
@@ -4089,6 +4109,12 @@ public class Executor implements Runnable
 		if (trouble.equals(""))
 		{
 			element.executed = false;
+			// START KGU#477 2017-12-10: Enh. #487 - special treatment for declaration sequences
+			if (this.lastDeclarationSurrogate != null && this.lastDeclarationSurrogate != element) {
+				this.lastDeclarationSurrogate.executed = false;
+				this.lastDeclarationSurrogate.addToExecTotalCount(element.getExecStepCount(false) - initialStepCount, false);
+			}
+			// END KGU#477 2017-12-10
 		}
 		return trouble;
 	}
