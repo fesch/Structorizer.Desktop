@@ -42,6 +42,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.11.09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
  *      Kay Gürtzig     2017.11.20      Issue #400: Ensures key listeners on buttons (also preparing enh. #425)
  *      Kay Gürtzig     2017.12.11/12   Enh. #425: Support for Find mechanism
+ *      Kay Gürtzig     2017.12.18      Enh. #425: Missing key binding for Ctrl-F added to the tabs component
  *
  ******************************************************************************************************
  *
@@ -55,6 +56,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
@@ -71,14 +73,16 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Vector;
 
-import javax.swing.Action;
+import javax.swing.AbstractAction;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -625,7 +629,6 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             public void keyPressed(KeyEvent evt) {
             	int keyCode = evt.getKeyCode();
             	int modifiers = evt.getModifiers();
-            	char key = evt.getKeyChar();
                 switch (keyCode) {
                 case KeyEvent.VK_ESCAPE:
                 {
@@ -815,6 +818,19 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         jPanel2.add(jScrollPane2, java.awt.BorderLayout.CENTER);
 
         tabs.addTab("Header", jPanel2);
+        // START KGU#393/KGU#418 2017-12-18: Issue #425 - we needed a key binding on the tabs
+        tabs.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
+        		KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "openFindDialog");
+        tabs.getActionMap().put("openFindDialog", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+        		if (searchDialog == null) {
+        			searchDialog = new TranslatorFindDialog(Translator.this);
+        		}
+        		searchDialog.setVisible(true);
+			}
+        });
+        // END KGU#393/KGU#418 2017-12-18
 
         getContentPane().add(tabs, java.awt.BorderLayout.CENTER);
         tabs.getAccessibleContext().setAccessibleName("Strings");
