@@ -1014,14 +1014,14 @@ PluginOptionDialog.msgVerificationError.text=Error de verificación
 PluginOptionDialog.btnOk.text=Aceptar
 PluginOptionDialog.btnCancel.text=Cancelar
 
------[ ElementNamesPreferences ]-----
-ElementNamesPreferences.title=Preferidos nombres de elementos
-ElementNamesPreferences.lblExplanation.text=Renombra tipos de elementos para el display
-ElementNamesPreferences.chkUseConfNames.text=Permite las designaciones preferidas
-ElementNamesPreferences.lblLocalized.text=Nombre localizado
-ElementNamesPreferences.lblIndividual.text=Nombre preferido
-ElementNamesPreferences.btnOK.text=Aceptar
-ElementNamesPreferences.btnOK.tooltip=Aceptar los cambios.
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=Preferidos nombres de elementos
+ElementNamePreferences.lblExplanation.text=Renombra tipos de elementos para el display
+ElementNamePreferences.chkUseConfNames.text=Permite las designaciones preferidas
+ElementNamePreferences.lblLocalized.text=Nombre localizado
+ElementNamePreferences.lblIndividual.text=Nombre preferido
+ElementNamePreferences.btnOK.text=Aceptar
+ElementNamePreferences.btnOK.tooltip=Aceptar los cambios.
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=Calibración de interfaz gráfica

@@ -1010,14 +1010,14 @@ PluginOptionDialog.msgVerificationError.text=Input verification failed
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancel
 
------[ ElementNamesPreferences ]-----
-ElementNamesPreferences.title=Element Name Preferences
-ElementNamesPreferences.lblExplanation.text=Re-label the Element types for display
-ElementNamesPreferences.chkUseConfNames.text=Enable the configured labels
-ElementNamesPreferences.lblLocalized.text=Localized label
-ElementNamesPreferences.lblIndividual.text=Configured label
-ElementNamesPreferences.btnOK.text=OK
-ElementNamesPreferences.btnOK.tooltip=Accept these settings.
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=Element Name Preferences
+ElementNamePreferences.lblExplanation.text=Re-label the Element types for display
+ElementNamePreferences.chkUseConfNames.text=Enable the configured labels
+ElementNamePreferences.lblLocalized.text=Localized label
+ElementNamePreferences.lblIndividual.text=Configured label
+ElementNamePreferences.btnOK.text=OK
+ElementNamePreferences.btnOK.tooltip=Accept these settings.
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI Scale

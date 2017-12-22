@@ -967,14 +967,14 @@ PluginOptionDialog.msgVerificationError.text=
 PluginOptionDialog.btnOk.text=
 PluginOptionDialog.btnCancel.text=
 
------[ ElementNamesPreferences ]-----
-ElementNamesPreferences.title=
-ElementNamesPreferences.lblExplanation.text=
-ElementNamesPreferences.chkUseConfNames.text=
-ElementNamesPreferences.lblLocalized.text=
-ElementNamesPreferences.lblIndividual.text=
-ElementNamesPreferences.btnOK.text=
-ElementNamesPreferences.btnOK.tooltip=
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=
+ElementNamePreferences.lblExplanation.text=
+ElementNamePreferences.chkUseConfNames.text=
+ElementNamePreferences.lblLocalized.text=
+ElementNamePreferences.lblIndividual.text=
+ElementNamePreferences.btnOK.text=
+ElementNamePreferences.btnOK.tooltip=
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=
