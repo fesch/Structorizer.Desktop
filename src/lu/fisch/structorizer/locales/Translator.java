@@ -818,7 +818,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         jPanel2.add(jScrollPane2, java.awt.BorderLayout.CENTER);
 
         tabs.addTab("Header", jPanel2);
-        // START KGU#393/KGU#418 2017-12-18: Issue #425 - we needed a key binding on the tabs
+        // START KGU#418 2017-12-18: Issue #425 - we needed a key binding on the tabs
         tabs.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
         		KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "openFindDialog");
         tabs.getActionMap().put("openFindDialog", new AbstractAction() {
@@ -830,7 +830,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         		searchDialog.setVisible(true);
 			}
         });
-        // END KGU#393/KGU#418 2017-12-18
+        // END KGU#418 2017-12-18
 
         getContentPane().add(tabs, java.awt.BorderLayout.CENTER);
         tabs.getAccessibleContext().setAccessibleName("Strings");

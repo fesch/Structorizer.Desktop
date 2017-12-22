@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-05 (2017.12.18)
+Current development version 3.27-05 (2017.12.22)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -43,6 +43,7 @@ Current development version 3.27-05 (2017.12.18)
 - 04: Enh. #492: Configurable designations of element types [A. Brusinsky]2
 - 04: Issues #493, #494: COBOL import improved w.r.t. SEARCH <Simon Sobisch>
 - 05: Enh. #425: The Ctrl-F key binding in Translator only worked on the buttons <2>
+- 05: C# autodoc comment style changed from Javadoc to "/// <summary> ..." <2> 
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

@@ -702,7 +702,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Inserts a multi-line comment with configurable comment delimiters for the staring line, the
+	 * Inserts a multi-line comment with configurable comment delimiters for the starting line, the
 	 * continuation lines, and the trailing line.
 	 * @see #insertComment(Element, String)
 	 * @see #insertAsComment(Element, String)
@@ -711,9 +711,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #addCode(String, String, boolean) 
 	 * @param _sl - the StringList to be written as commment
 	 * @param _indent - the basic indentation 
-	 * @param _start - comment symbol for the leading comment line (e.g. "/**", if null then this is omitted)
-	 * @param _cont - comment symbol for the continuation lines
-	 * @param _end - comment symbol for trailing line (e.g. " *\/", if null then no trailing line is generated)
+	 * @param _start - comment symbol for the leading comment line (e.g. "/**"; omitted if being null)
+	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
+	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then no trailing line is generated)
 	 */
 	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
