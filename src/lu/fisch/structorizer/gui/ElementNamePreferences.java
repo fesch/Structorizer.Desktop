@@ -179,6 +179,8 @@ public class ElementNamePreferences extends LangDialog {
 		};
 		chkUseConfNames.addItemListener(checkItemListener);
 
+        GUIScaler.rescaleComponents(this);
+
 		pack();
 		setLocationRelativeTo(getOwner());
 		

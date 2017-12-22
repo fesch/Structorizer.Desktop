@@ -1013,14 +1013,14 @@ PluginOptionDialog.msgVerificationError.text=Fehler bei Eingabeprüfung
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Abbrechen
 
------[ ElementNamesPreferences ]-----
-ElementNamesPreferences.title=Elementnamen einstellen
-ElementNamesPreferences.lblExplanation.text=Elementtypen für Anzeige umbezeichnen
-ElementNamesPreferences.chkUseConfNames.text=Individuelle Bezeichnungen erlauben
-ElementNamesPreferences.lblLocalized.text=Lokalisierter Name
-ElementNamesPreferences.lblIndividual.text=Individueller Name
-ElementNamesPreferences.btnOK.text=OK
-ElementNamesPreferences.btnOK.tooltip=Einstellungen übernehmen.
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=Elementnamen einstellen
+ElementNamePreferences.lblExplanation.text=Elementtypen für Anzeige umbezeichnen
+ElementNamePreferences.chkUseConfNames.text=Individuelle Bezeichnungen erlauben
+ElementNamePreferences.lblLocalized.text=Lokalisierter Name
+ElementNamePreferences.lblIndividual.text=Individueller Name
+ElementNamePreferences.btnOK.text=Speichern
+ElementNamePreferences.btnOK.tooltip=Einstellungen übernehmen.
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI-Skalierung

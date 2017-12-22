@@ -43,7 +43,9 @@ Current development version 3.27-05 (2017.12.22)
 - 04: Enh. #492: Configurable designations of element types [A. Brusinsky]2
 - 04: Issues #493, #494: COBOL import improved w.r.t. SEARCH <Simon Sobisch>
 - 05: Enh. #425: The Ctrl-F key binding in Translator only worked on the buttons <2>
-- 05: C# autodoc comment style changed from Javadoc to "/// <summary> ..." <2> 
+- 05: Issue #496: C# autodoc comment style changed to "/// <summary> ..." <2>
+- 05: Enh. #492: Localization (EN/DE/ES) and GUI scaling support for dialog
+      ElementNamePreferences (Preferences => Element names) fixed <2>      
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

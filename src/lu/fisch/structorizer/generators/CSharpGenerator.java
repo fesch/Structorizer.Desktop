@@ -59,7 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
  *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
- *      Kay Gürtzig             2017.12.22      KGU#482: Autodoc comment style changed from /**... to ///...
+ *      Kay Gürtzig             2017.12.22      Issue #496: Autodoc comment style changed from /**... to ///...
  *
  ******************************************************************************************************
  *
