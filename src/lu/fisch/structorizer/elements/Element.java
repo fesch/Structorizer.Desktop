@@ -1942,6 +1942,12 @@ public abstract class Element {
 		}
 	}
 
+	/**
+	 * Returns the {@link Root} the given Element {@code _element} is residing in.
+	 * @param _element - the interesting Element
+	 * @return the owning {@link Root} or null (if {@code _element} is orphaned).
+	 * @see #getNestingDepth()
+	 */
 	public static Root getRoot(Element _element)
 	{
 		while (_element.parent != null)
@@ -1952,6 +1958,23 @@ public abstract class Element {
 			return (Root) _element;
 		else
 			return null;
+	}
+	
+	/**
+	 * Retrieves the length of the path from the given Element up to the rot (not
+	 * counting the {@link Subqueue} levels).
+	 * @param _element - the interesting Element
+	 * @return the path length (0 for a Root, 1 for any of its immediate children etc.)
+	 */
+	public static int getNestingDepth(Element _element)
+	{
+		int depth = 0;
+		while (_element.parent != null)
+		{
+			_element = _element.parent;
+			depth++;
+		}
+		return depth / 2;
 	}
 
 //	@Deprecated

@@ -51,7 +51,10 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 
+import java.io.File;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 
@@ -59,6 +62,12 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 public class TexGenerator extends Generator {
+	
+	/** Conversion factor from pixels to millimeters (assuming 72 dpi) */
+	// FIXME: This factor might also depend on the current Structorizer font size!
+	private final double PIXEL_TO_MM = 25.4 / 72.0;
+	/** Mirror of Element.E_PADDING */
+	private final int E_PADDING = 20;
 	
 	/************ Fields ***********************/
 	protected String getDialogTitle()
@@ -108,7 +117,7 @@ public class TexGenerator extends Generator {
 	@Override
 	protected String getIncludePattern()
 	{
-		return null;
+		return "\\usepackage{%}";
 	}
 	// END KGU#351 2017-02-26
 
@@ -251,7 +260,17 @@ public class TexGenerator extends Generator {
     			// START KGU#483 2017-12-30: Enh. #497
     			//code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
     			String line = lines.get(i);
-    			
+    			if (Instruction.isTypeDefinition(line)) {
+    				code.add(_indent+"\\assign{%");
+    				code.add(_indent+this.getIndent() + "\\begin{declaration}[type:]");
+    				// get the type name
+    				StringList tokens = Element.splitLexically(line, true);
+    				tokens.removeAll(" ");
+    				String typeName = tokens.get(1);
+    				code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + typeName + "}{"
+    						+ transform(tokens.concatenate(" ", 3)) + "}");
+    				code.add(_indent+this.getIndent() + "\\end{declaration}");    				
+    			}
     			if (!Instruction.isAssignment(line) && Instruction.isDeclaration(line)) {
     				code.add(_indent+"\\assign{%");
     				code.add(_indent+this.getIndent() + "\\begin{declaration}[variable:]");
@@ -261,8 +280,7 @@ public class TexGenerator extends Generator {
     				String varName = _inst.getAssignedVarname(tokens);
     				code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + varName + "}{"
     						+ transform(line) + "}");
-    				code.add(_indent+this.getIndent() + "\\begin{declaration}");
-    				
+    				code.add(_indent+this.getIndent() + "\\end{declaration}");    				
     			}
     			code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
     			// END KGU#483 2017-12-30
@@ -287,22 +305,35 @@ public class TexGenerator extends Generator {
     	if (!_alt.disabled) {
     		// START KGU#453 2017-11-02: Issue #447 - line continuation support was inconsistent
     		//code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+    		String indentPlus1 = _indent + this.getIndent();
     		StringList condLines = _alt.getCuteText();
     		int nCondLines = condLines.count();
-    		int gradient = Math.max(1, 8 - 2 * nCondLines);
-    		code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+       		int gradient = Math.max(1, 8 - 2 * nCondLines);
+       		// START KGU#483 2017-12-31: Issue #497 - this was too simple and inadequate - we should estimate the actual width ratio
+    		//code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+       		int depth = Element.getNestingDepth(_alt);
+       		gradient = Math.max(1, gradient / Math.max(1, depth));
+    		int lWidth = _alt.qTrue.getRect().getRectangle().width;
+       		int rWidth = _alt.qFalse.getRect().getRectangle().width;
+       		int lRatio = Math.max(1, 2 * gradient * lWidth / (lWidth + rWidth));
+       		int rRatio = 2 * gradient - lRatio;
+       		if (gradient == 6 || depth > 2) {
+    			code.add(_indent + "% Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \\ifthenelse{3}{3}... or \\ifthenelse[10]{" + lRatio + "}{" + rRatio +"}...");
+    		}
+    		code.add(_indent + "\\ifthenelse{" + lRatio + "}{" + rRatio + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+    		// END KGU#483 2017-12-31
     		// END KGU#453 2017-11-02
-    		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+    		generateCode(_alt.qTrue, indentPlus1);
     		if(_alt.qFalse.getSize() > 0)
     		{
     			code.add(_indent+"\\change");
-    			generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+    			generateCode(_alt.qFalse, indentPlus1);
     		}
     		else
     		{
-    			code.add(_indent+"\\change");
+    			code.add(_indent + "\\change");
     		}
-    		code.add(_indent+"\\ifend");
+    		code.add(_indent + "\\ifend");
     	}
 	}
 	
@@ -310,19 +341,33 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Case _case, String _indent)
 	{
     	if (!_case.disabled) {
-    		code.add(_indent+"\\case{6}{"+_case.qs.size()+"}{\\("+transform(_case.getText().get(0))+"\\)}{"+transform(_case.getText().get(1))+"}");
-    		generateCode((Subqueue) _case.qs.get(0),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-
-    		for(int i=1;i<_case.qs.size()-1;i++)
+    		// START KGU#483 2017-12-31: Issue #497 - we need a trick to activate the default branch
+    		//code.add(_indent+"\\case{6}{"+_case.qs.size()+"}{\\("+transform(_case.getText().get(0))+"\\)}{"+transform(_case.getText().get(1))+"}");
+    		String indentPlus1 = _indent + this.getIndent();
+    		String indentPlus2 = indentPlus1 + this.getIndent();
+    		StringList caseText = _case.getUnbrokenText();
+    		int nBranches = _case.qs.size();
+    		boolean hasDefaultBranch = !caseText.get(nBranches).trim().equals("%");
+    		String macro = "\\case{6}{"+nBranches+"}";
+    		if (hasDefaultBranch) {
+    			macro = "\\case["+(nBranches * 5)+"]{5}{"+nBranches+"}";
+    		}
+    		// The first branch is integrated in the macro
+    		code.add(_indent + macro + "{\\("+transform(caseText.get(0))+"\\)}{"+transform(caseText.get(1))+"}");
+    		// END KGU#483 2017-12-31
+    		generateCode((Subqueue) _case.qs.get(0), indentPlus2);
+    		// The further branches have to be added witch switch clauses
+    		for(int i=1; i < nBranches-1; i++)
     		{
-    			code.add(_indent+_indent.substring(0,1)+"\\switch{"+transform(_case.getText().get(i+1).trim())+"}");
-    			generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
+    			code.add(indentPlus1 + "\\switch{" + transform(caseText.get(i+1).trim()) + "}");
+    			generateCode((Subqueue) _case.qs.get(i), indentPlus2);
     		}
 
-    		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    		if (hasDefaultBranch)
     		{
-    			code.add(_indent+_indent.substring(0,1)+"\\switch[r]{"+transform(_case.getText().get(_case.qs.size()).trim())+"}");
-    			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
+    			// This selector is to be right-aligned (therefore the "[r]" argument)
+    			code.add(indentPlus1 + "\\switch[r]{" + transform(caseText.get(nBranches).trim()) + "}");
+    			generateCode((Subqueue) _case.qs.get(nBranches-1), indentPlus2);
     		}
     		code.add(_indent+_indent.substring(0,1)+"\\caseend");
     	}
@@ -355,7 +400,7 @@ public class TexGenerator extends Generator {
 			}
 			code.add(_indent + "\\while{" + content + "}");
 			// END KGU#483 2017-12-30
-			generateCode(_for.q, _indent + _indent.substring(0,1));
+			generateCode(_for.q, _indent + this.getIndent());
 			code.add(_indent + "\\whileend");
 		}
 	}
@@ -364,7 +409,7 @@ public class TexGenerator extends Generator {
 	{
 		if (!_while.disabled) {
 			code.add(_indent + "\\while{\\(" + transform(_while.getUnbrokenText().getLongString()) + "\\)}");
-			generateCode(_while.q, _indent + _indent.substring(0,1));
+			generateCode(_while.q, _indent + this.getIndent());
 			code.add(_indent + "\\whileend");
 		}
 	}
@@ -373,7 +418,7 @@ public class TexGenerator extends Generator {
 	{
 		if (!_repeat.disabled) {
 			code.add(_indent + "\\until{\\(" + transform(_repeat.getUnbrokenText().getLongString()) + "\\)}");
-			generateCode(_repeat.q, _indent + _indent.substring(0,1));
+			generateCode(_repeat.q, _indent + this.getIndent());
 			code.add(_indent + "\\untilend");
 		}
 	}
@@ -382,7 +427,7 @@ public class TexGenerator extends Generator {
 	{
 		if (!_forever.isDisabled()) {
 			code.add(_indent+"\\forever");
-			generateCode(_forever.q,_indent+_indent.substring(0,1));
+			generateCode(_forever.q, _indent + this.getIndent());
 			code.add(_indent+"\\foreverend");
 		}
 	}
@@ -394,7 +439,7 @@ public class TexGenerator extends Generator {
 		{
 			// START KGU#2 2015-12-19: Wrong command, should be \sub
 			//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
-			code.add(_indent+"\\sub{\\("+transform(lines.get(i))+"\\)}");
+			code.add(_indent + "\\sub{\\("+transform(lines.get(i))+"\\)}");
 			// END KGU#2 2015-12-19
 		}
 	}
@@ -415,17 +460,23 @@ public class TexGenerator extends Generator {
 			else
 				// END KGU#78 2015-12-19
 			{
-				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+				//String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 				for(int i=0; i<lines.count(); i++)
 				{
 					// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 					//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
+					String line = _jump.getText().get(i);
 					String command = "exit";	// Just the default
-					if (_indent.startsWith(preReturn))
-					{
-						command = "return";
-					}
-					code.add(_indent+ "\\" + command + "{\\("+transform(_jump.getText().get(i))+"\\)}");
+					String padding = "";	// StrukTeX handles the text orientation differently in exit and return macros
+					// START KGU#483 2017-12-31: Issue #497 - distinction between return and exit repaired but then withdrawn
+					// (is not compatible with DIN 66261 and indentation needs a workaround too...)
+					//if (line.startsWith(preReturn))
+					//{
+					//	command = "return";
+					//	padding = "    ";	// The return macro does no left padding in contrast to the exit macro
+					//}
+					// END KGU#483 2017-12-31
+					code.add(_indent+ "\\" + command + "{\\("+transform(padding + line)+"\\)}");
 					// END KGU#78 2015-12-19
 				}
 			}
@@ -475,8 +526,8 @@ public class TexGenerator extends Generator {
 		for (int i = 0; i < _sq.getSize(); i++) {
 			task.children.addElement(_sq.getElement(i).copy());
 		}
-		task.width = _sq.getRect().getRectangle().width + 40;
-		task.height = _sq.getRect().getRectangle().height + 60;
+		task.width = _sq.getRect().getRectangle().width;
+		task.height = _sq.getRect().getRectangle().height;
 		this.tasks.addLast(task);
 		return name;
 	}
@@ -508,16 +559,26 @@ public class TexGenerator extends Generator {
 			code.add("");
 			code.add("\\usepackage{struktex}");
 			code.add("\\usepackage{german}");
+			// START KGU#483 2017-12-31: Issue #497 - there might also be usepackage additions
+			this.insertUserIncludes("");
+			// END KGU#483 2017-12-31
 			code.add("");
-			code.add("\\title{Structorizer StrukTeX Export}");
+			// START KGU#483 2017-12-31: Issue #497
+			//code.add("\\title{Structorizer StrukTeX Export}");
+			File file = _root.getFile();
+			code.add("\\title{Structorizer StrukTeX Export" + (file != null ? " of " + file.getName().replace(" ","_").replace("_", "\\_") : "") + "}");
+			// END KGU#483 2017-12-31
 			// START KGU#363 2017-05-16: Enh. #372
-			code.add("\\author{Structorizer "+Element.E_VERSION+"}");
+			//code.add("\\author{Structorizer "+Element.E_VERSION+"}");
 			if (this.optionExportLicenseInfo()) {
 				code.add("\\author{" + _root.getAuthor() + "}");
 			} else {
 				code.add("\\author{Structorizer "+Element.E_VERSION+"}");
 			}
 			// END KGU#363 2017-05-16
+			// START KGU#483 2017-12-31: Issue #497
+			code.add("\\date{"+ DateFormat.getDateInstance().format(new Date()) +"}");
+			// END KGU#483 2017-12-31
 			code.add("");
 			code.add("\\begin{document}");
 		// START KGU#178 2016-07-20: Enh. #160
@@ -527,7 +588,8 @@ public class TexGenerator extends Generator {
 		code.add("");
 		// START KGU#483 2017-12-30: Bugfix #497 - we must escape underscores in the name
 		//code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getText().get(0))+"]");
-		code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getMethodName())+"]");
+		code.add("% TODO: Tune the width and height argument if necessary!");
+		code.add("\\begin{struktogramm}("+Math.round((_root.width - 2 * E_PADDING) * PIXEL_TO_MM)+","+Math.round(_root.height * PIXEL_TO_MM)+")["+transform(_root.getMethodName())+"]");
 		generateParameterDecl(_root);
 		// END KGU#483 2017-12-30
 		generateCode(_root.children, this.getIndent());
@@ -536,7 +598,8 @@ public class TexGenerator extends Generator {
 		// START KGU#483 2017-12-30: Bugfix #497
 		while (!this.tasks.isEmpty()) {
 			Root task = tasks.removeFirst();
-			code.add("\\begin{struktogramm}("+Math.round(task.width/72.0*25.4)+","+Math.round(task.height/75.0*25.4)+")["+transform(task.getText().get(0))+"]");
+			code.add("% TODO: Tune the width and height argument if necessary!");
+			code.add("\\begin{struktogramm}("+Math.round(task.width * PIXEL_TO_MM)+","+Math.round(task.height * PIXEL_TO_MM)+")["+transform(task.getText().get(0))+"]");
 			generateCode(task.children, this.getIndent());
 			code.add("\\end{struktogramm}");			
 		}
