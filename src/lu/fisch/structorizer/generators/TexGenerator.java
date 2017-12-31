@@ -41,6 +41,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done.
  *      Kay Gürtzig     2016.10.14      Enh. #270: Disabled elements are skipped here now
  *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig     2017.12.30/31   Bugfix #497: Text export had been defective, Parallel export was useless
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,11 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import lu.fisch.utils.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.parsers.CodeParser;
 
@@ -116,6 +122,7 @@ public class TexGenerator extends Generator {
     @Override
 	protected String getInputReplacer(boolean withPrompt)
 	{
+    	// Will not be used
 		return "scanf(\"\", &$1);";
 	}
 
@@ -127,26 +134,93 @@ public class TexGenerator extends Generator {
     @Override
 	protected String getOutputReplacer()
 	{
+    	// Will not be used
 		return "printf(\"\\n\", &$1);";
 	}
 
+    // START KGU#483 2017-12-30: Bugfix #497 - we need a more sophisticated structure here
+	///**
+	// * Transforms assignments in the given intermediate-language code line.
+	// * Replaces "<-" by "\gets" here
+	// * @param _interm - a code line in intermediate syntax
+	// * @return transformed string
+	// */
+	//protected String transformAssignment(String _interm)
+	//{
+	//	return _interm.replace("<-", "\\gets");
+	//}
+    /** Temporary list of virtual Roots created for complex threads in Parallel elements */
+    private LinkedList<Root> tasks = new LinkedList<Root>();
+    private int taskNo = 0;
 	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "\gets" here
+	 * Transforms operators and other tokens from the given intermediate
+	 * language into tokens of the target language and returns the result
+	 * as string.<br/>
+	 * This method is called by {@link #transform(String, boolean)} but may
+	 * also be used elsewhere for a specific token list.
+	 * @see #transform(String, boolean)
+	 * @see #transformInput(String)
+	 * @see #transformOutput(String)
+	 * @see #transformType(String, String)
+	 * @see #suppressTransformation
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed string
 	 */
-	protected String transformAssignment(String _interm)
+    @Override
+	protected String transformTokens(StringList tokens)
 	{
-		return _interm.replace("<-", "\\gets");
+		tokens.replaceAll("{", "\\{");
+		tokens.replaceAll("}", "\\}");
+		tokens.replaceAll("%", "\\)\\pKey{mod}\\(");
+		tokens.replaceAll("&&", "\\wedge");
+		tokens.replaceAll("||", "\\vee");
+		tokens.replaceAll("==", "=");
+		tokens.replaceAll("!=", "\\neq");
+		tokens.replaceAll("<=", "\\leq");
+		tokens.replaceAll(">=", "\\geq");
+		String[] keywords = CodeParser.getAllProperties();
+		HashSet<String> keys = new HashSet<String>(keywords.length);
+		for (String keyword: keywords) {
+			keys.add(keyword);
+		}
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			int len = token.length();
+			if (token.equals("<-") || token.equals(":=")) {
+				token = "\\gets";
+				if (i+1 < tokens.count() && !tokens.get(i+1).trim().isEmpty()) {
+					token += " ";
+				}
+				tokens.set(i,  token);
+			}
+			// Cut strings out of math mode and disarm quotes
+			else if (len >= 2 && token.charAt(0) == '"' && token.charAt(len-1) == '"') {
+				tokens.set(i, "\\)" + token.replace("\"", "\"{}").replace("'", "'{}").replace("^", "\\^{}") + "\\(");
+			}
+			else if (len >= 2 && token.charAt(0) == '\'' && token.charAt(len-1) == '\'') {
+				tokens.set(i, "\\)" + token.replace("\"", "\"{}").replace("'", "'{}").replace("^", "\\^{}") + "\\(");
+			}
+			else if (keys.contains(token)) {
+				tokens.set(i, "\\)\\pKey{" + token + "}\\(");
+			}
+			else if (token.contains("^")) {
+				tokens.set(i, token.replace("^", "\\hat{}"));
+			}
+		}
+		return tokens.concatenate();
 	}
+	// END KGU#483 2017-12-30
 	// END KGU#18/KGU#23 2015-11-01
 
 	protected String transform(String _input)
 	{
 		// das Zuweisungssymbol
 		//_input=BString.replace(_input,"<-","\\gets");
-		_input = transformAssignment(_input);
+		// START KGU#483 2017-12-30: Bugfix #497 - now done by transformTokens()
+		//_input = transformAssignment(_input);
+		_input = super.transform(_input, false);
+		_input = _input.replace("_", "\\_");
+		// END KGU#483 2017-12-30
 		
 		// Leerzeichen
 		_input = _input.replace(" ","\\ ");
@@ -172,9 +246,26 @@ public class TexGenerator extends Generator {
 	{
     	if (!_inst.disabled) {
     		StringList lines = _inst.getUnbrokenText();
-    		for(int i=0;i<lines.count();i++)
+    		for (int i=0; i<lines.count(); i++)
     		{
+    			// START KGU#483 2017-12-30: Enh. #497
+    			//code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
+    			String line = lines.get(i);
+    			
+    			if (!Instruction.isAssignment(line) && Instruction.isDeclaration(line)) {
+    				code.add(_indent+"\\assign{%");
+    				code.add(_indent+this.getIndent() + "\\begin{declaration}[variable:]");
+    				// get the variable name
+    				StringList tokens = Element.splitLexically(line + "<-", true);
+    				tokens.removeAll(" ");
+    				String varName = _inst.getAssignedVarname(tokens);
+    				code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + varName + "}{"
+    						+ transform(line) + "}");
+    				code.add(_indent+this.getIndent() + "\\begin{declaration}");
+    				
+    			}
     			code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
+    			// END KGU#483 2017-12-30
     		}
     	}
 	}
@@ -202,7 +293,7 @@ public class TexGenerator extends Generator {
     		code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
     		// END KGU#453 2017-11-02
     		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
-    		if(_alt.qFalse.getSize()!=0)
+    		if(_alt.qFalse.getSize() > 0)
     		{
     			code.add(_indent+"\\change");
     			generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
@@ -240,7 +331,30 @@ public class TexGenerator extends Generator {
 	protected void generateCode(For _for, String _indent)
 	{
 		if (!_for.disabled) {
-			code.add(_indent + "\\while{\\(" + transform(_for.getUnbrokenText().getLongString()) + "\\)}");
+			// START KGU#483 2017-12-30: Bugfix #497 - we should at least mark the keywords
+			//code.add(_indent + "\\while{\\(" + transform(_for.getUnbrokenText().getLongString()) + "\\)}");
+			String content = "";
+			if (_for.isForInLoop()) {
+				content = "\\(\\forall " + transform(_for.getCounterVar()) +
+						"\\in " + transform(_for.getValueList()) + "\\)";				
+			}
+			else if (_for.style == For.ForLoopStyle.COUNTER) {
+				content = "\\pKey{" + CodeParser.getKeyword("preFor") + "}\\(" +
+						transform(_for.getCounterVar()) +
+						"\\ \\gets\\ " +
+						transform(_for.getStartValue()) +
+						"\\)\\pKey{" + CodeParser.getKeyword("postFor") + "}\\(" +
+						transform(_for.getEndValue()) + "\\)";
+				if (_for.getStepConst() != 1) {
+					content += "\\pKey{" + CodeParser.getKeyword("stepFor") + "}\\(" +
+							transform(_for.getStepString()) + "\\)";
+				}
+			}
+			else {
+				content = "\\(" + transform(_for.getUnbrokenText().getLongString()) + "\\)";
+			}
+			code.add(_indent + "\\while{" + content + "}");
+			// END KGU#483 2017-12-30
 			generateCode(_for.q, _indent + _indent.substring(0,1));
 			code.add(_indent + "\\whileend");
 		}
@@ -293,12 +407,14 @@ public class TexGenerator extends Generator {
 			//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
 			if (lines.count() == 0 || lines.getText().trim().isEmpty())
 			{
-				code.add(_indent+ "\\exit{}");
+				// START KGU#483 2017-12-30: Bugfix #497 - should contain a keyword
+				//code.add(_indent+ "\\exit{}");
+				code.add(_indent+ "\\exit{\\(" + transform(CodeParser.getKeywordOrDefault("preLeave", "leave")) +"\\)}");
+				// END KGU#483 2017-12-30
 			}
 			else
 				// END KGU#78 2015-12-19
 			{
-				// FIXME (KGU 2015-12-19): This should not be split into several blocks
 				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 				for(int i=0; i<lines.count(); i++)
 				{
@@ -323,16 +439,49 @@ public class TexGenerator extends Generator {
 		if (!_para.qs.isEmpty() && !_para.disabled)
 		{
 			// Since substructure is not allowed (at least a call would have been sensible!),
-			// we transform all thread contents into single long strings...
-			code.add(_indent + "\\inparallel{" + _para.qs.size() + "} {" + 
-					transform(_para.qs.get(0).getFullText(false).getLongString()) + "}");
+			// we transfer all non-atomic threads into virtual Roots
+			code.add(_indent + "\\inparallel{" + _para.qs.size() + "} {" +
+					// START KGU#483 2017-12-30: Bugfix 497
+					//transform(_para.qs.get(0).getFullText(false).getLongString()) + "}");
+					makeTaskDescr(_para.qs.get(0)) + "}");
+					// END KGU#483 2017-12-30
 			for (int q = 1; q < _para.qs.size(); q++)
 			{
-				code.add(_indent + "\\task{" + transform(_para.qs.get(q).getFullText(false).getLongString()) + "}");
+				// START KGU#483 2017-12-30: Bugfix 497
+				//code.add(_indent + "\\task{" + transform(_para.qs.get(q).getFullText(false).getLongString()) + "}");
+				code.add(_indent + "\\task{" + makeTaskDescr(_para.qs.get(q)) + "}");
+				// END KGU#483 2017-12-30
 			}
 			code.add(_indent + "\\inparallelend");		
 		}
 	}
+	
+	// START KGU#483 2017-12-30: Enh. #497
+	/**
+	 * Returns a single-line description for the task represented by {@link Subqueue} {@code _sq}
+	 * and creates a virtual {@link Root} with its content if not atomic to be exported afterwards
+	 * as separate structogram. 
+	 * @param _sq - the Element (sequence) of the task
+	 * @return the describing string to be put into the {@code inparallel} macro.
+	 */
+	private String makeTaskDescr(Subqueue _sq) {
+		Element el;
+		if (_sq.getSize() == 1 && (el = _sq.getElement(0)) instanceof Instruction && el.getUnbrokenText().count() == 1) {
+			return transform(el.getUnbrokenText().get(0));
+		}
+		String name = "Task" + ++this.taskNo;
+		Root task = new Root();
+		task.setText(name);
+		for (int i = 0; i < _sq.getSize(); i++) {
+			task.children.addElement(_sq.getElement(i).copy());
+		}
+		task.width = _sq.getRect().getRectangle().width + 40;
+		task.height = _sq.getRect().getRectangle().height + 60;
+		this.tasks.addLast(task);
+		return name;
+	}
+	// END KGU#483 2017-12-19
+
 	// END KGU#47 2015-12-19
 	
 //	protected void generateCode(Subqueue _subqueue, String _indent)
@@ -376,10 +525,22 @@ public class TexGenerator extends Generator {
 		}
 		// END KGU#178 2016-07-20
 		code.add("");
-		code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getText().get(0))+"]");
+		// START KGU#483 2017-12-30: Bugfix #497 - we must escape underscores in the name
+		//code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getText().get(0))+"]");
+		code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getMethodName())+"]");
+		generateParameterDecl(_root);
+		// END KGU#483 2017-12-30
 		generateCode(_root.children, this.getIndent());
 		code.add("\\end{struktogramm}");
 		code.add("");
+		// START KGU#483 2017-12-30: Bugfix #497
+		while (!this.tasks.isEmpty()) {
+			Root task = tasks.removeFirst();
+			code.add("\\begin{struktogramm}("+Math.round(task.width/72.0*25.4)+","+Math.round(task.height/75.0*25.4)+")["+transform(task.getText().get(0))+"]");
+			generateCode(task.children, this.getIndent());
+			code.add("\\end{struktogramm}");			
+		}
+		// END KGU#483 2017-12-30
 		// START KGU#178 2016-07-20: Enh. #160
 		//code.add("\\end{document}");
 		if (topLevel)
@@ -390,6 +551,37 @@ public class TexGenerator extends Generator {
 		
 		return code.getText();
 	}
+
+	// START KGU#483 2017-12-30: Bugfix #497
+	/**
+	 * Creates a dummy element declaring all arguments in case of a function diagram
+	 * @param _root
+	 */
+	private void generateParameterDecl(Root _root) {
+		if (_root.isSubroutine()) {
+			String indent1 = this.getIndent();
+			String indent2 = indent1 + indent1;
+			String indent3 = indent2 + indent1;
+			String resType = _root.getResultType();
+			ArrayList<Param> params = _root.getParams();
+			if (!params.isEmpty() || resType != null) {
+				code.add(indent1 + "\\assign{%");
+				code.add(indent2 + "\\begin{declaration}[Parameters:]");
+				for (Param param: params) {
+					code.add(indent3 + "\\description{\\pVar{"+transform(param.getName())+
+							"}}{type: \\("+ transform(param.getType()) +"\\)}");
+				}
+				code.add(indent2 + "\\end{declaration}");
+				if (resType != null) {
+					code.add(indent2 + "\\begin{declaration}[Result type:]");
+					code.add(indent3 + "\\description{" + resType + "}{}");
+					code.add(indent2 + "\\end{declaration}");
+				}
+				code.add(this.getIndent() + "}");
+			}
+		}
+	}
+	// END KGU#483 2017-12-30
 
 //	@Override - obsolete since 3.27
 //	public String[] getReservedWords() {

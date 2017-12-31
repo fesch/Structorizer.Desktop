@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-05 (2017.12.22)
+Current development version 3.27-05 (2017.12.31)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -45,7 +45,8 @@ Current development version 3.27-05 (2017.12.22)
 - 05: Enh. #425: The Ctrl-F key binding in Translator only worked on the buttons <2>
 - 05: Issue #496: C# autodoc comment style changed to "/// <summary> ..." <2>
 - 05: Enh. #492: Localization (EN/DE/ES) and GUI scaling support for dialog
-      ElementNamePreferences (Preferences => Element names) fixed <2>      
+      ElementNamePreferences (Preferences => Element names) fixed <2>
+- 05: Bugfix: 497: Several defects on StrukTeX export mended <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

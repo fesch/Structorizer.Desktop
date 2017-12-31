@@ -179,7 +179,9 @@ public class ElementNamePreferences extends LangDialog {
 		};
 		chkUseConfNames.addItemListener(checkItemListener);
 
-        GUIScaler.rescaleComponents(this);
+		// START KGU#479 2017-12-22: Issue #492: GUI scaling hadn't worked properly
+		GUIScaler.rescaleComponents(this);
+		// END KGU#479 2017-12-22
 
 		pack();
 		setLocationRelativeTo(getOwner());
