@@ -1514,10 +1514,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#61 2016-03-23: Enh. #84 (FOR-IN loop infrastructure)
 	/**
 	 * In case of a FOR-IN loop tries to extract the value list items if explicitly
-	 * given in the loop text (literal syntax).
+	 * given in the loop text (literal syntax).<br/>
+	 * If the value list is represented by a variable then null will be returned instead.<br/>
 	 * Utility routine that may be used in {@link #generateCode(For, String)}.
 	 * @param _for - the for loop of FOR-IN style to be analysed
-	 * @return a StringList where every element contains one item (as string)
+	 * @return a StringList where every element contains one item (as string) or null
 	 */
 	protected StringList extractForInListItems(For _for)
 	{

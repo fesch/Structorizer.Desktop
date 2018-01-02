@@ -42,6 +42,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.14      Enh. #270: Disabled elements are skipped here now
  *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig     2017.12.30/31   Bugfix #497: Text export had been defective, Parallel export was useless
+ *      Kay Gürtzig     2018.01.02      Issue #497: FOR-IN loop list conversion fixed, height arg reduced, includedRoots involved
  *
  ******************************************************************************************************
  *
@@ -59,6 +60,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 public class TexGenerator extends Generator {
@@ -269,9 +271,10 @@ public class TexGenerator extends Generator {
     				String typeName = tokens.get(1);
     				code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + typeName + "}{"
     						+ transform(tokens.concatenate(" ", 3)) + "}");
-    				code.add(_indent+this.getIndent() + "\\end{declaration}");    				
+    				code.add(_indent+this.getIndent() + "\\end{declaration}");
+    				code.add(_indent + "}");
     			}
-    			if (!Instruction.isAssignment(line) && Instruction.isDeclaration(line)) {
+    			else if (!Instruction.isAssignment(line) && Instruction.isDeclaration(line)) {
     				code.add(_indent+"\\assign{%");
     				code.add(_indent+this.getIndent() + "\\begin{declaration}[variable:]");
     				// get the variable name
@@ -281,8 +284,11 @@ public class TexGenerator extends Generator {
     				code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + varName + "}{"
     						+ transform(line) + "}");
     				code.add(_indent+this.getIndent() + "\\end{declaration}");    				
+    				code.add(_indent + "}");
     			}
-    			code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
+    			else {
+    				code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
+    			}
     			// END KGU#483 2017-12-30
     		}
     	}
@@ -380,8 +386,22 @@ public class TexGenerator extends Generator {
 			//code.add(_indent + "\\while{\\(" + transform(_for.getUnbrokenText().getLongString()) + "\\)}");
 			String content = "";
 			if (_for.isForInLoop()) {
+				StringList items = this.extractForInListItems(_for);
+				String valueList = "";
+				if (items == null) {
+					valueList = _for.getValueList();
+				}
+				else {
+					valueList = items.concatenate(", ");
+					if (items.count() != 1 || !isStringLiteral(items.get(0)) && !Function.testIdentifier(items.get(0), null)) {
+						valueList = "\\{" + transform(valueList) + "\\}";
+					}
+					else {
+						valueList = "\\ " + transform(valueList);
+					}
+				}
 				content = "\\(\\forall " + transform(_for.getCounterVar()) +
-						"\\in " + transform(_for.getValueList()) + "\\)";				
+						"\\in " + valueList + "\\)";				
 			}
 			else if (_for.style == For.ForLoopStyle.COUNTER) {
 				content = "\\pKey{" + CodeParser.getKeyword("preFor") + "}\\(" +
@@ -405,6 +425,11 @@ public class TexGenerator extends Generator {
 		}
 	}
 	
+	/** tests whether the given value list item {@code _item} is a string literal */
+	private boolean isStringLiteral(String _item) {
+		return _item.length() >= 2 && _item.charAt(0) == '"' && _item.charAt(_item.length()-1) == '"';
+	}
+
 	protected void generateCode(While _while, String _indent)
 	{
 		if (!_while.disabled) {
@@ -589,7 +614,7 @@ public class TexGenerator extends Generator {
 		// START KGU#483 2017-12-30: Bugfix #497 - we must escape underscores in the name
 		//code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getText().get(0))+"]");
 		code.add("% TODO: Tune the width and height argument if necessary!");
-		code.add("\\begin{struktogramm}("+Math.round((_root.width - 2 * E_PADDING) * PIXEL_TO_MM)+","+Math.round(_root.height * PIXEL_TO_MM)+")["+transform(_root.getMethodName())+"]");
+		code.add("\\begin{struktogramm}("+Math.round((_root.width - 2 * E_PADDING) * PIXEL_TO_MM)+","+Math.round(_root.height * PIXEL_TO_MM / 2)+")["+transform(_root.getMethodName())+"]");
 		generateParameterDecl(_root);
 		// END KGU#483 2017-12-30
 		generateCode(_root.children, this.getIndent());
@@ -599,7 +624,7 @@ public class TexGenerator extends Generator {
 		while (!this.tasks.isEmpty()) {
 			Root task = tasks.removeFirst();
 			code.add("% TODO: Tune the width and height argument if necessary!");
-			code.add("\\begin{struktogramm}("+Math.round(task.width * PIXEL_TO_MM)+","+Math.round(task.height * PIXEL_TO_MM)+")["+transform(task.getText().get(0))+"]");
+			code.add("\\begin{struktogramm}("+Math.round(task.width * PIXEL_TO_MM)+","+Math.round(task.height * PIXEL_TO_MM / 2)+")["+transform(task.getText().get(0))+"]");
 			generateCode(task.children, this.getIndent());
 			code.add("\\end{struktogramm}");			
 		}
@@ -608,6 +633,16 @@ public class TexGenerator extends Generator {
 		//code.add("\\end{document}");
 		if (topLevel)
 		{
+			// START KGU#483 2018-01-02: Enh. 389, issue #497
+			if (this.optionExportSubroutines()) {
+				while (!this.includedRoots.isEmpty()) {
+					Root incl = this.includedRoots.remove();
+					if (incl != _root) {
+						this.insertDefinitions(incl, _indent, null, true);
+					}
+				}
+			}
+			// END KGU#483
 			code.add("\\end{document}");
 		}
 		// END KGU#178 2016-07-20
@@ -621,30 +656,53 @@ public class TexGenerator extends Generator {
 	 * @param _root
 	 */
 	private void generateParameterDecl(Root _root) {
-		if (_root.isSubroutine()) {
+		boolean hasIncludes = _root.includeList != null && _root.includeList.count() > 0;
+		if (_root.isSubroutine() || hasIncludes) {
 			String indent1 = this.getIndent();
 			String indent2 = indent1 + indent1;
 			String indent3 = indent2 + indent1;
 			String resType = _root.getResultType();
 			ArrayList<Param> params = _root.getParams();
-			if (!params.isEmpty() || resType != null) {
+			if (!params.isEmpty() || resType != null || hasIncludes) {
 				code.add(indent1 + "\\assign{%");
-				code.add(indent2 + "\\begin{declaration}[Parameters:]");
-				for (Param param: params) {
-					code.add(indent3 + "\\description{\\pVar{"+transform(param.getName())+
-							"}}{type: \\("+ transform(param.getType()) +"\\)}");
+				if (!params.isEmpty()) {
+					code.add(indent2 + "\\begin{declaration}[Parameters:]");
+					for (Param param: params) {
+						code.add(indent3 + "\\description{\\pVar{"+transform(param.getName())+
+								"}}{type: \\("+ transform(param.getType()) +"\\)}");
+					}
+					code.add(indent2 + "\\end{declaration}");
 				}
-				code.add(indent2 + "\\end{declaration}");
 				if (resType != null) {
 					code.add(indent2 + "\\begin{declaration}[Result type:]");
 					code.add(indent3 + "\\description{" + resType + "}{}");
 					code.add(indent2 + "\\end{declaration}");
+				}
+				if (hasIncludes) {
+					code.add(indent2 + "\\begin{declaration}[Requires:]");
+					code.add(indent3 + "\\description{" + _root.includeList.concatenate(", ") + "}{}");
+					code.add(indent2 + "\\end{declaration}");					
 				}
 				code.add(this.getIndent() + "}");
 			}
 		}
 	}
 	// END KGU#483 2017-12-30
+
+	// START KGU#483 2018-01-02: Enh. #389 + issue #497
+	protected void insertDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+		// Just generate the entire diagram...
+		boolean wasTopLevel = topLevel;
+		try {
+			topLevel = false;
+			generateCode(_root, _indent);
+		}
+		finally {
+			topLevel = wasTopLevel;
+		}
+	}
+	// END KGU#483 2018-01-02
+
 
 //	@Override - obsolete since 3.27
 //	public String[] getReservedWords() {
