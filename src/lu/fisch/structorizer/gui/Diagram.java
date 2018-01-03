@@ -141,6 +141,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.12.06      Enh. #487: Support for hiding declaration sequences (still defective)
  *      Kay Gürtzig     2017.12.12      Issue #471: Option to copy error message to clipboard in importCode()
  *      Kay Gürtzig     2017.12.15      Issue #492: Element type name configuration
+ *      Kay Gürtzig     2018.01.03      Enh. #415: Ensured that the Find&Replace dialog regains focus when selected
  *
  ******************************************************************************************************
  *
@@ -7315,11 +7316,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			findDialog = new FindAndReplace(this);
 		}
 		pop.setVisible(false);
-		// FIXME: Should be avoided, but then we need we must cache it or listen to its closing
-		// And the FindAndReplace dialog must listen to all important changes here!
-		if (!findDialog.isVisible()) {
-			findDialog.setVisible(true);
-		}
+		// Even if the Find&Replace dialog had been visible it has now to regain focus
+		findDialog.setVisible(true);
 	}
 	
 	/**
