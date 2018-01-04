@@ -7446,9 +7446,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				ElementNames.configuredNames[i] = namePrefs.txtElements[i].getText();
 			}
 			ElementNames.useConfiguredNames = namePrefs.chkUseConfNames.isSelected();
+			ElementNames.saveToINI();
+			Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
 		}
-		ElementNames.saveToINI();
-		Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
 	}
 	// END KGU#479 2017-12-14
 

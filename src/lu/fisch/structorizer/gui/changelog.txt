@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-05 (2018.01.03)
+Current development version 3.27-05 (2018.01.04)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -48,6 +48,7 @@ Current development version 3.27-05 (2018.01.03)
       ElementNamePreferences (Preferences => Element names) fixed <2>
 - 05: Bugfix 497: Several defects on StrukTeX export mended <2>
 - 05: Issue 415: Find&Replace dialog now regains focus when summoned again <2>
+- 05: Icon for menu item Save as... now differs from that for Save... <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

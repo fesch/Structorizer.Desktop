@@ -58,7 +58,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.13      Enh. #415: New icon 073_binoculars for Find & Replace dialog
  *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced
  *      Kay Gürtzig     2017.12.06      Enh. #487: New icon 085_hide_decl for hiding declarations
- *      Kay Gürtzig     2017.12.11      Enh. #425: New icons 114_down and 115_up for Translator 
+ *      Kay Gürtzig     2017.12.11      Enh. #425: New icons 114_down and 115_up for Translator
+ *      Kay Gürtzig     2018.01.04      New icon 092_SaveAs 
  *
  ******************************************************************************************************
  *
@@ -213,7 +214,7 @@ public class IconLoader {
 	public static ImageIcon ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
 	public static ImageIcon ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
 	public static ImageIcon ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
-	//public static ImageIcon ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
+	public static ImageIcon ico092 = getIconImage(getURI(from+"icons/092_SaveAs.png"));
 	//public static ImageIcon ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
 	//public static ImageIcon ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 
@@ -389,7 +390,7 @@ public class IconLoader {
         	ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
             // END KGU#287 2016-11-01
             
-            //ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
+            ico092 = getIconImage(getURI(from+"icons/092_SaveAs.png"));
             //ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
             //ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 

@@ -127,7 +127,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// Submenus of "File"
 	protected final JMenuItem menuFileNew = new JMenuItem("New", IconLoader.ico001);
 	protected final JMenuItem menuFileSave = new JMenuItem("Save", IconLoader.ico003);
-	protected final JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico003);
+	protected final JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico092);
 	// START KGU#373 2017-03-28: Enh. #387
 	protected final JMenuItem menuFileSaveAll = new JMenuItem("Save All", IconLoader.ico069);
 	//  END KGU#373 2017-03-28
@@ -284,9 +284,6 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
 	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
 	protected final JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
-	// START KGU#479 2017-12-14: Enh. #492
-	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...",IconLoader.ico057);
-	// END KGU#479 2017-12-14
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	// START KGU#309 2016-12-15: Enh. #310 - new options for saving diagrams
 	protected final JMenuItem menuPreferencesSaving = new JMenuItem("Saving ...",IconLoader.ico003);
@@ -300,6 +297,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#232 2016-08-03/2016-09-06: Enh. #222
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
+	// START KGU#479 2017-12-14: Enh. #492
+	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...",IconLoader.ico057);
+	// END KGU#479 2017-12-14
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
 	// START KGU#287 2017-01-11: Issue #81/#330
 	protected final JMenuItem menuPreferencesScalePreset = new JMenuItem("GUI Scaling ...", IconLoader.ico051);
@@ -1082,11 +1082,6 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferences.add(menuPreferencesParser);
 		menuPreferencesParser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.parserNSD(); doButtons(); } } );
 
-		// START KGU#479 2017-12-14: Enh. #492
-		menuPreferences.add(menuPreferencesElements);
-		menuPreferencesElements.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.elementNamesNSD(); doButtons(); } } );;
-		// END KGU#479 2017-12-14
-
 		menuPreferences.add(menuPreferencesAnalyser);
 		menuPreferencesAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.analyserNSD(); doButtons(); } } );
 
@@ -1129,6 +1124,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferencesLanguageFromFile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLangFile(); } } );
 		menuPreferencesLanguageFromFile.setToolTipText("You may create translation files with the 'Translator' tool in the File menu.");
                 
+		// START KGU#479 2017-12-14: Enh. #492
+		menuPreferences.add(menuPreferencesElements);
+		menuPreferencesElements.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.elementNamesNSD(); doButtons(); } } );;
+		// END KGU#479 2017-12-14
+
 		// create Look & Feel Menu
 		menuPreferences.add(menuPreferencesLookAndFeel);
 		menuPreferencesLookAndFeel.setIcon(IconLoader.ico078);
