@@ -117,7 +117,7 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class Menu extends LangMenuBar implements NSDController
 {
-	public enum PluginType { GENERATOR, PARSER, IMPORTER };
+	public enum PluginType { GENERATOR, PARSER, IMPORTER, CONTROLLER };
 	
 	private Diagram diagram = null;
 	private NSDController NSDControl = null;
@@ -1251,6 +1251,11 @@ public class Menu extends LangMenuBar implements NSDController
 		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
 		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
 		// START KGU#463 2017-11-2
+		
+		// START KGU#448 2018-01-04: Enh. #443 - checkbox menu items prepared for additional diagram controllers
+		// TODO: To be activated as soon as a second DiagramController offspring is available
+		this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.ico004);
+		// END KGU#448 2018-01-04
 
 		menuDebug.add(menuDebugDropBrkpts);
 		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
@@ -1705,6 +1710,8 @@ public class Menu extends LangMenuBar implements NSDController
     		fileName = "importers.xml";
 			tooltip = msgImportTooltip.getText();
     		break;
+    	case CONTROLLER:
+    		fileName = "controllers.xml";
     	}
 		// and add them to the menu
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream(fileName));
@@ -1724,7 +1731,16 @@ public class Menu extends LangMenuBar implements NSDController
 				}
 				catch (Exception ex) {}
 			}
-			JMenuItem pluginItem = new JMenuItem(plugin.title, icon);
+			JMenuItem pluginItem;
+			if (_type == PluginType.CONTROLLER) {
+				if (plugin.className.equals("lu.fisch.turtle.TurtleBox")) {
+					continue;
+				}
+				pluginItem = new JCheckBoxMenuItem(plugin.title, icon);
+			}
+			else {
+				pluginItem = new JMenuItem(plugin.title, icon);
+			}
 			_menu.add(pluginItem);
 			if (plugin.info != null) {
 				pluginItem.setToolTipText(tooltip.replace("%", plugin.info));
@@ -1751,6 +1767,11 @@ public class Menu extends LangMenuBar implements NSDController
 				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className, options); doButtons(); } };
 				// END KGU#354/KGU#395 2017-05-11
 				break;
+				// START KGU#448 2018-01-05: Enh. #443
+			case CONTROLLER:	// This isn't used anymore - we still leave in the code for regularity
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.enableController(className, ((JCheckBoxMenuItem)pluginItem).isSelected()); } };
+				break;
+				// END KGU#448 2018-01-05
 			}
 			if (listener != null) {
 				pluginItem.addActionListener(listener);

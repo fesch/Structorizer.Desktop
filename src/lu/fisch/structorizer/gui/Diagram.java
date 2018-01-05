@@ -290,10 +290,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
     // START KGU#354 2017-03-15: Enh. #354 CodeParser cache
+    /** Cache of class instances implementing interface {@link CodeParser} */
 	private static Vector<CodeParser> parsers = null;
-	// This map contains a string array (key, type, caption, tooltip) per option per parser
+	/** The {@link GENPlugin}s held here provide parser-specific option specifications */
 	private static Vector<GENPlugin> parserPlugins = null;
 	// END KGU#354 2017-03-15
+	// START KGU#448 2018-01-05: Enh. #443
+	/** Available {@link DiagramController}-implementing instances (including Turtleizer) */
+	private static ArrayList<DiagramController> diagramControllers = null;
+	/** Bitset of enabled {@link DiagramController} instances */ 
+	private long enabledDiagramControllers = 0;
+	// END KGU#448 2018-01-05
     
     // START KGU#300 2016-12-02: Enh. #300 - update notification settings
     // KGU#300 2017-03-15: turned static
@@ -4963,7 +4970,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return parser;
 	}
 
-	// Lazy initialization method for static field parsers
+	/** Lazy initialization method for static field {@link #parsers} */
 	private void retrieveParsers() {
 		if (parsers != null) {
 			return;
@@ -6987,33 +6994,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
     public void goRun()
     {
-    	// Activate he executor (getInstance() is supposed to do that)
-    	/*Executor executor =*/ Executor.getInstance(this,null);
-    	/*
-                String str = JOptionPane.showInputDialog(null, "Please enter the animation delay!", "50");
-                if(str!=null)
-                {
-                    executor.setDelay(Integer.valueOf(str));
-                    executor.execute(this.root);
-                }
-    	 */
+    	// START KGU#448 2018-01-05: Enh. #443 - generalized DiagramController activation
+    	//Executor.getInstance(this,null);
+    	Executor.getInstance(this, this.getEnabledControllers());
+    	// END KGU#448 2018-01-05
     	if (root.advanceTutorialState(26, this.root)) {
     		analyse();
     	}
     }
 
-    public void goTurtle()
+	public void goTurtle()
     {
-    	if(turtle==null)
+    	if (turtle == null)
     	{
-    		turtle= new TurtleBox(500,500);
+    		turtle = new TurtleBox(500,500);
     	}
     	turtle.setVisible(true);
     	// Activate the executor (getInstance() is supposed to do that)
-    	// START KGU#448 2017-10-28: Enh. #443: Cop with potentially several controllers
+    	// START KGU#448 2018-01-05: Enh. #443: Cope with potentially several controllers
     	//Executor.getInstance(this,turtle);
-    	Executor.getInstance(this, new DiagramController[]{turtle});
-    	// END KGU#448 2017-10-28
+    	this.enableController("lu.fisch.turtle.TurtleBox", true);
+    	goRun();
+    	// END KGU#448 2018-01-05
 
     }
     
@@ -7030,8 +7032,61 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	Executor.getInstance(null, null);
     	return false;
     }
+
+    // START KGU#448 2018-01-05: Enh. #443
+	/** Lazy initialization method for static field {@link #diagramControllers} */
+	private void retrieveDiagramControllers() {
+		if (diagramControllers != null) {
+			return;
+		}
+		diagramControllers = new ArrayList<DiagramController>();
+		// Turtleizer is always added as first entry (no matter whether initialized or not)
+		diagramControllers.add(turtle);
+		String errors = "";
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("controllers.xml"));
+		GENParser genp = new GENParser();
+		Vector<GENPlugin> plugins = genp.parse(buff);
+		try { buff.close(); } catch (IOException e1) {}
+		for (int i = 0; i < plugins.size(); i++)
+		{
+			GENPlugin plugin = plugins.get(i);
+			final String className = plugin.className;
+			// If it's not Turtleizer then add it to the available controllers
+			if (!className.equals("TurtleBox")) {
+				try {
+					Class<?> genClass = Class.forName(className);
+					diagramControllers.add((DiagramController) genClass.newInstance());
+				} catch (Exception ex) {
+					errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
+				}
+			}
+		}
+		try {
+			buff.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (!errors.isEmpty()) {
+			errors = Menu.msgTitleLoadingError.getText() + errors;
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), errors, 
+					Menu.msgTitleParserError.getText(), JOptionPane.ERROR_MESSAGE);
+		}
+	}
     
-    
+    private DiagramController[] getEnabledControllers() {
+    	this.retrieveDiagramControllers();
+    	LinkedList<DiagramController> controllers = new LinkedList<DiagramController>();
+    	long mask = 1;
+    	for (DiagramController contr: diagramControllers) {
+    		if (contr != null && (this.enabledDiagramControllers & mask) != 0) {
+    			controllers.add(contr);
+    		}
+    		mask <<= 1;
+    	}
+		return controllers.toArray(new DiagramController[]{});
+	}
+    // END KGU#448 2018-01-08
+
     // START KGU#177 2016-04-07: Enh. #158
     /**
      * Tries to shift the selection to the next element in the _direction specified.
@@ -7451,5 +7506,38 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	// END KGU#479 2017-12-14
+
+	// START KGU#448 2018-01-05: Enh. #443
+	/**
+	 * Ensures field {@link #diagramControllers} being initialized and enables or
+	 * disables the {@link DiagramController} with class name {@code className}
+	 * according to the value of {@code selected}.
+	 * @param className - full class name of a {@link DiagramController} subclass
+	 * @param selected - if true enables, otherwise disables the specified controller
+	 * @return true if the specified controller class was found.
+	 */
+	public boolean enableController(String className, boolean selected) {
+		this.retrieveDiagramControllers();
+		long mask = 1;
+		for (DiagramController controller: diagramControllers) {
+			// The initial position is reserved for the TurtleBox instance, which may not have been created 
+			if (controller == null && mask == 1) {
+				diagramControllers.set(0, turtle);
+				controller = turtle;
+			}
+			if (controller != null && controller.getClass().getName().equalsIgnoreCase(className)) {
+				if (selected) {
+					this.enabledDiagramControllers |= mask;
+				}
+				else {
+					this.enabledDiagramControllers &= ~mask;
+				}
+				return true;
+			}
+			mask <<= 1;
+		}
+		return false;
+	}
+	// END KGU#448 2018-01-14
 
 }

@@ -84,7 +84,7 @@ public interface DiagramController
 	
 	/**
 	 * Returns a title for this controller
-	 * (The defalt implementation just returns the simple class name. Override this if needed) 
+	 * (The default implementation just returns the simple class name. Override this if needed) 
 	 * @return the title string
 	 * @see #setName(String)
 	 */

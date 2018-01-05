@@ -502,9 +502,9 @@ AnalyserPreferences.okButton.text=OK
 -----[ Diagram ]-----
 // Buttons
 // I/O
-Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagrammes.
-Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagrammes.
-Editor.btnSave.tooltip=Speichern des aktuellen Diagrammmes.
+Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagramms.
+Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagramms.
+Editor.btnSave.tooltip=Speichern des aktuellen Diagramms.
 Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme sichern.
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Einfügen einer neuen @a vor dem ausgewählten Element.
