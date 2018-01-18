@@ -59,7 +59,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced
  *      Kay Gürtzig     2017.12.06      Enh. #487: New icon 085_hide_decl for hiding declarations
  *      Kay Gürtzig     2017.12.11      Enh. #425: New icons 114_down and 115_up for Translator
- *      Kay Gürtzig     2018.01.04      New icon 092_SaveAs 
+ *      Kay Gürtzig     2018.01.04      New icon 092_SaveAs
+ *      Kay Gürtzig     2018.01.18      Issue #4: New icons 032_export, 086_properties, 087_code, 088_picture
  *
  ******************************************************************************************************
  *
@@ -134,7 +135,10 @@ public class IconLoader {
 	// END KGU#318 2017-01-07
 
 	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
-	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
+	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+	//public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
+	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_export.png"));
+	// END KGU#486 2018-01-18
 	public static ImageIcon ico033 = getIconImage(getURI(from+"icons/033_font_up.png"));
 	public static ImageIcon ico034 = getIconImage(getURI(from+"icons/034_font_down.png"));
 	
@@ -207,9 +211,11 @@ public class IconLoader {
 	// START KGU#477 2017-12-06: Enh. #487
 	public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
 	// END KGU#477 2017-12-06
-	//public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_it.png"));
-	//public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
-	//public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
+	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+	public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_properties.png"));
+	public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_code.png"));
+	public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_picture.png"));
+	// END KGU#486 2018-01-18
 
 	public static ImageIcon ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
 	public static ImageIcon ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
@@ -308,7 +314,10 @@ public class IconLoader {
         	// END KGU#318 2017-01-07
 
             ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
-            ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
+        	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+            //ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
+            ico032 = getIconImage(getURI(from+"icons/032_export.png"));
+        	// END KGU#486 2018-01-18
             ico033 = getIconImage(getURI(from+"icons/033_font_up.png"));
             ico034 = getIconImage(getURI(from+"icons/034_font_down.png"));
 
@@ -380,9 +389,11 @@ public class IconLoader {
         	// START KGU#477 2017-12-06: Enh. #487
             ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
         	// END KGU#477 2017-12-06
-            //ico086 = getIconImage(getURI(from+"icons/086_it.png"));
-            //ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
-            //ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
+        	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+            ico086 = getIconImage(getURI(from+"icons/086_properties.png"));
+            ico087 = getIconImage(getURI(from+"icons/087_code.png"));
+            ico088 = getIconImage(getURI(from+"icons/088_picture.png"));
+        	// END KGU#486 2018-01-18: Issue #4
             
             // START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
             ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));

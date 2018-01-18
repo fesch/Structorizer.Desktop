@@ -95,7 +95,8 @@ public interface DiagramController
 	
 	/**
 	 * May allow to set the title or name for this controller (e.g. from plugin)
-	 * The default implementation ignores the given {@code title}, override this if needed)
+	 * The default implementation ignores the given {@code title} (i.e. does not influence
+	 * the result of {@link #getName()}, so override both if needed).
 	 * @param title - the proposed new title string
 	 * @see #getName()
 	 */

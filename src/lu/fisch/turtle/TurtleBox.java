@@ -38,9 +38,10 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2017.06.29/30   Enh. #424: Inheritance extension to FunctionProvidingDiagramControl
  *                                      function map introduced, functions getX(), getY(), getOrientation() added
  *      Kay Gürtzig     2017.10.28      Enh. #443: interface FunctionProvidingDiagramControl now integrated,
- *                                      structure of function map mofified, procedure map added, execution
+ *                                      structure of function map modified, procedure map added, execution
  *                                      mechanism fundamentally revised
  *                                      Concurrency issue fixed (KGU#449).
+ *      Kay Gürtzig     2018.01.16      Enh. #490: Class decomposed to allow a mere API use without realising the GUI 
  *
  ******************************************************************************************************
  *
@@ -74,24 +75,29 @@ import lu.fisch.turtle.elements.Line;
 import lu.fisch.turtle.elements.Move;
 
 /**
- * TurtleBox - a Turtle graphics window with an interface usable e.g. by Structorizer
- * but also (with an appropriate adapter) by arbitrary Java applications<br/>
+ * TurtleBox - a Turtle controller providing an interface usable e.g. by Structorizer
+ * but also (with an appropriate adapter) by arbitrary Java applications<br/>.
+ * On parameterized initialization or call of any of the offered routines a graphics
+ * window with a Turtle is realized.
  * To start the Turtleizer in an application, the following steps are recommended:<br/>
- * {@code TurtleBox =	turtleBox = new TurtleBox(<width>, <height>);}<br/>
+ * {@code TurtleBox turtleBox = new TurtleBox(<width>, <height>);}<br/>
  * {@code turtleBox.setVisible(true);}<br/>
  * {@code turtleBox.setAnimationDelay(0, true);}<br/>
  * The API for employing applications is retrievable via {@link TurtleBox#getFunctionMap()}
- * and {@link TurtleBox#getProcedureMap()}.
+ * and {@link TurtleBox#getProcedureMap()}.<br/>
+ * In order just to retrieve the available API without bringing up the GUI a light-weight
+ * instance is obtained by
+ * {@code TurtleBox turtleBox = new TurtleBox();}
  * @author robertfisch
  * @author Kay Gürtzig
  */
 // START KGU#97 2015-12-10: Inheritance change for enhancement request #48
 //public class TurtleBox extends JFrame implements DiagramController
 @SuppressWarnings("serial")
-// START KGU#417 2017-06-30: Inheritance change for enh. #424 (2017-10-28 withdrawn)
+// START KGU#480 2018-01-16: Inheritance change for enh. #490
 //public class TurtleBox extends JFrame implements DelayableDiagramController
-public class TurtleBox extends JFrame implements DelayableDiagramController
-// END KGU#417 2017-06-30
+public class TurtleBox implements DelayableDiagramController
+// END KGU#480 2018-01-16
 // END KGU#97 2015-12-10
 {
 //	// START KGU#417 2017-06-29: Enh. #424 Function capability map
@@ -144,6 +150,10 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
 		}
 	}
 	// END KGU#417/KGU#448 2017-10-28
+	// START KGU#480 2018-01-16: Enh. #490 - frame now as attribute
+	/** The GUI frame - while null, it hasn't been materialized (light-weight instance) */
+	private JFrame frame = null;
+	// END KGU#480 2018-01-16
     private final String TITLE = "Turtleizer";
 
     private Point pos;
@@ -165,11 +175,27 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     private Vector<Element> elements = new Vector<Element>();
     private JPanel panel; 
 
+    /**
+     * This constructor does NOT realize a GUI, it just creates a light-weight instance
+     * for API retrieval. A call of {@link #setVisible(boolean)} or the first use of an
+     * API routine from {@link #definedProcedures} or {@link #definedFunctions} will establish
+     * the graphics window, though.
+     */
     public TurtleBox()
     {
-        init(300,300);
+    	// START KGU#480 2018-01-16: Enh. #490 - This constructor no longer builds the GUI
+        //init(300,300);
+    	home = new Point();
+    	reinit();
+        // END KGU#480 2018-01-16
     }
 
+    /**
+     * Establishes a window frame with the graphics canvas for the turtle movements.
+     * The turtle will be placed in the centre of he canvas.
+     * @param width - the initial width of the frame in pixels
+     * @param height - the initial height of the frame in pixels.
+     */
     public TurtleBox(int width, int height)
     {
         init(width,height);
@@ -190,6 +216,11 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     	return TITLE;
     }
     
+    /**
+     * Returns the contrary of the internal orientation of the turtle in degrees.
+     * @return degrees (90° = North, positive sense = clockwise)
+     * @see #getOrientation()
+     */
     public double getAngle()
     {
         return 180+angle;
@@ -197,12 +228,13 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     
     // START KGU#417 2017-06-29: Enh. #424
     /**
-     * Returns the "external" turtle orientation in degrees in the interval
-     * -180 .. 180 where<br/>
-     * 0 is upwards/north (initial orientation),<br/>
-     * positive is right/east,
-     * negative is left/west
+     * API function returning the "external" turtle orientation in degrees
+     * in the range -180 .. 180 where<br/>
+     * 0 is upwards/North (initial orientation),<br/>
+     * positive sense is clockwise (right/East),
+     * negative sense is counter-clockwise (left/West)
      * @return orientation in degrees.
+     * @see #getAngle()
      */
     public double getOrientation() {
     	double orient = angle + 90.0;
@@ -228,8 +260,19 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     }
     // END #272 2016-10-16
 
+    /**
+     * Initialises this instance establishing the window with the graphics canvas
+     * and places the Turtle in the centre.
+     * @param width - initial width of the frame in pixels
+     * @param height - initial height of the frame in pixels
+     */
     private void init(int width, int height)
     {
+    	// START KGU#480 2018-01-16: Enh. #490 - care for the existence of a frame
+    	if (frame == null) {
+    		frame = new JFrame();
+    	}
+    	// END KGU#480 2018-01-16
     	panel = new JPanel()
         {
             @Override
@@ -288,14 +331,14 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
             }
         };
 
-        this.setTitle(TITLE);
-        this.setIconImage((new ImageIcon(this.getClass().getResource("turtle.png"))).getImage());
+        frame.setTitle(TITLE);
+        frame.setIconImage((new ImageIcon(this.getClass().getResource("turtle.png"))).getImage());
 
         //this.setDefaultCloseOperation(TurtleBox.EXIT_ON_CLOSE);
         //this.setDefaultCloseOperation(TurtleBox.DISPOSE_ON_CLOSE);
-        this.setDefaultCloseOperation(TurtleBox.HIDE_ON_CLOSE);
-        this.setBounds(0,0,width,height);
-        this.getContentPane().add(panel);
+        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        frame.setBounds(0,0,width,height);
+        frame.getContentPane().add(panel);
         //this.setVisible(true);
         setPos(new Point(panel.getWidth()/2,panel.getHeight()/2));
         home = new Point(panel.getWidth()/2,panel.getHeight()/2);
@@ -303,10 +346,20 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
         panel.repaint();
     }
 
-    @Override
+    //@Override
+    /**
+     * Realizes the window on the screen , brings it to front and fetches the window focus.
+     * @param visible
+     * @see JFrame#setVisible(boolean)
+     */
     public void setVisible(boolean visible)
     {
-        super.setVisible(visible);
+    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+    	if (visible && frame == null) {
+    		init(300, 300);
+    	}
+    	// END KGU#480 2018-01-16
+        frame.setVisible(visible);
 // START KGU#303 2016-12-03: Issue #302 - replaced by reinit() call below
 //        elements.clear();
 //        angle=-90;
@@ -317,11 +370,13 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
 //        // END KGU#3032016-12-02
 //        setPos(new Point(panel.getWidth()/2,panel.getHeight()/2));
 // END KGU#303 2016-12-03
-        home = new Point(panel.getWidth()/2,panel.getHeight()/2);
-        // START KGU#303 2016-12-03: Issue #302 - replaces disabled code above
-        reinit();
-        // END KGU#303 2016-12-03
-        paint(this.getGraphics());
+        if (visible) {
+        	home = new Point(panel.getWidth()/2,panel.getHeight()/2);
+        	// START KGU#303 2016-12-03: Issue #302 - replaces disabled code above
+        	reinit();
+        	// END KGU#303 2016-12-03
+        	frame.paint(frame.getGraphics());
+        }
     }
     
     // START KGU#303 2016-12-03: Issue #302
@@ -344,8 +399,12 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     {
         //panel.repaint();
         // force repaint (not recommended!)
-
-        if(delay!=0)
+    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+    	if (frame == null) {
+    		init(300, 300);
+    	}
+    	// END KGU#480 2018-01-16
+        if (delay!=0)
         {
             panel.paint(panel.getGraphics());
             try { Thread.sleep(delay); }
@@ -465,6 +524,11 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
      */
     public void setBackgroundColor(Color bgColor)
     {
+    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+    	if (frame == null) {
+    		init(300, 300);
+    	}
+    	// END KGU#480 2018-01-16
     	backgroundColor = bgColor;
     	panel.repaint();
     }
@@ -487,6 +551,11 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
      */
     public void setPenColor(Color penColor)
     {
+    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+    	if (frame == null) {
+    		init(300, 300);
+    	}
+    	// END KGU#480 2018-01-16
     	defaultPenColor = penColor;
     	panel.repaint();
     }

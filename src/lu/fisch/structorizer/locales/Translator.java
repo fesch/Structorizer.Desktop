@@ -168,7 +168,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         this.setTitle("Structorizer Translator");
         // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
         //setSize(1000, 500);	// with less width the save button was invisible
-        setSize((int)(1000*scaleFactor), (int)(500*scaleFactor));	// with less width the save button was invisible
+        setSize((int)(1000*scaleFactor), (int)(500*scaleFactor));
         // END KGU#287 2016-11-02
         stdBackgroundColor = button_empty.getBackground();	// for resetting
         // END KGU 2016-08-04

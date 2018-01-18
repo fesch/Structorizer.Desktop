@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-05 (2018.01.05)
+Current development version 3.27-05 (2018.01.18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -48,7 +48,7 @@ Current development version 3.27-05 (2018.01.05)
       ElementNamePreferences (Preferences => Element names) fixed <2>
 - 05: Bugfix 497: Several defects on StrukTeX export mended <2>
 - 05: Issue 415: Find&Replace dialog now regains focus when summoned again <2>
-- 05: Icon for menu item "Save as..." now differs from that of "Save..." <2>
+- 05: Issue 04: Several new and redesigned icons (for better scalability) <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
@@ -169,7 +169,7 @@ Version 3.27 (2017.10.30)
 - 08: Issue #417: Scrolling detention with many / large diagrams alleviated <2>
 - 08: Enh. #423: Export support for records to Python, bash, Oberon <2>
 - 08: Enh. #441: Java export now directly supports use of extracted Turtleizer <2>
-- 08: Enh. #443: Preparations for multiple controller plugins like Turtleizer <2>  
+- 08: Enh. #443: Preparations for multiple controller plugins like Turtleizer <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
