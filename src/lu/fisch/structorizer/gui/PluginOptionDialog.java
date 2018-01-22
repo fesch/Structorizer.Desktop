@@ -32,6 +32,8 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.06.20      First Issue
+ *      Kay Gürtzig     2018.01.22      Issue #484: Layout modified such that text fields will get all remaining width
+ *                                      Moreover, bug in item list processing fixed.
  *
  ******************************************************************************************************
  *
@@ -42,6 +44,8 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 
 import java.awt.event.ActionEvent;
@@ -75,6 +79,7 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class PluginOptionDialog extends LangDialog {
 	
+	private static final int TEXT_FIELD_WIDTH = 20;	// Default initial width of generic text fields
 	private GENPlugin plugin;
 	public HashMap<String, String> optionVals;
 	protected JButton btnOk = new JButton("OK");
@@ -234,8 +239,19 @@ public class PluginOptionDialog extends LangDialog {
 		// ====================== OPTIONS ======================
 		JPanel pnlOptions = new JPanel();
 		pnlOptions.setBorder(new EmptyBorder(5,5,5,5));
-		// FIXME We may prefer a GridBagLayout instead
-		pnlOptions.setLayout(new GridLayout(0, 1));
+		// START KGU#472 2018-01-22: Issue #484 - We may prefer a GridBagLayout
+		//pnlOptions.setLayout(new GridLayout(0, 1));
+		GridBagLayout gbl = new GridBagLayout();
+		GridBagConstraints gbc = new GridBagConstraints();
+		pnlOptions.setLayout(gbl);
+		gbc.gridx = 1;
+		gbc.gridy = 0;
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.LINE_START;
+		gbc.weightx = 1.0;
+		// END KGU#472 2018-01-22
+		
 		for (HashMap<String, String> optionSpec: plugin.options) {
 			String key = optionSpec.get("name");
 			String type = optionSpec.get("type");
@@ -244,7 +260,10 @@ public class PluginOptionDialog extends LangDialog {
 			String tooltip = optionSpec.get("help");
 			String value = this.optionVals.get(key);
 			if (items != null && items.startsWith("{") && items.endsWith("}")) {
-				StringList itemVals = Element.splitExpressionList(type.substring(1, type.length()-1), ";");
+				// START KGU#472 2018-01-22: Bugfix #484 - wrong string was split
+				//StringList itemVals = Element.splitExpressionList(type.substring(1, type.length()-1), ";");
+				StringList itemVals = Element.splitExpressionList(items.substring(1, items.length()-1), ";");
+				// END KGU#472 2018-01-22
 				JComboBox<String> comp = new JComboBox<String>(itemVals.toArray());
 				comp.setEditable(false);
 				if (tooltip != null && !tooltip.trim().isEmpty()) {
@@ -261,7 +280,11 @@ public class PluginOptionDialog extends LangDialog {
 				pnl.add(lbl);
 				pnl.add(comp);
 				optionComponents.put(key, comp);
-				pnlOptions.add(pnl);				
+				// START KGU#472 2018-01-22: Issue #484
+				//pnlOptions.add(pnl);
+				gbc.gridy++;
+				pnlOptions.add(pnl, gbc);
+				// END KGU#472 2018-01-22
 			}
 			else if (type.equalsIgnoreCase("Boolean")) {
 				JCheckBox comp = new JCheckBox(caption);
@@ -271,10 +294,14 @@ public class PluginOptionDialog extends LangDialog {
 				comp.setSelected(Boolean.parseBoolean(value));
 				comp.addKeyListener(keyListener);
 				optionComponents.put(key, comp);
-				pnlOptions.add(comp);
+				// START KGU#472 2018-01-22: Issue #484
+				//pnlOptions.add(comp);
+				gbc.gridy++;
+				pnlOptions.add(comp, gbc);
+				// END KGU#472 2018-01-22
 			}
 			else {
-				JTextField comp = new JTextField(/*TEXT_FIELD_WIDTH*/);
+				JTextField comp = new JTextField(TEXT_FIELD_WIDTH);
 				comp.setText(value);
 				if (type.equalsIgnoreCase("Integer")) {
 					comp.setInputVerifier(intVerifier);
@@ -293,19 +320,47 @@ public class PluginOptionDialog extends LangDialog {
 				}
 				comp.addKeyListener(keyListener);
 				JLabel lbl = new JLabel(caption + "  ");
-				JPanel pnl = new JPanel();
-				pnl.setLayout(new GridLayout(1, 0));
-				pnl.setBorder(new EmptyBorder(0, 2, 0,2));
-				pnl.add(lbl);
-				pnl.add(comp);
+				// START KGU#472 2018-01-22: Issue #484 
+//				JPanel pnl = new JPanel();
+//				pnl.setLayout(new GridLayout(1, 0));
+//				pnl.setBorder(new EmptyBorder(0, 2, 0,2));
+//				pnl.add(lbl);
+//				pnl.add(comp);
 				optionComponents.put(key, comp);
-				pnlOptions.add(pnl);
+//				pnlOptions.add(pnl);
+				gbc.gridy++;
+				gbc.gridwidth = 1;
+				gbc.weightx = 0.0;
+				gbc.fill = GridBagConstraints.NONE;
+				pnlOptions.add(lbl, gbc);
+				gbc.fill = GridBagConstraints.HORIZONTAL;
+				gbc.gridwidth = GridBagConstraints.REMAINDER;
+				gbc.gridx++;
+				gbc.weightx = 1.0;
+				pnlOptions.add(comp, gbc);
+				gbc.gridx = 1;
+				// END KGU#472 2018-01-22
 			}
 		}
 		// ====================== BUTTONS ======================
-		JPanel pnlButtons = new JPanel();
+		// START KGU#472 2018-01-22: Issue #484
+		//JPanel pnlButtons = new JPanel();
+		JPanel pnlButtonBar = new JPanel();
+		// END KGU#472 2018-01-22
 		{
-			pnlButtons.setBorder(new EmptyBorder(10, 5, 5, 5));
+			// START KGU#472 2018-01-22: Issue #484
+			//pnlButtons.setBorder(new EmptyBorder(10, 5, 5, 5));
+			pnlButtonBar.setBorder(new EmptyBorder(10, 5, 5, 5));
+			pnlButtonBar.setLayout(new GridBagLayout());
+			GridBagConstraints gbc1 = new GridBagConstraints();
+			gbc1.gridx = 1;
+			gbc1.gridy = 1;
+			gbc1.gridwidth = 1;
+			gbc1.gridheight = 1;
+			gbc1.anchor = GridBagConstraints.LINE_START;
+			gbc1.fill = GridBagConstraints.HORIZONTAL;
+			JPanel pnlButtons = new JPanel();
+			// END KGU#472 2018-01-22
 			pnlButtons.setLayout(new GridLayout(1, 0));
 			btnCancel.addActionListener(new ActionListener() {
 				@Override
@@ -322,16 +377,27 @@ public class PluginOptionDialog extends LangDialog {
 			btnOk.addKeyListener(keyListener);
 			pnlButtons.add(btnCancel);
 			pnlButtons.add(btnOk);
+			// START KGU#472 2018-01-22: Issue #484
+			gbc1.weightx = 1.0;
+			pnlButtonBar.add(new JLabel(""), gbc1);
+			gbc1.anchor = GridBagConstraints.LINE_END;
+			gbc1.fill = GridBagConstraints.NONE;
+			gbc1.weightx = 0.0;
+			pnlButtonBar.add(pnlButtons, gbc1);
+			// END KGU#472 2018-01-22
 		}
 		
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
 		contentPane.add(pnlOptions, BorderLayout.NORTH);
-		contentPane.add(pnlButtons, BorderLayout.SOUTH);
-		
-        GUIScaler.rescaleComponents(this);
+		// START KGU#472 2018-01-22: Issue #484
+		//contentPane.add(pnlButtons, BorderLayout.SOUTH);
+		contentPane.add(pnlButtonBar, BorderLayout.SOUTH);
+		// END KGU#472 2018-01-22
 
-        pack();
+		GUIScaler.rescaleComponents(this);
+
+		pack();
 
 	}
 

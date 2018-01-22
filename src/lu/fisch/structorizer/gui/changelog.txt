@@ -50,6 +50,7 @@ Current development version 3.27-05 (2018.01.22)
 - 05: Issue 415: Find&Replace dialog now regains focus when summoned again <2>
 - 05: Issue 04: Several new and redesigned icons (for better scalability) <2>
 - 05: Enh. #490: Turtleizer routines individually re-nameable [A. Brusinsky]2
+- 05: Issue #484: Layout of Export/Import Options dialogs fixed [Simon Sobisch]2
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
