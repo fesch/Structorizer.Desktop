@@ -791,10 +791,7 @@ public abstract class Element {
 
 	public void setText(String _text)
 	{
-		// START KGU#91 2015-12-01: Should never set in swapped mode!
-		//getText().setText(_text);
 		text.setText(_text);
-		// END KGU#91 2015-12-01
 	}
 
 	public void setText(StringList _text)
@@ -960,6 +957,59 @@ public abstract class Element {
 	// END KGU#413 2017-06-09
 	
 	// START KGU#480 2018-01-21: Enh. #490
+	/**
+	 * @return the text of this element, with {@link DiagramController} routine names
+	 * replaced by user-specific alias names if {@link #E_APPLY_ALIASES} is true
+	 * @see #setAliasText(StringList)
+	 * @see #getText()
+	 */
+	public StringList getAliasText()
+	{
+		if (!Element.E_APPLY_ALIASES) {
+			return text;
+		}
+		String aliasText = replaceControllerAliases(text.getText(), true, false);
+		return StringList.explode(aliasText, "\n");
+	}
+	
+	/**
+	 * Sets the element text from {@code aliasText}, after having replaced all
+	 * user-specific {@link DiagramController} routine aliases by the original
+	 * routine names.
+	 * @param aliasText - the intended element text, possibly containing aliases
+	 * @see #getAliasText()
+	 * @see #setAliasText(String)
+	 * @see #setText(StringList)
+	 */
+	public void setAliasText(StringList aliasText)
+	{
+		if (Element.E_APPLY_ALIASES) {
+			text.setText(Element.replaceControllerAliases(aliasText.getText(), false, false));
+		}
+		else {
+			text = aliasText;
+		}
+	}
+	
+	/**
+	 * Sets the element text from {@code aliasText} by splitting it at newlines,
+	 * after having replaced all user-specific {@link DiagramController} routine
+	 * aliases by the original routine names.
+	 * @param aliasText - the intended element text, possibly containing aliases
+	 * @see #getAliasText()
+	 * @see #setAliasText(StringList)
+	 * @see #setText(String)
+	 */
+	public void setAliasText(String aliasText)
+	{
+		if (Element.E_APPLY_ALIASES) {
+			this.setText(Element.replaceControllerAliases(aliasText, false, false));
+		}
+		else {
+			text.setText(aliasText);
+		}
+	}
+
 	/**
 	 * If {@link #E_APPLY_ALIASES} is true then replaces the names of all routines
 	 * of {@link DiagramController} classes with registered alias names or vice versa,

@@ -142,7 +142,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.12.12      Issue #471: Option to copy error message to clipboard in importCode()
  *      Kay Gürtzig     2017.12.15      Issue #492: Element type name configuration
  *      Kay Gürtzig     2018.01.03      Enh. #415: Ensured that the Find&Replace dialog regains focus when selected
- *      Kay Gürtzig     2018.01.21      Enh. #490: New DiagramController alias preferences inegrated  
+ *      Kay Gürtzig     2018.01.21      Enh. #490: New DiagramController alias preferences integrated
+ *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
  *
  ******************************************************************************************************
  *
@@ -2619,7 +2620,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				data.title="Edit element ...";
 				// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
 				//data.text.setText(element.getText().getText());
-				data.text.setText(Element.replaceControllerAliases(element.getText().getText(), true, false));
+				data.text.setText(element.getAliasText().getText());
 				// END KGU#480 2018-01-21
 				data.comment.setText(element.getComment().getText());
 				// START KGU#43 2015-10-12
@@ -2672,8 +2673,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					{
 						// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
 						//element.setText(data.text.getText());
-						String text = Element.replaceControllerAliases(data.text.getText(), false, false);
-						element.setText(text);
+						element.setAliasText(data.text.getText());
 						// END KGU#480 2018-01-21
 					}
 					element.setComment(data.comment.getText());
@@ -2730,8 +2730,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			_for.style = For.ForLoopStyle.COUNTER;
 			_data.forParts.add(_for.getCounterVar());
-			_data.forParts.add(_for.getStartValue());
-			_data.forParts.add(_for.getEndValue());
+			// START KGU#480 2018-01-22: Enh. #490 - maybe aliases are to be put in
+			//_data.forParts.add(_for.getStartValue());
+			//_data.forParts.add(_for.getEndValue());
+			_data.forParts.add(Element.replaceControllerAliases(_for.getStartValue(), true, false));
+			_data.forParts.add(Element.replaceControllerAliases(_for.getEndValue(), true, false));
+			// END KGU#480 2018-01-22
 			_data.forParts.add(Integer.toString(_for.getStepConst()));
 		}
 		catch (Exception ex) {}
@@ -2743,6 +2747,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String valueList = _for.getValueList();
 		if (valueList != null)
 		{
+			// START KGU#480 2018-01-22: Enh. #490 - maybe aliases are to be put in
+			valueList = Element.replaceControllerAliases(valueList, true, false);
+			// END KGU#480 2018-01-22
 			_data.forParts.add(valueList);
 		}
 		
@@ -2753,8 +2760,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		_for.style = _data.forLoopStyle;
 
 		_for.setCounterVar(_data.forParts.get(0));
-		_for.setStartValue(_data.forParts.get(1));
-		_for.setEndValue(_data.forParts.get(2));
+		// START KGU#480 2018-01-22: Enh. #490 - maybe aliases are to be replaced
+		//_for.setStartValue(_data.forParts.get(1));
+		//_for.setEndValue(_data.forParts.get(2));
+		_for.setStartValue(Element.replaceControllerAliases(_data.forParts.get(1), false, false));
+		_for.setEndValue(Element.replaceControllerAliases(_data.forParts.get(2), false, false));
+		// END KGU#480 2018-01-22
 		_for.setStepConst(_data.forParts.get(3));
 
 		// FOR-IN loop support
@@ -2764,14 +2775,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//_for.style = For.ForLoopStyle.FREETEXT;
 			//_for.setValueList(_for.getValueList());
 			//_for.style = For.ForLoopStyle.TRAVERSAL;
-			_for.setValueList(_data.forParts.get(4));
+			// START KGU#480 2018-01-22: Enh. #490 - maybe aliases are to be replaced
+			//_for.setValueList(_data.forParts.get(4));
+			_for.setValueList(Element.replaceControllerAliases(_data.forParts.get(4), false, false));
+			// END KGU#480 2018-01-22
 			// END KGU#61 2016-09-24
 		}
 		// START KGU#61 2016-09-24
 		else {
 			_for.setValueList(null);
 		}
-		// END KGU#61 2016-09-24		
+		// END KGU#61 2016-09-24
+		/*/ START KGU 2018-01-22: This code differed from that in addNewElement with respect to the
+		 * following statement missing here so far, which seemed to make sense in case of inconsistency,
+		 * though. So it was added as part of the unification - it forces FREETEXT flavour in due cases.
+		 */
+		_for.style = _for.classifyStyle();
+		// END KGU 2018-01-22
+
 	}
 
 	/*****************************************
@@ -2983,8 +3004,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
 					//_ele.setText(data.text.getText());
-					String text = Element.replaceControllerAliases(data.text.getText(), false, false);
-					_ele.setText(text);
+					_ele.setAliasText(data.text.getText());
 					// END KGU#480 2018-01-21
 				}
 				_ele.setComment(data.comment.getText());
@@ -3002,15 +3022,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#3 2015-10-25
 				if (_ele instanceof For)
 				{
-					((For)_ele).setCounterVar(data.forParts.get(0));
-					((For)_ele).setStartValue(data.forParts.get(1));
-					((For)_ele).setEndValue(data.forParts.get(2));
-					((For)_ele).setStepConst(data.forParts.get(3));
-					// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops as well
-					//((For)_ele).isConsistent = ((For)_ele).checkConsistency();
-					((For)_ele).setValueList(data.forParts.get(4));
-					((For)_ele).style = ((For)_ele).classifyStyle();
-					// END KGU#61 2016-03-21
+					/*/ START KGU 2018-01-22: The only difference of this code to postEditorFor(_data, (For)_ele)
+					 * was the way the style information and the value list were set - it was difficult to say
+					 * which way was the better one.
+					 */
+//					((For)_ele).setCounterVar(data.forParts.get(0));
+//					// START KGU#480 2018-01-22: Enh. #490 we have to replace DiagramController aliases by the original names
+//					//((For)_ele).setStartValue(data.forParts.get(1));
+//					//((For)_ele).setEndValue(data.forParts.get(2));
+//					((For)_ele).setStartValue(Element.replaceControllerAliases(
+//							data.forParts.get(1), false, false));
+//					((For)_ele).setEndValue(Element.replaceControllerAliases(
+//							data.forParts.get(2), false, false));
+//					// END KGU#480 2018-01-22
+//					((For)_ele).setStepConst(data.forParts.get(3));
+//					// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops as well
+//					//((For)_ele).isConsistent = ((For)_ele).checkConsistency();
+//					// START KGU#480 2018-01-22: Enh. #490 we have to replace DiagramController aliases by the original names
+//					//((For)_ele).setValueList(data.forParts.get(4));
+//					((For)_ele).setValueList(Element.replaceControllerAliases(
+//							data.forParts.get(4), false, false));
+//					// END KGU#480 2018-01-22
+//					((For)_ele).style = ((For)_ele).classifyStyle();
+//					// END KGU#61 2016-03-21
+					this.postEditFor(data, (For)_ele);
+					// END KGU 2018-01-22
 				}
 				// END KGU#3 2015-10-25
 				//root.addUndo();
