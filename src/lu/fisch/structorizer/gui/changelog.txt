@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-05 (2018.01.22)
+Current development version 3.27-05 (2018.01.23)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -51,6 +51,7 @@ Current development version 3.27-05 (2018.01.22)
 - 05: Issue 04: Several new and redesigned icons (for better scalability) <2>
 - 05: Enh. #490: Turtleizer routines individually re-nameable [A. Brusinsky]2
 - 05: Issue #484: Layout of Export/Import Options dialogs fixed [Simon Sobisch]2
+- 05: Bugfix #498: Priliminary executability check of REPEAT conditions dropped <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
