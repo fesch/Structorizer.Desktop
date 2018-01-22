@@ -65,6 +65,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.05      Issue #452: Differentiated initial setting for Analyser preferences
  *      Kay Gürtzig     2017.11.06      Issue #455: Drastic measures against races on startup.
  *      Kay Gürtzig     2017.11.14      Bugfix #465: invokeAndWait must be suppressed if not standalone
+ *      Kay Gürtzig     2018.01.21      Enh. #490: DiagramController aliases saved and loaded to/from Ini
+ *                                      Issue #455: Multiple redrawing of diagram avoided in loadFromIni().
  *
  ******************************************************************************************************
  *
@@ -91,6 +93,7 @@ package lu.fisch.structorizer.gui;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map.Entry;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -99,6 +102,8 @@ import javax.swing.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.turtle.TurtleBox;
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -516,7 +521,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#300 2016-12-02: Enh. #300
 			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
 			// END KGU#300 2016-12-02
-			if (diagram!=null) 
+			if (diagram != null) 
 			{
 				// current directory
 				// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
@@ -532,27 +537,35 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
 				{
-					diagram.setDIN();
+					//diagram.setDIN();
+					Element.E_DIN = true;
 				}
 				// comments
 				if (ini.getProperty("showComments","1").equals("0")) // default = 1
 				{
-					diagram.setComments(false);
+					//diagram.setComments(false);
+					Element.E_SHOWCOMMENTS = true;
 				}
 				// START KGU#227 2016-08-01: Enh. #128
-				diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
+				//diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
+				Element.E_COMMENTSPLUSTEXT = ini.getProperty("commentsPlusText","0").equals("1");	// default = 0
 				// END KGU#227 2016-08-01
 				if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
 				{
-					diagram.setToggleTC(true);
+					//diagram.setToggleTC(true);
+					Element.E_TOGGLETC = true;
 				}
 				// syntax highlighting
 				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
 				{
-					diagram.setHightlightVars(true);
+					//diagram.setHightlightVars(true);
+					Element.E_VARHIGHLIGHT = true;	// this isn't used for drawing, actually
+					diagram.getRoot().hightlightVars = true;
+
 				}
 				// START KGU#477 2017-12-06: Enh. #487
-				diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
+				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
+				Element.E_HIDE_DECL = ini.getProperty("hideDeclarations","0").equals("1");	// default = 0
 				// END KGU#227 2017-12-06
 				// analyser
 				// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
@@ -562,6 +575,34 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					diagram.setAnalyser(false);
 				}
                  * */
+				// START KGU#480 2018-01-21: Enh. #490
+				if (Element.controllerName2Alias.isEmpty()) {
+					for (DiagramController controller: diagram.getDiagramControllers()) {
+						if (controller == null) {
+							controller = new TurtleBox();
+						}
+						String className = controller.getClass().getName();
+						for (Entry<String, java.lang.reflect.Method> entry: controller.getProcedureMap().entrySet()) {
+							String sign = entry.getKey();
+							String name = entry.getValue().getName();
+							String[] parts = sign.split("#");
+							if (!name.equalsIgnoreCase(parts[0])) {
+								name = parts[0];
+							}
+							String alias = ini.getProperty(className + "." + sign, "").trim();
+							if (!alias.isEmpty()) {
+								Element.controllerName2Alias.put(sign, alias);
+								Element.controllerAlias2Name.put(alias.toLowerCase() + "#" + parts[1], name);
+							}
+						}
+					}
+					if (ini.getProperty("applyAliases", "0").equals("1")) // default = 0
+					{
+						//diagram.setApplyAliases(true);
+						Element.E_APPLY_ALIASES = true;
+					}
+				}
+				// END KGU#480 2018-01-18
 				// START KGU#305 2016-12-14: Enh. #305
 				//System.out.println("* setArrangerIndex() ...");
 				diagram.setArrangerIndex(ini.getProperty("index", "1").equals("1"));	// default = 1
@@ -573,6 +614,31 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// START KGU#456 2017-11-05: Issue #452
 				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
 				// END KGU#452 2017-11-05
+				
+	            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+	            	try {
+	            		EventQueue.invokeAndWait(new Runnable() {
+	            			@Override
+	            			public void run() {
+	            				doButtons();
+	            				diagram.analyse();
+	            				diagram.resetDrawingInfo(true);
+	            				diagram.redraw();
+	            			}
+	            		});
+	            	} catch (InvocationTargetException e1) {
+	            		e1.printStackTrace();
+	            	} catch (InterruptedException e1) {
+	            		e1.printStackTrace();
+	            	}
+	            }
+	            else {
+	            	// Already in an event dispatcher thread
+					this.doButtons();
+					diagram.analyse();
+					diagram.resetDrawingInfo(true);
+					diagram.redraw();
+	            }
 			}
 
 			// START KGU#309 2016-12-15: Enh. #310 new saving options
@@ -594,13 +660,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			{	
 				if (diagram != null)
 				{
-					for(int i=9;i>=0;i--)
+					for (int i = 9; i >= 0; i--)
 					{
 						if(ini.keySet().contains("recent"+i))
 						{
-							if(!ini.getProperty("recent"+i,"").trim().equals(""))
+							if(!ini.getProperty("recent"+i, "").trim().equals(""))
 							{
-								diagram.addRecentFile(ini.getProperty("recent"+i,""),false);
+								diagram.addRecentFile(ini.getProperty("recent"+i, ""), false);
 							}
 						}
 					}
@@ -687,6 +753,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#477 2017-12-06: Enh. #487
 			ini.setProperty("hideDeclarations", Element.E_HIDE_DECL ? "1" : "0");
 			// END KGU#227 2016-12-06
+			// START KGU#480 2018-01-21: Enh. #490
+			ini.setProperty("applyAliases", Element.E_APPLY_ALIASES ? "1" : "0");
+			// END KGU#480 2018-01-21
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
 			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
 			// START KGU#123 2016-01-04: Enh. #87

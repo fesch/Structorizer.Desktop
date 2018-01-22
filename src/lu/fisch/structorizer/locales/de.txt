@@ -264,6 +264,7 @@ Menu.menuPreferencesColors.text=Farben ...
 Menu.menuPreferencesOptions.text=Strukturen ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesElements.text=Elementbezeichnungen ...
+Menu.menuPreferencesCtrlAliases.text=Routinenumbenennung ...
 Menu.menuPreferencesAnalyser.text=Überprüfungen ...
 Menu.menuPreferencesSaving.text=Sichern ...
 Menu.menuPreferencesExport.text=Export ...
@@ -383,6 +384,9 @@ Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf 
 Menu.msgGuidedTourDone.text=Gratulation - Sie haben den Kurs «%» geschafft.
 Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten dazu ein neues Diagramm starten → Menü "%3"
 Menu.ttlGuidedTours.text=Geführte Kurse
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Routinensignatur
+Menu.msgTabHdrAlias.text=Alias (Ersatzname)
 
 // Error messages for analyser
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 ► %2".
@@ -1021,6 +1025,19 @@ ElementNamePreferences.lblLocalized.text=Lokalisierter Name
 ElementNamePreferences.lblIndividual.text=Individueller Name
 ElementNamePreferences.btnOK.text=Speichern
 ElementNamePreferences.btnOK.tooltip=Einstellungen übernehmen.
+
+-----[ DiagramControllerAliases ]-----
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
+DiagramControllerAliases.title=Aktionsmodul-Routinenumbenennung
+DiagramControllerAliases.lblHeader.text=Legen Sie Alias-Namen für die Routinen von Aktionsmodulen fest.
+DiagramControllerAliases.lblRemark.text=(Beachte: Groß-/Kleinschreibung spielt keine Rolle bei Aktionsmodul-Routinen!)
+DiagramControllerAliases.chkApplyAliases.text=Die festgelegten Ersatznamen bei der Darstellung anwenden
+DiagramControllerAliases.btnOK.text=Speichern
+DiagramControllerAliases.hlpEndEditing.text=Die Änderung der Tabellenzelle durch Taste <Enter> oder <Esc> oder durch Klick an andere Stelle beenden.
+DiagramControllerAliases.msgIdentifierRequired.text=Ihr Ersatzname enthält unzulässige Zeichen.\nEin Unterprogramm-Ersatzname muss entweder leer oder ein Bezeichner sein\n(d.h. darf nur aus Buchstaben, Ziffern und Unterstrichen bestehen).\n\nDer Originaltext wird wieder hergestellt.
+DiagramControllerAliases.ttlIllegalValues.text=Ungültiger Ersatzname
+DiagramControllerAliases.msgIn.text=in
+DiagramControllerAliases.msgConflictsFound.text=Die Änderungen können nicht akzeptiert werden, es gibt Signaturkonflikte:\n\n%\n\nSie müssen erst die Bezeichnungskonflikte auflösen. (Die Konfliktliste wird in die Zwischenablage kopiert.)
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI-Skalierung

@@ -261,6 +261,7 @@ Menu.menuPreferencesColors.text=Colors ...
 Menu.menuPreferencesOptions.text=Structures ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesElements.text=Element names ...
+Menu.menuPreferencesCtrlAliases.text=Controller aliases ...
 Menu.menuPreferencesAnalyser.text=Analyser ...
 Menu.menuPreferencesSaving.text=Saving ...
 Menu.menuPreferencesExport.text=Export ...
@@ -380,6 +381,9 @@ Menu.msgGuidedTours.text=You activated guided tours.\n\nWatch out for recommenda
 Menu.msgGuidedTourDone.text=Congratulations - you finished the tutorial «%».
 Menu.msgGuidedTourNext.text=%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first: → Menu "%3"
 Menu.ttlGuidedTours.text=Guided Tours
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Routine Signature
+Menu.msgTabHdrAlias.text=Alias Name
 	
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".
@@ -1018,6 +1022,19 @@ ElementNamePreferences.lblLocalized.text=Localized label
 ElementNamePreferences.lblIndividual.text=Configured label
 ElementNamePreferences.btnOK.text=OK
 ElementNamePreferences.btnOK.tooltip=Accept these settings.
+
+-----[ DiagramControllerAliases ]-----
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
+DiagramControllerAliases.title=Controller Routine Aliases
+DiagramControllerAliases.lblHeader.text=Specify alias names for the routines of controllable add-ons.
+DiagramControllerAliases.lblRemark.text=(Note that case is ignored with controller routine names!)
+DiagramControllerAliases.chkApplyAliases.text=Apply the specified aliases on display etc.
+DiagramControllerAliases.btnOK.text=OK
+DiagramControllerAliases.hlpEndEditing.text=End cell editing by pressing <Enter> or <Esc> or by clicking elsewhere.
+DiagramControllerAliases.msgIdentifierRequired.text=Your alias contains illegal characters.\nA routine name alias must either be empty or an identifier\n(i.e. only consist of letters, digits, and underscores).\n\nThe original text will be restored.
+DiagramControllerAliases.ttlIllegalValues.text=Illegal alias
+DiagramControllerAliases.msgIn.text=in
+DiagramControllerAliases.msgConflictsFound.text=There are signature conflicts, changes can't be committed:\n\n%\n\nYou must resolve these conflicts first. (The conflict list is copied to the clipboard.)
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI Scale

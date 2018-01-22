@@ -60,6 +60,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.09.15-28   Enh. #423: Record type definition concept nearly accomplished
  *      Kay Gürtzig     2017.12.06      Enh. #487: Drawing supports hiding of declaration sequences 
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: Run data support for new display mode "Hide declarations"
+ *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *
  ******************************************************************************************************
  *
@@ -148,6 +149,11 @@ public class Instruction extends Element {
 		}
 		// END KGU#227 2016-07-30
 		
+		// START KGU#480 2018-01-21: Enh. #490
+		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, false), "\n");
+		}
+		// END KGU#480 2018-01-21
 		// START KGU#413 2017-06-09: Enh. #416
 		boolean isContinuation = false;
 		// END KGU#413 2017-06-09
@@ -277,6 +283,11 @@ public class Instruction extends Element {
 		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fm.getHeight()*/;
 		// END KGU#227 2016-07-30
 		
+		// START KGU#480 2018-01-21: Enh. #490
+		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.getRoot(_element).hightlightVars), "\n");
+		}
+		// END KGU#480 2018-01-21
 		// START KGU#413 2017-06-09: Enh. #416
 		boolean isContinuation = false;
 		// END KGU#413 2017-06-09

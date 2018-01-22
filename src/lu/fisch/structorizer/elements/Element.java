@@ -87,6 +87,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.09.29      Enh. #423: splitLexically() debugged, now ellipses are tokens too
  *      Kay Gürtzig     2017.10.02      Enh. #423: Method extractDeclarationsFromList() and regex mechanisms revised
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: Method access modifications to support hiding of declarations
+ *      Kay Gürtzig     2018.01.21      Enh. #490: Methods for replacement of DiagramController aliases
  *
  ******************************************************************************************************
  *
@@ -182,6 +183,7 @@ import lu.fisch.structorizer.io.*;
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
+import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -356,6 +358,10 @@ public abstract class Element {
     /** Shall only the most important toolbar buttons be presented (beginners' mode?*/
 	public static boolean E_REDUCED_TOOLBARS = false;
 	// END KGU#456 2017-11-05
+	// START KGU#480 2018-01-21: Enh. #490
+	/** Is the replacement of DiagramController aliases active? */
+	public static boolean E_APPLY_ALIASES = false;
+	// END KGU#480 2018-01-21
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");
@@ -381,13 +387,28 @@ public abstract class Element {
 	public static String preImport = "Included diagrams:";
 	// END KGU#376 2017-07-01
 	
-	// used font
+	// START KGU#480 2018-01-19: Enh. #490 controller API alias mechanism
+	/**
+	 * Maps {@link DiagramController} routine signatures (@code <name>#<arity>) to aliases.
+	 * @see #controllerAlias2Name
+	 */
+	public static final HashMap<String, String> controllerName2Alias = new HashMap<String, String>();
+	/**
+	 * Maps alias routine signatures (@code <alias>#<arity>) to the genuine {@link DiagramController} routine names
+	 * @see #controllerAlias2Name
+	 */
+	public static final HashMap<String, String> controllerAlias2Name = new HashMap<String, String>();
+	// END KGU#480 2018-01-19
+	
+	/** Used font for drawing element text */
 	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
-
+	/** A string indicating that the shortened text in collapsed elements may continue (an ellipse) */
 	public static final String COLLAPSED =  "...";
+	/** Whether the right branch of an alternative is to be padded (width enlarged) */
 	public static boolean altPadRight = true;
 	// START KGU#401 2017-05-17: Issue #405
-	public static int caseShrinkByRot = 8;			// Number of CASE branches to trigger the attempt to shrink width by rotating branches
+	/** Number of CASE branches to trigger the attempt to shrink width by rotating branches */
+	public static int caseShrinkByRot = 8;
 	// END KGU#401 2017-05-17
 	
 	// START KGU 2017-09-19: Performance tuning for syntax analysis
@@ -871,12 +892,24 @@ public abstract class Element {
 	}
 	// END KGU#453 2017-11-01
 
+	/**
+	 * @return a shortened text for the case this is collapsed (usually the first line plus an ellipse). 
+	 */
 	public StringList getCollapsedText()
 	{
 		StringList sl = new StringList();
 		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
 		//if(getText().count()>0) sl.add(getText().get(0));
-		if (getText(false).count()>0) sl.add(getText(false).get(0));
+		// START KGU#480 2018-01-21: Enh. #490 - It might be that a controller routine call starts in the 1st line
+		//if (getText(false).count()>0) sl.add(getText(false).get(0));
+		if (getText(false).count() > 0) {
+			StringList myText = getText(false);
+			if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+			}
+			sl.add(myText.get(0));
+		}
+		// END KGU#480 2018-01-21
 		// END KGU#91 2015-12-01
 		sl.add(COLLAPSED);
 		return sl;
@@ -926,6 +959,51 @@ public abstract class Element {
 	}
 	// END KGU#413 2017-06-09
 	
+	// START KGU#480 2018-01-21: Enh. #490
+	/**
+	 * If {@link #E_APPLY_ALIASES} is true then replaces the names of all routines
+	 * of {@link DiagramController} classes with registered alias names or vice versa,
+	 * depending on {@code names2aliases} and returns the modified text. The text may
+	 * contain newlines and line continuators (end-standing backslashes).  
+	 * @param text - the (Element) text as concatenated string
+	 * @param names2aliases - whether names are to be replaced by aliases (or vice versa)
+	 * @param withArity - whether the replacing alias (or original name) is to be combined
+	 * with the number of the routine arguments (like this: "{@code <name>#<arity>}"). 
+	 * @return the resulting text.
+	 */
+	public static String replaceControllerAliases(String text, boolean names2aliases, boolean withArity)
+	{
+		if (!Element.E_APPLY_ALIASES) {
+			return text;
+		}
+		HashMap<String, String> substitutions = 
+				names2aliases ? controllerName2Alias : controllerAlias2Name;
+		StringList tokens = splitLexically(text, true);
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i).trim();
+			if (!token.isEmpty() && Function.testIdentifier(token, null)) {
+				// Skip all whitespace
+				int j = i;
+				String nextToken = null;
+				while (++j < tokens.count() && ((nextToken = tokens.get(j).trim()).isEmpty() || nextToken.equals("\\")));
+				// Now check for a beginning parameter list
+				if ("(".equals(nextToken)) {
+					int nArgs = Element.splitExpressionList(tokens.subSequence(j+1, tokens.count()), ",", false).count();
+					String key = token.toLowerCase() + "#" + nArgs;
+					String subst = substitutions.get(key);
+					if (subst != null) {
+						token = subst;
+						if (withArity) {
+							token += "#" + nArgs;
+						}
+						tokens.set(i, token);
+					}
+				}
+			}
+		}
+		return tokens.concatenate();
+	}
+	// END KGU#480 2018-01-21
 
 	public void setComment(String _comment)
 	{
@@ -2315,17 +2393,20 @@ public abstract class Element {
 	
 	// START KGU#101 2015-12-11: Enhancement #54: We need to split expression lists (might go to a helper class)
 	/**
-	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings comprising one of the listed expressions each.
+	 * Splits the string {@code _text}, which is supposed to represent a list of expressions
+	 * separated by character sequences {@code _listSeparator}, into strings comprising one of
+	 * the listed expressions each.<br/>
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. (These must not be broken.)
-	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
-	 * bracket, or the like).
-	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
+	 * of function calls etc. (These must not be broken.)<br/>
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched right parenthesis,
+	 * bracket, or the like).<br/>
+	 * The remaining string from the unsatisfied right parenthesis, bracket, or brace on will
 	 * be ignored!
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
+	 * @see #splitExpressionList(String, String, boolean)
+	 * @see #splitExpressionList(StringList, String, boolean)
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator)
 	// START KGU#93 2015-12-21 Bugfix #41/#68/#69
@@ -2334,20 +2415,22 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings comprising one of the listed expressions each.
+	 * Splits the string {@code _text}, which is supposed to represent a list of expressions
+	 * separated by character sequence {@code _listSeparator}, into strings comprising one of
+	 * the listed expressions each.<br/>
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. (These must not be broken.)
-	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
-	 * bracket, or the like).
-	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
-	 * be added as last element to the result if _appendRemainder is true - otherwise there is no
-	 * difference to method splitExpressionList(String _text, String _listSeparator)!
+	 * of function calls etc. (These must not be broken.)<br/>
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched right parenthesis,
+	 * bracket, or the like).<br/>
+	 * The remaining string from the unsatisfied right parenthesis, bracket, or brace on will
+	 * be added as last element to the result if {@code _appendTail} is true - otherwise there is no
+	 * difference to method {@link #splitExpressionList(String, String)}!<br/>
 	 * If the last result element is empty then the expression list was syntactically "clean".
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
+	 * @see #splitExpressionList(StringList, String, boolean)
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
 	// END KGU#93 2015-12-21
@@ -2361,20 +2444,22 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Splits the tokenized list {@code _tokens} of expressions separated by {@code _listSeparator}
-	 * into strings comprising one of the listed expressions each.
+	 * Splits the token list {@code _tokens}, which is supposed to represent a sequence of expressions
+	 * separated by separators {@code _listSeparator}, into strings comprising one of the listed expressions
+	 * each.<br/>
 	 * This is aware of string literals, argument lists of function calls etc. (These must not be broken.)
-	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
-	 * bracket, or the like).
-	 * The remaining tokens from the unsatisfied closing parenthesis, bracket, or brace on will
-	 * be concatenated and added as last element to the result if _appendRemainder is true.
-	 * If the last result element is empty in mode {@code _appedTail} then the expression list was syntactically
-	 * "clean".
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched right parenthesis,
+	 * bracket, or the like).<br/>
+	 * The remaining tokens from the unsatisfied right parenthesis, bracket, or brace on will
+	 * be concatenated and added as last element to the result if {@code _appendTail} is true.
+	 * If the last result element is empty in mode {@code _appendTail} then the expression list was syntactically
+	 * "clean".<br/>
 	 * FIXME If the expression was given without some parentheses as delimiters then a tail won't be added.
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
+	 * @see #splitExpressionList(String, String, boolean)
 	 */
 	public static StringList splitExpressionList(StringList _tokens, String _listSeparator, boolean _appendTail)
 	{
@@ -2682,13 +2767,19 @@ public abstract class Element {
 		{
 			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
 			//if (root.hightlightVars==true)
-			if (root.hightlightVars==true && !root.isSwitchTextCommentMode())
+			if (root.hightlightVars && !root.isSwitchTextCommentMode())
 			// END KGU#226 2016-07-29
 			{
 				StringList parts = Element.splitLexically(_text, true);
 
 				// bold font
-				Font boldFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
+				Font boldFont = new Font(Element.font.getName(), Font.BOLD, Element.font.getSize());
+				// START KGU#480 2018-01-21: Enh. #490 - we will underline alias names
+				// underlined font
+				Map<TextAttribute, Integer> fontAttributes = new HashMap<TextAttribute, Integer>();
+				fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+				Font underlinedFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize()).deriveFont(fontAttributes);
+				// END KGU#480 2018-01-21
 				// backup the original font
 				Font backupFont = _canvas.getFont();
 
@@ -2814,28 +2905,25 @@ public abstract class Element {
 					// END KGU#331 2017-01-13
 					// END KGU#377 2017-03-30
 
-					if(!display.equals(""))
+					if (!display.equals(""))
 					{
 						// if this part has to be colored
 						if(root.variables.contains(display))
 						{
-							// set color
+							// dark blue, bold
 							_canvas.setColor(Color.decode("0x000099"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
 						else if (root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// END KGU#388 2017-09-17
 						// if this part has to be colored with special color
 						else if(specialSigns.contains(display))
 						{
-							// set color
+							// burgundy, bold
 							_canvas.setColor(Color.decode("0x990000"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// if this part has to be colored with io color
@@ -2844,21 +2932,19 @@ public abstract class Element {
 						else if(ioSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
-							// set color
+							// green, bold
 							_canvas.setColor(Color.decode("0x007700"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// START KGU 2015-11-12
 						// START KGU#116 2015-12-23: Enh. #75
-						// START KGU#165 2016-03-25: cosider the new option
+						// START KGU#165 2016-03-25: consider the new case option
 						//else if(jumpSigns.contains(display))
 						else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
-							// set color
+							// orange, bold
 							_canvas.setColor(Color.decode("0xff5511"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// END KGU#116 2015-12-23
@@ -2866,10 +2952,23 @@ public abstract class Element {
 						else if (display.startsWith("\"") && display.endsWith("\"") ||
 								display.startsWith("'") && display.endsWith("'"))
 						{
-							// set colour
+							// violet, plain
 							_canvas.setColor(Color.decode("0x770077"));
 						}
 						// END KGU 2015-11-12
+						// START KGU#480 2018-01-21: Enh. #490 DiagramController routine aliases?
+						else if (E_APPLY_ALIASES && Function.testIdentifier(display, "#")) {
+							int j = i;
+							while (j < parts.count() && parts.get(++j).trim().isEmpty());
+							if (j < parts.count() && parts.get(j).equals("(")) {
+								if (Element.controllerAlias2Name.containsKey(display.toLowerCase())) {
+									// Replace the name and show it underlined
+									display = display.substring(0, display.indexOf('#'));
+									_canvas.setFont(underlinedFont);
+								}
+							}
+						}
+						// END KGU#480 2018-01-21
 					}
 
 					if (_actuallyDraw)

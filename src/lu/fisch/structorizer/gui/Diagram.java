@@ -142,6 +142,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.12.12      Issue #471: Option to copy error message to clipboard in importCode()
  *      Kay Gürtzig     2017.12.15      Issue #492: Element type name configuration
  *      Kay Gürtzig     2018.01.03      Enh. #415: Ensured that the Find&Replace dialog regains focus when selected
+ *      Kay Gürtzig     2018.01.21      Enh. #490: New DiagramController alias preferences inegrated  
  *
  ******************************************************************************************************
  *
@@ -1215,7 +1216,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     
     public void redraw()
     {
-    	// START KGU#440 2017-11-06: Bugfix #455 - supprss drawing unless Structorizer is fully initialized
+    	// START KGU#440 2017-11-06: Bugfix #455 - suppress drawing unless Structorizer is fully initialized
     	if (!this.isInitialized) {
     		return;
     	}
@@ -2577,7 +2578,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				if (data.result==true)
 				{
-					Element ele = new Instruction(data.text.getText());
+					// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
+					//Element ele = new Instruction(data.text.getText());
+					String text = Element.replaceControllerAliases(data.text.getText(), false, false);
+					Element ele = new Instruction(text);
+					// END KGU#480 2018-01-21
 					ele.setComment(data.comment.getText());
 					// START KGU#43 2015-10-17
 					if (data.breakpoint) {
@@ -2612,7 +2617,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				EditData data = new EditData();
 				data.title="Edit element ...";
-				data.text.setText(element.getText().getText());
+				// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
+				//data.text.setText(element.getText().getText());
+				data.text.setText(Element.replaceControllerAliases(element.getText().getText(), true, false));
+				// END KGU#480 2018-01-21
 				data.comment.setText(element.getComment().getText());
 				// START KGU#43 2015-10-12
 				data.breakpoint = element.isBreakpoint();
@@ -2662,7 +2670,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#363 2017-05-21
 					if (!(element instanceof Forever))
 					{
-						element.setText(data.text.getText());
+						// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
+						//element.setText(data.text.getText());
+						String text = Element.replaceControllerAliases(data.text.getText(), false, false);
+						element.setText(text);
+						// END KGU#480 2018-01-21
 					}
 					element.setComment(data.comment.getText());
 					// START KGU#43 2015-10-12
@@ -2959,7 +2971,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (getSelected()!=null)
 		{
 			EditData data = new EditData();
-			data.title=_title;
+			data.title = _title;
 			data.text.setText(_pre);
 			// START KGU 2015-10-14: More information to ease title localisation
 			//showInputBox(data);
@@ -2969,7 +2981,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				if (!(_ele instanceof Forever))
 				{
-					_ele.setText(data.text.getText());
+					// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
+					//_ele.setText(data.text.getText());
+					String text = Element.replaceControllerAliases(data.text.getText(), false, false);
+					_ele.setText(text);
+					// END KGU#480 2018-01-21
 				}
 				_ele.setComment(data.comment.getText());
 				// START KGU 2015-10-17
@@ -6376,10 +6392,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setHightlightVars(boolean _highlight)
 	{
-		Element.E_VARHIGHLIGHT=_highlight;	// this isn't used for drawing, actually
-		root.hightlightVars=_highlight;
+		Element.E_VARHIGHLIGHT = _highlight;	// this isn't used for drawing, actually
+		root.hightlightVars = _highlight;
 		// START KGU#136 2016-03-01: Bugfix #97
-		this.resetDrawingInfo(false);	// Only current root is involved
+		this.resetDrawingInfo(false);	// Only current root is involved (is that true?)
 		// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
@@ -7034,19 +7050,38 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
 
     // START KGU#448 2018-01-05: Enh. #443
-	/** Lazy initialization method for static field {@link #diagramControllers} */
-	private void retrieveDiagramControllers() {
+	/**
+	 * Lazy initialization method for static field {@link #diagramControllers} 
+	 * @return the initialized list of {@link DiagramController} instances; the first
+	 * element (reserved for a {@link TurtleBox)} instance) may be null.
+	 */
+	protected ArrayList<DiagramController> getDiagramControllers() {
 		if (diagramControllers != null) {
-			return;
+			return diagramControllers;
 		}
 		diagramControllers = new ArrayList<DiagramController>();
 		// Turtleizer is always added as first entry (no matter whether initialized or not)
 		diagramControllers.add(turtle);
 		String errors = "";
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("controllers.xml"));
-		GENParser genp = new GENParser();
-		Vector<GENPlugin> plugins = genp.parse(buff);
-		try { buff.close(); } catch (IOException e1) {}
+		Vector<GENPlugin> plugins = Menu.controllerPlugins;
+		if (plugins.isEmpty()) {
+			BufferedInputStream buff = null;
+			try {
+				buff = new BufferedInputStream(getClass().getResourceAsStream("controllers.xml"));
+				GENParser genp = new GENParser();
+				plugins = genp.parse(buff);
+			} catch (Exception ex) {
+				errors = ex.toString();
+				ex.printStackTrace();
+			}
+			if (buff != null) {
+				try {
+					buff.close(); 
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
 		for (int i = 0; i < plugins.size(); i++)
 		{
 			GENPlugin plugin = plugins.get(i);
@@ -7061,20 +7096,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		}
-		try {
-			buff.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
 			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), errors, 
 					Menu.msgTitleParserError.getText(), JOptionPane.ERROR_MESSAGE);
 		}
+		return diagramControllers;
 	}
     
+	/** Returns an array of {@link DiagramController} instances enabled for execution */
     private DiagramController[] getEnabledControllers() {
-    	this.retrieveDiagramControllers();
+    	this.getDiagramControllers();
     	LinkedList<DiagramController> controllers = new LinkedList<DiagramController>();
     	long mask = 1;
     	for (DiagramController contr: diagramControllers) {
@@ -7516,8 +7548,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param selected - if true enables, otherwise disables the specified controller
 	 * @return true if the specified controller class was found.
 	 */
-	public boolean enableController(String className, boolean selected) {
-		this.retrieveDiagramControllers();
+	public boolean enableController(String className, boolean selected)
+	{
+		this.getDiagramControllers();
 		long mask = 1;
 		for (DiagramController controller: diagramControllers) {
 			// The initial position is reserved for the TurtleBox instance, which may not have been created 
@@ -7539,5 +7572,37 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return false;
 	}
 	// END KGU#448 2018-01-14
+
+	// START KGU#480 2018-01-18: Enh. #490
+	/**
+	 * Opens a dialog allowing to configure alias names for {@link DiagramController} API
+	 * methods (e.g. for {@link TurtleBox}).
+	 * @param controllerPlugins - the plugin objects for the available {@link DiagramController}s
+	 */
+	public void controllerAliasesNSD(Vector<GENPlugin> controllerPlugins)
+	{
+		DiagramControllerAliases dialog = new DiagramControllerAliases(this.NSDControl.getFrame(), controllerPlugins);
+		dialog.setVisible(true);
+		// FIXME: Just temporary - mind Element.controllerName2Alias and Element.controllerAlias2Name
+		if (dialog.OK) {
+			try {
+				Ini.getInstance().save();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+			setApplyAliases(dialog.chkApplyAliases.isSelected());
+		}
+	}
+
+	/**
+	 * Switches the replacement of {@link DiagramController} routine names with aliases on or off
+	 * @param apply - new status value
+	 */
+	public void setApplyAliases(boolean apply) {
+		Element.E_APPLY_ALIASES = apply;
+		this.resetDrawingInfo(true);
+		redraw();
+	}
+	// END KGU#480 2018-01-18
 
 }

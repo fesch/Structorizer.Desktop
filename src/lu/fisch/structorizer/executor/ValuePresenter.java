@@ -138,13 +138,8 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
     		if (_value instanceof JButton) {
     			table = _table;
     			button = (JButton)_value;
-    			//        			if (isSelected) {
     			button.setForeground(table.getSelectionForeground());
     			button.setBackground(table.getSelectionBackground());
-    			//        			} else {
-    			//        				button.setForeground(table.getForeground());
-    			//        				button.setBackground(table.getBackground());
-    			//        			}
     		}
     		else {
     			button = null;

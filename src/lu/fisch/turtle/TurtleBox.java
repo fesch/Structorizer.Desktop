@@ -47,7 +47,7 @@ package lu.fisch.turtle;
  *
  *      Comment:
  *      To start the Turtleizer in an application, the following steps are recommended:
- *      	{@code TurtleBox =	turtleBox = new TurtleBox(<width>, <height>);}
+ *      	{@code TurtleBox turtleBox = new TurtleBox(<width>, <height>);}
  *			{@code turtleBox.setVisible(true);}
  *			{@code turtleBox.setAnimationDelay(0, true);}
  *      The API for employing applications is retrievable via {@link TurtleBox#getFunctionMap()} and
@@ -122,8 +122,8 @@ public class TurtleBox implements DelayableDiagramController
 			definedProcedures.put("bk#2", TurtleBox.class.getMethod("bk", new Class<?>[]{Integer.class, Color.class}));
 			definedProcedures.put("left#1", TurtleBox.class.getMethod("left", new Class<?>[]{Double.class}));
 			definedProcedures.put("right#1", TurtleBox.class.getMethod("right", new Class<?>[]{Double.class}));
-			definedProcedures.put("rl#1", TurtleBox.class.getMethod("rl", new Class<?>[]{Double.class}));
-			definedProcedures.put("rr#1", TurtleBox.class.getMethod("rr", new Class<?>[]{Double.class}));
+			definedProcedures.put("rl#1", TurtleBox.class.getMethod("left", new Class<?>[]{Double.class}));
+			definedProcedures.put("rr#1", TurtleBox.class.getMethod("right", new Class<?>[]{Double.class}));
 			definedProcedures.put("gotoxy#2", TurtleBox.class.getMethod("gotoXY", new Class<?>[]{Integer.class, Integer.class}));
 			definedProcedures.put("gotox#1", TurtleBox.class.getMethod("gotoX", new Class<?>[]{Integer.class}));
 			definedProcedures.put("gotoy#1", TurtleBox.class.getMethod("gotoY", new Class<?>[]{Integer.class}));
@@ -142,8 +142,8 @@ public class TurtleBox implements DelayableDiagramController
 	private static final HashMap<String, Method> definedFunctions = new HashMap<String, Method>();
 	static {
 		try {
-			definedFunctions.put("getx#0", TurtleBox.class.getMethod("getx", (Class<?>[])null));
-			definedFunctions.put("gety#0", TurtleBox.class.getMethod("gety", (Class<?>[])null));
+			definedFunctions.put("getx#0", TurtleBox.class.getMethod("getX", (Class<?>[])null));
+			definedFunctions.put("gety#0", TurtleBox.class.getMethod("getY", (Class<?>[])null));
 			definedFunctions.put("getorientation#0", TurtleBox.class.getMethod("getOrientation", (Class<?>[])null));
 		} catch (NoSuchMethodException | SecurityException ex) {
 			ex.printStackTrace();
@@ -497,7 +497,7 @@ public class TurtleBox implements DelayableDiagramController
     }
     // END KGU#448 2017-10-28
 
-    public void rl(Double degrees)
+    private void rl(Double degrees)
     {
         this.angle+=degrees;
         delay();
@@ -508,7 +508,7 @@ public class TurtleBox implements DelayableDiagramController
         rl(degrees);
     }
 
-    public void rr(Double degrees)
+    private void rr(Double degrees)
     {
         rl(-degrees);
     }
@@ -853,14 +853,14 @@ public class TurtleBox implements DelayableDiagramController
      * Returns the current horizontal pixel coordinate.
      * @return the precise result of preceding moves, i.e. as double value
      */
-    public double getx() {
+    public double getX() {
     	return this.posX;
     }
     /**
      * Returns the current vertical pixel coordinate (from top downwards).
      * @return the precise result of preceding moves, i.e. as double value
      */
-    public double gety() {
+    public double getY() {
     	return this.posY;
     }
     // END KGU#448 2017-10-28

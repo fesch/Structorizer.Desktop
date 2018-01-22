@@ -64,7 +64,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
  *      Kay Gürtzig             2017.09.22      Bugfix #428 Defective replacement pattern for "short" in transformType(String)
  *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
- *      Kay Gürtzig             2017.10.27      Enh. #441: Direct support for now extractable Turtleizer package 
+ *      Kay Gürtzig             2017.10.27      Enh. #441: Direct support for now extractable Turtleizer package
+ *      Kay Gürtzig             2018.01.21      Enh. #441/#490: Improved support for TurtleBox routine export. 
  *
  ******************************************************************************************************
  *
@@ -108,6 +109,7 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.turtle.TurtleBox;
 import lu.fisch.turtle.adapters.Turtleizer;
 
 import java.util.HashMap;
@@ -115,6 +117,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -218,6 +221,19 @@ public class JavaGenerator extends CGenerator
 	// END KGU#351 2017-02-26
 
 	/************ Code Generation **************/
+	
+	// START KGU#480 2018-01-21: Enh. #490 Improved support for Turtleizer export
+	/**
+	 * Maps light-weight instances of DiagramControllers for API retrieval
+	 * to their respective adapter class names
+	 */
+	protected static HashMap<DiagramController, String> controllerMap = new HashMap<DiagramController, String>();
+	static {
+		// FIXME: The controllers should be retrieved from controllers.xml
+		// FIXME: For a more generic approach, the adapter class names should be fully qualified
+		controllerMap.put(new TurtleBox(), "Turtleizer");
+	}
+	// END KGU#480 2018-01-21
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
@@ -301,12 +317,27 @@ public class JavaGenerator extends CGenerator
 			String token = tokens.get(i);
 			if (Function.testIdentifier(token, null)) {
 				int j = i;
+				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
 				String turtleMethod = null;
-				if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
-					tokens.set(i, turtleMethod);
-					this.usesTurtleizer = true;
+				// START KGU#480 2018-01-21: Enh. 490 - more precise detection
+				//if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
+				//	tokens.set(i, turtleMethod);
+				//	this.usesTurtleizer = true;
+				//}
+				if (j+1 < tokens.count() && tokens.get(j).equals("(")) {
+					int nArgs = Element.splitExpressionList(tokens.subSequence(j+1, tokens.count()), ",", false).count();
+					for (Entry<DiagramController, String> entry: controllerMap.entrySet()) {
+						String name = entry.getKey().providedRoutine(token, nArgs);
+						if (name != null) {
+							tokens.set(i, entry.getValue() + "." +name);
+							if (entry.getKey() instanceof TurtleBox) {
+								this.usesTurtleizer = true;
+							}
+						}
+					}
 				}
+				// END KGU#480 2018-01-21
 			}
 		}
 		return super.transformTokens(tokens);
@@ -951,6 +982,9 @@ public class JavaGenerator extends CGenerator
 			insertBlockHeading(_root, "public static void main(String[] args)", indentPlus1);
 		}
 		else {
+			// START KGU#446 2018-01-21: Enh. #441
+			this.includeInsertionLine = code.count();
+			// END KGU#446 2018-01-21
 			insertBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
 			insertBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
@@ -1092,8 +1126,8 @@ public class JavaGenerator extends CGenerator
 		// END KGU#311 2016-12-22
 		// START KGU#446 2017-10-27: Enh. #441
 		if (topLevel && this.usesTurtleizer) {
-			code.insert("TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
-			code.insert("import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
+			code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
+			code.insert((_root.isSubroutine() ? this.commentSymbolLeft() : "") + "import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
 		}
 		// END KGU#446 2017-10-27
 	}
