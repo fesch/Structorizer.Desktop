@@ -910,7 +910,7 @@ public class Executor implements Runnable
 	// FIXME: Might have to be adapted with a newer version of the bean shell interpreter some day ...
 	private static final Matcher MTCH_EVAL_ERROR_ARRAY = Pattern.compile(".*Can't assign.*to java\\.lang\\.Object \\[\\].*").matcher("");
 	/** Matcher for split function */
-	private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
+	//private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
 	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
 	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
 	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
@@ -1735,8 +1735,8 @@ public class Executor implements Runnable
 									this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#198 2016-05-25
 									Object[] options = {
-											control.lbOk.getText(),
-											control.lbPause.getText()
+											Control.lbOk.getText(),
+											Control.lbPause.getText()
 											};
 									int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
@@ -4358,7 +4358,7 @@ public class Executor implements Runnable
 					int nArgs = args.count();
 					String fSign = fName + "#" + nArgs;
 					DiagramController controller = this.controllerFunctions.get(fSign);
-					Method function = controller.getFunctionMap().get(fSign);
+					//Method function = controller.getFunctionMap().get(fSign);
 					// Now we must know what is beyond the function call (the tail)
 					String tail = "";
 					StringList parts = Element.splitExpressionList(exprTail, ",", true);
@@ -4367,7 +4367,7 @@ public class Executor implements Runnable
 					}
 					Object argVals[] = new Object[nArgs];
 					for (int i = 0; i < nArgs; i++) {
-						// TODO While the known controller function haven't got (complex) arguments we may neglect initializers
+						// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
 						argVals[i] = this.evaluateExpression(args.get(i), false, false);
 					}
 					// Passed till here, we try to execute the function - this may throw a FunctionException
@@ -4632,9 +4632,9 @@ public class Executor implements Runnable
 		{
 			// In run mode, give the user a chance to intervene
 			Object[] options = {
-					control.lbOk.getText(),
-					control.lbPause.getText()
-					};
+					Control.lbOk.getText(),
+					Control.lbPause.getText()
+			};
 			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), control.lbAcknowledge.getText(), control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
@@ -4825,9 +4825,9 @@ public class Executor implements Runnable
 			{
 				// In run mode, give the user a chance to intervene
 				Object[] options = {
-						control.lbOk.getText(),
-						control.lbPause.getText()
-						};
+						Control.lbOk.getText(),
+						Control.lbPause.getText()
+				};
 				// diagram is a bad anchor component since its extension is the Root rectangle (may be huge!)
 				int pressed = JOptionPane.showOptionDialog(diagram.getParent(), s, control.lbOutput.getText(),
 						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
@@ -4909,9 +4909,9 @@ public class Executor implements Runnable
 					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {
-							control.lbOk.getText(),
-							control.lbPause.getText()
-							};
+							Control.lbOk.getText(),
+							Control.lbPause.getText()
+					};
 					int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)

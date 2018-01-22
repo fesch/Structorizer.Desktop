@@ -19,13 +19,6 @@
  */
 package lu.fisch.structorizer.parsers;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.xml.sax.SAXException;
-
-import lu.fisch.structorizer.elements.Root;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -46,6 +39,12 @@ import lu.fisch.structorizer.elements.Root;
  *      
  *
  ******************************************************************************************************///
+
+import java.io.IOException;
+
+import org.xml.sax.SAXException;
+
+import lu.fisch.structorizer.elements.Root;
 
 /**
  * @author Kay Gürtzig

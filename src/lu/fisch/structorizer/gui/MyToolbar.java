@@ -21,7 +21,6 @@
 package lu.fisch.structorizer.gui;
 
 import java.awt.Component;
-import java.awt.Dimension;
 import java.util.Vector;
 
 import javax.swing.JToolBar;

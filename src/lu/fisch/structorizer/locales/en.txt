@@ -105,6 +105,7 @@
  *      Kay Gürtzig     2017.10.14/16   Issues #437-#438: New Control messages
  *      Kay Gürtzig     2017.11.05      New texts for issues #448, #452, #454 added.
  *      Kay Gürtzig     2017.12.15      Element name place holders introduced
+ *      Kay Gürtzig     2018.01.18      DiagramControllerAliases added
  *
  ******************************************************************************************************
  *

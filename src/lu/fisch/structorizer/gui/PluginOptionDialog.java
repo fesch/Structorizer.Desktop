@@ -234,6 +234,7 @@ public class PluginOptionDialog extends LangDialog {
 		// ====================== OPTIONS ======================
 		JPanel pnlOptions = new JPanel();
 		pnlOptions.setBorder(new EmptyBorder(5,5,5,5));
+		// FIXME We may prefer a GridBagLayout instead
 		pnlOptions.setLayout(new GridLayout(0, 1));
 		for (HashMap<String, String> optionSpec: plugin.options) {
 			String key = optionSpec.get("name");

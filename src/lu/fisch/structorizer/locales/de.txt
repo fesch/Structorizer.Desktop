@@ -110,6 +110,7 @@
  *      Andreas Brusinsky   2017.12.10  Element names translated into German
  *      Kay Gürtzig         2017.12.14  German element name translation adapted
  *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
+ *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
  *
  ******************************************************************************************************
  *

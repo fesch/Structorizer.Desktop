@@ -19,10 +19,6 @@
  */
 package lu.fisch.structorizer.executor;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -44,6 +40,9 @@ import java.awt.Component;
  *
  ******************************************************************************************************///
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
@@ -52,7 +51,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map.Entry;
 
 import javax.swing.AbstractCellEditor;

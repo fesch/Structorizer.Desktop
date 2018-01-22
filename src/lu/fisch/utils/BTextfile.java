@@ -43,7 +43,6 @@ package lu.fisch.utils;
  ******************************************************************************************************/
 
 import java.io.*;
-import lu.fisch.utils.*;
 
 public class BTextfile
 {
