@@ -85,7 +85,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
  *      Kay Gürtzig     2017.11.20      Enh. #452/#459: Revisions for guided tours, enh. #469: Accelerators for debug menu
  *      Kay Gürtzig     2017.12.06      Enh. #487: New menu items for hiding of declaration sequences
- *      Kay Gürtzig     2017.12.14/15   Enh. #492: Configuration of external element names added 
+ *      Kay Gürtzig     2017.12.14/15   Enh. #492: Configuration of external element names added
+ *      Kay Gürtzig     2018.01.18      Issue #4: Icon association modified
+ *      Kay Gürtzig     2018.01.18/19   Enh. #490: New preferences menu item added (DiagramController aliases)
  *
  ******************************************************************************************************
  *
@@ -117,7 +119,7 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class Menu extends LangMenuBar implements NSDController
 {
-	public enum PluginType { GENERATOR, PARSER, IMPORTER };
+	public enum PluginType { GENERATOR, PARSER, IMPORTER, CONTROLLER };
 	
 	private Diagram diagram = null;
 	private NSDController NSDControl = null;
@@ -127,7 +129,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// Submenus of "File"
 	protected final JMenuItem menuFileNew = new JMenuItem("New", IconLoader.ico001);
 	protected final JMenuItem menuFileSave = new JMenuItem("Save", IconLoader.ico003);
-	protected final JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico003);
+	protected final JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico092);
 	// START KGU#373 2017-03-28: Enh. #387
 	protected final JMenuItem menuFileSaveAll = new JMenuItem("Save All", IconLoader.ico069);
 	//  END KGU#373 2017-03-28
@@ -136,28 +138,39 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenu menuFileExport = new JMenu("Export");
 	// Submenu of "File -> Export"
 	protected final JMenu menuFileExportPicture = new JMenu("Picture");
-	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.ico032);
-	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.ico032);
-	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.ico032);
-	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF ...",IconLoader.ico032);
-	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.ico032);
-	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.ico032);
+	// START KGU#486 2018-01-18: Issue #4 icon redesign
+//	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.ico032);
+//	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.ico032);
+//	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.ico032);
+//	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF ...",IconLoader.ico032);
+//	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.ico032);
+//	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.ico032);
+	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.ico088);
+	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.ico088);
+	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.ico088);
+	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF ...",IconLoader.ico088);
+	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.ico088);
+	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.ico088);
+	// END KGU#486 2018-01-18
 	protected final JMenu menuFileExportCode = new JMenu("Code");
 	// START KGU#171 2016-04-01: Enh. #144 - new menu item for Favourite Code Export
 	protected static final LangTextHolder lbFileExportCodeFavorite = new LangTextHolder("Export as % Code");	// Label template for translation
-	protected final JMenuItem menuFileExportCodeFavorite = new JMenuItem("Export Fav. Code", IconLoader.ico004);
+	// START KGU#486 2018-01-18: Issue #4 icon redesign
+	//protected final JMenuItem menuFileExportCodeFavorite = new JMenuItem("Export Fav. Code", IconLoader.ico004);
+	protected final JMenuItem menuFileExportCodeFavorite = new JMenuItem("Export Fav. Code", IconLoader.ico087);
+	// END KGU#486 2018-01-18
 	// END KGU#171 2016-04-01
 	protected final JMenu menuFileImport = new JMenu("Import");
 	// Submenu of "File -> Import"
 	// START KGU#354 2017-03-14: Enh. #354 We use one unified menu item for all code import now
 	//protected final JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
-	protected final JMenuItem menuFileImportCode = new JMenuItem("Source Code ...", IconLoader.ico004);
+	protected final JMenuItem menuFileImportCode = new JMenuItem("Source Code ...", IconLoader.ico087);
 	// END KGU#354 2017-03-14
-	protected final JMenuItem menuFileImportNSDEd = new JMenuItem("Foreign NSD editor file ...", IconLoader.ico074);
+	//protected final JMenuItem menuFileImportNSDEd = new JMenuItem("Foreign NSD editor file ...", IconLoader.ico074);
 
 	
 	// START KGU#363 2017-05-19: Enh. #372
-	protected final JMenuItem menuFileAttributes = new JMenuItem("Inspect attributes");
+	protected final JMenuItem menuFileAttributes = new JMenuItem("Inspect attributes", IconLoader.ico086);
 	// END KGU#363 2017-05-19
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
@@ -284,9 +297,6 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
 	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
 	protected final JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
-	// START KGU#479 2017-12-14: Enh. #492
-	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...",IconLoader.ico057);
-	// END KGU#479 2017-12-14
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	// START KGU#309 2016-12-15: Enh. #310 - new options for saving diagrams
 	protected final JMenuItem menuPreferencesSaving = new JMenuItem("Saving ...",IconLoader.ico003);
@@ -300,6 +310,12 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#232 2016-08-03/2016-09-06: Enh. #222
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
+	// START KGU#479 2017-12-14: Enh. #492
+	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...", IconLoader.ico057);
+	// END KGU#479 2017-12-14
+	// START KGU#480 2018-01-18: Enh. #490 - Aliases for controller API
+	protected final JMenuItem menuPreferencesCtrlAliases = new JMenuItem("Controller aliases ...", IconLoader.turtle);
+	// END KGU#480 2018-01-18
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
 	// START KGU#287 2017-01-11: Issue #81/#330
 	protected final JMenuItem menuPreferencesScalePreset = new JMenuItem("GUI Scaling ...", IconLoader.ico051);
@@ -331,9 +347,13 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
 	// START KGU#239 2016-08-12: Enh. #231
-	// Generator plugins accessible for Analyser, Diagram, ExportOptionDialoge etc.
+	/** Generator plugins accessible for Analyser, {@link Diagram}, {@link ExportOptionDialoge} etc. */
 	public static Vector<GENPlugin> generatorPlugins = new Vector<GENPlugin>();
 	// END KGU#239 2016-08-12
+	// START KGU#448/KGU#480 2018-01-08: Enh. #443, #490
+	/** {@link DiagramController} plugins accessible for {@link Diagram}, {@link DiagramControllerAliases} etc. */
+	public static Vector<GENPlugin> controllerPlugins = new Vector<GENPlugin>();
+	// END KGU#448/KGU#480 2018-01-08
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
 	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu \"%1 ► %2\".");
@@ -579,6 +599,10 @@ public class Menu extends LangMenuBar implements NSDController
     // START KGU#386 2017-04-28
 	public static final LangTextHolder msgImportTooltip = new LangTextHolder("Diagram files generated by the Nassi-Shneiderman editor from %");
     // END KGU#386 2017-04-28
+	// START KGU#480 2018-01-19: Enh. #490 - table header strings for DiagramControllerAliases
+	public static final LangTextHolder msgTabHdrSignature = new LangTextHolder("Signature");
+	public static final LangTextHolder msgTabHdrAlias = new LangTextHolder("Alias");
+	// END KGU#480 2018-01-19
 
 	public void create()
 	{
@@ -629,6 +653,9 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#354 2017-03-04
 		// START KGU#354 2017-03-14: Enh. #354 We turn back to a single menu entry and leave selection to the FileChooser
 		menuFileImport.add(menuFileImportCode);
+		// START KGU#486 2018-01-18: Issue #4
+		menuFileImport.setIcon(IconLoader.ico025);
+		// END KGU#486 2018-01-18
 		menuFileImportCode.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(); } });
 		menuFileImportCode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,(java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
 		// END KGU#354 2017-03-14
@@ -638,9 +665,15 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#386 2017-04-26
 
 		menuFile.add(menuFileExport);
+		// START KGU#486 2018-01-18: Issue #4
+		menuFileExport.setIcon(IconLoader.ico032);
+		// END KGU#486 2018-01-18
 
 		menuFileExport.add(menuFileExportPicture);
-		menuFileExportPicture.setIcon(IconLoader.ico032);
+		// START KGU#486 2018-01-18: Issue #4
+		//menuFileExportPicture.setIcon(IconLoader.ico032);
+		menuFileExportPicture.setIcon(IconLoader.ico088);
+		// END KGU#486 2018-01-18
 
 		menuFileExportPicture.add(menuFileExportPicturePNG);
 		menuFileExportPicturePNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -662,7 +695,10 @@ public class Menu extends LangMenuBar implements NSDController
 		menuFileExportPictureSVG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportSVG(); doButtons(); } } );
 
 		menuFileExport.add(menuFileExportCode);
-		menuFileExportCode.setIcon(IconLoader.ico004);
+		// START KGU#486 2018-01-18: Issue #4
+		//menuFileExportCode.setIcon(IconLoader.ico004);
+		menuFileExportCode.setIcon(IconLoader.ico087);
+		// END KGU#486 2018-01-18
 		// START KGU#386 2017-04-26: Plugin evaluation outsourced
 //		// read generators from file
 //		// and add them to the menu
@@ -697,7 +733,10 @@ public class Menu extends LangMenuBar implements NSDController
 //			final String className = plugin.className;
 //			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
 //		}
-		generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.ico004);
+		// START KGU#486 2018-01-18: Issue #4 - Icon redesign
+		//generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.ico004);
+		generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.ico087);
+		// END KGU#486 2018-01-18
 		
 		// START KGU#171 2016-04-01: Enh. #144 - accelerated export to favourite target language
 		menuFile.add(menuFileExportCodeFavorite);
@@ -1082,11 +1121,6 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferences.add(menuPreferencesParser);
 		menuPreferencesParser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.parserNSD(); doButtons(); } } );
 
-		// START KGU#479 2017-12-14: Enh. #492
-		menuPreferences.add(menuPreferencesElements);
-		menuPreferencesElements.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.elementNamesNSD(); doButtons(); } } );;
-		// END KGU#479 2017-12-14
-
 		menuPreferences.add(menuPreferencesAnalyser);
 		menuPreferencesAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.analyserNSD(); doButtons(); } } );
 
@@ -1102,6 +1136,16 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferences.add(menuPreferencesImport);
 		menuPreferencesImport.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importOptions(); doButtons(); } } );
 		// END KGU#258 2016-09-25
+
+		// START KGU#479 2017-12-14: Enh. #492
+		menuPreferences.add(menuPreferencesElements);
+		menuPreferencesElements.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.elementNamesNSD(); doButtons(); } } );;
+		// END KGU#479 2017-12-14
+
+		// START KGU#480 2018-01-18: Enh. #490 - Aliases for controller API
+		menuPreferences.add(menuPreferencesCtrlAliases);
+		menuPreferencesCtrlAliases.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.controllerAliasesNSD(controllerPlugins); } } );;
+		// END KGU#480 2018-01-18
 
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);
@@ -1251,6 +1295,10 @@ public class Menu extends LangMenuBar implements NSDController
 		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
 		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
 		// START KGU#463 2017-11-2
+		
+		// START KGU#448 2018-01-04: Enh. #443 - checkbox menu items prepared for additional diagram controllers
+		controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.ico004);
+		// END KGU#448 2018-01-04
 
 		menuDebug.add(menuDebugDropBrkpts);
 		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
@@ -1705,6 +1753,8 @@ public class Menu extends LangMenuBar implements NSDController
     		fileName = "importers.xml";
 			tooltip = msgImportTooltip.getText();
     		break;
+    	case CONTROLLER:
+    		fileName = "controllers.xml";
     	}
 		// and add them to the menu
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream(fileName));
@@ -1724,7 +1774,16 @@ public class Menu extends LangMenuBar implements NSDController
 				}
 				catch (Exception ex) {}
 			}
-			JMenuItem pluginItem = new JMenuItem(plugin.title, icon);
+			JMenuItem pluginItem;
+			if (_type == PluginType.CONTROLLER) {
+				if (plugin.className.equals("lu.fisch.turtle.TurtleBox")) {
+					continue;
+				}
+				pluginItem = new JCheckBoxMenuItem(plugin.title, icon);
+			}
+			else {
+				pluginItem = new JMenuItem(plugin.title, icon);
+			}
 			_menu.add(pluginItem);
 			if (plugin.info != null) {
 				pluginItem.setToolTipText(tooltip.replace("%", plugin.info));
@@ -1751,6 +1810,11 @@ public class Menu extends LangMenuBar implements NSDController
 				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className, options); doButtons(); } };
 				// END KGU#354/KGU#395 2017-05-11
 				break;
+				// START KGU#448 2018-01-05: Enh. #443
+			case CONTROLLER:	// This isn't used anymore - we still leave in the code for regularity
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.enableController(className, ((JCheckBoxMenuItem)pluginItem).isSelected()); } };
+				break;
+				// END KGU#448 2018-01-05
 			}
 			if (listener != null) {
 				pluginItem.addActionListener(listener);

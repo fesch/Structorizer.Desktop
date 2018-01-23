@@ -110,6 +110,7 @@
  *      Kay Gürtzig     2017.10.16  Issues #437-#438: New Control messages
  *      Kay Gürtzig     2017.11.05  New texts for issues #448, #452, #454 added.
  *      Kay Gürtzig     2017.12.15  Element name placeholders introduced
+ *      Kay Gürtzig     2018.01.18  DiagramControllerAliases added
  *
  ******************************************************************************************************
  *
@@ -265,6 +266,7 @@ Menu.menuPreferencesColors.text=Colores ...
 Menu.menuPreferencesOptions.text=Estructuras ...
 Menu.menuPreferencesParser.text=Analizador ...
 Menu.menuPreferencesElements.text=Nombres de elementos ...
+Menu.menuPreferencesCtrlAliases.text=Aliases de rutinas ...
 Menu.menuPreferencesAnalyser.text=Comprobador ...
 Menu.menuPreferencesSaving.text=Guardar ...
 Menu.menuPreferencesExport.text=Exportación ...
@@ -384,6 +386,9 @@ Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendacion
 Menu.msgGuidedTourDone.text=Congratulaciones - Has acabado el curso «%».
 Menu.msgGuidedTourNext.text=%1\nCurso «%2» va a empezar ahora.\nTal vez quieres iniciar nuevo diagrama: → Menú "%3"
 Menu.ttlGuidedTours.text=Cursos guiados
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Signatura de la rutina
+Menu.msgTabHdrAlias.text=Nombre alias
 
 // Error messages for analyser
 Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 ► %2".
@@ -1014,14 +1019,27 @@ PluginOptionDialog.msgVerificationError.text=Error de verificación
 PluginOptionDialog.btnOk.text=Aceptar
 PluginOptionDialog.btnCancel.text=Cancelar
 
------[ ElementNamesPreferences ]-----
-ElementNamesPreferences.title=Preferidos nombres de elementos
-ElementNamesPreferences.lblExplanation.text=Renombra tipos de elementos para el display
-ElementNamesPreferences.chkUseConfNames.text=Permite las designaciones preferidas
-ElementNamesPreferences.lblLocalized.text=Nombre localizado
-ElementNamesPreferences.lblIndividual.text=Nombre preferido
-ElementNamesPreferences.btnOK.text=Aceptar
-ElementNamesPreferences.btnOK.tooltip=Aceptar los cambios.
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=Preferidos nombres de elementos
+ElementNamePreferences.lblExplanation.text=Renombra tipos de elementos para el display
+ElementNamePreferences.chkUseConfNames.text=Permite las designaciones preferidas
+ElementNamePreferences.lblLocalized.text=Nombre localizado
+ElementNamePreferences.lblIndividual.text=Nombre preferido
+ElementNamePreferences.btnOK.text=Aceptar
+ElementNamePreferences.btnOK.tooltip=Aceptar los cambios.
+
+-----[ DiagramControllerAliases ]-----
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
+DiagramControllerAliases.title=Aliases de rutinas de mando
+DiagramControllerAliases.lblHeader.text=Especifica aliases para rutinas de unidades de mando.
+DiagramControllerAliases.lblRemark.text=(Fijate: Mayúscula/minúscula no son significantes con estas rutinas.)
+DiagramControllerAliases.chkApplyAliases.text=Aplicar los aliases especificados
+DiagramControllerAliases.btnOK.text=Aceptar
+DiagramControllerAliases.hlpEndEditing.text=Termina de editar la línea con tecla <Enter> o <Esc> o clicando sobre otro sitio.
+DiagramControllerAliases.msgIdentifierRequired.text=Tu alias contiene carácteres ilícitos.\nUn alias de rutina tiene que ser o vacío o un identificador\n(es decir constar sólamente de letras, cifras y guiones bajos).\n\nEl texto original será restablecido.
+DiagramControllerAliases.ttlIllegalValues.text=Alias ilícito
+DiagramControllerAliases.msgIn.text=en
+DiagramControllerAliases.msgConflictsFound.text=Hay conflictos entre signaturas, hechos modificaciones no son aceptables:\n\n%\n\nTienes que resolvar estos conflictos priméramente. (La lista de conflictos será copiada al clipboard.)
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=Calibración de interfaz gráfica
@@ -1175,7 +1193,7 @@ OutputConsole.menuFontDown.text=Disminuir grado de letra
 ElementNames.localizedNames.0.text=Instrucción
 ElementNames.localizedNames.1.text=SI
 ElementNames.localizedNames.2.text=CASE
-ElementNames.localizedNames.3.text=PARA/POR
+ElementNames.localizedNames.3.text=PARA
 ElementNames.localizedNames.4.text=PARA-HASTA
 ElementNames.localizedNames.5.text=POR CADA
 ElementNames.localizedNames.6.text=MIENTRAS

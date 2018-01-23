@@ -20,7 +20,7 @@
 
 package lu.fisch.turtle;
 
-import java.awt.Color;
+//import java.awt.Color;
 import lu.fisch.structorizer.gui.Mainform;
 
 /**

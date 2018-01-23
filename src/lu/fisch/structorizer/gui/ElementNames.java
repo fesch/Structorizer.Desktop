@@ -26,7 +26,6 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.io.Ini;
-import lu.fisch.utils.StringList;
 
 /******************************************************************************************************
  *
@@ -40,7 +39,7 @@ import lu.fisch.utils.StringList;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.12.14      First Issue on behalf of issue #492
+ *      Kay Gürtzig     2017.12.14      First Issue on behalf of enhancement request #492
  *
  ******************************************************************************************************
  *

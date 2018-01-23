@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-04 (2017.12.16)
+Current development version 3.27-05 (2018.01.23)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -37,11 +37,21 @@ Current development version 3.27-04 (2017.12.16)
 - 04: Bugfix #485: Workaround for intrinsic COBOL functions [Simon Sobisch]2
 - 04: Bugfix #486: Return mechanism in imported COBOL functions enforced <2>
 - 04: Enh. #487: New display mode to hide (collapse) declaration sequences <2>
-- 04: Enh. #87: Insertion of elements enabled on multiple selections <2>
+- 04: Enh. #38: Insertion of elements enabled on multiple selections <2>
 - 04: Enh. #425: Simple find mechanism in Translator and key sensitivity <2>
 - 04: Enh. #491: Translator: tooltips show master texts too long for the column <2>
 - 04: Enh. #492: Configurable designations of element types [A. Brusinsky]2
 - 04: Issues #493, #494: COBOL import improved w.r.t. SEARCH <Simon Sobisch>
+- 05: Enh. #425: The Ctrl-F key binding in Translator only worked on the buttons <2>
+- 05: Issue #496: C# autodoc comment style changed to "/// <summary> ..." <2>
+- 05: Enh. #492: Localization (EN/DE/ES) and GUI scaling support for dialog
+      ElementNamePreferences (Preferences => Element names) fixed <2>
+- 05: Bugfix 497: Several defects on StrukTeX export mended <2>
+- 05: Issue 415: Find&Replace dialog now regains focus when summoned again <2>
+- 05: Issue 04: Several new and redesigned icons (for better scalability) <2>
+- 05: Enh. #490: Turtleizer routines individually re-nameable [A. Brusinsky]2
+- 05: Issue #484: Layout of Export/Import Options dialogs fixed [Simon Sobisch]2
+- 05: Bugfix #498: Priliminary executability check of REPEAT conditions dropped <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
@@ -162,7 +172,7 @@ Version 3.27 (2017.10.30)
 - 08: Issue #417: Scrolling detention with many / large diagrams alleviated <2>
 - 08: Enh. #423: Export support for records to Python, bash, Oberon <2>
 - 08: Enh. #441: Java export now directly supports use of extracted Turtleizer <2>
-- 08: Enh. #443: Preparations for multiple controller plugins like Turtleizer <2>  
+- 08: Enh. #443: Preparations for multiple controller plugins like Turtleizer <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

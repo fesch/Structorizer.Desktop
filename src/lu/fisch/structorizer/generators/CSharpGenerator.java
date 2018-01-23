@@ -59,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
  *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
+ *      Kay Gürtzig             2017.12.22      Issue #496: Autodoc comment style changed from /**... to ///...
  *
  ******************************************************************************************************
  *
@@ -782,7 +783,7 @@ public class CSharpGenerator extends CGenerator
 			// END KGU#351 2017-02-26
 			code.add(_indent + "");
 			// START KGU 2015-10-18
-			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
+			insertBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
 			// END KGU 2015-10-18
 
 			insertBlockHeading(_root, "public class "+ _procName, _indent);
@@ -801,10 +802,7 @@ public class CSharpGenerator extends CGenerator
 			insertGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
 			code.add(_indent);
-			code.add(indentPlus1 + "/**");
-			code.add(indentPlus1 + " * @param args - array of command line arguments");
-			code.add(indentPlus1 + " */");
-
+			code.add(indentPlus1 + "/// <param name=\"args\"> array of command line arguments </param>");
 			insertBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
 			code.add("");
 		}
@@ -820,12 +818,13 @@ public class CSharpGenerator extends CGenerator
 				this.subClassInsertionLine = code.count();
 			}
 			// END KGU#348 2017-02-24
-			insertBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
+			insertBlockComment(_root.getComment(), indentPlus1, "/// <summary>", "/// ", "/// </summary>");
+			for (String param: _paramNames.toArray()) {
+				code.add(indentPlus1 + "/// <param name=\"" + param + "\"> TODO </param>");
+			}
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				insertBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
-				code.add(_indent+this.getIndent() + " * @return ");
-				code.add(_indent+this.getIndent() + " */");
+				code.add(indentPlus1 + "/// <return> TODO </return>");
 				_resultType = transformType(_resultType, "int");
 				// START KGU#140 2017-01-31: Enh. #113 - Converts possible array notations
 				_resultType = transformArrayDeclaration(_resultType, "");
@@ -833,7 +832,6 @@ public class CSharpGenerator extends CGenerator
 			}
 			else
 			{
-				insertBlockComment(_paramNames, indentPlus1, null, " * @param ", " */");
 				_resultType = "void";
 			}
 			// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private

@@ -57,7 +57,7 @@ import javax.swing.table.TableModel;
 
 /**
  * This class represents tabs for the {@link Translator}, the main component is a
- * three-column {@link JTable} showing key sequnences in the first column, English
+ * three-column {@link JTable} showing key sequences in the first column, English
  * master text in the central column, and the locale-bound translation in the third
  * column.
  * @author Robert Fisch

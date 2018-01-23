@@ -144,7 +144,6 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
-import lu.fisch.structorizer.gui.SelectedSequence;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;

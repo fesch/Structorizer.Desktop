@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.parsers;
 
-import javax.xml.XMLConstants;
-
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -60,7 +58,7 @@ import javax.xml.XMLConstants;
  *
  ******************************************************************************************************///
 
-
+import javax.xml.XMLConstants;
 import javax.xml.parsers.*;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -73,7 +71,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Stack;
 

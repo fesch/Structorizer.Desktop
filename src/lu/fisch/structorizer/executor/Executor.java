@@ -147,6 +147,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.31      Enh. #439: showCompoundValue() now more comfortable with ValuePresenter
  *      Kay Gürtzig     2017.11.01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
+ *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
  *
  ******************************************************************************************************
  *
@@ -910,7 +911,7 @@ public class Executor implements Runnable
 	// FIXME: Might have to be adapted with a newer version of the bean shell interpreter some day ...
 	private static final Matcher MTCH_EVAL_ERROR_ARRAY = Pattern.compile(".*Can't assign.*to java\\.lang\\.Object \\[\\].*").matcher("");
 	/** Matcher for split function */
-	private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
+	//private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
 	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
 	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
 	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
@@ -1735,8 +1736,8 @@ public class Executor implements Runnable
 									this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#198 2016-05-25
 									Object[] options = {
-											control.lbOk.getText(),
-											control.lbPause.getText()
+											Control.lbOk.getText(),
+											Control.lbPause.getText()
 											};
 									int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
@@ -4358,7 +4359,7 @@ public class Executor implements Runnable
 					int nArgs = args.count();
 					String fSign = fName + "#" + nArgs;
 					DiagramController controller = this.controllerFunctions.get(fSign);
-					Method function = controller.getFunctionMap().get(fSign);
+					//Method function = controller.getFunctionMap().get(fSign);
 					// Now we must know what is beyond the function call (the tail)
 					String tail = "";
 					StringList parts = Element.splitExpressionList(exprTail, ",", true);
@@ -4367,7 +4368,7 @@ public class Executor implements Runnable
 					}
 					Object argVals[] = new Object[nArgs];
 					for (int i = 0; i < nArgs; i++) {
-						// TODO While the known controller function haven't got (complex) arguments we may neglect initializers
+						// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
 						argVals[i] = this.evaluateExpression(args.get(i), false, false);
 					}
 					// Passed till here, we try to execute the function - this may throw a FunctionException
@@ -4632,9 +4633,9 @@ public class Executor implements Runnable
 		{
 			// In run mode, give the user a chance to intervene
 			Object[] options = {
-					control.lbOk.getText(),
-					control.lbPause.getText()
-					};
+					Control.lbOk.getText(),
+					Control.lbPause.getText()
+			};
 			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), control.lbAcknowledge.getText(), control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
@@ -4825,9 +4826,9 @@ public class Executor implements Runnable
 			{
 				// In run mode, give the user a chance to intervene
 				Object[] options = {
-						control.lbOk.getText(),
-						control.lbPause.getText()
-						};
+						Control.lbOk.getText(),
+						Control.lbPause.getText()
+				};
 				// diagram is a bad anchor component since its extension is the Root rectangle (may be huge!)
 				int pressed = JOptionPane.showOptionDialog(diagram.getParent(), s, control.lbOutput.getText(),
 						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
@@ -4909,9 +4910,9 @@ public class Executor implements Runnable
 					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {
-							control.lbOk.getText(),
-							control.lbPause.getText()
-							};
+							Control.lbOk.getText(),
+							Control.lbPause.getText()
+					};
 					int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)
@@ -5559,19 +5560,22 @@ public class Executor implements Runnable
 			// END KGU#150 2016-04-03
 
 			//int cw = 0;
+			// START KGU#487 2018-01-23: Bugfix #498 - preliminary condition test dropped altogether. 
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 			//Object cond = context.interpreter.eval(convertStringComparison(condStr));
-			String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-			Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
+			//String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+			//Object cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
 			// END KGU#417 2017-06-30
-			if (cond == null)
-			{
-				// START KGU#197 2016-07-27: Localization support
-				//trouble = "<" + condStr
-				//		+ "> is not a correct or existing expression.";
-				trouble = control.msgInvalidExpr.getText().replace("%1", condStr);
-				// END KGU#197 2016-07-27
-			} else
+			//if (cond == null)
+			//{
+			//	// START KGU#197 2016-07-27: Localization support
+			//	//trouble = "<" + condStr
+			//	//		+ "> is not a correct or existing expression.";
+			//	trouble = control.msgInvalidExpr.getText().replace("%1", condStr);
+			//	// END KGU#197 2016-07-27
+			//} else
+			Object cond = null;
+			// END KGU#487 2018-01-23
 			{
 				// START KGU#78 2015-11-25: In order to handle exits we must know the nesting depth
 				context.loopDepth++;
@@ -5604,7 +5608,7 @@ public class Executor implements Runnable
 					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 					//cond = context.interpreter.eval(convertStringComparison(condStr));
 					//Object cond = context.interpreter.eval(condStr);
-					tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+					String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
 					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
 					// END KGU#417 2017-06-30
 					if (cond == null || !(cond instanceof Boolean))

@@ -54,6 +54,7 @@ package lu.fisch.structorizer.elements;
  *                                      Inheritance changed (IFork added)
  *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
  *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
+ *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *
  ******************************************************************************************************
  *
@@ -133,6 +134,11 @@ public class Alternative extends Element implements IFork {
 		// START KGU#453 2017-11-01: Bugfix #447 - don't show end-standing backslashes
 		//int nLines = getText(false).count();
 		StringList myText = getCuteText(false);
+		// START KGU#480 2018-01-21: Enh. #490
+		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, false), "\n");
+		}
+		// END KGU#480 2018-01-21
 		int nLines = myText.count();
 		// END KGU#453 2017-11-01
 		
@@ -300,6 +306,11 @@ public class Alternative extends Element implements IFork {
 		// START KGU#453 2017-11-01: Bugfix #447 - don't show end-standing backslashes
 		//int nLines = getText(false).count();
 		StringList myText = getCuteText(false);
+		// START KGU#480 2018-01-21: Enh. #490
+		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+		}
+		// END KGU#480 2018-01-21
 		int nLines = myText.count();
 		// END KGU#453 2017-11-01
 
