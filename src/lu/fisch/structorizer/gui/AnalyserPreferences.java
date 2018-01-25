@@ -203,13 +203,14 @@ public class AnalyserPreferences extends LangDialog {
 
 		KeyListener keyListener = new KeyListener()
 		{
-			public void keyPressed(KeyEvent e) 
+			@Override
+			public void keyPressed(KeyEvent kevt) 
 			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				if(kevt.getKeyCode() == KeyEvent.VK_ESCAPE)
 				{
 					setVisible(false);
 				}
-				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+				else if(kevt.getKeyCode() == KeyEvent.VK_ENTER && (kevt.isShiftDown() || kevt.isControlDown()))
 				{
 					// START KGU#393 2017-05-09: Issue #400
 					OK = true;
@@ -218,7 +219,7 @@ public class AnalyserPreferences extends LangDialog {
 				}
 			}
 			
-			public void keyReleased(KeyEvent ke) {} 
+			public void keyReleased(KeyEvent kevt) {} 
 			public void keyTyped(KeyEvent kevt) {}
 		};
 
@@ -315,6 +316,7 @@ public class AnalyserPreferences extends LangDialog {
 		okButton.addActionListener(actionListener);
 	}
 	
+	// START KGU#456 2017-11-04 Enh. #452
 	/**
 	 * Retrieves the tab caption and the current description of check number {@code checkNo} from
 	 * the current locale if possible and returns them as String array in element 0 and 1, respectively. 
@@ -353,5 +355,16 @@ public class AnalyserPreferences extends LangDialog {
 		}
 		return captions;
 	}
+	// END KGU#456 2017-11-04
+	
+	// START KGU#456 2017-11-14: Enh. #452
+	/**
+	 * @return the didactically sorted array of check numbers representing guide tours
+	 */
+	public static int[] getOrderedGuideCodes()
+	{
+		return checkboxTabs.get("Hints / Tutoring").clone();
+	}
+	// END KGU#456 2017-11-14
 	
 }

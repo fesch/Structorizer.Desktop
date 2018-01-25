@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-02 (2017.11.07)
+Current development version 3.27-05 (2018.01.23)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -22,6 +22,36 @@ Current development version 3.27-02 (2017.11.07)
 - 02: Enh. #454: Analyser check now complains blanks in program names <2>
 - 02: Enh. #456: Print preview now allows to customize orientation and margins <2>
 - 02: Issue #455: Startup races and mis-drawing of initial diagrams reduced <2>
+- 03: Enh. #415: New accelerator key Ctrl-Shift-d for "copy EMF image" <2>
+- 03: Enh. #452: Guided tours slightly improved, typos corrected [Rolf Schmidt]2
+- 03: Bugfix #465: Arranger couldn't open Structorizer sub-instances anymore <2>
+- 04: Bugfix #468: User guide action was associated to wrong toolbar button <2>
+- 04: Enh. #452/#459: Further revision to the mechanisms of the guided tours <2>
+- 04: Enh. #469: Accelerator keys for Executor (Ctrl-R) and Turtleizer <2>
+- 04: Bugfixes in COBOL import (USAGE parsing, SEARCH, EXIT) <Simon Sobisch>
+- 04: Issue #471: Code import error can now be copied to clipboard [Simon Sobisch]2
+- 04: Bugfix #473: COBOL argument types failed to be generated [Simon Sobisch]2
+- 04: Bugfix #475: Import of COBOL paragraphs broke sections [Simon Sobisch]2
+- 04: Bugfix #480: Import of COBOL level-77 data and record array initialization <2>
+- 04: Bugfix #483: Option to suppress mere variable declarations on COBOL import <2>
+- 04: Bugfix #485: Workaround for intrinsic COBOL functions [Simon Sobisch]2
+- 04: Bugfix #486: Return mechanism in imported COBOL functions enforced <2>
+- 04: Enh. #487: New display mode to hide (collapse) declaration sequences <2>
+- 04: Enh. #38: Insertion of elements enabled on multiple selections <2>
+- 04: Enh. #425: Simple find mechanism in Translator and key sensitivity <2>
+- 04: Enh. #491: Translator: tooltips show master texts too long for the column <2>
+- 04: Enh. #492: Configurable designations of element types [A. Brusinsky]2
+- 04: Issues #493, #494: COBOL import improved w.r.t. SEARCH <Simon Sobisch>
+- 05: Enh. #425: The Ctrl-F key binding in Translator only worked on the buttons <2>
+- 05: Issue #496: C# autodoc comment style changed to "/// <summary> ..." <2>
+- 05: Enh. #492: Localization (EN/DE/ES) and GUI scaling support for dialog
+      ElementNamePreferences (Preferences => Element names) fixed <2>
+- 05: Bugfix 497: Several defects on StrukTeX export mended <2>
+- 05: Issue 415: Find&Replace dialog now regains focus when summoned again <2>
+- 05: Issue 04: Several new and redesigned icons (for better scalability) <2>
+- 05: Enh. #490: Turtleizer routines individually re-nameable [A. Brusinsky]2
+- 05: Issue #484: Layout of Export/Import Options dialogs fixed [Simon Sobisch]2
+- 05: Bugfix #498: Priliminary executability check of REPEAT conditions dropped <2>
 
 Version 3.27 (2017.10.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
@@ -142,7 +172,7 @@ Version 3.27 (2017.10.30)
 - 08: Issue #417: Scrolling detention with many / large diagrams alleviated <2>
 - 08: Enh. #423: Export support for records to Python, bash, Oberon <2>
 - 08: Enh. #441: Java export now directly supports use of extracted Turtleizer <2>
-- 08: Enh. #443: Preparations for multiple controller plugins like Turtleizer <2>  
+- 08: Enh. #443: Preparations for multiple controller plugins like Turtleizer <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
@@ -492,7 +522,7 @@ Version 3.23 (2015.12.04)
 - 33: Bugfix #39 - Errors on drawing empty Case structures, confused texts and comments <2>
 - 33: Bugfix #41 - Shift operators <<, >>, shl, shr hadn't been supported <2>
 - 33: Bugfix #40 - Recent nsd files got truncated on saving errors <2>
-- 33: Bugfix #42 - Default saving directory should not be root (/) but home <2>
+- 33: Bugfix #42 - Default saving directory should not be root (/) but home [elemhsb]2
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]
@@ -511,7 +541,7 @@ Version 3.21 [2011.06.28]
 - 04: visual performance updates [Bob Fisch]
 - 05: fix of some small click problems [Bob Fisch]
 - 06: fixing a performance problem [Laurent Haan]
-- 07: fixing an diagram copy-to-clipboard problem [Neuberger Dominik]
+- 07: fixing a diagram copy-to-clipboard problem [Neuberger Dominik]
 - 08: visual performance updates [Bob Fisch]
 - 09: recoded auto-size algorithm for alternatives [Matthias Paul]
 - 09: updated drawing code to respect variable highlighting [Bob Fisch]
@@ -735,7 +765,7 @@ Version 3.01 [02/01/2008]
 - Added rounded corners for "sub" diagrams [FISRO]
 
 Version 3.00 [01/01/2008]
-- First public release of the new JAVA-Version [FISRO]
+- First public release of the new JAVA version [FISRO]
 
 ----%<---------------------------------------------------
 
@@ -857,7 +887,7 @@ Version 1.24 [30/05/2007]
   of blank scrolling problems [T1IF1 2006/2007 - JosÈ Espinosa]
 - Adaptation of auto-size algorithm when
   analyser is *on* [FISRO]
-- Drag & drop of an emtpy element should
+- Drag & drop of an empty element should
   not be possible [T1IF1 2006/2007 - Tom Schons]
 - Bug in analyser while loading grammar
   files [FISRO]
@@ -892,7 +922,7 @@ Version 1.21 [15/01/2007]
 - added CASE statement [MARSE]
 - added call [Prophet05]
 - small fixes in PAS2NSD [FISRO]
-- small fix in "save-as" routine [T1IF2 2006/2007 - NoÈmie Feltgen]
+- small fix in "save-as" routine [T1IF2 2006/2007 - Noëmie Feltgen]
 
 Version 1.20 [never published]
 - some small fixes [FISRO]
@@ -917,7 +947,7 @@ Version 1.17 [05/12/2006]
 - Bug detected while updating comments [FISRO]
 - Bug on saving when title contained
   illegal characters. Solved for ":" [PYRSI]
-- First Linux-Version written in Lazarus! [FISRO]
+- First Linux version written in Lazarus! [FISRO]
 
 Version 1.16 [26/11/2006]
 - Copy & Paste of elements [FISRO]
@@ -939,7 +969,7 @@ Version 1.15 [never published]
 - For instructions only: automatically
   convert ":=" to " <- " [FISRO]
 - Printing support with
-  print-preview [T1IF1 2006/2007 - JosÈ-Maria Espinosa]
+  print-preview [T1IF1 2006/2007 - José-Maria Espinosa]
 
 Version 1.14 [16/11/2006]
 - Press <ESC> to cancel input
@@ -950,7 +980,7 @@ Version 1.13 [13/11/2006]
 - Each element also contains
   a comment now. [FISRO]
 - An new-old bug had reappeared
-  an been elominated once again [MARSE]
+  and been eliminated once again [MARSE]
 
 Version 1.12 [never published]
 - Variable colorizing [FISRO]
@@ -974,18 +1004,18 @@ Version 1.10 [22/10/2006]
 - Fixed wrong displayed dialogs at
   120 dpi font size [MARSE + GAMCA]
 - New name for new diagram [PIRSY]
-- Double-click on empty queue = new
+- Double-click on empty sequence = new
   instruction [PIRSY]
 
 Version 1.09 [never published]
-- Dynamic increase/decrease font [FISRO]
+- Dynamic font increase/decrease [FISRO]
 
 Version 1.08 [never published]
-- BMP Export of the diagram [FISRO]
+- BMP export of the diagram [FISRO]
 
 Version 1.07 [01/10/2006]
 - A security bug has been reported
-  and finally sweeped out... [FISRO]
+  and finally swept out... [FISRO]
 
 Version 1.06 [27/09/2006]
 - The different elements can now be

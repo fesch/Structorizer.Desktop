@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+ ",   A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
     Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
@@ -75,6 +75,16 @@ package lu.fisch.structorizer.parsers;
  *                                      loop condition transformation
  *      Kay Gürtzig     2017.10.22      File status assignments added according to the proposal of Simon Sobisch
  *      Kay Gürtzig     2017.10.26      File maps moved to CobProg to avoid name clashes
+ *      Kay Gürtzig     2017.10.31      Bugfix #445: Face empty sections / paragraphs on refactoring
+ *      Simon Sobisch   2017.11.27      Some fixes for USAGE, SEARCH and EXIT
+ *      Kay Gürtzig     2017.11.27      Bugfix #475: A paragraph starting just after the section header closed the section
+ *      Kay Gürtzig     2017.12.01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
+ *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling revised, bugfix #473 approach,
+ *                                      issue #485 workaround (prefixing intrinsic functions with FUNCTION)
+ *      Kay Gürtzig     2017.12.05      Bugfix #483: mild version of disabled optionImportVarDecl,
+ *                                      Bugfix #486: Return mechanism in imported functions enforced
+ *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled
+ *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed. 
  *
  ******************************************************************************************************
  *
@@ -134,15 +144,11 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
-import lu.fisch.structorizer.gui.SelectedSequence;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
-
-import java.io.File;
-import java.io.FileInputStream;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the GnuCOBOL language.
@@ -3287,7 +3293,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SORT_OUTPUT                                                           = 1506;  // <sort_output> ::= 
 //		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
 //		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
-//		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
+		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
 //		final int PROD_START_BODY                                                            = 1510;  // <start_body> ::= <file_name> <start_key> <sizelen_clause> <_invalid_key_phrases>
 //		final int PROD_SIZELEN_CLAUSE                                                        = 1511;  // <sizelen_clause> ::= 
 //		final int PROD_SIZELEN_CLAUSE2                                                       = 1512;  // <sizelen_clause> ::= <_with> <size_or_length> <exp>
@@ -4113,6 +4119,451 @@ public class COBOLParser extends CodeParser
 	// line length for source if source format is VARIABLE
 	private static final int TEXTCOLUMN_VARIABLE = 500;
 	
+	// START KGU#473 2017-12-04: Bugfix #485
+	/** Names of all known intrinsic functions to be prefixed with "FUNCTION" for the parser */
+	private static final String[] INTRINSIC_FUNCTION_NAMES = {
+		"ABS",
+		"ABSOLUTE-VALUE",
+		"ACOS",
+		"ANNUITY",
+		"ASIN",
+		"ATAN",
+		"BOOLEAN-OF-INTEGER",
+		"BYTE-LENGTH",
+		"CHAR",
+		"CHAR-NATIONAL",
+		"COMBINED-DATETIME",
+		"CONCATENATE",
+		"COS",
+		"CURRENCY-SYMBOL",
+		"CURRENT-DATE",
+		"DATE-OF-INTEGER",
+		"DATE-TO-YYYYMMDD",
+		"DAY-OF-INTEGER",
+		"DAY-TO-YYYYDDD",
+		"DISPLAY-OF",
+		"E",
+		"EXCEPTION-FILE",
+		"EXCEPTION-FILE-N",
+		"EXCEPTION-LOCATION",
+		"EXCEPTION-LOCATION-N",
+		"EXCEPTION-STATEMENT",
+		"EXCEPTION-STATUS",
+		"EXP",
+		"EXP10",
+		"FACTORIAL",
+		"FORMATTED-CURRENT-DATE",
+		"FORMATTED-DATE",
+		"FORMATTED-DATETIME",
+		"FORMATTED-TIME",
+		"FRACTION-PART",
+		"HIGHEST-ALGEBRAIC",
+		"INTEGER",
+		"INTEGER-OF-BOOLEAN",
+		"INTEGER-OF-DATE",
+		"INTEGER-OF-DAY",
+		"INTEGER-OF-FORMATTED-DATE",
+		"INTEGER-PART",
+		"LENGTH",
+		"LENGTH-AN",
+		"LOCALE-COMPARE",
+		"LOCALE-DATE",
+		"LOCALE-TIME",
+		"LOCALE-TIME-FROM-SECONDS",
+		"LOG",
+		"LOG10",
+		"LOWER-CASE",
+		"LOWEST-ALGEBRAIC",
+		"MAX",
+		"MEAN",
+		"MEDIAN",
+		"MIDRANGE",
+		"MIN",
+		"MOD",
+		"MODULE-CALLER-ID",
+		"MODULE-DATE",
+		"MODULE-FORMATTED-DATE",
+		"MODULE-ID",
+		"MODULE-PATH",
+		"MODULE-SOURCE",
+		"MODULE-TIME",
+		"MONETARY-DECIMAL-POINT",
+		"MONETARY-THOUSANDS-SEPARATOR",
+		"NATIONAL-OF",
+		"NUMERIC-DECIMAL-POINT",
+		"NUMERIC-THOUSANDS-SEPARATOR",
+		"NUMVAL",
+		"NUMVAL-C",
+		"NUMVAL-F",
+		"ORD",
+		"ORD-MAX",
+		"ORD-MIN",
+		"PI",
+		"PRESENT-VALUE",
+		"RANDOM",
+		"RANGE",
+		"REM",
+		"REVERSE",
+		"SECONDS-FROM-FORMATTED-TIME",
+		"SECONDS-PAST-MIDNIGHT",
+		"SIGN",
+		"SIN",
+		"SQRT",
+		"STANDARD-COMPARE",
+		"STANDARD-DEVIATION",
+		"STORED-CHAR-LENGTH",
+		"SUBSTITUTE",
+		"SUBSTITUTE-CASE",
+		"SUM",
+		"TAN",
+		"TEST-DATE-YYYYMMDD",
+		"TEST-DAY-YYYYDDD",
+		"TEST-FORMATTED-DATETIME",
+		"TEST-NUMVAL",
+		"TEST-NUMVAL-C",
+		"TEST-NUMVAL-F",
+		"TRIM",
+		"UPPER-CASE",
+		"VARIANCE",
+		"WHEN-COMPILED",
+		"YEAR-TO-YYYY"
+	};
+	private static class RepositoryAutomaton {
+		enum State {
+			RA_START,
+			RA_DIV0, RA_SECT0, RA_SECT1,
+			RA_ENV0, RA_ENV1, RA_ENV,
+			RA_CONF0, RA_CONF1, RA_CONF,
+			RA_REP0, RA_REP1, RA_REP2, RA_REP3a, RA_REP3b, RA_REP4a, RA_REP4b, RA_REP5b,
+			RA_READY,
+			RA_PROC0, RA_PROC1, RA_PROC2, RA_PROC,
+			RA_END
+			};
+		
+		private State state = State.RA_START;
+		private static HashSet<String> intrinsicFunctions = new HashSet<String>();
+		static {
+			for (String fn: INTRINSIC_FUNCTION_NAMES) {
+				intrinsicFunctions.add(fn);
+			}
+		}
+		private HashSet<String> privilegedFunctions = new HashSet<String>();
+		private String pendingName = null;
+		
+		public String process(String line)
+		{
+			boolean replacementsDone = false;
+//			StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(line));
+//			tokenizer.quoteChar('"');
+//			tokenizer.quoteChar('\'');
+//			tokenizer.slashStarComments(false);
+//			tokenizer.slashSlashComments(false);
+//			tokenizer.commentChar('*');
+//			tokenizer.parseNumbers();
+//			// Underscore must be added to word characters!
+//			tokenizer.wordChars('_', '_');
+//			tokenizer.wordChars('-', '-');
+			
+			StringList tokens = StringList.explodeWithDelimiter(line.trim(), ".");
+			tokens = StringList.explode(tokens, "\\s+");
+			if (tokens.count() == 0 || tokens.get(0).startsWith("*") || state == State.RA_END) {
+				// Nothing to do here
+				return line;
+			}
+			int pos = -1;
+			boolean followsFUNCTION = false;
+			// FIXME We must find a way to skip string literals
+			while (pos+1 < tokens.count() && state != State.RA_END) {
+				int pos1 = -1;
+				switch (state) {
+				case RA_START:	// No repository section seen
+					if ((pos1 = tokens.indexOf("ENVIRONMENT", pos+1, false)) >= 0) {
+						// Might be the begin of the ENVIRONMENT DIVISION
+						pos = pos1;
+						state = State.RA_ENV0;
+					}
+					else if ((pos1 = tokens.indexOf("DATA", pos+1, false)) >= 0) {
+						// We assume to enter the DATA division instead -> no repository
+						pos = pos1;
+						state = State.RA_DIV0;
+					}
+					else if ((pos1 = tokens.indexOf("PROCEDURE", pos+1, false)) >= 0) {
+						// We assume to enter the PROCEDURE division instead -> no repository
+						pos = pos1;
+						state = State.RA_DIV0;
+					}
+					else {
+						pos++;
+					}
+					break;
+				case RA_DIV0:	// Waitig for "DIVISION" - to end - or to fall back otherwise
+					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
+						// No REPOSITORY SECTION...
+						state = State.RA_END;
+					}
+					else {
+						// Fall back, was something else
+						state = State.RA_START;
+					}
+					break;
+					
+				case RA_ENV0:	// "ENVIRONMENT" seen, waiting for "DIVISION"
+					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
+						// ENVIRONMENT SECTION beginning?
+						state = State.RA_ENV1;
+					}
+					else {
+						// Was something else
+						state = State.RA_START;
+					}
+					break;
+				case RA_ENV1:	// "ENVIRONMENT DIVISION" seen, waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_ENV;
+					}
+					else {
+						// Was likely a syntax error
+						state = State.RA_START;
+					}
+					break;
+				case RA_ENV:	// "ENVIRONMENT DIVISION." seen, waiting for "CONFIGURATION"
+					if ((pos1 = tokens.indexOf("CONFIGURATION", ++pos, false)) >= 0) {
+						state = State.RA_CONF0;
+						pos = pos1;
+					}
+					else if ((pos1 = tokens.indexOf("INPUT-OUTPUT", ++pos, false)) >= 0) {
+						state = State.RA_SECT0;
+						pos = pos1;
+					}
+					break;
+				case RA_SECT0:	// Waiting for "SECTION" - to end - or to fall back otherwise
+					if (tokens.get(++pos).equalsIgnoreCase("SECTION")) {
+						// No REPOSITORY SECTION...
+						state = State.RA_END;
+					}
+					else {
+						// Fall back, was something else
+						state = State.RA_ENV;
+					}
+					break;
+					
+				case RA_CONF0:	// "CONFIGURATION" seen, waiting for "SECTION"
+					if (tokens.get(++pos).equalsIgnoreCase("SECTION")) {
+						state = State.RA_CONF1;
+					}
+					else {
+						// Not a CONFIGURATION SECTION, fall back
+						state = State.RA_ENV;
+					}
+					break;
+				case RA_CONF1:	// "CONFIGURATION SECTION" seen, waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_CONF;
+					}
+					else {
+						// Was likely a syntax error
+						state = State.RA_ENV;
+					}
+					break;
+				case RA_CONF:	// in CONFIGURATION SECTION, waiting for "REPOSITORY"
+					if ((pos1 = tokens.indexOf("REPOSITORY", pos+1, false)) >= 0) {
+						state = State.RA_REP0;
+						pos = pos1;
+					}
+					else if ((pos1 = tokens.indexOf("INPUT-OUTPUT", pos+1, false)) >= 0) {
+						state = State.RA_SECT1;
+						pos = pos1;
+					}
+					else {
+						pos++;
+					}
+					break;
+				case RA_SECT1:	// Waitig for "SECTION" - to end - or to fall back otherwise
+					if (tokens.get(++pos).equalsIgnoreCase("SECTION")) {
+						// No REPOSITORY SECTION...
+						state = State.RA_END;
+					}
+					else {
+						// Fall back, was something else
+						state = State.RA_CONF;
+					}
+					break;
+					
+				case RA_REP0:	// Seen "REPOSITORY", waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_REP1;
+					}
+					else {
+						// Must have been something else
+						state = State.RA_CONF;
+					}
+					break;
+				case RA_REP1:	// Inside REPOSITORY, awaiting a FUNCTION clause
+					if (tokens.get(++pos).equalsIgnoreCase("FUNCTION")) {
+						state = State.RA_REP2;
+					}
+					else {
+						// We are done with REPOSITORY
+						state = State.RA_READY;
+					}
+					break;
+				case RA_REP2:	// Seen "FUNCTION", expecting a function name or "ALL"
+				{
+					String word = tokens.get(++pos).toUpperCase();
+					if (word.equals("ALL") || intrinsicFunctions.contains(word)) {
+						pendingName = word;
+						state = State.RA_REP3a;
+					}
+					else {
+						// Ignore the name, wait for "AS" or TOK_DOT
+						state = State.RA_REP3b;
+					}
+					break;
+				}
+				case RA_REP3a:	// Seen "FUNCTION <name>", waiting for "INTRINSIC" or "AS"
+				{
+					String word = tokens.get(++pos).toUpperCase();
+					if (word.equals("INTRINSIC")) {
+						if (pendingName.equals("ALL")) {
+							privilegedFunctions.addAll(intrinsicFunctions);
+						}
+						else {
+							privilegedFunctions.add(pendingName);
+						}
+						// Okay, now there MAY be a TOK_DOT
+						state = State.RA_REP4a;
+					}
+					else if (word.equals("AS")) {
+						// Now wait for the alias
+						state = State.RA_REP4b;
+					}
+					else {
+						// Looks like a syntax error
+						pendingName = null;
+						state = State.RA_READY;
+					}
+					break;
+				}
+				case RA_REP4a:	// Seen "FUNCTION <name> INTRINSIC", waiting for TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						// Clause is ready, another one might come...
+						state = State.RA_REP1;
+					}
+					else if (tokens.get(pos).equalsIgnoreCase("FUNCTION")) {
+						// Another FUNCTION clause without TOK-DOT
+						state = State.RA_REP2;
+					}
+					else {
+						// Looks like a syntax error
+						state = State.RA_READY;
+					}
+					pendingName = null;
+					break;
+				case RA_REP3b:	// Seen "FUNCTION <name>", waiting for "AS" or TOK-DOT
+				{
+					String word = tokens.get(++pos).toUpperCase();
+					if (word.equals("AS")) {
+						state = State.RA_REP4b;
+					}
+					else if (word.equals(".")) {
+						// Ready for next FUNCTION clause
+						state = State.RA_REP1;
+					}
+					else if (word.equalsIgnoreCase("FUNCTION")) {
+						// Another FUNCTION clause without TOK-DOT
+						state = State.RA_REP2;
+					}
+					pendingName = null;
+					break;
+				}
+				case RA_REP4b:	// Having seen "FUNCTION <name> AS", waiting for alias 
+					privilegedFunctions.add(tokens.get(++pos));
+					// Still wait for the TOK-DOT
+					state = State.RA_REP5b;
+					break;
+				case RA_REP5b:
+					if (tokens.get(++pos).equals(".")) {
+						// Ready for next FUNCTION clause
+						state = State.RA_REP1;
+					}
+					else if (tokens.get(pos).equalsIgnoreCase("FUNCTION")) {
+						// Another FUNCTION clause without TOK-DOT
+						state = State.RA_REP2;
+					}
+					else {
+						// Apparently syntax error
+						state = State.RA_READY;
+					}
+					
+				case RA_READY:	// Ready with REPOSITORY, waiting for PROCEDURE DIVISION
+					if ((pos1 = tokens.indexOf("PROCEDURE", ++pos, false)) >= 0) {
+						pos = pos1;
+						state = State.RA_PROC0;
+					}
+					break;
+					
+				case RA_PROC0:	// Seen "PROCEDURE", waiting for "DIVISION"
+					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
+						state = State.RA_PROC1;
+					}
+					else {
+						// Must have been something different
+						state = State.RA_READY;
+					}
+					break;
+				case RA_PROC1:	// Seen "PROCEDURE DIVISION", awaiting TOK-DOT
+					if (tokens.get(++pos).equals(".")) {
+						state = State.RA_PROC;
+					}
+					break;
+				case RA_PROC:	// The only state where there may be replacements
+				{
+					// FIXME: Do a proper tokenization here (aware of String literals etc.)
+					String token = tokens.get(++pos);
+					if (token.equalsIgnoreCase("FUNCTION")) {
+						followsFUNCTION = true;
+						break;
+					}
+					StringList parts = StringList.explodeWithDelimiter(token, "("); 
+					parts = StringList.explodeWithDelimiter(parts, ")");
+					for (int i = 0; i < parts.count(); i++) {
+						String part = parts.get(i);
+						if (followsFUNCTION) {
+							followsFUNCTION = part.equalsIgnoreCase("FUNCTION");
+							continue;
+						}
+						if (part.equalsIgnoreCase("FUNCTION")) {
+							followsFUNCTION = true;
+							continue;
+						}
+						// FIXME: We might have looked for a following parenthesis
+						if (privilegedFunctions.contains(part.toUpperCase())) {
+							parts.set(i, "FUNCTION " + part);
+							replacementsDone = true;
+						}
+					}
+					tokens.set(pos, parts.concatenate());
+					break;
+				}
+				default:
+					// Something must have gone wrong
+					state = State.RA_END;
+					break;
+				}
+				while (pos+1 < tokens.count() && tokens.get(pos+1).trim().isEmpty()) {
+					pos++;
+				}
+			}
+			// Build a new line if replacements have been done
+			if (replacementsDone) {
+				int leftOffs = line.indexOf(line.trim());
+				line = line.substring(0, leftOffs) + tokens.concatenate(" ");
+			}
+			return line;
+		}
+	};
+	// END KGU#473 2017-12-04
+	
 	/* configuration settings */
 	// reference-format with column aware-parts
 	private boolean settingFixedForm;
@@ -4166,7 +4617,12 @@ public class COBOLParser extends CodeParser
 		 * remove ';' and ',' that are not part of a string/integer - cater also for ";;,,;"
 		 * recognize and store constants (78 name value [is] literal | 01 name constant as literal)
 		 * and replace them by tokens (must be redone during parsing)
+		 * Register all intrinsic functions named in the repository
 		 */
+		
+		// START KGU#473 2017-12-04: Bugfix #485
+		RepositoryAutomaton repAuto = new RepositoryAutomaton();
+		// END KGU#473 2017-12-04
 		
 		File interm = null;
 		try
@@ -4193,9 +4649,7 @@ public class COBOLParser extends CodeParser
 			}
 			
 			int srcCodeLastPos = 0;
-			int srcLastCodeLenght = settingCodeLength;
-			
-			// 
+			int srcLastCodeLength = settingCodeLength;
 			
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
@@ -4251,17 +4705,17 @@ public class COBOLParser extends CodeParser
 						// work on "clean" sources)
 						// and if the same literal symbol was used
 						if (srcCodeLastPos != 0) {
-							while (srcLastCodeLenght < settingCodeLength) {
+							while (srcLastCodeLength < settingCodeLength) {
 								srcCode.insert(srcCodeLastPos - 1, " ");
 								srcCodeLastPos++;
-								srcLastCodeLenght++;
+								srcLastCodeLength++;
 							}
 							srcCode.insert(srcCodeLastPos - 1, firstNonSpaceInLine + " &");
 							srcCodeLastPos += 4;
 						}
 						strLine = srcLineCode;
-						srcLastCodeLenght = strLine.length();
-						srcCodeLastPos += srcLastCodeLenght;
+						srcLastCodeLength = strLine.length();
+						srcCodeLastPos += srcLastCodeLength;
 					} else {
 						String resultLine = checkForDirectives(srcLineCode);
 						if (resultLine != null) {
@@ -4295,12 +4749,12 @@ public class COBOLParser extends CodeParser
 							// }
 							if (srcLineCode.trim().length() != 0) {
 								strLine = srcLineCode;
-								srcLastCodeLenght = strLine.length();
+								srcLastCodeLength = strLine.length();
 							} else {
 								strLine = "";
-								srcLastCodeLenght = 0;
+								srcLastCodeLength = 0;
 							}
-							srcCodeLastPos = srcCode.length() + srcLastCodeLenght;
+							srcCodeLastPos = srcCode.length() + srcLastCodeLength;
 							srcCodeLastPos += 1; // counting newline
 						}
 					}
@@ -4321,6 +4775,9 @@ public class COBOLParser extends CodeParser
 
 				}
 				//srcCodeLastPos += 1;   // really needed for free-form reference-format?
+				// START KGU#473 2017-12-04: Bugfix #485
+				strLine = repAuto.process(strLine);
+				// END KGU#473 2017-12-04
 				srcCode.append (strLine + "\n");
 			}
 			//Close the input stream
@@ -4494,6 +4951,11 @@ public class COBOLParser extends CodeParser
 
 	//---------------------- Build fields and methods for structograms ---------------------------
 
+	// START KGU#464 2017-12-03: Bugfix #475
+	/** Target type for accomplishment of a {@link SectionOrParagraph} object */
+	private static enum SoPTarget {SOP_SECTION, SOP_PARAGRAPH, SOP_ANY};
+	// END KGU#464 2017-12-03
+	
 	/** Record for detected sections and paragraphs if needed as reference for possible calls */ 
 	private class SectionOrParagraph {
 		public String name;
@@ -4501,35 +4963,99 @@ public class COBOLParser extends CodeParser
 		public int startsAt = -1;		// Element index of first statement within parent
 		public int endsBefore = -1;	// Element index beyond closing TOK_DOT within parent
 		public Subqueue parent = null;
-		public Element firstElement = null, lastElement = null;
+		// START KGU#464 2017-12-03: Bugfix #475
+		//public Element firstElement = null, lastElement = null;
+		public SectionOrParagraph containedBy = null;
+		public LinkedList<Jump> sectionExits = new LinkedList<Jump>();
+		public LinkedList<Jump> paragraphExits = new LinkedList<Jump>();
+		// END KGU#464 2017-12-03
 		
-		public SectionOrParagraph(String _name, boolean _isSection, int _startIndex, Subqueue _parentNode)
+		public SectionOrParagraph(String _name, boolean _isSection, int _startIndex, Subqueue _parentNode, SectionOrParagraph _containingSoP)
 		{
 			name = _name;
 			isSection = _isSection;
 			startsAt = _startIndex;
 			parent = _parentNode;
+			containedBy = _containingSoP;
 		}
 		
 		public String toString()
 		{
-			return getClass().getSimpleName() + "(" + this.name + ":" + this.startsAt + ".." + this.endsBefore + ")";
+			return getClass().getSimpleName() + "(" + (this.isSection ? "SECTION " : "") + this.name + ":" + this.startsAt + ".." + this.endsBefore + ")";
 		}
+		
+		// START KGU#464 2017-12-03: Bugfix #475 - these methods replace the former fields
+		public Element getFirstElement()
+		{
+			Element element = null;
+			if (this.parent != null && this.startsAt > -1 && this.startsAt < this.parent.getSize()) {
+				element = this.parent.getElement(this.startsAt);
+			}
+			return element;
+		}
+		public Element getLastElement()
+		{
+			Element element = null;
+			int lastIndex = this.endsBefore ;
+			if (this.parent != null && (lastIndex == -1 || lastIndex > this.startsAt) && lastIndex <= this.parent.getSize()) {
+				if (lastIndex == -1) lastIndex = this.parent.getSize();
+				element = this.parent.getElement(lastIndex - 1);
+			}
+			return element;
+		}
+		public int getSize()
+		{
+			return (this.endsBefore < 0 ? this.parent.getSize() : this.endsBefore) - this.startsAt; 
+		}
+		// END KGU#464 2017-12-03
 	}
-	
-	/** Visitor class responsible for updating disabled "EXIT *" elements to
-	 * "return" elements
+
+	// START KGU#464 2017-12-04: Bugfix #475 - Now obsolete
+//	/** Visitor class responsible for updating disabled "EXIT *" elements to
+//	 * "return" elements (might have become superfluous by bugfix #475)
+//	 */
+//	private final class JumpConverter implements IElementVisitor
+//	{
+//		@Override
+//		public boolean visitPreOrder(Element _ele) {
+//			String text = _ele.getText().getLongString();
+//			if (_ele instanceof Jump && _ele.disabled && 
+//					(text.equalsIgnoreCase("EXIT SECTION") || text.equalsIgnoreCase("EXIT PARAGRAPH"))) {
+//				// Replace the comment by the previous text
+//				_ele.setComment(text);
+//				_ele.setText(getKeywordOrDefault("preReturn", "return"));
+//				_ele.setColor(Color.WHITE);
+//				_ele.disabled = false;
+//			}
+//			return true;
+//		}
+//		@Override
+//		public boolean visitPostOrder(Element _ele) {
+//			return true;
+//		}
+//	};
+	// END KGU#464 2017-12-04
+	// START KGU#475 2017-12-05: Bugfix #486 - New mechanism to enforce value return
+	/** 
+	 * Visitor class responsible for adding the result variable name to otherwise
+	 * empty return Jumps
 	 */
-	private final class JumpConverter implements IElementVisitor
+	private final class ReturnEnforcer implements IElementVisitor
 	{
+		String resultVar;
+		
+		ReturnEnforcer(String _resultVar)
+		{
+			resultVar = _resultVar;
+		}
+		
 		@Override
 		public boolean visitPreOrder(Element _ele) {
 			String text = _ele.getText().getLongString();
-			if (_ele instanceof Jump && _ele.disabled && 
-					(text.contentEquals("EXIT SECTION") || text.contentEquals("EXIT PARAGRAPH"))) {
-				// Replace the comment by the previous text
-				_ele.setComment(text);
-				_ele.setText(getKeywordOrDefault("preReturn", "return"));
+			if (_ele instanceof Jump && ((Jump)_ele).isReturn()) {
+				if (text.trim().equalsIgnoreCase(getKeywordOrDefault("preReturn", "return"))) {
+					_ele.setText(text + " " + resultVar);
+				};
 				_ele.setColor(Color.WHITE);
 				_ele.disabled = false;
 			}
@@ -4540,15 +5066,16 @@ public class COBOLParser extends CodeParser
 			return true;
 		}
 	};
+	// END KGU#475 2017-12-05
 	
 	/** During build phase, all detected sections and paragraphs are listed here for resolution of internal calls */
 	private LinkedList<SectionOrParagraph> procedureList = new LinkedList<SectionOrParagraph>();
 	
 	private LinkedHashMap< String, LinkedList<Call> > internalCalls = new LinkedHashMap< String, LinkedList<Call> >();
+	// START KGU#476 2017-12-05: Try to distinguish superfluous paragraph labels
+	private LinkedHashMap< String, HashSet<Root> > internalGotos = new LinkedHashMap< String, HashSet<Root> >();
+	// END KGU#476 2017-12-05
 	
-	/** Maps the names of function parameters to their type specifications */
-	private HashMap<Root, HashMap<String, String>> paramTypeMap = new HashMap<Root, HashMap<String, String>>();
-
 	/**
 	 * Associates the name of the result variable to the respective function Root
 	 */
@@ -4624,11 +5151,13 @@ public class COBOLParser extends CodeParser
 		log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 		//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
-		for (SectionOrParagraph sop: this.procedureList) {
-			if (sop.firstElement != null && ((Subqueue)sop.firstElement.parent).getIndexOf(sop.firstElement) < 0) {
-				System.err.println("1st element of " + sop.name + " (" + sop.firstElement + ") vanished!");
-			}
-		}
+//		// FIXME KGU#464 2027-12-03: DEBUG check for issue #475
+//		for (SectionOrParagraph sop: this.procedureList) {
+//			if (sop.getFirstElement() == null || sop.getLastElement() == null) {
+//				System.out.println("!!!" + sop + " still open!");
+//			}
+//		}
+//		// END KGU#464 2017-12-03
 		
 		switch (ruleId) {
 		case RuleConstants.PROD_PROGRAM_DEFINITION:
@@ -4701,19 +5230,17 @@ public class COBOLParser extends CodeParser
 			//String arguments = this.getContent_R(_reduction.get(1).asReduction(), "").trim();
 			//root.setText(root.getText().getLongString() + "(" + arguments + ")");
 			StringList arguments = this.getParameterList(_reduction.get(1).asReduction(), "<procedure_param_list>", RuleConstants.PROD_PROCEDURE_PARAM, 3);
-//			HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-//			if (paramTypes != null && paramTypes.size() > 0) {
-//				for (int i = 0; i < arguments.count(); i++) {
-//					String type = paramTypes.get(arguments.get(i));
-//					if (type != null && !type.isEmpty() && !type.equals("???")) {
-//						arguments.set(i, type + " " + arguments.get(i)) ;
-//					}
-//				}
-//			}
 			if (arguments.count() > 0) {
 				for (int i = 0; i < arguments.count(); i++) {
 					String varName = arguments.get(i);
-					String type = CobTools.getTypeString(currentProg.getCobVar(varName), false);
+					// START KGU#465 2017-12-04: Bugfix #473
+					//String type = CobTools.getTypeString(currentProg.getCobVar(varName), false);
+					String type = null;
+					CobVar var = currentProg.getCobVar(varName);	// Variables retrieved with COPY may be missing
+					if (var != null) {
+						type = CobTools.getTypeName(currentProg.getCobVar(varName), true);
+					}
+					// END KGU#465 2017-12-04
 					if (type != null) {
 						arguments.set(i, type + " " + varName) ;
 					}
@@ -4728,15 +5255,22 @@ public class COBOLParser extends CodeParser
 			// Debug....
 			String resultVar = this.getContent_R(_reduction.get(1).asReduction(), "");
 			this.returnMap.put(root, resultVar);
-			if (this.paramTypeMap.containsKey(root)) {	// FIXME!
-				StringList rootText = root.getText();
-				//HashMap<String, String> paramTypes = this.paramTypeMap.get(root);
-				//if (paramTypes.containsKey(resultVar)
-				String resultType = CobTools.getTypeString(currentProg.getCobVar(resultVar), false);
-				if (resultType != null
-					&& rootText.count() >= 1
+			StringList rootText = root.getText();
+			// START KGU#465 2017-12-04: Bugfix #473
+			//String resultType = CobTools.getTypeString(currentProg.getCobVar(resultVar), false);
+			String resultType = CobTools.getTypeName(currentProg.getCobVar(resultVar), true);
+			// END KGU#564 2017-12-04
+			if (resultType != null) {
+				// START KGU#475 2017-12-05: Bugfix #486
+				if (!root.getParameterNames().contains(resultVar) && this.optionImportVarDecl) {
+					Instruction decl = new Instruction("var " + resultVar + ": " + resultType);
+					decl.setComment("Result variable");
+					decl.setColor(colorDecl);
+					_parentNode.addElement(decl);
+				}
+				// END KGU#475 2017-12-05
+				if (rootText.count() >= 1
 					&& rootText.getLongString().trim().endsWith(")")) {
-					//rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + paramTypes.get(resultVar));
 					rootText.set(rootText.count()-1, rootText.get(rootText.count()-1) + ": " + resultType);
 				}
 			}
@@ -4747,7 +5281,7 @@ public class COBOLParser extends CodeParser
 			// <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
 			// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
 			//       to close the previous section and the previous paragraph
-			accomplishPrevSoP(_parentNode);
+			accomplishPrevSoP(_parentNode, SoPTarget.SOP_SECTION);
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 			// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
@@ -4759,14 +5293,16 @@ public class COBOLParser extends CodeParser
 			sec.getComment().insert("Definition of section " + name, 0);
 			
 			// add to procedureList for later handling
-			this.procedureList.addFirst(new SectionOrParagraph(name, true, _parentNode.getSize(), _parentNode));
+			addProcedureToList(_parentNode, name, true);
 		}
 		break;
 		case RuleConstants.PROD_PARAGRAPH_HEADER_TOK_DOT:
 		{
 			// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
-			// Note: this starts a new paragraph AND closes the previous paragraph
-			accomplishPrevSoP(_parentNode);
+			// Note: this starts a new paragraph AND closes the previous paragraph (if existent)
+			// START KGU#464 2017-11-27: Bugfix #475 
+			accomplishPrevSoP(_parentNode, SoPTarget.SOP_PARAGRAPH);
+			// END KGU#464 2017-11-27
 			
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 
@@ -4780,17 +5316,21 @@ public class COBOLParser extends CodeParser
 			if (Character.isDigit(name.charAt(0))) {
 				name = "sub" + name;
 			}
-			this.procedureList.addFirst(new SectionOrParagraph(name, false, _parentNode.getSize(), _parentNode));
+			addProcedureToList(_parentNode, name, false);
 		}
 		break;
 //			deactivated as we get an ArrayIndexOutOfBoundsException sometimes
-		case RuleConstants.PROD_PROCEDURE_TOK_DOT:
+		case RuleConstants.PROD_PROCEDURE_TOK_DOT:	// <procedure> ::= <statements> 'TOK_DOT'
 			// First process the statements then handle the TOK_DOT with the subsequent case
 			buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
 			// No break; here!
-		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// This rule will never occur (falls through to TOKDOT!)
-			// TODO close the last unsatisfied "procedure"
-			accomplishPrevSoP(_parentNode);
+		case RuleConstants.PROD_PROCEDURE_TOK_DOT2:	// This case should never occur since the rule is supposed to fall through to TOK-DOT!
+			// FIXME: Remove this DEBUG logging!
+			if (ruleId == RuleConstants.PROD_PROCEDURE_TOK_DOT2) this.log("===> PROD_PROCEDURE_TOK_DOT2\n", false);
+			// START KGU#464 2017-12-03: Bugfix #475
+			// DON't close the last unsatisfied "procedure" here unless a SECTION ends (which is detected otherwise)
+			//accomplishPrevSoP(_parentNode, SoPTarget.SOP_ANY);
+			// END KGU#464 2017-12-03
 			break;
 		case RuleConstants.PROD_IF_STATEMENT_IF:
 			//System.out.println("PROD_IF_STATEMENT_IF");
@@ -4913,7 +5453,7 @@ public class COBOLParser extends CodeParser
 					HashMap<String, String> typeMap = new HashMap<String, String>();
 					// START KGU 2017-05-24: We do not only want the type info here but also create declarations 
 					//this.processDataDescriptions(datRed, null, typeMap);
-					this.processDataDescriptions(datRed, _parentNode, typeMap);
+					this.processDataDescriptions(datRed, typeMap);
 					// END KGU 2017-05-24
 					for (String recName: typeMap.keySet()) {
 						currentProg.fileRecordMap.put(recName, fdName);
@@ -4932,6 +5472,16 @@ public class COBOLParser extends CodeParser
 				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
+		}
+		break;
+		case RuleConstants.PROD_START_STATEMENT_START:
+		{
+			//System.out.println("PROD_START_STATEMENT_START
+			String content = this.getOriginalText(_reduction, "");
+			Instruction instr = new Instruction(content);
+			instr.setColor(Color.RED);
+			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			instr.getComment().add("TODO: Structorizer File API does not support indexed or other non-text files");
 		}
 		break;
 		case RuleConstants.PROD_READ_STATEMENT_READ:
@@ -5025,6 +5575,13 @@ public class COBOLParser extends CodeParser
 			if (content.toUpperCase().startsWith("TO ")) {
 				content = content.substring(3);
 			}
+			// START KGU#476 2017-12-05
+			String contentLower = content.toLowerCase();
+			if (!this.internalGotos.containsKey(contentLower)) {
+				this.internalGotos.put(content, new HashSet<Root>());
+			}
+			this.internalGotos.get(content).add(root);
+			// END KGU#476 2017-12-05
 			Jump jmp = new Jump("goto " + content);
 			jmp.setColor(Color.RED);
 			_parentNode.addElement(this.equipWithSourceComment(jmp, _reduction));
@@ -5063,7 +5620,7 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT:
 		{
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_WORKING);
-			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null);
 			// FIXME! TEST ONLY - provide the correct diagram Subqueues!
 			this.buildDataSection(currentProg.getWorkingStorage(), _parentNode);
 		}
@@ -5071,7 +5628,7 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD__LOCAL_STORAGE_SECTION_LOCAL_STORAGE_SECTION_TOK_DOT:
 		{
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LOCAL);
-			this.processDataDescriptions(_reduction.get(3).asReduction(), _parentNode, null);
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null);
 			// FIXME! TEST ONLY
 			this.buildDataSection(currentProg.getLocalStorage(), _parentNode);
 		}
@@ -5079,12 +5636,38 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT:
 		{
 			currentProg.setCurrentStorage(CobTools.Storage.STORAGE_LINKAGE);
-			if (!this.paramTypeMap.containsKey(root)) {
-				this.paramTypeMap.put(root, new HashMap<String, String>());
+			this.processDataDescriptions(_reduction.get(3).asReduction(), null);
+			// START KGU#465 2017-12-04: Bugfix #473 - produce an includable diagram for record definitions
+			boolean hasRecordTypes = false;
+			CobVar arg = currentProg.getLinkageStorage();
+			while (arg != null && !hasRecordTypes) {
+				System.out.println(arg.getName() + ": " + arg.deriveTypeName());
+				if (arg.hasChild()) {
+					hasRecordTypes = true;
+				}
+				arg = arg.getSister();
 			}
-			// This is not to produce elements but to accomplish the type map, therefore we
-			// don't pass the _parentNode.
-			this.processDataDescriptions(_reduction.get(3).asReduction(), null, this.paramTypeMap.get(root));
+			if (hasRecordTypes) {
+				// FIXME (KGU 2017-12-04): The lacking type support in COBOL forces us to unify types in a postprocess
+				Root incl = new Root();
+				incl.setText(root.getMethodName() + "_ArgTypes");
+				incl.setComment("Argument type definitions for routine " + root.getMethodName());
+				incl.setInclude();
+				this.buildDataSection(currentProg.getLinkageStorage(), incl.children);
+				int i = 0;
+				while (i < incl.children.getSize()) {
+					Element el = incl.children.getElement(i);
+					if (!(el instanceof Instruction) || !(((Instruction)el).isTypeDefinition() || ((Instruction)el).getText().get(0).startsWith("const "))) {
+						incl.children.removeElement(i);
+					}
+					else i++;
+				}
+				if (incl.children.getSize() > 0) {
+					subRoots.add(incl);
+					root.addToIncludeList(incl);
+				}
+			}
+			// END KGU#465 2017-12-04
 		}
 		break;
 		case RuleConstants.PROD__FILE_SECTION_HEADER_TOK_FILE_SECTION_TOK_DOT:
@@ -5122,66 +5705,115 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Accomplishes the element references of the preceding (and here-ending) unsatisfied section
-	 * or paragraph
-	 * @param _parentNode
+	 * Inserts a new {@link SectionOrParagraph} object at the front of {@link #procedureList}.
+	 * The new procedure reference object will start at the current end of @{@link Subqueue} {@code _parentNode}.   
+	 * @param _parentNode - the {@link Subqueue} we are referrung to
+	 * @param _name - name of the section or paragraph starting here
+	 * @param _asSection - whether it is a SECTION.
 	 */
-	private void accomplishPrevSoP(Subqueue _parentNode) {
+	protected void addProcedureToList(Subqueue _parentNode, String _name, boolean _asSection) {
+		SectionOrParagraph containingSoP = null;
+		for (SectionOrParagraph sop: this.procedureList) {
+			// Same Subqueue and not closed? Then we will link it
+			if (sop.parent == _parentNode && sop.endsBefore < 0) {
+				containingSoP = sop;
+				break;
+			}
+		}
+		this.procedureList.addFirst(new SectionOrParagraph(_name, _asSection, _parentNode.getSize(), _parentNode, containingSoP));
+	}
+
+	/**
+	 * Accomplishes the element references of the preceding (and here-ending) unsatisfied paragraphs
+	 * until to the first occurring unsaturated section entry.
+	 * @param _parentNode - the Subqueue to add elements to
+	 * @param _what - whether a section is to be accomplished (involves closing of all begun paragraphs),
+	 * or just a paragraph will be accomplished (if there is an open one) or just the last open entry.
+	 * @return whether a matching open entry was found.
+	 */
+	private boolean accomplishPrevSoP(Subqueue _parentNode, SoPTarget _what) {
 		Iterator<SectionOrParagraph> iter = procedureList.iterator();
 		boolean found = false;
 		while (!found && iter.hasNext()) {
 			SectionOrParagraph sop = iter.next();
-			if (sop.parent == _parentNode && sop.endsBefore < 0) {
-				sop.endsBefore = _parentNode.getSize();
-				// START KGU#452 2017-10-30: Bugfix #445 - We must face empty Subqueues or SoPs
-				//sop.firstElement = _parentNode.getElement(sop.startsAt);
-				//sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
-				if (sop.startsAt < sop.endsBefore) {
-					sop.firstElement = _parentNode.getElement(sop.startsAt);
-					sop.lastElement = _parentNode.getElement(sop.endsBefore-1);
+			if (sop.parent == _parentNode) {
+				// START KGU#464 2017-12-03: Bugfix #475
+				//sop.endsBefore = _parentNode.getSize();
+				if (_what != SoPTarget.SOP_SECTION && sop.endsBefore >= 0) {
+					// Leave if we are not to satisfy a section but the last entry isn't open anymore
+					break;
 				}
-				// END KGU#452 2017-10-30
-				found = true;
-//				System.out.println("======== " + sop.name + " =======");
-//				for (int i = sop.startsAt; i < sop.endsBefore; i++) {
-//					System.out.println("\t" + _parentNode.getElement(i));
-//				}
+				if (_what != SoPTarget.SOP_PARAGRAPH || !sop.isSection) {
+					// This definitively ends the section or paragraph - it will no longer be found as open entity
+					sop.endsBefore = _parentNode.getSize();
+				}
+				// If we are to close a section, then we must close all open paragraphs first until we find the
+				// last open section and may leave. Otherwise we may leave just now.
+				if (_what != SoPTarget.SOP_SECTION || sop.isSection) {
+					found = true;
+				}
+				// END KGU#464 2017-12-03
 			}
 		}
+		return found;
 	}
 
 	/**
 	 * Builds an equivalent loop structure for a SEARCH statement
+	 *
 	 * @param _reduction - the statement reduction
-	 * @param _parentNode - the 
+	 * @param _parentNode - the
 	 */
 	private void importSearch(Reduction _reduction, Subqueue _parentNode) {
-		// FIXME: At least add variable name parsing the same way we have in other places
-		//        and add some line breaks
+		/*
+		 * FIXME: At least add variable name parsing the same way we have in
+		 * other places and add some line breaks
+		 */
 		Reduction redBody = _reduction.get(1).asReduction();
 		if (redBody.getParent().getTableIndex() == RuleConstants.PROD_SEARCH_BODY) {
 			String varName = this.getContent_R(redBody.get(0).asReduction(), "");
-			CobVar table = currentProg.getCobVar(varName);
-			CobVar indexVar = null;
-			if (redBody.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD_SEARCH_VARYING_VARYING) {
-				String indexName = this.getContent_R(redBody.get(1).asReduction().get(1).asReduction(), "");
-				indexVar = currentProg.getCobVar(indexName);
+			CobVar table = this.currentProg.getCobVar(varName);
+			if (table == null) {
+//				String content = this.getOriginalText(_reduction, "");
+//				Instruction instr = new Instruction(content);
+//				instr.setColor(Color.RED);
+//				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+//				instr.getComment().add("FIXME: Couldn't identify the table variable!");
+//				return;
+				System.out.println("Warning, couldn't identify the table variable \"" + varName + "\"!");
+				// create table and its index for rest of the function
+				table = this.cobTools.new CobVar(1, varName, null, null, null, null, false, false, 0, 99, null);
 			}
-			else {
-				// We just try the first available index variable ... FIXME: is this okay? (might depend on the WHEN clauses?)
-				indexVar = table.getIndexedBy(0);
-			}
-			// In case we could identify an index variable we might possibly use a FOR-IN loop?
+			// Note: SEARCH *allways* changes and searches with the first index,
+			//       this does NOT change depending on the WHEN
+			//       VARYING identifier-2 does an *additional* increase of identifier-2
+			CobVar indexVar = table.getIndexedBy(0);
 			if (indexVar == null) {
-				String content = this.getOriginalText(_reduction, "");
-				Instruction instr = new Instruction(content);
-				instr.setColor(Color.RED);
-				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
-				instr.getComment().add("FIXME: Couldn't identify an index variable!");
-				return;
+				System.out.println("Warning, couldn't get the index variable for \"" + table.getName() + "\"!");
+				indexVar = this.cobTools.new CobVar(varName + "MissingIdx", table);
 			}
-			// Sometimes the COBOL programmer didn't specify the actual array component but some ancestor...
-			else if (!table.isArray() && indexVar.isIndex()) {
+			CobVar indexAdditionalVar = null;
+			if (redBody.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD_SEARCH_VARYING_VARYING) {
+				String indexAdditionalName = this.getContent_R(redBody.get(1).asReduction().get(1).asReduction(), "");
+				indexAdditionalVar = this.currentProg.getCobVar(indexAdditionalName);
+				if (indexAdditionalVar == null) {
+					System.out.println("Warning, couldn't get the index variable \"" + indexAdditionalName + "\"!");
+					indexAdditionalVar = this.cobTools.new CobVar(indexAdditionalName, table);
+				}
+			}
+			// In case we could identify an index variable we might possibly use
+			// a FOR-IN loop?
+//			if (indexVar == null) {
+//				String content = this.getOriginalText(_reduction, "");
+//				Instruction instr = new Instruction(content);
+//				instr.setColor(Color.RED);
+//				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+//				instr.getComment().add("FIXME: Couldn't identify an index variable!");
+//				return;
+//			} else
+			// Sometimes the COBOL programmer didn't specify the actual array
+			// component but some ancestor...
+			if (!table.isArray() && indexVar.isIndex()) {
 				// If the subscript is actually an index then we can mend it.
 				CobVar actTable = indexVar.getParent();
 				if (actTable.isComponentOf(table)) {
@@ -5197,7 +5829,7 @@ public class COBOLParser extends CodeParser
 			testInit.setColor(colorMisc);
 			wLoop.setColor(colorMisc);
 			_parentNode.addElement(testInit);
-			_parentNode.addElement(equipWithSourceComment(wLoop, _reduction));
+			_parentNode.addElement(this.equipWithSourceComment(wLoop, _reduction));
 			// Now convert the WHEN clauses and add the resulting Alternatives to the loop body
 			Reduction redWhens = redBody.get(3).asReduction();
 			// Alternatively, we could use a Jump "leave" here (advantage: index won't be incremented, drawback: unstructured code)
@@ -5207,31 +5839,33 @@ public class COBOLParser extends CodeParser
 				if (redWhens.getParent().getTableIndex() == RuleConstants.PROD_SEARCH_WHENS2) {
 					redWhen = redWhen.get(0).asReduction();
 					redWhens = redWhens.get(1).asReduction();
-				}
-				else {
+				} else {
 					redWhens = null;
 				}
 				String cond = this.transformCondition(redWhen.get(1).asReduction(), null);
 				Alternative when = new Alternative(cond);
 				when.setColor(colorMisc);
-				wLoop.getBody().addElement(equipWithSourceComment(when, redWhen));
+				wLoop.getBody().addElement(this.equipWithSourceComment(when, redWhen));
 				this.buildNSD_R(redWhen.get(2).asReduction(), when.qTrue);
 				when.qTrue.addElement(new Instruction(stopStmt));
 			} while (redWhens != null);
 			// Now add the increment to the loop body
-			Instruction incr = new Instruction("inc(" + indexVar.getName() + ")");
+			String InstrString = "inc(" + indexVar.getName() + ")";
+			if (indexAdditionalVar != null) {
+				InstrString += "\n inc(" + indexAdditionalVar.getName() + ")";
+			}
+			Instruction incr = new Instruction(InstrString);
 			incr.setColor(colorMisc);
 			wLoop.getBody().addElement(incr);
 			// Finally convert and add the AT END clause after the loop.
 			redWhens = redBody.get(2).asReduction();
 			if (redWhens.getParent().getTableIndex() == RuleConstants.PROD_SEARCH_AT_END_END) {
-				Alternative endTest = new Alternative("not " + testVarName); 
+				Alternative endTest = new Alternative("not " + testVarName);
 				endTest.setColor(colorMisc);
-				_parentNode.addElement(equipWithSourceComment(endTest, redWhens));
-				this.buildNSD_R(redWhens.get(1).asReduction(),endTest.qTrue);
+				_parentNode.addElement(this.equipWithSourceComment(endTest, redWhens));
+				this.buildNSD_R(redWhens.get(1).asReduction(), endTest.qTrue);
 			}
-		}
-		else {
+		} else {
 			// This is a SEARCH ALL statement - we haven't got a strategy yet
 			String content = this.getOriginalText(_reduction, "");
 			Instruction instr = new Instruction(content);
@@ -6190,6 +6824,7 @@ public class COBOLParser extends CodeParser
 		Color color = null;
 		Reduction secRed = _reduction.get(1).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
+		SoPTarget exitTarget = SoPTarget.SOP_ANY;
 		switch (secRuleId) {
 		case RuleConstants.PROD_EXIT_BODY:	// (empty)
 			content = "(exit from paragraph)";
@@ -6208,12 +6843,21 @@ public class COBOLParser extends CodeParser
 			content = CodeParser.getKeywordOrDefault("preLeave", "leave");
 			break;
 		case RuleConstants.PROD_EXIT_BODY_PERFORM_CYCLE: // <exit_body> ::= PERFORM CYCLE
+			content = "continue";	// may even work in some code exports, can be understood
+			color = Color.RED;
+			comment = "Unsupported kind of JUMP, was: " + this.getContent_R(_reduction, "");
+			break;
 		case RuleConstants.PROD_EXIT_BODY_SECTION:	// <exit_body> ::= SECTION
 		case RuleConstants.PROD_EXIT_BODY_PARAGRAPH:// <exit_body> ::= PARAGRAPH
-			content = this.getContent_R(_reduction, "");
-			color = Color.RED;
-			comment = "Unsupported kind of JUMP";
+			// START KGU#464 2017-12-04: Bugfix #475 - If we are in an appropriate context, we may generate Return instruction
+			//content = this.getContent_R(_reduction, "");
+			//color = Color.RED;
+			//comment = "Unsupported kind of JUMP";
+			content = CodeParser.getKeywordOrDefault("preReturn", "return");
+			comment = "EXIT " + secRed.get(0).asString();
+			exitTarget = (secRuleId == RuleConstants.PROD_EXIT_BODY_SECTION) ? SoPTarget.SOP_SECTION : SoPTarget.SOP_PARAGRAPH;
 			break;
+			// END KGU#464 2017-12-04
 		}
 		if (content != null) {
 			Jump jmp = new Jump(content.trim());
@@ -6226,6 +6870,36 @@ public class COBOLParser extends CodeParser
 				jmp.disabled = true;
 			}
 			_parentNode.addElement(jmp);
+			// START KGU#464 201-12-04: Bugfix #475
+			if (exitTarget != SoPTarget.SOP_ANY) {
+				registerExitInProcedureContext(jmp, exitTarget);
+			}
+			// END KGU#464 2017-12-04
+		}
+	}
+
+	/**
+	 * Checks whether there is a open section or paragraph context and if so marks it as
+	 * containing an EXIT statement. Returns true if the category of the innermost context
+	 * matches the argument. 
+	 * @param _exitSection - true if the EXIT statement was an EXIT SECTION 
+	 * @return true if the current procedure context is a section and {@code _exitSection} is true or
+	 * if the context is a paragraph and {@code _exitSection} is false 
+	 */
+	private void registerExitInProcedureContext(Jump _jump, SoPTarget _target) {
+		if (!this.procedureList.isEmpty()) {
+			for (SectionOrParagraph sop: this.procedureList) {
+
+				if (sop.endsBefore < 0) {
+					if (_target == SoPTarget.SOP_SECTION) {
+						sop.sectionExits.add(_jump);
+					}
+					else {
+						sop.paragraphExits.add(_jump);
+					}
+					return;
+				}
+			}
 		}
 	}
 
@@ -6754,7 +7428,7 @@ public class COBOLParser extends CodeParser
 		return pattern;
 	}
 
-	private final void processDataDescriptions(Reduction _reduction, Subqueue _parentNode, HashMap<String, String> _typeInfo)
+	private final void processDataDescriptions(Reduction _reduction, HashMap<String, String> _typeInfo)
 	{
 		int ruleId = _reduction.getParent().getTableIndex();
 		if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
@@ -6808,8 +7482,8 @@ public class COBOLParser extends CodeParser
 					break;
 				case RuleConstants.PROD_EXTERNAL_CLAUSE_EXTERNAL: // <external_clause>
 					// only occurs on level 01/77, this record or single variable shares the same value in *independent* programs
-					// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need to share this
-					// variable in a single IMPORT NSD (name: var name)
+					// which could but not have to be *nested* in general this is a rare cause but to be "correct" we would need
+					// to share this variable in a single IMPORT NSD (name: var name)
 					isExternal = true;
 					break;
 //				case RuleConstants.PROD_DATA_DESCRIPTION_CLAUSE3: // <global_clause> --> global import
@@ -6905,7 +7579,7 @@ public class COBOLParser extends CodeParser
 				}
 				// END KGU 2017-10-04
 				default:
-					// a variable without USAGE explicit given (77 myvar COMP-2) goes here;
+					// a variable without explicitly given USAGE (77 myvar COMP-2) goes here;
 					usage = getUsageFromReduction(descrRed);
 				}
 				seqRed = seqRed.get(0).asReduction();
@@ -6996,7 +7670,7 @@ public class COBOLParser extends CodeParser
 		else {
 			for (int i = 0; i < _reduction.size(); i++) {
 				if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL) {
-					this.processDataDescriptions(_reduction.get(i).asReduction(), _parentNode, _typeInfo);
+					this.processDataDescriptions(_reduction.get(i).asReduction(), _typeInfo);
 				}
 			}
 		}
@@ -7378,11 +8052,16 @@ public class COBOLParser extends CodeParser
 		return _content;
 	}
 
+	// START KGU#467 2017-12-02: Bugfix #480
+	/** Maximum number of characters for concatenation of nested multi-line initializer expressions */
+	private static final int MAX_INITIALIZER_LINE_LENGTH = 80;
+	// END KGU#467 2017-12-02
 	// Patterns and Matchers needed for getContent_R()
 	// (reusable, otherwise both get created and compiled over and over again)
 	private static final Pattern pHexLiteral = Pattern.compile("^[Nn]?[Xx][\"']([0-9A-Fa-f]+)[\"']");
 	private static final Pattern pIntLiteral = Pattern.compile("^0+([0-9]+)");
 	private static final Pattern pAcuNumLiteral = Pattern.compile("^[BbOoXxHh]#([0-9A-Fa-f]+)");
+
 	private static Matcher mHexLiteral = pHexLiteral.matcher("");
 	private static Matcher mIntLiteral = pIntLiteral.matcher("");
 	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
@@ -7831,7 +8510,7 @@ public class COBOLParser extends CodeParser
 			if (isExternal && this.declaredExternals.contains(varName)) {
 				containsExternals = true;
 				// Don't add a declaration in case of a reference to a former external declaration
-				// (but make declarations must contain an empty entry for the final CobVar loop)) 
+				// (but declarations list must contain an empty entry for the final CobVar loop)) 
 				declarations.add("");
 			}
 			else {
@@ -7863,6 +8542,11 @@ public class COBOLParser extends CodeParser
 						declaration = "";
 					}
 				}
+				// START KGU#471 2017-12-05: Bugfix #483 - suppress unshared non-complex mere declarations
+				else if (!currentVar.hasChild(true) && !this.optionImportVarDecl && !isGlobal && !isExternal) {
+					declaration = "";
+				}
+				// END KGU#471 2017-12-05
 				// We postpone all other declarations
 				declarations.add(declaration);
 			}
@@ -7925,12 +8609,14 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * @param externalNode
-	 * @param globalNode
-	 * @param targetNode
-	 * @param currentVar
-	 * @param varName
-	 * @param decl
+	 * Adds an instruction with text {@code text} declaring variable {@code currentVar} to
+	 * the {@link Subqueue} {@code targetNode}.<br/>
+	 * Note that option {@link #optionImportVarDecl} has no effect here as this method
+	 * doesn't know whether the element is to be shared.
+	 * @param externalNode - the element sequence to append to
+	 * @param currentVar - the variable object to create a declaration for
+	 * @param text - the prepared instruction text
+	 * @param isConst - whether it is a constant definition
 	 */
 	private void addDeclToDiagram(Subqueue targetNode, CobVar currentVar, String text, boolean isConst) {
 		Instruction decl = new Instruction(text);
@@ -8032,8 +8718,7 @@ public class COBOLParser extends CodeParser
 			initialization = "{" + var.getValueList(", ", null) + "}";
 		}
 		if (child != null && !child.isConditionName()) {
-			// FIXME: What to do with an array of records here? How would the values be organized in CobVar then?
-			String typeName = var.forceName() + "_" + (declLevel == 0 ? "type" : Integer.toHexString(var.hashCode()));
+			String typeName = var.forceName() + "_" + (declLevel == 0 ? "type" : "t" + Integer.toHexString(var.hashCode()));
 			typeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
 			StringBuilder init = new StringBuilder(typeName);
 			String sepa = "{\\\n";
@@ -8049,12 +8734,29 @@ public class COBOLParser extends CodeParser
 			// Anything added at all? (In this case the initial separator would have changed)
 			if (!sepa.equals("{\\\n")) {
 				initialization = init.toString();
+				// START KGU#467 2017-12-01: Bugfix #480 - in case of an array of sub-records multiply the initialization
+				int arraySize = var.getArraySize();
+				// FIXME: Should we restrict the array size for this approach (but how to communicate it then?)
+				if (arraySize > 0) {
+					if (initialization.length() < MAX_INITIALIZER_LINE_LENGTH) {
+						initialization = initialization.replace("\\\n", " ");
+					}
+					StringBuilder arrayInit = new StringBuilder("{\\\n");
+					sepa = "";
+					for (int i = 0; i < arraySize; i++) {
+						arrayInit.append(sepa + initialization);
+						sepa = ",\\\n";
+					}
+					arrayInit.append("\\\n}");
+					initialization = arrayInit.toString();
+				}
+				// END KGU#467 2017-12-01
 			}
 		}
 		return initialization;
 	}
 	// END KGU#388 2017-10-03
-
+	
 	//------------------------- Postprocessor ---------------------------
 
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
@@ -8089,9 +8791,13 @@ public class COBOLParser extends CodeParser
 		if (this.returnMap.containsKey(aRoot)) {
 			String resultVar = this.returnMap.get(aRoot);
 			int nElements = aRoot.children.getSize();
-			if (!aRoot.getMethodName().equals(resultVar) && !resultVar.equalsIgnoreCase("RESULT")
-					&& (nElements == 0 || !(aRoot.children.getElement(nElements-1) instanceof Jump))) {
-				aRoot.children.addElement(new Instruction(getKeywordOrDefault("preReturn", "return") + " " + this.returnMap.get(aRoot)));
+			if (!aRoot.getMethodName().equals(resultVar) && !resultVar.equalsIgnoreCase("RESULT")) {
+				// Revise all return elements (make sure there isn't any without value)
+				aRoot.traverse(new ReturnEnforcer(resultVar));
+				// Now make sure that the routine ends with a return element
+				if (nElements == 0 || !(aRoot.children.getElement(nElements-1) instanceof Jump)) {
+					aRoot.children.addElement(new Instruction(getKeywordOrDefault("preReturn", "return") + " " + this.returnMap.get(aRoot)));
+				}
 			}
 		}
 	}
@@ -8104,34 +8810,41 @@ public class COBOLParser extends CodeParser
 	{
 		// The automatic conversion of Instructions to Calls may have invalidated element references.
 		// Hence update the procedureList before elements are going to be moved.
-		refactorProcedureList();
+		finishProcedureList();
 		
 		// Now the actual extraction of local procedures may begin.
 		for (SectionOrParagraph sop: this.procedureList) {
 			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
-			if (sop.firstElement != null && sop.lastElement != null) {
-				Root owner = Element.getRoot(sop.firstElement);
-				Subqueue sq = (Subqueue)sop.firstElement.parent;
+			Element firstElement = sop.getFirstElement();
+			Element lastElement = sop.getLastElement();
+			if (firstElement != null && lastElement != null) {
+				Subqueue sq = sop.parent;
 				// We will have to copy the content of the replacing call. Therefore we must
 				// have an opportunity to find the call. This should be feasible via the index
 				// of the first element of the subsequence. But we cannot be sure that sop.start
 				// is still correct - the original context may already have been outsourced itself
 				// so we search for it in the current context.
-				int callIndex = sq.getIndexOf(sop.firstElement);
-				if (callIndex < 0) {
+				int startIndex = sop.startsAt;
+				int nextIndex = sop.endsBefore;
+				if (startIndex < 0) {
 					this.log("Corrupt diagram: Parts of section or paragraph \"" + sop.name + "\" not detected!", true);
 					continue;
 				}
-				SelectedSequence elements = new SelectedSequence(sop.firstElement, sop.lastElement);
-				if (clients != null) {
+				// START KGU#464 2017-12-04: Bugfix #475 - Check if there are EXIT PARAGRAPH or EXIT SECTION Jumps
+				//if (clients != null) {
+				if (clients != null || sop.isSection && !sop.sectionExits.isEmpty() || !sop.isSection && !sop.paragraphExits.isEmpty()) {
+				// END KGU#464 2017-12-04
 					// No longer bothering to detect arguments and results, we may simply move the elements
 					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
 					String callText = sop.name + "()";
 
-					// This the decisive step
-					Call replacingCall = extractSectionOrParagraph(owner, sq, callIndex, elements, callText);
+					// This the decisive step (bugfix #475: now already refactors indices)
+					Call replacingCall = extractSectionOrParagraph(sop, callText);
 
-					callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing 
+					int callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing
+					if (callIndex != sop.startsAt) {
+						System.err.println("*** Refactoring of " + sop + " faild!");
+					}
 					// Now cleanup and get rid of place-holding dummy elements
 					Element doomedEl = null;
 					if (callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Call) {
@@ -8139,9 +8852,21 @@ public class COBOLParser extends CodeParser
 						if (doomedEl.disabled && doomedEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
 							replacingCall.setComment(doomedEl.getComment());
 							//System.out.println("=== Cleanup Call: " + sq.getElement(callIndex-1));
-							sq.removeElement(--callIndex);
+							sq.removeElement(callIndex-1);
+							// START KGU#464 2017-12-03: Bugfix #475
+							sop.startsAt--;
+							sop.endsBefore--;
+							// END KGU#464 2017-12-03
 						}
 					}
+					// START KGU#464 2017-12-03: Bugfix #475 - mark inappropriate multi-level returns
+					if (!sop.isSection) {
+						for (Jump jp: sop.sectionExits) {
+							jp.setColor(Color.RED);
+							jp.getComment().add("UNSUPPORTED: Cannot exit the calling subroutine!");
+						}
+					}
+					// END KGU#464 2017-12-03
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
 					for (Call client: clients) {
@@ -8151,28 +8876,57 @@ public class COBOLParser extends CodeParser
 						client.disabled = false;
 					}
 					// At the original place we most likely won't need the Call anymore (not reachable).
-					if (!sq.isReachable(callIndex, false)) {
+					if (!sq.isReachable(sop.startsAt, false)) {
 						sq.removeElement(replacingCall);
+						// START KGU#464 2017-12-03: Bugfix #475
+						sop.endsBefore--;
+						// END KGU#464 2017-12-03
 					}
 				}
 				// Not explicitly used anywhere and just consisting of a disabled dummy jump? 
-				else if (elements.getSize() == 1 && elements.getElement(0) instanceof Jump) {
+				else if (sop.getSize() == 1 && firstElement instanceof Jump) {
 					Element dummyCall = null;
-					Jump dummyJump = (Jump)elements.getElement(0);
+					Jump dummyJump = (Jump)firstElement;
 					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
 					// both being un-reachable; then we will drop the two dummy elements now
-					if (callIndex > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(callIndex-1)) instanceof Call) {
+					if (startIndex > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(startIndex-1)) instanceof Call) {
 						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name)) {
-							if (!sq.isReachable(callIndex-1, false)) {
+							if (!sq.isReachable(startIndex-1, false)) {
 								//System.out.println("=== Cleanup Jump: " + sq.getElement(ix));
-								sq.removeElement(callIndex);	// This is the dummyJump itself
+								sq.removeElement(startIndex);	// This is the dummyJump itself
 								//System.out.println("=== Cleanup Call: " + sq.getElement(ix-1));
-								sq.removeElement(callIndex-1);	// This is the preceding dummyCall
+								sq.removeElement(startIndex-1);	// This is the preceding dummyCall
+								// START KGU#464 2017-12-03: Bugfix #475
+								sop.startsAt--;
+								sop.endsBefore -= 2;
+								// END KGU#464 2017-12-03
 							}
 						}
 					}
 				}
+				// START KGU#464 2017-12-03: Bugfix #475
+				else if (!sop.isSection) {
+					SectionOrParagraph contSoP = sop.containedBy;
+					while (contSoP != null && !contSoP.isSection) {
+						contSoP = contSoP.containedBy;
+					}
+					if (contSoP != null && contSoP.endsBefore < 0) {
+						for (Jump jp: sop.sectionExits) {
+							contSoP.sectionExits.add(jp);
+						}
+					}
+				}
+				refactorProcedureList(sop, startIndex, nextIndex);
+				// END KGU#464 2017-12-03
 			}
+			// START KGU#478 2017-12-10: Issue #475 - S. Sobisch wanted calls to empty or corrupt sections be disabled
+			else if (clients != null) {
+				for (Call client: clients) {
+					client.getComment().add("The called " + (sop.isSection ? "section" : "paragraph") + " seems to be empty, corrupt, or vanished.");
+					client.disabled = true;
+				}
+			}
+			// END KGU#478 2017-12-10
 		}
 		// START KGU#376 2017-10-04: Enh. #389
 		if (externalRoot != null && externalRoot.children.getSize() > 0) {
@@ -8188,46 +8942,46 @@ public class COBOLParser extends CodeParser
 	// END KGU 2017-05-28
 
 	/**
-	 * Extracts the COBOL section or paragraph comprised by {@code elements} from {@link Subqueue} {@code sq}
+	 * Extracts the COBOL section or paragraph comprised by {@code sop} from its {@link Subqueue}
 	 * to a new subdiagram, which is going to be registered in {@link CodeParser#subRoots}.
 	 * Usually this is accompanied by the extraction of all potentially shared data declarations (type
-	 * and constant definitions, variable declarations and initialisations) from {@link Root} {@code owner}
-	 * to a new includable diagram, which will be registered {@link #dataSectionIncludes} (if all that hadn't
-	 * already been done in relation with another extraction from {@code owner}). 
-	 * @param owner - the diagram {@code elements} belong to
-	 * @param sq - this direct parent {@link Subqueue} of {@code elements}
-	 * @param callIndex - the start position of {@code elements} within {@code sq} (hence the target index for
-	 * 		the replacing {@link Call}.
-	 * @param elements - the {@link Element}s to be outsourced.
-	 * @param callText
+	 * and constant definitions, variable declarations and initialisations) from the owning {@link Root}
+	 * to a new includable diagram, which will be registered in {@link #dataSectionIncludes} (if all that hadn't
+	 * already been done in relation with another extraction from the owning {@link Root}). 
+	 * @param sop - the {@link SectionOrParagraph} to be outsourced.
+	 * @param callText - the text to be placed in the substituting Call.
 	 * @return the {@link Call} element replacing the section or paragraph in {@code owner}. 
 	 */
-	private Call extractSectionOrParagraph(Root owner, Subqueue sq, int callIndex, SelectedSequence elements,
-			String callText) {
+	private Call extractSectionOrParagraph(SectionOrParagraph sop, String callText) {
+		Root owner = Element.getRoot(sop.parent);
 		Root proc = new Root();
 		proc.setText(callText);
 		proc.setProgram(false);
-		int nElements = elements.getSize();
+		int nElements = sop.getSize();
 		//System.out.println("==== Extracting " + sop.name + " ===...");
 		for (int i = 0; i < nElements; i++) {
-			proc.children.addElement(elements.getElement(0));
+			proc.children.addElement(sop.parent.getElement(sop.startsAt));
 			//System.out.println("\t" + (callIndex + i) + " " + elements.getElement(0)); 
-			elements.removeElement(0);
+			sop.parent.removeElement(sop.startsAt);
+			sop.endsBefore--;
 		}
+		// START KGU#464 2017-12-04): Bugfix #475 This became obsolete now
 		// Now we convert all EXIT SECTION or EXIT PARAGRAPH elements into return Jumps.
-		proc.traverse(new JumpConverter());
+		//proc.traverse(new JumpConverter());
+		// END KGU#464 2017-12-04
 
 		Call replacingCall = new Call(callText);
-		sq.insertElementAt(replacingCall, callIndex);
+		sop.parent.insertElementAt(replacingCall, sop.startsAt);
+		sop.endsBefore++;
 		// Has the owner Root still shareable data at its beginning? Then outsource them...
 		extractShareableData(owner);
 		// If the owner has a mapped includable let the new proc include it as well
 		if (dataSectionIncludes.containsKey(owner)) {
 			proc.addToIncludeList(dataSectionIncludes.get(owner));
 		}
-		// Put the new subroutine daigram to the set of results as well
-		subRoots.add(proc);
 		
+		// Put the new subroutine diagram to the set of results as well
+		subRoots.add(proc);	
 		
 		return replacingCall;
 	}
@@ -8258,49 +9012,106 @@ public class COBOLParser extends CodeParser
 			dataSectionEnds.remove(owner);	// Un-register the root from those holding their own data declarations
 			dataSectionIncludes.put(owner, dataName);	// register the mapped includable instead
 			owner.addToIncludeList(dataName);	// ... and let the former owner include it
+			// START KGU#464 2017-12-03: Bugfix #475 - adapt all section or paragraph references affected from this extraction
+			for (SectionOrParagraph sop: this.procedureList) {
+				if (sop.parent == owner.children && sop.startsAt >= endDataIx) {
+					if (sop.endsBefore >= sop.startsAt) {
+						sop.endsBefore -= endDataIx;
+					}
+					sop.startsAt -= endDataIx;
+				}
+			}
+			// END KGU#464 2017-12-03
+		}
+	}
 
+	// START KGU#464 2017-12-03: Bugfix #475 - we have to face nested paragraphs with require reference modifications
+	/**
+	 * Checks all {@link SectioOrParagraph} entries in {@code this.}{@link #procedureList} for open
+	 * ends and sets the size of the respective parent {@link Subqueue} as end index in these cases. 
+	 * This is due before the extraction of sections and paragraphs to subdiagrams.
+	 * (Submethod of {@link #subclassPostProcess(String)}) 
+	 */
+	private void finishProcedureList() {
+		for (SectionOrParagraph sop: this.procedureList) {
+			// START KGU#452 2017-10-30: Bugfix #445 - There may be empty sections or paragraphs
+			if (sop.getFirstElement() == null) {
+				// We can't do anything here
+				continue;
+			}
+			// END KGU#452 2017-10-30
+			// START KGU#464 2017-12-03: Bugfix #475 - close open SoPs (usually not closed at EOF)
+			else if (sop.endsBefore < 0) {
+				sop.endsBefore = sop.parent.getSize();
+			}
+//			int i = 0;
+//			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
+//				int ix = (i == 0 ? sop.startsAt : sop.endsBefore - 1);
+//				Subqueue sq = null;
+//				Element newEl = null;
+//				// Was the element an Instruction and has it vanished?
+//				if (el instanceof Instruction && (sq = (Subqueue)el.parent).getIndexOf(el) < 0) {
+//					if (ix < sq.getSize() && (newEl = sq.getElement(ix)) instanceof Call &&
+//							newEl.getText().getText().equals(el.getText().getText())) {
+//						if (i == 0) {
+//							sop.firstElement = newEl;
+//						}
+//						else {
+//							sop.lastElement = newEl;
+//						}
+//					}
+//					else {
+//						System.err.println("Instructions of Section/Paragraph " + sop.name + " got out of sight!");
+//					}
+//				}
+//				i++;
+//			}
+			// END KGU#464 2017-12-03
 		}
 	}
 
 	/**
-	 * Checks and updates direct element references in all {@link SectioOrParagraph} entries of 
-	 * {@code this.}{@link #procedureList}. This is due before the extraction of sections and
-	 * paragraphs to subdiagrams after {@code super} has transmuted Instructions to Calls.
-	 * Requires that the index references still match, which they won't do any longer when elements
-	 * start to be moved around.
-	 * (Submethod of {@link #subclassPostProcess(String)}) 
+	 * Checks and updates element index ranges in all {@link SectionOrParagraph} entries directly or
+	 * indirectly including the given {@code _sop} along the containdBy links in 
+	 * {@code this.}{@link #procedureList}. This is due whenever a modification (subroutine extraction or
+	 * elimination of dummy calls or jumps) was done.
+	 * Ensures that the index references will match again.
+	 * @param _sop - the {@link SectionOrParagraph} object just manipulated
+	 * @param _formerStartIndex - its former start index
+	 * @param _formerNextIndex - its former end index
 	 */
-	private void refactorProcedureList() {
-		for (SectionOrParagraph sop: this.procedureList) {
-			// START KGU#452 2017-10-30: Bugfix #445 - There may be empty sections or paragraphs
-			if (sop.firstElement == null) {
-				// We can't do here anything
-				continue;
+	private void refactorProcedureList(SectionOrParagraph _sop, int _formerStartIndex, int _formerNextIndex)
+	{
+		int startChange = _sop.startsAt - _formerStartIndex;	// usually <= 0
+		int sizeChange =  _sop.getSize() - (_formerNextIndex - _formerStartIndex);	// usually <= 0
+		if (startChange == 0 && sizeChange == 0) {
+			// Nothing to do
+			return;
+		}
+		SectionOrParagraph nextSop = _sop.containedBy;
+		while (nextSop != null) {
+			// It will always hold that nextSop.startsAt >= _sop.startsAt (otherwise they wouldn't have been
+			// linked).
+			// If the size has changed and the linked (containing) sector or paragraph had ended at or after
+			// the old end of _sop then index endsBefore will have to be adapted accordingly
+			if (sizeChange != 0 && nextSop.endsBefore >= 0 && nextSop.endsBefore >= _formerNextIndex) {
+				nextSop.endsBefore += sizeChange;
 			}
-			// END KGU#453 2017-10-30
-			int i = 0;
-			for (Element el: new Element[]{sop.firstElement, sop.lastElement}) {
-				int ix = (i == 0 ? sop.startsAt : sop.endsBefore - 1);
-				Subqueue sq = null;
-				Element newEl = null;
-				if (el instanceof Instruction && (sq = (Subqueue)el.parent).getIndexOf(el) < 0) {
-					if (ix < sq.getSize() && (newEl = sq.getElement(ix)) instanceof Call &&
-							newEl.getText().getText().equals(el.getText().getText())) {
-						if (i == 0) {
-							sop.firstElement = newEl;
-						}
-						else {
-							sop.lastElement = newEl;
-						}
-					}
-					else {
-						System.err.println("Instructions of Section/Paragraph " + sop.name + " got out of sight!");
-					}
+			// If both _sop and nextSop shared the start index and _sop.startsAt has decreased
+			// then nextSop will also be moved the same distance.
+			if (startChange < 0) {
+				if (nextSop.startsAt == _formerStartIndex) {
+					nextSop.startsAt += startChange;
 				}
-				i++;
+				if (nextSop.endsBefore >= 0) {
+					nextSop.endsBefore += startChange;
+				}
 			}
+			nextSop = nextSop.containedBy;
 		}
 	}
+	// END KGU#464 2017-12-03
+
 }
 
 
@@ -8337,20 +9148,34 @@ class CobTools {
 		USAGE_FP_BIN64,
 		USAGE_FP_BIN128,
 		USAGE_LONG_DOUBLE,
-		USAGE_DISPLAY_NUMERIC /* calculated from picture: usage DISPLAY with only numeric values */,
-		USAGE_NOT_SET /* no explicit usage given, handle as USAGE_DISPLAY */,
+		/** calculated picture: usage DISPLAY with only numeric values */
+		USAGE_DISPLAY_NUMERIC,
+		/** no explicit usage given, handle as USAGE_DISPLAY */
+		USAGE_NOT_SET
 	};
 
 	/** COBOL storages */
 	public static enum Storage {
+		/** WORKING-STORAGE section (permanent storage) */
 		STORAGE_WORKING,
+		/** LOCAL-STORAGE section (temporary storage per instance) */
 		STORAGE_LOCAL,
+		/** LINKAGE section (arguments passed by caller)*/
 		STORAGE_LINKAGE,
+		/** SCREEN section (user interaction) */
 		STORAGE_SCREEN,
+		/** REPORT section */
 		STORAGE_REPORT,
+		/** No storage set */
 		STORAGE_UNKNOWN,
+		/** FILE section */
 		STORAGE_FILE
-	};
+	}
+
+	// START KGU#465 2017-12-04: Bugfix #473
+	/** A dummy string specifying an un-recognized type (neither pic nor usage) */
+	private static final String UNKNOWN_TYPE = "-unknown-type-";
+	// END KGU#465 2017-12-04
 	
 	/**
 	 * Current node in the CobProg tree 
@@ -9046,41 +9871,50 @@ class CobTools {
 			}
 			
 			this.level = level;
+			// START KGU#467 2017-12-01: Bugfix #480 - level 77 data had been handled in a wrong way
+			// Handle level 77 data as if they had level 1 (we avoid further consistency checks here)
+			if (level == 77) {
+				level = 1;
+			}
+			// END KGU#467 2017-12-01
 			if (name != null && !name.isEmpty()) {
 				this.name = name.trim().toLowerCase();
 			} else {
 				this.name = "filler";
 			}
 			if (this.name.equals("filler")) {
-				fillerCount++;
+				CobTools.this.fillerCount++;
 				// START KGU#388 2017-10-04: Enh. #423 - we need a valid identifier
-				//this.name += "_$" + fillerCount;
-				this.name += "_" + String.format("%1$02d", fillerCount);
+				// this.name += "_$" + fillerCount;
+				this.name += "_" + String.format("%1$02d", CobTools.this.fillerCount);
 				// END KGU#388_2017-10-04
 			}
 			if (picture != null && !picture.isEmpty()) {
 				this.picture = picture.trim();
-				setVarAttributesFromPic(this, picture);
+				CobTools.this.setVarAttributesFromPic(this, picture);
 			} else {
 				this.picture = "";
 			}
 
 			/* set relation to other fields */
 			this.parent = null;
-			if (lastVar != null && lastVar.level < level) {
-				this.parent = lastVar;
-				if (lastVar.child == null) {
-					lastVar.child = this;
+			if (CobTools.this.lastVar != null && CobTools.this.lastVar.level < level) {
+				this.parent = CobTools.this.lastVar;
+				if (CobTools.this.lastVar.child == null) {
+					CobTools.this.lastVar.child = this;
 				}
 			} else {
-				for (CobVar v = lastVar; v != null; v = v.parent) {
-					if (level == v.level || level == 1 && v.level == 78) {
+				for (CobVar v = CobTools.this.lastVar; v != null; v = v.parent) {
+					// START KGU#467 2017-12-01: Bugfix #480 - level 77 data had been handled in a wrong way
+					//if (level == v.level || level == 1 && v.level == 78) {
+					if (level == v.level || level == 1 && (v.level == 77 || v.level == 78)) {
+					// END KGU#467 2017-12-01
 						this.parent = v.parent;
 						v.sister = this;
 						break;
 					} else if (v.level < level) {
 						this.parent = v;
-						insertFiller(v, this);
+						this.insertFiller(v, this);
 						break;
 					}
 				}
@@ -9088,7 +9922,7 @@ class CobTools {
 			this.child = null;
 			this.sister = null;
 			
-			// usage explicit given overrides usage calculated from PICTURE
+			// usage explicitly given overrides usage calculated from PICTURE
 			if (usage != null) {
 				this.usage = usage;
 			} else {
@@ -9111,7 +9945,7 @@ class CobTools {
 			}
 
 			if (value != null) {
-				this.values = new String[] {value};
+				this.values = new String[] { value };
 				this.valueFirst = value;
 			}
 			
@@ -9124,12 +9958,13 @@ class CobTools {
 			this.anyLength = anyLength; 
 			this.occurs = times;
 			this.occursString = timesString;
-//			lastRealVar = this;
-			lastVar = this;
+			// lastRealVar = this;
+			CobTools.this.lastVar = this;
 		}
 
 		/**
 		 * Special constructor for creating condition-names (level 88 variables)
+		 *
 		 * @param name
 		 * @param values
 		 * @param valueFalse
@@ -9146,30 +9981,30 @@ class CobTools {
 			}
 
 			if (values != null) {
-				ArrayList<String> sortList = new ArrayList<String>(Arrays.asList(values));
+				ArrayList<String> sortList = new ArrayList<>(Arrays.asList(values));
 				Collections.reverse(sortList);
 				this.values = sortList.toArray(new String[sortList.size()]);
 				this.valueFirst = this.values[0];
 			}
 			this.valueFalse = valueFalse;
 
-			if (lastVar == null) {
+			if (CobTools.this.lastVar == null) {
 				// create "correct" picture first
-				String picString = createPicStringFromValues(values);
+				String picString = CobTools.this.createPicStringFromValues(values);
 				// partial code import, generate implicit filler
-				lastVar = new CobVar (1, null, picString, null, null, null, false, false, 0, 0, null);
+				CobTools.this.lastVar = new CobVar(1, null, picString, null, null, null, false, false, 0, 0, null);
 			}
 			
 			this.picture = null;
 
 			/* set relation to other fields */
-			if (lastVar.level == 88) {
-				this.parent = lastVar.parent;
-				lastVar.sister = this;
+			if (CobTools.this.lastVar.level == 88) {
+				this.parent = CobTools.this.lastVar.parent;
+				CobTools.this.lastVar.sister = this;
 			} else {
-				this.parent = lastVar;
-				if (lastVar.child == null) {
-					lastVar.child = this;
+				this.parent = CobTools.this.lastVar;
+				if (CobTools.this.lastVar.child == null) {
+					CobTools.this.lastVar.child = this;
 				}
 			}
 			this.child = null;
@@ -9179,7 +10014,7 @@ class CobTools {
 			/* set usage from parent */
 			this.usage = this.parent.usage;
 			
-			lastVar = this;
+			CobTools.this.lastVar = this;
 		}
 
 		/**
@@ -9201,25 +10036,24 @@ class CobTools {
 			}
 
 			if (value != null) {
-				this.values = new String[] {value};
+				this.values = new String[] { value };
 				this.valueFirst = value;
 			}
 			this.valueFalse = null;
 
 			// create assumed picture first
-			this.picture = createPicStringFromValues(this.values);
+			this.picture = CobTools.this.createPicStringFromValues(this.values);
 
-			if (lastVar == null) {
-				lastVar = this;
-			}
-			else {
+			if (CobTools.this.lastVar == null) {
+				CobTools.this.lastVar = this;
+			} else {
 			/* set relation to other fields */
-				if (lastVar.level == level) {
-					this.parent = lastVar.parent;
-					lastVar.sister = this;
+				if (CobTools.this.lastVar.level == level) {
+					this.parent = CobTools.this.lastVar.parent;
+					CobTools.this.lastVar.sister = this;
 				} else { 
 					/* set relation to other fields */
-					for (CobVar v = lastVar; v != null; v = v.parent) {
+					for (CobVar v = CobTools.this.lastVar; v != null; v = v.parent) {
 						if (v.level == 01 || v.level == 78) {
 							this.parent = v.parent;
 							v.sister = this;
@@ -9232,13 +10066,12 @@ class CobTools {
 			this.sister = null;
 			
 			/* set usage from picture */
-			// FIXME: Does this mean we should call setVarAttributesFromPic(this, ths.picture) now?
-			this.usage = null;
+			CobTools.this.setVarAttributesFromPic(this, this.picture);
 			
 			this.isGlobal = isGlobal;
 			this.constant = true;
 			
-			lastVar = this;
+			CobTools.this.lastVar = this;
 		}
 
 		/**
@@ -9370,8 +10203,7 @@ class CobTools {
 		 * to bottom), such that "%i" can be replaced by the respective i-th index expression.
 		 * @return fully qualified name (e.g. "top.foo.bar").
 		 */
-		public String getQualifiedName()
-		{
+		public String getQualifiedName() {
 			String qualName = this.forceName();
 			CobVar ancestor = this.parent;
 			int nArrayLevels = 0;
@@ -9381,7 +10213,7 @@ class CobTools {
 					if (ancestor.isArray()) {
 						nArrayLevels++;
 						// put an index bracket with reverse level first
-						index = "[%r"+ nArrayLevels + "]";
+						index = "[%r" + nArrayLevels + "]";
 					}
 					qualName = ancestor.forceName() + index + "." + qualName;
 					ancestor = ancestor.parent;
@@ -9389,7 +10221,7 @@ class CobTools {
 			}
 			// Now revert the provisional index place holders
 			for (int i = 0; i < nArrayLevels; i++) {
-				qualName = qualName.replace("%r" + (i+1), "%" + (nArrayLevels - i));
+				qualName = qualName.replace("%r" + (i + 1), "%" + (nArrayLevels - i));
 			}
 			return qualName;
 		}
@@ -9415,7 +10247,7 @@ class CobTools {
 		public String getValueComparisonString() {
 			boolean firstValue = true;
 			String valueComparison = "";
-			for (Object value : values) {
+			for (Object value : this.values) {
 				if (firstValue) {
 					firstValue = false;
 				} else {
@@ -9515,7 +10347,7 @@ class CobTools {
 			}
 		} else if (picString.matches("9*")) {
 			variable.usage = Usage.USAGE_DISPLAY_NUMERIC;
-		} else  if (picString.matches("[XA]*")){
+		} else if (picString.matches("[XA]*")) {
 			variable.usage = Usage.USAGE_DISPLAY;
 		} else {
 			variable.usage = Usage.USAGE_DISPLAY;
@@ -9523,7 +10355,8 @@ class CobTools {
 		}
 	}
 	
-	// START KGU#427 2017-10-05: Quick hack as workaround for the NullPointerException in setVarAttributesFromPic()
+	// START KGU#427 2017-10-05: Quick hack as workaround for the
+	// NullPointerException in setVarAttributesFromPic()
 	public void setProgram(CobProg currentProg) {
 		this.currentProgram = currentProg;
 	}
@@ -9536,20 +10369,34 @@ class CobTools {
 			// really bad code...
 			picString = "X";
 		} else {
-			if (values[0].startsWith("\'")
-			|| values[0].startsWith("\"")) {
+			boolean isNumeric = false;
+			char first = values[0].charAt(0);
+			if (first == '\'' || first == '\"') {
+				if (values[0].substring(1).startsWith("\\u00")) {
 				picString = "X";
 			} else {
-				if (values[0].startsWith("-")) {
-					picString = "S9";
+					picString = "N";
+				}
 				} else {
+				if (first == '-' || (first >= '0' && first <= '9')) {
 					picString = "9";
+					isNumeric = true;
+				} else {
+					picString = "X";
 				}
 			}
 			for (String value : values) {
 				if (value.length() > len) {
 					len = value.length();
+					if (isNumeric && value.charAt(0) == '-') {
+						len--;
+						picString = "S9";
+					}
 				}
+				}
+			// don't count quotes and "\\u", count as non-unicode
+			if (!isNumeric) {
+				len = (len - 4) / 4;
 			}
 			picString += "(" + len + ")";
 			
@@ -9560,18 +10407,20 @@ class CobTools {
 	/**
 	 * Returns the Java type of a given CobVar depending on its attributes including
 	 * usage, picture and length.<br/>
-	 * Note that in case of an array only the ELEMENT TYPE String!
+	 * Note that in case of an array only the ELEMENT TYPE String will be returned
+	 * unless {@code withArraySize} is set!
 	 * @param CobVar - variable (or component) to return the type string for
 	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
 	 * @return Java type representation as string
 	 * @see CobVar#isArray()
 	 * @see CobVar#getArraySize()
 	 */
-	public static String getTypeString (CobVar variable, boolean withArraySize) {
+	public static String getTypeString(CobVar variable, boolean withArraySize) {
 		if (variable == null) {
 			return null;
 		}
 		// START KGU#388 2017-10-04: Enh. #423
+		// usage can be null if this CobVar was created via CobVar(String, String[], String)
 		else if (variable.usage == null) {
 			System.err.println("getTypeString(" + variable + "): variable has unset usage field!");
 			return "";
@@ -9581,7 +10430,6 @@ class CobTools {
 		if (withArraySize && variable.isArray()) {
 			arraySuffix = "[" + variable.getArraySize() + "]";
 		}
-		// FIXME: usage can be null if this CobVar was created via CobVar(String, String[], String)
 		switch (variable.usage) {
 		case USAGE_BIT: // CHECKME
 			return "";
@@ -9663,11 +10511,21 @@ class CobTools {
 			} else {
 				// CHECKME: does this happen? if not raise a warning or at least log a warning
 				//return "";
-				return "-unknown-type-";
+				return UNKNOWN_TYPE;
 			}
 		// we explicitly don't want a default, allowing to check if all USAGEs have a value assigned
 		}
 		return "";
 	}
+	
+	// START KGU#465 2017-12-04: Bugfix #473 - For hierarchical arguments we need a type name
+	public static String getTypeName (CobVar variable, boolean withArraySize) {
+		String typeName = getTypeString(variable, withArraySize);
+		if (typeName.equals(UNKNOWN_TYPE)) {
+			typeName = variable.deriveTypeName();
+		}
+		return typeName;
+	}
+	// END KGU#465 2017-12-04
 	
 }

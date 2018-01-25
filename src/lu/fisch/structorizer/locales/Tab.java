@@ -20,10 +20,36 @@
 
 package lu.fisch.structorizer.locales;
 
+/******************************************************************************************************
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    This class represents a Translator tab (for editing of a locale file section).
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2016.08.01      First Issue
+ *      Kay Gürtzig     2016.08.04      Issue #220: Subsection header rows shouldn't be editable
+ *      Kay Gürtzig     2016.08.08      Issue #220: Detect any substantial modification in a cell
+ *      Kay Gürtzig     2016.09.06      KGU#244: Opportunity to reload a saved language file to resume editing it
+ *                                      Cell renderer shall highlight also deleted texts as modifications
+ *      Kay Gürtzig     2017.12.12      Enh. #491: Tooltip for long master texts (otherwise not completely readable)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *
+ ******************************************************************************************************///
+
 import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -31,7 +57,9 @@ import javax.swing.table.TableModel;
 
 /**
  * This class represents tabs for the {@link Translator}, the main component is a
- * four-column {@link JTable}.
+ * three-column {@link JTable} showing key sequences in the first column, English
+ * master text in the central column, and the locale-bound translation in the third
+ * column.
  * @author Robert Fisch
  */
 @SuppressWarnings("serial")
@@ -113,7 +141,7 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         TableModel model = table.getModel();
         String key = (String) model.getValueAt(row, 0);
         
-        if(key!=null && key.startsWith(Locale.startOfSubSection))
+        if (key!=null && key.startsWith(Locale.startOfSubSection))
         {
         	// START KGU 2016-08-04: Issue #220
         	if (model instanceof TranslatorTableModel)
@@ -126,8 +154,7 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
             else
                     c.setBackground(Color.blue);
         }
-        else
-        if((value instanceof String && ((String) value).equals("")) || (value==null))
+        else if ((value instanceof String && ((String) value).equals("")) || (value==null))
         {
             // START KGU#244 2016-09-06: Show an explicit deletion as well
             boolean isDeleted = col == 2 && Translator.loadedLocale.valueDiffersFrom(key, (String)value);
@@ -152,7 +179,18 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         {
             c.setBackground(backgroundColor);
         }
-        
+        // START KGU#481 2017-12-12: Enh. #491 - long texts in the central column couldn't read completely
+        if (col == 1 && value instanceof String) {
+        	int length = c.getPreferredSize().width; 
+        	int width = table.getColumnModel().getColumn(1).getWidth();
+        	if (length > width) {
+        		((JLabel)c).setToolTipText((String)value);
+        	}
+        	else {
+        		((JLabel)c).setToolTipText(null);
+        	}
+        }
+        // END KGU#481 2017-12-12
         return c;
     }
     

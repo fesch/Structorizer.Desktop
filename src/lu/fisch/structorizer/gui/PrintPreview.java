@@ -357,7 +357,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		// END KGU#456 2017-11-05
 
 		// preview
-		m_preview = new PreviewContainer();
+		//m_preview = new PreviewContainer();	// --> moved to generatePreviewPages(int)
 		
 		PrinterJob prnJob = PrinterJob.getPrinterJob();
 		pp_pf = prnJob.defaultPage();
@@ -374,46 +374,49 @@ public class PrintPreview extends LangDialog implements Runnable{
 		m_yMargin = (int)(pp_pf.getImageableY());
 		spnMarginX.getModel().setValue(m_xMargin);
 		spnMarginY.getModel().setValue(m_yMargin);
-		Paper paper = pp_pf.getPaper();
-		// Make the margins symmetric (this is good enough)
-		paper.setImageableArea(m_xMargin, m_yMargin, m_wPage - 2*m_xMargin, m_hPage-2*m_yMargin);
-		pp_pf.setPaper(paper);
-		// END KGU#458 2017-11-06
-
-		int scale = 100;
-		int w = (int)(m_wPage * scale / 100);
-		int h = (int)(m_hPage * scale / 100);
 		
-		int pageIndex = 0;
-		try
-		{
-			while (true)
-			{
-				// FIXME (KGU): What exactly is going on here? This often multiplies pages (even without loop!)
-				BufferedImage img = new BufferedImage(m_wPage, m_hPage, BufferedImage.TYPE_INT_RGB);
-				Graphics g = img.getGraphics();
-				g.setColor(Color.white);
-				g.fillRect(0, 0, m_wPage, m_hPage);
-				// START KGU#458 2017-11-06: Enh. #456 - Show the margins as gray lines
-				g.setColor(Color.decode("0xD0D0D0"));
-				g.drawLine(0, m_yMargin, m_wPage, m_yMargin);
-				g.drawLine(0, m_hPage - m_yMargin, m_wPage, m_hPage - m_yMargin);
-				g.drawLine(m_xMargin, 0, m_xMargin, m_hPage);
-				g.drawLine(m_wPage - m_xMargin, 0, m_wPage - m_xMargin, m_hPage);
-				// END KGU#458 2017-11-06
-				if (m_target.print(g, pp_pf, pageIndex) != Printable.PAGE_EXISTS) {
-					break;
-				}
-				PagePreview pp = new PagePreview(w, h, img);
-				m_preview.add(pp);
-				pageIndex++;
-			}
-		}
-		catch (PrinterException e)
-		{
-			e.printStackTrace();
-			System.err.println("Printing error: "+e.toString());
-		}
+		// START KGU#458 2017-11-07: Issue #456 - duplicate code consolidated
+//		Paper paper = pp_pf.getPaper();
+//		// Make the margins symmetric (this is good enough)
+//		paper.setImageableArea(m_xMargin, m_yMargin, m_wPage - 2*m_xMargin, m_hPage-2*m_yMargin);
+//		pp_pf.setPaper(paper);
+//		// END KGU#458 2017-11-06
+//
+//		int scale = 100;
+//		int w = (int)(m_wPage * scale / 100);
+//		int h = (int)(m_hPage * scale / 100);
+//		
+//		int pageIndex = 0;
+//		try
+//		{
+//			while (true)
+//			{
+//				BufferedImage img = new BufferedImage(m_wPage, m_hPage, BufferedImage.TYPE_INT_RGB);
+//				Graphics g = img.getGraphics();
+//				g.setColor(Color.white);
+//				g.fillRect(0, 0, m_wPage, m_hPage);
+//				// START KGU#458 2017-11-06: Enh. #456 - Show the margins as gray lines
+//				g.setColor(Color.decode("0xD0D0D0"));
+//				g.drawLine(0, m_yMargin, m_wPage, m_yMargin);
+//				g.drawLine(0, m_hPage - m_yMargin, m_wPage, m_hPage - m_yMargin);
+//				g.drawLine(m_xMargin, 0, m_xMargin, m_hPage);
+//				g.drawLine(m_wPage - m_xMargin, 0, m_wPage - m_xMargin, m_hPage);
+//				// END KGU#458 2017-11-06
+//				if (m_target.print(g, pp_pf, pageIndex) != Printable.PAGE_EXISTS) {
+//					break;
+//				}
+//				PagePreview pp = new PagePreview(w, h, img);
+//				m_preview.add(pp);
+//				pageIndex++;
+//			}
+//		}
+//		catch (PrinterException e)
+//		{
+//			e.printStackTrace();
+//			System.err.println("Printing error: "+e.toString());
+//		}
+		generatePreviewPages(100);
+		// END KGU#458 2017-11-07
 		
 		// START KGU#287 2017-01-09: Issue #81 / bugfix #330: GUI scaling
 		GUIScaler.rescaleComponents(this);
@@ -452,6 +455,36 @@ public class PrintPreview extends LangDialog implements Runnable{
 		{
 			return;
 		}
+		
+		// START KGU#458 2017-11-07: Issue #456 duplicate code consolidated
+		generatePreviewPages(scale);
+		// END KGU#458 2017-11-07
+		
+		scrPreview.setViewportView(m_preview);
+		System.gc();
+				
+		/*
+		Component[] comps = m_preview.getComponents();
+		for (int k = 0; k < comps.length; k++)
+		{
+			if (!(comps[k] instanceof PagePreview))
+				continue;
+			PagePreview pp = (PagePreview) comps[k];
+			pp.setScaledSize(w, h);
+		}
+		m_preview.doLayout();
+		m_preview.getParent().getParent().validate();
+		*/
+		// START KGU#458 2017-11-06: Enh. #456 - Now adapt the dialog width to the paper orientation
+		setSize(new Dimension(getPreferredSize().width, getSize().height));
+		// END KGU#458 2017-11-06
+	}
+
+	/**
+	 * Sets field {@link #m_preview} to a new {@link PreviewContainer}, generates the target pages and adds them to it. 
+	 * @param scale - a rough scale factor for the entire preview (not just its content!) in percent
+	 */
+	protected void generatePreviewPages(int scale) {
 		int w = (int)(m_wPage * scale / 100);
 		int h = (int)(m_hPage * scale / 100);
 		
@@ -472,7 +505,6 @@ public class PrintPreview extends LangDialog implements Runnable{
 			// END KGU#458 2017-11-06
 			while (true)
 			{
-				// FIXME (KGU): What exactly is going on here? This often multiplies pages (even without loop!)
 				BufferedImage img = new BufferedImage(m_wPage, m_hPage, BufferedImage.TYPE_INT_RGB);
 				Graphics g = img.getGraphics();
 				g.setColor(Color.white);
@@ -496,26 +528,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		{
 			e.printStackTrace();
 			System.err.println("Printing error: "+e.toString());
-		}	
-		
-		scrPreview.setViewportView(m_preview);
-		System.gc();
-				
-		/*
-		Component[] comps = m_preview.getComponents();
-		for (int k = 0; k < comps.length; k++)
-		{
-			if (!(comps[k] instanceof PagePreview))
-				continue;
-			PagePreview pp = (PagePreview) comps[k];
-			pp.setScaledSize(w, h);
 		}
-		m_preview.doLayout();
-		m_preview.getParent().getParent().validate();
-		*/
-		// START KGU#458 2017-11-06: Enh. #456 - Now adapt the dialog width to the paper orientation
-		setSize(new Dimension(getPreferredSize().width, getSize().height));
-		// END KGU#458 2017-11-06
 	}
 	
 	// START KGU#458 2017-11-06: Enh. #456 - common action of both Enter key and Ok button pressing

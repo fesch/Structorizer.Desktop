@@ -57,6 +57,7 @@ package lu.fisch.structorizer.elements;
  *                                      Inheritance changed to implement o more intuitive horizontal cursor navigation
  *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
  *      Kay Gürtzig     2017.11.01/02   Issue #447: Line continuation (backslash at line end) is to be supported
+ *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *
  ******************************************************************************************************
  *
@@ -236,7 +237,7 @@ public class Case extends Element implements IFork
             // END KGU#136 2016-03-01
             
             // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-            if (isCollapsed()) 
+            if (isCollapsed(true)) 
             {
             	rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
         		// START KGU#136 2016-03-01: Bugfix #97
@@ -281,6 +282,11 @@ public class Case extends Element implements IFork
             {
             	discrLines = this.getComment();
             }
+    		// START KGU#480 2018-01-21: Enh. #490
+            else if (Element.E_APPLY_ALIASES) {
+    			discrLines = StringList.explode(Element.replaceControllerAliases(discrLines.getText(), true, false), "\n");
+    		}
+    		// END KGU#480 2018-01-21
             // FIXME: The required extra padding must be proportional to the font size
             int extrapadding = padding + (discrLines.count()-1) * (3 * padding + fm.getHeight());
             // START KGU#227 2016-07-31: Enh. #128 - compute the dimensions of the comment area
@@ -315,7 +321,14 @@ public class Case extends Element implements IFork
             	// FIXME (KGU): By the way, why don't we do it right (i.e. including substructure) in the first place?
                 // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
             	//textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2;
-            	String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+    			// START KGU#480 2018-01-21: Enh. #490
+    			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+    			String selectors = unbrokenText.get(i+1);
+    	    	if (Element.E_APPLY_ALIASES) {
+    				selectors = Element.replaceControllerAliases(selectors, true, false);
+    			}
+    	    	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
+    			// END KGU#480 2018-01-21
             	if (brokenLine.length > nSelectorLines) {
             		nSelectorLines = brokenLine.length; 
             	}
@@ -377,7 +390,7 @@ public class Case extends Element implements IFork
             		// START KGU#401 2017-05-17: Issue #405
             		boolean rotatable = rtt.bottom < rtt.right
             				&& sq.getSize() == 1 && (sq.getElement(0) instanceof Instruction ||
-            						sq.getElement(0).isCollapsed());
+            						sq.getElement(0).isCollapsed(true));
             		rotX0Branches.addElement(rotatedWidth);
             		int rotWidth = (rotatable ? rtt.bottom : rtt.right);
             		int rotHeight = (rotatable ? rtt.right : rtt.bottom);
@@ -411,7 +424,7 @@ public class Case extends Element implements IFork
 
     public void draw(Canvas _canvas, Rect _top_left)
     {
-    	if(isCollapsed()) 
+    	if(isCollapsed(true)) 
     	{
     		Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
     		return;
@@ -419,6 +432,7 @@ public class Case extends Element implements IFork
     	// START KGU#172 2016-04-01: Bugfix #145
     	boolean isSwitchMode = this.isSwitchTextCommentMode();
     	// END KGU#172 2016-04-01
+    	boolean isHighlight = Element.getRoot(this).hightlightVars;
 
     	Rect myrect = new Rect();
     	// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
@@ -541,7 +555,14 @@ public class Case extends Element implements IFork
     		}
     		// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
     		else {
-    			text = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);	// Text can't be empty, see setText()
+    			// START KGU#480 2018-01-21: Enh. #490
+    			//text = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);	// Text can't be empty, see setText()
+    			String discr = unbrokenText.get(0);	// Text can't be empty, see setText()
+    	    	if (Element.E_APPLY_ALIASES) {
+    				discr = Element.replaceControllerAliases(discr, true, isHighlight);
+    			}
+    			text = StringList.explode(discr, SOFT_LINE_BREAK);
+    			// END KGU#480 2018-01-21
     		}
     		// END KGU#354 2017-11-01
       		int divisor = 2;
@@ -722,7 +743,14 @@ public class Case extends Element implements IFork
     			//		// END KGU#91 2915-12-01
     			//		myrect.top - E_PADDING / 4, //+fm.getHeight(),
     			//		getText().get(i+1),this);
-    			String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+    			// START KGU#480 2018-01-21: Enh. #490
+    			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+    			String selectors = unbrokenText.get(i+1);
+    	    	if (Element.E_APPLY_ALIASES) {
+    				selectors = Element.replaceControllerAliases(selectors, true, isHighlight);
+    			}
+    	    	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
+    			// END KGU#480 2018-01-21
     			for (int j = 0; j < brokenLine.length; j++) {
     				writeOutVariables(canvas,
     						myrect.right + (myrect.left-myrect.right) / 2 - (textWidths[i] - E_PADDING/2)/ 2,
@@ -752,13 +780,13 @@ public class Case extends Element implements IFork
     }
 
     // START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#getIcon()
+     */
     @Override
     public ImageIcon getIcon()
     {
-    	// START KGU#217 2016-07-25: Issue #87 - Was wrong icon number
-    	//return IconLoader.ico057;
     	return IconLoader.ico064;
-    	// END KGU#217 2016-07-25
     }
     // END KGU#122 2016-01-03
 
@@ -769,7 +797,7 @@ public class Case extends Element implements IFork
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
     	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
 		//if (!this.isCollapsed())
-		if (!this.isCollapsed() && (selMe != null || _forSelection))
+		if (!this.isCollapsed(true) && (selMe != null || _forSelection))
 		// START KGU#207 2016-07-21
 		{
 		// END KGU#121 2016-01-03
@@ -903,12 +931,12 @@ public class Case extends Element implements IFork
 		case TOTALSTEPS_LIN:
 		case TOTALSTEPS_LOG:
 			stepInfo = Integer.toString(this.getExecStepCount(true));
-			if (!this.isCollapsed()) {
+			if (!this.isCollapsed(true)) {
 				stepInfo = "(" + stepInfo + ")";
 			}
 			break;
 		default:
-			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed(true)));
 		}
 		return info + stepInfo;
 	}

@@ -141,7 +141,7 @@ public class ParserPreferences extends LangDialog {
 	
 	public ParserPreferences(Frame owner) {
 		super(owner);
-                setModal(true);
+		setModal(true);
 		initComponents();
 	}
 	

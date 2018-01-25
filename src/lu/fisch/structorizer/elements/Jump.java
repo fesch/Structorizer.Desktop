@@ -192,6 +192,9 @@ public class Jump extends Instruction {
 	}
 
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Instruction#getIcon()
+	 */
 	@Override
 	public ImageIcon getIcon()
 	{

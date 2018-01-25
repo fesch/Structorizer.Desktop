@@ -114,7 +114,7 @@ public class Parallel extends Element
 //		}
     	if (!_trueComment)
     	{
-    		if (this.isCollapsed())
+    		if (this.isCollapsed(true))
     		{
     			return StringList.getNew(this.getGenericText());
     		}
@@ -244,7 +244,7 @@ public class Parallel extends Element
 	 */
 	protected int getTextDrawingOffset()
 	{
-		return this.isCollapsed() ? 0 : (Element.E_PADDING/2);
+		return this.isCollapsed(true) ? 0 : (Element.E_PADDING/2);
 	}
 	// END KGU#227 2016-07-30
 
@@ -258,7 +258,7 @@ public class Parallel extends Element
             // END KGU#136 2016-03-01
 
             // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-            if (isCollapsed()) 
+            if (isCollapsed(true)) 
             {
                 rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
         		// START KGU#136 2016-03-01: Bugfix #97
@@ -345,7 +345,7 @@ public class Parallel extends Element
 
     public void draw(Canvas _canvas, Rect _top_left)
     {
-            if(isCollapsed()) 
+            if(isCollapsed(true)) 
             {
                 Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
                 return;
@@ -481,6 +481,9 @@ public class Parallel extends Element
 	// END KGU 2016-07-30
 
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#getIcon()
+     */
     @Override
     public ImageIcon getIcon()
     {
@@ -496,7 +499,7 @@ public class Parallel extends Element
     		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
         	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
     		//if (!this.isCollapsed())
-    		if (!this.isCollapsed() && (selMe != null || _forSelection))
+    		if (!this.isCollapsed(true) && (selMe != null || _forSelection))
     		// START KGU#207 2016-07-21
     		{
     		// END KGU#121 2016-01-03
@@ -622,12 +625,12 @@ public class Parallel extends Element
 		case TOTALSTEPS_LIN:
 		case TOTALSTEPS_LOG:
 			stepInfo = Integer.toString(this.getExecStepCount(true));
-			if (!this.isCollapsed()) {
+			if (!this.isCollapsed(true)) {
 				stepInfo = "(" + stepInfo + ")";
 			}
 			break;
 		default:
-			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed(true)));
 		}
 		return info + stepInfo;
 	}

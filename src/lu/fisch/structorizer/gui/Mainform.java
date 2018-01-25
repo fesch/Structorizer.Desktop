@@ -64,10 +64,17 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.10.06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
  *      Kay Gürtzig     2017.11.05      Issue #452: Differentiated initial setting for Analyser preferences
  *      Kay Gürtzig     2017.11.06      Issue #455: Drastic measures against races on startup.
+ *      Kay Gürtzig     2017.11.14      Bugfix #465: invokeAndWait must be suppressed if not standalone
+ *      Kay Gürtzig     2018.01.21      Enh. #490: DiagramController aliases saved and loaded to/from Ini
+ *                                      Issue #455: Multiple redrawing of diagram avoided in loadFromIni().
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      2017.11.06 Drastic measures against races on start
+ *      - If opened stand-alone (i.e. unless being opened from Arranger), races on startup of caused lots
+ *        of NullPointerExceptions in the background and a diagram initially to be loaded looking contorted
+ *        and bizarrely prolonged. So the steps on creation where put in invokeAndWait blocks.
  *      2015.11.14 New approach to solve the Window Closing problem (Kay Gürtzig, #6 = KGU#49 / #16 = KGU#66)
  *      - A new boolean field isStandalone (addressed by a new parameterized constructor) is introduced in
  *        order to decide whether to exit or only to dispose on Window Closing event. So if the Mainform is
@@ -86,6 +93,7 @@ package lu.fisch.structorizer.gui;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map.Entry;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -94,6 +102,8 @@ import javax.swing.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.turtle.TurtleBox;
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -129,10 +139,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	private static int instanceCount = 0;
 	private int instanceNo;
 	// END KGU#326 #2017-01-07
-    // START KGU#456 2017-11-05: Enh. #452
+	// START KGU#456 2017-11-05: Enh. #452
 	/** Indicates whether Structorizer may have been started the first time */
-    boolean isNew = false;
-    // END KGU#456 2017-11-05
+	boolean isNew = false;
+	// END KGU#456 2017-11-05
 		
 	/******************************
  	 * Setup the Mainform
@@ -141,7 +151,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	{
             // START KGU#456 2017-11-05: Enh. #452
             //Ini.getInstance();
-	        isNew = Ini.getInstance().wasFirstStart();
+            isNew = Ini.getInstance().wasFirstStart();
             // END KGU#456 2017-11-05
             /*
             try {
@@ -198,17 +208,23 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Setup the editor
              ******************************/
             //System.out.println("* Setup the editor ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			editor = new Editor(Mainform.this);
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				editor = new Editor(Mainform.this);
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	// Already in an event dispatcher thread
+            	editor = new Editor(Mainform.this);
             }
             //System.out.println("* editor done.");
             // get reference to the diagram
@@ -221,18 +237,23 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Setup the menu
              ******************************/
             //System.out.println("* Setup the menu ...");
-            try {
-				EventQueue.invokeAndWait(new Runnable() {
-					@Override
-					public void run() {
-						menu = new Menu(diagram, Mainform.this);
-					}
-				});
-			} catch (InvocationTargetException e1) {
-				e1.printStackTrace();
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				menu = new Menu(diagram, Mainform.this);
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	menu = new Menu(diagram, Mainform.this);
+            }
             //System.out.println("* menu done.");
             setJMenuBar(menu);		
 
@@ -240,17 +261,22 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Update the buttons and menu
              ******************************/
             //System.out.println("* Update the buttons and menu ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			doButtons();
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				doButtons();
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	doButtons();
             }
             //System.out.println("* Buttons and menu done.");
 
@@ -341,47 +367,62 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              ******************************/
             //editor.componentResized(null);
             //System.out.println("* Revalidate editor ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			getEditor().revalidate();
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				getEditor().revalidate();
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	getEditor().revalidate();
             }
             //System.out.println("* Repaint ...");
             repaint();
             //System.out.println("* Redraw ...");
             //System.out.println("* Revalidate editor ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			diagram.setInitialized();
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				diagram.setInitialized();
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	diagram.setInitialized();
             }
             // START KGU#305 2016-12-16
             //System.out.println("* Update Arranger index ...");
-            try {
-            	EventQueue.invokeAndWait(new Runnable() {
-            		@Override
-            		public void run() {
-            			getEditor().updateArrangerIndex(Arranger.getSortedRoots());
-            		}
-            	});
-            } catch (InvocationTargetException e1) {
-            	e1.printStackTrace();
-            } catch (InterruptedException e1) {
-            	e1.printStackTrace();
+            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+            	try {
+            		EventQueue.invokeAndWait(new Runnable() {
+            			@Override
+            			public void run() {
+            				getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            			}
+            		});
+            	} catch (InvocationTargetException e1) {
+            		e1.printStackTrace();
+            	} catch (InterruptedException e1) {
+            		e1.printStackTrace();
+            	}
+            }
+            else {
+            	getEditor().updateArrangerIndex(Arranger.getSortedRoots());
             }
             //System.out.println("* Arranger index done.");
             // END KGU#305 2016-12-16
@@ -448,6 +489,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			//System.out.println("* setLocale(" + localeFileName + ")");
 			Locales.getInstance().setLocale(localeFileName);
 			//System.out.println("* Locale is set.");
+			// START KGU#479 2017-12-15: Enh. #492 - preparation for configurable element names
+			Locales.getInstance().setLocale(ElementNames.getInstance());
+			ElementNames.getFromIni(ini);
+			// END KGU#479 2017-12-15
 			
 			// colors
 			Element.loadFromINI();
@@ -476,7 +521,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#300 2016-12-02: Enh. #300
 			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
 			// END KGU#300 2016-12-02
-			if (diagram!=null) 
+			if (diagram != null) 
 			{
 				// current directory
 				// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
@@ -492,25 +537,36 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
 				{
-					diagram.setDIN();
+					//diagram.setDIN();
+					Element.E_DIN = true;
 				}
 				// comments
 				if (ini.getProperty("showComments","1").equals("0")) // default = 1
 				{
-					diagram.setComments(false);
+					//diagram.setComments(false);
+					Element.E_SHOWCOMMENTS = true;
 				}
 				// START KGU#227 2016-08-01: Enh. #128
-				diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
+				//diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
+				Element.E_COMMENTSPLUSTEXT = ini.getProperty("commentsPlusText","0").equals("1");	// default = 0
 				// END KGU#227 2016-08-01
 				if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
 				{
-					diagram.setToggleTC(true);
+					//diagram.setToggleTC(true);
+					Element.E_TOGGLETC = true;
 				}
-				// comments
+				// syntax highlighting
 				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
 				{
-					diagram.setHightlightVars(true);
+					//diagram.setHightlightVars(true);
+					Element.E_VARHIGHLIGHT = true;	// this isn't used for drawing, actually
+					diagram.getRoot().hightlightVars = true;
+
 				}
+				// START KGU#477 2017-12-06: Enh. #487
+				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
+				Element.E_HIDE_DECL = ini.getProperty("hideDeclarations","0").equals("1");	// default = 0
+				// END KGU#227 2017-12-06
 				// analyser
 				// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
                 /*
@@ -519,6 +575,34 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					diagram.setAnalyser(false);
 				}
                  * */
+				// START KGU#480 2018-01-21: Enh. #490
+				if (Element.controllerName2Alias.isEmpty()) {
+					for (DiagramController controller: diagram.getDiagramControllers()) {
+						if (controller == null) {
+							controller = new TurtleBox();
+						}
+						String className = controller.getClass().getName();
+						for (Entry<String, java.lang.reflect.Method> entry: controller.getProcedureMap().entrySet()) {
+							String sign = entry.getKey();
+							String name = entry.getValue().getName();
+							String[] parts = sign.split("#");
+							if (!name.equalsIgnoreCase(parts[0])) {
+								name = parts[0];
+							}
+							String alias = ini.getProperty(className + "." + sign, "").trim();
+							if (!alias.isEmpty()) {
+								Element.controllerName2Alias.put(sign, alias);
+								Element.controllerAlias2Name.put(alias.toLowerCase() + "#" + parts[1], name);
+							}
+						}
+					}
+					if (ini.getProperty("applyAliases", "0").equals("1")) // default = 0
+					{
+						//diagram.setApplyAliases(true);
+						Element.E_APPLY_ALIASES = true;
+					}
+				}
+				// END KGU#480 2018-01-18
 				// START KGU#305 2016-12-14: Enh. #305
 				//System.out.println("* setArrangerIndex() ...");
 				diagram.setArrangerIndex(ini.getProperty("index", "1").equals("1"));	// default = 1
@@ -530,6 +614,31 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// START KGU#456 2017-11-05: Issue #452
 				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
 				// END KGU#452 2017-11-05
+				
+	            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+	            	try {
+	            		EventQueue.invokeAndWait(new Runnable() {
+	            			@Override
+	            			public void run() {
+	            				doButtons();
+	            				diagram.analyse();
+	            				diagram.resetDrawingInfo(true);
+	            				diagram.redraw();
+	            			}
+	            		});
+	            	} catch (InvocationTargetException e1) {
+	            		e1.printStackTrace();
+	            	} catch (InterruptedException e1) {
+	            		e1.printStackTrace();
+	            	}
+	            }
+	            else {
+	            	// Already in an event dispatcher thread
+					this.doButtons();
+					diagram.analyse();
+					diagram.resetDrawingInfo(true);
+					diagram.redraw();
+	            }
 			}
 
 			// START KGU#309 2016-12-15: Enh. #310 new saving options
@@ -551,13 +660,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			{	
 				if (diagram != null)
 				{
-					for(int i=9;i>=0;i--)
+					for (int i = 9; i >= 0; i--)
 					{
 						if(ini.keySet().contains("recent"+i))
 						{
-							if(!ini.getProperty("recent"+i,"").trim().equals(""))
+							if(!ini.getProperty("recent"+i, "").trim().equals(""))
 							{
-								diagram.addRecentFile(ini.getProperty("recent"+i,""),false);
+								diagram.addRecentFile(ini.getProperty("recent"+i, ""), false);
 							}
 						}
 					}
@@ -641,6 +750,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#227 2016-08-01
 			ini.setProperty("switchTextComments", (Element.E_TOGGLETC ? "1" : "0"));
 			ini.setProperty("varHightlight", (Element.E_VARHIGHLIGHT ? "1" : "0"));
+			// START KGU#477 2017-12-06: Enh. #487
+			ini.setProperty("hideDeclarations", Element.E_HIDE_DECL ? "1" : "0");
+			// END KGU#227 2016-12-06
+			// START KGU#480 2018-01-21: Enh. #490
+			ini.setProperty("applyAliases", Element.E_APPLY_ALIASES ? "1" : "0");
+			// END KGU#480 2018-01-21
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
 			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
 			// START KGU#123 2016-01-04: Enh. #87
@@ -698,6 +813,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 //				}
 //			}
 			// END KGU#324 2017-06-16
+			
+			// START KGU#479 2017-12-15: Enh. #492
+			ElementNames.putToIni(ini);
+			// END KGU#479 2017-12-15
 			
 			ini.save();
 		}
@@ -900,18 +1019,21 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     }
     // END KGU#278 2016-10-11
     
-    // START KGU#300 2016-12-02: Enh. #300
+    // START KGU#300 2016-12-02: Enh. #300 (KGU#456 2017-11-06: renamed for enh. #452)
     public void popupWelcomePane()
     {
+    	// START KGU#456 2017-11-06: Enh. #452
+    	//if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
     	if (this.isNew) {
     		int chosen = JOptionPane.showOptionDialog(this,
 					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
 					Menu.lblHint.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
-					null,
+					IconLoader.ico024,
 					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
 			if (chosen == JOptionPane.OK_OPTION) {
 				Root.setCheck(26, true);
+				Root.setCheck(25, true);
 				if (diagram != null) {
 					diagram.setSimplifiedGUI(true);
 				}
@@ -922,6 +1044,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
     	}
     	else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
+    	// END KGU#456 2017-11-06
     		if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
     			int chosen = JOptionPane.showOptionDialog(this,
     					Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
@@ -937,6 +1060,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     	else if (diagram != null) {
     		diagram.updateNSD(false);
     	}
+		// START KGU#459 2017-11-20: Enh. #459-1
+    	if (diagram != null) {
+			diagram.updateTutorialQueues();
+			if (diagram.getRoot().startNextTutorial(false) > -1) {
+				diagram.showTutorialHint();
+			}
+    	}
+		// END KGU#459 2017-11-20
     }
     // END KGU#300 2016-12-02
     

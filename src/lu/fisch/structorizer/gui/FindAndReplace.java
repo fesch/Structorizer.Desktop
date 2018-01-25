@@ -39,7 +39,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in pulldown list and Esc key without pulldown
  *      Kay Gürtzig     2017.10.09      Internal consistency of For elements on replacement ensured (KGU#431)
  *      Kay Gürtzig     2017.11.03      Bugfix #448: endless self-replacement averted, performance improved
- *                                      (minimum-invasive revision)  
+ *                                      (minimum-invasive revision)
+ *      Kay Gürtzig     2018.01.22      Enh. #490: The dialog now works on the controller alias texts if enabled
  *
  ******************************************************************************************************
  *
@@ -215,7 +216,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	    	}
 	    	Object description = value;
 	    	if (value instanceof Element) {
-	    		StringList text = ((Element)value).getText();
+	    		// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
+	    		//StringList text = ((Element)value).getText();
+	    		StringList text = ((Element)value).getAliasText();
+	    		// END KGU#480 2018-01-22
 	    		if (text.count() > 0) {
 	    			description = text.get(0);
 	    			if (text.count() > 1) {
@@ -646,7 +650,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 						}
 					}
 					if (txtText != null) {
-						txtText.setEnabled(chkInTexts.isSelected() && currentElement != null && textMatches(currentElement.getText()) > 0);
+			    		// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
+						//txtText.setEnabled(chkInTexts.isSelected() && currentElement != null && textMatches(currentElement.getText()) > 0);
+						txtText.setEnabled(chkInTexts.isSelected() && currentElement != null && textMatches(currentElement.getAliasText()) > 0);
+			    		// END KGU#480 2018-01-22
 					}
 					if (txtComm != null) {
 						txtComm.setEnabled(chkInComments.isSelected() && currentElement != null && textMatches(currentElement.getComment()) > 0);
@@ -993,7 +1000,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			clearCurrentElement();
 			// START KGU#454 2017-11-03: Bugfix #448
 			currentElement = ele;
-			this.splitTextToList(ele.getText(), this.partsText);
+			// START KGU#480 2018-01-22: Enh. #490 
+			//this.splitTextToList(ele.getText(), this.partsText);
+			this.splitTextToList(ele.getAliasText(), this.partsText);
+			// END KGU#480 2018-01-22
 			this.splitTextToList(ele.getComment(), this.partsComment);
 			// END KGU#454 2017-11-03
 		}
@@ -1360,7 +1370,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					// Every single replacement is to be undoable ...
 					root.addUndo();
 				}
-				StringList text = currentElement.getText();
+				// START KGU#480 2018-01-22: Enh. #490
+				//StringList text = currentElement.getText();
+				StringList text = currentElement.getAliasText();
+				// END KGU#480 2018-01-22
 				StringList comment = currentElement.getComment();
 				// START KGU#454 2017-11-03: Bugfix #448
 //				int nMatchesComment = textMatches(comment);
@@ -1375,7 +1388,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					//text = replacePattern(text, elementwise, currentPosition);
 					text = replacePattern(partsText, elementwise, currentPosition);
 					// END KGU#454 2017-11-03 
-					currentElement.setText(text);
+					// START KGU#480 2018-01-22: Enh. #490
+					//currentElement.setText(text);
+					currentElement.setAliasText(text);
+					// END KGU#480 2018-01-22
 					// START KGU#431 2017-10-09: We must handle the structured fields of For elements				
 					if (currentElement instanceof For) {
 						((For)currentElement).updateFromForClause();					
@@ -1717,7 +1733,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		ElementType type = ElementType.valueOf(elementClass);
 		if (chkElementTypes[type.ordinal()].isSelected()) {
 			if (chkInTexts.isSelected()) {
-				nMatches += textMatches(_ele.getText());
+				// START KGU#480 2018-01-22: Enh. #490
+				//nMatches += textMatches(_ele.getText());
+				nMatches += textMatches(_ele.getAliasText());
+				// END KGU#480 2018-01-22
 			}
 			if (chkInComments.isSelected()) {
 				nMatches += textMatches(_ele.getComment());

@@ -59,9 +59,10 @@ import java.util.Set;
 import lu.fisch.structorizer.elements.Element;
 
 /**
- * This class manages product settings as properties, saves and loads them to/from the INI-file, 
+ * This class manages product settings as properties, saves and loads them to/from the INI-file,
+ * adhering to the Singleton pattern. 
  * @author Bob Fisch
- *
+ * @see #getInstance()
  */
 public class Ini
 {
@@ -99,6 +100,15 @@ public class Ini
 		}
 	}
 
+	/**
+	 * Returns the singleton instance of this class. In case there hadn't been
+	 * an instance before, creates it and may also create the "structorizer.ini"
+	 * file if there hasn't been any in either the home or the installation
+	 * directory. Will not reload the file otherwise.
+	 * @return the instance
+	 * @see #load()
+	 * @see #load(String)
+	 */
 	public static Ini getInstance()
 	{
 		if (ini == null)
@@ -293,17 +303,17 @@ public class Ini
 					} catch (Exception e)
 					{
 						e.printStackTrace();
-						System.out.println(e.getMessage());
+						System.err.println(e.getMessage());
 					}
 				}
 
 				regularExists = true;
 			} catch (Error e)
 			{
-				System.out.println(e.getMessage());
+				System.err.println(e.getMessage());
 			} catch (Exception e)
 			{
-				System.out.println(e.getMessage());
+				System.err.println(e.getMessage());
 			}
 		} else if (alternateExists)
 		{

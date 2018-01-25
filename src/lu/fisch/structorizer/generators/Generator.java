@@ -702,7 +702,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Inserts a multi-line comment with configurable comment delimiters for the staring line, the
+	 * Inserts a multi-line comment with configurable comment delimiters for the starting line, the
 	 * continuation lines, and the trailing line.
 	 * @see #insertComment(Element, String)
 	 * @see #insertAsComment(Element, String)
@@ -711,9 +711,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #addCode(String, String, boolean) 
 	 * @param _sl - the StringList to be written as commment
 	 * @param _indent - the basic indentation 
-	 * @param _start - comment symbol for the leading comment line (e.g. "/**", if null then this is omitted)
-	 * @param _cont - comment symbol for the continuation lines
-	 * @param _end - comment symbol for trailing line (e.g. " *\/", if null then no trailing line is generated)
+	 * @param _start - comment symbol for the leading comment line (e.g. "/**"; omitted if being null)
+	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
+	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then no trailing line is generated)
 	 */
 	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
@@ -1514,10 +1514,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#61 2016-03-23: Enh. #84 (FOR-IN loop infrastructure)
 	/**
 	 * In case of a FOR-IN loop tries to extract the value list items if explicitly
-	 * given in the loop text (literal syntax).
+	 * given in the loop text (literal syntax).<br/>
+	 * If the value list is represented by a variable then null will be returned instead.<br/>
 	 * Utility routine that may be used in {@link #generateCode(For, String)}.
 	 * @param _for - the for loop of FOR-IN style to be analysed
-	 * @return a StringList where every element contains one item (as string)
+	 * @return a StringList where every element contains one item (as string) or null
 	 */
 	protected StringList extractForInListItems(For _for)
 	{

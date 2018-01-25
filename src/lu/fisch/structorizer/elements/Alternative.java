@@ -54,6 +54,7 @@ package lu.fisch.structorizer.elements;
  *                                      Inheritance changed (IFork added)
  *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
  *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
+ *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *
  ******************************************************************************************************
  *
@@ -121,7 +122,7 @@ public class Alternative extends Element implements IFork {
 		if (this.isRectUpToDate) return rect0;
 		// END KGU#136 2016-03-01
 		//  KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-		if(isCollapsed()) 
+		if(isCollapsed(true)) 
 		{
 			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
 			// START KGU#136 2016-03-01: Bugfix #97
@@ -133,6 +134,11 @@ public class Alternative extends Element implements IFork {
 		// START KGU#453 2017-11-01: Bugfix #447 - don't show end-standing backslashes
 		//int nLines = getText(false).count();
 		StringList myText = getCuteText(false);
+		// START KGU#480 2018-01-21: Enh. #490
+		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, false), "\n");
+		}
+		// END KGU#480 2018-01-21
 		int nLines = myText.count();
 		// END KGU#453 2017-11-01
 		
@@ -280,7 +286,7 @@ public class Alternative extends Element implements IFork {
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		//System.out.println("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
-		if(isCollapsed()) 
+		if(isCollapsed(true)) 
 		{
 			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
 			return;
@@ -300,6 +306,11 @@ public class Alternative extends Element implements IFork {
 		// START KGU#453 2017-11-01: Bugfix #447 - don't show end-standing backslashes
 		//int nLines = getText(false).count();
 		StringList myText = getCuteText(false);
+		// START KGU#480 2018-01-21: Enh. #490
+		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+		}
+		// END KGU#480 2018-01-21
 		int nLines = myText.count();
 		// END KGU#453 2017-11-01
 
@@ -498,6 +509,9 @@ public class Alternative extends Element implements IFork {
 	}
 	
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getIcon()
+	 */
 	@Override
 	public ImageIcon getIcon()
 	{
@@ -517,7 +531,7 @@ public class Alternative extends Element implements IFork {
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
 		// START KGU#207 2016-07-21: Bugfix #198 - If this is not hit then there is no need to check the children
 		//if (!this.isCollapsed())
-		if ((selMe != null || _forSelection) && !this.isCollapsed())
+		if ((selMe != null || _forSelection) && !this.isCollapsed(true))
 		// END KGU#207 2016-07-21
 		{
 		// END KGU#121 2016-01-03
@@ -644,12 +658,12 @@ public class Alternative extends Element implements IFork {
 		case TOTALSTEPS_LIN:
 		case TOTALSTEPS_LOG:
 			stepInfo = Integer.toString(this.getExecStepCount(true));
-			if (!this.isCollapsed()) {
+			if (!this.isCollapsed(true)) {
 				stepInfo = "(" + stepInfo + ")";
 			}
 			break;
 		default:
-			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed(true)));
 		}
 		return info + stepInfo;
 	}

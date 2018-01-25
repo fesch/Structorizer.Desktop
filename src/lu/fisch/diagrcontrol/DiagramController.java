@@ -34,6 +34,7 @@ package lu.fisch.diagrcontrol;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.06.29      Sub-interface FunctionProvidingDiagramControl introduced (for enh. #424))
  *      Kay Gürtzig     2017.10.28      Sub-interface FunctionProvidingDiagramControl integrated and enhanced )
+ *      Kay Gürtzig     2018.01.21      Enh. #443, #490: Additional method for retrieval of Java adapter class
  *
  ******************************************************************************************************
  *
@@ -53,9 +54,15 @@ import java.util.HashMap;
 
 /**
  * Interface for classes that provide an API for being controlled e.g. by executed Structorizer
- * diagrams.
+ * diagrams.<br/>
  * Offers methods to retrieve the set of supported procedures and functions or to check whether
- * a given signature matches with one the offered methods.
+ * a given signature matches with one the offered methods.<br/>
+ * NOTE: The standard constructor of implementing classes should produce a light-weight instance
+ * for API retrieval (see {@link #getFunctionMap()}, {@link #getProcedureMap()},
+ * {@link #providedRoutine(String, int)}, {@link #providesRoutine(String, Object[], boolean)}).
+ * Constructors with arguments may result in fully functional heavy-weight singletons or the
+ * like. If a light-weight instance is asked to {@link #execute(String, Object[])} then it
+ * should convert to a fully functional controller instance if it hadn't already been.
  * @author robertfisch
  * @author Kay Gürtzig
  */
@@ -84,7 +91,7 @@ public interface DiagramController
 	
 	/**
 	 * Returns a title for this controller
-	 * (The defalt implementation just returns the simple class name. Override this if needed) 
+	 * (The default implementation just returns the simple class name. Override this if needed) 
 	 * @return the title string
 	 * @see #setName(String)
 	 */
@@ -95,7 +102,8 @@ public interface DiagramController
 	
 	/**
 	 * May allow to set the title or name for this controller (e.g. from plugin)
-	 * The default implementation ignores the given {@code title}, override this if needed)
+	 * The default implementation ignores the given {@code title} (i.e. does not influence
+	 * the result of {@link #getName()}, so override both if needed).
 	 * @param title - the proposed new title string
 	 * @see #getName()
 	 */
@@ -124,6 +132,34 @@ public interface DiagramController
      */
     public HashMap<String, Method> getProcedureMap();
     
+    // START KGU#446/KGU#448 2018-01-21: Enh. #441, #443 - More generic support for code export
+    /**
+     * Checks whether there may be a procedure or function with name {@code name} and
+     * {@code nArguments} arguments where letter case and the category of the routine
+     * are ignored.<br/>
+     * If there is a matching routine then its actual name is returned.<br/>
+     * For a more precise test see {@link #providesRoutine(String, Object[], boolean)}.
+     * @param name - case-ignorant routine name
+     * @param nArguments - number of arguments
+     * @return An exact routine name if there is a routine with the roughly given signature,
+     * null otherwise.
+     * @see #providesRoutine(String, Object[], boolean)
+     */
+    public default String providedRoutine(String name, int nArguments)
+    {
+    	String routineName = null;
+    	String key = name.toLowerCase() + "#" + nArguments;
+    	Method method = this.getProcedureMap().get(key);
+    	if (method == null) {
+    		method = this.getFunctionMap().get(key);
+    	}
+    	if (method != null) {
+    		routineName = method.getName();
+    	}
+    	return routineName;
+    }
+    // END KGU#446/KGU#448 2018-01-21
+    
     /**
      * Checks whether there is a either a function or procedure exposed for this API the
      * declared parameters for which match the given arguments in type.
@@ -134,6 +170,7 @@ public interface DiagramController
      * @see #getFunctionMap()
      * @see #getProcedureMap()
      * @see #execute(String, Object[])
+     * @see #providedRoutine(String, int)
      */
     public default boolean providesRoutine(String name, Object[] arguments, boolean isFunction)
     {

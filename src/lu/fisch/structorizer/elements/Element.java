@@ -86,6 +86,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.09.18      Enh. #423: Recursive record definitions, splitLexically() improved
  *      Kay Gürtzig     2017.09.29      Enh. #423: splitLexically() debugged, now ellipses are tokens too
  *      Kay Gürtzig     2017.10.02      Enh. #423: Method extractDeclarationsFromList() and regex mechanisms revised
+ *      Kay Gürtzig     2017.12.10/11   Enh. #487: Method access modifications to support hiding of declarations
+ *      Kay Gürtzig     2018.01.21      Enh. #490: Methods for replacement of DiagramController aliases
  *
  ******************************************************************************************************
  *
@@ -181,6 +183,7 @@ import lu.fisch.structorizer.io.*;
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
+import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -195,7 +198,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.27-02";
+	public static String E_VERSION = "3.27-05";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -285,37 +288,59 @@ public abstract class Element {
 	protected static int E_PADDING = 20;
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
 	//public static int E_INDENT = 2;
-	public static int E_INDENT = 4;	// Used as minimum indentation for continuationn lines (after lines ending with backslash)
+	/** Used as minimum indentation for continuation lines (after lines ending with backslash) */
+	public static int E_INDENT = 4;
 	// END KGU#412 2017-06-09
-	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
+	/** Actually, the background colour for selected elements */
+	public static Color E_DRAWCOLOR = Color.YELLOW;
+	/** Background colour for collapsed elements and drawing surrogates for eclipsed declarations */
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
-	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
+	/** Background colour for Elements currently (to be) executed */
+	public static Color E_RUNNINGCOLOR = Color.ORANGE; 
 	// END KGU#41 2015-10-13
-	public static Color E_WAITCOLOR = new Color(255,255,210);	// used for Elements with pending execution
+	/** Background colour for Elements with pending execution (substructure is currently executed) */
+	public static Color E_WAITCOLOR = new Color(255,255,210);
+	/** Colour for the comment indicator bar */
 	public static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
-	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
+	/** Colour of the breakpoint indicator bar at element top */
+	public static Color E_BREAKPOINTCOLOR = Color.RED;
 	// END KGU#43 2015-10-11
 	// START KGU#365 2017-04-14: Enh. #380 Introduced to highlight trouble-making elements during GUI activities
+	/** Colour for temporary highlighting of elements causing trouble */
 	public static final Color E_TROUBLECOLOR = Color.RED;
 	// END KGU#365 2017-04-14
 	// START KGU#117 2016-03-06: Test coverage colour and mode for Enh. #77
+	/** Background colour for test-covered elements in run data tracking mode */
 	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;
+	/** Flag for run data tracking mode */
 	public static boolean E_COLLECTRUNTIMEDATA = false;
-	public static RuntimeDataPresentMode E_RUNTIMEDATAPRESENTMODE = RuntimeDataPresentMode.NONE;	// FIXME: To be replaced by an enumeration type
+	/** Current mode for run data visualisation */
+	public static RuntimeDataPresentMode E_RUNTIMEDATAPRESENTMODE = RuntimeDataPresentMode.NONE;
 	// END KGU#117 2016-03-06
 
-	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
-	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
-	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
+	/** Highlight variables, operators, string literals, and certain keywords? */
+	public static boolean E_VARHIGHLIGHT = false;
+	/** Enable comment bars and comment popups? */
+	public static boolean E_SHOWCOMMENTS = true;
+	/** Swap text and comment on displaying? */
+	public static boolean E_TOGGLETC = false;
 	// START KGU#227 2016-07-29: Enh. #128
-	public static boolean E_COMMENTSPLUSTEXT = false;	// Draw elements with both text and comments?
+	/** Draw elements with both text and comments? */
+	public static boolean E_COMMENTSPLUSTEXT = false;
 	// END KGU#227 2016-07-29
-	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
-	public static boolean E_ANALYSER = true;		// Analyser enabled?
+	// START KGU#477 2017-12-06: Enh. #487
+	/** Eclipse sequences of mere declaration behind their first elements? */
+	public static boolean E_HIDE_DECL = false;
+	// END KGU#477 2017-12-06
+	/** Show FOR loops according to DIN 66261? */
+	public static boolean E_DIN = false;
+	/* Analyser enabled? */
+	public static boolean E_ANALYSER = true;
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
-	public static boolean E_WHEELCOLLAPSE = false;	// Is collapsing by mouse wheel rotation enabled?
+	/** Is collapsing by mouse wheel rotation enabled? */
+	public static boolean E_WHEELCOLLAPSE = false;
 	// END KGU#123 2016-01-04
     // START KGU#309 2016-12-15: Enh. #310 new saving options
     public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
@@ -323,14 +348,20 @@ public abstract class Element {
     public static boolean E_MAKE_BACKUPS = true;
     // END KGU#309 20161-12-15
     // START KGU#287 2017-01-11: Issue #81 (workaround)
+    /** GUI scaling factor prepared for the next session */
     public static double E_NEXT_SCALE_FACTOR;
     // END KGU#287 2017-01-15
     // START KGU#331 2017-01-13:
     public static boolean E_SHOW_UNICODE_OPERATORS = true;
     // END KGU#331 2017-01-13
 	// START KGU#456 2017-11-05: Enh. #452
+    /** Shall only the most important toolbar buttons be presented (beginners' mode?*/
 	public static boolean E_REDUCED_TOOLBARS = false;
 	// END KGU#456 2017-11-05
+	// START KGU#480 2018-01-21: Enh. #490
+	/** Is the replacement of DiagramController aliases active? */
+	public static boolean E_APPLY_ALIASES = false;
+	// END KGU#480 2018-01-21
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");
@@ -356,13 +387,28 @@ public abstract class Element {
 	public static String preImport = "Included diagrams:";
 	// END KGU#376 2017-07-01
 	
-	// used font
+	// START KGU#480 2018-01-19: Enh. #490 controller API alias mechanism
+	/**
+	 * Maps {@link DiagramController} routine signatures (@code <name>#<arity>) to aliases.
+	 * @see #controllerAlias2Name
+	 */
+	public static final HashMap<String, String> controllerName2Alias = new HashMap<String, String>();
+	/**
+	 * Maps alias routine signatures (@code <alias>#<arity>) to the genuine {@link DiagramController} routine names
+	 * @see #controllerAlias2Name
+	 */
+	public static final HashMap<String, String> controllerAlias2Name = new HashMap<String, String>();
+	// END KGU#480 2018-01-19
+	
+	/** Used font for drawing element text */
 	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
-
+	/** A string indicating that the shortened text in collapsed elements may continue (an ellipse) */
 	public static final String COLLAPSED =  "...";
+	/** Whether the right branch of an alternative is to be padded (width enlarged) */
 	public static boolean altPadRight = true;
 	// START KGU#401 2017-05-17: Issue #405
-	public static int caseShrinkByRot = 8;			// Number of CASE branches to trigger the attempt to shrink width by rotating branches
+	/** Number of CASE branches to trigger the attempt to shrink width by rotating branches */
+	public static int caseShrinkByRot = 8;
 	// END KGU#401 2017-05-17
 	
 	// START KGU 2017-09-19: Performance tuning for syntax analysis
@@ -418,6 +464,9 @@ public abstract class Element {
 	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
 	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
 	// END KGU156 2016-03-10
+	// START KGU#477 2017-12-10: Enh. #487 - mode E_HIDE_DECL required an additional max count
+	protected static int maxExecStepsEclCount = 0;	// Maximum combined number of performed steps including aggregated eclipsed declarations 
+	// END KGU#477 2017-12-10
 	// START KGU#225 2016-07-28: Bugfix #210
 	protected static Vector<Integer> execCounts = new Vector<Integer>();
 	// END KGU#225 2016-07-28
@@ -742,10 +791,7 @@ public abstract class Element {
 
 	public void setText(String _text)
 	{
-		// START KGU#91 2015-12-01: Should never set in swapped mode!
-		//getText().setText(_text);
 		text.setText(_text);
-		// END KGU#91 2015-12-01
 	}
 
 	public void setText(StringList _text)
@@ -843,12 +889,24 @@ public abstract class Element {
 	}
 	// END KGU#453 2017-11-01
 
+	/**
+	 * @return a shortened text for the case this is collapsed (usually the first line plus an ellipse). 
+	 */
 	public StringList getCollapsedText()
 	{
 		StringList sl = new StringList();
 		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
 		//if(getText().count()>0) sl.add(getText().get(0));
-		if (getText(false).count()>0) sl.add(getText(false).get(0));
+		// START KGU#480 2018-01-21: Enh. #490 - It might be that a controller routine call starts in the 1st line
+		//if (getText(false).count()>0) sl.add(getText(false).get(0));
+		if (getText(false).count() > 0) {
+			StringList myText = getText(false);
+			if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+			}
+			sl.add(myText.get(0));
+		}
+		// END KGU#480 2018-01-21
 		// END KGU#91 2015-12-01
 		sl.add(COLLAPSED);
 		return sl;
@@ -898,6 +956,104 @@ public abstract class Element {
 	}
 	// END KGU#413 2017-06-09
 	
+	// START KGU#480 2018-01-21: Enh. #490
+	/**
+	 * @return the text of this element, with {@link DiagramController} routine names
+	 * replaced by user-specific alias names if {@link #E_APPLY_ALIASES} is true
+	 * @see #setAliasText(StringList)
+	 * @see #getText()
+	 */
+	public StringList getAliasText()
+	{
+		if (!Element.E_APPLY_ALIASES) {
+			return text;
+		}
+		String aliasText = replaceControllerAliases(text.getText(), true, false);
+		return StringList.explode(aliasText, "\n");
+	}
+	
+	/**
+	 * Sets the element text from {@code aliasText}, after having replaced all
+	 * user-specific {@link DiagramController} routine aliases by the original
+	 * routine names.
+	 * @param aliasText - the intended element text, possibly containing aliases
+	 * @see #getAliasText()
+	 * @see #setAliasText(String)
+	 * @see #setText(StringList)
+	 */
+	public void setAliasText(StringList aliasText)
+	{
+		if (Element.E_APPLY_ALIASES) {
+			text.setText(Element.replaceControllerAliases(aliasText.getText(), false, false));
+		}
+		else {
+			text = aliasText;
+		}
+	}
+	
+	/**
+	 * Sets the element text from {@code aliasText} by splitting it at newlines,
+	 * after having replaced all user-specific {@link DiagramController} routine
+	 * aliases by the original routine names.
+	 * @param aliasText - the intended element text, possibly containing aliases
+	 * @see #getAliasText()
+	 * @see #setAliasText(StringList)
+	 * @see #setText(String)
+	 */
+	public void setAliasText(String aliasText)
+	{
+		if (Element.E_APPLY_ALIASES) {
+			this.setText(Element.replaceControllerAliases(aliasText, false, false));
+		}
+		else {
+			text.setText(aliasText);
+		}
+	}
+
+	/**
+	 * If {@link #E_APPLY_ALIASES} is true then replaces the names of all routines
+	 * of {@link DiagramController} classes with registered alias names or vice versa,
+	 * depending on {@code names2aliases} and returns the modified text. The text may
+	 * contain newlines and line continuators (end-standing backslashes).  
+	 * @param text - the (Element) text as concatenated string
+	 * @param names2aliases - whether names are to be replaced by aliases (or vice versa)
+	 * @param withArity - whether the replacing alias (or original name) is to be combined
+	 * with the number of the routine arguments (like this: "{@code <name>#<arity>}"). 
+	 * @return the resulting text.
+	 */
+	public static String replaceControllerAliases(String text, boolean names2aliases, boolean withArity)
+	{
+		if (!Element.E_APPLY_ALIASES) {
+			return text;
+		}
+		HashMap<String, String> substitutions = 
+				names2aliases ? controllerName2Alias : controllerAlias2Name;
+		StringList tokens = splitLexically(text, true);
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i).trim();
+			if (!token.isEmpty() && Function.testIdentifier(token, null)) {
+				// Skip all whitespace
+				int j = i;
+				String nextToken = null;
+				while (++j < tokens.count() && ((nextToken = tokens.get(j).trim()).isEmpty() || nextToken.equals("\\")));
+				// Now check for a beginning parameter list
+				if ("(".equals(nextToken)) {
+					int nArgs = Element.splitExpressionList(tokens.subSequence(j+1, tokens.count()), ",", false).count();
+					String key = token.toLowerCase() + "#" + nArgs;
+					String subst = substitutions.get(key);
+					if (subst != null) {
+						token = subst;
+						if (withArity) {
+							token += "#" + nArgs;
+						}
+						tokens.set(i, token);
+					}
+				}
+			}
+		}
+		return tokens.concatenate();
+	}
+	// END KGU#480 2018-01-21
 
 	public void setComment(String _comment)
 	{
@@ -960,9 +1116,15 @@ public abstract class Element {
 		return selected;
 	}
 
-	public void setSelected(boolean _sel)
+	/**
+	 * Sets the selection flag on this element
+	 * @param _sel - if the element is to be selected or not
+	 * @return the element(s) actually being selected (null if _sel = false).
+	 */
+	public Element setSelected(boolean _sel)
 	{
-		selected=_sel;
+		selected = _sel;
+		return _sel ? this : null;
 	}
 
 	// START KGU#183 2016-04-24: Issue #169 
@@ -1027,6 +1189,9 @@ public abstract class Element {
 	public static void resetMaxExecCount()
 	{
 		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;
+		// START KGU#477 2017-12-10: Enh. #487 - consider maximum steps of eclipsed declarations
+		Element.maxExecStepsEclCount = 0;
+		// END KGU#477 2017-12-10
 		// START KGU#225 2016-07-28: Bugfix #210
 		Element.execCounts.clear();
 		// END KGU#225 2016-07-28
@@ -1091,11 +1256,10 @@ public abstract class Element {
 	// END KGU#225 2016-07-28
 
 	/**
-	 * Computes the summed up execution steps of this and all its substructure
-	 * This method is just for setting the cached value execTotalCount, so don't
-	 * call it unless you must (better 
-	 * @param _directly TODO
-	 * @return
+	 * Returns the summed up execution steps of this element and - if {@code _combined} is true - 
+	 * all its substructure.
+	 * @param _combined - whether the (cached) substructure step counts are to be added
+	 * @return the requested step count
 	 */
 	public int getExecStepCount(boolean _combined)
 	{
@@ -1103,7 +1267,9 @@ public abstract class Element {
 	}
 
 	/**
-	 * Increments the execution counter.
+	 * Increments the execution counter (provided that {@link #E_COLLECTRUNTIMEDATA} is
+	 * enabled). If the new counter value exceeds {@link #maxExecCount} then the latter
+	 * will be updated to that value. 
 	 */
 	public final void countExecution()
 	{
@@ -1127,7 +1293,7 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Updates the own or substructure instruction counter by adding the growth value
+	 * Updates the own or substructure instruction counter by adding the {@code _growth} value.
 	 * @param _growth - the amount by which the counter is to be increased
 	 * @param _directly - whether is to be counted as own instruction or the substructure's
 	 */
@@ -1302,8 +1468,8 @@ public abstract class Element {
 			}
 		}
 		// END KGU#117 2016-03-06
-		else if (this.collapsed) {
-			// NOTE: If the backround colour for collapsed elements should once be discarded, then
+		else if (this.isCollapsed(true)) {
+			// NOTE: If the background colour for collapsed elements should once be discarded, then
 			// for Instruction subclasses the icon is to be activated in Instruction.draw() 
 			return Element.E_COLLAPSEDCOLOR;
 		}
@@ -1326,12 +1492,22 @@ public abstract class Element {
 			logarithmic = true;
 		case EXECSTEPS_LIN:
 			maxValue = Element.maxExecStepCount;
+			// START KGU#477 2017-12-10: Enh. #487 - consider amalgamated declarations
+			if (Element.E_HIDE_DECL && Element.maxExecStepsEclCount > Element.maxExecStepCount) {
+				maxValue = Element.maxExecStepsEclCount;
+			}
+			// END KGU#477 2017-12-10
 			value = this.getExecStepCount(false);
 			break;
 		case TOTALSTEPS_LOG:
 			logarithmic = true;
 		case TOTALSTEPS_LIN:
 			maxValue = Element.maxExecTotalCount;
+			// START KGU#477 2017-12-10: Enh. #487 - consider amalgamated declarations
+			if (Element.E_HIDE_DECL && Element.maxExecStepsEclCount > Element.maxExecTotalCount) {
+				maxValue = Element.maxExecStepsEclCount;
+			}
+			// END KGU#477 2017-12-10
 			value = this.getExecStepCount(true);
 			break;
 		default:
@@ -1353,7 +1529,7 @@ public abstract class Element {
 	 * @param maxValue - the end of the scale 
 	 * @return the corresponding spectral colour.
 	 */
-	private Color getScaleColor(int value, int maxValue)
+	protected final Color getScaleColor(int value, int maxValue)
 	{
 		// Actually we split the range in four equally sized sections
 		// In section 0, blue is at the brightness limit, red sticks to 0,
@@ -1894,6 +2070,12 @@ public abstract class Element {
 		}
 	}
 
+	/**
+	 * Returns the {@link Root} the given Element {@code _element} is residing in.
+	 * @param _element - the interesting Element
+	 * @return the owning {@link Root} or null (if {@code _element} is orphaned).
+	 * @see #getNestingDepth()
+	 */
 	public static Root getRoot(Element _element)
 	{
 		while (_element.parent != null)
@@ -1904,6 +2086,23 @@ public abstract class Element {
 			return (Root) _element;
 		else
 			return null;
+	}
+	
+	/**
+	 * Retrieves the length of the path from the given Element up to the rot (not
+	 * counting the {@link Subqueue} levels).
+	 * @param _element - the interesting Element
+	 * @return the path length (0 for a Root, 1 for any of its immediate children etc.)
+	 */
+	public static int getNestingDepth(Element _element)
+	{
+		int depth = 0;
+		while (_element.parent != null)
+		{
+			_element = _element.parent;
+			depth++;
+		}
+		return depth / 2;
 	}
 
 //	@Deprecated
@@ -2244,17 +2443,20 @@ public abstract class Element {
 	
 	// START KGU#101 2015-12-11: Enhancement #54: We need to split expression lists (might go to a helper class)
 	/**
-	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings comprising one of the listed expressions each.
+	 * Splits the string {@code _text}, which is supposed to represent a list of expressions
+	 * separated by character sequences {@code _listSeparator}, into strings comprising one of
+	 * the listed expressions each.<br/>
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. (These must not be broken.)
-	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
-	 * bracket, or the like).
-	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
+	 * of function calls etc. (These must not be broken.)<br/>
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched right parenthesis,
+	 * bracket, or the like).<br/>
+	 * The remaining string from the unsatisfied right parenthesis, bracket, or brace on will
 	 * be ignored!
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
+	 * @see #splitExpressionList(String, String, boolean)
+	 * @see #splitExpressionList(StringList, String, boolean)
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator)
 	// START KGU#93 2015-12-21 Bugfix #41/#68/#69
@@ -2263,20 +2465,22 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
-	 * into strings comprising one of the listed expressions each.
+	 * Splits the string {@code _text}, which is supposed to represent a list of expressions
+	 * separated by character sequence {@code _listSeparator}, into strings comprising one of
+	 * the listed expressions each.<br/>
 	 * This does not mean mere string splitting but is aware of string literals, argument lists
-	 * of function calls etc. (These must not be broken.)
-	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
-	 * bracket, or the like).
-	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
-	 * be added as last element to the result if _appendRemainder is true - otherwise there is no
-	 * difference to method splitExpressionList(String _text, String _listSeparator)!
+	 * of function calls etc. (These must not be broken.)<br/>
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched right parenthesis,
+	 * bracket, or the like).<br/>
+	 * The remaining string from the unsatisfied right parenthesis, bracket, or brace on will
+	 * be added as last element to the result if {@code _appendTail} is true - otherwise there is no
+	 * difference to method {@link #splitExpressionList(String, String)}!<br/>
 	 * If the last result element is empty then the expression list was syntactically "clean".
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
+	 * @see #splitExpressionList(StringList, String, boolean)
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
 	// END KGU#93 2015-12-21
@@ -2290,20 +2494,22 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Splits the tokenized list {@code _tokens} of expressions separated by {@code _listSeparator}
-	 * into strings comprising one of the listed expressions each.
+	 * Splits the token list {@code _tokens}, which is supposed to represent a sequence of expressions
+	 * separated by separators {@code _listSeparator}, into strings comprising one of the listed expressions
+	 * each.<br/>
 	 * This is aware of string literals, argument lists of function calls etc. (These must not be broken.)
-	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
-	 * bracket, or the like).
-	 * The remaining tokens from the unsatisfied closing parenthesis, bracket, or brace on will
-	 * be concatenated and added as last element to the result if _appendRemainder is true.
-	 * If the last result element is empty in mode {@code _appedTail} then the expression list was syntactically
-	 * "clean".
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched right parenthesis,
+	 * bracket, or the like).<br/>
+	 * The remaining tokens from the unsatisfied right parenthesis, bracket, or brace on will
+	 * be concatenated and added as last element to the result if {@code _appendTail} is true.
+	 * If the last result element is empty in mode {@code _appendTail} then the expression list was syntactically
+	 * "clean".<br/>
 	 * FIXME If the expression was given without some parentheses as delimiters then a tail won't be added.
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
+	 * @see #splitExpressionList(String, String, boolean)
 	 */
 	public static StringList splitExpressionList(StringList _tokens, String _listSeparator, boolean _appendTail)
 	{
@@ -2611,13 +2817,19 @@ public abstract class Element {
 		{
 			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
 			//if (root.hightlightVars==true)
-			if (root.hightlightVars==true && !root.isSwitchTextCommentMode())
+			if (root.hightlightVars && !root.isSwitchTextCommentMode())
 			// END KGU#226 2016-07-29
 			{
 				StringList parts = Element.splitLexically(_text, true);
 
 				// bold font
-				Font boldFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
+				Font boldFont = new Font(Element.font.getName(), Font.BOLD, Element.font.getSize());
+				// START KGU#480 2018-01-21: Enh. #490 - we will underline alias names
+				// underlined font
+				Map<TextAttribute, Integer> fontAttributes = new HashMap<TextAttribute, Integer>();
+				fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+				Font underlinedFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize()).deriveFont(fontAttributes);
+				// END KGU#480 2018-01-21
 				// backup the original font
 				Font backupFont = _canvas.getFont();
 
@@ -2743,28 +2955,25 @@ public abstract class Element {
 					// END KGU#331 2017-01-13
 					// END KGU#377 2017-03-30
 
-					if(!display.equals(""))
+					if (!display.equals(""))
 					{
 						// if this part has to be colored
 						if(root.variables.contains(display))
 						{
-							// set color
+							// dark blue, bold
 							_canvas.setColor(Color.decode("0x000099"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
 						else if (root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// END KGU#388 2017-09-17
 						// if this part has to be colored with special color
 						else if(specialSigns.contains(display))
 						{
-							// set color
+							// burgundy, bold
 							_canvas.setColor(Color.decode("0x990000"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// if this part has to be colored with io color
@@ -2773,21 +2982,19 @@ public abstract class Element {
 						else if(ioSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
-							// set color
+							// green, bold
 							_canvas.setColor(Color.decode("0x007700"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// START KGU 2015-11-12
 						// START KGU#116 2015-12-23: Enh. #75
-						// START KGU#165 2016-03-25: cosider the new option
+						// START KGU#165 2016-03-25: consider the new case option
 						//else if(jumpSigns.contains(display))
 						else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
-							// set color
+							// orange, bold
 							_canvas.setColor(Color.decode("0xff5511"));
-							// set font
 							_canvas.setFont(boldFont);
 						}
 						// END KGU#116 2015-12-23
@@ -2795,10 +3002,23 @@ public abstract class Element {
 						else if (display.startsWith("\"") && display.endsWith("\"") ||
 								display.startsWith("'") && display.endsWith("'"))
 						{
-							// set colour
+							// violet, plain
 							_canvas.setColor(Color.decode("0x770077"));
 						}
 						// END KGU 2015-11-12
+						// START KGU#480 2018-01-21: Enh. #490 DiagramController routine aliases?
+						else if (E_APPLY_ALIASES && Function.testIdentifier(display, "#")) {
+							int j = i;
+							while (j < parts.count() && parts.get(++j).trim().isEmpty());
+							if (j < parts.count() && parts.get(j).equals("(")) {
+								if (Element.controllerAlias2Name.containsKey(display.toLowerCase())) {
+									// Replace the name and show it underlined
+									display = display.substring(0, display.indexOf('#'));
+									_canvas.setFont(underlinedFont);
+								}
+							}
+						}
+						// END KGU#480 2018-01-21
 					}
 
 					if (_actuallyDraw)
@@ -2931,13 +3151,16 @@ public abstract class Element {
 	 */
 	protected String getRuntimeInfoString()
 	{
-		return this.getExecCount() + " / " + this.getExecStepCount(this.isCollapsed());
+		return this.getExecCount() + " / " + this.getExecStepCount(this.isCollapsed(true));
 	}
 	// END KGU#156 2016-03-11
 	
-
-
-    public boolean isCollapsed() {
+    /**
+     * Detect whether the element is currently collapsed (or to be shown as collapsed by other reasons)
+     * @param _orHidden - if some additional element-specific hiding criterion is to be considered, too  
+     * @return true if element is to be shown in collapsed shape
+     */
+    public boolean isCollapsed(boolean _orHidden) {
         return collapsed;
     }
 
@@ -2948,7 +3171,11 @@ public abstract class Element {
     	// END KGU#136 2016-03-01
     }
     
-    // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+    // START KGU#122 2016-01-03: Enh. #87
+    /**
+     * @return the element-type-specific icon image intended to be placed in the upper left
+     * corner of the drawn element if being collapsed.
+     */
     public ImageIcon getIcon()
     {
     	return IconLoader.ico057;

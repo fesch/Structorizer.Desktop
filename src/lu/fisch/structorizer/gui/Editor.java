@@ -55,7 +55,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
  *      Kay Gürtzig     2017.03.28      Enh. #387: New "Save All" button
  *      Kay Gürtzig     2017.05.16      Enh. #389: Button for third diagram type (includable)
- *      Kay Gürtzig     2017.06.15      Enh. #415: Toolbar additions for find & replace
+ *      Kay Gürtzig     2017.06.15      Enh. #415, #199: Toolbar additions for find & replace as well as help
+ *      Kay Gürtzig     2017.11.05      Issue #452: Mechanisms for simplified toolbar (beginners' mode)
+ *      Kay Gürtzig     2017.11.19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button   
  *
  ******************************************************************************************************
  *
@@ -182,17 +184,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// font
     protected final JButton btnFontUp = new JButton(IconLoader.ico033); 
     protected final JButton btnFontDown = new JButton(IconLoader.ico034);
-	// copyright 
+	// copyright / help
     protected final JButton btnAbout = new JButton(IconLoader.ico017);
+	// START KGU#414 2017-06-14: Enh. #199
+	protected final JButton btnHelp = new JButton(IconLoader.ico110);
+	// END KGU#414 2017-06-14
     // executing / testing
     protected final JButton btnMake = new JButton(IconLoader.ico004);
     protected final JButton btnTurtle = new JButton(IconLoader.turtle);
     // START KGU 2015-10-12: Breakpoint wiping
     protected final JButton btnDropBrk = new JButton(IconLoader.ico104);
     // END KGU 2015-10-12
-	// START KGU#414 2017-06-14: Enh. #199
-	protected final JButton btnHelp = new JButton(IconLoader.ico110);
-	// END KGU#414 2017-06-14
 	// colors
     protected ColorButton btnColor0 = new ColorButton(Element.color0);
     protected ColorButton btnColor1 = new ColorButton(Element.color1);
@@ -854,7 +856,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#414 2017-06-14: Enh. #199
 		toolbar.add(btnHelp);
 		btnHelp.setFocusable(false);
-		btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.helpNSD(); } } );
+		// START KGU#462 2017-11-19: Issues #199, #468
+		//btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.helpNSD(); } } );
+		btnHelp.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.helpNSD(); } } );
+		// END KGU#462 2017-11-19
 		// END KGU#414 2017-06-14
 
 		sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -1093,52 +1098,52 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnRedo.setEnabled(diagram.getRoot().canRedo());
 		
 		// elements
-		btnBeforeInst.setEnabled(conditionNoMult);
-		btnBeforeAlt.setEnabled(conditionNoMult);
-		btnBeforeCase.setEnabled(conditionNoMult);
-		btnBeforeFor.setEnabled(conditionNoMult);
-		btnBeforeWhile.setEnabled(conditionNoMult);
-		btnBeforeRepeat.setEnabled(conditionNoMult);
-		btnBeforeForever.setEnabled(conditionNoMult);
-		btnBeforeCall.setEnabled(conditionNoMult);
-		btnBeforeJump.setEnabled(conditionNoMult);
-		btnBeforePara.setEnabled(conditionNoMult);
+		btnBeforeInst.setEnabled(condition);
+		btnBeforeAlt.setEnabled(condition);
+		btnBeforeCase.setEnabled(condition);
+		btnBeforeFor.setEnabled(condition);
+		btnBeforeWhile.setEnabled(condition);
+		btnBeforeRepeat.setEnabled(condition);
+		btnBeforeForever.setEnabled(condition);
+		btnBeforeCall.setEnabled(condition);
+		btnBeforeJump.setEnabled(condition);
+		btnBeforePara.setEnabled(condition);
 
-		btnAfterInst.setEnabled(conditionNoMult);
-		btnAfterAlt.setEnabled(conditionNoMult);
-		btnAfterCase.setEnabled(conditionNoMult);
-		btnAfterFor.setEnabled(conditionNoMult);
-		btnAfterWhile.setEnabled(conditionNoMult);
-		btnAfterRepeat.setEnabled(conditionNoMult);
-		btnAfterForever.setEnabled(conditionNoMult);
-		btnAfterCall.setEnabled(conditionNoMult);
-		btnAfterJump.setEnabled(conditionNoMult);
-		btnAfterPara.setEnabled(conditionNoMult);
+		btnAfterInst.setEnabled(condition);
+		btnAfterAlt.setEnabled(condition);
+		btnAfterCase.setEnabled(condition);
+		btnAfterFor.setEnabled(condition);
+		btnAfterWhile.setEnabled(condition);
+		btnAfterRepeat.setEnabled(condition);
+		btnAfterForever.setEnabled(condition);
+		btnAfterCall.setEnabled(condition);
+		btnAfterJump.setEnabled(condition);
+		btnAfterPara.setEnabled(condition);
 
 		// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
-		popupAdd.setEnabled(conditionNoMult);
+		popupAdd.setEnabled(condition);
 		// END KGU#87 2015-11-22
-		popupAddBeforeInst.setEnabled(conditionNoMult);
-		popupAddBeforeAlt.setEnabled(conditionNoMult);
-		popupAddBeforeCase.setEnabled(conditionNoMult);
-		popupAddBeforeFor.setEnabled(conditionNoMult);
-		popupAddBeforeWhile.setEnabled(conditionNoMult);
-		popupAddBeforeRepeat.setEnabled(conditionNoMult);
-		popupAddBeforeForever.setEnabled(conditionNoMult);
-		popupAddBeforeCall.setEnabled(conditionNoMult);
-		popupAddBeforeJump.setEnabled(conditionNoMult);
-		popupAddBeforePara.setEnabled(conditionNoMult);
+		popupAddBeforeInst.setEnabled(condition);
+		popupAddBeforeAlt.setEnabled(condition);
+		popupAddBeforeCase.setEnabled(condition);
+		popupAddBeforeFor.setEnabled(condition);
+		popupAddBeforeWhile.setEnabled(condition);
+		popupAddBeforeRepeat.setEnabled(condition);
+		popupAddBeforeForever.setEnabled(condition);
+		popupAddBeforeCall.setEnabled(condition);
+		popupAddBeforeJump.setEnabled(condition);
+		popupAddBeforePara.setEnabled(condition);
 
-		popupAddAfterInst.setEnabled(conditionNoMult);
-		popupAddAfterAlt.setEnabled(conditionNoMult);
-		popupAddAfterCase.setEnabled(conditionNoMult);
-		popupAddAfterFor.setEnabled(conditionNoMult);
-		popupAddAfterWhile.setEnabled(conditionNoMult);
-		popupAddAfterRepeat.setEnabled(conditionNoMult);
-		popupAddAfterForever.setEnabled(conditionNoMult);
-		popupAddAfterCall.setEnabled(conditionNoMult);
-		popupAddAfterJump.setEnabled(conditionNoMult);
-		popupAddAfterPara.setEnabled(conditionNoMult);
+		popupAddAfterInst.setEnabled(condition);
+		popupAddAfterAlt.setEnabled(condition);
+		popupAddAfterCase.setEnabled(condition);
+		popupAddAfterFor.setEnabled(condition);
+		popupAddAfterWhile.setEnabled(condition);
+		popupAddAfterRepeat.setEnabled(condition);
+		popupAddAfterForever.setEnabled(condition);
+		popupAddAfterCall.setEnabled(condition);
+		popupAddAfterJump.setEnabled(condition);
+		popupAddAfterPara.setEnabled(condition);
 		
 		// colors
 		btnColor0.setEnabled(condition);
@@ -1154,8 +1159,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
-		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
-		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
+		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
 		// START KGU#277 2016-10-13: Enh. #270
 		btnDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
@@ -1203,8 +1208,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
-		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
-		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
+		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
 		// START KGU#277 2016-10-13: Enh. #270
 		popupDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
