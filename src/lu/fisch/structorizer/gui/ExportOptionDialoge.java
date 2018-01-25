@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls
  *      Kay Gürtzig     2017.05.11  Enh. #372: New option to export license attributes
  *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
+ *      Kay Gürtzig     2018.01.22  Issue #484: Layout of the "Includes" tab fixed (text fields now expand). 
  *
  ******************************************************************************************************
  *
@@ -259,7 +260,7 @@ public class ExportOptionDialoge extends LangDialog
         
         jButton1.setText("OK");
         jButton1.addActionListener(new ActionListener() {
-			@Override
+            @Override
             public void actionPerformed(ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
@@ -288,15 +289,15 @@ public class ExportOptionDialoge extends LangDialog
             	}
 			}});
         cbOptionPlugins.setMaximumSize(
-        		new Dimension(cbPrefGenerator.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
+                new Dimension(cbPrefGenerator.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
         if (cbOptionPlugins.getItemCount() == 0) {
-        	btnPluginOptions.setVisible(false);
-        	cbOptionPlugins.setVisible(false);
+            btnPluginOptions.setVisible(false);
+            cbOptionPlugins.setVisible(false);
         }
         // END KGU#416 2017-06-20
         
         // START KGU#351 2017-02-26: Enh. #346
-		//======== contentPanel0 ========
+        //======== contentPanel0 ========
         //org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         //getContentPane().setLayout(layout);
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(contentPanel0);
@@ -310,26 +311,26 @@ public class ExportOptionDialoge extends LangDialog
                     .add(jLabel1)
                     // START KGU#168 2016-04-04: Enh. #149
                     .add(layout.createSequentialGroup()
-                    		.add(lbVoid1)
+                            .add(lbVoid1)
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            		.add(lbCharset)
-                            		.add(lbPrefGenerator)
+                                    .add(lbCharset)
+                                    .add(lbPrefGenerator)
                                     // START KGU#416 2017-06-20: Enh. #353,#357
-                            		.add(btnPluginOptions))
-                            		// END KGU#416 2017-06-20
-                    		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                    .add(btnPluginOptions))
+                                    // END KGU#416 2017-06-20
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            		.add(cbCharset)
-                            		.add(cbPrefGenerator)
+                                    .add(cbCharset)
+                                    .add(cbPrefGenerator)
                                     // START KGU#416 2017-06-20: Enh. #353,#357
-                            		.add(cbOptionPlugins))
-                            		// END KGU#416 2017-06-20
-                    		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                    .add(cbOptionPlugins))
+                                    // END KGU#416 2017-06-20
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            		.add(chkCharsetAll)
-                            		.add(lbVoid))
-                    		.addContainerGap()
-                    		)
+                                    .add(chkCharsetAll)
+                                    .add(lbVoid))
+                            .addContainerGap()
+                            )
                     // END KGU#168 2016-04-04
                     // START KGU#162 2016-03-31: Enh. #144
                     .add(noConversionCheckBox)
@@ -342,7 +343,7 @@ public class ExportOptionDialoge extends LangDialog
                     // END KGU#178 2016-07-20
                     // START KGU#363 2017-05-11: Enh. #372
                     .add(chkExportLicenseInfo)
-                	// END KGU#363 2017-05-11: Enh. #372
+                    // END KGU#363 2017-05-11: Enh. #372
                     /*.add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jButton1)
                         .addContainerGap())*/))
@@ -355,20 +356,20 @@ public class ExportOptionDialoge extends LangDialog
                 .add(22, 22, 22)
                 // START KGU#168/KGU#171 2016-04-04: Enh. #149 choice of character set
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
-                		.add(lbVoid1)
-                		.add(layout.createSequentialGroup()
-                				.add(lbCharset)
-                				.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                				.add(lbPrefGenerator))
-                		.add(layout.createSequentialGroup()
-                				.add(cbCharset)
-                				.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                				.add(cbPrefGenerator))
-                		.add(layout.createSequentialGroup()
-                				.add(chkCharsetAll)
-                				.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                				.add(lbVoid))
-                		)
+                        .add(lbVoid1)
+                        .add(layout.createSequentialGroup()
+                                .add(lbCharset)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(lbPrefGenerator))
+                        .add(layout.createSequentialGroup()
+                                .add(cbCharset)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cbPrefGenerator))
+                        .add(layout.createSequentialGroup()
+                                .add(chkCharsetAll)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(lbVoid))
+                        )
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 // END KGU#168/KGU#171 2016-04-04
                 // START KGU#162 2016-03-31: Enh. #144
@@ -387,12 +388,12 @@ public class ExportOptionDialoge extends LangDialog
                 // START KGU#363 2017-05-11: Enh. #372
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkExportLicenseInfo)
-            	// END KGU#363 2017-05-11: Enh. #372
+                // END KGU#363 2017-05-11: Enh. #372
                 // START KGU#416 2017-06-20: Enh. #353,#357
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
-                				.add(btnPluginOptions)
-                				.add(cbOptionPlugins))
+                                .add(btnPluginOptions)
+                                .add(cbOptionPlugins))
                 // END KGU#416 2017-06-20
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 /*.add(jButton1)
@@ -400,7 +401,7 @@ public class ExportOptionDialoge extends LangDialog
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)*/)
         );
         
-        // START KGU#351 2017-02-26: Enh. #346
+		// START KGU#351 2017-02-26: Enh. #346
 		//======== contentPanel1 ========
 		{
 			// get generator Names
@@ -409,20 +410,27 @@ public class ExportOptionDialoge extends LangDialog
 			
 			this.targetLabels = new JLabel[nGenerators];
 			this.includeLists = new JTextField[nGenerators];
-	        GridBagLayout gbl = new GridBagLayout();
-	        GridBagConstraints gbc0 = new GridBagConstraints();
-	        GridBagConstraints gbc1 = new GridBagConstraints();
+			GridBagLayout gbl = new GridBagLayout();
+			GridBagConstraints gbc0 = new GridBagConstraints();
+			GridBagConstraints gbc1 = new GridBagConstraints();
+			contentPanel1.setBorder(new EmptyBorder(0, 5, 0, 5));
 			contentPanel1.setLayout(gbl);
 			gbc0.gridx = 1;
 			gbc0.gridy = 1;
 			gbc0.gridwidth = 1;
 			gbc0.gridheight = 1;
+			// START KGU#472 2018-01-22: Issue #484 - Left column (labels) shall not be expanded
+			gbc0.weightx = 0.0;
+			// END KGU#472 2018-01-22
 			gbc0.fill = GridBagConstraints.BOTH;
 			gbc0.insets = new Insets(0, 0, 0, 5);
 			gbc1.gridx = 2;
 			gbc1.gridy = 1;
 			gbc1.gridwidth = GridBagConstraints.REMAINDER;
 			gbc1.gridheight = 1;
+			// START KGU#472 2018-01-22: Issue #484 - Right column (text fields) are to be expanded
+			gbc1.weightx = 1.0;
+			// END KGU#472 2018-01-22
 			gbc1.fill = GridBagConstraints.BOTH;
 
 			for (int i = 0; i < nGenerators; i++)
@@ -454,12 +462,12 @@ public class ExportOptionDialoge extends LangDialog
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
 		contentPane.add(tabbedPane, BorderLayout.CENTER);
-        tabbedPane.addTab("General", contentPanel0);
-        tabbedPane.addTab("Includes", contentPanel1);
-        contentPane.add(buttonBar, BorderLayout.SOUTH);
-        // END KGU#351 2017-02-26
-        
-        // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
+		tabbedPane.addTab("General", contentPanel0);
+		tabbedPane.addTab("Includes", contentPanel1);
+		contentPane.add(buttonBar, BorderLayout.SOUTH);
+		// END KGU#351 2017-02-26
+		
+		// START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
 		KeyListener keyListener = new KeyListener()
 		{
 			public void keyPressed(KeyEvent e) 
@@ -505,9 +513,9 @@ public class ExportOptionDialoge extends LangDialog
 
     // START KGU#416 2017-06-20: Enh. #354,#357
     protected void openSpecificOptionDialog(String TitleFormat, GENPlugin plugin, HashMap<String, String> optionValues) {
-    	PluginOptionDialog pod = new PluginOptionDialog(plugin, optionValues);
-    	pod.setTitle(TitleFormat.replace("%", plugin.title));
-    	pod.setVisible(true);
+        PluginOptionDialog pod = new PluginOptionDialog(plugin, optionValues);
+        pod.setTitle(TitleFormat.replace("%", plugin.title));
+        pod.setVisible(true);
     }
     // END KGU#416 2017-06-20
 
@@ -517,11 +525,11 @@ public class ExportOptionDialoge extends LangDialog
 //    }//GEN-LAST:event_commentsCheckBoxActionPerformed
 
     protected void licenseInfoCheckBoxActionPerformed(ActionEvent evt) {
-		// TODO Auto-generated method stub
-		
-	}
+        // TODO Auto-generated method stub
+        
+    }
 
-	private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
+    private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
     {//GEN-HEADEREND:event_jButton1ActionPerformed
         goOn = true;
         this.setVisible(false);
@@ -549,14 +557,14 @@ public class ExportOptionDialoge extends LangDialog
     
     public void charsetListChanged(String favouredCharset)
     {
-    	Set<String> availableCharsets = Charset.availableCharsets().keySet();
-    	cbCharset.removeAllItems();
+        Set<String> availableCharsets = Charset.availableCharsets().keySet();
+        cbCharset.removeAllItems();
         if (chkCharsetAll.isSelected())
         {
-        	for (String charsetName : availableCharsets)
-        	{
-        		cbCharset.addItem(charsetName);
-        	}
+            for (String charsetName : availableCharsets)
+            {
+                cbCharset.addItem(charsetName);
+            }
         }
         else
         {
@@ -578,10 +586,10 @@ public class ExportOptionDialoge extends LangDialog
         		cbCharset.insertItemAt(favouredCharset,  0);
         	}
         }
-    	if (favouredCharset != null)
-    	{
-    		cbCharset.setSelectedItem(favouredCharset);
-    	}
+        if (favouredCharset != null)
+        {
+            cbCharset.setSelectedItem(favouredCharset);
+        }
     }
     
     /**
@@ -601,13 +609,13 @@ public class ExportOptionDialoge extends LangDialog
     		try { buff.close();	} catch (IOException e) {}
     	}
     	Vector<String> generatorNames = new Vector<String>();
-		for(int i = 0; i < plugins.size(); i++)
-		{
-			if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
-				generatorNames.add(plugins.get(i).title);
-			}
-		}
-		return generatorNames;
+    	for(int i = 0; i < plugins.size(); i++)
+    	{
+    		if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
+    			generatorNames.add(plugins.get(i).title);
+    		}
+    	}
+    	return generatorNames;
     }
 
 //    /**
@@ -669,7 +677,7 @@ public class ExportOptionDialoge extends LangDialog
 	public javax.swing.JPanel buttonBar;
 	// START KGU#416 2017-06-20: Enh. #354, #357
 	//public Vector<String> generatorKeys;
-    private Vector<GENPlugin> plugins = null;
+	private Vector<GENPlugin> plugins = null;
 	// In order of this.plugins there is an option value map per generator plugin
 	public Vector<HashMap<String, String>> generatorOptions = new Vector<HashMap<String, String>>();
 	public javax.swing.JButton btnPluginOptions;

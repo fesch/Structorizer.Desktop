@@ -55,6 +55,7 @@ import lu.fisch.structorizer.locales.LangDialog;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.12.14      First Issue for #492
+ *      Kay Gürtzig     2018.01.20      Layout improved (row distance reduced)
  *
  ******************************************************************************************************
  *
@@ -121,7 +122,8 @@ public class ElementNamePreferences extends LangDialog {
 			//======== headBar =============
 			{
 				chkUseConfNames.setSelected(true);
-				headBar.setLayout(new GridLayout(0, 1, 8, 8));
+				headBar.setBorder(new EmptyBorder(0, 0, 10, 0));
+				headBar.setLayout(new GridLayout(0, 1, 8, 4));
 				headBar.add(lblExplanation);
 				headBar.add(chkUseConfNames);
 			}
@@ -129,7 +131,7 @@ public class ElementNamePreferences extends LangDialog {
 
 			//======== contentPanel ========
 			{
-				configPanel.setLayout(new GridLayout(0, 2, 8, 8));
+				configPanel.setLayout(new GridLayout(0, 2, 8, 0));
 				
 				configPanel.add(lblLocalized);
 				configPanel.add(lblIndividual);
@@ -178,6 +180,10 @@ public class ElementNamePreferences extends LangDialog {
 
 		};
 		chkUseConfNames.addItemListener(checkItemListener);
+
+		// START KGU#479 2017-12-22: Issue #492: GUI scaling hadn't worked properly
+		GUIScaler.rescaleComponents(this);
+		// END KGU#479 2017-12-22
 
 		pack();
 		setLocationRelativeTo(getOwner());
