@@ -786,7 +786,7 @@ public class Case extends Element implements IFork
     @Override
     public ImageIcon getIcon()
     {
-    	return IconLoader.ico064;
+    	return IconLoader.getIcon(64);
     }
     // END KGU#122 2016-01-03
 

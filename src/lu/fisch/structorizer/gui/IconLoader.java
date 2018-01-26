@@ -61,6 +61,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.12.11      Enh. #425: New icons 114_down and 115_up for Translator
  *      Kay Gürtzig     2018.01.04      New icon 092_SaveAs
  *      Kay Gürtzig     2018.01.18      Issue #4: New icons 032_export, 086_properties, 087_code, 088_picture
+ *      Kay Gürtzig     2018.01.25      Issue #4: Enumerable icon fields converted into an array (ico011 --> getIcon(11))
  *
  ******************************************************************************************************
  *
@@ -82,6 +83,139 @@ public class IconLoader {
 	private static String from = new String("");
 
 	protected static double scaleFactor = 1;
+	
+	// START KGU#486 2018-01-24: Issue #4 - new icon file retrieval mechanism
+	private static final String[] ICON_FILES = {
+			null,
+			"001_New.png",
+			"002_Open.png",
+			"003_Save.png",
+			"004_Make.png",
+			"005_Delete.png",
+			"006_update.png",
+			"007_intBefore.png",
+			"008_altBefore.png",
+			"009_forBefore.png",
+			"010_whileBefore.png",
+			"011_repeatBefore.png",
+			"012_intAfter.png",
+			"013_altAfter.png",
+			"014_forAfter.png",
+			"015_whileAfter.png",
+			"016_repeatAfter.png",
+			"017_Eye.png",
+			"018_add.png",
+			"019_Up.png",
+			"020_Down.png",
+			"021_function.png",
+			"022_program.png",
+			"023_font.png",
+			"024_smiley.png",
+			"025_import.png",
+			"026_disable.png",
+			"027_richTurtle.png",
+			"028_poorTurtle.png",
+			"029_index.png",
+			"030_function_green.png",
+			"031_make_copy.png",
+			"032_export.png",
+			"033_font_up.png",
+			"034_font_down.png",
+			"035_realtime.png",
+			"036_textfile.png",
+			"037_text.png",
+			"038_redo.png",
+			"039_undo.png",
+			"040_notnice.png",
+			"041_print.png",
+			"042_copy.png",
+			"043_paste.png",
+			"044_cut.png",
+			"045_remove.png",
+			"046_covered.png",
+			"047_casebefore.png",
+			"048_caseafter.png",
+			"049_callbefore.png",
+			"050_callafter.png",
+			"051_scale_gui.png",
+			"052_update.png",
+			"053_paste.png",
+			null,	// 54
+			"055_jumpafter.png",
+			"056_jumpbefore.png",
+			"057_conv_inst.png",
+			"058_conv_call.png",
+			"059_conv_jump.png",
+			"060_conv_if.png",
+			"061_conv_for.png",
+			"062_conv_while.png",
+			"063_conv_repeat.png",
+			"064_conv_case.png",
+			"065_paragraph.png",
+			"066_litterbin.png",
+			"067_commit.png",
+			"068_seq2sub.png",
+			"069_SaveAll.png",
+			"070_program_green.png",
+			"071_include.png",
+			"072_include_green.png",
+			"073_binoculars.png",
+			"074_nsd.png",
+			"075_beginner.png",
+			"076_latex.png",
+			"077_bubble.png",
+			"078_java.png",
+			"079_marker.png",
+			"080_pulldown.png",
+			"081_pen.png",
+			"082_din.png",
+			"083_loupe.png",
+			"084_pencil.png",
+			"085_hide_decl.png",
+			"086_properties.png",
+			"087_code.png",
+			"088_picture.png",
+			"089_paraAfter.png",
+			"090_paraBefore.png",
+			"091_conv_para.png",
+			"092_SaveAs.png",
+			"093_picture_export.png",
+			null,	// 94
+			null,	// 95
+			null,	// 96
+			null,	// 97
+			null,	// 98
+			null,	// 99
+			"100_diagram_drop.png",	// not used
+			"101_diagram_new.png",	// not used
+			"102_switch.png",
+			"103_breakpt.png",
+			"104_nobreakpt.png",
+			"105_arranger.png",
+			"106_collapse.png",
+			"107_expand.png",
+			"108_collapse_by_wheel.png",
+			"109_wand.png",
+			"110_help.png",
+			"111_c_plus_t.png",
+			"112_stopwatch.png",
+			"113_translater.png",
+			"114_down.png",
+			"115_up.png",
+	};
+	
+	private static final int[] ICON_SIZES = {
+			16,
+			24,
+			32,
+			48,
+			64
+			// The sizes 128 and 256 are only for design purposes, they would unnecessarily inflate the jar
+	};
+	
+	/** Array of available numbered icons with lazy initialization (replaces ico001, ico002 etc.) */
+	private static ImageIcon[] icons = null;
+	// END KGU#486 2018-01-24
 
 	// Icons
 	public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
@@ -90,372 +224,463 @@ public class IconLoader {
 	public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
 	// END KGU#287 2016-11-02
 	
-	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
-	public static ImageIcon ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
-	public static ImageIcon ico003 = getIconImage(getURI(from+"icons/003_Save.png"));
-	public static ImageIcon ico004 = getIconImage(getURI(from+"icons/004_Make.png"));
-	public static ImageIcon ico005 = getIconImage(getURI(from+"icons/005_Delete.png"));
-	public static ImageIcon ico006 = getIconImage(getURI(from+"icons/006_update.png"));
-	public static ImageIcon ico007 = getIconImage(getURI(from+"icons/007_intBefore.png"));
-	public static ImageIcon ico008 = getIconImage(getURI(from+"icons/008_altBefore.png"));
-	public static ImageIcon ico009 = getIconImage(getURI(from+"icons/009_forBefore.png"));
-	public static ImageIcon ico010 = getIconImage(getURI(from+"icons/010_whileBefore.png"));
-	public static ImageIcon ico011 = getIconImage(getURI(from+"icons/011_repeatBefore.png"));
-	public static ImageIcon ico012 = getIconImage(getURI(from+"icons/012_intAfter.png"));
-	public static ImageIcon ico013 = getIconImage(getURI(from+"icons/013_altAfter.png"));
-	public static ImageIcon ico014 = getIconImage(getURI(from+"icons/014_forAfter.png"));
-	public static ImageIcon ico015 = getIconImage(getURI(from+"icons/015_whileAfter.png"));
-	public static ImageIcon ico016 = getIconImage(getURI(from+"icons/016_repeatAfter.png"));
-	public static ImageIcon ico017 = getIconImage(getURI(from+"icons/017_Eye.png"));
-	public static ImageIcon ico018 = getIconImage(getURI(from+"icons/018_add.png"));
-	public static ImageIcon ico019 = getIconImage(getURI(from+"icons/019_Up.png"));
-	public static ImageIcon ico020 = getIconImage(getURI(from+"icons/020_Down.png"));
-	public static ImageIcon ico021 = getIconImage(getURI(from+"icons/021_function.png"));
-	public static ImageIcon ico022 = getIconImage(getURI(from+"icons/022_program.png"));
-	public static ImageIcon ico023 = getIconImage(getURI(from+"icons/023_font.png"));
-	// START KGU#459 2017-11-19: Issue #459
-	public static ImageIcon ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
-	// END KGU#459 2017-11-19
-	
-	// START KGU#258 2016-09-25: Enh. #253
-	public static ImageIcon ico025 = getIconImage(getURI(from+"icons/025_import.png"));
-	// END KGU#258 2016-09-25
-	// START KGU#277 2016-10-13: Enh. #270
-	public static ImageIcon ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
-	// END KGU#277 2016-10-13
-	// START KGU#282 2016-10-16: Enh. #272
-	public static ImageIcon ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
-	public static ImageIcon ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
-	// END KGU#282 2016-10-16
-	// START KGU#305 2016-12-14: Enh. #305
-	public static ImageIcon ico029 = getIconImage(getURI(from+"icons/029_index.png"));
-	// END KGU#305 2016-12-14
-	// START KGU#318 2017-01-07: Enh. #319
-	public static ImageIcon ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
-	// END KGU#318 2017-01-07
-
-	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
-	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
-	//public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
-	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_export.png"));
-	// END KGU#486 2018-01-18
-	public static ImageIcon ico033 = getIconImage(getURI(from+"icons/033_font_up.png"));
-	public static ImageIcon ico034 = getIconImage(getURI(from+"icons/034_font_down.png"));
-	
-	public static ImageIcon ico038 = getIconImage(getURI(from+"icons/038_redo.png"));
-	public static ImageIcon ico039 = getIconImage(getURI(from+"icons/039_undo.png"));
-	public static ImageIcon ico040 = getIconImage(getURI(from+"icons/040_notnice.png"));
-	public static ImageIcon ico041 = getIconImage(getURI(from+"icons/041_print.png"));
-	public static ImageIcon ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
-	public static ImageIcon ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
-	public static ImageIcon ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-	// START KGU#318 2017-01-05: Enh. #319 - new icon for Aranger index
-	public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
-	public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
-	// END KGU#318 2017-01-05
-	public static ImageIcon ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
-	public static ImageIcon ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
-	public static ImageIcon ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
-	public static ImageIcon ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-	// START KGU#287 2017-01-11: Issue #81/#330
-	public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
-	// END KGU#287 2017-01-11
-	public static ImageIcon ico052 = getIconImage(getURI(from+"icons/052_update.png"));
-	
-	public static ImageIcon ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
-	public static ImageIcon ico056 = getIconImage(getURI(from+"icons/056_jumpbefore.png"));
-	
-	// START KGU#122 2016-01-03: Enhancement for collapsed elements
-	public static ImageIcon ico057 = getIconImage(getURI(from+"icons/057_conv_inst.png"));
-	public static ImageIcon ico058 = getIconImage(getURI(from+"icons/058_conv_call.png"));
-	public static ImageIcon ico059 = getIconImage(getURI(from+"icons/059_conv_jump.png"));
-	public static ImageIcon ico060 = getIconImage(getURI(from+"icons/060_conv_if.png"));
-	public static ImageIcon ico061 = getIconImage(getURI(from+"icons/061_conv_for.png"));
-	public static ImageIcon ico062 = getIconImage(getURI(from+"icons/062_conv_while.png"));
-	public static ImageIcon ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
-	public static ImageIcon ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
-	// END KGU#122 2016-01-03
-	// START KGU#363 2017-03-13: Issue #372
-	public static ImageIcon ico065 = getIconImage(getURI(from+"icons/065_paragraph.png"));
-	public static ImageIcon ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
-	public static ImageIcon ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
-	// END KGU#363 2017-03-13
-	// START KGU#365 2017-03-23: Issue #380
-	public static ImageIcon ico068 = getIconImage(getURI(from+"icons/068_seq2sub.png"));
-	// END KGU#365 2017-03-23
-	// START KGU#373 2017-03-28: Issue #387
-	public static ImageIcon ico069 = getIconImage(getURI(from+"icons/069_SaveAll.png"));
-	// END KGU#373 2017-03-28
-	// START KGU#318/KGU#376 2017-04-29: Enh. #319, #389
-	public static ImageIcon ico070 = getIconImage(getURI(from+"icons/070_program_green.png"));
-	public static ImageIcon ico071 = getIconImage(getURI(from+"icons/071_include.png"));
-	public static ImageIcon ico072 = getIconImage(getURI(from+"icons/072_include_green.png"));
-	// END KGU#318/KGU#376 2017-04-29
-	// START KGU#324 2017-06-13: Enh. #415
-	public static ImageIcon ico073 = getIconImage(getURI(from+"icons/073_binoculars.png"));
-	// END KGU#324 2017-06-13
-	
-	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
-	// START KGU#456 2017-11-05: Issue #452
-	public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_beginner.png"));
-	// END KGU#456 2017-11-05
-	public static ImageIcon ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
-	public static ImageIcon ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
-	public static ImageIcon ico078 = getIconImage(getURI(from+"icons/078_java.png"));
-	public static ImageIcon ico079 = getIconImage(getURI(from+"icons/079_marker.png"));
-	public static ImageIcon ico080 = getIconImage(getURI(from+"icons/080_pulldown.png"));
-	public static ImageIcon ico081 = getIconImage(getURI(from+"icons/081_pen.png"));
-	public static ImageIcon ico082 = getIconImage(getURI(from+"icons/082_din.png"));
-	public static ImageIcon ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
-	public static ImageIcon ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
-	// START KGU#477 2017-12-06: Enh. #487
-	public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
-	// END KGU#477 2017-12-06
-	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
-	public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_properties.png"));
-	public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_code.png"));
-	public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_picture.png"));
-	// END KGU#486 2018-01-18
-
-	public static ImageIcon ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
-	public static ImageIcon ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
-	public static ImageIcon ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
-	public static ImageIcon ico092 = getIconImage(getURI(from+"icons/092_SaveAs.png"));
-	//public static ImageIcon ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
-	//public static ImageIcon ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
-
-	public static ImageIcon ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
-	
-	// START KGU 2015-10-12: New checkpoint icon
-	public static ImageIcon ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
-	public static ImageIcon ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
-	// END KGU 2015-10-12
-	// START KGU#2 2015-11-19: Arranger icon
-	public static ImageIcon ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
-	// END KGU 2015-10-12
-	// START KGU#123 2016-01-03/04: Enh. #87
-	public static ImageIcon ico106 = getIconImage(getURI(from+"icons/106_collapse.png"));
-	public static ImageIcon ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
-	public static ImageIcon ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
-	// END KGU#123 2016-01-03/04
-	// START KGU#199 2016-07-06: Enh. #188
-	public static ImageIcon ico109 = getIconImage(getURI(from+"icons/109_wand.png"));
-	// END KGU#199 2016-07-06
-	// START KGU#208 2016-07-22: Enh. #199 - direct online user guide activation
-	public static ImageIcon ico110 = getIconImage(getURI(from+"icons/110_help.png"));
-	// END KGU#208 2016-07-22
-	// START KGU#227 2016-07-31: Enh. #128 - comments plus text display
-	public static ImageIcon ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
-	// END KGU#227 2016-07-31
-	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
-	public static ImageIcon ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
-	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
-	// END KGU#213 2016-08-02
-	// START KGU#418 2017-12-11: Enh. #425
-	public static ImageIcon ico114 = getIconImage(getURI(from+"icons/114_down.png"));
-	public static ImageIcon ico115 = getIconImage(getURI(from+"icons/115_up.png"));
-	// END KGU#213 2017-12-11
+//	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
+//	public static ImageIcon ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
+//	public static ImageIcon ico003 = getIconImage(getURI(from+"icons/003_Save.png"));
+//	public static ImageIcon ico004 = getIconImage(getURI(from+"icons/004_Make.png"));
+//	public static ImageIcon ico005 = getIconImage(getURI(from+"icons/005_Delete.png"));
+//	public static ImageIcon ico006 = getIconImage(getURI(from+"icons/006_update.png"));
+//	public static ImageIcon ico007 = getIconImage(getURI(from+"icons/007_intBefore.png"));
+//	public static ImageIcon ico008 = getIconImage(getURI(from+"icons/008_altBefore.png"));
+//	public static ImageIcon ico009 = getIconImage(getURI(from+"icons/009_forBefore.png"));
+//	public static ImageIcon ico010 = getIconImage(getURI(from+"icons/010_whileBefore.png"));
+//	public static ImageIcon ico011 = getIconImage(getURI(from+"icons/011_repeatBefore.png"));
+//	public static ImageIcon ico012 = getIconImage(getURI(from+"icons/012_intAfter.png"));
+//	public static ImageIcon ico013 = getIconImage(getURI(from+"icons/013_altAfter.png"));
+//	public static ImageIcon ico014 = getIconImage(getURI(from+"icons/014_forAfter.png"));
+//	public static ImageIcon ico015 = getIconImage(getURI(from+"icons/015_whileAfter.png"));
+//	public static ImageIcon ico016 = getIconImage(getURI(from+"icons/016_repeatAfter.png"));
+//	public static ImageIcon ico017 = getIconImage(getURI(from+"icons/017_Eye.png"));
+//	public static ImageIcon ico018 = getIconImage(getURI(from+"icons/018_add.png"));
+//	public static ImageIcon ico019 = getIconImage(getURI(from+"icons/019_Up.png"));
+//	public static ImageIcon ico020 = getIconImage(getURI(from+"icons/020_Down.png"));
+//	public static ImageIcon ico021 = getIconImage(getURI(from+"icons/021_function.png"));
+//	public static ImageIcon ico022 = getIconImage(getURI(from+"icons/022_program.png"));
+//	public static ImageIcon ico023 = getIconImage(getURI(from+"icons/023_font.png"));
+//	// START KGU#459 2017-11-19: Issue #459
+//	public static ImageIcon ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
+//	// END KGU#459 2017-11-19
+//	
+//	// START KGU#258 2016-09-25: Enh. #253
+//	public static ImageIcon ico025 = getIconImage(getURI(from+"icons/025_import.png"));
+//	// END KGU#258 2016-09-25
+//	// START KGU#277 2016-10-13: Enh. #270
+//	public static ImageIcon ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
+//	// END KGU#277 2016-10-13
+//	// START KGU#282 2016-10-16: Enh. #272
+//	public static ImageIcon ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
+//	public static ImageIcon ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
+//	// END KGU#282 2016-10-16
+//	// START KGU#305 2016-12-14: Enh. #305
+//	public static ImageIcon ico029 = getIconImage(getURI(from+"icons/029_index.png"));
+//	// END KGU#305 2016-12-14
+//	// START KGU#318 2017-01-07: Enh. #319
+//	public static ImageIcon ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+//	// END KGU#318 2017-01-07
+//
+//	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
+//	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+//	//public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
+//	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_export.png"));
+//	// END KGU#486 2018-01-18
+//	public static ImageIcon ico033 = getIconImage(getURI(from+"icons/033_font_up.png"));
+//	public static ImageIcon ico034 = getIconImage(getURI(from+"icons/034_font_down.png"));
+//	
+//	public static ImageIcon ico038 = getIconImage(getURI(from+"icons/038_redo.png"));
+//	public static ImageIcon ico039 = getIconImage(getURI(from+"icons/039_undo.png"));
+//	public static ImageIcon ico040 = getIconImage(getURI(from+"icons/040_notnice.png"));
+//	public static ImageIcon ico041 = getIconImage(getURI(from+"icons/041_print.png"));
+//	public static ImageIcon ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
+//	public static ImageIcon ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
+//	public static ImageIcon ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
+//	// START KGU#318 2017-01-05: Enh. #319 - new icon for Aranger index
+//	public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
+//	public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
+//	// END KGU#318 2017-01-05
+//	public static ImageIcon ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
+//	public static ImageIcon ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
+//	public static ImageIcon ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
+//	public static ImageIcon ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
+//	// START KGU#287 2017-01-11: Issue #81/#330
+//	public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
+//	// END KGU#287 2017-01-11
+//	public static ImageIcon ico052 = getIconImage(getURI(from+"icons/052_update.png"));
+//	
+//	public static ImageIcon ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
+//	public static ImageIcon ico056 = getIconImage(getURI(from+"icons/056_jumpbefore.png"));
+//	
+//	// START KGU#122 2016-01-03: Enhancement for collapsed elements
+//	public static ImageIcon ico057 = getIconImage(getURI(from+"icons/057_conv_inst.png"));
+//	public static ImageIcon ico058 = getIconImage(getURI(from+"icons/058_conv_call.png"));
+//	public static ImageIcon ico059 = getIconImage(getURI(from+"icons/059_conv_jump.png"));
+//	public static ImageIcon ico060 = getIconImage(getURI(from+"icons/060_conv_if.png"));
+//	public static ImageIcon ico061 = getIconImage(getURI(from+"icons/061_conv_for.png"));
+//	public static ImageIcon ico062 = getIconImage(getURI(from+"icons/062_conv_while.png"));
+//	public static ImageIcon ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
+//	public static ImageIcon ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
+//	// END KGU#122 2016-01-03
+//	// START KGU#363 2017-03-13: Issue #372
+//	public static ImageIcon ico065 = getIconImage(getURI(from+"icons/065_paragraph.png"));
+//	public static ImageIcon ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
+//	public static ImageIcon ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
+//	// END KGU#363 2017-03-13
+//	// START KGU#365 2017-03-23: Issue #380
+//	public static ImageIcon ico068 = getIconImage(getURI(from+"icons/068_seq2sub.png"));
+//	// END KGU#365 2017-03-23
+//	// START KGU#373 2017-03-28: Issue #387
+//	public static ImageIcon ico069 = getIconImage(getURI(from+"icons/069_SaveAll.png"));
+//	// END KGU#373 2017-03-28
+//	// START KGU#318/KGU#376 2017-04-29: Enh. #319, #389
+//	public static ImageIcon ico070 = getIconImage(getURI(from+"icons/070_program_green.png"));
+//	public static ImageIcon ico071 = getIconImage(getURI(from+"icons/071_include.png"));
+//	public static ImageIcon ico072 = getIconImage(getURI(from+"icons/072_include_green.png"));
+//	// END KGU#318/KGU#376 2017-04-29
+//	// START KGU#324 2017-06-13: Enh. #415
+//	public static ImageIcon ico073 = getIconImage(getURI(from+"icons/073_binoculars.png"));
+//	// END KGU#324 2017-06-13
+//	
+//	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
+//	// START KGU#456 2017-11-05: Issue #452
+//	public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_beginner.png"));
+//	// END KGU#456 2017-11-05
+//	public static ImageIcon ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
+//	public static ImageIcon ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
+//	public static ImageIcon ico078 = getIconImage(getURI(from+"icons/078_java.png"));
+//	public static ImageIcon ico079 = getIconImage(getURI(from+"icons/079_marker.png"));
+//	public static ImageIcon ico080 = getIconImage(getURI(from+"icons/080_pulldown.png"));
+//	public static ImageIcon ico081 = getIconImage(getURI(from+"icons/081_pen.png"));
+//	public static ImageIcon ico082 = getIconImage(getURI(from+"icons/082_din.png"));
+//	public static ImageIcon ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
+//	public static ImageIcon ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
+//	// START KGU#477 2017-12-06: Enh. #487
+//	public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
+//	// END KGU#477 2017-12-06
+//	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+//	public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_properties.png"));
+//	public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_code.png"));
+//	public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_picture.png"));
+//	// END KGU#486 2018-01-18
+//
+//	public static ImageIcon ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
+//	public static ImageIcon ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
+//	public static ImageIcon ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
+//	public static ImageIcon ico092 = getIconImage(getURI(from+"icons/092_SaveAs.png"));
+//	//public static ImageIcon ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
+//	//public static ImageIcon ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
+//
+//	public static ImageIcon ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
+//	
+//	// START KGU 2015-10-12: New checkpoint icon
+//	public static ImageIcon ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
+//	public static ImageIcon ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
+//	// END KGU 2015-10-12
+//	// START KGU#2 2015-11-19: Arranger icon
+//	public static ImageIcon ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
+//	// END KGU 2015-10-12
+//	// START KGU#123 2016-01-03/04: Enh. #87
+//	public static ImageIcon ico106 = getIconImage(getURI(from+"icons/106_collapse.png"));
+//	public static ImageIcon ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
+//	public static ImageIcon ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
+//	// END KGU#123 2016-01-03/04
+//	// START KGU#199 2016-07-06: Enh. #188
+//	public static ImageIcon ico109 = getIconImage(getURI(from+"icons/109_wand.png"));
+//	// END KGU#199 2016-07-06
+//	// START KGU#208 2016-07-22: Enh. #199 - direct online user guide activation
+//	public static ImageIcon ico110 = getIconImage(getURI(from+"icons/110_help.png"));
+//	// END KGU#208 2016-07-22
+//	// START KGU#227 2016-07-31: Enh. #128 - comments plus text display
+//	public static ImageIcon ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
+//	// END KGU#227 2016-07-31
+//	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
+//	public static ImageIcon ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
+//	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
+//	// END KGU#213 2016-08-02
+//	// START KGU#418 2017-12-11: Enh. #425
+//	public static ImageIcon ico114 = getIconImage(getURI(from+"icons/114_down.png"));
+//	public static ImageIcon ico115 = getIconImage(getURI(from+"icons/115_up.png"));
+//	// END KGU#213 2017-12-11
 
 	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 	
 	// START KGU#242 2016-09-05
 	public static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
 	// END KGU#242 2016-09-05
+	
+	// START KGU#486 2018-01-25: Issues #4, #81
+	/**
+	 * New preferred icon retrieval mechanism to support qualitatively acceptable icon scaling
+	 * results and to facilitate the introduction of new icons (though it's going to get harder
+	 * to identify unused icons.)<br/>
+	 * The first call will cause the initialization of he icon cache.
+	 * @param iconNo - the index of he requested icon
+	 * @return the {@linkImageIcon} object for the requested icon if available, null otherwise
+	 * @see #getIconImage(java.net.URL)
+	 * @see #setScaleFactor(double)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIcon(int iconNo)
+	{
+		if (iconNo < 0 || iconNo >= ICON_FILES.length) {
+			return null;
+		}
+		if (icons == null) {
+			// Lazy initialization of the icon cache
+			icons = new ImageIcon[ICON_FILES.length];
+			for (int i = 0; i < ICON_FILES.length; i++) {
+				String fileName = ICON_FILES[i];
+				if (fileName != null) {
+					icons[i] = getIconImage(fileName);
+				}
+				else {
+					icons[i] = null;
+				}
+			}
+		}
+		return icons[iconNo];
+	}
+	// END KGU#486 2018-01-25
 
-        public static void setScaleFactor(double scale)
-        {
-            scaleFactor=scale;
-            // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
-        	icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
-        	// END KGU#287 2016-11-02
+	public static void setScaleFactor(double scale)
+	{
+		scaleFactor = scale;
+		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+		icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+		// END KGU#287 2016-11-02
 
-            ico001 = getIconImage(getURI(from+"icons/001_New.png"));
-            ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
-            ico003 = getIconImage(getURI(from+"icons/003_Save.png"));
-            ico004 = getIconImage(getURI(from+"icons/004_Make.png"));
-            ico005 = getIconImage(getURI(from+"icons/005_Delete.png"));
-            ico006 = getIconImage(getURI(from+"icons/006_update.png"));
-            ico007 = getIconImage(getURI(from+"icons/007_intBefore.png"));
-            ico008 = getIconImage(getURI(from+"icons/008_altBefore.png"));
-            ico009 = getIconImage(getURI(from+"icons/009_forBefore.png"));
-            ico010 = getIconImage(getURI(from+"icons/010_whileBefore.png"));
-            ico011 = getIconImage(getURI(from+"icons/011_repeatBefore.png"));
-            ico012 = getIconImage(getURI(from+"icons/012_intAfter.png"));
-            ico013 = getIconImage(getURI(from+"icons/013_altAfter.png"));
-            ico014 = getIconImage(getURI(from+"icons/014_forAfter.png"));
-            ico015 = getIconImage(getURI(from+"icons/015_whileAfter.png"));
-            ico016 = getIconImage(getURI(from+"icons/016_repeatAfter.png"));
-            ico017 = getIconImage(getURI(from+"icons/017_Eye.png"));
-            ico018 = getIconImage(getURI(from+"icons/018_add.png"));
-            ico019 = getIconImage(getURI(from+"icons/019_Up.png"));
-            ico020 = getIconImage(getURI(from+"icons/020_Down.png"));
-            ico021 = getIconImage(getURI(from+"icons/021_function.png"));
-            ico022 = getIconImage(getURI(from+"icons/022_program.png"));
-            ico023 = getIconImage(getURI(from+"icons/023_font.png"));
-        	// START KGU#459 2017-11-19: Issue #459
-        	ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
-        	// END KGU#459 2017-11-19
+//		ico001 = getIconImage(getURI(from+"icons/001_New.png"));
+//		ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
+//		ico003 = getIconImage(getURI(from+"icons/003_Save.png"));
+//		ico004 = getIconImage(getURI(from+"icons/004_Make.png"));
+//		ico005 = getIconImage(getURI(from+"icons/005_Delete.png"));
+//		ico006 = getIconImage(getURI(from+"icons/006_update.png"));
+//		ico007 = getIconImage(getURI(from+"icons/007_intBefore.png"));
+//		ico008 = getIconImage(getURI(from+"icons/008_altBefore.png"));
+//		ico009 = getIconImage(getURI(from+"icons/009_forBefore.png"));
+//		ico010 = getIconImage(getURI(from+"icons/010_whileBefore.png"));
+//		ico011 = getIconImage(getURI(from+"icons/011_repeatBefore.png"));
+//		ico012 = getIconImage(getURI(from+"icons/012_intAfter.png"));
+//		ico013 = getIconImage(getURI(from+"icons/013_altAfter.png"));
+//		ico014 = getIconImage(getURI(from+"icons/014_forAfter.png"));
+//		ico015 = getIconImage(getURI(from+"icons/015_whileAfter.png"));
+//		ico016 = getIconImage(getURI(from+"icons/016_repeatAfter.png"));
+//		ico017 = getIconImage(getURI(from+"icons/017_Eye.png"));
+//		ico018 = getIconImage(getURI(from+"icons/018_add.png"));
+//		ico019 = getIconImage(getURI(from+"icons/019_Up.png"));
+//		ico020 = getIconImage(getURI(from+"icons/020_Down.png"));
+//		ico021 = getIconImage(getURI(from+"icons/021_function.png"));
+//		ico022 = getIconImage(getURI(from+"icons/022_program.png"));
+//		ico023 = getIconImage(getURI(from+"icons/023_font.png"));
+//		// START KGU#459 2017-11-19: Issue #459
+//		ico024 = getIconImage(getURI(from+"icons/024_smiley.png"));
+//		// END KGU#459 2017-11-19
+//
+//		// START KGU#258 2016-09-25: Enh. #253
+//		ico025 = getIconImage(getURI(from+"icons/025_import.png"));
+//		// END KGU#258 2016-09-25
+//		// START KGU#277 2016-10-13: Enh. #270
+//		ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
+//		// END KGU#277 2016-10-13
+//		// START KGU#282 2016-10-16: Enh. #272
+//		ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
+//		ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
+//		// END KGU#282 2016-10-16
+//		// START KGU#305 2016-12-14: Enh. #305
+//		ico029 = getIconImage(getURI(from+"icons/029_index.png"));
+//		// END KGU#305 2016-12-14
+//		// START KGU#318 2017-01-07: Enh. #319
+//		ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+//		// END KGU#318 2017-01-07
+//
+//		ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
+//		// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+//		//ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
+//		ico032 = getIconImage(getURI(from+"icons/032_export.png"));
+//		// END KGU#486 2018-01-18
+//		ico033 = getIconImage(getURI(from+"icons/033_font_up.png"));
+//		ico034 = getIconImage(getURI(from+"icons/034_font_down.png"));
+//
+//		ico038 = getIconImage(getURI(from+"icons/038_redo.png"));
+//		ico039 = getIconImage(getURI(from+"icons/039_undo.png"));
+//		ico040 = getIconImage(getURI(from+"icons/040_notnice.png"));
+//		ico041 = getIconImage(getURI(from+"icons/041_print.png"));
+//		ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
+//		ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
+//		ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
+//		// START KGU#318 2017-01-05: Enh. #319 - new icons for Arranger index
+//		ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
+//		ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
+//		// END KGU#318 2017-01-05
+//		ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
+//		ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
+//		ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
+//		ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
+//		// START KGU#287 2017-01-11: Issue #81/#330
+//		ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
+//		// END KGU#287 2017-01-11
+//		ico052 = getIconImage(getURI(from+"icons/052_update.png"));
+//
+//		ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
+//		ico056 = getIconImage(getURI(from+"icons/056_jumpbefore.png"));
+//
+//		// START KGU#122 2016-01-03: Enhancement for collapsed elements
+//		ico057 = getIconImage(getURI(from+"icons/057_conv_inst.png"));
+//		ico058 = getIconImage(getURI(from+"icons/058_conv_call.png"));
+//		ico059 = getIconImage(getURI(from+"icons/059_conv_jump.png"));
+//		ico060 = getIconImage(getURI(from+"icons/060_conv_if.png"));
+//		ico061 = getIconImage(getURI(from+"icons/061_conv_for.png"));
+//		ico062 = getIconImage(getURI(from+"icons/062_conv_while.png"));
+//		ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
+//		ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
+//		// END KGU#122 2016-01-03
+//		// START KGU#363 2017-03-13: Issue #372
+//		ico065 = getIconImage(getURI(from+"icons/065_paragraph.png"));
+//		ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
+//		ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
+//		// END KGU#363 2017-03-13
+//		// START KGU#365 2017-03-23: Issue #380
+//		ico068 = getIconImage(getURI(from+"icons/068_seq2sub.png"));
+//		// END KGU#365 2017-03-23
+//		// START KGU#373 2017-03-28: Issue #387
+//		ico069 = getIconImage(getURI(from+"icons/069_SaveAll.png"));
+//		// END KGU#373 2017-03-28
+//		// START KGU#318/KGU#376 2017-04-29: Enh. #319, #389
+//		ico070 = getIconImage(getURI(from+"icons/070_program_green.png"));
+//		ico071 = getIconImage(getURI(from+"icons/071_include.png"));
+//		ico072 = getIconImage(getURI(from+"icons/072_include_green.png"));
+//		// END KGU#318/KGU#376 2017-04-29
+//		// START KGU#324 2017-06-13: Enh. #415
+//		ico073 = getIconImage(getURI(from+"icons/073_binoculars.png"));
+//		// END KGU#324 2017-06-13
+//		ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
+//		// START KGU#456 2017-11-05: Issue #452
+//		ico075 = getIconImage(getURI(from+"icons/075_beginner.png"));
+//		// END KGU#456 2017-11-05
+//		ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
+//		ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
+//		ico078 = getIconImage(getURI(from+"icons/078_java.png"));
+//		ico079 = getIconImage(getURI(from+"icons/079_marker.png"));
+//		ico080 = getIconImage(getURI(from+"icons/080_pulldown.png"));
+//		ico081 = getIconImage(getURI(from+"icons/081_pen.png"));
+//		ico082 = getIconImage(getURI(from+"icons/082_din.png"));
+//		ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
+//		ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
+//		// START KGU#477 2017-12-06: Enh. #487
+//		ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
+//		// END KGU#477 2017-12-06
+//		// START KGU#486 2018-01-18: Issue #4 (icon redesign)
+//		ico086 = getIconImage(getURI(from+"icons/086_properties.png"));
+//		ico087 = getIconImage(getURI(from+"icons/087_code.png"));
+//		ico088 = getIconImage(getURI(from+"icons/088_picture.png"));
+//		// END KGU#486 2018-01-18: Issue #4
+//
+//		// START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
+//		ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
+//		ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
+//		ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
+//		// END KGU#287 2016-11-01
+//
+//		ico092 = getIconImage(getURI(from+"icons/092_SaveAs.png"));
+//		//ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
+//		//ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
+//
+//		// START KGU#287 2016-11-02: Issue #81: Scaling had been forgotten
+//		ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
+//		// END KGU#287 2016-11-02            
+//		// START KGU 2015-10-12: Whatever this might be good for...(?)
+//		ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
+//		ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
+//		// END KGU 2015-10-12
+//		// START KGU#2 2015-11-19
+//		ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
+//		// END KGU#2 2015-11-19
+//		// START KGU#123 2016-01-03/04: Enh. #87
+//		ico106 = getIconImage(getURI(from+"icons/106_collapse.png"));
+//		ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
+//		ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
+//		// END KGU#123 2016-01-03/04
+//		// START KGU#199 2016-07-06: Enh. #188
+//		ico109 = getIconImage(getURI(from+"icons/109_wand.png"));
+//		// END KGU#199 2016-07-06
+//		// START KGU#208 2016-07-22: Enh. #199 - direct online user guide activation
+//		ico110 = getIconImage(getURI(from+"icons/110_help.png"));
+//		// END KGU#208 2016-07-22
+//		// START KGU#227 2016-07-31: Enh. #128 - comments plus text display mode
+//		ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
+//		// END KGU#227 2016-07-31
+//		// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
+//		ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
+//		// END KGU#213 2016-08-02
+//
+//		// START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
+//		ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
+//		// END KGU#287 2016-11-01
+//
+//		// START KGU#418 2017-12-11: Enh. #425
+//		ico114 = getIconImage(getURI(from+"icons/114_down.png"));
+//		ico115 = getIconImage(getURI(from+"icons/115_up.png"));
+//		// END KGU#213 2017-12-11
+		
+		// Take advantage of the lazy initialization mechanism in getIcon(int) 
+		icons = null;
 
-        	// START KGU#258 2016-09-25: Enh. #253
-            ico025 = getIconImage(getURI(from+"icons/025_import.png"));
-        	// END KGU#258 2016-09-25
-        	// START KGU#277 2016-10-13: Enh. #270
-        	ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
-        	// END KGU#277 2016-10-13
-        	// START KGU#282 2016-10-16: Enh. #272
-        	ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
-        	ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
-        	// END KGU#282 2016-10-16
-        	// START KGU#305 2016-12-14: Enh. #305
-        	ico029 = getIconImage(getURI(from+"icons/029_index.png"));
-        	// END KGU#305 2016-12-14
-        	// START KGU#318 2017-01-07: Enh. #319
-        	ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
-        	// END KGU#318 2017-01-07
+		turtle = getIconImage(getURI(from + "icons/turtle.png"));
 
-            ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
-        	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
-            //ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
-            ico032 = getIconImage(getURI(from+"icons/032_export.png"));
-        	// END KGU#486 2018-01-18
-            ico033 = getIconImage(getURI(from+"icons/033_font_up.png"));
-            ico034 = getIconImage(getURI(from+"icons/034_font_down.png"));
+		// START KGU#242 2016-09-05
+		for (String key: icoLocales.keySet())
+		{
+			icoLocales.put(key, getIconImage(getURI(from+"icons/locale_"+key+".png")));
+		}
+		// END KGU#242 2016-09-05
+	}
 
-            ico038 = getIconImage(getURI(from+"icons/038_redo.png"));
-            ico039 = getIconImage(getURI(from+"icons/039_undo.png"));
-            ico040 = getIconImage(getURI(from+"icons/040_notnice.png"));
-            ico041 = getIconImage(getURI(from+"icons/041_print.png"));
-            ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
-            ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
-            ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-            // START KGU#318 2017-01-05: Enh. #319 - new icons for Arranger index
-            ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
-            ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
-            // END KGU#318 2017-01-05
-            ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
-            ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
-            ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
-            ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-        	// START KGU#287 2017-01-11: Issue #81/#330
-        	ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
-        	// END KGU#287 2017-01-11
-            ico052 = getIconImage(getURI(from+"icons/052_update.png"));
-
-            ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
-            ico056 = getIconImage(getURI(from+"icons/056_jumpbefore.png"));
-
-        	// START KGU#122 2016-01-03: Enhancement for collapsed elements
-        	ico057 = getIconImage(getURI(from+"icons/057_conv_inst.png"));
-        	ico058 = getIconImage(getURI(from+"icons/058_conv_call.png"));
-        	ico059 = getIconImage(getURI(from+"icons/059_conv_jump.png"));
-        	ico060 = getIconImage(getURI(from+"icons/060_conv_if.png"));
-        	ico061 = getIconImage(getURI(from+"icons/061_conv_for.png"));
-        	ico062 = getIconImage(getURI(from+"icons/062_conv_while.png"));
-        	ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
-        	ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
-        	// END KGU#122 2016-01-03
-        	// START KGU#363 2017-03-13: Issue #372
-        	ico065 = getIconImage(getURI(from+"icons/065_paragraph.png"));
-        	ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
-        	ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
-        	// END KGU#363 2017-03-13
-        	// START KGU#365 2017-03-23: Issue #380
-        	ico068 = getIconImage(getURI(from+"icons/068_seq2sub.png"));
-        	// END KGU#365 2017-03-23
-        	// START KGU#373 2017-03-28: Issue #387
-        	ico069 = getIconImage(getURI(from+"icons/069_SaveAll.png"));
-        	// END KGU#373 2017-03-28
-        	// START KGU#318/KGU#376 2017-04-29: Enh. #319, #389
-        	ico070 = getIconImage(getURI(from+"icons/070_program_green.png"));
-        	ico071 = getIconImage(getURI(from+"icons/071_include.png"));
-        	ico072 = getIconImage(getURI(from+"icons/072_include_green.png"));
-        	// END KGU#318/KGU#376 2017-04-29
-        	// START KGU#324 2017-06-13: Enh. #415
-        	ico073 = getIconImage(getURI(from+"icons/073_binoculars.png"));
-        	// END KGU#324 2017-06-13
-        	ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
-        	// START KGU#456 2017-11-05: Issue #452
-            ico075 = getIconImage(getURI(from+"icons/075_beginner.png"));
-        	// END KGU#456 2017-11-05
-            ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
-            ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
-            ico078 = getIconImage(getURI(from+"icons/078_java.png"));
-            ico079 = getIconImage(getURI(from+"icons/079_marker.png"));
-            ico080 = getIconImage(getURI(from+"icons/080_pulldown.png"));
-            ico081 = getIconImage(getURI(from+"icons/081_pen.png"));
-            ico082 = getIconImage(getURI(from+"icons/082_din.png"));
-            ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
-            ico084 = getIconImage(getURI(from+"icons/084_pencil.png"));
-        	// START KGU#477 2017-12-06: Enh. #487
-            ico085 = getIconImage(getURI(from+"icons/085_hide_decl.png"));
-        	// END KGU#477 2017-12-06
-        	// START KGU#486 2018-01-18: Issue #4 (icon redesign)
-            ico086 = getIconImage(getURI(from+"icons/086_properties.png"));
-            ico087 = getIconImage(getURI(from+"icons/087_code.png"));
-            ico088 = getIconImage(getURI(from+"icons/088_picture.png"));
-        	// END KGU#486 2018-01-18: Issue #4
-            
-            // START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
-            ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
-            ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
-        	ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
-            // END KGU#287 2016-11-01
-            
-            ico092 = getIconImage(getURI(from+"icons/092_SaveAs.png"));
-            //ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
-            //ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
-
-            // START KGU#287 2016-11-02: Issue #81: Scaling had been forgotten
-        	ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
-            // END KGU#287 2016-11-02            
-            // START KGU 2015-10-12: Whatever this might be good for...(?)
-        	ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
-        	ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
-        	// END KGU 2015-10-12
-        	// START KGU#2 2015-11-19
-        	ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
-        	// END KGU#2 2015-11-19
-        	// START KGU#123 2016-01-03/04: Enh. #87
-        	ico106 = getIconImage(getURI(from+"icons/106_collapse.png"));
-        	ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
-        	ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
-        	// END KGU#123 2016-01-03/04
-        	// START KGU#199 2016-07-06: Enh. #188
-        	ico109 = getIconImage(getURI(from+"icons/109_wand.png"));
-        	// END KGU#199 2016-07-06
-        	// START KGU#208 2016-07-22: Enh. #199 - direct online user guide activation
-        	ico110 = getIconImage(getURI(from+"icons/110_help.png"));
-        	// END KGU#208 2016-07-22
-        	// START KGU#227 2016-07-31: Enh. #128 - comments plus text display mode
-        	ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
-        	// END KGU#227 2016-07-31
-        	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
-        	ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
-        	// END KGU#213 2016-08-02
-
-            // START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
-            ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
-            // END KGU#287 2016-11-01
-
-        	// START KGU#418 2017-12-11: Enh. #425
-        	ico114 = getIconImage(getURI(from+"icons/114_down.png"));
-        	ico115 = getIconImage(getURI(from+"icons/115_up.png"));
-        	// END KGU#213 2017-12-11
-
-        	turtle = getIconImage(getURI(from+"icons/turtle.png"));
-        	
-        	// START KGU#242 2016-09-05
-        	for (String key: icoLocales.keySet())
-        	{
-        		icoLocales.put(key, getIconImage(getURI(from+"icons/locale_"+key+".png")));
-        	}
-        	// END KGU#242 2016-09-05
-        }
-
+    /**
+     * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
+     * for the currently specified scale.
+     * @param url - the source URL for the icon file.
+     * @return the retrieved or scaled ImageIco
+     * @see #getIcon(int)
+     * @see #setScaleFactor(double)
+     */
+    public static ImageIcon getIconImage(String fileName)
+    {
+    	System.out.println("getIconImage(\"" + fileName + "\")");
+    	// First we fetch the base icon (size 16 pixels = scalefactor 1)
+    	ImageIcon ii = new ImageIcon(getURI(from + "icons/" + fileName));
+    	// We coerce the scale factor to multiples of 0.5 and compute the wanted size
+    	long pixels = 8 * Math.round(scaleFactor * 2);
+    	int size = 16;
+    	double factor = 1.0 * pixels / size;
+    	java.net.URL foundURL = null;
+    	for (int i = 1; size < pixels && i < ICON_SIZES.length; i++) {
+    		size = ICON_SIZES[i];
+			java.net.URL url = getURI(from + "icons_" + size + "/" + fileName);
+			if (url != null) {
+				// If he file can be scaled with an itegral factor, we'll cache it
+				if (pixels % size == 0) { 
+					foundURL = url;
+					factor = pixels / size;
+				}
+    		}
+    	}
+    	if (foundURL != null) {
+    		// Obviously we found a better file than the base icon file
+    		System.out.println("loading icon " + foundURL);
+    		try {
+    			ii = new ImageIcon(foundURL);
+    		}
+    		catch (Exception ex) {
+    			System.err.println(ex.toString());
+    			ex.printStackTrace();
+    		}
+    	}
+    	else {
+    		factor = scaleFactor;
+    	}
+        return scale(ii, factor);
+    }
+    
+        /**
+         * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
+         * for the currently specified scale.
+         * @param url - the source URL for the icon file.
+         * @return
+         * @see #getIcon(int)
+         * @see #setScaleFactor(double)
+         */
         public static ImageIcon getIconImage(java.net.URL url)
         {
             ImageIcon ii = new ImageIcon(url);
-            ii = scale(ii);
+            ii = scale(ii, scaleFactor);
             return ii;
         }
         
@@ -472,18 +697,19 @@ public class IconLoader {
         }
         // END KGU 2016-09-06
 
-        /**
+		/**
          * Returns an ImageIcon version of src, which is magnified by length factor this.scaleFactor
          * @param src - the source icon
+         * @param factor TODO
          * @return the magnified (or diminished) icon
          */
-        private static final ImageIcon scale(ImageIcon src)
+        private static final ImageIcon scale(ImageIcon src, double factor)
         {
             //System.out.println(scaleFactor);
-            if(scaleFactor>1)
+            if (factor > 1)
             {
-                int w = (int)(scaleFactor*src.getIconWidth());
-                int h = (int)(scaleFactor*src.getIconHeight());
+                int w = (int)(factor * src.getIconWidth());
+                int h = (int)(factor * src.getIconHeight());
                 return scaleTo(src, w, h);
             }
             else return src;
@@ -515,20 +741,25 @@ public class IconLoader {
 		return icol.getClass().getResource(_filename);
 	}
 	
-            public static ImageIcon generateIcon(Color _color)
-            {
-                    int size = (int) (16*scaleFactor);
-                    BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-                    Graphics2D graphics = (Graphics2D) image.getGraphics();
-                    graphics.setColor(Color.BLACK);
-                    graphics.fillRect(0,0,size,size);
-                    graphics.setColor(_color);
-                    graphics.fillRect(1,1,size-2,size-2);
-                    return new ImageIcon(image);
-            }
+	public static ImageIcon generateIcon(Color _color)
+	{
+		int size = (int) (16*scaleFactor);
+		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = (Graphics2D) image.getGraphics();
+		graphics.setColor(Color.BLACK);
+		graphics.fillRect(0,0,size,size);
+		graphics.setColor(_color);
+		graphics.fillRect(1,1,size-2,size-2);
+		return new ImageIcon(image);
+	}
 	
+	/**
+	 * Sets a new absolute or relative base directory for the icon file retrieval. 
+	 * @param _from - an absolute or relative file path to the parent directory of
+	 * the icons and icons_&lt;pixels&gt; folder(s).
+	 */
 	public static void setFrom(String _from)
 	{
-		from=_from;
+		from = _from;
 	}
 }

@@ -2263,7 +2263,8 @@ public class Executor implements Runnable
 // END KGU#159 2016-03-17
 			JDialog stackView = new JDialog();
 			stackView.setTitle("Stack trace");
-			stackView.setIconImage(IconLoader.ico004.getImage());
+			//stackView.setIconImage(IconLoader.ico004.getImage());
+			stackView.setIconImage(IconLoader.getIcon(4).getImage());
 			List stackContent = new List(10);
 			int depth = stackTrace.count();
 			for (int i = 0; i < depth; i++)

@@ -116,7 +116,7 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 		double scaleFactor = Element.E_NEXT_SCALE_FACTOR;
 		SpinnerModel spnModel = new SpinnerNumberModel(1.0, 0.5, 5.0, 0.5);
 		spnScale = new JSpinner(spnModel);
-		lblIcon.setIcon(IconLoader.ico074);
+		lblIcon.setIcon(IconLoader.getIcon(74));
 		
 		if (scaleFactor < 0.5) scaleFactor = 0.5;
 

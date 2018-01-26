@@ -194,10 +194,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
             // set icon depending on OS ;-)
             String os = System.getProperty("os.name").toLowerCase();
-            setIconImage(IconLoader.ico074.getImage());
+            setIconImage(IconLoader.getIcon(74).getImage());
             if (os.contains("windows")) 
             {
-                setIconImage(IconLoader.ico074.getImage());
+                setIconImage(IconLoader.getIcon(74).getImage());
             } 
             else if (os.contains("mac")) 
             {
@@ -615,30 +615,30 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
 				// END KGU#452 2017-11-05
 				
-	            if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
-	            	try {
-	            		EventQueue.invokeAndWait(new Runnable() {
-	            			@Override
-	            			public void run() {
-	            				doButtons();
-	            				diagram.analyse();
-	            				diagram.resetDrawingInfo(true);
-	            				diagram.redraw();
-	            			}
-	            		});
-	            	} catch (InvocationTargetException e1) {
-	            		e1.printStackTrace();
-	            	} catch (InterruptedException e1) {
-	            		e1.printStackTrace();
-	            	}
-	            }
-	            else {
-	            	// Already in an event dispatcher thread
+				if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+					try {
+						EventQueue.invokeAndWait(new Runnable() {
+							@Override
+							public void run() {
+								doButtons();
+								diagram.analyse();
+								diagram.resetDrawingInfo(true);
+								diagram.redraw();
+							}
+						});
+					} catch (InvocationTargetException e1) {
+						e1.printStackTrace();
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+				}
+				else {
+					// Already in an event dispatcher thread
 					this.doButtons();
 					diagram.analyse();
 					diagram.resetDrawingInfo(true);
 					diagram.redraw();
-	            }
+				}
 			}
 
 			// START KGU#309 2016-12-15: Enh. #310 new saving options
@@ -1029,7 +1029,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
 					Menu.lblHint.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
-					IconLoader.ico024,
+					IconLoader.getIcon(24),
 					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
 			if (chosen == JOptionPane.OK_OPTION) {
 				Root.setCheck(26, true);

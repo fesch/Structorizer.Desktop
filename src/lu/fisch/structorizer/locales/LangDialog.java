@@ -69,7 +69,7 @@ public class LangDialog extends JDialog {
 
     public LangDialog() {
         super(dummyFrame);
-        dummyFrame.setIconImage(IconLoader.ico074.getImage());
+        dummyFrame.setIconImage(IconLoader.getIcon(74).getImage());
         this.repaint();
         initLang();
     }

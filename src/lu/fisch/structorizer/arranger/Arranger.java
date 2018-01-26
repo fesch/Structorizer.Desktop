@@ -258,7 +258,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         {
             // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
             //setIconImage(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage());
-            setIconImage(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage()); // NOI18N
+            setIconImage(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_48/105_arranger.png")).getImage()); // NOI18N
             // END KGU#287 2016-11-01
         }
         catch (Error error)
@@ -272,7 +272,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
-        btnExportPNG.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
+        btnExportPNG.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_24/093_export_picture.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnExportPNG.setText("PNG Export");
         btnExportPNG.setFocusable(false);
@@ -288,7 +288,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#110 2015-12-20: Enh. #62
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
-        btnSaveArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
+        btnSaveArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_24/003_Save.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnSaveArr.setText("Save List");
         btnSaveArr.setFocusable(false);
@@ -303,7 +303,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
-        btnLoadArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
+        btnLoadArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_24/002_Open.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnLoadArr.setText("Load List");
         btnLoadArr.setFocusable(false);
@@ -353,7 +353,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#117 2016-03-09: Enh. #77 - Mark a subroutine as test-covered
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
-        btnSetCovered.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        btnSetCovered.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_24/046_covered.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnSetCovered.setText("Set Covered");
         btnSetCovered.setToolTipText("Mark the routine diagram as test-covered for subroutine calls to it.");

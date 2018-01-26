@@ -155,10 +155,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // START KGU 2016-08-04: Issue #220
         // set icon depending on OS ;-)
         String os = System.getProperty("os.name").toLowerCase();
-        setIconImage(IconLoader.ico074.getImage());
+        setIconImage(IconLoader.getIcon(74).getImage());
         /*if (os.indexOf("windows") != -1) 
         {
-            setIconImage(IconLoader.ico074.getImage());
+            setIconImage(IconLoader.getIcon(74).getImage());
         } 
         else*/
         if (os.indexOf("mac") != -1) 

@@ -487,7 +487,7 @@ public class Parallel extends Element
     @Override
     public ImageIcon getIcon()
     {
-    	return IconLoader.ico091;
+    	return IconLoader.getIcon(91);
     }
     // END KGU#122 2016-01-03
 
