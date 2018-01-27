@@ -272,7 +272,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
-        btnExportPNG.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_24/093_export_picture.png"))); // NOI18N
+        btnExportPNG.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_24/093_picture_export.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnExportPNG.setText("PNG Export");
         btnExportPNG.setFocusable(false);
