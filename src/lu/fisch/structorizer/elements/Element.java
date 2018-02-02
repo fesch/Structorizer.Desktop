@@ -88,6 +88,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.10.02      Enh. #423: Method extractDeclarationsFromList() and regex mechanisms revised
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: Method access modifications to support hiding of declarations
  *      Kay Gürtzig     2018.01.21      Enh. #490: Methods for replacement of DiagramController aliases
+ *      Kay Gürtzig     2018.02.02      Bugfix #501: Methods setAliasText() corrected (Case and Parallel elements)
  *
  ******************************************************************************************************
  *
@@ -198,7 +199,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.27-05";
+	public static String E_VERSION = "3.27-06";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -984,10 +985,16 @@ public abstract class Element {
 	public void setAliasText(StringList aliasText)
 	{
 		if (Element.E_APPLY_ALIASES) {
-			text.setText(Element.replaceControllerAliases(aliasText.getText(), false, false));
+			// START KGU#488 2018-02-02: Bugfix #501 - We must not undermine the effect of overriding of setText()!
+			//text.setText(Element.replaceControllerAliases(aliasText.getText(), false, false));
+			this.setText(Element.replaceControllerAliases(aliasText.getText(), false, false));
+			// END KGU#488 2018-01-02
 		}
 		else {
-			text = aliasText;
+			// START KGU#488 2018-02-02: Bugfix #501 - We must not undermine the effect of overriding of setText()!
+			//text = aliasText;
+			this.setText(aliasText);
+			// END KGU#488 2018-01-02
 		}
 	}
 	
@@ -1006,7 +1013,10 @@ public abstract class Element {
 			this.setText(Element.replaceControllerAliases(aliasText, false, false));
 		}
 		else {
-			text.setText(aliasText);
+			// START KGU#488 2018-02-02: Bugfix #501 - We must not undermine the effect of overriding of setText()!
+			//text.setText(aliasText);
+			this.setText(aliasText);
+			// END KGU#488 2018-02-02
 		}
 	}
 
