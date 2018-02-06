@@ -267,7 +267,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	
 	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
     protected final JPopupMenu popupIndex = new JPopupMenu();
-    protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.getIcon(74));
+    protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.getIcon(0));
     protected final JMenuItem popupIndexSave = new JMenuItem("Save changes", IconLoader.getIcon(3));
     protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(45));
     protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.getIcon(46));

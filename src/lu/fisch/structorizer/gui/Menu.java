@@ -661,7 +661,7 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#354 2017-03-14
 
 		// START KGU#386 2017-04-26
-		addPluginMenuItems(menuFileImport, PluginType.IMPORTER, IconLoader.getIcon(74));
+		addPluginMenuItems(menuFileImport, PluginType.IMPORTER, IconLoader.getIcon(0));
 		// END KGU#386 2017-04-26
 
 		menuFile.add(menuFileExport);
@@ -1625,7 +1625,7 @@ public class Menu extends LangMenuBar implements NSDController
 			for(int j = 0; j < diagram.recentFiles.size(); ++j)
 			{
 				final String nextFile = (String) diagram.recentFiles.get(j);
-				JMenuItem mi = new JMenuItem(nextFile, IconLoader.getIcon(74));
+				JMenuItem mi = new JMenuItem(nextFile, IconLoader.getIcon(0));
 				// START KGU#316 2016-12-28: Enh. #290/#318
 				//mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
 				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNsdOrArr(nextFile); doButtons(); } } );

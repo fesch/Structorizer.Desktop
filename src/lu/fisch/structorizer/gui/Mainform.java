@@ -194,10 +194,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
             // set icon depending on OS ;-)
             String os = System.getProperty("os.name").toLowerCase();
-            setIconImage(IconLoader.getIcon(74).getImage());
+            setIconImage(IconLoader.getIcon(0).getImage());
             if (os.contains("windows")) 
             {
-                setIconImage(IconLoader.getIcon(74).getImage());
+                setIconImage(IconLoader.getIcon(0).getImage());
             } 
             else if (os.contains("mac")) 
             {

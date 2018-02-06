@@ -62,6 +62,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.04      New icon 092_SaveAs
  *      Kay Gürtzig     2018.01.18      Issue #4: New icons 032_export, 086_properties, 087_code, 088_picture
  *      Kay Gürtzig     2018.01.25      Issue #4: Enumerable icon fields converted into an array (ico011 --> getIcon(11))
+ *      Kay Gürtzig     2018.02.06      Issue #4: Extra factor in getIconImage() for e.g. Arranger icons
  *
  ******************************************************************************************************
  *
@@ -86,7 +87,7 @@ public class IconLoader {
 	
 	// START KGU#486 2018-01-24: Issue #4 - new icon file retrieval mechanism
 	private static final String[] ICON_FILES = {
-			null,
+			"000_structorizer.png",	// former 074_nsd.png, structorizer.png, and structorizer48.png
 			"001_New.png",
 			"002_Open.png",
 			"003_Save.png",
@@ -117,7 +118,7 @@ public class IconLoader {
 			"028_poorTurtle.png",
 			"029_index.png",
 			"030_function_green.png",
-			"031_make_copy.png",
+			"031_palette.png",
 			"032_export.png",
 			"033_font_up.png",
 			"034_font_down.png",
@@ -132,7 +133,7 @@ public class IconLoader {
 			"043_paste.png",
 			"044_cut.png",
 			"045_remove.png",
-			"046_covered.png",
+			"046_covered.png",	// for Arranger
 			"047_casebefore.png",
 			"048_caseafter.png",
 			"049_callbefore.png",
@@ -160,7 +161,7 @@ public class IconLoader {
 			"071_include.png",
 			"072_include_green.png",
 			"073_binoculars.png",
-			"074_nsd.png",
+			null,	// 74, was "074_nsd.png" --> "000_structorizer.png"
 			"075_beginner.png",
 			"076_latex.png",
 			"077_bubble.png",
@@ -179,15 +180,15 @@ public class IconLoader {
 			"090_paraBefore.png",
 			"091_conv_para.png",
 			"092_SaveAs.png",
-			"093_picture_export.png",
+			"093_picture_export.png",	// for Arranger
 			null,	// 94
 			null,	// 95
 			null,	// 96
 			null,	// 97
 			null,	// 98
-			null,	// 99
-			"100_diagram_drop.png",	// not used
-			"101_diagram_new.png",	// not used
+			"099_pin_blue.png",	// for Arranger
+			"100_diagram_drop.png", // for Arranger
+			"101_diagram_new.png",	// for Arranger
 			"102_switch.png",
 			"103_breakpt.png",
 			"104_nobreakpt.png",
@@ -199,7 +200,7 @@ public class IconLoader {
 			"110_help.png",
 			"111_c_plus_t.png",
 			"112_stopwatch.png",
-			"113_translater.png",
+			"113_translator.png",
 			"114_down.png",
 			"115_up.png",
 	};
@@ -210,7 +211,7 @@ public class IconLoader {
 			32,
 			48,
 			64
-			// The sizes 128 and 256 are only for design purposes, they would unnecessarily inflate the jar
+			// The sizes 128 and 256 are only for design purposes, they would unnecessarily inflate the JAR
 	};
 	
 	/** Array of available numbered icons with lazy initialization (replaces ico001, ico002 etc.) */
@@ -219,9 +220,12 @@ public class IconLoader {
 
 	// Icons
 	public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
-    // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+	// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 	//public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
-	public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+	// START KGU#486 2018-02-06: Issue #4 (Icon redesign)
+	//public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+	public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons_48/000_structorizer.png"));
+	// END KGU#486 2018-02-06
 	// END KGU#287 2016-11-02
 	
 //	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
@@ -434,7 +438,10 @@ public class IconLoader {
 	{
 		scaleFactor = scale;
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
-		icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+		// START KGU#486 2018-02-06: Issue #4 (icon redesign)
+		//icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+		icoNSD48 = getIconImage(getURI(from+"icons_48/000_structorizer.png"));
+		// END KGU#486 2018-02-06
 		// END KGU#287 2016-11-02
 
 //		ico001 = getIconImage(getURI(from+"icons/001_New.png"));
@@ -623,117 +630,137 @@ public class IconLoader {
 		// END KGU#242 2016-09-05
 	}
 
-    /**
-     * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
-     * for the currently specified scale.
-     * @param url - the source URL for the icon file.
-     * @return the retrieved or scaled ImageIco
-     * @see #getIcon(int)
-     * @see #setScaleFactor(double)
-     */
-    public static ImageIcon getIconImage(String fileName)
-    {
-    	System.out.println("getIconImage(\"" + fileName + "\")");
-    	// First we fetch the base icon (size 16 pixels = scalefactor 1)
-    	ImageIcon ii = new ImageIcon(getURI(from + "icons/" + fileName));
-    	// We coerce the scale factor to multiples of 0.5 and compute the wanted size
-    	long pixels = 8 * Math.round(scaleFactor * 2);
-    	int size = 16;
-    	double factor = 1.0 * pixels / size;
-    	java.net.URL foundURL = null;
-    	for (int i = 1; size < pixels && i < ICON_SIZES.length; i++) {
-    		size = ICON_SIZES[i];
+	/**
+	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
+	 * for the currently specified scale.
+	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders.
+	 * @return the retrieved or scaled ImageIco
+	 * @see #getIcon(int)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIconImage(String fileName)
+	// START KGU#486 2018-02-06: Issue #4 new opportunity to scecify an extra factor
+	{
+		return getIconImage(fileName, 1.0);
+	}
+	/**
+	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
+	 * for the currently specified scale.
+	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders;
+	 * @param extraFactor - additional (product-internal) scaling factor
+	 * @return the retrieved or scaled ImageIco
+	 * @see #getIcon(int)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIconImage(String fileName, double extraFactor)
+	// END KGU#486 2018-02-06
+	{
+		System.out.println("getIconImage(\"" + fileName + "\")");
+		// First we fetch the base icon (size 16 pixels = scalefactor 1)
+		ImageIcon ii = new ImageIcon(getURI(from + "icons/" + fileName));
+		// We coerce the scale factor to multiples of 0.5 and compute the wanted size
+		long pixels = 8 * Math.round(scaleFactor * extraFactor * 2);
+		int size = 16;
+		double factor = 1.0 * pixels / size;
+		java.net.URL roundURL = null;
+		java.net.URL largestURL = null;
+		double minFactor = factor;
+		for (int i = 1; i < ICON_SIZES.length && ICON_SIZES[i] <= pixels; i++) {
+			size = ICON_SIZES[i];
 			java.net.URL url = getURI(from + "icons_" + size + "/" + fileName);
 			if (url != null) {
+				largestURL = url;
+				minFactor = 1.0 * pixels / size;
 				// If he file can be scaled with an itegral factor, we'll cache it
 				if (pixels % size == 0) { 
-					foundURL = url;
+					roundURL = url;
 					factor = pixels / size;
 				}
-    		}
-    	}
-    	if (foundURL != null) {
-    		// Obviously we found a better file than the base icon file
-    		System.out.println("loading icon " + foundURL);
-    		try {
-    			ii = new ImageIcon(foundURL);
-    		}
-    		catch (Exception ex) {
-    			System.err.println(ex.toString());
-    			ex.printStackTrace();
-    		}
-    	}
-    	else {
-    		factor = scaleFactor;
-    	}
-        return scale(ii, factor);
-    }
-    
-        /**
-         * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
-         * for the currently specified scale.
-         * @param url - the source URL for the icon file.
-         * @return
-         * @see #getIcon(int)
-         * @see #setScaleFactor(double)
-         */
-        public static ImageIcon getIconImage(java.net.URL url)
-        {
-            ImageIcon ii = new ImageIcon(url);
-            ii = scale(ii, scaleFactor);
-            return ii;
-        }
-        
-        // START KGU 2016-09-06
-        public static ImageIcon getLocaleIconImage(String localeName)
-        {
-        	ImageIcon ii = icoLocales.get(localeName);
-        	if (ii == null && Locales.isNamedLocale(localeName))
-        	{
-        		// Already comprises scaling...
-        		ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
-        	}
-        	return ii;
-        }
-        // END KGU 2016-09-06
+			}
+		}
+		if (roundURL != null && factor <= 3) {
+			largestURL = roundURL;
+		}
+		else if (largestURL != null /*&& (minFactor - Math.floor(minFactor)) < 0.3*/) {
+			factor = minFactor; //Math.floor(minFactor);
+		}
+		else {
+			factor = scaleFactor * extraFactor;
+		}
+		if (largestURL != null) {
+			ii = new ImageIcon(largestURL);
+		}
+		return scale(ii, factor);
+	}
 
-		/**
-         * Returns an ImageIcon version of src, which is magnified by length factor this.scaleFactor
-         * @param src - the source icon
-         * @param factor TODO
-         * @return the magnified (or diminished) icon
-         */
-        private static final ImageIcon scale(ImageIcon src, double factor)
-        {
-            //System.out.println(scaleFactor);
-            if (factor > 1)
-            {
-                int w = (int)(factor * src.getIconWidth());
-                int h = (int)(factor * src.getIconHeight());
-                return scaleTo(src, w, h);
-            }
-            else return src;
-        }
+	/**
+	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
+	 * for the currently specified scale.
+	 * @param url - the source URL for the icon file.
+	 * @return
+	 * @see #getIcon(int)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIconImage(java.net.URL url)
+	{
+		ImageIcon ii = new ImageIcon(url);
+		ii = scale(ii, scaleFactor);
+		return ii;
+	}
+
+	// START KGU 2016-09-06
+	public static ImageIcon getLocaleIconImage(String localeName)
+	{
+		ImageIcon ii = icoLocales.get(localeName);
+		if (ii == null && Locales.isNamedLocale(localeName))
+		{
+			// Already comprises scaling...
+			ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
+		}
+		return ii;
+	}
+	// END KGU 2016-09-06
+
+	/**
+	 * Returns an ImageIcon version of src, which is magnified by length factor
+	 * {@code factor}. Uses method {@link #scaleTo(ImageIcon, int, int)}.
+	 * @param src - the source icon
+	 * @param factor - the magnification factor (values < 1 ignored)
+	 * @return the magnified icon
+	 * @see #scaleTo(ImageIcon, int, int)
+	 */
+	public static final ImageIcon scale(ImageIcon src, double factor)
+	{
+		//System.out.println(scaleFactor);
+		if (factor > 1)
+		{
+			int w = (int)(factor * src.getIconWidth());
+			int h = (int)(factor * src.getIconHeight());
+			return scaleTo(src, w, h);
+		}
+		else return src;
+	}
 
 
-        /**
-         * Returns an ImageIcon version of src, which is magnified (or diminished to the
-         * given width and height
-         * @param src - the source icon
-         * @param width - the target icon width
-         * @param height - the target icon height
-         * @return the magnified (or diminished) icon
-         */
-        public static final ImageIcon scaleTo(ImageIcon src, int width, int height)
-        {
-            //System.out.println(scaleFactor);
-        	int type = BufferedImage.TYPE_INT_ARGB;
-        	BufferedImage dst = new BufferedImage(width, height, type);
-        	Graphics2D g2 = dst.createGraphics();
-        	g2.drawImage(src.getImage(), 0, 0, width, height, null);
-        	g2.dispose();
-        	return new ImageIcon(dst);
-        }
+	/**
+	 * Returns an ImageIcon version of src, which is magnified (or diminished) to the
+	 * given width and height
+	 * @param src - the source icon
+	 * @param width - the target icon width
+	 * @param height - the target icon height
+	 * @return the magnified (or diminished) icon
+	 * @see #scale(ImageIcon, double)
+	 */
+	public static final ImageIcon scaleTo(ImageIcon src, int width, int height)
+	{
+		//System.out.println(scaleFactor);
+		int type = BufferedImage.TYPE_INT_ARGB;
+		BufferedImage dst = new BufferedImage(width, height, type);
+		Graphics2D g2 = dst.createGraphics();
+		g2.drawImage(src.getImage(), 0, 0, width, height, null);
+		g2.dispose();
+		return new ImageIcon(dst);
+	}
 
 	public static java.net.URL getURI(String _filename)
 	{

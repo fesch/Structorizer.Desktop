@@ -310,7 +310,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	{
 		// FIXME: There should rather be buttons FindAll, FindNext, FindPrev, ReplaceNext, ReplaceAll
 
-		this.setIconImage(IconLoader.getIcon(74).getImage());
+		this.setIconImage(IconLoader.getIcon(0).getImage());
 		Ini ini = Ini.getInstance();
 		try {
 			ini.load();

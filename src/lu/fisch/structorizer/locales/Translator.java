@@ -155,10 +155,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // START KGU 2016-08-04: Issue #220
         // set icon depending on OS ;-)
         String os = System.getProperty("os.name").toLowerCase();
-        setIconImage(IconLoader.getIcon(74).getImage());
+        setIconImage(IconLoader.getIcon(0).getImage());
         /*if (os.indexOf("windows") != -1) 
         {
-            setIconImage(IconLoader.getIcon(74).getImage());
+            setIconImage(IconLoader.getIcon(0).getImage());
         } 
         else*/
         if (os.indexOf("mac") != -1) 
@@ -726,7 +726,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
         //button_save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
-        button_save.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
+        // START KGU#486 2018-02-06: Issue #4
+        //button_save.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
+        button_save.setIcon(IconLoader.getIcon(3)); // NOI18N
+        // END KGU#486 2018-02-06
         // END KGU#287 2016-11-02
         button_save.setToolTipText("Save changes");
         button_save.addActionListener(new java.awt.event.ActionListener() {
@@ -754,7 +757,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
         //button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
-        button_preview.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
+        // START KGU#486 2018-02-06: Issue #4 Eye icon as preview here
+        //button_preview.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
+        button_preview.setIcon(IconLoader.getIcon(17)); // NOI18N
+        // END KGU#486 2018-02-06
         // END KGU#287 2016-11-02
         button_preview.setToolTipText("Preview in Structorizer");
         button_preview.addActionListener(new java.awt.event.ActionListener() {
