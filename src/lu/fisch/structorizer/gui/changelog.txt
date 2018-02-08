@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-06 (2018-02-02)
+Current development version 3.27-07 (2018-02-08)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -53,6 +53,9 @@ Current development version 3.27-06 (2018-02-02)
 - 05: Issue #484: Layout of Export/Import Options dialogs fixed [Simon Sobisch]2
 - 05: Bugfix #498: Preliminary evaluation check of REPEAT conditions dropped <2>
 - 06: Bugfix #501: Creation/editing of CASE and PARALLEL elements failed <2>
+- 07: Bugfix #503: Defective pre-processing of string comparisons fixed <2>
+- 07: Issue #4: Icon scaling revised, many icons renewed [rugk, S. Sobisch]2
+- 07: Issue #81: Plugin icons (e.g. for import) weren't properly scaled <2>
 
 Version 3.27 (2017-10-30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

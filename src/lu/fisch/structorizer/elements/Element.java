@@ -199,7 +199,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.27-06";
+	public static String E_VERSION = "3.27-07";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -3188,7 +3188,7 @@ public abstract class Element {
      */
     public ImageIcon getIcon()
     {
-    	return IconLoader.ico057;
+    	return IconLoader.getIcon(57);
     }
     // END KGU#122 2016-01-03
 

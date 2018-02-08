@@ -235,7 +235,7 @@ public class Repeat extends Element implements ILoop {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.ico063;
+		return IconLoader.getIcon(63);
 	}
 	// END KGU#122 2016-01-03
 

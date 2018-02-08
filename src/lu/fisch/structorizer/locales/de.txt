@@ -241,7 +241,7 @@ Menu.menuDiagramExpand.text=Erweitern
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
-Menu.menuDiagramTypeInclude.text=@p-Diagramm
+Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
@@ -545,8 +545,8 @@ Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements n
 // style
 Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=@o-Diagramm (gerundete Ecken).
-Editor.btnProgram.tooltip=@n-Diagram (kantige Ecken).
-Editor.btnInclude.tooltip=@p-Diagram (2 abgeschrägte Ecken).
+Editor.btnProgram.tooltip=@n-Diagramm (kantige Ecken).
+Editor.btnInclude.tooltip=@p-Diagramm (2 abgeschrägte Ecken).
 // editing
 Editor.btnEdit.tooltip=Bearbeiten des ausgewählten Elements.
 Editor.btnDelete.tooltip=Löschen des ausgewählten Elements.
@@ -1044,9 +1044,10 @@ DiagramControllerAliases.msgConflictsFound.text=Die Änderungen können nicht ak
 GUIScaleChooser.title=GUI-Skalierung
 GUIScaleChooser.txtComment.text=Dies bietet eine Voreinstellung mit Vorschau.\nEine unmittelbare Re-Skalierung der offenen Anwendung ist nicht möglich.\nDer Skalierungsfaktor wird erst beim nächsten Structorizer-Start wirksam.
 GUIScaleChooser.lblSpinner.text=Skalierungsfaktor
-GUIScaleChooser.lblTest.text=Voransicht Schriftgröße
-GUIScaleChooser.lblIcon.text=Voransicht Icon-Größe
-GUIScaleChooser.chkTest.text=Voransicht Optionselement
+GUIScaleChooser.pnlTest.border=Voransicht
+GUIScaleChooser.lblTest.text=Schriftgröße
+GUIScaleChooser.lblIcon.text=Icon-Größe
+GUIScaleChooser.chkTest.text=Optionselement (testen!)
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
 

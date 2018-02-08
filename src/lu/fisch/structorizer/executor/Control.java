@@ -176,7 +176,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     private void initComponents() {
 
         // START KGU#89 2015-11-25
-        this.setIconImage(IconLoader.ico004.getImage());
+        this.setIconImage(IconLoader.getIcon(4).getImage());
         // END KGU#89 2015-11-25
         // START KGU 2017-10-08
         this.setTitle("Executor Control");
@@ -368,7 +368,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // END KGU#269 2016-10-05
         });
         // START KGU#443 2017-10-16: Enh. #439
-        int pulldownWidth = IconLoader.ico080.getIconWidth();
+        int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
         tblVar.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
         tblVar.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
         tblVar.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
@@ -835,7 +835,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         varUpdates.clear();
         // END KGU#68 2016-10-07
         // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
-        ImageIcon pulldownIcon = IconLoader.ico080;
+        ImageIcon pulldownIcon = IconLoader.getIcon(80);
         // END KGU#443 2016-10-16
         // START KGU#274 2016-10-08: Issue #264 Reduce the ArrayIndexOutOfBoundsException rate
         //while(tm.getRowCount()>0) tm.removeRow(0);

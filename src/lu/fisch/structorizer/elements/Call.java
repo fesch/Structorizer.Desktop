@@ -192,7 +192,7 @@ public class Call extends Instruction {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.ico058;
+		return IconLoader.getIcon(58);
 	}
 	// END KGU#122 2016-01-03
 

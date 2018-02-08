@@ -177,7 +177,7 @@ public class While extends Element implements ILoop {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.ico062;
+		return IconLoader.getIcon(62);
 	}
 	// END KGU#122 2016-01-03
 	

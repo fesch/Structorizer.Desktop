@@ -172,8 +172,8 @@ public class TranslatorFindDialog extends JDialog {
 			}
 		});
 		cbbPattern.addPopupMenuListener(cmbPopupListener);
-		btnNext.setIcon(IconLoader.ico114);
-		btnPrev.setIcon(IconLoader.ico115);
+		btnNext.setIcon(IconLoader.getIcon(114));
+		btnPrev.setIcon(IconLoader.getIcon(115));
 		btnNext.addActionListener(buttonListener);
 		btnPrev.addActionListener(buttonListener);
 		btnNext.addKeyListener(keyListener);
