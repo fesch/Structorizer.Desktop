@@ -112,8 +112,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGU#213 2016-08-01
     
     // START KGU#294 2016-11-22: Enh. #284
-    protected final JButton btnFontUp = new JButton(IconLoader.ico033); 
-    protected final JButton btnFontDown = new JButton(IconLoader.ico034);
+    protected final JButton btnFontUp = new JButton(IconLoader.getIcon(33)); 
+    protected final JButton btnFontDown = new JButton(IconLoader.getIcon(34));
     // END KGI#294 2016-11-22
 
     // START KGU 2015-10-14: Additional information for data-specific title translation

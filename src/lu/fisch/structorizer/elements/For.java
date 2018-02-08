@@ -297,9 +297,9 @@ public class For extends Element implements ILoop {
 	{
 		if (Element.E_DIN)
 		{
-			return IconLoader.ico062;
+			return IconLoader.getIcon(62);
 		}
-		return IconLoader.ico061;
+		return IconLoader.getIcon(61);
 	}
 	// END KGU#122 2016-01-03
 

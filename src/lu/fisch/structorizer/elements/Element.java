@@ -3188,7 +3188,7 @@ public abstract class Element {
      */
     public ImageIcon getIcon()
     {
-    	return IconLoader.ico057;
+    	return IconLoader.getIcon(57);
     }
     // END KGU#122 2016-01-03
 

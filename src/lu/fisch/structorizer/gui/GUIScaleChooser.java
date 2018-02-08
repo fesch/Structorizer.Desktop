@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.01.11      First Issue
  *      Kay Gürtzig     2017.05.09      Issue #400: keyListener at all controls, initial focus to spinner
+ *      Kay Gürtzig     2018.02.06      Issue #4/#81: Icon scaling preview adapted 
  *      Kay Gürtzig     2018.02.08      Put a titled border around the preview controls 
  *
  ******************************************************************************************************
@@ -76,7 +77,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import lu.fisch.structorizer.elements.Element;
-
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 /**
@@ -118,7 +119,7 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 		double scaleFactor = Element.E_NEXT_SCALE_FACTOR;
 		SpinnerModel spnModel = new SpinnerNumberModel(1.0, 1.0, 5.0, 0.5);
 		spnScale = new JSpinner(spnModel);
-		lblIcon.setIcon(IconLoader.ico074);
+		lblIcon.setIcon(IconLoader.getIcon(0));
 		
 		if (scaleFactor < 0.5) scaleFactor = 0.5;
 
@@ -339,11 +340,15 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 		}
 
 		scaleFactor = Math.max(1.0, scaleFactor);
-		URL myUrl = IconLoader.getURI("icons/074_nsd.png");
-		ImageIcon ii = new ImageIcon(myUrl);
-		int w = (int)(scaleFactor * ii.getIconWidth());
-		int h = (int)(scaleFactor * ii.getIconHeight());
-		lblIcon.setIcon(IconLoader.scaleTo(ii, w, h));
+		// START KGU#486 2018-02-06:Issue #4
+		//URL myUrl = IconLoader.getURI("icons/074_nsd.png");
+		//ImageIcon ii = new ImageIcon(myUrl);
+		//int w = (int)(scaleFactor * ii.getIconWidth());
+		//int h = (int)(scaleFactor * ii.getIconHeight());
+		//lblIcon.setIcon(IconLoader.scaleTo(ii, w, h));
+		double scale = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		lblIcon.setIcon(IconLoader.getIconImage("000_structorizer.png", scaleFactor / scale));
+		// END KGU#486 2018-02-06
         
         pack();
 	}

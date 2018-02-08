@@ -571,7 +571,7 @@ public class Root extends Element {
 					message, 
 					Menu.ttlGuidedTours.getText(), 
 					JOptionPane.INFORMATION_MESSAGE,
-					IconLoader.ico024);
+					IconLoader.getIcon(24));
 		}
 		return checkNo;
 	}
@@ -1162,11 +1162,11 @@ public class Root extends Element {
     {
     	switch (this.diagrType) {
     	case DT_INCL:
-    		return IconLoader.ico071;
+    		return IconLoader.getIcon(71);
     	case DT_SUB:
-    		return IconLoader.ico021;
+    		return IconLoader.getIcon(21);
     	case DT_MAIN:
-    		return IconLoader.ico022;
+    		return IconLoader.getIcon(22);
     	}
     	return super.getIcon();
     }
@@ -4745,21 +4745,21 @@ public class Root extends Element {
         // END KGU#61 2016-03-22
         {
             //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
-        	// START KGU#456/KGU#457 2017-11-04: Enh. #452, #454 - charm initiative
+            // START KGU#456/KGU#457 2017-11-04: Enh. #452, #454 - charm initiative
             //error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
-        	if (programName.equals("???") && this.children.getSize() == 0) {
-        		// "What is your algorithm to do? Replace «???» with a good name for it!"
+            if (programName.equals("???") && this.children.getSize() == 0) {
+                // "What is your algorithm to do? Replace «???» with a good name for it!"
                 error  = new DetectedError(errorMsg(Menu.hint07_1, programName), this);
-        	}
-        	else if (programName.contains(" ") && Function.testIdentifier(programName.replace(' ', '_'), null)) {
-        		// "Program names should not contain spaces, better place underscores between the words:"
-        		error  = new DetectedError(errorMsg(Menu.error07_4, programName.replace(' ', '_')), this);        		
-        	}
-        	else {
-        		// "«"+programName+"» is not a valid name for a program or function!"
-        		error  = new DetectedError(errorMsg(Menu.error07_1, programName), this);
-        	}
-        	hasValidName = false;
+            }
+            else if (programName.contains(" ") && Function.testIdentifier(programName.replace(' ', '_'), null)) {
+                // "Program names should not contain spaces, better place underscores between the words:"
+                error  = new DetectedError(errorMsg(Menu.error07_4, programName.replace(' ', '_')), this);        		
+            }
+            else {
+                // "«"+programName+"» is not a valid name for a program or function!"
+                error  = new DetectedError(errorMsg(Menu.error07_1, programName), this);
+            }
+            hasValidName = false;
             // END KGU#456/KGU#457 2017-11-04
             addError(errors, error, 7);
         }

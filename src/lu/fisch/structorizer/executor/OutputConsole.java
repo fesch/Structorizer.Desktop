@@ -106,16 +106,16 @@ public class OutputConsole extends LangFrame implements ActionListener {
     	
     	setDefaultCloseOperation(javax.swing.WindowConstants.HIDE_ON_CLOSE);
         setTitle("Structorizer Output Console");
-    	this.setIconImage(IconLoader.ico004.getImage());
+    	this.setIconImage(IconLoader.getIcon(4).getImage());
     	
     	// START KGU#279 2016-10-11: Enh. #268: Font selection opportunity
     	menu = new JMenu("Properties");
-    	menuFont = new JMenuItem("Font ...",IconLoader.ico023);
+    	menuFont = new JMenuItem("Font ...",IconLoader.getIcon(23));
     	menuFont.addActionListener(this);
-    	menuFontUp = new JMenuItem("Enlarge font", IconLoader.ico033);
+    	menuFontUp = new JMenuItem("Enlarge font", IconLoader.getIcon(33));
     	menuFontUp.addActionListener(this);
     	menuFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK));
-    	menuFontDown = new JMenuItem("Diminish font", IconLoader.ico034);
+    	menuFontDown = new JMenuItem("Diminish font", IconLoader.getIcon(34));
     	menuFontDown.addActionListener(this);
     	menuFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK));
     	
