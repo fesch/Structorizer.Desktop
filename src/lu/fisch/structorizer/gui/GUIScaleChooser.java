@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.11      First Issue
  *      Kay Gürtzig     2017.05.09      Issue #400: keyListener at all controls, initial focus to spinner
  *      Kay Gürtzig     2018.02.06      Issue #4/#81: Icon scaling preview adapted 
+ *      Kay Gürtzig     2018.02.08      Put a titled border around the preview controls 
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,7 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -94,9 +96,9 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 	protected JLabel lblDummy = new JLabel("");
 	protected JSpinner spnScale = null;
 	protected JTextArea txtComment = new JTextArea("This is just a preview. A hot scaling of the entire application isn't possible.\nThe scale factor will only be active on next Structorizer start.");
-	protected JLabel lblIcon = new JLabel("Icon Preview");
-	protected JLabel lblTest = new JLabel("Font Preview");
-	protected JCheckBox chkTest = new JCheckBox("CheckBox Preview");
+	protected JLabel lblIcon = new JLabel("Icon (example)");
+	protected JLabel lblTest = new JLabel("Font");
+	protected JCheckBox chkTest = new JCheckBox("CheckBox (check this!)");
 	protected JPanel buttonBar = new JPanel();
 	protected JButton btnOK = new JButton("OK");
 
@@ -115,7 +117,7 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 	
 	private void initComponents() {
 		double scaleFactor = Element.E_NEXT_SCALE_FACTOR;
-		SpinnerModel spnModel = new SpinnerNumberModel(1.0, 0.5, 5.0, 0.5);
+		SpinnerModel spnModel = new SpinnerNumberModel(1.0, 1.0, 5.0, 0.5);
 		spnScale = new JSpinner(spnModel);
 		lblIcon.setIcon(IconLoader.getIcon(0));
 		
@@ -193,6 +195,10 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 		
 					//======== pnlTest ========
 					{
+						// START KGU 2018-02-08: panel border allows to shorten the labels
+						// FIXME: How do I get insets working here (CompundBorder doesn't help)?
+						pnlTest.setBorder(new TitledBorder("Preview"));
+						// END KGU 2018-02-08
 						pnlTest.setLayout(new GridLayout(0, 1));
 						pnlTest.add(lblTest);
 						pnlTest.add(lblIcon);
@@ -270,6 +276,9 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 	}
 
 	@Override
+	/**
+	 * Change listener method for the spinner
+	 */
 	public void stateChanged(ChangeEvent evt) {
 		SpinnerModel numberModel = spnScale.getModel();
 		double scaleFactor = (Double)numberModel.getValue();
