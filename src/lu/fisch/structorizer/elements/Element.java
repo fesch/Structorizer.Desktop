@@ -199,13 +199,13 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.27-07";
+	public static String E_VERSION = "3.27-08";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
-	"Export classes written and maintained by\n"+
+	"Export classes initially written by\n"+
 	" - Oberon: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - Perl: Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - KSH: Jan Peter Klippel <structorizer@xtux.org>\n"+
@@ -217,7 +217,7 @@ public abstract class Element {
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
 	"Import grammars and parsers written and maintained by\n"+
-	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>"+
+	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - COBOL: Simon Sobisch, Kay Gürtzig"+
 	"\n"+
 	"License setup and checking done by\n"+
@@ -279,9 +279,6 @@ public abstract class Element {
 	"\n"+
 	"Command interpreter provided by\n"+
 	" - Pat Niemeyer <pat@pat.net>\n"+
-	"\n"+
-	"Turtle icon designed by\n"+
-	" - rainie_billybear@yahoo.com <rainiew@cass.net>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
 
