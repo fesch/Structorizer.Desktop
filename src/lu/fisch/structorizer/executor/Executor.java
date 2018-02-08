@@ -148,6 +148,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.11.01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
  *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
+ *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
  *
  ******************************************************************************************************
  *
@@ -991,11 +992,34 @@ public class Executor implements Runnable
 	
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
+	/**
+	 * Unifies the operators, replaces math functions and certain built-in routines and
+	 * converts string comparisons.<br/>
+	 * NOTE: This method should NOT be called if {@code s} contains an entire instruction line
+	 * rather than just an expression - use {@code convert(s, false)} in such cases instead
+	 * nad make sure the {@link #convertStringComparison(String)} is called for the mere
+	 * expression part later on. 
+	 * @param s - the expression or instruction line to be pre-processed
+	 * @param convertComparisons - whether string comparisons are to be detected and rewritten
+	 * @return the converted string
+	 * @see #convert(String, boolean)
+	 * @see #convertStringComparison(String)
+	 * @see #unconvert(String)
+	 */
 	private String convert(String s)
 	{
 		return convert(s, true);
 	}
 	
+	/**
+	 * Unifies the operators, replaces math functions and certain built-in routines and
+	 * converts string comparisons if {@code convertComparisons} is true.<br/>
+	 * NOTE: Argument {@code convertComparisons} should not be true if {@code s} contains
+	 * an entire instruction line rather than just an expression! 
+	 * @param s - the expression or instruction line to be pre-processed
+	 * @param convertComparisons - whether string comparisons are to be detected and rewritten
+	 * @return the converted string
+	 */
 	private String convert(String s, boolean convertComparisons)
 	{
 		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
@@ -1116,7 +1140,8 @@ public class Executor implements Runnable
 
 		if (convertComparisons)
 		{
-			// FIXME: This should only be applied to an expression in s, not to an entire instruction line!
+			// This should only be applied to an expression in s, not to an entire instruction line!
+			// KGU#490 / bugfix #503: this is now to be ensured by the caller of convert()
 			s = convertStringComparison(s);
 		}
 
@@ -1127,6 +1152,8 @@ public class Executor implements Runnable
 	// START KGU#57 2015-11-07
 	private String convertStringComparison(String str)
 	{
+		// FIXME (#503): Instruction keywords like "OUTPUT" or "INPUT" should not actually occur here (but do)!
+		// FIXME (#503): Shouldn't we FIRST tokenize the expression and THEN look for operators!?
 //		Character chA = 'a';
 //		Character chB = 'a';
 //		System.out.println("Zeichen sind " + ((chA == chB) ? "" : "NICHT ") + "identisch!");
@@ -1143,8 +1170,11 @@ public class Executor implements Runnable
 		if (containsComparison)
 		// END KGU#76 2016-04-25
 		{
-			// We are looking for || operators and split the expression by them (if present) 
-			StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			// We are looking for || operators and split the expression by them (if present)
+			// START KGU#490 2018-02-07: Bugfix #503 - the regex precaution was wrong here
+			//StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			StringList exprs = StringList.explodeWithDelimiter(str, " || ");	// The delimiter is no regex here!!
+			// END KGU#490 2018-02-07
 			// Now we do the same with && operators
 			exprs = StringList.explodeWithDelimiter(exprs, " && ");
 			// Now we should have some atomic assertions, among them comparisons
@@ -1261,8 +1291,11 @@ public class Executor implements Runnable
 				} // for (int op = 0; op < eqOps.length; op++)
 				if (replaced)
 				{
-					// Compose the partial expressions and undo the regex escaping for the initial split
-					str = exprs.getLongString().replace(" \\|\\| ", " || ");
+					// START KGU#490 2018-02-07: Bugfix #503 - the regex escaping was wrong (see above)
+					//// Compose the partial expressions and undo the regex escaping for the initial split
+					//str = exprs.getLongString().replace(" \\|\\| ", " || ");
+					str = exprs.getLongString();
+					// END KGU#490 2018-02-07
 					str.replace("  ", " ");	// Get rid of multiple spaces
 				}
 			}
@@ -3163,6 +3196,10 @@ public class Executor implements Runnable
 					target = tokens.get(posLBrack-1);
 					if (posLBrack == 1) {
 						indexStr = tokens.concatenate(" ");
+						// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition#
+						// A string comparison in the index string  may be unlikely but not impossible
+						indexStr = this.convertStringComparison(indexStr);
+						// END KGU#490 2018-02-08
 						if (isConstant) {
 							throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
 						}
@@ -3984,7 +4021,7 @@ public class Executor implements Runnable
 				!context.returned && leave == 0)
 		// END KGU#77/KGU#78 2015-11-25
 		{
-			String cmd = sl.get(i);
+			String cmd = sl.get(i).trim();
 			// START KGU#388 2017-09-13: Enh. #423 We shouldn't do this for type definitions
 			//cmd = convert(cmd).trim();
 			// END KGU#388 2017-09-13
@@ -3997,12 +4034,39 @@ public class Executor implements Runnable
 //				}
 				// END KGU#271 2016-10-06
 				
+				// START KGU#490 2018-02-07: Bugfix #503 - we should first rule out input, output instructions, and JUMPs
+				//if (!Instruction.isTypeDefinition(cmd, context.dynTypeMap)) {
+				//	cmd = convert(cmd).trim();
+				// Input (keyword should only trigger this if positioned at line start)
+				if (cmd.matches(
+						this.getKeywordPattern(CodeParser.getKeyword("input")) + "([\\W].*|$)"))
+				{
+					trouble = tryInput(cmd);
+				}
+				// output (keyword should only trigger this if positioned at line start)
+				else if (cmd.matches(
+						this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
+				{
+					trouble = tryOutput(cmd);
+				}
+				// return statement
+				// The "return" keyword ought to be the first word of the instruction,
+				// comparison should not be case-sensitive while CodeParser.preReturn isn't fully configurable,
+				// but a separator would be fine...
+				else if (cmd.matches(
+						this.getKeywordPattern(CodeParser.getKeywordOrDefault("preReturn", "return")) + "([\\W].*|$)"))
+				{		 
+					trouble = tryReturn(cmd.trim());
+				}
+				else 
 				// START KGU#388 2017-09-13: Enh. #423 We shouldn't do this for type definitions
 				if (!Instruction.isTypeDefinition(cmd, context.dynTypeMap)) {
-					cmd = convert(cmd).trim();
+					cmd = convert(cmd, false).trim();	// Do the string comparison analysis after decomposition!
 				// END KGU#388 2017-09-13
+				// END KGU#490 2018-02-07
 
-					// START KGU#417 2017-06-30: Enh. #424 (Turtleizer functions introduced) 
+					// START KGU#417 2017-06-30: Enh. #424 (Turtleizer functions introduced)
+					// FIXME (KGU#490): Is this too early?
 					cmd = this.evaluateDiagramControllerFunctions(cmd);
 					// END KGU#417 2017-06-30
 
@@ -4015,34 +4079,35 @@ public class Executor implements Runnable
 						trouble = tryAssignment(cmd, element, i);
 					}
 					// input
-					// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
-					//else if (cmd.indexOf(CodeParser.input) >= 0)
-					else if (cmd.matches(
-							this.getKeywordPattern(CodeParser.getKeyword("input")) + "([\\W].*|$)"))
-						// END KGU#65 2015-11-04
-					{
-						trouble = tryInput(cmd);
-					}
-					// output
+					// START KGU#490 2018-02-07: Bugfix #503 - we should first rule out input, output instructions, and JUMPs
+					//// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
+					////else if (cmd.indexOf(CodeParser.input) >= 0)
+					//else if (cmd.matches(
+					//		this.getKeywordPattern(CodeParser.getKeyword("input")) + "([\\W].*|$)"))
+					//	// END KGU#65 2015-11-04
+					//{
+					//	trouble = tryInput(cmd);
+					//}
+					//// output
 					// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
 					//else if (cmd.indexOf(CodeParser.output) >= 0)
-					else if (cmd.matches(
-							this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
-						// END KGU#65 2015-11-04
-					{
-						trouble = tryOutput(cmd);
-					}
-					// return statement
-					// START KGU 2015-11-28: The "return" keyword ought to be the first word of the instruction,
-					// comparison should not be case-sensitive while CodeParser.preReturn isn't fully configurable,
-					// but a separator would be fine...
-					//else if (cmd.indexOf("return") >= 0)
-					else if (cmd.matches(
-							this.getKeywordPattern(CodeParser.getKeywordOrDefault("preReturn", "return")) + "([\\W].*|$)"))
-						// END KGU 2015-11-11
-					{		 
-						trouble = tryReturn(cmd.trim());
-					}
+					//else if (cmd.matches(
+					//		this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
+					//	// END KGU#65 2015-11-04
+					//{
+					//	trouble = tryOutput(cmd);
+					//}
+					//// return statement
+					//// START KGU 2015-11-28: The "return" keyword ought to be the first word of the instruction,
+					//// comparison should not be case-sensitive while CodeParser.preReturn isn't fully configurable,
+					//// but a separator would be fine...
+					////else if (cmd.indexOf("return") >= 0)
+					//else if (cmd.matches(
+					//		this.getKeywordPattern(CodeParser.getKeywordOrDefault("preReturn", "return")) + "([\\W].*|$)"))
+					//	// END KGU 2015-11-11
+					//{		 
+					//	trouble = tryReturn(cmd.trim());
+					//}
 					// START KGU#332 2017-01-17/19: Enh. #335 - tolerate a Pascal variable declaration
 					else if (cmd.matches("^var.*:.*")) {
 						// START KGU#388 2017-09-14: Enh. #423
@@ -4065,6 +4130,9 @@ public class Executor implements Runnable
 					// END KGU#332 2017-01-17/19
 					else
 					{
+						// START KGU#490 2018-02-08: Bugfix #503 - we haven't converted string comp any longer before
+						cmd = this.convertStringComparison(cmd);
+						// END KGU#490 2018-02-08
 						trouble = trySubroutine(cmd, element);
 					}
 					// START KGU#156 2016-03-11: Enh. #124
@@ -4144,7 +4212,10 @@ public class Executor implements Runnable
 		{
 			String cmd = sl.get(i);
 			// cmd=cmd.replace(":=", "<-");
-			cmd = convert(cmd);
+			// START KGU#490 2018-02-08: Bugfix #503 - postpone string comparison conversion 
+			//cmd = convert(cmd);
+			cmd = convert(cmd, !Instruction.isAssignment(cmd));
+			// END KGU#490 2018-02-08
 
 			try
 			{
@@ -4423,6 +4494,10 @@ public class Executor implements Runnable
 		int posAsgnOpr = tokens.indexOf("<-");
 		String leftSide = tokens.subSequence(0, posAsgnOpr).concatenate().trim();
 		tokens.remove(0, posAsgnOpr+1);
+		// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition#
+		// FIXME: this repeated tokenization is pretty ugly - we need a syntax tree...
+		tokens = Element.splitLexically(this.convertStringComparison(tokens.concatenate().trim()), true);
+		// END KGU#490 2018-02-08
 		// START KGU#388 2017-09-13: Enh. #423 support records
 		tokens.removeAll(" ");
 		// END KGU#388 2017-09-13
@@ -4628,6 +4703,10 @@ public class Executor implements Runnable
 			}
 		}
 		// END KGU#281 2016-10-12
+		// START KGU#490 2018-02-07: Bugfix #503 
+		in = this.evaluateDiagramControllerFunctions(convert(in).trim());
+		// END KGU#490 2018-02-07
+
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
 		if (in.isEmpty())
 		{
@@ -4763,6 +4842,9 @@ public class Executor implements Runnable
 		// KGU 2015-12-11: Instruction is supposed to start with the output keyword!
 		String out = cmd.substring(/*cmd.indexOf(CodeParser.output) +*/
 						CodeParser.getKeyword("output").trim().length()).trim();
+		// START KGU#490 2018-02-07: Bugfix #503 
+		out = this.evaluateDiagramControllerFunctions(convert(out).trim());
+		// END KGU#490 2018-02-07
 		String str = "";
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty output instruction
 		if (!out.isEmpty())
@@ -4869,6 +4951,9 @@ public class Executor implements Runnable
 		//	JOptionPane.showMessageDialog(diagram, s,
 		//			"Returned trouble", 0);
 		//}
+		// START KGU#490 2018-02-07: Bugfix #503 
+		out = this.evaluateDiagramControllerFunctions(convert(out).trim());
+		// END KGU#490 2018-02-07
 		Object resObj = null;
 		if (!out.isEmpty())
 		{
@@ -6365,7 +6450,15 @@ public class Executor implements Runnable
 		return valueRecord;
 	}
 	// END KGU#388 2017-09-13
-		
+	
+	/**
+	 * Against the suggestion of its name, just replaces "==" with "=" rather doing a
+	 * reverse {@link #convert(String)}.
+	 * @param s - the expression where Java equality operators are to be replaced by simple
+	 * equality signs for display. 
+	 * @return the "un-converted" string
+	 * @see #convert(String)
+	 */
 	private String unconvert(String s)
 	{
 		s = s.replace("==", "=");

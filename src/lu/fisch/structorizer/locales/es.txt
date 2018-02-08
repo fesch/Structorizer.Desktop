@@ -1045,9 +1045,10 @@ DiagramControllerAliases.msgConflictsFound.text=Hay conflictos entre signaturas,
 GUIScaleChooser.title=Calibración de interfaz gráfica
 GUIScaleChooser.txtComment.text=Solo ofrece preajuste con previsión. No es posible re-escalar la interfaz mientras operando.\nPara poner el factor de magificación en operación hay que rearrancar Structorizer.
 GUIScaleChooser.lblSpinner.text=Factor de magnificación
-GUIScaleChooser.lblTest.text=Previsión de texto
-GUIScaleChooser.lblIcon.text=Previsión de icono
-GUIScaleChooser.chkTest.text=Previsión de elemento opción
+GUIScaleChooser.pnlTest.border=Previsión
+GUIScaleChooser.lblTest.text=Texto
+GUIScaleChooser.lblIcon.text=Icono (ejemplo)
+GUIScaleChooser.chkTest.text=Elemento opción (¡pruébalo!)
 GUIScaleChooser.btnOK.text=Aceptar
 GUIScaleChooser.btnOK.tooltip=Aceptar los cambios.
 
