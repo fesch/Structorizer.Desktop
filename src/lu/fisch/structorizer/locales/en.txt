@@ -1041,9 +1041,10 @@ DiagramControllerAliases.msgConflictsFound.text=There are signature conflicts, c
 GUIScaleChooser.title=GUI Scale
 GUIScaleChooser.txtComment.text=This is just a preview. A hot scaling of the entire application isn't possible.\nThe scale factor will only be active on next Structorizer start.
 GUIScaleChooser.lblSpinner.text=Scale factor
-GUIScaleChooser.lblTest.text=Font Preview
-GUIScaleChooser.lblIcon.text=Icon Preview
-GUIScaleChooser.chkTest.text=CheckBox Preview
+GUIScaleChooser.pnlTest.border=Preview
+GUIScaleChooser.lblTest.text=Font
+GUIScaleChooser.lblIcon.text=Icon (example)
+GUIScaleChooser.chkTest.text=CheckBox (check this!)
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Validate your choice for next start.
 

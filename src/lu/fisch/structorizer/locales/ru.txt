@@ -980,6 +980,7 @@ ElementNamePreferences.btnOK.tooltip=
 GUIScaleChooser.title=
 GUIScaleChooser.txtComment.text=
 GUIScaleChooser.lblSpinner.text=
+GUIScaleChooser.pnlTest.border=
 GUIScaleChooser.lblTest.text=
 GUIScaleChooser.lblIcon.text=
 GUIScaleChooser.chkTest.text=

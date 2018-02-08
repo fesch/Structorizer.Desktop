@@ -1044,9 +1044,10 @@ DiagramControllerAliases.msgConflictsFound.text=Die Änderungen können nicht ak
 GUIScaleChooser.title=GUI-Skalierung
 GUIScaleChooser.txtComment.text=Dies bietet eine Voreinstellung mit Vorschau.\nEine unmittelbare Re-Skalierung der offenen Anwendung ist nicht möglich.\nDer Skalierungsfaktor wird erst beim nächsten Structorizer-Start wirksam.
 GUIScaleChooser.lblSpinner.text=Skalierungsfaktor
-GUIScaleChooser.lblTest.text=Voransicht Schriftgröße
-GUIScaleChooser.lblIcon.text=Voransicht Icon-Größe
-GUIScaleChooser.chkTest.text=Voransicht Optionselement
+GUIScaleChooser.pnlTest.border=Voransicht
+GUIScaleChooser.lblTest.text=Schriftgröße
+GUIScaleChooser.lblIcon.text=Icon-Größe
+GUIScaleChooser.chkTest.text=Optionselement (testen!)
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
 
