@@ -141,7 +141,7 @@ public class IconLoader {
 			"051_scale_gui.png",
 			"052_update.png",
 			"053_paste.png",
-			null,	// 54
+			"054_tortoise.png",	// 54
 			"055_jumpafter.png",
 			"056_jumpbefore.png",
 			"057_conv_inst.png",
@@ -655,7 +655,7 @@ public class IconLoader {
 	public static ImageIcon getIconImage(String fileName, double extraFactor)
 	// END KGU#486 2018-02-06
 	{
-		System.out.println("getIconImage(\"" + fileName + "\")");
+		//System.out.println("getIconImage(\"" + fileName + "\")");
 		// First we fetch the base icon (size 16 pixels = scalefactor 1)
 		ImageIcon ii = new ImageIcon(getURI(from + "icons/" + fileName));
 		// We coerce the scale factor to multiples of 0.5 and compute the wanted size

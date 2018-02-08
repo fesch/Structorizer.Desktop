@@ -88,6 +88,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.12.14/15   Enh. #492: Configuration of external element names added
  *      Kay Gürtzig     2018.01.18      Issue #4: Icon association modified
  *      Kay Gürtzig     2018.01.18/19   Enh. #490: New preferences menu item added (DiagramController aliases)
+ *      Kay Gürtzig     2018.02.07      Enh. #4, #81: Icon retrieval updated, scaling for plugin icons
  *
  ******************************************************************************************************
  *
@@ -314,7 +315,10 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...", IconLoader.getIcon(57));
 	// END KGU#479 2017-12-14
 	// START KGU#480 2018-01-18: Enh. #490 - Aliases for controller API
-	protected final JMenuItem menuPreferencesCtrlAliases = new JMenuItem("Controller aliases ...", IconLoader.turtle);
+	// START KGU#486 2018-02-06: Issue #4
+	//protected final JMenuItem menuPreferencesCtrlAliases = new JMenuItem("Controller aliases ...", IconLoader.turtle);
+	protected final JMenuItem menuPreferencesCtrlAliases = new JMenuItem("Controller aliases ...", IconLoader.getIcon(54));
+	// END KGU#486 2018-02-06
 	// END KGU#480 2018-01-18
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
 	// START KGU#287 2017-01-11: Issue #81/#330
@@ -329,8 +333,11 @@ public class Menu extends LangMenuBar implements NSDController
 	// Menu "Debug"
 	protected final JMenu menuDebug = new JMenu("Debug");
 	// Submenu of "Debug"
-    protected final JMenuItem menuDebugTurtle = new JMenuItem("Turtleizer ...", IconLoader.turtle);
-    protected final JMenuItem menuDebugExecute = new JMenuItem("Executor ...", IconLoader.getIcon(4));
+	// START KGU#486 2018-02-06: Issue #4
+	//protected final JMenuItem menuDebugTurtle = new JMenuItem("Turtleizer ...", IconLoader.turtle);
+	protected final JMenuItem menuDebugTurtle = new JMenuItem("Turtleizer ...", IconLoader.getIcon(54));
+	// END KGU#486 2018-02-06
+	protected final JMenuItem menuDebugExecute = new JMenuItem("Executor ...", IconLoader.getIcon(4));
 	protected final JMenuItem menuDebugBreakpoint = new JMenuItem("Toggle breakpoint", IconLoader.getIcon(103));
 	protected final JMenuItem menuDebugBreakTrigger = new JMenuItem("Specify break trigger ...", IconLoader.getIcon(112));
 	protected final JMenuItem menuDebugDropBrkpts = new JMenuItem("Clear breakpoints", IconLoader.getIcon(104));
@@ -1625,7 +1632,11 @@ public class Menu extends LangMenuBar implements NSDController
 			for(int j = 0; j < diagram.recentFiles.size(); ++j)
 			{
 				final String nextFile = (String) diagram.recentFiles.get(j);
-				JMenuItem mi = new JMenuItem(nextFile, IconLoader.getIcon(0));
+				// START KGU#489 2018-02-07: 
+				//JMenuItem mi = new JMenuItem(nextFile, IconLoader.getIcon(0));
+				JMenuItem mi = new JMenuItem(nextFile, 
+						((nextFile.endsWith(".arr") || nextFile.endsWith(".arrz")) ? IconLoader.getIcon(105) : IconLoader.getIcon(0)));
+				// END KGU#489 2018-02-07
 				// START KGU#316 2016-12-28: Enh. #290/#318
 				//mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
 				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNsdOrArr(nextFile); doButtons(); } } );
@@ -1769,7 +1780,10 @@ public class Menu extends LangMenuBar implements NSDController
 				try {
 					URL iconFile = this.getClass().getResource(plugin.icon);
 					if (iconFile != null) {
-						icon = new ImageIcon(this.getClass().getResource(plugin.icon));
+						// START KGU#287 2018-02-07: Enh. #81 
+						//icon = new ImageIcon(this.getClass().getResource(plugin.icon));
+						icon = IconLoader.getIconImage(this.getClass().getResource(plugin.icon));
+						// END KGU#287 2018-02-07
 					}
 				}
 				catch (Exception ex) {}

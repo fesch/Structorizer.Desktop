@@ -191,7 +191,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// END KGU#414 2017-06-14
     // executing / testing
     protected final JButton btnMake = new JButton(IconLoader.getIcon(4));
-    protected final JButton btnTurtle = new JButton(IconLoader.turtle);
+    // START KGU#486 2018-02-06: Issue #4
+    //protected final JButton btnTurtle = new JButton(IconLoader.turtle);
+    protected final JButton btnTurtle = new JButton(IconLoader.getIcon(54));
+    // END KGU#486 2018-02-06
     // START KGU 2015-10-12: Breakpoint wiping
     protected final JButton btnDropBrk = new JButton(IconLoader.getIcon(104));
     // END KGU 2015-10-12
