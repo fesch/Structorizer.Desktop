@@ -19,6 +19,10 @@
  */
 package lu.fisch.structorizer.executor;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -40,9 +44,6 @@ package lu.fisch.structorizer.executor;
  *
  ******************************************************************************************************///
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
@@ -51,6 +52,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
 
 import javax.swing.AbstractCellEditor;
@@ -136,8 +138,13 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
     		if (_value instanceof JButton) {
     			table = _table;
     			button = (JButton)_value;
+    			//        			if (isSelected) {
     			button.setForeground(table.getSelectionForeground());
     			button.setBackground(table.getSelectionBackground());
+    			//        			} else {
+    			//        				button.setForeground(table.getForeground());
+    			//        				button.setBackground(table.getBackground());
+    			//        			}
     		}
     		else {
     			button = null;
@@ -195,11 +202,11 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		tblFields.setShowGrid(true);
 		if (this.editable) {
 			// Use pencil symbol if editable
-			this.setIconImage(IconLoader.ico084.getImage());
+			this.setIconImage(IconLoader.getIcon(84).getImage());
 		}
 		else {
 			// Use a magnifying glass if not editable
-			this.setIconImage(IconLoader.ico083.getImage());    			
+			this.setIconImage(IconLoader.getIcon(83).getImage());    			
 		}
 		this.getContentPane().setLayout(new BorderLayout());
 		pnlButtons.setLayout(new java.awt.GridLayout(0, 2));
@@ -255,7 +262,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 			}
 		}
         // START KGU#443 2017-10-16: Enh. #439 - pulldown buttons near compound values
-		ImageIcon pulldownIcon = IconLoader.ico080;
+		ImageIcon pulldownIcon = IconLoader.getIcon(80);
         for (int i = 0; i < tm.getRowCount(); i++) {
         	String value = (String)tm.getValueAt(i, 2);
             String name = (String)tm.getValueAt(i, 0);
@@ -269,7 +276,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
         }
         // END KGU#443 2017-10-16
         // START KGU#443 2017-10-16: Enh. #439
-        int pulldownWidth = IconLoader.ico080.getIconWidth();
+        int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
         tblFields.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
         tblFields.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
         tblFields.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);

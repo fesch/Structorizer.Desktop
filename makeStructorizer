@@ -20,6 +20,7 @@ set -e
 #      Bob Fisch & Philipp Hübner     2009.07.08   Scripting ameliorations
 #      Kay Gürtzig                    2016.12.27   More resource files copied
 #      Simon Sobisch                  2017.03.06   Check for javac
+#      Kay Gürtzig                    2018.01.26   Additional icon directories copied
 #
 ################################################################################
 
@@ -39,7 +40,7 @@ pushd src
 echo Compiling non-dependant classes
 javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar lu/fisch/structorizer/generators/*.java
 
-# compile the application itself (and all dependend classes)
+# compile the application itself (and all dependent classes)
 echo "Compiling Structorizer"
 javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer.java
 echo "Compiling Structorizer Applet"
@@ -47,9 +48,13 @@ javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib
 
 # copying some other files to binary tree
 echo Copying resources
-[ -d ../bin/lu/fisch/structorizer/gui/icons ] && rm -R ../bin/lu/fisch/structorizer/gui/icons
-mkdir ../bin/lu/fisch/structorizer/gui/icons 
-cp -R lu/fisch/structorizer/gui/icons/* ../bin/lu/fisch/structorizer/gui/icons/
+for icondir in icons icons_24 icons_32 icons_48 icons_64
+do
+  [ -d ../bin/lu/fisch/structorizer/gui/$icondir ] && rm -R ../bin/lu/fisch/structorizer/gui/$icondir
+  mkdir ../bin/lu/fisch/structorizer/gui/$icondir 
+  echo "Copying icon dir $icondir .."
+  cp -R lu/fisch/structorizer/gui/$icondir/* ../bin/lu/fisch/structorizer/gui/$icondir/
+done
 cp -R lu/fisch/structorizer/gui/*.txt ../bin/lu/fisch/structorizer/gui/
 cp -R lu/fisch/structorizer/gui/*.xml ../bin/lu/fisch/structorizer/gui/
 cp -R lu/fisch/structorizer/locales/*.txt ../bin/lu/fisch/structorizer/locales/

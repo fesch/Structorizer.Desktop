@@ -184,7 +184,7 @@ public class Forever extends Element implements ILoop {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.ico061;
+		return IconLoader.getIcon(61);
 	}
 	// END KGU#122 2016-01-03
 

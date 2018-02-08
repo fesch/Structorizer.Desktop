@@ -7053,6 +7053,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	if (root.advanceTutorialState(26, this.root)) {
     		analyse();
     	}
+    	if (root.advanceTutorialState(26, this.root)) {
+    		analyse();
+    	}
     }
 
 	public void goTurtle()

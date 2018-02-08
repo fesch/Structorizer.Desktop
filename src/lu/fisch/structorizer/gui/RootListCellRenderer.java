@@ -62,17 +62,17 @@ import lu.fisch.structorizer.elements.Root;
 
 @SuppressWarnings("serial")
 class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
-    private final static ImageIcon mainIcon = IconLoader.ico022;
-    private final static ImageIcon subIcon = IconLoader.ico021;
+    private final static ImageIcon mainIcon = IconLoader.getIcon(22);
+    private final static ImageIcon subIcon = IconLoader.getIcon(21);
     // START KGU#318 2017-01-07: Enh. #319: Better than text colouring for test-covered diagrams
-    private final static ImageIcon subIconCovered = IconLoader.ico030;
+    private final static ImageIcon subIconCovered = IconLoader.getIcon(30);
     // END KGU#318 2017-01-07
     // START KGU#318/KGU#376 2017-04-29: Enh. #319, #389: show coverage status of (imported) main diagrams
-    private final static ImageIcon mainIconCovered = IconLoader.ico070;
+    private final static ImageIcon mainIconCovered = IconLoader.getIcon(70);
     // END KGU#318/KGU#376 2017-04-29
     // START KGU#318/KGU#376 2017-05-16: Enh. #319, #389: show coverage status of (imported) main diagrams
-    private final static ImageIcon inclIcon = IconLoader.ico071;
-    private final static ImageIcon inclIconCovered = IconLoader.ico072;
+    private final static ImageIcon inclIcon = IconLoader.getIcon(71);
+    private final static ImageIcon inclIconCovered = IconLoader.getIcon(72);
     // END KGU#318/KGU#376 2017-05-16
     private final static Color selectedBackgroundNimbus = new Color(57,105,138);
 

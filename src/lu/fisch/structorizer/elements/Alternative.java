@@ -515,7 +515,7 @@ public class Alternative extends Element implements IFork {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.ico060;
+		return IconLoader.getIcon(60);
 	}
 	// END KGU#122 2016-01-03
 	
