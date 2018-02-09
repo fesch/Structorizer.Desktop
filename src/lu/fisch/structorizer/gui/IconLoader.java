@@ -93,7 +93,7 @@ public class IconLoader {
 			"003_Save.png",
 			"004_Make.png",
 			"005_Delete.png",
-			"006_update.png",
+			"006_edit.png",	// Renamed
 			"007_intBefore.png",
 			"008_altBefore.png",
 			"009_forBefore.png",
@@ -111,7 +111,7 @@ public class IconLoader {
 			"021_function.png",
 			"022_program.png",
 			"023_font.png",
-			"024_smiley.png",
+			"024_smiley.png",	// larger than usual!
 			"025_import.png",
 			"026_disable.png",
 			"027_richTurtle.png",
@@ -122,9 +122,9 @@ public class IconLoader {
 			"032_export.png",
 			"033_font_up.png",
 			"034_font_down.png",
-			"035_realtime.png",
-			"036_textfile.png",
-			"037_text.png",
+			"035_realtime.png",	// not used
+			"036_textfile.png",	// not used
+			"037_text.png",		// not used
 			"038_redo.png",
 			"039_undo.png",
 			"040_notnice.png",
@@ -132,16 +132,16 @@ public class IconLoader {
 			"042_copy.png",
 			"043_paste.png",
 			"044_cut.png",
-			"045_remove.png",
-			"046_covered.png",	// for Arranger
+			"045_remove.png",	// used in Arranger index
+			"046_covered.png",	// for Arranger toolbar
 			"047_casebefore.png",
 			"048_caseafter.png",
 			"049_callbefore.png",
 			"050_callafter.png",
 			"051_scale_gui.png",
 			"052_update.png",
-			"053_paste.png",
-			"054_tortoise.png",	// 54
+			null,	// 53
+			"054_tortoise.png",
 			"055_jumpafter.png",
 			"056_jumpbefore.png",
 			"057_conv_inst.png",
@@ -152,9 +152,9 @@ public class IconLoader {
 			"062_conv_while.png",
 			"063_conv_repeat.png",
 			"064_conv_case.png",
-			"065_paragraph.png",
-			"066_litterbin.png",
-			"067_commit.png",
+			"065_paragraph.png",	// not used
+			"066_litterbin.png",	// not used
+			"067_commit.png",		// not used
 			"068_seq2sub.png",
 			"069_SaveAll.png",
 			"070_program_green.png",
@@ -163,32 +163,32 @@ public class IconLoader {
 			"073_binoculars.png",
 			null,	// 74, was "074_nsd.png" --> "000_structorizer.png"
 			"075_beginner.png",
-			"076_latex.png",
+			"076_latex.png",	// for StrukTeX?
 			"077_bubble.png",
 			"078_java.png",
 			"079_marker.png",
-			"080_pulldown.png",
+			"080_pulldown.png",	// for value presenter
 			"081_pen.png",
 			"082_din.png",
-			"083_loupe.png",
-			"084_pencil.png",
+			"083_loupe.png",	// Analyser
+			"084_pencil.png",	// for Value Presenter
 			"085_hide_decl.png",
 			"086_properties.png",
 			"087_code.png",
-			"088_picture.png",
+			"088_picture.png",	// export / import
 			"089_paraAfter.png",
 			"090_paraBefore.png",
 			"091_conv_para.png",
 			"092_SaveAs.png",
-			"093_picture_export.png",	// for Arranger
+			"093_picture_export.png",	// for Arranger toolbar
 			null,	// 94
 			null,	// 95
 			null,	// 96
 			null,	// 97
 			null,	// 98
-			"099_pin_blue.png",	// for Arranger
-			"100_diagram_drop.png", // for Arranger
-			"101_diagram_new.png",	// for Arranger
+			"099_pin_blue.png",	// for Arranger toolbar
+			"100_diagram_drop.png", // for Arranger toolbar
+			"101_diagram_new.png",	// for Arranger toolbar
 			"102_switch.png",
 			"103_breakpt.png",
 			"104_nobreakpt.png",
@@ -201,8 +201,8 @@ public class IconLoader {
 			"111_c_plus_t.png",
 			"112_stopwatch.png",
 			"113_translator.png",
-			"114_down.png",
-			"115_up.png",
+			"114_down.png",	// for Translator Find dialog
+			"115_up.png",	// for Translator Find dialog
 	};
 	
 	private static final int[] ICON_SIZES = {
