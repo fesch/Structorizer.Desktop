@@ -144,6 +144,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.03      Enh. #415: Ensured that the Find&Replace dialog regains focus when selected
  *      Kay Gürtzig     2018.01.21      Enh. #490: New DiagramController alias preferences integrated
  *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
+ *      Kay Gürtzig     2018.02.09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
  *
  ******************************************************************************************************
  *
@@ -5465,7 +5466,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		// START KGU#393 2017-05-09: Issue #400 - check whether changes were committed
 		if (preferences.OK) {
-		// END KGU#393 2017-05-09		
+		// END KGU#393 2017-05-09
+			// START KGU#491 2018-02-09: Bugfix #507 - if branch labels change we force reshaping
+			boolean mustInvalidateAlt =
+					!Element.preAltT.equals(preferences.edtAltT.getText()) ||
+					!Element.preAltF.equals(preferences.edtAltF.getText());
+			// END KGU#491 2018-02-09
 			// get fields
 			Element.preAltT     = preferences.edtAltT.getText();
 			Element.preAltF     = preferences.edtAltF.getText();
@@ -5482,6 +5488,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			int newShrinkThreshold = (Integer)preferences.spnCaseRot.getModel().getValue();
 			//if (newShrinkThreshold != Element.caseShrinkByRot) {
 			if (newShrinkThreshold != Element.caseShrinkByRot
+					// START KGU#491 2019-02-09: Bugfix #507
+					|| mustInvalidateAlt
+					// END KGU#491 2019-02-09
 					|| !newImportCaption.equals(Element.preImport)) {
 				root.resetDrawingInfoDown();
 			}

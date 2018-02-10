@@ -63,6 +63,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.18      Issue #4: New icons 032_export, 086_properties, 087_code, 088_picture
  *      Kay Gürtzig     2018.01.25      Issue #4: Enumerable icon fields converted into an array (ico011 --> getIcon(11))
  *      Kay Gürtzig     2018.02.06      Issue #4: Extra factor in getIconImage() for e.g. Arranger icons
+ *      Kay Gürtzig     2018.02.09      Issue #4: Some icon renaming and reorganisation
  *
  ******************************************************************************************************
  *

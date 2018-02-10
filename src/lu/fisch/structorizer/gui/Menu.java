@@ -1238,7 +1238,7 @@ public class Menu extends LangMenuBar implements NSDController
 			{ 
 				JFileChooser fc = new JFileChooser();
 				fc.setFileFilter(new INIFilter());
-				if(fc.showOpenDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
+				if (fc.showOpenDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
 				{
 					try
 					{
@@ -1273,6 +1273,7 @@ public class Menu extends LangMenuBar implements NSDController
 						// START KGU#258 2016-09-26: Enh. #253
 						if (diagram.offerRefactoring(refactoringData))
 						{
+							// (Refactoring involves redrawing)
 							diagram.refactorNSD(refactoringData);
 						}
 						// END KGU#258 2016-09-26

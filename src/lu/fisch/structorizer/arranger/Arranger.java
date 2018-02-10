@@ -19,8 +19,7 @@
  */
 package lu.fisch.structorizer.arranger;
 
-/*
- *****************************************************************************************************
+/******************************************************************************************************
  *
  *      Author: Bob Fisch
  *
@@ -64,8 +63,8 @@ package lu.fisch.structorizer.arranger;
  *
  * Comment:	/
  *
- *****************************************************************************************************
- *///
+ ******************************************************************************************************///
+
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -269,6 +268,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
         toolbar.setFloatable(false);
         toolbar.setRollover(true);
+        
+        //Border raisedBorder = BorderFactory.createRaisedBevelBorder();
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
@@ -283,6 +284,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 btnExportPNGActionPerformed(evt);
             }
         });
+        //btnExportPNG.setBorder(raisedBorder);
         toolbar.add(btnExportPNG);
 
         // START KGU#110 2015-12-20: Enh. #62
@@ -299,6 +301,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 btnSaveArrActionPerformed(evt);
             }
         });
+        //btnSaveArr.setBorder(raisedBorder);
         toolbar.add(btnSaveArr);
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
@@ -314,6 +317,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 btnLoadArrActionPerformed(evt);
             }
         });
+        //btnLoadArr.setBorder(raisedBorder);
         toolbar.add(btnLoadArr);
         // END KGU#110 2015-12-20
 
@@ -330,6 +334,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 btnAddDiagramActionPerformed(evt);
             }
         });
+        //btnAddDiagram.setBorder(raisedBorder);
         toolbar.add(btnAddDiagram);
 
         // START KGU#88 2015-11-24: Protect a diagram against replacement
@@ -347,6 +352,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 btnPinDiagramActionPerformed(evt);
             }
         });
+        //btnPinDiagram.setBorder(raisedBorder);
         toolbar.add(btnPinDiagram);
         // END KGU#88 2015-11-24
 
@@ -365,6 +371,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 btnSetCoveredActionPerformed(evt);
             }
         });
+        //btnSetCovered.setBorder(raisedBorder);
         toolbar.add(btnSetCovered);
         // END KGU#117 2016-03-09
 
@@ -382,6 +389,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 btnRemoveDiagramActionPerformed(evt);
             }
         });
+        //btnRemoveDiagram.setBorder(raisedBorder);
         toolbar.add(btnRemoveDiagram);
         // END KGU#85 2015-11-17
 
@@ -467,6 +475,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         this.doButtons();
         // END KGU#117 2016-03-09
         pack();
+
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed

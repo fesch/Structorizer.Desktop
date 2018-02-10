@@ -67,6 +67,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.14      Bugfix #465: invokeAndWait must be suppressed if not standalone
  *      Kay Gürtzig     2018.01.21      Enh. #490: DiagramController aliases saved and loaded to/from Ini
  *                                      Issue #455: Multiple redrawing of diagram avoided in loadFromIni().
+ *      Kay Gürtzig     2018.02.09      Bugfix #507 had revealed an event queue issue in loadFromIni() on
+ *                                      loading  preferences from explicitly chosen ini file. This is fixed now 
  *
  ******************************************************************************************************
  *
@@ -131,6 +133,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
 	private boolean isStandalone = true;	// The default is to exit...
 	// END KGU#49/KGU#66 2015-11-14
+	// START KGU#461/KGU#491 2018-02-09: Bugfix #455/#465/#507: We got into trouble on reloading the preferences
+	private boolean isStartingUp = true;
+	// END KGU#461/KGU#491 2018-02-09
 	
 	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
 	private String titleString = "Structorizer " + Element.E_VERSION;
@@ -430,6 +435,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             //System.out.println("* scrollarea.requestFocus ...");
             getEditor().scrollarea.requestFocusInWindow();
             // END KGU#325 2017-01-06
+            
+        	// START KGU#461/KGU#491 2018-02-09: Bugfix #455/#465/#507: We got into trouble on reloading the preferences
+        	isStartingUp = false;
+        	// END KGU#461/KGU#491 2018-02-09
 	}
 	
 
@@ -615,7 +624,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
 				// END KGU#452 2017-11-05
 				
-				if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+				// START KGU#461/KGU#491 2018-02-09: Bugfix #455/#465/#507: We got into trouble on reloading the preferences
+				//if (this.isStandalone) {	// KGU#461 2017-11-14: Bugfix #455/#465
+				if (this.isStandalone && this.isStartingUp) {
+				// END KGU#461/KGU#491 2018-02-09
 					try {
 						EventQueue.invokeAndWait(new Runnable() {
 							@Override
