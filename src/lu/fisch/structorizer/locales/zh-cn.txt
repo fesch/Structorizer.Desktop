@@ -233,17 +233,17 @@ AnalyserPreferences.okButton.text=确定
 Editor.btnNew.tooltip=创建一个空的图。
 Editor.btnOpen.tooltip=打开一个存在的图。
 Editor.btnSave.tooltip=保存实际的图。
-// InsertBefore
-Editor.btnBeforeInst.tooltip=在选中的元素前插入一个新的指令。
-Editor.btnBeforeAlt.tooltip=在选中的元素前插入一个新的IF语句。
-Editor.btnBeforeFor.tooltip=在选中的元素前插入一个新的FOR循环。
-Editor.btnBeforeWhile.tooltip=在选中的元素前插入一个新的WHILE循环。
-Editor.btnBeforeRepeat.tooltip=在选中的元素前插入一个新的REPEAT循环。
-Editor.btnBeforeForever.tooltip=在选中的元素前插入一个新的无限循环。
-Editor.btnBeforeCall.tooltip=在选中的元素前插入一个新的调用。
-Editor.btnBeforeJump.tooltip=在选中的元素前插入一个新的跳转。
-Editor.btnBeforeCase.tooltip=在选中的元素前插入一个新的CASE语句。
-// InsertAfter
+// InsertBefore TODO: Integrate the hint for shift key effect into the btnAfter... tooltips
+//Editor.btnBeforeInst.tooltip=在选中的元素前插入一个新的指令。
+//Editor.btnBeforeAlt.tooltip=在选中的元素前插入一个新的IF语句。
+//Editor.btnBeforeFor.tooltip=在选中的元素前插入一个新的FOR循环。
+//Editor.btnBeforeWhile.tooltip=在选中的元素前插入一个新的WHILE循环。
+//Editor.btnBeforeRepeat.tooltip=在选中的元素前插入一个新的REPEAT循环。
+//Editor.btnBeforeForever.tooltip=在选中的元素前插入一个新的无限循环。
+//Editor.btnBeforeCall.tooltip=在选中的元素前插入一个新的调用。
+//Editor.btnBeforeJump.tooltip=在选中的元素前插入一个新的跳转。
+//Editor.btnBeforeCase.tooltip=在选中的元素前插入一个新的CASE语句。
+// InsertAfter (+shift: Before)
 Editor.btnAfterInst.tooltip=在选中的元素后插入一个新的指令。
 Editor.btnAfterAlt.tooltip=在选中的元素后插入一个新的IF语句。
 Editor.btnAfterFor.tooltip=在选中的元素后插入一个新的FOR循环。

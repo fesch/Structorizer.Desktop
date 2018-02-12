@@ -64,6 +64,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.25      Issue #4: Enumerable icon fields converted into an array (ico011 --> getIcon(11))
  *      Kay Gürtzig     2018.02.06      Issue #4: Extra factor in getIconImage() for e.g. Arranger icons
  *      Kay Gürtzig     2018.02.09      Issue #4: Some icon renaming and reorganisation
+ *      Kay Gürtzig     2018.02.12      Issue #4: Distinct set of FOR loop icons (no longer = forever/while)
  *
  ******************************************************************************************************
  *
@@ -97,12 +98,12 @@ public class IconLoader {
 			"006_edit.png",	// Renamed
 			"007_intBefore.png",
 			"008_altBefore.png",
-			"009_forBefore.png",
+			"009_foreverBefore.png",
 			"010_whileBefore.png",
 			"011_repeatBefore.png",
 			"012_intAfter.png",
 			"013_altAfter.png",
-			"014_forAfter.png",
+			"014_foreverAfter.png",
 			"015_whileAfter.png",
 			"016_repeatAfter.png",
 			"017_Eye.png",
@@ -129,7 +130,7 @@ public class IconLoader {
 			"038_redo.png",
 			"039_undo.png",
 			"040_notnice.png",
-			"041_print.png",
+			"041_print.png",	// or use "041_printer.png" alternatively
 			"042_copy.png",
 			"043_paste.png",
 			"044_cut.png",
@@ -141,7 +142,7 @@ public class IconLoader {
 			"050_callafter.png",
 			"051_scale_gui.png",
 			"052_update.png",
-			null,	// 53
+			"053_conv_for.png",	// new
 			"054_tortoise.png",
 			"055_jumpafter.png",
 			"056_jumpbefore.png",
@@ -149,7 +150,7 @@ public class IconLoader {
 			"058_conv_call.png",
 			"059_conv_jump.png",
 			"060_conv_if.png",
-			"061_conv_for.png",
+			"061_conv_forever.png",
 			"062_conv_while.png",
 			"063_conv_repeat.png",
 			"064_conv_case.png",
@@ -162,7 +163,7 @@ public class IconLoader {
 			"071_include.png",
 			"072_include_green.png",
 			"073_binoculars.png",
-			null,	// 74, was "074_nsd.png" --> "000_structorizer.png"
+			"074_conv_for_din.png",	// new, replaced "074_nsd.png" --> "000_structorizer.png"
 			"075_beginner.png",
 			"076_latex.png",	// for StrukTeX?
 			"077_bubble.png",
@@ -175,17 +176,17 @@ public class IconLoader {
 			"084_pencil.png",	// for Value Presenter
 			"085_hide_decl.png",
 			"086_properties.png",
-			"087_code.png",
+			"087_code.png",		// or use "041_code1.png" alternatively
 			"088_picture.png",	// export / import
 			"089_paraAfter.png",
 			"090_paraBefore.png",
 			"091_conv_para.png",
 			"092_SaveAs.png",
 			"093_picture_export.png",	// for Arranger toolbar
-			null,	// 94
-			null,	// 95
-			null,	// 96
-			null,	// 97
+			"094_forBefore.png",		// new
+			"095_for_dinBefore.png",	// new
+			"096_forAfter.png",			// new
+			"097_for_dinAfter.png",		// new
 			null,	// 98
 			"099_pin_blue.png",	// for Arranger toolbar
 			"100_diagram_drop.png", // for Arranger toolbar
@@ -395,6 +396,11 @@ public class IconLoader {
 //	public static ImageIcon ico115 = getIconImage(getURI(from+"icons/115_up.png"));
 //	// END KGU#213 2017-12-11
 
+	/**
+	 * This still holds the obsolete traditional turtle icon.
+	 * Use {@link #getIcon(int)} with argument 54 to obtain the topical tortoise. 
+	 */
+	@Deprecated 
 	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 	
 	// START KGU#242 2016-09-05

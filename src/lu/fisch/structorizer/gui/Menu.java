@@ -89,6 +89,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.18      Issue #4: Icon association modified
  *      Kay Gürtzig     2018.01.18/19   Enh. #490: New preferences menu item added (DiagramController aliases)
  *      Kay Gürtzig     2018.02.07      Enh. #4, #81: Icon retrieval updated, scaling for plugin icons
+ *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
  *
  ******************************************************************************************************
  *
@@ -212,7 +213,10 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramAddBeforeInst = new JMenuItem("Instruction",IconLoader.getIcon(7));
 	protected final JMenuItem menuDiagramAddBeforeAlt = new JMenuItem("IF statement",IconLoader.getIcon(8));
 	protected final JMenuItem menuDiagramAddBeforeCase = new JMenuItem("CASE statement",IconLoader.getIcon(47));
-	protected final JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(9));
+	// START KGU#493 2018-02-12: Issue #4
+	//protected final JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(9));
+	protected final JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(95));
+	// END KGU#493 2018-02-12
 	protected final JMenuItem menuDiagramAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(10));
 	protected final JMenuItem menuDiagramAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(11));
 	protected final JMenuItem menuDiagramAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(9));
@@ -226,7 +230,10 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramAddAfterInst = new JMenuItem("Instruction",IconLoader.getIcon(12));
 	protected final JMenuItem menuDiagramAddAfterAlt = new JMenuItem("IF statement",IconLoader.getIcon(13));
 	protected final JMenuItem menuDiagramAddAfterCase = new JMenuItem("CASE statement",IconLoader.getIcon(48));
-	protected final JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(14));
+	// START KGU#493 2018-02-12: Issue #4
+	//protected final JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(14));
+	protected final JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(97));
+	// END KGU#493 2018-02-12
 	protected final JMenuItem menuDiagramAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(15));
 	protected final JMenuItem menuDiagramAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(16));
 	protected final JMenuItem menuDiagramAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(14));
@@ -1573,15 +1580,23 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// DIN 66261
 			menuDiagramDIN.setSelected(Element.E_DIN);
-			if(Element.E_DIN==true)
+			if (Element.E_DIN)
 			{
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(10));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(15));
+				// START KGU#493 2018-02-12: Issue #4
+				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(10));
+				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(15));
+				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(95));
+				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(97));
+				// END KGU#493 2018-02-12
 			}
 			else
 			{
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(9));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(14));
+				// START KGU#493 2018-02-12: Issue #4
+				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(9));
+				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(14));
+				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(94));
+				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(96));
+				// END KGU#493 2018-02-12
 			}
 			
 			// START KGU#123 2016-01-04: Enh. #87

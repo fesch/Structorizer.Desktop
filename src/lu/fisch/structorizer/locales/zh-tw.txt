@@ -220,18 +220,18 @@ AnalyserPreferences.okButton.text=確定
 Editor.btnNew.tooltip=建立全新的空白圖形.
 Editor.btnOpen.tooltip=開啟存在的圖形.
 Editor.btnSave.tooltip=儲存實際的圖形.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=在選取元素之前插入一個新指令. 
-Editor.btnBeforeAlt.tooltip=在選取元素之前插入一個新IF條件.
-Editor.btnBeforeFor.tooltip=在選取元素之前插入一個新FOR迴圈.
-Editor.btnBeforeWhile.tooltip=在選取元素之前插入一個新WHILE迴圈.
-Editor.btnBeforeRepeat.tooltip=在選取元素之前插入一個新REPEAT迴圈.
-Editor.btnBeforeForever.tooltip=在選取元素之前插入一個新無窮迴圈.
-Editor.btnBeforeCall.tooltip=在選取元素之前插入一個新呼叫.
-Editor.btnBeforeJump.tooltip=在選取元素之前插入一個新跳躍.
-Editor.btnBeforeCase.tooltip=在選取元素之前插入一個新CASE條件.
-Editor.btnBeforePara.tooltip=在選取元素之前插入一個新平行.
-// InsertAfter
+// InsertBefore TODO: Integrate the hint for shift key effect into the btnAfter... tooltips
+//Editor.btnBeforeInst.tooltip=在選取元素之前插入一個新指令. 
+//Editor.btnBeforeAlt.tooltip=在選取元素之前插入一個新IF條件.
+//Editor.btnBeforeFor.tooltip=在選取元素之前插入一個新FOR迴圈.
+//Editor.btnBeforeWhile.tooltip=在選取元素之前插入一個新WHILE迴圈.
+//Editor.btnBeforeRepeat.tooltip=在選取元素之前插入一個新REPEAT迴圈.
+//Editor.btnBeforeForever.tooltip=在選取元素之前插入一個新無窮迴圈.
+//Editor.btnBeforeCall.tooltip=在選取元素之前插入一個新呼叫.
+//Editor.btnBeforeJump.tooltip=在選取元素之前插入一個新跳躍.
+//Editor.btnBeforeCase.tooltip=在選取元素之前插入一個新CASE條件.
+//Editor.btnBeforePara.tooltip=在選取元素之前插入一個新平行.
+// InsertAfter (shift: Before)
 Editor.btnAfterInst.tooltip=在選取元素之後插入一個新指令.
 Editor.btnAfterAlt.tooltip=在選取元素之後插入一個新IF條件.
 Editor.btnAfterFor.tooltip=在選取元素之後插入一個新FOR迴圈.

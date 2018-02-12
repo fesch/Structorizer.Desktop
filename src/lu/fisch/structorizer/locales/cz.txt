@@ -324,27 +324,16 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Vytvořit nový prázdný diagram.
 Editor.btnOpen.tooltip=Otevřít existující diagram.
 Editor.btnSave.tooltip=Uložit aktuální diagram.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Vložit nový @{Instruction} před vybraný element.
-Editor.btnBeforeAlt.tooltip=Vložit novou @{Alternative} podmínku před vybraný element.
-Editor.btnBeforeFor.tooltip=Vložit nový @{For} cyklus před vybraný element.
-Editor.btnBeforeWhile.tooltip=Vložit nový @{While} cyklus před vybraný element.
-Editor.btnBeforeRepeat.tooltip=Vložit nový @{Repeat} cyklus před vybraný element.
-Editor.btnBeforeForever.tooltip=Vložit nový nekonečný @{Forever} cyklus před vybraný element.
-Editor.btnBeforeCall.tooltip=Vložit nové volání CALL před vybraný element.
-Editor.btnBeforeJump.tooltip=Vložit nový skok JUMP před vybraný element.
-Editor.btnBeforeCase.tooltip=Vložit nové @{Case} rozhodování před vybraný element.
-Editor.btnBeforePara.tooltip=
-// InsertAfter
-Editor.btnAfterInst.tooltip=Vložit nový @{Instruction} po vybraném elementu.
-Editor.btnAfterAlt.tooltip=Vložit novou @{Alternative} podmínku po vybraném elementu.
-Editor.btnAfterFor.tooltip=Vložit nový @{For} cyklus po vybraném elementu.
-Editor.btnAfterWhile.tooltip=Vložit nový @{While} cyklus po vybraném elementu.
-Editor.btnAfterRepeat.tooltip=Vložit nový @{Repeat} cyklus po vybraném elementu.
-Editor.btnAfterForever.tooltip=Vložit nový nekonečný @{Forever} cyklus po vybraném elementu.
-Editor.btnAfterCall.tooltip=Vložit nové volání CALL po vybraném elementu.
-Editor.btnAfterJump.tooltip=Vložit nový skok JUMP po vybraném elementu.
-Editor.btnAfterCase.tooltip=Vložit nové @{Case} po vybraném elementu.
+// InsertAfter (+ shift: Before)
+Editor.btnAfterInst.tooltip=Vložit nový @{Instruction} po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterAlt.tooltip=Vložit novou @{Alternative} podmínku po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterFor.tooltip=Vložit nový @{For} cyklus po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterWhile.tooltip=Vložit nový @{While} cyklus po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterRepeat.tooltip=Vložit nový @{Repeat} cyklus po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterForever.tooltip=Vložit nový nekonečný @{Forever} cyklus po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterCall.tooltip=Vložit nové volání CALL po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterJump.tooltip=Vložit nový skok JUMP po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterCase.tooltip=Vložit nové @{Case} po vybraném elementu (shift: před vybraný element).
 Editor.btnAfterPara.tooltip=
 // undo & redo
 Editor.btnUndo.tooltip=Odvolat poslední akci.

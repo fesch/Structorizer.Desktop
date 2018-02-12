@@ -508,28 +508,17 @@ Editor.btnNew.tooltip=Create a new blank diagram.
 Editor.btnOpen.tooltip=Open an existing diagram.
 Editor.btnSave.tooltip=Save the current diagram.
 Editor.btnSaveAll.tooltip=Save all diagrams with unsaved changes.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Insert a new @a before the selected element. 
-Editor.btnBeforeAlt.tooltip=Insert a new @b statement before the selected element.
-Editor.btnBeforeFor.tooltip=Insert a new @d loop before the selected element.
-Editor.btnBeforeWhile.tooltip=Insert a new @g loop before the selected element.
-Editor.btnBeforeRepeat.tooltip=Insert a new @h loop before the selected element.
-Editor.btnBeforeForever.tooltip=Insert a new @i loop before the selected element.
-Editor.btnBeforeCall.tooltip=Insert a new @j before the selected element.
-Editor.btnBeforeJump.tooltip=Insert a new @k before the selected element.
-Editor.btnBeforeCase.tooltip=Insert a new @c statement before the selected element.
-Editor.btnBeforePara.tooltip=Insert a new @l statement before the selected element.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Insert a new @a after the selected element.
-Editor.btnAfterAlt.tooltip=Insert a new @b statement after the selected element.
-Editor.btnAfterFor.tooltip=Insert a new @d loop after the selected element.
-Editor.btnAfterWhile.tooltip=Insert a new @g loop after the selected element.
-Editor.btnAfterRepeat.tooltip=Insert a new @h loop after the selected element.
-Editor.btnAfterForever.tooltip=Insert a new @i loop after the selected element.
-Editor.btnAfterCall.tooltip=Insert a new @j after the selected element.
-Editor.btnAfterJump.tooltip=Insert a new @k after the selected element.
-Editor.btnAfterCase.tooltip=Insert a new @c statement after the selected element.
-Editor.btnAfterPara.tooltip=Insert a new @l statement after the selected element.
+// InsertAfter (+shift: before)
+Editor.btnAfterInst.tooltip=Insert a new @a after (+shift: before) the selected element.
+Editor.btnAfterAlt.tooltip=Insert a new @b statement after (+shift: before) the selected element.
+Editor.btnAfterFor.tooltip=Insert a new @d loop after (+shift: before) the selected element.
+Editor.btnAfterWhile.tooltip=Insert a new @g loop after (+shift: before) the selected element.
+Editor.btnAfterRepeat.tooltip=Insert a new @h loop after (+shift: before) the selected element.
+Editor.btnAfterForever.tooltip=Insert a new @i loop after (+shift: before) the selected element.
+Editor.btnAfterCall.tooltip=Insert a new @j after (+shift: before) the selected element.
+Editor.btnAfterJump.tooltip=Insert a new @k after (+shift: before) the selected element.
+Editor.btnAfterCase.tooltip=Insert a new @c statement after (+shift: before) the selected element.
+Editor.btnAfterPara.tooltip=Insert a new @l statement after (+shift: before) the selected element.
 // undo & redo
 Editor.btnUndo.tooltip=Undo the last action.
 Editor.btnRedo.tooltip=Redo the last action.
