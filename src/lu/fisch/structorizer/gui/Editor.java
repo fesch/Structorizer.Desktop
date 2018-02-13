@@ -58,7 +58,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.15      Enh. #415, #199: Toolbar additions for find & replace as well as help
  *      Kay Gürtzig     2017.11.05      Issue #452: Mechanisms for simplified toolbar (beginners' mode)
  *      Kay Gürtzig     2017.11.19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button
- *      Kay Gürtzig     2018.02.12      Issues #4, #510: element toolbars merged, icon numbers modified   
+ *      Kay Gürtzig     2018.02.12      Issues #4, #510: element toolbars merged, icon numbers modified
+ *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by conv. element icons
  *
  ******************************************************************************************************
  *
@@ -233,35 +234,35 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // Submenu of "Add"
     protected final JMenu popupAddBefore = new JMenu("Before");
     // Submenus of "Add -> Before"
-    protected final JMenuItem popupAddBeforeInst = new JMenuItem("Instruction",IconLoader.getIcon(7));
-    protected final JMenuItem popupAddBeforeAlt = new JMenuItem("IF statement",IconLoader.getIcon(8));
-    protected final JMenuItem popupAddBeforeCase = new JMenuItem("CASE statement",IconLoader.getIcon(47));
+    protected final JMenuItem popupAddBeforeInst = new JMenuItem("Instruction",IconLoader.getIcon(/*7*/57));
+    protected final JMenuItem popupAddBeforeAlt = new JMenuItem("IF statement",IconLoader.getIcon(/*8*/60));
+    protected final JMenuItem popupAddBeforeCase = new JMenuItem("CASE statement",IconLoader.getIcon(/*47*/64));
     // START KGU#493 2018-02-12: Issue #4 - distinguishable FOR symbol
     //protected final JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(9));
-    protected final JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(95));
+    protected final JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(/*95*/74));
     // END KGU#493 2018-002-12
-    protected final JMenuItem popupAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(10));
-    protected final JMenuItem popupAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(11));
-    protected final JMenuItem popupAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(9));
-    protected final JMenuItem popupAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(49));
-    protected final JMenuItem popupAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(56));
-    protected final JMenuItem popupAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(90));
+    protected final JMenuItem popupAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(/*10*/62));
+    protected final JMenuItem popupAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(/*11*/63));
+    protected final JMenuItem popupAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(/*9*/61));
+    protected final JMenuItem popupAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(/*49*/58));
+    protected final JMenuItem popupAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(/*56*/59));
+    protected final JMenuItem popupAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(/*90*/91));
 
     protected final JMenu popupAddAfter = new JMenu("After");
     // Submenus of "Add -> After"
-    protected final JMenuItem popupAddAfterInst = new JMenuItem("Instruction",IconLoader.getIcon(12));
-    protected final JMenuItem popupAddAfterAlt = new JMenuItem("IF statement",IconLoader.getIcon(13));
-    protected final JMenuItem popupAddAfterCase = new JMenuItem("CASE statement",IconLoader.getIcon(48));
+    protected final JMenuItem popupAddAfterInst = new JMenuItem("Instruction",IconLoader.getIcon(/*12*/57));
+    protected final JMenuItem popupAddAfterAlt = new JMenuItem("IF statement",IconLoader.getIcon(/*13*/60));
+    protected final JMenuItem popupAddAfterCase = new JMenuItem("CASE statement",IconLoader.getIcon(/*48*/64));
     // START KGU#493 2018-02-12: Issue #4 - distinguishable FOR symbol
     //protected final JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(14));
-    protected final JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(97));
+    protected final JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(/*97*/74));
     // END KGU#493 2018-002-12
-    protected final JMenuItem popupAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(15));
-    protected final JMenuItem popupAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(16));
-    protected final JMenuItem popupAddAfterCall = new JMenuItem("Call",IconLoader.getIcon(50));
-    protected final JMenuItem popupAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(55));
-    protected final JMenuItem popupAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(14));
-    protected final JMenuItem popupAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(89));
+    protected final JMenuItem popupAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(/*15*/62));
+    protected final JMenuItem popupAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(/*16*/63));
+    protected final JMenuItem popupAddAfterCall = new JMenuItem("Call",IconLoader.getIcon(/*50*/58));
+    protected final JMenuItem popupAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(/*55*/59));
+    protected final JMenuItem popupAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(/*14*/61));
+    protected final JMenuItem popupAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(/*89*/91));
 
     protected final JMenuItem popupEdit = new JMenuItem("Edit",IconLoader.getIcon(6));
     protected final JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.getIcon(5));
@@ -1285,8 +1286,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			//popupAddBeforeFor.setIcon(IconLoader.getIcon(10));
 			//popupAddAfterFor.setIcon(IconLoader.getIcon(15));
 			btnAfterFor.setIcon(IconLoader.getIcon(74));
-			popupAddBeforeFor.setIcon(IconLoader.getIcon(95));
-			popupAddAfterFor.setIcon(IconLoader.getIcon(97));
+			popupAddBeforeFor.setIcon(IconLoader.getIcon(/*95*/74));
+			popupAddAfterFor.setIcon(IconLoader.getIcon(/*97*/74));
 			// END KGU#493 2018-02-12
 		}
 		else
@@ -1298,8 +1299,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			//popupAddBeforeFor.setIcon(IconLoader.getIcon(9));
 			//popupAddAfterFor.setIcon(IconLoader.getIcon(14));
 			btnAfterFor.setIcon(IconLoader.getIcon(53));
-			popupAddBeforeFor.setIcon(IconLoader.getIcon(94));
-			popupAddAfterFor.setIcon(IconLoader.getIcon(96));
+			popupAddBeforeFor.setIcon(IconLoader.getIcon(/*94*/53));
+			popupAddAfterFor.setIcon(IconLoader.getIcon(/*96*/53));
 			// END KGU#493 2018-02-12
 		}
 		

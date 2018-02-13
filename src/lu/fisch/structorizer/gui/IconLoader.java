@@ -96,16 +96,16 @@ public class IconLoader {
 			"004_Make.png",
 			"005_Delete.png",
 			"006_edit.png",	// Renamed
-			"007_intBefore.png",
-			"008_altBefore.png",
-			"009_foreverBefore.png",
-			"010_whileBefore.png",
-			"011_repeatBefore.png",
-			"012_intAfter.png",
-			"013_altAfter.png",
-			"014_foreverAfter.png",
-			"015_whileAfter.png",
-			"016_repeatAfter.png",
+			"007_intBefore.png",		// obsolete (#510)
+			"008_altBefore.png",		// obsolete (#510)
+			"009_foreverBefore.png",	// obsolete (#510)
+			"010_whileBefore.png",		// obsolete (#510)
+			"011_repeatBefore.png",		// obsolete (#510)
+			"012_intAfter.png",			// obsolete (#510)
+			"013_altAfter.png",			// obsolete (#510)
+			"014_foreverAfter.png",		// obsolete (#510)
+			"015_whileAfter.png",		// obsolete (#510)
+			"016_repeatAfter.png",		// obsolete (#510)
 			"017_Eye.png",
 			"018_add.png",
 			"019_Up.png",
@@ -136,16 +136,16 @@ public class IconLoader {
 			"044_cut.png",
 			"045_remove.png",	// used in Arranger index
 			"046_covered.png",	// for Arranger toolbar
-			"047_casebefore.png",
-			"048_caseafter.png",
-			"049_callbefore.png",
-			"050_callafter.png",
+			"047_casebefore.png",	// obsolete (#510)
+			"048_caseafter.png",	// obsolete (#510)
+			"049_callbefore.png",	// obsolete (#510)
+			"050_callafter.png",	// obsolete (#510)
 			"051_scale_gui.png",
 			"052_update.png",
 			"053_conv_for.png",	// new
 			"054_tortoise.png",
-			"055_jumpafter.png",
-			"056_jumpbefore.png",
+			"055_jumpafter.png",	// obsolete (#510)
+			"056_jumpbefore.png",	// obsolete (#510)
 			"057_conv_inst.png",
 			"058_conv_call.png",
 			"059_conv_jump.png",
@@ -176,17 +176,17 @@ public class IconLoader {
 			"084_pencil.png",	// for Value Presenter
 			"085_hide_decl.png",
 			"086_properties.png",
-			"087_code.png",		// or use "041_code1.png" alternatively
+			"087_code.png",		// or use "087_code1.png" alternatively
 			"088_picture.png",	// export / import
-			"089_paraAfter.png",
-			"090_paraBefore.png",
+			"089_paraAfter.png",	// obsolete (#510)
+			"090_paraBefore.png",	// obsolete (#510)
 			"091_conv_para.png",
 			"092_SaveAs.png",
 			"093_picture_export.png",	// for Arranger toolbar
-			"094_forBefore.png",		// new
-			"095_for_dinBefore.png",	// new
-			"096_forAfter.png",			// new
-			"097_for_dinAfter.png",		// new
+			"094_forBefore.png",		// obsolete (#510)
+			"095_for_dinBefore.png",	// obsolete (#510)
+			"096_forAfter.png",			// obsolete (#510)
+			"097_for_dinAfter.png",		// obsolete (#510)
 			null,	// 98
 			"099_pin_blue.png",	// for Arranger toolbar
 			"100_diagram_drop.png", // for Arranger toolbar
