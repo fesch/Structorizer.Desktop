@@ -678,18 +678,22 @@ public class IconLoader {
 			if (url != null) {
 				largestURL = url;
 				minFactor = 1.0 * pixels / size;
-				// If he file can be scaled with an itegral factor, we'll cache it
+				// If the file can be scaled with an integral factor, we'll cache it
 				if (pixels % size == 0) { 
 					roundURL = url;
 					factor = pixels / size;
 				}
 			}
 		}
+		if (largestURL != null && minFactor < 1.25) {
+			roundURL = largestURL;
+			factor = 1.0;
+		}
 		if (roundURL != null && factor <= 3) {
 			largestURL = roundURL;
 		}
-		else if (largestURL != null /*&& (minFactor - Math.floor(minFactor)) < 0.3*/) {
-			factor = minFactor; //Math.floor(minFactor);
+		else if (largestURL != null) {
+			factor = minFactor;
 		}
 		else {
 			factor = scaleFactor * extraFactor;
@@ -722,7 +726,10 @@ public class IconLoader {
 		if (ii == null && Locales.isNamedLocale(localeName))
 		{
 			// Already comprises scaling...
-			ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
+			// START KGU#286 2018-02-13: Issues #4, #81
+			//ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
+			ii = getIconImage("locale_" + localeName + ".png");
+			// END KGU#286 2018-02-13
 		}
 		return ii;
 	}
