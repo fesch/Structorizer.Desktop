@@ -61,6 +61,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.12.06      Enh. #487: Drawing supports hiding of declaration sequences 
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: Run data support for new display mode "Hide declarations"
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
+ *      Kay Gürtzig     2018.02.15      Issue #508: Workaround for large-scaled collapse symbols eclipsing the text
  *
  ******************************************************************************************************
  *
@@ -129,7 +130,13 @@ public class Instruction extends Element {
 	
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
-		Rect rect = new Rect(0, 0, 2*(Element.E_PADDING/2), 0);
+		// START KGU#494 2018-02-15: Enh. #408
+		int leftPadding = Element.E_PADDING/2;
+		if (_element.isCollapsed(true)) {
+			leftPadding += _element.getIcon().getIconWidth();
+		}
+		// END KGU#494 2018-02-15
+		Rect rect = new Rect(0, 0, leftPadding + Element.E_PADDING/2, 0);
 		// START KGU#227 2016-07-30: Enh. #128
 		int commentHeight = 0;
 		// END KGU#227 2016-07-30
@@ -172,7 +179,7 @@ public class Instruction extends Element {
 				}
 			}
 			isContinuation = line.trim().endsWith("\\");
-			int lineWidth = getWidthOutVariables(_canvas, line, _element) + Element.E_PADDING;
+			int lineWidth = getWidthOutVariables(_canvas, line, _element) + leftPadding + Element.E_PADDING/2;
 			// END KGU#413 2017-06-09
 			if (rect.right < lineWidth)
 			{
@@ -288,6 +295,12 @@ public class Instruction extends Element {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.getRoot(_element).hightlightVars), "\n");
 		}
 		// END KGU#480 2018-01-21
+		// START KGU#494 2018-02-15: Enh. #408
+		int leftPadding = Element.E_PADDING/2;
+		if (_element.isCollapsed(true)) {
+			leftPadding += _element.getIcon().getIconWidth();
+		}
+		// END KGU#494 2018-02-15
 		// START KGU#413 2017-06-09: Enh. #416
 		boolean isContinuation = false;
 		// END KGU#413 2017-06-09
@@ -309,7 +322,7 @@ public class Instruction extends Element {
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
 //					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
-					myrect.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+					myrect.left + leftPadding + _element.getTextDrawingOffset(),
 					// START KGU#227 2016-07-30: Enh. #128
 					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
 					yTextline += fm.getHeight(),

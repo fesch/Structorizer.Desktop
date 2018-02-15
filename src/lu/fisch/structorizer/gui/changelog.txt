@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-08 (2018-02-14)
+Current development version 3.27-08 (2018-02-15)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -63,6 +63,8 @@ Current development version 3.27-08 (2018-02-14)
 - 08: Issue #510: toolbars "Add Before" and "Add After" merged (shift: before)<2>
 - 08: Issue #4: Distinct symbols for FOR loops (for better recognition) <2>
 - 08: Issue #510: Element icons enlarged, colour buttons now round <2>
+- 08: Issue #508: Workaround for large-scaled symbols in collapsed elements <2>
+- 08: Bugfix #511: Cursor key navigation was blocked by collapsed loops <2>
 
 Version 3.27 (2017-10-30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

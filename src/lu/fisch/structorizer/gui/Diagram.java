@@ -145,6 +145,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.21      Enh. #490: New DiagramController alias preferences integrated
  *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
  *      Kay Gürtzig     2018.02.09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
+ *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
  *
  ******************************************************************************************************
  *
@@ -7182,7 +7183,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		switch (_direction)
     		{
     		case CMD_UP:
-    			if (selected instanceof Repeat)
+    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+    			//if (selected instanceof Repeat)
+    			if (selected instanceof Repeat && !selected.isCollapsed(false))
+        		// END KGU#495 2018-02-15
     			{
     				// START KGU#292 2016-11-16: Bugfix #291
     				//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
@@ -7199,7 +7203,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			}
     			break;
     		case CMD_DOWN:
-    			if (selected instanceof ILoop && !(selected instanceof Repeat))
+    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+    			//if (selected instanceof ILoop && !(selected instanceof Repeat))
+        		if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
+    			// END KGU#495 2018-02-15
     			{
     				Subqueue body = ((ILoop)selected).getBody();
     				y = body.getRectOffDrawPoint().top + 2;
@@ -7252,7 +7259,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			}
     			break;
     		case CMD_RIGHT:
-    			if (selected instanceof ILoop)
+    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+    			//if (selected instanceof ILoop)
+    			if (selected instanceof ILoop && !selected.isCollapsed(false))
+        		// END KGU#495 2018-02-15
     			{
     				Rect bodyRect = ((ILoop)selected).getBody().getRectOffDrawPoint();
     				x = bodyRect.left + 2;
