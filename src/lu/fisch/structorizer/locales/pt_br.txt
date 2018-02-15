@@ -159,7 +159,7 @@ Menu.menuDiagramExpand.text=Expandir
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principal
 Menu.menuDiagramTypeFunction.text=Sub
-Menu.menuDiagramNice.text=Diagrama encaixado?
+Menu.menuDiagramUnboxed.text=Diagrama no encaixado?
 Menu.menuDiagramComment.text=Mostrar comentários?
 Menu.menuDiagramSwitchComments.text=Trocar texto/comentários?
 Menu.menuDiagramMarker.text=Destacar variáveis?
@@ -314,7 +314,6 @@ Editor.btnCopy.tooltip=Copiar o elemento selecionado.
 Editor.btnPaste.tooltip=Colar ou recortar após o elemento selecionado.
 
 // style
-Editor.btnNice.tooltip=Mudar o estilo visual do diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (cantos arredondados).
 Editor.btnProgram.tooltip=Diagrama principal (cantos quadrados).
 

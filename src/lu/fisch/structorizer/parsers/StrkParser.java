@@ -182,7 +182,7 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 		{
 			// read attributes
 			root.setProgram(true);
-			root.isNice=true;
+			root.isBoxed = true;
 
 			// place stack
 			lastE = root;

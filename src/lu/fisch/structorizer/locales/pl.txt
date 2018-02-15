@@ -127,7 +127,7 @@ Menu.menuDiagramMoveDown.text=W dół
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Program główny
 Menu.menuDiagramTypeFunction.text=Podprogram
-Menu.menuDiagramNice.text=Diagram w ramce?
+Menu.menuDiagramUnboxed.text=Diagram bez ramy?
 Menu.menuDiagramComment.text=Pokaż komentarze?
 Menu.menuDiagramMarker.text=Wyróżnij zmienne?
 Menu.menuDiagramDIN.text=DIN?
@@ -247,7 +247,6 @@ Editor.btnCut.tooltip=Wytnij wybrany element.
 Editor.btnCopy.tooltip=Kopiuj wybrany element.
 Editor.btnPaste.tooltip=Wklej skopiowany lub wycięty element.
 // style 
-Editor.btnNice.tooltip=Przełącz styl diagramu.
 Editor.btnFunction.tooltip=Podprogram (rounded corners).
 Editor.btnProgram.tooltip=Program główny (square corners).
 // editing

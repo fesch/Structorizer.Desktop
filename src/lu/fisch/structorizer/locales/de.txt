@@ -242,7 +242,7 @@ Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
-Menu.menuDiagramNice.text=Umrahmtes Diagramm?
+Menu.menuDiagramUnboxed.text=Ungerahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
 Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
@@ -532,7 +532,6 @@ Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
 Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements nach dem ausgewählten Element.
 // style
-Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=@o-Diagramm (gerundete Ecken).
 Editor.btnProgram.tooltip=@n-Diagramm (kantige Ecken).
 Editor.btnInclude.tooltip=@p-Diagramm (2 abgeschrägte Ecken).

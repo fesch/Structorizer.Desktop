@@ -177,7 +177,7 @@ Menu.menuDiagramExpand.text=Exploser
 Menu.menuDiagramType.text=Type de diagramme
 Menu.menuDiagramTypeProgram.text=Programme
 Menu.menuDiagramTypeFunction.text=Sous programme
-Menu.menuDiagramNice.text=Diagramme cadré
+Menu.menuDiagramUnboxed.text=Diagramme non cadré
 Menu.menuDiagramComment.text=Montrer les commentaires?
 Menu.menuDiagramSwitchComments.text=Basculer entre code / commentaires?
 Menu.menuDiagramCommentsPlusText.text=Code et commentaires?
@@ -343,7 +343,6 @@ Editor.btnCut.tooltip=Couper l'élément sélectionné.
 Editor.btnCopy.tooltip=Copier l'élément sélectionné.
 Editor.btnPaste.tooltip=Insérer l'élément coupé ou copié devant l'élément sélectionné.
 // style
-Editor.btnNice.tooltip=Changer la mode de visualisation du diagramme.
 Editor.btnFunction.tooltip=Sous programme (coins ronds).
 Editor.btnProgram.tooltip=Programme principal (coins carrés).
 // editing

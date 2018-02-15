@@ -188,7 +188,7 @@ Menu.menuDiagramExpand.text=Espandi
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
-Menu.menuDiagramNice.text=Stile box?
+Menu.menuDiagramUnboxed.text=Diagramma senza comice?
 Menu.menuDiagramComment.text=Mostra commenti?
 Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
 Menu.menuDiagramCommentsPlusText.text=
@@ -385,7 +385,6 @@ Editor.btnCut.tooltip=Taglia l'elemento selezionato.
 Editor.btnCopy.tooltip=Copia l'elemento selezionato.
 Editor.btnPaste.tooltip=Incolla l'elemento selezionato.
 // style
-Editor.btnNice.tooltip=Cabia lop stile di visualizzazione del diagramma.
 Editor.btnFunction.tooltip=Sottoprogramma (angoli arrotondati).
 Editor.btnProgram.tooltip=Programma (angoli retti).
 // editing

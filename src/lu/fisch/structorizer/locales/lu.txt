@@ -128,7 +128,7 @@ Menu.menuDiagramMoveDown.text=No ënnen réckelen
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
-Menu.menuDiagramNice.text=Boxed diagramm?
+Menu.menuDiagramUnboxed.text=Diagramm net boxed?
 Menu.menuDiagramComment.text=Kommentaren uwëisen?
 Menu.menuDiagramSwitchComments.text=Tëschent Text an Kommentaren wiesselen
 Menu.menuDiagramMarker.text=Variabelen markéieren?
@@ -272,7 +272,6 @@ Editor.btnCut.tooltip=Dat ausgewielten Element erausschneiden.
 Editor.btnCopy.tooltip=Dat ausgewielten Element kopéieren.
 Editor.btnPaste.tooltip=Dat kopéiert oder erausgeschnidden Element hannert dat ausgewielten Element apechen.
 // style 
-Editor.btnNice.tooltip=Toggle the visual style of the diagram.
 Editor.btnFunction.tooltip=Sub Diagramm (ronn Ecker).
 Editor.btnProgram.tooltip=Main Diagramm (spatz Ecker).
 // editing

@@ -382,7 +382,7 @@ public class XmlGenerator extends Generator {
  			pr = "includable";
  		}
 		// END KGU##376 2017-05-16
-		String ni = _root.isNice ? "nice" : "abbr";
+		String ni = _root.isBoxed ? "nice" : "abbr";
 		
 		// START KGU#257 2016-09-25: Enh. #253
 		String pp_attributes = "";

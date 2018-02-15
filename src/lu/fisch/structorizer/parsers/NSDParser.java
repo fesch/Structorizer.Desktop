@@ -204,8 +204,8 @@ public class NSDParser extends DefaultHandler {
 				}
 			}
 			// END KGU#376 2017-05-16
-			root.isNice=true;
-			if(attributes.getIndex("style")!=-1)  {if (!attributes.getValue("style").equals("nice")) {root.isNice=false;}}
+			root.isBoxed=true;
+			if(attributes.getIndex("style")!=-1)  {if (!attributes.getValue("style").equals("nice")) {root.isBoxed=false;}}
 			// START KGU 2015-12-04: The following line was nonsense
 			//if(attributes.getIndex("style")!=-1)  {if (attributes.getValue("type").equals(" ")) {root.isNice=true;}}
 			// END KGU 2015-12-04

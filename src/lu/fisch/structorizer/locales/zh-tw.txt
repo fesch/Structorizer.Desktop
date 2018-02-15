@@ -122,7 +122,7 @@ Menu.menuDiagramMoveDown.text=往下移
 Menu.menuDiagramType.text=類型
 Menu.menuDiagramTypeProgram.text=主程式
 Menu.menuDiagramTypeFunction.text=副程式
-Menu.menuDiagramNice.text=有分隔線的圖?
+Menu.menuDiagramUnboxed.text=有分隔線的圖?
 Menu.menuDiagramComment.text=顯示註解?
 Menu.menuDiagramMarker.text=高亮度變數?
 Menu.menuDiagramDIN.text=DIN連接器?
@@ -250,7 +250,6 @@ Editor.btnCut.tooltip=剪下選取元素.
 Editor.btnCopy.tooltip=複製選取素.
 Editor.btnPaste.tooltip=貼上或複製在選取元素之後的元素.
 // style 
-Editor.btnNice.tooltip=切換圖形的佈景樣式.
 Editor.btnFunction.tooltip=子圖形 (圓角).
 Editor.btnProgram.tooltip=主圖形 (直角).
 // editing

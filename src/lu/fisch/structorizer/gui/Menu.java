@@ -274,7 +274,7 @@ public class Menu extends LangMenuBar implements NSDController
 	//START KGU#376 2017-05-16: Enh. #389
 	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable",IconLoader.getIcon(71));
 	//END KGU#376 2017-05-16
-	protected final JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.getIcon(40));
+	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.getIcon(40));
 	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.getIcon(77));
 	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.getIcon(79));
 	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.getIcon(82));
@@ -1065,8 +1065,8 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramTypeInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
 		// END KGU#376 2017-05-16
 
-		menuDiagram.add(menuDiagramNice);
-		menuDiagramNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(menuDiagramNice.isSelected()); doButtons(); } } );
+		menuDiagram.add(menuDiagramUnboxed);
+		menuDiagramUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(menuDiagramUnboxed.isSelected()); doButtons(); } } );
 
 		menuDiagram.add(menuDiagramComment);
 		menuDiagramComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuDiagramComment.isSelected()); doButtons(); } } );
@@ -1466,7 +1466,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
 			menuDiagramTypeInclude.setSelected(diagram.isInclude());
-			menuDiagramNice.setSelected(diagram.getRoot().isNice);
+			menuDiagramUnboxed.setSelected(!diagram.getRoot().isBoxed);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 			// START KGU#305 2016-12-14: Enh. #305
 			menuDiagramIndex.setSelected(diagram.showArrangerIndex());
@@ -1550,7 +1550,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditPaste.setEnabled(diagram.canPaste());
 
 			// nice
-			menuDiagramNice.setSelected(diagram.isNice());
+			menuDiagramUnboxed.setSelected(diagram.isUnboxed());
 
 			// variable highlighting
 			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);

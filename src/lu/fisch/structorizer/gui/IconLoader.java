@@ -65,6 +65,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.06      Issue #4: Extra factor in getIconImage() for e.g. Arranger icons
  *      Kay Gürtzig     2018.02.09      Issue #4: Some icon renaming and reorganisation
  *      Kay Gürtzig     2018.02.12      Issue #4: Distinct set of FOR loop icons (no longer = forever/while)
+ *      Kay Gürtzig     2018.02.14      Issue #510: Colour button icon shape changed from rectangle to circle.
  *
  ******************************************************************************************************
  *
@@ -142,18 +143,18 @@ public class IconLoader {
 			"050_callafter.png",	// obsolete (#510)
 			"051_scale_gui.png",
 			"052_update.png",
-			"053_conv_for.png",	// new
+			"053_elem_for.png",	// new
 			"054_tortoise.png",
 			"055_jumpafter.png",	// obsolete (#510)
 			"056_jumpbefore.png",	// obsolete (#510)
-			"057_conv_inst.png",
-			"058_conv_call.png",
-			"059_conv_jump.png",
-			"060_conv_if.png",
-			"061_conv_forever.png",
-			"062_conv_while.png",
-			"063_conv_repeat.png",
-			"064_conv_case.png",
+			"057_elem_inst.png",
+			"058_elem_call.png",
+			"059_elem_jump.png",
+			"060_elem_if.png",
+			"061_elem_forever.png",
+			"062_elem_while.png",
+			"063_elem_repeat.png",
+			"064_elem_case.png",
 			"065_paragraph.png",	// not used
 			"066_litterbin.png",	// not used
 			"067_commit.png",		// not used
@@ -163,7 +164,7 @@ public class IconLoader {
 			"071_include.png",
 			"072_include_green.png",
 			"073_binoculars.png",
-			"074_conv_for_din.png",	// new, replaced "074_nsd.png" --> "000_structorizer.png"
+			"074_elem_for_din.png",	// new, replaced "074_nsd.png" --> "000_structorizer.png"
 			"075_beginner.png",
 			"076_latex.png",	// for StrukTeX?
 			"077_bubble.png",
@@ -180,7 +181,7 @@ public class IconLoader {
 			"088_picture.png",	// export / import
 			"089_paraAfter.png",	// obsolete (#510)
 			"090_paraBefore.png",	// obsolete (#510)
-			"091_conv_para.png",
+			"091_elem_para.png",
 			"092_SaveAs.png",
 			"093_picture_export.png",	// for Arranger toolbar
 			"094_forBefore.png",		// obsolete (#510)
@@ -788,9 +789,18 @@ public class IconLoader {
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
 		graphics.setColor(Color.BLACK);
-		graphics.fillRect(0,0,size,size);
+		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
+		//graphics.fillRect(0,0,size,size);
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+		graphics.setColor(Color.BLACK);
+		graphics.fillOval(0, 0, size, size);
+		// END KGU#493 2018-02-14
 		graphics.setColor(_color);
-		graphics.fillRect(1,1,size-2,size-2);
+		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
+		//graphics.fillRect(1,1,size-2,size-2);
+		graphics.fillOval(1, 1, size-2, size-2);
+		// END KGU#493 2018-02-14
 		return new ImageIcon(image);
 	}
 	

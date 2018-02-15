@@ -177,7 +177,7 @@ Menu.menuDiagramExpand.text=
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
-Menu.menuDiagramNice.text=Hranatý diagram?
+Menu.menuDiagramUnboxed.text=Nezarámovaný diagram?
 Menu.menuDiagramComment.text=Ukazovat komentáře?
 Menu.menuDiagramSwitchComments.text=
 Menu.menuDiagramCommentsPlusText.text=
@@ -343,7 +343,6 @@ Editor.btnCut.tooltip=Vyjmout vybraný element.
 Editor.btnCopy.tooltip=Kopírovat vybraný element.
 Editor.btnPaste.tooltip=Vložit zkopírovaný nebo vyjmutý element po vybraném elementu.
 // style
-Editor.btnNice.tooltip=Přepnout mezi zobrazeními diagramu.
 Editor.btnFunction.tooltip=Diagram podprogramu (kulaté rohy).
 Editor.btnProgram.tooltip=Diagram hlavního programu (hranaté rohy).
 // editing

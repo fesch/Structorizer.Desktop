@@ -3145,7 +3145,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (sub != null) {
 					// adopt presentation properties from root
 					sub.hightlightVars = root.hightlightVars;
-					sub.isNice = root.isNice;
+					sub.isBoxed = root.isBoxed;
 					sub.getVarNames();	// just to prepare proper drawing.
 					sub.setChanged();
 					Arranger arr = Arranger.getInstance();
@@ -6318,9 +6318,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return Element.E_DIN;
 	}
 
-	public void setNice(boolean _nice)
+	public void setUnboxed(boolean _unboxed)
 	{
-		root.isNice=_nice;
+		root.isBoxed = !_unboxed;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
 		root.setChanged();
@@ -6331,15 +6331,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
-	public boolean isNice()
+	public boolean isUnboxed()
 	{
-		return root.isNice;
+		return !root.isBoxed;
 	}
 
 	public void setFunction()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && root.isProgram())
+		// START KGU#221 2016-07-28: Bugfix #208 - outer dimensions change
+		if (!root.isBoxed && root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
@@ -6358,7 +6358,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setProgram()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && !root.isProgram())
+		if (!root.isBoxed && !root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
@@ -6377,20 +6377,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#376 2017-05-16: Enh. #389
 	public void setInclude()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && root.isProgram())
+		// For an unboxed diagram, the outer dimensions may change
+		if (!root.isBoxed && root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
-		// END KGU#221 2016-07-28
 		root.setInclude();
-		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
-		//root.hasChanged=true;
+		// Record this change in addition to the undoable ones
 		root.setChanged();
-		// END KGU#137 2016-01-11
-		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		// check absense of parameter list
 		analyse();
-		// END KGU#253 2016-09-22
 		redraw();
 	}
 	// END KGU #376 2017-05-16

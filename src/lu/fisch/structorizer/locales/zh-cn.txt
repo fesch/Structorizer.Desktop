@@ -135,7 +135,7 @@ Menu.menuDiagramMoveDown.text=向下移动`
 Menu.menuDiagramType.text=类型
 Menu.menuDiagramTypeProgram.text=主程序
 Menu.menuDiagramTypeFunction.text=子程序
-Menu.menuDiagramNice.text=有横隔的图？
+Menu.menuDiagramUnboxed.text=有横隔的图？
 Menu.menuDiagramComment.text=显示注释？
 Menu.menuDiagramMarker.text=变量高亮显示？
 Menu.menuDiagramDIN.text=DIN？
@@ -261,7 +261,6 @@ Editor.btnCut.tooltip=剪切选中的元素。
 Editor.btnCopy.tooltip=拷贝选中的元素。
 Editor.btnPaste.tooltip=在选中的元素后粘贴。
 // style 
-Editor.btnNice.tooltip=切换图的可视化风格。
 Editor.btnFunction.tooltip=子程序图 (圆角)。
 Editor.btnProgram.tooltip=主程序图 (方角)。
 // editing

@@ -281,12 +281,17 @@ public abstract class Element {
 	" - Pat Niemeyer <pat@pat.net>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
+	// START KGU#494 2018-02-14: Enh. #508
+	/** basic padding value for scaling with scale_factor */
+	public static final int E_PADDING_BASE = 20;
+	// END KGU#494 2018-02-14
 
-	// some static constants
+	// some static quasi-constants
+	/** Padding between e.g. the content of elements and their borders */
 	protected static int E_PADDING = 20;
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
 	//public static int E_INDENT = 2;
-	/** Used as minimum indentation for continuation lines (after lines ending with backslash) */
+	/** Used as minimum text indentation for continuation lines (after lines ending with backslash) */
 	public static int E_INDENT = 4;
 	// END KGU#412 2017-06-09
 	/** Actually, the background colour for selected elements */
@@ -1982,6 +1987,9 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
+			// START KGU#494 2018-02-14: Enh. #508 (still disabled because not desirable either, e.g. in presentation mode)
+			//E_PADDING = Math.round((float)(E_PADDING_BASE * Double.parseDouble(ini.getProperty("scaleFactor", "1.0"))));
+			// END KGU#494 2018-01-14
 			// START KGU 2017-01-06: Issue #327: Default changed to English
 			preAltT=ini.getProperty("IfTrue","T");
 			preAltF=ini.getProperty("IfFalse","F");

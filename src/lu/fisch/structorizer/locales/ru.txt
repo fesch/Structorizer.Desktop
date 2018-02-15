@@ -195,7 +195,7 @@ Menu.menuDiagramType.text=Тип
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
-Menu.menuDiagramNice.text=Поля диаграммы
+Menu.menuDiagramUnboxed.text=Диаграмма без рамки
 Menu.menuDiagramComment.text=Показывать комментарии
 Menu.menuDiagramSwitchComments.text=Обменить тексты/комментарии
 Menu.menuDiagramCommentsPlusText.text=Тексты и комментарии
@@ -481,7 +481,6 @@ Editor.btnCut.tooltip=Вырезать выбранный элемент.
 Editor.btnCopy.tooltip=Скопировать выбранный элемент.
 Editor.btnPaste.tooltip=Вставить скопированный или вырезанный элемент.
 // style
-Editor.btnNice.tooltip=Переключить визуальный стиль схемы.
 Editor.btnFunction.tooltip=@{Root.DT_SUB} (закругленные углы).
 Editor.btnProgram.tooltip=@{Root.DT_MAIN} (прямые углы).
 Editor.btnInclude.tooltip=@{Root.DT_INCL}

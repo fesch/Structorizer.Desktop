@@ -239,7 +239,7 @@ Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
-Menu.menuDiagramNice.text=Boxed diagram?
+Menu.menuDiagramUnboxed.text=Diagram without frame?
 Menu.menuDiagramComment.text=Show comments?
 Menu.menuDiagramSwitchComments.text=Switch text/comments?
 Menu.menuDiagramCommentsPlusText.text=Comments plus texts?
@@ -529,7 +529,6 @@ Editor.btnCut.tooltip=Cut the selected element.
 Editor.btnCopy.tooltip=Copy the selected element.
 Editor.btnPaste.tooltip=Paste the copied or cut element after the selected element.
 // style 
-Editor.btnNice.tooltip=Toggle the visual style of the diagram.
 Editor.btnFunction.tooltip=@o (rounded corners).
 Editor.btnProgram.tooltip=@n (square corners).
 Editor.btnInclude.tooltip=@p (2 bevelled corners).
