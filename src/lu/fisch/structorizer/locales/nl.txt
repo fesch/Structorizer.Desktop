@@ -234,6 +234,7 @@ Editor.btnCut.tooltip=Het geselecteerde element knippen.
 Editor.btnCopy.tooltip=Het geselecteerde element kopiëren.
 Editor.btnPaste.tooltip=Het geknipte of gekopieerde element na het geselecteerde element plakken.
 // style 
+Editor.btnUnboxed.tooltip=De visuele stijl van het diagram wisselen.
 Editor.btnFunction.tooltip=Subroutine diagram (ronde hoeken).
 Editor.btnProgram.tooltip=Programma diagram (rechte hoeken).
 // editing

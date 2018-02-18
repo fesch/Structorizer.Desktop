@@ -274,7 +274,7 @@ public class Menu extends LangMenuBar implements NSDController
 	//START KGU#376 2017-05-16: Enh. #389
 	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable",IconLoader.getIcon(71));
 	//END KGU#376 2017-05-16
-	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.getIcon(40));
+	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?",IconLoader.getIcon(40));
 	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.getIcon(77));
 	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.getIcon(79));
 	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.getIcon(82));

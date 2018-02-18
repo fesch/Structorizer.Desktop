@@ -247,6 +247,7 @@ Editor.btnCut.tooltip=Wytnij wybrany element.
 Editor.btnCopy.tooltip=Kopiuj wybrany element.
 Editor.btnPaste.tooltip=Wklej skopiowany lub wycięty element.
 // style 
+Editor.btnUnboxed.tooltip=Przełącz styl diagramu.
 Editor.btnFunction.tooltip=Podprogram (rounded corners).
 Editor.btnProgram.tooltip=Program główny (square corners).
 // editing

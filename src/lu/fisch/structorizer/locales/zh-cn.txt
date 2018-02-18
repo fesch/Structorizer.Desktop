@@ -261,6 +261,7 @@ Editor.btnCut.tooltip=剪切选中的元素。
 Editor.btnCopy.tooltip=拷贝选中的元素。
 Editor.btnPaste.tooltip=在选中的元素后粘贴。
 // style 
+Editor.btnUnboxed.tooltip=切换图的可视化风格。
 Editor.btnFunction.tooltip=子程序图 (圆角)。
 Editor.btnProgram.tooltip=主程序图 (方角)。
 // editing

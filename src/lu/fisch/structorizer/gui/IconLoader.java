@@ -97,16 +97,16 @@ public class IconLoader {
 			"004_Make.png",
 			"005_Delete.png",
 			"006_edit.png",	// Renamed
-			"007_intBefore.png",		// obsolete (#510)
-			"008_altBefore.png",		// obsolete (#510)
-			"009_foreverBefore.png",	// obsolete (#510)
-			"010_whileBefore.png",		// obsolete (#510)
-			"011_repeatBefore.png",		// obsolete (#510)
-			"012_intAfter.png",			// obsolete (#510)
-			"013_altAfter.png",			// obsolete (#510)
-			"014_foreverAfter.png",		// obsolete (#510)
-			"015_whileAfter.png",		// obsolete (#510)
-			"016_repeatAfter.png",		// obsolete (#510)
+			"007_zoom_out.png",	//"007_intBefore.png",		// obsolete (#510)
+			"008_zoom_in.png",	//"008_altBefore.png",		// obsolete (#510)
+			null,	//"009_foreverBefore.png",	// obsolete (#510)
+			null,	//"010_whileBefore.png",		// obsolete (#510)
+			null,	//"011_repeatBefore.png",		// obsolete (#510)
+			null,	//"012_intAfter.png",			// obsolete (#510)
+			null,	//"013_altAfter.png",			// obsolete (#510)
+			null,	//"014_foreverAfter.png",		// obsolete (#510)
+			null,	//"015_whileAfter.png",		// obsolete (#510)
+			null,	//"016_repeatAfter.png",		// obsolete (#510)
 			"017_Eye.png",
 			"018_add.png",
 			"019_Up.png",
@@ -137,16 +137,16 @@ public class IconLoader {
 			"044_cut.png",
 			"045_remove.png",	// used in Arranger index
 			"046_covered.png",	// for Arranger toolbar
-			"047_casebefore.png",	// obsolete (#510)
-			"048_caseafter.png",	// obsolete (#510)
-			"049_callbefore.png",	// obsolete (#510)
-			"050_callafter.png",	// obsolete (#510)
+			null,	//"047_casebefore.png",	// obsolete (#510)
+			null,	//"048_caseafter.png",	// obsolete (#510)
+			null,	//"049_callbefore.png",	// obsolete (#510)
+			null,	//"050_callafter.png",	// obsolete (#510)
 			"051_scale_gui.png",
 			"052_update.png",
 			"053_elem_for.png",	// new
 			"054_tortoise.png",
-			"055_jumpafter.png",	// obsolete (#510)
-			"056_jumpbefore.png",	// obsolete (#510)
+			null,	//"055_jumpafter.png",	// obsolete (#510)
+			null,	//"056_jumpbefore.png",	// obsolete (#510)
 			"057_elem_inst.png",
 			"058_elem_call.png",
 			"059_elem_jump.png",
@@ -179,15 +179,15 @@ public class IconLoader {
 			"086_properties.png",
 			"087_code.png",		// or use "087_code1.png" alternatively
 			"088_picture.png",	// export / import
-			"089_paraAfter.png",	// obsolete (#510)
-			"090_paraBefore.png",	// obsolete (#510)
+			null,	//"089_paraAfter.png",	// obsolete (#510)
+			null,	//"090_paraBefore.png",	// obsolete (#510)
 			"091_elem_para.png",
 			"092_SaveAs.png",
 			"093_picture_export.png",	// for Arranger toolbar
-			"094_forBefore.png",		// obsolete (#510)
-			"095_for_dinBefore.png",	// obsolete (#510)
-			"096_forAfter.png",			// obsolete (#510)
-			"097_for_dinAfter.png",		// obsolete (#510)
+			null,	//"094_forBefore.png",		// obsolete (#510)
+			null,	//"095_for_dinBefore.png",	// obsolete (#510)
+			null,	//"096_forAfter.png",			// obsolete (#510)
+			null,	//"097_for_dinAfter.png",		// obsolete (#510)
 			null,	// 98
 			"099_pin_blue.png",	// for Arranger toolbar
 			"100_diagram_drop.png", // for Arranger toolbar

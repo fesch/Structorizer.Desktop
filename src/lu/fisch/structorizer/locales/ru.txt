@@ -481,6 +481,7 @@ Editor.btnCut.tooltip=Вырезать выбранный элемент.
 Editor.btnCopy.tooltip=Скопировать выбранный элемент.
 Editor.btnPaste.tooltip=Вставить скопированный или вырезанный элемент.
 // style
+Editor.btnUnboxed.tooltip=Переключить визуальный стиль схемы.
 Editor.btnFunction.tooltip=@{Root.DT_SUB} (закругленные углы).
 Editor.btnProgram.tooltip=@{Root.DT_MAIN} (прямые углы).
 Editor.btnInclude.tooltip=@{Root.DT_INCL}

@@ -343,6 +343,7 @@ Editor.btnCut.tooltip=Vyjmout vybraný element.
 Editor.btnCopy.tooltip=Kopírovat vybraný element.
 Editor.btnPaste.tooltip=Vložit zkopírovaný nebo vyjmutý element po vybraném elementu.
 // style
+Editor.btnUnboxed.tooltip=Přepnout mezi zobrazeními diagramu.
 Editor.btnFunction.tooltip=Diagram podprogramu (kulaté rohy).
 Editor.btnProgram.tooltip=Diagram hlavního programu (hranaté rohy).
 // editing

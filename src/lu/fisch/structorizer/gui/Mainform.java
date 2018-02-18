@@ -325,8 +325,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                                             // END KGU#49 2017-01-04
                                             System.exit(0);	// This kills all related frames and threads as well!
                                     }
-                                    else
+                                    else {
                                             dispose();
+                                    }
                                     // END KGU#49/KGU#66 (#6/#16) 2015-11-14
                             }
                     }
@@ -789,7 +790,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#331 2017-01-15
 
 			// look and feel
-			if(laf!=null)
+			if (laf != null)
 			{
 				ini.setProperty("laf", laf);
 			}
@@ -829,6 +830,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#479 2017-12-15: Enh. #492
 			ElementNames.putToIni(ini);
 			// END KGU#479 2017-12-15
+			
+			// START KGU#497 2018-02-17: Enh. #512
+			// Give the Arranger a chance to add its stuff to the properties to be saved 
+			if (Arranger.hasInstance()) {
+				Arranger.getInstance().updateProperties(ini);
+			}
+			// END KGU#497 2018-02-17
 			
 			ini.save();
 		}

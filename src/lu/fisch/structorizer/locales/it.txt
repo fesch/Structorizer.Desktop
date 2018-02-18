@@ -385,6 +385,7 @@ Editor.btnCut.tooltip=Taglia l'elemento selezionato.
 Editor.btnCopy.tooltip=Copia l'elemento selezionato.
 Editor.btnPaste.tooltip=Incolla l'elemento selezionato.
 // style
+Editor.btnUnboxed.tooltip=Cambia il stile di visualizzazione del diagramma.
 Editor.btnFunction.tooltip=Sottoprogramma (angoli arrotondati).
 Editor.btnProgram.tooltip=Programma (angoli retti).
 // editing
@@ -394,7 +395,7 @@ Editor.btnMoveUp.tooltip=Sposta in alto l'elemento selezionato.
 Editor.btnMoveDown.tooltip=Sposta in basso l'elemento selezionato.
 Editor.btnTransmute.tooltip=Trasmuta istruzioni in Chiamate o Salti, combina o dividi sequenze
 //printing
-Editor.btnPrint.tooltip=Stampa il diapramma.
+Editor.btnPrint.tooltip=Stampa il diagramma.
 Editor.btnArrange.tooltip=Aggiungi il diagramma al pannello Arranger
 // font
 Editor.btnFontUp.tooltip=Aumenta la dimensione del carattere.

@@ -111,6 +111,7 @@
  *      Kay Gürtzig         2017.12.14  German element name translation adapted
  *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
  *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
+ *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
  *
  ******************************************************************************************************
  *
@@ -532,6 +533,7 @@ Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
 Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements nach dem ausgewählten Element.
 // style
+Editor.btnUnboxed.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=@o-Diagramm (gerundete Ecken).
 Editor.btnProgram.tooltip=@n-Diagramm (kantige Ecken).
 Editor.btnInclude.tooltip=@p-Diagramm (2 abgeschrägte Ecken).
@@ -1076,6 +1078,22 @@ FindAndReplace.msgRegexCorrupt.text=Der reguläre Ausdruck «%1» scheint inkorr
 FindAndReplace.ttlSearchError.text=Suchfehler
 
 -----> Arranger
+-----[ Arranger ]-----
+Arranger.btnAddDiagram.text=Neues Diagramm
+Arranger.btnRemoveDiagram.text=Entfernen
+Arranger.btnExportPNG.text=PNG-Export
+Arranger.btnSaveArr.text=Liste sichern
+Arranger.btnLoadArr.text=Liste laden
+Arranger.btnPinDiagram.text=Anheften
+Arranger.btnSetCovered.text=Getestet
+Arranger.btnZoom.text=Ferner/Näher
+Arranger.btnSaveArr.tooltip=Diese Anordnung als Liste (*.arr) oder Archiv (*.arrz) sichern.
+Arranger.btnLoadArr.tooltip=Eine Anordnung von Liste (*.arr) oder Archiv (*.arrz) laden.
+Arranger.btnExportPNG.tooltip=Diese Anordnung als Bilddatei im PNG-Format ausgeben.
+Arranger.btnPinDiagram.tooltip=Diagramm anheften, um es gegen Ersetzung seitens Structorizer zu schützen.
+Arranger.btnSetCovered.tooltip=Unterprogrammdiagram für Routinenaufrufe als testabgedeckt markieren.
+Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
+-----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
 Surface.msgSavePortable.text=Als portables komprimiertes Archiv sichern?
 Surface.msgSaveDialogTitle.text=Speichere die Diagrammanordnung ...

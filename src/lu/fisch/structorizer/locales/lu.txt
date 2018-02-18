@@ -272,6 +272,7 @@ Editor.btnCut.tooltip=Dat ausgewielten Element erausschneiden.
 Editor.btnCopy.tooltip=Dat ausgewielten Element kopéieren.
 Editor.btnPaste.tooltip=Dat kopéiert oder erausgeschnidden Element hannert dat ausgewielten Element apechen.
 // style 
+Editor.btnUnboxed.tooltip=Toggle the visual style of the diagram.
 Editor.btnFunction.tooltip=Sub Diagramm (ronn Ecker).
 Editor.btnProgram.tooltip=Main Diagramm (spatz Ecker).
 // editing

@@ -111,6 +111,7 @@
  *      Kay Gürtzig     2017.11.05  New texts for issues #448, #452, #454 added.
  *      Kay Gürtzig     2017.12.15  Element name placeholders introduced
  *      Kay Gürtzig     2018.01.18  DiagramControllerAliases added
+ *      Kay Gürtzig     2018.02.17  Arranger captions added (on occasion of enh. #512)
  *
  ******************************************************************************************************
  *
@@ -533,6 +534,7 @@ Editor.btnCut.tooltip=Cortar elementos seleccionados.
 Editor.btnCopy.tooltip=Copiar elementos seleccionados.
 Editor.btnPaste.tooltip=Pegar los elementos cortados o copiados después del elemento seleccionado.
 // style
+Editor.btnUnboxed.tooltip=Cambiar estilo visual del diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (esquinas redondeadas).
 Editor.btnProgram.tooltip=Main diagrama (esquinas cuadradas).
 Editor.btnInclude.tooltip=Diagrama incluible (2 esquinas sesgadas).
@@ -1075,6 +1077,22 @@ FindAndReplace.btnReplaceAll.text=Reemplazar todos
 FindAndReplace.btnClose.text=Cerrar
 
 -----> Arranger
+-----[ Arranger ]-----
+Arranger.btnAddDiagram.text=Nuevo diagrama
+Arranger.btnRemoveDiagram.text=Quita diagrama
+Arranger.btnExportPNG.text=Exporte a PNG
+Arranger.btnSaveArr.text=Graba lista
+Arranger.btnLoadArr.text=Carga lista
+Arranger.btnPinDiagram.text=Grapa diagrama
+Arranger.btnSetCovered.text=Pon cubierto
+Arranger.btnZoom.text=Zoom 
+Arranger.btnSaveArr.tooltip=Graba esta constelación como lista (*.arr) o archivo comprimido (*.arrz).
+Arranger.btnLoadArr.tooltip=Carga una constelación desde lista (*.arr) o archivo comprimido (*.arrz).
+Arranger.btnExportPNG.tooltip=Dibuja esta constelación en un fichero de imagen del formato PNG.
+Arranger.btnPinDiagram.tooltip=Grapa un diagrama para protejerlo de reemplazamiento por Structorizer.
+Arranger.btnSetCovered.tooltip=Marca el diagrama de rutina como completamente probado para llamadas.
+Arranger.btnZoom.tooltip=Deja presionada la tecla Shift para acercarse con el zoom.
+-----[ Surface ]-----
 Surface.msgFileLoadError.text=Error abriendo archivo:
 Surface.msgSavePortable.text=¿Guardar como archivo portable y comprimido?
 Surface.msgSaveDialogTitle.text=Guarda colocado conjunto de diagramas ...

@@ -60,7 +60,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button
  *      Kay Gürtzig     2018.02.12      Issues #4, #510: element toolbars merged, icon numbers modified
  *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by pure element icons
- *      Kay Gürtzig     2018.02.14      Issue #510: btnNice and its solitary toolbar disabled.
+ *      Kay Gürtzig     2018.02.14      Issue #510: btnUnboxed and its solitary toolbar disabled.
  *
  ******************************************************************************************************
  *
@@ -166,9 +166,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JButton btnCopy = new JButton(IconLoader.getIcon(42)); 
     protected final JButton btnPaste = new JButton(IconLoader.getIcon(43));
 	// style / type
-	// START KGU#493 2018-02-14: Issue #510 Disabled as of little use here 
-    //protected final JToggleButton btnNice = new JToggleButton(IconLoader.getIcon(40));
-    // END KGU#493 2018-02-14
+    protected final JToggleButton btnUnboxed = new JToggleButton(IconLoader.getIcon(40));	// KGU#494 2018-02-14 #510 not used
     protected final JToggleButton btnFunction = new JToggleButton(IconLoader.getIcon(21));
     protected final JToggleButton btnProgram = new JToggleButton(IconLoader.getIcon(22));
     // START KGU#376 2017-05-16: Enh. #389
@@ -712,9 +710,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 //		toolbar = newToolBar("Nice", false);
 //		
 //		//toolbar.addSeparator();
-//        toolbar.add(btnNice);
-//		btnNice.setFocusable(false);
-//		btnNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(btnNice.isSelected()); doButtons(); } } );
+//        toolbar.add(btnUnboxed);
+//		btnUnboxed.setFocusable(false);
+//		btnUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(btnUnboxed.isSelected()); doButtons(); } } );
 		// END KGU#493 2018-02-14
 
 		// START KGU#493 2018-02-12: Issue #510 - toolbars Before + After merged
@@ -1277,7 +1275,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		// style
 		// START KGU#493 2018-02-14: Issue #510 Disabled as of little use here 
-		//btnNice.setSelected(diagram.isNice());
+		//btnUnboxed.setSelected(diagram.isUnboxed());
 		// END KGU#493 2018-02-14
 		btnFunction.setSelected(diagram.isSubroutine());
 		btnProgram.setSelected(diagram.isProgram());

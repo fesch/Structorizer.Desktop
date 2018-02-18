@@ -43,6 +43,8 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
+
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Frame;
@@ -116,7 +118,7 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
      */
 	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
 	{
-		double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		//double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
 		
 		int lineNo = 1;
 
@@ -128,12 +130,15 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 	    scrIncludeList = new JScrollPane(txtIncludeList);
 
 	    txtIncludeList.addKeyListener(this);
+	    // START KGU 2018-02-16: Make sure the includes area isn't mistaken for comments or signature text
+	    txtIncludeList.setBackground(new Color(255,255,210));
+	    // END KGU 2018-02-16
         // Issue #163 - tab isn't really needed within the text
         txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
         txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
 
         scalableComponents.addElement(txtIncludeList);
-
+        
         _gbc.gridx = 1;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
@@ -148,25 +153,26 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 		_gbc.gridy = ++lineNo;
 		_gbc.gridheight = 4;
 		_gbc.gridwidth = 18;
-        _gbc.fill = GridBagConstraints.BOTH;
-        _gbc.weightx = 1;
-        _gbc.weighty = 1;
-        _gbc.anchor = GridBagConstraints.NORTH;
+		_gbc.fill = GridBagConstraints.BOTH;
+		_gbc.weightx = 1;
+		_gbc.weighty = 1;
+		_gbc.anchor = GridBagConstraints.NORTH;
 		_panel.add(scrIncludeList, _gbc);
-		int stdFontHeight = txtIncludeList.getFontMetrics(txtIncludeList.getFont()).getHeight();
-		scrIncludeList.setPreferredSize(new Dimension(getPreferredSize().width, (int)Math.ceil(3 * stdFontHeight * scaleFactor)));
 
-        _gbc.gridx = 1;
-        _gbc.gridy = (lineNo += _gbc.gridheight);
-        _gbc.gridwidth = 18;
-        _gbc.gridheight = 1;
-        _gbc.fill = GridBagConstraints.BOTH;
-        _gbc.weightx = 1;
-        _gbc.weighty = 0;
-        _gbc.anchor = GridBagConstraints.NORTH;
-        _gb.setConstraints(lblText, _gbc);
-        _panel.add(lblText);
-        
+		int fontHeight = txtIncludeList.getFontMetrics(txtIncludeList.getFont().deriveFont(FONT_SIZE)).getHeight();
+		scrIncludeList.setPreferredSize(new Dimension(getPreferredSize().width, (int)Math.ceil(2 * fontHeight)));
+
+		_gbc.gridx = 1;
+		_gbc.gridy = (lineNo += _gbc.gridheight);
+		_gbc.gridwidth = 18;
+		_gbc.gridheight = 1;
+		_gbc.fill = GridBagConstraints.BOTH;
+		_gbc.weightx = 1;
+		_gbc.weighty = 0;
+		_gbc.anchor = GridBagConstraints.NORTH;
+		_gb.setConstraints(lblText, _gbc);
+		_panel.add(lblText);
+
 		return lineNo + _gbc.gridheight;
 	}
 	// END KGU#376 2017-06-30

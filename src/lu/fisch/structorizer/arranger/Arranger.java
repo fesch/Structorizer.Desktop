@@ -58,6 +58,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.01.04  KGU#49: Arranger now handles windowClosing events itself (instead
  *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
  *      Kay Gürtzig     2017.03.28  Enh. #386: New method saveAll()
+ *      Kay Gürtzig     2018.02.17  Enh. #512: Zoom mechanism implemented (zoom button + key actions)
  *
  ******************************************************************************************************
  *
@@ -65,6 +66,7 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -84,6 +86,7 @@ import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangFrame;
 
 /**
@@ -244,8 +247,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         btnLoadArr = new javax.swing.JButton();
         // END KGU#110 2015-12-20
         // START KGU#117 2016-03-09: Env. #77 - test coverage
-        btnSetCovered = new javax.swing.JButton();
+        btnSetCovered = new  javax.swing.JButton();
         // END KGU#117 2016-03-09
+        // START KGU#497 2018-02-17: Enh. #512 - zoom function
+        btnZoom = new javax.swing.JButton();
+        // END KGU#497 2018-02-17
 
         
         surface = new lu.fisch.structorizer.arranger.Surface();
@@ -273,7 +279,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
-        btnExportPNG.setIcon(IconLoader.getIconImage("093_picture_export.png", 1.5)); // NOI18N
+        btnExportPNG.setIcon(IconLoader.getIconImage("093_picture_export.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnExportPNG.setText("PNG Export");
         btnExportPNG.setFocusable(false);
@@ -290,7 +296,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#110 2015-12-20: Enh. #62
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
-        btnSaveArr.setIcon(IconLoader.getIconImage("003_Save.png", 1.5)); // NOI18N
+        btnSaveArr.setIcon(IconLoader.getIconImage("003_Save.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnSaveArr.setText("Save List");
         btnSaveArr.setFocusable(false);
@@ -306,7 +312,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
-        btnLoadArr.setIcon(IconLoader.getIconImage("002_Open.png", 1.5)); // NOI18N
+        btnLoadArr.setIcon(IconLoader.getIconImage("002_Open.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnLoadArr.setText("Load List");
         btnLoadArr.setFocusable(false);
@@ -323,7 +329,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnAddDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
-        btnAddDiagram.setIcon(IconLoader.getIconImage("101_diagram_new.png", 1.5)); // NOI18N
+        btnAddDiagram.setIcon(IconLoader.getIconImage("101_diagram_new.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnAddDiagram.setText("New Diagram");
         btnAddDiagram.setFocusable(false);
@@ -340,7 +346,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#88 2015-11-24: Protect a diagram against replacement
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
-        btnPinDiagram.setIcon(IconLoader.getIconImage("099_pin_blue.png", 1.5)); // NOI18N
+        btnPinDiagram.setIcon(IconLoader.getIconImage("099_pin_blue.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnPinDiagram.setText("Pin Diagram");
         btnPinDiagram.setToolTipText("Pin a diagram to make it immune against replacement.");
@@ -359,7 +365,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#117 2016-03-09: Enh. #77 - Mark a subroutine as test-covered
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
-        btnSetCovered.setIcon(IconLoader.getIconImage("046_covered.png", 1.5)); // NOI18N
+        btnSetCovered.setIcon(IconLoader.getIconImage("046_covered.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnSetCovered.setText("Set Covered");
         btnSetCovered.setToolTipText("Mark the routine diagram as test-covered for subroutine calls to it.");
@@ -378,7 +384,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#85 2015-11-17: New opportunity to drop the selected diagram 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
-        btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", 1.5)); // NOI18N
+        btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnRemoveDiagram.setText("Drop Diagram");
         btnRemoveDiagram.setFocusable(false);
@@ -392,6 +398,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnRemoveDiagram.setBorder(raisedBorder);
         toolbar.add(btnRemoveDiagram);
         // END KGU#85 2015-11-17
+
+        // START KGU#497 2018-02-17: Enh. #512 - zoom function
+        btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2016-11-01
+        btnZoom.setText("Zoom out/in");
+        btnZoom.setFocusable(false);
+        btnZoom.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnZoom.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnZoom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnZoomActionPerformed(evt);
+            }
+        });
+        toolbar.add(btnZoom);
+        // END KGU#497 2018-02-17
 
         getContentPane().add(toolbar, java.awt.BorderLayout.NORTH);
 
@@ -478,7 +499,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
+	private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
     {//GEN-HEADEREND:event_btnExportPNGActionPerformed
         surface.exportPNG(this);
     }//GEN-LAST:event_btnExportPNGActionPerformed
@@ -516,6 +537,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#88 2016-03-09
 
+    // START KGU#497 2018-02-17: Enh. #513
+    protected void btnZoomActionPerformed(ActionEvent evt) {
+		surface.zoom((evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0);
+		if (surface.getZoom() <= 1 && this.isShiftPressed) {
+			btnZoom.setEnabled(false);
+		}
+	}
+    // END KGU#497 2018-02-17
+
     /**
      * Starts the Arranger as application
      *
@@ -548,6 +578,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#117 2016-03-09: Env. #77 - test coverage
     private javax.swing.JButton btnSetCovered;
     // END KGU#117 2016-03-09
+    // START KGU#497 2018-02-17: Enh. #512 - zoomm function
+    private javax.swing.JButton btnZoom;
+    /** Registers whether shift key had been pressed without having been released again */
+    private boolean isShiftPressed = false;
+    /** Defines a magnification factor for the toolbar button icons w.r.t. the default size 16x16 px */
+    private static final double ICON_FACTOR = 1.5;
+    // END KGU#497 2018-02-17
     
     private lu.fisch.structorizer.arranger.Surface surface;
     private javax.swing.JToolBar toolbar;
@@ -627,6 +664,23 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     }
                     break;
                 // END KGU#177 2016-04-14
+                // START KGU#497 2018-02-17: Enh. #512 - zooming introduced
+                case KeyEvent.VK_SHIFT:
+                    if (!this.isShiftPressed) {
+                        this.btnZoom.setIcon(IconLoader.getIconImage("008_zoom_in.png", ICON_FACTOR));
+                        this.isShiftPressed = true;
+                        if (surface.getZoom() <= 1) {
+                            btnZoom.setEnabled(false);
+                        }
+                    }
+                	break;
+                case KeyEvent.VK_ADD:
+                    surface.zoom(true);
+                    break;
+                case KeyEvent.VK_SUBTRACT:
+                    surface.zoom(false);
+                    break;
+                // END KGU#497 2018-02-17
             }
         }
     }
@@ -634,7 +688,17 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     @Override
     public void keyReleased(KeyEvent ev) {
-        // Nothing to do here
+    	// START KGU#497 2018-02-17: Change the zoom icon when shift is released
+        if (ev.getSource() == this) {
+            switch (ev.getKeyCode()) {
+                case KeyEvent.VK_SHIFT:
+                	this.isShiftPressed = false;
+                	this.btnZoom.setEnabled(true);
+            		this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
+                	break;
+            }
+        }
+        // END KGU#497 2018-02-17
     }
 
     @Override
@@ -771,5 +835,17 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		this.surface.saveDiagrams(false, true);
 	}
 	// END KGU#373 2017-03-28
+	
+	// START KGU#497 2018-02-17: Enh. #512
+	/**
+	 * Adds or updates Arranger-specific preferences or properties to {@code ini}
+	 * such that they may be saved.
+	 * @param ini - the instance of the {@link Ini} class. 
+	 */
+	public void updateProperties(Ini ini)
+	{
+    	ini.setProperty("arrangerZoom", Float.toString(surface.getZoom()));
+	}
+	// END KGU#497 2018-02-17
 
 }

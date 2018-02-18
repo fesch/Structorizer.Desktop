@@ -314,6 +314,7 @@ Editor.btnCopy.tooltip=Copiar o elemento selecionado.
 Editor.btnPaste.tooltip=Colar ou recortar após o elemento selecionado.
 
 // style
+Editor.btnUnboxed.tooltip=Mudar o estilo visual do diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (cantos arredondados).
 Editor.btnProgram.tooltip=Diagrama principal (cantos quadrados).
 
