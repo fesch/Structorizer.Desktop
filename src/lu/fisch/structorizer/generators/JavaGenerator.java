@@ -110,7 +110,6 @@ package lu.fisch.structorizer.generators;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.turtle.TurtleBox;
-import lu.fisch.turtle.adapters.Turtleizer;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -319,8 +318,8 @@ public class JavaGenerator extends CGenerator
 				int j = i;
 				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
-				String turtleMethod = null;
 				// START KGU#480 2018-01-21: Enh. 490 - more precise detection
+				//String turtleMethod = null;
 				//if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
 				//	tokens.set(i, turtleMethod);
 				//	this.usesTurtleizer = true;

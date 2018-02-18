@@ -188,7 +188,7 @@ Menu.menuDiagramExpand.text=Espandi
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
-Menu.menuDiagramNice.text=Stile box?
+Menu.menuDiagramUnboxed.text=Diagramma senza comice?
 Menu.menuDiagramComment.text=Mostra commenti?
 Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
 Menu.menuDiagramCommentsPlusText.text=
@@ -366,28 +366,17 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Crea un nuovo diagramma vuoto.
 Editor.btnOpen.tooltip=Apri un diagramma esistente.
 Editor.btnSave.tooltip=Sava il diagramma attuale.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Inserisci una nuova @{Instruction} prima dell'elemento selezionato.
-Editor.btnBeforeAlt.tooltip=Inserisci una nuova @{Alternative} prima dell'elemento selezionato.
-Editor.btnBeforeFor.tooltip=Inserisci un nuovo ciclo @{For} prima dell'elemento selezionato.
-Editor.btnBeforeWhile.tooltip=Inserisci un nuovo cilo @{While} prima dell'elemento selezionato.
-Editor.btnBeforeRepeat.tooltip=Inserisci un nuovo ciclo @{Repeat} prima dell'elemento selezionato.
-Editor.btnBeforeForever.tooltip=Inserisci un nuovo ciclo @{Forever} prima dell'elemento selezionato.
-Editor.btnBeforeCall.tooltip=Inserisci una nuova @{Call} prima dell'elemento selezionato.
-Editor.btnBeforeJump.tooltip=Inserisci un nuovo @{Jump} prima dell'elemento selezionato.
-Editor.btnBeforeCase.tooltip=Inserisci una nuova @{Case} prima dell'elemento selezionato.
-Editor.btnBeforePara.tooltip=Inserisci un nuovo passaggio @{Parallel} prima dell'elemento selezionato.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Inserisci una nuova @{Instruction} dopo l'elemento selezionato.
-Editor.btnAfterAlt.tooltip=Inserisci una nuova @{Alternative} dopo l'elemento selezionato.
-Editor.btnAfterFor.tooltip=Inserisci un nuovo ciclo @{For} dopo l'elemento selezionato.
-Editor.btnAfterWhile.tooltip=Inserisci un nuovo ciclo @{While} dopo l'elemento selezionato.
-Editor.btnAfterRepeat.tooltip=Inserisci un nuovo ciclo @{Repeat} dopo l'elemento selezionato.
-Editor.btnAfterForever.tooltip=Inserisci un nuovo ciclo @{Forever} dopo l'elemento selezionato.
-Editor.btnAfterCall.tooltip=Inserisci una nuova @{Call} dopo l'elemento selezionato.
-Editor.btnAfterJump.tooltip=Inserisci un nuovo @{Jump} dopo l'elemento selezionato.
-Editor.btnAfterCase.tooltip=Inserisci una nuova @{Case} dopo l'elemento selezionato.
-Editor.btnAfterPara.tooltip=Inserisci un nuovo passaggio @{Parallel} dopo l'elemento selezionato.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Inserisci una nuova @{Instruction} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterAlt.tooltip=Inserisci una nuova @{Alternative} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterFor.tooltip=Inserisci un nuovo ciclo @{For} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterWhile.tooltip=Inserisci un nuovo ciclo @{While} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterRepeat.tooltip=Inserisci un nuovo ciclo @{Repeat} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterForever.tooltip=Inserisci un nuovo ciclo @{Forever} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterCall.tooltip=Inserisci una nuova @{Call} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterJump.tooltip=Inserisci un nuovo @{Jump} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterCase.tooltip=Inserisci una nuova @{Case} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterPara.tooltip=Inserisci un nuovo passaggio @{Parallel} dopo (+shift: prima) l'elemento selezionato.
 // undo & redo
 Editor.btnUndo.tooltip=Annulla l'ultima azione.
 Editor.btnRedo.tooltip=Ripeti l'ultima azione.
@@ -396,7 +385,7 @@ Editor.btnCut.tooltip=Taglia l'elemento selezionato.
 Editor.btnCopy.tooltip=Copia l'elemento selezionato.
 Editor.btnPaste.tooltip=Incolla l'elemento selezionato.
 // style
-Editor.btnNice.tooltip=Cabia lop stile di visualizzazione del diagramma.
+Editor.btnUnboxed.tooltip=Cambia il stile di visualizzazione del diagramma.
 Editor.btnFunction.tooltip=Sottoprogramma (angoli arrotondati).
 Editor.btnProgram.tooltip=Programma (angoli retti).
 // editing
@@ -406,7 +395,7 @@ Editor.btnMoveUp.tooltip=Sposta in alto l'elemento selezionato.
 Editor.btnMoveDown.tooltip=Sposta in basso l'elemento selezionato.
 Editor.btnTransmute.tooltip=Trasmuta istruzioni in Chiamate o Salti, combina o dividi sequenze
 //printing
-Editor.btnPrint.tooltip=Stampa il diapramma.
+Editor.btnPrint.tooltip=Stampa il diagramma.
 Editor.btnArrange.tooltip=Aggiungi il diagramma al pannello Arranger
 // font
 Editor.btnFontUp.tooltip=Aumenta la dimensione del carattere.

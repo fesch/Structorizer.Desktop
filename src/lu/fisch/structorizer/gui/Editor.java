@@ -57,7 +57,10 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.16      Enh. #389: Button for third diagram type (includable)
  *      Kay Gürtzig     2017.06.15      Enh. #415, #199: Toolbar additions for find & replace as well as help
  *      Kay Gürtzig     2017.11.05      Issue #452: Mechanisms for simplified toolbar (beginners' mode)
- *      Kay Gürtzig     2017.11.19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button   
+ *      Kay Gürtzig     2017.11.19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button
+ *      Kay Gürtzig     2018.02.12      Issues #4, #510: element toolbars merged, icon numbers modified
+ *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by pure element icons
+ *      Kay Gürtzig     2018.02.14      Issue #510: btnUnboxed and its solitary toolbar disabled.
  *
  ******************************************************************************************************
  *
@@ -119,28 +122,40 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // START KGU#373 2017-03-28: Enh. #387
     protected final JButton btnSaveAll = new JButton(IconLoader.getIcon(69));
     // END KGU#373 2017-03-38
-    // InsertBefore
-    protected final JButton btnBeforeInst = new JButton(IconLoader.getIcon(7)); 
-    protected final JButton btnBeforeAlt = new JButton(IconLoader.getIcon(8)); 
-    protected final JButton btnBeforeFor = new JButton(IconLoader.getIcon(9)); 
-    protected final JButton btnBeforeWhile = new JButton(IconLoader.getIcon(10)); 
-    protected final JButton btnBeforeRepeat = new JButton(IconLoader.getIcon(11)); 
-    protected final JButton btnBeforeCall = new JButton(IconLoader.getIcon(49)); 
-    protected final JButton btnBeforeJump = new JButton(IconLoader.getIcon(56)); 
-    protected final JButton btnBeforeCase = new JButton(IconLoader.getIcon(47)); 
-    protected final JButton btnBeforeForever = new JButton(IconLoader.getIcon(9));
-    protected final JButton btnBeforePara = new JButton(IconLoader.getIcon(90));
+    // START KGU493 2018-02-12: Issue #510 - toolbars Before and After merged
+//    // InsertBefore
+//    protected final JButton btnBeforeInst = new JButton(IconLoader.getIcon(7)); 
+//    protected final JButton btnBeforeAlt = new JButton(IconLoader.getIcon(8)); 
+//    protected final JButton btnBeforeFor = new JButton(IconLoader.getIcon(9)); 
+//    protected final JButton btnBeforeWhile = new JButton(IconLoader.getIcon(10)); 
+//    protected final JButton btnBeforeRepeat = new JButton(IconLoader.getIcon(11)); 
+//    protected final JButton btnBeforeCall = new JButton(IconLoader.getIcon(49)); 
+//    protected final JButton btnBeforeJump = new JButton(IconLoader.getIcon(56)); 
+//    protected final JButton btnBeforeCase = new JButton(IconLoader.getIcon(47)); 
+//    protected final JButton btnBeforeForever = new JButton(IconLoader.getIcon(9));
+//    protected final JButton btnBeforePara = new JButton(IconLoader.getIcon(90));
     // InsertAfter
-    protected final JButton btnAfterInst = new JButton(IconLoader.getIcon(12)); 
-    protected final JButton btnAfterAlt = new JButton(IconLoader.getIcon(13)); 
-    protected final JButton btnAfterFor = new JButton(IconLoader.getIcon(14)); 
-    protected final JButton btnAfterWhile = new JButton(IconLoader.getIcon(15)); 
-    protected final JButton btnAfterRepeat = new JButton(IconLoader.getIcon(16)); 
-    protected final JButton btnAfterCall = new JButton(IconLoader.getIcon(50)); 
-    protected final JButton btnAfterJump = new JButton(IconLoader.getIcon(55)); 
-    protected final JButton btnAfterCase = new JButton(IconLoader.getIcon(48)); 
-    protected final JButton btnAfterForever = new JButton(IconLoader.getIcon(14));
-    protected final JButton btnAfterPara = new JButton(IconLoader.getIcon(89));
+//    protected final JButton btnAfterInst = new JButton(IconLoader.getIcon(12)); 
+//    protected final JButton btnAfterAlt = new JButton(IconLoader.getIcon(13)); 
+//    protected final JButton btnAfterFor = new JButton(IconLoader.getIcon(14)); 
+//    protected final JButton btnAfterWhile = new JButton(IconLoader.getIcon(15)); 
+//    protected final JButton btnAfterRepeat = new JButton(IconLoader.getIcon(16)); 
+//    protected final JButton btnAfterCall = new JButton(IconLoader.getIcon(50)); 
+//    protected final JButton btnAfterJump = new JButton(IconLoader.getIcon(55)); 
+//    protected final JButton btnAfterCase = new JButton(IconLoader.getIcon(48)); 
+//    protected final JButton btnAfterForever = new JButton(IconLoader.getIcon(14));
+//    protected final JButton btnAfterPara = new JButton(IconLoader.getIcon(89));
+    protected final JButton btnAfterInst = new JButton(IconLoader.getIcon(57)); 
+    protected final JButton btnAfterAlt = new JButton(IconLoader.getIcon(60)); 
+    protected final JButton btnAfterFor = new JButton(IconLoader.getIcon(74)); 
+    protected final JButton btnAfterWhile = new JButton(IconLoader.getIcon(62)); 
+    protected final JButton btnAfterRepeat = new JButton(IconLoader.getIcon(63)); 
+    protected final JButton btnAfterCall = new JButton(IconLoader.getIcon(58)); 
+    protected final JButton btnAfterJump = new JButton(IconLoader.getIcon(59)); 
+    protected final JButton btnAfterCase = new JButton(IconLoader.getIcon(64)); 
+    protected final JButton btnAfterForever = new JButton(IconLoader.getIcon(61));
+    protected final JButton btnAfterPara = new JButton(IconLoader.getIcon(91));
+    // END KGU#493 2018-02-12
 	// undo & redo
     protected final JButton btnUndo = new JButton(IconLoader.getIcon(39)); 
 	protected final JButton btnRedo = new JButton(IconLoader.getIcon(38));
@@ -151,7 +166,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JButton btnCopy = new JButton(IconLoader.getIcon(42)); 
     protected final JButton btnPaste = new JButton(IconLoader.getIcon(43));
 	// style / type
-    protected final JToggleButton btnNice = new JToggleButton(IconLoader.getIcon(40));
+    protected final JToggleButton btnUnboxed = new JToggleButton(IconLoader.getIcon(40));	// KGU#494 2018-02-14 #510 not used
     protected final JToggleButton btnFunction = new JToggleButton(IconLoader.getIcon(21));
     protected final JToggleButton btnProgram = new JToggleButton(IconLoader.getIcon(22));
     // START KGU#376 2017-05-16: Enh. #389
@@ -220,29 +235,35 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // Submenu of "Add"
     protected final JMenu popupAddBefore = new JMenu("Before");
     // Submenus of "Add -> Before"
-    protected final JMenuItem popupAddBeforeInst = new JMenuItem("Instruction",IconLoader.getIcon(7));
-    protected final JMenuItem popupAddBeforeAlt = new JMenuItem("IF statement",IconLoader.getIcon(8));
-    protected final JMenuItem popupAddBeforeCase = new JMenuItem("CASE statement",IconLoader.getIcon(47));
-    protected final JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(9));
-    protected final JMenuItem popupAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(10));
-    protected final JMenuItem popupAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(11));
-    protected final JMenuItem popupAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(9));
-    protected final JMenuItem popupAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(49));
-    protected final JMenuItem popupAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(56));
-    protected final JMenuItem popupAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(90));
+    protected final JMenuItem popupAddBeforeInst = new JMenuItem("Instruction",IconLoader.getIcon(/*7*/57));
+    protected final JMenuItem popupAddBeforeAlt = new JMenuItem("IF statement",IconLoader.getIcon(/*8*/60));
+    protected final JMenuItem popupAddBeforeCase = new JMenuItem("CASE statement",IconLoader.getIcon(/*47*/64));
+    // START KGU#493 2018-02-12: Issue #4 - distinguishable FOR symbol
+    //protected final JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(9));
+    protected final JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(/*95*/74));
+    // END KGU#493 2018-002-12
+    protected final JMenuItem popupAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(/*10*/62));
+    protected final JMenuItem popupAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(/*11*/63));
+    protected final JMenuItem popupAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(/*9*/61));
+    protected final JMenuItem popupAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(/*49*/58));
+    protected final JMenuItem popupAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(/*56*/59));
+    protected final JMenuItem popupAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(/*90*/91));
 
     protected final JMenu popupAddAfter = new JMenu("After");
     // Submenus of "Add -> After"
-    protected final JMenuItem popupAddAfterInst = new JMenuItem("Instruction",IconLoader.getIcon(12));
-    protected final JMenuItem popupAddAfterAlt = new JMenuItem("IF statement",IconLoader.getIcon(13));
-    protected final JMenuItem popupAddAfterCase = new JMenuItem("CASE statement",IconLoader.getIcon(48));
-    protected final JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(14));
-    protected final JMenuItem popupAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(15));
-    protected final JMenuItem popupAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(16));
-    protected final JMenuItem popupAddAfterCall = new JMenuItem("Call",IconLoader.getIcon(50));
-    protected final JMenuItem popupAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(55));
-    protected final JMenuItem popupAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(14));
-    protected final JMenuItem popupAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(89));
+    protected final JMenuItem popupAddAfterInst = new JMenuItem("Instruction",IconLoader.getIcon(/*12*/57));
+    protected final JMenuItem popupAddAfterAlt = new JMenuItem("IF statement",IconLoader.getIcon(/*13*/60));
+    protected final JMenuItem popupAddAfterCase = new JMenuItem("CASE statement",IconLoader.getIcon(/*48*/64));
+    // START KGU#493 2018-02-12: Issue #4 - distinguishable FOR symbol
+    //protected final JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(14));
+    protected final JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(/*97*/74));
+    // END KGU#493 2018-002-12
+    protected final JMenuItem popupAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(/*15*/62));
+    protected final JMenuItem popupAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(/*16*/63));
+    protected final JMenuItem popupAddAfterCall = new JMenuItem("Call",IconLoader.getIcon(/*50*/58));
+    protected final JMenuItem popupAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(/*55*/59));
+    protected final JMenuItem popupAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(/*14*/61));
+    protected final JMenuItem popupAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(/*89*/91));
 
     protected final JMenuItem popupEdit = new JMenuItem("Edit",IconLoader.getIcon(6));
     protected final JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.getIcon(5));
@@ -457,11 +478,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         popupAddBefore.add(popupAddBeforeWhile);
         popupAddBeforeWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,false); doButtons(); } } );
 
-        popupAddBefore.add(popupAddBeforeForever);
-        popupAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
-
         popupAddBefore.add(popupAddBeforeRepeat);
         popupAddBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
+
+        popupAddBefore.add(popupAddBeforeForever);
+        popupAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
 
         popupAddBefore.add(popupAddBeforeCall);
         popupAddBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
@@ -490,11 +511,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         popupAddAfter.add(popupAddAfterWhile);
         popupAddAfterWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,true); doButtons(); } } );
 
-        popupAddAfter.add(popupAddAfterForever);
-        popupAddAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",true); doButtons(); } } );
-
         popupAddAfter.add(popupAddAfterRepeat);
         popupAddAfterRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,true); doButtons(); } } );
+
+        popupAddAfter.add(popupAddAfterForever);
+        popupAddAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",true); doButtons(); } } );
 
         popupAddAfter.add(popupAddAfterCall);
         popupAddAfterCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",true); doButtons(); } } );
@@ -685,49 +706,53 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
 	    // END KGU#376 2017-05-16
 
-		toolbar = newToolBar("Nice", false);
-		
-		//toolbar.addSeparator();
-        toolbar.add(btnNice);
-		btnNice.setFocusable(false);
-		btnNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(btnNice.isSelected()); doButtons(); } } );
-		
-		toolbar = newToolBar("Add before ...", false);
-		//toolbar.setOrientation(JToolBar.VERTICAL);
-		//this.add(toolbar,BorderLayout.WEST);
-		
-		// IsertBefore
-		//toolbar.addSeparator();
-        toolbar.add(btnBeforeInst);
-		btnBeforeInst.setFocusable(false);
-		btnBeforeInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",false); doButtons(); } } );
-        toolbar.add(btnBeforeAlt);
-		btnBeforeAlt.setFocusable(false);
-		btnBeforeAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,false); doButtons(); } } );
-        toolbar.add(btnBeforeCase);
-		btnBeforeCase.setFocusable(false);
-		btnBeforeCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,false); doButtons(); } } );
-        toolbar.add(btnBeforeFor);
-		btnBeforeFor.setFocusable(false);
-		btnBeforeFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,false); doButtons(); } } );
-        toolbar.add(btnBeforeWhile);
-		btnBeforeWhile.setFocusable(false);
-		btnBeforeWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,false); doButtons(); } } );
-        toolbar.add(btnBeforeRepeat);
-		btnBeforeRepeat.setFocusable(false);
-		btnBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
-        toolbar.add(btnBeforeForever, false);
-		btnBeforeForever.setFocusable(false);
-		btnBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
-        toolbar.add(btnBeforeCall);
-		btnBeforeCall.setFocusable(false);
-		btnBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
-        toolbar.add(btnBeforeJump, false);
-		btnBeforeJump.setFocusable(false);
-		btnBeforeJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",false); doButtons(); } } );
-        toolbar.add(btnBeforePara, false);
-		btnBeforePara.setFocusable(false);
-		btnBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
+		// START KGU#493 2018-02-14: Issue #510 Disabled as of little use here 
+//		toolbar = newToolBar("Nice", false);
+//		
+//		//toolbar.addSeparator();
+//        toolbar.add(btnUnboxed);
+//		btnUnboxed.setFocusable(false);
+//		btnUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(btnUnboxed.isSelected()); doButtons(); } } );
+		// END KGU#493 2018-02-14
+
+		// START KGU#493 2018-02-12: Issue #510 - toolbars Before + After merged
+//		toolbar = newToolBar("Add before ...", false);
+//		//toolbar.setOrientation(JToolBar.VERTICAL);
+//		//this.add(toolbar,BorderLayout.WEST);
+//		
+//		// IsertBefore
+//		//toolbar.addSeparator();
+//        toolbar.add(btnBeforeInst);
+//		btnBeforeInst.setFocusable(false);
+//		btnBeforeInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",false); doButtons(); } } );
+//        toolbar.add(btnBeforeAlt);
+//		btnBeforeAlt.setFocusable(false);
+//		btnBeforeAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,false); doButtons(); } } );
+//        toolbar.add(btnBeforeCase);
+//		btnBeforeCase.setFocusable(false);
+//		btnBeforeCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,false); doButtons(); } } );
+//        toolbar.add(btnBeforeFor);
+//		btnBeforeFor.setFocusable(false);
+//		btnBeforeFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,false); doButtons(); } } );
+//        toolbar.add(btnBeforeWhile);
+//		btnBeforeWhile.setFocusable(false);
+//		btnBeforeWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,false); doButtons(); } } );
+//        toolbar.add(btnBeforeRepeat);
+//		btnBeforeRepeat.setFocusable(false);
+//		btnBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
+//        toolbar.add(btnBeforeForever, false);
+//		btnBeforeForever.setFocusable(false);
+//		btnBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
+//        toolbar.add(btnBeforeCall);
+//		btnBeforeCall.setFocusable(false);
+//		btnBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
+//        toolbar.add(btnBeforeJump, false);
+//		btnBeforeJump.setFocusable(false);
+//		btnBeforeJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",false); doButtons(); } } );
+//        toolbar.add(btnBeforePara, false);
+//		btnBeforePara.setFocusable(false);
+//		btnBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
+		// END KGU#493 2018-02-12
 
 		toolbar = newToolBar("Add after ...", true);
 		//toolbar.setOrientation(JToolBar.VERTICAL);
@@ -737,34 +762,34 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		//toolbar.addSeparator();
         toolbar.add(btnAfterInst);
 		btnAfterInst.setFocusable(false);
-		btnAfterInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",true); doButtons(); } } );
+		btnAfterInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","", (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0 ); doButtons(); } } );
         toolbar.add(btnAfterAlt);
 		btnAfterAlt.setFocusable(false);
-		btnAfterAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,true); doButtons(); } } );
+		btnAfterAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt, (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterCase);
 		btnAfterCase.setFocusable(false);
-		btnAfterCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,true); doButtons(); } } );
+		btnAfterCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase, (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterFor);
 		btnAfterFor.setFocusable(false);
-		btnAfterFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,true); doButtons(); } } );
+		btnAfterFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor, (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterWhile);
 		btnAfterWhile.setFocusable(false);
-		btnAfterWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,true); doButtons(); } } );
+		btnAfterWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile, (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterRepeat);
 		btnAfterRepeat.setFocusable(false);
-		btnAfterRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,true); doButtons(); } } );
+		btnAfterRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat, (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterForever, false);
 		btnAfterForever.setFocusable(false);
-		btnAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",true); doButtons(); } } );
+		btnAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","", (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterCall);
 		btnAfterCall.setFocusable(false);
-		btnAfterCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",true); doButtons(); } } );
+		btnAfterCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","", (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterJump, false);
 		btnAfterJump.setFocusable(false);
-		btnAfterJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",true); doButtons(); } } );
+		btnAfterJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","", (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
         toolbar.add(btnAfterPara, false);
 		btnAfterPara.setFocusable(false);
-		btnAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
+		btnAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","", (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
 		
 		toolbar = newToolBar("Colors ...", false);
 
@@ -1101,16 +1126,18 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnRedo.setEnabled(diagram.getRoot().canRedo());
 		
 		// elements
-		btnBeforeInst.setEnabled(condition);
-		btnBeforeAlt.setEnabled(condition);
-		btnBeforeCase.setEnabled(condition);
-		btnBeforeFor.setEnabled(condition);
-		btnBeforeWhile.setEnabled(condition);
-		btnBeforeRepeat.setEnabled(condition);
-		btnBeforeForever.setEnabled(condition);
-		btnBeforeCall.setEnabled(condition);
-		btnBeforeJump.setEnabled(condition);
-		btnBeforePara.setEnabled(condition);
+		// START KGU#493 2018-02-12: Issue #510 Toolbars Before + After merged
+		//btnBeforeInst.setEnabled(condition);
+		//btnBeforeAlt.setEnabled(condition);
+		//btnBeforeCase.setEnabled(condition);
+		//btnBeforeFor.setEnabled(condition);
+		//btnBeforeWhile.setEnabled(condition);
+		//btnBeforeRepeat.setEnabled(condition);
+		//btnBeforeForever.setEnabled(condition);
+		//btnBeforeCall.setEnabled(condition);
+		//btnBeforeJump.setEnabled(condition);
+		//btnBeforePara.setEnabled(condition);
+		// END KGU#493 2018-02-12
 
 		btnAfterInst.setEnabled(condition);
 		btnAfterAlt.setEnabled(condition);
@@ -1247,25 +1274,39 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#143 2016-01-21
 		
 		// style
-		btnNice.setSelected(diagram.isNice());
+		// START KGU#493 2018-02-14: Issue #510 Disabled as of little use here 
+		//btnUnboxed.setSelected(diagram.isUnboxed());
+		// END KGU#493 2018-02-14
 		btnFunction.setSelected(diagram.isSubroutine());
 		btnProgram.setSelected(diagram.isProgram());
 		btnInclude.setSelected(diagram.isInclude());
 
 		// DIN
-		if(Element.E_DIN==true)
+		if (Element.E_DIN)
 		{
-			btnBeforeFor.setIcon(IconLoader.getIcon(10));
-			btnAfterFor.setIcon(IconLoader.getIcon(15));
-			popupAddBeforeFor.setIcon(IconLoader.getIcon(10));
-			popupAddAfterFor.setIcon(IconLoader.getIcon(15));
+			// START KGU493 2018-02-12: Issues #4, #510
+			//btnBeforeFor.setIcon(IconLoader.getIcon(10));
+			//btnAfterFor.setIcon(IconLoader.getIcon(15));
+			//btnAfterFor.setIcon(IconLoader.getIcon(62));
+			//popupAddBeforeFor.setIcon(IconLoader.getIcon(10));
+			//popupAddAfterFor.setIcon(IconLoader.getIcon(15));
+			btnAfterFor.setIcon(IconLoader.getIcon(74));
+			popupAddBeforeFor.setIcon(IconLoader.getIcon(/*95*/74));
+			popupAddAfterFor.setIcon(IconLoader.getIcon(/*97*/74));
+			// END KGU#493 2018-02-12
 		}
 		else
 		{
-			btnBeforeFor.setIcon(IconLoader.getIcon(9));
-			btnAfterFor.setIcon(IconLoader.getIcon(14));
-			popupAddBeforeFor.setIcon(IconLoader.getIcon(9));
-			popupAddAfterFor.setIcon(IconLoader.getIcon(14));
+			// START KGU493 2018-02-12: Issues #4, #510
+			//btnBeforeFor.setIcon(IconLoader.getIcon(9));
+			////btnAfterFor.setIcon(IconLoader.getIcon(14));
+			//btnAfterFor.setIcon(IconLoader.getIcon(61));
+			//popupAddBeforeFor.setIcon(IconLoader.getIcon(9));
+			//popupAddAfterFor.setIcon(IconLoader.getIcon(14));
+			btnAfterFor.setIcon(IconLoader.getIcon(53));
+			popupAddBeforeFor.setIcon(IconLoader.getIcon(/*94*/53));
+			popupAddAfterFor.setIcon(IconLoader.getIcon(/*96*/53));
+			// END KGU#493 2018-02-12
 		}
 		
 		

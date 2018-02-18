@@ -135,7 +135,7 @@ Menu.menuDiagramMoveDown.text=向下移动`
 Menu.menuDiagramType.text=类型
 Menu.menuDiagramTypeProgram.text=主程序
 Menu.menuDiagramTypeFunction.text=子程序
-Menu.menuDiagramNice.text=有横隔的图？
+Menu.menuDiagramUnboxed.text=有横隔的图？
 Menu.menuDiagramComment.text=显示注释？
 Menu.menuDiagramMarker.text=变量高亮显示？
 Menu.menuDiagramDIN.text=DIN？
@@ -233,17 +233,17 @@ AnalyserPreferences.okButton.text=确定
 Editor.btnNew.tooltip=创建一个空的图。
 Editor.btnOpen.tooltip=打开一个存在的图。
 Editor.btnSave.tooltip=保存实际的图。
-// InsertBefore
-Editor.btnBeforeInst.tooltip=在选中的元素前插入一个新的指令。
-Editor.btnBeforeAlt.tooltip=在选中的元素前插入一个新的IF语句。
-Editor.btnBeforeFor.tooltip=在选中的元素前插入一个新的FOR循环。
-Editor.btnBeforeWhile.tooltip=在选中的元素前插入一个新的WHILE循环。
-Editor.btnBeforeRepeat.tooltip=在选中的元素前插入一个新的REPEAT循环。
-Editor.btnBeforeForever.tooltip=在选中的元素前插入一个新的无限循环。
-Editor.btnBeforeCall.tooltip=在选中的元素前插入一个新的调用。
-Editor.btnBeforeJump.tooltip=在选中的元素前插入一个新的跳转。
-Editor.btnBeforeCase.tooltip=在选中的元素前插入一个新的CASE语句。
-// InsertAfter
+// InsertBefore TODO: Integrate the hint for shift key effect into the btnAfter... tooltips
+//Editor.btnBeforeInst.tooltip=在选中的元素前插入一个新的指令。
+//Editor.btnBeforeAlt.tooltip=在选中的元素前插入一个新的IF语句。
+//Editor.btnBeforeFor.tooltip=在选中的元素前插入一个新的FOR循环。
+//Editor.btnBeforeWhile.tooltip=在选中的元素前插入一个新的WHILE循环。
+//Editor.btnBeforeRepeat.tooltip=在选中的元素前插入一个新的REPEAT循环。
+//Editor.btnBeforeForever.tooltip=在选中的元素前插入一个新的无限循环。
+//Editor.btnBeforeCall.tooltip=在选中的元素前插入一个新的调用。
+//Editor.btnBeforeJump.tooltip=在选中的元素前插入一个新的跳转。
+//Editor.btnBeforeCase.tooltip=在选中的元素前插入一个新的CASE语句。
+// InsertAfter (+shift: Before)
 Editor.btnAfterInst.tooltip=在选中的元素后插入一个新的指令。
 Editor.btnAfterAlt.tooltip=在选中的元素后插入一个新的IF语句。
 Editor.btnAfterFor.tooltip=在选中的元素后插入一个新的FOR循环。
@@ -261,7 +261,7 @@ Editor.btnCut.tooltip=剪切选中的元素。
 Editor.btnCopy.tooltip=拷贝选中的元素。
 Editor.btnPaste.tooltip=在选中的元素后粘贴。
 // style 
-Editor.btnNice.tooltip=切换图的可视化风格。
+Editor.btnUnboxed.tooltip=切换图的可视化风格。
 Editor.btnFunction.tooltip=子程序图 (圆角)。
 Editor.btnProgram.tooltip=主程序图 (方角)。
 // editing

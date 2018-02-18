@@ -61,6 +61,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.14      Enh. #259: Approach to guess FOR-IN loop variable type too
  *      Kay Gürtzig     2017.04.30      Enh. #354: New structured constructors
  *      Kay Gürtzig     2017.11.02      Issue #447: Precaution against line-continuating backslashes 
+ *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
  *
  ******************************************************************************************************
  *
@@ -297,9 +298,15 @@ public class For extends Element implements ILoop {
 	{
 		if (Element.E_DIN)
 		{
-			return IconLoader.getIcon(62);
+			// START KGU#493 2018-02-12: Issue # - separate icons now
+			//return IconLoader.getIcon(62);
+			return IconLoader.getIcon(74);
+			// END KGU#493 2018-02-12
 		}
-		return IconLoader.getIcon(61);
+		// START KGU#493 2018-02-12: Issue # - separate icons now
+		//return IconLoader.getIcon(61);
+		return IconLoader.getIcon(53);
+		// END KGU#493 2018-02-12
 	}
 	// END KGU#122 2016-01-03
 

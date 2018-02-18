@@ -228,7 +228,7 @@ public class Root extends Element {
 	// END KGU#376 2017-05-16
 
 	// some fields
-	public boolean isNice = true;
+	public boolean isBoxed = true;
 	//private boolean isProgram = true;
 	// START KGU#137 2016-01-11: Bugfix #103 - More precise tracking of changes
 	//public boolean hasChanged = false;
@@ -705,7 +705,7 @@ public class Root extends Element {
 	@Override
 	public Color getColor()
 	{
-		if (isNice)	// KGU 2015-10-13 condition inverted because it hadn't made sense the way it was
+		if (isBoxed)
 		{
 			// The surrounding box is obvious - so it can't be mistaken for an instruction
 			return Color.WHITE;
@@ -749,7 +749,7 @@ public class Root extends Element {
 
 		// Compute width (dependent on diagram style and text properties)
 		int padding = 2*(E_PADDING/2);
-		if (isNice)
+		if (isBoxed)
 		{
 			padding = 2 * E_PADDING;
 			pt0Sub.x = E_PADDING;
@@ -765,7 +765,7 @@ public class Root extends Element {
 		}
 		
 		// Compute height (depends on diagram style and number of text lines)
-		int vPadding = isNice ? 3 * E_PADDING : padding;
+		int vPadding = isBoxed ? 3 * E_PADDING : padding;
 		rect0.bottom = vPadding + getText(false).count() * fm.getHeight();
 		
 		// START KGU#227 2016-07-31: Enhancement #128
@@ -791,13 +791,13 @@ public class Root extends Element {
 		// END KGU#376 2017-07-01
 		
 		pt0Sub.y = rect0.bottom;
-		if (isNice)	pt0Sub.y -= E_PADDING;
+		if (isBoxed)	pt0Sub.y -= E_PADDING;
 
 		_canvas.setFont(Element.font);
 
 		subrect0 = children.prepareDraw(_canvas);
 
-		if (isNice)
+		if (isBoxed)
 		{
 			rect0.right = Math.max(rect0.right, subrect0.right + 2*Element.E_PADDING);
 		}
@@ -808,7 +808,7 @@ public class Root extends Element {
 
 		rect0.bottom += subrect0.bottom;
 		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
-		if (!isNice && !isProgram()) rect0.bottom += E_PADDING/2;
+		if (!isBoxed && !isProgram()) rect0.bottom += E_PADDING/2;
 		// END KGU#221 2016-07-28
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
@@ -868,7 +868,7 @@ public class Root extends Element {
 		canvas.setColor(drawColor);
 		// START KGU#221 2016-07-27: Bugfix #208, KGU#376 2017-05-16: third type
 		//canvas.fillRect(_top_left);
-		int bevel = isNice ? R_CORNER : E_PADDING/2;
+		int bevel = isBoxed ? R_CORNER : E_PADDING/2;
 		switch (diagrType) {
 		case DT_SUB:
 			canvas.fillRoundRect(_top_left, R_CORNER);
@@ -900,7 +900,7 @@ public class Root extends Element {
 			// END KGU#221 2016-07-27
 		}
 
-		int textPadding = isNice ? E_PADDING : E_PADDING/2;
+		int textPadding = isBoxed ? E_PADDING : E_PADDING/2;
 
 		// START KGU#227 2016-07-31: Enh. #128
 		int commentHeight = 0;
@@ -954,7 +954,7 @@ public class Root extends Element {
 		bodyRect.left += pt0Sub.x;
 		bodyRect.top += pt0Sub.y;
 		bodyRect.right -= pt0Sub.x;	// Positioning is symmetric!
-		if (isNice)
+		if (isBoxed)
 		{
 			bodyRect.bottom -= E_PADDING;
 		}
@@ -979,7 +979,7 @@ public class Root extends Element {
 
 
 		// draw thick line
-		if (isNice==false)
+		if (isBoxed==false)
 		{
 			Rect sepRect = bodyRect.copy();
 			sepRect.bottom = sepRect.top--;
@@ -1411,7 +1411,7 @@ public class Root extends Element {
     {
             Root ele = new Root(this.getText().copy());
             copyDetails(ele, false);
-            ele.isNice=this.isNice;
+            ele.isBoxed=this.isBoxed;
             ele.diagrType = this.diagrType;
             ele.children=(Subqueue) this.children.copy();
             // START KGU#2 (#9) 2015-11-13: By the above replacement the new children were orphans

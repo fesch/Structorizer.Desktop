@@ -55,6 +55,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
  *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
+ *      Kay Gürtzig     2018.02.09      Bugfix #507: Element size and layout must depend on branch labels
  *
  ******************************************************************************************************
  *
@@ -167,6 +168,25 @@ public class Alternative extends Element implements IFork {
 		// prepare the sub-queues
 		rFalse = qFalse.prepareDraw(_canvas);
 		rTrue = qTrue.prepareDraw(_canvas);
+		
+		// START KGU#491 2018-02-09: Bugfix #507 - we must find out the label widths
+		int lWidthT = _canvas.stringWidth(preAltT);
+		int lWidthF = _canvas.stringWidth(preAltF);
+		// As a rough estimate of the angles we add a half of it and the padding
+		// (This is pretty sound since the label usually occupies the lower third of its triangle
+		// height. For proportionality reasons, the triangle width at top of the label must be
+		// about 2/3 of the entire branch width, such that we may assume the branch width minimum
+		// to be 1.5 * label width. With this simple formula we stay on the safe side even for
+		// nLines > 1 where 1 + 1/(nLines+1) would suffice.)
+		lWidthT += E_PADDING + lWidthT/2;	// or += E_PADDING + (lWidhtT/(nLines+1))
+		lWidthF += E_PADDING + lWidthF/2;	// or += E_PADDING + (lWidhtF/(nLines+1))
+		if (rTrue.right - rTrue.left < lWidthT) {
+			rTrue.right = rTrue.left + lWidthT;
+		}
+		if (rFalse.right - rFalse.left < lWidthF) {
+			rFalse.right = rFalse.left + lWidthF;
+		}
+		// END KGU#491 2018-02-09
 
 		// Compute the left traverse line (y coordinates reversed) as if the triangle were always at top
 		// the upper left corner
@@ -440,7 +460,7 @@ public class Alternative extends Element implements IFork {
 			 */
 		}
 		
-		// draw symbols
+		// draw branch labels
 		canvas.writeOut(myrect.left + (E_PADDING / 2),
 						myrect.bottom - (E_PADDING / 2), preAltT);
 		canvas.writeOut(myrect.right - (E_PADDING / 2) -_canvas.stringWidth(preAltF),

@@ -184,14 +184,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         scalableComponents.addElement(txtText);
         scalableComponents.addElement(txtComment);
         // END KGU#294 2016-11-21
-        // START KGU#428 2017-10-06: Enh. #430
-        if (FONT_SIZE > 0) {
-        	for (JComponent comp: scalableComponents) {
-            	Font font = comp.getFont();
-            	comp.setFont(font.deriveFont(FONT_SIZE));
-        	}
-        }
-        // END KGU#428 2017-10-06
         
         JPanel pnPanel0 = new JPanel();
         GridBagLayout gbPanel0 = new GridBagLayout();
@@ -203,6 +195,15 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // START KGU#3 2015-10-24: Open opportunities for subclasses
         createPanelTop(pnPanel0, gbPanel0, gbcPanel0);
         
+        // START KGU#428 2017-10-06: Enh. #430
+        if (FONT_SIZE > 0) {
+        	for (JComponent comp: scalableComponents) {
+            	Font font = comp.getFont();
+            	comp.setFont(font.deriveFont(FONT_SIZE));
+        	}
+        }
+        // END KGU#428 2017-10-06
+ 
         JPanel pnPanel1 = new JPanel();
         GridBagLayout gbPanel1 = new GridBagLayout();
         GridBagConstraints gbcPanel1 = new GridBagConstraints();

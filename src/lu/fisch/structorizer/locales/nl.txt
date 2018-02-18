@@ -127,7 +127,7 @@ Menu.menuDiagramMoveDown.text=Naar beneden verplaatsen
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Programma
 Menu.menuDiagramTypeFunction.text=Subroutine
-Menu.menuDiagramNice.text=Boxed diagram?
+Menu.menuDiagramUnboxed.text=Unboxed diagram?
 Menu.menuDiagramComment.text=Opmerkingen weergeven?
 Menu.menuDiagramMarker.text=Variabelen markeren?
 Menu.menuDiagramDIN.text=DIN?
@@ -216,26 +216,16 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Maak een nieuw leeg diagram.
 Editor.btnOpen.tooltip=Open een bestaand diagram.
 Editor.btnSave.tooltip=Het huidige diagram opslaan.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Een nieuwe instruction voor het geselecteerde element toevoegen.
-Editor.btnBeforeAlt.tooltip=Een nieuwe IF statement voor het geselecteerde element toevoegen.
-Editor.btnBeforeFor.tooltip=Een nieuwe FOR loop voor het geselecteerde element toevoegen.
-Editor.btnBeforeWhile.tooltip=Een nieuwe WHILE loop voor het geselecteerde element toevoegen.
-Editor.btnBeforeRepeat.tooltip=Een nieuwe REPEAT loop voor het geselecteerde element toevoegen.
-Editor.btnBeforeForever.tooltip=Een nieuwe ENDLESS loop voor het geselecteerde element toevoegen.
-Editor.btnBeforeCall.tooltip=Een nieuwe CALL voor het geselecteerde element toevoegen.
-Editor.btnBeforeJump.tooltip=Een nieuwe JUMP voor het geselecteerde element toevoegen.
-Editor.btnBeforeCase.tooltip=Een nieuwe CASE statement voor het geselecteerde element toevoegen.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Een nieuwe instruction na het geselecteerde element toevoegen.
-Editor.btnAfterAlt.tooltip=Een nieuwe IF statement na het geselecteerde element toevoegen.
-Editor.btnAfterFor.tooltip=Een nieuwe FOR loop na het geselecteerde element toevoegen.
-Editor.btnAfterWhile.tooltip=Een nieuwe WHILE loop na het geselecteerde element toevoegen.
-Editor.btnAfterRepeat.tooltip=Een nieuwe REPEAT loop na het geselecteerde element toevoegen. 
-Editor.btnAfterCall.tooltip=Een nieuwe CALL na het geselecteerde element toevoegen.
-Editor.btnAfterForever.tooltip=Een nieuwe ENDLESS loop na het geselecteerde element toevoegen.
-Editor.btnAfterJump.tooltip=Een nieuwe JUMP na het geselecteerde element toevoegen.
-Editor.btnAfterCase.tooltip=Een nieuwe CASE statement na het geselecteerde element toevoegen.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Een nieuwe instruction na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterAlt.tooltip=Een nieuwe IF statement na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterFor.tooltip=Een nieuwe FOR loop na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterWhile.tooltip=Een nieuwe WHILE loop na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterRepeat.tooltip=Een nieuwe REPEAT loop na (+shift: voor) het geselecteerde element toevoegen. 
+Editor.btnAfterCall.tooltip=Een nieuwe CALL na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterForever.tooltip=Een nieuwe ENDLESS loop na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterJump.tooltip=Een nieuwe JUMP na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterCase.tooltip=Een nieuwe CASE statement na (+shift: voor) het geselecteerde element toevoegen.
 // undo & redo
 Editor.btnUndo.tooltip=De laatste actie ongedaan maken.
 Editor.btnRedo.tooltip=De laatste actie herhalen.
@@ -244,7 +234,7 @@ Editor.btnCut.tooltip=Het geselecteerde element knippen.
 Editor.btnCopy.tooltip=Het geselecteerde element kopiëren.
 Editor.btnPaste.tooltip=Het geknipte of gekopieerde element na het geselecteerde element plakken.
 // style 
-Editor.btnNice.tooltip=De visuele stijl van het diagram wisselen.
+Editor.btnUnboxed.tooltip=De visuele stijl van het diagram wisselen.
 Editor.btnFunction.tooltip=Subroutine diagram (ronde hoeken).
 Editor.btnProgram.tooltip=Programma diagram (rechte hoeken).
 // editing

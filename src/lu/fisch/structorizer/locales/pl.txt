@@ -127,7 +127,7 @@ Menu.menuDiagramMoveDown.text=W dół
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Program główny
 Menu.menuDiagramTypeFunction.text=Podprogram
-Menu.menuDiagramNice.text=Diagram w ramce?
+Menu.menuDiagramUnboxed.text=Diagram bez ramy?
 Menu.menuDiagramComment.text=Pokaż komentarze?
 Menu.menuDiagramMarker.text=Wyróżnij zmienne?
 Menu.menuDiagramDIN.text=DIN?
@@ -228,28 +228,17 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Utwórz pusty diagram.
 Editor.btnOpen.tooltip=Otwórz istniejący diagram.
 Editor.btnSave.tooltip=Zapisz bieżący diagram.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Wstaw nową instrukcję przed wybrany element. 
-Editor.btnBeforeAlt.tooltip=Wstaw instrukcję IF przed wybrany element.
-Editor.btnBeforeFor.tooltip=Wstaw pętlę FOR przed wybrany element.
-Editor.btnBeforeWhile.tooltip=Wstaw pętlę WHILE przed wybrany element.
-Editor.btnBeforeRepeat.tooltip=Wstaw pętlę REPEAT przed wybrany element.
-Editor.btnBeforeForever.tooltip=Wstaw NIESKOŃCZONĄ pętle przed wybrany element.
-Editor.btnBeforeCall.tooltip=Wstaw instrukcję CALL przed wybrany element.
-Editor.btnBeforeJump.tooltip=Wstaw instrukcję JUMP przed wybrany element.
-Editor.btnBeforeCase.tooltip=Wstaw instrukcję CASE przed wybrany element.
-Editor.btnBeforePara.tooltip=Wstaw instrukcję PARALLEL przed wybrany element.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Wstaw nową instrukcję za wybranym elementem. 
-Editor.btnAfterAlt.tooltip=Wstaw instrukcję IF za wybranym elementem.
-Editor.btnAfterFor.tooltip=Wstaw pętlę FOR za wybranym elementem.
-Editor.btnAfterWhile.tooltip=Wstaw pętlę WHILE za wybranym elementem.
-Editor.btnAfterRepeat.tooltip=Wstaw pętlę REPEAT za wybranym elementem.
-Editor.btnAfterForever.tooltip=Wstaw NIESKOŃCZONĄ za wybranym elementem.
-Editor.btnAfterCall.tooltip=Wstaw instrukcję CALL za wybranym elementem.
-Editor.btnAfterJump.tooltip=Wstaw instrukcję JUMP za wybranym elementem.
-Editor.btnAfterCase.tooltip=Wstaw instrukcję CASE za wybranym elementem.
-Editor.btnAfterPara.tooltip=Wstaw instrukcję PARALLEL za wybranym elementem.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Wstaw nową instrukcję za wybranym elementem (+shift: przed wybrany element). 
+Editor.btnAfterAlt.tooltip=Wstaw instrukcję IF za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterFor.tooltip=Wstaw pętlę FOR za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterWhile.tooltip=Wstaw pętlę WHILE za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterRepeat.tooltip=Wstaw pętlę REPEAT za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterForever.tooltip=Wstaw NIESKOŃCZONĄ za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterCall.tooltip=Wstaw instrukcję CALL za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterJump.tooltip=Wstaw instrukcję JUMP za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterCase.tooltip=Wstaw instrukcję CASE za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterPara.tooltip=Wstaw instrukcję PARALLEL za wybranym elementem (+shift: przed wybrany element).
 // undo & redo
 Editor.btnUndo.tooltip=Cofnij.
 Editor.btnRedo.tooltip=Przywróć.
@@ -258,7 +247,7 @@ Editor.btnCut.tooltip=Wytnij wybrany element.
 Editor.btnCopy.tooltip=Kopiuj wybrany element.
 Editor.btnPaste.tooltip=Wklej skopiowany lub wycięty element.
 // style 
-Editor.btnNice.tooltip=Przełącz styl diagramu.
+Editor.btnUnboxed.tooltip=Przełącz styl diagramu.
 Editor.btnFunction.tooltip=Podprogram (rounded corners).
 Editor.btnProgram.tooltip=Program główny (square corners).
 // editing

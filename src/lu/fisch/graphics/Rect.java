@@ -37,6 +37,7 @@ import java.awt.Rectangle;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.11.24      Conversions to and from java.awt.Rectangle
+ *      Kay Gürtzig     2018.02.17      Method to generate a scaled copy added (to facilitate enh. #512)
  *
  ******************************************************************************************************
  *
@@ -84,6 +85,33 @@ public class Rect{
 		return new Rect(this.left, this.top, this.right, this.bottom);
 	}
 	
+	// START KGU 2018-02-17
+	/**
+	 * Creates a scaled copy of this with scale factor {@code factor}
+	 * related to the coordinate origin.
+	 * @param factor - the scale factor to be applied.
+	 * @return an equivalent java.awt.Rectangle
+	 */
+	public Rect scale(double factor)
+	{
+		Rect scaledRect = this.copy();
+		scaledRect.left *= factor;
+		scaledRect.top *= factor;
+		scaledRect.right *= factor;
+		scaledRect.bottom *= factor;
+		// Avoid degradation with 0 < factor < 1
+		if (factor > 0) {
+			if (right - left > 0 && scaledRect.right - scaledRect.left <= 0) {
+				scaledRect.right = scaledRect.left + 1;
+			}
+			if (bottom - top > 0 && scaledRect.bottom - scaledRect.top <= 0) {
+				scaledRect.bottom = scaledRect.top + 1;
+			}
+		}
+		return scaledRect;
+	}
+	// END KGU 2018-02-17
+
 	/**
 	 * Convert myself into a java.awt.Rectangle
 	 * @return an equivalent java.awt.Rectangle
@@ -93,8 +121,9 @@ public class Rect{
 		return new Rectangle(left, top, right-left, bottom - top);
 	}
 
-        public String toString()
-        {
-            return "Rect = ["+left+","+top+","+right+","+bottom+"]";
-        }
+	@Override
+	public String toString()
+	{
+		return "Rect = ["+left+","+top+","+right+","+bottom+"]";
+	}
 }
