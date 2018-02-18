@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-08 (2018-02-18)
+Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -19,7 +19,7 @@ Current development version 3.27-08 (2018-02-18)
 - 02: Enh. #439: Structured value presenter with pull-down buttons now recursive <2>
 - 02: Enh. #452: Welcome message on first start with beginner mode and guides <2>
 - 02: Enh. #453: C export: format strings now with "TODO" content [Rolf Schmidt]2
-- 02: Enh. #454: Analyser check now complains blanks in program names <2>
+- 02: Enh. #454: Analyser check now complains about blanks in program names <2>
 - 02: Enh. #456: Print preview now allows to customize orientation and margins <2>
 - 02: Issue #455: Startup races and mis-drawing of initial diagrams reduced <2>
 - 03: Enh. #415: New accelerator key Ctrl-Shift-d for "copy EMF image" <2>
