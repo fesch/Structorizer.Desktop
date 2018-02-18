@@ -146,6 +146,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
  *      Kay Gürtzig     2018.02.09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
  *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
+ *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key. 
  *
  ******************************************************************************************************
  *
@@ -7220,12 +7221,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			//{
     			//	y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
     			//}
-    			else if (selected instanceof IFork)
+        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			//else if (selected instanceof IFork)
+    			else if (selected instanceof IFork && !selected.isCollapsed(false))
+    			// END KGU#498 2018-02-18
     			{
     				y = selRect.top + ((IFork)selected).getHeadRect().bottom + 2;
     			}
     			// END KGU#346 2017-02-08
-    			else if (selected instanceof Parallel)
+        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			//else if (selected instanceof Parallel)
+    			else if (selected instanceof Parallel && !selected.isCollapsed(false))
+    			// END KGU#498 2018-02-18
     			{
     				y = ((Parallel)selected).qs.get(0).getRectOffDrawPoint().top + 2;
     			}

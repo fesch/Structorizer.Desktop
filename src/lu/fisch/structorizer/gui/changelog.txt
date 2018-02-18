@@ -11,6 +11,9 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
+Current development version: 3.28-01 (2018-02-18)
+- 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
+
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
@@ -64,7 +67,7 @@ Version 3.28 (2018-02-18)
 - 08: Issue #4: Distinct symbols for FOR loops (for better recognition) <2>
 - 08: Issue #510: Element icons enlarged, colour buttons now round <2>
 - 08: Issue #508: Workaround for large-scaled symbols in collapsed elements <2>
-- 08: Bugfix #511: Cursor key navigation was blocked by collapsed loops <2>
+- 08: Bugfix #511: Cursor key navigation was trapped by collapsed loops <2>
 - 08: Improvements concerning the include text field in the diagram editor <2>
 - 08: Enh. #512: Zoom function in Arranger (button + Numpad keys +,-) <2>
 
