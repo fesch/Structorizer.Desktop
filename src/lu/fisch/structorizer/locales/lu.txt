@@ -128,7 +128,7 @@ Menu.menuDiagramMoveDown.text=No ënnen réckelen
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
-Menu.menuDiagramNice.text=Boxed diagramm?
+Menu.menuDiagramUnboxed.text=Diagramm net boxed?
 Menu.menuDiagramComment.text=Kommentaren uwëisen?
 Menu.menuDiagramSwitchComments.text=Tëschent Text an Kommentaren wiesselen
 Menu.menuDiagramMarker.text=Variabelen markéieren?
@@ -253,28 +253,17 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=En neien Diagramm ufänken.
 Editor.btnOpen.tooltip=En Diagramm opmaachen.
 Editor.btnSave.tooltip=Den aktuellenDiagramm späicheren.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Eng nei Instruktioun virun dat ausgewielten Element setzen.
-Editor.btnBeforeAlt.tooltip=En neien IF statement virun dat ausgewielten Element setzen.
-Editor.btnBeforeFor.tooltip=Eng nei FOR-Schläif virun dat ausgewielten Element setzen.
-Editor.btnBeforeWhile.tooltip=Eng nei WHILE-Schläif virun dat ausgewielten Element setzen.
-Editor.btnBeforeRepeat.tooltip=Eng nei REPEAT-Schläif virun dat ausgewielten Element setzen.
-Editor.btnBeforeForever.tooltip=Eng nei ENDLOS-Schläif virun dat ausgewielten Element setzen.
-Editor.btnBeforeCall.tooltip=Eng nei CALL-Instruktioun hannert dat ausgewielten Element setzen.
-Editor.btnBeforeJump.tooltip=Eng nei JUMP-Instruktioun virun dat ausgewielten Element setzen.
-Editor.btnBeforeCase.tooltip=Eng nei CASE-Struktur virun dat ausgewielten Element setzen.
-Editor.btnBeforePara.tooltip=En neien PARALLEL statement virun dat ausgewielten Element setzen.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Eng nei Instruktioun hannert dat ausgewielten Element setzen.
-Editor.btnAfterAlt.tooltip=En neien IF statement hannert dat ausgewielten Element setzen.
-Editor.btnAfterFor.tooltip=Eng nei FOR-Schläif hannert dat ausgewielten Element setzen.
-Editor.btnAfterWhile.tooltip=Eng nei WHILE-Schläif hannert dat ausgewielten Element setzen.
-Editor.btnAfterRepeat.tooltip=Eng nei REPEAT-Schläif hannert dat ausgewielten Element setzen.
-Editor.btnAfterForever.tooltip=Eng nei ENDLOS-Schläif hannert dat ausgewielten Element setzen.
-Editor.btnAfterCall.tooltip=Eng nei CALL-Instruktioun hannert dat ausgewielten Element setzen.
-Editor.btnAfterJump.tooltip=Eng nei JUMP-Instruktioun hannert dat ausgewielten Element setzen.
-Editor.btnAfterCase.tooltip=Eng nei CASE-Struktur hannert dat ausgewielten Element setzen.
-Editor.btnAfterPara.tooltip=En neien PARALLEL statement hannert dat ausgewielten Element setzen.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Eng nei Instruktioun hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterAlt.tooltip=En neien IF statement hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterFor.tooltip=Eng nei FOR-Schläif hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterWhile.tooltip=Eng nei WHILE-Schläif hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterRepeat.tooltip=Eng nei REPEAT-Schläif hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterForever.tooltip=Eng nei ENDLOS-Schläif hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterCall.tooltip=Eng nei CALL-Instruktioun hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterJump.tooltip=Eng nei JUMP-Instruktioun hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterCase.tooltip=Eng nei CASE-Struktur hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterPara.tooltip=En neien PARALLEL statement hannert (+Shift: virun) dat ausgewielten Element setzen.
 // undo & redo
 Editor.btnUndo.tooltip=Déi läscht Aktioun réckgängeg maachen.
 Editor.btnRedo.tooltip=Déi läscht Aktioun erëm hierstellen.
@@ -283,7 +272,7 @@ Editor.btnCut.tooltip=Dat ausgewielten Element erausschneiden.
 Editor.btnCopy.tooltip=Dat ausgewielten Element kopéieren.
 Editor.btnPaste.tooltip=Dat kopéiert oder erausgeschnidden Element hannert dat ausgewielten Element apechen.
 // style 
-Editor.btnNice.tooltip=Toggle the visual style of the diagram.
+Editor.btnUnboxed.tooltip=Toggle the visual style of the diagram.
 Editor.btnFunction.tooltip=Sub Diagramm (ronn Ecker).
 Editor.btnProgram.tooltip=Main Diagramm (spatz Ecker).
 // editing

@@ -111,6 +111,7 @@
  *      Kay Gürtzig         2017.12.14  German element name translation adapted
  *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
  *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
+ *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
  *
  ******************************************************************************************************
  *
@@ -242,7 +243,7 @@ Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
-Menu.menuDiagramNice.text=Umrahmtes Diagramm?
+Menu.menuDiagramUnboxed.text=Ungerahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
 Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
@@ -511,28 +512,17 @@ Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagramms.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagramms.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagramms.
 Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme sichern.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Einfügen einer neuen @a vor dem ausgewählten Element.
-Editor.btnBeforeAlt.tooltip=Einfügen einer neuen @b-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeFor.tooltip=Einfügen einer neuen @d-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeWhile.tooltip=Einfügen einer neuen @g-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeRepeat.tooltip=Einfügen einer neuen @h-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeForever.tooltip=Einfügen einer neuen @i-Schleife vor dem ausgewählten Element.
-Editor.btnBeforeCall.tooltip=Einfügen einer neuen @j-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeJump.tooltip=Einfügen einer neuen @k-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeCase.tooltip=Einfügen einer neuen @c-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforePara.tooltip=Einfügen eines neuen @l-Abschnitts vor dem ausgewählten Element.
 // InsertAfter
-Editor.btnAfterInst.tooltip=Einfügen einer neuen @a nach dem ausgewählten Element.
-Editor.btnAfterAlt.tooltip=Einfügen einer neuen @b-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterFor.tooltip=Einfügen einer neuen @d-Schleife nach dem ausgewählten Element.
-Editor.btnAfterWhile.tooltip=Einfügen einer neuen @g-Schleife nach dem ausgewählten Element.
-Editor.btnAfterRepeat.tooltip=Einfügen einer neuen @h-Schleife nach dem ausgewählten Element.
-Editor.btnAfterForever.tooltip=Einfügen einer neuen @i-Schleife nach dem ausgewählten Element.
-Editor.btnAfterCall.tooltip=Einfügen einer neuen @j-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterJump.tooltip=Einfügen einer neuen @k-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterCase.tooltip=Einfügen einer neuen @c-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach dem ausgewählten Element.
+Editor.btnAfterInst.tooltip=Einfügen einer neuen @a nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterAlt.tooltip=Einfügen einer neuen @b-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterFor.tooltip=Einfügen einer neuen @d-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterWhile.tooltip=Einfügen einer neuen @g-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterRepeat.tooltip=Einfügen einer neuen @h-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterForever.tooltip=Einfügen einer neuen @i-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterCall.tooltip=Einfügen einer neuen @j-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterJump.tooltip=Einfügen einer neuen @k-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterCase.tooltip=Einfügen einer neuen @c-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach (+Umschalt: vor) dem ausgewählten Element.
 // undo & redo
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
@@ -543,7 +533,7 @@ Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
 Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements nach dem ausgewählten Element.
 // style
-Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
+Editor.btnUnboxed.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=@o-Diagramm (gerundete Ecken).
 Editor.btnProgram.tooltip=@n-Diagramm (kantige Ecken).
 Editor.btnInclude.tooltip=@p-Diagramm (2 abgeschrägte Ecken).
@@ -1088,6 +1078,22 @@ FindAndReplace.msgRegexCorrupt.text=Der reguläre Ausdruck «%1» scheint inkorr
 FindAndReplace.ttlSearchError.text=Suchfehler
 
 -----> Arranger
+-----[ Arranger ]-----
+Arranger.btnAddDiagram.text=Neues Diagramm
+Arranger.btnRemoveDiagram.text=Entfernen
+Arranger.btnExportPNG.text=PNG-Export
+Arranger.btnSaveArr.text=Liste sichern
+Arranger.btnLoadArr.text=Liste laden
+Arranger.btnPinDiagram.text=Anheften
+Arranger.btnSetCovered.text=Getestet
+Arranger.btnZoom.text=Ferner/Näher
+Arranger.btnSaveArr.tooltip=Diese Anordnung als Liste (*.arr) oder Archiv (*.arrz) sichern.
+Arranger.btnLoadArr.tooltip=Eine Anordnung von Liste (*.arr) oder Archiv (*.arrz) laden.
+Arranger.btnExportPNG.tooltip=Diese Anordnung als Bilddatei im PNG-Format ausgeben.
+Arranger.btnPinDiagram.tooltip=Diagramm anheften, um es gegen Ersetzung seitens Structorizer zu schützen.
+Arranger.btnSetCovered.tooltip=Unterprogrammdiagram für Routinenaufrufe als testabgedeckt markieren.
+Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
+-----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
 Surface.msgSavePortable.text=Als portables komprimiertes Archiv sichern?
 Surface.msgSaveDialogTitle.text=Speichere die Diagrammanordnung ...

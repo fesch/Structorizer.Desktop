@@ -159,7 +159,7 @@ Menu.menuDiagramExpand.text=Expandir
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principal
 Menu.menuDiagramTypeFunction.text=Sub
-Menu.menuDiagramNice.text=Diagrama encaixado?
+Menu.menuDiagramUnboxed.text=Diagrama no encaixado?
 Menu.menuDiagramComment.text=Mostrar comentários?
 Menu.menuDiagramSwitchComments.text=Trocar texto/comentários?
 Menu.menuDiagramMarker.text=Destacar variáveis?
@@ -292,29 +292,17 @@ Editor.btnNew.tooltip=Criar um diagrama em branco.
 Editor.btnOpen.tooltip=Abrir um diagrama existente.
 Editor.btnSave.tooltip=Salvar o diagrama atual.
 
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Inserir uma nova instrução antes do elemento selecionado.
-Editor.btnBeforeAlt.tooltip=Inserir uma nova alternativa (IF) antes do elemento selecionado.
-Editor.btnBeforeFor.tooltip=Inserir uma nova repetição (FOR) antes do elemento selecionado.
-Editor.btnBeforeWhile.tooltip=Inserir uma nova repetição (WHILE) antes do elemento selecionado.
-Editor.btnBeforeRepeat.tooltip=Inserir uma nova repetição (REPEAT) antes do elemento selecionado.
-Editor.btnBeforeForever.tooltip=Inserir uma nova repetição (ENDLESS) antes do elemento selecionado.
-Editor.btnBeforeCall.tooltip=Inserir uma nova chamada (CALL) antes do elemento selecionado.
-Editor.btnBeforeJump.tooltip=Inserir um novo desvio (JUMP) antes do elemento selecionado.
-Editor.btnBeforeCase.tooltip=Inserir uma nova alternativa (CASE) antes do elemento selecionado.
-Editor.btnBeforePara.tooltip=Inserir um novo comando paralelo (PARALLEL) antes do elemento selecionado.
-
-// InsertAfter
-Editor.btnAfterInst.tooltip=Inserir uma nova instrução após o elemento selecionado.
-Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (IF) após o elemento selecionado.
-Editor.btnAfterFor.tooltip=Inserir uma nova repetição (FOR) após o elemento selecionado.
-Editor.btnAfterWhile.tooltip=Inserir uma nova repetição (WHILE) após o elemento selecionado.
-Editor.btnAfterRepeat.tooltip=Inserir uma nova repetição (REPEAT) após o elemento selecionado.
-Editor.btnAfterForever.tooltip=Inserir uma nova repetição (ENDLESS) após o elemento selecionado.
-Editor.btnAfterCall.tooltip=Inserir uma nova chamada (CALL) após o elemento selecionado.
-Editor.btnAfterJump.tooltip=Inserir um novo desvio (JUMP) após o elemento selecionado.
-Editor.btnAfterCase.tooltip=Inserir uma nova alternativa (CASE) após o elemento selecionado.
-Editor.btnAfterPara.tooltip=Inserir um novo comando paralelo (PARALLEL) após o elemento selecionado.
+// InsertAfter (+shif: Before)
+Editor.btnAfterInst.tooltip=Inserir uma nova instrução após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (IF) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterFor.tooltip=Inserir uma nova repetição (FOR) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterWhile.tooltip=Inserir uma nova repetição (WHILE) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterRepeat.tooltip=Inserir uma nova repetição (REPEAT) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterForever.tooltip=Inserir uma nova repetição (ENDLESS) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterCall.tooltip=Inserir uma nova chamada (CALL) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterJump.tooltip=Inserir um novo desvio (JUMP) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterCase.tooltip=Inserir uma nova alternativa (CASE) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterPara.tooltip=Inserir um novo comando paralelo (PARALLEL) após o (+shift: antes do) elemento selecionado.
 
 // undo & redo
 Editor.btnUndo.tooltip=Desfazer a última ação.
@@ -326,7 +314,7 @@ Editor.btnCopy.tooltip=Copiar o elemento selecionado.
 Editor.btnPaste.tooltip=Colar ou recortar após o elemento selecionado.
 
 // style
-Editor.btnNice.tooltip=Mudar o estilo visual do diagrama.
+Editor.btnUnboxed.tooltip=Mudar o estilo visual do diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (cantos arredondados).
 Editor.btnProgram.tooltip=Diagrama principal (cantos quadrados).
 

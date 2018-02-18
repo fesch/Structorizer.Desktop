@@ -106,6 +106,7 @@
  *      Kay Gürtzig     2017.11.05      New texts for issues #448, #452, #454 added.
  *      Kay Gürtzig     2017.12.15      Element name place holders introduced
  *      Kay Gürtzig     2018.01.18      DiagramControllerAliases added
+ *      Kay Gürtzig     2018.02.17      Arranger captions added (on occasion of enh. #512)
  *
  ******************************************************************************************************
  *
@@ -239,7 +240,7 @@ Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
-Menu.menuDiagramNice.text=Boxed diagram?
+Menu.menuDiagramUnboxed.text=Unframed diagram?
 Menu.menuDiagramComment.text=Show comments?
 Menu.menuDiagramSwitchComments.text=Switch text/comments?
 Menu.menuDiagramCommentsPlusText.text=Comments plus texts?
@@ -508,28 +509,17 @@ Editor.btnNew.tooltip=Create a new blank diagram.
 Editor.btnOpen.tooltip=Open an existing diagram.
 Editor.btnSave.tooltip=Save the current diagram.
 Editor.btnSaveAll.tooltip=Save all diagrams with unsaved changes.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Insert a new @a before the selected element. 
-Editor.btnBeforeAlt.tooltip=Insert a new @b statement before the selected element.
-Editor.btnBeforeFor.tooltip=Insert a new @d loop before the selected element.
-Editor.btnBeforeWhile.tooltip=Insert a new @g loop before the selected element.
-Editor.btnBeforeRepeat.tooltip=Insert a new @h loop before the selected element.
-Editor.btnBeforeForever.tooltip=Insert a new @i loop before the selected element.
-Editor.btnBeforeCall.tooltip=Insert a new @j before the selected element.
-Editor.btnBeforeJump.tooltip=Insert a new @k before the selected element.
-Editor.btnBeforeCase.tooltip=Insert a new @c statement before the selected element.
-Editor.btnBeforePara.tooltip=Insert a new @l statement before the selected element.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Insert a new @a after the selected element.
-Editor.btnAfterAlt.tooltip=Insert a new @b statement after the selected element.
-Editor.btnAfterFor.tooltip=Insert a new @d loop after the selected element.
-Editor.btnAfterWhile.tooltip=Insert a new @g loop after the selected element.
-Editor.btnAfterRepeat.tooltip=Insert a new @h loop after the selected element.
-Editor.btnAfterForever.tooltip=Insert a new @i loop after the selected element.
-Editor.btnAfterCall.tooltip=Insert a new @j after the selected element.
-Editor.btnAfterJump.tooltip=Insert a new @k after the selected element.
-Editor.btnAfterCase.tooltip=Insert a new @c statement after the selected element.
-Editor.btnAfterPara.tooltip=Insert a new @l statement after the selected element.
+// InsertAfter (+shift: before)
+Editor.btnAfterInst.tooltip=Insert a new @a after (+shift: before) the selected element.
+Editor.btnAfterAlt.tooltip=Insert a new @b statement after (+shift: before) the selected element.
+Editor.btnAfterFor.tooltip=Insert a new @d loop after (+shift: before) the selected element.
+Editor.btnAfterWhile.tooltip=Insert a new @g loop after (+shift: before) the selected element.
+Editor.btnAfterRepeat.tooltip=Insert a new @h loop after (+shift: before) the selected element.
+Editor.btnAfterForever.tooltip=Insert a new @i loop after (+shift: before) the selected element.
+Editor.btnAfterCall.tooltip=Insert a new @j after (+shift: before) the selected element.
+Editor.btnAfterJump.tooltip=Insert a new @k after (+shift: before) the selected element.
+Editor.btnAfterCase.tooltip=Insert a new @c statement after (+shift: before) the selected element.
+Editor.btnAfterPara.tooltip=Insert a new @l statement after (+shift: before) the selected element.
 // undo & redo
 Editor.btnUndo.tooltip=Undo the last action.
 Editor.btnRedo.tooltip=Redo the last action.
@@ -540,7 +530,7 @@ Editor.btnCut.tooltip=Cut the selected element.
 Editor.btnCopy.tooltip=Copy the selected element.
 Editor.btnPaste.tooltip=Paste the copied or cut element after the selected element.
 // style 
-Editor.btnNice.tooltip=Toggle the visual style of the diagram.
+Editor.btnUnboxed.tooltip=Toggle the visual style of the diagram.
 Editor.btnFunction.tooltip=@o (rounded corners).
 Editor.btnProgram.tooltip=@n (square corners).
 Editor.btnInclude.tooltip=@p (2 bevelled corners).
@@ -1085,6 +1075,22 @@ FindAndReplace.msgRegexCorrupt.text=Regular expression «%1» seems invalid: %2
 FindAndReplace.ttlSearchError.text=Search Error
 
 -----> Arranger
+-----[ Arranger ]-----
+Arranger.btnAddDiagram.text=New Diagram
+Arranger.btnRemoveDiagram.text=Drop Diagram
+Arranger.btnExportPNG.text=PNG Export
+Arranger.btnSaveArr.text=Save List
+Arranger.btnLoadArr.text=Load List
+Arranger.btnPinDiagram.text=Pin Diagram
+Arranger.btnSetCovered.text=Set Covered
+Arranger.btnZoom.text=Zoom out/in
+Arranger.btnSaveArr.tooltip=Save this arrangement as list (*.arr) or archive (*.arrz).
+Arranger.btnLoadArr.tooltip=Load an arrangement from list (*.arr) or archive (*.arrz).
+Arranger.btnExportPNG.tooltip=Draw this arrangement into a PNG file.
+Arranger.btnPinDiagram.tooltip=Pin a diagram to make it immune against replacement.
+Arranger.btnSetCovered.tooltip=Mark the routine diagram as test-covered for subroutine calls to it.
+Arranger.btnZoom.tooltip=Hold Shift key pressed to zoom in.
+-----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:
 Surface.msgSavePortable.text=Save as portable compressed archive?
 Surface.msgSaveDialogTitle.text=Save arranged set of diagrams ...

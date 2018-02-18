@@ -144,6 +144,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.03      Enh. #415: Ensured that the Find&Replace dialog regains focus when selected
  *      Kay Gürtzig     2018.01.21      Enh. #490: New DiagramController alias preferences integrated
  *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
+ *      Kay Gürtzig     2018.02.09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
+ *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
  *
  ******************************************************************************************************
  *
@@ -3144,7 +3146,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (sub != null) {
 					// adopt presentation properties from root
 					sub.hightlightVars = root.hightlightVars;
-					sub.isNice = root.isNice;
+					sub.isBoxed = root.isBoxed;
 					sub.getVarNames();	// just to prepare proper drawing.
 					sub.setChanged();
 					Arranger arr = Arranger.getInstance();
@@ -5465,7 +5467,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		// START KGU#393 2017-05-09: Issue #400 - check whether changes were committed
 		if (preferences.OK) {
-		// END KGU#393 2017-05-09		
+		// END KGU#393 2017-05-09
+			// START KGU#491 2018-02-09: Bugfix #507 - if branch labels change we force reshaping
+			boolean mustInvalidateAlt =
+					!Element.preAltT.equals(preferences.edtAltT.getText()) ||
+					!Element.preAltF.equals(preferences.edtAltF.getText());
+			// END KGU#491 2018-02-09
 			// get fields
 			Element.preAltT     = preferences.edtAltT.getText();
 			Element.preAltF     = preferences.edtAltF.getText();
@@ -5482,6 +5489,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			int newShrinkThreshold = (Integer)preferences.spnCaseRot.getModel().getValue();
 			//if (newShrinkThreshold != Element.caseShrinkByRot) {
 			if (newShrinkThreshold != Element.caseShrinkByRot
+					// START KGU#491 2019-02-09: Bugfix #507
+					|| mustInvalidateAlt
+					// END KGU#491 2019-02-09
 					|| !newImportCaption.equals(Element.preImport)) {
 				root.resetDrawingInfoDown();
 			}
@@ -6309,9 +6319,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return Element.E_DIN;
 	}
 
-	public void setNice(boolean _nice)
+	public void setUnboxed(boolean _unboxed)
 	{
-		root.isNice=_nice;
+		root.isBoxed = !_unboxed;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
 		root.setChanged();
@@ -6322,15 +6332,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
-	public boolean isNice()
+	public boolean isUnboxed()
 	{
-		return root.isNice;
+		return !root.isBoxed;
 	}
 
 	public void setFunction()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && root.isProgram())
+		// START KGU#221 2016-07-28: Bugfix #208 - outer dimensions change
+		if (!root.isBoxed && root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
@@ -6349,7 +6359,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setProgram()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && !root.isProgram())
+		if (!root.isBoxed && !root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
@@ -6368,20 +6378,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#376 2017-05-16: Enh. #389
 	public void setInclude()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isNice && root.isProgram())
+		// For an unboxed diagram, the outer dimensions may change
+		if (!root.isBoxed && root.isProgram())
 		{
 			root.resetDrawingInfoUp();
 		}
-		// END KGU#221 2016-07-28
 		root.setInclude();
-		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
-		//root.hasChanged=true;
+		// Record this change in addition to the undoable ones
 		root.setChanged();
-		// END KGU#137 2016-01-11
-		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		// check absense of parameter list
 		analyse();
-		// END KGU#253 2016-09-22
 		redraw();
 	}
 	// END KGU #376 2017-05-16
@@ -7177,7 +7183,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		switch (_direction)
     		{
     		case CMD_UP:
-    			if (selected instanceof Repeat)
+    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+    			//if (selected instanceof Repeat)
+    			if (selected instanceof Repeat && !selected.isCollapsed(false))
+        		// END KGU#495 2018-02-15
     			{
     				// START KGU#292 2016-11-16: Bugfix #291
     				//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
@@ -7194,7 +7203,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			}
     			break;
     		case CMD_DOWN:
-    			if (selected instanceof ILoop && !(selected instanceof Repeat))
+    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+    			//if (selected instanceof ILoop && !(selected instanceof Repeat))
+        		if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
+    			// END KGU#495 2018-02-15
     			{
     				Subqueue body = ((ILoop)selected).getBody();
     				y = body.getRectOffDrawPoint().top + 2;
@@ -7247,7 +7259,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			}
     			break;
     		case CMD_RIGHT:
-    			if (selected instanceof ILoop)
+    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+    			//if (selected instanceof ILoop)
+    			if (selected instanceof ILoop && !selected.isCollapsed(false))
+        		// END KGU#495 2018-02-15
     			{
     				Rect bodyRect = ((ILoop)selected).getBody().getRectOffDrawPoint();
     				x = bodyRect.left + 2;

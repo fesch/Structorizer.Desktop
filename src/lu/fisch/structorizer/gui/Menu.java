@@ -89,6 +89,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.18      Issue #4: Icon association modified
  *      Kay Gürtzig     2018.01.18/19   Enh. #490: New preferences menu item added (DiagramController aliases)
  *      Kay Gürtzig     2018.02.07      Enh. #4, #81: Icon retrieval updated, scaling for plugin icons
+ *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
+ *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by conv. element icons
  *
  ******************************************************************************************************
  *
@@ -209,30 +211,36 @@ public class Menu extends LangMenuBar implements NSDController
 	// Submenu "Diagram -> Add -> Before"
 	protected final JMenu menuDiagramAddBefore = new JMenu("Before");
 	// Submenus for adding Elements "Before"
-	protected final JMenuItem menuDiagramAddBeforeInst = new JMenuItem("Instruction",IconLoader.getIcon(7));
-	protected final JMenuItem menuDiagramAddBeforeAlt = new JMenuItem("IF statement",IconLoader.getIcon(8));
-	protected final JMenuItem menuDiagramAddBeforeCase = new JMenuItem("CASE statement",IconLoader.getIcon(47));
-	protected final JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(9));
-	protected final JMenuItem menuDiagramAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(10));
-	protected final JMenuItem menuDiagramAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(11));
-	protected final JMenuItem menuDiagramAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(9));
-	protected final JMenuItem menuDiagramAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(49));
-	protected final JMenuItem menuDiagramAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(56));
-	protected final JMenuItem menuDiagramAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(90));
+	protected final JMenuItem menuDiagramAddBeforeInst = new JMenuItem("Instruction",IconLoader.getIcon(/*7*/57));
+	protected final JMenuItem menuDiagramAddBeforeAlt = new JMenuItem("IF statement",IconLoader.getIcon(/*8*/60));
+	protected final JMenuItem menuDiagramAddBeforeCase = new JMenuItem("CASE statement",IconLoader.getIcon(/*47*/64));
+	// START KGU#493 2018-02-12: Issue #4
+	//protected final JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(9));
+	protected final JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.getIcon(/*95*/74));
+	// END KGU#493 2018-02-12
+	protected final JMenuItem menuDiagramAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(/*10*/62));
+	protected final JMenuItem menuDiagramAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(/*11*/63));
+	protected final JMenuItem menuDiagramAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(/*9*/61));
+	protected final JMenuItem menuDiagramAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(/*49*/58));
+	protected final JMenuItem menuDiagramAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(/*56*/59));
+	protected final JMenuItem menuDiagramAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(/*90*/91));
 
 	// Submenu "Diagram -> Add -> After"
 	protected final JMenu menuDiagramAddAfter = new JMenu("After");
 	// Submenus for adding Elements "After"
-	protected final JMenuItem menuDiagramAddAfterInst = new JMenuItem("Instruction",IconLoader.getIcon(12));
-	protected final JMenuItem menuDiagramAddAfterAlt = new JMenuItem("IF statement",IconLoader.getIcon(13));
-	protected final JMenuItem menuDiagramAddAfterCase = new JMenuItem("CASE statement",IconLoader.getIcon(48));
-	protected final JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(14));
-	protected final JMenuItem menuDiagramAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(15));
-	protected final JMenuItem menuDiagramAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(16));
-	protected final JMenuItem menuDiagramAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(14));
-	protected final JMenuItem menuDiagramAddAfterCall = new JMenuItem("Call",IconLoader.getIcon(50));
-	protected final JMenuItem menuDiagramAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(55));
-	protected final JMenuItem menuDiagramAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(89));
+	protected final JMenuItem menuDiagramAddAfterInst = new JMenuItem("Instruction",IconLoader.getIcon(/*12*/57));
+	protected final JMenuItem menuDiagramAddAfterAlt = new JMenuItem("IF statement",IconLoader.getIcon(/*13*/60));
+	protected final JMenuItem menuDiagramAddAfterCase = new JMenuItem("CASE statement",IconLoader.getIcon(/*48*/64));
+	// START KGU#493 2018-02-12: Issue #4
+	//protected final JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(14));
+	protected final JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.getIcon(/*97*/74));
+	// END KGU#493 2018-02-12
+	protected final JMenuItem menuDiagramAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.getIcon(/*15*/62));
+	protected final JMenuItem menuDiagramAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.getIcon(/*16*/63));
+	protected final JMenuItem menuDiagramAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(/*14*/61));
+	protected final JMenuItem menuDiagramAddAfterCall = new JMenuItem("Call",IconLoader.getIcon(/*50*/58));
+	protected final JMenuItem menuDiagramAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(/*55*/59));
+	protected final JMenuItem menuDiagramAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(/*89*/91));
 
 	protected final JMenuItem menuDiagramEdit = new JMenuItem("Edit",IconLoader.getIcon(6));
 	protected final JMenuItem menuDiagramDelete = new JMenuItem("Delete",IconLoader.getIcon(5));
@@ -266,7 +274,7 @@ public class Menu extends LangMenuBar implements NSDController
 	//START KGU#376 2017-05-16: Enh. #389
 	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable",IconLoader.getIcon(71));
 	//END KGU#376 2017-05-16
-	protected final JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.getIcon(40));
+	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?",IconLoader.getIcon(40));
 	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.getIcon(77));
 	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.getIcon(79));
 	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.getIcon(82));
@@ -1057,8 +1065,8 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramTypeInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
 		// END KGU#376 2017-05-16
 
-		menuDiagram.add(menuDiagramNice);
-		menuDiagramNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(menuDiagramNice.isSelected()); doButtons(); } } );
+		menuDiagram.add(menuDiagramUnboxed);
+		menuDiagramUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(menuDiagramUnboxed.isSelected()); doButtons(); } } );
 
 		menuDiagram.add(menuDiagramComment);
 		menuDiagramComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuDiagramComment.isSelected()); doButtons(); } } );
@@ -1238,7 +1246,7 @@ public class Menu extends LangMenuBar implements NSDController
 			{ 
 				JFileChooser fc = new JFileChooser();
 				fc.setFileFilter(new INIFilter());
-				if(fc.showOpenDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
+				if (fc.showOpenDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
 				{
 					try
 					{
@@ -1273,6 +1281,7 @@ public class Menu extends LangMenuBar implements NSDController
 						// START KGU#258 2016-09-26: Enh. #253
 						if (diagram.offerRefactoring(refactoringData))
 						{
+							// (Refactoring involves redrawing)
 							diagram.refactorNSD(refactoringData);
 						}
 						// END KGU#258 2016-09-26
@@ -1457,7 +1466,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
 			menuDiagramTypeInclude.setSelected(diagram.isInclude());
-			menuDiagramNice.setSelected(diagram.getRoot().isNice);
+			menuDiagramUnboxed.setSelected(!diagram.getRoot().isBoxed);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 			// START KGU#305 2016-12-14: Enh. #305
 			menuDiagramIndex.setSelected(diagram.showArrangerIndex());
@@ -1541,7 +1550,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditPaste.setEnabled(diagram.canPaste());
 
 			// nice
-			menuDiagramNice.setSelected(diagram.isNice());
+			menuDiagramUnboxed.setSelected(diagram.isUnboxed());
 
 			// variable highlighting
 			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
@@ -1572,15 +1581,23 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// DIN 66261
 			menuDiagramDIN.setSelected(Element.E_DIN);
-			if(Element.E_DIN==true)
+			if (Element.E_DIN)
 			{
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(10));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(15));
+				// START KGU#493 2018-02-12: Issues #4, #510
+				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(10));
+				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(15));
+				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(/*95*/74));
+				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(/*97*/74));
+				// END KGU#493 2018-02-12
 			}
 			else
 			{
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(9));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(14));
+				// START KGU#493 2018-02-12: Issues #4, #510
+				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(9));
+				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(14));
+				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(/*94*/53));
+				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(/*96*/53));
+				// END KGU#493 2018-02-12
 			}
 			
 			// START KGU#123 2016-01-04: Enh. #87

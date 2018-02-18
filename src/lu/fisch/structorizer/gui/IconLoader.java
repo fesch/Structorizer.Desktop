@@ -63,6 +63,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.18      Issue #4: New icons 032_export, 086_properties, 087_code, 088_picture
  *      Kay Gürtzig     2018.01.25      Issue #4: Enumerable icon fields converted into an array (ico011 --> getIcon(11))
  *      Kay Gürtzig     2018.02.06      Issue #4: Extra factor in getIconImage() for e.g. Arranger icons
+ *      Kay Gürtzig     2018.02.09      Issue #4: Some icon renaming and reorganisation
+ *      Kay Gürtzig     2018.02.12      Issue #4: Distinct set of FOR loop icons (no longer = forever/while)
+ *      Kay Gürtzig     2018.02.14      Issue #510: Colour button icon shape changed from rectangle to circle.
  *
  ******************************************************************************************************
  *
@@ -93,17 +96,17 @@ public class IconLoader {
 			"003_Save.png",
 			"004_Make.png",
 			"005_Delete.png",
-			"006_update.png",
-			"007_intBefore.png",
-			"008_altBefore.png",
-			"009_forBefore.png",
-			"010_whileBefore.png",
-			"011_repeatBefore.png",
-			"012_intAfter.png",
-			"013_altAfter.png",
-			"014_forAfter.png",
-			"015_whileAfter.png",
-			"016_repeatAfter.png",
+			"006_edit.png",	// Renamed
+			"007_zoom_out.png",	//"007_intBefore.png",		// obsolete (#510)
+			"008_zoom_in.png",	//"008_altBefore.png",		// obsolete (#510)
+			null,	//"009_foreverBefore.png",	// obsolete (#510)
+			null,	//"010_whileBefore.png",		// obsolete (#510)
+			null,	//"011_repeatBefore.png",		// obsolete (#510)
+			null,	//"012_intAfter.png",			// obsolete (#510)
+			null,	//"013_altAfter.png",			// obsolete (#510)
+			null,	//"014_foreverAfter.png",		// obsolete (#510)
+			null,	//"015_whileAfter.png",		// obsolete (#510)
+			null,	//"016_repeatAfter.png",		// obsolete (#510)
 			"017_Eye.png",
 			"018_add.png",
 			"019_Up.png",
@@ -111,7 +114,7 @@ public class IconLoader {
 			"021_function.png",
 			"022_program.png",
 			"023_font.png",
-			"024_smiley.png",
+			"024_smiley.png",	// larger than usual!
 			"025_import.png",
 			"026_disable.png",
 			"027_richTurtle.png",
@@ -122,73 +125,73 @@ public class IconLoader {
 			"032_export.png",
 			"033_font_up.png",
 			"034_font_down.png",
-			"035_realtime.png",
-			"036_textfile.png",
-			"037_text.png",
+			"035_realtime.png",	// not used
+			"036_textfile.png",	// not used
+			"037_text.png",		// not used
 			"038_redo.png",
 			"039_undo.png",
 			"040_notnice.png",
-			"041_print.png",
+			"041_print.png",	// or use "041_printer.png" alternatively
 			"042_copy.png",
 			"043_paste.png",
 			"044_cut.png",
-			"045_remove.png",
-			"046_covered.png",	// for Arranger
-			"047_casebefore.png",
-			"048_caseafter.png",
-			"049_callbefore.png",
-			"050_callafter.png",
+			"045_remove.png",	// used in Arranger index
+			"046_covered.png",	// for Arranger toolbar
+			null,	//"047_casebefore.png",	// obsolete (#510)
+			null,	//"048_caseafter.png",	// obsolete (#510)
+			null,	//"049_callbefore.png",	// obsolete (#510)
+			null,	//"050_callafter.png",	// obsolete (#510)
 			"051_scale_gui.png",
 			"052_update.png",
-			"053_paste.png",
-			"054_tortoise.png",	// 54
-			"055_jumpafter.png",
-			"056_jumpbefore.png",
-			"057_conv_inst.png",
-			"058_conv_call.png",
-			"059_conv_jump.png",
-			"060_conv_if.png",
-			"061_conv_for.png",
-			"062_conv_while.png",
-			"063_conv_repeat.png",
-			"064_conv_case.png",
-			"065_paragraph.png",
-			"066_litterbin.png",
-			"067_commit.png",
+			"053_elem_for.png",	// new
+			"054_tortoise.png",
+			null,	//"055_jumpafter.png",	// obsolete (#510)
+			null,	//"056_jumpbefore.png",	// obsolete (#510)
+			"057_elem_inst.png",
+			"058_elem_call.png",
+			"059_elem_jump.png",
+			"060_elem_if.png",
+			"061_elem_forever.png",
+			"062_elem_while.png",
+			"063_elem_repeat.png",
+			"064_elem_case.png",
+			"065_paragraph.png",	// not used
+			"066_litterbin.png",	// not used
+			"067_commit.png",		// not used
 			"068_seq2sub.png",
 			"069_SaveAll.png",
 			"070_program_green.png",
 			"071_include.png",
 			"072_include_green.png",
 			"073_binoculars.png",
-			null,	// 74, was "074_nsd.png" --> "000_structorizer.png"
+			"074_elem_for_din.png",	// new, replaced "074_nsd.png" --> "000_structorizer.png"
 			"075_beginner.png",
-			"076_latex.png",
+			"076_latex.png",	// for StrukTeX?
 			"077_bubble.png",
 			"078_java.png",
 			"079_marker.png",
-			"080_pulldown.png",
+			"080_pulldown.png",	// for value presenter
 			"081_pen.png",
 			"082_din.png",
-			"083_loupe.png",
-			"084_pencil.png",
+			"083_loupe.png",	// Analyser
+			"084_pencil.png",	// for Value Presenter
 			"085_hide_decl.png",
 			"086_properties.png",
-			"087_code.png",
-			"088_picture.png",
-			"089_paraAfter.png",
-			"090_paraBefore.png",
-			"091_conv_para.png",
+			"087_code.png",		// or use "087_code1.png" alternatively
+			"088_picture.png",	// export / import
+			null,	//"089_paraAfter.png",	// obsolete (#510)
+			null,	//"090_paraBefore.png",	// obsolete (#510)
+			"091_elem_para.png",
 			"092_SaveAs.png",
-			"093_picture_export.png",	// for Arranger
-			null,	// 94
-			null,	// 95
-			null,	// 96
-			null,	// 97
+			"093_picture_export.png",	// for Arranger toolbar
+			null,	//"094_forBefore.png",		// obsolete (#510)
+			null,	//"095_for_dinBefore.png",	// obsolete (#510)
+			null,	//"096_forAfter.png",			// obsolete (#510)
+			null,	//"097_for_dinAfter.png",		// obsolete (#510)
 			null,	// 98
-			"099_pin_blue.png",	// for Arranger
-			"100_diagram_drop.png", // for Arranger
-			"101_diagram_new.png",	// for Arranger
+			"099_pin_blue.png",	// for Arranger toolbar
+			"100_diagram_drop.png", // for Arranger toolbar
+			"101_diagram_new.png",	// for Arranger toolbar
 			"102_switch.png",
 			"103_breakpt.png",
 			"104_nobreakpt.png",
@@ -201,8 +204,8 @@ public class IconLoader {
 			"111_c_plus_t.png",
 			"112_stopwatch.png",
 			"113_translator.png",
-			"114_down.png",
-			"115_up.png",
+			"114_down.png",	// for Translator Find dialog
+			"115_up.png",	// for Translator Find dialog
 	};
 	
 	private static final int[] ICON_SIZES = {
@@ -394,6 +397,11 @@ public class IconLoader {
 //	public static ImageIcon ico115 = getIconImage(getURI(from+"icons/115_up.png"));
 //	// END KGU#213 2017-12-11
 
+	/**
+	 * This still holds the obsolete traditional turtle icon.
+	 * Use {@link #getIcon(int)} with argument 54 to obtain the topical tortoise. 
+	 */
+	@Deprecated 
 	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 	
 	// START KGU#242 2016-09-05
@@ -671,18 +679,22 @@ public class IconLoader {
 			if (url != null) {
 				largestURL = url;
 				minFactor = 1.0 * pixels / size;
-				// If he file can be scaled with an itegral factor, we'll cache it
+				// If the file can be scaled with an integral factor, we'll cache it
 				if (pixels % size == 0) { 
 					roundURL = url;
 					factor = pixels / size;
 				}
 			}
 		}
+		if (largestURL != null && minFactor < 1.25) {
+			roundURL = largestURL;
+			factor = 1.0;
+		}
 		if (roundURL != null && factor <= 3) {
 			largestURL = roundURL;
 		}
-		else if (largestURL != null /*&& (minFactor - Math.floor(minFactor)) < 0.3*/) {
-			factor = minFactor; //Math.floor(minFactor);
+		else if (largestURL != null) {
+			factor = minFactor;
 		}
 		else {
 			factor = scaleFactor * extraFactor;
@@ -715,7 +727,10 @@ public class IconLoader {
 		if (ii == null && Locales.isNamedLocale(localeName))
 		{
 			// Already comprises scaling...
-			ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
+			// START KGU#286 2018-02-13: Issues #4, #81
+			//ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
+			ii = getIconImage("locale_" + localeName + ".png");
+			// END KGU#286 2018-02-13
 		}
 		return ii;
 	}
@@ -774,9 +789,18 @@ public class IconLoader {
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
 		graphics.setColor(Color.BLACK);
-		graphics.fillRect(0,0,size,size);
+		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
+		//graphics.fillRect(0,0,size,size);
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+		graphics.setColor(Color.BLACK);
+		graphics.fillOval(0, 0, size, size);
+		// END KGU#493 2018-02-14
 		graphics.setColor(_color);
-		graphics.fillRect(1,1,size-2,size-2);
+		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
+		//graphics.fillRect(1,1,size-2,size-2);
+		graphics.fillOval(1, 1, size-2, size-2);
+		// END KGU#493 2018-02-14
 		return new ImageIcon(image);
 	}
 	

@@ -199,13 +199,13 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.27-07";
+	public static String E_VERSION = "3.27-08";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
-	"Export classes written and maintained by\n"+
+	"Export classes initially written by\n"+
 	" - Oberon: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - Perl: Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - KSH: Jan Peter Klippel <structorizer@xtux.org>\n"+
@@ -217,7 +217,7 @@ public abstract class Element {
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
 	"Import grammars and parsers written and maintained by\n"+
-	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>"+
+	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - COBOL: Simon Sobisch, Kay Gürtzig"+
 	"\n"+
 	"License setup and checking done by\n"+
@@ -279,17 +279,19 @@ public abstract class Element {
 	"\n"+
 	"Command interpreter provided by\n"+
 	" - Pat Niemeyer <pat@pat.net>\n"+
-	"\n"+
-	"Turtle icon designed by\n"+
-	" - rainie_billybear@yahoo.com <rainiew@cass.net>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
+	// START KGU#494 2018-02-14: Enh. #508
+	/** basic padding value for scaling with scale_factor */
+	public static final int E_PADDING_BASE = 20;
+	// END KGU#494 2018-02-14
 
-	// some static constants
+	// some static quasi-constants
+	/** Padding between e.g. the content of elements and their borders */
 	protected static int E_PADDING = 20;
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
 	//public static int E_INDENT = 2;
-	/** Used as minimum indentation for continuation lines (after lines ending with backslash) */
+	/** Used as minimum text indentation for continuation lines (after lines ending with backslash) */
 	public static int E_INDENT = 4;
 	// END KGU#412 2017-06-09
 	/** Actually, the background colour for selected elements */
@@ -1985,6 +1987,9 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
+			// START KGU#494 2018-02-14: Enh. #508 (still disabled because not desirable either, e.g. in presentation mode)
+			//E_PADDING = Math.round((float)(E_PADDING_BASE * Double.parseDouble(ini.getProperty("scaleFactor", "1.0"))));
+			// END KGU#494 2018-01-14
 			// START KGU 2017-01-06: Issue #327: Default changed to English
 			preAltT=ini.getProperty("IfTrue","T");
 			preAltF=ini.getProperty("IfFalse","F");

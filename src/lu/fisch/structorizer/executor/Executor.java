@@ -149,6 +149,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
  *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
  *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
+ *      Kay Gürtzig     2018-02-11      Bugfix #509: Built-in function copyArray had a defective definition
  *
  ******************************************************************************************************
  *
@@ -656,7 +657,10 @@ public class Executor implements Runnable
 			//		+ "return targetArray;"
 			//		+ "}",
 			"public ArrayList copyArray(ArrayList sourceArray) {"
-					+ "return new ArrayList(targetArray);"
+					// START KGU#492 2018-02-11: Bugfix #509 - wrong use of arguments
+					//+ "return new ArrayList(targetArray);"
+					+ "return new ArrayList(sourceArray);"
+					// END KGU#492 2018-02-11
 					+ "}",
 			// END KGU#439 2017-10-13
 			// START KGU#388 2017-09-13: Enh. #423 Workaround for missing support of HashMap<?,?>.clone() in bsh-2.0b4.jar

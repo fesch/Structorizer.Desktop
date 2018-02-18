@@ -195,7 +195,7 @@ Menu.menuDiagramType.text=Тип
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
-Menu.menuDiagramNice.text=Поля диаграммы
+Menu.menuDiagramUnboxed.text=Диаграмма без рамки
 Menu.menuDiagramComment.text=Показывать комментарии
 Menu.menuDiagramSwitchComments.text=Обменить тексты/комментарии
 Menu.menuDiagramCommentsPlusText.text=Тексты и комментарии
@@ -460,28 +460,17 @@ Editor.btnNew.tooltip=Создать новую пустую схему.
 Editor.btnOpen.tooltip=Открыть схему.
 Editor.btnSave.tooltip=Сохранить схему.
 Editor.btnSaveAll.tooltip=
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Добавить новую инструкцию перед выбранным элементом.
-Editor.btnBeforeAlt.tooltip=Добавить оператор @{Alternative} перед выбранным элементом.
-Editor.btnBeforeFor.tooltip=Добавить цикл @{For} перед выбранным элементом.
-Editor.btnBeforeWhile.tooltip=Добавить цикл @{While} перед выбранным элементом.
-Editor.btnBeforeRepeat.tooltip=Добавить цикл @{Repeat} перед выбранным элементом.
-Editor.btnBeforeForever.tooltip=Добавить цикл @{Forever} перед выбранным элементом.
-Editor.btnBeforeCall.tooltip=Добавить новый вызов процедуры перед выбранным элементом.
-Editor.btnBeforeJump.tooltip=Добавить новый выход @{Jump} перед выбранным элементом.
-Editor.btnBeforeCase.tooltip=Добавить новый оператор @{Case} перед выбранным элементом.
-Editor.btnBeforePara.tooltip=Добавить новый "Параллельный процесс" перед выбранным элементом.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Добавить новую инструкцию после выбранного элемента.
-Editor.btnAfterAlt.tooltip=Добавить оператор @{Alternative} после выбранного элемента.
-Editor.btnAfterFor.tooltip=Добавить цикл @{For} после выбранного элемента.
-Editor.btnAfterWhile.tooltip=Добавить цикл @{While} после выбранного элемента.
-Editor.btnAfterRepeat.tooltip=Добавить цикл @{Repeat} после выбранного элемента.
-Editor.btnAfterForever.tooltip=Добавить цикл @{Forever} после выбранного элемента.
-Editor.btnAfterCall.tooltip=Добавить новый "вызов процедуры" после выбранного элемента.
-Editor.btnAfterJump.tooltip=Добавить новый выход @{Jump} после выбранного элемента.
-Editor.btnAfterCase.tooltip=Добавить новый оператор @{Case} после выбранного элемента.
-Editor.btnAfterPara.tooltip=Добавить новый "Параллельный процесс" после выбранного элемента.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Добавить новую инструкцию после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterAlt.tooltip=Добавить оператор @{Alternative} после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterFor.tooltip=Добавить цикл @{For} после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterWhile.tooltip=Добавить цикл @{While} после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterRepeat.tooltip=Добавить цикл @{Repeat} после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterForever.tooltip=Добавить цикл @{Forever} после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterCall.tooltip=Добавить новый "вызов процедуры" после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterJump.tooltip=Добавить новый выход @{Jump} после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterCase.tooltip=Добавить новый оператор @{Case} после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterPara.tooltip=Добавить новый "Параллельный процесс" после выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 // undo & redo
 Editor.btnUndo.tooltip=Отменить последнее действие.
 Editor.btnRedo.tooltip=Повторить последнее действие.
@@ -492,7 +481,7 @@ Editor.btnCut.tooltip=Вырезать выбранный элемент.
 Editor.btnCopy.tooltip=Скопировать выбранный элемент.
 Editor.btnPaste.tooltip=Вставить скопированный или вырезанный элемент.
 // style
-Editor.btnNice.tooltip=Переключить визуальный стиль схемы.
+Editor.btnUnboxed.tooltip=Переключить визуальный стиль схемы.
 Editor.btnFunction.tooltip=@{Root.DT_SUB} (закругленные углы).
 Editor.btnProgram.tooltip=@{Root.DT_MAIN} (прямые углы).
 Editor.btnInclude.tooltip=@{Root.DT_INCL}

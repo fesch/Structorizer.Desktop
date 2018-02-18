@@ -11,7 +11,7 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version 3.27-07 (2018-02-08)
+Current development version 3.27-08 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -56,6 +56,17 @@ Current development version 3.27-07 (2018-02-08)
 - 07: Bugfix #503: Defective pre-processing of string comparisons fixed <2>
 - 07: Issue #4: Icon scaling revised, many icons renewed [rugk, S. Sobisch]2
 - 07: Issue #81: Plugin icons (e.g. for import) weren't properly scaled <2>
+- 08: Issue #4: Arranger toolbar icons cleaned (had some pixel artefacts) <2>
+- 08: Issue #4: Mixed-up icons sorted out and icon set accomplishments <2>
+- 08: Bugfix #507: Impact of branch labels on IF element shape ensured <2>
+- 08: Bugfix #509: Built-in function copyArray was defectively defined <2>
+- 08: Issue #510: toolbars "Add Before" and "Add After" merged (shift: before)<2>
+- 08: Issue #4: Distinct symbols for FOR loops (for better recognition) <2>
+- 08: Issue #510: Element icons enlarged, colour buttons now round <2>
+- 08: Issue #508: Workaround for large-scaled symbols in collapsed elements <2>
+- 08: Bugfix #511: Cursor key navigation was blocked by collapsed loops <2>
+- 08: Improvements concerning the include text field in the diagram editor <2>
+- 08: Enh. #512: Zoom function in Arranger (button + Numpad keys +,-) <2>
 
 Version 3.27 (2017-10-30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>

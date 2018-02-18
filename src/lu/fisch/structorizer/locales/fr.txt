@@ -177,7 +177,7 @@ Menu.menuDiagramExpand.text=Exploser
 Menu.menuDiagramType.text=Type de diagramme
 Menu.menuDiagramTypeProgram.text=Programme
 Menu.menuDiagramTypeFunction.text=Sous programme
-Menu.menuDiagramNice.text=Diagramme cadré
+Menu.menuDiagramUnboxed.text=Diagramme non cadré
 Menu.menuDiagramComment.text=Montrer les commentaires?
 Menu.menuDiagramSwitchComments.text=Basculer entre code / commentaires?
 Menu.menuDiagramCommentsPlusText.text=Code et commentaires?
@@ -324,28 +324,17 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Créer un nouveau diagramme vièrge.
 Editor.btnOpen.tooltip=Ouvrir un diagramme existant.
 Editor.btnSave.tooltip=Sauvegarder le diagramme actuel.
-// InsertBefore
-Editor.btnBeforeInst.tooltip=Insérer une @{Instruction} devant l'élément sélectionné.
-Editor.btnBeforeAlt.tooltip=Insérer une structure @{Alternative} devant l'élément sélectionné.
-Editor.btnBeforeFor.tooltip=Insérer une boucle @{For} devant l'élément sélectionné.
-Editor.btnBeforeWhile.tooltip=Insérer une boucle @{While} devant l'élément sélectionné.
-Editor.btnBeforeRepeat.tooltip=Insérer une boucle @{Repeat} devant l'élément sélectionné.
-Editor.btnBeforeForever.tooltip=Insérer une boucle INFIFNIE devant l'élément sélectionné.
-Editor.btnBeforeCall.tooltip=Insérer un APPEL devant l'élément sélectionné.
-Editor.btnBeforeJump.tooltip=Insérer un SAUT devant l'élément sélectionné.
-Editor.btnBeforeCase.tooltip=Insérer une structure @{Case} devant l'élément sélectionné.
-Editor.btnBeforePara.tooltip=Insérer une instruction parallèle devant l'élément sélectionné.
-// InsertAfter
-Editor.btnAfterInst.tooltip=Insérer une @{Instruction} derrière l'élément sélectionné.
-Editor.btnAfterAlt.tooltip=Insérer une structure @{Alternative} derrière l'élément sélectionné.
-Editor.btnAfterFor.tooltip=Insérer une boucle @{For} derrière l'élément sélectionné.
-Editor.btnAfterWhile.tooltip=Insérer une boucle @{While} derrière l'élément sélectionné.
-Editor.btnAfterRepeat.tooltip=Insérer une boucle @{Repeat} derrière l'élément sélectionné.
-Editor.btnAfterForever.tooltip=Insérer une boucle @{Forever} derrière l'élément sélectionné.
-Editor.btnAfterCall.tooltip=Insérer un APPEL derrière l'élément sélectionné.
-Editor.btnAfterJump.tooltip=Insérer un SAUT derrière l'élément sélectionné.
-Editor.btnAfterCase.tooltip=Insérer une structure @{Case} derrière l'élément sélectionné.
-Editor.btnAfterPara.tooltip=Insérer une instruction parallèle derrière l'élément sélectionné.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Insérer une @{Instruction} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterAlt.tooltip=Insérer une structure @{Alternative} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterFor.tooltip=Insérer une boucle @{For} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterWhile.tooltip=Insérer une boucle @{While} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterRepeat.tooltip=Insérer une boucle @{Repeat} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterForever.tooltip=Insérer une boucle @{Forever} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterCall.tooltip=Insérer un APPEL derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterJump.tooltip=Insérer un SAUT derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterCase.tooltip=Insérer une structure @{Case} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterPara.tooltip=Insérer une instruction parallèle derrière (+shift: devant) l'élément sélectionné.
 // undo & redo
 Editor.btnUndo.tooltip=Annuler la dernière action.
 Editor.btnRedo.tooltip=Annuler l'annulation de la dernière action.
@@ -354,7 +343,7 @@ Editor.btnCut.tooltip=Couper l'élément sélectionné.
 Editor.btnCopy.tooltip=Copier l'élément sélectionné.
 Editor.btnPaste.tooltip=Insérer l'élément coupé ou copié devant l'élément sélectionné.
 // style
-Editor.btnNice.tooltip=Changer la mode de visualisation du diagramme.
+Editor.btnUnboxed.tooltip=Changer la mode de visualisation du diagramme.
 Editor.btnFunction.tooltip=Sous programme (coins ronds).
 Editor.btnProgram.tooltip=Programme principal (coins carrés).
 // editing
