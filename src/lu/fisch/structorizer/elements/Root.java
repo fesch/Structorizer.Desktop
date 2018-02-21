@@ -1172,7 +1172,7 @@ public class Root extends Element {
     }
     // END KGU#324 2017-06-16
 
-	@Override
+    @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
             // START KGU#136 2016-03-01: Bugfix #97 - now we relativate cursor position rather than rectangles

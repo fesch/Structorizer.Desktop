@@ -1789,10 +1789,13 @@ public abstract class Element {
 
 	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
 	/**
-	 * Retrieves the smallest (deepest) Element containing coordinate (_x, _y) and flags it as selected
+	 * Retrieves the the most specific (i.e. smallest or deepest nested) Element
+	 * containing coordinate (_x, _y) and flags it as {@link #selected}.
 	 * @param _x
 	 * @param _y
 	 * @return the selected Element (if any)
+	 * @see #getElementByCoord(int, int)
+	 * @see #findSelected()
 	 */
 	public Element selectElementByCoord(int _x, int _y)
 	{
@@ -1813,10 +1816,13 @@ public abstract class Element {
 
 	// 
 	/**
-	 * Retrieves the smallest (deepest) Element containing coordinate (_x, _y)
+	 * Retrieves the most specific (i.e. smallest or deepest nested) Element
+	 * containing coordinate {@code (_x, _y)}. Does not touch the {@link #selected}
+	 * state of any of the elements along the path.
 	 * @param _x
 	 * @param _y
-	 * @return the (sub-)Element at the given coordinate (if there is none, returns null)
+	 * @return the (sub-)Element at the given coordinate (null if there is none such)
+	 * @see #getElementByCoord(int, int, boolean)
 	 */
 	public Element getElementByCoord(int _x, int _y)
 	{
@@ -1834,6 +1840,17 @@ public abstract class Element {
 		return this.getElementByCoord(_x, _y, false);
 	}
 
+	/**
+	 * Retrieves the most specific (i.e. smallest or deepest nested) Element
+	 * containing coordinate {@code (_x, _y)} and marks it as selected (if
+	 * {@code _forSelection} is true). Other elements along the search path
+	 * are marked as unselected (i.e. their {@link #selected} attribute is
+	 * reset).
+	 * @param _x
+	 * @param _y
+	 * @param _forSelection - whether the identified element is to be selected
+	 * @return the (sub-)Element at the given coordinate (null, if there is none such)
+	 */
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 - we will now have origin-bound rects and coords
