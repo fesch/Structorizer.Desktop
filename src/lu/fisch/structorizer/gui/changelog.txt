@@ -11,9 +11,10 @@ Known issues:
 - Some export generators haven't been enabled to support record type equivalents yet
 - The many functional enhancements have further slowed down execution speed.
 
-Current development version: 3.28-01 (2018-02-21)
+Current development version: 3.28-01 (2018-02-22)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
+- 01: Bugfix #517: Correct export of includable declarations to J, C++, C# <2> 
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

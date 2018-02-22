@@ -266,7 +266,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	// Region occupied by diagrams
         Dimension area = new Dimension(0, 0);
         super.paint(g);
-        if(diagrams!=null)
+        if (diagrams != null)
         {
             // START KGU#497 2018-02-17: Enh. 
         	Graphics2D g2d = (Graphics2D) g;
@@ -1069,9 +1069,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             }
 
             // deselect any diagram
-            if(diagrams!=null)
+            if (diagrams != null)
             {
-                for(int d=0; d<diagrams.size(); d++)
+                for (int d=0; d<diagrams.size(); d++)
                 {
                     diagrams.get(d).root.setSelected(false);
                 }
@@ -1084,11 +1084,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             // START KGU#497 2018-02-17: Enh. #512 - consider the (new) zoom factor
             //BufferedImage bi = new BufferedImage(this.getWidth(), this.getHeight(),BufferedImage.TYPE_4BYTE_ABGR);
             //paint(bi.getGraphics());
-            BufferedImage bi = new BufferedImage(
-                    Math.round(this.getWidth() * this.zoomFactor),
-                    Math.round(this.getHeight() * this.zoomFactor),
-                    BufferedImage.TYPE_4BYTE_ABGR);
             float oldZoom = this.zoomFactor;
+//            System.out.println(this.getWidth() + " x " + this.getHeight());
+//            Rect rect = this.getDrawingRect(null);
+//            System.out.println(rect);
+//            System.out.println(this.getWidth()*oldZoom + " x " + this.getHeight()*oldZoom);
+            BufferedImage bi = new BufferedImage(
+                    Math.round(this.getWidth() * oldZoom),
+                    Math.round(this.getHeight() * oldZoom),
+                    BufferedImage.TYPE_4BYTE_ABGR);
             this.zoomFactor = 1;
             paint(bi.getGraphics());
             this.zoomFactor = oldZoom;

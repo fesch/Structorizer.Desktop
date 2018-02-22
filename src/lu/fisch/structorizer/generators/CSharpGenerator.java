@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
  *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
  *      Kay Gürtzig             2017.12.22      Issue #496: Autodoc comment style changed from /**... to ///...
+ *      Kay Gürtzig             2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
  *
  ******************************************************************************************************
  *
@@ -337,7 +338,10 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected boolean isInternalDeclarationAllowed()
 	{
-		return true;
+		// START KGU#501 2018-02-22: Bugfix #517
+		//return true;
+		return !isInitializingIncludes();
+		// END KGU#501 2018-02-22
 	}
 	// END KGU#332 2017-04-14
 
@@ -890,6 +894,19 @@ public class CSharpGenerator extends CGenerator
 //		return _indent;
 //	}
 	
+	// START KGU#501 2018-02-22: Bugfix #517
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#getModifiers(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected String getModifiers(Root _root, String _name) {
+		if (_root.isInclude()) {
+			return "private static ";
+		}
+		return "";
+	}
+	// END KGU#501 2018-02-22
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
 	 */

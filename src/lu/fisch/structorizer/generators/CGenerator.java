@@ -1677,7 +1677,7 @@ public class CGenerator extends Generator {
 	 * @param _root - the owning diagram
 	 * @param _name - the identifier of the variable or constant
 	 * @param _indent - the current indentation (as String)
-	 * @param _fullDecl - whether the declaration is to be forced in ful, format
+	 * @param _fullDecl - whether the declaration is to be forced in full format
 	 */
 	protected void insertDeclaration(Root _root, String _name, String _indent, boolean _fullDecl)
 	{
@@ -1766,7 +1766,10 @@ public class CGenerator extends Generator {
 				insertComment(decl + ";", _indent);
 			}
 			else {
-				code.add(_indent + decl + ";");
+				// START KGU#501 2018-02-22: Bugfix #517 In Java, C++, or C# we may need modifiers here
+				//code.add(_indent + decl + ";");
+				code.add(_indent + this.getModifiers(_root, _name) + decl + ";");
+				// END KGU#501 2018-02-22
 			}
 		}
 		// Add a comment if there is no type info or internal declaration is not allowed
@@ -1780,6 +1783,21 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#375 2017-04-12
 	
+	// START KGU#501 2018-02-22: Bugfix #517
+	/**
+	 * Returns modifiers to be placed in front of the declaration OF {@code _name} for the
+	 * diagram {@code _root}.<br/>
+	 * Method is intended to be overridden by sub-classes. If the result is non-empty then
+	 * it ought to be padded at the end.
+	 * @param _root - the originating {@link Root} of the entity {@code _name}
+	 * @param _name - the identifier  
+	 * @return a sequence of appropriate modifiers like "private static " or an empty string
+	 */
+	protected String getModifiers(Root _root, String _name) {
+		return "";
+	}
+	// END KGU#501 2018-02-22
+
 	// START KGU#388 2017-09-26: Enh. #423
 	/**
 	 * Generates code that decomposes a record initializer into separate component assignments

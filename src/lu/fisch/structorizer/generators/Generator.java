@@ -76,6 +76,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
  *      Kay Gürtzig     2017.09.20      Enh. #388/#423: comment mapping for declarations introduced
  *      Kay Gürtzig     2017.09.26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
+ *      Kay Gürtzig     2018.02.22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables 
  *
  ******************************************************************************************************
  *
@@ -244,6 +245,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected boolean usesTurtleizer = false;
 	protected int includeInsertionLine = -1;
 	// END KGU#446 2017-10-27
+	// START KGU#501 2018-02-22: Bugfix #517
+	private boolean includeInitialisation;
+	protected boolean isInitializingIncludes() {
+		return this.includeInitialisation;
+	}
+	// END KGU#501 2018-02-22
 	
 	/************ Abstract Methods *************/
 	/**
@@ -2387,7 +2394,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
 				insertComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+				// START KGU#501 2018-02-22: Bugfix #517
+				this.includeInitialisation = true;
+				// END KGU#501 2018-02-22
 				generateCode(incl.children, _indent);
+				// START KGU#501 2018-02-22: Bugfix #517
+				this.includeInitialisation = false;
+				// END KGU#501 2018-02-22
 				insertComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
 			}
 			if (code.count() > startLine) {

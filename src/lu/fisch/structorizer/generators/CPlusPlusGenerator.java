@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig     2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
  *      Kay Gürtzig     2017.09.27      Enh. #423: Handling of struct definitions and access
+ *      Kay Gürtzig     2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
  *
  ******************************************************************************************************
  *
@@ -240,7 +241,10 @@ public class CPlusPlusGenerator extends CGenerator {
 	@Override
 	protected boolean isInternalDeclarationAllowed()
 	{
-		return true;
+		// START KGU#501 2018-02-22: Bugfix #517
+		//return true;
+		return !isInitializingIncludes();
+		// END KGU#501 2018-02-22
 	}
 	// END KGU#332 2017-04-12
 
