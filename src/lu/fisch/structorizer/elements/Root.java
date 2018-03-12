@@ -119,6 +119,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.10.26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
  *      Kay Gürtzig     2017.11.04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
  *      Kay Gürtzig     2017.11.05      Issue #454: logic of getMethodName() modified
+ *      Kay Gürtzig     2018.03.12      Bugfix #518: Distinction between uninitialized and empty typeMap
  *      
  ******************************************************************************************************
  *
@@ -427,7 +428,10 @@ public class Root extends Element {
 	
 	private StringList rootVars = new StringList();
 	// START KGU#261 2017-01-19: Enh. #259 (type map: (var name | type name) -> type info)
-	private HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
+	// START KGU#502 2018-03-12: Bugfix #518 - distinguish between uninitialized and resulting empty map 
+	//private HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
+	private HashMap<String, TypeMapEntry> typeMap = null;
+	// END KGU#502 2018-03-12
 	// END KGU#261 2017-01-19
 	// START KGU#163 2016-03-25: Added to solve the complete detection of unknown/uninitialised identifiers
 	// Pre-processed parser preference keywords to match them against tokenized strings
@@ -2258,21 +2262,23 @@ public class Root extends Element {
 		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
 			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
 				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1));
-				// Remove all tokens from the type name on (they are in the HashMap now)
-				tokens.remove(posBrace-1, tokens.count());
-				// Append all the value strings for the components but not the component names
-				for (Entry<String, String> comp: components.entrySet()) {
-					if (!comp.getKey().startsWith("§")) {
-						StringList subTokens = Element.splitLexically(comp.getValue(), true);
+				if (components != null) {
+					// Remove all tokens from the type name on (they are in the HashMap now)
+					tokens.remove(posBrace-1, tokens.count());
+					// Append all the value strings for the components but not the component names
+					for (Entry<String, String> comp: components.entrySet()) {
+						if (!comp.getKey().startsWith("§")) {
+							StringList subTokens = Element.splitLexically(comp.getValue(), true);
+							skimRecordInitializers(subTokens);
+							tokens.add(subTokens);
+						}
+					}
+					// If there was further text beyond the initializer then tokenize and append it
+					if (components.containsKey("§TAIL§")) {
+						StringList subTokens = Element.splitLexically(components.get("§TAIL§"), true);
 						skimRecordInitializers(subTokens);
 						tokens.add(subTokens);
 					}
-				}
-				// If there was further text beyond the initializer then tokenize and append it
-				if (components.containsKey("§TAIL§")) {
-					StringList subTokens = Element.splitLexically(components.get("§TAIL§"), true);
-					skimRecordInitializers(subTokens);
-					tokens.add(subTokens);
 				}
 			}
 		}
@@ -2509,7 +2515,7 @@ public class Root extends Element {
     // START KGU#261 2017-01-20: Enh. #259
     /**
      * Creates (if not already cached), caches, and returns the static overall type map
-     * for this diagram and its included definition providers (if having being available
+     * for this diagram and its included definition providers (if having been available
      * on the first creation).<br/>
      * Every change to this diagram clears the cache and hence leads to an info refresh.  
      * @return the type table mapping prefixed type names and variable names to their
@@ -2517,7 +2523,11 @@ public class Root extends Element {
      */
     public HashMap<String, TypeMapEntry> getTypeInfo()
     {
-    	if (this.typeMap.isEmpty()) {
+    	// START KGU#502 2018-03-12: Bugfix #518 - Avoid repeated traversal in case of lacking type and var info
+    	//if (this.typeMap.isEmpty()) {
+    	if (this.typeMap == null) {
+    		this.typeMap = new HashMap<String, TypeMapEntry>();
+    	// END KGU#502 2018-03-12
     		// START KGU#388 2017-09-18: Enh. #423 adopt all type info from included diagrams first
     		// FIXME: The import info can easily get obsolete unnoticedly!
     		if (this.includeList != null) {
@@ -2554,8 +2564,10 @@ public class Root extends Element {
     
     private void clearTypeInfo()
     {
-    	// FIXME: To be modified when GUI-based type configuration will be enabled
-    	this.typeMap.clear();
+    	// START KGU#502 2018-03-12: Bugfix #518
+    	//this.typeMap.clear();
+    	this.typeMap = null;
+    	// END KGU#502 2018-03-12
     }
     // END KGU#261 2017-01-20
     
@@ -3959,7 +3971,10 @@ public class Root extends Element {
 							String arrTypeStr = varType.getCanonicalType(true, false);
 							if (arrTypeStr != null && arrTypeStr.startsWith("@")) {
 								// Try to get the element type
-								varType = typeMap.get(":" + arrTypeStr.substring(1));
+								// START KGU#502 2018-02-12: Bugfix #518 - seemed inconsistent to check the field typeMap here
+								//varType = typeMap.get(":" + arrTypeStr.substring(1));
+								varType = _types.get(":" + arrTypeStr.substring(1));
+								// END KGU#502 2018-02-12
 							}
 						}
 						if (varType == null || !varType.isRecord() || !varType.getComponentInfo(false).containsKey(after)) {

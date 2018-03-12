@@ -1121,7 +1121,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     {
         Rect r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 
-        if(diagrams!=null)
+        if (diagrams != null)
         {
         	//System.out.println("--------getDrawingRect()---------");
             if (diagrams.size() > 0)
