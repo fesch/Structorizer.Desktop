@@ -204,12 +204,10 @@ public class PythonGenerator extends Generator
 		// END KGU#388 2017-10-02
 	    
 		// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-		/**
-		 * A pattern how to embed the variable (right-hand side of an input instruction)
-		 * into the target code
-		 * @param withPrompt - is a prompt string to be considered?
-		 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
 		 */
+		@Override
 		// START KGU#281 2016-10-15: Enh. #281
 		//protected String getInputReplacer()
 		//{
@@ -224,11 +222,10 @@ public class PythonGenerator extends Generator
 		}
 		// END KGU#281 2016-10-15
 
-		/**
-		 * A pattern how to embed the expression (right-hand side of an output instruction)
-		 * into the target code
-		 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#getOutputReplacer()
 		 */
+		@Override
 		protected String getOutputReplacer()
 		{
 			// START KGU#108 2015-12-22: Bugfix #51, #54: Parenthesis was rather wrong (produced lists)

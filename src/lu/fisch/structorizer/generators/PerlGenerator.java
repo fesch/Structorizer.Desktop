@@ -225,7 +225,7 @@ public class PerlGenerator extends Generator {
 	{
 		// START KGU#103 2015-12-12: Bugfix #57 - Too few backslashes - were consumed by the regex replacement 
 		//return "print $1, \"\\n\"";
-		return "print $1, \"\\\\n\"";
+		return "print $1, \"\\n\"";
 		// END KGU#103 2015-12-12
 	}
 

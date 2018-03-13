@@ -76,7 +76,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
  *      Kay Gürtzig     2017.09.20      Enh. #388/#423: comment mapping for declarations introduced
  *      Kay Gürtzig     2017.09.26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
- *      Kay Gürtzig     2018.02.22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables 
+ *      Kay Gürtzig     2018.02.22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables
+ *      Kay Gürtzig     2018.03.13      Modifications for bugfix #521, transformOutput() revised
  *
  ******************************************************************************************************
  *
@@ -121,6 +122,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 
@@ -325,14 +327,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code. Depending on the argument value, either a pattern for
-	 * prompt output plus variable input or just the latter is to be returned.
-	 * In case withPrompt is false, placeholder $1 reserves the position for the
-	 * variable name.
-	 * In case withPrompt is true, placeholder $1 reserves the position for the
+	 * prompt output plus variable input or just for the latter is to be returned.<br/>
+	 * In case {@code withPrompt} is false, placeholder $1 reserves the position for the
+	 * variable name.<br/>
+	 * In case {@code withPrompt} is true, placeholder $1 reserves the position for the
 	 * prompt string and $2 is the placeholder for the variable name.
 	 * @see #getOutputReplacer()
 	 * @param withPrompt - is a prompt string to be considered?
-	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 * @return a regex replacement pattern, e.g. {@code "$1 = (new Scanner(System.in)).nextLine();"}
 	 */
 	// START KGU#281 2016-10-15: Enh. #271
 	//protected abstract String getInputReplacer();
@@ -344,7 +346,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * into the target code. The placeholder $1 marks the position where to insert the
 	 * expression list (assumed to be separated with comma).
 	 * @see #getInputReplacer(boolean)
-	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 * @return a string similar to a regex replacement pattern (but without duplicated
+	 * backslashes!), e.g. {@code "System.out.println($1);"}
 	 */
 	protected abstract String getOutputReplacer();
 	// END KGU#18/KGU#23 2015-11-01
@@ -1185,13 +1188,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected String transformOutput(String _interm)
 	{
 		String subst = getOutputReplacer();
-		// Between the input keyword and the variable name there MUST be some blank...
 		String keyword = CodeParser.getKeyword("output").trim();
 		// START KGU#399 2017-05-16: bugfix #403
 		//if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		// Between the input keyword and a variable name there must be some blank unless the keyword itself ends
+		// with a blank or some non-identifier character. On the other hand, the expression might start with an
+		// operator symbol or a parenthesis... We try to approach this uncertainty with the gap variable.
+		// As a result, however, a superfluous blank may remain in front of the first expression.
 		String gap = (!keyword.isEmpty() && Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)) ? "[\\W]" : "");
-		String pattern = "^" + getKeywordPattern(keyword) + "\\s*(" + gap + ".*|$)";
-		if (!keyword.isEmpty() && _interm.matches(pattern))
+		// START KGU#505 2018-03-13: The substitution mechanism introduced with #403 left a leading blank in the expression
+		//String pattern = "^" + getKeywordPattern(keyword) + "\\s*(" + gap + ".*|$)";
+		//if (!keyword.isEmpty() && _interm.matches(pattern))
+		Matcher matcher = Pattern.compile("^" + getKeywordPattern(keyword) + "\\s*(" + gap + ".*|$)").matcher(_interm);
+		if (!keyword.isEmpty() && matcher.matches())
+		// END KGU#505 2018-03-13
 		// END KGU#399 2017-05-16
 		{
 			// START KGU#399 201-05-16: bugfix #51, #403
@@ -1209,7 +1219,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// End - BFI (#51)
 			//
 			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-			_interm = _interm.replaceFirst(pattern, subst);
+			// START KGU#505 2018-03-13: trim the expressions before insertion
+			//_interm = _interm.replaceFirst(pattern, subst);
+			_interm = subst.replace("$1", matcher.group(1).trim());
+			// END KGU#505 2018-03-13
 			// END KGU#399 2017-05-16
 		}
 		return _interm;

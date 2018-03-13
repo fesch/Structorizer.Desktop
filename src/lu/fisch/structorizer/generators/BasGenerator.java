@@ -76,9 +76,22 @@ package lu.fisch.structorizer.generators;
 
 import java.util.regex.Matcher;
 
-import lu.fisch.utils.*;
-import lu.fisch.structorizer.parsers.*;
-import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
+import lu.fisch.structorizer.elements.Case;
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
+import lu.fisch.structorizer.elements.Parallel;
+import lu.fisch.structorizer.elements.Repeat;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.parsers.CodeParser;
+import lu.fisch.utils.StringList;
 
 
 public class BasGenerator extends Generator 
@@ -174,16 +187,15 @@ public class BasGenerator extends Generator
 
 	/************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-	/**
-	 * A pattern how to embed the variable (right-hand side of an input instruction)
-	 * into the target code
-	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
 	 */
 	// START KGU#281-10-15: Enh. #271 (support for input with prompt)
 	//protected String getInputReplacer(boolean withPrompt)
 	//{
 	//	return "INPUT $1";
 	//}
+	@Override
 	protected String getInputReplacer(boolean withPrompt)
 	{
 		if (withPrompt) {
@@ -193,11 +205,10 @@ public class BasGenerator extends Generator
 	}
 	// END KGU#281 2016-10-15
 
-	/**
-	 * A pattern how to embed the expression (right-hand side of an output instruction)
-	 * into the target code
-	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getOutputReplacer()
 	 */
+	@Override
 	protected String getOutputReplacer()
 	{
 		return "PRINT $1";
