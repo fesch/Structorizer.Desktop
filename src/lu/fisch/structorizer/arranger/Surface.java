@@ -76,10 +76,15 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.02.17      Enh. #512: Zoom mechanism implemented
  *      Kay Gürtzig     2018.02.20      Magic numbers replaced, Enh. #515 first steps toward a silhouette allocation
  *      Kay Gürtzig     2018.02.21      Enh. #515: Working first prototype for space-saving area management
+ *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2018.03.13 (Kay Gürtzig)
+ *      - According to a GUI suggestion by newboerg, surface now also implements MouseWheelListener in
+ *        order to let ctrl + mouse wheel forward to zoom out and ctrl + mouse wheel backward to zoom in
+ *      - is added as listener to Arranger.scrollarea  
  *      2018.02.21 (Kay Gürtzig)
  *      - Rather than to place added diagrams along the top and left window border, now there is a more
  *        intelligent strategy implemented, which still aligns from top to bottom, left to right but tries
@@ -135,6 +140,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
@@ -185,11 +192,13 @@ import lu.fisch.utils.StringList;
 import net.iharder.dnd.FileDrop;
 
 /**
- *
- * @author robertfisch
+ * Class represents the interactive viewport for arranging several Nassi Shneiderman
+ * diagrams (as part of a scroll pane).<br/>
+ * 2018-03-13: Enhanced the inheritance by {@link MouseWheelListener} to enable ctrl + wheel zooming 
+ * @author robertfisch, codemanyak
  */
 @SuppressWarnings("serial")
-public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner {
+public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener {
 
     private Vector<Diagram> diagrams = new Vector<Diagram>();
     // START KGU#305 2016-12-16: Code revision
@@ -2474,5 +2483,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.zoomFactor;
 	}
 	// END KGU#497 2018-02-17
+
+	// START KGU#503 201-03-13: Enh. #519 - ctrl + mouse wheel is to zoom in / zoom out
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
+		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+			int rotation = mwEvt.getWheelRotation();
+			if (rotation >= 1) {
+				mwEvt.consume();
+				this.zoom(false);
+			}
+			else if (rotation <= -1) {
+				mwEvt.consume();
+				this.zoom(true);
+			}
+		}
+	}
+	// END KGU#503 2018-03-13
 
  }

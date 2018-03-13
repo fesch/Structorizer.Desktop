@@ -146,7 +146,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
  *      Kay Gürtzig     2018.02.09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
  *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
- *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key. 
+ *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
+ *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
  *
  ******************************************************************************************************
  *
@@ -439,13 +440,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
-		// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
-		//this.addMouseWheelListener(this);
-		if (Element.E_WHEELCOLLAPSE)
-		{
-			this.addMouseWheelListener(this);
-		}
-		// END KGU#123 2016-01-04
 
 		new FileDrop( this, new FileDrop.Listener()
 			{
@@ -6275,7 +6269,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void fontDownNSD()
 	{
-		if(Element.getFont().getSize()-2>=4)
+		if (Element.getFont().getSize()-2 >= 4)
 		{
 			// change font size
 			Element.setFont(new Font(Element.getFont().getFamily(),Font.PLAIN,Element.getFont().getSize()-2));
@@ -6480,14 +6474,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setWheelCollapses(boolean _collapse)
 	{
 		Element.E_WHEELCOLLAPSE = _collapse;
-		if (_collapse)
-		{
-			this.addMouseWheelListener(this);
-		}
-		else
-		{
-			this.removeMouseWheelListener(this);
-		}
+		// START KGU#503 2018-03-13: Enh. #519 - To add the mouse wheel listener is to be left to scrollarea
+		//if (_collapse)
+		//{
+		//	this.addMouseWheelListener(this);
+		//}
+		//else
+		//{
+		//	this.removeMouseWheelListener(this);
+		//}
+		// END KGU#503 2018-03-13
 		this.NSDControl.doButtons();
 	}
 	
@@ -6833,11 +6829,34 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     @Override
     public void mouseWheelMoved(MouseWheelEvent e)
     {
-    	// NOTE: This method will only be triggered if mode Element.E_WHEELCOLLAPSE is enabled.
 		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
-    	//System.out.println("MouseWheelEvent: " + e.getModifiersEx() + " Rotation = " + e.getWheelRotation() + " Type = " + 
-    	//		((e.getScrollType() == e.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
-        if (selected != null)
+    	//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
+    	//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
+    	// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
+        //if (selected != null)
+    	if ((e.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+    		// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
+        	int rotation = e.getWheelRotation();
+        	int fontSize = Element.getFont().getSize();
+        	if (rotation >= 1 && fontSize-1 >= 4)
+    		{
+    			// reduce font size
+    			Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize-1));
+    			root.resetDrawingInfoDown();
+    			redraw();
+    			e.consume();
+    		}
+        	else if (rotation <= -1)
+        	{
+        		// enlarge font size
+        		Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize+1));
+    			root.resetDrawingInfoDown();
+    			redraw();
+    			e.consume();
+        	}
+    	}
+    	else if (Element.E_WHEELCOLLAPSE && selected != null)
+        // END KGU#503 2018-03-13
         {
         	// START KGU#123 2016-01-04: Bugfix #65 - heavy differences between Windows and Linux here:
         	// In Windows, the rotation result may be arbitrarily large whereas the scrollAmount is usually 1.
@@ -6859,7 +6878,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             	selected.setCollapsed(false);
             }
             // END KGU#123 2016-01-04
-            
+            // START KGU#503 2018-03-13: Enh. #519 - may not work (depends on the order of listeners)
+            e.consume();
+            // END KGU#503 2018-03-13
             redraw();
         }
         // FIXME KGU 2016-01-0: Issue #65

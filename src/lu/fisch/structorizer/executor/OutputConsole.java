@@ -40,6 +40,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.11      Enh. #268: Inheritance changed, font selecting opportunities added
  *      Kay Gürtzig     2016.10.17      Issue #268: Font setting source and target corrected (doc's default style)
  *      Kay Gürtzig     2016.11.22      Enh.#284: Font resizing accelerators modified (CTRL_DOWN_MASK added)
+ *      Kay Gürtzig     2018.03.13      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal)
  *
  ******************************************************************************************************
  *
@@ -54,6 +55,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -75,7 +78,8 @@ import lu.fisch.structorizer.locales.LangFrame;
 
 @SuppressWarnings("serial")
 // START KGU#279 2016-10-11: Enh. #268 - inheritance change was necessary to add a menu
-public class OutputConsole extends LangFrame implements ActionListener {
+// KGU#503 2018-03-13: Enh. #519 - having it implement MouseWheelListener
+public class OutputConsole extends LangFrame implements ActionListener, MouseWheelListener {
 
 	static private final int MIN_FONT_SIZE = 6;
 	static private final Color[] colours = {Color.BLUE, Color.CYAN, Color.GRAY, Color.GREEN, Color.LIGHT_GRAY,
@@ -156,6 +160,9 @@ public class OutputConsole extends LangFrame implements ActionListener {
     	panel.add(scrText, BorderLayout.CENTER);
     	this.add(panel, null);
     	this.setSize(500, 250);
+    	// START KGU#503 2018-03-13: Enh. #519 - Allow ctrl + mouse wheel to "zoom"
+    	scrText.addMouseWheelListener(this);
+    	// END KGU#503 2018-03-13
     }
     
     public void clear()
@@ -285,7 +292,24 @@ public class OutputConsole extends LangFrame implements ActionListener {
 		}
 	}
 	// END KGU#279 2016-10-11
-    
+
+	// START KGU#503 2018-03-13: Enh. #519 - "zooming" via font size control with ctrl + mouse wheel
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
+		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+			int rotation = mwEvt.getWheelRotation();
+			if (rotation >= 1) {
+				mwEvt.consume();
+				this.fontDown();
+			}
+			else if (rotation <= -1) {
+				mwEvt.consume();
+				this.fontUp();
+			}
+		}
+	}
+	// END KGU#503 2018-03-13
+
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {

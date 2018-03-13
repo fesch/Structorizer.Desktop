@@ -918,6 +918,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		scrollarea.setBorder(BorderFactory.createEmptyBorder());
 		scrollarea.setViewportView(diagram);
 		scrollarea.setFocusable(true);
+		// START KGU#503 2018-03-13: Enh. #519 - for the zooming diagram needs permanent wheel notification 
+		scrollarea.addMouseWheelListener(diagram);
+		// END KGU#503 2018-03-13
 		// START KGU#177 2016-04-06 Enh. #158 Moving selection by cursor keys
 		InputMap inpMap = scrollarea.getInputMap(WHEN_FOCUSED);
 		ActionMap actMap = scrollarea.getActionMap();

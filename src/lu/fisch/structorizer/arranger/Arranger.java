@@ -442,6 +442,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //scrollarea.setViewportView(surface);
         getContentPane().add(scrollarea, java.awt.BorderLayout.CENTER);
         // END KGU#85 2015-11-18
+        // START KGU#503 2018-03-13: Enh. #519 - Allow Ctrl  + mouse wheel to zoom
+        scrollarea.addMouseWheelListener(surface);
+        // END KGU#503 2018-03-13
         
         this.addKeyListener(this);
 
