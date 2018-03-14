@@ -6468,9 +6468,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#123 2016-01-04: Enh. #87
 	public void toggleWheelMode()
 	{
-		setWheelCollapses(!Element.E_WHEELCOLLAPSE);
+		Element.E_WHEELCOLLAPSE = !Element.E_WHEELCOLLAPSE;
 	}
 	
+	@Deprecated
 	public void setWheelCollapses(boolean _collapse)
 	{
 		Element.E_WHEELCOLLAPSE = _collapse;
@@ -6487,12 +6488,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.NSDControl.doButtons();
 	}
 	
+	@Deprecated
 	public boolean getWheelCollapses()
 	{
 		return Element.E_WHEELCOLLAPSE;
 	}
 	// END KGU#123 2016-01-04
 	
+	// START KGU#503 2018-03-14: Enh. #519
+	public void toggleCtrlWheelMode()
+	{
+		Element.E_WHEEL_REVERSE_ZOOM = !Element.E_WHEEL_REVERSE_ZOOM;
+	}
+		// END KGU#503 2018-03-14
+
 	// START KGU#170 2016-04-01: Enh. #144: Maintain a preferred export generator
 	public String getPreferredGeneratorName()
 	{
@@ -6838,6 +6847,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
         	int rotation = e.getWheelRotation();
         	int fontSize = Element.getFont().getSize();
+        	if (Element.E_WHEEL_REVERSE_ZOOM) {
+        		rotation *= -1;
+        	}
         	if (rotation >= 1 && fontSize-1 >= 4)
     		{
     			// reduce font size

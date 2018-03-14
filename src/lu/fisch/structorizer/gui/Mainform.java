@@ -512,7 +512,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			CodeParser.loadFromINI();
 
 			// look & feel
-			laf=ini.getProperty("laf","Mac OS X");
+			laf = ini.getProperty("laf","Mac OS X");
 			//System.out.println("* setLookAndFeel(" + laf + ")");
 			setLookAndFeel(laf);
 			//System.out.println("* LookAndFeel is set.");
@@ -527,6 +527,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			setSize(width,height);
 			setLocation(new Point(top,left));
 			validate();
+
+			// START KGU#123 2018-03-14: Enh. #87, Bugfix #65
+			Element.E_WHEELCOLLAPSE = ini.getProperty("wheelToCollapse", "0").equals("1");
+			// END KGU#123 2018-03-14
+			// START KGU#503 2018-03-14: Enh. #519
+			Element.E_WHEEL_REVERSE_ZOOM = ini.getProperty("wheelCtrlReverse", "0").equals("1");
+			// END KGU#503 2018-03-14
 
 			// START KGU#300 2016-12-02: Enh. #300
 			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
@@ -618,9 +625,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				diagram.setArrangerIndex(ini.getProperty("index", "1").equals("1"));	// default = 1
 				//System.out.println("* ArrangerIndex is set.");
 				// END KGU#305 2016-12-14
-				// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
-				diagram.setWheelCollapses(ini.getProperty("wheelToCollapse", "0").equals("1"));
-				// END KGU#123 2016-01-04
 				// START KGU#456 2017-11-05: Issue #452
 				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
 				// END KGU#452 2017-11-05
@@ -774,6 +778,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#123 2016-01-04: Enh. #87
 			ini.setProperty("wheelToCollapse", (Element.E_WHEELCOLLAPSE ? "1" : "0"));
 			// END KGU#123 2016-01-04
+			// START KGU#503 2018-03-14: Enh. #519
+			ini.setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
+			// END KGU#503 2018-03-14
 			
 		    // START KGU#309 2016-12-15: Enh. #310 new saving options
 		    ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));

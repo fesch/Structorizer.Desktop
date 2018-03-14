@@ -2492,6 +2492,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
 		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
 			int rotation = mwEvt.getWheelRotation();
+        	if (Element.E_WHEEL_REVERSE_ZOOM) {
+        		rotation *= -1;
+        	}
 			if (rotation >= 1) {
 				mwEvt.consume();
 				this.zoom(false);

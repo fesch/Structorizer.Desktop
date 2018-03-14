@@ -72,6 +72,7 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.gui.FontChooser;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.locales.LangFrame;
@@ -298,6 +299,9 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
 		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
 			int rotation = mwEvt.getWheelRotation();
+        	if (Element.E_WHEEL_REVERSE_ZOOM) {
+        		rotation *= -1;
+        	}
 			if (rotation >= 1) {
 				mwEvt.consume();
 				this.fontDown();

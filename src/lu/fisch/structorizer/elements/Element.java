@@ -345,6 +345,10 @@ public abstract class Element {
 	/** Is collapsing by mouse wheel rotation enabled? */
 	public static boolean E_WHEELCOLLAPSE = false;
 	// END KGU#123 2016-01-04
+	// START KGU#503 2018-03-14: Enh. #519 Configuration of the mouse wheel zoom direction
+	/** Whether ctrl + wheel up is to zoom in (otherwise zoom out) */
+	public static boolean E_WHEEL_REVERSE_ZOOM = false;
+	// END KGU#503 2018-03-14
     // START KGU#309 2016-12-15: Enh. #310 new saving options
     public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
     public static boolean E_AUTO_SAVE_ON_CLOSE = false;
@@ -1997,6 +2001,13 @@ public abstract class Element {
 	 * static things
 	 ************************/
 
+	/**
+	 * Reloads the ini file (???) and adopts SOME of the configurable properties
+	 * held on class Element. These are:<br/>
+	 * - structure preferences<br/>
+	 * - font</br>
+	 * - colours
+	 */
 	public static void loadFromINI()
 	{
 		try

@@ -254,7 +254,6 @@ Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
 Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
-Menu.menuDiagramWheel.text=¿Usar rueda para reducir?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
 Menu.menuPreferences.mnemonic=p
@@ -290,6 +289,9 @@ Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
 Menu.menuPreferencesScalePreset.text=Escalar interfaz gráfica ...
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
+Menu.menuPreferencesWheel.text=Rueda
+Menu.menuPreferencesWheelCollapse.text=¿Usar rueda para reducir?
+Menu.menuPreferencesWheelZoom.text=¿Invertar zoom usando ctrl + rueda?
 
 Menu.menuPreferencesSave.text=Todas las preferencias ...
 Menu.menuPreferencesSaveAll.text=Guardar/Importar

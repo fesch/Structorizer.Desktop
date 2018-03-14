@@ -250,7 +250,6 @@ Menu.menuDiagramMarker.text=Highlight variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyse structogram?
 Menu.menuDiagramIndex.text=Show Arranger index?
-Menu.menuDiagramWheel.text=Mouse wheel for collapsing?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferences
 Menu.menuPreferences.mnemonic=p
@@ -284,8 +283,11 @@ Menu.menuPreferencesLanguageItems.ru.text=Russian
 Menu.menuPreferencesLanguageItems.pl.text=Polish
 Menu.menuPreferencesLanguageFromFile.text=From file ...
 Menu.menuPreferencesLanguageFromFile.tooltip=You may create translation files with the 'Translator' tool in the File menu.
-Menu.menuPreferencesScalePreset.text=GUI Scaling ...
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
+Menu.menuPreferencesWheel.text=Mouse wheel
+Menu.menuPreferencesWheelCollapse.text=Mouse wheel for collapsing?
+Menu.menuPreferencesWheelZoom.text=Reverse zoom with ctrl + wheel?
+Menu.menuPreferencesScalePreset.text=GUI Scaling ...
 
 Menu.menuPreferencesSave.text=All preferences ...
 Menu.menuPreferencesSaveAll.text=Save

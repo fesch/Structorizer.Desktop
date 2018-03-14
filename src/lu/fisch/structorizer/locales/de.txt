@@ -253,7 +253,6 @@ Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
-Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
@@ -287,6 +286,9 @@ Menu.menuPreferencesLanguageItems.ru.text=Russisch
 Menu.menuPreferencesLanguageItems.pl.text=Polnisch
 Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Sie könnnen mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
+Menu.menuPreferencesWheel.text=Mausrad
+Menu.menuPreferencesWheelCollapse.text=Mausrad zum Reduzieren?
+Menu.menuPreferencesWheelZoom.text=Umgekehrter Zoom mit Strg?
 Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 

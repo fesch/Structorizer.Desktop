@@ -185,7 +185,6 @@ Menu.menuDiagramSwitchTCTooltip.text=Désélectionner "%1" afin d'activer ce poi
 Menu.menuDiagramMarker.text=Marquer les variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyser le diagramme?
-Menu.menuDiagramWheel.text=Utiliser la roue de la souris pour collaber/exploser?
 // Menu "Preferences"
 Menu.menuPreferences.text=Préférences
 Menu.menuPreferences.mnemonic=p
@@ -212,6 +211,9 @@ Menu.menuPreferencesLanguageItems.ru.text=Russe
 Menu.menuPreferencesLanguageItems.pl.text=Polonais
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
+Menu.menuPreferencesWheel.text=Roue de la souris
+Menu.menuPreferencesWheelCollapse.text=Utiliser pour collaber/exploser?
+Menu.menuPreferencesWheelZoom.text=Invertir le zoom au l'usage con ctrl?
 
 Menu.menuPreferencesSave.text=Toutes les préférences ...
 Menu.menuPreferencesSaveAll.text=Sauvegarder

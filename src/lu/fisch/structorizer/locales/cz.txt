@@ -185,7 +185,6 @@ Menu.menuDiagramSwitchTCTooltip.text=
 Menu.menuDiagramMarker.text=Zvýraznit proměnné?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=
-Menu.menuDiagramWheel.text=
 // Menu "Preferences"
 Menu.menuPreferences.text=Nastavení
 Menu.menuPreferences.mnemonic=n
