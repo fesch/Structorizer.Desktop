@@ -6,10 +6,10 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
-- COBOL parsing may fail if certain single-letter identifiers are used (rename them!)
-- COBOL import doesn't cope with some statement variants and variable redefinitions
-- Some export generators haven't been enabled to support record type equivalents yet
-- The many functional enhancements have further slowed down execution speed.
+- COBOL import may fail if certain single-letter identifiers are used (rename them!).
+- COBOL import doesn't cope with some statement variants and variable redefinitions.
+- C import fails if the code contains function pointer declarations.
+- Algorithmic efforts will have to compensate performance losses due to enhancements.
 
 Current development version: 3.28-01 (2018-03-15)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

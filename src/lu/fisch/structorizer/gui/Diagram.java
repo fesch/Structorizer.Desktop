@@ -3179,7 +3179,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						do {
 							includableName = JOptionPane.showInputDialog(prompt);
 							prompt = hint + "\n" + Menu.msgIncludableName.getText() + ": ";
-						} while (!Function.testIdentifier(includableName, null));
+						} while (includableName == null || !Function.testIdentifier(includableName, null));
 						Root incl = null;
 						if (Arranger.hasInstance()) {
 							Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName);
