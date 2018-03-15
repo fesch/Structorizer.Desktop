@@ -165,7 +165,6 @@ Menu.menuDiagramSwitchComments.text=Trocar texto/comentários?
 Menu.menuDiagramMarker.text=Destacar variáveis?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analisar diagrama?
-Menu.menuDiagramWheel.text=Rolagem do mouse para colapsar?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferências
@@ -194,6 +193,10 @@ Menu.menuPreferencesLanguageItems.ru.text=Russo
 Menu.menuPreferencesLanguageItems.pl.text=Polonês
 
 Menu.menuPreferencesLookAndFeel.text=Aspecto
+
+Menu.menuPreferencesWheel.text=Rolagem do mouse
+Menu.menuPreferencesWheelCollapse.text=Rolagem do mouse para colapsar?
+Menu.menuPreferencesWheelZoom.text=Inverter o zoom ao usar com Ctrl?
 
 Menu.menuPreferencesSave.text=Salvar preferências ...
 Menu.menuPreferencesSaveAll.text=Salvar

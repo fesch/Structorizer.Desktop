@@ -97,9 +97,9 @@ public class IconLoader {
 			"004_Make.png",
 			"005_Delete.png",
 			"006_edit.png",	// Renamed
-			"007_zoom_out.png",	//"007_intBefore.png",		// obsolete (#510)
-			"008_zoom_in.png",	//"008_altBefore.png",		// obsolete (#510)
-			null,	//"009_foreverBefore.png",	// obsolete (#510)
+			"007_zoom_out.png",
+			"008_zoom_in.png",
+			"009_mouse.png",	// (#519)
 			null,	//"010_whileBefore.png",		// obsolete (#510)
 			null,	//"011_repeatBefore.png",		// obsolete (#510)
 			null,	//"012_intAfter.png",			// obsolete (#510)

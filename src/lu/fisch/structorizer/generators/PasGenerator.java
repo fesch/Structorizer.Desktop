@@ -74,6 +74,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.09.21      Enh. #388, #389: Export strategy for Includables and structured constants
  *      Kay Gürtzig         2017.09.25      Enh. #388, #423: Positioning of declaration comments revised
  *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
  *
  ******************************************************************************************************
  *
@@ -213,12 +214,10 @@ public class PasGenerator extends Generator
 	/************ Code Generation **************/
 	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-	/**
-	 * A pattern how to embed the variable (right-hand side of an input instruction)
-	 * into the target code
-	 * @param withPrompt - is a prompt string to be considered?
-	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
 	 */
+	@Override
 	// START KGU#281 2016-10-15: Enh. #271
 	//protected String getInputReplacer()
 	//{
@@ -233,11 +232,10 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#281 2016-10-15
 
-	/**
-	 * A pattern how to embed the expression (right-hand side of an output instruction)
-	 * into the target code
-	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getOutputReplacer()
 	 */
+	@Override
 	protected String getOutputReplacer()
 	{
 		return "writeln($1)";
@@ -503,7 +501,7 @@ public class PasGenerator extends Generator
 					String argument = line.substring(preReturn.length()).trim();
 					if (!argument.isEmpty())
 					{
-						// START KGU#424 2017-09-25: Put the comment o substantial content
+						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
 							insertComment(_inst, _indent);
 							commentInserted = true;
@@ -516,7 +514,7 @@ public class PasGenerator extends Generator
 					if (sq == null || !(sq.parent instanceof Root) || sq.getIndexOf(_inst) != sq.getSize()-1 ||
 							i+1 < lines.count())
 					{
-						// START KGU#424 2017-09-25: Put the comment o substantial content
+						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
 							insertComment(_inst, _indent);
 							commentInserted = true;
@@ -527,7 +525,10 @@ public class PasGenerator extends Generator
 				}
 				// START KGU#375 2107-09-21: Enh. #388 constant definitions must not be generated here (preamble stuff)
 				//else	// no return
-				if (!Instruction.isTypeDefinition(line, null) && !line.toLowerCase().startsWith("const "))
+				// START KGU#504 2018-03-13: Bugfix #520, #521 - consider transformation suppression
+				//if (!Instruction.isTypeDefinition(line, null) && !line.toLowerCase().startsWith("const "))
+				if (this.suppressTransformation || !Instruction.isTypeDefinition(line, null) && !line.toLowerCase().startsWith("const "))
+				// END KGU#504 2018-03-13
 				// END KGU#375 2017-09-21
 				{
 					// START KGU#100 2016-01-14: Enh. #84 - resolve array initialisation
@@ -542,27 +543,33 @@ public class PasGenerator extends Generator
 						String varName = transline.substring(0, asgnPos).trim();
 						String expr = transline.substring(asgnPos+2).trim();
 						int posBrace = expr.indexOf("{");
-						// START KGU#424 2017-09-25: Put the comment o substantial content
+						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
 							insertComment(_inst, _indent);
 							commentInserted = true;
 						}
 						// END KGU#424 2017-09-25
-						isArrayOrRecordInit = posBrace == 0 && expr.endsWith("}");
-						if (isArrayOrRecordInit)
-						{
-							generateArrayInit(varName, expr, _indent, null, isDisabled);
+						// START KGU#504 2018-03-13 A: Bugfix #520, #521
+						if (!this.suppressTransformation) {
+						// END KGU#504 2018-03-13 A
+							isArrayOrRecordInit = posBrace == 0 && expr.endsWith("}");	// only true at this moment on array init
+							if (isArrayOrRecordInit)
+							{
+								generateArrayInit(varName, expr, _indent, null, isDisabled);
+							}
+							else if (posBrace > 0 && Function.testIdentifier(expr.substring(0,  posBrace), ".") && expr.endsWith("}"))
+							{
+								generateRecordInit(varName, expr, _indent, false, isDisabled);
+								isArrayOrRecordInit = true;
+							}
+						// START KGU#504 2018-03-13 B: Bugfix #520, #521
 						}
-						else if (posBrace > 0 && Function.testIdentifier(expr.substring(0,  posBrace), ".") && expr.endsWith("}"))
-						{
-							generateRecordInit(varName, expr, _indent, false, isDisabled);
-							isArrayOrRecordInit = true;
-						}
-
+						// END KGU#504 2018-03-13 B
 					}
 					if (!isArrayOrRecordInit)
 					{
 						// START KGU#311 2016-12-26: Enh. #314 - File API support
+						// If FileAPI is used then this isn't supposed to be suppressed on export
 						if (this.usesFileAPI && asgnPos > 0) {
 							boolean doneFileAPI = false;
 							String expr = transline.substring(asgnPos+1).trim();
@@ -609,7 +616,7 @@ public class PasGenerator extends Generator
 							}
 						}
 						if (transline != null) {
-							// START KGU#424 2017-09-25: Put the comment o substantial content
+							// START KGU#424 2017-09-25: Put the comment on substantial content
 							if (!commentInserted) {
 								insertComment(_inst, _indent);
 								commentInserted = true;
@@ -1442,7 +1449,10 @@ public class PasGenerator extends Generator
 		}
 		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
 		// START KGU#375 2017-04-12: Enh. #388 now passed to generatePreamble
-		if (_varNames != null) {
+		// START KGU#504 2018-03-13: Bugfix #520, #521
+		//if (_varNames != null) {
+		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+		// END KGU#504 2018-03-13
 			generateConstDefs(_root, _indent, _complexConsts, introPlaced);
 		}
 		
@@ -1454,7 +1464,10 @@ public class PasGenerator extends Generator
 			}
 		}
 		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
-		if (_varNames != null) {
+		// START KGU#504 2018-03-13: Bugfix #520, #521
+		//if (_varNames != null) {
+		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+		// END KGU#504 2018-03-13
 			introPlaced = generateTypeDefs(_root, _indent, introPlaced);
 		}
 		// END KGU#388 2017-09-19
@@ -1471,7 +1484,10 @@ public class PasGenerator extends Generator
 					this.insertPostponedInitialisations(incl, _indent + this.getIndent());
 				}
 			}
-			if (_varNames != null) {
+			// START KGU#504 2018-03-13: Bugfix #520, #521
+			//if (_varNames != null) {
+			if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+			// END KGU#504 2018-03-13
 				this.insertPostponedInitialisations(_root, _indent + this.getIndent());
 			}
 			// END KGU#375 2017-09-20
@@ -1484,7 +1500,10 @@ public class PasGenerator extends Generator
 				introPlaced = generateVarDecls(incl, _indent, incl.getVarNames(), _complexConsts, introPlaced);
 			}
 		}
-		if (_varNames != null) {
+		// START KGU#504 2018-03-13: Bugfix #520, #521
+		//if (_varNames != null) {
+		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+		// END KGU#504 2018-03-13
 			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
 		}
 		// END KGU#375 2017-04-12

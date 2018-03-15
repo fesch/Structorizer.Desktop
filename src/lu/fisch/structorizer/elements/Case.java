@@ -790,12 +790,12 @@ public class Case extends Element implements IFork
     }
     // END KGU#122 2016-01-03
 
-    @Override
-    public Element getElementByCoord(int _x, int _y, boolean _forSelection)
-    {
-    	Element selMe = super.getElementByCoord(_x, _y, _forSelection);
+	@Override
+	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
+	{
+		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
-    	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+		// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
 		//if (!this.isCollapsed())
 		if (!this.isCollapsed(true) && (selMe != null || _forSelection))
 		// START KGU#207 2016-07-21
@@ -836,10 +836,10 @@ public class Case extends Element implements IFork
 		}
 		// END KGU#121 2016-01-03
 
-    	return selMe;
-    }
-    // END KGU 2015-10-09
-    
+		return selMe;
+	}
+	// END KGU 2015-10-09
+
 	// START KGU#346 2017-02-08: Issue #198 Provide a relative rect for the head
 	/**
 	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle

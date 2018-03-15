@@ -253,7 +253,6 @@ Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
-Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
@@ -287,6 +286,9 @@ Menu.menuPreferencesLanguageItems.ru.text=Russisch
 Menu.menuPreferencesLanguageItems.pl.text=Polnisch
 Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Sie könnnen mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
+Menu.menuPreferencesWheel.text=Mausrad
+Menu.menuPreferencesWheelCollapse.text=Mausrad zum Reduzieren?
+Menu.menuPreferencesWheelZoom.text=Umgekehrter Zoom mit Strg?
 Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
@@ -378,6 +380,8 @@ Menu.lblNormal.text=Nein, normaler Modus
 Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
 Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
+Menu.msgIncludableName.text=Name eines (neuen) einbeziehbaren Diagramms für die geteilten Typen
+Menu.msgMustBeIdentifier.text=Der gewählte Name war nicht als Bezeichner geeignet!
 Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es @k-Anweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
 Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagrammdateien
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.

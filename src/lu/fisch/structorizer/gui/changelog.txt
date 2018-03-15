@@ -6,12 +6,23 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
-- COBOL parsing may fail if certain single-letter identifiers are used (rename them!)
-- COBOL import doesn't cope with some statement variants and variable redefinitions
-- Some export generators haven't been enabled to support record type equivalents yet
-- The many functional enhancements have further slowed down execution speed.
+- COBOL import may fail if certain single-letter identifiers are used (rename them!).
+- COBOL import doesn't cope with some statement variants and variable redefinitions.
+- C import fails if the code contains function pointer declarations.
+- Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version 3.27-08 (2018-02-18)
+Current development version: 3.28-01 (2018-03-15)
+- 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
+- 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
+- 01: Bugfix #517: Correct export of includable declarations to J, C++, C# <2>
+- 01: Bugfix #518: Very slow scrolling of diagrams lacking type info [TiNNiT]2
+- 01: Bugfix #520: "no conversion" export mode had to be enforced (Pascal, C) <2>
+- 01: Bugfix #521: Variable declaration export had been inconsistent for Oberon <2>
+- 01: Enh. #519: Zooming / font size control via ctrl + mouse wheel [B. Neuberg]2
+- 01: Bugfix #522: Outsourcing now copes better with record types and includes <2>
+- 01: Bugfix #523: Undoing and redoing of include list changes mended <2>
+
+Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
 - 01: Bugfix #447: Line continuation backslashes in IF, CASE, FOR defanged <2>
 - 01: Bugfix #417: Division by 0 exception averted in scroll unit adaptation <2>
@@ -19,7 +30,7 @@ Current development version 3.27-08 (2018-02-18)
 - 02: Enh. #439: Structured value presenter with pull-down buttons now recursive <2>
 - 02: Enh. #452: Welcome message on first start with beginner mode and guides <2>
 - 02: Enh. #453: C export: format strings now with "TODO" content [Rolf Schmidt]2
-- 02: Enh. #454: Analyser check now complains blanks in program names <2>
+- 02: Enh. #454: Analyser check now complains about blanks in program names <2>
 - 02: Enh. #456: Print preview now allows to customize orientation and margins <2>
 - 02: Issue #455: Startup races and mis-drawing of initial diagrams reduced <2>
 - 03: Enh. #415: New accelerator key Ctrl-Shift-d for "copy EMF image" <2>
@@ -64,7 +75,7 @@ Current development version 3.27-08 (2018-02-18)
 - 08: Issue #4: Distinct symbols for FOR loops (for better recognition) <2>
 - 08: Issue #510: Element icons enlarged, colour buttons now round <2>
 - 08: Issue #508: Workaround for large-scaled symbols in collapsed elements <2>
-- 08: Bugfix #511: Cursor key navigation was blocked by collapsed loops <2>
+- 08: Bugfix #511: Cursor key navigation was trapped by collapsed loops <2>
 - 08: Improvements concerning the include text field in the diagram editor <2>
 - 08: Enh. #512: Zoom function in Arranger (button + Numpad keys +,-) <2>
 

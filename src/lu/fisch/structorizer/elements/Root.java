@@ -119,6 +119,10 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.10.26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
  *      Kay Gürtzig     2017.11.04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
  *      Kay Gürtzig     2017.11.05      Issue #454: logic of getMethodName() modified
+ *      Kay Gürtzig     2018.03.12      Bugfix #518: Distinction between uninitialized and empty typeMap
+ *      Kay Gürtzig     2018.03.15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
+ *                                      Bugfix #523: Defective undo and redo of include_list changes mended
+ *                                      KGU#505: Analyser now copes better with lists of record access expressions
  *      
  ******************************************************************************************************
  *
@@ -228,7 +232,7 @@ public class Root extends Element {
 	// END KGU#376 2017-05-16
 
 	// some fields
-	public boolean isNice = true;
+	public boolean isBoxed = true;
 	//private boolean isProgram = true;
 	// START KGU#137 2016-01-11: Bugfix #103 - More precise tracking of changes
 	//public boolean hasChanged = false;
@@ -274,8 +278,16 @@ public class Root extends Element {
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
 	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now managed directly by Root
+	/** List of the names of the diagrams to be included by this Root (may be null!) */
 	public StringList includeList = null;
 	// END KGU#376 2017-06-30
+	/**
+	 * Checks, whether {@code aRoot} is includable and if so, ensures that its name is
+	 * becomes member of this' include list.
+	 * @param aRoot - a diagram to be added to the include list of this
+	 * @return true if {@code aRoot} is includable and new to the include list
+	 * @see #addToIncludeList(String)
+	 */
 	public boolean addToIncludeList(Root aRoot)
 	{
 		boolean added = false;
@@ -284,6 +296,14 @@ public class Root extends Element {
 		}
 		return added;
 	}
+	/**
+	 * Ensures that the given {@code rootName} (which is assumed to be the name of an
+	 * includable diagram, but not verified) is member of this' include list. If the
+	 * {@link #includeList} was null, then it will be created.
+	 * @param rootName - assumed name of an includable Root
+	 * @return true if {@code rootName} was new
+	 * @see #addToIncludeList(Root)
+	 */
 	public boolean addToIncludeList(String rootName)
 	{
 		if (this.includeList == null) {
@@ -427,7 +447,10 @@ public class Root extends Element {
 	
 	private StringList rootVars = new StringList();
 	// START KGU#261 2017-01-19: Enh. #259 (type map: (var name | type name) -> type info)
-	private HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
+	// START KGU#502 2018-03-12: Bugfix #518 - distinguish between uninitialized and resulting empty map 
+	//private HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
+	private HashMap<String, TypeMapEntry> typeMap = null;
+	// END KGU#502 2018-03-12
 	// END KGU#261 2017-01-19
 	// START KGU#163 2016-03-25: Added to solve the complete detection of unknown/uninitialised identifiers
 	// Pre-processed parser preference keywords to match them against tokenized strings
@@ -705,7 +728,7 @@ public class Root extends Element {
 	@Override
 	public Color getColor()
 	{
-		if (isNice)	// KGU 2015-10-13 condition inverted because it hadn't made sense the way it was
+		if (isBoxed)
 		{
 			// The surrounding box is obvious - so it can't be mistaken for an instruction
 			return Color.WHITE;
@@ -749,7 +772,7 @@ public class Root extends Element {
 
 		// Compute width (dependent on diagram style and text properties)
 		int padding = 2*(E_PADDING/2);
-		if (isNice)
+		if (isBoxed)
 		{
 			padding = 2 * E_PADDING;
 			pt0Sub.x = E_PADDING;
@@ -765,7 +788,7 @@ public class Root extends Element {
 		}
 		
 		// Compute height (depends on diagram style and number of text lines)
-		int vPadding = isNice ? 3 * E_PADDING : padding;
+		int vPadding = isBoxed ? 3 * E_PADDING : padding;
 		rect0.bottom = vPadding + getText(false).count() * fm.getHeight();
 		
 		// START KGU#227 2016-07-31: Enhancement #128
@@ -791,13 +814,13 @@ public class Root extends Element {
 		// END KGU#376 2017-07-01
 		
 		pt0Sub.y = rect0.bottom;
-		if (isNice)	pt0Sub.y -= E_PADDING;
+		if (isBoxed)	pt0Sub.y -= E_PADDING;
 
 		_canvas.setFont(Element.font);
 
 		subrect0 = children.prepareDraw(_canvas);
 
-		if (isNice)
+		if (isBoxed)
 		{
 			rect0.right = Math.max(rect0.right, subrect0.right + 2*Element.E_PADDING);
 		}
@@ -808,7 +831,7 @@ public class Root extends Element {
 
 		rect0.bottom += subrect0.bottom;
 		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
-		if (!isNice && !isProgram()) rect0.bottom += E_PADDING/2;
+		if (!isBoxed && !isProgram()) rect0.bottom += E_PADDING/2;
 		// END KGU#221 2016-07-28
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
@@ -868,7 +891,7 @@ public class Root extends Element {
 		canvas.setColor(drawColor);
 		// START KGU#221 2016-07-27: Bugfix #208, KGU#376 2017-05-16: third type
 		//canvas.fillRect(_top_left);
-		int bevel = isNice ? R_CORNER : E_PADDING/2;
+		int bevel = isBoxed ? R_CORNER : E_PADDING/2;
 		switch (diagrType) {
 		case DT_SUB:
 			canvas.fillRoundRect(_top_left, R_CORNER);
@@ -900,7 +923,7 @@ public class Root extends Element {
 			// END KGU#221 2016-07-27
 		}
 
-		int textPadding = isNice ? E_PADDING : E_PADDING/2;
+		int textPadding = isBoxed ? E_PADDING : E_PADDING/2;
 
 		// START KGU#227 2016-07-31: Enh. #128
 		int commentHeight = 0;
@@ -954,7 +977,7 @@ public class Root extends Element {
 		bodyRect.left += pt0Sub.x;
 		bodyRect.top += pt0Sub.y;
 		bodyRect.right -= pt0Sub.x;	// Positioning is symmetric!
-		if (isNice)
+		if (isBoxed)
 		{
 			bodyRect.bottom -= E_PADDING;
 		}
@@ -979,7 +1002,7 @@ public class Root extends Element {
 
 
 		// draw thick line
-		if (isNice==false)
+		if (isBoxed==false)
 		{
 			Rect sepRect = bodyRect.copy();
 			sepRect.bottom = sepRect.top--;
@@ -1172,7 +1195,7 @@ public class Root extends Element {
     }
     // END KGU#324 2017-06-16
 
-	@Override
+    @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
             // START KGU#136 2016-03-01: Bugfix #97 - now we relativate cursor position rather than rectangles
@@ -1411,7 +1434,7 @@ public class Root extends Element {
     {
             Root ele = new Root(this.getText().copy());
             copyDetails(ele, false);
-            ele.isNice=this.isNice;
+            ele.isBoxed=this.isBoxed;
             ele.diagrType = this.diagrType;
             ele.children=(Subqueue) this.children.copy();
             // START KGU#2 (#9) 2015-11-13: By the above replacement the new children were orphans
@@ -1669,15 +1692,20 @@ public class Root extends Element {
             if (redoable) {
             // END KGU#365 2017-03-19
                 redoList.add((Subqueue)children.copy());
-            	// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
-            	redoList.peek().setText(this.text.copy());
-            	redoList.peek().setComment(this.comment.copy());
-            	// END KGU#120 2016-01-02
+                // START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
+                redoList.peek().setText(this.text.copy());
+                redoList.peek().setComment(this.comment.copy());
+                // END KGU#120 2016-01-02
+                // START KGU#507 2018-03-15: Bugfix #523
+                if (this.includeList != null) {
+                    redoList.peek().diagramRefs = this.includeList.concatenate(",");
+                }
+                // END KGU#507 2018-03-15
             // START KGU#365 2017-03-19: Enh. #380
             }
             // END KGU#365 2017-03-19
             children = undoList.pop();
-            children.parent=this;
+            children.parent = this;
             // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from stack
             this.setText(children.getText().copy());
             this.setComment(children.getComment().copy());
@@ -1687,20 +1715,26 @@ public class Root extends Element {
         	// START KGU#363 2017-05-21: Enh. #372
         	// If the undone action involves Root attributes then we must
         	// cache the current attributes on the redo stack accordingly
-            // and restore the attributes from the und stack
-        	if (children.rootAttributes != null) {
-        		if (redoable) {
-        			redoList.peek().rootAttributes = new RootAttributes(this);
-        		}
-        		this.adoptAttributes(children.rootAttributes);
-        		children.rootAttributes = null;
-        	}
-        	// END KGU#363 2017-05-21
-        	// START KGU#376 2017-07-01: Enh. #389
-        	if (children.diagramRefs != null) {
-        		this.includeList = StringList.explode(children.diagramRefs, ",");
-        	}
-        	// END KGU#376 2017-07-01
+            // and restore the attributes from the undo stack
+            if (children.rootAttributes != null) {
+                if (redoable) {
+                    redoList.peek().rootAttributes = new RootAttributes(this);
+                }
+                this.adoptAttributes(children.rootAttributes);
+                children.rootAttributes = null;
+            }
+            // END KGU#363 2017-05-21
+            // START KGU#376 2017-07-01: Enh. #389
+            if (children.diagramRefs != null) {
+                this.includeList = StringList.explode(children.diagramRefs, ",");
+                children.diagramRefs = null;
+            }
+            // END KGU#376 2017-07-01
+            // START KGU507 2018-03-15: bugfix #523
+            else {
+                this.includeList = null;
+            }
+            // END KGU507 2018-03-15
             // START KGU#136 2016-03-01: Bugfix #97
             this.resetDrawingInfoDown();
             // END KGU#136 2016-03-01
@@ -1736,29 +1770,43 @@ public class Root extends Element {
                     //this.hasChanged=true;
                     // END KGU#137 2016-01-11
                     undoList.add((Subqueue)children.copy());
-            		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
-            		undoList.peek().setText(this.text.copy());
-            		undoList.peek().setComment(this.comment.copy());
-            		// END KGU#120 2016-01-02
+                    // START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
+                    undoList.peek().setText(this.text.copy());
+                    undoList.peek().setComment(this.comment.copy());
+                    // END KGU#120 2016-01-02
+                    // START KGU#507 2018-03-15: Bugfix #523
+                    if (this.includeList != null) {
+                        undoList.peek().diagramRefs = this.includeList.concatenate(",");
+                    }
+                    // END KGU#507 2018-03-15
                     children = redoList.pop();
                     children.parent=this;
-            		// START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
-            		this.setText(children.getText().copy());
-            		this.setComment(children.getComment().copy());
-            		children.text.clear();
-            		children.comment.clear();
-            		// END KGU#120 2016-01-02
-            		// START KGU#363 2017-05-21: Enh. #372
-            		this.adoptAttributes(children.rootAttributes);
-            		children.rootAttributes = null;
-            		// END KGU#363 2017-05-21
-                	// START KGU#136 2016-03-01: Bugfix #97
-                	this.resetDrawingInfoDown();
-                	// END KGU#136 2016-03-01
-            	    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-            		// FIXME: Certain explicit declarations should remain
-            		this.clearTypeInfo();
-            		// END KGU#261 2017-01-26
+                    // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
+                    this.setText(children.getText().copy());
+                    this.setComment(children.getComment().copy());
+                    children.text.clear();
+                    children.comment.clear();
+                    // END KGU#120 2016-01-02
+                    // START KGU#363 2017-05-21: Enh. #372
+                    this.adoptAttributes(children.rootAttributes);
+                    children.rootAttributes = null;
+                    // END KGU#363 2017-05-21
+                    // START KGU#507 2018-03-15: Bugfix #523
+                    if (children.diagramRefs != null) {
+                        this.includeList = StringList.explode(children.diagramRefs, ",");
+                        children.diagramRefs = null;
+                    }
+                    else {
+                        this.includeList = null;
+                    }
+                    // END KGU#507 2018-03-15
+                    // START KGU#136 2016-03-01: Bugfix #97
+                    this.resetDrawingInfoDown();
+                    // END KGU#136 2016-03-01
+                    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
+                    // FIXME: Certain explicit declarations should remain
+                    this.clearTypeInfo();
+                    // END KGU#261 2017-01-26
             }
     }
 
@@ -2258,21 +2306,23 @@ public class Root extends Element {
 		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
 			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
 				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1));
-				// Remove all tokens from the type name on (they are in the HashMap now)
-				tokens.remove(posBrace-1, tokens.count());
-				// Append all the value strings for the components but not the component names
-				for (Entry<String, String> comp: components.entrySet()) {
-					if (!comp.getKey().startsWith("§")) {
-						StringList subTokens = Element.splitLexically(comp.getValue(), true);
+				if (components != null) {
+					// Remove all tokens from the type name on (they are in the HashMap now)
+					tokens.remove(posBrace-1, tokens.count());
+					// Append all the value strings for the components but not the component names
+					for (Entry<String, String> comp: components.entrySet()) {
+						if (!comp.getKey().startsWith("§")) {
+							StringList subTokens = Element.splitLexically(comp.getValue(), true);
+							skimRecordInitializers(subTokens);
+							tokens.add(subTokens);
+						}
+					}
+					// If there was further text beyond the initializer then tokenize and append it
+					if (components.containsKey("§TAIL§")) {
+						StringList subTokens = Element.splitLexically(components.get("§TAIL§"), true);
 						skimRecordInitializers(subTokens);
 						tokens.add(subTokens);
 					}
-				}
-				// If there was further text beyond the initializer then tokenize and append it
-				if (components.containsKey("§TAIL§")) {
-					StringList subTokens = Element.splitLexically(components.get("§TAIL§"), true);
-					skimRecordInitializers(subTokens);
-					tokens.add(subTokens);
 				}
 			}
 		}
@@ -2509,7 +2559,7 @@ public class Root extends Element {
     // START KGU#261 2017-01-20: Enh. #259
     /**
      * Creates (if not already cached), caches, and returns the static overall type map
-     * for this diagram and its included definition providers (if having being available
+     * for this diagram and its included definition providers (if having been available
      * on the first creation).<br/>
      * Every change to this diagram clears the cache and hence leads to an info refresh.  
      * @return the type table mapping prefixed type names and variable names to their
@@ -2517,7 +2567,11 @@ public class Root extends Element {
      */
     public HashMap<String, TypeMapEntry> getTypeInfo()
     {
-    	if (this.typeMap.isEmpty()) {
+    	// START KGU#502 2018-03-12: Bugfix #518 - Avoid repeated traversal in case of lacking type and var info
+    	//if (this.typeMap.isEmpty()) {
+    	if (this.typeMap == null) {
+    		this.typeMap = new HashMap<String, TypeMapEntry>();
+    	// END KGU#502 2018-03-12
     		// START KGU#388 2017-09-18: Enh. #423 adopt all type info from included diagrams first
     		// FIXME: The import info can easily get obsolete unnoticedly!
     		if (this.includeList != null) {
@@ -2554,8 +2608,10 @@ public class Root extends Element {
     
     private void clearTypeInfo()
     {
-    	// FIXME: To be modified when GUI-based type configuration will be enabled
-    	this.typeMap.clear();
+    	// START KGU#502 2018-03-12: Bugfix #518
+    	//this.typeMap.clear();
+    	this.typeMap = null;
+    	// END KGU#502 2018-03-12
     }
     // END KGU#261 2017-01-20
     
@@ -3939,6 +3995,7 @@ public class Root extends Element {
 					while ((posDot = tokens.indexOf(".", posDot + 1)) > 0 && posDot < nTokens - 1) {
 						String before = tokens.get(posDot - 1);
 						// Jump in front of an index access
+						// FIXME: This is just a rough heuristics producing nonsense in case of nested expressions with indices
 						int posBrack = -1;
 						if (before.equals("]") && (posBrack = tokens.lastIndexOf("[", posDot)) > 0) {
 							before = tokens.get(posBrack - 1);
@@ -3949,6 +4006,12 @@ public class Root extends Element {
 							varType = null;
 							continue;
 						}
+						// START KGU#507 2018-03-15 - nonsense from expressions like OUTPUT otherDay.day, ".", otherDay.month, ".", otherDay.year 
+						else if (!path.endsWith("]") && !path.endsWith(before)) {
+							path = "";
+							varType = null;
+						}
+						// END KGU#507 2018-03-15
 						if ((path.isEmpty() || varType == null) && Function.testIdentifier(before, null)) {
 							if (path.isEmpty()) {
 								path = before;
@@ -3959,7 +4022,10 @@ public class Root extends Element {
 							String arrTypeStr = varType.getCanonicalType(true, false);
 							if (arrTypeStr != null && arrTypeStr.startsWith("@")) {
 								// Try to get the element type
-								varType = typeMap.get(":" + arrTypeStr.substring(1));
+								// START KGU#502 2018-02-12: Bugfix #518 - seemed inconsistent to check the field typeMap here
+								//varType = typeMap.get(":" + arrTypeStr.substring(1));
+								varType = _types.get(":" + arrTypeStr.substring(1));
+								// END KGU#502 2018-02-12
 							}
 						}
 						if (varType == null || !varType.isRecord() || !varType.getComponentInfo(false).containsKey(after)) {
@@ -5169,6 +5235,11 @@ public class Root extends Element {
 			String prefix = "";
 			String type = entry.getTypes().get(0);
 			if (!type.equals("???")) {
+				// START KGU#506 2018-03-14: Issue #522
+				if (entry.isRecord()) {
+					type = entry.typeName;
+				}
+				// END KGU#506 2018-03-14
 				while (type.startsWith("@")) {
 					prefix += "array of ";
 					type = type.substring(1);

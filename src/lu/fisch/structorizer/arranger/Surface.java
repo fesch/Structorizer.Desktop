@@ -74,10 +74,24 @@ package lu.fisch.structorizer.arranger;
  *                                      Enh. #35: Scrolling dimensioning mechanism revised (group layout dropped) 
  *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
  *      Kay Gürtzig     2018.02.17      Enh. #512: Zoom mechanism implemented
+ *      Kay Gürtzig     2018.02.20      Magic numbers replaced, Enh. #515 first steps toward a silhouette allocation
+ *      Kay Gürtzig     2018.02.21      Enh. #515: Working first prototype for space-saving area management
+ *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2018.03.13 (Kay Gürtzig)
+ *      - According to a GUI suggestion by newboerg, surface now also implements MouseWheelListener in
+ *        order to let ctrl + mouse wheel forward to zoom out and ctrl + mouse wheel backward to zoom in
+ *      - is added as listener to Arranger.scrollarea  
+ *      2018.02.21 (Kay Gürtzig)
+ *      - Rather than to place added diagrams along the top and left window border, now there is a more
+ *        intelligent strategy implemented, which still aligns from top to bottom, left to right but tries
+ *        to fill the gaps at a given level before diagrams are put beneath in new "rows". This is done
+ *        via constructing the "lower silhouette" from the diagrams placed so far and then to look for the
+ *        uppermost breach of sufficient width to accommodate the diagram to be added. See #515 on GitHub
+ *        for illustrations. 
  *      2016.03.16 (Kay Gürtzig)
  *      - It still happened that double-clicking on a diagram seemed to have no effect. In these cases
  *        actually there was a stale Mainform reference. The reason was that the windowClosing() trigger
@@ -126,6 +140,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
@@ -143,6 +159,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.Vector;
@@ -174,16 +192,28 @@ import lu.fisch.utils.StringList;
 import net.iharder.dnd.FileDrop;
 
 /**
- *
- * @author robertfisch
+ * Class represents the interactive viewport for arranging several Nassi Shneiderman
+ * diagrams (as part of a scroll pane).<br/>
+ * 2018-03-13: Enhanced the inheritance by {@link MouseWheelListener} to enable ctrl + wheel zooming 
+ * @author robertfisch, codemanyak
  */
 @SuppressWarnings("serial")
-public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner {
+public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener {
 
     private Vector<Diagram> diagrams = new Vector<Diagram>();
     // START KGU#305 2016-12-16: Code revision
     private final Vector<IRoutinePoolListener> listeners = new Vector<IRoutinePoolListener>();
     // END KGU#305 2016-12-16
+	/** Default minimum distance between diagrams when allocated */ 
+    private static final int DEFAULT_GAP = 10;
+	/** Default width for a diagram never drawn before */ 
+	private static final int DEFAULT_WIDTH = 120;
+	/** Default height for a diagram never drawn before */ 
+	private static final int DEFAULT_HEIGHT = 150;
+	/** Empirical width estimate for an empty diagram */ 
+	private static final int MIN_WIDTH = 80;
+	/** Empirical height estimate for an empty diagram */ 
+	private static final int MIN_HEIGHT = 118;
 
     /** Current actual mouse coordinates (i.e. without regarding the zoom-factor) */
     private Point mousePoint = null;
@@ -245,7 +275,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	// Region occupied by diagrams
         Dimension area = new Dimension(0, 0);
         super.paint(g);
-        if(diagrams!=null)
+        if (diagrams != null)
         {
             // START KGU#497 2018-02-17: Enh. 
         	Graphics2D g2d = (Graphics2D) g;
@@ -1048,9 +1078,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             }
 
             // deselect any diagram
-            if(diagrams!=null)
+            if (diagrams != null)
             {
-                for(int d=0; d<diagrams.size(); d++)
+                for (int d=0; d<diagrams.size(); d++)
                 {
                     diagrams.get(d).root.setSelected(false);
                 }
@@ -1063,11 +1093,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             // START KGU#497 2018-02-17: Enh. #512 - consider the (new) zoom factor
             //BufferedImage bi = new BufferedImage(this.getWidth(), this.getHeight(),BufferedImage.TYPE_4BYTE_ABGR);
             //paint(bi.getGraphics());
-            BufferedImage bi = new BufferedImage(
-                    Math.round(this.getWidth() * this.zoomFactor),
-                    Math.round(this.getHeight() * this.zoomFactor),
-                    BufferedImage.TYPE_4BYTE_ABGR);
             float oldZoom = this.zoomFactor;
+//            System.out.println(this.getWidth() + " x " + this.getHeight());
+//            Rect rect = this.getDrawingRect(null);
+//            System.out.println(rect);
+//            System.out.println(this.getWidth()*oldZoom + " x " + this.getHeight()*oldZoom);
+            BufferedImage bi = new BufferedImage(
+                    Math.round(this.getWidth() * oldZoom),
+                    Math.round(this.getHeight() * oldZoom),
+                    BufferedImage.TYPE_4BYTE_ABGR);
             this.zoomFactor = 1;
             paint(bi.getGraphics());
             this.zoomFactor = oldZoom;
@@ -1085,15 +1119,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
 
     /**
-     * Determines the union of bounds of all diagrams on this Surface.
+     * Determines the union of bounds of all diagrams on this Surface and updates
+     * the lower silhouette line if {@code _silhouette} is given.
+     * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
+     * (where the x coordinate represents a leap position and the y coordinate is the new
+     * level from x to the next leap eastwards) or null
      * @return the bounding box als {@link Rect}
      */
-    public Rect getDrawingRect()
+    public Rect getDrawingRect(LinkedList<Point> _silhouette)
     {
-    	// FIXME: Where to apply the zoom factor?
         Rect r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 
-        if(diagrams!=null)
+        if (diagrams != null)
         {
         	//System.out.println("--------getDrawingRect()---------");
             if (diagrams.size() > 0)
@@ -1111,10 +1148,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                 // START KGU#136 2016-03-01: Bugfix #97
                 // empirical minimum width of an empty diagram
                 //int width = Math.max(rect.right - rect.left, 80);
-                int width = Math.max(rect.right, 80);
+                int width = Math.max(rect.right, MIN_WIDTH);
                 // empirical minimum height of an empty diagram 
                 //int height = Math.max(rect.bottom - rect.top, 118);
-                int height = Math.max(rect.bottom, 118);
+                int height = Math.max(rect.bottom, MIN_HEIGHT);
                 // END KGU#136 2016-03-01
                 //System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
                 r.left = Math.min(diagram.point.x, r.left);
@@ -1122,6 +1159,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                 r.right = Math.max(diagram.point.x + width, r.right);
                 r.bottom = Math.max(diagram.point.y + height, r.bottom);
                 //END KGU#85 2015-11-18
+                // START KGU#499 2018-02-20
+                if (_silhouette != null) {
+                	this.updateSilhouette(_silhouette, diagram.point.x, width, diagram.point.y + height);
+                }
+                // END KGU#499 2018-02-20
             }
             else  r = new Rect(0,0,0,0);
         }
@@ -1132,10 +1174,111 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         return r;
     }
     
-    private Rect adaptLayout()
+    // START KGU#499 2018-02-20: Enh. #515 - Helper method for more intelligent area management
+    /**
+     * Integrates the shape of a diagram given by its left x coordinate, its width and its
+     * bottom y coordinate into the Point list {@code silhouette} describing the course of the
+     * lower silhouette of the diagrams.<br/>
+     * At the moment, this method tends to consume O(N) time with N diagrams already processed.
+     * @param _silhouette - List of leap points in the silhouette line from left to right
+     * @param left - the left edge x  coordinate of the considered diagram
+     * @param width - the widh of the considered diagram
+     * @param bottom - the bottom value of the considered diagram
+     */
+    private void updateSilhouette(LinkedList<Point> _silhouette, int left, int width, int bottom) {
+    	ListIterator<Point> iter = _silhouette.listIterator();
+    	Point lastLeap = new Point(0, 0);	// previous leap data
+    	Point leap = null;			// current leap data
+    	if (!iter.hasNext()) {
+        	// Ensure a first leap entry {0, 0}
+    		iter.add(lastLeap);
+    	}
+    	else {
+    		// Adopt the actual start level
+    		lastLeap = iter.next();
+    	}
+    	// Search for an overlapping between diagram and silhouette
+    	while (iter.hasNext() && ((leap = iter.next()).x < left || lastLeap.y >= bottom)) {
+    		lastLeap = leap;
+    	}
+		// Now if we haven't found any leap at all, then just add the two leaps for this diagram
+    	Point nextLeap = new Point(left + width, lastLeap.y);
+    	if (leap == null) {
+    		Point leap1 = new Point(left, bottom);
+    		_silhouette.add(leap1);
+    		_silhouette.add(nextLeap);
+    	}
+    	// There is nothing to do if the last leap is already beyond the diagram
+    	else if (lastLeap.x < left + width) {
+        	// otherwise there are two fundamental cases:
+    		if (lastLeap.y >= bottom && lastLeap.x >= left) {
+    			// 1. The diagram had already started but the silhouette is receding (at lastLeap)
+    			//    --> update lastLeap to level bottom
+    			lastLeap.y = bottom;
+    		}
+    		else {
+    			// 2. The diagram starts here and protrudes over the silhouette
+    			//    --> insert a new leap at position left (or just raise the level at lastLeap)
+    			Point leap1 = new Point(left, bottom);
+    			// Was there another leap beyond the last leap (or had the list been exhausted)?
+    			if (leap.x != lastLeap.x) {
+    				// There is another leap farther right
+    				// If the distance between silhouette leap and diagram edge is small then avoid
+    				// an additional leap and just move the existing leap to left
+    				if (leap.x - left <= DEFAULT_GAP && leap.y > bottom && left > lastLeap.x) {
+    					leap.x = left;		// Just move the leap left
+    				}
+    				else {
+    					iter.previous();	// go back before current leap
+    					iter.add(leap1);	// insert the new leap before it
+    					iter.next();		// and go beyond the already read leap again
+    				}
+    			}
+    			else {
+    				// List had been exhausted
+    				leap = null;
+        			iter.add(leap1);	// insert the new leap at end
+    			}
+    		}
+    		// Now wipe all leaps eclipsed exceeded by the diagram
+    		while (leap != null && leap.x <= left+width) {
+    			if (leap.y <= bottom) {
+    				if (nextLeap.y <= bottom) {
+    					nextLeap.y = leap.y;
+    					iter.remove();
+    				}
+    				else {
+    					nextLeap.y = leap.y;
+    					leap.y = bottom;
+    				}
+    			}
+    			if (iter.hasNext()) {
+    				leap = iter.next();
+    			}
+    			else {
+    				leap = null;
+    			}
+    		}
+    		// If there no further leap or the next leap is far, insert the prepared end leap
+    		if (leap == null || (leap.x - (left+width) > DEFAULT_GAP)) {
+    			if (leap != null && iter.hasPrevious()) {
+    				iter.previous();
+    			}
+        		iter.add(nextLeap);    			
+    		}
+    	}
+    	// DEBUG: Disable this list printing after debugging
+//    	iter = _silhouette.listIterator();
+//    	System.out.println("Current silhouette:");
+//    	while (iter.hasNext()) {
+//    		Point leap1 = iter.next();
+//    		System.out.println(leap1.x + " --> " + leap1.y);
+//    	}
+	}
+
+	private Rect adaptLayout()
     {
-    	// FIXME: Handle the zoomFactor!
-    	Rect rect = getDrawingRect();
+    	Rect rect = getDrawingRect(null);
     	// START KGU#85 2017-10-23: Enh. #35 - without this superfluous group layout it's all pretty simple
     	// Didn't find anything else to effectively inform the scrollbars about current extension
 //        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
@@ -1197,16 +1340,23 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     // END KGU#444 2017-10-23
 
+    /**
+     * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
+     * residing here. If a {@link Mainform} {@code form} was given, then it is registered with
+     * the {@code root} (unless there is already another {@link Mainform} associated) and
+     * {@code root} will automatically be pinned.
+     * @param root - a diagram to be placed here
+     */
 	public void addDiagram(Root root)
     // START KGU#2 2015-11-19: Needed a possibility to register a related Mainform
     {
     	addDiagram(root, null, null);
     }
     /**
-     * Places the passed-in diagram root in the drawing area if it hadn't already been
-     * residing here. If a Mainform form was given, then it is registered with the root
-     * (unless there is already another Mainform associated) and root will automatically
-     * be pinned.
+     * Places the passed-in diagram {@code root} in the drawing area if it hadn't already
+     * been residing here. If a {@link Mainform} {@code form} was given, then it is registered
+     * with the {@code root} (unless there is already another {@link Mainform} associated) and
+     * {@code root} will automatically be pinned.
      * @param root - a diagram to be placed here
      * @param form - the sender of the diagram if it was pushed here from a Structorizer instance
      */
@@ -1217,7 +1367,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     
     /**
-     * @param root - the root element of the diagram to be added
+     * @param root - the {@link Root} element of the diagram to be added
      * @param position - the proposed position
      */
     public void addDiagram(Root root, Point position)
@@ -1227,13 +1377,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }    
     
     /**
-     * Places the passed-in diagram root in the drawing area if it hadn't already been
-     * residing here. If a Mainform form was given, then it is registered with the root
-     * (unless there is already another Mainform associated) and root will automatically
-     * be pinned.
-     * If point is given then the diaram will be place to that position, otherwise a free
+     * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
+     * residing here. If a {@link Mainform} {@code form} was given, then it is registered with
+     * the {@code root} (unless there is already another {@link Mainform} associated) and
+     * {@code root} will automatically be pinned.
+     * If {@code point} is given then the diagram will be placed to that position, otherwise a free
      * area is looked for.
-     * @param root - the root element of the diagram to be added
+     * @param root - the {@link Root} element of the diagram to be added
      * @param form - the sender of the diagram if it was pushed here from a Structorizer instance
      * @param point - the proposed position
      */
@@ -1251,13 +1401,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	// END KGU#1119 2016-01-02
     	if (diagram == null) {
     	// END KGU#2 2015-11-19
-    		Rect rect = getDrawingRect();
+    		// START KGU#499 2018-02-22: New packing strategy (silhouette approach)
+    		//Rect rect = getDrawingRect();
+    		LinkedList<Point> silhouette = new LinkedList<Point>();
+    		Rect rect = getDrawingRect(silhouette);
+    		// END KGU#499 2018-02-22
 
-    		int top = 10;
-    		int left = 10;
+    		int top = DEFAULT_GAP;
+    		int left = DEFAULT_GAP;
 
     		top  = Math.max(rect.top, top);
-    		left = Math.max(rect.right+10, left);
+    		left = Math.max(rect.right + DEFAULT_GAP, left);
 
     		// START KGU#497 2018-02-17: Enh. #512 - zooming must be considered
     		//if (left > this.getWidth())
@@ -1265,12 +1419,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		// END KGU#497 2018-02-17
     		{
     			// FIXME (KGU 2015-11-19) This isn't really sensible - might find a free space by means of a quadtree?
-    			top = rect.bottom+10;
+    			top = rect.bottom + DEFAULT_GAP;
     			left = rect.left;
     		}
     		// START KGU#110 2015-12-20
     		//Point point = new Point(left,top);
-    		if (point == null)
+        	boolean pointGiven = point != null;
+    		if (!pointGiven)
     		{
     			point = new Point(left,top);
     		}
@@ -1291,18 +1446,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		// END KGU 2016-03-14
     		/*Diagram*/ diagram = new Diagram(root,point);
     		diagrams.add(diagram);
-    		// START KGU#85 2015-11-18
-    		adaptLayout();
-    		// END KGU#85 2015-11-18
     		// START KGU 2015-11-30
     		// START KGU#136 2016-03-01: Bugfix #97 - here we need the actual position
     		//Rectangle rec = root.getRect().getRectangle();
     		//rec.setLocation(left, top);
     		Rectangle rec = root.getRect(point).getRectangle();
     		// END KGU#136 2016-03-01
-    		// FIXME: Apply zoom factor!
-    		if (rec.width == 0)	rec.width = 120;
-    		if (rec.height == 0) rec.height = 150;
+    		if (rec.width == 0)	rec.width = DEFAULT_WIDTH;
+    		if (rec.height == 0) rec.height = DEFAULT_HEIGHT;
+    		// START KGU#499 2018-02-21: Enh. #515 - better area management
+    		// Improve the placement if possible (for more compact arrangement)
+    		if (!pointGiven) {
+    			point = findPreferredLocation(silhouette, rec);
+    			diagram.point = point;
+    			rec = root.getRect(point).getRectangle();
+    		}
+    		// END KGU#499 2018-02-21
+    		// START KGU#85 2015-11-18
+    		adaptLayout();
+    		// END KGU#85 2015-11-18
     		this.scrollRectToVisible(rec);
     		// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null
     		if (form != null)
@@ -1359,7 +1521,67 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	// END KGU#2 2015-11-19
     }
 
-    // START KGU#85 2015-11-17
+    // START KGU#499 2018-02-21: Enh. #515 - More intelligent area management
+    /**
+     * Scans the given silhouette line given by the {@link Point} list {@code silhouette}
+     * for the uppermost breach wide enough to accomodate a diagram of width {@code rec.width}. 
+     * @param silhouette - linked {@link Point} list symbolizing the lower bound of the diagrams
+     * @param rec - the proposed {@link Rectangle} of a diagram (possibly to be relocated)
+     * @return the preferrable new anchor position (top left) for the diagram
+     */
+    private Point findPreferredLocation(LinkedList<Point> silhouette, Rectangle rec) {
+		ListIterator<Point> iter = silhouette.listIterator();
+		LinkedList<Point> candidates = new LinkedList<Point>();
+		candidates.add(new Point(0,0));
+		Point optimum = null;
+		while (iter.hasNext()) {
+			Point leap = iter.next();
+			if (leap.x > this.getWidth() * this.zoomFactor) {
+				break;
+			}
+			ListIterator<Point> iter1 = candidates.listIterator();
+			while (iter1.hasNext()) {
+				Point cand = iter1.next();
+				// Update the entry if incomplete and needed
+				if (leap.x < cand.x + rec.width + 2 * DEFAULT_GAP) {
+					if (leap.y > cand.y) {
+						cand.y = leap.y;
+					}
+				}
+				else {
+					if (optimum == null || cand.y < optimum.y) {
+						optimum = cand;
+					}
+					// A complete entry worse than the optimum isn't needed any longer
+					iter1.remove();
+				}
+			}
+			// Here a better entry might start
+			if (optimum == null || leap.y < optimum.y) {
+				candidates.add(new Point(leap));
+			}
+		}
+		// If we didn't find anything better, then we will just adhere to the bounds approach result
+		// But first have a look whether some incompletely analysed breaches (those remaining open at
+		// end) are wide enough to be accepted. We will allow a diagram if fits at least by half.
+		float windowWidth = this.getWidth() * this.zoomFactor - rec.width/2; 
+		for (Point cand: candidates) {
+			if (cand.x < windowWidth && (optimum == null || cand.y < optimum.y)) {
+				optimum = cand;
+			}
+		}
+		if (optimum == null) {
+			optimum = new Point(rec.x, rec.y); 
+		}
+		else {
+			optimum.x += DEFAULT_GAP;
+			optimum.y += DEFAULT_GAP;
+		}
+		return optimum;
+	}
+    // END KGU#499 2018-02-21
+
+	// START KGU#85 2015-11-17
     public void removeDiagram()
     {
     	if (this.mouseSelected != null)
@@ -2261,5 +2483,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.zoomFactor;
 	}
 	// END KGU#497 2018-02-17
+
+	// START KGU#503 201-03-13: Enh. #519 - ctrl + mouse wheel is to zoom in / zoom out
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
+		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+			int rotation = mwEvt.getWheelRotation();
+        	if (Element.E_WHEEL_REVERSE_ZOOM) {
+        		rotation *= -1;
+        	}
+			if (rotation >= 1) {
+				mwEvt.consume();
+				this.zoom(false);
+			}
+			else if (rotation <= -1) {
+				mwEvt.consume();
+				this.zoom(true);
+			}
+		}
+	}
+	// END KGU#503 2018-03-13
 
  }
