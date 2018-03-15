@@ -2121,6 +2121,9 @@ public abstract class Element {
 	 */
 	public static Root getRoot(Element _element)
 	{
+		if (_element == null) {
+			return null;
+		}
 		while (_element.parent != null)
 		{
 			_element = _element.parent;

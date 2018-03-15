@@ -148,6 +148,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
  *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
  *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
+ *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes 
  *
  ******************************************************************************************************
  *
@@ -3128,7 +3129,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			// END KGU#365 2017-04-14
-			String subroutineName = JOptionPane.showInputDialog(Menu.msgSubroutineName.getText() + ": ");
+			String hint = Menu.msgMustBeIdentifier.getText();
+			String prompt = Menu.msgSubroutineName.getText() + ": ";
+			String subroutineName = null;
+			do {
+				subroutineName = JOptionPane.showInputDialog(prompt);
+				prompt = hint + "\n" + Menu.msgSubroutineName.getText() + ": ";
+			} while (subroutineName != null && !Function.testIdentifier(subroutineName, null));
 			if (subroutineName != null) {
 				try {
 					addUndoNSD();
@@ -3136,13 +3143,72 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					return;
 				}
 				selected.setSelected(false);
+				// START KGU#506 2018-03-14: issue #522 - we need to check for record types
+				HashMap<String, TypeMapEntry> parentTypes = root.getTypeInfo();
+				// END KGU#506 2018-03-14
 				// FIXME May we involve the user in argument and result value identification?
 				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
 				if (sub != null) {
 					// adopt presentation properties from root
 					sub.hightlightVars = root.hightlightVars;
 					sub.isBoxed = root.isBoxed;
-					sub.getVarNames();	// just to prepare proper drawing.
+					// START KGU#506 2018-03-14: issue #522 - we need to check for record types
+					//sub.getVarNames();	// just to prepare proper drawing.
+					StringList subVars = sub.getVarNames();
+					HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
+					for (int i = 0; i < subVars.count(); i++) {
+						String varName = subVars.get(i);
+						TypeMapEntry varType = parentTypes.get(varName);
+						if (varType != null && varType.isRecord()) {
+							Element defining = varType.getDeclaringElement();
+							if (defining != null) {
+								Root typeSource = Element.getRoot(defining); 
+								if (typeSource == root) {
+									sharedTypesMap.putIfAbsent(varType.typeName, defining);
+								}
+								else if (typeSource != null) {
+									sub.addToIncludeList(typeSource);
+								}
+							}
+						}
+					}
+					if (!sharedTypesMap.isEmpty()) {
+						// FIXME: We might also offer a combo box containing the already included diagrams of root
+						prompt = Menu.msgIncludableName.getText() + ": ";
+						String includableName = null;
+						do {
+							includableName = JOptionPane.showInputDialog(prompt);
+							prompt = hint + "\n" + Menu.msgIncludableName.getText() + ": ";
+						} while (!Function.testIdentifier(includableName, null));
+						Root incl = null;
+						if (Arranger.hasInstance()) {
+							Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName);
+							if (!includes.isEmpty()) {
+								incl = includes.firstElement();
+								incl.addUndo();
+							}
+						}
+						boolean isNewIncl = incl == null;
+						if (isNewIncl) {
+							incl = new Root();
+							incl.setText(includableName);
+							incl.setInclude();
+							// adopt presentation properties from root
+							incl.hightlightVars = root.hightlightVars;
+							incl.isBoxed = root.isBoxed;
+						}
+						for (Element source: sharedTypesMap.values()) {
+							((Subqueue)source.parent).removeElement(source);
+							incl.children.addElement(source);
+						}
+						incl.setChanged();
+						if (isNewIncl) {
+							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());;
+						}
+						root.addToIncludeList(includableName);
+						sub.addToIncludeList(includableName);
+					}
+					// END KGU#506 2018-03-14
 					sub.setChanged();
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());

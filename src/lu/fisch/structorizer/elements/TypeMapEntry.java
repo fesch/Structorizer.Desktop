@@ -791,7 +791,15 @@ public class TypeMapEntry {
 	}
 
 	// START KGU#388 2017-09-19: Enh. #423 for code generator support
-	public boolean isDeclaredWithin(Root _root) {
+	/**
+	 * Checks whether there is a declaration of this variable or type within the
+	 * given diagram {@code _root}.
+	 * @param _root - the suspected source diagram or null
+	 * @return true if there is a declaration within {@code _root} or if {@code _root}
+	 * is null and this is declared at all. 
+	 */
+	public boolean isDeclaredWithin(Root _root)
+	{
 		if (_root == null) {
 			return this.isDeclared;
 		}
@@ -803,5 +811,18 @@ public class TypeMapEntry {
 		return false;
 	}
 	// END KGU#388 2017-09-19
+	
+	// START KGU#506 2018-03-14: Issue #522
+	/** @return the {@link Element} where this variable or type is declared (if any). */
+	public Element getDeclaringElement()
+	{
+		for (VarDeclaration decl: declarations) {
+			if (decl.definingElement != null) {
+				return decl.definingElement;
+			}
+		}
+		return null;
+	}
+	// END KGU#506 2018-03-14
 	
 }
