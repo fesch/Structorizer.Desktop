@@ -66,8 +66,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig             2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
  *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017-10-24      Enh. #389, #423: Export strategy for includables and records
+ *      Kay Gürtzig             2017.10.24      Enh. #389, #423: Export strategy for includables and records
  *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig             2018.03.13      Bugfix #259,#335,#520,#521: Mode suppressTransform enforced for declarations
  *
  ******************************************************************************************************
  *
@@ -189,12 +190,10 @@ public class OberonGenerator extends Generator {
 	// END KGU#332 2017-01-30
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-	/**
-	 * A pattern how to embed the variable (right-hand side of an input instruction)
-	 * into the target code
-	 * @param withPrompt - is a prompt string to be considered?
-	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
 	 */
+	@Override
 	// START KGU#281 2016-10-15: Enh. #271
 	//protected String getInputReplacer()
 	//{
@@ -209,11 +208,10 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#281 2016-10-15
 
-	/**
-	 * A pattern how to embed the expression (right-hand side of an output instruction)
-	 * into the target code
-	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getOutputReplacer()
 	 */
+	@Override
 	protected String getOutputReplacer()
 	{
 		// START KGU#236 2016-10-16: Enh. #227 - we needed a substitution marker to accomplish identified routines
@@ -505,7 +503,10 @@ public class OberonGenerator extends Generator {
 				}
 				// START KGU#388 2017-10-24: Enh. #423 suppress type definitions here
 				//else
-				else if (!Instruction.isTypeDefinition(line))
+				// START KGU#504 2018-03-13: Bugfix #520, #521 - consider transformation suppression
+				//else if (!Instruction.isTypeDefinition(line))
+				else if (this.suppressTransformation || !Instruction.isTypeDefinition(line))
+				// START KGU#504 2018-03-13: Bugfix #520, #521 - consider transformation suppression
 				// END KGU#388 2017-10-24
 				{
 					// START KGU#100/#KGU#141 2016-01-16: Enh. #84 + Bugfix #112 - array handling
@@ -515,7 +516,10 @@ public class OberonGenerator extends Generator {
 					int asgnPos = transline.indexOf(":=");
 					boolean isComplexInit = false;
 					// START KGU#100 2016-01-16: Enh. #84 - resolve array initialisation
-					if (asgnPos >= 0 && transline.contains("{") && transline.contains("}"))
+					// START KGU#504 2018-03-13: Bugfix #520, #521
+					//if (asgnPos >= 0 && transline.contains("{") && transline.contains("}"))
+					if (!this.suppressTransformation && asgnPos >= 0 && transline.contains("{") && transline.contains("}"))
+					// END KGU#504 2018-03-13
 					{
 						String varName = transline.substring(0, asgnPos).trim();
 						String expr = transline.substring(asgnPos+":=".length()).trim();
@@ -543,7 +547,7 @@ public class OberonGenerator extends Generator {
 						}
 						// END KGU#388 2017-10-24
 					}
-					// non-comlex constants will already have been defined
+					// non-complex constants will already have been defined
 					if (!isComplexInit && !isConstant)
 					{
 						// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
@@ -555,7 +559,28 @@ public class OberonGenerator extends Generator {
 						// START KGU 2017-01-31: return must be capitalized here
 						transline = transline.replaceFirst("^" + BString.breakup(CodeParser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
 						// END KGU 2017-01-31
-						addCode(transline, _indent, isDisabled);
+						// START KGU#261/KGU#504 2018-03-13: Enh. #259/#335, bugfix #521
+						//addCode(transline, _indent, isDisabled);
+						if (!this.suppressTransformation && transline.matches("^(var|dim) .*")) {
+							if (asgnPos > 0) {
+								// First remove the "var" or "dim" key word
+								String separator = transline.startsWith("var") ? ":" : " as ";
+								transline = transline.substring(4);
+								int posColon = transline.substring(0, asgnPos).indexOf(separator);
+								if (posColon > 0) {
+									transline = transline.substring(0, posColon) + transline.substring(asgnPos);
+								}
+							}
+							else {
+								// No initialization - so ignore it here
+								// (the declaration will appear in the var section)
+								transline = null;
+							}
+						}
+						if (transline != null) {
+							addCode(transline, _indent, isDisabled);
+						}
+						// END KGU#261/KGU#504 2018-03-13
 						// END KGU#277/KGU#284 2016-10-13
 					}
 					// END KGU#100 2016-01-16
@@ -1379,7 +1404,10 @@ public class OberonGenerator extends Generator {
 		}
 		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
 		// START KGU#375 2017-04-12: Enh. #388 now passed to generatePreamble
-		if (_varNames != null) {
+		// START KGU#504 2018-03-13: Bugfix #520, #521
+		//if (_varNames != null) {
+		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+		// END KGU#504 2018-03-13
 			generateConstDefs(_root, _indent, _complexConsts, introPlaced);
 		}
 		
@@ -1391,7 +1419,10 @@ public class OberonGenerator extends Generator {
 			}
 		}
 		// START KGU#388 2017-09-19: Enh. #423 record type definitions introduced
-		if (_varNames != null) {
+		// START KGU#504 2018-03-13: Bugfix #520, #521
+		//if (_varNames != null) {
+		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+		// END KGU#504 2018-03-13
 			introPlaced = generateTypeDefs(_root, _indent, introPlaced);
 		}
 		// END KGU#388 2017-09-19
@@ -1408,7 +1439,10 @@ public class OberonGenerator extends Generator {
 					this.insertPostponedInitialisations(incl, _indent + this.getIndent());
 				}
 			}
-			if (_varNames != null) {
+			// START KGU#504 2018-03-13: Bugfix #520, #521
+			//if (_varNames != null) {
+			if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+			// END KGU#504 2018-03-13
 				this.insertPostponedInitialisations(_root, _indent + this.getIndent());
 			}
 			// END KGU#375 2017-09-20
@@ -1421,7 +1455,10 @@ public class OberonGenerator extends Generator {
 				introPlaced = generateVarDecls(incl, _indent, incl.getVarNames(), _complexConsts, introPlaced);
 			}
 		}
-		if (_varNames != null) {
+		// START KGU#504 2018-03-13: Bugfix #520, #521
+		//if (_varNames != null) {
+		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
+		// END KGU#504 2018-03-13
 			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
 		}
 		// END KGU#375 2017-04-12

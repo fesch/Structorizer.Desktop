@@ -254,7 +254,6 @@ Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
 Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
-Menu.menuDiagramWheel.text=¿Usar rueda para reducir?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
 Menu.menuPreferences.mnemonic=p
@@ -290,6 +289,9 @@ Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
 Menu.menuPreferencesScalePreset.text=Escalar interfaz gráfica ...
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
+Menu.menuPreferencesWheel.text=Rueda
+Menu.menuPreferencesWheelCollapse.text=¿Usar rueda para reducir?
+Menu.menuPreferencesWheelZoom.text=¿Invertar zoom usando ctrl + rueda?
 
 Menu.menuPreferencesSave.text=Todas las preferencias ...
 Menu.menuPreferencesSaveAll.text=Guardar/Importar
@@ -379,6 +381,8 @@ Menu.lblCopyToClipBoard.text=Copiar en el portapapeles
 Menu.msgSelectParser.text=Tipo de código del fichero "%2" es ambiguo. Escoge el idioma para el importe de código, por favor:%1\nIngresa el número más apropiado, por favor.
 Menu.msgImportCancelled.text=Importe de código para fichero "%" cancelado.
 Menu.msgSubroutineName.text=Nombre del nuevo subprograma 
+Menu.msgIncludableName.text=Nombre de (nuevo) incluíble diagrama para caber tipos comunes
+Menu.msgMustBeIdentifier.text=¡El dado nombre no era aceptable como identificador!
 Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay @ks que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
 Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman desde %
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.

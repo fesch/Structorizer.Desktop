@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.09.30      Enh. #423: struct export fixed.
  *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
  *      Kay Gürtzig             2017.11.06      Issue #453: Modifications for string type and input and output instructions
+ *      Kay Gürtzig             2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
  *
  ******************************************************************************************************
  *
@@ -270,17 +271,14 @@ public class CGenerator extends Generator {
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-	/**
-	 * A pattern how to embed the variable (right-hand side of an input
-	 * instruction) into the target code
-	 * @param withPrompt - is a prompt string to be considered?
-	 * @return a regex replacement pattern, e.g.
-	 *         "$1 = (new Scanner(System.in)).nextLine();"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
 	 */
 	// START KGU#281 2016-10-15: Enh. #271
 	//protected String getInputReplacer() {
 	//	return "scanf(\"\", &$1)";
 	//}
+	@Override
 	protected String getInputReplacer(boolean withPrompt) {
 		if (withPrompt) {
 			return "printf($1); scanf(\"TODO: specify format\", &$2)";
@@ -289,18 +287,17 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#281 2016-10-15
 
-	/**
-	 * A pattern how to embed the expression (right-hand side of an output
-	 * instruction) into the target code
-	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getOutputReplacer()
 	 */
+	@Override
 	protected String getOutputReplacer() {
-		return "printf(\"TODO: specify format\", $1); printf(\"\\\\n\")";
+		return "printf(\"TODO: specify format\", $1); printf(\"\\n\")";
 	}
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
-	 * Method preprocesses an include file name for the #include
+	 * Method pre-processes an include file name for the #include
 	 * clause. This version surrounds a string not enclosed in angular
 	 * brackets by quotes.
 	 * @param _includeFileName a string from the user include configuration
@@ -744,7 +741,10 @@ public class CGenerator extends Generator {
 				// 4. Input / output
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(lines.get(i)) + ";");
-				String line = _inst.getText().get(i);
+				// START KGU#504 2018-03-13: Bugfix #520/#521
+				//String line = _inst.getText().get(i);
+				String line = lines.get(i);
+				// END KGU#504 2018-03-13
 				// START KGU#261/KGU#332 2017-01-26: Enh. #259/#335
 				//String codeLine = transform(line) + ";";
 				//addCode(codeLine, _indent, isDisabled);
@@ -1608,7 +1608,12 @@ public class CGenerator extends Generator {
 	{
 		insertComment("TODO: Check and accomplish variable declarations:", _indent);
         // START KGU#261/KGU#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
-		insertDefinitions(_root, _indent, varNames, false);
+		// START KGU#504 2018-03-13: Bugfix #520, #521: only insert declarations if conversion is allowed
+		//insertDefinitions(_root, _indent, varNames, false);
+		if (!this.suppressTransformation) {
+			insertDefinitions(_root, _indent, varNames, false);
+		}
+		// END KGU#504 2018-03-13
 		// END KGU#261/KGU#332 2017-01-26
 		// START KGU#332 2017-01-30: Decomposed to ease sub-classing
 		generateIOComment(_root, _indent);
@@ -1677,7 +1682,7 @@ public class CGenerator extends Generator {
 	 * @param _root - the owning diagram
 	 * @param _name - the identifier of the variable or constant
 	 * @param _indent - the current indentation (as String)
-	 * @param _fullDecl - whether the declaration is to be forced in ful, format
+	 * @param _fullDecl - whether the declaration is to be forced in full format
 	 */
 	protected void insertDeclaration(Root _root, String _name, String _indent, boolean _fullDecl)
 	{
@@ -1766,7 +1771,10 @@ public class CGenerator extends Generator {
 				insertComment(decl + ";", _indent);
 			}
 			else {
-				code.add(_indent + decl + ";");
+				// START KGU#501 2018-02-22: Bugfix #517 In Java, C++, or C# we may need modifiers here
+				//code.add(_indent + decl + ";");
+				code.add(_indent + this.getModifiers(_root, _name) + decl + ";");
+				// END KGU#501 2018-02-22
 			}
 		}
 		// Add a comment if there is no type info or internal declaration is not allowed
@@ -1780,6 +1788,21 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#375 2017-04-12
 	
+	// START KGU#501 2018-02-22: Bugfix #517
+	/**
+	 * Returns modifiers to be placed in front of the declaration OF {@code _name} for the
+	 * diagram {@code _root}.<br/>
+	 * Method is intended to be overridden by sub-classes. If the result is non-empty then
+	 * it ought to be padded at the end.
+	 * @param _root - the originating {@link Root} of the entity {@code _name}
+	 * @param _name - the identifier  
+	 * @return a sequence of appropriate modifiers like "private static " or an empty string
+	 */
+	protected String getModifiers(Root _root, String _name) {
+		return "";
+	}
+	// END KGU#501 2018-02-22
+
 	// START KGU#388 2017-09-26: Enh. #423
 	/**
 	 * Generates code that decomposes a record initializer into separate component assignments

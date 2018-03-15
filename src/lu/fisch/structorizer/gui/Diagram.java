@@ -146,6 +146,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
  *      Kay Gürtzig     2018.02.09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
  *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
+ *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
+ *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
+ *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes 
  *
  ******************************************************************************************************
  *
@@ -438,13 +441,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
-		// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
-		//this.addMouseWheelListener(this);
-		if (Element.E_WHEELCOLLAPSE)
-		{
-			this.addMouseWheelListener(this);
-		}
-		// END KGU#123 2016-01-04
 
 		new FileDrop( this, new FileDrop.Listener()
 			{
@@ -3133,7 +3129,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			// END KGU#365 2017-04-14
-			String subroutineName = JOptionPane.showInputDialog(Menu.msgSubroutineName.getText() + ": ");
+			String hint = Menu.msgMustBeIdentifier.getText();
+			String prompt = Menu.msgSubroutineName.getText() + ": ";
+			String subroutineName = null;
+			do {
+				subroutineName = JOptionPane.showInputDialog(prompt);
+				prompt = hint + "\n" + Menu.msgSubroutineName.getText() + ": ";
+			} while (subroutineName != null && !Function.testIdentifier(subroutineName, null));
 			if (subroutineName != null) {
 				try {
 					addUndoNSD();
@@ -3141,13 +3143,72 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					return;
 				}
 				selected.setSelected(false);
+				// START KGU#506 2018-03-14: issue #522 - we need to check for record types
+				HashMap<String, TypeMapEntry> parentTypes = root.getTypeInfo();
+				// END KGU#506 2018-03-14
 				// FIXME May we involve the user in argument and result value identification?
 				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
 				if (sub != null) {
 					// adopt presentation properties from root
 					sub.hightlightVars = root.hightlightVars;
 					sub.isBoxed = root.isBoxed;
-					sub.getVarNames();	// just to prepare proper drawing.
+					// START KGU#506 2018-03-14: issue #522 - we need to check for record types
+					//sub.getVarNames();	// just to prepare proper drawing.
+					StringList subVars = sub.getVarNames();
+					HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
+					for (int i = 0; i < subVars.count(); i++) {
+						String varName = subVars.get(i);
+						TypeMapEntry varType = parentTypes.get(varName);
+						if (varType != null && varType.isRecord()) {
+							Element defining = varType.getDeclaringElement();
+							if (defining != null) {
+								Root typeSource = Element.getRoot(defining); 
+								if (typeSource == root) {
+									sharedTypesMap.putIfAbsent(varType.typeName, defining);
+								}
+								else if (typeSource != null) {
+									sub.addToIncludeList(typeSource);
+								}
+							}
+						}
+					}
+					if (!sharedTypesMap.isEmpty()) {
+						// FIXME: We might also offer a combo box containing the already included diagrams of root
+						prompt = Menu.msgIncludableName.getText() + ": ";
+						String includableName = null;
+						do {
+							includableName = JOptionPane.showInputDialog(prompt);
+							prompt = hint + "\n" + Menu.msgIncludableName.getText() + ": ";
+						} while (includableName == null || !Function.testIdentifier(includableName, null));
+						Root incl = null;
+						if (Arranger.hasInstance()) {
+							Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName);
+							if (!includes.isEmpty()) {
+								incl = includes.firstElement();
+								incl.addUndo();
+							}
+						}
+						boolean isNewIncl = incl == null;
+						if (isNewIncl) {
+							incl = new Root();
+							incl.setText(includableName);
+							incl.setInclude();
+							// adopt presentation properties from root
+							incl.hightlightVars = root.hightlightVars;
+							incl.isBoxed = root.isBoxed;
+						}
+						for (Element source: sharedTypesMap.values()) {
+							((Subqueue)source.parent).removeElement(source);
+							incl.children.addElement(source);
+						}
+						incl.setChanged();
+						if (isNewIncl) {
+							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());;
+						}
+						root.addToIncludeList(includableName);
+						sub.addToIncludeList(includableName);
+					}
+					// END KGU#506 2018-03-14
 					sub.setChanged();
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
@@ -6274,7 +6335,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void fontDownNSD()
 	{
-		if(Element.getFont().getSize()-2>=4)
+		if (Element.getFont().getSize()-2 >= 4)
 		{
 			// change font size
 			Element.setFont(new Font(Element.getFont().getFamily(),Font.PLAIN,Element.getFont().getSize()-2));
@@ -6473,29 +6534,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#123 2016-01-04: Enh. #87
 	public void toggleWheelMode()
 	{
-		setWheelCollapses(!Element.E_WHEELCOLLAPSE);
+		Element.E_WHEELCOLLAPSE = !Element.E_WHEELCOLLAPSE;
 	}
 	
+	@Deprecated
 	public void setWheelCollapses(boolean _collapse)
 	{
 		Element.E_WHEELCOLLAPSE = _collapse;
-		if (_collapse)
-		{
-			this.addMouseWheelListener(this);
-		}
-		else
-		{
-			this.removeMouseWheelListener(this);
-		}
+		// START KGU#503 2018-03-13: Enh. #519 - To add the mouse wheel listener is to be left to scrollarea
+		//if (_collapse)
+		//{
+		//	this.addMouseWheelListener(this);
+		//}
+		//else
+		//{
+		//	this.removeMouseWheelListener(this);
+		//}
+		// END KGU#503 2018-03-13
 		this.NSDControl.doButtons();
 	}
 	
+	@Deprecated
 	public boolean getWheelCollapses()
 	{
 		return Element.E_WHEELCOLLAPSE;
 	}
 	// END KGU#123 2016-01-04
 	
+	// START KGU#503 2018-03-14: Enh. #519
+	public void toggleCtrlWheelMode()
+	{
+		Element.E_WHEEL_REVERSE_ZOOM = !Element.E_WHEEL_REVERSE_ZOOM;
+	}
+		// END KGU#503 2018-03-14
+
 	// START KGU#170 2016-04-01: Enh. #144: Maintain a preferred export generator
 	public String getPreferredGeneratorName()
 	{
@@ -6832,11 +6904,37 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     @Override
     public void mouseWheelMoved(MouseWheelEvent e)
     {
-    	// NOTE: This method will only be triggered if mode Element.E_WHEELCOLLAPSE is enabled.
 		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
-    	//System.out.println("MouseWheelEvent: " + e.getModifiersEx() + " Rotation = " + e.getWheelRotation() + " Type = " + 
-    	//		((e.getScrollType() == e.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
-        if (selected != null)
+    	//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
+    	//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
+    	// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
+        //if (selected != null)
+    	if ((e.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+    		// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
+        	int rotation = e.getWheelRotation();
+        	int fontSize = Element.getFont().getSize();
+        	if (Element.E_WHEEL_REVERSE_ZOOM) {
+        		rotation *= -1;
+        	}
+        	if (rotation >= 1 && fontSize-1 >= 4)
+    		{
+    			// reduce font size
+    			Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize-1));
+    			root.resetDrawingInfoDown();
+    			redraw();
+    			e.consume();
+    		}
+        	else if (rotation <= -1)
+        	{
+        		// enlarge font size
+        		Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize+1));
+    			root.resetDrawingInfoDown();
+    			redraw();
+    			e.consume();
+        	}
+    	}
+    	else if (Element.E_WHEELCOLLAPSE && selected != null)
+        // END KGU#503 2018-03-13
         {
         	// START KGU#123 2016-01-04: Bugfix #65 - heavy differences between Windows and Linux here:
         	// In Windows, the rotation result may be arbitrarily large whereas the scrollAmount is usually 1.
@@ -6858,7 +6956,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             	selected.setCollapsed(false);
             }
             // END KGU#123 2016-01-04
-            
+            // START KGU#503 2018-03-13: Enh. #519 - may not work (depends on the order of listeners)
+            e.consume();
+            // END KGU#503 2018-03-13
             redraw();
         }
         // FIXME KGU 2016-01-0: Issue #65
@@ -7220,12 +7320,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			//{
     			//	y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
     			//}
-    			else if (selected instanceof IFork)
+        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			//else if (selected instanceof IFork)
+    			else if (selected instanceof IFork && !selected.isCollapsed(false))
+    			// END KGU#498 2018-02-18
     			{
     				y = selRect.top + ((IFork)selected).getHeadRect().bottom + 2;
     			}
     			// END KGU#346 2017-02-08
-    			else if (selected instanceof Parallel)
+        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			//else if (selected instanceof Parallel)
+    			else if (selected instanceof Parallel && !selected.isCollapsed(false))
+    			// END KGU#498 2018-02-18
     			{
     				y = ((Parallel)selected).qs.get(0).getRectOffDrawPoint().top + 2;
     			}

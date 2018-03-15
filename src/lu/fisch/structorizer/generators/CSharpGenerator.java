@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
  *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
  *      Kay Gürtzig             2017.12.22      Issue #496: Autodoc comment style changed from /**... to ///...
+ *      Kay Gürtzig             2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
  *
  ******************************************************************************************************
  *
@@ -189,12 +190,10 @@ public class CSharpGenerator extends CGenerator
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-	/**
-	 * A pattern how to embed the variable (right-hand side of an input instruction)
-	 * into the target code
-	 * @param withPrompt - is a prompt string to be considered?
-	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#getInputReplacer(boolean)
 	 */
+	@Override
 	// START KGU#281 2016-10-15: Enh. #271 (support for input with prompt)
 	//protected String getInputReplacer()
 	//{
@@ -215,11 +214,10 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#281 2016-10-15
 
-	/**
-	 * A pattern how to embed the expression (right-hand side of an output instruction)
-	 * into the target code
-	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#getOutputReplacer()
 	 */
+	@Override
 	protected String getOutputReplacer()
 	{
 		return "Console.WriteLine($1)";
@@ -337,7 +335,10 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected boolean isInternalDeclarationAllowed()
 	{
-		return true;
+		// START KGU#501 2018-02-22: Bugfix #517
+		//return true;
+		return !isInitializingIncludes();
+		// END KGU#501 2018-02-22
 	}
 	// END KGU#332 2017-04-14
 
@@ -890,6 +891,19 @@ public class CSharpGenerator extends CGenerator
 //		return _indent;
 //	}
 	
+	// START KGU#501 2018-02-22: Bugfix #517
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#getModifiers(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected String getModifiers(Root _root, String _name) {
+		if (_root.isInclude()) {
+			return "private static ";
+		}
+		return "";
+	}
+	// END KGU#501 2018-02-22
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
 	 */

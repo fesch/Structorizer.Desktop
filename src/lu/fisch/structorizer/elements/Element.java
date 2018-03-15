@@ -199,7 +199,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.28";
+	public static String E_VERSION = "3.28-01";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -345,6 +345,10 @@ public abstract class Element {
 	/** Is collapsing by mouse wheel rotation enabled? */
 	public static boolean E_WHEELCOLLAPSE = false;
 	// END KGU#123 2016-01-04
+	// START KGU#503 2018-03-14: Enh. #519 Configuration of the mouse wheel zoom direction
+	/** Whether ctrl + wheel up is to zoom in (otherwise zoom out) */
+	public static boolean E_WHEEL_REVERSE_ZOOM = false;
+	// END KGU#503 2018-03-14
     // START KGU#309 2016-12-15: Enh. #310 new saving options
     public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
     public static boolean E_AUTO_SAVE_ON_CLOSE = false;
@@ -1789,10 +1793,13 @@ public abstract class Element {
 
 	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
 	/**
-	 * Retrieves the smallest (deepest) Element containing coordinate (_x, _y) and flags it as selected
+	 * Retrieves the the most specific (i.e. smallest or deepest nested) Element
+	 * containing coordinate (_x, _y) and flags it as {@link #selected}.
 	 * @param _x
 	 * @param _y
 	 * @return the selected Element (if any)
+	 * @see #getElementByCoord(int, int)
+	 * @see #findSelected()
 	 */
 	public Element selectElementByCoord(int _x, int _y)
 	{
@@ -1813,10 +1820,13 @@ public abstract class Element {
 
 	// 
 	/**
-	 * Retrieves the smallest (deepest) Element containing coordinate (_x, _y)
+	 * Retrieves the most specific (i.e. smallest or deepest nested) Element
+	 * containing coordinate {@code (_x, _y)}. Does not touch the {@link #selected}
+	 * state of any of the elements along the path.
 	 * @param _x
 	 * @param _y
-	 * @return the (sub-)Element at the given coordinate (if there is none, returns null)
+	 * @return the (sub-)Element at the given coordinate (null if there is none such)
+	 * @see #getElementByCoord(int, int, boolean)
 	 */
 	public Element getElementByCoord(int _x, int _y)
 	{
@@ -1834,6 +1844,17 @@ public abstract class Element {
 		return this.getElementByCoord(_x, _y, false);
 	}
 
+	/**
+	 * Retrieves the most specific (i.e. smallest or deepest nested) Element
+	 * containing coordinate {@code (_x, _y)} and marks it as selected (if
+	 * {@code _forSelection} is true). Other elements along the search path
+	 * are marked as unselected (i.e. their {@link #selected} attribute is
+	 * reset).
+	 * @param _x
+	 * @param _y
+	 * @param _forSelection - whether the identified element is to be selected
+	 * @return the (sub-)Element at the given coordinate (null, if there is none such)
+	 */
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 - we will now have origin-bound rects and coords
@@ -1980,6 +2001,13 @@ public abstract class Element {
 	 * static things
 	 ************************/
 
+	/**
+	 * Reloads the ini file (???) and adopts SOME of the configurable properties
+	 * held on class Element. These are:<br/>
+	 * - structure preferences<br/>
+	 * - font</br>
+	 * - colours
+	 */
 	public static void loadFromINI()
 	{
 		try
@@ -2093,6 +2121,9 @@ public abstract class Element {
 	 */
 	public static Root getRoot(Element _element)
 	{
+		if (_element == null) {
+			return null;
+		}
 		while (_element.parent != null)
 		{
 			_element = _element.parent;

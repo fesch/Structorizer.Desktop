@@ -196,7 +196,6 @@ Menu.menuDiagramSwitchTCTooltip.text=
 Menu.menuDiagramMarker.text=Evidenzia variabili?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analizza struttogramma?
-Menu.menuDiagramWheel.text=Usa la rotella del mouse per collassare
 // Menu "Preferences"
 Menu.menuPreferences.text=Opzioni
 Menu.menuPreferences.mnemonic=o
@@ -225,6 +224,10 @@ Menu.menuPreferencesLanguageFromFile.text=Carica da file ...
 Menu.menuPreferencesLanguageFromFile.tooltip=
 
 Menu.menuPreferencesLookAndFeel.text=Aspetto
+
+Menu.menuPreferencesWheel.text=Rotella del mouse
+Menu.menuPreferencesWheelCollapse.text=Usa la rotella del mouse per collassare
+Menu.menuPreferencesWheelZoom.text=Invertire lo zoom a utilizzare ctrl + rotella
 
 Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora
 Menu.menuPreferencesSaveAll.text=Salva

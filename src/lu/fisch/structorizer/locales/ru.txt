@@ -205,7 +205,6 @@ Menu.menuDiagramMarker.text=Подсвечивать переменные
 Menu.menuDiagramDIN.text=DIN
 Menu.menuDiagramAnalyser.text=Анализировать схему
 Menu.menuDiagramIndex.text=
-Menu.menuDiagramWheel.text=Сжать с колесой?
 // Menu "Preferences"
 Menu.menuPreferences.text=Настройки
 Menu.menuPreferences.mnemonic=н
@@ -240,6 +239,9 @@ Menu.menuPreferencesLanguageFromFile.text=Из файла ...
 Menu.menuPreferencesLanguageFromFile.tooltip=
 Menu.menuPreferencesScalePreset.text=
 Menu.menuPreferencesLookAndFeel.text=Внешний вид
+Menu.menuPreferencesWheel.text=Kолеса
+Menu.menuPreferencesWheelCollapse.text=Сжать с колесой?
+Menu.menuPreferencesWheelZoom.text=
 
 Menu.menuPreferencesSave.text=Bсе настройки ...
 Menu.menuPreferencesSaveAll.text=Сохранить
