@@ -149,7 +149,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
  *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
  *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
- *      Kay Gürtzig     2018-02-11      Bugfix #509: Built-in function copyArray had a defective definition
+ *      Kay Gürtzig     2018.02.11      Bugfix #509: Built-in function copyArray had a defective definition
+ *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished 
  *
  ******************************************************************************************************
  *
@@ -2076,6 +2077,9 @@ public class Executor implements Runnable
 //				this.importList
 //				// END KGU#375, KGU#376 2017-04-21
 //				);
+		// START KGU#508 2018-03-19: Bugfix #525 - This had been forgotten on replacing the ExecutionStackEntry (#389)
+		this.context.root.isCalling = true;
+		// END KGU#508 2018-03-19
 		this.callers.push(this.context);
 		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		// END KGU#384 2017-04-22
@@ -4032,6 +4036,9 @@ public class Executor implements Runnable
 			// END KGU#388 2017-09-13
 			try
 			{
+				// START KGU#508 2018-03-19: Bugfix #525 operation count for all non-typedefs
+				boolean isTypeDef = false;
+				// END KGU#508 2018-03-19
 				// START KGU#271: 2016-10-06: Bugfix #269 - this was mis-placed here and had to go to the loop body end 
 //				if (i > 0)
 //				{
@@ -4140,17 +4147,27 @@ public class Executor implements Runnable
 						// END KGU#490 2018-02-08
 						trouble = trySubroutine(cmd, element);
 					}
-					// START KGU#156 2016-03-11: Enh. #124
-					element.addToExecTotalCount(1, true);	// For the instruction line
-					//END KGU#156 2016-03-11
+					// START KGU#508 2018-03-19: Bugfix #525 - this has to be done for all non-typedefs
+					//// START KGU#156 2016-03-11: Enh. #124
+					//element.addToExecTotalCount(1, true);	// For the instruction line
+					////END KGU#156 2016-03-11
+					// END KGU#508 2018-03-19
 					
 				// START KGU#388 2017-09-13: Enh. #423
 				}
 				else {
+					// START KGU#508 2018-03-19: Bugfix #525 operation count for non-typedefs
+					isTypeDef = true;
+					// END KGU#508 2018-03-19
 					element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
 					// We don't increment the total execution count here - this is regarded as a non-operation
 				}
 				// END KGU#388 2017-09-13
+				// START KGU#156/KGU#508 2018-03-19: Enh. #124, bugfix #525 - this has to be done for all non-typedefs
+				if (!isTypeDef) {
+					element.addToExecTotalCount(1, true);	// For the instruction line
+				}
+				// END KGU#156/KGU#508 2018-03-19
 				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
 				if ((i+1 < sl.count()) && trouble.equals("") && (stop == false)
 						&& !context.returned && leave == 0)

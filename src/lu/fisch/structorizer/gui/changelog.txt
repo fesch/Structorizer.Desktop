@@ -11,16 +11,18 @@ Known issues:
 - C import fails if the code contains function pointer declarations.
 - Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version: 3.28-01 (2018-03-15)
+Current development version: 3.28-02 (2018-03-19)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
-- 01: Bugfix #517: Correct export of includable declarations to J, C++, C# <2>
+- 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
 - 01: Bugfix #518: Very slow scrolling of diagrams lacking type info [TiNNiT]2
 - 01: Bugfix #520: "no conversion" export mode had to be enforced (Pascal, C) <2>
 - 01: Bugfix #521: Variable declaration export had been inconsistent for Oberon <2>
 - 01: Enh. #519: Zooming / font size control via ctrl + mouse wheel [B. Neuberg]2
 - 01: Bugfix #522: Outsourcing now copes better with record types and includes <2>
 - 01: Bugfix #523: Undoing and redoing of include list changes mended <2>
+- 02: Bugfix #525: Defective test coverage detection for recursive routines,
+      lacking operation counts on input, output, and jump instructions <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.executor;
 
-import java.util.HashMap;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -49,6 +47,8 @@ import java.util.HashMap;
  *        subroutine or import calls. Hence it will be renamed in ExecutionContext
  *
  ******************************************************************************************************///
+
+import java.util.HashMap;
 
 import bsh.Interpreter;
 import lu.fisch.structorizer.elements.Root;
