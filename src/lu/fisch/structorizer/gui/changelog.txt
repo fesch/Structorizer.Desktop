@@ -22,7 +22,8 @@ Current development version: 3.28-02 (2018-03-19)
 - 01: Bugfix #522: Outsourcing now copes better with record types and includes <2>
 - 01: Bugfix #523: Undoing and redoing of include list changes mended <2>
 - 02: Bugfix #525: Defective test coverage detection for recursive routines,
-      lacking operation counts on input, output, and jump instructions <2>
+      lacking operation counts on input, output, and jump instructions fixed <2>
+- 02: Issue #512: Arranger zoom compensation for PNG export was flawed <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

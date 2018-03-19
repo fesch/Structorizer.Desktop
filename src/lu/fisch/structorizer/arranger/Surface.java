@@ -77,6 +77,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.02.20      Magic numbers replaced, Enh. #515 first steps toward a silhouette allocation
  *      Kay Gürtzig     2018.02.21      Enh. #515: Working first prototype for space-saving area management
  *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
+ *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
  *
  ******************************************************************************************************
  *
@@ -123,6 +124,7 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -270,6 +272,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
     @Override
     public void paint(Graphics g)
+    // START KGU#497 2018-03-19: Enh. #512 - The PNG export must compensate the zoom factor
+    {
+    	this.paint(g, false);
+    }
+    /**
+     * Specific variant of {@link #paint(Graphics)} with the opportunity to compensate
+     * the imposed {@link #zoomFactor} by filling the enlarged canvas with white colour
+     * and drawing the diagrams in original size.
+     * @param g - a {@link Graphics2D} object as transformable drawing canvas
+     * @param compensateZoom - whether the imposed {@link #zoomFactor} is to be compensated
+     */
+    public void paint(Graphics g, boolean compensateZoom)
+    // END KGU#497 2018-03-19
     {
         //System.out.println("Surface: " + System.currentTimeMillis());
     	// Region occupied by diagrams
@@ -277,10 +292,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         super.paint(g);
         if (diagrams != null)
         {
-            // START KGU#497 2018-02-17: Enh. 
+            // START KGU#497 2018-02-17: Enh. #512
         	Graphics2D g2d = (Graphics2D) g;
-        	g2d.scale(1/zoomFactor, 1/zoomFactor);
+        	// START KGU#497 2018-03-19: Enh. #512
+    		//g2d.scale(1/zoomFactor, 1/zoomFactor);
             // END KGU#497 2018-02-17
+        	if (compensateZoom) {
+        		// In zoom-compensated drawing the background filled by super.paint(g)
+        		// is too small (virtually scaled don), therefore we must draw a
+        		// white rectangle covering the enlarged image area
+        		g2d.setColor(Color.WHITE);
+        		g2d.fillRect(0, 0, 
+        				Math.round(this.getWidth() * zoomFactor),
+        				Math.round(this.getHeight() * zoomFactor));
+        	}
+        	else {
+        		g2d.scale(1/zoomFactor, 1/zoomFactor);
+        	}
+        	// END KGU#497 2018-03-19
             for(int d=0; d<diagrams.size(); d++)
             {
                 Diagram diagram = diagrams.get(d);
@@ -314,9 +343,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                 if (rect.bottom > area.height) area.height = rect.bottom;
                 // END KGU#85 2017-10-23
             }
-            // START KGU#497 2018-02-17: Enh. 
-            g2d.scale(zoomFactor, zoomFactor);
-            // END KGU#497 2018-02-17
+            // START KGU#497 2018-03-19: Enh. #512
+            if (!compensateZoom) {
+            	g2d.scale(zoomFactor, zoomFactor);
+            }
+            // END KGU#497 2018-03-19
         }
         // START KGU#85 2017-10-23: Enh. #35 - now make sure the scrolling area is up to date
         area.width = Math.round(Math.min(area.width, Short.MAX_VALUE) / this.zoomFactor);
@@ -1090,22 +1121,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             // set up the file
             File file = new File(filename);
             // create the image
-            // START KGU#497 2018-02-17: Enh. #512 - consider the (new) zoom factor
+            // START KGU#497 2018-03-19: Enh. #512 - consider the (new) zoom factor
             //BufferedImage bi = new BufferedImage(this.getWidth(), this.getHeight(),BufferedImage.TYPE_4BYTE_ABGR);
             //paint(bi.getGraphics());
-            float oldZoom = this.zoomFactor;
-//            System.out.println(this.getWidth() + " x " + this.getHeight());
-//            Rect rect = this.getDrawingRect(null);
-//            System.out.println(rect);
-//            System.out.println(this.getWidth()*oldZoom + " x " + this.getHeight()*oldZoom);
+            System.out.println(this.getWidth() + " x " + this.getHeight());
+            Rect rect = this.getDrawingRect(null);
+            System.out.println(rect);
+            System.out.println(this.getWidth()*this.zoomFactor + " x " + this.getHeight()*this.zoomFactor);
             BufferedImage bi = new BufferedImage(
-                    Math.round(this.getWidth() * oldZoom),
-                    Math.round(this.getHeight() * oldZoom),
+                    Math.round(this.getWidth() * this.zoomFactor),
+                    Math.round(this.getHeight() * this.zoomFactor),
                     BufferedImage.TYPE_4BYTE_ABGR);
-            this.zoomFactor = 1;
-            paint(bi.getGraphics());
-            this.zoomFactor = oldZoom;
-            // END KGU#497 2018-02-17
+            paint(bi.getGraphics(), true);
+            // END KGU#497 2018-03-19
             // save the file
             try
             {

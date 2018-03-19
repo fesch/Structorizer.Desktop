@@ -150,14 +150,16 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
  *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
  *      Kay Gürtzig     2018.02.11      Bugfix #509: Built-in function copyArray had a defective definition
- *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished 
+ *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
+ *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext 
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *
  *      2017-10-28 Issue #443
  *      - Executor might potentially have to work with several DiagramControllers. So it is important
- *        efficiently to findo out, what diagram controller routines are available and whether there are
+ *        efficiently to find out, what diagram controller routines are available and whether there are
  *        potential signature conflicts.
  *      - Therefore the field diagramController was replaced by a list diagramContrllers and several
  *        retrieval mechanism had to be revised.
@@ -838,7 +840,7 @@ public class Executor implements Runnable
 	 * execution results, represented by an ImportInfo object, such that whenever
 	 * the same Root will be requested for import again, we may just retrieve its
 	 * results here.
-	 * @see ExecutionStackEntry#importList 
+	 * @see ExecutionContext#importList 
 	 */
 	private final HashMap<Root, ImportInfo> importMap = new HashMap<Root, ImportInfo>();
 	//private StringList importList = new StringList();	// KGU#384 2017-04-22: -> context
@@ -847,10 +849,10 @@ public class Executor implements Runnable
 	/**
 	 * Execution context cartridge containing all context to be pushed to callers stack on calls
 	 */
-	private ExecutionStackEntry context;
+	private ExecutionContext context;
 	// END KGU#376 2017-04-20
 	// START KGU#2 (#9) 2015-11-13: We need a stack of calling parents
-	private Stack<ExecutionStackEntry> callers = new Stack<ExecutionStackEntry>();
+	private Stack<ExecutionContext> callers = new Stack<ExecutionContext>();
 	//private Object returnedValue = null;	// KGU#384 2017-04-22 -> context
 	private Vector<IRoutinePool> routinePools = new Vector<IRoutinePool>();
 	// END KGU#2 (#9) 2015-11-13
@@ -1419,7 +1421,7 @@ public class Executor implements Runnable
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
 		// START KGU#384 2017-04-22
-		this.context = new ExecutionStackEntry(root);
+		this.context = new ExecutionContext(root);
 		initInterpreter();
 		// END KGU#384 2017-04-22
 		/////////////////////////////////////////////////////////
@@ -2124,11 +2126,11 @@ public class Executor implements Runnable
 		// START KGU#384 2017-04-22: Execution context redesign
 		if (root.isInclude()) {
 			// For an import Call continue the importList recursively
-			this.context = new ExecutionStackEntry(root, this.context.importList);
+			this.context = new ExecutionContext(root, this.context.importList);
 		}
 		else {
 			// For a subroutine call, start with a new import list
-			this.context = new ExecutionStackEntry(root);
+			this.context = new ExecutionContext(root);
 		}
 		initInterpreter();
 		// END KGU#384 2017-04-22
@@ -2171,7 +2173,7 @@ public class Executor implements Runnable
 		}
 		// END KG#117 2016-03-07
 		
-		ExecutionStackEntry entry = this.callers.pop();	// former context
+		ExecutionContext entry = this.callers.pop();	// former context
 		
 //		// START KGU#376 2017-04-21: Enh. #389 don't restore after an import call
 		// FIXME: Restore but cache the Interpreter with all variables and copy contents before
