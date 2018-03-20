@@ -325,6 +325,7 @@ Menu.msgOverwriteFiles.text=Existing file(s) detected. Overwrite?
 Menu.btnConfirmOverwrite.text=Confirm Overwrite
 Menu.msgRepeatSaveAttempt.text=Your file has not been saved. Please repeat the save operation!
 Menu.msgErrorFileSave.text=Error on saving the file: %!
+Menu.msgErrorFileRename.text=Error(s) on renaming the saved file:\n%1Look for file "%2" and move/rename it yourself.
 Menu.msgBreakTriggerPrompt.text=Specify an execution count triggering a break (0 = always).
 Menu.msgBreakTriggerIgnored.text=Input ignored - must be a cardinal number.
 Menu.msgOpenLangFile.text=Open language file

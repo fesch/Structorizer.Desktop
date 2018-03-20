@@ -24,6 +24,7 @@ Current development version: 3.28-02 (2018-03-20)
 - 02: Bugfix #525: Defective test coverage detection for recursive routines,
       lacking operation counts on input, output, and jump instructions fixed <2>
 - 02: Issue #512: Arranger zoom compensation for PNG export was flawed <2>
+- 02: Bugfix #526: On re-saving the renaming of the temp. file may fail (Linux) <2> 
 - 02: Issue #527: More helpful Executor messages on index range violations <2>
 
 Version 3.28 (2018-02-18)

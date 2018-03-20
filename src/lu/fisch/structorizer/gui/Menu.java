@@ -527,6 +527,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgBreakTriggerIgnored = new LangTextHolder("Input ignored - must be a cardinal number.");
 	public static final LangTextHolder msgErrorFileSave = new LangTextHolder("Error on saving the file: %!");
 	// END KGU#213 2016-08-02
+	// START KGU#509 2018-03-20: Bugfix #526
+	public static final LangTextHolder msgErrorFileRename = new LangTextHolder("Error(s) on renaming the saved file:\n%1Look for file \"%2\" and move/rename it yourself."); 
+	// END KGU#509 2018-03-20
 	// START KGU#232 2016-08-02: Enh. #222
 	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
 	public static final LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");

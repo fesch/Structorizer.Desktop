@@ -148,7 +148,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
  *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
  *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
- *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes 
+ *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes
+ *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file  
  *
  ******************************************************************************************************
  *
@@ -2092,6 +2093,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				f = new File(root.filename);
 				File tmpFile = new File(filename);
 				tmpFile.renameTo(f);
+				// START KGU#509 2018-03-20: Bugfix #526 renameTo may have failed, so better check
+				if (!f.exists() && tmpFile.canRead()) {
+					System.err.println("Failed to rename " + filename + " to " + f.getAbsolutePath() + "; trying a workaround...");
+					String errors = renameFile(tmpFile, f, true);
+					if (!errors.isEmpty()) {
+						JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+								Menu.msgErrorFileRename.getText().replace("%1", errors).replace("%2", tmpFile.getAbsolutePath()),
+								Menu.msgTitleError.getText(),
+								JOptionPane.ERROR_MESSAGE, null);						
+					}
+				}
+				// END KGU#509 2018-03-20
 				// START KGU#309 2016-12-15: Issue #310 backup may be opted out
 				if (!Element.E_MAKE_BACKUPS && backUp.exists()) {
 					backUp.delete();
@@ -2121,6 +2134,58 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		return done;
 	}
+	
+	// START KGU#509 2018-03-20: Bugfix #526 workaround for a failing renameTo() operation
+	/**
+	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
+	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
+	 * target file exists after the copy the source file will be removed
+	 * @param sourceFile
+	 * @param targetFile
+	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
+	 * copy
+	 * @return in case of errors, a string describing them.
+	 */
+	private String renameFile(File sourceFile, File targetFile, boolean removeSource) {
+		String problems = "";
+		final int BLOCKSIZE = 512;
+		byte[] buffer = new byte[BLOCKSIZE];
+		FileOutputStream fos = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(sourceFile.getAbsolutePath());
+			fos = new FileOutputStream(targetFile.getAbsolutePath());
+			int readBytes = 0;
+			do {
+				readBytes = fis.read(buffer);
+				if (readBytes > 0) {
+					fos.write(buffer, 0, readBytes);
+				}
+			} while (readBytes > 0);
+		} catch (FileNotFoundException e) {
+			problems += e + "\n";
+		} catch (IOException e) {
+			problems += e + "\n";
+		}
+		finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {}
+			}
+			if (fis != null) {
+				try {
+					fis.close();
+					if (removeSource && targetFile.exists()) {
+						sourceFile.delete();
+					}
+				} catch (IOException e) {}
+			}
+		}
+		return problems;
+	}
+	// END KGU#509 2018-03-20
+
 	// END KGU#94 2015-12-04
 	
 	// START KGU#316 2016-12-28: Enh. #318

@@ -329,6 +329,7 @@ Menu.msgOverwriteFiles.text=Archivo(s) existe(n). ¿Gravar encima?
 Menu.btnConfirmOverwrite.text=Confirma gravar
 Menu.msgRepeatSaveAttempt.text=No fue posible grabar el archivo de Vd. Trátalo de nuevo, por favor.
 Menu.msgErrorFileSave.text=Error guardando el archivo: %!
+Menu.msgErrorFileRename.text=Error renombrando el archivo temporario:\n%1Busca el fichero "%2" y renombralo.
 Menu.msgBreakTriggerPrompt.text=Fija el número de ejecuciónes antes de parar (0 = siempre)
 Menu.msgBreakTriggerIgnored.text=Valor no usable. Tiene que ser un número natural.
 Menu.msgOpenLangFile.text=Abrir archivo de traducciones
