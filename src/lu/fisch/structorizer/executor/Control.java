@@ -1018,6 +1018,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgBadValueListDetails =
     		new LangTextHolder("Details: %");
     // END KGU 2017-10-08
+    // START KGU#510 2018-03-20: Issue #527
+    public final LangTextHolder msgIndexOutOfBounds =
+    		new LangTextHolder("Index «%1» (%2) is out of bounds for array «%3»!");
+    // END KGU#510 2018-03-10
     // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =
     		new LangTextHolder("Invalid file number or file not open for reading.");

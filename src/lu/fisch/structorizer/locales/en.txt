@@ -1183,6 +1183,7 @@ Control.msgConstantRecordComponent.text=A record component «%» may not be made
 Control.msgTypeMismatch.text=Value type «%1» is incompatible with type «%2» of variable/component «%3»!
 Control.msgBadValueList.text=<%> cannot be interpreted as value list.
 Control.msgBadValueListDetails.text=Details: %
+Control.msgIndexOutOfBounds.text=Index «%1» (%2) is out of bounds for array «%3»!
 Control.msgVarUpdateErrors.text=Trouble updating variables
 Control.msgVarUpdatesFailed.text=These variable modifications failed because of evaluation errors:\n\n%
 Control.msgEndEditing.text=To continue, first release the variable cell editor (Enter or Esc).

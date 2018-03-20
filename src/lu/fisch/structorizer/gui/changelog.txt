@@ -8,10 +8,10 @@
 Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
-- C import fails if the code contains function pointer declarations.
+- C import fails if the code contains function pointers.
 - Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version: 3.28-02 (2018-03-19)
+Current development version: 3.28-02 (2018-03-20)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -24,6 +24,7 @@ Current development version: 3.28-02 (2018-03-19)
 - 02: Bugfix #525: Defective test coverage detection for recursive routines,
       lacking operation counts on input, output, and jump instructions fixed <2>
 - 02: Issue #512: Arranger zoom compensation for PNG export was flawed <2>
+- 02: Issue #527: More helpful Executor messages on index range violations <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

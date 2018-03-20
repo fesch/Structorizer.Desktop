@@ -934,6 +934,9 @@ public class Executor implements Runnable
 	private static final String ERROR423MESSAGE = "Error in method invocation: Method get( java.lang.String ) not found in class";
 	private static final Matcher ERROR423MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\(\\\"(\\w+)\\\"\\)(.*?)'' : Error in method.*").matcher("");
 	// END KGU#388 2017-10-29
+	// START KGU#510 2018-03-20: Issue ??? Possible pattern for index problem
+	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.get").matcher("");
+	// END KGU#510 2018-03-20
 
 	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
 	//private Executor(Diagram diagram, DiagramController diagramController)
@@ -1667,6 +1670,7 @@ public class Executor implements Runnable
 			
 			String modifiedResult = trouble;
 			// FIXME (KGU): If the interpreter happens to provide localized messages then this won't work anymore!
+			// ... and after having replaced actual arrays by ArrayLists we may no longer obtain this type of message
 			if (trouble.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
@@ -6402,6 +6406,26 @@ public class Executor implements Runnable
 							error423 = true;
 						}
 					}
+					// START KGU#509 2018-03-20: Issue #527 - index range problem detection for more helpful message
+					else if (ERROR527MATCHER.reset(error423message).matches()) {
+						try {
+							Object potArray = context.interpreter.eval(ERROR527MATCHER.group(4));
+							Object potIndex = context.interpreter.eval(ERROR527MATCHER.group(2));
+							if (potArray instanceof ArrayList && potIndex instanceof Integer) {
+								int index = ((Integer)potIndex).intValue();
+								if (index < 0 || index >= ((ArrayList<?>)potArray).size()) {
+									err.setMessage(control.msgIndexOutOfBounds.getText().
+											replace("%1", ERROR527MATCHER.group(2)).
+											replace("%2", Integer.toString(index)).
+											replace("%3", ERROR527MATCHER.group(4)));
+								}
+							}
+						}
+						catch (EvalError err1) {
+							
+						}
+					}
+					// END KGU#509 2018-03-20
 					if (!error423) {
 						throw err;
 					}
