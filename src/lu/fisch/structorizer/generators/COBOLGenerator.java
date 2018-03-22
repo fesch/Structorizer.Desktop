@@ -89,6 +89,14 @@ public class COBOLGenerator extends Generator {
 	private final HashMap<Root, HashSet<String>> subMap = new HashMap<Root, HashSet<String>>();
 	private HashMap<String, TypeMapEntry> typeMap; 
 
+	// START KGU 2018-03-21
+	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
+	protected org.slf4j.Logger getLogger()
+	{
+		return this.logger;
+	}
+	// END KGU 2018-03-21
+
 	/**
 	 * get start for COBOL source or comment line with correct length depending
 	 * on reference-format and optional line numbering for fixed-form reference

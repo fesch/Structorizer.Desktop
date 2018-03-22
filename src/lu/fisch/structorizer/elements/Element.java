@@ -198,9 +198,14 @@ import java.util.regex.Matcher;
 import javax.swing.ImageIcon;
 
 public abstract class Element {
+
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Element.class);
+	// END KGU 2018-03-21
+
 	// Program CONSTANTS
-	public static String E_VERSION = "3.28-01";
-	public static String E_THANKS =
+	public static final String E_VERSION = "3.28-02";
+	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
@@ -764,7 +769,7 @@ public abstract class Element {
 //			}
 			return true;
 		}
-		System.err.println("CombineRuntimeData for " + this + " FAILED!");
+		logger.error("CombineRuntimeData for {} FAILED!", this);
 		return false;
 	}
 	// END KGU#117 2016-03-07
@@ -1264,7 +1269,7 @@ public abstract class Element {
 			}
 			else
 			{
-				System.err.println("**** Illegal execCountIndex " + this.execCountIndex + " on " + this);
+				logger.error("Illegal execCountIndex {} on {}", this.execCountIndex, this);
 			}
 		}
 		return execCount;
@@ -2058,7 +2063,7 @@ public abstract class Element {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e);
+			logger.warn("", e);
 		}
 	}
 
@@ -2109,7 +2114,7 @@ public abstract class Element {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e);
+			logger.warn("", e);
 		}
 	}
 
@@ -3774,7 +3779,7 @@ public abstract class Element {
 				done = true;
 			}
 			else {
-				System.out.println("*** Type redefinition attempt for \"" + typeName + "\"!");
+				logger.warn("Type redefinition attempt for \"{}\"!", typeName);
 			}
 		}
 		return done;

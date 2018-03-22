@@ -188,6 +188,14 @@ public class COBOLParser extends CodeParser
 	public COBOLParser() {
 	}
 
+	// START KGU 2018-03-21
+	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
+	protected org.slf4j.Logger getLogger()
+	{
+		return this.logger;
+	}
+	// END KGU 2018-03-21
+	
 	//---------------------- File Filter configuration -----------------------
 	
 	@Override
@@ -4793,8 +4801,7 @@ public class COBOLParser extends CodeParser
 		}
 		catch (Exception e) 
 		{
-			System.err.println("COBOLParser.prepareTextfile() -> " + e.getMessage());
-			e.printStackTrace();	
+			getLogger().error(" -> ", e);
 		}
 		return interm;
 	}
@@ -5641,7 +5648,7 @@ public class COBOLParser extends CodeParser
 			boolean hasRecordTypes = false;
 			CobVar arg = currentProg.getLinkageStorage();
 			while (arg != null && !hasRecordTypes) {
-				System.out.println(arg.getName() + ": " + arg.deriveTypeName());
+				getLogger().trace("{}: {}", arg.getName(), arg.deriveTypeName());
 				if (arg.hasChild()) {
 					hasRecordTypes = true;
 				}
@@ -5780,7 +5787,7 @@ public class COBOLParser extends CodeParser
 //				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 //				instr.getComment().add("FIXME: Couldn't identify the table variable!");
 //				return;
-				System.out.println("Warning, couldn't identify the table variable \"" + varName + "\"!");
+				getLogger().warn("Couldn't identify the table variable \"{}\"!", varName);
 				// create table and its index for rest of the function
 				table = this.cobTools.new CobVar(1, varName, null, null, null, null, false, false, 0, 99, null);
 			}
@@ -5789,7 +5796,7 @@ public class COBOLParser extends CodeParser
 			//       VARYING identifier-2 does an *additional* increase of identifier-2
 			CobVar indexVar = table.getIndexedBy(0);
 			if (indexVar == null) {
-				System.out.println("Warning, couldn't get the index variable for \"" + table.getName() + "\"!");
+				getLogger().warn("Couldn't get the index variable for \"{}\"!", table.getName());
 				indexVar = this.cobTools.new CobVar(varName + "MissingIdx", table);
 			}
 			CobVar indexAdditionalVar = null;
@@ -5797,7 +5804,7 @@ public class COBOLParser extends CodeParser
 				String indexAdditionalName = this.getContent_R(redBody.get(1).asReduction().get(1).asReduction(), "");
 				indexAdditionalVar = this.currentProg.getCobVar(indexAdditionalName);
 				if (indexAdditionalVar == null) {
-					System.out.println("Warning, couldn't get the index variable \"" + indexAdditionalName + "\"!");
+					getLogger().warn("couldn't get the index variable \"{}\"!", indexAdditionalName);
 					indexAdditionalVar = this.cobTools.new CobVar(indexAdditionalName, table);
 				}
 			}
@@ -7037,7 +7044,7 @@ public class COBOLParser extends CodeParser
 			break;
 		default:
 			// CHECKME: Should never be reached	anymore
-			System.err.println("UNRECOGNIZED: Index " + optRed.getParent().getTableIndex() + " " + this.getContent_R(_reduction, ""));
+			getLogger().error("UNRECOGNIZED: Index {} {}", optRed.getParent().getTableIndex(), this.getContent_R(_reduction, ""));
 			buildPerformCall(bodyRed, _parentNode);
 		}
 		if (loop != null) {
@@ -7053,7 +7060,7 @@ public class COBOLParser extends CodeParser
 				break;
 			default:
 				// FIXME
-				System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+				logger.warn("We have no idea how to convert this: {}", this.getContent_R(_reduction, ""));
 			}
 			_parentNode.addElement((Element)loop);
 		}
@@ -8332,7 +8339,7 @@ public class COBOLParser extends CodeParser
 			String toAdd = _token.asString();
 			String name = _token.getName();
 			if (toAdd.toLowerCase().matches(".*true.*") || toAdd.toLowerCase().matches(".*false.*") || name.toLowerCase().matches(".*true.*") || name.toLowerCase().matches(".*false.*")) {
-				System.out.println("getContentToken_R: " + name + " / " + toAdd);
+				getLogger().trace("CONTENT: {} / {}", name, toAdd);
 			}
 			final String trueName = name;
 			// just drop the "zero terminated" and "Unicode" parts here
@@ -8843,7 +8850,7 @@ public class COBOLParser extends CodeParser
 
 					int callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing
 					if (callIndex != sop.startsAt) {
-						System.err.println("*** Refactoring of " + sop + " faild!");
+						getLogger().error("*** Refactoring of {} failed!", sop);
 					}
 					// Now cleanup and get rid of place-holding dummy elements
 					Element doomedEl = null;
@@ -9117,6 +9124,10 @@ public class COBOLParser extends CodeParser
 
 class CobTools {
 
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CobTools.class);
+	// END KGU 2018-03-21
+	
 	/** COBOL field types */
 	public static enum Usage {
 		USAGE_BINARY,
@@ -10422,7 +10433,7 @@ class CobTools {
 		// START KGU#388 2017-10-04: Enh. #423
 		// usage can be null if this CobVar was created via CobVar(String, String[], String)
 		else if (variable.usage == null) {
-			System.err.println("getTypeString(" + variable + "): variable has unset usage field!");
+			logger.error("getTypeString({}): variable has unset usage field!", variable);
 			return "";
 		}
 		// END KGU#388 2017-10-04

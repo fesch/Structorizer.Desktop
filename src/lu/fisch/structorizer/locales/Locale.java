@@ -46,6 +46,9 @@ public class Locale {
     
     private String filename;
     
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Locale.class);
+	// END KGU 2018-03-21
     // START KGU#231 2016-08-04: #220 
     public boolean hasUnsavedChanges = false;
     // END KGU#231 2016-08-04
@@ -60,13 +63,16 @@ public class Locale {
     public static void main(String[] args)
     {
         Locale locale = new Locale("en.txt");
-        System.out.println(locale.getText());
+        logger.info(locale.getText());
         
-        System.out.println("Sections:");
-        for (int i = 0; i < locale.getSectionNames().length; i++) {
-            String sectionName = locale.getSectionNames()[i];
-            System.out.println("- "+sectionName);
+        StringBuilder sectNames = new StringBuilder();
+        sectNames.append("Sections:");
+        String[] sectionNames = locale.getSectionNames();
+        for (int i = 0; i < sectionNames.length; i++) {
+            String sectionName = sectionNames[i];
+            sectNames.append("\n- " + sectionName);
         }
+        logger.info("{}", sectNames);
     }
     
     public Locale loadCopyFromFile()
@@ -86,7 +92,7 @@ public class Locale {
         // a file then
         if (!_langfile.equals("external.txt") && !_langfile.equals("preview.txt")) 
         {
-            System.out.println("Loading now locale: "+_langfile);        
+            logger.info("Loading now locale: "+_langfile);        
 
             // read the file from the compiled application into a string
             String input = new String();

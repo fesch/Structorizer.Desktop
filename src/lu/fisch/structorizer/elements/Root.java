@@ -241,7 +241,7 @@ public class Root extends Element {
 	// END KGU#137 2016-01-11
 	public boolean hightlightVars = false;
 	// START KGU#2 (#9) 2015-11-13:
-	// Executor: Is this routine currently waiting for a called subroutine?
+	/** Executor: Is this routine currently waiting for a called subroutine? */
 	public boolean isCalling = false;
 	// END KG#2 (#9) 2015-11-13
 	// START KGU#376 2017-07-02: Enh. #389 - we want to show execution in inlcudeList
@@ -4645,7 +4645,7 @@ public class Root extends Element {
         	}
         	catch (Exception ex)
         	{
-        		System.out.println(ex.getMessage());
+        		logger.error("Root: {}", ex.getMessage());
         	}
         }
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
@@ -5038,7 +5038,7 @@ public class Root extends Element {
         }
         catch (Exception e)
         {
-        	System.out.println(e);
+        	logger.warn("Root.saveToINI()", e);
         }
     }
 

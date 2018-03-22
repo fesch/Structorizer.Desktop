@@ -325,6 +325,7 @@ Menu.msgOverwriteFiles.text=Existing file(s) detected. Overwrite?
 Menu.btnConfirmOverwrite.text=Confirm Overwrite
 Menu.msgRepeatSaveAttempt.text=Your file has not been saved. Please repeat the save operation!
 Menu.msgErrorFileSave.text=Error on saving the file: %!
+Menu.msgErrorFileRename.text=Error(s) on renaming the saved file:\n%1Look for file "%2" and move/rename it yourself.
 Menu.msgBreakTriggerPrompt.text=Specify an execution count triggering a break (0 = always).
 Menu.msgBreakTriggerIgnored.text=Input ignored - must be a cardinal number.
 Menu.msgOpenLangFile.text=Open language file
@@ -1183,6 +1184,7 @@ Control.msgConstantRecordComponent.text=A record component «%» may not be made
 Control.msgTypeMismatch.text=Value type «%1» is incompatible with type «%2» of variable/component «%3»!
 Control.msgBadValueList.text=<%> cannot be interpreted as value list.
 Control.msgBadValueListDetails.text=Details: %
+Control.msgIndexOutOfBounds.text=Index «%1» (%2) is out of bounds for array «%3»!
 Control.msgVarUpdateErrors.text=Trouble updating variables
 Control.msgVarUpdatesFailed.text=These variable modifications failed because of evaluation errors:\n\n%
 Control.msgEndEditing.text=To continue, first release the variable cell editor (Enter or Esc).

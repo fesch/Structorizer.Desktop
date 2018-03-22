@@ -77,6 +77,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.02.20      Magic numbers replaced, Enh. #515 first steps toward a silhouette allocation
  *      Kay Gürtzig     2018.02.21      Enh. #515: Working first prototype for space-saving area management
  *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
+ *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
  *
  ******************************************************************************************************
  *
@@ -123,6 +124,7 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -200,7 +202,11 @@ import net.iharder.dnd.FileDrop;
 @SuppressWarnings("serial")
 public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener {
 
-    private Vector<Diagram> diagrams = new Vector<Diagram>();
+	// START#484 KGU 2018-03-21: Issue #463
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Surface.class);
+	// END KGU#484 2018-03-21
+
+	private Vector<Diagram> diagrams = new Vector<Diagram>();
     // START KGU#305 2016-12-16: Code revision
     private final Vector<IRoutinePoolListener> listeners = new Vector<IRoutinePoolListener>();
     // END KGU#305 2016-12-16
@@ -270,6 +276,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
     @Override
     public void paint(Graphics g)
+    // START KGU#497 2018-03-19: Enh. #512 - The PNG export must compensate the zoom factor
+    {
+    	this.paint(g, false);
+    }
+    /**
+     * Specific variant of {@link #paint(Graphics)} with the opportunity to compensate
+     * the imposed {@link #zoomFactor} by filling the enlarged canvas with white colour
+     * and drawing the diagrams in original size.
+     * @param g - a {@link Graphics2D} object as transformable drawing canvas
+     * @param compensateZoom - whether the imposed {@link #zoomFactor} is to be compensated
+     */
+    public void paint(Graphics g, boolean compensateZoom)
+    // END KGU#497 2018-03-19
     {
         //System.out.println("Surface: " + System.currentTimeMillis());
     	// Region occupied by diagrams
@@ -277,10 +296,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         super.paint(g);
         if (diagrams != null)
         {
-            // START KGU#497 2018-02-17: Enh. 
+            // START KGU#497 2018-02-17: Enh. #512
         	Graphics2D g2d = (Graphics2D) g;
-        	g2d.scale(1/zoomFactor, 1/zoomFactor);
+        	// START KGU#497 2018-03-19: Enh. #512
+    		//g2d.scale(1/zoomFactor, 1/zoomFactor);
             // END KGU#497 2018-02-17
+        	if (compensateZoom) {
+        		// In zoom-compensated drawing the background filled by super.paint(g)
+        		// is too small (virtually scaled don), therefore we must draw a
+        		// white rectangle covering the enlarged image area
+        		g2d.setColor(Color.WHITE);
+        		g2d.fillRect(0, 0, 
+        				Math.round(this.getWidth() * zoomFactor),
+        				Math.round(this.getHeight() * zoomFactor));
+        	}
+        	else {
+        		g2d.scale(1/zoomFactor, 1/zoomFactor);
+        	}
+        	// END KGU#497 2018-03-19
             for(int d=0; d<diagrams.size(); d++)
             {
                 Diagram diagram = diagrams.get(d);
@@ -314,9 +347,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                 if (rect.bottom > area.height) area.height = rect.bottom;
                 // END KGU#85 2017-10-23
             }
-            // START KGU#497 2018-02-17: Enh. 
-            g2d.scale(zoomFactor, zoomFactor);
-            // END KGU#497 2018-02-17
+            // START KGU#497 2018-03-19: Enh. #512
+            if (!compensateZoom) {
+            	g2d.scale(zoomFactor, zoomFactor);
+            }
+            // END KGU#497 2018-03-19
         }
         // START KGU#85 2017-10-23: Enh. #35 - now make sure the scrolling area is up to date
         area.width = Math.round(Math.min(area.width, Short.MAX_VALUE) / this.zoomFactor);
@@ -373,7 +408,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		{
     			if (!troubles.isEmpty()) { troubles += "\n"; }
     			troubles += "\"" + filename + "\": " + errorMessage;
-    			System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);	
+    			logger.error("Arranger failed to load \"{}\": {}", filename, errorMessage);	
     		}
     		else
     		{
@@ -992,12 +1027,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		//targetDir = findTempDir();
     		boolean tmpDirCreated = false;
     		try {
+    			// We just force the existence of the folder hierarchy in the temp directory
 				File tempFile = File.createTempFile("arr", null);
-				tempFile.delete();
+				tempFile.delete();	// We don't need the file itself
 				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
 				tmpDirCreated = (new File(targetDir)).mkdirs();
 			} catch (IOException ex) {
-				System.err.println("Surface.unzipArrangement: " + ex.getLocalizedMessage());
+				logger.error("Failed to unzip the arrangement archive: {}", ex.getLocalizedMessage());
 			}
     		if (!tmpDirCreated) {
 				targetDir = findTempDir();
@@ -1090,22 +1126,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             // set up the file
             File file = new File(filename);
             // create the image
-            // START KGU#497 2018-02-17: Enh. #512 - consider the (new) zoom factor
+            // START KGU#497 2018-03-19: Enh. #512 - consider the (new) zoom factor
             //BufferedImage bi = new BufferedImage(this.getWidth(), this.getHeight(),BufferedImage.TYPE_4BYTE_ABGR);
             //paint(bi.getGraphics());
-            float oldZoom = this.zoomFactor;
-//            System.out.println(this.getWidth() + " x " + this.getHeight());
-//            Rect rect = this.getDrawingRect(null);
-//            System.out.println(rect);
-//            System.out.println(this.getWidth()*oldZoom + " x " + this.getHeight()*oldZoom);
+            logger.debug("{} x {}", this.getWidth(), this.getHeight());
+            Rect rect = this.getDrawingRect(null);
+            logger.debug("Drawing Rect: {}", rect);
+            logger.debug("zoomed: {} x {}", this.getWidth()*this.zoomFactor, this.getHeight()*this.zoomFactor);
             BufferedImage bi = new BufferedImage(
-                    Math.round(this.getWidth() * oldZoom),
-                    Math.round(this.getHeight() * oldZoom),
+                    Math.round(this.getWidth() * this.zoomFactor),
+                    Math.round(this.getHeight() * this.zoomFactor),
                     BufferedImage.TYPE_4BYTE_ABGR);
-            this.zoomFactor = 1;
-            paint(bi.getGraphics());
-            this.zoomFactor = oldZoom;
-            // END KGU#497 2018-02-17
+            paint(bi.getGraphics(), true);
+            // END KGU#497 2018-03-19
             // save the file
             try
             {
@@ -1680,8 +1713,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			JOptionPane.showMessageDialog(this, msgParseError.getText() + " " + ex.getMessage(), "Paste Error",
     					JOptionPane.ERROR_MESSAGE);
     			
-    			System.out.println(ex);
-    			ex.printStackTrace();
+    			logger.warn(msgParseError.getText(), ex);
     		}
     	}	
     	if (root != null)
@@ -1779,7 +1811,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		this.zoomFactor = Float.parseFloat(Ini.getInstance().getProperty("arrangerZoom", "2.0f"));
     	}
     	catch (NumberFormatException ex) {
-    		System.err.println("Surface: " + ex);
+    		logger.error("Corrupt zoom factor in ini", ex);
     	}
     	// END KGU#497 2018-02-17
     }// </editor-fold>//GEN-END:initComponents

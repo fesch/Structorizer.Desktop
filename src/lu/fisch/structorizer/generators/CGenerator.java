@@ -160,6 +160,14 @@ import lu.fisch.structorizer.executor.Function;
 
 public class CGenerator extends Generator {
 
+	// START KGU 2018-03-21
+	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
+	protected org.slf4j.Logger getLogger()
+	{
+		return this.logger;
+	}
+	// END KGU 2018-03-21
+
 	/************ Fields ***********************/
 	@Override
 	protected String getDialogTitle() {
@@ -1709,7 +1717,7 @@ public class CGenerator extends Generator {
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
 		// FIXME (KGU 2017-09-30): It should be extremely unlikely now that there isn't a typeMap entry
 		else if (constValue != null) {
-			System.out.println(this.getClass().getSimpleName()+".insertDeclaration(" + _name + "): MISSING TYPE MAP ENTRY FOR THIS CONSTANT!");
+			getLogger().warn("insertDeclaration({}): MISSING TYPE MAP ENTRY FOR THIS CONSTANT!", _name);
 			String type = Element.identifyExprType(typeMap, constValue, false);
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));

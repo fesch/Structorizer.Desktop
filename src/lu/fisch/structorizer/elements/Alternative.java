@@ -197,7 +197,7 @@ public class Alternative extends Element implements IFork {
 		// END KGU#227 2016-07-31
 		// the lowest point of the triangle
 		double ax =  rTrue.right - rTrue.left;
-		//System.out.println("AX : "+ax);
+		//logger.debug("AX : "+ax);
 		double ay =  0;
 		// gradient coefficient of the left traverse line
 		double coeffleft = (cy-ay)/(cx-ax);
@@ -247,7 +247,7 @@ public class Alternative extends Element implements IFork {
 			int textWidth = getWidthOutVariables(_canvas, myText.get(i), this);
 			// END KGU#453 2017-11-01
 			double bx = textWidth + 2*(E_PADDING/2) + leftside;
-			//System.out.println("LS : "+leftside);
+			//logger.debug("LS : "+leftside);
 
 			// check if this is the one we need to do calculations
 			double coeff = (by-ay)/(bx-ax);
@@ -255,7 +255,7 @@ public class Alternative extends Element implements IFork {
 			// the point height we need
 			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
 			//double x = y/coeff + ax - ay/coeff;
-			//System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
+			//logger.debug(i+" => "+coeff+" --> "+String.valueOf(x));
 
 			if (coeff<lowest && coeff>0)
 			{
@@ -276,7 +276,7 @@ public class Alternative extends Element implements IFork {
 			//rect0.right = (int) Math.round(x);
 			rect0.right = Math.max((int) Math.round(x), commentRect.right);
 			// END KGU#435 2017-10-22
-			//System.out.println("C => "+lowest+" ---> "+rect.right);
+			//logger.debug("C => "+lowest+" ---> "+rect.right);
 		}
 		else
 		{
@@ -305,7 +305,7 @@ public class Alternative extends Element implements IFork {
 	
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
-		//System.out.println("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
+		//logger.debug("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
 		if(isCollapsed(true)) 
 		{
 			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);

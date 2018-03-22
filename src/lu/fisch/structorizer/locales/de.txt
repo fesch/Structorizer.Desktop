@@ -328,6 +328,7 @@ Menu.msgOverwriteFiles.text=Gleichnamige Datei(en) vorhanden. Überschreiben?
 Menu.btnConfirmOverwrite.text=Überschreiben bestätigen
 Menu.msgRepeatSaveAttempt.text=Die Datei konnte nicht gesichert werden. Versuchen Sie es bitte erneut!
 Menu.msgErrorFileSave.text=Fehler beim Sichern der Datei: %!
+Menu.msgErrorFileRename.text=Fehler beim Verschieben der gesicherten Datei:\n%1Bitte Datei "%2" suchen und selbst umbenennen.
 Menu.msgBreakTriggerPrompt.text=Ausführungsanzahl für die Auslösung eines Haltes festlegen (0 = immer).
 Menu.msgBreakTriggerIgnored.text=Eingabe ignoriert - muss eine Kardinalzahl sein.
 Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
@@ -1186,6 +1187,7 @@ Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht 
 Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!
 Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
 Control.msgBadValueListDetails.text=Details: %
+Control.msgIndexOutOfBounds.text=Index «%1» (%2) überschreitet Indexbereich für Array «%3»!
 Control.msgVarUpdateErrors.text=Problem beim Variablen-Update
 Control.msgVarUpdatesFailed.text=Diese Variablen-Änderungen scheiterten an syntaktischen Fehlern:\n\n%
 Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Enter oder Esc).

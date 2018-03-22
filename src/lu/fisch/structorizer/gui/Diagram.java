@@ -148,7 +148,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
  *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
  *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
- *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes 
+ *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes
+ *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file  
  *
  ******************************************************************************************************
  *
@@ -239,6 +240,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#363 2017-03-28
 	
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Diagram.class);
+	// END KGU 2018-03-21
+
 	/** Fixed size limitation for the file history */
 	private static final int MAX_RECENT_FILES = 10;
 	
@@ -1207,7 +1212,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		scrollRectToVisible(rect);
     	}
     	catch (Exception ex) {
-    		System.err.println("*** Executor.draw(" + element + "):" + ex);
+    		logger.error("*** {}", ex.toString());
     	}
     	redraw();	// This is to make sure the drawing rectangles are correct
     }
@@ -1229,7 +1234,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			root.getVarNames();
     		}
     		catch (Exception ex) {
-    			System.out.println("*** Possible sync problem in diagram.redraw(): " + ex.toString());
+    			logger.info("*** Possible sync problem: {}", ex.toString());
     			ex.printStackTrace(System.out);
     			// Avoid trouble
     			root.hightlightVars = false;
@@ -1313,7 +1318,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		super.paintComponent(g);
 		if(root!=null)
 		{
-			//System.out.println("Diagram: " + System.currentTimeMillis());
+			//logger.debug("Diagram: " + System.currentTimeMillis());
 			redraw(g);
 		}
 	}
@@ -1651,9 +1656,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//System.out.println(e.getMessage());
 			errorMessage = e.getLocalizedMessage();
 			if (errorMessage == null) errorMessage = e.getMessage();
-			System.err.println("openNSD(\"" + _filename + "\"): " + (errorMessage != null ? errorMessage : e));
+			if (errorMessage == null || errorMessage.isEmpty()) errorMessage = e.toString();
 			if (e instanceof java.util.ConcurrentModificationException) {
-				e.printStackTrace(System.err);
+				logger.error("openNSD(\"" + _filename + "\"): ", e);
+			}
+			else {
+				logger.error("openNSD(\"{}\"): {}", _filename, errorMessage);				
 			}
 			// END KGU#111 2015-12-16
 		}
@@ -1739,7 +1747,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				try {
 					Ini.getInstance().save();
 				} catch (Exception ex) {
-					System.err.println("*** Diagram.handleKeywordDifferences(): " + ex.getMessage());
+					logger.error("*** {}", ex.getMessage());
 				}
 				// Refactor the diagrams
 				refactorDiagrams(splitPrefs, true, tmpIgnoreCase);
@@ -2081,7 +2089,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			else if (fileExisted)
-			// END KGU#316 201612-28
+			// END KGU#316 2016-12-28
 			{
 				File backUp = new File(root.filename + ".bak");
 				if (backUp.exists())
@@ -2092,6 +2100,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				f = new File(root.filename);
 				File tmpFile = new File(filename);
 				tmpFile.renameTo(f);
+				// START KGU#509 2018-03-20: Bugfix #526 renameTo may have failed, so better check
+				if (!f.exists() && tmpFile.canRead()) {
+					logger.info("Failed to rename \"{}\" to \"{}\"; trying a workaround...", filename, f.getAbsolutePath());
+					String errors = renameFile(tmpFile, f, true);
+					if (!errors.isEmpty()) {
+						JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+								Menu.msgErrorFileRename.getText().replace("%1", errors).replace("%2", tmpFile.getAbsolutePath()),
+								Menu.msgTitleError.getText(),
+								JOptionPane.ERROR_MESSAGE, null);						
+					}
+				}
+				// END KGU#509 2018-03-20
 				// START KGU#309 2016-12-15: Issue #310 backup may be opted out
 				if (!Element.E_MAKE_BACKUPS && backUp.exists()) {
 					backUp.delete();
@@ -2121,6 +2141,58 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		return done;
 	}
+	
+	// START KGU#509 2018-03-20: Bugfix #526 workaround for a failing renameTo() operation
+	/**
+	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
+	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
+	 * target file exists after the copy the source file will be removed
+	 * @param sourceFile
+	 * @param targetFile
+	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
+	 * copy
+	 * @return in case of errors, a string describing them.
+	 */
+	private String renameFile(File sourceFile, File targetFile, boolean removeSource) {
+		String problems = "";
+		final int BLOCKSIZE = 512;
+		byte[] buffer = new byte[BLOCKSIZE];
+		FileOutputStream fos = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(sourceFile.getAbsolutePath());
+			fos = new FileOutputStream(targetFile.getAbsolutePath());
+			int readBytes = 0;
+			do {
+				readBytes = fis.read(buffer);
+				if (readBytes > 0) {
+					fos.write(buffer, 0, readBytes);
+				}
+			} while (readBytes > 0);
+		} catch (FileNotFoundException e) {
+			problems += e + "\n";
+		} catch (IOException e) {
+			problems += e + "\n";
+		}
+		finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {}
+			}
+			if (fis != null) {
+				try {
+					fis.close();
+					if (removeSource && targetFile.exists()) {
+						sourceFile.delete();
+					}
+				} catch (IOException e) {}
+			}
+		}
+		return problems;
+	}
+	// END KGU#509 2018-03-20
+
 	// END KGU#94 2015-12-04
 	
 	// START KGU#316 2016-12-28: Enh. #318
@@ -5203,10 +5275,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 				}
 				catch (NumberFormatException ex) {
-					System.err.println("Diagram.setPluginSpecificOptions("
-							+ _gen.getClass().getSimpleName()
-							+ "): " + ex.getMessage() + " on converting \""
-							+ valueStr + "\" to " + type + " for " + optionKey);
+					logger.error("setPluginSpecificOptions({}): {} on converting \"{}\" to {} for {}",
+							_gen.getClass().getSimpleName(),
+							ex.getMessage(),
+							valueStr, type, optionKey);
 				}
 			}
 			if (value != null) {
@@ -5389,9 +5461,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 
 			} catch (MalformedURLException e) {
-				System.err.println("Diagram.retrieveLatestVersion(): " + e.toString());
+				logger.error("{}", e.toString());
 			} catch (IOException e) {
-				System.out.println("Diagram.retrieveLatestVersion(): " + e.toString());
+				logger.error("{}", e.toString());
 			}
 		}
 		return version;
@@ -7006,7 +7078,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					System.err.println("EMFSelection: " + e.getMessage());
+					logger.error("EMFSelection: " + e.getMessage());
 				}
 			}
 
@@ -7046,7 +7118,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				else
 				{
-					System.out.println("Hei !!!");
+					//System.out.println("Hei !!!");
 					throw new UnsupportedFlavorException(flavor);
 				}
 			}

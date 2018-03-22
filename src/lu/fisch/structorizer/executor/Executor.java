@@ -149,14 +149,17 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
  *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
  *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
- *      Kay Gürtzig     2018-02-11      Bugfix #509: Built-in function copyArray had a defective definition
+ *      Kay Gürtzig     2018.02.11      Bugfix #509: Built-in function copyArray had a defective definition
+ *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
+ *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext 
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *
  *      2017-10-28 Issue #443
  *      - Executor might potentially have to work with several DiagramControllers. So it is important
- *        efficiently to findo out, what diagram controller routines are available and whether there are
+ *        efficiently to find out, what diagram controller routines are available and whether there are
  *        potential signature conflicts.
  *      - Therefore the field diagramController was replaced by a list diagramContrllers and several
  *        retrieval mechanism had to be revised.
@@ -323,6 +326,10 @@ import com.stevesoft.pat.Regex;
  */
 public class Executor implements Runnable
 {
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Executor.class);
+	// END KGU 2018-03-21
+
 	// START KGU#376 2017-04-20: Enh. #389
 	/**
 	 * Context record for an imported Root in order to fetch the defined constants
@@ -837,7 +844,7 @@ public class Executor implements Runnable
 	 * execution results, represented by an ImportInfo object, such that whenever
 	 * the same Root will be requested for import again, we may just retrieve its
 	 * results here.
-	 * @see ExecutionStackEntry#importList 
+	 * @see ExecutionContext#importList 
 	 */
 	private final HashMap<Root, ImportInfo> importMap = new HashMap<Root, ImportInfo>();
 	//private StringList importList = new StringList();	// KGU#384 2017-04-22: -> context
@@ -846,10 +853,10 @@ public class Executor implements Runnable
 	/**
 	 * Execution context cartridge containing all context to be pushed to callers stack on calls
 	 */
-	private ExecutionStackEntry context;
+	private ExecutionContext context;
 	// END KGU#376 2017-04-20
 	// START KGU#2 (#9) 2015-11-13: We need a stack of calling parents
-	private Stack<ExecutionStackEntry> callers = new Stack<ExecutionStackEntry>();
+	private Stack<ExecutionContext> callers = new Stack<ExecutionContext>();
 	//private Object returnedValue = null;	// KGU#384 2017-04-22 -> context
 	private Vector<IRoutinePool> routinePools = new Vector<IRoutinePool>();
 	// END KGU#2 (#9) 2015-11-13
@@ -931,6 +938,9 @@ public class Executor implements Runnable
 	private static final String ERROR423MESSAGE = "Error in method invocation: Method get( java.lang.String ) not found in class";
 	private static final Matcher ERROR423MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\(\\\"(\\w+)\\\"\\)(.*?)'' : Error in method.*").matcher("");
 	// END KGU#388 2017-10-29
+	// START KGU#510 2018-03-20: Issue ??? Possible pattern for index problem
+	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.get").matcher("");
+	// END KGU#510 2018-03-20
 
 	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
 	//private Executor(Diagram diagram, DiagramController diagramController)
@@ -1285,11 +1295,11 @@ public class Executor implements Runnable
 						}
 						catch (EvalError ex)
 						{
-							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
+							logger.error("convertStringComparison(\"{}\"): {}", str, ex.getMessage());
 						}
 						catch (Exception ex)
 						{
-							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
+							logger.error("convertStringComparison(\"{}\"): {}", str, ex.getMessage());
 						}
 					} // if (!s.equals(" " + eqOps[op] + " ") && (s.indexOf(eqOps[op]) >= 0))
 				} // for (int op = 0; op < eqOps.length; op++)
@@ -1328,7 +1338,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println("Executor.delay(): " + e.getMessage());
+				logger.error("delay(): {}", e.getMessage());
 			}
 		}
 		waitForNext();
@@ -1394,7 +1404,7 @@ public class Executor implements Runnable
 				try {
 					file.close();
 				} catch (IOException e) {
-					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+					logger.error("openFiles -> {}", e.getLocalizedMessage());
 				}
 			}
 		}
@@ -1418,7 +1428,7 @@ public class Executor implements Runnable
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
 		// START KGU#384 2017-04-22
-		this.context = new ExecutionStackEntry(root);
+		this.context = new ExecutionContext(root);
 		initInterpreter();
 		// END KGU#384 2017-04-22
 		/////////////////////////////////////////////////////////
@@ -1435,7 +1445,7 @@ public class Executor implements Runnable
 				try {
 					file.close();
 				} catch (IOException e) {
-					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+					logger.error("openFiles -> {}", e.getLocalizedMessage());
 				}
 			}
 		}
@@ -1664,6 +1674,7 @@ public class Executor implements Runnable
 			
 			String modifiedResult = trouble;
 			// FIXME (KGU): If the interpreter happens to provide localized messages then this won't work anymore!
+			// ... and after having replaced actual arrays by ArrayLists we may no longer obtain this type of message
 			if (trouble.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
@@ -1864,7 +1875,7 @@ public class Executor implements Runnable
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
 							TypeMapEntry oldEntry = context.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
 							if (oldEntry != null) {
-								System.err.println("Conflicting type entry " + typeEntry.getKey() + " from Includable " + diagrName);
+								logger.warn("Conflicting type entry {} from Includable {}", typeEntry.getKey(), diagrName);
 							}
 						}
 						// END KGU#388 2017-09-18
@@ -2076,6 +2087,9 @@ public class Executor implements Runnable
 //				this.importList
 //				// END KGU#375, KGU#376 2017-04-21
 //				);
+		// START KGU#508 2018-03-19: Bugfix #525 - This had been forgotten on replacing the ExecutionStackEntry (#389)
+		this.context.root.isCalling = true;
+		// END KGU#508 2018-03-19
 		this.callers.push(this.context);
 		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		// END KGU#384 2017-04-22
@@ -2120,11 +2134,11 @@ public class Executor implements Runnable
 		// START KGU#384 2017-04-22: Execution context redesign
 		if (root.isInclude()) {
 			// For an import Call continue the importList recursively
-			this.context = new ExecutionStackEntry(root, this.context.importList);
+			this.context = new ExecutionContext(root, this.context.importList);
 		}
 		else {
 			// For a subroutine call, start with a new import list
-			this.context = new ExecutionStackEntry(root);
+			this.context = new ExecutionContext(root);
 		}
 		initInterpreter();
 		// END KGU#384 2017-04-22
@@ -2167,7 +2181,7 @@ public class Executor implements Runnable
 		}
 		// END KG#117 2016-03-07
 		
-		ExecutionStackEntry entry = this.callers.pop();	// former context
+		ExecutionContext entry = this.callers.pop();	// former context
 		
 //		// START KGU#376 2017-04-21: Enh. #389 don't restore after an import call
 		// FIXME: Restore but cache the Interpreter with all variables and copy contents before
@@ -2181,7 +2195,7 @@ public class Executor implements Runnable
 			for (Entry<String, TypeMapEntry> typeEntry: context.dynTypeMap.entrySet()) {
 				TypeMapEntry oldEntry = entry.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
 				if (oldEntry != null) {
-					System.err.println("Conflicting type entry " + typeEntry.getKey() + " from Includable " + subRoot.getMethodName());
+					logger.error("Conflicting type entry {} from Includable {}", typeEntry.getKey(), subRoot.getMethodName());
 				}
 			}
 			// END KGU#388 2017-09-18
@@ -2436,7 +2450,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println("Executor.initRootExec(): " + e.getMessage());
+				logger.error("initRootExec(): {}", e.getMessage());
 			}
 		}
 		return trouble;
@@ -2504,8 +2518,9 @@ public class Executor implements Runnable
 				for (int i = 0; i < arguments.length; i++) {
 					args.add(arguments[i].toString());
 				}
-				System.err.println("Executor.getExec(" + controller + ", \"" + procName + "\", "
-						+ args.concatenate(", ") + "): " + e.getMessage());
+				logger.error("getExec({}, \"{}\", {}): {}",
+						controller, procName,
+						args.concatenate(", "), e.getMessage());
 			}
 		}
 		return trouble;
@@ -2542,7 +2557,7 @@ public class Executor implements Runnable
 		} catch (EvalError ex)
 		{
 			//java.io.IOException
-			System.err.println("Executor.initInterpreter(): " + ex.getMessage());
+			logger.error("Interpreter initialization: {}", ex.getMessage());
 		}
 	}
 	
@@ -2879,7 +2894,7 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				System.out.println("*** Sync Error in setPaus()/updateVariableDisplay(): " + ex.toString());
+				logger.error("Sync Error in setPaus()/updateVariableDisplay(): {}", ex.toString());
 			}
 		}
 		// END KGU 2015-10-13
@@ -3001,7 +3016,7 @@ public class Executor implements Runnable
 			}
 			catch (Exception ex)
 			{
-				System.out.println(rawInput + " as string/char: " + ex.getMessage());
+				logger.warn("\"{}\" as string/char: {}", rawInput, ex.getMessage());
 				// START KGU#388 2017-09-18: These explicit errors should get raised
 				throw ex;
 				// END KGU#388 2017-09-18
@@ -3808,7 +3823,7 @@ public class Executor implements Runnable
 				// START KGU#441 2017-10-13: Enh. #437
 				errors.add(varName + ": " + err.getMessage());
 				// END KGU#441 2017-10-13
-				System.err.println("Executor.adoptVarChanges(" + newValues + "): " + err.getMessage());
+				logger.error("adoptVarChanges({}) on {}: {}", newValues, varName, err.getMessage());
 			}
 		}
 		return errors;
@@ -4032,6 +4047,9 @@ public class Executor implements Runnable
 			// END KGU#388 2017-09-13
 			try
 			{
+				// START KGU#508 2018-03-19: Bugfix #525 operation count for all non-typedefs
+				boolean isTypeDef = false;
+				// END KGU#508 2018-03-19
 				// START KGU#271: 2016-10-06: Bugfix #269 - this was mis-placed here and had to go to the loop body end 
 //				if (i > 0)
 //				{
@@ -4140,17 +4158,27 @@ public class Executor implements Runnable
 						// END KGU#490 2018-02-08
 						trouble = trySubroutine(cmd, element);
 					}
-					// START KGU#156 2016-03-11: Enh. #124
-					element.addToExecTotalCount(1, true);	// For the instruction line
-					//END KGU#156 2016-03-11
+					// START KGU#508 2018-03-19: Bugfix #525 - this has to be done for all non-typedefs
+					//// START KGU#156 2016-03-11: Enh. #124
+					//element.addToExecTotalCount(1, true);	// For the instruction line
+					////END KGU#156 2016-03-11
+					// END KGU#508 2018-03-19
 					
 				// START KGU#388 2017-09-13: Enh. #423
 				}
 				else {
+					// START KGU#508 2018-03-19: Bugfix #525 operation count for non-typedefs
+					isTypeDef = true;
+					// END KGU#508 2018-03-19
 					element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
 					// We don't increment the total execution count here - this is regarded as a non-operation
 				}
 				// END KGU#388 2017-09-13
+				// START KGU#156/KGU#508 2018-03-19: Enh. #124, bugfix #525 - this has to be done for all non-typedefs
+				if (!isTypeDef) {
+					element.addToExecTotalCount(1, true);	// For the instruction line
+				}
+				// END KGU#156/KGU#508 2018-03-19
 				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
 				if ((i+1 < sl.count()) && trouble.equals("") && (stop == false)
 						&& !context.returned && leave == 0)
@@ -6383,6 +6411,26 @@ public class Executor implements Runnable
 							error423 = true;
 						}
 					}
+					// START KGU#509 2018-03-20: Issue #527 - index range problem detection for more helpful message
+					else if (ERROR527MATCHER.reset(error423message).matches()) {
+						try {
+							Object potArray = context.interpreter.eval(ERROR527MATCHER.group(4));
+							Object potIndex = context.interpreter.eval(ERROR527MATCHER.group(2));
+							if (potArray instanceof ArrayList && potIndex instanceof Integer) {
+								int index = ((Integer)potIndex).intValue();
+								if (index < 0 || index >= ((ArrayList<?>)potArray).size()) {
+									err.setMessage(control.msgIndexOutOfBounds.getText().
+											replace("%1", ERROR527MATCHER.group(2)).
+											replace("%2", Integer.toString(index)).
+											replace("%3", ERROR527MATCHER.group(4)));
+								}
+							}
+						}
+						catch (EvalError err1) {
+							
+						}
+					}
+					// END KGU#509 2018-03-20
 					if (!error423) {
 						throw err;
 					}
@@ -6487,7 +6535,7 @@ public class Executor implements Runnable
 					wait();
 				} catch (Exception e)
 				{
-					System.out.println(e.getMessage());
+					logger.error("{}", e.getMessage());
 				}
 			}
 		}
