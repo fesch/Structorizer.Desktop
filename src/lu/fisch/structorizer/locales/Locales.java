@@ -60,6 +60,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -100,9 +102,9 @@ public class Locales {
     	{"external", null}
     	};
     
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Locales.class);
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(Locales.class.getName());
+	// END KGU#484 2018-03-22
 
 	// the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
@@ -143,7 +145,7 @@ public class Locales {
             String name = names[i];
             localeNames.append("\n- " + name);
         }
-        logger.trace("Files:{}", localeNames.toString());
+        logger.log(Level.INFO, "Files:{0}", localeNames.toString());
 
         ArrayList<String> sections = locales.getSectionNames();
         StringBuilder sectNames = new StringBuilder();
@@ -151,7 +153,7 @@ public class Locales {
             String get = sections.get(i);
             sectNames.append("\n- "+get);
         }
-        logger.trace("Sections:{}", sectNames.toString());
+        logger.log(Level.INFO, "Sections:{0}", sectNames.toString());
     }
 
     private Locales() 
@@ -497,7 +499,8 @@ public class Locales {
             }
             
             if(errorMessage!=null)
-                logger.error("CONDITION ({}:{}): {}", fieldName, value, errorMessage);
+                logger.log(Level.WARNING, "CONDITION ({0}:{1}): {2}",
+                		new Object[]{fieldName, value, errorMessage});
 
             if(fieldValue!=null)
                 result &= value.trim().equalsIgnoreCase(fieldValue.trim());
@@ -608,8 +611,8 @@ public class Locales {
                             }
                         }
                         if (errorMessage != null) {
-                            logger.error("LANG: Error accessing element <{}.{}>!\n{}",
-                                    pieces.get(0), pieces.get(1), errorMessage);
+                            logger.log(Level.WARNING, "LANG: Error accessing element <{0}.{1}>!\n{}",
+                                    new Object[]{pieces.get(0), pieces.get(1), errorMessage});
                         } else if (field != null) {
                             // END KGU#3 2015-11-03
                             try {
@@ -661,9 +664,10 @@ public class Locales {
                                     // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
                                     else
                                     {
-                                        logger.error("LANG: Error while setting property <{}> for element <{}.{}.{}>!\n"
-                                        		+ "Index out of range (0...{})!",
-                                        		pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1);
+                                        logger.log(Level.WARNING,
+                                        		"LANG: Error while setting property <{0}> for element <{1}.{2}.{3}>!\n"
+                                        		+ "Index out of range (0...{4})!",
+                                        		new Object[]{pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1});
                                     }
                                 	// END KGU#252 2016-09-22
                                 }
@@ -680,12 +684,14 @@ public class Locales {
                             				target = method.invoke(target, piece2);
                             				if (target == null)
                             				{
-                            					logger.error("LANG: No Element <{}.{}> found!", pieces.get(0), piece1_2);
+                            					logger.log(Level.WARNING, "LANG: No Element <{0}.{1}> found!",
+                            							new Object[]{pieces.get(0), piece1_2});
                             				}
                             			}
                             			catch (Exception e) {
                             				// FIXME: No idea why this always goes off just on startup
-                            				logger.error("LANG: Trouble accessing <{}.{}>", pieces.get(0), piece1_2);
+                            				logger.log(Level.WARNING, "LANG: Trouble accessing <{0}.{1}>",
+                            						new Object[]{pieces.get(0), piece1_2});
                             			}
                             		}
                             		if (target != null)
@@ -759,11 +765,12 @@ public class Locales {
                             		reason = e.getClass().getSimpleName();
                             		e.printStackTrace();
                             	}
-                                logger.error("LANG: Error while setting property <{}> for element <{}>!\n",
-                                		pieces.get(2), pieces.get(0), pieces.get(1), reason);
+                                logger.log(Level.WARNING, "LANG: Error while setting property <{0}> for element <{1}>!\n",
+                                		new Object[]{pieces.get(2), pieces.get(0), pieces.get(1), reason});
                             }
                         } else {
-                            logger.error("LANG: Field not found <{}.{}>", pieces.get(0), pieces.get(1));
+                            logger.log(Level.WARNING, "LANG: Field not found <{0}.{1}>",
+                            		new Object[]{pieces.get(0), pieces.get(1)});
                         }
                     }
                 }
@@ -802,7 +809,7 @@ public class Locales {
                     method.invoke(_target, new Object[]{Integer.valueOf(keyCode)});
                 }
             } catch (NoSuchMethodError ex) {
-            	logger.warn("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
+            	logger.warning("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
             }
             // END KGU 2016-12-07
         } // END KGU#184 2016-04-24

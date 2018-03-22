@@ -53,7 +53,9 @@ package lu.fisch.structorizer.gui;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
-import java.io.*; 
+import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -68,7 +70,7 @@ public class About extends LangDialog implements ActionListener, KeyListener
 	// START KGU 2018-03-21
 	private static final String CHANGELOG_FILE = "changelog.txt";
 	private static final String LICENSE_FILE = "license.txt";
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(About.class);
+	public static final Logger logger = Logger.getLogger(About.class.getName());
 	// END KGU 2018-03-21
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
@@ -291,7 +293,7 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		}
 		catch (IOException e)
 		{
-			logger.error("Cannot read " + fileName, e);
+			logger.log(Level.SEVERE, "Cannot read " + fileName, e);
 		}
 		finally {
 			if (in != null)

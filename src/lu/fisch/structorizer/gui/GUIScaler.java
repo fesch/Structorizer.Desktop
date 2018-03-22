@@ -50,6 +50,8 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -76,7 +78,7 @@ import lu.fisch.structorizer.io.Ini;
 public class GUIScaler {
 	
 	// START KGU#484 2018-03-21: Issue #463
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(GUIScaler.class);
+	public static final Logger logger = Logger.getLogger(GUIScaler.class.getName());
 	// END KGU#484 2018-03-21
 	/**
 	 * Order of the ToggleButton icons cached here is:<br/>
@@ -179,7 +181,8 @@ public class GUIScaler {
 					try {
 						UIManager.setLookAndFeel(alternativeLaf);
 					} catch (Exception e) {
-						logger.error("scaleComponents(cont, {}, {}): {}", scaleFactor, alternativeLaf, e.toString());
+						logger.log(Level.WARNING, "scaleComponents(cont, {0}, {1}): {3}",
+								new Object[]{scaleFactor, alternativeLaf, e.toString()});
 					}
 				}
 				try {
@@ -190,7 +193,7 @@ public class GUIScaler {
 					// START KGU#484 2018-03-21: Issue #463
 					//System.err.println(ex);
 					//ex.printStackTrace(System.err);
-					logger.error("Error on scaling/setting toggle icons", ex);
+					logger.log(Level.WARNING, "Error on scaling/setting toggle icons", ex);
 					// END KGU#484 2018-03-21
 				}
 				if (alternativeLaf != null) {
@@ -199,7 +202,7 @@ public class GUIScaler {
 					} catch (Exception e) {
 						// START KGU#484 2018-03-21: Issue #463
 						System.err.println("GUIScaler.scaleComponents(): " + e.toString());
-						logger.warn("Intended Look & Feel cannot be set!", e);
+						logger.log(Level.WARNING, "Intended Look & Feel cannot be set!", e);
 						// END KGU#484 2018-03-21
 					}
 				}

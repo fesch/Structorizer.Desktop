@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 
@@ -47,7 +48,7 @@ public class Locale {
     private String filename;
     
 	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Locale.class);
+	public static final Logger logger = Logger.getLogger(Locale.class.getName());
 	// END KGU 2018-03-21
     // START KGU#231 2016-08-04: #220 
     public boolean hasUnsavedChanges = false;
@@ -72,7 +73,7 @@ public class Locale {
             String sectionName = sectionNames[i];
             sectNames.append("\n- " + sectionName);
         }
-        logger.info("{}", sectNames);
+        logger.info(sectNames.toString());
     }
     
     public Locale loadCopyFromFile()

@@ -102,6 +102,8 @@ package lu.fisch.structorizer.gui;
 
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.io.*;
 import java.net.URL;
 import java.awt.*;
@@ -126,9 +128,9 @@ public class Menu extends LangMenuBar implements NSDController
 {
 	public enum PluginType { GENERATOR, PARSER, IMPORTER, CONTROLLER };
 	
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Menu.class);
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(Menu.class.getName());
+	// END KGU#484 2018-03-22
 	private Diagram diagram = null;
 	private NSDController NSDControl = null;
 
@@ -1259,7 +1261,7 @@ public class Menu extends LangMenuBar implements NSDController
 					}
 					catch (Exception ex)
 					{
-						logger.error("Error saving the configuration file ...", ex);
+						logger.log(Level.WARNING, "Error saving the configuration file ...", ex);
 					}
 				}
 			}
@@ -1312,7 +1314,7 @@ public class Menu extends LangMenuBar implements NSDController
 					}
 					catch (Exception ex)
 					{
-						logger.error("Error loading the configuration file ...", ex);
+						logger.log(Level.WARNING, "Error loading the configuration file ...", ex);
 					}
 				}
 				NSDControl.savePreferences(); 

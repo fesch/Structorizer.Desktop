@@ -43,6 +43,8 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.Component;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -77,9 +79,9 @@ import lu.fisch.structorizer.io.Ini;
 @SuppressWarnings("serial")
 public class ElementNames extends Component {
 	
-	// START#484 KGU 2018-03-21: Issue #463
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElementNames.class);
-	// END KGU#484 2018-03-21
+	// START#484 KGU 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(ElementNames.class.getName());
+	// END KGU#484 2018-03-22
 
 	private static ElementNames instance = null;
 	
@@ -317,7 +319,7 @@ public class ElementNames extends Component {
 		}
 		catch (Exception e)
 		{
-			logger.warn("Ini", e);
+			logger.log(Level.WARNING, "Ini", e);
 		}
 	}
 }

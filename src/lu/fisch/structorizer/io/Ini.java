@@ -38,7 +38,8 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2016.07.22      Bugfix: save() method now immediately closes the file
  *      Kay Gürtzig         2016.09.28      First comment line modified (KGU#264)
  *      Kay Gürtzig         2017.03.13      Method getIniDirectory() added to support issue #372
- *      Kay Gürtzig         2017.11.05      Issue #452: Method wasFirstStart() added. 
+ *      Kay Gürtzig         2017.11.05      Issue #452: Method wasFirstStart() added.
+ *      Kay Gürtzig         2018.03.21      Issue #463 Logger introduced, two file reading sequences extracted to method readTextFile()
  *
  ******************************************************************************************************
  *
@@ -55,6 +56,8 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import lu.fisch.structorizer.elements.Element;
 
@@ -73,8 +76,8 @@ public class Ini
 	/** remembers whether the ini file had to be created. */
 	private boolean iniFileCreated = false;
 	// END KGU#456 2017-11-05
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Ini.class);
+	// START KGU#48 2018-03-21: Issue #463
+	public static final Logger logger = Logger.getLogger(Ini.class.getName());
 	// END KGU 2018-03-21
 
 	public static String getDirname()
@@ -121,10 +124,10 @@ public class Ini
 				ini = new Ini();
 			} catch (FileNotFoundException ex)
 			{
-				logger.error(ex.getMessage());
+				logger.severe(ex.getMessage());
 			} catch (IOException ex)
 			{
-				logger.error(ex.getMessage());
+				logger.severe(ex.getMessage());
 			}
 		}
 		return ini;
@@ -162,10 +165,10 @@ public class Ini
 			
 		} catch (Error e)
 		{
-			logger.error(e.getMessage());
+			logger.severe(e.getMessage());
 		} catch (Exception e)
 		{
-			logger.error(e.getMessage());
+			logger.severe(e.getMessage());
 		}
 		return iniDir;
 		
@@ -200,10 +203,10 @@ public class Ini
 			filename = dirname + System.getProperty("file.separator") + ininame;
 		} catch (Error e)
 		{
-			logger.error("probing regular ini directory {}", e.getMessage());
+			logger.warning("probing regular ini directory " + e.getMessage());
 		} catch (Exception e)
 		{
-			logger.error("probing regular ini directory {}", e.getMessage());
+			logger.warning("probing regular ini directory " + e.getMessage());
 		}
 
 		// does the regular file exists?
@@ -213,10 +216,10 @@ public class Ini
 			regularExists = file.exists();
 		} catch (Error e)
 		{
-			logger.error("testing existence of the regular file... {}", e.getMessage());
+			logger.warning("testing existence of the regular file... " + e.getMessage());
 		} catch (Exception e)
 		{
-			logger.error("testing existence of the regular file... {}", e.getMessage());
+			logger.warning("testing existence of the regular file... " + e.getMessage());
 		}
 
 		// alternate INI file
@@ -257,10 +260,10 @@ public class Ini
 			}
 		} catch (Error e)
 		{
-			logger.error(e.getMessage());
+			logger.warning("probing for an alternative ini file... " + e.getMessage());
 		} catch (Exception e)
 		{
-			logger.error(e.getMessage());
+			logger.warning("probing for an alternative ini file... " + e.getMessage());
 		}
 
 		// does the alternative file exist?
@@ -270,10 +273,10 @@ public class Ini
 			alternateExists = file.exists();
 		} catch (Error e)
 		{
-			logger.error("looking for alterntive ini {}", e.getMessage());
+			logger.warning("looking for alterntive ini " + e.getMessage());
 		} catch (Exception e)
 		{
-			logger.error("looking for alterntive ini {}", e.getMessage());
+			logger.warning("looking for alterntive ini " + e.getMessage());
 		}
 
 		// JOptionPane.showMessageDialog(null, filename+" ==> "+regularExists);
@@ -305,17 +308,17 @@ public class Ini
 						// END KGU#456 2017-11-05
 					} catch (Exception e)
 					{
-						logger.error("creating the regular file ", e);
+						logger.log(Level.WARNING, "creating the regular file ", e);
 					}
 				}
 
 				regularExists = true;
 			} catch (Error e)
 			{
-				logger.error(e.getMessage());
+				logger.severe(e.getMessage());
 			} catch (Exception e)
 			{
-				logger.error(e.getMessage());
+				logger.severe(e.getMessage());
 			}
 		} else if (alternateExists)
 		{

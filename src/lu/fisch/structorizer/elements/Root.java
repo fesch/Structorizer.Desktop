@@ -151,6 +151,7 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Enumeration;
@@ -4645,7 +4646,7 @@ public class Root extends Element {
         	}
         	catch (Exception ex)
         	{
-        		logger.error("Root: {}", ex.getMessage());
+        		logger.logp(Level.WARNING, getClass().getName(), "collectParameters", ex.getMessage());
         	}
         }
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
@@ -5038,7 +5039,7 @@ public class Root extends Element {
         }
         catch (Exception e)
         {
-        	logger.warn("Root.saveToINI()", e);
+        	logger.logp(Level.SEVERE, Root.class.getName(), "saveToINI()", "", e);
         }
     }
 

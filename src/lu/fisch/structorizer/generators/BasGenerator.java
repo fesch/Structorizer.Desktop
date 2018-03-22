@@ -106,14 +106,6 @@ public class BasGenerator extends Generator
 	protected int[] labelMap;
 	// END KGU#74 2015-12-18
 	
-	// START KGU 2018-03-21
-	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
-	protected org.slf4j.Logger getLogger()
-	{
-		return this.logger;
-	}
-	// END KGU 2018-03-21
-
 	/************ Fields ***********************/
     @Override
     protected String getDialogTitle()
