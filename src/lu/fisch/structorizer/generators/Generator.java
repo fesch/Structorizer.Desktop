@@ -255,6 +255,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#501 2018-02-22
 	
 	/************ Abstract Methods *************/
+	// START KGU 2018-03-21
+	protected abstract org.slf4j.Logger getLogger();
+	// END KGU 2018-03-21
 	/**
 	 * Should provide a string to be used as title for the export FileChooser
 	 * dialog, e.g. something like "Export Pascal Code ..."
@@ -2875,7 +2878,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			error = e.getLocalizedMessage();
 		}
 		if (!isDone) {
-			System.err.println("Generator.insertFileAPI(" + _language + ", ...): " + error);
+			getLogger().error("Generator.insertFileAPI(" + _language + ", ...): " + error);
 		}
 		return _atLine;
 	}
@@ -2964,7 +2967,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 			}
 			if (!isDone) {
-				System.err.println("Generator.copyFileAPIResource(" + _language + ", ...): " + error);
+				getLogger().error("copyFileAPIResource({}, ...): ", _language, error);
 			}
 		}
 		return isDone;
@@ -3026,7 +3029,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		else
 		{
-			System.err.println("*** Charset " + _charSet + " not available; " + exportCharset + " used.");
+			getLogger().error("*** Charset {} not available; {} used.", _charSet, exportCharset);
 		}
 		
 		boolean overwrite = false;
@@ -3066,7 +3069,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				case '-':	// Handled separately
 					break;
 				default:
-					System.err.println("Unknown generator option -" + ch + " ignored.");
+					getLogger().error("Unknown generator option -{} ignored.", ch);
 				}
 			}
 		}
@@ -3167,7 +3170,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		catch(Exception e)
 		{
-			System.err.println("*** Error while saving the file \"" + _targetFile + "\"!\n" + e.getMessage());
+			getLogger().error("*** Error while saving the file \"{}\"!\n{}", _targetFile, e.getMessage());
 		}
 	} 
 	
@@ -3184,7 +3187,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			outp = new OutputStreamWriter(System.out, exportCharset);
 		} catch (UnsupportedEncodingException e) {
 			// This should never happen since we have checked the Charset before...
-			System.err.println("*** Unsupported Encoding: " + e.getMessage());
+			getLogger().error("*** Unsupported Encoding: {}", e.getMessage());
 			outp = new OutputStreamWriter(System.out, Charset.defaultCharset());
 		}
 		try {
@@ -3192,7 +3195,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			writer.write(code.getText());
 			writer.close();		// May we do this at all with an underlying System.out?
 		} catch (IOException e) {
-			System.err.println("*** Error on writing to stdout, " + e.getMessage());
+			getLogger().error("*** Error on writing to stdout: {}", e.getMessage());
 		}
 	}
 	

@@ -326,6 +326,10 @@ import com.stevesoft.pat.Regex;
  */
 public class Executor implements Runnable
 {
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Executor.class);
+	// END KGU 2018-03-21
+
 	// START KGU#376 2017-04-20: Enh. #389
 	/**
 	 * Context record for an imported Root in order to fetch the defined constants
@@ -1291,11 +1295,11 @@ public class Executor implements Runnable
 						}
 						catch (EvalError ex)
 						{
-							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
+							logger.error("convertStringComparison(\"{}\"): {}", str, ex.getMessage());
 						}
 						catch (Exception ex)
 						{
-							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
+							logger.error("convertStringComparison(\"{}\"): {}", str, ex.getMessage());
 						}
 					} // if (!s.equals(" " + eqOps[op] + " ") && (s.indexOf(eqOps[op]) >= 0))
 				} // for (int op = 0; op < eqOps.length; op++)
@@ -1334,7 +1338,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println("Executor.delay(): " + e.getMessage());
+				logger.error("delay(): {}", e.getMessage());
 			}
 		}
 		waitForNext();
@@ -1400,7 +1404,7 @@ public class Executor implements Runnable
 				try {
 					file.close();
 				} catch (IOException e) {
-					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+					logger.error("openFiles -> {}", e.getLocalizedMessage());
 				}
 			}
 		}
@@ -1441,7 +1445,7 @@ public class Executor implements Runnable
 				try {
 					file.close();
 				} catch (IOException e) {
-					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+					logger.error("openFiles -> {}", e.getLocalizedMessage());
 				}
 			}
 		}
@@ -1871,7 +1875,7 @@ public class Executor implements Runnable
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
 							TypeMapEntry oldEntry = context.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
 							if (oldEntry != null) {
-								System.err.println("Conflicting type entry " + typeEntry.getKey() + " from Includable " + diagrName);
+								logger.warn("Conflicting type entry {} from Includable {}", typeEntry.getKey(), diagrName);
 							}
 						}
 						// END KGU#388 2017-09-18
@@ -2191,7 +2195,7 @@ public class Executor implements Runnable
 			for (Entry<String, TypeMapEntry> typeEntry: context.dynTypeMap.entrySet()) {
 				TypeMapEntry oldEntry = entry.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
 				if (oldEntry != null) {
-					System.err.println("Conflicting type entry " + typeEntry.getKey() + " from Includable " + subRoot.getMethodName());
+					logger.error("Conflicting type entry {} from Includable {}", typeEntry.getKey(), subRoot.getMethodName());
 				}
 			}
 			// END KGU#388 2017-09-18
@@ -2446,7 +2450,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println("Executor.initRootExec(): " + e.getMessage());
+				logger.error("initRootExec(): {}", e.getMessage());
 			}
 		}
 		return trouble;
@@ -2514,8 +2518,9 @@ public class Executor implements Runnable
 				for (int i = 0; i < arguments.length; i++) {
 					args.add(arguments[i].toString());
 				}
-				System.err.println("Executor.getExec(" + controller + ", \"" + procName + "\", "
-						+ args.concatenate(", ") + "): " + e.getMessage());
+				logger.error("getExec({}, \"{}\", {}): {}",
+						controller, procName,
+						args.concatenate(", "), e.getMessage());
 			}
 		}
 		return trouble;
@@ -2552,7 +2557,7 @@ public class Executor implements Runnable
 		} catch (EvalError ex)
 		{
 			//java.io.IOException
-			System.err.println("Executor.initInterpreter(): " + ex.getMessage());
+			logger.error("Interpreter initialization: {}", ex.getMessage());
 		}
 	}
 	
@@ -2889,7 +2894,7 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				System.out.println("*** Sync Error in setPaus()/updateVariableDisplay(): " + ex.toString());
+				logger.error("Sync Error in setPaus()/updateVariableDisplay(): {}", ex.toString());
 			}
 		}
 		// END KGU 2015-10-13
@@ -3011,7 +3016,7 @@ public class Executor implements Runnable
 			}
 			catch (Exception ex)
 			{
-				System.out.println(rawInput + " as string/char: " + ex.getMessage());
+				logger.warn("\"{}\" as string/char: {}", rawInput, ex.getMessage());
 				// START KGU#388 2017-09-18: These explicit errors should get raised
 				throw ex;
 				// END KGU#388 2017-09-18
@@ -3818,7 +3823,7 @@ public class Executor implements Runnable
 				// START KGU#441 2017-10-13: Enh. #437
 				errors.add(varName + ": " + err.getMessage());
 				// END KGU#441 2017-10-13
-				System.err.println("Executor.adoptVarChanges(" + newValues + "): " + err.getMessage());
+				logger.error("adoptVarChanges({}) on {}: {}", newValues, varName, err.getMessage());
 			}
 		}
 		return errors;
@@ -6530,7 +6535,7 @@ public class Executor implements Runnable
 					wait();
 				} catch (Exception e)
 				{
-					System.out.println(e.getMessage());
+					logger.error("{}", e.getMessage());
 				}
 			}
 		}

@@ -563,11 +563,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         Locale locale = locales.getDefaultLocale();
 
         // loop through all sections in order to merge the values
-        ArrayList<String> sectioNames = locales.getSectionNames();
-        for (int i = 0; i < sectioNames.size(); i++) {
+        ArrayList<String> sectionNames = locales.getSectionNames();
+        for (int i = 0; i < sectionNames.size(); i++) {
             // get the name of the section
-            String sectionName = sectioNames.get(i);
-            System.out.println("Section: "+sectionName);
+            String sectionName = sectionNames.get(i);
+            System.out.println("Section: " + sectionName);
 
             ArrayList<String> keys = locale.getKeys(sectionName);
 
@@ -577,7 +577,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 keys.remove(0);
                 if(keys.contains(key))
                 {
-                    System.out.println("    - "+key);
+                    System.out.println("    - " + key);
                     error = true;
                 }
             }

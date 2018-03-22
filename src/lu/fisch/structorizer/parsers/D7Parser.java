@@ -121,6 +121,14 @@ public class D7Parser extends CodeParser
  	public D7Parser() {
  	}
 
+	// START KGU 2018-03-21
+	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
+	protected org.slf4j.Logger getLogger()
+	{
+		return this.logger;
+	}
+	// END KGU 2018-03-21
+	
 	//---------------------- File Filter configuration ---------------------------
 	
 	@Override
@@ -879,8 +887,7 @@ public class D7Parser extends CodeParser
 		} 
 		catch (CharacterCodingException cce) 
 		{
-			String errorMessage = "Exception during character encoding/decoding: " + cce.getMessage();
-			System.out.println(errorMessage);	
+			getLogger().error("Exception during character encoding/decoding: {}", cce.getMessage());
 		}
 		
 		return result;	
@@ -939,7 +946,7 @@ public class D7Parser extends CodeParser
 		}
 		catch (Exception e) 
 		{
-			System.out.println(e.getMessage());
+			getLogger().error(e.getMessage());
 		}	
 		return interm;
 	}
@@ -1611,7 +1618,7 @@ public class D7Parser extends CodeParser
 	 */
 	@Override
 	protected void subclassUpdateRoot(Root root, String sourceFileName) {
-		System.out.println(root.getSignatureString(false));
+		getLogger().trace(root.getSignatureString(false));
 		if (unitName != null && root.isProgram() && root.getMethodName().equals("???")) {
 			root.setText(unitName + DEFAULT_GLOBAL_SUFFIX);
 			root.setInclude();

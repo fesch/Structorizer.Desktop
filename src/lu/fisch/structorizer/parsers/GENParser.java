@@ -60,6 +60,10 @@ import lu.fisch.utils.StringList;
 
 public class GENParser extends DefaultHandler {
 	
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(GENParser.class);
+	// END KGU 2018-03-21
+
 	private static Schema pluginSchema = null;
 	
 	private Vector<GENPlugin> plugins = new Vector<GENPlugin>();
@@ -214,8 +218,7 @@ public class GENParser extends DefaultHandler {
 			}
 			errorMessage += "Error parsing plugin file: " + e + "\n";
 			// END KGU#416 2017-06-20
-			System.err.println(errorMessage);
-			e.printStackTrace();
+			logger.error(errorMessage, e);
 		}
 		
 		return plugins;

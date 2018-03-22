@@ -35,6 +35,7 @@ package lu.fisch.diagrcontrol;
  *      Kay Gürtzig     2017.06.29      Sub-interface FunctionProvidingDiagramControl introduced (for enh. #424))
  *      Kay Gürtzig     2017.10.28      Sub-interface FunctionProvidingDiagramControl integrated and enhanced )
  *      Kay Gürtzig     2018.01.21      Enh. #443, #490: Additional method for retrieval of Java adapter class
+ *      Kay Gürtzig     2018.03.21      Issue #463: console output replaced by standard JDK4 (= j.u.l.) logging
  *
  ******************************************************************************************************
  *
@@ -51,6 +52,8 @@ package lu.fisch.diagrcontrol;
 import java.awt.Color;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Interface for classes that provide an API for being controlled e.g. by executed Structorizer
@@ -237,8 +240,12 @@ public interface DiagramController
     		try {
 				result = method.invoke(this, arguments);
 			} catch (Exception e) {
-				System.err.println("Defective DiagramControl class " + method + ": " + e.toString());;
-				e.printStackTrace();
+				// START KGU#484 2018-03-21: Issue #463
+				//System.err.println("Defective DiagramControl class " + method + ": " + e.toString());
+				//e.printStackTrace();
+				Logger logger = Logger.getLogger(getClass().getName());
+				logger.log(Level.SEVERE, "Defective DiagramControl class " + method + ": " + e.toString(), e);
+				// END KGU#484 2018-03-21
 			}
     	}
     	else {

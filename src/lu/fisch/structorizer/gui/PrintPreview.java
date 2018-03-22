@@ -58,6 +58,9 @@ import javax.swing.event.ChangeListener;
 @SuppressWarnings("serial")
 public class PrintPreview extends LangDialog implements Runnable{
 
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PrintPreview.class);
+	// END KGU 2018-03-21
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Bob Fisch
 	protected JPanel dialogPane;
@@ -363,7 +366,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		pp_pf = prnJob.defaultPage();
 		if (pp_pf.getHeight() == 0 || pp_pf.getWidth() == 0)
 		{
-			System.err.println("Unable to determine default page size");
+			logger.warn("Unable to determine default page size");
 			return;
 		}
 
@@ -526,8 +529,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		}
 		catch (PrinterException e)
 		{
-			e.printStackTrace();
-			System.err.println("Printing error: "+e.toString());
+			logger.error("Printing error: ", e);
 		}
 	}
 	
@@ -571,8 +573,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		}
 		catch (PrinterException ex)
 		{
-			ex.printStackTrace();
-			System.err.println("Printing error: " + ex.toString());
+			logger.error("Printing error: ", ex);
 		}
 		
 	}

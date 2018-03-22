@@ -71,6 +71,9 @@ import lu.fisch.structorizer.locales.LangDialog;
 @SuppressWarnings("serial")
 public class SaveOptionDialog extends LangDialog implements ActionListener, WindowListener {
 	
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SaveOptionDialog.class);
+	// END KGU 2018-03-21
     public boolean goOn = false;
     private Frame frame;
 
@@ -193,12 +196,9 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 				this.cbLicenseFile.addItem(fname.substring(prefix.length(), fname.lastIndexOf(ext)));
 			}
 			
-		} catch (Error e)
-		{
-			System.err.println("SaveOptionDialog: " + e.getMessage());
 		} catch (Exception e)
 		{
-			System.err.println("SaveOptionDialog: " + e.getMessage());
+			logger.error("Searching for license files: {}", e.getMessage());
 		}
 
         // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
@@ -331,7 +331,7 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 			try {
 				licFile.createNewFile();
 			} catch (IOException e) {
-				System.out.println("SaveOptionDialog: " + e.getMessage());
+				logger.error("Creating license file: {}", e.getMessage());
 			}
 			editor = new LicenseEditor(frame, licFile);
 			editor.addWindowListener(this);
@@ -367,12 +367,9 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 					String fname = f.getName();
 					this.cbLicenseFile.addItem(fname.substring(prefix.length(), fname.lastIndexOf(ext)));
 				}
-			} catch (Error ex)
-			{
-				System.err.println("SaveOptionDialog: " + ex.getMessage());
 			} catch (Exception ex)
 			{
-				System.err.println("SaveOptionDialog: " + ex.getMessage());
+				logger.error("Retrieving license files: {}", ex.getMessage());
 			}
 			String licName = ((LicenseEditor)source).getLicenseName(true); 
 			if (!licName.equals("???")) {

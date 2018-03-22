@@ -86,7 +86,6 @@ import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
-import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.ILoop;
@@ -106,6 +105,14 @@ import lu.fisch.utils.StringList;
  */
 public class CParser extends CodeParser
 {
+	
+	// START KGU 2018-03-21
+	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
+	protected org.slf4j.Logger getLogger()
+	{
+		return this.logger;
+	}
+	// END KGU 2018-03-21
 	
 	/** Default diagram name for an importable program diagram with global definitions */
 	private static final String DEFAULT_GLOBAL_NAME = "GlobalDefinitions";
@@ -1374,7 +1381,7 @@ public class CParser extends CodeParser
 			String rule = _reduction.getParent().toString();
 			String ruleName = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			System.out.println(rule + ", " + _parentNode.parent);
+			getLogger().debug("{}, {}", rule, _parentNode.parent);
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 			
 			if (

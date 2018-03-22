@@ -51,6 +51,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.21      Enh. #372: More intelligent Root attribute retrieval
  *      Kay Gürtzig     2017.05.22      Enh. #372: Attribute "origin" added.
  *      Kay Gürtzig     2017.06.20      Issue #404: Attempt to improve validation by providing a schema - in vain
+ *      Kay Gürtzig     2018.03.21      Issue #463: Direct console output replaced with logging
  *
  ******************************************************************************************************
  *
@@ -80,6 +81,10 @@ import lu.fisch.structorizer.io.Ini;
 
 public class NSDParser extends DefaultHandler {
 	
+	// START KGU#484 2018-03-21: Issue #463
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(NSDParser.class);
+	// END KGU#484 2018-03-21
+
 	private static Schema nsdSchema = null;
 
 	private Root root = null;
@@ -123,7 +128,7 @@ public class NSDParser extends DefaultHandler {
 
 	public void warning(SAXParseException exception) throws SAXException
 	{
-		System.out.println(exception);
+		logger.warn("", exception);
 	}
 	// END KGU#400 2017-06-20
 	
@@ -426,7 +431,7 @@ public class NSDParser extends DefaultHandler {
 				}
 				catch (Exception ex)
 				{
-					System.err.println("Wrong loop style in FOR loop: " + style);
+					logger.error("Wrong loop style in FOR loop: {}", style);
 				}
 			}
 			
@@ -834,7 +839,7 @@ public class NSDParser extends DefaultHandler {
 			try {
 				nsdSchema = sFactory.newSchema(schemaLocal);
 			} catch (SAXException ex) {
-				System.out.println(ex);
+				logger.warn("structorizer.xsd", ex);
 			}
 		}
 		// FIXME: This doesn't work properly -maybe it requires full tag qualification
@@ -849,9 +854,8 @@ public class NSDParser extends DefaultHandler {
 		} 
 		catch(Exception e) 
 		{
-			String errorMessage = "Error parsing " + _file + ": " + e;
-			System.err.println(errorMessage);
-			e.printStackTrace();
+			String errorMessage = "Error parsing " + _file + ":";
+			logger.error(errorMessage, e);
 			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
 			if (e instanceof SAXException)
 			{
@@ -903,7 +907,7 @@ public class NSDParser extends DefaultHandler {
 				nsdSchema = sFactory.newSchema(schemaLocal);
 			}
 			catch (SAXException ex) {
-				System.out.println(ex);
+				logger.warn("structorizer.xsd", ex);
 			}
 		}
 		// FIXME: This doesn't work properly
@@ -918,9 +922,8 @@ public class NSDParser extends DefaultHandler {
 		} 
 		catch(Exception e) 
 		{
-			String errorMessage = "Error parsing NSD: " + e;
-			System.err.println(errorMessage);
-			e.printStackTrace();
+			String errorMessage = "Error parsing NSD:";
+			logger.error(errorMessage, e);
 			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
 			if (e instanceof SAXException)
 			{

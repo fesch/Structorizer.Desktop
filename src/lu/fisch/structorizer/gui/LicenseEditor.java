@@ -116,6 +116,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	static protected final int PREFERRED_WIDTH = 500;
 	static protected final int PREFERRED_HEIGHT = 500;
 
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LicenseEditor.class);
+	// END KGU 2018-03-21
+
 	private Frame frame;
 	private RootAttributes rootLicInfo = null;			// License info of the associated diagram if any
 	private JPanel panel;
@@ -665,7 +669,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 					doc.insertString(0, rootLicInfo.licenseText, null);
 					this.undoMan.discardAllEdits();
 				} catch (BadLocationException e) {
-					System.err.println("LicenseEditor.actionPerformed(Reload): " + e.getLocalizedMessage());
+					logger.error("actionPerformed(Reload): {}", e.getLocalizedMessage());
 				}
 			}
 			else {

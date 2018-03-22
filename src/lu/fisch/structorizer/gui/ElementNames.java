@@ -19,14 +19,6 @@
  */
 package lu.fisch.structorizer.gui;
 
-import java.awt.Component;
-import java.util.HashMap;
-
-import lu.fisch.structorizer.elements.Element;
-import lu.fisch.structorizer.elements.For;
-import lu.fisch.structorizer.elements.Root;
-import lu.fisch.structorizer.io.Ini;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -40,6 +32,7 @@ import lu.fisch.structorizer.io.Ini;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.12.14      First Issue on behalf of enhancement request #492
+ *      Kay Gürtzig     2018.03.21      All direct console output replaced with logging
  *
  ******************************************************************************************************
  *
@@ -47,6 +40,14 @@ import lu.fisch.structorizer.io.Ini;
  *      
  *
  ******************************************************************************************************///
+
+import java.awt.Component;
+import java.util.HashMap;
+
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.io.Ini;
 
 /**
  * Lightweight class holding both user-specific GUI designations for Element types
@@ -76,6 +77,10 @@ import lu.fisch.structorizer.io.Ini;
 @SuppressWarnings("serial")
 public class ElementNames extends Component {
 	
+	// START#484 KGU 2018-03-21: Issue #463
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElementNames.class);
+	// END KGU#484 2018-03-21
+
 	private static ElementNames instance = null;
 	
 	private static HashMap<String, Integer> classNameLookUp = new HashMap<String, Integer>();
@@ -312,7 +317,7 @@ public class ElementNames extends Component {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e);
+			logger.warn("Ini", e);
 		}
 	}
 }

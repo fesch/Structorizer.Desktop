@@ -96,6 +96,10 @@ import lu.fisch.structorizer.locales.LangFrame;
 @SuppressWarnings("serial")
 public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener {
 
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Arranger.class);
+	// END KGU 2018-03-21
+	
     // START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
     private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
@@ -268,7 +272,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         }
         catch (Error error)
         {
-        	System.err.println(error.getMessage());
+        	logger.error(error.getMessage());
         }
         // END KGU#2 2015-11-24
 

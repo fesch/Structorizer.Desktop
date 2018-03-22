@@ -100,7 +100,11 @@ public class Locales {
     	{"external", null}
     	};
     
-    // the "default" oder "master" locale
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Locales.class);
+	// END KGU 2018-03-21
+
+	// the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
     
     // structure were all data is being loaded to
@@ -133,18 +137,21 @@ public class Locales {
     {
         Locales locales = Locales.getInstance();
 
-        System.out.println("Files:");
         String[] names = locales.getNames();
+        StringBuilder localeNames = new StringBuilder();
         for (int i = 0; i < names.length; i++) {
             String name = names[i];
-            System.out.println("- "+name);
+            localeNames.append("\n- " + name);
         }
-        
-        System.out.println("\nSections:");
-        for (int i = 0; i < locales.getSectionNames().size(); i++) {
-            String get = locales.getSectionNames().get(i);
-            System.out.println("- "+get);
+        logger.trace("Files:{}", localeNames.toString());
+
+        ArrayList<String> sections = locales.getSectionNames();
+        StringBuilder sectNames = new StringBuilder();
+        for (int i = 0; i < sections.size(); i++) {
+            String get = sections.get(i);
+            sectNames.append("\n- "+get);
         }
+        logger.trace("Sections:{}", sectNames.toString());
     }
 
     private Locales() 
@@ -490,7 +497,7 @@ public class Locales {
             }
             
             if(errorMessage!=null)
-                System.err.println("CONDITION ("+fieldName+":"+value+"): "+errorMessage);
+                logger.error("CONDITION ({}:{}): {}", fieldName, value, errorMessage);
 
             if(fieldValue!=null)
                 result &= value.trim().equalsIgnoreCase(fieldValue.trim());
@@ -601,8 +608,8 @@ public class Locales {
                             }
                         }
                         if (errorMessage != null) {
-                            System.err.println("LANG: Error accessing element <"
-                                    + pieces.get(0) + "." + pieces.get(1) + ">!\n" + errorMessage);
+                            logger.error("LANG: Error accessing element <{}.{}>!\n{}",
+                                    pieces.get(0), pieces.get(1), errorMessage);
                         } else if (field != null) {
                             // END KGU#3 2015-11-03
                             try {
@@ -654,9 +661,9 @@ public class Locales {
                                     // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
                                     else
                                     {
-                                        System.err.println("LANG: Error while setting property <" + pieces.get(3) +
-                                                "> for element <" + pieces.get(0) + "." + pieces.get(1) + "." + piece2 +
-                                                ">!\n" + "Index out of range (0..." + (length-1) + ")!");
+                                        logger.error("LANG: Error while setting property <{}> for element <{}.{}.{}>!\n"
+                                        		+ "Index out of range (0...{})!",
+                                        		pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1);
                                     }
                                 	// END KGU#252 2016-09-22
                                 }
@@ -673,12 +680,12 @@ public class Locales {
                             				target = method.invoke(target, piece2);
                             				if (target == null)
                             				{
-                            					System.err.println("LANG: No Element <" + pieces.get(0) + "." + piece1_2 + "> found!");
+                            					logger.error("LANG: No Element <{}.{}> found!", pieces.get(0), piece1_2);
                             				}
                             			}
                             			catch (Exception e) {
                             				// FIXME: No idea why this always goes off just on startup
-                            				System.err.println("LANG: Trouble accessing <" + pieces.get(0) + "." + piece1_2 + ">");
+                            				logger.error("LANG: Trouble accessing <{}.{}>", pieces.get(0), piece1_2);
                             			}
                             		}
                             		if (target != null)
@@ -752,11 +759,11 @@ public class Locales {
                             		reason = e.getClass().getSimpleName();
                             		e.printStackTrace();
                             	}
-                                System.err.println("LANG: Error while setting property <" + pieces.get(2) + "> for element <"
-                                        + pieces.get(0) + "." + pieces.get(1) + ">!\n" + reason);
+                                logger.error("LANG: Error while setting property <{}> for element <{}>!\n",
+                                		pieces.get(2), pieces.get(0), pieces.get(1), reason);
                             }
                         } else {
-                            System.err.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
+                            logger.error("LANG: Field not found <{}.{}>", pieces.get(0), pieces.get(1));
                         }
                     }
                 }
@@ -795,7 +802,7 @@ public class Locales {
                     method.invoke(_target, new Object[]{Integer.valueOf(keyCode)});
                 }
             } catch (NoSuchMethodError ex) {
-            	System.out.println("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
+            	logger.warn("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
             }
             // END KGU 2016-12-07
         } // END KGU#184 2016-04-24

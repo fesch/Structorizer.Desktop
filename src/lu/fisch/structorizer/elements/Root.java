@@ -4645,7 +4645,7 @@ public class Root extends Element {
         	}
         	catch (Exception ex)
         	{
-        		System.out.println(ex.getMessage());
+        		logger.error("Root: {}", ex.getMessage());
         	}
         }
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
@@ -5038,7 +5038,7 @@ public class Root extends Element {
         }
         catch (Exception e)
         {
-        	System.out.println(e);
+        	logger.warn("Root.saveToINI()", e);
         }
     }
 

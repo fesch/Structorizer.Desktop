@@ -117,6 +117,9 @@ import lu.fisch.structorizer.locales.Locales;
 @SuppressWarnings("serial")
 public class Mainform  extends LangFrame implements NSDController, IRoutinePoolListener
 {
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Mainform.class);
+	// END KGU 2018-03-21
 	public Diagram diagram = null;
 	private Menu menu = null;
 	private Editor editor = null;
@@ -691,11 +694,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
 			catch(Exception e)
 			{
-				e.printStackTrace();
-				System.out.println(e.getMessage());
+				logger.warn("Ini", e);
 			}
 			
-			// analyser (see also Root.saveToIni())
+			// Analyser (see also Root.saveToIni())
 			// START KGU#239 2016-08-12: Code redesign
 			for (int i = 1; i <= Root.numberOfChecks(); i++)
 			{
@@ -710,8 +712,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		catch (Exception e) 
 		{
-			e.printStackTrace();
-			System.out.println(e);
+			logger.warn("Ini", e);
 
 			setPreferredSize(new Dimension(500,500));
 			setSize(500,500);
@@ -849,8 +850,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		catch (Exception e) 
 		{
-			e.printStackTrace();
-			System.out.println(e.getMessage());
+			logger.error("", e);
 		}
 	}
 	

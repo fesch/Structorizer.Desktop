@@ -126,6 +126,9 @@ public class Menu extends LangMenuBar implements NSDController
 {
 	public enum PluginType { GENERATOR, PARSER, IMPORTER, CONTROLLER };
 	
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Menu.class);
+	// END KGU 2018-03-21
 	private Diagram diagram = null;
 	private NSDController NSDControl = null;
 
@@ -1256,8 +1259,7 @@ public class Menu extends LangMenuBar implements NSDController
 					}
 					catch (Exception ex)
 					{
-						System.err.println("Error saving the configuration file ...");
-						ex.printStackTrace();
+						logger.error("Error saving the configuration file ...", ex);
 					}
 				}
 			}
@@ -1310,8 +1312,7 @@ public class Menu extends LangMenuBar implements NSDController
 					}
 					catch (Exception ex)
 					{
-						System.err.println("Error loading the configuration file ...");
-						ex.printStackTrace();
+						logger.error("Error loading the configuration file ...", ex);
 					}
 				}
 				NSDControl.savePreferences(); 

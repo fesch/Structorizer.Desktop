@@ -73,7 +73,8 @@ import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 
-public class XmlGenerator extends Generator {
+public class XmlGenerator extends Generator
+{
 
 	// START KGU#118 2015-12-31: Support for bugfix #82
 	// START KGU#134 2016-01-08: Bugfix #99: mis-spelled attribute name
@@ -82,6 +83,14 @@ public class XmlGenerator extends Generator {
 	// END KGU#134 2016-01-08
 	// END KGU#118 2015-12-31
 	
+	// START KGU 2018-03-21
+	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
+	protected org.slf4j.Logger getLogger()
+	{
+		return this.logger;
+	}
+	// END KGU 2018-03-21
+
 	/************ Fields ***********************/
 	protected String getDialogTitle()
 	{
@@ -508,7 +517,7 @@ public class XmlGenerator extends Generator {
 			}
 		}
 		if (error != null) {
-			System.err.println("XmlGenerator.loadLicenseText(): " + error);
+			getLogger().error("loadLicenseText(): {}", error);
 		}
 		if (content.trim().isEmpty()) {
 			content = null;

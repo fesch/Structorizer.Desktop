@@ -63,6 +63,9 @@ import lu.fisch.structorizer.io.Ini;
 
 public class StrkParser extends DefaultHandler implements INSDImporter
 {
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(NSDParser.class);
+	// END KGU 2018-03-21
 
 	private Root root = null;
 
@@ -455,9 +458,8 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 		} 
 		catch(Exception e) 
 		{
-			String errorMessage = "Error parsing NSD: " + e;
-			System.err.println(errorMessage);
-			e.printStackTrace();
+			String errorMessage = "Error parsing NSD:";
+			logger.error(errorMessage, e);
 			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
 			if (e instanceof SAXException)
 			{

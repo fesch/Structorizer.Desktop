@@ -73,6 +73,9 @@ public class Ini
 	/** remembers whether the ini file had to be created. */
 	private boolean iniFileCreated = false;
 	// END KGU#456 2017-11-05
+	// START KGU 2018-03-21
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Ini.class);
+	// END KGU 2018-03-21
 
 	public static String getDirname()
 	{
@@ -118,10 +121,10 @@ public class Ini
 				ini = new Ini();
 			} catch (FileNotFoundException ex)
 			{
-				System.out.println(ex.getMessage());
+				logger.error(ex.getMessage());
 			} catch (IOException ex)
 			{
-				System.out.println(ex.getMessage());
+				logger.error(ex.getMessage());
 			}
 		}
 		return ini;
@@ -159,10 +162,10 @@ public class Ini
 			
 		} catch (Error e)
 		{
-			System.err.println("Ini.getIniDirectory(): " + e.getMessage());
+			logger.error(e.getMessage());
 		} catch (Exception e)
 		{
-			System.err.println("Ini.getIniDirectory(): " + e.getMessage());
+			logger.error(e.getMessage());
 		}
 		return iniDir;
 		
@@ -197,10 +200,10 @@ public class Ini
 			filename = dirname + System.getProperty("file.separator") + ininame;
 		} catch (Error e)
 		{
-			System.out.println(e.getMessage());
+			logger.error("probing regular ini directory {}", e.getMessage());
 		} catch (Exception e)
 		{
-			System.out.println(e.getMessage());
+			logger.error("probing regular ini directory {}", e.getMessage());
 		}
 
 		// does the regular file exists?
@@ -210,10 +213,10 @@ public class Ini
 			regularExists = file.exists();
 		} catch (Error e)
 		{
-			System.out.println(e.getMessage());
+			logger.error("testing existence of the regular file... {}", e.getMessage());
 		} catch (Exception e)
 		{
-			System.out.println(e.getMessage());
+			logger.error("testing existence of the regular file... {}", e.getMessage());
 		}
 
 		// alternate INI file
@@ -254,10 +257,10 @@ public class Ini
 			}
 		} catch (Error e)
 		{
-			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
 		} catch (Exception e)
 		{
-			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
 		}
 
 		// does the alternative file exist?
@@ -267,10 +270,10 @@ public class Ini
 			alternateExists = file.exists();
 		} catch (Error e)
 		{
-			System.out.println(e.getMessage());
+			logger.error("looking for alterntive ini {}", e.getMessage());
 		} catch (Exception e)
 		{
-			System.out.println(e.getMessage());
+			logger.error("looking for alterntive ini {}", e.getMessage());
 		}
 
 		// JOptionPane.showMessageDialog(null, filename+" ==> "+regularExists);
@@ -302,18 +305,17 @@ public class Ini
 						// END KGU#456 2017-11-05
 					} catch (Exception e)
 					{
-						e.printStackTrace();
-						System.err.println(e.getMessage());
+						logger.error("creating the regular file ", e);
 					}
 				}
 
 				regularExists = true;
 			} catch (Error e)
 			{
-				System.err.println(e.getMessage());
+				logger.error(e.getMessage());
 			} catch (Exception e)
 			{
-				System.err.println(e.getMessage());
+				logger.error(e.getMessage());
 			}
 		} else if (alternateExists)
 		{
