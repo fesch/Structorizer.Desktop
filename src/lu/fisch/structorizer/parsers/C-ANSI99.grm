@@ -1,4 +1,68 @@
-﻿"Name"     = 'ANSI-C99'
+﻿! -----------------------------------------------------------------------
+! ANSI C 99
+!
+! The C programming language evolved at Bell Labs from a series of 
+! programming languages: 'CPL', 'BCPL', and then 'B'. As a result, C's
+! development was a combined effort between Dennis Ritchie, Ken Thompson,
+! and Martin Richards.  
+!
+! C was designed for the creation and implementation of low-level systems
+! such as operating systems, device drivers, firmware, etc... To realize 
+! this goal, the language contains the ability to perform operations 
+! directly on memory and has direct access to system pointers. While this 
+! gives an enormous amount of control and flexibility, it also makes C a 
+! professional programming language - not to be used by an inexperienced
+! programmer.
+!
+! C (and later C++) quickly became the de facto standard for developing
+! operating systems, applications and most other large projects. UNIX as 
+! well as Windows, Linux, and Mac-OS X were developed using this 
+! language (and its successors).
+!
+! More information is available at Dennis Ritchie's website:
+!     http://cm.bell-labs.com/cm/cs/who/dmr/
+!
+! The C grammar is inherently ambigious and requires a large number of
+! LALR(1) states to parse. As a result, the time required by the GOLD 
+! Parser Builder to compile this grammar may be extensive.
+!
+! C is not a line-based grammar with the notable exception of compiler
+! directives (which are preceeded by a '#' character). These are usually not
+! handled directly by the actual parser, but, rather, the pre-processor. 
+! Before the program is analyzed by the parser, C compilers scan the code and
+! act on these commands. The final C program is then passed to the parser.
+! -----------------------------------------------------------------------
+
+! -----------------------------------------------------------------------
+! This grammar is a more or less direct adaptation of the grammar published
+! in Annex A of the ANSI C99 (ISO/IEC 9899:TC3) draft from September 7, 2007.
+! The grammar does not reflect any compiler directives.
+! The preprocessor directives part is disabled because it doesn't go well
+! with the actual grammar for the compiler. The respective non-terminals
+! start with a prefix PP such that they could easily be detected and moved
+! to a preprocessor project.
+! A little trick was used to resolve the conflict between general
+! identifiers, standard type names and those introduced by typedef.
+! For typedef names the pseudo-terminal "UserTypeId" was introduced.
+! This allows the grammar to be processed in the grammar tables but
+! requires a preprocessing replacing all type names introduced by typedef
+! with generic type names "user_type_000" through "user_type_999". Using
+! a map, these substitutions may be reverted after the prepared source
+! file will have passed the parser.
+! Some frequently used types from <stddef.h> like size_t, time_t, wchar_t,
+! and ptrdiff_t have been added to the grammar for convenience.
+! The declaration rules of the adopted grammar allow some modifier
+! combinations like unsigned double that are semantically illegal.
+! To sort out the nonsense combinations will be semantic task of the
+! embedding parser, the grammar can't do that without either inducing
+! giant decision tables or getting too restrictive or even contradictive.
+! The literal section, on the other hand, was somehwat simplified in
+! comparison to Annex A of the ANSI C99 draft of 2007.
+!
+! This grammar file was created for the code import feature of "Structorizer"
+! (a free Nassi-Shneiderman diagram editor see http://structorizer.fisch.lu)
+! -----------------------------------------------------------------------
+"Name"     = 'ANSI-C99'
 "Author"   = 'Kay Gürtzig'
 "Version"  = '1.0'
 "About"    = 'A short description of the grammar'
@@ -91,9 +155,13 @@ Comment Line  = '//'
                    
 <Type Specifier>  ::= void
                    |  char
+                   |  wchar_t           ! Added for convenience (from <stddef.h>)
                    |  short
                    |  int
                    |  long
+                   |  size_t            ! Added for convenience (from <stddef.h>)
+                   |  ptrdiff_t         ! Added for convenience (from <stddef.h>)
+                   |  time_t            ! Added for convenience (from <time.h>)
                    |  float
                    |  double
                    |  signed
