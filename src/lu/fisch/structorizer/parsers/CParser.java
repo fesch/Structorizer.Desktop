@@ -611,7 +611,7 @@ public class CParser extends CodeParser
 	private	final String[][] typeReplacements = new String[][] {
 		{"size_t", "unsigned long"},
 		{"time_t", "unsigned long"},
-		// FIXME to be made configurable
+		// FIXME: to be made configurable
 		{"cob_u8_t", "unsigned int"}
 	};
 	
@@ -1356,7 +1356,7 @@ public class CParser extends CodeParser
 	{
 		root.setProgram(false);	// C programs are functions, primarily
 		this.optionUpperCaseProgName = Root.check(6);
-		// START KGU#407 207-06-22: Enh. #420: Configure the lookup table for comment retrieval
+		// START KGU#407 2017-06-22: Enh. #420: Configure the lookup table for comment retrieval
 		this.registerStatementRuleIds(statementIds);
 		// END KGU#407 2017-06-11
 	}
