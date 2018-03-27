@@ -166,6 +166,8 @@ import java.util.ListIterator;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -202,9 +204,9 @@ import net.iharder.dnd.FileDrop;
 @SuppressWarnings("serial")
 public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener {
 
-	// START#484 KGU 2018-03-21: Issue #463
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Surface.class);
-	// END KGU#484 2018-03-21
+	// START#484 KGU 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(Surface.class.getName());
+	// END KGU#484 2018-03-22
 
 	private Vector<Diagram> diagrams = new Vector<Diagram>();
     // START KGU#305 2016-12-16: Code revision
@@ -407,8 +409,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		if (!errorMessage.isEmpty())
     		{
     			if (!troubles.isEmpty()) { troubles += "\n"; }
-    			troubles += "\"" + filename + "\": " + errorMessage;
-    			logger.error("Arranger failed to load \"{}\": {}", filename, errorMessage);	
+    			String trouble = "\"" + filename + "\": " + errorMessage;
+    			troubles += trouble;
+    			logger.log(Level.INFO, "Arranger failed to load " + trouble);	
     		}
     		else
     		{
@@ -1033,7 +1036,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
 				tmpDirCreated = (new File(targetDir)).mkdirs();
 			} catch (IOException ex) {
-				logger.error("Failed to unzip the arrangement archive: {}", ex.getLocalizedMessage());
+				logger.log(Level.WARNING, "Failed to unzip the arrangement archive: {0}", ex.getLocalizedMessage());
 			}
     		if (!tmpDirCreated) {
 				targetDir = findTempDir();
@@ -1129,10 +1132,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             // START KGU#497 2018-03-19: Enh. #512 - consider the (new) zoom factor
             //BufferedImage bi = new BufferedImage(this.getWidth(), this.getHeight(),BufferedImage.TYPE_4BYTE_ABGR);
             //paint(bi.getGraphics());
-            logger.debug("{} x {}", this.getWidth(), this.getHeight());
             Rect rect = this.getDrawingRect(null);
-            logger.debug("Drawing Rect: {}", rect);
-            logger.debug("zoomed: {} x {}", this.getWidth()*this.zoomFactor, this.getHeight()*this.zoomFactor);
+            if (logger.isLoggable(Level.CONFIG)) {
+                logger.log(Level.CONFIG, "{0} x {1}", new Object[]{this.getWidth(), this.getHeight()});
+                logger.log(Level.CONFIG, "Drawing Rect: {0}", rect);
+                logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{this.getWidth()*this.zoomFactor, this.getHeight()*this.zoomFactor});
+            }
             BufferedImage bi = new BufferedImage(
                     Math.round(this.getWidth() * this.zoomFactor),
                     Math.round(this.getHeight() * this.zoomFactor),
@@ -1713,7 +1718,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			JOptionPane.showMessageDialog(this, msgParseError.getText() + " " + ex.getMessage(), "Paste Error",
     					JOptionPane.ERROR_MESSAGE);
     			
-    			logger.warn(msgParseError.getText(), ex);
+    			logger.log(Level.WARNING, msgParseError.getText(), ex);
     		}
     	}	
     	if (root != null)
@@ -1811,7 +1816,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		this.zoomFactor = Float.parseFloat(Ini.getInstance().getProperty("arrangerZoom", "2.0f"));
     	}
     	catch (NumberFormatException ex) {
-    		logger.error("Corrupt zoom factor in ini", ex);
+    		logger.log(Level.WARNING, "Corrupt zoom factor in ini", ex);
     	}
     	// END KGU#497 2018-02-17
     }// </editor-fold>//GEN-END:initComponents

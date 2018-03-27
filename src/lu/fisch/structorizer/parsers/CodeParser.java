@@ -67,10 +67,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.creativewidgetworks.goldparser.engine.ParserException;
 import com.creativewidgetworks.goldparser.engine.Position;
@@ -105,9 +104,16 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 {
 	/************ Common fields *************/
 	
-	// START KGU 2018-03-21
-	protected abstract Logger getLogger();
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22 Issue #463
+	private Logger logger;
+	protected Logger getLogger()
+	{
+		if (this.logger == null) {
+			this.logger = Logger.getLogger(getClass().getName());
+		}
+		return this.logger;
+	}
+	// END KGU#484 2018-03-22
 	/**
 	 * String field holding the message of error occurred during parsing or build phase
 	 * for later evaluation (empty if there was no error) 
@@ -398,7 +404,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
             // Either execute the code or print any error message
             if (parsedWithoutError) {
 				// ************************************** log file
-				getLogger().info("Parsing complete.");
+				getLogger().info("Parsing complete.");	// System logging
 				log("\nParsing complete.\n\n", false);
 				// ************************************** end log
 				if (this.optionSaveParseTree()) {
@@ -412,7 +418,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 					ow.close();
 					}
 					catch (Exception ex) {
-						getLogger().error("{}", ex.getMessage());
+						getLogger().log(Level.WARNING, "Saving .parsetree.txt failed: {0}", ex.getMessage());
 					}
 				}
 				if (this.optionImportComments) {
@@ -488,7 +494,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			}
 			error += exp;
 			// ************************************** log file
-			getLogger().warn("Parsing failed.");
+			getLogger().warning("Parsing failed.");	// System logging
 			log("\n" + error + "\n\n", true);
 			// ************************************** end log
 		}
@@ -634,10 +640,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			logFile.write(_logContent);
 			done = true;
 		} catch (IOException e) {
-			getLogger().error("{}", e.toString());
+			getLogger().log(Level.WARNING, "Failed to write user log entry.", e);
 		}
 		if (!done && _toSystemOutInstead) {
-			System.out.print(_logContent);
+			// START KGU#484 2018-03-22: Issue #463 
+			//System.out.print(_logContent);
+			getLogger().info(_logContent);
+			// END KGU#484 2018-03-22
 		}
 	}
 	
@@ -1084,7 +1093,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 		catch (Exception e) 
 		{
-			LoggerFactory.getLogger(CodeParser.class).warn("Ini", e);
+			Logger.getLogger(CodeParser.class.getName()).log(Level.WARNING, "Ini", e);
 		}
 	}
 	
@@ -1104,7 +1113,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 		catch (Exception e) 
 		{
-			LoggerFactory.getLogger(CodeParser.class).warn("Ini", e);
+			Logger.getLogger(CodeParser.class.getName()).log(Level.WARNING, "Ini", e);
 		}
 	}
 	

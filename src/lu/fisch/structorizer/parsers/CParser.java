@@ -79,6 +79,7 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -105,14 +106,6 @@ import lu.fisch.utils.StringList;
  */
 public class CParser extends CodeParser
 {
-	
-	// START KGU 2018-03-21
-	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
-	protected org.slf4j.Logger getLogger()
-	{
-		return this.logger;
-	}
-	// END KGU 2018-03-21
 	
 	/** Default diagram name for an importable program diagram with global definitions */
 	private static final String DEFAULT_GLOBAL_NAME = "GlobalDefinitions";
@@ -1381,7 +1374,7 @@ public class CParser extends CodeParser
 			String rule = _reduction.getParent().toString();
 			String ruleName = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			getLogger().debug("{}, {}", rule, _parentNode.parent);
+			getLogger().log(Level.CONFIG, "Ruke {0}, {1}", new Object[]{rule, _parentNode.parent});
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 			
 			if (

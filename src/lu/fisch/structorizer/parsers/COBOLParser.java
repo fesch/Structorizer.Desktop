@@ -123,6 +123,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -188,14 +190,6 @@ public class COBOLParser extends CodeParser
 	public COBOLParser() {
 	}
 
-	// START KGU 2018-03-21
-	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
-	protected org.slf4j.Logger getLogger()
-	{
-		return this.logger;
-	}
-	// END KGU 2018-03-21
-	
 	//---------------------- File Filter configuration -----------------------
 	
 	@Override
@@ -4801,7 +4795,7 @@ public class COBOLParser extends CodeParser
 		}
 		catch (Exception e) 
 		{
-			getLogger().error(" -> ", e);
+			getLogger().log(Level.SEVERE, " -> ", e);
 		}
 		return interm;
 	}
@@ -5648,7 +5642,8 @@ public class COBOLParser extends CodeParser
 			boolean hasRecordTypes = false;
 			CobVar arg = currentProg.getLinkageStorage();
 			while (arg != null && !hasRecordTypes) {
-				getLogger().trace("{}: {}", arg.getName(), arg.deriveTypeName());
+				getLogger().log(Level.CONFIG, "{0}: {1}",
+						new Object[]{arg.getName(), arg.deriveTypeName()});
 				if (arg.hasChild()) {
 					hasRecordTypes = true;
 				}
@@ -5787,7 +5782,7 @@ public class COBOLParser extends CodeParser
 //				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 //				instr.getComment().add("FIXME: Couldn't identify the table variable!");
 //				return;
-				getLogger().warn("Couldn't identify the table variable \"{}\"!", varName);
+				getLogger().log(Level.INFO, "Couldn't identify the table variable \"{0}\"!", varName);
 				// create table and its index for rest of the function
 				table = this.cobTools.new CobVar(1, varName, null, null, null, null, false, false, 0, 99, null);
 			}
@@ -5796,7 +5791,7 @@ public class COBOLParser extends CodeParser
 			//       VARYING identifier-2 does an *additional* increase of identifier-2
 			CobVar indexVar = table.getIndexedBy(0);
 			if (indexVar == null) {
-				getLogger().warn("Couldn't get the index variable for \"{}\"!", table.getName());
+				getLogger().log(Level.INFO, "Couldn't get the index variable for \"{0}\"!", table.getName());
 				indexVar = this.cobTools.new CobVar(varName + "MissingIdx", table);
 			}
 			CobVar indexAdditionalVar = null;
@@ -5804,7 +5799,7 @@ public class COBOLParser extends CodeParser
 				String indexAdditionalName = this.getContent_R(redBody.get(1).asReduction().get(1).asReduction(), "");
 				indexAdditionalVar = this.currentProg.getCobVar(indexAdditionalName);
 				if (indexAdditionalVar == null) {
-					getLogger().warn("couldn't get the index variable \"{}\"!", indexAdditionalName);
+					getLogger().log(Level.INFO, "couldn't get the index variable \"{0}\"!", indexAdditionalName);
 					indexAdditionalVar = this.cobTools.new CobVar(indexAdditionalName, table);
 				}
 			}
@@ -7044,7 +7039,8 @@ public class COBOLParser extends CodeParser
 			break;
 		default:
 			// CHECKME: Should never be reached	anymore
-			getLogger().error("UNRECOGNIZED: Index {} {}", optRed.getParent().getTableIndex(), this.getContent_R(_reduction, ""));
+			getLogger().log(Level.INFO, "UNRECOGNIZED: Index {0} {1}",
+					new Object[]{optRed.getParent().getTableIndex(), this.getContent_R(_reduction, "")});
 			buildPerformCall(bodyRed, _parentNode);
 		}
 		if (loop != null) {
@@ -7060,7 +7056,7 @@ public class COBOLParser extends CodeParser
 				break;
 			default:
 				// FIXME
-				logger.warn("We have no idea how to convert this: {}", this.getContent_R(_reduction, ""));
+				getLogger().log(Level.INFO, "We have no idea how to convert this: {0}", this.getContent_R(_reduction, ""));
 			}
 			_parentNode.addElement((Element)loop);
 		}
@@ -8339,7 +8335,7 @@ public class COBOLParser extends CodeParser
 			String toAdd = _token.asString();
 			String name = _token.getName();
 			if (toAdd.toLowerCase().matches(".*true.*") || toAdd.toLowerCase().matches(".*false.*") || name.toLowerCase().matches(".*true.*") || name.toLowerCase().matches(".*false.*")) {
-				getLogger().trace("CONTENT: {} / {}", name, toAdd);
+				getLogger().log(Level.CONFIG, "CONTENT: {0} / {1}", new Object[]{name, toAdd});
 			}
 			final String trueName = name;
 			// just drop the "zero terminated" and "Unicode" parts here
@@ -8850,7 +8846,7 @@ public class COBOLParser extends CodeParser
 
 					int callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing
 					if (callIndex != sop.startsAt) {
-						getLogger().error("*** Refactoring of {} failed!", sop);
+						getLogger().log(Level.INFO, "*** Refactoring of {0} failed!", sop);
 					}
 					// Now cleanup and get rid of place-holding dummy elements
 					Element doomedEl = null;
@@ -9125,7 +9121,7 @@ public class COBOLParser extends CodeParser
 class CobTools {
 
 	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CobTools.class);
+	public static final Logger logger = Logger.getLogger(CobTools.class.getName());
 	// END KGU 2018-03-21
 	
 	/** COBOL field types */
@@ -10433,7 +10429,7 @@ class CobTools {
 		// START KGU#388 2017-10-04: Enh. #423
 		// usage can be null if this CobVar was created via CobVar(String, String[], String)
 		else if (variable.usage == null) {
-			logger.error("getTypeString({}): variable has unset usage field!", variable);
+			logger.log(Level.INFO, "Variable {0} has unset usage field!", variable);
 			return "";
 		}
 		// END KGU#388 2017-10-04

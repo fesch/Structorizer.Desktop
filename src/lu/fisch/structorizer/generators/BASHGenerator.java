@@ -146,14 +146,6 @@ public class BASHGenerator extends Generator {
 	//StringList varNames = new StringList();
 	// END KGU#6 2016-03-22
 
-	// START KGU 2018-03-21
-	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
-	protected org.slf4j.Logger getLogger()
-	{
-		return this.logger;
-	}
-	// END KGU 2018-03-21
-
 	/************ Fields ***********************/
 	@Override
 	protected String getDialogTitle()

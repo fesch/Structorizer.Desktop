@@ -183,6 +183,8 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -240,9 +242,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#363 2017-03-28
 	
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Diagram.class);
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22: Info #463
+	public static final Logger logger = Logger.getLogger(Diagram.class.getName());
+	// END KGU#484 2018-03-22
 
 	/** Fixed size limitation for the file history */
 	private static final int MAX_RECENT_FILES = 10;
@@ -1212,7 +1214,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		scrollRectToVisible(rect);
     	}
     	catch (Exception ex) {
-    		logger.error("*** {}", ex.toString());
+    		logger.warning(ex.toString());
     	}
     	redraw();	// This is to make sure the drawing rectangles are correct
     }
@@ -1234,8 +1236,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			root.getVarNames();
     		}
     		catch (Exception ex) {
-    			logger.info("*** Possible sync problem: {}", ex.toString());
-    			ex.printStackTrace(System.out);
+    			logger.log(Level.WARNING, "*** Possible sync problem:", ex);
     			// Avoid trouble
     			root.hightlightVars = false;
     		}
@@ -1651,18 +1652,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			//e.printStackTrace();
 			// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 			//System.out.println(e.getMessage());
 			errorMessage = e.getLocalizedMessage();
 			if (errorMessage == null) errorMessage = e.getMessage();
 			if (errorMessage == null || errorMessage.isEmpty()) errorMessage = e.toString();
+			Level level = Level.SEVERE;
 			if (e instanceof java.util.ConcurrentModificationException) {
-				logger.error("openNSD(\"" + _filename + "\"): ", e);
+				level = Level.WARNING;
 			}
-			else {
-				logger.error("openNSD(\"{}\"): {}", _filename, errorMessage);				
-			}
+			logger.log(level, "openNSD(\"" + _filename + "\"): ", e);				
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
@@ -1747,7 +1747,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				try {
 					Ini.getInstance().save();
 				} catch (Exception ex) {
-					logger.error("*** {}", ex.getMessage());
+					logger.log(Level.SEVERE, "Ini.getInstance().save()", ex);
 				}
 				// Refactor the diagrams
 				refactorDiagrams(splitPrefs, true, tmpIgnoreCase);
@@ -2102,7 +2102,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				tmpFile.renameTo(f);
 				// START KGU#509 2018-03-20: Bugfix #526 renameTo may have failed, so better check
 				if (!f.exists() && tmpFile.canRead()) {
-					logger.info("Failed to rename \"{}\" to \"{}\"; trying a workaround...", filename, f.getAbsolutePath());
+					logger.log(Level.WARNING, "Failed to rename \"{0}\" to \"{1}\"; trying a workaround...",
+							new Object[]{filename, f.getAbsolutePath()});
 					String errors = renameFile(tmpFile, f, true);
 					if (!errors.isEmpty()) {
 						JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
@@ -5275,10 +5276,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 				}
 				catch (NumberFormatException ex) {
-					logger.error("setPluginSpecificOptions({}): {} on converting \"{}\" to {} for {}",
-							_gen.getClass().getSimpleName(),
-							ex.getMessage(),
-							valueStr, type, optionKey);
+					logger.log(Level.SEVERE,"{0}: {1} on converting \"{2}\" to {3} for {4}",
+							new Object[]{
+									_gen.getClass().getSimpleName(),
+									ex.getMessage(),
+									valueStr,
+									type,
+									optionKey});
 				}
 			}
 			if (value != null) {
@@ -5461,9 +5465,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 
 			} catch (MalformedURLException e) {
-				logger.error("{}", e.toString());
+				logger.severe(e.toString());
 			} catch (IOException e) {
-				logger.error("{}", e.toString());
+				logger.warning(e.toString());
 			}
 		}
 		return version;
@@ -7078,7 +7082,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					logger.error("EMFSelection: " + e.getMessage());
+					logger.logp(Level.SEVERE, "EMFSelection", "static init", e.getMessage());
 				}
 			}
 

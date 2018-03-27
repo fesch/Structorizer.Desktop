@@ -66,6 +66,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
 import java.util.Map;
+import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
@@ -83,14 +84,6 @@ public class XmlGenerator extends Generator
 	// END KGU#134 2016-01-08
 	// END KGU#118 2015-12-31
 	
-	// START KGU 2018-03-21
-	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
-	protected org.slf4j.Logger getLogger()
-	{
-		return this.logger;
-	}
-	// END KGU 2018-03-21
-
 	/************ Fields ***********************/
 	protected String getDialogTitle()
 	{
@@ -517,7 +510,7 @@ public class XmlGenerator extends Generator
 			}
 		}
 		if (error != null) {
-			getLogger().error("loadLicenseText(): {}", error);
+			getLogger().log(Level.WARNING, "{0}", error);
 		}
 		if (content.trim().isEmpty()) {
 			content = null;

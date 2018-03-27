@@ -96,6 +96,8 @@ package lu.fisch.structorizer.gui;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -117,9 +119,9 @@ import lu.fisch.structorizer.locales.Locales;
 @SuppressWarnings("serial")
 public class Mainform  extends LangFrame implements NSDController, IRoutinePoolListener
 {
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Mainform.class);
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(Mainform.class.getName());
+	// END KGU#484 2018-03-22
 	public Diagram diagram = null;
 	private Menu menu = null;
 	private Editor editor = null;
@@ -326,9 +328,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                                                 Arranger.getInstance().windowClosing(e);
                                             }
                                             // END KGU#49 2017-01-04
+                                            // START KGU#484 2018-03-22: Issue #463
+                                            logger.info("Structorizer " + instanceNo + " shutting down.");
+                                            // START KGU#305 2016-12-16: Code revision                              
                                             System.exit(0);	// This kills all related frames and threads as well!
                                     }
                                     else {
+                                            // START KGU#484 2018-03-22: Issue #463
+                                            logger.info("Structorizer " + instanceNo + " going to dispose.");
+                                            // START KGU#305 2016-12-16: Code revision                              
                                             dispose();
                                     }
                                     // END KGU#49/KGU#66 (#6/#16) 2015-11-14
@@ -694,7 +702,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
 			catch(Exception e)
 			{
-				logger.warn("Ini", e);
+				logger.log(Level.WARNING, "Ini", e);
 			}
 			
 			// Analyser (see also Root.saveToIni())
@@ -712,7 +720,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		catch (Exception e) 
 		{
-			logger.warn("Ini", e);
+			logger.log(Level.WARNING, "Ini", e);
 
 			setPreferredSize(new Dimension(500,500));
 			setSize(500,500);
@@ -850,7 +858,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		catch (Exception e) 
 		{
-			logger.error("", e);
+			logger.log(Level.WARNING, "Ini", e);
 		}
 	}
 	
@@ -997,6 +1005,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
         this.instanceNo = ++instanceCount;
     	// END KGU#326 2017-01-07
         this.isStandalone = standalone;
+        // START KGU#484 2018-03-22: Issue #463
+        logger.info("Structorizer " + this.instanceNo + " starting up.");
         // START KGU#305 2016-12-16: Code revision
         Arranger.addToChangeListeners(this);
         // END KGU#305 2016-12-16

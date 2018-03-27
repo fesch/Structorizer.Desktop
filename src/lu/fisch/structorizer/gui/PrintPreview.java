@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2008.01.27      First Issue
  *      Kay Gürtzig     2017.11.06      Enh. #456 Orientation switching reactivated, margin configuration added.
+ *      Kay Gürtzig     2018.03.22      Issue #463 Console output replaced with logging mechanism
  *
  ******************************************************************************************************
  *
@@ -46,6 +47,8 @@ import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;
 import java.awt.print.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -58,9 +61,9 @@ import javax.swing.event.ChangeListener;
 @SuppressWarnings("serial")
 public class PrintPreview extends LangDialog implements Runnable{
 
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PrintPreview.class);
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(PrintPreview.class.getName());
+	// END KGU#484 2018-03-22
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Bob Fisch
 	protected JPanel dialogPane;
@@ -366,7 +369,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		pp_pf = prnJob.defaultPage();
 		if (pp_pf.getHeight() == 0 || pp_pf.getWidth() == 0)
 		{
-			logger.warn("Unable to determine default page size");
+			logger.warning("Unable to determine default page size");
 			return;
 		}
 
@@ -529,7 +532,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		}
 		catch (PrinterException e)
 		{
-			logger.error("Printing error: ", e);
+			logger.log(Level.WARNING, "Printing error: ", e);
 		}
 	}
 	
@@ -573,7 +576,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		}
 		catch (PrinterException ex)
 		{
-			logger.error("Printing error: ", ex);
+			logger.log(Level.WARNING, "Printing error: ", ex);
 		}
 		
 	}

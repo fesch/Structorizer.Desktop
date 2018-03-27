@@ -32,7 +32,8 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.04.25      First Issue
- *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" supported 
+ *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" supported
+ *      Kay Gürtzig     2018.03.22      Issue #463: Direct console output replaced with logging
  *
  ******************************************************************************************************
  *
@@ -55,6 +56,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
@@ -63,9 +66,9 @@ import lu.fisch.structorizer.io.Ini;
 
 public class StrkParser extends DefaultHandler implements INSDImporter
 {
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(NSDParser.class);
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22: Issue #463 
+	public static final Logger logger = Logger.getLogger(NSDParser.class.getName());
+	// END KGU#484 2018-03-22
 
 	private Root root = null;
 
@@ -459,7 +462,7 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 		catch(Exception e) 
 		{
 			String errorMessage = "Error parsing NSD:";
-			logger.error(errorMessage, e);
+			logger.log(Level.WARNING, errorMessage, e);
 			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
 			if (e instanceof SAXException)
 			{

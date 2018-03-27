@@ -327,7 +327,7 @@ import com.stevesoft.pat.Regex;
 public class Executor implements Runnable
 {
 	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Executor.class);
+	public static final Logger logger = Logger.getLogger(Executor.class.getName());
 	// END KGU 2018-03-21
 
 	// START KGU#376 2017-04-20: Enh. #389
@@ -1295,11 +1295,11 @@ public class Executor implements Runnable
 						}
 						catch (EvalError ex)
 						{
-							logger.error("convertStringComparison(\"{}\"): {}", str, ex.getMessage());
+							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{str, ex.getMessage()});
 						}
 						catch (Exception ex)
 						{
-							logger.error("convertStringComparison(\"{}\"): {}", str, ex.getMessage());
+							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{str, ex.getMessage()});
 						}
 					} // if (!s.equals(" " + eqOps[op] + " ") && (s.indexOf(eqOps[op]) >= 0))
 				} // for (int op = 0; op < eqOps.length; op++)
@@ -1338,7 +1338,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				logger.error("delay(): {}", e.getMessage());
+				logger.log(Level.SEVERE, e.getMessage());
 			}
 		}
 		waitForNext();
@@ -1404,7 +1404,7 @@ public class Executor implements Runnable
 				try {
 					file.close();
 				} catch (IOException e) {
-					logger.error("openFiles -> {}", e.getLocalizedMessage());
+					logger.log(Level.WARNING, "openFiles -> {0}", e.getLocalizedMessage());
 				}
 			}
 		}
@@ -1445,7 +1445,7 @@ public class Executor implements Runnable
 				try {
 					file.close();
 				} catch (IOException e) {
-					logger.error("openFiles -> {}", e.getLocalizedMessage());
+					logger.log(Level.WARNING, "openFiles -> {0}", e.getLocalizedMessage());
 				}
 			}
 		}
@@ -1875,7 +1875,7 @@ public class Executor implements Runnable
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
 							TypeMapEntry oldEntry = context.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
 							if (oldEntry != null) {
-								logger.warn("Conflicting type entry {} from Includable {}", typeEntry.getKey(), diagrName);
+								logger.log(Level.INFO, "Conflicting type entry {0} from Includable {1}", new Object[]{typeEntry.getKey(), diagrName});
 							}
 						}
 						// END KGU#388 2017-09-18
@@ -2195,7 +2195,7 @@ public class Executor implements Runnable
 			for (Entry<String, TypeMapEntry> typeEntry: context.dynTypeMap.entrySet()) {
 				TypeMapEntry oldEntry = entry.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
 				if (oldEntry != null) {
-					logger.error("Conflicting type entry {} from Includable {}", typeEntry.getKey(), subRoot.getMethodName());
+					logger.log(Level.INFO, "Conflicting type entry {0} from Includable {1}", new Object[]{typeEntry.getKey(), subRoot.getMethodName()});
 				}
 			}
 			// END KGU#388 2017-09-18
@@ -2450,7 +2450,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				logger.error("initRootExec(): {}", e.getMessage());
+				logger.log(Level.SEVERE, "sleep(): {0}", e.getMessage());
 			}
 		}
 		return trouble;
@@ -2518,9 +2518,11 @@ public class Executor implements Runnable
 				for (int i = 0; i < arguments.length; i++) {
 					args.add(arguments[i].toString());
 				}
-				logger.error("getExec({}, \"{}\", {}): {}",
-						controller, procName,
-						args.concatenate(", "), e.getMessage());
+				logger.log(Level.SEVERE, "getExec({0}, \"{1}\", {2}): {3}",
+						new Object[]{
+								controller, procName,
+								args.concatenate(", "), e.getMessage()
+						});
 			}
 		}
 		return trouble;
@@ -2557,7 +2559,7 @@ public class Executor implements Runnable
 		} catch (EvalError ex)
 		{
 			//java.io.IOException
-			logger.error("Interpreter initialization: {}", ex.getMessage());
+			logger.log(Level.SEVERE, ex.getMessage());
 		}
 	}
 	
@@ -2894,7 +2896,7 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				logger.error("Sync Error in setPaus()/updateVariableDisplay(): {}", ex.toString());
+				logger.log(Level.SEVERE, "Sync Error in updateVariableDisplay(): {0}", ex.toString());
 			}
 		}
 		// END KGU 2015-10-13
@@ -3016,7 +3018,7 @@ public class Executor implements Runnable
 			}
 			catch (Exception ex)
 			{
-				logger.warn("\"{}\" as string/char: {}", rawInput, ex.getMessage());
+				logger.log(Level.INFO, "\"{0}\" as string/char: {1}", new Object[]{rawInput, ex.getMessage()});
 				// START KGU#388 2017-09-18: These explicit errors should get raised
 				throw ex;
 				// END KGU#388 2017-09-18
@@ -3823,7 +3825,7 @@ public class Executor implements Runnable
 				// START KGU#441 2017-10-13: Enh. #437
 				errors.add(varName + ": " + err.getMessage());
 				// END KGU#441 2017-10-13
-				logger.error("adoptVarChanges({}) on {}: {}", newValues, varName, err.getMessage());
+				logger.log(Level.WARNING, "adoptVarChanges({}) on {0}: {1}", new Object[]{newValues, varName, err.getMessage()});
 			}
 		}
 		return errors;
@@ -6535,7 +6537,7 @@ public class Executor implements Runnable
 					wait();
 				} catch (Exception e)
 				{
-					logger.error("{}", e.getMessage());
+					logger.log(Level.SEVERE, "wait()", e);
 				}
 			}
 		}

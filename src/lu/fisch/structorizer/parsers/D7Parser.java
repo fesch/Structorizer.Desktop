@@ -99,6 +99,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.util.logging.Level;
 
 import com.stevesoft.pat.Regex;
 
@@ -121,14 +122,6 @@ public class D7Parser extends CodeParser
  	public D7Parser() {
  	}
 
-	// START KGU 2018-03-21
-	protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass());
-	protected org.slf4j.Logger getLogger()
-	{
-		return this.logger;
-	}
-	// END KGU 2018-03-21
-	
 	//---------------------- File Filter configuration ---------------------------
 	
 	@Override
@@ -887,7 +880,7 @@ public class D7Parser extends CodeParser
 		} 
 		catch (CharacterCodingException cce) 
 		{
-			getLogger().error("Exception during character encoding/decoding: {}", cce.getMessage());
+			getLogger().log(Level.WARNING, "Exception during character encoding/decoding: {0}", cce.getMessage());
 		}
 		
 		return result;	
@@ -946,7 +939,7 @@ public class D7Parser extends CodeParser
 		}
 		catch (Exception e) 
 		{
-			getLogger().error(e.getMessage());
+			getLogger().severe(e.getMessage());
 		}	
 		return interm;
 	}
@@ -1618,7 +1611,7 @@ public class D7Parser extends CodeParser
 	 */
 	@Override
 	protected void subclassUpdateRoot(Root root, String sourceFileName) {
-		getLogger().trace(root.getSignatureString(false));
+		getLogger().config(root.getSignatureString(false));
 		if (unitName != null && root.isProgram() && root.getMethodName().equals("???")) {
 			root.setText(unitName + DEFAULT_GLOBAL_SUFFIX);
 			root.setInclude();

@@ -60,6 +60,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -116,9 +118,9 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	static protected final int PREFERRED_WIDTH = 500;
 	static protected final int PREFERRED_HEIGHT = 500;
 
-	// START KGU 2018-03-21
-	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LicenseEditor.class);
-	// END KGU 2018-03-21
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(LicenseEditor.class.getName());
+	// END KGU#484 2018-03-21
 
 	private Frame frame;
 	private RootAttributes rootLicInfo = null;			// License info of the associated diagram if any
@@ -669,7 +671,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 					doc.insertString(0, rootLicInfo.licenseText, null);
 					this.undoMan.discardAllEdits();
 				} catch (BadLocationException e) {
-					logger.error("actionPerformed(Reload): {}", e.getLocalizedMessage());
+					logger.log(Level.WARNING, "Reload: {0}", e.getLocalizedMessage());
 				}
 			}
 			else {
