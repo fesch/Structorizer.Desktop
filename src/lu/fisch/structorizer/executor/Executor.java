@@ -151,7 +151,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
  *      Kay Gürtzig     2018.02.11      Bugfix #509: Built-in function copyArray had a defective definition
  *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
- *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext 
+ *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext
+ *      Kay Gürtzig     2018.04.03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body) 
  *
  ******************************************************************************************************
  *
@@ -5724,40 +5725,37 @@ public class Executor implements Runnable
 					{
 						//cw++;
 						element.executed = true;
-					}
-					// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
-					//cond = context.interpreter.eval(convertStringComparison(condStr));
-					//Object cond = context.interpreter.eval(condStr);
-					String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
-					cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
-					// END KGU#417 2017-06-30
-					if (cond == null || !(cond instanceof Boolean))
-					{
-						// START KGU#197 2016-07-27: Localization support
-						//trouble = "<"
-						//		+ condStr
-						//		+ "> is not a correct or existing expression.";
-						trouble = control.msgInvalidBool.getText().replace("%1", condStr);
-						// END KGU#197 2016-07-27
-					}
+						// START KGU#515 2018-04-03: The following must not be done if the body failed (had erroneously resided after this if)
+						// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
+						String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
+						cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
+						// END KGU#417 2017-06-30
+						if (cond == null || !(cond instanceof Boolean))
+						{
+							// START KGU#197 2016-07-27: Localization support
+							trouble = control.msgInvalidBool.getText().replace("%1", condStr);
+							// END KGU#197 2016-07-27
+						}
 
-					// delay this element
-					// START KGU 2015-10-12: This remains an important breakpoint position
-					checkBreakpoint(element);
-					// END KGU 2015-10-12
-					element.waited = false;
-					delay();	// Symbolizes the loop condition check time
-					element.waited = true;
+						// delay this element
+						// START KGU 2015-10-12: This remains an important breakpoint position
+						checkBreakpoint(element);
+						// END KGU 2015-10-12
+						element.waited = false;
+						delay();	// Symbolizes the loop condition check time
+						element.waited = true;
 
-					// START KGU#156 2016-03-11: Enh. #124
-					element.addToExecTotalCount(1, true);		// For the condition evaluation
-					//END KGU#156 2016-03-11
+						// START KGU#156 2016-03-11: Enh. #124
+						element.addToExecTotalCount(1, true);		// For the condition evaluation
+						// END KGU#156 2016-03-11
+						// END KGU#515 2018-04-03
+					}
 					
 				// START KGU#70 2015-11-09: Condition logically incorrect - execution often got stuck here 
 				//} while (!(n.toString().equals("true") && trouble.equals("") && (stop == false)));
 				// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 				//} while (!(n.toString().equals("true")) && trouble.equals("") && (stop == false))
-				} while (!(cond.toString().equals("true")) && trouble.equals("") && (stop == false) &&
+				} while (cond != null && !(cond.toString().equals("true")) && trouble.equals("") && (stop == false) &&
 						!context.returned && leave == 0);
 				// END KGU#77/KGU#78 2015-11-25
 				// END KGU#70 2015-11-09

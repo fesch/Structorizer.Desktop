@@ -123,6 +123,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.03.15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
  *                                      Bugfix #523: Defective undo and redo of include_list changes mended
  *                                      KGU#505: Analyser now copes better with lists of record access expressions
+ *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
  *      
  ******************************************************************************************************
  *
@@ -2932,6 +2933,12 @@ public class Root extends Element {
     		{
     			analyse_17((Parallel) ele, _errors);
     		}
+			// START KGU#514 2018-04-03: Bugfix #528 (for Instructions, it has already been done above)
+    		else if (check(24) && !eleClassName.equals("Instruction")) {
+    			analyse_24(ele, _errors, _types);
+    		}
+			// END KGU#514 2018-04-03
+
 
     		// continue analysis for subelements
     		if (ele instanceof ILoop)
@@ -3989,64 +3996,8 @@ public class Root extends Element {
 							}
 						}
 					}
-					// START KGU#388 2017-09-29: Enh. #423
-					int posDot = -1;
-					String path = "";
-					TypeMapEntry varType = null;
-					while ((posDot = tokens.indexOf(".", posDot + 1)) > 0 && posDot < nTokens - 1) {
-						String before = tokens.get(posDot - 1);
-						// Jump in front of an index access
-						// FIXME: This is just a rough heuristics producing nonsense in case of nested expressions with indices
-						int posBrack = -1;
-						if (before.equals("]") && (posBrack = tokens.lastIndexOf("[", posDot)) > 0) {
-							before = tokens.get(posBrack - 1);
-						}
-						String after = tokens.get(posDot+1);
-						if (!Function.testIdentifier(after, null) || !Function.testIdentifier(before, null)) {
-							path = "";
-							varType = null;
-							continue;
-						}
-						// START KGU#507 2018-03-15 - nonsense from expressions like OUTPUT otherDay.day, ".", otherDay.month, ".", otherDay.year 
-						else if (!path.endsWith("]") && !path.endsWith(before)) {
-							path = "";
-							varType = null;
-						}
-						// END KGU#507 2018-03-15
-						if ((path.isEmpty() || varType == null) && Function.testIdentifier(before, null)) {
-							if (path.isEmpty()) {
-								path = before;
-							}
-							varType = _types.get(path);
-						}
-						if (varType != null && posBrack > 0 && varType.isArray()) {
-							String arrTypeStr = varType.getCanonicalType(true, false);
-							if (arrTypeStr != null && arrTypeStr.startsWith("@")) {
-								// Try to get the element type
-								// START KGU#502 2018-02-12: Bugfix #518 - seemed inconsistent to check the field typeMap here
-								//varType = typeMap.get(":" + arrTypeStr.substring(1));
-								varType = _types.get(":" + arrTypeStr.substring(1));
-								// END KGU#502 2018-02-12
-							}
-						}
-						if (varType == null || !varType.isRecord() || !varType.getComponentInfo(false).containsKey(after)) {
-							if (posBrack > 0) {
-								path += tokens.concatenate("", posBrack, posDot);
-							}
-							//error  = new DetectedError("Record type «"+typeName+"» hasn't got a component «"+compName+"»!", _instr);
-							addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _instr), 24);
-							varType = null;
-							path += "." + after;
-						}
-						else if (posDot + 2 < nTokens && tokens.get(posDot+2).equals(".")) {
-							path += "." + after;
-							varType = varType.getComponentInfo(false).get(after);
-						}
-						else {
-							varType = null;
-							path = "";
-						}
-					}
+					// START KGU#388 2017-09-29: Enh. #423 (KGU#514 2018-04-03: extracted for bugfix #528)
+					analyse_24_tokens(_instr, _errors, _types, tokens);
 					// END KGU#388 2017-09-29
 
 				}
@@ -4056,6 +4007,78 @@ public class Root extends Element {
 		// START KGU#388 2017-09-17: Enh. #423 record analysis support
 		_instr.updateTypeMap(_types);
 		// END KGU#388 2017-09-17
+	}
+
+	/**
+	 * CHECK 24: does the detailed record component access analysis for the given token sequence
+	 * @param _ele - the originating element
+	 * @param _errors - global error list
+	 * @param _types - type definitions (key starting with ":") and declarations so far
+	 * @param _tokens - tokens of the current lne, ideally without any instruction keywords
+	 */
+	private void analyse_24_tokens(Element _ele, Vector<DetectedError> _errors,
+			HashMap<String, TypeMapEntry> _types, StringList _tokens) {
+		int nTokens = _tokens.count();
+		int posDot = -1;
+		String path = "";
+		TypeMapEntry varType = null;
+		while ((posDot = _tokens.indexOf(".", posDot + 1)) > 0 && posDot < nTokens - 1) {
+			String before = _tokens.get(posDot - 1);
+			// Jump in front of an index access
+			// FIXME: This is just a rough heuristics producing nonsense in case of nested expressions with indices
+			int posBrack = -1;
+			if (before.equals("]") && (posBrack = _tokens.lastIndexOf("[", posDot)) > 0) {
+				before = _tokens.get(posBrack - 1);
+			}
+			String after = _tokens.get(posDot+1);
+			if (!Function.testIdentifier(after, null) || !Function.testIdentifier(before, null)) {
+				path = "";
+				varType = null;
+				continue;
+			}
+			// START KGU#507 2018-03-15 - nonsense from expressions like OUTPUT otherDay.day, ".", otherDay.month, ".", otherDay.year 
+			else if (!path.endsWith("]") && !path.endsWith(before)) {
+				path = "";
+				varType = null;
+			}
+			// END KGU#507 2018-03-15
+			if ((path.isEmpty() || varType == null) && Function.testIdentifier(before, null)) {
+				if (path.isEmpty()) {
+					path = before;
+				}
+				varType = _types.get(path);
+			}
+			if (varType != null && posBrack > 0 && varType.isArray()) {
+				String arrTypeStr = varType.getCanonicalType(true, false);
+				if (arrTypeStr != null && arrTypeStr.startsWith("@")) {
+					// Try to get the element type
+					// START KGU#502 2018-02-12: Bugfix #518 - seemed inconsistent to check the field typeMap here
+					//varType = typeMap.get(":" + arrTypeStr.substring(1));
+					varType = _types.get(":" + arrTypeStr.substring(1));
+					// END KGU#502 2018-02-12
+				}
+			}
+			if (varType == null || !varType.isRecord() || !varType.getComponentInfo(false).containsKey(after)) {
+				if (posBrack > 0) {
+					path += _tokens.concatenate("", posBrack, posDot);
+				}
+				//error  = new DetectedError("Record type «"+typeName+"» hasn't got a component «"+compName+"»!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _ele), 24);
+				varType = null;
+				path += "." + after;
+			}
+			// START KGU#514 2018-04-03: Bugfix #528 - went wrong for e.g. rec.arr[idx].comp
+			//else if (posDot + 2 < nTokens && tokens.get(posDot+2).equals(".")) {
+			else if (posDot + 2 < nTokens && (_tokens.get(posDot+2).equals(".") || _tokens.get(posDot+2).equals("["))) {
+			// END KGU#514 2018-04-03
+				path += "." + after;
+				varType = varType.getComponentInfo(false).get(after);
+			}
+			else {
+				varType = null;
+				path = "";
+			}
+		}
 	}
 	
 	/**
@@ -4194,6 +4217,24 @@ public class Root extends Element {
 		// END KGU#376 2017-07-01
 
 	}
+	
+	// START KGU#514 2018-04-03: Bugfix #528
+	/**
+	 * CHECK #24: correct record access
+	 * @param _ele - element to be analysed
+	 * @param _errors - global error list
+	 * @param _types - type definitions (key starting with ":") and declarations so far
+	 */
+	private void analyse_24(Element _ele, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types)
+	{
+		StringList unbrText = _ele.getUnbrokenText();
+		for (int i = 0; i < unbrText.count(); i++) {
+			StringList tokens = Element.splitLexically(unbrText.get(i), true);
+			Element.cutOutRedundantMarkers(tokens);
+			analyse_24_tokens(_ele, _errors, _types, tokens);
+		}
+	}
+	// END KGU#514 2018-04-03
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**

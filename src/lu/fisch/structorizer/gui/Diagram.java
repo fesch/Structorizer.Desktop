@@ -149,7 +149,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
  *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
  *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes
- *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file  
+ *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file
+ *      Kay Gürtzig     2018.04.03      KGU#514: analyse() call on mere mouse clicking avoided
  *
  ******************************************************************************************************
  *
@@ -930,6 +931,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	{
     		//System.out.println("Released");
     		boolean doDraw = false;
+    		// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528 
+    		boolean doReanalyse = false;
+    		// END KGU#514 2018-04-03
 
     		if(selX!=-1 && selY!=-1 && selectedDown!=null)
     		{
@@ -966,6 +970,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								return;
 							}
 							NSDControl.doButtons();
+				    		// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528 
+				    		doReanalyse = true;
+				    		// END KGU#514 2018-04-03
 							
 							// START KGU401 2017-05-17: Issue #405
 							selectedDown.resetDrawingInfoDown();
@@ -1020,7 +1027,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(doDraw==true)
 			{
 				redraw();
-				analyse();
+	    		// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528
+				//analyse();
+	    		if (doReanalyse) {
+	    			analyse();
+	    		}
+	    		// END KGU#514 2018-04-03
 			}
 
 			if (NSDControl!=null) NSDControl.doButtons();
