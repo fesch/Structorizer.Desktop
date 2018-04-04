@@ -55,6 +55,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.18      Bugfix #386: New method isNoOP().
  *      Kay Gürtzig     2017.05.21      Enh. #372: Additional field for RootAttributes to be cached on undoing/redoing
  *      Kay Gürtzig     2017.07.01      Enh. #389: Additional field for caching the includeList on undoing/redoing 
+ *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *
  ******************************************************************************************************
  *
@@ -103,23 +104,29 @@ public class Subqueue extends Element implements IElementSequence {
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0;
-		this.y0Children.clear();
+		// START KGU#516 2018-04-04: Directly to work on fields was not so good an idea for re-entrance
+		//this.y0Children.clear();
+        // END KGU#516 2018-04-04
 		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		Rect subrect = new Rect();
 		
-		rect0.top = 0;
-		rect0.left = 0;
-		rect0.right = 0;
-		rect0.bottom = 0;
+		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+		//rect0.top = 0;
+		//rect0.left = 0;
+		//rect0.right = 0;
+		//rect0.bottom = 0;
+		Rect rect0 = new Rect();
+		Vector<Integer> y0Children = new Vector<Integer>();
+        // END KGU#516 2018-04-04
 		
 		if (children.size() > 0) 
 		{
 			for(int i = 0; i < children.size(); i++)
 			{
 				// START KGU#136 2016-03-01: Bugfix #97
-				this.y0Children.addElement(rect0.bottom);
+				y0Children.addElement(rect0.bottom);
 				// END KGU#136 2016-03-01
 				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
 				rect0.right = Math.max(rect0.right, subrect.right);
@@ -129,7 +136,7 @@ public class Subqueue extends Element implements IElementSequence {
 		else
 		{
 			// START KGU#136 2016-03-01: Bugfix #97
-			this.y0Children.addElement(rect0.bottom);
+			y0Children.addElement(rect0.bottom);
 			// END KGU#136 2016-03-01
 			rect0.right = 2*Element.E_PADDING;
 			FontMetrics fm = _canvas.getFontMetrics(Element.font);
@@ -137,6 +144,10 @@ public class Subqueue extends Element implements IElementSequence {
 
 		}
 		
+		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+		this.rect0 = rect0;
+		this.y0Children = y0Children;
+        // END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01

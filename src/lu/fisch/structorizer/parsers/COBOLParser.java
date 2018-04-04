@@ -84,7 +84,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.12.05      Bugfix #483: mild version of disabled optionImportVarDecl,
  *                                      Bugfix #486: Return mechanism in imported functions enforced
  *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled
- *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed. 
+ *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
+ *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
  *
  ******************************************************************************************************
  *
@@ -5414,7 +5415,7 @@ public class COBOLParser extends CodeParser
 			//System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
 			// TODO: Identify whether fileAPI s to be used.
 			Reduction secRed = _reduction.get(1).asReduction();	// display body
-			// TODO: Define a specific routine to extract the exressions
+			// TODO: Define a specific routine to extract the expressions
 			//String content = this.appendDisplayBody(secRed, "");
 			String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
 			if (content.startsWith(", ")) {
@@ -8127,6 +8128,16 @@ public class COBOLParser extends CodeParser
 				_content += "(" + arg1 + " mod " + arg2 + ")";
 			}
 		}
+		// START KGU#513 2018-04-04: Display clauses had been misinterpreted as expression lists.
+		else if (ruleHead.equals("<display_clause>") || ruleHead.equals("<display_upon>")) {
+			String displayClause = "";
+			for (int i = 0; i < _reduction.size(); i++) {
+				displayClause = this.getContentToken_R(_reduction.get(i), displayClause, "_", displayClause.isEmpty());
+			}
+			displayClause = displayClause.replace(" ", "_").replace("__","_");
+			_content += displayClause;
+		}
+		// END KGU#513 2018-04-04
 		else {
 			boolean hasRefMod = false;
 			int posSub = -1;
@@ -8320,13 +8331,24 @@ public class COBOLParser extends CodeParser
 			else {
 				String sepa = "";
 				String toAdd = getContent_R(_token.asReduction(), "", _separator);
-				if (!_isFirst && !_separator.isEmpty()) {
-					sepa = _separator;
+				// START KGU#513 2018-04-04: Avoids end-standing separators with empty rules at recursion end
+				//if (!_isFirst && !_separator.isEmpty()) {
+				//	sepa = _separator;
+				//}
+				//else if (!toAdd.isEmpty() && _content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
+				//	sepa = " ";
+				//}
+				//_content += sepa + toAdd;
+				if (!toAdd.trim().isEmpty()) {
+					if (!_isFirst && !_separator.isEmpty()) {
+						sepa = _separator;
+					}
+					else if (_content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
+						sepa = " ";
+					}
+					_content += sepa + toAdd;
 				}
-				else if (!toAdd.isEmpty() && _content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
-					sepa = " ";
-				}
-				_content += sepa + toAdd;
+				// END KGU#513 2018-04-04
 			}
 		}
 		break;

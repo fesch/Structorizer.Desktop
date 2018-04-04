@@ -11,7 +11,7 @@ Known issues:
 - C import fails if the code contains function pointers.
 - Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version: 3.28-02 (2018-04-03)
+Current development version: 3.28-02 (2018-04-04)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -27,7 +27,8 @@ Current development version: 3.28-02 (2018-04-03)
 - 02: Bugfix #526: On re-saving the renaming of the temp. file may fail (Linux) <2> 
 - 02: Issue #527: More helpful Executor messages on index range violations <2>
 - 02: Issue #463: Console output replaced by configurable logging [R. Schmidt]2
-- 02: Bugfix #528: Analyser check of record component access mended <2> 
+- 02: Bugfix #528: Analyser check of record component access mended <2>
+- 02: Bugfix #529: Concurrency on drawing diagrams during execution solved <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

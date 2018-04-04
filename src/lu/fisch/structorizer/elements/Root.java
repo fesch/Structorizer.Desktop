@@ -124,6 +124,7 @@ package lu.fisch.structorizer.elements;
  *                                      Bugfix #523: Defective undo and redo of include_list changes mended
  *                                      KGU#505: Analyser now copes better with lists of record access expressions
  *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
+ *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      
  ******************************************************************************************************
  *
@@ -761,12 +762,19 @@ public class Root extends Element {
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0.copy();
-		pt0Sub.x = 0;
+		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
+		//pt0Sub.x = 0;
+		// END KGU#516 2018-04-04
 		// END KGU#136 2016-03-01
 		
 		//  KGU#136 2016-02-25: Bugfix #97 - all rect references replaced by rect0
-		rect0.top = 0;
-		rect0.left = 0;
+		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+		//rect0.top = 0;
+		//rect0.left = 0;
+		Rect rect0 = new Rect();
+		Rect subrect0 = new Rect();
+		Point pt0Sub = new Point();
+		// END KGU#516 2018-04-04
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		Font titleFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
@@ -838,6 +846,11 @@ public class Root extends Element {
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
 		
+		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+		this.rect0 = rect0;
+		this.pt0Sub = pt0Sub;
+		this.subrect0 = subrect0;
+		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01

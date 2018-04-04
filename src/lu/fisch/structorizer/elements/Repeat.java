@@ -49,6 +49,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *      Kay Gürtzig     2016.12.12      Bugfix #308 in haveOuterRectDrawn() - must be drawn in collapsed mode
  *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
+ *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *
  ******************************************************************************************************
  *
@@ -148,9 +149,13 @@ public class Repeat extends Element implements ILoop {
 		// Just delegate the basics to Instruction
 		// START KGU#453 2017-11-01: Bugfix #447 - no need to show possible backslashes at end
 		//rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
-		rect0 = Instruction.prepareDraw(_canvas, this.getCuteText(false), this);
+		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+		//rect0 = Instruction.prepareDraw(_canvas, this.getCuteText(false), this);
+		Rect rect0 = Instruction.prepareDraw(_canvas, this.getCuteText(false), this);
+		Point pt0Body = new Point();
+		// END KGU#516 2018-04-04
 		// END KGU#453 2017-11-01
-		this.pt0Body.y = rect0.bottom;	// height of the footer
+		pt0Body.y = rect0.bottom;	// height of the footer
 
 		
 		// START KGU#136 2016-02-27: Bugfix #97 - field replaced by local variable
@@ -162,9 +167,13 @@ public class Repeat extends Element implements ILoop {
 		rect0.right = Math.max(rect0.right, rectBody.right+ 2*E_PADDING/2);
 		rect0.bottom += rectBody.bottom;		
 		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
-		this.pt0Body.x = 2*E_PADDING/2 - 1;		// FIXME: Fine tuning!
+		pt0Body.x = 2*E_PADDING/2 - 1;		// FIXME: Fine tuning!
 		// END KGU#136 2016-03-01
 
+		// START KGU#516 2018-04-04: Issue #529 - Reduced critical section
+		this.rect0 = rect0;
+		this.pt0Body = pt0Body;
+        // END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01
