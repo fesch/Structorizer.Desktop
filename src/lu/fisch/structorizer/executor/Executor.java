@@ -2781,8 +2781,10 @@ public class Executor implements Runnable
 					}
 				}
 			} catch (EvalError e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				logger.log(Level.WARNING, "Execution context change for variable " + varName, e);
+				// END KGU#484 2018-04-05
 			}
 		}
 		return somethingCopied;

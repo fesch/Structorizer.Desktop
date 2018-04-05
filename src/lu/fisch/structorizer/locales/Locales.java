@@ -467,7 +467,10 @@ public class Locales {
                 catch (Exception e) 
                 {
                     errorMessage = e.getMessage();
-                    e.printStackTrace();
+                    // START KGU#484 2018-04-05: Issue #463
+                    //e.printStackTrace();
+                    logger.log(Level.WARNING, "Field access to "+ fieldName + " failed.", e);
+                    // END KGU#484 2018-04-05
                 }
                 if (field == null) {
                     // Now try on inherited PUBLIC fields
@@ -480,20 +483,26 @@ public class Locales {
                     catch (Exception e) 
                     {
                         errorMessage = e.getMessage();
-                        e.printStackTrace();
+                        // START KGU#484 2018-04-05: Issue #463
+                        //e.printStackTrace();
+                        logger.log(Level.WARNING, "Component access failed.", e);
+                        // END KGU#484 2018-04-05
                     }
                 }
-                if(field!=null)
+                if (field!=null)
                 {
                     try
                     {
-                        if(field.get(component)!=null)
+                        if (field.get(component) != null)
                             fieldValue = field.get(component).toString();
                     }
                     catch(Exception e)
                     {
                         errorMessage = e.getMessage();
-                        e.printStackTrace();
+                        // START KGU#484 2018-04-05: Issue #463
+                        //e.printStackTrace();
+                        logger.log(Level.WARNING, "Field access to "+ component + " failed.", e);
+                        // END KGU#484 2018-04-05
                     }
                 }
             }
@@ -763,7 +772,10 @@ public class Locales {
                             	String reason = e.getMessage();
                             	if (reason == null) {
                             		reason = e.getClass().getSimpleName();
-                            		e.printStackTrace();
+                            		// START KGU#484 2018-04-05: Issue #463
+                            		//e.printStackTrace();
+                            		logger.log(Level.WARNING, "", e);	// FIXME: really that important?
+                            		// END KGU#484 2018-04-05
                             	}
                                 logger.log(Level.WARNING, "LANG: Error while setting property <{0}> for element <{1}>!\n",
                                 		new Object[]{pieces.get(2), pieces.get(0), pieces.get(1), reason});

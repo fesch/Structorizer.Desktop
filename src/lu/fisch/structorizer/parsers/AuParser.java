@@ -54,6 +54,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import com.creativewidgetworks.goldparser.engine.Group;
 import com.creativewidgetworks.goldparser.engine.Parser;
@@ -277,8 +279,10 @@ public class AuParser extends GOLDParser {
     			}
     			logFile.write("\n");
     		} catch (IOException e) {
-    		// TODO Auto-generated catch block
-    		e.printStackTrace();
+    			// START KGU#484 2018-04-05: Issue #463
+    			//e.printStackTrace();
+    			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Parser logging failed.", e);
+    			// END KGU#484 2018-04-05
     		}
     	}
     	return false;

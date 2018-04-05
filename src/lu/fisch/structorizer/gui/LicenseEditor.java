@@ -428,8 +428,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		try {
 			doc.remove(0, doc.getLength());
 		} catch (BadLocationException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Trouble clearing the content.", ex);
+			// END KGU#484 2018-04-05
 		}
 	}
 
@@ -559,7 +561,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 			error = e.getMessage();
 		} catch (BadLocationException e) {
 			error = e.getMessage();
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Inconsistent text content.", e);
+			// END KGU#484 2018-04-05
 		}
 		if (bw != null) {
 			try {
