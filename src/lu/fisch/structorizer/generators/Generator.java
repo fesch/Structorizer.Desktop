@@ -2541,11 +2541,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		} 
 		catch (FileNotFoundException ex)
 		{
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			// END KGU#484 2018-04-05
 		} 
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			// END KGU#484 2018-04-05
 		}
 
 		//=============== Request output file path (interactively) ======================
@@ -2723,10 +2729,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					copyFileAPIResources(filename);
 				}
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 				String message = e.getMessage();
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				getLogger().log(Level.WARNING, "Error on saving file!", e);
+				// END KGU#484 2018-04-05
 				if (message == null) {
 					message = e.getClass().getSimpleName();
 				}

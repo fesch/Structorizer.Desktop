@@ -27,6 +27,8 @@ Current development version: 3.28-02 (2018-04-12)
 - 02: Bugfix #526: On re-saving the renaming of the temp. file may fail (Linux) <2> 
 - 02: Issue #527: More helpful Executor messages on index range violations <2>
 - 02: Issue #463: Console output replaced by configurable logging [R. Schmidt]2
+- 02: Bugfix #528: Analyser check of record component access mended <2>
+- 02: Bugfix #529: Concurrency on drawing diagrams during execution solved <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

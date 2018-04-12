@@ -374,11 +374,15 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 			}
 			br.close();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "", e);
+			// END KGU#484 2018-04-05
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "", e);
+			// END KGU#484 2018-04-05
 		}
 		return decoded;
 	}
@@ -408,8 +412,11 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 		catch(Exception e) 
 		{
 			String errorMessage = "Error parsing " + _filename + ": " + e;
-			System.err.println(errorMessage);
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//System.err.println(errorMessage);
+			//e.printStackTrace();
+			logger.log(Level.WARNING, errorMessage, e);
+			// END KGU#484 2018-04-05
 			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
 			if (e instanceof SAXException)
 			{

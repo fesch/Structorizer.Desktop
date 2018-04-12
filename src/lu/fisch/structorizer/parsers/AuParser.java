@@ -292,7 +292,7 @@ public class AuParser extends GOLDParser {
     		} catch (IOException e) {
     			// START KGU#484 2018-04-12: Issue #463
     			//e.printStackTrace();
-    			logger.log(Level.WARNING, getClass().getSimpleName() + " parser logging failed!", e);
+    			logger.log(Level.WARNING, getClass().getSimpleName() + " logging failed!", e);
     			// END KGU#484 2018-04-12
     		}
     	}

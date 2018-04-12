@@ -58,6 +58,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
  *      Kay Gürtzig     2017.11.01/02   Issue #447: Line continuation (backslash at line end) is to be supported
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
+ *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *
  ******************************************************************************************************
  *
@@ -232,8 +233,10 @@ public class Case extends Element implements IFork
             // START KGU#136 2016-03-01: Bugfix #97
             if (this.isRectUpToDate) return rect0;
             
-            this.x0Branches.clear();
-            this.y0Branches = 0;
+    		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
+            //this.x0Branches.clear();
+            //this.y0Branches = 0;
+            // END KGU#516 2018-04-04
             // END KGU#136 2016-03-01
             
             // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
@@ -246,8 +249,16 @@ public class Case extends Element implements IFork
             	return rect0;
             }
 
-            rect0.top = 0;
-            rect0.left = 0;
+    		// START KGU#516 2018-04-04: Issue #529 Directly to work on field rect0 was not so good an idea for re-entrance
+            //rect0.top = 0;
+            //rect0.left = 0;
+            Rect rect0 = new Rect();
+            Rect commentRect;
+            Vector<Integer> x0Branches = new Vector<Integer>();
+            int y0Branches = 0;
+            int[] textWidths;
+            int fullWidth = 0, maxHeight = 0;
+            // END KGU#516 2018-04-04
 
             FontMetrics fm = _canvas.getFontMetrics(font);
 
@@ -359,7 +370,7 @@ public class Case extends Element implements IFork
             rect0.bottom += commentRect.bottom;
             // END KGU#227 2016-07-31
             // START KGU#136 2016-03-01: Bugfix #97
-            this.y0Branches = rect0.bottom;
+            y0Branches = rect0.bottom;
             // END KGU#136 2016-03-01
 
             //Rect rtt = null;
@@ -405,7 +416,7 @@ public class Case extends Element implements IFork
 
     		// START KGU#401 2017-05-17: Issue #405            
             if (caseShrinkByRot != 0 && nBranches > caseShrinkByRot && rotatedWidth < fullWidth) {
-            	this.x0Branches = rotX0Branches;
+            	x0Branches = rotX0Branches;
             	fullWidth = rotatedWidth;
             	maxHeight = rotatedHeight;
             	for (int i = 0; i < nBranches; i++) {
@@ -416,10 +427,19 @@ public class Case extends Element implements IFork
             rect0.right = Math.max(rect0.right, fullWidth);
             rect0.bottom = rect0.bottom + maxHeight;
 
-    		// START KGU#136 2016-03-01: Bugfix #97
-    		isRectUpToDate = true;
-    		// END KGU#136 2016-03-01
-    		return rect0;
+    		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+            this.rect0 = rect0;
+            this.commentRect = commentRect;
+            this.x0Branches = x0Branches;
+            this.y0Branches = y0Branches;
+            this.textWidths = textWidths;
+            this.fullWidth = fullWidth;
+            this.maxHeight = maxHeight;
+            // END KGU#516 2018-04-04
+            // START KGU#136 2016-03-01: Bugfix #97
+            isRectUpToDate = true;
+            // END KGU#136 2016-03-01
+            return rect0;
     }
 
     public void draw(Canvas _canvas, Rect _top_left)

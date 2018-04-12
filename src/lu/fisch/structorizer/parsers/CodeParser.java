@@ -107,6 +107,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	
 	// START KGU#484 2018-03-22 Issue #463
 	private Logger logger;
+	/** @return the standard Java logger for this class */
 	protected Logger getLogger()
 	{
 		if (this.logger == null) {
@@ -324,11 +325,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				try {
 					File log = new File(_textToParse);
 					logFile = new OutputStreamWriter(new FileOutputStream(new File(logDir, log.getName() + ".log")), "UTF-8");
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
 				}
+				// START KGU#484 2018-04-05: Issue #463
+				//catch (UnsupportedEncodingException e) {
+				//	e.printStackTrace();
+				//}
+				//catch (FileNotFoundException e) {
+				//	e.printStackTrace();
+				//}
+				catch (Exception e) {
+					getLogger().log(Level.SEVERE, "Creation of parser log file failed.", e);
+				}
+				// END KGU#484 2018-04-05
 			}
 		}
 		// AuParser is a Structorizer subclass of GOLDParser (Au = gold)
@@ -372,13 +380,19 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				try {
 					logFile.write(error);
 				} catch (IOException e) {
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					getLogger().log(Level.WARNING, "Failed to write parser log.", e);
+					// END KGU#484 2018-04-05
 				}
 				try {
 					logFile.close();
 					logFile = null;
 				} catch (IOException e) {
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					getLogger().log(Level.WARNING, "Failed to close parser log.", e);
+					// END KGU#484 2018-04-05
 				}
 			}
 			return subRoots;	// It doesn't make sense to continue here (BTW subRoots is supposed to be empty)
@@ -430,24 +444,33 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 						}
 					}
 				}
-            	buildNSD(parser.getCurrentReduction());
-            } else {
-            	isSyntaxError = true;
-                error = parser.getErrorMessage() + " in file \"" + _textToParse + "\"";
-            }
-        }
-        catch (ParserException e) {
-            error = "**PARSER ERROR** with file \"" + _textToParse + "\":\n" + e.getMessage();
-            e.printStackTrace();
-        }
-		catch (IOException e1) {
-            error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
-			e1.printStackTrace();
+				buildNSD(parser.getCurrentReduction());
+			} else {
+				isSyntaxError = true;
+				error = parser.getErrorMessage() + " in file \"" + _textToParse + "\"";
+			}
 		}
-        catch (Exception e2) {
-        	error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
-        	e2.printStackTrace();
-        }
+		catch (ParserException e) {
+			error = "**PARSER ERROR** with file \"" + _textToParse + "\":\n" + e.getMessage();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			getLogger().log(Level.WARNING, error, e);
+			// END KGU#484 2018-04-05
+		}
+		catch (IOException e1) {
+			error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
+			// START KGU#484 2018-04-05: Issue #463
+			//e1.printStackTrace();
+			getLogger().log(Level.WARNING, error, e1);
+			// END KGU#484 2018-04-05
+		}
+		catch (Exception e2) {
+			error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
+			// START KGU#484 2018-04-05: Issue #463
+			//e2.printStackTrace();
+			getLogger().log(Level.WARNING, error, e2);
+			// END KGU#484 2018-04-05
+		}
 
 		// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
 		if (isSyntaxError && intermediate != null)
@@ -568,7 +591,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				logFile.close();
 				logFile = null;
 			} catch (IOException e) {
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				getLogger().log(Level.WARNING, "Failed to close parser log.", e);
+				// END KGU#484 2018-04-05
 			}
 		}
 		

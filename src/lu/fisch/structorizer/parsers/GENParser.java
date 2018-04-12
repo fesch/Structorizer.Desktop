@@ -199,8 +199,10 @@ public class GENParser extends DefaultHandler {
 			try {
 				pluginSchema = sFactory.newSchema(schemaLocal);
 			} catch (SAXException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				logger.log(Level.WARNING, "Plugin schema failed.", e);
+				// END KGU#484 2018-04-05
 			}
 		}
 		//factory.setNamespaceAware(true);
