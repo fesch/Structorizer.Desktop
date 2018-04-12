@@ -608,11 +608,11 @@ public class CParser extends CodeParser
 	private String ParserEncoding;
 	private String ParserPath;
 	
+	/** Fix list of common preprocesssor-defined type names for convenience */
 	private	final String[][] typeReplacements = new String[][] {
 		{"size_t", "unsigned long"},
 		{"time_t", "unsigned long"},
-		// FIXME: to be made configurable
-		{"cob_u8_t", "unsigned int"}
+		{"ptrdiff_t", "unsigned long"}
 	};
 	
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();

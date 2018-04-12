@@ -87,7 +87,6 @@ import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
-import com.creativewidgetworks.goldparser.parser.GOLDParser;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;

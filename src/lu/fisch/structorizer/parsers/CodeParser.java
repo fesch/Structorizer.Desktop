@@ -42,6 +42,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream 
  *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
  *      Kay Gürtzig     2017.09.30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
+ *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved.
  *
  ******************************************************************************************************
  *
@@ -270,7 +271,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	/**
 	 * Is to return the internal name of the grammar table as given in the grammar file
 	 * parameters
-	 * @return Name string as specified inthe grammar file header
+	 * @return Name string as specified in the grammar file header
 	 */
 	protected abstract String getGrammarTableName();
 	
@@ -471,14 +472,19 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			addLineToErrorString(lineNo+1, line.replace("\t", "    "));
 			SymbolList sl = parser.getExpectedSymbols();
 			Token token = parser.getCurrentToken();
-			final String tokVal = token.toString();
+			// START KGU#511 2018-04-12: Issue #489
+			//final String tokVal = token.toString();
+			final String tokVal = (token == null) ? "ε (END OF TEXT)" : token.toString();
+			// END KGU#511 2018-04-12
 			error += "\n\nFound token " + tokVal;
-			String tokStr = token.asString().trim();
-			// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id  
-			tokStr = this.undoIdReplacements(tokStr);
-			// END KGU 2017-05-23
-			if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
-				error += " (" + tokStr + ")";
+			if (token != null) {
+				String tokStr = token.asString().trim();
+				// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id  
+				tokStr = this.undoIdReplacements(tokStr);
+				// END KGU 2017-05-23
+				if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
+					error += " (" + tokStr + ")";
+				}
 			}
 			error += "\n\nExpected: ";
 			String sepa = "";

@@ -5,6 +5,9 @@
 	<plugin title="ANSI-C" 				class="lu.fisch.structorizer.parsers.CParser" icon="" >
 		<option name="typeNames" type="String" title="Externally defined type names" help="Comma-separated list of typedefs defined outside the source but referred to within (just to pass the syntax check)" />
 	</plugin>
+	<plugin title="ANSI-C99" 				class="lu.fisch.structorizer.parsers.C99Parser" icon="" >
+		<option name="typeNames" type="String" title="Externally defined type names" help="Comma-separated list of typedefs defined outside the source but referred to within (just to pass the syntax check)" />
+	</plugin>
 	<plugin title="COBOL" 				class="lu.fisch.structorizer.parsers.COBOLParser" icon="" >
 		<option name="debugLines" type="Boolean" title="Debug Lines" />
 		<option name="decimalComma" type="Boolean" title="Decimal comma (instead of decimal point)" />

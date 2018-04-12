@@ -44,6 +44,7 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2018.03.26      First Issue (generated with GOLDprog.exe)
+ *      Kay Gürtzig     2018.04.12      RuleConstants updated to corrected grammar (version 1.1)
  *
  ******************************************************************************************************
  *
@@ -112,7 +113,7 @@ public class C99Parser extends CodeParser
 	@Override
 	protected final String getCompiledGrammar()
 	{
-		return "ANSI-C99.egt";
+		return "C-ANSI99.egt";
 	}
 	
 	@Override
@@ -255,105 +256,102 @@ public class C99Parser extends CodeParser
 		final int SYM_LITERAL           =  78;  // Literal
 		final int SYM_LONG              =  79;  // long
 		final int SYM_OCTLITERAL        =  80;  // OctLiteral
-		final int SYM_PTRDIFF_T         =  81;  // 'ptrdiff_t'
-		final int SYM_REGISTER          =  82;  // register
-		final int SYM_RESTRICT          =  83;  // restrict
-		final int SYM_RETURN            =  84;  // return
-		final int SYM_SHORT             =  85;  // short
-		final int SYM_SIGNED            =  86;  // signed
-		final int SYM_SIZE_T            =  87;  // 'size_t'
-		final int SYM_SIZEOF            =  88;  // sizeof
-		final int SYM_STATIC            =  89;  // static
-		final int SYM_STRINGLITERAL     =  90;  // StringLiteral
-		final int SYM_STRUCT            =  91;  // struct
-		final int SYM_SWITCH            =  92;  // switch
-		final int SYM_TIME_T            =  93;  // 'time_t'
-		final int SYM_TYPEDEF           =  94;  // typedef
-		final int SYM_UNION             =  95;  // union
-		final int SYM_UNSIGNED          =  96;  // unsigned
-		final int SYM_USERTYPEID        =  97;  // UserTypeId
-		final int SYM_VOID              =  98;  // void
-		final int SYM_VOLATILE          =  99;  // volatile
-		final int SYM_WCHAR_T           = 100;  // 'wchar_t'
-		final int SYM_WHILE             = 101;  // while
-		final int SYM_ABSTRACTDECL      = 102;  // <Abstract Decl>
-		final int SYM_ADDEXP            = 103;  // <Add Exp>
-		final int SYM_ANDEXP            = 104;  // <And Exp>
-		final int SYM_ARGEXPLIST        = 105;  // <ArgExpList>
-		final int SYM_ASSIGNEXP         = 106;  // <Assign Exp>
-		final int SYM_ASSIGNOP          = 107;  // <Assign Op>
-		final int SYM_BLOCKITEM         = 108;  // <BlockItem>
-		final int SYM_BLOCKITEMLIST     = 109;  // <BlockItemList>
-		final int SYM_CASESTMTS         = 110;  // <Case Stmts>
-		final int SYM_CASTEXP           = 111;  // <Cast Exp>
-		final int SYM_CONDEXP           = 112;  // <Cond Exp>
-		final int SYM_CONSTANTEXP       = 113;  // <Constant Exp>
-		final int SYM_DECLSPECIFIERS    = 114;  // <Decl Specifiers>
-		final int SYM_DECLSPECS         = 115;  // <Decl Specs>
-		final int SYM_DECLARATION       = 116;  // <Declaration>
-		final int SYM_DECLARATIONLIST   = 117;  // <DeclarationList>
-		final int SYM_DECLARATOR        = 118;  // <Declarator>
-		final int SYM_DECLLISTOPT       = 119;  // <DeclListOpt>
-		final int SYM_DESIGNATION       = 120;  // <Designation>
-		final int SYM_DESIGNATOR        = 121;  // <Designator>
-		final int SYM_DESIGNATORLIST    = 122;  // <DesignatorList>
-		final int SYM_DIRABSTRDECLOPT   = 123;  // <DirAbstrDeclOpt>
-		final int SYM_DIRECTABSTRDECL   = 124;  // <Direct Abstr Decl>
-		final int SYM_DIRECTDECL        = 125;  // <Direct Decl>
-		final int SYM_ENUMERATOR        = 126;  // <Enumerator>
-		final int SYM_ENUMERATORSPEC    = 127;  // <Enumerator Spec>
-		final int SYM_ENUMLIST          = 128;  // <EnumList>
-		final int SYM_EQUATEXP          = 129;  // <Equat Exp>
-		final int SYM_EXCLOREXP         = 130;  // <ExclOr Exp>
-		final int SYM_EXPRESSION        = 131;  // <Expression>
-		final int SYM_EXPRESSIONSTMT    = 132;  // <Expression Stmt>
-		final int SYM_EXPROPT           = 133;  // <ExprOpt>
-		final int SYM_EXTERNALDECL      = 134;  // <External Decl>
-		final int SYM_FUNCTIONDEF       = 135;  // <Function Def>
-		final int SYM_IDENTIFIERLIST    = 136;  // <IdentifierList>
-		final int SYM_IDLISTOPT         = 137;  // <IdListOpt>
-		final int SYM_INITDECLARATOR    = 138;  // <Init Declarator>
-		final int SYM_INITDECLLIST      = 139;  // <InitDeclList>
-		final int SYM_INITIALIZER       = 140;  // <Initializer>
-		final int SYM_INITIALIZERLIST   = 141;  // <InitializerList>
-		final int SYM_ITERATIONSTMT     = 142;  // <Iteration Stmt>
-		final int SYM_JUMPSTMT          = 143;  // <Jump Stmt>
-		final int SYM_LABELLEDSTMT      = 144;  // <Labelled Stmt>
-		final int SYM_LITERAL2          = 145;  // <Literal>
-		final int SYM_LOGANDEXP         = 146;  // <LogAnd Exp>
-		final int SYM_LOGOREXP          = 147;  // <LogOr Exp>
-		final int SYM_MULTEXP           = 148;  // <Mult Exp>
-		final int SYM_OREXP             = 149;  // <Or Exp>
-		final int SYM_PARAMETERDECL     = 150;  // <Parameter Decl>
-		final int SYM_PARAMETERLIST     = 151;  // <ParameterList>
-		final int SYM_PARAMTYPELIST     = 152;  // <ParamTypeList>
-		final int SYM_POINTER           = 153;  // <Pointer>
-		final int SYM_POSTFIXEXP        = 154;  // <Postfix Exp>
-		final int SYM_RELATEXP          = 155;  // <Relat Exp>
-		final int SYM_SELECTIONSTMT     = 156;  // <Selection Stmt>
-		final int SYM_SELECTOR          = 157;  // <Selector>
-		final int SYM_SHIFTEXP          = 158;  // <Shift Exp>
-		final int SYM_SPECQUALLIST      = 159;  // <SpecQualList>
-		final int SYM_SPECQUALS         = 160;  // <SpecQuals>
-		final int SYM_STATEMENT         = 161;  // <Statement>
-		final int SYM_STMTLIST          = 162;  // <StmtList>
-		final int SYM_STORAGECLASS      = 163;  // <Storage Class>
-		final int SYM_STRUCTDECL        = 164;  // <Struct Decl>
-		final int SYM_STRUCTDECLARATION = 165;  // <Struct Declaration>
-		final int SYM_STRUCTDECLLIST    = 166;  // <StructDeclList>
-		final int SYM_STRUCTDECLNLIST   = 167;  // <StructDeclnList>
-		final int SYM_STRUCTORUNION     = 168;  // <StructOrUnion>
-		final int SYM_STRUCTORUNIONSPEC = 169;  // <StructOrUnion Spec>
-		final int SYM_TRANSLATIONUNIT   = 170;  // <Translation Unit>
-		final int SYM_TYPEQUALIFIER     = 171;  // <Type Qualifier>
-		final int SYM_TYPESPECIFIER     = 172;  // <Type Specifier>
-		final int SYM_TYPEDEFNAME       = 173;  // <Typedef Name>
-		final int SYM_TYPENAME          = 174;  // <Typename>
-		final int SYM_TYPEQUALLIST      = 175;  // <TypeQualList>
-		final int SYM_TYPEQUALSOPT      = 176;  // <TypeQualsOpt>
-		final int SYM_UNARYEXP          = 177;  // <Unary Exp>
-		final int SYM_UNARYOP           = 178;  // <Unary Op>
-		final int SYM_VALUE             = 179;  // <Value>
+		final int SYM_REGISTER          =  81;  // register
+		final int SYM_RESTRICT          =  82;  // restrict
+		final int SYM_RETURN            =  83;  // return
+		final int SYM_SHORT             =  84;  // short
+		final int SYM_SIGNED            =  85;  // signed
+		final int SYM_SIZEOF            =  86;  // sizeof
+		final int SYM_STATIC            =  87;  // static
+		final int SYM_STRINGLITERAL     =  88;  // StringLiteral
+		final int SYM_STRUCT            =  89;  // struct
+		final int SYM_SWITCH            =  90;  // switch
+		final int SYM_TYPEDEF           =  91;  // typedef
+		final int SYM_UNION             =  92;  // union
+		final int SYM_UNSIGNED          =  93;  // unsigned
+		final int SYM_USERTYPEID        =  94;  // UserTypeId
+		final int SYM_VOID              =  95;  // void
+		final int SYM_VOLATILE          =  96;  // volatile
+		final int SYM_WCHAR_T           =  97;  // 'wchar_t'
+		final int SYM_WHILE             =  98;  // while
+		final int SYM_ABSTRACTDECL      =  99;  // <Abstract Decl>
+		final int SYM_ADDEXP            = 100;  // <Add Exp>
+		final int SYM_ANDEXP            = 101;  // <And Exp>
+		final int SYM_ARGEXPLIST        = 102;  // <ArgExpList>
+		final int SYM_ASSIGNEXP         = 103;  // <Assign Exp>
+		final int SYM_ASSIGNOP          = 104;  // <Assign Op>
+		final int SYM_BLOCKITEM         = 105;  // <BlockItem>
+		final int SYM_BLOCKITEMLIST     = 106;  // <BlockItemList>
+		final int SYM_CASESTMTS         = 107;  // <Case Stmts>
+		final int SYM_CASTEXP           = 108;  // <Cast Exp>
+		final int SYM_CONDEXP           = 109;  // <Cond Exp>
+		final int SYM_CONSTANTEXP       = 110;  // <Constant Exp>
+		final int SYM_DECLSPECIFIERS    = 111;  // <Decl Specifiers>
+		final int SYM_DECLSPECS         = 112;  // <Decl Specs>
+		final int SYM_DECLARATION       = 113;  // <Declaration>
+		final int SYM_DECLARATIONLIST   = 114;  // <DeclarationList>
+		final int SYM_DECLARATOR        = 115;  // <Declarator>
+		final int SYM_DECLLISTOPT       = 116;  // <DeclListOpt>
+		final int SYM_DESIGNATION       = 117;  // <Designation>
+		final int SYM_DESIGNATOR        = 118;  // <Designator>
+		final int SYM_DESIGNATORLIST    = 119;  // <DesignatorList>
+		final int SYM_DIRABSTRDECLOPT   = 120;  // <DirAbstrDeclOpt>
+		final int SYM_DIRECTABSTRDECL   = 121;  // <Direct Abstr Decl>
+		final int SYM_DIRECTDECL        = 122;  // <Direct Decl>
+		final int SYM_ENUMERATOR        = 123;  // <Enumerator>
+		final int SYM_ENUMERATORSPEC    = 124;  // <Enumerator Spec>
+		final int SYM_ENUMLIST          = 125;  // <EnumList>
+		final int SYM_EQUATEXP          = 126;  // <Equat Exp>
+		final int SYM_EXCLOREXP         = 127;  // <ExclOr Exp>
+		final int SYM_EXPRESSION        = 128;  // <Expression>
+		final int SYM_EXPRESSIONSTMT    = 129;  // <Expression Stmt>
+		final int SYM_EXPROPT           = 130;  // <ExprOpt>
+		final int SYM_EXTERNALDECL      = 131;  // <External Decl>
+		final int SYM_FUNCTIONDEF       = 132;  // <Function Def>
+		final int SYM_IDENTIFIERLIST    = 133;  // <IdentifierList>
+		final int SYM_IDLISTOPT         = 134;  // <IdListOpt>
+		final int SYM_INITDECLARATOR    = 135;  // <Init Declarator>
+		final int SYM_INITDECLLIST      = 136;  // <InitDeclList>
+		final int SYM_INITIALIZER       = 137;  // <Initializer>
+		final int SYM_INITIALIZERLIST   = 138;  // <InitializerList>
+		final int SYM_ITERATIONSTMT     = 139;  // <Iteration Stmt>
+		final int SYM_JUMPSTMT          = 140;  // <Jump Stmt>
+		final int SYM_LABELLEDSTMT      = 141;  // <Labelled Stmt>
+		final int SYM_LITERAL2          = 142;  // <Literal>
+		final int SYM_LOGANDEXP         = 143;  // <LogAnd Exp>
+		final int SYM_LOGOREXP          = 144;  // <LogOr Exp>
+		final int SYM_MULTEXP           = 145;  // <Mult Exp>
+		final int SYM_OREXP             = 146;  // <Or Exp>
+		final int SYM_PARAMETERDECL     = 147;  // <Parameter Decl>
+		final int SYM_PARAMETERLIST     = 148;  // <ParameterList>
+		final int SYM_PARAMTYPELIST     = 149;  // <ParamTypeList>
+		final int SYM_POINTER           = 150;  // <Pointer>
+		final int SYM_POSTFIXEXP        = 151;  // <Postfix Exp>
+		final int SYM_RELATEXP          = 152;  // <Relat Exp>
+		final int SYM_SELECTIONSTMT     = 153;  // <Selection Stmt>
+		final int SYM_SELECTOR          = 154;  // <Selector>
+		final int SYM_SHIFTEXP          = 155;  // <Shift Exp>
+		final int SYM_SPECQUALLIST      = 156;  // <SpecQualList>
+		final int SYM_SPECQUALS         = 157;  // <SpecQuals>
+		final int SYM_STATEMENT         = 158;  // <Statement>
+		final int SYM_STMTLIST          = 159;  // <StmtList>
+		final int SYM_STORAGECLASS      = 160;  // <Storage Class>
+		final int SYM_STRUCTDECL        = 161;  // <Struct Decl>
+		final int SYM_STRUCTDECLARATION = 162;  // <Struct Declaration>
+		final int SYM_STRUCTDECLLIST    = 163;  // <StructDeclList>
+		final int SYM_STRUCTDECLNLIST   = 164;  // <StructDeclnList>
+		final int SYM_STRUCTORUNION     = 165;  // <StructOrUnion>
+		final int SYM_STRUCTORUNIONSPEC = 166;  // <StructOrUnion Spec>
+		final int SYM_TRANSLATIONUNIT   = 167;  // <Translation Unit>
+		final int SYM_TYPEQUALIFIER     = 168;  // <Type Qualifier>
+		final int SYM_TYPESPECIFIER     = 169;  // <Type Specifier>
+		final int SYM_TYPEDEFNAME       = 170;  // <Typedef Name>
+		final int SYM_TYPENAME          = 171;  // <Typename>
+		final int SYM_TYPEQUALLIST      = 172;  // <TypeQualList>
+		final int SYM_TYPEQUALSOPT      = 173;  // <TypeQualsOpt>
+		final int SYM_UNARYEXP          = 174;  // <Unary Exp>
+		final int SYM_UNARYOP           = 175;  // <Unary Op>
+		final int SYM_VALUE             = 176;  // <Value>
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -361,247 +359,246 @@ public class C99Parser extends CodeParser
 	private interface RuleConstants
 	{
 		final int PROD_DECLARATION_SEMI                                   =   0;  // <Declaration> ::= <Decl Specifiers> <InitDeclList> ';'
-		final int PROD_DECLSPECIFIERS                                     =   1;  // <Decl Specifiers> ::= <Storage Class> <Decl Specs>
-		final int PROD_DECLSPECIFIERS2                                    =   2;  // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
-		final int PROD_DECLSPECIFIERS3                                    =   3;  // <Decl Specifiers> ::= <Type Qualifier> <Decl Specs>
-		final int PROD_DECLSPECIFIERS_INLINE                              =   4;  // <Decl Specifiers> ::= inline <Decl Specs>
-		final int PROD_DECLSPECS                                          =   5;  // <Decl Specs> ::= <Decl Specifiers>
-		final int PROD_DECLSPECS2                                         =   6;  // <Decl Specs> ::= 
-		final int PROD_INITDECLLIST_COMMA                                 =   7;  // <InitDeclList> ::= <InitDeclList> ',' <Init Declarator>
-		final int PROD_INITDECLLIST                                       =   8;  // <InitDeclList> ::= <Init Declarator>
-		final int PROD_INITDECLARATOR_EQ                                  =   9;  // <Init Declarator> ::= <Declarator> '=' <Initializer>
-		final int PROD_INITDECLARATOR                                     =  10;  // <Init Declarator> ::= <Declarator>
-		final int PROD_STORAGECLASS_TYPEDEF                               =  11;  // <Storage Class> ::= typedef
-		final int PROD_STORAGECLASS_EXTERN                                =  12;  // <Storage Class> ::= extern
-		final int PROD_STORAGECLASS_STATIC                                =  13;  // <Storage Class> ::= static
-		final int PROD_STORAGECLASS_AUTO                                  =  14;  // <Storage Class> ::= auto
-		final int PROD_STORAGECLASS_REGISTER                              =  15;  // <Storage Class> ::= register
-		final int PROD_TYPESPECIFIER_VOID                                 =  16;  // <Type Specifier> ::= void
-		final int PROD_TYPESPECIFIER_CHAR                                 =  17;  // <Type Specifier> ::= char
-		final int PROD_TYPESPECIFIER_WCHAR_T                              =  18;  // <Type Specifier> ::= 'wchar_t'
-		final int PROD_TYPESPECIFIER_SHORT                                =  19;  // <Type Specifier> ::= short
-		final int PROD_TYPESPECIFIER_INT                                  =  20;  // <Type Specifier> ::= int
-		final int PROD_TYPESPECIFIER_LONG                                 =  21;  // <Type Specifier> ::= long
-		final int PROD_TYPESPECIFIER_SIZE_T                               =  22;  // <Type Specifier> ::= 'size_t'
-		final int PROD_TYPESPECIFIER_PTRDIFF_T                            =  23;  // <Type Specifier> ::= 'ptrdiff_t'
-		final int PROD_TYPESPECIFIER_TIME_T                               =  24;  // <Type Specifier> ::= 'time_t'
-		final int PROD_TYPESPECIFIER_FLOAT                                =  25;  // <Type Specifier> ::= float
-		final int PROD_TYPESPECIFIER_DOUBLE                               =  26;  // <Type Specifier> ::= double
-		final int PROD_TYPESPECIFIER_SIGNED                               =  27;  // <Type Specifier> ::= signed
-		final int PROD_TYPESPECIFIER_UNSIGNED                             =  28;  // <Type Specifier> ::= unsigned
-		final int PROD_TYPESPECIFIER__BOOL                                =  29;  // <Type Specifier> ::= '_Bool'
-		final int PROD_TYPESPECIFIER__COMPLEX                             =  30;  // <Type Specifier> ::= '_Complex'
-		final int PROD_TYPESPECIFIER                                      =  31;  // <Type Specifier> ::= <StructOrUnion Spec>
-		final int PROD_TYPESPECIFIER2                                     =  32;  // <Type Specifier> ::= <Enumerator Spec>
-		final int PROD_TYPESPECIFIER3                                     =  33;  // <Type Specifier> ::= <Typedef Name>
-		final int PROD_STRUCTORUNIONSPEC_IDENTIFIER_LBRACE_RBRACE         =  34;  // <StructOrUnion Spec> ::= <StructOrUnion> Identifier '{' <StructDeclnList> '}'
-		final int PROD_STRUCTORUNIONSPEC_LBRACE_RBRACE                    =  35;  // <StructOrUnion Spec> ::= <StructOrUnion> '{' <StructDeclnList> '}'
-		final int PROD_STRUCTORUNIONSPEC_IDENTIFIER                       =  36;  // <StructOrUnion Spec> ::= <StructOrUnion> Identifier
-		final int PROD_STRUCTORUNION_STRUCT                               =  37;  // <StructOrUnion> ::= struct
-		final int PROD_STRUCTORUNION_UNION                                =  38;  // <StructOrUnion> ::= union
-		final int PROD_STRUCTDECLNLIST_COMMA                              =  39;  // <StructDeclnList> ::= <StructDeclnList> ',' <Struct Declaration>
-		final int PROD_STRUCTDECLNLIST                                    =  40;  // <StructDeclnList> ::= <Struct Declaration>
-		final int PROD_STRUCTDECLARATION_SEMI                             =  41;  // <Struct Declaration> ::= <SpecQualList> <StructDeclList> ';'
-		final int PROD_SPECQUALLIST                                       =  42;  // <SpecQualList> ::= <Type Specifier> <SpecQuals>
-		final int PROD_SPECQUALLIST2                                      =  43;  // <SpecQualList> ::= <Type Qualifier> <SpecQuals>
-		final int PROD_SPECQUALS                                          =  44;  // <SpecQuals> ::= <SpecQualList>
-		final int PROD_SPECQUALS2                                         =  45;  // <SpecQuals> ::= 
-		final int PROD_STRUCTDECLLIST_COMMA                               =  46;  // <StructDeclList> ::= <StructDeclList> ',' <Struct Decl>
-		final int PROD_STRUCTDECLLIST                                     =  47;  // <StructDeclList> ::= <Struct Decl>
-		final int PROD_STRUCTDECL_COLON                                   =  48;  // <Struct Decl> ::= <Declarator> ':' <Constant Exp>
-		final int PROD_STRUCTDECL                                         =  49;  // <Struct Decl> ::= <Declarator>
-		final int PROD_STRUCTDECL_COLON2                                  =  50;  // <Struct Decl> ::= ':' <Constant Exp>
-		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_RBRACE       =  51;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> '}'
-		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_COMMA_RBRACE =  52;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> ',' '}'
-		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE                  =  53;  // <Enumerator Spec> ::= enum '{' <EnumList> '}'
-		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE            =  54;  // <Enumerator Spec> ::= enum '{' <EnumList> ',' '}'
-		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER                     =  55;  // <Enumerator Spec> ::= enum Identifier
-		final int PROD_ENUMLIST_COMMA                                     =  56;  // <EnumList> ::= <EnumList> ',' <Enumerator>
-		final int PROD_ENUMLIST                                           =  57;  // <EnumList> ::= <Enumerator>
-		final int PROD_ENUMERATOR_IDENTIFIER_EQ                           =  58;  // <Enumerator> ::= Identifier '=' <Constant Exp>
-		final int PROD_ENUMERATOR_IDENTIFIER                              =  59;  // <Enumerator> ::= Identifier
-		final int PROD_TYPEQUALIFIER_CONST                                =  60;  // <Type Qualifier> ::= const
-		final int PROD_TYPEQUALIFIER_RESTRICT                             =  61;  // <Type Qualifier> ::= restrict
-		final int PROD_TYPEQUALIFIER_VOLATILE                             =  62;  // <Type Qualifier> ::= volatile
-		final int PROD_DECLARATOR                                         =  63;  // <Declarator> ::= <Pointer> <Direct Decl>
-		final int PROD_DECLARATOR2                                        =  64;  // <Declarator> ::= <Direct Decl>
-		final int PROD_DIRECTDECL_IDENTIFIER                              =  65;  // <Direct Decl> ::= Identifier
-		final int PROD_DIRECTDECL_LPAREN_RPAREN                           =  66;  // <Direct Decl> ::= '(' <Declarator> ')'
-		final int PROD_DIRECTDECL_LBRACKET_RBRACKET                       =  67;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> <Assign Exp> ']'
-		final int PROD_DIRECTDECL_LBRACKET_TIMES_RBRACKET                 =  68;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> '*' ']'
-		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET                =  69;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualList> static <Assign Exp> ']'
-		final int PROD_DIRECTDECL_LBRACKET_RBRACKET2                      =  70;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> ']'
-		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET2               =  71;  // <Direct Decl> ::= <Direct Decl> '[' static <TypeQualsOpt> <Assign Exp> ']'
-		final int PROD_DIRECTDECL_LPAREN_RPAREN2                          =  72;  // <Direct Decl> ::= <Direct Decl> '(' <ParamTypeList> ')'
-		final int PROD_DIRECTDECL_LPAREN_RPAREN3                          =  73;  // <Direct Decl> ::= <Direct Decl> '(' <IdListOpt> ')'
-		final int PROD_POINTER_TIMES                                      =  74;  // <Pointer> ::= '*' <TypeQualList> <Pointer>
-		final int PROD_POINTER_TIMES2                                     =  75;  // <Pointer> ::= '*' <TypeQualList>
-		final int PROD_POINTER_TIMES3                                     =  76;  // <Pointer> ::= '*' <Pointer>
-		final int PROD_POINTER_TIMES4                                     =  77;  // <Pointer> ::= '*'
-		final int PROD_TYPEQUALLIST                                       =  78;  // <TypeQualList> ::= <Type Qualifier>
-		final int PROD_TYPEQUALLIST2                                      =  79;  // <TypeQualList> ::= <TypeQualList> <Type Qualifier>
-		final int PROD_TYPEQUALSOPT                                       =  80;  // <TypeQualsOpt> ::= <TypeQualList>
-		final int PROD_TYPEQUALSOPT2                                      =  81;  // <TypeQualsOpt> ::= 
-		final int PROD_PARAMTYPELIST_COMMA_DOTDOTDOT                      =  82;  // <ParamTypeList> ::= <ParameterList> ',' '...'
-		final int PROD_PARAMTYPELIST                                      =  83;  // <ParamTypeList> ::= <ParameterList>
-		final int PROD_PARAMETERLIST_COMMA                                =  84;  // <ParameterList> ::= <ParameterList> ',' <Parameter Decl>
-		final int PROD_PARAMETERLIST                                      =  85;  // <ParameterList> ::= <Parameter Decl>
-		final int PROD_PARAMETERDECL                                      =  86;  // <Parameter Decl> ::= <Decl Specifiers> <Declarator>
-		final int PROD_PARAMETERDECL2                                     =  87;  // <Parameter Decl> ::= <Decl Specifiers> <Abstract Decl>
-		final int PROD_PARAMETERDECL3                                     =  88;  // <Parameter Decl> ::= <Decl Specifiers>
-		final int PROD_IDENTIFIERLIST_COMMA_IDENTIFIER                    =  89;  // <IdentifierList> ::= <IdentifierList> ',' Identifier
-		final int PROD_IDENTIFIERLIST_IDENTIFIER                          =  90;  // <IdentifierList> ::= Identifier
-		final int PROD_IDLISTOPT                                          =  91;  // <IdListOpt> ::= <IdentifierList>
-		final int PROD_IDLISTOPT2                                         =  92;  // <IdListOpt> ::= 
-		final int PROD_TYPENAME                                           =  93;  // <Typename> ::= <SpecQualList> <Abstract Decl>
-		final int PROD_TYPENAME2                                          =  94;  // <Typename> ::= <SpecQualList>
-		final int PROD_ABSTRACTDECL                                       =  95;  // <Abstract Decl> ::= <Pointer> <Direct Abstr Decl>
-		final int PROD_ABSTRACTDECL2                                      =  96;  // <Abstract Decl> ::= <Pointer>
-		final int PROD_ABSTRACTDECL3                                      =  97;  // <Abstract Decl> ::= <Direct Abstr Decl>
-		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN                      =  98;  // <Direct Abstr Decl> ::= '(' <Abstract Decl> ')'
-		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET                  =  99;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> <Assign Exp> ']'
-		final int PROD_DIRECTABSTRDECL_LBRACKET_TIMES_RBRACKET            = 100;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' '*' ']'
-		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET           = 101;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualList> static <Assign Exp> ']'
-		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET2                 = 102;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> ']'
-		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET2          = 103;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' static <TypeQualsOpt> <Assign Exp> ']'
-		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN2                     = 104;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' <ParamTypeList> ')'
-		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN3                     = 105;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' ')'
-		final int PROD_DIRABSTRDECLOPT                                    = 106;  // <DirAbstrDeclOpt> ::= <Direct Abstr Decl>
-		final int PROD_DIRABSTRDECLOPT2                                   = 107;  // <DirAbstrDeclOpt> ::= 
-		final int PROD_TYPEDEFNAME_USERTYPEID                             = 108;  // <Typedef Name> ::= UserTypeId
-		final int PROD_INITIALIZER                                        = 109;  // <Initializer> ::= <Assign Exp>
-		final int PROD_INITIALIZER_LBRACE_RBRACE                          = 110;  // <Initializer> ::= '{' <InitializerList> '}'
-		final int PROD_INITIALIZER_LBRACE_COMMA_RBRACE                    = 111;  // <Initializer> ::= '{' <InitializerList> ',' '}'
-		final int PROD_INITIALIZERLIST_COMMA                              = 112;  // <InitializerList> ::= <InitializerList> ',' <Designation>
-		final int PROD_INITIALIZERLIST                                    = 113;  // <InitializerList> ::= <Designation>
-		final int PROD_DESIGNATION_EQ                                     = 114;  // <Designation> ::= <DesignatorList> '=' <Initializer>
-		final int PROD_DESIGNATION                                        = 115;  // <Designation> ::= <Initializer>
-		final int PROD_DESIGNATORLIST                                     = 116;  // <DesignatorList> ::= <DesignatorList> <Designator>
-		final int PROD_DESIGNATORLIST2                                    = 117;  // <DesignatorList> ::= <Designator>
-		final int PROD_DESIGNATOR_LBRACKET_RBRACKET                       = 118;  // <Designator> ::= '[' <Constant Exp> ']'
-		final int PROD_DESIGNATOR_DOT_IDENTIFIER                          = 119;  // <Designator> ::= '.' Identifier
-		final int PROD_STATEMENT                                          = 120;  // <Statement> ::= <Labelled Stmt>
-		final int PROD_STATEMENT_LBRACE_RBRACE                            = 121;  // <Statement> ::= '{' <BlockItemList> '}'
-		final int PROD_STATEMENT2                                         = 122;  // <Statement> ::= <Expression Stmt>
-		final int PROD_STATEMENT3                                         = 123;  // <Statement> ::= <Selection Stmt>
-		final int PROD_STATEMENT4                                         = 124;  // <Statement> ::= <Iteration Stmt>
-		final int PROD_STATEMENT5                                         = 125;  // <Statement> ::= <Jump Stmt>
-		final int PROD_LABELLEDSTMT_IDENTIFIER_COLON                      = 126;  // <Labelled Stmt> ::= Identifier ':' <Statement>
-		final int PROD_BLOCKITEMLIST                                      = 127;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
-		final int PROD_BLOCKITEMLIST2                                     = 128;  // <BlockItemList> ::= <BlockItem>
-		final int PROD_BLOCKITEM                                          = 129;  // <BlockItem> ::= <Declaration>
-		final int PROD_BLOCKITEM2                                         = 130;  // <BlockItem> ::= <Statement>
-		final int PROD_EXPRESSIONSTMT_SEMI                                = 131;  // <Expression Stmt> ::= <Expression> ';'
-		final int PROD_EXPRESSIONSTMT_SEMI2                               = 132;  // <Expression Stmt> ::= ';'
-		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN                     = 133;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement>
-		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN_ELSE                = 134;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement> else <Statement>
-		final int PROD_SELECTIONSTMT_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE   = 135;  // <Selection Stmt> ::= switch '(' <Expression> ')' '{' <Case Stmts> '}'
-		final int PROD_CASESTMTS_CASE_COLON                               = 136;  // <Case Stmts> ::= case <Selector> ':' <StmtList> <Case Stmts>
-		final int PROD_CASESTMTS_DEFAULT_COLON                            = 137;  // <Case Stmts> ::= default ':' <StmtList>
-		final int PROD_CASESTMTS                                          = 138;  // <Case Stmts> ::= 
-		final int PROD_SELECTOR_LITERAL                                   = 139;  // <Selector> ::= Literal
-		final int PROD_SELECTOR_LPAREN_RPAREN                             = 140;  // <Selector> ::= '(' <Expression> ')'
-		final int PROD_STMTLIST                                           = 141;  // <StmtList> ::= <Statement> <StmtList>
-		final int PROD_STMTLIST2                                          = 142;  // <StmtList> ::= 
-		final int PROD_ITERATIONSTMT_WHILE_LPAREN_RPAREN                  = 143;  // <Iteration Stmt> ::= while '(' <Expression> ')' <Statement>
-		final int PROD_ITERATIONSTMT_DO_WHILE_LPAREN_RPAREN_SEMI          = 144;  // <Iteration Stmt> ::= do <Statement> while '(' <Expression> ')' ';'
-		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_SEMI_RPAREN          = 145;  // <Iteration Stmt> ::= for '(' <ExprOpt> ';' <ExprOpt> ';' <ExprOpt> ')' <Statement>
-		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_RPAREN               = 146;  // <Iteration Stmt> ::= for '(' <Declaration> <ExprOpt> ';' <ExprOpt> ')' <Statement>
-		final int PROD_JUMPSTMT_GOTO_IDENTIFIER_SEMI                      = 147;  // <Jump Stmt> ::= goto Identifier ';'
-		final int PROD_JUMPSTMT_CONTINUE_SEMI                             = 148;  // <Jump Stmt> ::= continue ';'
-		final int PROD_JUMPSTMT_BREAK_SEMI                                = 149;  // <Jump Stmt> ::= break ';'
-		final int PROD_JUMPSTMT_RETURN_SEMI                               = 150;  // <Jump Stmt> ::= return <ExprOpt> ';'
-		final int PROD_TRANSLATIONUNIT                                    = 151;  // <Translation Unit> ::= <External Decl>
-		final int PROD_TRANSLATIONUNIT2                                   = 152;  // <Translation Unit> ::= <Translation Unit> <External Decl>
-		final int PROD_EXTERNALDECL                                       = 153;  // <External Decl> ::= <Function Def>
-		final int PROD_EXTERNALDECL2                                      = 154;  // <External Decl> ::= <Declaration>
-		final int PROD_FUNCTIONDEF_LBRACE_RBRACE                          = 155;  // <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> '{' <BlockItemList> '}'
-		final int PROD_DECLARATIONLIST                                    = 156;  // <DeclarationList> ::= <DeclarationList> <Declaration>
-		final int PROD_DECLARATIONLIST2                                   = 157;  // <DeclarationList> ::= <Declaration>
-		final int PROD_DECLLISTOPT                                        = 158;  // <DeclListOpt> ::= <DeclarationList>
-		final int PROD_DECLLISTOPT2                                       = 159;  // <DeclListOpt> ::= 
-		final int PROD_EXPRESSION_COMMA                                   = 160;  // <Expression> ::= <Expression> ',' <Assign Exp>
-		final int PROD_EXPRESSION                                         = 161;  // <Expression> ::= <Assign Exp>
-		final int PROD_ASSIGNEXP                                          = 162;  // <Assign Exp> ::= <Unary Exp> <Assign Op> <Assign Exp>
-		final int PROD_ASSIGNEXP2                                         = 163;  // <Assign Exp> ::= <Cond Exp>
-		final int PROD_ASSIGNOP_EQ                                        = 164;  // <Assign Op> ::= '='
-		final int PROD_ASSIGNOP_TIMESEQ                                   = 165;  // <Assign Op> ::= '*='
-		final int PROD_ASSIGNOP_DIVEQ                                     = 166;  // <Assign Op> ::= '/='
-		final int PROD_ASSIGNOP_PERCENTEQ                                 = 167;  // <Assign Op> ::= '%='
-		final int PROD_ASSIGNOP_PLUSEQ                                    = 168;  // <Assign Op> ::= '+='
-		final int PROD_ASSIGNOP_MINUSEQ                                   = 169;  // <Assign Op> ::= '-='
-		final int PROD_ASSIGNOP_LTLTEQ                                    = 170;  // <Assign Op> ::= '<<='
-		final int PROD_ASSIGNOP_GTGTEQ                                    = 171;  // <Assign Op> ::= '>>='
-		final int PROD_ASSIGNOP_AMPEQ                                     = 172;  // <Assign Op> ::= '&='
-		final int PROD_ASSIGNOP_CARET                                     = 173;  // <Assign Op> ::= '^'
-		final int PROD_ASSIGNOP_PIPEEQ                                    = 174;  // <Assign Op> ::= '|='
-		final int PROD_CONDEXP_QUESTION_COLON                             = 175;  // <Cond Exp> ::= <LogOr Exp> '?' <Expression> ':' <Cond Exp>
-		final int PROD_CONDEXP                                            = 176;  // <Cond Exp> ::= <LogOr Exp>
-		final int PROD_LOGOREXP_PIPEPIPE                                  = 177;  // <LogOr Exp> ::= <LogOr Exp> '||' <LogAnd Exp>
-		final int PROD_LOGOREXP                                           = 178;  // <LogOr Exp> ::= <LogAnd Exp>
-		final int PROD_LOGANDEXP_AMPAMP                                   = 179;  // <LogAnd Exp> ::= <LogAnd Exp> '&&' <Or Exp>
-		final int PROD_LOGANDEXP                                          = 180;  // <LogAnd Exp> ::= <Or Exp>
-		final int PROD_OREXP_PIPE                                         = 181;  // <Or Exp> ::= <Or Exp> '|' <ExclOr Exp>
-		final int PROD_OREXP                                              = 182;  // <Or Exp> ::= <ExclOr Exp>
-		final int PROD_EXCLOREXP_CARET                                    = 183;  // <ExclOr Exp> ::= <ExclOr Exp> '^' <And Exp>
-		final int PROD_EXCLOREXP                                          = 184;  // <ExclOr Exp> ::= <And Exp>
-		final int PROD_ANDEXP_AMP                                         = 185;  // <And Exp> ::= <And Exp> '&' <Equat Exp>
-		final int PROD_ANDEXP                                             = 186;  // <And Exp> ::= <Equat Exp>
-		final int PROD_EQUATEXP_EQEQ                                      = 187;  // <Equat Exp> ::= <Equat Exp> '==' <Relat Exp>
-		final int PROD_EQUATEXP_EXCLAMEQ                                  = 188;  // <Equat Exp> ::= <Equat Exp> '!=' <Relat Exp>
-		final int PROD_EQUATEXP                                           = 189;  // <Equat Exp> ::= <Relat Exp>
-		final int PROD_RELATEXP_GT                                        = 190;  // <Relat Exp> ::= <Relat Exp> '>' <Shift Exp>
-		final int PROD_RELATEXP_LT                                        = 191;  // <Relat Exp> ::= <Relat Exp> '<' <Shift Exp>
-		final int PROD_RELATEXP_LTEQ                                      = 192;  // <Relat Exp> ::= <Relat Exp> '<=' <Shift Exp>
-		final int PROD_RELATEXP_GTEQ                                      = 193;  // <Relat Exp> ::= <Relat Exp> '>=' <Shift Exp>
-		final int PROD_RELATEXP                                           = 194;  // <Relat Exp> ::= <Shift Exp>
-		final int PROD_SHIFTEXP_LTLT                                      = 195;  // <Shift Exp> ::= <Shift Exp> '<<' <Add Exp>
-		final int PROD_SHIFTEXP_GTGT                                      = 196;  // <Shift Exp> ::= <Shift Exp> '>>' <Add Exp>
-		final int PROD_SHIFTEXP                                           = 197;  // <Shift Exp> ::= <Add Exp>
-		final int PROD_ADDEXP_PLUS                                        = 198;  // <Add Exp> ::= <Add Exp> '+' <Mult Exp>
-		final int PROD_ADDEXP_MINUS                                       = 199;  // <Add Exp> ::= <Add Exp> '-' <Mult Exp>
-		final int PROD_ADDEXP                                             = 200;  // <Add Exp> ::= <Mult Exp>
-		final int PROD_MULTEXP_TIMES                                      = 201;  // <Mult Exp> ::= <Mult Exp> '*' <Cast Exp>
-		final int PROD_MULTEXP_DIV                                        = 202;  // <Mult Exp> ::= <Mult Exp> '/' <Cast Exp>
-		final int PROD_MULTEXP_PERCENT                                    = 203;  // <Mult Exp> ::= <Mult Exp> '%' <Cast Exp>
-		final int PROD_MULTEXP                                            = 204;  // <Mult Exp> ::= <Cast Exp>
-		final int PROD_POSTFIXEXP                                         = 205;  // <Postfix Exp> ::= <Value>
-		final int PROD_POSTFIXEXP_LBRACKET_RBRACKET                       = 206;  // <Postfix Exp> ::= <Postfix Exp> '[' <Expression> ']'
-		final int PROD_POSTFIXEXP_LPAREN_RPAREN                           = 207;  // <Postfix Exp> ::= <Postfix Exp> '(' <ArgExpList> ')'
-		final int PROD_POSTFIXEXP_DOT_IDENTIFIER                          = 208;  // <Postfix Exp> ::= <Postfix Exp> '.' Identifier
-		final int PROD_POSTFIXEXP_MINUSGT_IDENTIFIER                      = 209;  // <Postfix Exp> ::= <Postfix Exp> '->' Identifier
-		final int PROD_POSTFIXEXP_PLUSPLUS                                = 210;  // <Postfix Exp> ::= <Postfix Exp> '++'
-		final int PROD_POSTFIXEXP_MINUSMINUS                              = 211;  // <Postfix Exp> ::= <Postfix Exp> '--'
-		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_RBRACE             = 212;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> '}'
-		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_COMMA_RBRACE       = 213;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> ',' '}'
-		final int PROD_ARGEXPLIST                                         = 214;  // <ArgExpList> ::= <Assign Exp>
-		final int PROD_ARGEXPLIST_COMMA                                   = 215;  // <ArgExpList> ::= <ArgExpList> ',' <Assign Exp>
-		final int PROD_UNARYEXP                                           = 216;  // <Unary Exp> ::= <Postfix Exp>
-		final int PROD_UNARYEXP_PLUSPLUS                                  = 217;  // <Unary Exp> ::= '++' <Unary Exp>
-		final int PROD_UNARYEXP_MINUSMINUS                                = 218;  // <Unary Exp> ::= '--' <Unary Exp>
-		final int PROD_UNARYEXP2                                          = 219;  // <Unary Exp> ::= <Unary Op> <Cast Exp>
-		final int PROD_UNARYEXP_SIZEOF                                    = 220;  // <Unary Exp> ::= sizeof <Unary Exp>
-		final int PROD_UNARYEXP_SIZEOF_LPAREN_RPAREN                      = 221;  // <Unary Exp> ::= sizeof '(' <Typename> ')'
-		final int PROD_UNARYOP_AMP                                        = 222;  // <Unary Op> ::= '&'
-		final int PROD_UNARYOP_TIMES                                      = 223;  // <Unary Op> ::= '*'
-		final int PROD_UNARYOP_PLUS                                       = 224;  // <Unary Op> ::= '+'
-		final int PROD_UNARYOP_MINUS                                      = 225;  // <Unary Op> ::= '-'
-		final int PROD_UNARYOP_TILDE                                      = 226;  // <Unary Op> ::= '~'
-		final int PROD_UNARYOP_EXCLAM                                     = 227;  // <Unary Op> ::= '!'
-		final int PROD_CASTEXP                                            = 228;  // <Cast Exp> ::= <Unary Exp>
-		final int PROD_CASTEXP_LPAREN_RPAREN                              = 229;  // <Cast Exp> ::= '(' <Typename> ')' <Cast Exp>
-		final int PROD_VALUE_IDENTIFIER                                   = 230;  // <Value> ::= Identifier
-		final int PROD_VALUE                                              = 231;  // <Value> ::= <Literal>
-		final int PROD_VALUE_LPAREN_RPAREN                                = 232;  // <Value> ::= '(' <Expression> ')'
-		final int PROD_LITERAL_DECLITERAL                                 = 233;  // <Literal> ::= DecLiteral
-		final int PROD_LITERAL_OCTLITERAL                                 = 234;  // <Literal> ::= OctLiteral
-		final int PROD_LITERAL_HEXLITERAL                                 = 235;  // <Literal> ::= HexLiteral
-		final int PROD_LITERAL_FLOATLITERAL                               = 236;  // <Literal> ::= FloatLiteral
-		final int PROD_LITERAL_STRINGLITERAL                              = 237;  // <Literal> ::= StringLiteral
-		final int PROD_LITERAL_CHARLITERAL                                = 238;  // <Literal> ::= CharLiteral
-		final int PROD_CONSTANTEXP                                        = 239;  // <Constant Exp> ::= <Cond Exp>
-		final int PROD_EXPROPT                                            = 240;  // <ExprOpt> ::= <Expression>
-		final int PROD_EXPROPT2                                           = 241;  // <ExprOpt> ::= 
+		final int PROD_DECLARATION_SEMI2                                  =   1;  // <Declaration> ::= <Decl Specifiers> ';'
+		final int PROD_DECLSPECIFIERS                                     =   2;  // <Decl Specifiers> ::= <Storage Class> <Decl Specs>
+		final int PROD_DECLSPECIFIERS2                                    =   3;  // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+		final int PROD_DECLSPECIFIERS3                                    =   4;  // <Decl Specifiers> ::= <Type Qualifier> <Decl Specs>
+		final int PROD_DECLSPECIFIERS_INLINE                              =   5;  // <Decl Specifiers> ::= inline <Decl Specs>
+		final int PROD_DECLSPECS                                          =   6;  // <Decl Specs> ::= <Decl Specifiers>
+		final int PROD_DECLSPECS2                                         =   7;  // <Decl Specs> ::= 
+		final int PROD_INITDECLLIST_COMMA                                 =   8;  // <InitDeclList> ::= <InitDeclList> ',' <Init Declarator>
+		final int PROD_INITDECLLIST                                       =   9;  // <InitDeclList> ::= <Init Declarator>
+		final int PROD_INITDECLARATOR_EQ                                  =  10;  // <Init Declarator> ::= <Declarator> '=' <Initializer>
+		final int PROD_INITDECLARATOR                                     =  11;  // <Init Declarator> ::= <Declarator>
+		final int PROD_STORAGECLASS_TYPEDEF                               =  12;  // <Storage Class> ::= typedef
+		final int PROD_STORAGECLASS_EXTERN                                =  13;  // <Storage Class> ::= extern
+		final int PROD_STORAGECLASS_STATIC                                =  14;  // <Storage Class> ::= static
+		final int PROD_STORAGECLASS_AUTO                                  =  15;  // <Storage Class> ::= auto
+		final int PROD_STORAGECLASS_REGISTER                              =  16;  // <Storage Class> ::= register
+		final int PROD_TYPESPECIFIER_VOID                                 =  17;  // <Type Specifier> ::= void
+		final int PROD_TYPESPECIFIER_CHAR                                 =  18;  // <Type Specifier> ::= char
+		final int PROD_TYPESPECIFIER_WCHAR_T                              =  19;  // <Type Specifier> ::= 'wchar_t'
+		final int PROD_TYPESPECIFIER_SHORT                                =  20;  // <Type Specifier> ::= short
+		final int PROD_TYPESPECIFIER_INT                                  =  21;  // <Type Specifier> ::= int
+		final int PROD_TYPESPECIFIER_LONG                                 =  22;  // <Type Specifier> ::= long
+		final int PROD_TYPESPECIFIER_FLOAT                                =  23;  // <Type Specifier> ::= float
+		final int PROD_TYPESPECIFIER_DOUBLE                               =  24;  // <Type Specifier> ::= double
+		final int PROD_TYPESPECIFIER_SIGNED                               =  25;  // <Type Specifier> ::= signed
+		final int PROD_TYPESPECIFIER_UNSIGNED                             =  26;  // <Type Specifier> ::= unsigned
+		final int PROD_TYPESPECIFIER__BOOL                                =  27;  // <Type Specifier> ::= '_Bool'
+		final int PROD_TYPESPECIFIER__COMPLEX                             =  28;  // <Type Specifier> ::= '_Complex'
+		final int PROD_TYPESPECIFIER                                      =  29;  // <Type Specifier> ::= <StructOrUnion Spec>
+		final int PROD_TYPESPECIFIER2                                     =  30;  // <Type Specifier> ::= <Enumerator Spec>
+		final int PROD_TYPESPECIFIER3                                     =  31;  // <Type Specifier> ::= <Typedef Name>
+		final int PROD_STRUCTORUNIONSPEC_IDENTIFIER_LBRACE_RBRACE         =  32;  // <StructOrUnion Spec> ::= <StructOrUnion> Identifier '{' <StructDeclnList> '}'
+		final int PROD_STRUCTORUNIONSPEC_LBRACE_RBRACE                    =  33;  // <StructOrUnion Spec> ::= <StructOrUnion> '{' <StructDeclnList> '}'
+		final int PROD_STRUCTORUNIONSPEC_IDENTIFIER                       =  34;  // <StructOrUnion Spec> ::= <StructOrUnion> Identifier
+		final int PROD_STRUCTORUNION_STRUCT                               =  35;  // <StructOrUnion> ::= struct
+		final int PROD_STRUCTORUNION_UNION                                =  36;  // <StructOrUnion> ::= union
+		final int PROD_STRUCTDECLNLIST                                    =  37;  // <StructDeclnList> ::= <StructDeclnList> <Struct Declaration>
+		final int PROD_STRUCTDECLNLIST2                                   =  38;  // <StructDeclnList> ::= <Struct Declaration>
+		final int PROD_STRUCTDECLARATION_SEMI                             =  39;  // <Struct Declaration> ::= <SpecQualList> <StructDeclList> ';'
+		final int PROD_SPECQUALLIST                                       =  40;  // <SpecQualList> ::= <Type Specifier> <SpecQuals>
+		final int PROD_SPECQUALLIST2                                      =  41;  // <SpecQualList> ::= <Type Qualifier> <SpecQuals>
+		final int PROD_SPECQUALS                                          =  42;  // <SpecQuals> ::= <SpecQualList>
+		final int PROD_SPECQUALS2                                         =  43;  // <SpecQuals> ::= 
+		final int PROD_STRUCTDECLLIST_COMMA                               =  44;  // <StructDeclList> ::= <StructDeclList> ',' <Struct Decl>
+		final int PROD_STRUCTDECLLIST                                     =  45;  // <StructDeclList> ::= <Struct Decl>
+		final int PROD_STRUCTDECL_COLON                                   =  46;  // <Struct Decl> ::= <Declarator> ':' <Constant Exp>
+		final int PROD_STRUCTDECL                                         =  47;  // <Struct Decl> ::= <Declarator>
+		final int PROD_STRUCTDECL_COLON2                                  =  48;  // <Struct Decl> ::= ':' <Constant Exp>
+		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_RBRACE       =  49;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> '}'
+		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_COMMA_RBRACE =  50;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> ',' '}'
+		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE                  =  51;  // <Enumerator Spec> ::= enum '{' <EnumList> '}'
+		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE            =  52;  // <Enumerator Spec> ::= enum '{' <EnumList> ',' '}'
+		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER                     =  53;  // <Enumerator Spec> ::= enum Identifier
+		final int PROD_ENUMLIST_COMMA                                     =  54;  // <EnumList> ::= <EnumList> ',' <Enumerator>
+		final int PROD_ENUMLIST                                           =  55;  // <EnumList> ::= <Enumerator>
+		final int PROD_ENUMERATOR_IDENTIFIER_EQ                           =  56;  // <Enumerator> ::= Identifier '=' <Constant Exp>
+		final int PROD_ENUMERATOR_IDENTIFIER                              =  57;  // <Enumerator> ::= Identifier
+		final int PROD_TYPEQUALIFIER_CONST                                =  58;  // <Type Qualifier> ::= const
+		final int PROD_TYPEQUALIFIER_RESTRICT                             =  59;  // <Type Qualifier> ::= restrict
+		final int PROD_TYPEQUALIFIER_VOLATILE                             =  60;  // <Type Qualifier> ::= volatile
+		final int PROD_DECLARATOR                                         =  61;  // <Declarator> ::= <Pointer> <Direct Decl>
+		final int PROD_DECLARATOR2                                        =  62;  // <Declarator> ::= <Direct Decl>
+		final int PROD_DIRECTDECL_IDENTIFIER                              =  63;  // <Direct Decl> ::= Identifier
+		final int PROD_DIRECTDECL_LPAREN_RPAREN                           =  64;  // <Direct Decl> ::= '(' <Declarator> ')'
+		final int PROD_DIRECTDECL_LBRACKET_RBRACKET                       =  65;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTDECL_LBRACKET_TIMES_RBRACKET                 =  66;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> '*' ']'
+		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET                =  67;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualList> static <Assign Exp> ']'
+		final int PROD_DIRECTDECL_LBRACKET_RBRACKET2                      =  68;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> ']'
+		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET2               =  69;  // <Direct Decl> ::= <Direct Decl> '[' static <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTDECL_LPAREN_RPAREN2                          =  70;  // <Direct Decl> ::= <Direct Decl> '(' <ParamTypeList> ')'
+		final int PROD_DIRECTDECL_LPAREN_RPAREN3                          =  71;  // <Direct Decl> ::= <Direct Decl> '(' <IdListOpt> ')'
+		final int PROD_POINTER_TIMES                                      =  72;  // <Pointer> ::= '*' <TypeQualList> <Pointer>
+		final int PROD_POINTER_TIMES2                                     =  73;  // <Pointer> ::= '*' <TypeQualList>
+		final int PROD_POINTER_TIMES3                                     =  74;  // <Pointer> ::= '*' <Pointer>
+		final int PROD_POINTER_TIMES4                                     =  75;  // <Pointer> ::= '*'
+		final int PROD_TYPEQUALLIST                                       =  76;  // <TypeQualList> ::= <Type Qualifier>
+		final int PROD_TYPEQUALLIST2                                      =  77;  // <TypeQualList> ::= <TypeQualList> <Type Qualifier>
+		final int PROD_TYPEQUALSOPT                                       =  78;  // <TypeQualsOpt> ::= <TypeQualList>
+		final int PROD_TYPEQUALSOPT2                                      =  79;  // <TypeQualsOpt> ::= 
+		final int PROD_PARAMTYPELIST_COMMA_DOTDOTDOT                      =  80;  // <ParamTypeList> ::= <ParameterList> ',' '...'
+		final int PROD_PARAMTYPELIST                                      =  81;  // <ParamTypeList> ::= <ParameterList>
+		final int PROD_PARAMETERLIST_COMMA                                =  82;  // <ParameterList> ::= <ParameterList> ',' <Parameter Decl>
+		final int PROD_PARAMETERLIST                                      =  83;  // <ParameterList> ::= <Parameter Decl>
+		final int PROD_PARAMETERDECL                                      =  84;  // <Parameter Decl> ::= <Decl Specifiers> <Declarator>
+		final int PROD_PARAMETERDECL2                                     =  85;  // <Parameter Decl> ::= <Decl Specifiers> <Abstract Decl>
+		final int PROD_PARAMETERDECL3                                     =  86;  // <Parameter Decl> ::= <Decl Specifiers>
+		final int PROD_IDENTIFIERLIST_COMMA_IDENTIFIER                    =  87;  // <IdentifierList> ::= <IdentifierList> ',' Identifier
+		final int PROD_IDENTIFIERLIST_IDENTIFIER                          =  88;  // <IdentifierList> ::= Identifier
+		final int PROD_IDLISTOPT                                          =  89;  // <IdListOpt> ::= <IdentifierList>
+		final int PROD_IDLISTOPT2                                         =  90;  // <IdListOpt> ::= 
+		final int PROD_TYPENAME                                           =  91;  // <Typename> ::= <SpecQualList> <Abstract Decl>
+		final int PROD_TYPENAME2                                          =  92;  // <Typename> ::= <SpecQualList>
+		final int PROD_ABSTRACTDECL                                       =  93;  // <Abstract Decl> ::= <Pointer> <Direct Abstr Decl>
+		final int PROD_ABSTRACTDECL2                                      =  94;  // <Abstract Decl> ::= <Pointer>
+		final int PROD_ABSTRACTDECL3                                      =  95;  // <Abstract Decl> ::= <Direct Abstr Decl>
+		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN                      =  96;  // <Direct Abstr Decl> ::= '(' <Abstract Decl> ')'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET                  =  97;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_TIMES_RBRACKET            =  98;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' '*' ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET           =  99;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualList> static <Assign Exp> ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET2                 = 100;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET2          = 101;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' static <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN2                     = 102;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' <ParamTypeList> ')'
+		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN3                     = 103;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' ')'
+		final int PROD_DIRABSTRDECLOPT                                    = 104;  // <DirAbstrDeclOpt> ::= <Direct Abstr Decl>
+		final int PROD_DIRABSTRDECLOPT2                                   = 105;  // <DirAbstrDeclOpt> ::= 
+		final int PROD_TYPEDEFNAME_USERTYPEID                             = 106;  // <Typedef Name> ::= UserTypeId
+		final int PROD_INITIALIZER                                        = 107;  // <Initializer> ::= <Assign Exp>
+		final int PROD_INITIALIZER_LBRACE_RBRACE                          = 108;  // <Initializer> ::= '{' <InitializerList> '}'
+		final int PROD_INITIALIZER_LBRACE_COMMA_RBRACE                    = 109;  // <Initializer> ::= '{' <InitializerList> ',' '}'
+		final int PROD_INITIALIZERLIST_COMMA                              = 110;  // <InitializerList> ::= <InitializerList> ',' <Designation>
+		final int PROD_INITIALIZERLIST                                    = 111;  // <InitializerList> ::= <Designation>
+		final int PROD_DESIGNATION_EQ                                     = 112;  // <Designation> ::= <DesignatorList> '=' <Initializer>
+		final int PROD_DESIGNATION                                        = 113;  // <Designation> ::= <Initializer>
+		final int PROD_DESIGNATORLIST                                     = 114;  // <DesignatorList> ::= <DesignatorList> <Designator>
+		final int PROD_DESIGNATORLIST2                                    = 115;  // <DesignatorList> ::= <Designator>
+		final int PROD_DESIGNATOR_LBRACKET_RBRACKET                       = 116;  // <Designator> ::= '[' <Constant Exp> ']'
+		final int PROD_DESIGNATOR_DOT_IDENTIFIER                          = 117;  // <Designator> ::= '.' Identifier
+		final int PROD_STATEMENT                                          = 118;  // <Statement> ::= <Labelled Stmt>
+		final int PROD_STATEMENT_LBRACE_RBRACE                            = 119;  // <Statement> ::= '{' <BlockItemList> '}'
+		final int PROD_STATEMENT2                                         = 120;  // <Statement> ::= <Expression Stmt>
+		final int PROD_STATEMENT3                                         = 121;  // <Statement> ::= <Selection Stmt>
+		final int PROD_STATEMENT4                                         = 122;  // <Statement> ::= <Iteration Stmt>
+		final int PROD_STATEMENT5                                         = 123;  // <Statement> ::= <Jump Stmt>
+		final int PROD_LABELLEDSTMT_IDENTIFIER_COLON                      = 124;  // <Labelled Stmt> ::= Identifier ':' <Statement>
+		final int PROD_BLOCKITEMLIST                                      = 125;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
+		final int PROD_BLOCKITEMLIST2                                     = 126;  // <BlockItemList> ::= <BlockItem>
+		final int PROD_BLOCKITEM                                          = 127;  // <BlockItem> ::= <Declaration>
+		final int PROD_BLOCKITEM2                                         = 128;  // <BlockItem> ::= <Statement>
+		final int PROD_EXPRESSIONSTMT_SEMI                                = 129;  // <Expression Stmt> ::= <Expression> ';'
+		final int PROD_EXPRESSIONSTMT_SEMI2                               = 130;  // <Expression Stmt> ::= ';'
+		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN                     = 131;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement>
+		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN_ELSE                = 132;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement> else <Statement>
+		final int PROD_SELECTIONSTMT_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE   = 133;  // <Selection Stmt> ::= switch '(' <Expression> ')' '{' <Case Stmts> '}'
+		final int PROD_CASESTMTS_CASE_COLON                               = 134;  // <Case Stmts> ::= case <Selector> ':' <StmtList> <Case Stmts>
+		final int PROD_CASESTMTS_DEFAULT_COLON                            = 135;  // <Case Stmts> ::= default ':' <StmtList>
+		final int PROD_CASESTMTS                                          = 136;  // <Case Stmts> ::= 
+		final int PROD_SELECTOR_LITERAL                                   = 137;  // <Selector> ::= Literal
+		final int PROD_SELECTOR_LPAREN_RPAREN                             = 138;  // <Selector> ::= '(' <Expression> ')'
+		final int PROD_STMTLIST                                           = 139;  // <StmtList> ::= <Statement> <StmtList>
+		final int PROD_STMTLIST2                                          = 140;  // <StmtList> ::= 
+		final int PROD_ITERATIONSTMT_WHILE_LPAREN_RPAREN                  = 141;  // <Iteration Stmt> ::= while '(' <Expression> ')' <Statement>
+		final int PROD_ITERATIONSTMT_DO_WHILE_LPAREN_RPAREN_SEMI          = 142;  // <Iteration Stmt> ::= do <Statement> while '(' <Expression> ')' ';'
+		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_SEMI_RPAREN          = 143;  // <Iteration Stmt> ::= for '(' <ExprOpt> ';' <ExprOpt> ';' <ExprOpt> ')' <Statement>
+		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_RPAREN               = 144;  // <Iteration Stmt> ::= for '(' <Declaration> <ExprOpt> ';' <ExprOpt> ')' <Statement>
+		final int PROD_JUMPSTMT_GOTO_IDENTIFIER_SEMI                      = 145;  // <Jump Stmt> ::= goto Identifier ';'
+		final int PROD_JUMPSTMT_CONTINUE_SEMI                             = 146;  // <Jump Stmt> ::= continue ';'
+		final int PROD_JUMPSTMT_BREAK_SEMI                                = 147;  // <Jump Stmt> ::= break ';'
+		final int PROD_JUMPSTMT_RETURN_SEMI                               = 148;  // <Jump Stmt> ::= return <ExprOpt> ';'
+		final int PROD_TRANSLATIONUNIT                                    = 149;  // <Translation Unit> ::= <External Decl>
+		final int PROD_TRANSLATIONUNIT2                                   = 150;  // <Translation Unit> ::= <Translation Unit> <External Decl>
+		final int PROD_EXTERNALDECL                                       = 151;  // <External Decl> ::= <Function Def>
+		final int PROD_EXTERNALDECL2                                      = 152;  // <External Decl> ::= <Declaration>
+		final int PROD_FUNCTIONDEF_LBRACE_RBRACE                          = 153;  // <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> '{' <BlockItemList> '}'
+		final int PROD_DECLARATIONLIST                                    = 154;  // <DeclarationList> ::= <DeclarationList> <Declaration>
+		final int PROD_DECLARATIONLIST2                                   = 155;  // <DeclarationList> ::= <Declaration>
+		final int PROD_DECLLISTOPT                                        = 156;  // <DeclListOpt> ::= <DeclarationList>
+		final int PROD_DECLLISTOPT2                                       = 157;  // <DeclListOpt> ::= 
+		final int PROD_EXPRESSION_COMMA                                   = 158;  // <Expression> ::= <Expression> ',' <Assign Exp>
+		final int PROD_EXPRESSION                                         = 159;  // <Expression> ::= <Assign Exp>
+		final int PROD_ASSIGNEXP                                          = 160;  // <Assign Exp> ::= <Unary Exp> <Assign Op> <Assign Exp>
+		final int PROD_ASSIGNEXP2                                         = 161;  // <Assign Exp> ::= <Cond Exp>
+		final int PROD_ASSIGNOP_EQ                                        = 162;  // <Assign Op> ::= '='
+		final int PROD_ASSIGNOP_TIMESEQ                                   = 163;  // <Assign Op> ::= '*='
+		final int PROD_ASSIGNOP_DIVEQ                                     = 164;  // <Assign Op> ::= '/='
+		final int PROD_ASSIGNOP_PERCENTEQ                                 = 165;  // <Assign Op> ::= '%='
+		final int PROD_ASSIGNOP_PLUSEQ                                    = 166;  // <Assign Op> ::= '+='
+		final int PROD_ASSIGNOP_MINUSEQ                                   = 167;  // <Assign Op> ::= '-='
+		final int PROD_ASSIGNOP_LTLTEQ                                    = 168;  // <Assign Op> ::= '<<='
+		final int PROD_ASSIGNOP_GTGTEQ                                    = 169;  // <Assign Op> ::= '>>='
+		final int PROD_ASSIGNOP_AMPEQ                                     = 170;  // <Assign Op> ::= '&='
+		final int PROD_ASSIGNOP_CARET                                     = 171;  // <Assign Op> ::= '^'
+		final int PROD_ASSIGNOP_PIPEEQ                                    = 172;  // <Assign Op> ::= '|='
+		final int PROD_CONDEXP_QUESTION_COLON                             = 173;  // <Cond Exp> ::= <LogOr Exp> '?' <Expression> ':' <Cond Exp>
+		final int PROD_CONDEXP                                            = 174;  // <Cond Exp> ::= <LogOr Exp>
+		final int PROD_LOGOREXP_PIPEPIPE                                  = 175;  // <LogOr Exp> ::= <LogOr Exp> '||' <LogAnd Exp>
+		final int PROD_LOGOREXP                                           = 176;  // <LogOr Exp> ::= <LogAnd Exp>
+		final int PROD_LOGANDEXP_AMPAMP                                   = 177;  // <LogAnd Exp> ::= <LogAnd Exp> '&&' <Or Exp>
+		final int PROD_LOGANDEXP                                          = 178;  // <LogAnd Exp> ::= <Or Exp>
+		final int PROD_OREXP_PIPE                                         = 179;  // <Or Exp> ::= <Or Exp> '|' <ExclOr Exp>
+		final int PROD_OREXP                                              = 180;  // <Or Exp> ::= <ExclOr Exp>
+		final int PROD_EXCLOREXP_CARET                                    = 181;  // <ExclOr Exp> ::= <ExclOr Exp> '^' <And Exp>
+		final int PROD_EXCLOREXP                                          = 182;  // <ExclOr Exp> ::= <And Exp>
+		final int PROD_ANDEXP_AMP                                         = 183;  // <And Exp> ::= <And Exp> '&' <Equat Exp>
+		final int PROD_ANDEXP                                             = 184;  // <And Exp> ::= <Equat Exp>
+		final int PROD_EQUATEXP_EQEQ                                      = 185;  // <Equat Exp> ::= <Equat Exp> '==' <Relat Exp>
+		final int PROD_EQUATEXP_EXCLAMEQ                                  = 186;  // <Equat Exp> ::= <Equat Exp> '!=' <Relat Exp>
+		final int PROD_EQUATEXP                                           = 187;  // <Equat Exp> ::= <Relat Exp>
+		final int PROD_RELATEXP_GT                                        = 188;  // <Relat Exp> ::= <Relat Exp> '>' <Shift Exp>
+		final int PROD_RELATEXP_LT                                        = 189;  // <Relat Exp> ::= <Relat Exp> '<' <Shift Exp>
+		final int PROD_RELATEXP_LTEQ                                      = 190;  // <Relat Exp> ::= <Relat Exp> '<=' <Shift Exp>
+		final int PROD_RELATEXP_GTEQ                                      = 191;  // <Relat Exp> ::= <Relat Exp> '>=' <Shift Exp>
+		final int PROD_RELATEXP                                           = 192;  // <Relat Exp> ::= <Shift Exp>
+		final int PROD_SHIFTEXP_LTLT                                      = 193;  // <Shift Exp> ::= <Shift Exp> '<<' <Add Exp>
+		final int PROD_SHIFTEXP_GTGT                                      = 194;  // <Shift Exp> ::= <Shift Exp> '>>' <Add Exp>
+		final int PROD_SHIFTEXP                                           = 195;  // <Shift Exp> ::= <Add Exp>
+		final int PROD_ADDEXP_PLUS                                        = 196;  // <Add Exp> ::= <Add Exp> '+' <Mult Exp>
+		final int PROD_ADDEXP_MINUS                                       = 197;  // <Add Exp> ::= <Add Exp> '-' <Mult Exp>
+		final int PROD_ADDEXP                                             = 198;  // <Add Exp> ::= <Mult Exp>
+		final int PROD_MULTEXP_TIMES                                      = 199;  // <Mult Exp> ::= <Mult Exp> '*' <Cast Exp>
+		final int PROD_MULTEXP_DIV                                        = 200;  // <Mult Exp> ::= <Mult Exp> '/' <Cast Exp>
+		final int PROD_MULTEXP_PERCENT                                    = 201;  // <Mult Exp> ::= <Mult Exp> '%' <Cast Exp>
+		final int PROD_MULTEXP                                            = 202;  // <Mult Exp> ::= <Cast Exp>
+		final int PROD_POSTFIXEXP                                         = 203;  // <Postfix Exp> ::= <Value>
+		final int PROD_POSTFIXEXP_LBRACKET_RBRACKET                       = 204;  // <Postfix Exp> ::= <Postfix Exp> '[' <Expression> ']'
+		final int PROD_POSTFIXEXP_LPAREN_RPAREN                           = 205;  // <Postfix Exp> ::= <Postfix Exp> '(' <ArgExpList> ')'
+		final int PROD_POSTFIXEXP_LPAREN_RPAREN2                          = 206;  // <Postfix Exp> ::= <Postfix Exp> '(' ')'
+		final int PROD_POSTFIXEXP_DOT_IDENTIFIER                          = 207;  // <Postfix Exp> ::= <Postfix Exp> '.' Identifier
+		final int PROD_POSTFIXEXP_MINUSGT_IDENTIFIER                      = 208;  // <Postfix Exp> ::= <Postfix Exp> '->' Identifier
+		final int PROD_POSTFIXEXP_PLUSPLUS                                = 209;  // <Postfix Exp> ::= <Postfix Exp> '++'
+		final int PROD_POSTFIXEXP_MINUSMINUS                              = 210;  // <Postfix Exp> ::= <Postfix Exp> '--'
+		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_RBRACE             = 211;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> '}'
+		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_COMMA_RBRACE       = 212;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> ',' '}'
+		final int PROD_ARGEXPLIST                                         = 213;  // <ArgExpList> ::= <Assign Exp>
+		final int PROD_ARGEXPLIST_COMMA                                   = 214;  // <ArgExpList> ::= <ArgExpList> ',' <Assign Exp>
+		final int PROD_UNARYEXP                                           = 215;  // <Unary Exp> ::= <Postfix Exp>
+		final int PROD_UNARYEXP_PLUSPLUS                                  = 216;  // <Unary Exp> ::= '++' <Unary Exp>
+		final int PROD_UNARYEXP_MINUSMINUS                                = 217;  // <Unary Exp> ::= '--' <Unary Exp>
+		final int PROD_UNARYEXP2                                          = 218;  // <Unary Exp> ::= <Unary Op> <Cast Exp>
+		final int PROD_UNARYEXP_SIZEOF                                    = 219;  // <Unary Exp> ::= sizeof <Unary Exp>
+		final int PROD_UNARYEXP_SIZEOF_LPAREN_RPAREN                      = 220;  // <Unary Exp> ::= sizeof '(' <Typename> ')'
+		final int PROD_UNARYOP_AMP                                        = 221;  // <Unary Op> ::= '&'
+		final int PROD_UNARYOP_TIMES                                      = 222;  // <Unary Op> ::= '*'
+		final int PROD_UNARYOP_PLUS                                       = 223;  // <Unary Op> ::= '+'
+		final int PROD_UNARYOP_MINUS                                      = 224;  // <Unary Op> ::= '-'
+		final int PROD_UNARYOP_TILDE                                      = 225;  // <Unary Op> ::= '~'
+		final int PROD_UNARYOP_EXCLAM                                     = 226;  // <Unary Op> ::= '!'
+		final int PROD_CASTEXP                                            = 227;  // <Cast Exp> ::= <Unary Exp>
+		final int PROD_CASTEXP_LPAREN_RPAREN                              = 228;  // <Cast Exp> ::= '(' <Typename> ')' <Cast Exp>
+		final int PROD_VALUE_IDENTIFIER                                   = 229;  // <Value> ::= Identifier
+		final int PROD_VALUE                                              = 230;  // <Value> ::= <Literal>
+		final int PROD_VALUE_LPAREN_RPAREN                                = 231;  // <Value> ::= '(' <Expression> ')'
+		final int PROD_LITERAL_DECLITERAL                                 = 232;  // <Literal> ::= DecLiteral
+		final int PROD_LITERAL_OCTLITERAL                                 = 233;  // <Literal> ::= OctLiteral
+		final int PROD_LITERAL_HEXLITERAL                                 = 234;  // <Literal> ::= HexLiteral
+		final int PROD_LITERAL_FLOATLITERAL                               = 235;  // <Literal> ::= FloatLiteral
+		final int PROD_LITERAL_STRINGLITERAL                              = 236;  // <Literal> ::= StringLiteral
+		final int PROD_LITERAL_CHARLITERAL                                = 237;  // <Literal> ::= CharLiteral
+		final int PROD_CONSTANTEXP                                        = 238;  // <Constant Exp> ::= <Cond Exp>
+		final int PROD_EXPROPT                                            = 239;  // <ExprOpt> ::= <Expression>
+		final int PROD_EXPROPT2                                           = 240;  // <ExprOpt> ::= 
 	};
 
 	//---------------------------- Local Definitions ---------------------
@@ -621,11 +618,11 @@ public class C99Parser extends CodeParser
 	private String ParserEncoding;
 	private String ParserPath;
 	
+	/** Fix list of common preprocesssor-defined type names for convenience */
 	private	final String[][] typeReplacements = new String[][] {
 		{"size_t", "unsigned long"},
 		{"time_t", "unsigned long"},
-		// FIXME: to be made configurable
-		{"cob_u8_t", "unsigned int"}
+		{"ptrdiff_t", "unsigned long"}
 	};
 	
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();

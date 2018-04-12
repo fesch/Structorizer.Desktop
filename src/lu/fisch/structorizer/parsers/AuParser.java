@@ -34,7 +34,8 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.09      First Issue
  *      Kay Gürtzig     2017.04.27      File logging option added
- *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import 
+ *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
+ *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved, logger added
  *
  ******************************************************************************************************
  *
@@ -54,6 +55,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.creativewidgetworks.goldparser.engine.Group;
 import com.creativewidgetworks.goldparser.engine.Parser;
@@ -90,8 +93,13 @@ import com.creativewidgetworks.goldparser.util.ResourceHelper;
  */
 public class AuParser extends GOLDParser {
 	
+	// START KGU#484 2018-04-12: Issue #463 - regular logging mechanism
+	/** General logger instance for product maintenance. */
+	private static final Logger logger = Logger.getLogger(AuParser.class.getName());
+	// END KU#484 2018-04-12
 	// START KGU#354 2017-04-27: Enh. #354
-	OutputStreamWriter logFile = null;
+	/** Specific logging stream for verbose Structorizer code import. */
+	private OutputStreamWriter logFile = null;
 	// END KGU#354 2017-04-27
 	
 	// START KGU#407 2017-07-21: Enh. #420: Prerequisites to map comment tokens.
@@ -238,6 +246,11 @@ public class AuParser extends GOLDParser {
 
     protected boolean processTokenRead() {
     	Token token = this.getCurrentToken();
+    	// START KGU#511 2018-04-12: Issue #489
+    	if (token == null) {
+    		return false;
+    	}
+    	// END KGU#511 2018-04-12
     	// START KGU#407 2017-06-21: Enh. #420 Set the token - comment mapping
     	String name = token.getName();	// FIXME is this sufficient for a classification?
     	if (name.equalsIgnoreCase("comment")) {
@@ -277,14 +290,26 @@ public class AuParser extends GOLDParser {
     			}
     			logFile.write("\n");
     		} catch (IOException e) {
-    		// TODO Auto-generated catch block
-    		e.printStackTrace();
+    			// START KGU#484 2018-04-12: Issue #463
+    			//e.printStackTrace();
+    			logger.log(Level.WARNING, getClass().getSimpleName() + " parser logging failed!", e);
+    			// END KGU#484 2018-04-12
     		}
     	}
     	return false;
     }
     
     public Token getCurrentToken() {
-    	return super.getCurrentToken();
+    	// START KGU#511 2018-04-12: Issue #489
+    	//return super.getCurrentToken();
+    	Token currentToken = null;
+    	try {
+    		currentToken = super.getCurrentToken();
+    	}
+    	catch (java.util.EmptyStackException ex) {
+    		logger.log(Level.SEVERE, "No current token", ex);
+    	}
+    	return currentToken;
+    	// END KGU#511 2018-04-12
     }
 }

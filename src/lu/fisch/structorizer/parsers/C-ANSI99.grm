@@ -49,8 +49,7 @@
 ! with generic type names "user_type_000" through "user_type_999". Using
 ! a map, these substitutions may be reverted after the prepared source
 ! file will have passed the parser.
-! Some frequently used types from <stddef.h> like size_t, time_t, wchar_t,
-! and ptrdiff_t have been added to the grammar for convenience.
+! Type wchar_t from <stddef.h> was added to the grammar for convenience.
 ! The declaration rules of the adopted grammar allow some modifier
 ! combinations like unsigned double that are semantically illegal.
 ! To sort out the nonsense combinations will be semantic task of the
@@ -61,11 +60,18 @@
 !
 ! This grammar file was created for the code import feature of "Structorizer"
 ! (a free Nassi-Shneiderman diagram editor see http://structorizer.fisch.lu)
+!
+! Created: 2018-03-27
+!
+! Modified 2018-04-12
+!   * The missing rule variant for <Declaration> was added
+!   * The erroneous ',' was removed from the <StructDeclnList> rule
+!   * Rule for function call with empty argument list had been missing
 ! -----------------------------------------------------------------------
 "Name"     = 'ANSI-C99'
 "Author"   = 'Kay Gürtzig'
-"Version"  = '1.0'
-"About"    = 'A short description of the grammar'
+"Version"  = '1.1'
+"About"    = 'ANSI C99 (ISO/IEC 9899:TC3 draft from September 7, 2007)'
 
 "Case Sensitive" = True
 
@@ -132,6 +138,7 @@ Comment Line  = '//'
 ! -------------------------------------------------
 
 <Declaration>     ::= <Decl Specifiers> <InitDeclList> ';'
+                   | <Decl Specifiers> ';'
                 
 <Decl Specifiers> ::= <Storage Class> <Decl Specs>
                    | <Type Specifier> <Decl Specs>
@@ -159,9 +166,6 @@ Comment Line  = '//'
                    |  short
                    |  int
                    |  long
-                   |  size_t            ! Added for convenience (from <stddef.h>)
-                   |  ptrdiff_t         ! Added for convenience (from <stddef.h>)
-                   |  time_t            ! Added for convenience (from <time.h>)
                    |  float
                    |  double
                    |  signed
@@ -179,7 +183,7 @@ Comment Line  = '//'
 <StructOrUnion>   ::= struct
                    | union
                    
-<StructDeclnList>  ::= <StructDeclnList> ',' <Struct Declaration>
+<StructDeclnList>  ::= <StructDeclnList> <Struct Declaration>
                    | <Struct Declaration>
                    
 <Struct Declaration> ::= <SpecQualList> <StructDeclList> ';'
@@ -410,6 +414,7 @@ Comment Line  = '//'
 <Postfix Exp> ::= <Value>
                |  <Postfix Exp> '[' <Expression> ']'
                |  <Postfix Exp> '(' <ArgExpList> ')'
+               |  <Postfix Exp> '(' ')'
                |  <Postfix Exp> '.' Identifier
                |  <Postfix Exp> '->' Identifier
                |  <Postfix Exp> '++'
