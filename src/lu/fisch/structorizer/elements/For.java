@@ -62,6 +62,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.30      Enh. #354: New structured constructors
  *      Kay Gürtzig     2017.11.02      Issue #447: Precaution against line-continuating backslashes 
  *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
+ *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *
  ******************************************************************************************************
  *
@@ -231,14 +232,18 @@ public class For extends Element implements ILoop {
 		}
 
 		// START KGU#227 2016-07-30: Enh. #128 - Just delegate the basics to Instruction
-		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+		//rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		Rect rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		Point pt0Body = new Point();
+		// END KGU#516 2018-04-04
 		int padding = 2*(E_PADDING/2); 
 		// END KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
 
 
 		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
-		this.pt0Body.x = padding - 1;		// FIXME: Fine tuning!
-		this.pt0Body.y = rect0.bottom - 1;	// FIXME: Fine tuning!
+		pt0Body.x = padding - 1;		// FIXME: Fine tuning!
+		pt0Body.y = rect0.bottom - 1;	// FIXME: Fine tuning!
 		// END KGU#136 2016-03-01
 
 		// START KGU#136 2016-02-27: Bugfix #97 - field replaced by local variable
@@ -254,6 +259,10 @@ public class For extends Element implements ILoop {
 			rect0.bottom += E_PADDING;
 		}
 
+		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+		this.rect0 = rect0;
+		this.pt0Body = pt0Body;
+        // END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01

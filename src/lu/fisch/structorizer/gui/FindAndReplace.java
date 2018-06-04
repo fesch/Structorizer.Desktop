@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.03      Bugfix #448: endless self-replacement averted, performance improved
  *                                      (minimum-invasive revision)
  *      Kay Gürtzig     2018.01.22      Enh. #490: The dialog now works on the controller alias texts if enabled
+ *      Kay Gürtzig     2018.04.05      Issue #463: Plain console messages replaced by logging mechanism
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -123,6 +126,10 @@ import lu.fisch.utils.StringList;
  */
 @SuppressWarnings("serial")
 public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
+
+	// START KGU#484 2018-04-05: Info #463
+	public static final Logger logger = Logger.getLogger(FindAndReplace.class.getName());
+	// END KGU#484 2018-04-05
 
 	/** pattern history limitation */
 	private static final int MAX_RECENT_PATTERNS = 10;
@@ -316,7 +323,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			ini.load();
 		} catch (IOException ex) {
 			// Seems ok to ignore this
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463 
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Failed to re-read preferences.", ex);
+			// END KGU#484 2018-04-05
 		}
 		double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
 		int inset = (int)Math.round(5 * scaleFactor);
@@ -981,8 +991,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		try {
 			doc.remove(0, doc.getLength());
 		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble clearing the content.", e);
+			// END KGU#484 2018-04-05
 		}
 	}
 
@@ -1059,7 +1071,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			try {
 				doc.insertString(doc.getLength(), text0, doc.getStyle("default"));
 			} catch (BadLocationException e) {
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463 
+				//e.printStackTrace();
+				logger.log(Level.WARNING, "Inconsistent content.", e);
+				// END KGU#484 2018-04-05
 			}
 		}
 		else {
@@ -1104,7 +1119,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					txtPane.setCaretPosition(emphPos);
 				}
 			} catch (BadLocationException e) {
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463 
+				//e.printStackTrace();
+				logger.log(Level.WARNING, "Inconsistent content.", e);
+				// END KGU#484 2018-04-05
 			}
 			// END KGU#454 2017-11-03
 		}

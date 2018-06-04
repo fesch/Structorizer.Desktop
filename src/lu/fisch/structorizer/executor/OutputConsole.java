@@ -57,6 +57,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -169,11 +171,13 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     public void clear()
     {
     	try {
-			doc.remove(0, doc.getLength());
-		} catch (BadLocationException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
-		}
+    		doc.remove(0, doc.getLength());
+    	} catch (BadLocationException ex) {
+    		// START KGU#484 2018-04-05: Issue #463
+    		//ex.printStackTrace();
+    		Logger.getLogger(getClass().getName()).log(Level.WARNING, "Trouble clearing the content.", ex);
+    		// END KGU#484 2018-04-05
+    	}
     }
     
     /**
@@ -197,8 +201,10 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     	try {
     		this.doc.insertString(doc.getLength(), _text, doc.getStyle(_colour.toString()));
     	} catch (BadLocationException e) {
-    		// TODO Auto-generated catch block
-    		e.printStackTrace();
+    		// START KGU#484 2018-04-05: Issue #463 
+    		//e.printStackTrace();
+    		Logger.getLogger(getClass().getName()).log(Level.WARNING, "Inconsistent content.", e);
+    		// END KGU#484 2018-04-05
     	}
     	// Scroll to end (if there is an easier way, I just didn't find it).
     	Rectangle rect = this.textPane.getBounds();

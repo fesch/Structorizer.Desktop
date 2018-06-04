@@ -227,9 +227,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             			}
             		});
             	} catch (InvocationTargetException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.SEVERE, "Editor creation thread failed.", e1);
+            		// END KGU#484 2018-04-05
             	} catch (InterruptedException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.SEVERE, "Editor creation thread failed.", e1);
+            		// END KGU#484 2018-04-05
             	}
             }
             else {
@@ -256,9 +262,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             			}
             		});
             	} catch (InvocationTargetException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.SEVERE, "Menu creation thread failed.", e1);
+            		// END KGU#484 2018-04-05
             	} catch (InterruptedException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.SEVERE, "Menu creation thread failed.", e1);
+            		// END KGU#484 2018-04-05
             	}
             }
             else {
@@ -280,9 +292,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             			}
             		});
             	} catch (InvocationTargetException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Button update failed.", e1);
+            		// END KGU#484 2018-04-05
             	} catch (InterruptedException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Button update failed.", e1);
+            		// END KGU#484 2018-04-05
             	}
             }
             else {
@@ -393,9 +411,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             			}
             		});
             	} catch (InvocationTargetException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Editor revaluation thread failed.", e1);
+            		// END KGU#484 2018-04-05
             	} catch (InterruptedException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Editor revalidation thread failed.", e1);
+            		// END KGU#484 2018-04-05
             	}
             }
             else {
@@ -414,9 +438,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             			}
             		});
             	} catch (InvocationTargetException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Diagram initialization failed.", e1);
+            		// END KGU#484 2018-04-05
             	} catch (InterruptedException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Diagram initialization failed.", e1);
+            		// END KGU#484 2018-04-05
             	}
             }
             else {
@@ -433,9 +463,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             			}
             		});
             	} catch (InvocationTargetException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Arranger index update failed.", e1);
+            		// END KGU#484 2018-04-05
             	} catch (InterruptedException e1) {
-            		e1.printStackTrace();
+            		// START KGU#484 2018-04-05: Issue #463
+            		//e1.printStackTrace();
+            		logger.log(Level.WARNING, "Arranger index update failed.", e1);
+            		// END KGU#484 2018-04-05
             	}
             }
             else {
@@ -655,9 +691,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 							}
 						});
 					} catch (InvocationTargetException e1) {
-						e1.printStackTrace();
+						// START KGU#484 2018-04-05: Issue #463
+						//e1.printStackTrace();
+						logger.log(Level.WARNING, "Diagram update failed.", e1);
+						// END KGU#484 2018-04-05
 					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+						// START KGU#484 2018-04-05: Issue #463
+						//e1.printStackTrace();
+						logger.log(Level.WARNING, "Diagram index update failed.", e1);
+						// END KGU#484 2018-04-05
 					}
 				}
 				else {

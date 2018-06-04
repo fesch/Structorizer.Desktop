@@ -101,7 +101,7 @@ public class AnalyserPreferences extends LangDialog {
 		/*21*/"Discourage use of mistakable variable names «I», «l», and «O».",
 		/*22*/"Check for possible violations of constants.",
 		/*23*/"Check against faulty diagram includes.",
-		/*24*/"Check type definitions.",
+		/*24*/"Check type definitions and record component access.",
 		/*25*/"Recommendations for first program instructions.",
 		/*26*/"Short \"hello world\" tour."
 		// Just append the descriptions for new check types here and insert their

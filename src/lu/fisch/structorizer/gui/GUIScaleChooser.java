@@ -55,6 +55,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -157,11 +159,11 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 						spnScale.putClientProperty("JComponent.sizeVariant", "large");
 
 						GridBagLayout gbSpinner = new GridBagLayout();
-				        GridBagConstraints gbcSpinner = new GridBagConstraints();
-				        border = (int)(5 * scaleFactor);
-				        gbcSpinner.insets = new Insets(0, 0, border, border);
-				        pnlSpinner.setLayout(gbSpinner);
-				        
+						GridBagConstraints gbcSpinner = new GridBagConstraints();
+						border = (int)(5 * scaleFactor);
+						gbcSpinner.insets = new Insets(0, 0, border, border);
+						pnlSpinner.setLayout(gbSpinner);
+
 						JPanel pnlAux = new JPanel();
 						pnlAux.setLayout(new GridLayout(1,2));
 						((GridLayout)pnlAux.getLayout()).setHgap(border);
@@ -169,21 +171,21 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 						pnlAux.add(spnScale);
 
 						gbcSpinner.gridx = 1;
-				        gbcSpinner.gridy = 1;
-				        gbcSpinner.gridwidth = 1;
-				        gbcSpinner.gridheight = 1;
-				        gbcSpinner.fill = GridBagConstraints.NONE;
-				        gbcSpinner.weightx = 1;
-				        gbcSpinner.weighty = 1;
-				        gbcSpinner.anchor = GridBagConstraints.NORTHWEST;
-				        gbSpinner.setConstraints(pnlAux, gbcSpinner);
+						gbcSpinner.gridy = 1;
+						gbcSpinner.gridwidth = 1;
+						gbcSpinner.gridheight = 1;
+						gbcSpinner.fill = GridBagConstraints.NONE;
+						gbcSpinner.weightx = 1;
+						gbcSpinner.weighty = 1;
+						gbcSpinner.anchor = GridBagConstraints.NORTHWEST;
+						gbSpinner.setConstraints(pnlAux, gbcSpinner);
 						pnlSpinner.add(pnlAux);
 
-				        gbcSpinner.gridx = 2;
-				        gbcSpinner.fill = GridBagConstraints.REMAINDER;
-				        gbcSpinner.gridwidth = 100;
-				        //gbcSpinner.anchor = GridBagConstraints.NORTHWEST;
-				        gbSpinner.setConstraints(lblDummy, gbcSpinner);
+						gbcSpinner.gridx = 2;
+						gbcSpinner.fill = GridBagConstraints.REMAINDER;
+						gbcSpinner.gridwidth = 100;
+						//gbcSpinner.anchor = GridBagConstraints.NORTHWEST;
+						gbSpinner.setConstraints(lblDummy, gbcSpinner);
 						pnlSpinner.add(lblDummy);
 						
 						spnScale.addChangeListener(this);
@@ -322,7 +324,10 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 					try {
 						UIManager.setLookAndFeel(surrLaf);
 					} catch (Exception e) {
-						e.printStackTrace();
+						// START KGU#484 2018-04-05: Issue #463 
+						//e.printStackTrace();
+						Logger.getLogger(getClass().getName()).log(Level.WARNING, "Failed to set Look&Feel.", e);
+						// END KGU#484 2018-04-05
 					}
 				}
 			}
@@ -332,7 +337,10 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 				try {
 					UIManager.setLookAndFeel(currLaf);
 				} catch (UnsupportedLookAndFeelException e) {
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463 
+					//e.printStackTrace();
+					Logger.getLogger(getClass().getName()).log(Level.WARNING, "Failed to set Look&Feel.", e);
+					// END KGU#484 2018-04-05
 				}
 			}
 		}
@@ -347,8 +355,8 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 		double scale = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
 		lblIcon.setIcon(IconLoader.getIconImage("000_structorizer.png", scaleFactor / scale));
 		// END KGU#486 2018-02-06
-        
-        pack();
+
+		pack();
 	}
 	
     /**

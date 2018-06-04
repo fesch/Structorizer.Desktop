@@ -149,7 +149,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
  *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
  *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes
- *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file  
+ *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file
+ *      Kay Gürtzig     2018.04.03      KGU#514: analyse() call on mere mouse clicking avoided
  *
  ******************************************************************************************************
  *
@@ -562,12 +563,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									}
 									else {
 								// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
-									parserError = parser.error;
+										parserError = parser.error;
 									}
 								}
 								catch (Exception ex) {
 									parserError = ex.toString();
-									ex.printStackTrace();
+									// START KGU#484 2018-04-05: Issue #463
+									//ex.printStackTrace();
+									logger.log(Level.WARNING, "Use of parser " + parser + " failed.", ex);
+									// END KGU#484 2018-04-05
 								}
 								if (parserError != null)
 								// END KGU#354 2017-05-03
@@ -930,6 +934,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	{
     		//System.out.println("Released");
     		boolean doDraw = false;
+    		// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528 
+    		boolean doReanalyse = false;
+    		// END KGU#514 2018-04-03
 
     		if(selX!=-1 && selY!=-1 && selectedDown!=null)
     		{
@@ -966,6 +973,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								return;
 							}
 							NSDControl.doButtons();
+				    		// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528 
+				    		doReanalyse = true;
+				    		// END KGU#514 2018-04-03
 							
 							// START KGU401 2017-05-17: Issue #405
 							selectedDown.resetDrawingInfoDown();
@@ -1020,7 +1030,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(doDraw==true)
 			{
 				redraw();
-				analyse();
+	    		// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528
+				//analyse();
+	    		if (doReanalyse) {
+	    			analyse();
+	    		}
+	    		// END KGU#514 2018-04-03
 			}
 
 			if (NSDControl!=null) NSDControl.doButtons();
@@ -4374,7 +4389,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					logger.log(Level.WARNING, "Trouble exporting as image.", e);
+					// END KGU#484 2018-04-05
 				}
 			}
 		}
@@ -4499,7 +4517,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					logger.log(Level.WARNING, "Trouble exporting as image.", e);
+					// END KGU#484 2018-04-05
 				}
 			}
 		}
@@ -4607,7 +4628,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					logger.log(Level.WARNING, "Trouble exporting as image.", e);
+					// END KGU#484 2018-04-05
 				}
 			}
 		}
@@ -4713,7 +4737,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					logger.log(Level.WARNING, "Trouble exporting as image.", e);
+					// END KGU#484 2018-04-05
 				}
 			}
 		}
@@ -4778,7 +4805,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), ex.getMessage(),
 					Menu.msgTitleError.getText(), JOptionPane.ERROR_MESSAGE);
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Using parser " + _className + " failed.", ex);
+			// END KGU#484 2018-04-05
 		}
 	}
 	
@@ -5083,7 +5113,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				String message = ex.getLocalizedMessage();
 				if (message == null) {
 					message = ex.getMessage();
-					ex.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//ex.printStackTrace();
+					logger.log(Level.WARNING, "", ex);
+					// END KGU#484 2018-04-05
 				}
 				if (message == null) message = ex.toString();
 				JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
@@ -5183,7 +5216,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			buff.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Couldn't close parser plugin definition file.", e);
+			// END KGU#484 2018-04-05
 		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
@@ -5325,7 +5361,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			isLaunched = lu.fisch.utils.Desktop.browse(new URI("http://help.structorizer.fisch.lu/index.php"));
 		} catch (URISyntaxException ex) {
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Can't browse help URL.", ex);
+			// END KGU#484 2018-04-05
 		}
 		if (!isLaunched)
 		{
@@ -5408,7 +5447,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 						catch(Exception ex)
 						{
-							ex.printStackTrace();
+							// START KGU#484 2018-04-05: Issue #463
+							//ex.printStackTrace();
+							logger.log(Level.WARNING, "Defective homepage link.", ex);
+							// END KGU#484 2018-04-05
 							errorMessage = ex.getLocalizedMessage();
 							if (errorMessage == null) errorMessage = ex.getMessage();
 						}
@@ -5432,7 +5474,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing homepage.", e);
+			// END KGU#484 2018-04-05
 		}		
 	}
 
@@ -6223,11 +6268,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         } 
         catch (FileNotFoundException ex)
         {
-            ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Trouble saving preferences.", ex);
+			// END KGU#484 2018-04-05
         } 
         catch (IOException ex)
         {
-            ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Trouble saving preferences.", ex);
+			// END KGU#484 2018-04-05
         }
     }
 
@@ -6310,11 +6361,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         } 
         catch (FileNotFoundException ex)
         {
-            ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing import preferences.", ex);
+			// END KGU#484 2018-04-05
         } 
         catch (IOException ex)
         {
-            ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing import preferences.", ex);
+			// END KGU#484 2018-04-05
         }
     }
     // END KGU#258 2016-09-26
@@ -6352,11 +6409,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			ini.save();
     		}
     	} catch (FileNotFoundException e) {
-    		// TODO Auto-generated catch block
-    		e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing preferences.", e);
+			// END KGU#484 2018-04-05
     	} catch (IOException e) {
-    		// TODO Auto-generated catch block
-    		e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing saving preferences.", e);
+			// END KGU#484 2018-04-05
     	}
     }
     // END KGU#258 2016-09-26
@@ -6649,21 +6710,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (this.prefGeneratorName.isEmpty())
 		{
-	        try
-	        {
-	            Ini ini = Ini.getInstance();
-	            ini.load();
-	            this.prefGeneratorName = ini.getProperty("genExportPreferred", "Java");
-	        } 
-	        catch (FileNotFoundException ex)
-	        {
-	            ex.printStackTrace();
-	        } 
-	        catch (IOException ex)
-	        {
-	            ex.printStackTrace();
-	        }
-	    }
+			try
+			{
+				Ini ini = Ini.getInstance();
+				ini.load();
+				this.prefGeneratorName = ini.getProperty("genExportPreferred", "Java");
+			} 
+			catch (FileNotFoundException ex)
+			{
+				// START KGU#484 2018-04-05: Issue #463
+				//ex.printStackTrace();
+				logger.log(Level.WARNING, "Trouble accessing preferences.", ex);
+				// END KGU#484 2018-04-05
+			} 
+			catch (IOException ex)
+			{
+				// START KGU#484 2018-04-05: Issue #463
+				//ex.printStackTrace();
+				logger.log(Level.WARNING, "Trouble accessing preferences.", ex);
+				// END KGU#484 2018-04-05
+			}
+		}
 		return this.prefGeneratorName;
 	}
 	// END KGU#170 2016-04-01
@@ -6961,7 +7028,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Clipboad action failed.", e);
+			// END KGU#484 2018-04-05
 		}
 
 		// START KGU#183 2016-04-24: Issue #169 - restore old selection
@@ -7293,13 +7363,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				plugins = genp.parse(buff);
 			} catch (Exception ex) {
 				errors = ex.toString();
-				ex.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//ex.printStackTrace();
+				logger.log(Level.WARNING, "Trouble accessing controller plugin definitions.", ex);
+				// END KGU#484 2018-04-05
 			}
 			if (buff != null) {
 				try {
 					buff.close(); 
 				} catch (IOException ex) {
-					ex.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//ex.printStackTrace();
+					logger.log(Level.WARNING, "Couldn't close the controller plugin definition file.", ex);
+					// END KGU#484 2018-04-05
 				}
 			}
 		}
@@ -7824,7 +7900,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			try {
 				Ini.getInstance().save();
 			} catch (IOException ex) {
-				ex.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//ex.printStackTrace();
+				logger.log(Level.WARNING, "Trouble saving preferences.", ex);
+				// END KGU#484 2018-04-05
 			}
 			setApplyAliases(dialog.chkApplyAliases.isSelected());
 		}

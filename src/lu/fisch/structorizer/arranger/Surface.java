@@ -1071,7 +1071,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		zipfile.close();
     	} catch(Exception ex) {
-    		ex.printStackTrace();
+    		// START KGU#484 2018-04-05: Issue #463
+    		//ex.printStackTrace();
+    		logger.log(Level.WARNING, "Failed to unzip the arrangement archive " + filename, ex);
+    		// END KGU#484 2018-04-05
     	}
     	return arrFilename;
     }
