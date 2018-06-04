@@ -100,6 +100,20 @@ public class Structorizer
 			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
 		}
 		// END KGU#484 2018-03-21
+		// START KGU#484 2018-04-05: Issue #463 - Find out where WebStart assumes the properties file
+		else {
+			File iniDir = Ini.getIniDirectory();
+			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
+			try {
+				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
+				logLog.write("No logging config file found in dir " + appPath + " - using Java logging standard.");
+				logLog.close();
+			} catch (IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// END KGU#4884 2018-04-05
 		// START KGU#187 2016-04-28: Enh. #179
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
