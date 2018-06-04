@@ -60,6 +60,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -115,6 +117,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	static private final int MIN_FONT_SIZE = 6;
 	static protected final int PREFERRED_WIDTH = 500;
 	static protected final int PREFERRED_HEIGHT = 500;
+
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(LicenseEditor.class.getName());
+	// END KGU#484 2018-03-21
 
 	private Frame frame;
 	private RootAttributes rootLicInfo = null;			// License info of the associated diagram if any
@@ -422,8 +428,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		try {
 			doc.remove(0, doc.getLength());
 		} catch (BadLocationException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Trouble clearing the content.", ex);
+			// END KGU#484 2018-04-05
 		}
 	}
 
@@ -553,7 +561,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 			error = e.getMessage();
 		} catch (BadLocationException e) {
 			error = e.getMessage();
-			e.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Inconsistent text content.", e);
+			// END KGU#484 2018-04-05
 		}
 		if (bw != null) {
 			try {
@@ -665,7 +676,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 					doc.insertString(0, rootLicInfo.licenseText, null);
 					this.undoMan.discardAllEdits();
 				} catch (BadLocationException e) {
-					System.err.println("LicenseEditor.actionPerformed(Reload): " + e.getLocalizedMessage());
+					logger.log(Level.WARNING, "Reload: {0}", e.getLocalizedMessage());
 				}
 			}
 			else {

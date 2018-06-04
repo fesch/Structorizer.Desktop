@@ -57,6 +57,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism revised
  *      Kay Gürtzig     2017.09.30      Enh. #411: Bugfix in typedef preparation, enh. #423: struct import done
  *                                      Enh. #420: Comment delimiter specification added
+ *      Kay Gürtzig     2018.06.04      Issue #533: Import of C struct definitions hadn't been converted to Structorizer syntax
  *
  ******************************************************************************************************
  *
@@ -79,6 +80,7 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,7 +88,6 @@ import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
-import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.ILoop;
@@ -412,7 +413,7 @@ public class CParser extends CodeParser
 		final int PROD_TYPEDEFDECL_TYPEDEF                          =  31;  // <Typedef Decl> ::= typedef <Var Decl>
 		final int PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE           =  32;  // <Struct Decl> ::= struct Id '{' <Struct Def> '}' <Decl End>
 		final int PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE             =  33;  // <Union Decl> ::= union Id '{' <Struct Def> '}' <Decl End>
-//		final int PROD_STRUCTDEF                                    =  34;  // <Struct Def> ::= <Var Decl> <Struct Def>
+		final int PROD_STRUCTDEF                                    =  34;  // <Struct Def> ::= <Var Decl> <Struct Def>
 //		final int PROD_STRUCTDEF2                                   =  35;  // <Struct Def> ::= <Var Decl>
 //		final int PROD_DECLEND_SEMI                                 =  36;  // <Decl End> ::= ';'
 		final int PROD_DECLEND_SEMI2                                =  37;  // <Decl End> ::= <Var Item> <Var List> ';'
@@ -1374,7 +1375,7 @@ public class CParser extends CodeParser
 			String rule = _reduction.getParent().toString();
 			String ruleName = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			System.out.println(rule + ", " + _parentNode.parent);
+			getLogger().log(Level.CONFIG, "Ruke {0}, {1}", new Object[]{rule, _parentNode.parent});
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 			
 			if (
@@ -1529,10 +1530,13 @@ public class CParser extends CodeParser
 				if (ruleId == RuleConstants.PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE) {
 					// <Struct Decl> ::= struct Id '{' <Struct Def> '}' <Decl End>
 					String structName = _reduction.get(1).asString();
-					// FIXME: This is only quick and dirty - of course we must analyse recursively!
-					String components = this.getContent_R(_reduction.get(3).asReduction(), "").replace("struct ", "").trim();
-					if (components.endsWith(";")) components = components.substring(0, components.length()-1);
-					content = "type " + structName + " = struct{" + components + "}";
+					// START KGU#517 2018-06-04: Bugfix #??? - we must analyse recursively and convert syntax!
+					//String components = this.getContent_R(_reduction.get(3).asReduction(), "").replace("struct ", "").trim();
+					//if (components.endsWith(";")) components = components.substring(0, components.length()-1);
+					//content = "type " + structName + " = struct{" + components + "}";
+					StringList components = getCompsFromStructDef(_reduction.get(3).asReduction());
+					content = "type " + structName + " = struct{" + components.concatenate(";\\\n") + "}";
+					// END KGU#517 2018-06-04
 					isValid = true;
 				}
 				// END KGU#388 2017-09-30
@@ -1818,7 +1822,8 @@ public class CParser extends CodeParser
 				String params = "";
 				switch (ruleId) {
 				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2:
-					params = getParamListFromStructDecl(_reduction.get(4).asReduction());
+					//params = getparamsFromStructDecl(_reduction.get(4).asReduction());
+					params = getCompsFromStructDef(_reduction.get(4).asReduction()).concatenate("; ");
 					bodyIndex = 5;
 					// Here is by design no break!
 				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
@@ -2076,10 +2081,13 @@ public class CParser extends CodeParser
 							type = _typeList.get(0);
 							addType = false;
 						}
-						// FIXME: This is only quick and dirty - of course we must analyse recursively!
-						String components = this.getContent_R(typeRed.get(2).asReduction(), "").replace("struct ", "").trim();
-						if (components.endsWith(";")) components = components.substring(0, components.length()-1);
-						String content = "type " + type + " = struct{" + components + "}";
+						// START KGU#517 2018-06-04: Bugfix #??? - we must analyse recursively and convert syntax!
+						//String components = this.getContent_R(typeRed.get(2).asReduction(), "").replace("struct ", "").trim();
+						//if (components.endsWith(";")) components = components.substring(0, components.length()-1);
+						//String content = "type " + type + " = struct{" + components + "}";
+						StringList components = getCompsFromStructDef(typeRed.get(2).asReduction());
+						String content = "type " + type + " = struct{" + components.concatenate(";\\\n") + "}";
+						// END KGU#517 2018-06-04
 						Instruction typeDef = new Instruction(this.translateContent(content));
 						if (addType && _declaringVars) {
 							typeDef.setComment("Automatically created from anonymous struct in following declaration");
@@ -2117,35 +2125,80 @@ public class CParser extends CodeParser
 		}
 		return isStruct;
 	}
-	
+
+	// START KGU#517 2018-06-04: Bugfix ???
 	/**
-	 * Helper method for he analysis of the very old C function declaration syntax:
-	 * <Type> <Func ID> '(' <Id List> ')' <Struct Def> <Block>
-	 * @param _structDef - the reduction of <Struct Def>
-	 * @return a String comprising all parameter declarations in modern syntax
+	 * Is to extract the struct component declarations from a struct definition and
+	 * to convert them into Structorizer (Pascal-like) syntax.
+	 * Also useful as helper method for the analysis of the very old C function declaration
+	 * syntax:<br/>
+	 * {@code <Type> <Func ID> '(' <Id List> ')' <Struct Def> <Block>}
+	 * @param _structDef - the {@link Reduction} representing a {@code <Struct Decl>} rule.
+	 * @return the component declaration strings in Structorizer syntax
 	 */
-	private String getParamListFromStructDecl(Reduction _structDef) {
-		StringList params = new StringList();
+	private StringList getCompsFromStructDef(Reduction _structDef) {
+		//String components = this.getContent_R(_structDef, "").replace("struct ", "").trim();
+		//if (components.endsWith(";")) components = components.substring(0, components.length()-1);
+		StringList components = new StringList();
 		do {
-			Reduction varDecl = _structDef.get(0).asReduction();
-			int nameIx = varDecl.size() - 2;
+			Reduction varDecl = _structDef;
+			if (_structDef.getParent().getTableIndex() == RuleConstants.PROD_STRUCTDEF) {
+				varDecl = _structDef.get(0).asReduction();
+				_structDef = _structDef.get(1).asReduction();
+			}
+			else {
+				_structDef = null;
+			}
+			int nameIx = varDecl.size() - 3;
 			String type = "int";
 			if (varDecl.getParent().getTableIndex() < RuleConstants.PROD_VARDECL_SEMI3) {
 				type = getContent_R(varDecl.get(nameIx -1).asReduction(), "");
 			}
-			params.add(type + " " + varDecl.get(nameIx).asString());
 			Reduction varList = varDecl.get(nameIx+1).asReduction();
-			while (varList.size() > 0) {
-				params.add(type + " " + varList.get(1).asString());
-				varList = varList.get(2).asReduction();
+			StringList compNames = new StringList();
+			Reduction varRed = varDecl.get(nameIx).asReduction();
+			String name = varRed.get(0).asString();
+			String index = getContent_R(varRed.get(1).asReduction(), "").trim();
+			if (!index.isEmpty()) {
+				if (index.equals("[]")) {
+					index = "";
+				}
+				components.add(name + ": array" + index + " of " + type);
 			}
-			if (_structDef.size() > 1) {
-				_structDef = _structDef.get(1).asReduction();
+			else {
+				compNames.add(name);
+				while (varList.size() > 0) {
+					varRed = varList.get(1).asReduction();
+					String pointers = getContent_R(varRed.get(0).asReduction(), "").trim();
+					name = varRed.get(1).asReduction().get(0).asString();
+					index = getContent_R(varRed.get(1).asReduction().get(1).asReduction(), "").trim();
+					if (!index.isEmpty() || !pointers.isEmpty()) {
+						if (compNames.count() > 0) {
+							components.add(compNames.concatenate(", ") + ": " + type);
+							compNames.clear();
+						}
+						if (index.equals("[]")) {
+							index = "array of ";
+						}
+						else if (!index.isEmpty()) {
+							index = "array " + index + " of ";
+						}
+						components.add(name + ": " + index + type + pointers);
+					}
+					else {
+						compNames.add(name);
+					}
+					varList = varList.get(2).asReduction();
+				}
+				if (compNames.count() > 0) {
+					components.add(compNames.concatenate(", ") + ": " + type);
+				}
 			}
 		} while (_structDef != null);
-		return params.concatenate(", ");
+		return components;
 	}
-
+	// END KGU#517 2018-06-04
+	
 	/**
 	 * Converts a detected C library function to the corresponding Structorizer
 	 * built-in routine if possible.
@@ -2688,7 +2741,7 @@ public class CParser extends CodeParser
 			if (this.optionUpperCaseProgName) {
 				fileName = fileName.toUpperCase();
 			}
-			fileName = fileName.replaceAll("(.*?)[^A-Za-z_](.*?)", "$1_$2");
+			fileName = fileName.replaceAll("(.*?)[^A-Za-z0-9_](.*?)", "$1_$2");
 			if (aRoot.getParameterNames().count() > 0) {
 				String header = aRoot.getText().getText();
 				header = header.replaceFirst("(.*?)main([((].*)", "$1" + fileName + "$2");

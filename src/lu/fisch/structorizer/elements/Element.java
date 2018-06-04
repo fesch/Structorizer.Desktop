@@ -193,14 +193,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
 public abstract class Element {
+
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(Element.class.getName());
+	// END KGU#484 2018-03-22
+
 	// Program CONSTANTS
-	public static String E_VERSION = "3.28-01";
-	public static String E_THANKS =
+	public static final String E_VERSION = "3.28-02";
+	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
@@ -764,7 +771,7 @@ public abstract class Element {
 //			}
 			return true;
 		}
-		System.err.println("CombineRuntimeData for " + this + " FAILED!");
+		logger.log(Level.WARNING, "CombineRuntimeData for {0} FAILED!", this);
 		return false;
 	}
 	// END KGU#117 2016-03-07
@@ -1264,7 +1271,7 @@ public abstract class Element {
 			}
 			else
 			{
-				System.err.println("**** Illegal execCountIndex " + this.execCountIndex + " on " + this);
+				logger.log(Level.SEVERE, "Illegal execCountIndex {0} on {1}", new Object[]{this.execCountIndex, this});
 			}
 		}
 		return execCount;
@@ -2058,7 +2065,7 @@ public abstract class Element {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e);
+			logger.log(Level.SEVERE, "Error", e);
 		}
 	}
 
@@ -2109,7 +2116,7 @@ public abstract class Element {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e);
+			logger.log(Level.SEVERE, "Error", e);
 		}
 	}
 
@@ -3774,7 +3781,7 @@ public abstract class Element {
 				done = true;
 			}
 			else {
-				System.out.println("*** Type redefinition attempt for \"" + typeName + "\"!");
+				logger.log(Level.WARNING, "Type redefinition attempt for \"{1}\"!", typeName);
 			}
 		}
 		return done;

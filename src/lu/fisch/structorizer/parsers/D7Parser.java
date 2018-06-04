@@ -99,6 +99,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.util.logging.Level;
 
 import com.stevesoft.pat.Regex;
 
@@ -879,8 +880,7 @@ public class D7Parser extends CodeParser
 		} 
 		catch (CharacterCodingException cce) 
 		{
-			String errorMessage = "Exception during character encoding/decoding: " + cce.getMessage();
-			System.out.println(errorMessage);	
+			getLogger().log(Level.WARNING, "Exception during character encoding/decoding: {0}", cce.getMessage());
 		}
 		
 		return result;	
@@ -939,7 +939,7 @@ public class D7Parser extends CodeParser
 		}
 		catch (Exception e) 
 		{
-			System.out.println(e.getMessage());
+			getLogger().severe(e.getMessage());
 		}	
 		return interm;
 	}
@@ -1611,7 +1611,7 @@ public class D7Parser extends CodeParser
 	 */
 	@Override
 	protected void subclassUpdateRoot(Root root, String sourceFileName) {
-		System.out.println(root.getSignatureString(false));
+		getLogger().config(root.getSignatureString(false));
 		if (unitName != null && root.isProgram() && root.getMethodName().equals("???")) {
 			root.setText(unitName + DEFAULT_GLOBAL_SUFFIX);
 			root.setInclude();

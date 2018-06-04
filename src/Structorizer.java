@@ -44,6 +44,7 @@
  *      Kay Gürtzig     2017.04.27      Enh. #354: Verbose option (-v with log directory) for batch import
  *      Kay Gürtzig     2017.07.02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
  *      Kay Gürtzig     2017.11.06      Issue #455: Loading of argument files put in a sequential thread to overcome races
+ *      Kay Gürtzig     2018.03.21      Issue #463: Logging configuration via file logging.properties
  *
  ******************************************************************************************************
  *
@@ -61,6 +62,8 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -86,6 +89,31 @@ public class Structorizer
 	// entry point
 	public static void main(String args[])
 	{
+		// START KGU#484 2018-03-21: Issue #463 Configurability of the logging system ensured
+		// The logging configuration (for java.util.logging) is expected next to the jar file
+		// (or in the project directory while debugged from the IDE).
+		// FIXME: Check a proper configuration scenario for Java WebStart!
+		String appPath = getApplicationPath();
+		File configFile = new File(appPath + System.getProperty("file.separator") + "logging.properties");
+		// If the file doesn't exist then we'll fall back to the JRE logging standard (INFO/ConsoleAppender)
+		if (configFile.exists()) {
+			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
+		}
+		// END KGU#484 2018-03-21
+		// START KGU#484 2018-04-05: Issue #463 - Find out where WebStart assumes the properties file
+		else {
+			File iniDir = Ini.getIniDirectory();
+			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
+			try {
+				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
+				logLog.write("No logging config file found in dir " + appPath + " - using Java logging standard.");
+				logLog.close();
+			} catch (IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// END KGU#4884 2018-04-05
 		// START KGU#187 2016-04-28: Enh. #179
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
@@ -270,6 +298,8 @@ public class Structorizer
 			}
 		}/**/
 
+		// Without this, the toolbar had often wrong status when started from a diagram 
+		mainform.doButtons();
 		// START KGU#300 2016-12-02
 		mainform.popupWelcomePane();
 		// END KGU#300 2016-12-02
@@ -663,5 +693,18 @@ public class Structorizer
 		System.out.println("");
 	}
 	// END KGU#187 2016-05-02
+	
+	/** @return the installation path of Structorizer */
+    public static String getApplicationPath()
+    {
+        CodeSource codeSource = Structorizer.class.getProtectionDomain().getCodeSource();
+        File rootPath = null;
+        try {
+            rootPath = new File(codeSource.getLocation().toURI().getPath());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }           
+        return rootPath.getParentFile().getPath();
+    }
 		
 }

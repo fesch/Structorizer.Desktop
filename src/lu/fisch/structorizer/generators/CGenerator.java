@@ -152,9 +152,11 @@ package lu.fisch.structorizer.generators;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.structorizer.arranger.Surface;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -1709,7 +1711,8 @@ public class CGenerator extends Generator {
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
 		// FIXME (KGU 2017-09-30): It should be extremely unlikely now that there isn't a typeMap entry
 		else if (constValue != null) {
-			System.out.println(this.getClass().getSimpleName()+".insertDeclaration(" + _name + "): MISSING TYPE MAP ENTRY FOR THIS CONSTANT!");
+			getLogger().log(Level.WARNING, "insertDeclaration({0}, {1}, ...): MISSING TYPE MAP ENTRY FOR THIS CONSTANT!",
+					new Object[]{_root, _name});
 			String type = Element.identifyExprType(typeMap, constValue, false);
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));

@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.01.09      First Issue
  *      Kay Gürtzig     2017.10.15      Scaling for JTree rows added
+ *      Kay Gürtzig     2018.03.21      Console output replaced with logging mechanism
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,8 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -69,20 +72,33 @@ import javax.swing.table.JTableHeader;
 import lu.fisch.structorizer.io.Ini;
 
 /**
- * @author kay
- *
+ * Helper class for the DPI awareness workaround, provides static methods for GUI scaling
+ * @author Kay Gürtzig
  */
 public class GUIScaler {
 	
-	// Order of the ToggleButton icons cached here is:
-	// 0 - unselected CheckBox icon
-	// 1 - selected CheckBox icon
-	// 2 - unselected RadioButton icon
-	// 3 - selected RadioButton icon
+	// START KGU#484 2018-03-21: Issue #463
+	public static final Logger logger = Logger.getLogger(GUIScaler.class.getName());
+	// END KGU#484 2018-03-21
+	/**
+	 * Order of the ToggleButton icons cached here is:<br/>
+	 * 0 - unselected CheckBox icon<br/>
+	 * 1 - selected CheckBox icon<br/>
+	 * 2 - unselected RadioButton icon<br/>
+	 * 3 - selected RadioButton icon
+	 */
 	private static ImageIcon[] toggleIcons = new ImageIcon[]{null, null, null, null};
+	/** Array of info records for all installed Look & Feel variants */ 
 	private static LookAndFeelInfo[] lafis = UIManager.getInstalledLookAndFeels();
+	/** Currently selected Look & Feel */
 	private static LookAndFeel laf = null;
 	
+	/**
+	 * Tries to derive a size variant string roughly corresponding to the {@code scaleFactor}
+	 * if the latter is small (below 2). If no related scale factor is found returns null.
+	 * @param scaleFactor
+	 * @return If acceptable a string among "mini", "small", and "large". Otherwise null.
+	 */
 	public static String getSizeVariant(double scaleFactor)
 	{
 		String sizeVariant = null;
@@ -98,6 +114,11 @@ public class GUIScaler {
 		return sizeVariant;
 	}
 	
+	/**
+	 * Recursively rescales all {@link Component}s in container {@code cont} that
+	 * can be adapted to the given relative size.
+	 * @param cont - the owning container
+	 */
 	public static void rescaleComponents(Container cont)
 	{
 		double scale = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
@@ -160,7 +181,8 @@ public class GUIScaler {
 					try {
 						UIManager.setLookAndFeel(alternativeLaf);
 					} catch (Exception e) {
-						System.err.println("GUIScaler.scaleComponents(cont, " + scaleFactor + ", " + alternativeLaf + "): " + e.toString());
+						logger.log(Level.WARNING, "scaleComponents(cont, {0}, {1}): {3}",
+								new Object[]{scaleFactor, alternativeLaf, e.toString()});
 					}
 				}
 				try {
@@ -168,14 +190,20 @@ public class GUIScaler {
 					((JToggleButton)comp).setSelectedIcon(scaleToggleIcon((JToggleButton)comp, true));
 				}
 				catch (Exception ex) {
-					System.err.println(ex);
-					ex.printStackTrace(System.err);
+					// START KGU#484 2018-03-21: Issue #463
+					//System.err.println(ex);
+					//ex.printStackTrace(System.err);
+					logger.log(Level.WARNING, "Error on scaling/setting toggle icons", ex);
+					// END KGU#484 2018-03-21
 				}
 				if (alternativeLaf != null) {
 					try {
 						UIManager.setLookAndFeel(laf);
 					} catch (Exception e) {
+						// START KGU#484 2018-03-21: Issue #463
 						System.err.println("GUIScaler.scaleComponents(): " + e.toString());
+						logger.log(Level.WARNING, "Intended Look & Feel cannot be set!", e);
+						// END KGU#484 2018-03-21
 					}
 				}
 			}

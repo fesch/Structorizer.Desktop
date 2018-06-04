@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2016.12.15      First Issue for enh. #310
  *      Kay Gürtzig     2017.03.12      Enh. #372 (name attribute choosable)
+ *      Kay Gürtzig     2017.03.22      Issue #463: Console output replaced by logging mechanism
  *
  ******************************************************************************************************
  *
@@ -54,6 +55,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.border.EmptyBorder;
@@ -71,6 +74,9 @@ import lu.fisch.structorizer.locales.LangDialog;
 @SuppressWarnings("serial")
 public class SaveOptionDialog extends LangDialog implements ActionListener, WindowListener {
 	
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(SaveOptionDialog.class.getName());
+	// END KGU#484 2018-03-22
     public boolean goOn = false;
     private Frame frame;
 
@@ -193,12 +199,9 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 				this.cbLicenseFile.addItem(fname.substring(prefix.length(), fname.lastIndexOf(ext)));
 			}
 			
-		} catch (Error e)
-		{
-			System.err.println("SaveOptionDialog: " + e.getMessage());
 		} catch (Exception e)
 		{
-			System.err.println("SaveOptionDialog: " + e.getMessage());
+			logger.log(Level.WARNING, "Searching for license files: {0}", e.getMessage());
 		}
 
         // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
@@ -331,7 +334,7 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 			try {
 				licFile.createNewFile();
 			} catch (IOException e) {
-				System.out.println("SaveOptionDialog: " + e.getMessage());
+				logger.warning("Creating license file: " + e.getMessage());
 			}
 			editor = new LicenseEditor(frame, licFile);
 			editor.addWindowListener(this);
@@ -359,6 +362,7 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 			this.cbLicenseFile.removeAllItems();
 			try
 			{
+				// Diagram will look for the selected license, so we must update the list
 				File dir = getLicenseDirectory();
 				File[] licFiles = dir.listFiles(new LicFilter());
 				String prefix = LicFilter.getNamePrefix();
@@ -367,12 +371,9 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 					String fname = f.getName();
 					this.cbLicenseFile.addItem(fname.substring(prefix.length(), fname.lastIndexOf(ext)));
 				}
-			} catch (Error ex)
-			{
-				System.err.println("SaveOptionDialog: " + ex.getMessage());
 			} catch (Exception ex)
 			{
-				System.err.println("SaveOptionDialog: " + ex.getMessage());
+				logger.warning("Updating license list: " + ex.getMessage());
 			}
 			String licName = ((LicenseEditor)source).getLicenseName(true); 
 			if (!licName.equals("???")) {

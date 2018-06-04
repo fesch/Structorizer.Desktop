@@ -54,11 +54,9 @@ import java.awt.Color;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -67,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.ParserException;
@@ -102,6 +102,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 {
 	/************ Common fields *************/
 	
+	// START KGU#484 2018-03-22 Issue #463
+	private Logger logger;
+	/** @return the standard Java logger for this class */
+	protected Logger getLogger()
+	{
+		if (this.logger == null) {
+			this.logger = Logger.getLogger(getClass().getName());
+		}
+		return this.logger;
+	}
+	// END KGU#484 2018-03-22
 	/**
 	 * String field holding the message of error occurred during parsing or build phase
 	 * for later evaluation (empty if there was no error) 
@@ -311,11 +322,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				try {
 					File log = new File(_textToParse);
 					logFile = new OutputStreamWriter(new FileOutputStream(new File(logDir, log.getName() + ".log")), "UTF-8");
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
 				}
+				// START KGU#484 2018-04-05: Issue #463
+				//catch (UnsupportedEncodingException e) {
+				//	e.printStackTrace();
+				//}
+				//catch (FileNotFoundException e) {
+				//	e.printStackTrace();
+				//}
+				catch (Exception e) {
+					getLogger().log(Level.SEVERE, "Creation of parser log file failed.", e);
+				}
+				// END KGU#484 2018-04-05
 			}
 		}
 		// AuParser is a Structorizer subclass of GOLDParser (Au = gold)
@@ -359,13 +377,19 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				try {
 					logFile.write(error);
 				} catch (IOException e) {
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					getLogger().log(Level.WARNING, "Failed to write parser log.", e);
+					// END KGU#484 2018-04-05
 				}
 				try {
 					logFile.close();
 					logFile = null;
 				} catch (IOException e) {
-					e.printStackTrace();
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					getLogger().log(Level.WARNING, "Failed to close parser log.", e);
+					// END KGU#484 2018-04-05
 				}
 			}
 			return subRoots;	// It doesn't make sense to continue here (BTW subRoots is supposed to be empty)
@@ -392,7 +416,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
             // Either execute the code or print any error message
             if (parsedWithoutError) {
 				// ************************************** log file
-				System.out.println("Parsing complete.");
+				getLogger().info("Parsing complete.");	// System logging
 				log("\nParsing complete.\n\n", false);
 				// ************************************** end log
 				if (this.optionSaveParseTree()) {
@@ -406,7 +430,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 					ow.close();
 					}
 					catch (Exception ex) {
-						System.err.println(ex.getMessage());
+						getLogger().log(Level.WARNING, "Saving .parsetree.txt failed: {0}", ex.getMessage());
 					}
 				}
 				if (this.optionImportComments) {
@@ -417,24 +441,33 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 						}
 					}
 				}
-            	buildNSD(parser.getCurrentReduction());
-            } else {
-            	isSyntaxError = true;
-                error = parser.getErrorMessage() + " in file \"" + _textToParse + "\"";
-            }
-        }
-        catch (ParserException e) {
-            error = "**PARSER ERROR** with file \"" + _textToParse + "\":\n" + e.getMessage();
-            e.printStackTrace();
-        }
-		catch (IOException e1) {
-            error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
-			e1.printStackTrace();
+				buildNSD(parser.getCurrentReduction());
+			} else {
+				isSyntaxError = true;
+				error = parser.getErrorMessage() + " in file \"" + _textToParse + "\"";
+			}
 		}
-        catch (Exception e2) {
-        	error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
-        	e2.printStackTrace();
-        }
+		catch (ParserException e) {
+			error = "**PARSER ERROR** with file \"" + _textToParse + "\":\n" + e.getMessage();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			getLogger().log(Level.WARNING, error, e);
+			// END KGU#484 2018-04-05
+		}
+		catch (IOException e1) {
+			error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
+			// START KGU#484 2018-04-05: Issue #463
+			//e1.printStackTrace();
+			getLogger().log(Level.WARNING, error, e1);
+			// END KGU#484 2018-04-05
+		}
+		catch (Exception e2) {
+			error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
+			// START KGU#484 2018-04-05: Issue #463
+			//e2.printStackTrace();
+			getLogger().log(Level.WARNING, error, e2);
+			// END KGU#484 2018-04-05
+		}
 
 		// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
 		if (isSyntaxError && intermediate != null)
@@ -482,7 +515,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			}
 			error += exp;
 			// ************************************** log file
-			System.out.println("Parsing failed.");
+			getLogger().warning("Parsing failed.");	// System logging
 			log("\n" + error + "\n\n", true);
 			// ************************************** end log
 		}
@@ -550,7 +583,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				logFile.close();
 				logFile = null;
 			} catch (IOException e) {
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				getLogger().log(Level.WARNING, "Failed to close parser log.", e);
+				// END KGU#484 2018-04-05
 			}
 		}
 		
@@ -628,10 +664,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			logFile.write(_logContent);
 			done = true;
 		} catch (IOException e) {
-			System.err.println(this.getClass().getSimpleName() + ".log(): " + e.toString());
+			getLogger().log(Level.WARNING, "Failed to write user log entry.", e);
 		}
 		if (!done && _toSystemOutInstead) {
-			System.out.print(_logContent);
+			// START KGU#484 2018-03-22: Issue #463 
+			//System.out.print(_logContent);
+			getLogger().info(_logContent);
+			// END KGU#484 2018-03-22
 		}
 	}
 	
@@ -1078,7 +1117,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 		catch (Exception e) 
 		{
-			System.out.println(e);
+			Logger.getLogger(CodeParser.class.getName()).log(Level.WARNING, "Ini", e);
 		}
 	}
 	
@@ -1098,7 +1137,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 		catch (Exception e) 
 		{
-			System.out.println(e);
+			Logger.getLogger(CodeParser.class.getName()).log(Level.WARNING, "Ini", e);
 		}
 	}
 	

@@ -56,6 +56,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *      Kay Gürtzig     2018.02.09      Bugfix #507: Element size and layout must depend on branch labels
+ *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *
  ******************************************************************************************************
  *
@@ -143,8 +144,14 @@ public class Alternative extends Element implements IFork {
 		int nLines = myText.count();
 		// END KGU#453 2017-11-01
 		
-		rect0.top = 0;
-		rect0.left = 0;
+		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+		//rect0.top = 0;
+		//rect0.left = 0;
+		Rect rect0 = new Rect();
+		Rect commentRect;
+		Rect rFalse, rTrue;
+		Point pt0Parting = new Point();
+		// END KGU#516 2018-04-04
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 
@@ -197,7 +204,7 @@ public class Alternative extends Element implements IFork {
 		// END KGU#227 2016-07-31
 		// the lowest point of the triangle
 		double ax =  rTrue.right - rTrue.left;
-		//System.out.println("AX : "+ax);
+		//logger.debug("AX : "+ax);
 		double ay =  0;
 		// gradient coefficient of the left traverse line
 		double coeffleft = (cy-ay)/(cx-ax);
@@ -247,7 +254,7 @@ public class Alternative extends Element implements IFork {
 			int textWidth = getWidthOutVariables(_canvas, myText.get(i), this);
 			// END KGU#453 2017-11-01
 			double bx = textWidth + 2*(E_PADDING/2) + leftside;
-			//System.out.println("LS : "+leftside);
+			//logger.debug("LS : "+leftside);
 
 			// check if this is the one we need to do calculations
 			double coeff = (by-ay)/(bx-ax);
@@ -255,7 +262,7 @@ public class Alternative extends Element implements IFork {
 			// the point height we need
 			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
 			//double x = y/coeff + ax - ay/coeff;
-			//System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
+			//logger.debug(i+" => "+coeff+" --> "+String.valueOf(x));
 
 			if (coeff<lowest && coeff>0)
 			{
@@ -276,7 +283,7 @@ public class Alternative extends Element implements IFork {
 			//rect0.right = (int) Math.round(x);
 			rect0.right = Math.max((int) Math.round(x), commentRect.right);
 			// END KGU#435 2017-10-22
-			//System.out.println("C => "+lowest+" ---> "+rect.right);
+			//logger.debug("C => "+lowest+" ---> "+rect.right);
 		}
 		else
 		{
@@ -296,6 +303,15 @@ public class Alternative extends Element implements IFork {
 		rect0.bottom += Math.max(rTrue.bottom, rFalse.bottom);
 		pt0Parting.x = rTrue.right;
 
+		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+		//rect0.top = 0;
+		//rect0.left = 0;
+		this.rect0 = rect0;
+		this.commentRect = commentRect;
+		this.rFalse = rFalse;
+		this.rTrue = rTrue;
+		this.pt0Parting = pt0Parting;
+		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01
@@ -305,7 +321,7 @@ public class Alternative extends Element implements IFork {
 	
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
-		//System.out.println("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
+		//logger.debug("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
 		if(isCollapsed(true)) 
 		{
 			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);

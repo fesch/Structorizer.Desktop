@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as workaround for lacking DPI awareness
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling done by GUIScaler
+ *      Kay Gürtzig     2018.03-21      Logger introduced, two file reading sequences extracted to method readTextFile()
  *
  ******************************************************************************************************
  *
@@ -52,7 +53,9 @@ package lu.fisch.structorizer.gui;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
-import java.io.*; 
+import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -64,6 +67,11 @@ import lu.fisch.structorizer.elements.*;
 @SuppressWarnings("serial")
 public class About extends LangDialog implements ActionListener, KeyListener
 {
+	// START KGU 2018-03-21
+	private static final String CHANGELOG_FILE = "changelog.txt";
+	private static final String LICENSE_FILE = "license.txt";
+	public static final Logger logger = Logger.getLogger(About.class.getName());
+	// END KGU 2018-03-21
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel dialogPane;
@@ -249,39 +257,9 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		txtLicense.setEditable(false);
 		
 		
-		String input = new String();
-		try
-		{
-			BufferedReader in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("changelog.txt"),"UTF8"));
-			String str;
-			while ((str = in.readLine()) != null)
-			{
-				input+=str+"\n";
-			}
-			in.close();
-		}
-		catch (IOException e)
-		{
-			System.out.println(e.getMessage());
-		}
-		txtChangelog.setText(input);
+		txtChangelog.setText(readTextFile(CHANGELOG_FILE));
 
-		input = new String();
-		try
-		{
-			BufferedReader in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("license.txt"),"UTF8"));
-			String str;
-			while ((str = in.readLine()) != null)
-			{
-				input+=str+"\n";
-			}
-			in.close();
-		}
-		catch (IOException e)
-		{
-			System.out.println(e.getMessage());
-		}
-		txtLicense.setText(input);
+		txtLicense.setText(readTextFile(LICENSE_FILE));
 
 		
 		txtThanks.setText(Element.E_THANKS);
@@ -290,9 +268,40 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		//txtChangelog.setText(Element.E_CHANGELOG);
 		txtChangelog.setCaretPosition(0);
 
-                txtLicense.setCaretPosition(0);
+		txtLicense.setCaretPosition(0);
 		
 		lblVersion.setText("Version "+Element.E_VERSION);
+	}
+
+	/**
+	 * Reads the file given by the resource name {@code fileName} and returns its
+	 * text content as string.
+	 * @param fileName - the relative (local) name of the text file
+	 * @return the text content if any
+	 */
+	private String readTextFile(String fileName) {
+		StringBuilder input = new StringBuilder();
+		BufferedReader in = null;
+		try
+		{
+			in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("changelog.txt"),"UTF8"));
+			String str;
+			while ((str = in.readLine()) != null)
+			{
+				input.append(str + "\n");
+			}
+		}
+		catch (IOException e)
+		{
+			logger.log(Level.SEVERE, "Cannot read " + fileName, e);
+		}
+		finally {
+			if (in != null)
+				try {
+					in.close();
+				} catch (IOException e) {}
+		}
+		return input.toString();
 	}
 	
 	// listen to actions
@@ -325,7 +334,7 @@ public class About extends LangDialog implements ActionListener, KeyListener
 	public About(Frame owner)
 	{
 		super(owner);
-                setPacking(false);
+		setPacking(false);
 		this.setModal(true);
 		create();
 	}

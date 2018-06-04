@@ -84,7 +84,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.12.05      Bugfix #483: mild version of disabled optionImportVarDecl,
  *                                      Bugfix #486: Return mechanism in imported functions enforced
  *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled
- *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed. 
+ *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
+ *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
  *
  ******************************************************************************************************
  *
@@ -123,6 +124,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -4793,8 +4796,7 @@ public class COBOLParser extends CodeParser
 		}
 		catch (Exception e) 
 		{
-			System.err.println("COBOLParser.prepareTextfile() -> " + e.getMessage());
-			e.printStackTrace();	
+			getLogger().log(Level.SEVERE, " -> ", e);
 		}
 		return interm;
 	}
@@ -5413,7 +5415,7 @@ public class COBOLParser extends CodeParser
 			//System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
 			// TODO: Identify whether fileAPI s to be used.
 			Reduction secRed = _reduction.get(1).asReduction();	// display body
-			// TODO: Define a specific routine to extract the exressions
+			// TODO: Define a specific routine to extract the expressions
 			//String content = this.appendDisplayBody(secRed, "");
 			String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
 			if (content.startsWith(", ")) {
@@ -5641,7 +5643,8 @@ public class COBOLParser extends CodeParser
 			boolean hasRecordTypes = false;
 			CobVar arg = currentProg.getLinkageStorage();
 			while (arg != null && !hasRecordTypes) {
-				System.out.println(arg.getName() + ": " + arg.deriveTypeName());
+				getLogger().log(Level.CONFIG, "{0}: {1}",
+						new Object[]{arg.getName(), arg.deriveTypeName()});
 				if (arg.hasChild()) {
 					hasRecordTypes = true;
 				}
@@ -5780,7 +5783,7 @@ public class COBOLParser extends CodeParser
 //				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 //				instr.getComment().add("FIXME: Couldn't identify the table variable!");
 //				return;
-				System.out.println("Warning, couldn't identify the table variable \"" + varName + "\"!");
+				getLogger().log(Level.INFO, "Couldn't identify the table variable \"{0}\"!", varName);
 				// create table and its index for rest of the function
 				table = this.cobTools.new CobVar(1, varName, null, null, null, null, false, false, 0, 99, null);
 			}
@@ -5789,7 +5792,7 @@ public class COBOLParser extends CodeParser
 			//       VARYING identifier-2 does an *additional* increase of identifier-2
 			CobVar indexVar = table.getIndexedBy(0);
 			if (indexVar == null) {
-				System.out.println("Warning, couldn't get the index variable for \"" + table.getName() + "\"!");
+				getLogger().log(Level.INFO, "Couldn't get the index variable for \"{0}\"!", table.getName());
 				indexVar = this.cobTools.new CobVar(varName + "MissingIdx", table);
 			}
 			CobVar indexAdditionalVar = null;
@@ -5797,7 +5800,7 @@ public class COBOLParser extends CodeParser
 				String indexAdditionalName = this.getContent_R(redBody.get(1).asReduction().get(1).asReduction(), "");
 				indexAdditionalVar = this.currentProg.getCobVar(indexAdditionalName);
 				if (indexAdditionalVar == null) {
-					System.out.println("Warning, couldn't get the index variable \"" + indexAdditionalName + "\"!");
+					getLogger().log(Level.INFO, "couldn't get the index variable \"{0}\"!", indexAdditionalName);
 					indexAdditionalVar = this.cobTools.new CobVar(indexAdditionalName, table);
 				}
 			}
@@ -7037,7 +7040,8 @@ public class COBOLParser extends CodeParser
 			break;
 		default:
 			// CHECKME: Should never be reached	anymore
-			System.err.println("UNRECOGNIZED: Index " + optRed.getParent().getTableIndex() + " " + this.getContent_R(_reduction, ""));
+			getLogger().log(Level.INFO, "UNRECOGNIZED: Index {0} {1}",
+					new Object[]{optRed.getParent().getTableIndex(), this.getContent_R(_reduction, "")});
 			buildPerformCall(bodyRed, _parentNode);
 		}
 		if (loop != null) {
@@ -7053,7 +7057,7 @@ public class COBOLParser extends CodeParser
 				break;
 			default:
 				// FIXME
-				System.err.println("We have no idea how to convert this: " + this.getContent_R(_reduction, ""));
+				getLogger().log(Level.INFO, "We have no idea how to convert this: {0}", this.getContent_R(_reduction, ""));
 			}
 			_parentNode.addElement((Element)loop);
 		}
@@ -8124,6 +8128,16 @@ public class COBOLParser extends CodeParser
 				_content += "(" + arg1 + " mod " + arg2 + ")";
 			}
 		}
+		// START KGU#513 2018-04-04: Display clauses had been misinterpreted as expression lists.
+		else if (ruleHead.equals("<display_clause>") || ruleHead.equals("<display_upon>")) {
+			String displayClause = "";
+			for (int i = 0; i < _reduction.size(); i++) {
+				displayClause = this.getContentToken_R(_reduction.get(i), displayClause, "_", displayClause.isEmpty());
+			}
+			displayClause = displayClause.replace(" ", "_").replace("__","_");
+			_content += displayClause;
+		}
+		// END KGU#513 2018-04-04
 		else {
 			boolean hasRefMod = false;
 			int posSub = -1;
@@ -8317,13 +8331,24 @@ public class COBOLParser extends CodeParser
 			else {
 				String sepa = "";
 				String toAdd = getContent_R(_token.asReduction(), "", _separator);
-				if (!_isFirst && !_separator.isEmpty()) {
-					sepa = _separator;
+				// START KGU#513 2018-04-04: Avoids end-standing separators with empty rules at recursion end
+				//if (!_isFirst && !_separator.isEmpty()) {
+				//	sepa = _separator;
+				//}
+				//else if (!toAdd.isEmpty() && _content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
+				//	sepa = " ";
+				//}
+				//_content += sepa + toAdd;
+				if (!toAdd.trim().isEmpty()) {
+					if (!_isFirst && !_separator.isEmpty()) {
+						sepa = _separator;
+					}
+					else if (_content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
+						sepa = " ";
+					}
+					_content += sepa + toAdd;
 				}
-				else if (!toAdd.isEmpty() && _content.matches(".*\\w") && !(toAdd.startsWith("(") || toAdd.startsWith(" "))) {
-					sepa = " ";
-				}
-				_content += sepa + toAdd;
+				// END KGU#513 2018-04-04
 			}
 		}
 		break;
@@ -8332,7 +8357,7 @@ public class COBOLParser extends CodeParser
 			String toAdd = _token.asString();
 			String name = _token.getName();
 			if (toAdd.toLowerCase().matches(".*true.*") || toAdd.toLowerCase().matches(".*false.*") || name.toLowerCase().matches(".*true.*") || name.toLowerCase().matches(".*false.*")) {
-				System.out.println("getContentToken_R: " + name + " / " + toAdd);
+				getLogger().log(Level.CONFIG, "CONTENT: {0} / {1}", new Object[]{name, toAdd});
 			}
 			final String trueName = name;
 			// just drop the "zero terminated" and "Unicode" parts here
@@ -8843,7 +8868,7 @@ public class COBOLParser extends CodeParser
 
 					int callIndex = sq.getIndexOf(replacingCall);	// index of replacingCall may have changed by data outsourcing
 					if (callIndex != sop.startsAt) {
-						System.err.println("*** Refactoring of " + sop + " faild!");
+						getLogger().log(Level.INFO, "*** Refactoring of {0} failed!", sop);
 					}
 					// Now cleanup and get rid of place-holding dummy elements
 					Element doomedEl = null;
@@ -9117,6 +9142,10 @@ public class COBOLParser extends CodeParser
 
 class CobTools {
 
+	// START KGU 2018-03-21
+	public static final Logger logger = Logger.getLogger(CobTools.class.getName());
+	// END KGU 2018-03-21
+	
 	/** COBOL field types */
 	public static enum Usage {
 		USAGE_BINARY,
@@ -10422,7 +10451,7 @@ class CobTools {
 		// START KGU#388 2017-10-04: Enh. #423
 		// usage can be null if this CobVar was created via CobVar(String, String[], String)
 		else if (variable.usage == null) {
-			System.err.println("getTypeString(" + variable + "): variable has unset usage field!");
+			logger.log(Level.INFO, "Variable {0} has unset usage field!", variable);
 			return "";
 		}
 		// END KGU#388 2017-10-04

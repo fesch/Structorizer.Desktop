@@ -119,10 +119,10 @@ import lu.fisch.structorizer.executor.Function;
 public class PasGenerator extends Generator 
 {
 	
-	// The method name of root
+	/** The method name of root */
 	protected String procName = "";
 	
-    /************ Fields ***********************/
+	/************ Fields ***********************/
     @Override
     protected String getDialogTitle()
     {

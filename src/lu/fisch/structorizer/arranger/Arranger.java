@@ -75,6 +75,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -96,6 +98,10 @@ import lu.fisch.structorizer.locales.LangFrame;
 @SuppressWarnings("serial")
 public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener {
 
+	// START KGU 2018-03-21
+	public static final Logger logger = Logger.getLogger(Arranger.class.getName());
+	// END KGU 2018-03-21
+	
     // START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
     private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
@@ -268,7 +274,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         }
         catch (Error error)
         {
-        	System.err.println(error.getMessage());
+        	logger.log(Level.WARNING, error.getMessage());
         }
         // END KGU#2 2015-11-24
 

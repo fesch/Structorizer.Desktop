@@ -110,7 +110,16 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.awt.Frame;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -121,25 +130,48 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.*;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
-import lu.fisch.utils.*;
 import lu.fisch.structorizer.arranger.Arranger;
-import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
+import lu.fisch.structorizer.elements.Case;
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.IElementVisitor;
+import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
+import lu.fisch.structorizer.elements.Parallel;
+import lu.fisch.structorizer.elements.Repeat;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Control;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.CodeParser;
+import lu.fisch.utils.BString;
+import lu.fisch.utils.BTextfile;
+import lu.fisch.utils.StringList;
 
 
 public abstract class Generator extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	/************ Fields ***********************/
+	// START KGU#484 2018-03-22: Issue #463
+	private Logger logger = null;
+	// END KGU#484 2018-03-22
 	// START KGU#162 2016-03-31: Enh. #144
 	protected boolean suppressTransformation = false;
 	// END KGU#162 2016-03-31
@@ -255,6 +287,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#501 2018-02-22
 	
 	/************ Abstract Methods *************/
+	// START KGU#484 2018-03-22: Issue #463
+	protected Logger getLogger()
+	{
+		if (this.logger == null) {
+			this.logger = Logger.getLogger(getClass().getName());
+		}
+		return this.logger;
+	}
+	// END KGU#484 2018-03-22
 	/**
 	 * Should provide a string to be used as title for the export FileChooser
 	 * dialog, e.g. something like "Export Pascal Code ..."
@@ -2500,11 +2541,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		} 
 		catch (FileNotFoundException ex)
 		{
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			// END KGU#484 2018-04-05
 		} 
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			// END KGU#484 2018-04-05
 		}
 
 		//=============== Request output file path (interactively) ======================
@@ -2682,10 +2729,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					copyFileAPIResources(filename);
 				}
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 				String message = e.getMessage();
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				getLogger().log(Level.WARNING, "Error on saving file!", e);
+				// END KGU#484 2018-04-05
 				if (message == null) {
 					message = e.getClass().getSimpleName();
 				}
@@ -2875,7 +2925,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			error = e.getLocalizedMessage();
 		}
 		if (!isDone) {
-			System.err.println("Generator.insertFileAPI(" + _language + ", ...): " + error);
+			getLogger().log(Level.WARNING, "insertFileAPI({0}, ...): {1}", new Object[]{_language, error});
 		}
 		return _atLine;
 	}
@@ -2964,7 +3014,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 			}
 			if (!isDone) {
-				System.err.println("Generator.copyFileAPIResource(" + _language + ", ...): " + error);
+				getLogger().log(Level.WARNING, "copyFileAPIResource({0}, {1}, ...): {2}", new Object[]{_language, _targetFilename, error});
 			}
 		}
 		return isDone;
@@ -3026,7 +3076,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		else
 		{
-			System.err.println("*** Charset " + _charSet + " not available; " + exportCharset + " used.");
+			getLogger().log(Level.WARNING, "*** Charset {0} not available; {1} used.", new Object[]{_charSet, exportCharset});
 		}
 		
 		boolean overwrite = false;
@@ -3066,7 +3116,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				case '-':	// Handled separately
 					break;
 				default:
-					System.err.println("Unknown generator option -" + ch + " ignored.");
+					// START KGU#484 2018-03-22: Issue #463
+					//System.err.println("*** Unknown generator option -" + ch + " ignored.");
+					getLogger().log(Level.WARNING, "Unknown generator option -{0} ignored.", ch);
 				}
 			}
 		}
@@ -3167,7 +3219,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		catch(Exception e)
 		{
-			System.err.println("*** Error while saving the file \"" + _targetFile + "\"!\n" + e.getMessage());
+			getLogger().log(Level.WARNING, "*** Error while saving the file \"{0}\"!\n{1}", new Object[]{_targetFile, e.getMessage()});
 		}
 	} 
 	
@@ -3184,7 +3236,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			outp = new OutputStreamWriter(System.out, exportCharset);
 		} catch (UnsupportedEncodingException e) {
 			// This should never happen since we have checked the Charset before...
-			System.err.println("*** Unsupported Encoding: " + e.getMessage());
+			getLogger().log(Level.WARNING, "*** Unsupported Encoding: {0}", e.getMessage());
 			outp = new OutputStreamWriter(System.out, Charset.defaultCharset());
 		}
 		try {
@@ -3192,7 +3244,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			writer.write(code.getText());
 			writer.close();		// May we do this at all with an underlying System.out?
 		} catch (IOException e) {
-			System.err.println("*** Error on writing to stdout, " + e.getMessage());
+			getLogger().log(Level.WARNING, "*** Error on writing to stdout: {0}", e.getMessage());
 		}
 	}
 	

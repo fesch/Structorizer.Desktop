@@ -49,6 +49,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *
  ******************************************************************************************************
  *
@@ -129,7 +130,11 @@ public class Forever extends Element implements ILoop {
 		}
             
 		// START KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
-		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+		//rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		Rect rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		Point pt0Body = new Point();
+		// END KGU#516 2018-04-04
 		// END KGU#227 2016-07-30: Just delegate the basics to Instruction
 
 		// START KGU#136 2016-03-01: Bugfix #97
@@ -146,6 +151,10 @@ public class Forever extends Element implements ILoop {
 		rect0.bottom += rectBody.bottom+E_PADDING;
 		// END KGU#136 2016-02-27
 		
+		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+		this.rect0 = rect0;
+		this.pt0Body = pt0Body;
+        // END KGU#516 2018-04-04
 		// START KGU#227 2016-07-30: Has not been done by Instruction
 		isRectUpToDate = true;
 		// END KGU#227 2016-07-30

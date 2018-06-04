@@ -36,6 +36,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.04.01      Type of field plugins specialized
  *      Kay Gürtzig     2017.04.23      Enh. #231: reserved words configuration moved to plugin file
  *      Kay Gürtzig     2017.06.20      Enh. #354,#357: Option retrieval added, #404: test with schema file (failed)
+ *      Kay Gürtzig     2018.03.22      Issue #463: Standard logging mechanism instead of console messages
  *
  ******************************************************************************************************
  *
@@ -46,6 +47,8 @@ package lu.fisch.structorizer.parsers;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.*;
@@ -60,6 +63,10 @@ import lu.fisch.utils.StringList;
 
 public class GENParser extends DefaultHandler {
 	
+	// START KGU#484 2018-03-22: Issue #463
+	public static final Logger logger = Logger.getLogger(GENParser.class.getName());
+	// END KGU#484 2018-03-22
+
 	private static Schema pluginSchema = null;
 	
 	private Vector<GENPlugin> plugins = new Vector<GENPlugin>();
@@ -192,8 +199,10 @@ public class GENParser extends DefaultHandler {
 			try {
 				pluginSchema = sFactory.newSchema(schemaLocal);
 			} catch (SAXException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				logger.log(Level.WARNING, "Plugin schema failed.", e);
+				// END KGU#484 2018-04-05
 			}
 		}
 		//factory.setNamespaceAware(true);
@@ -214,8 +223,7 @@ public class GENParser extends DefaultHandler {
 			}
 			errorMessage += "Error parsing plugin file: " + e + "\n";
 			// END KGU#416 2017-06-20
-			System.err.println(errorMessage);
-			e.printStackTrace();
+			logger.log(Level.WARNING, errorMessage, e);
 		}
 		
 		return plugins;

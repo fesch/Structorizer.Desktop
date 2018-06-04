@@ -66,6 +66,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
 import java.util.Map;
+import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
@@ -73,7 +74,8 @@ import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 
-public class XmlGenerator extends Generator {
+public class XmlGenerator extends Generator
+{
 
 	// START KGU#118 2015-12-31: Support for bugfix #82
 	// START KGU#134 2016-01-08: Bugfix #99: mis-spelled attribute name
@@ -508,7 +510,7 @@ public class XmlGenerator extends Generator {
 			}
 		}
 		if (error != null) {
-			System.err.println("XmlGenerator.loadLicenseText(): " + error);
+			getLogger().log(Level.WARNING, "{0}", error);
 		}
 		if (content.trim().isEmpty()) {
 			content = null;

@@ -106,7 +106,7 @@ public class BasGenerator extends Generator
 	protected int[] labelMap;
 	// END KGU#74 2015-12-18
 	
-    /************ Fields ***********************/
+	/************ Fields ***********************/
     @Override
     protected String getDialogTitle()
     {
