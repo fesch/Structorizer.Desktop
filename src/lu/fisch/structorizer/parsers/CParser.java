@@ -1375,7 +1375,7 @@ public class CParser extends CodeParser
 			String rule = _reduction.getParent().toString();
 			String ruleName = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			getLogger().log(Level.CONFIG, "Ruke {0}, {1}", new Object[]{rule, _parentNode.parent});
+			getLogger().log(Level.CONFIG, "Rule {0}, {1}", new Object[]{rule, _parentNode.parent});
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 			
 			if (

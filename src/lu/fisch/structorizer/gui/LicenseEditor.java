@@ -33,7 +33,9 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.13      First Issue
  *      Kay Gürtzig     2017.05.20      Member class RootLicenseInfo refactored to global class RootAttributes
- *                                      reddish text background colour if text cannot be edited 
+ *                                      reddish text background colour if text cannot be edited
+ *      Kay Gürtzig     2018.06.06      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal),
+ *                                      Issue #535: Icon and accelerator key for menu item "Save as ..." unified 
  *
  ******************************************************************************************************
  *
@@ -50,6 +52,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -82,6 +86,7 @@ import javax.swing.text.StyledDocument;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
@@ -112,7 +117,8 @@ import lu.fisch.structorizer.locales.LangDialog;
  *         adopt as copy -> case 3; title like 4 but with root name in parentheses?
  */
 @SuppressWarnings("serial")
-public class LicenseEditor extends LangDialog implements ActionListener, UndoableEditListener {
+//KGU#503 2018-06-06: Enh. #519 - having it implement MouseWheelListener
+public class LicenseEditor extends LangDialog implements ActionListener, UndoableEditListener, MouseWheelListener {
 
 	static private final int MIN_FONT_SIZE = 6;
 	static protected final int PREFERRED_WIDTH = 500;
@@ -271,9 +277,9 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		menuFileSave = new JMenuItem("Save to pool", IconLoader.getIcon(3));
 		menuFileSave.addActionListener(this);
 		menuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		menuFileSaveAs = new JMenuItem("Save as ...", IconLoader.getIcon(3));
+		menuFileSaveAs = new JMenuItem("Save as ...", IconLoader.getIcon(92));
 		menuFileSaveAs.addActionListener(this);
-		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
 		menuFileRename = new JMenuItem("Rename ...");
 		menuFileRename.addActionListener(this);
 		menuFileRename.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -385,7 +391,9 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		};
 		textPane.addKeyListener(keyListener);
 		// END KGU#393 2017-05-09		
-
+    	// START KGU#503 2018-06-06: Enh. #519 - Allow ctrl + mouse wheel to "zoom"
+    	scrText.addMouseWheelListener(this);
+    	// END KGU#503 2018-06-06
 		
 		panel.setLayout(new BorderLayout());
 		panel.add(scrText, BorderLayout.CENTER);
@@ -774,5 +782,25 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		undoMan.addEdit(udoEd);
 		this.doButtons();
 	}
+
+	// START KGU#503 2018-06-06: Enh. #519 - "zooming" via font size control with ctrl + mouse wheel
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
+		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+			int rotation = mwEvt.getWheelRotation();
+        	if (Element.E_WHEEL_REVERSE_ZOOM) {
+        		rotation *= -1;
+        	}
+			if (rotation >= 1) {
+				mwEvt.consume();
+				this.fontDown();
+			}
+			else if (rotation <= -1) {
+				mwEvt.consume();
+				this.fontUp();
+			}
+		}
+	}
+	// END KGU#503 2018-06-06
 
 }
