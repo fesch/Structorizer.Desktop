@@ -21,7 +21,7 @@ package lu.fisch.structorizer.parsers;
 
 /******************************************************************************************************
  *
- *      Author:         kay
+ *      Author:         Kay Gürtzig
  *
  *      Description:    This is a subclass of Ralph Iden's GOLDParser version 5.0 (Au = gold),
  *                      hence a language-independent general-purpose LALR(1) parser.
@@ -32,7 +32,7 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.09      First Issue
+ *      Kay Gürtzig     2017.03.09      First Issue (solving the legacy cgt problem)
  *      Kay Gürtzig     2017.04.27      File logging option added
  *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
  *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved, logger added
@@ -41,12 +41,14 @@ package lu.fisch.structorizer.parsers;
  *
  *      Comment:
  *      One of the major issues inducing this subclass was a NullPointerException on loading legacy
- *      cgt file, e.g. the D/Grammar.cgt used for the Pascal import into Structorizer.
+ *      cgt file, e.g. the D7Grammar.cgt used for the Pascal import into Structorizer.
  *      The exception was caused by a missing "Comment" symbol for grouping line comments. Since it
  *      turned out impossible to generate an upgraded cgt or egt from D7Grammar.grm with the current
  *      GOLDbuild tool, I chose to apply a fix to method Parser.resolveCommentGroupsForVersion1Grammars(),
- *      which solved the problem. I wanted to avoid to many invasive code interventions in the original
- *      package, so I just changed the method visibility from private to protected and overrode it here. 
+ *      which solved the problem. I wanted to avoid too many invasive code interventions in the original
+ *      package, so I just changed the method visibility from private to protected and overrode it here.
+ *      Further auxiliary infrastructure for a parser logging and a comment retrieval mechanism were
+ *      added later. 
  *
  ******************************************************************************************************///
 
@@ -74,9 +76,31 @@ import com.creativewidgetworks.goldparser.util.FormatHelper;
 import com.creativewidgetworks.goldparser.util.ResourceHelper;
 
 /**
- * General purpose wrapper class used to process source input and generate
- * a parse tree, directly based on {@link GOLDParser} with some fixes
- * version 5.0.0 by Ralph Iden (http://www.creativewidgetworks.com)
+ * General-purpose wrapper class used to process source input and generate
+ * a parse tree, directly based on {@link GOLDParser} version 5.0.0 by
+ * Ralph Iden (http://www.creativewidgetworks.com) with some fixes.
+ * (The name was simply derived from the chemical symbol Au for gold.)
+ * <br/><br/>
+ * This class also caters for a mapping of tokens to found comment strings.
+ * Generally, a comment may be associated to the previous statement (if there
+ * have been tokens in the same line before) or to the following statement -
+ * which is the usual case.<br/>
+ * Therefore we must cache both the last relevant token in expectation of a
+ * comment and the last unsatisfied comment token in expectation of a relevant
+ * token. All the time we must be aware of newline tokens. A newline cuts the
+ * connection between relevant token and further comments (if there hadn't been
+ * a comment then we just forget the preceding token, otherwise both will be
+ * added to the map).<br/>
+ * Which tokens are representing statements cannot be decided while they are
+ * read (this is language-specific and the reduction process hasn't even been
+ * finished). Instead, the client parsers must traverse the subtree down from
+ * a token representing a statement (language-specific) and gather all tokens
+ * with associated comments. For convenience, they might map the {@link Reduction}
+ * of any non-terminal token found as key in the {@link #commentMap} to the
+ * respective {@link Token}. Lest nested statements should also mix in their
+ * comments to the outer algorithmic structures, the client will have to
+ * configure the rule ids where the tree search is to be stopped. But this
+ * mechanism is of course up to the client parsers and depends on the purpose.
  * 
  * <br>Dependencies:
  * <ul>
@@ -103,39 +127,23 @@ public class AuParser extends GOLDParser {
 	// END KGU#354 2017-04-27
 	
 	// START KGU#407 2017-07-21: Enh. #420: Prerequisites to map comment tokens.
-	// A comment may be associated to the previous statement (if there have been
-	// tokens in the same line before) or to the following statement - the usual
-	// case.
-	// Therefore we must cache both the last relevant token in expectation of a
-	// comment and the last unsatisfied comment token in expectation of a relevant
-	// token. All the time we must be aware of newline tokens. A newline cuts the
-	// connection between relevant token and further comments (if there hadn't been
-	// a comment then we just forget the preceding token, otherwise both will be
-	// mapped).
-	// Which tokens are representing statements cannot be decided while they are
-	// read (this is language-specific and the reduction process hasn't even been
-	// finished). Instead, the client parsers must traverse the subtree down from
-	// a token representing a statement (language-specific) and gather all tokens
-	// with
-	// comments. Lest nested statements should also mix in their comments, the
-	// client will have to configure the rule ids where the tree search is to be
-	// stopped. But this mechanism is up to the client parsers.
+	/** Most recent comment */
 	private String lastComment = null;
+	/** most recent token */
 	private Token lastToken = null;
 	/**
 	 * Maps tokens to neighbouring comment texts for possible comment import. The
 	 * client parsers must decide themselves whether and how they make use of it.
 	 * Typically, the retrieval will start from a reduction or token representing
-	 * a statement (i .e. something being converted into a structogram element. 
+	 * a statement (i .e. something being converted into a structogram element). 
 	 */
 	protected final HashMap<Token, String> commentMap = new HashMap<Token, String>();
 	// END KGU#407 2017-07-21
 
 	/**
-	 * 
+	 * Default constructor
 	 */
 	public AuParser() {
-		// Auto-generated constructor stub
 	}
 
 	/**
@@ -147,9 +155,9 @@ public class AuParser extends GOLDParser {
 	}
 
 	/**
-	 * @param cgtFile
-	 * @param rulesPackage
-	 * @param trimReductions
+	 * @param cgtFile - the (extended) compiled grammar as {@link File} object.
+	 * @param rulesPackage - name/path of the compiled grammar table
+	 * @param trimReductions - whether reductions paths are to be shortened sensibly
 	 */
 	public AuParser(File cgtFile, String rulesPackage, boolean trimReductions) {
 		// Auto-generated constructor stub
@@ -157,9 +165,9 @@ public class AuParser extends GOLDParser {
 	}
 
 	/**
-	 * @param cgtFile
-	 * @param rulesPackage
-	 * @param trimReductions
+	 * @param cgtFile - the (extended) compiled grammar as input stream
+	 * @param rulesPackage - name/path of the compiled grammar table
+	 * @param trimReductions - whether reductions paths are to be shortened sensibly
 	 */
 	public AuParser(InputStream cgtFile, String rulesPackage, boolean trimReductions) {
 		// Auto-generated constructor stub
@@ -180,7 +188,7 @@ public class AuParser extends GOLDParser {
 	// END KGU#354 2017-04-27
 
     /**
-     * Inserts Group objects into the group table so comments can be processed in a 
+     * Inserts Group objects into the group table, so comments can be processed in a 
      * grammar.  It is assumed that version 1.0 files have a maximum of 1 closed
      * comment block and one comment line symbol.
      */	
@@ -252,7 +260,7 @@ public class AuParser extends GOLDParser {
     	}
     	// END KGU#511 2018-04-12
     	// START KGU#407 2017-06-21: Enh. #420 Set the token - comment mapping
-    	String name = token.getName();	// FIXME is this sufficient for a classification?
+    	String name = token.getName();	// FIXME: Is this sufficient for a classification?
     	if (name.equalsIgnoreCase("comment")) {
     		String comment = token.asString();
     		if (lastToken != null) {
@@ -299,6 +307,9 @@ public class AuParser extends GOLDParser {
     	return false;
     }
     
+    /**
+     * Just allowing public access to the current token 
+     */
     public Token getCurrentToken() {
     	// START KGU#511 2018-04-12: Issue #489
     	//return super.getCurrentToken();

@@ -11,7 +11,7 @@ Known issues:
 - C import fails if the code contains function pointers.
 - Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version: 3.28-02 (2018-04-12)
+Current development version: 3.28-03 (2018-06-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -29,6 +29,11 @@ Current development version: 3.28-02 (2018-04-12)
 - 02: Issue #463: Console output replaced by configurable logging [R. Schmidt]2
 - 02: Bugfix #528: Analyser check of record component access mended <2>
 - 02: Bugfix #529: Concurrency on drawing diagrams during execution solved <2>
+- 02: Bugfix #451: Java version test in shell start scripts revised [hans005]
+- 02: Bugfix #533: Import of struct types from C files was dysfunctional <2>
+- 03: Enh. #519: Font resizing with ctrl + mouse wheel missed in LicenseEditor <2>
+- 03: Issue #535: Menu item "Save as..." had wrong icon and accelerator <2>
+- 03: Issue #463: Logging configuration mechanism didn't work for WebStart <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

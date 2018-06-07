@@ -790,10 +790,10 @@ public class Parser {
     /*----------------------------------------------------------------------------*/
 
     /**
-     * This method analyzes a token and either:
-     *   1. Makes a SINGLE reduction and pushes a complete Reduction object on the stack
-     *   2. Accepts the token and shifts
-     *   3. Errors and places the expected symbol indexes in the Tokens list.
+     * This method analyzes a token and either:<br/>
+     *   1. Makes a SINGLE reduction and pushes a complete Reduction object on the stack<br/>
+     *   2. Accepts the token and shifts<br/>
+     *   3. Errors and places the expected symbol indexes in the Tokens list.<br/>
      *   
      * @param nextToken to be analyzed
      * @return ParseResult  
