@@ -151,6 +151,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes
  *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file
  *      Kay Gürtzig     2018.04.03      KGU#514: analyse() call on mere mouse clicking avoided
+ *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble in openNsdOrArr()
  *
  ******************************************************************************************************
  *
@@ -1599,13 +1600,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#289/KGU#316 2016-11-15/2016-12-28: Enh. #290/#318: Better support for Arranger files
 	public String openNsdOrArr(String _filepath)
 	{
-		String ext = StructogramFilter.getExtension(_filepath);
-		if (ext.equalsIgnoreCase("arr") || ext.equalsIgnoreCase("arrz")) {
+		String ext = ExtFileFilter.getExtension(_filepath);
+		if (ext.equals("arr") || ext.equals("arrz")) {
 			loadArrangement(new File(_filepath));			
 		}
-		else {
+		// START KGU#521 2018-06-08: Bugfix #536
+		//else {
+		else if (ext.equals("nsd")) {
+		// START KGU#521 2018-06-08: Bugfix #536
 			this.openNSD(_filepath);
 		}
+		// START KGU#521 2018-06-08: Bugfix #536
+		else {
+			ext = "";
+		}
+		// END KGU#521 2018-06-08
 		return ext;
 	}
 	// END KGU#316 2016-12-28

@@ -25,7 +25,7 @@ package lu.fisch.structorizer.io;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    Inputfilter for pascal source files.
+ *      Description:    Input filter for Pascal source files.
  *
  ******************************************************************************************************
  *
@@ -34,6 +34,7 @@ package lu.fisch.structorizer.io;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.27      First Issue
+ *      Kay Gürtzig     2018.06.08      Inheritance changed
  *
  ******************************************************************************************************
  *
@@ -43,44 +44,40 @@ package lu.fisch.structorizer.io;
  */
 
 import java.io.File;
-import javax.swing.filechooser.*;
 
-public class PascalFilter extends FileFilter {
+public class PascalFilter extends ExtFileFilter {
 	
-	public static boolean isNSD(String _filename)
+	public static boolean isSRC(String _filename)
 	{
-		return 
-		(getExtension(_filename).equals("pas")) ||
-		(getExtension(_filename).equals("dpr")) ||
-		(getExtension(_filename).equals("lpr")) 
-		;
+		String ext = getExtension(_filename);
+		return ext.equals("pas") || ext.equals("dpr") || ext.equals("lpr");
 	}
 	
-	public static String getExtension(String s) 
-	{
-		String ext = null;
-		int i = s.lastIndexOf('.');
-		
-		if (i > 0 &&  i < s.length() - 1) 
-		{
-			ext = s.substring(i+1).toLowerCase();
-		}
-		return ext;
-	}
-	
-	public static String getExtension(File f) 
-	{
-		String ext = null;
-		String s = f.getName();
-		int i = s.lastIndexOf('.');
-		
-		if (i > 0 &&  i < s.length() - 1) 
-		{
-			ext = s.substring(i+1).toLowerCase();
-		}
-		
-		return ext;
-	}
+//	public static String getExtension(String s) 
+//	{
+//		String ext = null;
+//		int i = s.lastIndexOf('.');
+//		
+//		if (i > 0 &&  i < s.length() - 1) 
+//		{
+//			ext = s.substring(i+1).toLowerCase();
+//		}
+//		return ext;
+//	}
+//	
+//	public static String getExtension(File f) 
+//	{
+//		String ext = null;
+//		String s = f.getName();
+//		int i = s.lastIndexOf('.');
+//		
+//		if (i > 0 &&  i < s.length() - 1) 
+//		{
+//			ext = s.substring(i+1).toLowerCase();
+//		}
+//		
+//		return ext;
+//	}
 	
 	public String getDescription() 
 	{
@@ -94,13 +91,13 @@ public class PascalFilter extends FileFilter {
             return true;
         }
 		
-        String extension = getExtension(f);
-        if (extension != null) 
-		{
-            return isNSD(f.getName());
-		}
+//        String extension = getExtension(f);
+//        if (extension != null) 
+//		{
+            return isSRC(f.getName());
+//		}
 		
-        return false;
+//        return false;
     }
 	
 }
