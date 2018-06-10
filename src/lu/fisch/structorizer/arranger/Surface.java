@@ -78,10 +78,18 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.02.21      Enh. #515: Working first prototype for space-saving area management
  *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
  *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
+ *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2018.06.10 (Kay Gürtzig)
+ *      - The change was made to comply with the Oracle Swing debugging guidelines
+ *        (https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/swing002.html#BABHEADA),
+ *        in particular section 13.2.8 Custom Painting and Double Buffering:
+ *        "Although you can override paint and do custom painting in the override, you should instead
+ *         override paintComponent. The JComponent.paint method ensures that painting happens to the
+ *         double buffer. If you override paint directly, you may lose double buffering."
  *      2018.03.13 (Kay Gürtzig)
  *      - According to a GUI suggestion by newboerg, surface now also implements MouseWheelListener in
  *        order to let ctrl + mouse wheel forward to zoom out and ctrl + mouse wheel backward to zoom in
@@ -277,10 +285,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#385 2017-04-22
 
     @Override
-    public void paint(Graphics g)
+    public void paintComponent(Graphics g)
     // START KGU#497 2018-03-19: Enh. #512 - The PNG export must compensate the zoom factor
     {
-    	this.paint(g, false);
+    	this.paintComponent(g, false);
     }
     /**
      * Specific variant of {@link #paint(Graphics)} with the opportunity to compensate
@@ -289,13 +297,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
      * @param g - a {@link Graphics2D} object as transformable drawing canvas
      * @param compensateZoom - whether the imposed {@link #zoomFactor} is to be compensated
      */
-    public void paint(Graphics g, boolean compensateZoom)
+    public void paintComponent(Graphics g, boolean compensateZoom)
     // END KGU#497 2018-03-19
     {
         //System.out.println("Surface: " + System.currentTimeMillis());
     	// Region occupied by diagrams
         Dimension area = new Dimension(0, 0);
-        super.paint(g);
+        super.paintComponent(g);
         if (diagrams != null)
         {
             // START KGU#497 2018-02-17: Enh. #512
@@ -1145,7 +1153,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                     Math.round(this.getWidth() * this.zoomFactor),
                     Math.round(this.getHeight() * this.zoomFactor),
                     BufferedImage.TYPE_4BYTE_ABGR);
-            paint(bi.getGraphics(), true);
+            paintComponent(bi.getGraphics(), true);
             // END KGU#497 2018-03-19
             // save the file
             try
