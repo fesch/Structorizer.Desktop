@@ -47,6 +47,7 @@
  *      Kay Gürtzig     2018.03.21      Issue #463: Logging configuration via file logging.properties
  *      Kay Gürtzig     2018.06.07      Issue #463: Logging configuration mechanism revised (to support WebStart)
  *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble
+ *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
  *
  ******************************************************************************************************
  *
@@ -80,7 +81,6 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -210,6 +210,10 @@ public class Structorizer
 		}
 		// END KGU#187 2016-04-28
 		
+		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
+		System.setProperty("sun.java2d.noddraw", "true");
+		// END KGU#521 2018-06-12
+
 		// try to load the system Look & Feel
 		try
 		{
@@ -222,7 +226,7 @@ public class Structorizer
 
 		// load the mainform
 		final Mainform mainform = new Mainform();
-
+		
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
         try {
         	EventQueue.invokeAndWait(new Runnable() {

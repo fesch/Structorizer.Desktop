@@ -11,7 +11,7 @@ Known issues:
 - C import fails if the code contains function pointers.
 - Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version: 3.28-03 (2018-06-11)
+Current development version: 3.28-03 (2018-06-12)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -35,7 +35,7 @@ Current development version: 3.28-03 (2018-06-11)
 - 03: Issue #535: License Editor menu item "Save as..." had wrong accelerator <2>
 - 03: Issue #463: Logging configuration mechanism didn't work for WebStart <2>
 - 03: Issue #536: Precaution against unsuited command line arguments <2>,
-      modified start scripts for Windows and Linux avoiding Direct3D trouble <2>
+      experimental workaround against Direct3D trouble on some machines <2>
 - 03: Issue #143: Comment popup switched off on opening print preview <2>
 
 Version 3.28 (2018-02-18)
