@@ -11,7 +11,7 @@ Known issues:
 - C import fails if the code contains function pointers.
 - Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version: 3.28-03 (2018-06-12)
+Current development version: 3.28-03 (2018-06-17)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -37,6 +37,9 @@ Current development version: 3.28-03 (2018-06-12)
 - 03: Issue #536: Precaution against unsuited command line arguments <2>,
       experimental workaround against Direct3D trouble on some machines <2>
 - 03: Issue #143: Comment popup switched off on opening print preview <2>
+- 03: Bugfix #540: C import could fail or get stuck on processing macros <2>
+- 03: Enh. #541: New import option "redundant symbols/macros" for C code <2>
+- 03: Bugfix: 542: Procedure import from C code mended (result type + return) <2>  
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

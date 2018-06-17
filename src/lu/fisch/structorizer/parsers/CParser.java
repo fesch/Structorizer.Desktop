@@ -58,6 +58,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.09.30      Enh. #411: Bugfix in typedef preparation, enh. #423: struct import done
  *                                      Enh. #420: Comment delimiter specification added
  *      Kay Gürtzig     2018.06.04      Issue #533: Import of C struct definitions hadn't been converted to Structorizer syntax
+ *      Kay Gürtzig     2018.06.17      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
+ *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
+ *                                      Bugfix #542: return without expr. not supported, result type void now suppressed
  *
  ******************************************************************************************************
  *
@@ -146,6 +149,7 @@ public class CParser extends CodeParser
 		RuleConstants.PROD_TYPEDEFDECL_TYPEDEF,
 		RuleConstants.PROD_NORMALSTM_BREAK_SEMI,
 		RuleConstants.PROD_NORMALSTM_RETURN_SEMI,
+		RuleConstants.PROD_NORMALSTM_RETURN_SEMI2,
 		RuleConstants.PROD_NORMALSTM_GOTO_ID_SEMI,
 		RuleConstants.PROD_NORMALSTM_CONTINUE_SEMI,
 		RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN,
@@ -494,92 +498,93 @@ public class CParser extends CodeParser
 		final int PROD_NORMALSTM_BREAK_SEMI                         = 112;  // <Normal Stm> ::= break ';'
 		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 113;  // <Normal Stm> ::= continue ';'
 		final int PROD_NORMALSTM_RETURN_SEMI                        = 114;  // <Normal Stm> ::= return <Expr> ';'
-//		final int PROD_NORMALSTM_SEMI2                              = 115;  // <Normal Stm> ::= ';'
-//		final int PROD_ARG                                          = 116;  // <Arg> ::= <Expr>
-//		final int PROD_ARG2                                         = 117;  // <Arg> ::= 
-		final int PROD_CASESTMS_CASE_COLON                          = 118;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
-		final int PROD_CASESTMS_DEFAULT_COLON                       = 119;  // <Case Stms> ::= default ':' <Stm List>
-//		final int PROD_CASESTMS                                     = 120;  // <Case Stms> ::= 
-//		final int PROD_BLOCK_LBRACE_RBRACE                          = 121;  // <Block> ::= '{' <Decl Stm List> '}'
-//		final int PROD_DECLSTMLIST                                  = 122;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
-//		final int PROD_DECLSTMLIST2                                 = 123;  // <Decl Stm List> ::= <Stm List>
-		final int PROD_STMLIST                                      = 124;  // <Stm List> ::= <Stm> <Stm List>
-//		final int PROD_STMLIST2                                     = 125;  // <Stm List> ::= 
-//		final int PROD_INITIALIZER                                  = 126;  // <Initializer> ::= <Op If>
-//		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 127;  // <Initializer> ::= '{' <ExprIni> '}'
-//		final int PROD_EXPR_COMMA                                   = 128;  // <Expr> ::= <Expr> ',' <Op Assign>
-//		final int PROD_EXPR                                         = 129;  // <Expr> ::= <Op Assign>
-//		final int PROD_EXPRINI_COMMA                                = 130;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
-//		final int PROD_EXPRINI                                      = 131;  // <ExprIni> ::= <Initializer>
-		final int PROD_OPASSIGN_EQ                                  = 132;  // <Op Assign> ::= <Op If> '=' <Op Assign>
-		final int PROD_OPASSIGN_PLUSEQ                              = 133;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
-		final int PROD_OPASSIGN_MINUSEQ                             = 134;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
-		final int PROD_OPASSIGN_TIMESEQ                             = 135;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
-		final int PROD_OPASSIGN_DIVEQ                               = 136;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
-		final int PROD_OPASSIGN_CARETEQ                             = 137;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
-		final int PROD_OPASSIGN_AMPEQ                               = 138;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
-		final int PROD_OPASSIGN_PIPEEQ                              = 139;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
-		final int PROD_OPASSIGN_GTGTEQ                              = 140;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
-		final int PROD_OPASSIGN_LTLTEQ                              = 141;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
-//		final int PROD_OPASSIGN                                     = 142;  // <Op Assign> ::= <Op If>
-//		final int PROD_OPIF_QUESTION_COLON                          = 143;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
-//		final int PROD_OPIF                                         = 144;  // <Op If> ::= <Op Or>
-//		final int PROD_OPOR_PIPEPIPE                                = 145;  // <Op Or> ::= <Op Or> '||' <Op And>
-//		final int PROD_OPOR                                         = 146;  // <Op Or> ::= <Op And>
-//		final int PROD_OPAND_AMPAMP                                 = 147;  // <Op And> ::= <Op And> '&&' <Op BinOR>
-//		final int PROD_OPAND                                        = 148;  // <Op And> ::= <Op BinOR>
-//		final int PROD_OPBINOR_PIPE                                 = 149;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
-//		final int PROD_OPBINOR                                      = 150;  // <Op BinOR> ::= <Op BinXOR>
-//		final int PROD_OPBINXOR_CARET                               = 151;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
-//		final int PROD_OPBINXOR                                     = 152;  // <Op BinXOR> ::= <Op BinAND>
-//		final int PROD_OPBINAND_AMP                                 = 153;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
-//		final int PROD_OPBINAND                                     = 154;  // <Op BinAND> ::= <Op Equate>
-//		final int PROD_OPEQUATE_EQEQ                                = 155;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
-//		final int PROD_OPEQUATE_EXCLAMEQ                            = 156;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
-//		final int PROD_OPEQUATE                                     = 157;  // <Op Equate> ::= <Op Compare>
-//		final int PROD_OPCOMPARE_LT                                 = 158;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
-//		final int PROD_OPCOMPARE_GT                                 = 159;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
-//		final int PROD_OPCOMPARE_LTEQ                               = 160;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
-//		final int PROD_OPCOMPARE_GTEQ                               = 161;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
-//		final int PROD_OPCOMPARE                                    = 162;  // <Op Compare> ::= <Op Shift>
-//		final int PROD_OPSHIFT_LTLT                                 = 163;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
-//		final int PROD_OPSHIFT_GTGT                                 = 164;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
-//		final int PROD_OPSHIFT                                      = 165;  // <Op Shift> ::= <Op Add>
-//		final int PROD_OPADD_PLUS                                   = 166;  // <Op Add> ::= <Op Add> '+' <Op Mult>
-//		final int PROD_OPADD_MINUS                                  = 167;  // <Op Add> ::= <Op Add> '-' <Op Mult>
-//		final int PROD_OPADD                                        = 168;  // <Op Add> ::= <Op Mult>
-//		final int PROD_OPMULT_TIMES                                 = 169;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
-//		final int PROD_OPMULT_DIV                                   = 170;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
-//		final int PROD_OPMULT_PERCENT                               = 171;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
-//		final int PROD_OPMULT                                       = 172;  // <Op Mult> ::= <Op Unary>
-//		final int PROD_OPUNARY_EXCLAM                               = 173;  // <Op Unary> ::= '!' <Op Unary>
-//		final int PROD_OPUNARY_TILDE                                = 174;  // <Op Unary> ::= '~' <Op Unary>
-//		final int PROD_OPUNARY_MINUS                                = 175;  // <Op Unary> ::= '-' <Op Unary>
-//		final int PROD_OPUNARY_TIMES                                = 176;  // <Op Unary> ::= '*' <Op Unary>
-//		final int PROD_OPUNARY_AMP                                  = 177;  // <Op Unary> ::= '&' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS                             = 178;  // <Op Unary> ::= '++' <Op Unary>
-		final int PROD_OPUNARY_MINUSMINUS                           = 179;  // <Op Unary> ::= '--' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS2                            = 180;  // <Op Unary> ::= <Op Pointer> '++'
-		final int PROD_OPUNARY_MINUSMINUS2                          = 181;  // <Op Unary> ::= <Op Pointer> '--'
-//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 182;  // <Op Unary> ::= '(' <ConstType> ')' <Op Unary>
-//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 183;  // <Op Unary> ::= sizeof '(' <ConstType> ')'
-//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 184;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
-//		final int PROD_OPUNARY                                      = 185;  // <Op Unary> ::= <Op Pointer>
-//		final int PROD_OPPOINTER_DOT                                = 186;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
-//		final int PROD_OPPOINTER_MINUSGT                            = 187;  // <Op Pointer> ::= <Op Pointer> '->' <Call Id>
-//		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 188;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
-//		final int PROD_OPPOINTER                                    = 189;  // <Op Pointer> ::= <Value>
-		final int PROD_CALLID_ID_LPAREN_RPAREN                      = 190;  // <Call Id> ::= Id '(' <Expr> ')'
-		final int PROD_CALLID_ID_LPAREN_RPAREN2                     = 191;  // <Call Id> ::= Id '(' ')'
-//		final int PROD_CALLID_ID                                    = 192;  // <Call Id> ::= Id
-//		final int PROD_VALUE_OCTLITERAL                             = 193;  // <Value> ::= OctLiteral
-//		final int PROD_VALUE_HEXLITERAL                             = 194;  // <Value> ::= HexLiteral
-//		final int PROD_VALUE_DECLITERAL                             = 195;  // <Value> ::= DecLiteral
-//		final int PROD_VALUE_STRINGLITERAL                          = 196;  // <Value> ::= StringLiteral
-//		final int PROD_VALUE_CHARLITERAL                            = 197;  // <Value> ::= CharLiteral
-//		final int PROD_VALUE_FLOATLITERAL                           = 198;  // <Value> ::= FloatLiteral
-//		final int PROD_VALUE                                        = 199;  // <Value> ::= <Call Id>
-//		final int PROD_VALUE_LPAREN_RPAREN                          = 200;  // <Value> ::= '(' <Expr> ')'
+		final int PROD_NORMALSTM_RETURN_SEMI2                       = 115;  // <Normal Stm> ::= return ';'
+//		final int PROD_NORMALSTM_SEMI2                              = 116;  // <Normal Stm> ::= ';'
+//		final int PROD_ARG                                          = 117;  // <Arg> ::= <Expr>
+//		final int PROD_ARG2                                         = 118;  // <Arg> ::= 
+		final int PROD_CASESTMS_CASE_COLON                          = 119;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
+		final int PROD_CASESTMS_DEFAULT_COLON                       = 120;  // <Case Stms> ::= default ':' <Stm List>
+//		final int PROD_CASESTMS                                     = 121;  // <Case Stms> ::= 
+//		final int PROD_BLOCK_LBRACE_RBRACE                          = 122;  // <Block> ::= '{' <Decl Stm List> '}'
+//		final int PROD_DECLSTMLIST                                  = 123;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
+//		final int PROD_DECLSTMLIST2                                 = 124;  // <Decl Stm List> ::= <Stm List>
+		final int PROD_STMLIST                                      = 125;  // <Stm List> ::= <Stm> <Stm List>
+//		final int PROD_STMLIST2                                     = 126;  // <Stm List> ::= 
+//		final int PROD_INITIALIZER                                  = 127;  // <Initializer> ::= <Op If>
+//		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 128;  // <Initializer> ::= '{' <ExprIni> '}'
+//		final int PROD_EXPR_COMMA                                   = 129;  // <Expr> ::= <Expr> ',' <Op Assign>
+//		final int PROD_EXPR                                         = 130;  // <Expr> ::= <Op Assign>
+//		final int PROD_EXPRINI_COMMA                                = 131;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
+//		final int PROD_EXPRINI                                      = 132;  // <ExprIni> ::= <Initializer>
+		final int PROD_OPASSIGN_EQ                                  = 133;  // <Op Assign> ::= <Op If> '=' <Op Assign>
+		final int PROD_OPASSIGN_PLUSEQ                              = 134;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
+		final int PROD_OPASSIGN_MINUSEQ                             = 135;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
+		final int PROD_OPASSIGN_TIMESEQ                             = 136;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
+		final int PROD_OPASSIGN_DIVEQ                               = 137;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
+		final int PROD_OPASSIGN_CARETEQ                             = 138;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
+		final int PROD_OPASSIGN_AMPEQ                               = 139;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
+		final int PROD_OPASSIGN_PIPEEQ                              = 140;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
+		final int PROD_OPASSIGN_GTGTEQ                              = 141;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
+		final int PROD_OPASSIGN_LTLTEQ                              = 142;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
+//		final int PROD_OPASSIGN                                     = 143;  // <Op Assign> ::= <Op If>
+//		final int PROD_OPIF_QUESTION_COLON                          = 144;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
+//		final int PROD_OPIF                                         = 145;  // <Op If> ::= <Op Or>
+//		final int PROD_OPOR_PIPEPIPE                                = 146;  // <Op Or> ::= <Op Or> '||' <Op And>
+//		final int PROD_OPOR                                         = 147;  // <Op Or> ::= <Op And>
+//		final int PROD_OPAND_AMPAMP                                 = 148;  // <Op And> ::= <Op And> '&&' <Op BinOR>
+//		final int PROD_OPAND                                        = 149;  // <Op And> ::= <Op BinOR>
+//		final int PROD_OPBINOR_PIPE                                 = 150;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
+//		final int PROD_OPBINOR                                      = 151;  // <Op BinOR> ::= <Op BinXOR>
+//		final int PROD_OPBINXOR_CARET                               = 152;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
+//		final int PROD_OPBINXOR                                     = 153;  // <Op BinXOR> ::= <Op BinAND>
+//		final int PROD_OPBINAND_AMP                                 = 154;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
+//		final int PROD_OPBINAND                                     = 155;  // <Op BinAND> ::= <Op Equate>
+//		final int PROD_OPEQUATE_EQEQ                                = 156;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
+//		final int PROD_OPEQUATE_EXCLAMEQ                            = 157;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
+//		final int PROD_OPEQUATE                                     = 158;  // <Op Equate> ::= <Op Compare>
+//		final int PROD_OPCOMPARE_LT                                 = 159;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
+//		final int PROD_OPCOMPARE_GT                                 = 160;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
+//		final int PROD_OPCOMPARE_LTEQ                               = 161;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
+//		final int PROD_OPCOMPARE_GTEQ                               = 162;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
+//		final int PROD_OPCOMPARE                                    = 163;  // <Op Compare> ::= <Op Shift>
+//		final int PROD_OPSHIFT_LTLT                                 = 164;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
+//		final int PROD_OPSHIFT_GTGT                                 = 165;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
+//		final int PROD_OPSHIFT                                      = 166;  // <Op Shift> ::= <Op Add>
+//		final int PROD_OPADD_PLUS                                   = 167;  // <Op Add> ::= <Op Add> '+' <Op Mult>
+//		final int PROD_OPADD_MINUS                                  = 168;  // <Op Add> ::= <Op Add> '-' <Op Mult>
+//		final int PROD_OPADD                                        = 169;  // <Op Add> ::= <Op Mult>
+//		final int PROD_OPMULT_TIMES                                 = 170;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
+//		final int PROD_OPMULT_DIV                                   = 171;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
+//		final int PROD_OPMULT_PERCENT                               = 172;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
+//		final int PROD_OPMULT                                       = 173;  // <Op Mult> ::= <Op Unary>
+//		final int PROD_OPUNARY_EXCLAM                               = 174;  // <Op Unary> ::= '!' <Op Unary>
+//		final int PROD_OPUNARY_TILDE                                = 175;  // <Op Unary> ::= '~' <Op Unary>
+//		final int PROD_OPUNARY_MINUS                                = 176;  // <Op Unary> ::= '-' <Op Unary>
+//		final int PROD_OPUNARY_TIMES                                = 177;  // <Op Unary> ::= '*' <Op Unary>
+//		final int PROD_OPUNARY_AMP                                  = 178;  // <Op Unary> ::= '&' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS                             = 179;  // <Op Unary> ::= '++' <Op Unary>
+		final int PROD_OPUNARY_MINUSMINUS                           = 180;  // <Op Unary> ::= '--' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS2                            = 181;  // <Op Unary> ::= <Op Pointer> '++'
+		final int PROD_OPUNARY_MINUSMINUS2                          = 182;  // <Op Unary> ::= <Op Pointer> '--'
+//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 183;  // <Op Unary> ::= '(' <ConstType> ')' <Op Unary>
+//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 184;  // <Op Unary> ::= sizeof '(' <ConstType> ')'
+//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 185;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
+//		final int PROD_OPUNARY                                      = 186;  // <Op Unary> ::= <Op Pointer>
+//		final int PROD_OPPOINTER_DOT                                = 187;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
+//		final int PROD_OPPOINTER_MINUSGT                            = 188;  // <Op Pointer> ::= <Op Pointer> '->' <Call Id>
+//		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 189;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
+//		final int PROD_OPPOINTER                                    = 190;  // <Op Pointer> ::= <Value>
+		final int PROD_CALLID_ID_LPAREN_RPAREN                      = 191;  // <Call Id> ::= Id '(' <Expr> ')'
+		final int PROD_CALLID_ID_LPAREN_RPAREN2                     = 192;  // <Call Id> ::= Id '(' ')'
+//		final int PROD_CALLID_ID                                    = 193;  // <Call Id> ::= Id
+//		final int PROD_VALUE_OCTLITERAL                             = 194;  // <Value> ::= OctLiteral
+//		final int PROD_VALUE_HEXLITERAL                             = 195;  // <Value> ::= HexLiteral
+//		final int PROD_VALUE_DECLITERAL                             = 196;  // <Value> ::= DecLiteral
+//		final int PROD_VALUE_STRINGLITERAL                          = 197;  // <Value> ::= StringLiteral
+//		final int PROD_VALUE_CHARLITERAL                            = 198;  // <Value> ::= CharLiteral
+//		final int PROD_VALUE_FLOATLITERAL                           = 199;  // <Value> ::= FloatLiteral
+//		final int PROD_VALUE                                        = 200;  // <Value> ::= <Call Id>
+//		final int PROD_VALUE_LPAREN_RPAREN                          = 201;  // <Value> ::= '(' <Expr> ')'
 	};
 
 	//---------------------------- Local Definitions ---------------------
@@ -618,8 +623,13 @@ public class CParser extends CodeParser
 	
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
 
-	final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
-	static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
+	private final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
+	private static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
+	// START KGU#519 2018-06-17: Enh. #541
+	// macro signature:  macroname ( 3 )
+	private static final Pattern PTRN_MACRO_SIG = Pattern.compile("(\\w+)\\(\\s*([0-9]*)\\s*\\)");
+	private static Matcher mtchMacroSig = PTRN_MACRO_SIG.matcher("");
+	// END KGU#519 2018-06-17
 
 	//----------------------------- Preprocessor -----------------------------
 
@@ -639,6 +649,10 @@ public class CParser extends CodeParser
 	{	
 		this.ParserPath = null; // set after file object creation
 		this.ParserEncoding	= _encoding;
+		
+		// START KGU#519 2018-06-17: Enh. 541 Empty the defines before general start
+		defines.clear();
+		// END KGU#51 2018-06-17
 		
 		//========================================================================!!!
 		// Now introduced as plugin-defined option configuration for C
@@ -705,6 +719,11 @@ public class CParser extends CodeParser
 			// END KGU#193 2016-05-04
 			String strLine;
 			boolean inComment = false;
+
+			// START KGU#519 2018-06-17: Enh. #541
+			registerRedundantDefines(defines);
+			// END KGU#519 2018-06-17
+			
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the #define replacements (at least roughly...) which we do
@@ -848,6 +867,46 @@ public class CParser extends CodeParser
 		}
 	}
 
+	// START KGU#519 2018-06-17: Enh. #541
+	/**
+	 * Analyses the import option "redundantNames" and derives dummy defines from
+	 * them that are suited to eliminate the respective texts from the code. 
+	 */
+	private void registerRedundantDefines(HashMap<String, String[]> defines) {
+		String namesToBeIgnored = (String)this.getPluginOption("redundantNames", null);
+		if (namesToBeIgnored != null) {
+			String[] macros = namesToBeIgnored.split(",");
+			for (String macro: macros) {
+				macro = macro.trim();
+				if (mtchMacroSig.reset(macro).matches()) {
+					String macroName = mtchMacroSig.group(1).trim();
+					String countStr = mtchMacroSig.group(2).trim();
+					int count = 1;
+					try {
+						if (!countStr.isEmpty()) {
+							count = Integer.parseInt(countStr);
+						}
+						String[] pseudoArgs = new String[count+1];
+						pseudoArgs[0] = "";
+						for (int i = 0; i < count; i++) {
+							pseudoArgs[i+1] = "arg" + i;
+						}
+						defines.put(macroName, pseudoArgs);
+						log("Prepared to eliminate redundant macro \"" + macro + "\"\n", false);
+					}
+					catch (NumberFormatException ex) {
+						log("*** Illegal redundant macro specification: " + macro + "\n", true);
+					}
+				}
+				else {
+					defines.put(macro, new String[]{""});
+					log("Prepared to eliminate redundant symbol \"" + macro + "\"\n", false);
+				}
+			}
+		}
+	}
+	// END KGU#519 2018-06-17
+
 	// Patterns and Matchers for preprocessing
 	// (reusable, otherwise these get created and compiled over and over again)
 	// #define	a	b
@@ -862,7 +921,7 @@ public class CParser extends CodeParser
 	private static final Pattern PTRN_UNDEF = Pattern.compile("^undef\\s+(\\w+)(.*)");
 	// #undef	a
 	private static final Pattern PTRN_INCLUDE = Pattern.compile("^include\\s+[<\"]([^>\"]+)[>\"]");
-	// multiple things we can ignore: #pragma, #warning, #error, #message 
+	// several things we can ignore: #pragma, #warning, #error, #message 
 	private static final Pattern PTRN_IGNORE = Pattern.compile("^(?>pragma)|(?>warning)|(?>error)|(?>message)");
 	
 	private static Matcher mtchDefine = PTRN_DEFINE.matcher("");
@@ -949,7 +1008,7 @@ public class CParser extends CodeParser
 			if (processSourceFile(this.ParserPath + incName, null)) {
 				return "// preparser include (parsed): ";
 			} else {
-				return "// preparser include: ";
+				return "// preparser include (failed): ";
 			}
 		}
 
@@ -1266,9 +1325,21 @@ public class CParser extends CodeParser
 	}
 
 	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) {
-		if (toReplace.trim().isEmpty()) {
-			return "";
+		// START KGU#519 2018-06-17: Enh. #541 - The matching tends to fail if toReplace ends with newline characters
+		// (The trailing newlines were appended on concatenating lines broken by end-standing backslashes to preserve line counting.)
+		//if (toReplace.trim().isEmpty()) {
+		//	return "";
+		//}
+		String nlTail = "";
+		int nlPos = toReplace.indexOf('\n');
+		if (nlPos >= 0) {
+			nlTail = toReplace.substring(nlPos);	// Ought to contain the tail of \n characters
+			toReplace = toReplace.substring(0, nlPos);
 		}
+		if (toReplace.trim().isEmpty()) {
+			return nlTail;	// Preserve line count...
+		}
+		// END KGU#519 2018-06-17
 		//log("CParser.replaceDefinedEntries(): " + Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", false);
 		for (Entry<String, String[]> entry: defines.entrySet()) {
 			
@@ -1278,21 +1349,27 @@ public class CParser extends CodeParser
 			if (entry.getValue().length > 1) {
 				//          key<val[0]>     <   val[1]   >
 				// #define	a1(a2,a3,a4)	stuff (  a2  )
-				// key  (  text1, text2, text3 )	--->	stuff (  text1  )
+				// key  ( text1, text2, text3 )	--->	stuff (  text1  )
 				// #define	a1(a2,a3,a4)
-				// key  (  text1, text2, text3 )	--->
+				// key  ( text1, text2, text3 )	--->
 				// #define	a1(a2,a3,a4)	a2
-				// key  (  text1, text2, text3 )	--->	text1
+				// key  ( text1, text2, text3 )	--->	text1
 				// #define	a1(a2,a3,a4)	some text
-				// key  (  text1, text2, text3 )	--->	some text
-				// The trouble here is that text1, text2 etc. might also contain parentheses, so may the following text.
-				// The result of the replacement would then be a total desaster
-				while (toReplace.matches("(^|.*?\\W)" + entry.getKey() + "\\s*\\(.*\\).*?")) {
+				// key  ( text1, text2, text3 )	--->	some text
+				/* FIXME: 
+				 * The trouble here is that text1, text2 etc. might also contain parentheses, so may the following text.
+				 * The result of the replacement would then be a total desaster
+				 */
+				Matcher matcher = Pattern.compile("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)").matcher("");
+				//while (toReplace.matches("(^|.*?\\W)" + entry.getKey() + "\\s*\\(.*\\).*?")) {
+				while (matcher.reset(toReplace).matches()) {
 					if (entry.getValue()[0].isEmpty()) {
-						toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
+						//toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
+						toReplace = matcher.replaceAll("$1$2$4");
 					} else {
 						// The greedy quantifier inside the parentheses ensures that we get to the rightmost closing parenthesis
-						String argsRaw = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)", "$3");
+						//String argsRaw = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)", "$3");
+						String argsRaw = matcher.group(3);
 						// Now we split the balanced substring (up to the first unexpected closing parenthesis) syntactically
 						// (The unmatched tail of argsRaw will be re-appended later)
 						StringList args = Element.splitExpressionList(argsRaw, ",");
@@ -1300,17 +1377,39 @@ public class CParser extends CodeParser
 						if (args.count() != entry.getValue().length - 1) {
 							// FIXME: function-like define doesn't match arg count
 							log("CParser.replaceDefinedEntries() cannot apply function macro\n\t"
-									+ entry.getKey() + entry.getValue().toString() + "\n\tdue to arg count diffs:\n\t"
+									// START KGU#522 2018-06-17: Bugfix #540 reconstruction of the macro
+									//+ entry.getKey() + entry.getValue().toString() + "\n\tdue to arg count diffs:\n\t"
+									+ entry.getKey() + "(" + (new StringList(entry.getValue())).concatenate(", ", 1) + ")"
+									+ "\n\tdue to arg count diffs:\n\t"
+									// END KGU#522 2018-06-07							
 									+ toReplace + "\n", true);
+							// START KGU#522 2018-06-17: Bugfix #540 (emergency exit from a threatening eternal loop)
+							break;
+							// END KGU#522 2018-06-07
 						}
 						else {
 							HashMap<String, String> argMap = new HashMap<String, String>();
 							// Lest the substitutions should interfere with one another we first split the string for all parameters
-							StringList parts = StringList.getNew(entry.getValue()[0]); 
+							// KGU#522: But not this way!
+							StringList parts = StringList.getNew(entry.getValue()[0]);
 							for (int i = 0; i < args.count(); i++) {
 								String param = entry.getValue()[i+1];
 								argMap.put(param, args.get(i));
 								parts = StringList.explodeWithDelimiter(parts, param);
+								// START KGU#522 2018-06-17: Bugfix #540 - we must recompose identifiers
+								parts.removeAll("");
+								int pos = -1;
+								while ((pos = parts.indexOf(param, pos+1)) >= 0) {
+									if (pos > 0 && parts.get(pos-1).matches(".*?\\w")) {
+										parts.set(pos-1, parts.get(pos-1)+param);
+										parts.remove(pos--);
+									}
+									if (pos+1 < parts.count() && parts.get(pos+1).matches("\\w.*?")) {
+										parts.set(pos, parts.get(pos) + parts.get(pos+1));
+										parts.remove(pos+1);
+									}
+								}
+								// END KGU#522 2018-06-17
 							}
 							// Now we have all parts separated and walk through the StringList, substituting the parameter names
 							for (int i = 0; i < parts.count(); i++) {
@@ -1337,11 +1436,14 @@ public class CParser extends CodeParser
 				}
 			} else {
 				// from: #define	a	b, b can also be empty
-				toReplace = toReplace.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)",
+				toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\W.*?)",
 						"$1" + Matcher.quoteReplacement((String) entry.getValue()[0]) + "$2");
 			}
 		}
-		return toReplace;
+		// START KGU#519 2018-06-17: Enh. #541 - To preserve line counting, we restore the temporarily cropped newlines
+		//return toReplace;
+		return toReplace + nlTail;
+		// END KGU#519 2018-06-17
 	}
 
 	//---------------------- Build methods for structograms ---------------------------
@@ -1664,10 +1766,20 @@ public class CParser extends CodeParser
 			else if (
 					// RETURN instruction
 					ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI
+					// START KGU#523 2018-06-17: Bugfix #542
+					||
+					ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI2
+					// END KGU#523 2018-06-17
 					)
 			{
-				String content = translateContent(getKeyword("preReturn") + 
-						" " + getContent_R(_reduction.get(1).asReduction(), ""));
+				// START KGU#523 2018-06-17: Bugfix #542
+				//String content = translateContent(getKeyword("preReturn") + 
+				//		" " + getContent_R(_reduction.get(1).asReduction(), ""));
+				String content = getKeyword("preReturn");
+				if (ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI) { 
+					content += " " + translateContent(getContent_R(_reduction.get(1).asReduction(), ""));
+				}
+				// END KGU#523 2018-06-17
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				//_parentNode.addElement(new Jump(content.trim()));								
 				_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
@@ -1817,6 +1929,11 @@ public class CParser extends CodeParser
 					}
 					content = content.replace("const ", "");
 				}
+				// START KGU#523 2018-06-17: Bugfix #542 - result type void should be suppressed
+				if (content.trim().equals("void")) {
+					content = "";
+				}
+				// END KGU#523 2018-06-17
 				content += funcName + "(";
 				int bodyIndex = 4;
 				String params = "";
@@ -2314,7 +2431,7 @@ public class CParser extends CodeParser
 	 * Converts a rule of type PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE into the
 	 * skeleton of a Case element. The case branches will be handled separately
 	 * @param _reduction - Reduction rule of a switch instruction
-	 * @param _parentNode - the Subqueue this Case elemen is to be appended to
+	 * @param _parentNode - the Subqueue this Case element is to be appended to
 	 */
 	private void buildCase(Reduction _reduction, Subqueue _parentNode)
 	{
