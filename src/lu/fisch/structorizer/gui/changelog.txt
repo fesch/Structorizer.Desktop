@@ -39,7 +39,7 @@ Current development version: 3.28-03 (2018-06-17)
 - 03: Issue #143: Comment popup switched off on opening print preview <2>
 - 03: Bugfix #540: C import could fail or get stuck on processing macros <2>
 - 03: Enh. #541: New import option "redundant symbols/macros" for C code <2>
-- 03: Bugfix: 542: Procedure import from C code mended (result type + return) <2>  
+- 03: Bugfix #542: Procedure import from C code mended (result type + return) <2>  
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
