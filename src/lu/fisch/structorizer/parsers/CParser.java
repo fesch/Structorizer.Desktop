@@ -62,6 +62,8 @@ package lu.fisch.structorizer.parsers;
  *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
  *                                      Bugfix #542: return without expr. not supported, result type void now suppressed
  *      Kay Gürtzig     2018.06.18      KGU#525: Better support for legacy function definition syntax
+ *      Kay Gürtzig     2018.06.18      Issue #533: Initializers for struct variables are now converted into record
+ *                                      literals in Structorizer syntax.
  *
  ******************************************************************************************************
  *
@@ -81,6 +83,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.Vector;
@@ -100,6 +103,7 @@ import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.StringList;
 
@@ -1451,6 +1455,10 @@ public class CParser extends CodeParser
 
 	private Root globalRoot = null;	//  dummy Root for global definitions (will be put to main or the only function)
 	
+	// STAERT KGU#518 2018-06-18 (Couldn't we just make use of the getTypeInfo() method?)
+	//private HashMap<String, LinkedHashMap<String, String>> structTypes = new HashMap<String, LinkedHashMap<String, String>>();
+	// END KGU#518 2018-06-18
+	
 	/**
 	 * Preselects the type of the initial diagram to be imported as function.
 	 * @see CodeParser#initializeBuildNSD()
@@ -1565,7 +1573,7 @@ public class CParser extends CodeParser
 				boolean isStruct = processTypes(_reduction, ruleId, parentNode, isGlobal, tmpTypes, true);
 				// END KGU#388 2017-09-30
 				String type = tmpTypes.concatenate();
-				// START KGU#407 2017-06-22: Enh.#420 grope for possible souce comments
+				// START KGU#407 2017-06-22: Enh.#420 grope for possible source comments
 				String comment = this.retrieveComment(_reduction);
 				// END KGU#407 2017-06-22
 				// Now concern on the first declaration of the list
@@ -2422,11 +2430,20 @@ public class CParser extends CodeParser
 			// multiple indices in a declaration (only in assignments or as expression)
 			String varName = _reduc.get(0).asString();
 			//String arrayTag = this.getContent_R((Reduction)thdReduc.getToken(1).getData(), "");
-			String expr = this.getContent_R(_reduc.get(3).asReduction(), "");
-			content = translateContent(content);
+			String expr = translateContent(this.getContent_R(_reduc.get(3).asReduction(), ""));
+			// START KGU#518 2018-06-18: Enh. #533 - we don't need the value of content any longer
+			//content = translateContent(content);
+			TypeMapEntry typeEntry = Element.getRoot(_parentNode).getTypeInfo().get(":" + _type);
+			if (typeEntry != null && typeEntry.isRecord() && expr.startsWith("{") && expr.endsWith("}")) {
+				expr = convertStructInitializer(_type, expr, typeEntry);
+			}
+			// END KGU#518 2018-06-18
 			Element instr = null;
 			if (this.optionImportVarDecl) {
-				instr = new Instruction(translateContent(_type) + " " + content);
+				// START KGU#518 2018-06-18: Enh. #533 
+				//instr = new Instruction(translateContent(_type) + " " + content);
+				instr = new Instruction(translateContent(_type) + " " + varName + " <- " + expr);
+				// END KGU#518 2018-06-18
 				if (isConstant) {
 					instr.setColor(colorConst);
 				}
@@ -2452,6 +2469,42 @@ public class CParser extends CodeParser
 			_parentNode.addElement(instr);
 		}
 		log("\tfallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")\n", false);
+	}
+
+	/**
+	 * Converts a C initializer expression for a struct type to a corresponding
+	 * record initializer for Structorizer.
+	 * This method may not be applicable if the type info isn't available
+	 * @param _typeName - Name of the detected struct type
+	 * @param _expr - the initialiser expression to be converted
+	 * @param _typeEntry - the type entry corresponding to {@code _typeName}
+	 * @return the converted initializer
+	 */
+	private String convertStructInitializer(String _typeName, String _expr, TypeMapEntry _typeEntry) {
+		StringList parts = Element.splitExpressionList(_expr.substring(1), ",", true);
+		LinkedHashMap<String, TypeMapEntry> compInfo = _typeEntry.getComponentInfo(false);
+		if (parts.count() > 1 && compInfo.size() >= parts.count() - 1) {
+			int ix = 0;
+			_expr = _typeName + "{";
+			for (Entry<String, TypeMapEntry> comp: compInfo.entrySet()) {
+				String part = parts.get(ix).trim();
+				// Check for recursive structure initializers
+				TypeMapEntry compType = comp.getValue();
+				if (part.startsWith("{") && part.endsWith("}") &&
+						compType != null && compType.isRecord() && compType.isNamed()) {
+					part = convertStructInitializer(compType.typeName, part, compType);
+				}
+				_expr += comp.getKey() + ": " + part;
+				if (++ix >= parts.count()-1) {
+					_expr += parts.get(parts.count()-1);
+					break;
+				}
+				else {
+					_expr += ", ";
+				}
+			}
+		}
+		return _expr;
 	}
 	
 	/**
