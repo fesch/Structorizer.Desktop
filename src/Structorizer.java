@@ -45,6 +45,9 @@
  *      Kay Gürtzig     2017.07.02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
  *      Kay Gürtzig     2017.11.06      Issue #455: Loading of argument files put in a sequential thread to overcome races
  *      Kay Gürtzig     2018.03.21      Issue #463: Logging configuration via file logging.properties
+ *      Kay Gürtzig     2018.06.07      Issue #463: Logging configuration mechanism revised (to support WebStart)
+ *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble
+ *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
  *
  ******************************************************************************************************
  *
@@ -56,8 +59,10 @@
 import java.awt.EventQueue;
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -69,7 +74,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import lu.fisch.structorizer.elements.Root;
@@ -93,27 +102,38 @@ public class Structorizer
 		// The logging configuration (for java.util.logging) is expected next to the jar file
 		// (or in the project directory while debugged from the IDE).
 		// FIXME: Check a proper configuration scenario for Java WebStart!
-		String appPath = getApplicationPath();
-		File configFile = new File(appPath + System.getProperty("file.separator") + "logging.properties");
-		// If the file doesn't exist then we'll fall back to the JRE logging standard (INFO/ConsoleAppender)
+		File iniDir = Ini.getIniDirectory();
+		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
+		// If the file doesn't exist then we'll copy it from the resource
+		if (!configFile.exists()) {
+			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
+			if (configStr != null) {
+				copyStream(configStr, configFile);
+			}
+		}
 		if (configFile.exists()) {
 			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
+			try {
+				LogManager.getLogManager().readConfiguration();
+			} catch (SecurityException | IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
 		}
 		// END KGU#484 2018-03-21
 		// START KGU#484 2018-04-05: Issue #463 - Find out where WebStart assumes the properties file
 		else {
-			File iniDir = Ini.getIniDirectory();
 			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
 			try {
 				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
-				logLog.write("No logging config file found in dir " + appPath + " - using Java logging standard.");
+				logLog.write("No logging config file in dir " + iniDir + " - using Java logging standard.");
 				logLog.close();
 			} catch (IOException e) {
 				// Just write the trace to System.err
 				e.printStackTrace();
 			}
 		}
-		// END KGU#4884 2018-04-05
+		// END KGU#484 2018-04-05
 		// START KGU#187 2016-04-28: Enh. #179
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
@@ -190,6 +210,10 @@ public class Structorizer
 		}
 		// END KGU#187 2016-04-28
 		
+		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
+		System.setProperty("sun.java2d.noddraw", "true");
+		// END KGU#521 2018-06-12
+
 		// try to load the system Look & Feel
 		try
 		{
@@ -202,7 +226,7 @@ public class Structorizer
 
 		// load the mainform
 		final Mainform mainform = new Mainform();
-
+		
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
         try {
         	EventQueue.invokeAndWait(new Runnable() {
@@ -232,6 +256,14 @@ public class Structorizer
         						mainform.diagram.arrangeNSD();
         					}
         					lastExt = mainform.diagram.openNsdOrArr(s);
+        					// START KGU#521 2018-06-08: Bugfix #536 (try)
+        					if (lastExt == "") {
+        						String msg = "Unsuited or misplaced command line argument \"" + s + "\" ignored.";
+        						Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
+        						JOptionPane.showMessageDialog(mainform, msg,
+        								"Command line", JOptionPane.WARNING_MESSAGE);
+        					}
+        					// END KGU#521 2018-06-08
         				}
         				// END KGU#306 2016-12-12/2017-01-27
         			}
@@ -421,7 +453,7 @@ public class Structorizer
 	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode
 	/*****************************************
 	 * batch code import methods
-	 * @param _logDir TODO
+	 * @param _logDir - Path of the target folder for the parser log
 	 *****************************************/
 	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet, String _logDir)
 	{
@@ -707,4 +739,45 @@ public class Structorizer
         return rootPath.getParentFile().getPath();
     }
 		
+	/**
+	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
+	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
+	 * target file exists after the copy the source file will be removed
+	 * @param sourceFile
+	 * @param targetFile
+	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
+	 * copy
+	 * @return in case of errors, a string describing them.
+	 */
+	private static String copyStream(InputStream sourceStrm, File targetFile) {
+		String problems = "";
+		final int BLOCKSIZE = 512;
+		byte[] buffer = new byte[BLOCKSIZE];
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(targetFile.getAbsolutePath());
+			int readBytes = 0;
+			do {
+				readBytes = sourceStrm.read(buffer);
+				if (readBytes > 0) {
+					fos.write(buffer, 0, readBytes);
+				}
+			} while (readBytes > 0);
+		} catch (FileNotFoundException e) {
+			problems += e + "\n";
+		} catch (IOException e) {
+			problems += e + "\n";
+		}
+		finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {}
+			}
+			try {
+				sourceStrm.close();
+			} catch (IOException e) {}
+		}
+		return problems;
+	}
 }

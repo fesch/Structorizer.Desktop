@@ -45,12 +45,23 @@ package lu.fisch.structorizer.parsers;
  *
  ******************************************************************************************************
  *
- *      Revision List
+ *      Revision List (Template File!)
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.02      First Issue (generated with GOLDprog.exe)
+ *      Kay Gürtzig     2017.03.02      First Issue for Iden GOLDEngine
  *      Kay Gürtzig     2017.03.11      Parameter annotations and some comments corrected, indentation unified
+ *      Kay Gürtzig     2018.03.26      Imports revised
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List (this parser)
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+##PARAMETERS
+ *      %Author%     YYYY.MM.DD      First Issue (generated with GOLDprog.exe)
+##END-PARAMETERS
  *
  ******************************************************************************************************
  *
@@ -66,6 +77,7 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************/
 
 import java.io.*;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -87,13 +99,6 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.BString;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-
-import com.creativewidgetworks.goldparser.engine.ParserException;
-import com.creativewidgetworks.goldparser.parser.GOLDParser;
-
 /**
 ##PARAMETERS
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the %Name% language.
@@ -104,6 +109,13 @@ import com.creativewidgetworks.goldparser.parser.GOLDParser;
 public class %Name%Parser extends CodeParser
 ##END-PARAMETERS
 {
+
+	/** Rule ids representing statements, used as stoppers for comment retrieval (enh. #420) */
+	private static final int[] statementIds = new int[]{
+			/* TODO: Fill in the RuleConstants members of those productions that are
+			 * to be associated with comments found in their syntax subtrees or their
+			 * immediate environment. */
+	};
 
 	//---------------------- Grammar specification ---------------------------
 
@@ -248,6 +260,9 @@ public class %Name%Parser extends CodeParser
 //	protected void initializeBuildNSD()
 //	{
 //		// TODO insert initializations for the build phase if necessary ...
+//		// START KGU#407 2018-03-26: Enh. #420: Configure the lookup table for comment retrieval
+//		this.registerStatementRuleIds(statementIds);
+//		// END KGU#407 2018-06-26
 //	}
 
 	/* (non-Javadoc)

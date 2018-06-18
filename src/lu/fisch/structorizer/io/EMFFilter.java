@@ -33,6 +33,7 @@ package lu.fisch.structorizer.io;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2008.02.21      First Issue
+ *      Kay Gürtzig     2018.06.08      Inheritance changed
  *
  ******************************************************************************************************
  *
@@ -41,42 +42,39 @@ package lu.fisch.structorizer.io;
  ******************************************************************************************************///
 
 import java.io.File;
-import javax.swing.filechooser.*;
 
-public class EMFFilter extends FileFilter {
+public class EMFFilter extends ExtFileFilter {
 	
 	public static boolean isIMG(String _filename)
 	{
-		return 
-		(getExtension(_filename).equals("emf"))
-		;
+		return getExtension(_filename).equals("emf");
 	}
 	
-	public static String getExtension(String s) 
-	{
-		String ext = null;
-		int i = s.lastIndexOf('.');
-		
-		if (i > 0 &&  i < s.length() - 1) 
-		{
-			ext = s.substring(i+1).toLowerCase();
-		}
-		return ext;
-	}
-	
-	public static String getExtension(File f) 
-	{
-		String ext = null;
-		String s = f.getName();
-		int i = s.lastIndexOf('.');
-		
-		if (i > 0 &&  i < s.length() - 1) 
-		{
-			ext = s.substring(i+1).toLowerCase();
-		}
-		
-		return ext;
-	}
+//	public static String getExtension(String s) 
+//	{
+//		String ext = null;
+//		int i = s.lastIndexOf('.');
+//		
+//		if (i > 0 &&  i < s.length() - 1) 
+//		{
+//			ext = s.substring(i+1).toLowerCase();
+//		}
+//		return ext;
+//	}
+//	
+//	public static String getExtension(File f) 
+//	{
+//		String ext = null;
+//		String s = f.getName();
+//		int i = s.lastIndexOf('.');
+//		
+//		if (i > 0 &&  i < s.length() - 1) 
+//		{
+//			ext = s.substring(i+1).toLowerCase();
+//		}
+//		
+//		return ext;
+//	}
 	
 	public String getDescription() 
 	{
@@ -90,13 +88,13 @@ public class EMFFilter extends FileFilter {
             return true;
         }
 		
-        String extension = getExtension(f);
-        if (extension != null) 
-		{
+//        String extension = getExtension(f);
+//        if (extension != null) 
+//		{
             return isIMG(f.getName());
-		}
-		
-        return false;
+//		}
+//		
+//        return false;
     }
 	
 }

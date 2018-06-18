@@ -59,6 +59,7 @@ package lu.fisch.structorizer.arranger;
  *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
  *      Kay Gürtzig     2017.03.28  Enh. #386: New method saveAll()
  *      Kay Gürtzig     2018.02.17  Enh. #512: Zoom mechanism implemented (zoom button + key actions)
+ *      Kay Gürtzig     2018.06.12  Issue #536: Experimental workaround for Direct3D trouble
  *
  ******************************************************************************************************
  *
@@ -561,6 +562,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
+		System.setProperty("sun.java2d.noddraw", "true");
+		// END KGU#521 2018-06-12
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 // START KGU#2 2015-11-19: Converted into a singleton
