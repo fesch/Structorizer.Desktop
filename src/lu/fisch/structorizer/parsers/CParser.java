@@ -61,6 +61,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.17      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
  *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
  *                                      Bugfix #542: return without expr. not supported, result type void now suppressed
+ *      Kay Gürtzig     2018.06.18      KGU#525: Better support for legacy function definition syntax
  *
  ******************************************************************************************************
  *
@@ -1817,6 +1818,7 @@ public class CParser extends CodeParser
 				_parentNode.addElement(el);
 			}
 			else if (
+					// Continue instruction
 					ruleId == RuleConstants.PROD_NORMALSTM_CONTINUE_SEMI
 					)
 			{
@@ -1940,9 +1942,34 @@ public class CParser extends CodeParser
 				switch (ruleId) {
 				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2:
 					//params = getparamsFromStructDecl(_reduction.get(4).asReduction());
-					params = getCompsFromStructDef(_reduction.get(4).asReduction()).concatenate("; ");
 					bodyIndex = 5;
-					// Here is by design no break!
+					// START KGU#525 2018-06-18: Don't throw the type information away...
+					//params = getCompsFromStructDef(_reduction.get(4).asReduction()).concatenate("; ");
+					params = getContent_R(_reduction.get(2).asReduction(), "");
+					{
+						StringList paramDecls = getCompsFromStructDef(_reduction.get(4).asReduction());
+						StringList paramNames = StringList.explode(params, ",");
+						// Sort the parameter declarations according to the arg list (just in case...)
+						if (paramDecls.count() == paramNames.count()) {
+							StringList paramsOrdered = new StringList();
+							for (int p = 0; p < paramNames.count(); p++) {
+								Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
+								for (int q = 0; q < paramDecls.count(); q++) {
+									String pd = paramDecls.get(q);
+									if (pm.reset(pd).matches()) {
+										paramsOrdered.add(pd);
+										break;
+									}
+								}
+								if (paramsOrdered.count() < p+1) {
+									paramsOrdered.add(paramNames.get(p));
+								}
+							}
+							params = paramsOrdered.concatenate("; ");
+						}
+					}
+					break;
+					// END KGU#525 2018-06-18
 				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
 					params = getContent_R(_reduction.get(2).asReduction(), "");
 					break;
