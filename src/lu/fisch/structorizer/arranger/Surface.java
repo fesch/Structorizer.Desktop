@@ -79,7 +79,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
  *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
  *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
- *      Kay Gürtzig     2018.06.18      Bugfix #512 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations 
+ *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations 
  *
  ******************************************************************************************************
  *

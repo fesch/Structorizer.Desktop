@@ -62,7 +62,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
  *                                      Bugfix #542: return without expr. not supported, result type void now suppressed
  *      Kay Gürtzig     2018.06.18      KGU#525: Better support for legacy function definition syntax
- *      Kay Gürtzig     2018.06.18      Issue #533: Initializers for struct variables are now converted into record
+ *      Kay Gürtzig     2018.06.19      Issue #533: Initializers for struct variables are now converted into record
  *                                      literals in Structorizer syntax.
  *
  ******************************************************************************************************
@@ -1455,9 +1455,14 @@ public class CParser extends CodeParser
 
 	private Root globalRoot = null;	//  dummy Root for global definitions (will be put to main or the only function)
 	
-	// STAERT KGU#518 2018-06-18 (Couldn't we just make use of the getTypeInfo() method?)
-	//private HashMap<String, LinkedHashMap<String, String>> structTypes = new HashMap<String, LinkedHashMap<String, String>>();
-	// END KGU#518 2018-06-18
+	// START KGU#518 2018-06-19: Bugfix #533 (struct initializer conversion)
+	/**
+	 * Global type map - e.g. for the conversion of struct initializers.
+	 * This isn't clean but more reliable and efficient than trying to retrieve the
+	 * type info from the several incomplete Roots.
+	 */
+	private final HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
+	// END KGU#518 2018-06-19
 	
 	/**
 	 * Preselects the type of the initial diagram to be imported as function.
@@ -1759,6 +1764,11 @@ public class CParser extends CodeParser
 						// END KGU#376 2017-09-30
 					}
 					parentNode.insertElementAt(this.equipWithSourceComment(decl, _reduction), insertAt);
+					// START KGU#518 2018-06-19: Bugfix #533
+					if (isValid) {
+						decl.updateTypeMap(typeMap);
+					}
+					// END KGU#518 2018-06-19
 				}
 			}
 			else if (
@@ -2257,6 +2267,9 @@ public class CParser extends CodeParser
 							// END KGU#376 2017-09-30
 						}
 						_subqueue.addElement(typeDef);
+						// START KGU#518 2018-06-19: Bugfix #533
+						typeDef.updateTypeMap(typeMap);
+						// END KGU#518 2018-06-19
 						isStruct = true;
 					}
 					break;
@@ -2433,7 +2446,7 @@ public class CParser extends CodeParser
 			String expr = translateContent(this.getContent_R(_reduc.get(3).asReduction(), ""));
 			// START KGU#518 2018-06-18: Enh. #533 - we don't need the value of content any longer
 			//content = translateContent(content);
-			TypeMapEntry typeEntry = Element.getRoot(_parentNode).getTypeInfo().get(":" + _type);
+			TypeMapEntry typeEntry = typeMap.get(":" + _type);
 			if (typeEntry != null && typeEntry.isRecord() && expr.startsWith("{") && expr.endsWith("}")) {
 				expr = convertStructInitializer(_type, expr, typeEntry);
 			}
