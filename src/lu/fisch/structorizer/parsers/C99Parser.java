@@ -45,6 +45,10 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2018.03.26      First Issue (generated with GOLDprog.exe)
  *      Kay Gürtzig     2018.04.12      RuleConstants updated to corrected grammar (version 1.1)
+ *      Kay Gürtzig     2018.06.18      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
+ *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
+ *      Kay Gürtzig     2018.06.19      File decomposed and inheritance changed
+ *      Kay Gürtzig     2018.06.20      Most algorithmic structures implemented, bugfixes #545, #546 integrated
  *
  ******************************************************************************************************
  *
@@ -60,16 +64,9 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************/
 
 import java.awt.Color;
-import java.io.*;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Stack;
-import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.logging.Level;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -77,13 +74,14 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
-import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
@@ -92,20 +90,19 @@ import lu.fisch.utils.StringList;
  * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
  * @author Kay Gürtzig
  */
-public class C99Parser extends CodeParser
+public class C99Parser extends CPreParser
 {
 
-	/** Default diagram name for an importable program diagram with global definitions */
-	private static final String DEFAULT_GLOBAL_NAME = "GlobalDefinitions";
-	/** Template for the generation of grammar-conform user type ids (typedef-declared) */
-	private static final String USER_TYPE_ID_MASK = "user_type_%03d";
-	/** Replacement pattern for the decomposition of composed typdefs (named struct def + type def) */
-	private static final String TYPEDEF_DECOMP_REPLACER = "$1 $2;\ntypedef $1 $3;";
 	/** rule ids representing statements, used as stoppers for comment retrieval (enh. #420) */
 	private static final int[] statementIds = new int[]{
 			/* TODO: Fill in the RuleConstants members of those productions that are
 			 * to be associated with comments found in their syntax subtrees or their
 			 * immediate environment. */
+			RuleConstants.PROD_SELECTIONSTMT_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE,
+			RuleConstants.PROD_CASESTMTS_CASE_COLON,
+			RuleConstants.PROD_CASESTMTS_DEFAULT_COLON,
+			//RuleConstants.PROD_STATEMENT2,
+			//RuleConstants.PROD_ASSIGNEXP
 	};
 
 	//---------------------- Grammar specification ---------------------------
@@ -121,12 +118,6 @@ public class C99Parser extends CodeParser
 	{
 		return "ANSI-C99";
 	}
-
-	/**
-	 * If this flag is set then program names derived from file name will be made uppercase
-	 * This default will be initialized in consistency with the Analyser check 
-	 */
-	private boolean optionUpperCaseProgName = false;
 
 	//------------------------------ Constructor -----------------------------
 
@@ -154,19 +145,6 @@ public class C99Parser extends CodeParser
 		// TODO specify the usual file name extensions for ANSI-C99 source files here!";
 		final String[] exts = { "c" };
 		return exts;
-	}
-
-	//------------------- Comment delimiter specification ---------------------------------
-	
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.parsers.CodeParser#getCommentDelimiters()
-	 */
-	protected String[][] getCommentDelimiters()
-	{
-		return new String[][]{
-			{"/*", "*/"},
-			{"//"}
-		};
 	}
 
 	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
@@ -207,53 +185,53 @@ public class C99Parser extends CodeParser
 		final int SYM_LBRACKET          =  29;  // '['
 		final int SYM_RBRACKET          =  30;  // ']'
 		final int SYM_CARET             =  31;  // '^'
-		final int SYM__BOOL             =  32;  // '_Bool'
-		final int SYM__COMPLEX          =  33;  // '_Complex'
-		final int SYM_LBRACE            =  34;  // '{'
-		final int SYM_PIPE              =  35;  // '|'
-		final int SYM_PIPEPIPE          =  36;  // '||'
-		final int SYM_PIPEEQ            =  37;  // '|='
-		final int SYM_RBRACE            =  38;  // '}'
-		final int SYM_TILDE             =  39;  // '~'
-		final int SYM_PLUS              =  40;  // '+'
-		final int SYM_PLUSPLUS          =  41;  // '++'
-		final int SYM_PLUSEQ            =  42;  // '+='
-		final int SYM_LT                =  43;  // '<'
-		final int SYM_LTLT              =  44;  // '<<'
-		final int SYM_LTLTEQ            =  45;  // '<<='
-		final int SYM_LTEQ              =  46;  // '<='
-		final int SYM_EQ                =  47;  // '='
-		final int SYM_MINUSEQ           =  48;  // '-='
-		final int SYM_EQEQ              =  49;  // '=='
-		final int SYM_GT                =  50;  // '>'
-		final int SYM_MINUSGT           =  51;  // '->'
-		final int SYM_GTEQ              =  52;  // '>='
-		final int SYM_GTGT              =  53;  // '>>'
-		final int SYM_GTGTEQ            =  54;  // '>>='
-		final int SYM_AUTO              =  55;  // auto
-		final int SYM_BREAK             =  56;  // break
-		final int SYM_CASE              =  57;  // case
-		final int SYM_CHAR              =  58;  // char
-		final int SYM_CHARLITERAL       =  59;  // CharLiteral
-		final int SYM_CONST             =  60;  // const
-		final int SYM_CONTINUE          =  61;  // continue
-		final int SYM_DECLITERAL        =  62;  // DecLiteral
-		final int SYM_DEFAULT           =  63;  // default
-		final int SYM_DO                =  64;  // do
-		final int SYM_DOUBLE            =  65;  // double
-		final int SYM_ELSE              =  66;  // else
-		final int SYM_ENUM              =  67;  // enum
-		final int SYM_EXTERN            =  68;  // extern
-		final int SYM_FLOAT             =  69;  // float
-		final int SYM_FLOATLITERAL      =  70;  // FloatLiteral
-		final int SYM_FOR               =  71;  // for
-		final int SYM_GOTO              =  72;  // goto
-		final int SYM_HEXLITERAL        =  73;  // HexLiteral
-		final int SYM_IDENTIFIER        =  74;  // Identifier
-		final int SYM_IF                =  75;  // if
-		final int SYM_INLINE            =  76;  // inline
-		final int SYM_INT               =  77;  // int
-		final int SYM_LITERAL           =  78;  // Literal
+		final int SYM_CARETEQ           =  32;  // '^='
+		final int SYM__BOOL             =  33;  // '_Bool'
+		final int SYM__COMPLEX          =  34;  // '_Complex'
+		final int SYM_LBRACE            =  35;  // '{'
+		final int SYM_PIPE              =  36;  // '|'
+		final int SYM_PIPEPIPE          =  37;  // '||'
+		final int SYM_PIPEEQ            =  38;  // '|='
+		final int SYM_RBRACE            =  39;  // '}'
+		final int SYM_TILDE             =  40;  // '~'
+		final int SYM_PLUS              =  41;  // '+'
+		final int SYM_PLUSPLUS          =  42;  // '++'
+		final int SYM_PLUSEQ            =  43;  // '+='
+		final int SYM_LT                =  44;  // '<'
+		final int SYM_LTLT              =  45;  // '<<'
+		final int SYM_LTLTEQ            =  46;  // '<<='
+		final int SYM_LTEQ              =  47;  // '<='
+		final int SYM_EQ                =  48;  // '='
+		final int SYM_MINUSEQ           =  49;  // '-='
+		final int SYM_EQEQ              =  50;  // '=='
+		final int SYM_GT                =  51;  // '>'
+		final int SYM_MINUSGT           =  52;  // '->'
+		final int SYM_GTEQ              =  53;  // '>='
+		final int SYM_GTGT              =  54;  // '>>'
+		final int SYM_GTGTEQ            =  55;  // '>>='
+		final int SYM_AUTO              =  56;  // auto
+		final int SYM_BREAK             =  57;  // break
+		final int SYM_CASE              =  58;  // case
+		final int SYM_CHAR              =  59;  // char
+		final int SYM_CHARLITERAL       =  60;  // CharLiteral
+		final int SYM_CONST             =  61;  // const
+		final int SYM_CONTINUE          =  62;  // continue
+		final int SYM_DECLITERAL        =  63;  // DecLiteral
+		final int SYM_DEFAULT           =  64;  // default
+		final int SYM_DO                =  65;  // do
+		final int SYM_DOUBLE            =  66;  // double
+		final int SYM_ELSE              =  67;  // else
+		final int SYM_ENUM              =  68;  // enum
+		final int SYM_EXTERN            =  69;  // extern
+		final int SYM_FLOAT             =  70;  // float
+		final int SYM_FLOATLITERAL      =  71;  // FloatLiteral
+		final int SYM_FOR               =  72;  // for
+		final int SYM_GOTO              =  73;  // goto
+		final int SYM_HEXLITERAL        =  74;  // HexLiteral
+		final int SYM_IDENTIFIER        =  75;  // Identifier
+		final int SYM_IF                =  76;  // if
+		final int SYM_INLINE            =  77;  // inline
+		final int SYM_INT               =  78;  // int
 		final int SYM_LONG              =  79;  // long
 		final int SYM_OCTLITERAL        =  80;  // OctLiteral
 		final int SYM_REGISTER          =  81;  // register
@@ -317,7 +295,7 @@ public class C99Parser extends CodeParser
 		final int SYM_ITERATIONSTMT     = 139;  // <Iteration Stmt>
 		final int SYM_JUMPSTMT          = 140;  // <Jump Stmt>
 		final int SYM_LABELLEDSTMT      = 141;  // <Labelled Stmt>
-		final int SYM_LITERAL2          = 142;  // <Literal>
+		final int SYM_LITERAL           = 142;  // <Literal>
 		final int SYM_LOGANDEXP         = 143;  // <LogAnd Exp>
 		final int SYM_LOGOREXP          = 144;  // <LogOr Exp>
 		final int SYM_MULTEXP           = 145;  // <Mult Exp>
@@ -495,7 +473,7 @@ public class C99Parser extends CodeParser
 		final int PROD_CASESTMTS_CASE_COLON                               = 134;  // <Case Stmts> ::= case <Selector> ':' <StmtList> <Case Stmts>
 		final int PROD_CASESTMTS_DEFAULT_COLON                            = 135;  // <Case Stmts> ::= default ':' <StmtList>
 		final int PROD_CASESTMTS                                          = 136;  // <Case Stmts> ::= 
-		final int PROD_SELECTOR_LITERAL                                   = 137;  // <Selector> ::= Literal
+		final int PROD_SELECTOR                                           = 137;  // <Selector> ::= <Literal>
 		final int PROD_SELECTOR_LPAREN_RPAREN                             = 138;  // <Selector> ::= '(' <Expression> ')'
 		final int PROD_STMTLIST                                           = 139;  // <StmtList> ::= <Statement> <StmtList>
 		final int PROD_STMTLIST2                                          = 140;  // <StmtList> ::= 
@@ -529,7 +507,7 @@ public class C99Parser extends CodeParser
 		final int PROD_ASSIGNOP_LTLTEQ                                    = 168;  // <Assign Op> ::= '<<='
 		final int PROD_ASSIGNOP_GTGTEQ                                    = 169;  // <Assign Op> ::= '>>='
 		final int PROD_ASSIGNOP_AMPEQ                                     = 170;  // <Assign Op> ::= '&='
-		final int PROD_ASSIGNOP_CARET                                     = 171;  // <Assign Op> ::= '^'
+		final int PROD_ASSIGNOP_CARETEQ                                   = 171;  // <Assign Op> ::= '^='
 		final int PROD_ASSIGNOP_PIPEEQ                                    = 172;  // <Assign Op> ::= '|='
 		final int PROD_CONDEXP_QUESTION_COLON                             = 173;  // <Cond Exp> ::= <LogOr Exp> '?' <Expression> ':' <Cond Exp>
 		final int PROD_CONDEXP                                            = 174;  // <Cond Exp> ::= <LogOr Exp>
@@ -603,767 +581,23 @@ public class C99Parser extends CodeParser
 
 	//---------------------------- Local Definitions ---------------------
 
-	private static enum PreprocState {TEXT, TYPEDEF, STRUCT_UNION_ENUM, STRUCT_UNION_ENUM_ID, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
-	private StringList typedefs = new StringList();
-	// START KGU#388 2017-09-30: Enh. #423 counter for anonymous types
-	private int typeCount = 0;
-	// END KGU#388 2017-09-30
-	
-	// START KGU#376 2017-07-01: Enh. #389 - modified mechanism
-	// Roots having induced global definitions, which will have to be renamed as soon as the name gets known
-	//private LinkedList<Call> provisionalImportCalls = new LinkedList<Call>();
-	private LinkedList<Root> importingRoots = new LinkedList<Root>();
-	// END KGU#376 2017-07-01
-
-	private String ParserEncoding;
-	private String ParserPath;
-	
-	/** Fix list of common preprocesssor-defined type names for convenience */
-	private	final String[][] typeReplacements = new String[][] {
-		{"size_t", "unsigned long"},
-		{"time_t", "unsigned long"},
-		{"ptrdiff_t", "unsigned long"}
-	};
-	
-	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
-
-	final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
-	static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
-
-	//----------------------------- Preprocessor -----------------------------
-
-	/**
-	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it and writes a new temporary file "Structorizer&lt;randomstring&gt;.c"
-	 * or "Structorizer&lt;randomstring&gt;.h", which is then actually parsed.
-	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
-	 * be executed (at least the defines. with #if it would get difficult).
-	 * The preprocessed file will always be saved with UTF-8 encoding.
-	 * @param _textToParse - name (path) of the source file
-	 * @param _encoding - the expected encoding of the source file.
-	 * @return The File object associated with the preprocessed source file.
-	 */
-	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding)
-	{	
-		this.ParserPath = null; // set after file object creation
-		this.ParserEncoding	= _encoding;
-		
-		//========================================================================!!!
-		// Now introduced as plugin-defined option configuration for C
-		//this.setPluginOption("typeNames", "cob_field,cob_u8_ptr,cob_call_union");
-		//                  +"cob_content,cob_pic_symbol,cob_field_attr");
-		//========================================================================!!!
-		
-		boolean parsed = false;
-		
-		StringBuilder srcCodeSB = new StringBuilder();
-		parsed = processSourceFile(_textToParse, srcCodeSB);
-
-		File interm = null;
-		if (parsed) {
-			try {
-//				for (Entry<String, String> entry: defines.entrySet()) {
-////					if (logFile != null) {
-////						logFile.write("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()) + "\n");
-////					}
-//					srcCode = srcCode.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)", "$1"+ Matcher.quoteReplacement((String)entry.getValue()) + "$2");
-//				}
-			
-				// Now we try to replace all type names introduced by typedef declarations
-				// because the grammar doesn't cope with user-defined type ids.
-				String srcCode = this.prepareTypedefs(srcCodeSB.toString(), _textToParse);
-//				System.out.println(srcCode);
-				
-				// trim and save as new file
-				interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
-				OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
-				ow.write(srcCode.trim()+"\n");
-				//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));
-				ow.close();
-			}
-			catch (Exception e) 
-			{
-				System.err.println("CParser.prepareTextfile() creation of intermediate file -> " + e.getMessage());
-			}
-		}
-		return interm;
-	}
-
-	/**
-	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it places its contents into the given StringBuilder (if set).
-	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
-	 * be executed (at least the defines. with #if it would get difficult).
-	 * @param _textToParse - name (path) of the source file
-	 * @param srcCodeSB - optional: StringBuilder to store the content of the preprocessing<br/>
-	 * if not given only the preprocessor handling (including #defines) will be done  
-	 * @return info if the preprocessing worked
-	 */
-	private boolean processSourceFile(String _textToParse, StringBuilder srcCodeSB) {
-		
-		try
-		{
-			File file = new File(_textToParse);
-			if (this.ParserPath == null) {
-				this.ParserPath = file.getAbsoluteFile().getParent() + File.separatorChar;
-			}
-			DataInputStream in = new DataInputStream(new FileInputStream(file));
-			// START KGU#193 2016-05-04
-			BufferedReader br = new BufferedReader(new InputStreamReader(in, this.ParserEncoding));
-			// END KGU#193 2016-05-04
-			String strLine;
-			boolean inComment = false;
-			//Read File Line By Line
-			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the #define replacements (at least roughly...) which we do
-			while ((strLine = br.readLine()) != null)
-			{
-				String trimmedLine = strLine.trim();
-				if (trimmedLine.isEmpty()) {
-					if (srcCodeSB != null) {
-						// no processing if we only want to check for defines
-						srcCodeSB.append("\n");
-					}
-					continue;
-				}
-				
-				// the grammar doesn't know about continuation markers,
-				// concatenate the lines here
-				if (strLine.endsWith("\\")) {
-					String newlines = "";
-					strLine = strLine.substring(0, strLine.length() - 1);
-					String otherline = "";
-					while ((otherline = br.readLine()) != null) {
-						newlines += "\n";
-						if (otherline.endsWith("\\")) {
-							strLine += otherline.substring(0, otherline.length() - 1);
-						} else {
-							strLine += otherline;
-							break;
-						}
-					}
-					trimmedLine = strLine.trim();
-					// add line breaks for better line counter,
-					// works but looks strange in the case of errors when
-					// the "preceding context" consist of 8 empty lines
-					strLine += newlines;
-				}
-				
-				// check if we are in a comment block, in this case look for the end
-				boolean commentsChecked = false;
-				String commentFree = "";
-				String lineTail = trimmedLine;
-				while (!lineTail.isEmpty() && !commentsChecked) {
-					if (inComment) {
-						// check if the line ends the current comment block
-						int commentPos = lineTail.indexOf("*/");
-						if (commentPos >= 0) {
-							inComment = false;
-							commentPos += 2;
-							if (lineTail.length() > commentPos) {
-								lineTail = " " + lineTail.substring(commentPos).trim();
-							} else {
-								lineTail = "";
-							}
-						}
-						else {
-							commentsChecked = true;
-							lineTail = "";
-						}
-					}
-
-					if (!inComment && !lineTail.isEmpty()) {
-						// remove inline comments
-						int commentPos = lineTail.indexOf("//");
-						if (commentPos > 0) {
-							lineTail = lineTail.substring(0, commentPos).trim(); 
-						}
-						// check if the line starts a new comment block
-						commentPos = lineTail.indexOf("/*");
-						if (commentPos >= 0) {
-							inComment = true;
-							if (commentPos > 0) {
-								commentFree += " " + lineTail.substring(0, commentPos).trim();
-							}
-							commentPos += 2;
-							if (lineTail.length() > commentPos) {
-								lineTail = lineTail.substring(commentPos);
-							} else {
-								lineTail = "";
-							}
-						}
-						else {
-							commentsChecked = true;
-						}
-					}
-
-				}
-				trimmedLine = (commentFree + lineTail).trim();
-
-				// Note: trimmedLine can be empty if we start a block comment only
-				if (trimmedLine.isEmpty()) {
-					if (srcCodeSB != null) {
-						// no processing if we only want to check for defines
-						srcCodeSB.append(strLine);
-						srcCodeSB.append("\n");
-					}
-					continue;
-				}
-				// FIXME: try to take care for #if/#else/#endif, maybe depending upon an import setting
-				//        likely only useful if we parse includes...
-				//        and/or add a standard (dialect specific) list of defines
-				if (trimmedLine.charAt(0) == '#') {
-					if (srcCodeSB == null) {
-						handlePreprocessorLine(trimmedLine.substring(1), defines);
-						// no further processing if we only want to check for defines
-						continue;
-					}
-					srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
-					srcCodeSB.append(strLine);
-				} else {
-					if (srcCodeSB == null) {
-						// no further processing if we only want to check for defines
-						continue;
-					}
-					strLine = replaceDefinedEntries(strLine, defines);
-					// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
-					// replace as many as possible of them in advance.
-					// We cannot guess however, what's included since include files won't be available for us.
-					for (String[] pair: typeReplacements) {
-						String search = "(^|.*?\\W)"+Pattern.quote(pair[0])+"(\\W.*?|$)";
-						if (strLine.matches(search)) {
-							strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
-						}
-					}
-					mtchVoidCast.reset(strLine);
-					if (mtchVoidCast.matches()) {
-						strLine = mtchVoidCast.group(1) + mtchVoidCast.group(2);	// checkme
-					}
-					srcCodeSB.append(strLine);
-				}
-				srcCodeSB.append("\n");
-			}
-			//Close the input stream
-			in.close();
-			return true;
-		}
-		catch (Exception e) 
-		{
-			if (srcCodeSB != null) {
-				System.err.println("CParser.processSourcefile() -> " + e.getMessage());
-			}
-			return false;
-		}
-	}
-
-	// Patterns and Matchers for preprocessing
-	// (reusable, otherwise these get created and compiled over and over again)
-	// #define	a	b
-	private static final Pattern PTRN_DEFINE = Pattern.compile("^define\\s+(\\w*)\\s+(\\S.*?)");
-	// #define	a	// empty
-	private static final Pattern PTRN_DEFINE_EMPTY = Pattern.compile("^define\\s+(\\w*)\\s*");
-	// #define	a(b)	functionname (int b)
-	// #define	a(b,c,d)	functionname (int b, char *d)	// multiple ones, some may be omitted
-	// #define	a(b)	// empty
-	private static final Pattern PTRN_DEFINE_FUNC = Pattern.compile("^define\\s+(\\w+)\\s*\\(([^)]+)\\)\\s+(.*)");
-	// #undef	a
-	private static final Pattern PTRN_UNDEF = Pattern.compile("^undef\\s+(\\w+)(.*)");
-	// #undef	a
-	private static final Pattern PTRN_INCLUDE = Pattern.compile("^include\\s+[<\"]([^>\"]+)[>\"]");
-	// multiple things we can ignore: #pragma, #warning, #error, #message 
-	private static final Pattern PTRN_IGNORE = Pattern.compile("^(?>pragma)|(?>warning)|(?>error)|(?>message)");
-	
-	private static Matcher mtchDefine = PTRN_DEFINE.matcher("");
-	private static Matcher mtchDefineEmpty = PTRN_DEFINE_EMPTY.matcher("");
-	private static Matcher mtchDefineFunc = PTRN_DEFINE_FUNC.matcher("");
-	private static Matcher mtchUndef = PTRN_UNDEF.matcher("");
-	private static Matcher mtchInclude = PTRN_INCLUDE.matcher("");
-	private static Matcher mtchIgnore = PTRN_IGNORE.matcher("");
-
-	// Patterns and Matchers for parsing / building
-	// detection of a const modifier in a declaration
-	private static final Pattern PTRN_CONST = Pattern.compile("(^|.*?\\s+)const(\\s+.*?|$)");
-
-	private static Matcher mtchConst = PTRN_CONST.matcher("");
-
-	/**
-	 * Helper function for prepareTextfile to handle C preprocessor commands
-	 * @param preprocessorLine	line for the preprocessor without leading '#'
-	 * @param defines 
-	 * @return comment string that can be used for prefixing the original source line
-	 */
-	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines)
-	{
-		mtchDefineFunc.reset(preprocessorLine);
-		if (mtchDefineFunc.matches()) {
-			// #define	a1(a2,a3,a4)	stuff  ( a2 ) 
-			//          1  >  2   <		>     3     <
-			String symbol = mtchDefineFunc.group(1);
-			String[] params = mtchDefineFunc.group(2).split(",");
-			String subst = mtchDefineFunc.group(3);
-			String substTab[] = new String[params.length + 1];
-			substTab[0] = replaceDefinedEntries(subst, defines).trim();
-			for (int i = 0; i < params.length; i++) {
-				substTab[i+1] = params[i].trim();
-			}
-			defines.put(symbol, substTab);
-			return "// preparser define (function): ";
-		}
-
-		mtchDefine.reset(preprocessorLine);
-		if (mtchDefine.matches()) {
-			// #define	a	b
-			//          1	2
-			String symbol = mtchDefine.group(1);
-			String subst[] = new String[1];
-			subst[0] = mtchDefine.group(2);
-			subst[0] = replaceDefinedEntries(subst[0], defines).trim();
-			defines.put(symbol, subst);
-			return "// preparser define: ";
-		}
-		
-		mtchUndef.reset(preprocessorLine);
-		if (mtchUndef.matches()) {
-			// #undef	a
-			String symbol = mtchUndef.group(1);
-			defines.remove(symbol);
-			return "// preparser undef: ";
-		}
-
-		mtchDefineEmpty.reset(preprocessorLine);
-		if (mtchDefineEmpty.matches()) {
-			// #define	a
-			String symbol = mtchDefineEmpty.group(1);
-			String subst[] = new String[]{""};
-			defines.put(symbol, subst);
-			return "// preparser define: ";
-		}
-
-		mtchInclude.reset(preprocessorLine);
-		if (mtchInclude.matches()) {
-			// #include	"header"
-			// FIXME: *MAYBE* store list of non-system includes to parse as IMPORT diagram upon request?
-			String incName = mtchInclude.group(1);
-			// do internal preparsing for resolving define/struct/typedef for the imported file
-			// FIXME: maybe do only when set as preparser option
-			// FIXME: add option to use more than the main file's path as preparser option
-			if (File.separatorChar == '\\') {
-				// FIXME (KGU) This doesn't seem so good an idea - usually both systems cope with '/' 
-				incName = incName.replaceAll("/", "\\\\");
-			} else {
-				incName = incName.replaceAll("\\\\", File.separator);
-			}
-			
-			if (processSourceFile(this.ParserPath + incName, null)) {
-				return "// preparser include (parsed): ";
-			} else {
-				return "// preparser include: ";
-			}
-		}
-
-		mtchIgnore.reset(preprocessorLine);
-		if (mtchIgnore.find()) {
-			// #pragma, #error, #warning, #message ...
-			return "// preparser instruction (ignored): ";
-		}
-
-		// #if, #ifdef, #ifndef, #else, #elif, #endif, ...
-		return "// preparser instruction (not parsed!): ";
-	}
-
-	/**
-	 * Detects typedef declarations in the {@code srcCode}, identifies the defined type names and replaces
-	 * them throughout their definition scopes text with generic names "user_type_###" defined in the grammar
-	 * such that the parse won't fail. The type name map is represented by the static variable {@link #typedefs}
-	 * where the ith entry is mapped to a type id "user_type_&lt;i+1&gt;" for later backwards replacement.
-	 * @param srcCode - the pre-processed source code as long string
-	 * @param _textToParse - the original file name
-	 * @return the source code with replaced type names
-	 * @throws IOException
-	 */
-	private String prepareTypedefs(String srcCode, String _textToParse) throws IOException
-	{
-		// In a first step we gather all type names defined via typedef in a
-		// StringList mapping them by their index to generic type ids being
-		// defined in the grammar ("user_type_###"). It will be a rudimentary parsing
-		// i.e. we don't consider anything except typedef declarations and we expect
-		// a syntactically correct construct. If something strange occurs then we just
-		// ignore the text until we bump into another typedef keyword.
-		// In the second step we replace all identifiers occurring in the map with
-		// their associated generic name, respecting the definition scope.
-		
-		typedefs.clear();
-
-		Vector<Integer[]> blockRanges = new Vector<Integer[]>();
-		LinkedList<String> typedefDecomposers = new LinkedList<String>();
-		
-		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow configured global typenames
-		String configuredTypeNames = (String)this.getPluginOption("typeNames", null);
-		if (configuredTypeNames != null) {
-			String[] typeIds = configuredTypeNames.split("(,| )");
-			for (int i = 0; i < typeIds.length; i++) {
-				String typeId = typeIds[i].trim();
-				if (typeId.matches("^\\w+$")) {
-					typedefs.add(typeId);
-					blockRanges.addElement(new Integer[]{0, -1});
-				}
-			}
-		}
-		// END KGU 2017-05-26
-			
-		Stack<Character> parenthStack = new Stack<Character>();
-		Stack<Integer> blockStarts = new Stack<Integer>();
-		int blockStartLine = -1;
-		int typedefLevel = -1;
-		int indexDepth = 0;
-		PreprocState state = PreprocState.TEXT;
-		String lastId = null;
-		char expected = '\0';
-		
-		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(srcCode));
-		tokenizer.quoteChar('"');
-		tokenizer.quoteChar('\'');
-		tokenizer.slashStarComments(true);
-		tokenizer.slashSlashComments(true);
-		tokenizer.parseNumbers();
-		tokenizer.eolIsSignificant(true);
-		// Underscore must be added to word characters!
-		tokenizer.wordChars('_', '_');
-		
-		// A regular search pattern to find and decompose type definitions with both
-		// struct/union/enum id and type id like in:
-		// typedef struct structId {...} typeId [, ...];
-		// (This is something the used grammar doesn't cope with and so it is to be 
-		// decomposed as follows for the example above:
-		// struct structId {...};
-		// typedef struct structId typeId [, ...];
-		String typedefStructPattern = "";
-		
-		while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
-			String word = null;
-			log("[" + tokenizer.lineno() + "]: ", false);
-			switch (tokenizer.ttype) {
-			case StreamTokenizer.TT_EOL:
-				log("**newline**\n", false);
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += ".*?\\v";
-				}
-				break;
-			case StreamTokenizer.TT_NUMBER:
-				log("number: " + tokenizer.nval + "\n", false);
-				if (!typedefStructPattern.isEmpty()) {
-					// NOTE: a non-integral number literal is rather unlikely within a type definition...
-					typedefStructPattern += "\\W+[+-]?[0-9]+";
-				}
-				break;
-			case StreamTokenizer.TT_WORD:
-				word = tokenizer.sval;
-				log("word: " + word + "\n", false);
-				if (state == PreprocState.TYPEDEF) {
-					if (word.equals("enum") || word.equals("struct") || word.equals("union")) {
-						state = PreprocState.STRUCT_UNION_ENUM;
-						typedefStructPattern = "typedef\\s+(" + word;
-					}
-					else {
-						lastId = word;	// Might be the defined type id if no identifier will follow
-						typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
-					}
-				}
-				else if (state == PreprocState.TYPEID && indexDepth == 0) {
-					typedefs.add(word);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-					if (!typedefStructPattern.isEmpty()) {
-						if (typedefStructPattern.matches(".*?\\W")) {
-							typedefStructPattern += "\\s*" + word;
-						}
-						else {
-							typedefStructPattern += "\\s+" + word;
-						}
-					}
-				}
-				// START KGU 2017-05-23: Bugfix - declarations like "typedef struct structId typeId"
-				else if (state == PreprocState.STRUCT_UNION_ENUM) {
-					state = PreprocState.STRUCT_UNION_ENUM_ID;
-					// This must be the struct/union/enum id.
-					typedefStructPattern += "\\s+" + word + ")\\s*(";	// named struct/union/enum: add its id and switch to next group
-				}
-				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
-					// We have read the struct/union/enum id already, so this must be the first type id.
-					typedefs.add(word);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-					typedefStructPattern = "";	// ... but it's definitely no combined struct and type definition
-					state = PreprocState.TYPEID;
-				}
-				// END KGU 2017-05-23
-				else if (word.equals("typedef")) {
-					typedefLevel = blockStarts.size();
-					state = PreprocState.TYPEDEF;
-				}
-				else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-					if (typedefStructPattern.matches(".*\\w") && !typedefStructPattern.endsWith("\\v")) {
-						typedefStructPattern += "\\s+";
-					}
-					else if (typedefStructPattern.endsWith(",") || typedefStructPattern.endsWith(";")) {
-						// these are typical positions for comments...
-						typedefStructPattern += ".*?";
-					}
-					else {
-						typedefStructPattern += "\\s*";
-					}
-					typedefStructPattern += word;
-				}
-				break;
-			case '\'':
-				log("character: '" + tokenizer.sval + "'\n", false);
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += Pattern.quote("'"+tokenizer.sval+"'");	// We hope that there are no parentheses inserted
-				}
-				break;
-			case '"':
-				log("string: \"" + tokenizer.sval + "\"\n", false);
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += Pattern.quote("\""+tokenizer.sval+"\"");	// We hope that there are no parentheses inserted
-				}
-				break;
-			case '{':
-				blockStarts.add(tokenizer.lineno());
-				if (state == PreprocState.STRUCT_UNION_ENUM || state == PreprocState.STRUCT_UNION_ENUM_ID) {
-					if (state == PreprocState.STRUCT_UNION_ENUM) {
-						typedefStructPattern = ""; 	// We don't need a decomposition
-					}
-					else {
-						typedefStructPattern += "\\s*\\{";
-					}
-					state = PreprocState.COMPLIST;
-				}
-				parenthStack.push('}');
-				break;
-			case '(':
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*\\(";
-				}
-				parenthStack.push(')');
-				break;
-			case '[':	// FIXME: Handle index lists in typedefs!
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*\\[";
-				}
-				if (state == PreprocState.TYPEID) {
-					indexDepth++;
-				}
-				parenthStack.push(']');
-				break;
-			case '}':
-				blockStartLine = blockStarts.pop();
-				// Store the start and current line no as block range if there are typedefs on this block level
-				int blockEndLine = tokenizer.lineno();
-				Integer[] entry;
-				for (int i = blockRanges.size()-1; i >= 0 && (entry = blockRanges.get(i))[1] >= blockStartLine; i--) {
-					if (entry[1] == blockStartLine && entry[1] < entry[0]) {
-						entry[1] = blockEndLine;
-					}
-				}
-				if (state == PreprocState.COMPLIST && typedefLevel == blockStarts.size()) {
-					// After the closing brace, type ids are expected to follow
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*\\})\\s*(";	// .. therefore open the next group
-					}
-					state = PreprocState.TYPEID;
-				}
-			case ')':
-			case ']':	// Handle index lists in typedef!s
-				{
-					if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
-						String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
-						+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
-						+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
-						System.err.println(errText);
-						log(errText, false);
-					}
-					else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
-						indexDepth--;
-						if (!typedefStructPattern.isEmpty()) {
-							typedefStructPattern += "\\s*\\" + (char)tokenizer.ttype;
-						}
-					}
-				}
-					break;
-			case '*':
-				if (state == PreprocState.TYPEDEF) {
-					state = PreprocState.TYPEID;
-				}
-				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
-					typedefStructPattern = "";	// Cannot be a combined definition: '*' follows immediately to the struct id
-				}
-				else if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*[*]";
-				}
-				break;
-			case ',':
-				if (state == PreprocState.TYPEDEF && lastId != null) {
-					typedefs.add(lastId);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-					if (!typedefStructPattern.isEmpty()) {
-						// Type name won't be replaced within the typedef clause
-						//typedefStructPattern += "\\s+" + String.format(USER_TYPE_ID_MASK, typedefs.count()) + "\\s*,";
-						typedefStructPattern += "\\s+" + lastId + "\\s*,";
-					}
-					state = PreprocState.TYPEID;
-				}
-				else if (state == PreprocState.TYPEID) {
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*,";
-					}
-				}
-				break;
-			case ';':
-				if (state == PreprocState.TYPEDEF && lastId != null) {
-					typedefs.add(lastId);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
-					typedefStructPattern = "";
-					state = PreprocState.TEXT;
-				}
-				else if (state == PreprocState.TYPEID) {
-					if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
-						typedefStructPattern += ")\\s*;";
-						typedefDecomposers.add(typedefStructPattern);
-					}
-					typedefStructPattern = "";
-					state = PreprocState.TEXT;						
-				}
-				else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*;";
-				}
-				break;
-			default:
-				char tokenChar = (char)tokenizer.ttype;
-				if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*" + Pattern.quote(tokenChar + "");
-				}
-				log("other: " + tokenChar + "\n", false);
-			}
-			log("", false);
-		}
-		StringList srcLines = StringList.explode(srcCode, "\n");
-		// Now we replace the detected user-specific type names by the respective generic ones.
-		for (int i = 0; i < typedefs.count(); i++) {
-			String typeName = typedefs.get(i);
-			Integer[] range = blockRanges.get(i);
-			// Global range?
-			if (range[1] < 0) {
-				range[1] = srcLines.count()-1;
-			}
-			String pattern = "(^|.*?\\W)("+typeName+")(\\W.*?|$)";
-			String subst = String.format(USER_TYPE_ID_MASK, i+1);
-			this.replacedIds.put(subst, typeName);
-			subst = "$1" + subst + "$3";
-			for (int j = range[0]; j <= range[1]; j++) {
-				if (srcLines.get(j).matches(pattern)) {
-					srcLines.set(j, srcLines.get(j).replaceAll(pattern, subst));
-				}
-			}
-		}
-		srcCode = srcLines.concatenate("\n");
-		
-		// Now we try the impossible: to decompose compound struct/union/enum and type name definition
-		for (String pattern: typedefDecomposers) {
-			srcCode = srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
-		}
-
-		return srcCode;
-	}
-
-	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) {
-		if (toReplace.trim().isEmpty()) {
-			return "";
-		}
-		//log("CParser.replaceDefinedEntries(): " + Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", false);
-		for (Entry<String, String[]> entry: defines.entrySet()) {
-			
-			// FIXME: doesn't work if entry is at start/end of toReplace 
-			
-			
-			if (entry.getValue().length > 1) {
-				//          key<val[0]>     <   val[1]   >
-				// #define	a1(a2,a3,a4)	stuff (  a2  )
-				// key  (  text1, text2, text3 )	--->	stuff (  text1  )
-				// #define	a1(a2,a3,a4)
-				// key  (  text1, text2, text3 )	--->
-				// #define	a1(a2,a3,a4)	a2
-				// key  (  text1, text2, text3 )	--->	text1
-				// #define	a1(a2,a3,a4)	some text
-				// key  (  text1, text2, text3 )	--->	some text
-				// The trouble here is that text1, text2 etc. might also contain parentheses, so may the following text.
-				// The result of the replacement would then be a total desaster
-				while (toReplace.matches("(^|.*?\\W)" + entry.getKey() + "\\s*\\(.*\\).*?")) {
-					if (entry.getValue()[0].isEmpty()) {
-						toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
-					} else {
-						// The greedy quantifier inside the parentheses ensures that we get to the rightmost closing parenthesis
-						String argsRaw = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)", "$3");
-						// Now we split the balanced substring (up to the first unexpected closing parenthesis) syntactically
-						// (The unmatched tail of argsRaw will be re-appended later)
-						StringList args = Element.splitExpressionList(argsRaw, ",");
-						// We test whether argument and parameter count match
-						if (args.count() != entry.getValue().length - 1) {
-							// FIXME: function-like define doesn't match arg count
-							log("CParser.replaceDefinedEntries() cannot apply function macro\n\t"
-									+ entry.getKey() + entry.getValue().toString() + "\n\tdue to arg count diffs:\n\t"
-									+ toReplace + "\n", true);
-						}
-						else {
-							HashMap<String, String> argMap = new HashMap<String, String>();
-							// Lest the substitutions should interfere with one another we first split the string for all parameters
-							StringList parts = StringList.getNew(entry.getValue()[0]); 
-							for (int i = 0; i < args.count(); i++) {
-								String param = entry.getValue()[i+1];
-								argMap.put(param, args.get(i));
-								parts = StringList.explodeWithDelimiter(parts, param);
-							}
-							// Now we have all parts separated and walk through the StringList, substituting the parameter names
-							for (int i = 0; i < parts.count(); i++) {
-								String part = parts.get(i);
-								if (!part.isEmpty() && argMap.containsKey(part)) {
-									parts.set(i, argMap.get(part));
-								}
-							}
-							// Now we correct possible matching defects
-							StringList argsPlusTail = Element.splitExpressionList(argsRaw, ",", true);
-							if (argsPlusTail.count() > args.count()) {
-								String tail = argsPlusTail.get(args.count()).trim();
-								// With high probability tail stars with a closing parenthesis, which has to be dropped if so
-								// whereas the consumed parenthesis at the end has to be restored.
-								if (tail.startsWith(")")) {
-									tail = tail.substring(1) + ")";
-								}
-								parts.add(tail);
-							}
-							toReplace = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)",
-									"$1" + Matcher.quoteReplacement(parts.concatenate()) + "$4");
-						}
-					}
-				}
-			} else {
-				// from: #define	a	b, b can also be empty
-				toReplace = toReplace.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)",
-						"$1" + Matcher.quoteReplacement((String) entry.getValue()[0]) + "$2");
-			}
-		}
-		return toReplace;
-	}
-
 
 	//---------------------- Build methods for structograms ---------------------------
 
-//	/* (non-Javadoc)
-//	 * @see CodeParser#initializeBuildNSD()
-//	 */
-//	@Override
-//	protected void initializeBuildNSD()
-//	{
-//		// TODO insert initializations for the build phase if necessary ...
-//	}
+	private Root globalRoot = null;	//  dummy Root for global definitions (will be put to main or the only function)
+	
+	/**
+	 * Preselects the type of the initial diagram to be imported as function.
+	 * @see CodeParser#initializeBuildNSD()
+	 */
+	@Override
+	protected void initializeBuildNSD()
+	{
+		root.setProgram(false);	// C programs are functions, primarily
+		this.optionUpperCaseProgName = Root.check(6);
+		// Enh. #420: Configure the lookup table for comment retrieval
+		this.registerStatementRuleIds(statementIds);
+	}
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
@@ -1378,37 +612,320 @@ public class C99Parser extends CodeParser
 			String rule = _reduction.getParent().toString();
 			String ruleHead = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+			getLogger().log(Level.CONFIG, "Rule {0}, {1}", new Object[]{rule, _parentNode.parent});
+			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 
-			/* -------- Begin code example for tree analysis and build -------- */
-//			if (
-//					// Assignment or procedure call?
-//					ruleId == RuleConstants.PROD_OPASSIGN_EQ
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
-//					)
-//			{
-//				// Simply convert it as text and create an instruction. In case of a call
-//				// we'll try to transmute it after all subroutines will have been parsed.
-//				String content = new String();
-//				content = getContent_R(_reduction, content).trim();
-//				//System.out.println(ruleName + ": " + content);
-//				// In case of a variable declaration get rid of the trailing semicolon
-//				//if (content.endsWith(";")) {
-//				//	content = content.substring(0, content.length() - 1).trim();
-//				//}
-//				_parentNode.addElement(new Instruction(translateContent(content)));
-//			}
-//			else if (ruleHead.equals("<Decls>") {
-//				...
-//			}
-//			/* -------- End code example for tree analysis and build -------- */
-//			// Block...?
-//			else
+			if (
+					// Procedure call?
+					(ruleId == RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN
+					||
+					ruleId == RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN2)
+					&& 
+					_reduction.get(0).getType() == SymbolType.NON_TERMINAL
+					&& _reduction.get(0).asReduction().getParent().getTableIndex() == RuleConstants.PROD_VALUE_IDENTIFIER
+					)
+			{
+				String content = "";
+				String procName = _reduction.get(0).asReduction().get(0).asString();
+				StringList arguments = null;
+				if (ruleId == RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN) {
+					arguments = this.getExpressionList(_reduction.get(2).asReduction());
+				}
+				else {
+					arguments = new StringList();
+				}
+				if (procName.equals("exit")) {
+					content = getKeywordOrDefault("preExit", "exit");
+					if (arguments.count() > 0) {
+						content += arguments.get(0);
+						_parentNode.addElement(this.equipWithSourceComment(new Jump(content), _reduction));
+					}
+				}
+				else if (procName.equals("printf") || procName.equals("puts") && arguments.count() == 1)
+				{
+					buildOutput(_reduction, procName, arguments, _parentNode);
+				}
+				else if (procName.equals("scanf") || procName.equals("gets") && arguments.count() == 1){
+					buildInput(_reduction, procName, arguments, _parentNode);
+				}
+				else if (!convertBuiltInRoutines(_reduction, procName, arguments, _parentNode)) {
+					_parentNode.addElement(this.equipWithSourceComment(new Instruction(getContent_R(_reduction, content)), _reduction));
+				}
+			}
+			else if (
+					// Assignment?
+					ruleId == RuleConstants.PROD_ASSIGNEXP
+					)
+			{
+				// FIXME: What if this is part of a declaration?
+				// Simply convert it as text and create an instruction. In case of an
+				// external function call we'll try to transmute it after all subroutines
+				// will have been built.
+				String var = getContent_R(_reduction.get(0).asReduction(), "").trim();
+				Token opToken = _reduction.get(1).asReduction().get(0);
+				String opAsStr = opToken.asString();
+				String content = var + " <- ";
+				if (!opAsStr.equals("=")) {
+					String opr = opAsStr.substring(0, opAsStr.length()-1);
+					content += var + " " + (opr.equals("%") ? " mod " : opr) ;
+				}
+				content = getContent_R(_reduction.get(2).asReduction(), content).trim();
+				//System.out.println(ruleName + ": " + content);
+				// In case of a variable declaration get rid of the trailing semicolon
+				//if (content.endsWith(";")) {
+				//	content = content.substring(0, content.length() - 1).trim();
+				//}
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+			}
+			else if (
+					// Autoincrement / autodecrement (i++, i--, ++i, --i)
+					ruleId == RuleConstants.PROD_POSTFIXEXP_PLUSPLUS
+					||
+					ruleId == RuleConstants.PROD_POSTFIXEXP_MINUSMINUS
+					||
+					ruleId == RuleConstants.PROD_UNARYEXP_PLUSPLUS
+					||
+					ruleId == RuleConstants.PROD_UNARYEXP_MINUSMINUS
+					)
+			{
+				// Token index of the variable (CAUTION: There could be a more complex operand!)
+				int lvalIx = (ruleId >= RuleConstants.PROD_UNARYEXP_PLUSPLUS) ? 1 : 0;
+				// Variable name
+				String lval = getContent_R(_reduction.get(lvalIx).asReduction(), "");
+				// Operator + or - ?
+				String opr = (ruleId == RuleConstants.PROD_UNARYEXP_PLUSPLUS || ruleId == RuleConstants.PROD_POSTFIXEXP_PLUSPLUS) ? " + " : " - ";
+				String content = lval + " <- " + lval + opr + "1";
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+			}
+			else if (
+					// Variable declaration with or without initialization? Might also be a typedef though!
+					ruleId == RuleConstants.PROD_DECLARATION_SEMI			
+					)
+			{
+				// If declaration import is allowed then we make an instruction in
+				// Pascal syntax out of it.
+				Subqueue parentNode = _parentNode;
+				// Just a container for the type to be returned
+				StringList tmpTypes = new StringList();
+				String rootName = root.getMethodName();
+				boolean isGlobal = rootName.equals("???");
+				if (isGlobal) {
+					if (this.globalRoot == null) {
+						this.globalRoot = root;
+//								this.globalRoot.setText("global");
+//								subRoots.add(this.globalRoot);
+					}
+					parentNode = this.globalRoot.children;
+				}
+				boolean isTypedef = processTypes(_reduction, ruleId, parentNode, isGlobal, tmpTypes, true);
+				if (!isTypedef) {
+					String type = tmpTypes.concatenate();
+					// START KGU#407 2017-06-22: Enh.#420 grope for possible source comments
+					String comment = this.retrieveComment(_reduction);
+					// END KGU#407 2017-06-22
+					Reduction declReduc = _reduction.get(1).asReduction();
+					// Now concern on the declarations of the list (FIXME: test for last argument is too vague) 
+					buildDeclsOrAssignments(declReduc, type, parentNode, comment, tmpTypes.contains("struct"));
+				}
+				// CHECKME!
+				if (isGlobal && root != globalRoot && !importingRoots.contains(root)) {
+					importingRoots.add(root);
+				}
+			}
+			else if (
+					// Labeled instruction?
+					ruleId == RuleConstants.PROD_LABELLEDSTMT_IDENTIFIER_COLON
+					)
+			{
+				// <Labelled Stmt> ::= Identifier ':' <Statement>
+				String content = _reduction.get(0).asString() + ":";
+				Instruction el = new Instruction(content);
+				el.setColor(Color.RED);	// will only be seen if the user enables the element
+				el.disabled = true;
+				this.equipWithSourceComment(el, _reduction);
+				el.getComment().add("FIXME: Goto instructions are not supported in structured algorithms!");
+				_parentNode.addElement(el);
+				// Label is done, now parse the actual statement
+				// FIXME: Can't we avoid recursion here?
+				buildNSD_R(_reduction.get(2).asReduction(), _parentNode);
+			}
+			else if (
+					// BREAK instruction
+					ruleId == RuleConstants.PROD_JUMPSTMT_BREAK_SEMI
+					)
+			{
+				String content = getKeyword("preLeave");
+				_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
+			}
+			else if (
+					// RETURN instruction
+					ruleId == RuleConstants.PROD_JUMPSTMT_RETURN_SEMI
+					)
+			{
+				String content = getKeyword("preReturn");
+				Reduction exprRed = _reduction.get(1).asReduction();
+				if (exprRed.getParent().getTableIndex() != RuleConstants.PROD_EXPROPT2) { 
+					content += " " + translateContent(getContent_R(exprRed, ""));
+				}
+				_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
+			}
+			else if (
+					// GOTO instruction
+					ruleId == RuleConstants.PROD_JUMPSTMT_GOTO_IDENTIFIER_SEMI
+					)
+			{
+				String content = _reduction.get(0).asString() + " " + _reduction.get(1).asString();
+				Jump el = new Jump(content.trim());
+				this.equipWithSourceComment(el, _reduction);
+				el.getComment().add("FIXME: Goto is not supported in structured algorithms!");
+				el.setColor(Color.RED);
+				_parentNode.addElement(el);				
+			}
+			else if (
+					// WHILE loop?
+					ruleId == RuleConstants.PROD_ITERATIONSTMT_WHILE_LPAREN_RPAREN
+					 )
+			{
+				String content = new String();
+				content = getContent_R(_reduction.get(2).asReduction(), content);
+				While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
+				_parentNode.addElement(ele);
+				
+				Reduction secReduc = _reduction.get(4).asReduction();
+				buildNSD_R(secReduc, ele.q);
+			}
+			else if (
+					// REPEAT loop?
+					ruleId == RuleConstants.PROD_ITERATIONSTMT_DO_WHILE_LPAREN_RPAREN_SEMI
+					 )
+			{
+				String content = new String();
+				content = getContent_R(_reduction.get(4).asReduction(), content);
+				// FIXME We might look for kinds of expressions with direct negation possibility,
+				// e.g. PROD_OPEQUATE_EQEQ, PROD_OPEQUATE_EXCLAMEQ, PROD_OPCOMPARE_LT, PROD_OPCOMPARE_GT
+				// etc. where we could try to replace the reduction by its opposite.
+				Repeat ele = new Repeat((getKeyword("preRepeat").trim() + " not (" + content + ") " + getKeyword("postRepeat").trim()).trim());
+				// START KGU#407 2017-06-20: Enh. #420 - comments already here
+				this.equipWithSourceComment(ele, _reduction);
+				// END KGU#407 2017-06-22
+				_parentNode.addElement(ele);
+				
+				Reduction secReduc = _reduction.get(1).asReduction();
+				buildNSD_R(secReduc, ele.q);
+			}
+			else if (
+					// FOR loop?
+					 ruleId == RuleConstants.PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_SEMI_RPAREN
+					 ||
+					 ruleId == RuleConstants.PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_RPAREN
+					 )
+			{
+				// <Iteration Stmt> ::= for '(' <ExprOpt> ';' <ExprOpt> ';' <ExprOpt> ')' <Statement>
+				// <Iteration Stmt> ::= for '(' <Declaration> <ExprOpt> ';' <ExprOpt> ')' <Statement>
+				// The easiest (and default) approach is always to build WHILE loops here
+				// Only in very few cases which are difficult to verify, a FOR loop might
+				// be built: The first part must be a single assignment, the variable of
+				// which must occur in a comparison in part 2 and in a simple incrementation
+				// or decrementation in part3. The next trouble: The incrementation/decremention
+				// should only have one of the forms i++, ++i, i--, --i - only then can we be
+				// sure it's an integer increment/decrement and the step sign is clear such
+				// that the comparison will not have to be modified fundamentally.
+				
+				// get first part - should be an assignment...
+				// We make a separate instruction out of it
+				Reduction secReduc = _reduction.get(2).asReduction();
+				buildNSD_R(secReduc, _parentNode);
+				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+				_parentNode.getElement(_parentNode.getSize()-1).setColor(colorMisc);
+				
+				// get the second part - should be an ordinary condition
+				int condIx = 4;
+				if (ruleId == RuleConstants.PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_RPAREN) {
+					condIx = 3;
+				}
+				String content = getContent_R(_reduction.get(condIx).asReduction(), "");
+				Subqueue body = null;
+				Element ele = null;
+				if (content.trim().isEmpty()) {
+					Forever loop = new Forever();
+					ele = loop;
+					body = loop.getBody();
+				}
+				else {
+					While loop = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+					ele = loop;
+					body = loop.getBody();
+				}
+				this.equipWithSourceComment(ele, _reduction);
+				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+				ele.setColor(colorMisc);
+				_parentNode.addElement(ele);
+				
+				// Get and convert the body
+				secReduc = _reduction.get(condIx + 4).asReduction();
+				buildNSD_R(secReduc, body);
+
+				// get the last part of the header now and append it to the body
+				secReduc = _reduction.get(condIx + 2).asReduction();
+				// Problem is that it is typically a simple operator expression,
+				// e.g. i++ or --i, so it won't be recognized as statement unless we
+				/// impose some extra status
+				buildNSD_R(secReduc, body);
+				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+				body.getElement(body.getSize()-1).setColor(colorMisc);
+
+			}
+			else if (
+					// Alternative?
+					ruleId == RuleConstants.PROD_SELECTIONSTMT_IF_LPAREN_RPAREN
+					||
+					ruleId == RuleConstants.PROD_SELECTIONSTMT_IF_LPAREN_RPAREN_ELSE
+					)
+			{
+				// <Selection Stmt>  ::= if '(' <Expression> ')' <Statement>
+				// <Selection Stmt>  ::= if '(' <Expression> ')' <Statement> else <Statement>
+				String content = getContent_R(_reduction.get(2).asReduction(), "");
+				Alternative alt = new Alternative(content);
+				this.equipWithSourceComment(alt, _reduction);
+				_parentNode.addElement(alt);
+				buildNSD_R(_reduction.get(4).asReduction(), alt.qTrue);
+				if (_reduction.size() >= 7) {
+					buildNSD_R(_reduction.get(6).asReduction(), alt.qFalse);
+				}
+			}
+			else if (
+					// CASE branch?
+					ruleId == RuleConstants.PROD_CASESTMTS_CASE_COLON
+					||
+					ruleId == RuleConstants.PROD_CASESTMTS_DEFAULT_COLON
+					)
+			{
+				buildCaseBranch(_reduction, ruleId, (Case) _parentNode.parent);
+			}
+			else if (
+					// Case selection?
+					ruleId == RuleConstants.PROD_SELECTIONSTMT_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE
+					)
+			{
+				// <Selection Stmt>  ::= switch '(' <Expression> ')' '{' <Case Stmts> '}'
+				buildCase(_reduction, _parentNode); 
+			}
+			// Frequent stack overflows on large sources was observed
+			else if (ruleId == RuleConstants.PROD_STMTLIST)
+			{
+				// We can easily reduce recursion overhead since the crucial <Stm List> rule is
+				// right-recursive. We don't even need auxiliary data structures.
+				while (_reduction.size() > 0) {
+					this.buildNSD_R(_reduction.get(0).asReduction(), _parentNode);
+					_reduction = _reduction.get(1).asReduction();
+				}
+			}
+			
+			// TODO add the handling of further instruction types here...
+			else 
 			{
 				if (_reduction.size()>0)
 				{
@@ -1425,6 +942,522 @@ public class C99Parser extends CodeParser
 	}
 
 	/**
+	 * Converts a rule of type PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE into the
+	 * skeleton of a Case element. The case branches will be handled separately
+	 * @param _reduction - Reduction rule of a switch instruction
+	 * @param _parentNode - the Subqueue this Case element is to be appended to
+	 */
+	private void buildCase(Reduction _reduction, Subqueue _parentNode)
+	{
+		String content = new String();
+		// Put the discriminator into the first line of content
+		content = getKeyword("preCase")+getContent_R(_reduction.get(2).asReduction(), content)+getKeyword("postCase");
+
+		// How many branches has the CASE element? We must count the non-empty statement lists!
+		Reduction sr = _reduction.get(5).asReduction();
+		int j = 0;
+		//System.out.println(sr.getParentRule().getText());  // <<<<<<<
+		while (sr.getParent().getTableIndex() == RuleConstants.PROD_CASESTMTS_CASE_COLON)
+		{
+			Reduction stmList = (Reduction) sr.get(3).getData();
+			if (stmList.getParent().getTableIndex() == RuleConstants.PROD_STMTLIST) {
+				// non-empty statement list, so we will have to set up a branch
+				j++;
+				content += "\n??";
+			}
+			sr = sr.get(4).asReduction();
+		}
+
+		if (sr.getParent().getTableIndex() == RuleConstants.PROD_CASESTMTS_DEFAULT_COLON)
+		{
+			content += "\ndefault";
+		}
+		else {
+			content += "\n%";
+		}
+		j++;
+
+		// Pooh, the translation is risky...
+		Case ele = new Case(translateContent(content));
+		//ele.setText(updateContent(content));
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		this.equipWithSourceComment(ele, _reduction);
+		// END KGU#407 2017-06-22
+		_parentNode.addElement(ele);
+
+		// Create the selector branches
+		Reduction secReduc = _reduction.get(5).asReduction();
+		buildNSD_R(secReduc, (Subqueue) ele.qs.get(0));
+
+		// In theory, all branches should end with a break instruction
+		// unless they end with return or exit. Drop the break instructions
+		// (and only these) now.
+		for (int i = 0; i < ele.qs.size(); i++) {
+			Subqueue sq = ele.qs.get(i);
+			int size = sq.getSize();
+			if (size > 0) {
+				Element el = sq.getElement(size-1);
+				if (el instanceof Jump && ((Jump)el).isLeave()) {
+					sq.removeElement(size-1);
+				}
+			}
+		}
+
+		// cut off else, if possible
+		if (((Subqueue) ele.qs.get(j-1)).getSize()==0)
+		{
+			ele.getText().set(ele.getText().count()-1,"%");
+		}
+
+	}
+
+	private void buildCaseBranch(Reduction _reduction, int _ruleId, Case _case)
+	{
+		// We should first make clear what could happen here. A case analysis
+		// switch(discriminator) {
+		// case 1:
+		// case 2:		// to be merged with previous one -> selector 1,2
+		//    instr21;
+		//    instr22;
+		// case 3:		// can be merged with 1,2 if instr1; instr2; are put to an alternative
+		// case 4:		// to be merged with previous one 
+		//    instr41;	// either to be copied to case 1,2 if 3 hadn't been merged with 1,2
+		//    instr42;	//		or to be merged to case 1,2,3 (if that had an alternative)
+		//    break;	// To be removed after all branches are complete 
+		// case 5:		// new branch
+		//    instr51;
+		//    instr52;
+		//    return;	// Must not be removed
+		// case 6:		// new branch
+		// default:		// cannot be merged with previous branch
+		//    instr0;	// must be copied to case 6
+		//    [break;]	// To be removed after all branches are complete
+		// }
+		// The first (easier) approach here is to copy/append instr41; instr42; (and instr0;)
+		int nLines = _case.getText().count();
+		int iNext = 0;	// line index of the next free selector entry
+		// buildCase(...) had marked all selector lines (but the default) with "??"
+		for (int i = 1; i < nLines && iNext == 0; i++) {
+			if (_case.getText().get(i).equals("??"))
+			{
+				iNext = i;
+			}
+		}
+		// Only default branch open? Then select the last line
+		// Be aware, though, that this rule is not necessarily the default branch rule!
+		// (The previous branch may be empty such that we are to merge them)
+		if (iNext == 0) { iNext = nLines-1; }
+		
+		// Now we must find out whether this branch is to be merged with the previous one
+		boolean lastCaseWasEmpty = iNext > 1 && _case.qs.get(iNext-2).getSize() == 0;
+		int stmListIx = 2;	// <Stm List> index for default rule (has different structure)...
+		// Now we first handle the branches with explicit selector
+		if (_ruleId == RuleConstants.PROD_CASESTMTS_CASE_COLON) {
+			// <Case Stmts> ::= case <Selector> ':' <StmtList> <Case Stmts>
+			// Get the selector constant
+			String selector = getContent_R(_reduction.get(1).asReduction(), "");
+			// If the last branch was empty then just add the selector to the list
+			// and reduce the index
+			if (lastCaseWasEmpty) {
+				String selectors = _case.getText().get(iNext-1) + ", " + selector;
+				_case.getText().set(iNext - 1, selectors);
+				iNext--;
+			}
+			else {
+				_case.getText().set(iNext, selector);
+			}
+			stmListIx = 3;	// <StmtList> index for explicit branch
+		}
+		// Add the branch content
+		Reduction secReduc = _reduction.get(stmListIx).asReduction();
+		Subqueue sq = (Subqueue) _case.qs.get(iNext-1);
+		// Fill the branch with the instructions (if there are any)
+		buildNSD_R(secReduc, sq);
+				
+		// Which is the last branch ending with jump instruction?
+		int lastCaseWithJump = iNext-1;
+		for (int i = iNext-2; i >= 0; i--) {
+			int size = _case.qs.get(i).getSize();
+			if (size > 0 && (_case.qs.get(i).getElement(size-1) instanceof Jump)) {
+				lastCaseWithJump = i;
+				break;
+			}
+		}
+		// append copies of the elements of the new case to all cases still not terminated
+		for (int i = lastCaseWithJump+1; i < iNext-1; i++) {
+			Subqueue sq1 = _case.qs.get(i);
+			for (int j = 0; j < sq.getSize(); j++) {
+				Element el = sq.getElement(j).copy();	// FIXME: Need a new Id!
+				sq1.addElement(el);
+			}
+		}
+		
+		// If this is an explicit case branch then the last token holds the subsequent branches
+		if (_ruleId == RuleConstants.PROD_CASESTMTS_CASE_COLON) {
+			// We may pass an arbitrary subqueue, the case branch rule goes up to the Case element anyway
+			buildNSD_R(_reduction.get(stmListIx+1).asReduction(), _case.qs.get(0));					
+		}
+		
+	}
+
+	/**
+	 * Converts a declaration list into a sequence of {@link Instruction} elements.  
+	 * @param _reduction - an {@code <InitDeclList>} rule, may be left-recursive
+	 * @param _type - the common data type as string
+	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to
+	 * @param _comment - a retrieved source code comment to be placed in the element or null
+	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type) 
+	 */
+	private void buildDeclsOrAssignments(Reduction _reduction, String _type, Subqueue _parentNode, String _comment,
+			boolean _forceDecl) {
+		log("\tanalyzing <InitDeclList> ...\n", false);
+		// Resolve the left recursion
+		LinkedList<Reduction> decls = new LinkedList<Reduction>();
+		while (_reduction  != null) {
+			if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_INITDECLLIST_COMMA) {
+				// <InitDeclList> ::= <InitDeclList> ',' <Init Declarator>
+				decls.addFirst(_reduction.get(2).asReduction());
+				_reduction = _reduction.get(0).asReduction();
+			}
+			else {
+				decls.addFirst(_reduction);
+				_reduction = null;
+			}
+		}
+		// Now derive the declarations
+		for (Reduction red: decls) {
+			buildDeclOrAssignment(red, _type, _parentNode, _comment, _forceDecl);
+		}
+		log("\t<InitDeclList> done.\n", false);
+	}
+
+	/**
+	 * Converts a rule with head &lt;Init Declarator&gt; (as part of a declaration) into an
+	 * Instruction element.  
+	 * @param _reduc - the Reduction object (PROD_VAR_ID or PROD_VAR_ID_EQ)
+	 * @param _type - the data type as string
+	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to
+	 * @param _comment - a retrieved source code comment to be placed in the element or null
+	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
+	 */
+	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl)
+	{
+		boolean isConstant = _type != null && _type.startsWith("const ");	// Is it sure that const will be at the beginning?
+		int ruleId = _reduc.getParent().getTableIndex();
+		String content = getContent_R(_reduc, "");	// Default???
+		String expr = null;
+		if (ruleId == RuleConstants.PROD_INITDECLARATOR_EQ) {
+			log("\ttrying <Declarator> '=' <Initializer> ...\n", false);
+			content = this.getContent_R(_reduc.get(0).asReduction(), "");
+			expr = this.getContent_R(_reduc.get(2).asReduction(), "");
+			_reduc = _reduc.get(0).asReduction();
+		}
+		else {
+			log("\ttrying <Declarator> ...\n", false);
+			// Simple declaration - if allowed then make it to a Pascal decl.
+			_forceDecl = this.optionImportVarDecl || _forceDecl;
+		}
+		if (_forceDecl) {
+			if (ruleId == RuleConstants.PROD_DECLARATOR) {
+				log("\ttrying <Pointer> <Direct Decl> ...\n", false);
+				// This should be the <Pointers> token...
+				_type = this.getContent_R(_reduc.get(0).asReduction(), _type);
+			}
+			if (isConstant) {
+				content = "const " + content + ": " + _type.substring("const ".length());
+			}
+			else {
+				content = "var " + content + ": " + _type;
+			}
+		}
+		if (_forceDecl || expr != null) {
+			if (expr != null) {
+				content += "<- " + expr;
+			}
+			Element instr = new Instruction(translateContent(content));
+			if (_comment != null) {
+				instr.setComment(_comment);
+			}
+			if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
+				instr.getComment().add("Globally declared!");
+				instr.setColor(colorGlobal);
+				// FIXME
+				if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
+					this.importingRoots.add(root);
+					((Root)_parentNode.parent).addToIncludeList((Root)_parentNode.parent);
+				}
+			}
+			else {
+				instr.setColor(colorDecl);	// local declarations with a smooth green
+			}
+			// Constant colour has priority
+			if (isConstant) {
+				instr.setColor(colorConst);
+			}
+			_parentNode.addElement(instr);
+		}
+//		else {
+//			// assignment
+//			log("\ttrying <Declarator> '=' <Initializer> ...\n", false);
+//			// Should be RuleConstants.PROD_VAR_ID_EQ. Now it can get tricky if arrays
+//			// are involved - remember this is a declaration rule!
+//			// The executor now copes with lines like int data[4] <- {2,5,6,3}. On the
+//			// other hand, an import without the type but with index brackets would
+//			// induce a totally wrong semantics. So we must drop both or none.
+//			// Without declaration however, the parser won't accept initializers
+//			// anymore - which is sound with ANSI C.
+//			// Don't be afraid of multidimensional arrays. The grammar doesn't accept
+//			// multiple indices in a declaration (only in assignments or as expression).
+//			String varName = _reduc.get(0).asString();
+//			//String arrayTag = this.getContent_R((Reduction)thdReduc.getToken(1).getData(), "");
+//			String expr = this.getContent_R(_reduc.get(3).asReduction(), "");
+//			content = translateContent(content);
+//			Element instr = null;
+//			if (this.optionImportVarDecl || _forceDecl) {
+//				instr = new Instruction(translateContent(_type) + " " + content);
+//				if (isConstant) {
+//					instr.setColor(colorConst);
+//				}
+//			}
+//			else {
+//				instr = new Instruction((isConstant ? "const " : "") + varName + " <- " + translateContent(expr));
+//				if (isConstant) {
+//					instr.setColor(colorConst);
+//				}
+//			}
+//			// START KGU#407 2017-06-22: Enh. #420
+//			if (_comment != null) {
+//				instr.setComment(_comment);
+//			}
+//			// END KGU#407 2017-06-22
+//			if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
+//				// START KGU#407 2017-06-22: Enh. #420
+//				//instr.setComment("globally declared!");
+//				instr.getComment().add("Globally declared!");
+//				// END KGU#407 2017-06-22
+//				instr.setColor(colorGlobal);
+//			}
+//			_parentNode.addElement(instr);
+//		}
+		log("\tfallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")\n", false);
+	}
+	
+	/**
+	 * Processes type specifications for a variable / constant declaration or a
+	 * type definition (argument {@code _declaringVars} indicates which of both).
+	 * If an anonymous struct description is found then a type definition object
+	 * will be inserted to {@code _subqueue} - either with a generic name (if 
+	 * {@code _typeList} is empty) or with the first element of {@code _typeList}
+	 * as name. Except in the latter case (type definition with given name created)
+	 * the name of the found type will be inserted at the beginning of
+	 * {@code _typeList}.
+	 * If {@code _isGlobal} is true and a type definition is to be created then
+	 * a dependency of the current {@link #root} to the global diagram is established
+	 * in {@code this.importingRoots}.
+	 * The trouble here is that we would like to return several things at once:
+	 * a type entry, a type description, and some flags. For a recursive application,
+	 * we would even need different resulting formats.
+	 * @param _reduction - current {@link Reduction} object
+	 * @param _ruleId - table id of the production rule
+	 * @param _subqueue - the {@link Subqueue} to which elements are to be added
+	 * @param _isGlobal - whether the type / variable is a global one
+	 * @param _typeList - a container for type names, both for input and output 
+	 * @param _declaringVars - whether this is used by a variable/constant declaration (type definition otherwise)
+	 * @return a logical value indicating whether the processed rule was a type definition
+	 */
+	protected boolean processTypes(Reduction _reduction, int _ruleId, Subqueue _subqueue, boolean _isGlobal,
+			StringList _typeList, boolean _declaringVars)
+	{
+		boolean isStruct = false;
+		boolean isTypedef = false;
+		String type = "int";
+		boolean isConstant = false;
+		boolean addType = true;
+		StringList storage = new StringList();
+		StringList specifiers = new StringList();
+		StringList qualifiers = new StringList();
+		Reduction declRed = null;
+		// Will a variable or type be declared / defined here?
+		boolean hasDecl = _ruleId == RuleConstants.PROD_DECLARATION_SEMI;
+		if (hasDecl) {
+			declRed = _reduction.get(1).asReduction(); 
+		}
+		if (hasDecl || _ruleId == RuleConstants.PROD_DECLARATION_SEMI2) {
+			_reduction = _reduction.get(0).asReduction();
+			_ruleId = _reduction.getParent().getTableIndex();
+		}
+		while (_reduction.getParent().getHead().equals("<Decl Secifiers>")) {
+			Token prefix = _reduction.get(0);
+			switch (_ruleId) {
+			case RuleConstants.PROD_DECLSPECIFIERS: // <Decl Specifiers> ::= <Storage Class> <Decl Specs>
+				storage.add(prefix.toString());
+				break;
+			case RuleConstants.PROD_DECLSPECIFIERS2: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+				if (prefix.getType() == SymbolType.NON_TERMINAL) {
+					switch (prefix.asReduction().getParent().getTableIndex()) {
+					case RuleConstants.PROD_TYPESPECIFIER:	// rather unlikely (represented by one of the following)
+					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER_LBRACE_RBRACE:
+					case RuleConstants.PROD_STRUCTORUNIONSPEC_LBRACE_RBRACE:
+					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER:
+					{
+						Reduction structRed = prefix.asReduction();
+						if (structRed.size() == 2) {
+							type = structRed.get(1).toString();
+							// TODO retrieve type
+						}
+						else {
+							Reduction compList = structRed.get(structRed.size()-2).asReduction();
+							if (structRed.size() == 4) {
+								type = String.format("AnonStruct%1$03d", typeCount++);
+							}
+							else {
+								type = structRed.get(1).toString();
+							}
+							// Resolve the left recursion non-recursively
+							LinkedList<Reduction> compReds = new LinkedList<Reduction>();
+							while (compList.size() == 2) {
+								compReds.addFirst(compList.get(1).asReduction());
+								compList = compList.get(0).asReduction();
+							}
+							compReds.addFirst(compList.get(0).asReduction());
+							for (Reduction compRed:compReds) {
+								// TODO: Now analyse components (recursively)
+								System.out.println(getContent_R(compRed, ""));
+							}
+							// TODO compose and define type
+						}
+						isStruct = true;
+					}
+						break;
+					case RuleConstants.PROD_TYPESPECIFIER2:
+						break;
+					case RuleConstants.PROD_TYPESPECIFIER3:
+						break;
+					}
+				}
+				else {
+					specifiers.add(prefix.toString());
+				}
+				break;
+			case RuleConstants.PROD_DECLSPECIFIERS3: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+				qualifiers.add(prefix.toString());
+				break;
+			default:
+			}
+			_reduction = _reduction.get(1).asReduction();
+			_ruleId = _reduction.getParent().getTableIndex();
+			
+		}
+		if (isConstant && _declaringVars) {
+			type = "const " + type;
+		}
+		if (addType) {
+			_typeList.insert(type, 0);
+		}
+		return isTypedef;
+	}
+
+	/**
+	 * Creates an output instruction from the given arguments {@code _args} and adds it to
+	 * the {@code _parentNode}.
+	 * @param _reduction - the responsible rule
+	 * @param _name - the name of the encountered input function (e.g. "scanf")
+	 * @param _args - the argument expressions
+	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
+	 */
+	private void buildInput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
+		//content = content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+" $2");
+		String content = getKeyword("input");
+		if (_args != null) {
+			if (_name.equals("scanf")) {
+				// Forget the format string
+				if (_args.count() > 0) {
+					_args.remove(0);
+				}
+				for (int i = 0; i < _args.count(); i++) {
+					String varItem = _args.get(i).trim();
+					if (varItem.startsWith("&")) {
+						_args.set(i, varItem.substring(1));
+					}
+				}
+			}
+			content += _args.concatenate(", ");
+		}
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		//_parentNode.addElement(new Instruction(content.trim()));
+		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
+		// END KGU#407 2017-06-22
+	}
+
+	/**
+	 * Creates an output instruction from the given arguments {@code _args} and adds it to
+	 * the {@code _parentNode}.
+	 * @param _reduction - the responsible rule
+	 * @param _name - the name of the encountered output function (e.g. "printf")
+	 * @param _args - the argument expressions
+	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
+	 */
+	private void buildOutput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
+		//content = content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+" $1");
+		String content = getKeyword("output") + " ";
+		if (_args != null) {
+			int nExpr = _args.count();
+			// Find the format mask
+			if (nExpr > 1 && _name.equals("printf") && _args.get(0).matches("^[\"].*[\"]$")) {
+				// We try to split the string by the "%" signs which is of course dirty
+				// Unfortunately, we can't use split because it eats empty chunks
+				StringList newExprList = new StringList();
+				String formatStr = _args.get(0);
+				int posPerc = -1;
+				formatStr = formatStr.substring(1, formatStr.length()-1);
+				int i = 1;
+				while ((posPerc = formatStr.indexOf('%')) >= 0 && i < _args.count()) {
+					newExprList.add('"' + formatStr.substring(0, posPerc) + '"');
+					formatStr = formatStr.substring(posPerc+1).replaceFirst(".*?[idxucsefg](.*)", "$1");
+					newExprList.add(_args.get(i++));
+				}
+				if (!formatStr.isEmpty()) {
+					newExprList.add('"' + formatStr + '"');
+				}
+				if (i < _args.count()) {
+					newExprList.add(_args.subSequence(i, _args.count()).concatenate(", "));
+				}
+				_args = newExprList;
+			}
+			else {
+				// Drop an end-standing newline since Structorizer produces a newline automatically
+				String last = _args.get(nExpr - 1);
+				if (last.equals("\"\n\"")) {
+					_args.remove(--nExpr);
+				}
+				else if (last.endsWith("\n\"")) {
+					_args.set(nExpr-1, last.substring(0, last.length()-2) + '"');
+				}
+			}
+			content += _args.concatenate(", ");
+		}
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		//_parentNode.addElement(new Instruction(content.trim()));
+		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
+		// END KGU#407 2017-06-22
+	}
+
+	/**
+	 * Converts a detected C library function to the corresponding Structorizer
+	 * built-in routine if possible.
+	 * @param _reduction a rule of type &lt;Value&gt; ::= Id '(' [&lt;Expr&gt;] ')'
+	 * @param procName - the already extracted routine identifier
+	 * @param arguments - list of argument strings
+	 * @param _parentNode - the {@link Subqueue} the derived instruction is to be appended to 
+	 * @return true if a specific conversion could be applied and all is done.
+	 */
+	private boolean convertBuiltInRoutines(Reduction _reduction, String procName, StringList arguments,
+			Subqueue _parentNode) {
+		// TODO Here we should convert certain known library functions to Structorizer built-in procedures
+		return false;
+	}
+
+	/**
 	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
 	 * assembled string _content and adapt it to syntactical conventions of Structorizer. Finally return
 	 * the text phrase.
@@ -1434,28 +1467,9 @@ public class C99Parser extends CodeParser
 	 */
 	private String translateContent(String _content)
 	{
-		String output = getKeyword("output");
-		String input = getKeyword("input");
-		_content = _content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+"$1");
-		_content = _content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+"$2");
-		
-		//System.out.println(_content);
-		
-		/*
-		 _content:=ReplaceEntities(_content);
-		*/
-		
-		// Convert the pseudo function back to array initializers
-//		int posIni = _content.indexOf(arrayIniFunc);
-//		if (posIni >= 0) {
-//			StringList items = Element.splitExpressionList(_content.substring(posIni + arrayIniFunc.length()), ",", true);
-//			_content = _content.substring(0, posIni) + "{" + items.subSequence(0, items.count()-1).concatenate(", ") +
-//					"}" + items.get(items.count()-1).substring(1);
-//		}
-		
-		//_content = BString.replace(_content, ":="," \u2190 ");
-		//_content = BString.replace(_content, " = "," <- "); already done by getContent_R()!
-
+		// START KGU 2017-04-11
+		_content = undoIdReplacements(_content);
+		// END KGU 2017-04-11
 		return _content.trim();
 	}
 	
@@ -1469,21 +1483,115 @@ public class C99Parser extends CodeParser
 			switch (token.getType()) 
 			{
 			case NON_TERMINAL:
-//				int ruleId = _reduction.getParent().getTableIndex();
-//				_content = getContent_R(token.asReduction(), _content);	
+				_content = getContent_R(token.asReduction(), _content);
+				// START KGU 2018-06-20: Avoid unnecessary gap between unary operator and operand
+				// FIXME: repeated unary operators could inadvertently be glued, like "- -a"> "--a" 
+				if (token.getName().equals("Unary Op") && _content.endsWith(" ") && !_content.trim().endsWith("not")) {
+					_content = _content.substring(0, _content.length()-1);
+				}
+				// END KGU 2018-06-20
+				// START KGU 2017-05-27: There may be strings split over several lines... 
+				{
+					// Real (unescaped) newlines shouldn't occur within expressions otherwise
+					StringList parts = StringList.explode(_content, "\n");
+					if (parts.count() > 1) {
+						_content = "";
+						for (i = 0; i < parts.count(); i++) {
+							String sep = " ";	// By default we will just put a space character there
+							if (_content.endsWith("\"") && parts.get(i).trim().startsWith("\"")) {
+								// In this case we may concatenate the strings (which is the meaning)
+								sep = " + ";
+							}
+							_content += sep + parts.get(i).trim();
+						}
+						_content = _content.trim();
+					}
+				}
+				// END KGU 2017-05-27
 				break;
 			case CONTENT:
-//				{
-//					String toAdd = "";
-//					int idx = token.getTableIndex();
-//					switch (idx) {
-//					case SymbolConstants.SYM_EXCLAM:
-//						_content += " not ";
-//						break;
-//					...
-//					}
-//				}
-				break;
+			{
+				String toAdd = token.asString();
+				int idx = token.getTableIndex();
+				switch (idx) {
+				case SymbolConstants.SYM_EXCLAM:
+					_content += " not ";
+					break;
+				case SymbolConstants.SYM_PERCENT:
+					_content += " mod ";
+					break;
+				case SymbolConstants.SYM_AMPAMP:
+					_content += " and ";
+					break;
+				case SymbolConstants.SYM_PIPEPIPE:
+					_content += " or ";
+					break;
+				case SymbolConstants.SYM_LTLT:
+					_content += " shl ";
+					break;
+				case SymbolConstants.SYM_GTGT:
+					_content += " shr ";
+					break;
+				case SymbolConstants.SYM_EQ:
+					_content += " <- ";
+					break;
+				case SymbolConstants.SYM_EQEQ:
+					_content += " = ";
+					break;
+				case SymbolConstants.SYM_EXCLAMEQ:
+					_content += " <> ";
+					break;
+				case SymbolConstants.SYM_LBRACE:
+					_content += " {";
+					break;
+				case SymbolConstants.SYM_RBRACE:
+					_content += "} ";
+					break;
+				case SymbolConstants.SYM_MINUS:
+				case SymbolConstants.SYM_PLUS:
+				case SymbolConstants.SYM_TIMES:
+				case SymbolConstants.SYM_DIV:
+				case SymbolConstants.SYM_AMP:
+				case SymbolConstants.SYM_LT:
+				case SymbolConstants.SYM_GT:
+				case SymbolConstants.SYM_LTEQ:
+				case SymbolConstants.SYM_GTEQ:
+				case SymbolConstants.SYM_CARET:
+				case SymbolConstants.SYM_PIPE:
+				case SymbolConstants.SYM_TILDE:
+					_content += " " + toAdd + " ";
+					break;
+				case SymbolConstants.SYM_STRINGLITERAL:
+					if (toAdd.trim().startsWith("L")) {
+						toAdd = toAdd.trim().substring(1);
+					}
+					_content += toAdd;
+					break;
+				case SymbolConstants.SYM_DECLITERAL:
+				case SymbolConstants.SYM_HEXLITERAL:
+				case SymbolConstants.SYM_OCTLITERAL:
+				case SymbolConstants.SYM_FLOATLITERAL:
+					// Remove type-specific suffixes
+					if (toAdd.matches(".*?[uUlL]+")) {
+						toAdd = toAdd.replaceAll("(.*?)[uUlL]+", "$1");
+					}
+					else if (idx == SymbolConstants.SYM_FLOATLITERAL && toAdd.matches(".+?[fF]")) {
+						toAdd = toAdd.replaceAll("(.+?)[fFlL]", "$1");
+					}
+					// NOTE: The missing of a break instruction is intended here!
+					// START KGU 2017-05-26: We must of course restore the original type name
+				case SymbolConstants.SYM_USERTYPEID:
+						toAdd = this.undoIdReplacements(toAdd);
+					// END KGU 2017-05-26
+					// NOTE: The missing of a break instruction is intended here!
+				default:
+					if (toAdd.matches("^\\w.*") && _content.matches(".*\\w$") || _content.matches(".*[,;]$")) {
+						_content += " ";
+					}
+					_content += toAdd;
+				}
+			}
+			break;
 			default:
 				break;
 			}
@@ -1491,6 +1599,37 @@ public class C99Parser extends CodeParser
 		}
 		
 		return _content;
+	}
+
+	/**
+	 * Routine will return the list of the (translated) expressions (at top level, if a tree is needed,
+	 * than keep with the reduction tree.)
+	 * @param _reduc - a rule with head &lt;Expr&gt; or &lt;ExprIni&gt; 
+	 * @return the list of expressions as strings
+	 */
+	private StringList getExpressionList(Reduction _reduc)
+	{
+		StringList exprList = new StringList();
+		String ruleHead = _reduc.getParent().getHead().toString();
+		if (ruleHead.equals("<Literal>") || ruleHead.equals("<Call Id>")) {
+			exprList.add(getContent_R(_reduc, ""));
+		}
+		else while (ruleHead.equals("<ArgExpList>") || ruleHead.equals("<IdentifierList>")) {
+			// Get the content from right to left to avoid recursion
+			exprList.add(getContent_R(_reduc.get(_reduc.size()-1).asReduction(), ""));
+			if (_reduc.size() > 1) {
+				_reduc = _reduc.get(0).asReduction();
+				ruleHead = _reduc.getParent().getHead().toString();
+				if (!ruleHead.equals("<ArgExpList>") && !ruleHead.equals("IdenifierList")) {
+					exprList.add(getContent_R(_reduc, ""));	
+				}
+			}
+			else {
+				ruleHead = "";
+				//exprList.add(getContent_R(_reduc.get(0).asReduction(), ""));
+			}
+		}
+		return exprList.reverse();
 	}
 
 	@Override

@@ -67,10 +67,13 @@
 !   * The missing rule variant for <Declaration> was added
 !   * The erroneous ',' was removed from the <StructDeclnList> rule
 !   * Rule for function call with empty argument list had been missing
+! Modified 2018-06-20
+!   * Erroneous use of "Literal" in >Selector> rule corrected to <Literal>
+!   * Forgotten equality sign in assign operator '^=' added
 ! -----------------------------------------------------------------------
 "Name"     = 'ANSI-C99'
 "Author"   = 'Kay Gürtzig'
-"Version"  = '1.1'
+"Version"  = '1.2'
 "About"    = 'ANSI C99 (ISO/IEC 9899:TC3 draft from September 7, 2007)'
 
 "Case Sensitive" = True
@@ -324,7 +327,7 @@ Comment Line  = '//'
                    | default ':' <StmtList>                  
                    |
 
-<Selector>        ::= Literal
+<Selector>        ::= <Literal>
                    |  '(' <Expression> ')'
                    
 <StmtList>        ::= <Statement> <StmtList>
@@ -368,7 +371,7 @@ Comment Line  = '//'
 <Assign Exp>  ::= <Unary Exp> <Assign Op> <Assign Exp>
                |  <Cond Exp> 
                
-<Assign Op>   ::= '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^' | '|='
+<Assign Op>   ::= '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
 
 <Cond Exp>    ::= <LogOr Exp> '?' <Expression> ':' <Cond Exp>
                |  <LogOr Exp>

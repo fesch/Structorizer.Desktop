@@ -35,7 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.09      First Issue (solving the legacy cgt problem)
  *      Kay Gürtzig     2017.04.27      File logging option added
  *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
- *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved, logger added
+ *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved, logger added, comments reorganized
  *
  ******************************************************************************************************
  *
@@ -129,7 +129,7 @@ public class AuParser extends GOLDParser {
 	// START KGU#407 2017-07-21: Enh. #420: Prerequisites to map comment tokens.
 	/** Most recent comment */
 	private String lastComment = null;
-	/** most recent token */
+	/** Most recent token */
 	private Token lastToken = null;
 	/**
 	 * Maps tokens to neighbouring comment texts for possible comment import. The

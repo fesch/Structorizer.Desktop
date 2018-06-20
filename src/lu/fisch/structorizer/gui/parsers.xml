@@ -8,6 +8,7 @@
 	</plugin>
 	<plugin title="ANSI-C99" 				class="lu.fisch.structorizer.parsers.C99Parser" icon="" >
 		<option name="typeNames" type="String" title="Externally defined type names" help="Comma-separated list of typedefs defined outside the source but referred to within (just to pass the syntax check)" />
+		<option name="redundantNames" type="String" title="Redundant pre-processor names or macros" help="Comma-separated list of names or macros (with empty parentheses) to be ignored on parsing" />
 	</plugin>
 	<plugin title="COBOL" 				class="lu.fisch.structorizer.parsers.COBOLParser" icon="" >
 		<option name="debugLines" type="Boolean" title="Debug Lines" />
