@@ -64,6 +64,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.18      KGU#525: Better support for legacy function definition syntax
  *      Kay Gürtzig     2018.06.19      Issue #533: Initializers for struct variables are now converted into record
  *                                      literals in Structorizer syntax.
+ *      Kay Gürtzig     2018.06.20      Bugfixes #545, #546 (for loops with empty condition, printf format string splitting)
  *
  ******************************************************************************************************
  *
@@ -97,6 +98,7 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
@@ -619,11 +621,11 @@ public class CParser extends CodeParser
 	private String ParserEncoding;
 	private String ParserPath;
 	
+	/** Fix list of common preprocesssor-defined type names for convenience */
 	private	final String[][] typeReplacements = new String[][] {
 		{"size_t", "unsigned long"},
 		{"time_t", "unsigned long"},
-		// FIXME to be made configurable
-		{"cob_u8_t", "unsigned int"}
+		{"ptrdiff_t", "unsigned long"}
 	};
 	
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
@@ -657,7 +659,7 @@ public class CParser extends CodeParser
 		
 		// START KGU#519 2018-06-17: Enh. 541 Empty the defines before general start
 		defines.clear();
-		// END KGU#51 2018-06-17
+		// END KGU#519 2018-06-17
 		
 		//========================================================================!!!
 		// Now introduced as plugin-defined option configuration for C
@@ -1473,7 +1475,7 @@ public class CParser extends CodeParser
 	{
 		root.setProgram(false);	// C programs are functions, primarily
 		this.optionUpperCaseProgName = Root.check(6);
-		// START KGU#407 207-06-22: Enh. #420: Configure the lookup table for comment retrieval
+		// START KGU#407 2017-06-22: Enh. #420: Configure the lookup table for comment retrieval
 		this.registerStatementRuleIds(statementIds);
 		// END KGU#407 2017-06-11
 	}
@@ -2070,7 +2072,21 @@ public class CParser extends CodeParser
 				
 				// get the second part - should be an ordinary condition
 				String content = getContent_R(_reduction.get(4).asReduction(), "");
-				While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				// START KGU#527 2018-06-20: Bugfix #545
+				//While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				Subqueue body = null;
+				Element ele = null;
+				if (content.trim().isEmpty()) {
+					Forever lp0 = new Forever();
+					ele = lp0;
+					body = lp0.getBody();
+				}
+				else {
+					While lp0 = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+					ele = lp0;
+					body = lp0.getBody();
+				}
+				// END KGU#527 2018-06-20
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -2080,16 +2096,16 @@ public class CParser extends CodeParser
 				
 				// Get and convert the body
 				secReduc = _reduction.get(8).asReduction();
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, body);
 
 				// get the last part of the header now and append it to the body
 				secReduc = _reduction.get(6).asReduction();
 				// Problem is that it is typically a simple operator expression,
 				// e.g. i++ or --i, so it won't be recognized as statement unless we
 				/// impose some extra status
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, body);
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				ele.q.getElement(ele.q.getSize()-1).setColor(colorMisc);
+				body.getElement(body.getSize()-1).setColor(colorMisc);
 
 			}
 			else if (
@@ -2230,10 +2246,12 @@ public class CParser extends CodeParser
 				switch (typeRed.getParent().getTableIndex())
 				{
 				case RuleConstants.PROD_BASE_STRUCT_ID:
+					// <Base> ::= struct Id
 					type = type.replace("struct ", "").trim();
 					isStruct = true;
 					break;
 				case RuleConstants.PROD_BASE_STRUCT_LBRACE_RBRACE:
+					// <Base> ::= struct '{' <Struct Def> '}'
 					// We have an anonymous type here - if we didn't obtain a type name, we'll create a new one
 					{
 						if (_typeList.count() == 0) {
@@ -2694,7 +2712,10 @@ public class CParser extends CodeParser
 				int posPerc = -1;
 				formatStr = formatStr.substring(1, formatStr.length()-1);
 				int i = 1;
-				while ((posPerc = formatStr.indexOf('%')) > 0 && i < _args.count()) {
+				// START KGU#528 2018-06-20: Bugfix #546 (format strings staring with '%' weren't split)
+				//while ((posPerc = formatStr.indexOf('%')) > 0 && i < _args.count()) {
+				while ((posPerc = formatStr.indexOf('%')) >= 0 && i < _args.count()-1) {
+				// END KGU#528 2018-06-20
 					newExprList.add('"' + formatStr.substring(0, posPerc) + '"');
 					formatStr = formatStr.substring(posPerc+1).replaceFirst(".*?[idxucsefg](.*)", "$1");
 					newExprList.add(_args.get(i++));
@@ -2785,7 +2806,7 @@ public class CParser extends CodeParser
 	@Override
 	protected String getContent_R(Reduction _reduction, String _content)
 	{
-		// If we haden't to replace some things here, we might as well
+		// If we hadn't to replace some things here, we might as well
 		// have used token.asString(), it seems (instead of passing the
 		// token as reduction to this method).
 		for(int i=0; i<_reduction.size(); i++)
