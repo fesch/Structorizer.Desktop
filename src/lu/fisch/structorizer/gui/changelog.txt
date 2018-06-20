@@ -9,9 +9,8 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - C import fails if the code contains function pointers.
-- Algorithmic efforts will have to compensate performance losses due to enhancements.
 
-Current development version: 3.28-03 (2018-06-07)
+Current development version: 3.28-04 (2018-06-20)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -32,8 +31,19 @@ Current development version: 3.28-03 (2018-06-07)
 - 02: Bugfix #451: Java version test in shell start scripts revised [hans005]
 - 02: Bugfix #533: Import of struct types from C files was dysfunctional <2>
 - 03: Enh. #519: Font resizing with ctrl + mouse wheel missed in LicenseEditor <2>
-- 03: Issue #535: Menu item "Save as..." had wrong icon and accelerator <2>
+- 03: Issue #535: License Editor menu item "Save as..." had wrong accelerator <2>
 - 03: Issue #463: Logging configuration mechanism didn't work for WebStart <2>
+- 03: Issue #536: Precaution against unsuited command line arguments <2>,
+      experimental workaround against Direct3D trouble on some machines <2>
+- 03: Issue #143: Comment popup switched off on opening print preview <2>
+- 03: Bugfix #540: C import could fail or get stuck on processing macros <2>
+- 03: Enh. #541: New import option "redundant symbols/macros" for C code <2>
+- 03: Bugfix #542: Procedure import from C code mended (result type + return) <2>
+- 03: Import of legacy C function definitions improved (arg types, KGU#525) <2>
+- 04: Bugfix #544: Arranger deceleratingly redrew on diagram navigation <2>
+- 04: Bugfix #533: Effort to import C struct initializers as record literals <2>
+- 04: Bugfix #545: Defective C import of FOR loops without condition <2>
+- 04: Bugfix #546: C import failed to split certain printf format strings <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

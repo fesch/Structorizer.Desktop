@@ -21,11 +21,17 @@ set -e
 #      Kay Gürtzig                    2016.12.27   More resource files copied
 #      Simon Sobisch                  2017.03.06   Check for javac
 #      Kay Gürtzig                    2018.01.26   Additional icon directories copied
+#      Simon Sobisch                  2018.06.08   create bin directory, if missing
 #
 ################################################################################
 
 # check for javac in PATH
 javac -version 2>/dev/null || (rc=$? && echo 'javac not found in $PATH' && exit $rc)
+
+# create bin directory if missing
+if ! test -d bin; then
+  mkdir bin
+fi
 
 # delete old class files from "lu" package
 echo Removing .class files

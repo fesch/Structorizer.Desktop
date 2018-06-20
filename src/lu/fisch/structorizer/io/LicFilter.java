@@ -45,8 +45,8 @@ import java.io.FilenameFilter;
 
 
 /**
- * @author kay
- *
+ * File name filer for Structorizer license files
+ * @author Kay Gürtzig
  */
 public class LicFilter implements FilenameFilter {
 
@@ -67,7 +67,7 @@ public class LicFilter implements FilenameFilter {
 	
 	public static String getExtension(String s) 
 	{
-		String ext = null;
+		String ext = "";
 		int i = s.lastIndexOf('.');
 		
 		if (i > 0 &&  i < s.length() - 1) 
@@ -79,16 +79,7 @@ public class LicFilter implements FilenameFilter {
 	
 	public static String getExtension(File f) 
 	{
-		String ext = null;
-		String s = f.getName();
-		int i = s.lastIndexOf('.');
-		
-		if (i > 0 &&  i < s.length() - 1) 
-		{
-			ext = s.substring(i+1).toLowerCase();
-		}
-		
-		return ext;
+		return getExtension(f.getName());
 	}
 	
     public boolean accept(File dir, String fileName) {

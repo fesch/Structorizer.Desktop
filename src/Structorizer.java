@@ -46,6 +46,8 @@
  *      Kay Gürtzig     2017.11.06      Issue #455: Loading of argument files put in a sequential thread to overcome races
  *      Kay Gürtzig     2018.03.21      Issue #463: Logging configuration via file logging.properties
  *      Kay Gürtzig     2018.06.07      Issue #463: Logging configuration mechanism revised (to support WebStart)
+ *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble
+ *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
  *
  ******************************************************************************************************
  *
@@ -72,8 +74,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import lu.fisch.structorizer.elements.Root;
@@ -205,6 +210,10 @@ public class Structorizer
 		}
 		// END KGU#187 2016-04-28
 		
+		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
+		System.setProperty("sun.java2d.noddraw", "true");
+		// END KGU#521 2018-06-12
+
 		// try to load the system Look & Feel
 		try
 		{
@@ -217,7 +226,7 @@ public class Structorizer
 
 		// load the mainform
 		final Mainform mainform = new Mainform();
-
+		
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
         try {
         	EventQueue.invokeAndWait(new Runnable() {
@@ -247,6 +256,14 @@ public class Structorizer
         						mainform.diagram.arrangeNSD();
         					}
         					lastExt = mainform.diagram.openNsdOrArr(s);
+        					// START KGU#521 2018-06-08: Bugfix #536 (try)
+        					if (lastExt == "") {
+        						String msg = "Unsuited or misplaced command line argument \"" + s + "\" ignored.";
+        						Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
+        						JOptionPane.showMessageDialog(mainform, msg,
+        								"Command line", JOptionPane.WARNING_MESSAGE);
+        					}
+        					// END KGU#521 2018-06-08
         				}
         				// END KGU#306 2016-12-12/2017-01-27
         			}
@@ -436,7 +453,7 @@ public class Structorizer
 	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode
 	/*****************************************
 	 * batch code import methods
-	 * @param _logDir TODO
+	 * @param _logDir - Path of the target folder for the parser log
 	 *****************************************/
 	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet, String _logDir)
 	{

@@ -58,6 +58,13 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.09.30      Enh. #411: Bugfix in typedef preparation, enh. #423: struct import done
  *                                      Enh. #420: Comment delimiter specification added
  *      Kay Gürtzig     2018.06.04      Issue #533: Import of C struct definitions hadn't been converted to Structorizer syntax
+ *      Kay Gürtzig     2018.06.17      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
+ *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
+ *                                      Bugfix #542: return without expr. not supported, result type void now suppressed
+ *      Kay Gürtzig     2018.06.18      KGU#525: Better support for legacy function definition syntax
+ *      Kay Gürtzig     2018.06.19      Issue #533: Initializers for struct variables are now converted into record
+ *                                      literals in Structorizer syntax.
+ *      Kay Gürtzig     2018.06.20      Bugfixes #545, #546 (for loops with empty condition, printf format string splitting)
  *
  ******************************************************************************************************
  *
@@ -77,6 +84,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.Vector;
@@ -90,12 +98,14 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.StringList;
 
@@ -146,6 +156,7 @@ public class CParser extends CodeParser
 		RuleConstants.PROD_TYPEDEFDECL_TYPEDEF,
 		RuleConstants.PROD_NORMALSTM_BREAK_SEMI,
 		RuleConstants.PROD_NORMALSTM_RETURN_SEMI,
+		RuleConstants.PROD_NORMALSTM_RETURN_SEMI2,
 		RuleConstants.PROD_NORMALSTM_GOTO_ID_SEMI,
 		RuleConstants.PROD_NORMALSTM_CONTINUE_SEMI,
 		RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN,
@@ -494,92 +505,93 @@ public class CParser extends CodeParser
 		final int PROD_NORMALSTM_BREAK_SEMI                         = 112;  // <Normal Stm> ::= break ';'
 		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 113;  // <Normal Stm> ::= continue ';'
 		final int PROD_NORMALSTM_RETURN_SEMI                        = 114;  // <Normal Stm> ::= return <Expr> ';'
-//		final int PROD_NORMALSTM_SEMI2                              = 115;  // <Normal Stm> ::= ';'
-//		final int PROD_ARG                                          = 116;  // <Arg> ::= <Expr>
-//		final int PROD_ARG2                                         = 117;  // <Arg> ::= 
-		final int PROD_CASESTMS_CASE_COLON                          = 118;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
-		final int PROD_CASESTMS_DEFAULT_COLON                       = 119;  // <Case Stms> ::= default ':' <Stm List>
-//		final int PROD_CASESTMS                                     = 120;  // <Case Stms> ::= 
-//		final int PROD_BLOCK_LBRACE_RBRACE                          = 121;  // <Block> ::= '{' <Decl Stm List> '}'
-//		final int PROD_DECLSTMLIST                                  = 122;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
-//		final int PROD_DECLSTMLIST2                                 = 123;  // <Decl Stm List> ::= <Stm List>
-		final int PROD_STMLIST                                      = 124;  // <Stm List> ::= <Stm> <Stm List>
-//		final int PROD_STMLIST2                                     = 125;  // <Stm List> ::= 
-//		final int PROD_INITIALIZER                                  = 126;  // <Initializer> ::= <Op If>
-//		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 127;  // <Initializer> ::= '{' <ExprIni> '}'
-//		final int PROD_EXPR_COMMA                                   = 128;  // <Expr> ::= <Expr> ',' <Op Assign>
-//		final int PROD_EXPR                                         = 129;  // <Expr> ::= <Op Assign>
-//		final int PROD_EXPRINI_COMMA                                = 130;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
-//		final int PROD_EXPRINI                                      = 131;  // <ExprIni> ::= <Initializer>
-		final int PROD_OPASSIGN_EQ                                  = 132;  // <Op Assign> ::= <Op If> '=' <Op Assign>
-		final int PROD_OPASSIGN_PLUSEQ                              = 133;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
-		final int PROD_OPASSIGN_MINUSEQ                             = 134;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
-		final int PROD_OPASSIGN_TIMESEQ                             = 135;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
-		final int PROD_OPASSIGN_DIVEQ                               = 136;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
-		final int PROD_OPASSIGN_CARETEQ                             = 137;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
-		final int PROD_OPASSIGN_AMPEQ                               = 138;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
-		final int PROD_OPASSIGN_PIPEEQ                              = 139;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
-		final int PROD_OPASSIGN_GTGTEQ                              = 140;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
-		final int PROD_OPASSIGN_LTLTEQ                              = 141;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
-//		final int PROD_OPASSIGN                                     = 142;  // <Op Assign> ::= <Op If>
-//		final int PROD_OPIF_QUESTION_COLON                          = 143;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
-//		final int PROD_OPIF                                         = 144;  // <Op If> ::= <Op Or>
-//		final int PROD_OPOR_PIPEPIPE                                = 145;  // <Op Or> ::= <Op Or> '||' <Op And>
-//		final int PROD_OPOR                                         = 146;  // <Op Or> ::= <Op And>
-//		final int PROD_OPAND_AMPAMP                                 = 147;  // <Op And> ::= <Op And> '&&' <Op BinOR>
-//		final int PROD_OPAND                                        = 148;  // <Op And> ::= <Op BinOR>
-//		final int PROD_OPBINOR_PIPE                                 = 149;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
-//		final int PROD_OPBINOR                                      = 150;  // <Op BinOR> ::= <Op BinXOR>
-//		final int PROD_OPBINXOR_CARET                               = 151;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
-//		final int PROD_OPBINXOR                                     = 152;  // <Op BinXOR> ::= <Op BinAND>
-//		final int PROD_OPBINAND_AMP                                 = 153;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
-//		final int PROD_OPBINAND                                     = 154;  // <Op BinAND> ::= <Op Equate>
-//		final int PROD_OPEQUATE_EQEQ                                = 155;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
-//		final int PROD_OPEQUATE_EXCLAMEQ                            = 156;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
-//		final int PROD_OPEQUATE                                     = 157;  // <Op Equate> ::= <Op Compare>
-//		final int PROD_OPCOMPARE_LT                                 = 158;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
-//		final int PROD_OPCOMPARE_GT                                 = 159;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
-//		final int PROD_OPCOMPARE_LTEQ                               = 160;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
-//		final int PROD_OPCOMPARE_GTEQ                               = 161;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
-//		final int PROD_OPCOMPARE                                    = 162;  // <Op Compare> ::= <Op Shift>
-//		final int PROD_OPSHIFT_LTLT                                 = 163;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
-//		final int PROD_OPSHIFT_GTGT                                 = 164;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
-//		final int PROD_OPSHIFT                                      = 165;  // <Op Shift> ::= <Op Add>
-//		final int PROD_OPADD_PLUS                                   = 166;  // <Op Add> ::= <Op Add> '+' <Op Mult>
-//		final int PROD_OPADD_MINUS                                  = 167;  // <Op Add> ::= <Op Add> '-' <Op Mult>
-//		final int PROD_OPADD                                        = 168;  // <Op Add> ::= <Op Mult>
-//		final int PROD_OPMULT_TIMES                                 = 169;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
-//		final int PROD_OPMULT_DIV                                   = 170;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
-//		final int PROD_OPMULT_PERCENT                               = 171;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
-//		final int PROD_OPMULT                                       = 172;  // <Op Mult> ::= <Op Unary>
-//		final int PROD_OPUNARY_EXCLAM                               = 173;  // <Op Unary> ::= '!' <Op Unary>
-//		final int PROD_OPUNARY_TILDE                                = 174;  // <Op Unary> ::= '~' <Op Unary>
-//		final int PROD_OPUNARY_MINUS                                = 175;  // <Op Unary> ::= '-' <Op Unary>
-//		final int PROD_OPUNARY_TIMES                                = 176;  // <Op Unary> ::= '*' <Op Unary>
-//		final int PROD_OPUNARY_AMP                                  = 177;  // <Op Unary> ::= '&' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS                             = 178;  // <Op Unary> ::= '++' <Op Unary>
-		final int PROD_OPUNARY_MINUSMINUS                           = 179;  // <Op Unary> ::= '--' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS2                            = 180;  // <Op Unary> ::= <Op Pointer> '++'
-		final int PROD_OPUNARY_MINUSMINUS2                          = 181;  // <Op Unary> ::= <Op Pointer> '--'
-//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 182;  // <Op Unary> ::= '(' <ConstType> ')' <Op Unary>
-//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 183;  // <Op Unary> ::= sizeof '(' <ConstType> ')'
-//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 184;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
-//		final int PROD_OPUNARY                                      = 185;  // <Op Unary> ::= <Op Pointer>
-//		final int PROD_OPPOINTER_DOT                                = 186;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
-//		final int PROD_OPPOINTER_MINUSGT                            = 187;  // <Op Pointer> ::= <Op Pointer> '->' <Call Id>
-//		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 188;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
-//		final int PROD_OPPOINTER                                    = 189;  // <Op Pointer> ::= <Value>
-		final int PROD_CALLID_ID_LPAREN_RPAREN                      = 190;  // <Call Id> ::= Id '(' <Expr> ')'
-		final int PROD_CALLID_ID_LPAREN_RPAREN2                     = 191;  // <Call Id> ::= Id '(' ')'
-//		final int PROD_CALLID_ID                                    = 192;  // <Call Id> ::= Id
-//		final int PROD_VALUE_OCTLITERAL                             = 193;  // <Value> ::= OctLiteral
-//		final int PROD_VALUE_HEXLITERAL                             = 194;  // <Value> ::= HexLiteral
-//		final int PROD_VALUE_DECLITERAL                             = 195;  // <Value> ::= DecLiteral
-//		final int PROD_VALUE_STRINGLITERAL                          = 196;  // <Value> ::= StringLiteral
-//		final int PROD_VALUE_CHARLITERAL                            = 197;  // <Value> ::= CharLiteral
-//		final int PROD_VALUE_FLOATLITERAL                           = 198;  // <Value> ::= FloatLiteral
-//		final int PROD_VALUE                                        = 199;  // <Value> ::= <Call Id>
-//		final int PROD_VALUE_LPAREN_RPAREN                          = 200;  // <Value> ::= '(' <Expr> ')'
+		final int PROD_NORMALSTM_RETURN_SEMI2                       = 115;  // <Normal Stm> ::= return ';'
+//		final int PROD_NORMALSTM_SEMI2                              = 116;  // <Normal Stm> ::= ';'
+//		final int PROD_ARG                                          = 117;  // <Arg> ::= <Expr>
+//		final int PROD_ARG2                                         = 118;  // <Arg> ::= 
+		final int PROD_CASESTMS_CASE_COLON                          = 119;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
+		final int PROD_CASESTMS_DEFAULT_COLON                       = 120;  // <Case Stms> ::= default ':' <Stm List>
+//		final int PROD_CASESTMS                                     = 121;  // <Case Stms> ::= 
+//		final int PROD_BLOCK_LBRACE_RBRACE                          = 122;  // <Block> ::= '{' <Decl Stm List> '}'
+//		final int PROD_DECLSTMLIST                                  = 123;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
+//		final int PROD_DECLSTMLIST2                                 = 124;  // <Decl Stm List> ::= <Stm List>
+		final int PROD_STMLIST                                      = 125;  // <Stm List> ::= <Stm> <Stm List>
+//		final int PROD_STMLIST2                                     = 126;  // <Stm List> ::= 
+//		final int PROD_INITIALIZER                                  = 127;  // <Initializer> ::= <Op If>
+//		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 128;  // <Initializer> ::= '{' <ExprIni> '}'
+//		final int PROD_EXPR_COMMA                                   = 129;  // <Expr> ::= <Expr> ',' <Op Assign>
+//		final int PROD_EXPR                                         = 130;  // <Expr> ::= <Op Assign>
+//		final int PROD_EXPRINI_COMMA                                = 131;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
+//		final int PROD_EXPRINI                                      = 132;  // <ExprIni> ::= <Initializer>
+		final int PROD_OPASSIGN_EQ                                  = 133;  // <Op Assign> ::= <Op If> '=' <Op Assign>
+		final int PROD_OPASSIGN_PLUSEQ                              = 134;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
+		final int PROD_OPASSIGN_MINUSEQ                             = 135;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
+		final int PROD_OPASSIGN_TIMESEQ                             = 136;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
+		final int PROD_OPASSIGN_DIVEQ                               = 137;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
+		final int PROD_OPASSIGN_CARETEQ                             = 138;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
+		final int PROD_OPASSIGN_AMPEQ                               = 139;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
+		final int PROD_OPASSIGN_PIPEEQ                              = 140;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
+		final int PROD_OPASSIGN_GTGTEQ                              = 141;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
+		final int PROD_OPASSIGN_LTLTEQ                              = 142;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
+//		final int PROD_OPASSIGN                                     = 143;  // <Op Assign> ::= <Op If>
+//		final int PROD_OPIF_QUESTION_COLON                          = 144;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
+//		final int PROD_OPIF                                         = 145;  // <Op If> ::= <Op Or>
+//		final int PROD_OPOR_PIPEPIPE                                = 146;  // <Op Or> ::= <Op Or> '||' <Op And>
+//		final int PROD_OPOR                                         = 147;  // <Op Or> ::= <Op And>
+//		final int PROD_OPAND_AMPAMP                                 = 148;  // <Op And> ::= <Op And> '&&' <Op BinOR>
+//		final int PROD_OPAND                                        = 149;  // <Op And> ::= <Op BinOR>
+//		final int PROD_OPBINOR_PIPE                                 = 150;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
+//		final int PROD_OPBINOR                                      = 151;  // <Op BinOR> ::= <Op BinXOR>
+//		final int PROD_OPBINXOR_CARET                               = 152;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
+//		final int PROD_OPBINXOR                                     = 153;  // <Op BinXOR> ::= <Op BinAND>
+//		final int PROD_OPBINAND_AMP                                 = 154;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
+//		final int PROD_OPBINAND                                     = 155;  // <Op BinAND> ::= <Op Equate>
+//		final int PROD_OPEQUATE_EQEQ                                = 156;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
+//		final int PROD_OPEQUATE_EXCLAMEQ                            = 157;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
+//		final int PROD_OPEQUATE                                     = 158;  // <Op Equate> ::= <Op Compare>
+//		final int PROD_OPCOMPARE_LT                                 = 159;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
+//		final int PROD_OPCOMPARE_GT                                 = 160;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
+//		final int PROD_OPCOMPARE_LTEQ                               = 161;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
+//		final int PROD_OPCOMPARE_GTEQ                               = 162;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
+//		final int PROD_OPCOMPARE                                    = 163;  // <Op Compare> ::= <Op Shift>
+//		final int PROD_OPSHIFT_LTLT                                 = 164;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
+//		final int PROD_OPSHIFT_GTGT                                 = 165;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
+//		final int PROD_OPSHIFT                                      = 166;  // <Op Shift> ::= <Op Add>
+//		final int PROD_OPADD_PLUS                                   = 167;  // <Op Add> ::= <Op Add> '+' <Op Mult>
+//		final int PROD_OPADD_MINUS                                  = 168;  // <Op Add> ::= <Op Add> '-' <Op Mult>
+//		final int PROD_OPADD                                        = 169;  // <Op Add> ::= <Op Mult>
+//		final int PROD_OPMULT_TIMES                                 = 170;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
+//		final int PROD_OPMULT_DIV                                   = 171;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
+//		final int PROD_OPMULT_PERCENT                               = 172;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
+//		final int PROD_OPMULT                                       = 173;  // <Op Mult> ::= <Op Unary>
+//		final int PROD_OPUNARY_EXCLAM                               = 174;  // <Op Unary> ::= '!' <Op Unary>
+//		final int PROD_OPUNARY_TILDE                                = 175;  // <Op Unary> ::= '~' <Op Unary>
+//		final int PROD_OPUNARY_MINUS                                = 176;  // <Op Unary> ::= '-' <Op Unary>
+//		final int PROD_OPUNARY_TIMES                                = 177;  // <Op Unary> ::= '*' <Op Unary>
+//		final int PROD_OPUNARY_AMP                                  = 178;  // <Op Unary> ::= '&' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS                             = 179;  // <Op Unary> ::= '++' <Op Unary>
+		final int PROD_OPUNARY_MINUSMINUS                           = 180;  // <Op Unary> ::= '--' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS2                            = 181;  // <Op Unary> ::= <Op Pointer> '++'
+		final int PROD_OPUNARY_MINUSMINUS2                          = 182;  // <Op Unary> ::= <Op Pointer> '--'
+//		final int PROD_OPUNARY_LPAREN_RPAREN                        = 183;  // <Op Unary> ::= '(' <ConstType> ')' <Op Unary>
+//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 184;  // <Op Unary> ::= sizeof '(' <ConstType> ')'
+//		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 185;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
+//		final int PROD_OPUNARY                                      = 186;  // <Op Unary> ::= <Op Pointer>
+//		final int PROD_OPPOINTER_DOT                                = 187;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
+//		final int PROD_OPPOINTER_MINUSGT                            = 188;  // <Op Pointer> ::= <Op Pointer> '->' <Call Id>
+//		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 189;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
+//		final int PROD_OPPOINTER                                    = 190;  // <Op Pointer> ::= <Value>
+		final int PROD_CALLID_ID_LPAREN_RPAREN                      = 191;  // <Call Id> ::= Id '(' <Expr> ')'
+		final int PROD_CALLID_ID_LPAREN_RPAREN2                     = 192;  // <Call Id> ::= Id '(' ')'
+//		final int PROD_CALLID_ID                                    = 193;  // <Call Id> ::= Id
+//		final int PROD_VALUE_OCTLITERAL                             = 194;  // <Value> ::= OctLiteral
+//		final int PROD_VALUE_HEXLITERAL                             = 195;  // <Value> ::= HexLiteral
+//		final int PROD_VALUE_DECLITERAL                             = 196;  // <Value> ::= DecLiteral
+//		final int PROD_VALUE_STRINGLITERAL                          = 197;  // <Value> ::= StringLiteral
+//		final int PROD_VALUE_CHARLITERAL                            = 198;  // <Value> ::= CharLiteral
+//		final int PROD_VALUE_FLOATLITERAL                           = 199;  // <Value> ::= FloatLiteral
+//		final int PROD_VALUE                                        = 200;  // <Value> ::= <Call Id>
+//		final int PROD_VALUE_LPAREN_RPAREN                          = 201;  // <Value> ::= '(' <Expr> ')'
 	};
 
 	//---------------------------- Local Definitions ---------------------
@@ -618,8 +630,13 @@ public class CParser extends CodeParser
 	
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
 
-	final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
-	static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
+	private final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
+	private static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
+	// START KGU#519 2018-06-17: Enh. #541
+	// macro signature:  macroname ( 3 )
+	private static final Pattern PTRN_MACRO_SIG = Pattern.compile("(\\w+)\\(\\s*([0-9]*)\\s*\\)");
+	private static Matcher mtchMacroSig = PTRN_MACRO_SIG.matcher("");
+	// END KGU#519 2018-06-17
 
 	//----------------------------- Preprocessor -----------------------------
 
@@ -639,6 +656,10 @@ public class CParser extends CodeParser
 	{	
 		this.ParserPath = null; // set after file object creation
 		this.ParserEncoding	= _encoding;
+		
+		// START KGU#519 2018-06-17: Enh. 541 Empty the defines before general start
+		defines.clear();
+		// END KGU#519 2018-06-17
 		
 		//========================================================================!!!
 		// Now introduced as plugin-defined option configuration for C
@@ -705,6 +726,11 @@ public class CParser extends CodeParser
 			// END KGU#193 2016-05-04
 			String strLine;
 			boolean inComment = false;
+
+			// START KGU#519 2018-06-17: Enh. #541
+			registerRedundantDefines(defines);
+			// END KGU#519 2018-06-17
+			
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the #define replacements (at least roughly...) which we do
@@ -848,6 +874,46 @@ public class CParser extends CodeParser
 		}
 	}
 
+	// START KGU#519 2018-06-17: Enh. #541
+	/**
+	 * Analyses the import option "redundantNames" and derives dummy defines from
+	 * them that are suited to eliminate the respective texts from the code. 
+	 */
+	private void registerRedundantDefines(HashMap<String, String[]> defines) {
+		String namesToBeIgnored = (String)this.getPluginOption("redundantNames", null);
+		if (namesToBeIgnored != null) {
+			String[] macros = namesToBeIgnored.split(",");
+			for (String macro: macros) {
+				macro = macro.trim();
+				if (mtchMacroSig.reset(macro).matches()) {
+					String macroName = mtchMacroSig.group(1).trim();
+					String countStr = mtchMacroSig.group(2).trim();
+					int count = 1;
+					try {
+						if (!countStr.isEmpty()) {
+							count = Integer.parseInt(countStr);
+						}
+						String[] pseudoArgs = new String[count+1];
+						pseudoArgs[0] = "";
+						for (int i = 0; i < count; i++) {
+							pseudoArgs[i+1] = "arg" + i;
+						}
+						defines.put(macroName, pseudoArgs);
+						log("Prepared to eliminate redundant macro \"" + macro + "\"\n", false);
+					}
+					catch (NumberFormatException ex) {
+						log("*** Illegal redundant macro specification: " + macro + "\n", true);
+					}
+				}
+				else {
+					defines.put(macro, new String[]{""});
+					log("Prepared to eliminate redundant symbol \"" + macro + "\"\n", false);
+				}
+			}
+		}
+	}
+	// END KGU#519 2018-06-17
+
 	// Patterns and Matchers for preprocessing
 	// (reusable, otherwise these get created and compiled over and over again)
 	// #define	a	b
@@ -862,7 +928,7 @@ public class CParser extends CodeParser
 	private static final Pattern PTRN_UNDEF = Pattern.compile("^undef\\s+(\\w+)(.*)");
 	// #undef	a
 	private static final Pattern PTRN_INCLUDE = Pattern.compile("^include\\s+[<\"]([^>\"]+)[>\"]");
-	// multiple things we can ignore: #pragma, #warning, #error, #message 
+	// several things we can ignore: #pragma, #warning, #error, #message 
 	private static final Pattern PTRN_IGNORE = Pattern.compile("^(?>pragma)|(?>warning)|(?>error)|(?>message)");
 	
 	private static Matcher mtchDefine = PTRN_DEFINE.matcher("");
@@ -949,7 +1015,7 @@ public class CParser extends CodeParser
 			if (processSourceFile(this.ParserPath + incName, null)) {
 				return "// preparser include (parsed): ";
 			} else {
-				return "// preparser include: ";
+				return "// preparser include (failed): ";
 			}
 		}
 
@@ -1266,9 +1332,21 @@ public class CParser extends CodeParser
 	}
 
 	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) {
-		if (toReplace.trim().isEmpty()) {
-			return "";
+		// START KGU#519 2018-06-17: Enh. #541 - The matching tends to fail if toReplace ends with newline characters
+		// (The trailing newlines were appended on concatenating lines broken by end-standing backslashes to preserve line counting.)
+		//if (toReplace.trim().isEmpty()) {
+		//	return "";
+		//}
+		String nlTail = "";
+		int nlPos = toReplace.indexOf('\n');
+		if (nlPos >= 0) {
+			nlTail = toReplace.substring(nlPos);	// Ought to contain the tail of \n characters
+			toReplace = toReplace.substring(0, nlPos);
 		}
+		if (toReplace.trim().isEmpty()) {
+			return nlTail;	// Preserve line count...
+		}
+		// END KGU#519 2018-06-17
 		//log("CParser.replaceDefinedEntries(): " + Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", false);
 		for (Entry<String, String[]> entry: defines.entrySet()) {
 			
@@ -1278,21 +1356,27 @@ public class CParser extends CodeParser
 			if (entry.getValue().length > 1) {
 				//          key<val[0]>     <   val[1]   >
 				// #define	a1(a2,a3,a4)	stuff (  a2  )
-				// key  (  text1, text2, text3 )	--->	stuff (  text1  )
+				// key  ( text1, text2, text3 )	--->	stuff (  text1  )
 				// #define	a1(a2,a3,a4)
-				// key  (  text1, text2, text3 )	--->
+				// key  ( text1, text2, text3 )	--->
 				// #define	a1(a2,a3,a4)	a2
-				// key  (  text1, text2, text3 )	--->	text1
+				// key  ( text1, text2, text3 )	--->	text1
 				// #define	a1(a2,a3,a4)	some text
-				// key  (  text1, text2, text3 )	--->	some text
-				// The trouble here is that text1, text2 etc. might also contain parentheses, so may the following text.
-				// The result of the replacement would then be a total desaster
-				while (toReplace.matches("(^|.*?\\W)" + entry.getKey() + "\\s*\\(.*\\).*?")) {
+				// key  ( text1, text2, text3 )	--->	some text
+				/* FIXME: 
+				 * The trouble here is that text1, text2 etc. might also contain parentheses, so may the following text.
+				 * The result of the replacement would then be a total desaster
+				 */
+				Matcher matcher = Pattern.compile("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)").matcher("");
+				//while (toReplace.matches("(^|.*?\\W)" + entry.getKey() + "\\s*\\(.*\\).*?")) {
+				while (matcher.reset(toReplace).matches()) {
 					if (entry.getValue()[0].isEmpty()) {
-						toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
+						//toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
+						toReplace = matcher.replaceAll("$1$2$4");
 					} else {
 						// The greedy quantifier inside the parentheses ensures that we get to the rightmost closing parenthesis
-						String argsRaw = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)", "$3");
+						//String argsRaw = toReplace.replaceFirst("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*)", "$3");
+						String argsRaw = matcher.group(3);
 						// Now we split the balanced substring (up to the first unexpected closing parenthesis) syntactically
 						// (The unmatched tail of argsRaw will be re-appended later)
 						StringList args = Element.splitExpressionList(argsRaw, ",");
@@ -1300,17 +1384,39 @@ public class CParser extends CodeParser
 						if (args.count() != entry.getValue().length - 1) {
 							// FIXME: function-like define doesn't match arg count
 							log("CParser.replaceDefinedEntries() cannot apply function macro\n\t"
-									+ entry.getKey() + entry.getValue().toString() + "\n\tdue to arg count diffs:\n\t"
+									// START KGU#522 2018-06-17: Bugfix #540 reconstruction of the macro
+									//+ entry.getKey() + entry.getValue().toString() + "\n\tdue to arg count diffs:\n\t"
+									+ entry.getKey() + "(" + (new StringList(entry.getValue())).concatenate(", ", 1) + ")"
+									+ "\n\tdue to arg count diffs:\n\t"
+									// END KGU#522 2018-06-07							
 									+ toReplace + "\n", true);
+							// START KGU#522 2018-06-17: Bugfix #540 (emergency exit from a threatening eternal loop)
+							break;
+							// END KGU#522 2018-06-07
 						}
 						else {
 							HashMap<String, String> argMap = new HashMap<String, String>();
 							// Lest the substitutions should interfere with one another we first split the string for all parameters
-							StringList parts = StringList.getNew(entry.getValue()[0]); 
+							// KGU#522: But not this way!
+							StringList parts = StringList.getNew(entry.getValue()[0]);
 							for (int i = 0; i < args.count(); i++) {
 								String param = entry.getValue()[i+1];
 								argMap.put(param, args.get(i));
 								parts = StringList.explodeWithDelimiter(parts, param);
+								// START KGU#522 2018-06-17: Bugfix #540 - we must recompose identifiers
+								parts.removeAll("");
+								int pos = -1;
+								while ((pos = parts.indexOf(param, pos+1)) >= 0) {
+									if (pos > 0 && parts.get(pos-1).matches(".*?\\w")) {
+										parts.set(pos-1, parts.get(pos-1)+param);
+										parts.remove(pos--);
+									}
+									if (pos+1 < parts.count() && parts.get(pos+1).matches("\\w.*?")) {
+										parts.set(pos, parts.get(pos) + parts.get(pos+1));
+										parts.remove(pos+1);
+									}
+								}
+								// END KGU#522 2018-06-17
 							}
 							// Now we have all parts separated and walk through the StringList, substituting the parameter names
 							for (int i = 0; i < parts.count(); i++) {
@@ -1337,16 +1443,28 @@ public class CParser extends CodeParser
 				}
 			} else {
 				// from: #define	a	b, b can also be empty
-				toReplace = toReplace.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)",
+				toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\W.*?)",
 						"$1" + Matcher.quoteReplacement((String) entry.getValue()[0]) + "$2");
 			}
 		}
-		return toReplace;
+		// START KGU#519 2018-06-17: Enh. #541 - To preserve line counting, we restore the temporarily cropped newlines
+		//return toReplace;
+		return toReplace + nlTail;
+		// END KGU#519 2018-06-17
 	}
 
 	//---------------------- Build methods for structograms ---------------------------
 
 	private Root globalRoot = null;	//  dummy Root for global definitions (will be put to main or the only function)
+	
+	// START KGU#518 2018-06-19: Bugfix #533 (struct initializer conversion)
+	/**
+	 * Global type map - e.g. for the conversion of struct initializers.
+	 * This isn't clean but more reliable and efficient than trying to retrieve the
+	 * type info from the several incomplete Roots.
+	 */
+	private final HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
+	// END KGU#518 2018-06-19
 	
 	/**
 	 * Preselects the type of the initial diagram to be imported as function.
@@ -1462,7 +1580,7 @@ public class CParser extends CodeParser
 				boolean isStruct = processTypes(_reduction, ruleId, parentNode, isGlobal, tmpTypes, true);
 				// END KGU#388 2017-09-30
 				String type = tmpTypes.concatenate();
-				// START KGU#407 2017-06-22: Enh.#420 grope for possible souce comments
+				// START KGU#407 2017-06-22: Enh.#420 grope for possible source comments
 				String comment = this.retrieveComment(_reduction);
 				// END KGU#407 2017-06-22
 				// Now concern on the first declaration of the list
@@ -1648,6 +1766,11 @@ public class CParser extends CodeParser
 						// END KGU#376 2017-09-30
 					}
 					parentNode.insertElementAt(this.equipWithSourceComment(decl, _reduction), insertAt);
+					// START KGU#518 2018-06-19: Bugfix #533
+					if (isValid) {
+						decl.updateTypeMap(typeMap);
+					}
+					// END KGU#518 2018-06-19
 				}
 			}
 			else if (
@@ -1664,10 +1787,20 @@ public class CParser extends CodeParser
 			else if (
 					// RETURN instruction
 					ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI
+					// START KGU#523 2018-06-17: Bugfix #542
+					||
+					ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI2
+					// END KGU#523 2018-06-17
 					)
 			{
-				String content = translateContent(getKeyword("preReturn") + 
-						" " + getContent_R(_reduction.get(1).asReduction(), ""));
+				// START KGU#523 2018-06-17: Bugfix #542
+				//String content = translateContent(getKeyword("preReturn") + 
+				//		" " + getContent_R(_reduction.get(1).asReduction(), ""));
+				String content = getKeyword("preReturn");
+				if (ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI) { 
+					content += " " + translateContent(getContent_R(_reduction.get(1).asReduction(), ""));
+				}
+				// END KGU#523 2018-06-17
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				//_parentNode.addElement(new Jump(content.trim()));								
 				_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
@@ -1705,6 +1838,7 @@ public class CParser extends CodeParser
 				_parentNode.addElement(el);
 			}
 			else if (
+					// Continue instruction
 					ruleId == RuleConstants.PROD_NORMALSTM_CONTINUE_SEMI
 					)
 			{
@@ -1817,15 +1951,45 @@ public class CParser extends CodeParser
 					}
 					content = content.replace("const ", "");
 				}
+				// START KGU#523 2018-06-17: Bugfix #542 - result type void should be suppressed
+				if (content.trim().equals("void")) {
+					content = "";
+				}
+				// END KGU#523 2018-06-17
 				content += funcName + "(";
 				int bodyIndex = 4;
 				String params = "";
 				switch (ruleId) {
 				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2:
 					//params = getparamsFromStructDecl(_reduction.get(4).asReduction());
-					params = getCompsFromStructDef(_reduction.get(4).asReduction()).concatenate("; ");
 					bodyIndex = 5;
-					// Here is by design no break!
+					// START KGU#525 2018-06-18: Don't throw the type information away...
+					//params = getCompsFromStructDef(_reduction.get(4).asReduction()).concatenate("; ");
+					params = getContent_R(_reduction.get(2).asReduction(), "");
+					{
+						StringList paramDecls = getCompsFromStructDef(_reduction.get(4).asReduction());
+						StringList paramNames = StringList.explode(params, ",");
+						// Sort the parameter declarations according to the arg list (just in case...)
+						if (paramDecls.count() == paramNames.count()) {
+							StringList paramsOrdered = new StringList();
+							for (int p = 0; p < paramNames.count(); p++) {
+								Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
+								for (int q = 0; q < paramDecls.count(); q++) {
+									String pd = paramDecls.get(q);
+									if (pm.reset(pd).matches()) {
+										paramsOrdered.add(pd);
+										break;
+									}
+								}
+								if (paramsOrdered.count() < p+1) {
+									paramsOrdered.add(paramNames.get(p));
+								}
+							}
+							params = paramsOrdered.concatenate("; ");
+						}
+					}
+					break;
+					// END KGU#525 2018-06-18
 				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
 					params = getContent_R(_reduction.get(2).asReduction(), "");
 					break;
@@ -1908,7 +2072,21 @@ public class CParser extends CodeParser
 				
 				// get the second part - should be an ordinary condition
 				String content = getContent_R(_reduction.get(4).asReduction(), "");
-				While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				// START KGU#527 2018-06-20: Bugfix #545
+				//While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				Subqueue body = null;
+				Element ele = null;
+				if (content.trim().isEmpty()) {
+					Forever lp0 = new Forever();
+					ele = lp0;
+					body = lp0.getBody();
+				}
+				else {
+					While lp0 = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+					ele = lp0;
+					body = lp0.getBody();
+				}
+				// END KGU#527 2018-06-20
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -1918,16 +2096,16 @@ public class CParser extends CodeParser
 				
 				// Get and convert the body
 				secReduc = _reduction.get(8).asReduction();
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, body);
 
 				// get the last part of the header now and append it to the body
 				secReduc = _reduction.get(6).asReduction();
 				// Problem is that it is typically a simple operator expression,
 				// e.g. i++ or --i, so it won't be recognized as statement unless we
 				/// impose some extra status
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, body);
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				ele.q.getElement(ele.q.getSize()-1).setColor(colorMisc);
+				body.getElement(body.getSize()-1).setColor(colorMisc);
 
 			}
 			else if (
@@ -2068,10 +2246,12 @@ public class CParser extends CodeParser
 				switch (typeRed.getParent().getTableIndex())
 				{
 				case RuleConstants.PROD_BASE_STRUCT_ID:
+					// <Base> ::= struct Id
 					type = type.replace("struct ", "").trim();
 					isStruct = true;
 					break;
 				case RuleConstants.PROD_BASE_STRUCT_LBRACE_RBRACE:
+					// <Base> ::= struct '{' <Struct Def> '}'
 					// We have an anonymous type here - if we didn't obtain a type name, we'll create a new one
 					{
 						if (_typeList.count() == 0) {
@@ -2105,6 +2285,9 @@ public class CParser extends CodeParser
 							// END KGU#376 2017-09-30
 						}
 						_subqueue.addElement(typeDef);
+						// START KGU#518 2018-06-19: Bugfix #533
+						typeDef.updateTypeMap(typeMap);
+						// END KGU#518 2018-06-19
 						isStruct = true;
 					}
 					break;
@@ -2278,11 +2461,20 @@ public class CParser extends CodeParser
 			// multiple indices in a declaration (only in assignments or as expression)
 			String varName = _reduc.get(0).asString();
 			//String arrayTag = this.getContent_R((Reduction)thdReduc.getToken(1).getData(), "");
-			String expr = this.getContent_R(_reduc.get(3).asReduction(), "");
-			content = translateContent(content);
+			String expr = translateContent(this.getContent_R(_reduc.get(3).asReduction(), ""));
+			// START KGU#518 2018-06-18: Enh. #533 - we don't need the value of content any longer
+			//content = translateContent(content);
+			TypeMapEntry typeEntry = typeMap.get(":" + _type);
+			if (typeEntry != null && typeEntry.isRecord() && expr.startsWith("{") && expr.endsWith("}")) {
+				expr = convertStructInitializer(_type, expr, typeEntry);
+			}
+			// END KGU#518 2018-06-18
 			Element instr = null;
 			if (this.optionImportVarDecl) {
-				instr = new Instruction(translateContent(_type) + " " + content);
+				// START KGU#518 2018-06-18: Enh. #533 
+				//instr = new Instruction(translateContent(_type) + " " + content);
+				instr = new Instruction(translateContent(_type) + " " + varName + " <- " + expr);
+				// END KGU#518 2018-06-18
 				if (isConstant) {
 					instr.setColor(colorConst);
 				}
@@ -2309,12 +2501,48 @@ public class CParser extends CodeParser
 		}
 		log("\tfallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")\n", false);
 	}
+
+	/**
+	 * Converts a C initializer expression for a struct type to a corresponding
+	 * record initializer for Structorizer.
+	 * This method may not be applicable if the type info isn't available
+	 * @param _typeName - Name of the detected struct type
+	 * @param _expr - the initialiser expression to be converted
+	 * @param _typeEntry - the type entry corresponding to {@code _typeName}
+	 * @return the converted initializer
+	 */
+	private String convertStructInitializer(String _typeName, String _expr, TypeMapEntry _typeEntry) {
+		StringList parts = Element.splitExpressionList(_expr.substring(1), ",", true);
+		LinkedHashMap<String, TypeMapEntry> compInfo = _typeEntry.getComponentInfo(false);
+		if (parts.count() > 1 && compInfo.size() >= parts.count() - 1) {
+			int ix = 0;
+			_expr = _typeName + "{";
+			for (Entry<String, TypeMapEntry> comp: compInfo.entrySet()) {
+				String part = parts.get(ix).trim();
+				// Check for recursive structure initializers
+				TypeMapEntry compType = comp.getValue();
+				if (part.startsWith("{") && part.endsWith("}") &&
+						compType != null && compType.isRecord() && compType.isNamed()) {
+					part = convertStructInitializer(compType.typeName, part, compType);
+				}
+				_expr += comp.getKey() + ": " + part;
+				if (++ix >= parts.count()-1) {
+					_expr += parts.get(parts.count()-1);
+					break;
+				}
+				else {
+					_expr += ", ";
+				}
+			}
+		}
+		return _expr;
+	}
 	
 	/**
 	 * Converts a rule of type PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE into the
 	 * skeleton of a Case element. The case branches will be handled separately
 	 * @param _reduction - Reduction rule of a switch instruction
-	 * @param _parentNode - the Subqueue this Case elemen is to be appended to
+	 * @param _parentNode - the Subqueue this Case element is to be appended to
 	 */
 	private void buildCase(Reduction _reduction, Subqueue _parentNode)
 	{
@@ -2484,7 +2712,10 @@ public class CParser extends CodeParser
 				int posPerc = -1;
 				formatStr = formatStr.substring(1, formatStr.length()-1);
 				int i = 1;
-				while ((posPerc = formatStr.indexOf('%')) > 0 && i < _args.count()) {
+				// START KGU#528 2018-06-20: Bugfix #546 (format strings staring with '%' weren't split)
+				//while ((posPerc = formatStr.indexOf('%')) > 0 && i < _args.count()) {
+				while ((posPerc = formatStr.indexOf('%')) >= 0 && i < _args.count()-1) {
+				// END KGU#528 2018-06-20
 					newExprList.add('"' + formatStr.substring(0, posPerc) + '"');
 					formatStr = formatStr.substring(posPerc+1).replaceFirst(".*?[idxucsefg](.*)", "$1");
 					newExprList.add(_args.get(i++));
@@ -2575,7 +2806,7 @@ public class CParser extends CodeParser
 	@Override
 	protected String getContent_R(Reduction _reduction, String _content)
 	{
-		// If we haden't to replace some things here, we might as well
+		// If we hadn't to replace some things here, we might as well
 		// have used token.asString(), it seems (instead of passing the
 		// token as reduction to this method).
 		for(int i=0; i<_reduction.size(); i++)

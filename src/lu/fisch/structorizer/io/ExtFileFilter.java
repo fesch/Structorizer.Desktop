@@ -16,76 +16,59 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ */
 package lu.fisch.structorizer.io;
 
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Input filter for Arranger Zip files. They contain nsd files and an arr file
+ *      Description:    Abstract extended FileFilter class with file extension support
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author          Date			Description
+ *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2016.06.29      First Issue
- *      Kay Gürtzig     2018.06.08      Inheritance changed
+ *      Kay Gürtzig     2018.06.08      First Issue
  *
  ******************************************************************************************************
  *
- *      Comment:		/
+ *      Comment:
+ *      getExtension() ensures a non-null return value (in case of a missing extension,
+ *      an empty string will be returned)
  *
  ******************************************************************************************************///
 
 import java.io.File;
 
-public class ArrZipFilter extends ExtFileFilter {
-
-	public static boolean isArr(String _filename)
+import javax.swing.filechooser.FileFilter;
+/**
+ * This is an extended abstract subclass of {@link javax.swing.filechooser.FileFilter}
+ * providing two basic static methods for file name extension extraction 
+ * @author Kay Gürtzig
+ */
+public abstract class ExtFileFilter extends FileFilter {
+	
+	public static String getExtension(String s) 
 	{
-		return (getExtension(_filename).equals("arrz"));
-	}
-
-//	public static String getExtension(String s) 
-//	{
-//		String ext = null;
-//		int i = s.lastIndexOf('.');
-//
-//		if (i > 0 &&  i < s.length() - 1) 
-//		{
-//			ext = s.substring(i+1).toLowerCase();
-//		}
-//		return ext;
-//	}
-//
-//	public static String getExtension(File f) 
-//	{
-//		return getExtension(f.getName());
-//	}
-
-	public String getDescription() 
-	{
-		return "Portable Arranger Zip Files";
-	}
-
-	public boolean accept(File f) 
-	{
-		if (f.isDirectory()) 
+		// START KGU#521 2018-06-08: Bugfix #536 We shouldn't return null in any case
+		//String ext = null;
+		String ext = "";
+		// END KGU#521 2018-06-08
+		int i = s.lastIndexOf('.');
+		
+		if (i > 0 &&  i < s.length() - 1) 
 		{
-			return true;
+			ext = s.substring(i+1).toLowerCase();
 		}
-
-//		String extension = getExtension(f);
-//		if (extension != null) 
-//		{
-			return isArr(f.getName());
-//		}
-//
-//		return false;
+		return ext;
+	}
+	
+	public static String getExtension(File f) 
+	{
+		return getExtension(f.getName());
 	}
 
 }

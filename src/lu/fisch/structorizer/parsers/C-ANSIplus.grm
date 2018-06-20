@@ -341,6 +341,7 @@ Comment Line  = '//'
                | break ';'
                | continue ';'
                | return <Expr> ';'
+               | return ';'
                | ';'              !Null statement
 
 

@@ -33,6 +33,7 @@ package lu.fisch.structorizer.io;
  *      Author          Date			Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2015.12.20      First Issue
+ *      Kay Gürtzig     2018.06.08      Inheritance changed
  *
  ******************************************************************************************************
  *
@@ -41,31 +42,30 @@ package lu.fisch.structorizer.io;
  ******************************************************************************************************///
 
 import java.io.File;
-import javax.swing.filechooser.*;
 
-public class ArrFilter extends FileFilter {
+public class ArrFilter extends ExtFileFilter {
 
 	public static boolean isArr(String _filename)
 	{
 		return (getExtension(_filename).equals("arr"));
 	}
 
-	public static String getExtension(String s) 
-	{
-		String ext = null;
-		int i = s.lastIndexOf('.');
-
-		if (i > 0 &&  i < s.length() - 1) 
-		{
-			ext = s.substring(i+1).toLowerCase();
-		}
-		return ext;
-	}
-
-	public static String getExtension(File f) 
-	{
-		return getExtension(f.getName());
-	}
+//	public static String getExtension(String s) 
+//	{
+//		String ext = null;
+//		int i = s.lastIndexOf('.');
+//
+//		if (i > 0 &&  i < s.length() - 1) 
+//		{
+//			ext = s.substring(i+1).toLowerCase();
+//		}
+//		return ext;
+//	}
+//
+//	public static String getExtension(File f) 
+//	{
+//		return getExtension(f.getName());
+//	}
 
 	public String getDescription() 
 	{
@@ -79,13 +79,13 @@ public class ArrFilter extends FileFilter {
 			return true;
 		}
 
-		String extension = getExtension(f);
-		if (extension != null) 
-		{
+//		String extension = getExtension(f);
+//		if (extension != null) 
+//		{
 			return isArr(f.getName());
-		}
-
-		return false;
+//		}
+//
+//		return false;
 	}
 
 }

@@ -55,9 +55,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.08      Bugfix #97: Drawing info invalidation now involves Arranger (KGU#155)
  *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against replacement of Root under execution (KGU#158)
  *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loops considered in editing and parser preferences (KGU#61)
- *      Kay Gürtzig     2016-04-01      Issue #143 (comment popup off on editing etc.), Issue #144 (preferred code generator)
- *      Kay Gürtzig     2016-04-04      Enh. #149: Characterset configuration for export supported
- *      Kay Gürtzig     2016-04-05      Bugfix #155: Selection must be cleared in newNSD()
+ *      Kay Gürtzig     2016.04.01      Issue #143 (comment popup off on editing etc.), Issue #144 (preferred code generator)
+ *      Kay Gürtzig     2016.04.04      Enh. #149: Characterset configuration for export supported
+ *      Kay Gürtzig     2016.04.05      Bugfix #155: Selection must be cleared in newNSD()
  *      Kay Gürtzig     2016.04.07      Enh. #158: Moving selection as cursor key actions (KGU#177)
  *      Kay Gürtzig     2016-04-14      Enh. #158: moveSelection() now updates the scroll view (KGU#177)
  *      Kay Gürtzig     2016-04-19      Issue #164 (no selection heir on deletion) and #165 (inconsistent unselection)
@@ -151,6 +151,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes
  *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file
  *      Kay Gürtzig     2018.04.03      KGU#514: analyse() call on mere mouse clicking avoided
+ *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble in openNsdOrArr()
+ *      Kay Gürtzig     2018.06.11      Issue #143: Comment popup off on opening print preview
  *
  ******************************************************************************************************
  *
@@ -1599,13 +1601,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#289/KGU#316 2016-11-15/2016-12-28: Enh. #290/#318: Better support for Arranger files
 	public String openNsdOrArr(String _filepath)
 	{
-		String ext = StructogramFilter.getExtension(_filepath);
-		if (ext.equalsIgnoreCase("arr") || ext.equalsIgnoreCase("arrz")) {
+		String ext = ExtFileFilter.getExtension(_filepath);
+		if (ext.equals("arr") || ext.equals("arrz")) {
 			loadArrangement(new File(_filepath));			
 		}
-		else {
+		// START KGU#521 2018-06-08: Bugfix #536
+		//else {
+		else if (ext.equals("nsd")) {
+		// START KGU#521 2018-06-08: Bugfix #536
 			this.openNSD(_filepath);
 		}
+		// START KGU#521 2018-06-08: Bugfix #536
+		else {
+			ext = "";
+		}
+		// END KGU#521 2018-06-08
 		return ext;
 	}
 	// END KGU#316 2016-12-28
@@ -3962,6 +3972,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pp.setLocation(Math.round(p.x+(getVisibleRect().width-pp.getWidth())/2), Math.round(p.y)+(getVisibleRect().height-pp.getHeight())/2);
 		pp.setVisible(true);
 		*/
+		// START KGU#170 2018-06-11: Issue #143 - on opening the print preview a comment popup should vanish
+		pop.setVisible(false);
+		// END KGU#170 2018-06-11
 		PrintPreview pp = new PrintPreview(NSDControl.getFrame(),this);
 		Point p = getLocationOnScreen();
 		pp.setLocation(Math.round(p.x+(getVisibleRect().width-pp.getWidth())/2+this.getVisibleRect().x),

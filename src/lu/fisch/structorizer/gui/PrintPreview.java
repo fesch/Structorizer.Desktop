@@ -544,11 +544,12 @@ public class PrintPreview extends LangDialog implements Runnable{
 		{
 			// Use default printer, no dialog
 			PrinterJob prnJob = PrinterJob.getPrinterJob();
-                                
 			// get the default page format
 			PageFormat pf0 = prnJob.defaultPage();
 			// clone it
 			PageFormat pf1 = (PageFormat) pf0.clone();
+			// We might instead choose a different format (and margins!?)
+			//PageFormat pf1 = prnJob.pageDialog(pf0);
 			Paper p = pf0.getPaper();
 			// set to given margins (in theory, we could just use the margins since all PageFormats here are derived
 			// from prnJob.defaultPage(), but well be prepared for some proportional scaling (doesn't cause harm if
@@ -707,7 +708,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		}
 
 		@Override
-		public void paint(Graphics g)
+		public void paintComponent(Graphics g)
 		{
 			g.setColor(getBackground());
 			g.fillRect(0, 0, getWidth(), getHeight());

@@ -3681,6 +3681,10 @@ public class Executor implements Runnable
 			// START KGU#388 2017-09-14: Enh. #423
 			if (val.getClass().getSimpleName().equals("HashMap"))
 			{
+				// Unfortunately we haven't access to the type map since this is a static method,
+				// so we can't provide the declared component order and will present the components
+				// in random order.
+				// The method must be static because Control also needs access to it.
 				@SuppressWarnings("unchecked")
 				HashMap<String, Object> hmVal = (HashMap<String, Object>)val;
 				valStr = hmVal.get("§TYPENAME§") + "{";
