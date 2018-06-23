@@ -79,6 +79,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
  *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
  *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
+ *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations 
  *
  ******************************************************************************************************
  *
@@ -1348,10 +1349,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //        		);
     	//System.out.println(rect);
     	Dimension oldDim = this.getPreferredSize();
-    	if (rect.right != oldDim.width || rect.bottom != oldDim.height) {
-    		this.setPreferredSize(new Dimension(rect.right, rect.bottom));
+    	// START KGU#524 2018-06-18: Bugfix for #512 (forgotten zoom consideration)
+//    	if (rect.right != oldDim.width || rect.bottom != oldDim.height) {
+//    		this.setPreferredSize(new Dimension(rect.right, rect.bottom));
+//    		this.revalidate();
+//    	}
+    	Dimension newZoomedDim = new Dimension(Math.round(Math.min(rect.right, Short.MAX_VALUE) / this.zoomFactor),
+        Math.round(Math.min(rect.bottom, Short.MAX_VALUE) / this.zoomFactor));
+    	if (newZoomedDim.width != oldDim.width || newZoomedDim.height != oldDim.height) {
+    		this.setPreferredSize(newZoomedDim);
     		this.revalidate();
     	}
+    	// END KGU#524 2018-06-18
     	// END KGU#85 2017-10-23
     	// START KGU#444 2017-10-23: Issue #417 - reduce polynomial scrolling time complexity
         adaptScrollUnits(rect);
