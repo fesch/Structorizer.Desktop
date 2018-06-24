@@ -206,7 +206,7 @@ public abstract class Element {
 	// END KGU#484 2018-03-22
 
 	// Program CONSTANTS
-	public static final String E_VERSION = "3.28-04";
+	public static final String E_VERSION = "3.28-05";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
