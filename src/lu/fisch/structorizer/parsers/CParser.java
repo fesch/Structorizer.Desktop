@@ -65,9 +65,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.19      Issue #533: Initializers for struct variables are now converted into record
  *                                      literals in Structorizer syntax.
  *      Kay Gürtzig     2018.06.20      Bugfixes #545, #546 (for loops with empty condition, printf format string splitting)
- *      Kay Gürtzig     2018.06.24      Bugfix #549: missing assignment operator '%=' added (grammar change).
+ *      Kay Gürtzig     2018.06.24      Bugfix #549: missing assignment operator '%=' added (grammar change),
+ *                                      Bugfix #550: Defective import of switch statements without break in the 1st branch 
  *      Kay Gürtzig     2018.06.24      Inheritance changed to CPreParser, all common stuff now inherited from there
- *      Kay Gürtzig     2018.06.24      Bugfix KGU#530 (missing assignment operator '%=' added).
  *
  ******************************************************************************************************
  *
@@ -1762,7 +1762,10 @@ public class CParser extends CPreParser
 		buildNSD_R(secReduc, sq);
 				
 		// Which is the last branch ending with jump instruction?
-		int lastCaseWithJump = iNext-1;
+		// START KGU#531 2018-06-24: Bugfix #550 (open first branch wasn't detected)
+		//int lastCaseWithJump = iNext-1;
+		int lastCaseWithJump = -1;
+		// END KGU#531 2018-06-24
 		for (int i = iNext-2; i >= 0; i--) {
 			int size = _case.qs.get(i).getSize();
 			if (size > 0 && (_case.qs.get(i).getElement(size-1) instanceof Jump)) {
