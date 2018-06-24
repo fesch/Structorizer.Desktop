@@ -255,7 +255,7 @@ Menu.menuPreferences.text=Preferences
 Menu.menuPreferences.mnemonic=p
 // Submenu of "Preferences"
 Menu.menuPreferencesNotifyUpdate.text=Notify of new versions?
-Menu.menuPreferencesNotifyUpdate.tooltip=Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.
+Menu.menuPreferencesNotifyUpdate.tooltip=Allow Structorizer to retrieve version info from Structorizer homepage and to indicate new releases.
 Menu.menuPreferencesSimplified.text=Simplified toolbars?
 Menu.menuPreferencesFont.text=Font ...
 Menu.menuPreferencesColors.text=Colors ...
@@ -365,7 +365,7 @@ Menu.lblLeaveAsIs.text=Leave diagram as is
 Menu.lblAllowChanges.text=Allow to change now
 Menu.msgReplacementsDone.text=% instructions replaced.
 Menu.msgNewerVersionAvail.text=Newer version % available for download.
-Menu.msgUpdateInfoHint.text=If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" ► "%2".
+Menu.msgUpdateInfoHint.text=If you want Structorizer to check the availability of new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" ► "%2".\n(Data protection information: For the Html request, your IP address would be transmitted but not permanently stored.\nNo personal data will be transmitted, recorded, tracked, or otherwise processed.)
 Menu.msgWelcomeMessage.text=Welcome to Structorizer, your Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms and many things more.\nIt was designed for easy handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
 Menu.lblOk.text=OK
 Menu.lblYes.text=Yes, continue

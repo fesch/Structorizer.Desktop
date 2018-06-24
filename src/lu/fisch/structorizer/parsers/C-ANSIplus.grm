@@ -103,6 +103,12 @@
 !     in order to allow combined struct/union/enum and variable declarations (was easier here
 !     than in <Var Decl>)
 !
+! Modified 17/06/2018 (Kay Gürtzig)
+!   * Rule for return statement without expression had been missing.
+!
+! Modified 24/06/2018 (Kay Gürtzig)
+!   * Operator %= had been missing.
+!
 ! -----------------------------------------------------------------------
 
 
@@ -380,6 +386,7 @@ Comment Line  = '//'
                | <Op If> '-='  <Op Assign>
                | <Op If> '*='  <Op Assign>
                | <Op If> '/='  <Op Assign>
+               | <Op If> '%='  <Op Assign>
                | <Op If> '^='  <Op Assign>
                | <Op If> '&='  <Op Assign>
                | <Op If> '|='  <Op Assign>

@@ -259,7 +259,7 @@ Menu.menuPreferences.text=Preferencias
 Menu.menuPreferences.mnemonic=p
 // Submenu of "Preferences"
 Menu.menuPreferencesNotifyUpdate.text=Informar de versiones nuevas
-Menu.menuPreferencesNotifyUpdate.tooltip=Permitir Structorizer a buscar actualizaniones por el sitio web de Structorizer e informar de nuevas versions.
+Menu.menuPreferencesNotifyUpdate.tooltip=Permitir Structorizer a buscar actualizaciones por el sitio web de Structorizer e informar de nuevas versiones.
 Menu.menuPreferencesSimplified.text=Barras simplificadas
 Menu.menuPreferencesFont.text=Fuente ...
 Menu.menuPreferencesColors.text=Colores ...
@@ -369,7 +369,7 @@ Menu.lblLeaveAsIs.text=Dejar diagrama así
 Menu.lblAllowChanges.text=Permitir cambios
 Menu.msgReplacementsDone.text=% instrucciones sustituidos.
 Menu.msgNewerVersionAvail.text=Versión más nueva % lista para descaragar.
-Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" ► "%2".
+Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones al arrancar Structorizer\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" ► "%2".\n(Nota de privacidad: Para enviar la consulta de Html su código IP será transmitido pero no guardado.\nOtros datos personales no serán ni captados ni transmitidos ni procesados.)
 Menu.msgWelcomeMessage.text=¡Bienvenido/-a en Structorizer, su editor para diagramas Nassi-Shneiderman!\nCon este programa puedes diseñar, probar, analisar, exportar algoritms y mucho más.\nStructorizer fue hecho para el uso simple pero ha sido aumentado con muchas funcionas adicionales.\n\nSi crees tener poca experiencia con algoritmos y su desarollo puedes comenzar con menú reducido y una «%».\n¿Quieres comenzar en el modo simplificado con guía?
 Menu.lblOk.text=Visto
 Menu.lblYes.text=Si, continuar
