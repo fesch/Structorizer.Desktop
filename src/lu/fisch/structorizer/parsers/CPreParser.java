@@ -1122,6 +1122,7 @@ public abstract class CPreParser extends CodeParser
 				String header = aRoot.getText().getText();
 				header = header.replaceFirst("(.*?)main([((].*)", "$1" + fileName + "$2");
 				aRoot.setText(header);
+				aRoot.comment.add("The original name was \"main\"!");
 			}
 			else {
 				aRoot.setText(fileName);
@@ -1137,10 +1138,6 @@ public abstract class CPreParser extends CodeParser
 				this.globalRoot.setInclude();
 				// END KGU#376 2017-05-17
 				// START KGU#376 2017-07-01: Enh. #389 - now register global includable with Root
-//				for (Call provCall: this.provisionalImportCalls) {
-//					provCall.setText(provCall.getText().get(0).replace(DEFAULT_GLOBAL_NAME, inclName).replace("???", inclName));
-//				}
-//				this.provisionalImportCalls.clear();
 				for (Root impRoot: this.importingRoots) {
 					if (impRoot.includeList != null) {
 						int n = impRoot.includeList.replaceAll(oldName, inclName);
@@ -1159,28 +1156,6 @@ public abstract class CPreParser extends CodeParser
 				// END KGU#376 2017-07-01
 			}
 		}
-		// START KGU#376 2017-04-11: enh. #389 import mechanism for globals
-//		if (this.globalRoot != null && this.globalRoot != aRoot) {
-//			String globalName = this.globalRoot.getMethodName();
-//			// START KGU#376 2017-07-01: Enh. #389 - modified mechanism
-////			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? DEFAULT_GLOBAL_NAME : globalName));
-////			importCall.setColor(colorGlobal);
-////			aRoot.children.insertElementAt(importCall, 0);
-////			if (globalName.equals("???")) {
-////				this.provisionalImportCalls.add(importCall);
-////			}
-//			if (aRoot.includeList == null) {
-//				aRoot.includeList = StringList.getNew(globalName);
-//			}
-//			else {
-//				aRoot.includeList.addIfNew(globalName);
-//			}
-//			if (!this.importingRoots.contains(aRoot)) {
-//				this.importingRoots.add(aRoot);
-//			}
-//			// END KGU#376 2017-07-01
-//		}
-		// END KGU#376 2017-04-11
 	}
 
 	/* (non-Javadoc)
@@ -1188,7 +1163,7 @@ public abstract class CPreParser extends CodeParser
 	 */
 	protected void subclassPostProcess(String textToParse)
 	{
-		// May there was no main function but global definitions
+		// Maybe there was no main function but global definitions
 		if (this.globalRoot != null && this.globalRoot.children.getSize() > 0) {
 			String globalName = this.globalRoot.getMethodName();
 			if (globalName.equals("???")) {

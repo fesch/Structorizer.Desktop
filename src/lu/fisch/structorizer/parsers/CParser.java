@@ -68,6 +68,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.24      Bugfix #549: missing assignment operator '%=' added (grammar change),
  *                                      Bugfix #550: Defective import of switch statements without break in the 1st branch 
  *      Kay Gürtzig     2018.06.24      Inheritance changed to CPreParser, all common stuff now inherited from there
+ *      Kay Gürtzig     2018.06.24      Bugfix KGU#530 (missing assignment operator '%=' added).
  *
  ******************************************************************************************************
  *
