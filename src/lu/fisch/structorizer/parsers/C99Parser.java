@@ -49,6 +49,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
  *      Kay Gürtzig     2018.06.19      File decomposed and inheritance changed
  *      Kay Gürtzig     2018.06.20      Most algorithmic structures implemented, bugfixes #545, #546 integrated
+ *      Kay Gürtzig     2018.06.23      Function definitions, struct definitions, and struct initializers
  *
  ******************************************************************************************************
  *
@@ -583,6 +584,8 @@ public class C99Parser extends CPreParser
 
 	//---------------------- Build methods for structograms ---------------------------
 
+	private final Matcher MATCH_PTR_DECL = Pattern.compile("(\\s*([*]\\s*)+)(.+)").matcher("");
+	
 	/**
 	 * Global type map - e.g. for the conversion of struct initializers.
 	 * This isn't clean but more reliable and efficient than trying to retrieve the
@@ -1360,10 +1363,13 @@ public class C99Parser extends CPreParser
 		int ruleId = _reduc.getParent().getTableIndex();
 		String content = getContent_R(_reduc, "");	// Default???
 		String expr = null;
+		if (isConstant) {
+			_type = _type.substring("const ".length());
+		}
 		if (ruleId == RuleConstants.PROD_INITDECLARATOR_EQ) {
 			log("\ttrying <Declarator> '=' <Initializer> ...\n", false);
 			content = this.getContent_R(_reduc.get(0).asReduction(), "");
-			expr = this.getContent_R(_reduc.get(2).asReduction(), "");
+			expr = this.getContent_R(_reduc.get(2).asReduction(), "").trim();
 			_reduc = _reduc.get(0).asReduction();
 		}
 		else {
@@ -1378,15 +1384,20 @@ public class C99Parser extends CPreParser
 				_type = this.getContent_R(_reduc.get(0).asReduction(), _type);
 			}
 			if (isConstant) {
-				content = "const " + content + ": " + _type.substring("const ".length());
+				content = "const " + content + ": " + _type;
 			}
 			else {
 				content = "var " + content + ": " + _type;
 			}
 		}
-		if (_forceDecl || expr != null) {
+		TypeMapEntry typeEntry = typeMap.get(":" + _type.trim());
+		boolean isStruct = typeEntry != null && typeEntry.isRecord();
+		if (_forceDecl || isStruct || expr != null) {
 			if (expr != null) {
-				content += "<- " + expr;
+				if (isStruct && expr.startsWith("{") && expr.endsWith("}")) {
+					expr = convertStructInitializer(_type, expr, typeEntry);
+				}
+				content += " <- " + expr;
 			}
 			Element instr = new Instruction(translateContent(content));
 			if (_comment != null) {
@@ -1568,8 +1579,8 @@ public class C99Parser extends CPreParser
 	/**
 	 * Is to extract the struct component declarations from a struct definition and
 	 * to convert them into Structorizer (Pascal-like) syntax.
-	 * @param _compListRed - the reduction representing the component list
-	 * @return The {@link StringList} of component groups
+	 * @param _compListRed - the reduction representing a rule {@code <StructDeclnList>}
+	 * @return The {@link StringList} of processed component groups
 	 */
 	private StringList getCompsFromStructDef(Reduction _compListRed)
 	{
@@ -1577,25 +1588,70 @@ public class C99Parser extends CPreParser
 		StringList components = new StringList();
 		LinkedList<Reduction> compReds = new LinkedList<Reduction>();
 		while (_compListRed.size() == 2) {
-			compReds.addFirst(_compListRed.get(1).asReduction());
+			// <StructDeclnList> ::= <StructDeclnList> <Struct Declaration>
+			compReds.add(_compListRed.get(1).asReduction());
 			_compListRed = _compListRed.get(0).asReduction();
 		}
-		compReds.addFirst(_compListRed);
+		// <StructDeclnList> ::= <Struct Declaration>
+		compReds.add(_compListRed);
+		
 		for (Reduction compRed: compReds) {
 			// <Struct Declaration> ::= <SpecQualList> <StructDeclList> ';'
-			System.out.println(getContent_R(compRed, ""));
-			// TODO: Now analyse components (recursively)
+			// Now analyse components
+			// FIXME: parse type recursively - there might be anonymous structs!
 			String compType = getContent_R(compRed.get(0).asReduction(), "");
+			// Component names -there might be arrays among them!
 			Reduction declListRed = compRed.get(1).asReduction();
 			StringList declList = new StringList();
 			while (declListRed.getParent().getTableIndex() == RuleConstants.PROD_STRUCTDECLLIST_COMMA) {
-				declList.add(getContent_R(declListRed.get(2).asReduction(), ""));
+				// <StructDeclList> ::= <StructDeclList> ',' <Struct Decl>
+				addProcessedCompDecl(compType, declListRed.get(2).asReduction(), declList, components);
 				declListRed = declListRed.get(0).asReduction();
 			}
-			declList.add(getContent_R(declListRed, ""));
+			// <StructDeclList> ::= <Struct Decl>
+			addProcessedCompDecl(compType, declListRed, declList, components);
 			components.add(declList.reverse().concatenate(", ") + ": " + compType + ";\\");
 		}
-		return components;
+		return components.reverse();
+	}
+
+	/**
+	 * Processes the declarator represented by {@code _declRed} and either adds the result to {@code _declList} or
+	 * to {@code _groupList}. 
+	 * @param _baseType - basic type of the components of this list.
+	 * @param _declRed - {@link Reduction} representing a declarator.
+	 * @param _declList - {@link StringList} of processed simple declarators of the {@code _baseType}, to be enhanced.
+	 * @param _groupList - {@link StringList} of component declarator groups, may be extended by e.g. array components.
+	 */
+	private void addProcessedCompDecl(String _baseType, Reduction _declRed, StringList _declList, StringList _groupList) {
+		String compDecl = getContent_R(_declRed, "");
+		int pos = compDecl.indexOf(':');	// bit field?
+		if (pos >= 0) {
+			compDecl = compDecl.substring(0, pos);
+		}
+		if (!compDecl.trim().isEmpty()) {
+			String ptrs = "";
+			if (MATCH_PTR_DECL.reset(compDecl).matches()) {
+				ptrs = MATCH_PTR_DECL.group(1);
+				compDecl = MATCH_PTR_DECL.group(3);
+			}
+			pos = compDecl.indexOf("[");
+			String index = "";
+			if (pos > 0) {
+				index = "array " + compDecl.substring(pos) + " of ";
+				compDecl = compDecl.substring(0, pos);
+			}
+			if (!ptrs.isEmpty() || !index.isEmpty()) {
+				if (_declList.count() > 0) {
+					_groupList.add(_declList.reverse().concatenate(", ") + ": " + _baseType + ";\\");
+					_declList.clear();
+				}
+				_groupList.add(compDecl + ": " + index + ptrs + _baseType + ";\\");
+			}
+			else {
+				_declList.add(compDecl);
+			}
+		}
 	}
 
 	/**

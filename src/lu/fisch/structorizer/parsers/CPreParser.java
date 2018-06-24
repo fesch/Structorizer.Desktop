@@ -29,21 +29,12 @@ package lu.fisch.structorizer.parsers;
  *
  ******************************************************************************************************
  *
- *      Revision List (Template File!)
- *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.02      First Issue for Iden GOLDEngine
- *      Kay Gürtzig     2017.03.11      Parameter annotations and some comments corrected, indentation unified
- *      Kay Gürtzig     2018.03.26      Imports revised
- *
- ******************************************************************************************************
- *
- *      Revision List (this parser)
+ *      Revision List
  *
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2018.06.19      First Issue (derived from the common parts of CParser and C99Parser)
+ *      Kay Gürtzig     2018.06.23      Further common (i.e. C + C99) stuff placed here
  *
  ******************************************************************************************************
  *
