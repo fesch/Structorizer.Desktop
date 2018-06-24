@@ -46,6 +46,7 @@ Current development version: 3.28-05 (2018-06-24)
 - 04: Bugfix #546: C import failed to split certain printf format strings <2>
 - 05: Bugfix #549: The operator '%=' had been missing in the C grammar <2>
 - 05: Data protection information added to the update information hint <2>
+- 05: Bugfix #550: Defective import of C switch statements in certain cases <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
