@@ -665,8 +665,9 @@ public class StringList {
 		// END KGU 2015-11-04
 	}
 
-
-
+	/**
+	 * @return a reverse copy of this StringList, does not alter this.
+	 */
 	public StringList reverse()
 	{
 		StringList sl = new StringList();
@@ -679,6 +680,13 @@ public class StringList {
 		return sl;
 	}
 
+	
+	/**
+	 * Replaces the element at position {@code _index} with string {@code _s} if {@code 0 <= _index < this.count()},
+	 * doesn't do anything otherwise.
+	 * @param _index - the index of the element to be replaced
+	 * @param _s - the replacing string
+	 */
 	public void set(int _index, String _s)
 	{
 		if(_index<strings.size() && _index>=0)

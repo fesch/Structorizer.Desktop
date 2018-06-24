@@ -64,9 +64,11 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************/
 
 import java.awt.Color;
-
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -75,12 +77,12 @@ import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.StringList;
 
@@ -150,7 +152,7 @@ public class C99Parser extends CPreParser
 	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 
-	@SuppressWarnings("unused")
+	//@SuppressWarnings("unused")
 	private interface SymbolConstants 
 	{
 		final int SYM_EOF               =   0;  // (EOF)
@@ -333,7 +335,7 @@ public class C99Parser extends CPreParser
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
-	@SuppressWarnings("unused")
+	//@SuppressWarnings("unused")
 	private interface RuleConstants
 	{
 		final int PROD_DECLARATION_SEMI                                   =   0;  // <Declaration> ::= <Decl Specifiers> <InitDeclList> ';'
@@ -579,12 +581,14 @@ public class C99Parser extends CPreParser
 		final int PROD_EXPROPT2                                           = 240;  // <ExprOpt> ::= 
 	};
 
-	//---------------------------- Local Definitions ---------------------
-
-
 	//---------------------- Build methods for structograms ---------------------------
 
-	private Root globalRoot = null;	//  dummy Root for global definitions (will be put to main or the only function)
+	/**
+	 * Global type map - e.g. for the conversion of struct initializers.
+	 * This isn't clean but more reliable and efficient than trying to retrieve the
+	 * type info from the several incomplete Roots.
+	 */
+	private final HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
 	
 	/**
 	 * Preselects the type of the initial diagram to be imported as function.
@@ -616,6 +620,13 @@ public class C99Parser extends CPreParser
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
 
 			if (
+					// Function definition?
+					ruleId == RuleConstants.PROD_FUNCTIONDEF_LBRACE_RBRACE
+					)
+			{
+				buildFunction(_reduction);				
+			}
+			else if (
 					// Procedure call?
 					(ruleId == RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN
 					||
@@ -699,7 +710,10 @@ public class C99Parser extends CPreParser
 			}
 			else if (
 					// Variable declaration with or without initialization? Might also be a typedef though!
-					ruleId == RuleConstants.PROD_DECLARATION_SEMI			
+					ruleId == RuleConstants.PROD_DECLARATION_SEMI
+					// FIXME: What about RuleConstants.PROD_DECLARATION_SEMI2?
+					||
+					ruleId == RuleConstants.PROD_DECLARATION_SEMI2
 					)
 			{
 				// If declaration import is allowed then we make an instruction in
@@ -941,6 +955,206 @@ public class C99Parser extends CPreParser
 		}
 	}
 
+	/**
+	 * Processes a function definition from the given {@code _reduction}
+	 * @param _reduction - the {@link Reduction} of the parser
+	 */
+	private void buildFunction(Reduction _reduction) {
+		// <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> '{' <BlockItemList> '}'
+		// Find out the name of the function
+		Reduction secReduc = _reduction.get(1).asReduction();
+		String content = new String();
+		boolean weird = false;
+		int secRuleId = secReduc.getParent().getTableIndex();
+		int nPointers = 0;
+		// Drop redundant parentheses
+		while (secRuleId == RuleConstants.PROD_DECLARATOR || secRuleId == RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN) {
+			if (secRuleId == RuleConstants.PROD_DECLARATOR) {
+				nPointers++;
+				secReduc = secReduc.get(1).asReduction();
+				secRuleId = secReduc.getParent().getTableIndex();
+			}
+			secReduc = secReduc.get(1).asReduction();
+			secRuleId = secReduc.getParent().getTableIndex();
+		} 
+		String funcName = null;
+		Reduction paramReduc = null;
+		switch (secRuleId) {
+		case RuleConstants.PROD_DIRECTDECL_IDENTIFIER:
+			funcName = getContent_R(secReduc, "");
+			break;
+		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN2:
+		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN3:
+			funcName = getContent_R(secReduc.get(0).asReduction(), "");
+			paramReduc = secReduc.get(2).asReduction();
+			break;
+		default: 
+			// Something weird like an array of functions or the like
+			content = getContent_R(_reduction, "");
+			weird = true;
+		}
+		Root prevRoot = root;	// Cache the original root
+		root = new Root();	// Prepare a new root for the (sub)routine
+		root.setProgram(false);
+		subRoots.add(root);
+		// If the previous root was global and had collected elements then make the new root a potential importer
+		if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0) {
+			// We must have inserted some global stuff, so assume a dependency...
+			this.importingRoots.add(root);
+		}
+		// Is there a type specification different from void?
+		if (!weird) {
+			Token typeToken = _reduction.get(0);
+			if (typeToken.getType() == SymbolType.CONTENT) {
+				content += typeToken.asString() + " ";
+			}
+			else {
+				// FIXME: We might need a more intelligent type analysis
+				content = getContent_R(typeToken.asReduction(), "").trim() + " ";
+			}
+			content = content.replace("const ", "");
+			// Result type void should be suppressed
+			if (content.trim().equals("void")) {
+				content = "";
+			}
+			content += funcName + "(";
+			String params = "";
+			if (paramReduc != null) {
+				StringList paramList = new StringList();
+				String ellipse = "";
+				int ruleId =paramReduc.getParent().getTableIndex(); 
+				if (ruleId == RuleConstants.PROD_PARAMTYPELIST_COMMA_DOTDOTDOT) {
+					ellipse = ", ...";
+					paramReduc = paramReduc.get(0).asReduction();
+				}
+				switch (ruleId) {
+				case RuleConstants.PROD_IDLISTOPT2:
+					// Empty argument list
+					break;
+				case RuleConstants.PROD_IDENTIFIERLIST_IDENTIFIER:	// FIXME does is work for this rule?
+				case RuleConstants.PROD_IDENTIFIERLIST_COMMA_IDENTIFIER:
+					// Ancient function definition: type foo(a, b, c) type1 a; type2 b; type3 c; {...}
+					params = getContent_R(paramReduc, "");
+					{
+						StringList paramDecls = getDeclsFromDeclList(_reduction.get(2).asReduction());
+						StringList paramNames = StringList.explode(params, ",");
+						// Sort the parameter declarations according to the arg list (just in case...)
+						if (paramDecls.count() == paramNames.count()) {
+							StringList paramsOrdered = new StringList();
+							for (int p = 0; p < paramNames.count(); p++) {
+								Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
+								for (int q = 0; q < paramDecls.count(); q++) {
+									String pd = paramDecls.get(q);
+									if (pm.reset(pd).matches()) {
+										paramsOrdered.add(pd);
+										break;
+									}
+								}
+								if (paramsOrdered.count() < p+1) {
+									paramsOrdered.add(paramNames.get(p));
+								}
+							}
+							params = paramsOrdered.concatenate("; ");
+						}
+					}
+					break;
+				case RuleConstants.PROD_PARAMETERLIST_COMMA:
+					// More than one parameter
+					do {
+						String param = getContent_R(paramReduc.get(2).asReduction(), "");
+						paramReduc = paramReduc.get(0).asReduction();
+						ruleId = paramReduc.getParent().getTableIndex();
+						paramList.add(param);
+					} while (ruleId == RuleConstants.PROD_PARAMETERLIST_COMMA);
+					// no break here!
+				default: // Should be a <Parameter Decl>
+					paramList.add(getContent_R(paramReduc, ""));
+					params = paramList.reverse().concatenate(", ") + ellipse;
+					break;
+				}
+			}
+			if (params.trim().equals("void")) {
+				params = "";
+			}
+			content += params + ")";
+		}
+		root.setText(content);
+		this.equipWithSourceComment(root, _reduction);
+		if (_reduction.get(4).getType() == SymbolType.NON_TERMINAL)
+		{
+			buildNSD_R(_reduction.get(4).asReduction(), root.children);
+		}
+		// Restore the original root
+		root = prevRoot;
+	}
+	
+	/**
+	 * Is to extract the declarations from an old-style parameter declaration list
+	 * ({@code <DeclarationList>}) and to convert them into Structorizer-compatible
+	 * syntax.
+	 * @param _declRed - the {@link Reduction} representing a {@code <Struct Decl>} rule.
+	 * @return {@link StringList} of the declaration strings in Structorizer syntax
+	 */
+	StringList getDeclsFromDeclList(Reduction _declRed)
+	{
+		StringList decls = new StringList();
+		int ruleId = _declRed.getParent().getTableIndex();
+		do {
+			Reduction varDecl = _declRed;
+			if (ruleId == RuleConstants.PROD_DECLARATIONLIST) {
+				varDecl = _declRed.get(1).asReduction();
+				_declRed = _declRed.get(0).asReduction();
+			}
+			else {
+				_declRed = null;
+			}
+			int nameIx = varDecl.size() - 3;
+			String type = getContent_R(varDecl.get(0).asReduction(), "");
+			StringList compNames = new StringList();
+			// FIXME
+			decls.add(getContent_R(varDecl.get(1).asReduction(), type));
+//			Reduction varRed = varDecl.get(1).asReduction();
+//			String name = varRed.get(0).asString();
+//			String index = getContent_R(varRed.get(1).asReduction(), "").trim();
+//			if (!index.isEmpty()) {
+//				if (index.equals("[]")) {
+//					index = "";
+//				}
+//				components.add(name + ": array" + index + " of " + type);
+//			}
+//			else {
+//				compNames.add(name);
+//				while (varList.size() > 0) {
+//					varRed = varList.get(1).asReduction();
+//					String pointers = getContent_R(varRed.get(0).asReduction(), "").trim();
+//					name = varRed.get(1).asReduction().get(0).asString();
+//					index = getContent_R(varRed.get(1).asReduction().get(1).asReduction(), "").trim();
+//					if (!index.isEmpty() || !pointers.isEmpty()) {
+//						if (compNames.count() > 0) {
+//							components.add(compNames.concatenate(", ") + ": " + type);
+//							compNames.clear();
+//						}
+//						if (index.equals("[]")) {
+//							index = "array of ";
+//						}
+//						else if (!index.isEmpty()) {
+//							index = "array " + index + " of ";
+//						}
+//						components.add(name + ": " + index + type + pointers);
+//					}
+//					else {
+//						compNames.add(name);
+//					}
+//					varList = varList.get(2).asReduction();
+//				}
+//				if (compNames.count() > 0) {
+//					components.add(compNames.concatenate(", ") + ": " + type);
+//				}
+//			}
+		} while (_declRed != null);
+		return decls;
+	}
+	
 	/**
 	 * Converts a rule of type PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE into the
 	 * skeleton of a Case element. The case branches will be handled separately
@@ -1265,7 +1479,7 @@ public class C99Parser extends CPreParser
 	 * @param _declaringVars - whether this is used by a variable/constant declaration (type definition otherwise)
 	 * @return a logical value indicating whether the processed rule was a type definition
 	 */
-	protected boolean processTypes(Reduction _reduction, int _ruleId, Subqueue _subqueue, boolean _isGlobal,
+	protected boolean processTypes(Reduction _reduction, int _ruleId, Subqueue _parentNode, boolean _isGlobal,
 			StringList _typeList, boolean _declaringVars)
 	{
 		boolean isStruct = false;
@@ -1286,7 +1500,7 @@ public class C99Parser extends CPreParser
 			_reduction = _reduction.get(0).asReduction();
 			_ruleId = _reduction.getParent().getTableIndex();
 		}
-		while (_reduction.getParent().getHead().equals("<Decl Secifiers>")) {
+		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers>")) {
 			Token prefix = _reduction.get(0);
 			switch (_ruleId) {
 			case RuleConstants.PROD_DECLSPECIFIERS: // <Decl Specifiers> ::= <Storage Class> <Decl Specs>
@@ -1302,29 +1516,23 @@ public class C99Parser extends CPreParser
 					{
 						Reduction structRed = prefix.asReduction();
 						if (structRed.size() == 2) {
-							type = structRed.get(1).toString();
+							type = structRed.get(1).asString();
 							// TODO retrieve type
 						}
 						else {
-							Reduction compList = structRed.get(structRed.size()-2).asReduction();
 							if (structRed.size() == 4) {
 								type = String.format("AnonStruct%1$03d", typeCount++);
 							}
 							else {
-								type = structRed.get(1).toString();
+								type = structRed.get(1).asString();
 							}
-							// Resolve the left recursion non-recursively
-							LinkedList<Reduction> compReds = new LinkedList<Reduction>();
-							while (compList.size() == 2) {
-								compReds.addFirst(compList.get(1).asReduction());
-								compList = compList.get(0).asReduction();
-							}
-							compReds.addFirst(compList.get(0).asReduction());
-							for (Reduction compRed:compReds) {
-								// TODO: Now analyse components (recursively)
-								System.out.println(getContent_R(compRed, ""));
-							}
-							// TODO compose and define type
+							StringList components = getCompsFromStructDef(structRed.get(structRed.size()-2).asReduction());
+							// compose and define type
+							components.insert("type " + type + " = struct{\\", 0);
+							components.add("}");
+							Instruction typedef = new Instruction(components);
+							_parentNode.addElement(typedef);
+							typedef.updateTypeMap(typeMap);
 						}
 						isStruct = true;
 					}
@@ -1358,88 +1566,36 @@ public class C99Parser extends CPreParser
 	}
 
 	/**
-	 * Creates an output instruction from the given arguments {@code _args} and adds it to
-	 * the {@code _parentNode}.
-	 * @param _reduction - the responsible rule
-	 * @param _name - the name of the encountered input function (e.g. "scanf")
-	 * @param _args - the argument expressions
-	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
+	 * Is to extract the struct component declarations from a struct definition and
+	 * to convert them into Structorizer (Pascal-like) syntax.
+	 * @param _compListRed - the reduction representing the component list
+	 * @return The {@link StringList} of component groups
 	 */
-	private void buildInput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
-		//content = content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+" $2");
-		String content = getKeyword("input");
-		if (_args != null) {
-			if (_name.equals("scanf")) {
-				// Forget the format string
-				if (_args.count() > 0) {
-					_args.remove(0);
-				}
-				for (int i = 0; i < _args.count(); i++) {
-					String varItem = _args.get(i).trim();
-					if (varItem.startsWith("&")) {
-						_args.set(i, varItem.substring(1));
-					}
-				}
-			}
-			content += _args.concatenate(", ");
+	private StringList getCompsFromStructDef(Reduction _compListRed)
+	{
+		// Resolve the left recursion non-recursively
+		StringList components = new StringList();
+		LinkedList<Reduction> compReds = new LinkedList<Reduction>();
+		while (_compListRed.size() == 2) {
+			compReds.addFirst(_compListRed.get(1).asReduction());
+			_compListRed = _compListRed.get(0).asReduction();
 		}
-		// START KGU#407 2017-06-20: Enh. #420 - comments already here
-		//_parentNode.addElement(new Instruction(content.trim()));
-		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
-		// END KGU#407 2017-06-22
-	}
-
-	/**
-	 * Creates an output instruction from the given arguments {@code _args} and adds it to
-	 * the {@code _parentNode}.
-	 * @param _reduction - the responsible rule
-	 * @param _name - the name of the encountered output function (e.g. "printf")
-	 * @param _args - the argument expressions
-	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
-	 */
-	private void buildOutput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
-		//content = content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+" $1");
-		String content = getKeyword("output") + " ";
-		if (_args != null) {
-			int nExpr = _args.count();
-			// Find the format mask
-			if (nExpr > 1 && _name.equals("printf") && _args.get(0).matches("^[\"].*[\"]$")) {
-				// We try to split the string by the "%" signs which is of course dirty
-				// Unfortunately, we can't use split because it eats empty chunks
-				StringList newExprList = new StringList();
-				String formatStr = _args.get(0);
-				int posPerc = -1;
-				formatStr = formatStr.substring(1, formatStr.length()-1);
-				int i = 1;
-				while ((posPerc = formatStr.indexOf('%')) >= 0 && i < _args.count()) {
-					newExprList.add('"' + formatStr.substring(0, posPerc) + '"');
-					formatStr = formatStr.substring(posPerc+1).replaceFirst(".*?[idxucsefg](.*)", "$1");
-					newExprList.add(_args.get(i++));
-				}
-				if (!formatStr.isEmpty()) {
-					newExprList.add('"' + formatStr + '"');
-				}
-				if (i < _args.count()) {
-					newExprList.add(_args.subSequence(i, _args.count()).concatenate(", "));
-				}
-				_args = newExprList;
+		compReds.addFirst(_compListRed);
+		for (Reduction compRed: compReds) {
+			// <Struct Declaration> ::= <SpecQualList> <StructDeclList> ';'
+			System.out.println(getContent_R(compRed, ""));
+			// TODO: Now analyse components (recursively)
+			String compType = getContent_R(compRed.get(0).asReduction(), "");
+			Reduction declListRed = compRed.get(1).asReduction();
+			StringList declList = new StringList();
+			while (declListRed.getParent().getTableIndex() == RuleConstants.PROD_STRUCTDECLLIST_COMMA) {
+				declList.add(getContent_R(declListRed.get(2).asReduction(), ""));
+				declListRed = declListRed.get(0).asReduction();
 			}
-			else {
-				// Drop an end-standing newline since Structorizer produces a newline automatically
-				String last = _args.get(nExpr - 1);
-				if (last.equals("\"\n\"")) {
-					_args.remove(--nExpr);
-				}
-				else if (last.endsWith("\n\"")) {
-					_args.set(nExpr-1, last.substring(0, last.length()-2) + '"');
-				}
-			}
-			content += _args.concatenate(", ");
+			declList.add(getContent_R(declListRed, ""));
+			components.add(declList.reverse().concatenate(", ") + ": " + compType + ";\\");
 		}
-		// START KGU#407 2017-06-20: Enh. #420 - comments already here
-		//_parentNode.addElement(new Instruction(content.trim()));
-		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
-		// END KGU#407 2017-06-22
+		return components;
 	}
 
 	/**
@@ -1630,12 +1786,6 @@ public class C99Parser extends CPreParser
 			}
 		}
 		return exprList.reverse();
-	}
-
-	@Override
-	protected void subclassUpdateRoot(Root root, String sourceFileName) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	//------------------------- Postprocessor ---------------------------

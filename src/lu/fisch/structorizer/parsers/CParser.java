@@ -1901,113 +1901,7 @@ public class CParser extends CodeParser
 					ruleName.equals("<Func Decl>")
 					)
 			{
-				// Find out the name of the function
-				Reduction secReduc = _reduction.get(0).asReduction();
-				int nameIx = -1;	// Token index of the function id
-				int typeIx = -1;	// Token index of the type specifier ("const") neglected
-				int funcId = secReduc.getParent().getTableIndex();
-				switch (funcId) {
-				case RuleConstants.PROD_FUNCID_ID:
-					typeIx = 1;
-					nameIx = 2;
-					break;
-				case RuleConstants.PROD_FUNCID_CONST_ID:
-					typeIx = 2;
-					nameIx = 3;
-					break;
-				case RuleConstants.PROD_FUNCID_VOID_ID2:
-					typeIx = 1;
-					nameIx = 2;
-					break;
-				case RuleConstants.PROD_FUNCID_ID2:
-				case RuleConstants.PROD_FUNCID_VOID_ID:
-					typeIx = 0;
-					nameIx = 1;
-					break;
-				case RuleConstants.PROD_FUNCID_ID3:
-					nameIx = 0;
-					break;
-				}
-				String funcName = secReduc.get(nameIx).getData().toString();
-				Root prevRoot = root;	// Cache the original root
-				root = new Root();	// Prepare a new root for the (sub)routine
-				root.setProgram(false);
-				subRoots.add(root);
-				// START KGU#376 2017-09-30: Enh. #389
-				if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0) {
-					// We must have inserted some global stuff, so assume a dependency...
-					this.importingRoots.add(root);
-				}
-				// END KGU#376 2017-09-30
-				String content = new String();
-				// Is there a type specification different from void?
-				if (typeIx >= 0) {
-					Token typeToken = secReduc.get(typeIx);
-					if (typeToken.getType() == SymbolType.CONTENT) {
-						content += typeToken.asString() + " ";
-					}
-					else {
-						content = getContent_R(secReduc.get(typeIx).asReduction(), content).trim() + " ";
-					}
-					content = content.replace("const ", "");
-				}
-				// START KGU#523 2018-06-17: Bugfix #542 - result type void should be suppressed
-				if (content.trim().equals("void")) {
-					content = "";
-				}
-				// END KGU#523 2018-06-17
-				content += funcName + "(";
-				int bodyIndex = 4;
-				String params = "";
-				switch (ruleId) {
-				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2:
-					//params = getparamsFromStructDecl(_reduction.get(4).asReduction());
-					bodyIndex = 5;
-					// START KGU#525 2018-06-18: Don't throw the type information away...
-					//params = getCompsFromStructDef(_reduction.get(4).asReduction()).concatenate("; ");
-					params = getContent_R(_reduction.get(2).asReduction(), "");
-					{
-						StringList paramDecls = getCompsFromStructDef(_reduction.get(4).asReduction());
-						StringList paramNames = StringList.explode(params, ",");
-						// Sort the parameter declarations according to the arg list (just in case...)
-						if (paramDecls.count() == paramNames.count()) {
-							StringList paramsOrdered = new StringList();
-							for (int p = 0; p < paramNames.count(); p++) {
-								Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
-								for (int q = 0; q < paramDecls.count(); q++) {
-									String pd = paramDecls.get(q);
-									if (pm.reset(pd).matches()) {
-										paramsOrdered.add(pd);
-										break;
-									}
-								}
-								if (paramsOrdered.count() < p+1) {
-									paramsOrdered.add(paramNames.get(p));
-								}
-							}
-							params = paramsOrdered.concatenate("; ");
-						}
-					}
-					break;
-					// END KGU#525 2018-06-18
-				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
-					params = getContent_R(_reduction.get(2).asReduction(), "");
-					break;
-				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN3:
-					bodyIndex = 3;
-					break;
-				}
-				content += params + ")";
-				root.setText(content);
-				// START KGU#407 2017-06-20: Enh. #420 - comments already here
-				this.equipWithSourceComment(root, _reduction);
-				// END KGU#407 2017-06-22
-				if (_reduction.get(bodyIndex).getType() == SymbolType.NON_TERMINAL)
-				{
-					buildNSD_R(_reduction.get(bodyIndex).asReduction(), root.children);
-				}
-				// Restore the original root
-				root = prevRoot;
+				buildFunction(_reduction, ruleId);
 			}
 			// END KGU#194 2016-05-08
 			else if (
@@ -2179,6 +2073,121 @@ public class CParser extends CodeParser
 	}
 
 	/**
+	 * Processes a function definition from the given {@code _reduction}
+	 * @param _reduction - the {@link Reduction} of the parser
+	 * @param ruleId - the rule id of {@code _reduction} for further classification
+	 */
+	private void buildFunction(Reduction _reduction, int ruleId) {
+		// Find out the name of the function
+		Reduction secReduc = _reduction.get(0).asReduction();
+		int nameIx = -1;	// Token index of the function id
+		int typeIx = -1;	// Token index of the type specifier ("const") neglected
+		int funcId = secReduc.getParent().getTableIndex();
+		switch (funcId) {
+		case RuleConstants.PROD_FUNCID_ID:
+			typeIx = 1;
+			nameIx = 2;
+			break;
+		case RuleConstants.PROD_FUNCID_CONST_ID:
+			typeIx = 2;
+			nameIx = 3;
+			break;
+		case RuleConstants.PROD_FUNCID_VOID_ID2:
+			typeIx = 1;
+			nameIx = 2;
+			break;
+		case RuleConstants.PROD_FUNCID_ID2:
+		case RuleConstants.PROD_FUNCID_VOID_ID:
+			typeIx = 0;
+			nameIx = 1;
+			break;
+		case RuleConstants.PROD_FUNCID_ID3:
+			nameIx = 0;
+			break;
+		}
+		String funcName = secReduc.get(nameIx).getData().toString();
+		Root prevRoot = root;	// Cache the original root
+		root = new Root();	// Prepare a new root for the (sub)routine
+		root.setProgram(false);
+		subRoots.add(root);
+		// START KGU#376 2017-09-30: Enh. #389
+		if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0) {
+			// We must have inserted some global stuff, so assume a dependency...
+			this.importingRoots.add(root);
+		}
+		// END KGU#376 2017-09-30
+		String content = new String();
+		// Is there a type specification different from void?
+		if (typeIx >= 0) {
+			Token typeToken = secReduc.get(typeIx);
+			if (typeToken.getType() == SymbolType.CONTENT) {
+				content += typeToken.asString() + " ";
+			}
+			else {
+				content = getContent_R(secReduc.get(typeIx).asReduction(), content).trim() + " ";
+			}
+			content = content.replace("const ", "");
+		}
+		// START KGU#523 2018-06-17: Bugfix #542 - result type void should be suppressed
+		if (content.trim().equals("void")) {
+			content = "";
+		}
+		// END KGU#523 2018-06-17
+		content += funcName + "(";
+		int bodyIndex = 4;
+		String params = "";
+		switch (ruleId) {
+		case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2:
+			//params = getparamsFromStructDecl(_reduction.get(4).asReduction());
+			bodyIndex = 5;
+			// START KGU#525 2018-06-18: Don't throw the type information away...
+			//params = getCompsFromStructDef(_reduction.get(4).asReduction()).concatenate("; ");
+			params = getContent_R(_reduction.get(2).asReduction(), "");
+			{
+				StringList paramDecls = getCompsFromStructDef(_reduction.get(4).asReduction());
+				StringList paramNames = StringList.explode(params, ",");
+				// Sort the parameter declarations according to the arg list (just in case...)
+				if (paramDecls.count() == paramNames.count()) {
+					StringList paramsOrdered = new StringList();
+					for (int p = 0; p < paramNames.count(); p++) {
+						Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
+						for (int q = 0; q < paramDecls.count(); q++) {
+							String pd = paramDecls.get(q);
+							if (pm.reset(pd).matches()) {
+								paramsOrdered.add(pd);
+								break;
+							}
+						}
+						if (paramsOrdered.count() < p+1) {
+							paramsOrdered.add(paramNames.get(p));
+						}
+					}
+					params = paramsOrdered.concatenate("; ");
+				}
+			}
+			break;
+			// END KGU#525 2018-06-18
+		case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
+			params = getContent_R(_reduction.get(2).asReduction(), "");
+			break;
+		case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN3:
+			bodyIndex = 3;
+			break;
+		}
+		content += params + ")";
+		root.setText(content);
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		this.equipWithSourceComment(root, _reduction);
+		// END KGU#407 2017-06-22
+		if (_reduction.get(bodyIndex).getType() == SymbolType.NON_TERMINAL)
+		{
+			buildNSD_R(_reduction.get(bodyIndex).asReduction(), root.children);
+		}
+		// Restore the original root
+		root = prevRoot;
+	}
+
+	/**
 	 * Processes type specifications for a variable / constant declaration or a
 	 * type definition (argument {@code _declaringVars} indicates which of both).
 	 * If an anonymous struct description is found then a type definition object
@@ -2312,7 +2321,7 @@ public class CParser extends CodeParser
 	// START KGU#517 2018-06-04: Bugfix ???
 	/**
 	 * Is to extract the struct component declarations from a struct definition and
-	 * to convert them into Structorizer (Pascal-like) syntax.
+	 * to convert them into Structorizer (Pascal-like) syntax.<br/>
 	 * Also useful as helper method for the analysis of the very old C function declaration
 	 * syntax:<br/>
 	 * {@code <Type> <Func ID> '(' <Id List> ')' <Struct Def> <Block>}

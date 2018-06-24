@@ -61,9 +61,13 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.creativewidgetworks.goldparser.engine.Reduction;
 
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.utils.StringList;
 
 /**
@@ -978,6 +982,245 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#519 2018-06-17
 	}
 
+	//---------------------- Build helpers for structograms ---------------------------
+
+	/**
+	 * Dummy Root for global definitions (will be put to main or the only function if
+	 * there aren't more depending Roots)
+	 */
+	protected Root globalRoot = null;
+	
+	/**
+	 * Creates an output instruction from the given arguments {@code _args} and adds it to
+	 * the {@code _parentNode}.
+	 * @param _reduction - the responsible rule
+	 * @param _name - the name of the encountered input function (e.g. "scanf")
+	 * @param _args - the argument expressions
+	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
+	 */
+	protected void buildInput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
+		//content = content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+" $2");
+		String content = getKeyword("input");
+		if (_args != null) {
+			if (_name.equals("scanf")) {
+				// Forget the format string
+				if (_args.count() > 0) {
+					_args.remove(0);
+				}
+				for (int i = 0; i < _args.count(); i++) {
+					String varItem = _args.get(i).trim();
+					if (varItem.startsWith("&")) {
+						_args.set(i, varItem.substring(1));
+					}
+				}
+			}
+			content += _args.concatenate(", ");
+		}
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		//_parentNode.addElement(new Instruction(content.trim()));
+		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
+		// END KGU#407 2017-06-22
+	}
+
+	/**
+	 * Creates an output instruction from the given arguments {@code _args} and adds it to
+	 * the {@code _parentNode}.
+	 * @param _reduction - the responsible rule
+	 * @param _name - the name of the encountered output function (e.g. "printf")
+	 * @param _args - the argument expressions
+	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
+	 */
+	protected void buildOutput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
+		//content = content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+" $1");
+		String content = getKeyword("output") + " ";
+		if (_args != null) {
+			int nExpr = _args.count();
+			// Find the format mask
+			if (nExpr > 1 && _name.equals("printf") && _args.get(0).matches("^[\"].*[\"]$")) {
+				// We try to split the string by the "%" signs which is of course dirty
+				// Unfortunately, we can't use split because it eats empty chunks
+				StringList newExprList = new StringList();
+				String formatStr = _args.get(0);
+				int posPerc = -1;
+				formatStr = formatStr.substring(1, formatStr.length()-1);
+				int i = 1;
+				while ((posPerc = formatStr.indexOf('%')) >= 0 && i < _args.count()) {
+					newExprList.add('"' + formatStr.substring(0, posPerc) + '"');
+					formatStr = formatStr.substring(posPerc+1).replaceFirst(".*?[idxucsefg](.*)", "$1");
+					newExprList.add(_args.get(i++));
+				}
+				if (!formatStr.isEmpty()) {
+					newExprList.add('"' + formatStr + '"');
+				}
+				if (i < _args.count()) {
+					newExprList.add(_args.subSequence(i, _args.count()).concatenate(", "));
+				}
+				_args = newExprList;
+			}
+			else {
+				// Drop an end-standing newline since Structorizer produces a newline automatically
+				String last = _args.get(nExpr - 1);
+				if (last.equals("\"\n\"")) {
+					_args.remove(--nExpr);
+				}
+				else if (last.endsWith("\n\"")) {
+					_args.set(nExpr-1, last.substring(0, last.length()-2) + '"');
+				}
+			}
+			content += _args.concatenate(", ");
+		}
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		//_parentNode.addElement(new Instruction(content.trim()));
+		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
+		// END KGU#407 2017-06-22
+	}
+
+	/**
+	 * Converts a C initializer expression for a struct type to a corresponding
+	 * record initializer for Structorizer.
+	 * This method may not be applicable if the type info isn't available
+	 * @param _typeName - Name of the detected struct type
+	 * @param _expr - the initialiser expression to be converted
+	 * @param _typeEntry - the type entry corresponding to {@code _typeName}
+	 * @return the converted initializer
+	 */
+	protected String convertStructInitializer(String _typeName, String _expr, TypeMapEntry _typeEntry) {
+		StringList parts = Element.splitExpressionList(_expr.substring(1), ",", true);
+		LinkedHashMap<String, TypeMapEntry> compInfo = _typeEntry.getComponentInfo(false);
+		if (parts.count() > 1 && compInfo.size() >= parts.count() - 1) {
+			int ix = 0;
+			_expr = _typeName + "{";
+			for (Entry<String, TypeMapEntry> comp: compInfo.entrySet()) {
+				String part = parts.get(ix).trim();
+				// Check for recursive structure initializers
+				TypeMapEntry compType = comp.getValue();
+				if (part.startsWith("{") && part.endsWith("}") &&
+						compType != null && compType.isRecord() && compType.isNamed()) {
+					part = convertStructInitializer(compType.typeName, part, compType);
+				}
+				_expr += comp.getKey() + ": " + part;
+				if (++ix >= parts.count()-1) {
+					_expr += parts.get(parts.count()-1);
+					break;
+				}
+				else {
+					_expr += ", ";
+				}
+			}
+		}
+		return _expr;
+	}
+	
+	//------------------------- Postprocessor ---------------------------
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
+		if (aRoot.getMethodName().equals("main")) {
+			String fileName = new File(textToParse).getName();
+			if (fileName.contains(".")) {
+				fileName = fileName.substring(0, fileName.indexOf('.'));
+			}
+			if (this.optionUpperCaseProgName) {
+				fileName = fileName.toUpperCase();
+			}
+			fileName = fileName.replaceAll("(.*?)[^A-Za-z0-9_](.*?)", "$1_$2");
+			if (aRoot.getParameterNames().count() > 0) {
+				String header = aRoot.getText().getText();
+				header = header.replaceFirst("(.*?)main([((].*)", "$1" + fileName + "$2");
+				aRoot.setText(header);
+			}
+			else {
+				aRoot.setText(fileName);
+				aRoot.setProgram(true);
+			}
+			// Are there some global definitions to be imported?
+			if (this.globalRoot != null && this.globalRoot.children.getSize() > 0 && this.globalRoot != aRoot) {
+				String oldName = this.globalRoot.getMethodName();
+				String inclName = fileName + "Globals";
+				this.globalRoot.setText(inclName);
+				// START KGU#376 2017-05-17: Enh. #389 now we have an appropriate diagram type
+				//this.globalRoot.setProgram(true);
+				this.globalRoot.setInclude();
+				// END KGU#376 2017-05-17
+				// START KGU#376 2017-07-01: Enh. #389 - now register global includable with Root
+//				for (Call provCall: this.provisionalImportCalls) {
+//					provCall.setText(provCall.getText().get(0).replace(DEFAULT_GLOBAL_NAME, inclName).replace("???", inclName));
+//				}
+//				this.provisionalImportCalls.clear();
+				for (Root impRoot: this.importingRoots) {
+					if (impRoot.includeList != null) {
+						int n = impRoot.includeList.replaceAll(oldName, inclName);
+						n += impRoot.includeList.replaceAll(DEFAULT_GLOBAL_NAME, inclName);
+						n += impRoot.includeList.replaceAll("???", inclName);
+						if (n > 1) {
+							impRoot.includeList.removeAll(inclName);
+							impRoot.includeList.add(inclName);
+						}
+					}
+					else {
+						impRoot.includeList = StringList.getNew(inclName);
+					}
+				}
+				this.importingRoots.clear();
+				// END KGU#376 2017-07-01
+			}
+		}
+		// START KGU#376 2017-04-11: enh. #389 import mechanism for globals
+//		if (this.globalRoot != null && this.globalRoot != aRoot) {
+//			String globalName = this.globalRoot.getMethodName();
+//			// START KGU#376 2017-07-01: Enh. #389 - modified mechanism
+////			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? DEFAULT_GLOBAL_NAME : globalName));
+////			importCall.setColor(colorGlobal);
+////			aRoot.children.insertElementAt(importCall, 0);
+////			if (globalName.equals("???")) {
+////				this.provisionalImportCalls.add(importCall);
+////			}
+//			if (aRoot.includeList == null) {
+//				aRoot.includeList = StringList.getNew(globalName);
+//			}
+//			else {
+//				aRoot.includeList.addIfNew(globalName);
+//			}
+//			if (!this.importingRoots.contains(aRoot)) {
+//				this.importingRoots.add(aRoot);
+//			}
+//			// END KGU#376 2017-07-01
+//		}
+		// END KGU#376 2017-04-11
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#postProcess(java.lang.String)
+	 */
+	protected void subclassPostProcess(String textToParse)
+	{
+		// May there was no main function but global definitions
+		if (this.globalRoot != null && this.globalRoot.children.getSize() > 0) {
+			String globalName = this.globalRoot.getMethodName();
+			if (globalName.equals("???")) {
+				// FIXME: Shouldn't we also derive the name from the filename as in the method above?
+				this.globalRoot.setText(globalName = DEFAULT_GLOBAL_NAME);
+			}
+			// START KGU#376 2017-05-23: Enh. #389 now we have an appropriate diagram type
+			//this.globalRoot.setProgram(true);
+			this.globalRoot.setInclude();
+			// END KGU#376 2017-05-23
+			// Check again that we haven't forgotten to update any include list
+			for (Root dependent: this.importingRoots) {
+				if (dependent.includeList == null) {
+					dependent.includeList = StringList.getNew(globalName);
+				}
+				else {
+					dependent.includeList.removeAll("???");
+					dependent.includeList.addIfNew(globalName);
+				}
+			}
+			this.importingRoots.clear();
+		}
+	}
 
 
 }

@@ -10,7 +10,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - C import fails if the code contains function pointers.
 
-Current development version: 3.28-04 (2018-06-20)
+Current development version: 3.28-05 (2018-06-23)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -44,6 +44,7 @@ Current development version: 3.28-04 (2018-06-20)
 - 04: Bugfix #533: Effort to import C struct initializers as record literals <2>
 - 04: Bugfix #545: Defective C import of FOR loops without condition <2>
 - 04: Bugfix #546: C import failed to split certain printf format strings <2>
+- 05: Enh. #489: C99 parser pushed forward (though a little quick and dirty) <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
