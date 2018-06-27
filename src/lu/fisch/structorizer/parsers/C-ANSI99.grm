@@ -70,10 +70,14 @@
 ! Modified 2018-06-20
 !   * Erroneous use of "Literal" in >Selector> rule corrected to <Literal>
 !   * Forgotten equality sign in assign operator '^=' added
+! Modified 2018-06-24
+!   * Forgotten empty block (without <BlockItemList>) as possible
+!     <Compound Stmt> added.
+!   * Identifiers allowed as CASE selectors.
 ! -----------------------------------------------------------------------
 "Name"     = 'ANSI-C99'
 "Author"   = 'Kay Gürtzig'
-"Version"  = '1.2'
+"Version"  = '1.3'
 "About"    = 'ANSI C99 (ISO/IEC 9899:TC3 draft from September 7, 2007)'
 
 "Case Sensitive" = True
@@ -302,13 +306,16 @@ Comment Line  = '//'
 ! -------------------------------------------------
 
 <Statement>       ::= <Labelled Stmt>
-                   |  '{' <BlockItemList> '}'
+                   |  <Compound Stmt>
                    |  <Expression Stmt>
                    |  <Selection Stmt>
                    |  <Iteration Stmt>
                    |  <Jump Stmt>
                    
 <Labelled Stmt>   ::= Identifier ':' <Statement>
+                   
+<Compound Stmt>   ::= '{' <BlockItemList> '}'
+                   | '{' '}'
                    
 <BlockItemList>   ::= <BlockItemList> <BlockItem>
                    |  <BlockItem>
@@ -328,6 +335,7 @@ Comment Line  = '//'
                    |
 
 <Selector>        ::= <Literal>
+                   |  Identifier
                    |  '(' <Expression> ')'
                    
 <StmtList>        ::= <Statement> <StmtList>
@@ -353,7 +361,7 @@ Comment Line  = '//'
 <External Decl>   ::= <Function Def>
                    |  <Declaration>
 
-<Function Def>    ::= <Decl Specifiers> <Declarator> <DeclListOpt> '{' <BlockItemList> '}'
+<Function Def>    ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
                    
 <DeclarationList> ::= <DeclarationList> <Declaration>
                    |  <Declaration>

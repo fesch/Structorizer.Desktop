@@ -101,7 +101,7 @@ public class C99Parser extends CPreParser
 			/* TODO: Fill in the RuleConstants members of those productions that are
 			 * to be associated with comments found in their syntax subtrees or their
 			 * immediate environment. */
-			RuleConstants.PROD_FUNCTIONDEF_LBRACE_RBRACE,
+			RuleConstants.PROD_FUNCTIONDEF,
 			RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN,
 			RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN2,
 			RuleConstants.PROD_POSTFIXEXP_PLUSPLUS,
@@ -286,74 +286,75 @@ public class C99Parser extends CPreParser
 //		final int SYM_BLOCKITEMLIST     = 106;  // <BlockItemList>
 //		final int SYM_CASESTMTS         = 107;  // <Case Stmts>
 //		final int SYM_CASTEXP           = 108;  // <Cast Exp>
-//		final int SYM_CONDEXP           = 109;  // <Cond Exp>
-//		final int SYM_CONSTANTEXP       = 110;  // <Constant Exp>
-//		final int SYM_DECLSPECIFIERS    = 111;  // <Decl Specifiers>
-//		final int SYM_DECLSPECS         = 112;  // <Decl Specs>
-//		final int SYM_DECLARATION       = 113;  // <Declaration>
-//		final int SYM_DECLARATIONLIST   = 114;  // <DeclarationList>
-//		final int SYM_DECLARATOR        = 115;  // <Declarator>
-//		final int SYM_DECLLISTOPT       = 116;  // <DeclListOpt>
-//		final int SYM_DESIGNATION       = 117;  // <Designation>
-//		final int SYM_DESIGNATOR        = 118;  // <Designator>
-//		final int SYM_DESIGNATORLIST    = 119;  // <DesignatorList>
-//		final int SYM_DIRABSTRDECLOPT   = 120;  // <DirAbstrDeclOpt>
-//		final int SYM_DIRECTABSTRDECL   = 121;  // <Direct Abstr Decl>
-//		final int SYM_DIRECTDECL        = 122;  // <Direct Decl>
-//		final int SYM_ENUMERATOR        = 123;  // <Enumerator>
-//		final int SYM_ENUMERATORSPEC    = 124;  // <Enumerator Spec>
-//		final int SYM_ENUMLIST          = 125;  // <EnumList>
-//		final int SYM_EQUATEXP          = 126;  // <Equat Exp>
-//		final int SYM_EXCLOREXP         = 127;  // <ExclOr Exp>
-//		final int SYM_EXPRESSION        = 128;  // <Expression>
-//		final int SYM_EXPRESSIONSTMT    = 129;  // <Expression Stmt>
-//		final int SYM_EXPROPT           = 130;  // <ExprOpt>
-//		final int SYM_EXTERNALDECL      = 131;  // <External Decl>
-//		final int SYM_FUNCTIONDEF       = 132;  // <Function Def>
-//		final int SYM_IDENTIFIERLIST    = 133;  // <IdentifierList>
-//		final int SYM_IDLISTOPT         = 134;  // <IdListOpt>
-//		final int SYM_INITDECLARATOR    = 135;  // <Init Declarator>
-//		final int SYM_INITDECLLIST      = 136;  // <InitDeclList>
-//		final int SYM_INITIALIZER       = 137;  // <Initializer>
-//		final int SYM_INITIALIZERLIST   = 138;  // <InitializerList>
-//		final int SYM_ITERATIONSTMT     = 139;  // <Iteration Stmt>
-//		final int SYM_JUMPSTMT          = 140;  // <Jump Stmt>
-//		final int SYM_LABELLEDSTMT      = 141;  // <Labelled Stmt>
-//		final int SYM_LITERAL           = 142;  // <Literal>
-//		final int SYM_LOGANDEXP         = 143;  // <LogAnd Exp>
-//		final int SYM_LOGOREXP          = 144;  // <LogOr Exp>
-//		final int SYM_MULTEXP           = 145;  // <Mult Exp>
-//		final int SYM_OREXP             = 146;  // <Or Exp>
-//		final int SYM_PARAMETERDECL     = 147;  // <Parameter Decl>
-//		final int SYM_PARAMETERLIST     = 148;  // <ParameterList>
-//		final int SYM_PARAMTYPELIST     = 149;  // <ParamTypeList>
-//		final int SYM_POINTER           = 150;  // <Pointer>
-//		final int SYM_POSTFIXEXP        = 151;  // <Postfix Exp>
-//		final int SYM_RELATEXP          = 152;  // <Relat Exp>
-//		final int SYM_SELECTIONSTMT     = 153;  // <Selection Stmt>
-//		final int SYM_SELECTOR          = 154;  // <Selector>
-//		final int SYM_SHIFTEXP          = 155;  // <Shift Exp>
-//		final int SYM_SPECQUALLIST      = 156;  // <SpecQualList>
-//		final int SYM_SPECQUALS         = 157;  // <SpecQuals>
-//		final int SYM_STATEMENT         = 158;  // <Statement>
-//		final int SYM_STMTLIST          = 159;  // <StmtList>
-//		final int SYM_STORAGECLASS      = 160;  // <Storage Class>
-//		final int SYM_STRUCTDECL        = 161;  // <Struct Decl>
-//		final int SYM_STRUCTDECLARATION = 162;  // <Struct Declaration>
-//		final int SYM_STRUCTDECLLIST    = 163;  // <StructDeclList>
-//		final int SYM_STRUCTDECLNLIST   = 164;  // <StructDeclnList>
-//		final int SYM_STRUCTORUNION     = 165;  // <StructOrUnion>
-//		final int SYM_STRUCTORUNIONSPEC = 166;  // <StructOrUnion Spec>
-//		final int SYM_TRANSLATIONUNIT   = 167;  // <Translation Unit>
-//		final int SYM_TYPEQUALIFIER     = 168;  // <Type Qualifier>
-//		final int SYM_TYPESPECIFIER     = 169;  // <Type Specifier>
-//		final int SYM_TYPEDEFNAME       = 170;  // <Typedef Name>
-//		final int SYM_TYPENAME          = 171;  // <Typename>
-//		final int SYM_TYPEQUALLIST      = 172;  // <TypeQualList>
-//		final int SYM_TYPEQUALSOPT      = 173;  // <TypeQualsOpt>
-//		final int SYM_UNARYEXP          = 174;  // <Unary Exp>
-//		final int SYM_UNARYOP           = 175;  // <Unary Op>
-//		final int SYM_VALUE             = 176;  // <Value>
+//		final int SYM_COMPOUNDSTMT      = 109;  // <Compound Stmt>
+//		final int SYM_CONDEXP           = 110;  // <Cond Exp>
+//		final int SYM_CONSTANTEXP       = 111;  // <Constant Exp>
+//		final int SYM_DECLSPECIFIERS    = 112;  // <Decl Specifiers>
+//		final int SYM_DECLSPECS         = 113;  // <Decl Specs>
+//		final int SYM_DECLARATION       = 114;  // <Declaration>
+//		final int SYM_DECLARATIONLIST   = 115;  // <DeclarationList>
+//		final int SYM_DECLARATOR        = 116;  // <Declarator>
+//		final int SYM_DECLLISTOPT       = 117;  // <DeclListOpt>
+//		final int SYM_DESIGNATION       = 118;  // <Designation>
+//		final int SYM_DESIGNATOR        = 119;  // <Designator>
+//		final int SYM_DESIGNATORLIST    = 120;  // <DesignatorList>
+//		final int SYM_DIRABSTRDECLOPT   = 121;  // <DirAbstrDeclOpt>
+//		final int SYM_DIRECTABSTRDECL   = 122;  // <Direct Abstr Decl>
+//		final int SYM_DIRECTDECL        = 123;  // <Direct Decl>
+//		final int SYM_ENUMERATOR        = 124;  // <Enumerator>
+//		final int SYM_ENUMERATORSPEC    = 125;  // <Enumerator Spec>
+//		final int SYM_ENUMLIST          = 126;  // <EnumList>
+//		final int SYM_EQUATEXP          = 127;  // <Equat Exp>
+//		final int SYM_EXCLOREXP         = 128;  // <ExclOr Exp>
+//		final int SYM_EXPRESSION        = 129;  // <Expression>
+//		final int SYM_EXPRESSIONSTMT    = 130;  // <Expression Stmt>
+//		final int SYM_EXPROPT           = 131;  // <ExprOpt>
+//		final int SYM_EXTERNALDECL      = 132;  // <External Decl>
+//		final int SYM_FUNCTIONDEF       = 133;  // <Function Def>
+//		final int SYM_IDENTIFIERLIST    = 134;  // <IdentifierList>
+//		final int SYM_IDLISTOPT         = 135;  // <IdListOpt>
+//		final int SYM_INITDECLARATOR    = 136;  // <Init Declarator>
+//		final int SYM_INITDECLLIST      = 137;  // <InitDeclList>
+//		final int SYM_INITIALIZER       = 138;  // <Initializer>
+//		final int SYM_INITIALIZERLIST   = 139;  // <InitializerList>
+//		final int SYM_ITERATIONSTMT     = 140;  // <Iteration Stmt>
+//		final int SYM_JUMPSTMT          = 141;  // <Jump Stmt>
+//		final int SYM_LABELLEDSTMT      = 142;  // <Labelled Stmt>
+//		final int SYM_LITERAL           = 143;  // <Literal>
+//		final int SYM_LOGANDEXP         = 144;  // <LogAnd Exp>
+//		final int SYM_LOGOREXP          = 145;  // <LogOr Exp>
+//		final int SYM_MULTEXP           = 146;  // <Mult Exp>
+//		final int SYM_OREXP             = 147;  // <Or Exp>
+//		final int SYM_PARAMETERDECL     = 148;  // <Parameter Decl>
+//		final int SYM_PARAMETERLIST     = 149;  // <ParameterList>
+//		final int SYM_PARAMTYPELIST     = 150;  // <ParamTypeList>
+//		final int SYM_POINTER           = 151;  // <Pointer>
+//		final int SYM_POSTFIXEXP        = 152;  // <Postfix Exp>
+//		final int SYM_RELATEXP          = 153;  // <Relat Exp>
+//		final int SYM_SELECTIONSTMT     = 154;  // <Selection Stmt>
+//		final int SYM_SELECTOR          = 155;  // <Selector>
+//		final int SYM_SHIFTEXP          = 156;  // <Shift Exp>
+//		final int SYM_SPECQUALLIST      = 157;  // <SpecQualList>
+//		final int SYM_SPECQUALS         = 158;  // <SpecQuals>
+//		final int SYM_STATEMENT         = 159;  // <Statement>
+//		final int SYM_STMTLIST          = 160;  // <StmtList>
+//		final int SYM_STORAGECLASS      = 161;  // <Storage Class>
+//		final int SYM_STRUCTDECL        = 162;  // <Struct Decl>
+//		final int SYM_STRUCTDECLARATION = 163;  // <Struct Declaration>
+//		final int SYM_STRUCTDECLLIST    = 164;  // <StructDeclList>
+//		final int SYM_STRUCTDECLNLIST   = 165;  // <StructDeclnList>
+//		final int SYM_STRUCTORUNION     = 166;  // <StructOrUnion>
+//		final int SYM_STRUCTORUNIONSPEC = 167;  // <StructOrUnion Spec>
+//		final int SYM_TRANSLATIONUNIT   = 168;  // <Translation Unit>
+//		final int SYM_TYPEQUALIFIER     = 169;  // <Type Qualifier>
+//		final int SYM_TYPESPECIFIER     = 170;  // <Type Specifier>
+//		final int SYM_TYPEDEFNAME       = 171;  // <Typedef Name>
+//		final int SYM_TYPENAME          = 172;  // <Typename>
+//		final int SYM_TYPEQUALLIST      = 173;  // <TypeQualList>
+//		final int SYM_TYPEQUALSOPT      = 174;  // <TypeQualsOpt>
+//		final int SYM_UNARYEXP          = 175;  // <Unary Exp>
+//		final int SYM_UNARYOP           = 176;  // <Unary Op>
+//		final int SYM_VALUE             = 177;  // <Value>
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -425,17 +426,17 @@ public class C99Parser extends CPreParser
 //		final int PROD_DECLARATOR2                                        =  62;  // <Declarator> ::= <Direct Decl>
 		final int PROD_DIRECTDECL_IDENTIFIER                              =  63;  // <Direct Decl> ::= Identifier
 		final int PROD_DIRECTDECL_LPAREN_RPAREN                           =  64;  // <Direct Decl> ::= '(' <Declarator> ')'
-//		final int PROD_DIRECTDECL_LBRACKET_RBRACKET                       =  65;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> <Assign Exp> ']'
-//		final int PROD_DIRECTDECL_LBRACKET_TIMES_RBRACKET                 =  66;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> '*' ']'
-//		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET                =  67;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualList> static <Assign Exp> ']'
-//		final int PROD_DIRECTDECL_LBRACKET_RBRACKET2                      =  68;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> ']'
-//		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET2               =  69;  // <Direct Decl> ::= <Direct Decl> '[' static <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTDECL_LBRACKET_RBRACKET                       =  65;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTDECL_LBRACKET_TIMES_RBRACKET                 =  66;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> '*' ']'
+		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET                =  67;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualList> static <Assign Exp> ']'
+		final int PROD_DIRECTDECL_LBRACKET_RBRACKET2                      =  68;  // <Direct Decl> ::= <Direct Decl> '[' <TypeQualsOpt> ']'
+		final int PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET2               =  69;  // <Direct Decl> ::= <Direct Decl> '[' static <TypeQualsOpt> <Assign Exp> ']'
 		final int PROD_DIRECTDECL_LPAREN_RPAREN2                          =  70;  // <Direct Decl> ::= <Direct Decl> '(' <ParamTypeList> ')'
 		final int PROD_DIRECTDECL_LPAREN_RPAREN3                          =  71;  // <Direct Decl> ::= <Direct Decl> '(' <IdListOpt> ')'
-//		final int PROD_POINTER_TIMES                                      =  72;  // <Pointer> ::= '*' <TypeQualList> <Pointer>
-//		final int PROD_POINTER_TIMES2                                     =  73;  // <Pointer> ::= '*' <TypeQualList>
-//		final int PROD_POINTER_TIMES3                                     =  74;  // <Pointer> ::= '*' <Pointer>
-//		final int PROD_POINTER_TIMES4                                     =  75;  // <Pointer> ::= '*'
+		final int PROD_POINTER_TIMES                                      =  72;  // <Pointer> ::= '*' <TypeQualList> <Pointer>
+		final int PROD_POINTER_TIMES2                                     =  73;  // <Pointer> ::= '*' <TypeQualList>
+		final int PROD_POINTER_TIMES3                                     =  74;  // <Pointer> ::= '*' <Pointer>
+		final int PROD_POINTER_TIMES4                                     =  75;  // <Pointer> ::= '*'
 //		final int PROD_TYPEQUALLIST                                       =  76;  // <TypeQualList> ::= <Type Qualifier>
 //		final int PROD_TYPEQUALLIST2                                      =  77;  // <TypeQualList> ::= <TypeQualList> <Type Qualifier>
 //		final int PROD_TYPEQUALSOPT                                       =  78;  // <TypeQualsOpt> ::= <TypeQualList>
@@ -453,17 +454,17 @@ public class C99Parser extends CPreParser
 		final int PROD_IDLISTOPT2                                         =  90;  // <IdListOpt> ::= 
 //		final int PROD_TYPENAME                                           =  91;  // <Typename> ::= <SpecQualList> <Abstract Decl>
 //		final int PROD_TYPENAME2                                          =  92;  // <Typename> ::= <SpecQualList>
-//		final int PROD_ABSTRACTDECL                                       =  93;  // <Abstract Decl> ::= <Pointer> <Direct Abstr Decl>
+		final int PROD_ABSTRACTDECL                                       =  93;  // <Abstract Decl> ::= <Pointer> <Direct Abstr Decl>
 //		final int PROD_ABSTRACTDECL2                                      =  94;  // <Abstract Decl> ::= <Pointer>
 //		final int PROD_ABSTRACTDECL3                                      =  95;  // <Abstract Decl> ::= <Direct Abstr Decl>
-//		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN                      =  96;  // <Direct Abstr Decl> ::= '(' <Abstract Decl> ')'
-//		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET                  =  97;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> <Assign Exp> ']'
-//		final int PROD_DIRECTABSTRDECL_LBRACKET_TIMES_RBRACKET            =  98;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' '*' ']'
-//		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET           =  99;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualList> static <Assign Exp> ']'
-//		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET2                 = 100;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> ']'
-//		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET2          = 101;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' static <TypeQualsOpt> <Assign Exp> ']'
-//		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN2                     = 102;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' <ParamTypeList> ')'
-//		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN3                     = 103;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' ')'
+		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN                      =  96;  // <Direct Abstr Decl> ::= '(' <Abstract Decl> ')'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET                  =  97;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_TIMES_RBRACKET            =  98;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' '*' ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET           =  99;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualList> static <Assign Exp> ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET2                 = 100;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' <TypeQualsOpt> ']'
+		final int PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET2          = 101;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '[' static <TypeQualsOpt> <Assign Exp> ']'
+		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN2                     = 102;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' <ParamTypeList> ')'
+		final int PROD_DIRECTABSTRDECL_LPAREN_RPAREN3                     = 103;  // <Direct Abstr Decl> ::= <DirAbstrDeclOpt> '(' ')'
 //		final int PROD_DIRABSTRDECLOPT                                    = 104;  // <DirAbstrDeclOpt> ::= <Direct Abstr Decl>
 //		final int PROD_DIRABSTRDECLOPT2                                   = 105;  // <DirAbstrDeclOpt> ::= 
 		final int PROD_TYPEDEFNAME_USERTYPEID                             = 106;  // <Typedef Name> ::= UserTypeId
@@ -479,128 +480,131 @@ public class C99Parser extends CPreParser
 //		final int PROD_DESIGNATOR_LBRACKET_RBRACKET                       = 116;  // <Designator> ::= '[' <Constant Exp> ']'
 //		final int PROD_DESIGNATOR_DOT_IDENTIFIER                          = 117;  // <Designator> ::= '.' Identifier
 //		final int PROD_STATEMENT                                          = 118;  // <Statement> ::= <Labelled Stmt>
-//		final int PROD_STATEMENT_LBRACE_RBRACE                            = 119;  // <Statement> ::= '{' <BlockItemList> '}'
-//		final int PROD_STATEMENT2                                         = 120;  // <Statement> ::= <Expression Stmt>
-//		final int PROD_STATEMENT3                                         = 121;  // <Statement> ::= <Selection Stmt>
-//		final int PROD_STATEMENT4                                         = 122;  // <Statement> ::= <Iteration Stmt>
-//		final int PROD_STATEMENT5                                         = 123;  // <Statement> ::= <Jump Stmt>
+//		final int PROD_STATEMENT2                                         = 119;  // <Statement> ::= <Compound Stmt>
+//		final int PROD_STATEMENT3                                         = 120;  // <Statement> ::= <Expression Stmt>
+//		final int PROD_STATEMENT4                                         = 121;  // <Statement> ::= <Selection Stmt>
+//		final int PROD_STATEMENT5                                         = 122;  // <Statement> ::= <Iteration Stmt>
+//		final int PROD_STATEMENT6                                         = 123;  // <Statement> ::= <Jump Stmt>
 		final int PROD_LABELLEDSTMT_IDENTIFIER_COLON                      = 124;  // <Labelled Stmt> ::= Identifier ':' <Statement>
-//		final int PROD_BLOCKITEMLIST                                      = 125;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
-//		final int PROD_BLOCKITEMLIST2                                     = 126;  // <BlockItemList> ::= <BlockItem>
-//		final int PROD_BLOCKITEM                                          = 127;  // <BlockItem> ::= <Declaration>
-//		final int PROD_BLOCKITEM2                                         = 128;  // <BlockItem> ::= <Statement>
-//		final int PROD_EXPRESSIONSTMT_SEMI                                = 129;  // <Expression Stmt> ::= <Expression> ';'
-//		final int PROD_EXPRESSIONSTMT_SEMI2                               = 130;  // <Expression Stmt> ::= ';'
-		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN                     = 131;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement>
-		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN_ELSE                = 132;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement> else <Statement>
-		final int PROD_SELECTIONSTMT_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE   = 133;  // <Selection Stmt> ::= switch '(' <Expression> ')' '{' <Case Stmts> '}'
-		final int PROD_CASESTMTS_CASE_COLON                               = 134;  // <Case Stmts> ::= case <Selector> ':' <StmtList> <Case Stmts>
-		final int PROD_CASESTMTS_DEFAULT_COLON                            = 135;  // <Case Stmts> ::= default ':' <StmtList>
-//		final int PROD_CASESTMTS                                          = 136;  // <Case Stmts> ::= 
-//		final int PROD_SELECTOR                                           = 137;  // <Selector> ::= <Literal>
-//		final int PROD_SELECTOR_LPAREN_RPAREN                             = 138;  // <Selector> ::= '(' <Expression> ')'
-		final int PROD_STMTLIST                                           = 139;  // <StmtList> ::= <Statement> <StmtList>
-//		final int PROD_STMTLIST2                                          = 140;  // <StmtList> ::= 
-		final int PROD_ITERATIONSTMT_WHILE_LPAREN_RPAREN                  = 141;  // <Iteration Stmt> ::= while '(' <Expression> ')' <Statement>
-		final int PROD_ITERATIONSTMT_DO_WHILE_LPAREN_RPAREN_SEMI          = 142;  // <Iteration Stmt> ::= do <Statement> while '(' <Expression> ')' ';'
-		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_SEMI_RPAREN          = 143;  // <Iteration Stmt> ::= for '(' <ExprOpt> ';' <ExprOpt> ';' <ExprOpt> ')' <Statement>
-		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_RPAREN               = 144;  // <Iteration Stmt> ::= for '(' <Declaration> <ExprOpt> ';' <ExprOpt> ')' <Statement>
-		final int PROD_JUMPSTMT_GOTO_IDENTIFIER_SEMI                      = 145;  // <Jump Stmt> ::= goto Identifier ';'
-		final int PROD_JUMPSTMT_CONTINUE_SEMI                             = 146;  // <Jump Stmt> ::= continue ';'
-		final int PROD_JUMPSTMT_BREAK_SEMI                                = 147;  // <Jump Stmt> ::= break ';'
-		final int PROD_JUMPSTMT_RETURN_SEMI                               = 148;  // <Jump Stmt> ::= return <ExprOpt> ';'
-//		final int PROD_TRANSLATIONUNIT                                    = 149;  // <Translation Unit> ::= <External Decl>
-//		final int PROD_TRANSLATIONUNIT2                                   = 150;  // <Translation Unit> ::= <Translation Unit> <External Decl>
-//		final int PROD_EXTERNALDECL                                       = 151;  // <External Decl> ::= <Function Def>
-//		final int PROD_EXTERNALDECL2                                      = 152;  // <External Decl> ::= <Declaration>
-		final int PROD_FUNCTIONDEF_LBRACE_RBRACE                          = 153;  // <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> '{' <BlockItemList> '}'
-		final int PROD_DECLARATIONLIST                                    = 154;  // <DeclarationList> ::= <DeclarationList> <Declaration>
-//		final int PROD_DECLARATIONLIST2                                   = 155;  // <DeclarationList> ::= <Declaration>
-//		final int PROD_DECLLISTOPT                                        = 156;  // <DeclListOpt> ::= <DeclarationList>
-//		final int PROD_DECLLISTOPT2                                       = 157;  // <DeclListOpt> ::= 
-//		final int PROD_EXPRESSION_COMMA                                   = 158;  // <Expression> ::= <Expression> ',' <Assign Exp>
-//		final int PROD_EXPRESSION                                         = 159;  // <Expression> ::= <Assign Exp>
-		final int PROD_ASSIGNEXP                                          = 160;  // <Assign Exp> ::= <Unary Exp> <Assign Op> <Assign Exp>
-//		final int PROD_ASSIGNEXP2                                         = 161;  // <Assign Exp> ::= <Cond Exp>
-//		final int PROD_ASSIGNOP_EQ                                        = 162;  // <Assign Op> ::= '='
-//		final int PROD_ASSIGNOP_TIMESEQ                                   = 163;  // <Assign Op> ::= '*='
-//		final int PROD_ASSIGNOP_DIVEQ                                     = 164;  // <Assign Op> ::= '/='
-//		final int PROD_ASSIGNOP_PERCENTEQ                                 = 165;  // <Assign Op> ::= '%='
-//		final int PROD_ASSIGNOP_PLUSEQ                                    = 166;  // <Assign Op> ::= '+='
-//		final int PROD_ASSIGNOP_MINUSEQ                                   = 167;  // <Assign Op> ::= '-='
-//		final int PROD_ASSIGNOP_LTLTEQ                                    = 168;  // <Assign Op> ::= '<<='
-//		final int PROD_ASSIGNOP_GTGTEQ                                    = 169;  // <Assign Op> ::= '>>='
-//		final int PROD_ASSIGNOP_AMPEQ                                     = 170;  // <Assign Op> ::= '&='
-//		final int PROD_ASSIGNOP_CARETEQ                                   = 171;  // <Assign Op> ::= '^='
-//		final int PROD_ASSIGNOP_PIPEEQ                                    = 172;  // <Assign Op> ::= '|='
-//		final int PROD_CONDEXP_QUESTION_COLON                             = 173;  // <Cond Exp> ::= <LogOr Exp> '?' <Expression> ':' <Cond Exp>
-//		final int PROD_CONDEXP                                            = 174;  // <Cond Exp> ::= <LogOr Exp>
-//		final int PROD_LOGOREXP_PIPEPIPE                                  = 175;  // <LogOr Exp> ::= <LogOr Exp> '||' <LogAnd Exp>
-//		final int PROD_LOGOREXP                                           = 176;  // <LogOr Exp> ::= <LogAnd Exp>
-//		final int PROD_LOGANDEXP_AMPAMP                                   = 177;  // <LogAnd Exp> ::= <LogAnd Exp> '&&' <Or Exp>
-//		final int PROD_LOGANDEXP                                          = 178;  // <LogAnd Exp> ::= <Or Exp>
-//		final int PROD_OREXP_PIPE                                         = 179;  // <Or Exp> ::= <Or Exp> '|' <ExclOr Exp>
-//		final int PROD_OREXP                                              = 180;  // <Or Exp> ::= <ExclOr Exp>
-//		final int PROD_EXCLOREXP_CARET                                    = 181;  // <ExclOr Exp> ::= <ExclOr Exp> '^' <And Exp>
-//		final int PROD_EXCLOREXP                                          = 182;  // <ExclOr Exp> ::= <And Exp>
-//		final int PROD_ANDEXP_AMP                                         = 183;  // <And Exp> ::= <And Exp> '&' <Equat Exp>
-//		final int PROD_ANDEXP                                             = 184;  // <And Exp> ::= <Equat Exp>
-//		final int PROD_EQUATEXP_EQEQ                                      = 185;  // <Equat Exp> ::= <Equat Exp> '==' <Relat Exp>
-//		final int PROD_EQUATEXP_EXCLAMEQ                                  = 186;  // <Equat Exp> ::= <Equat Exp> '!=' <Relat Exp>
-//		final int PROD_EQUATEXP                                           = 187;  // <Equat Exp> ::= <Relat Exp>
-//		final int PROD_RELATEXP_GT                                        = 188;  // <Relat Exp> ::= <Relat Exp> '>' <Shift Exp>
-//		final int PROD_RELATEXP_LT                                        = 189;  // <Relat Exp> ::= <Relat Exp> '<' <Shift Exp>
-//		final int PROD_RELATEXP_LTEQ                                      = 190;  // <Relat Exp> ::= <Relat Exp> '<=' <Shift Exp>
-//		final int PROD_RELATEXP_GTEQ                                      = 191;  // <Relat Exp> ::= <Relat Exp> '>=' <Shift Exp>
-//		final int PROD_RELATEXP                                           = 192;  // <Relat Exp> ::= <Shift Exp>
-//		final int PROD_SHIFTEXP_LTLT                                      = 193;  // <Shift Exp> ::= <Shift Exp> '<<' <Add Exp>
-//		final int PROD_SHIFTEXP_GTGT                                      = 194;  // <Shift Exp> ::= <Shift Exp> '>>' <Add Exp>
-//		final int PROD_SHIFTEXP                                           = 195;  // <Shift Exp> ::= <Add Exp>
-//		final int PROD_ADDEXP_PLUS                                        = 196;  // <Add Exp> ::= <Add Exp> '+' <Mult Exp>
-//		final int PROD_ADDEXP_MINUS                                       = 197;  // <Add Exp> ::= <Add Exp> '-' <Mult Exp>
-//		final int PROD_ADDEXP                                             = 198;  // <Add Exp> ::= <Mult Exp>
-//		final int PROD_MULTEXP_TIMES                                      = 199;  // <Mult Exp> ::= <Mult Exp> '*' <Cast Exp>
-//		final int PROD_MULTEXP_DIV                                        = 200;  // <Mult Exp> ::= <Mult Exp> '/' <Cast Exp>
-//		final int PROD_MULTEXP_PERCENT                                    = 201;  // <Mult Exp> ::= <Mult Exp> '%' <Cast Exp>
-//		final int PROD_MULTEXP                                            = 202;  // <Mult Exp> ::= <Cast Exp>
-//		final int PROD_POSTFIXEXP                                         = 203;  // <Postfix Exp> ::= <Value>
-//		final int PROD_POSTFIXEXP_LBRACKET_RBRACKET                       = 204;  // <Postfix Exp> ::= <Postfix Exp> '[' <Expression> ']'
-		final int PROD_POSTFIXEXP_LPAREN_RPAREN                           = 205;  // <Postfix Exp> ::= <Postfix Exp> '(' <ArgExpList> ')'
-		final int PROD_POSTFIXEXP_LPAREN_RPAREN2                          = 206;  // <Postfix Exp> ::= <Postfix Exp> '(' ')'
-//		final int PROD_POSTFIXEXP_DOT_IDENTIFIER                          = 207;  // <Postfix Exp> ::= <Postfix Exp> '.' Identifier
-//		final int PROD_POSTFIXEXP_MINUSGT_IDENTIFIER                      = 208;  // <Postfix Exp> ::= <Postfix Exp> '->' Identifier
-		final int PROD_POSTFIXEXP_PLUSPLUS                                = 209;  // <Postfix Exp> ::= <Postfix Exp> '++'
-		final int PROD_POSTFIXEXP_MINUSMINUS                              = 210;  // <Postfix Exp> ::= <Postfix Exp> '--'
-//		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_RBRACE             = 211;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> '}'
-//		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_COMMA_RBRACE       = 212;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> ',' '}'
-//		final int PROD_ARGEXPLIST                                         = 213;  // <ArgExpList> ::= <Assign Exp>
-//		final int PROD_ARGEXPLIST_COMMA                                   = 214;  // <ArgExpList> ::= <ArgExpList> ',' <Assign Exp>
-//		final int PROD_UNARYEXP                                           = 215;  // <Unary Exp> ::= <Postfix Exp>
-		final int PROD_UNARYEXP_PLUSPLUS                                  = 216;  // <Unary Exp> ::= '++' <Unary Exp>
-		final int PROD_UNARYEXP_MINUSMINUS                                = 217;  // <Unary Exp> ::= '--' <Unary Exp>
-//		final int PROD_UNARYEXP2                                          = 218;  // <Unary Exp> ::= <Unary Op> <Cast Exp>
-//		final int PROD_UNARYEXP_SIZEOF                                    = 219;  // <Unary Exp> ::= sizeof <Unary Exp>
-//		final int PROD_UNARYEXP_SIZEOF_LPAREN_RPAREN                      = 220;  // <Unary Exp> ::= sizeof '(' <Typename> ')'
-//		final int PROD_UNARYOP_AMP                                        = 221;  // <Unary Op> ::= '&'
-//		final int PROD_UNARYOP_TIMES                                      = 222;  // <Unary Op> ::= '*'
-//		final int PROD_UNARYOP_PLUS                                       = 223;  // <Unary Op> ::= '+'
-//		final int PROD_UNARYOP_MINUS                                      = 224;  // <Unary Op> ::= '-'
-//		final int PROD_UNARYOP_TILDE                                      = 225;  // <Unary Op> ::= '~'
-//		final int PROD_UNARYOP_EXCLAM                                     = 226;  // <Unary Op> ::= '!'
-//		final int PROD_CASTEXP                                            = 227;  // <Cast Exp> ::= <Unary Exp>
-//		final int PROD_CASTEXP_LPAREN_RPAREN                              = 228;  // <Cast Exp> ::= '(' <Typename> ')' <Cast Exp>
-		final int PROD_VALUE_IDENTIFIER                                   = 229;  // <Value> ::= Identifier
-//		final int PROD_VALUE                                              = 230;  // <Value> ::= <Literal>
-//		final int PROD_VALUE_LPAREN_RPAREN                                = 231;  // <Value> ::= '(' <Expression> ')'
-//		final int PROD_LITERAL_DECLITERAL                                 = 232;  // <Literal> ::= DecLiteral
-//		final int PROD_LITERAL_OCTLITERAL                                 = 233;  // <Literal> ::= OctLiteral
-//		final int PROD_LITERAL_HEXLITERAL                                 = 234;  // <Literal> ::= HexLiteral
-//		final int PROD_LITERAL_FLOATLITERAL                               = 235;  // <Literal> ::= FloatLiteral
-//		final int PROD_LITERAL_STRINGLITERAL                              = 236;  // <Literal> ::= StringLiteral
-//		final int PROD_LITERAL_CHARLITERAL                                = 237;  // <Literal> ::= CharLiteral
-//		final int PROD_CONSTANTEXP                                        = 238;  // <Constant Exp> ::= <Cond Exp>
-//		final int PROD_EXPROPT                                            = 239;  // <ExprOpt> ::= <Expression>
-		final int PROD_EXPROPT2                                           = 240;  // <ExprOpt> ::= 
+		final int PROD_COMPOUNDSTMT_LBRACE_RBRACE                         = 125;  // <Compound Stmt> ::= '{' <BlockItemList> '}'
+//		final int PROD_COMPOUNDSTMT_LBRACE_RBRACE2                        = 126;  // <Compound Stmt> ::= '{' '}'
+//		final int PROD_BLOCKITEMLIST                                      = 127;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
+//		final int PROD_BLOCKITEMLIST2                                     = 128;  // <BlockItemList> ::= <BlockItem>
+//		final int PROD_BLOCKITEM                                          = 129;  // <BlockItem> ::= <Declaration>
+//		final int PROD_BLOCKITEM2                                         = 130;  // <BlockItem> ::= <Statement>
+//		final int PROD_EXPRESSIONSTMT_SEMI                                = 131;  // <Expression Stmt> ::= <Expression> ';'
+//		final int PROD_EXPRESSIONSTMT_SEMI2                               = 132;  // <Expression Stmt> ::= ';'
+		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN                     = 133;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement>
+		final int PROD_SELECTIONSTMT_IF_LPAREN_RPAREN_ELSE                = 134;  // <Selection Stmt> ::= if '(' <Expression> ')' <Statement> else <Statement>
+		final int PROD_SELECTIONSTMT_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE   = 135;  // <Selection Stmt> ::= switch '(' <Expression> ')' '{' <Case Stmts> '}'
+		final int PROD_CASESTMTS_CASE_COLON                               = 136;  // <Case Stmts> ::= case <Selector> ':' <StmtList> <Case Stmts>
+		final int PROD_CASESTMTS_DEFAULT_COLON                            = 137;  // <Case Stmts> ::= default ':' <StmtList>
+//		final int PROD_CASESTMTS                                          = 138;  // <Case Stmts> ::= 
+//		final int PROD_SELECTOR                                           = 139;  // <Selector> ::= <Literal>
+//		final int PROD_SELECTOR_IDENTIFIER                                = 140;  // <Selector> ::= Identifier
+//		final int PROD_SELECTOR_LPAREN_RPAREN                             = 141;  // <Selector> ::= '(' <Expression> ')'
+		final int PROD_STMTLIST                                           = 142;  // <StmtList> ::= <Statement> <StmtList>
+//		final int PROD_STMTLIST2                                          = 143;  // <StmtList> ::= 
+		final int PROD_ITERATIONSTMT_WHILE_LPAREN_RPAREN                  = 144;  // <Iteration Stmt> ::= while '(' <Expression> ')' <Statement>
+		final int PROD_ITERATIONSTMT_DO_WHILE_LPAREN_RPAREN_SEMI          = 145;  // <Iteration Stmt> ::= do <Statement> while '(' <Expression> ')' ';'
+		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_SEMI_RPAREN          = 146;  // <Iteration Stmt> ::= for '(' <ExprOpt> ';' <ExprOpt> ';' <ExprOpt> ')' <Statement>
+		final int PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_RPAREN               = 147;  // <Iteration Stmt> ::= for '(' <Declaration> <ExprOpt> ';' <ExprOpt> ')' <Statement>
+		final int PROD_JUMPSTMT_GOTO_IDENTIFIER_SEMI                      = 148;  // <Jump Stmt> ::= goto Identifier ';'
+		final int PROD_JUMPSTMT_CONTINUE_SEMI                             = 149;  // <Jump Stmt> ::= continue ';'
+		final int PROD_JUMPSTMT_BREAK_SEMI                                = 150;  // <Jump Stmt> ::= break ';'
+		final int PROD_JUMPSTMT_RETURN_SEMI                               = 151;  // <Jump Stmt> ::= return <ExprOpt> ';'
+//		final int PROD_TRANSLATIONUNIT                                    = 152;  // <Translation Unit> ::= <External Decl>
+//		final int PROD_TRANSLATIONUNIT2                                   = 153;  // <Translation Unit> ::= <Translation Unit> <External Decl>
+//		final int PROD_EXTERNALDECL                                       = 154;  // <External Decl> ::= <Function Def>
+//		final int PROD_EXTERNALDECL2                                      = 155;  // <External Decl> ::= <Declaration>
+		final int PROD_FUNCTIONDEF                                        = 156;  // <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
+		final int PROD_DECLARATIONLIST                                    = 157;  // <DeclarationList> ::= <DeclarationList> <Declaration>
+//		final int PROD_DECLARATIONLIST2                                   = 158;  // <DeclarationList> ::= <Declaration>
+//		final int PROD_DECLLISTOPT                                        = 159;  // <DeclListOpt> ::= <DeclarationList>
+//		final int PROD_DECLLISTOPT2                                       = 160;  // <DeclListOpt> ::= 
+//		final int PROD_EXPRESSION_COMMA                                   = 161;  // <Expression> ::= <Expression> ',' <Assign Exp>
+//		final int PROD_EXPRESSION                                         = 162;  // <Expression> ::= <Assign Exp>
+		final int PROD_ASSIGNEXP                                          = 163;  // <Assign Exp> ::= <Unary Exp> <Assign Op> <Assign Exp>
+//		final int PROD_ASSIGNEXP2                                         = 164;  // <Assign Exp> ::= <Cond Exp>
+//		final int PROD_ASSIGNOP_EQ                                        = 165;  // <Assign Op> ::= '='
+//		final int PROD_ASSIGNOP_TIMESEQ                                   = 166;  // <Assign Op> ::= '*='
+//		final int PROD_ASSIGNOP_DIVEQ                                     = 167;  // <Assign Op> ::= '/='
+//		final int PROD_ASSIGNOP_PERCENTEQ                                 = 168;  // <Assign Op> ::= '%='
+//		final int PROD_ASSIGNOP_PLUSEQ                                    = 169;  // <Assign Op> ::= '+='
+//		final int PROD_ASSIGNOP_MINUSEQ                                   = 170;  // <Assign Op> ::= '-='
+//		final int PROD_ASSIGNOP_LTLTEQ                                    = 171;  // <Assign Op> ::= '<<='
+//		final int PROD_ASSIGNOP_GTGTEQ                                    = 172;  // <Assign Op> ::= '>>='
+//		final int PROD_ASSIGNOP_AMPEQ                                     = 173;  // <Assign Op> ::= '&='
+//		final int PROD_ASSIGNOP_CARETEQ                                   = 174;  // <Assign Op> ::= '^='
+//		final int PROD_ASSIGNOP_PIPEEQ                                    = 175;  // <Assign Op> ::= '|='
+//		final int PROD_CONDEXP_QUESTION_COLON                             = 176;  // <Cond Exp> ::= <LogOr Exp> '?' <Expression> ':' <Cond Exp>
+//		final int PROD_CONDEXP                                            = 177;  // <Cond Exp> ::= <LogOr Exp>
+//		final int PROD_LOGOREXP_PIPEPIPE                                  = 178;  // <LogOr Exp> ::= <LogOr Exp> '||' <LogAnd Exp>
+//		final int PROD_LOGOREXP                                           = 179;  // <LogOr Exp> ::= <LogAnd Exp>
+//		final int PROD_LOGANDEXP_AMPAMP                                   = 180;  // <LogAnd Exp> ::= <LogAnd Exp> '&&' <Or Exp>
+//		final int PROD_LOGANDEXP                                          = 181;  // <LogAnd Exp> ::= <Or Exp>
+//		final int PROD_OREXP_PIPE                                         = 182;  // <Or Exp> ::= <Or Exp> '|' <ExclOr Exp>
+//		final int PROD_OREXP                                              = 183;  // <Or Exp> ::= <ExclOr Exp>
+//		final int PROD_EXCLOREXP_CARET                                    = 184;  // <ExclOr Exp> ::= <ExclOr Exp> '^' <And Exp>
+//		final int PROD_EXCLOREXP                                          = 185;  // <ExclOr Exp> ::= <And Exp>
+//		final int PROD_ANDEXP_AMP                                         = 186;  // <And Exp> ::= <And Exp> '&' <Equat Exp>
+//		final int PROD_ANDEXP                                             = 187;  // <And Exp> ::= <Equat Exp>
+//		final int PROD_EQUATEXP_EQEQ                                      = 188;  // <Equat Exp> ::= <Equat Exp> '==' <Relat Exp>
+//		final int PROD_EQUATEXP_EXCLAMEQ                                  = 189;  // <Equat Exp> ::= <Equat Exp> '!=' <Relat Exp>
+//		final int PROD_EQUATEXP                                           = 190;  // <Equat Exp> ::= <Relat Exp>
+//		final int PROD_RELATEXP_GT                                        = 191;  // <Relat Exp> ::= <Relat Exp> '>' <Shift Exp>
+//		final int PROD_RELATEXP_LT                                        = 192;  // <Relat Exp> ::= <Relat Exp> '<' <Shift Exp>
+//		final int PROD_RELATEXP_LTEQ                                      = 193;  // <Relat Exp> ::= <Relat Exp> '<=' <Shift Exp>
+//		final int PROD_RELATEXP_GTEQ                                      = 194;  // <Relat Exp> ::= <Relat Exp> '>=' <Shift Exp>
+//		final int PROD_RELATEXP                                           = 195;  // <Relat Exp> ::= <Shift Exp>
+//		final int PROD_SHIFTEXP_LTLT                                      = 196;  // <Shift Exp> ::= <Shift Exp> '<<' <Add Exp>
+//		final int PROD_SHIFTEXP_GTGT                                      = 197;  // <Shift Exp> ::= <Shift Exp> '>>' <Add Exp>
+//		final int PROD_SHIFTEXP                                           = 198;  // <Shift Exp> ::= <Add Exp>
+//		final int PROD_ADDEXP_PLUS                                        = 199;  // <Add Exp> ::= <Add Exp> '+' <Mult Exp>
+//		final int PROD_ADDEXP_MINUS                                       = 200;  // <Add Exp> ::= <Add Exp> '-' <Mult Exp>
+//		final int PROD_ADDEXP                                             = 201;  // <Add Exp> ::= <Mult Exp>
+//		final int PROD_MULTEXP_TIMES                                      = 202;  // <Mult Exp> ::= <Mult Exp> '*' <Cast Exp>
+//		final int PROD_MULTEXP_DIV                                        = 203;  // <Mult Exp> ::= <Mult Exp> '/' <Cast Exp>
+//		final int PROD_MULTEXP_PERCENT                                    = 204;  // <Mult Exp> ::= <Mult Exp> '%' <Cast Exp>
+//		final int PROD_MULTEXP                                            = 205;  // <Mult Exp> ::= <Cast Exp>
+//		final int PROD_POSTFIXEXP                                         = 206;  // <Postfix Exp> ::= <Value>
+//		final int PROD_POSTFIXEXP_LBRACKET_RBRACKET                       = 207;  // <Postfix Exp> ::= <Postfix Exp> '[' <Expression> ']'
+		final int PROD_POSTFIXEXP_LPAREN_RPAREN                           = 208;  // <Postfix Exp> ::= <Postfix Exp> '(' <ArgExpList> ')'
+		final int PROD_POSTFIXEXP_LPAREN_RPAREN2                          = 209;  // <Postfix Exp> ::= <Postfix Exp> '(' ')'
+//		final int PROD_POSTFIXEXP_DOT_IDENTIFIER                          = 210;  // <Postfix Exp> ::= <Postfix Exp> '.' Identifier
+//		final int PROD_POSTFIXEXP_MINUSGT_IDENTIFIER                      = 211;  // <Postfix Exp> ::= <Postfix Exp> '->' Identifier
+		final int PROD_POSTFIXEXP_PLUSPLUS                                = 212;  // <Postfix Exp> ::= <Postfix Exp> '++'
+		final int PROD_POSTFIXEXP_MINUSMINUS                              = 213;  // <Postfix Exp> ::= <Postfix Exp> '--'
+//		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_RBRACE             = 214;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> '}'
+//		final int PROD_POSTFIXEXP_LPAREN_RPAREN_LBRACE_COMMA_RBRACE       = 215;  // <Postfix Exp> ::= '(' <Typename> ')' '{' <InitializerList> ',' '}'
+//		final int PROD_ARGEXPLIST                                         = 216;  // <ArgExpList> ::= <Assign Exp>
+//		final int PROD_ARGEXPLIST_COMMA                                   = 217;  // <ArgExpList> ::= <ArgExpList> ',' <Assign Exp>
+//		final int PROD_UNARYEXP                                           = 218;  // <Unary Exp> ::= <Postfix Exp>
+		final int PROD_UNARYEXP_PLUSPLUS                                  = 219;  // <Unary Exp> ::= '++' <Unary Exp>
+		final int PROD_UNARYEXP_MINUSMINUS                                = 220;  // <Unary Exp> ::= '--' <Unary Exp>
+//		final int PROD_UNARYEXP2                                          = 221;  // <Unary Exp> ::= <Unary Op> <Cast Exp>
+//		final int PROD_UNARYEXP_SIZEOF                                    = 222;  // <Unary Exp> ::= sizeof <Unary Exp>
+//		final int PROD_UNARYEXP_SIZEOF_LPAREN_RPAREN                      = 223;  // <Unary Exp> ::= sizeof '(' <Typename> ')'
+//		final int PROD_UNARYOP_AMP                                        = 224;  // <Unary Op> ::= '&'
+//		final int PROD_UNARYOP_TIMES                                      = 225;  // <Unary Op> ::= '*'
+//		final int PROD_UNARYOP_PLUS                                       = 226;  // <Unary Op> ::= '+'
+//		final int PROD_UNARYOP_MINUS                                      = 227;  // <Unary Op> ::= '-'
+//		final int PROD_UNARYOP_TILDE                                      = 228;  // <Unary Op> ::= '~'
+//		final int PROD_UNARYOP_EXCLAM                                     = 229;  // <Unary Op> ::= '!'
+//		final int PROD_CASTEXP                                            = 230;  // <Cast Exp> ::= <Unary Exp>
+//		final int PROD_CASTEXP_LPAREN_RPAREN                              = 231;  // <Cast Exp> ::= '(' <Typename> ')' <Cast Exp>
+		final int PROD_VALUE_IDENTIFIER                                   = 232;  // <Value> ::= Identifier
+//		final int PROD_VALUE                                              = 233;  // <Value> ::= <Literal>
+//		final int PROD_VALUE_LPAREN_RPAREN                                = 234;  // <Value> ::= '(' <Expression> ')'
+//		final int PROD_LITERAL_DECLITERAL                                 = 235;  // <Literal> ::= DecLiteral
+//		final int PROD_LITERAL_OCTLITERAL                                 = 236;  // <Literal> ::= OctLiteral
+//		final int PROD_LITERAL_HEXLITERAL                                 = 237;  // <Literal> ::= HexLiteral
+//		final int PROD_LITERAL_FLOATLITERAL                               = 238;  // <Literal> ::= FloatLiteral
+//		final int PROD_LITERAL_STRINGLITERAL                              = 239;  // <Literal> ::= StringLiteral
+//		final int PROD_LITERAL_CHARLITERAL                                = 240;  // <Literal> ::= CharLiteral
+//		final int PROD_CONSTANTEXP                                        = 241;  // <Constant Exp> ::= <Cond Exp>
+//		final int PROD_EXPROPT                                            = 242;  // <ExprOpt> ::= <Expression>
+		final int PROD_EXPROPT2                                           = 243;  // <ExprOpt> ::= 
 	};
 
 	//---------------------- Build methods for structograms ---------------------------
@@ -645,7 +649,7 @@ public class C99Parser extends CPreParser
 
 			if (
 					// Function definition?
-					ruleId == RuleConstants.PROD_FUNCTIONDEF_LBRACE_RBRACE
+					ruleId == RuleConstants.PROD_FUNCTIONDEF
 					)
 			{
 				buildFunction(_reduction);				
@@ -984,39 +988,43 @@ public class C99Parser extends CPreParser
 	 * @param _reduction - the {@link Reduction} of the parser
 	 */
 	private void buildFunction(Reduction _reduction) {
-		// <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> '{' <BlockItemList> '}'
+		// <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
 		// Find out the name of the function
 		Reduction secReduc = _reduction.get(1).asReduction();
 		String content = new String();
 		boolean weird = false;
 		int secRuleId = secReduc.getParent().getTableIndex();
-		int nPointers = 0;
-		// Drop redundant parentheses
-		while (secRuleId == RuleConstants.PROD_DECLARATOR || secRuleId == RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN) {
-			if (secRuleId == RuleConstants.PROD_DECLARATOR) {
-				nPointers++;
-				secReduc = secReduc.get(1).asReduction();
-				secRuleId = secReduc.getParent().getTableIndex();
-			}
-			secReduc = secReduc.get(1).asReduction();
-			secRuleId = secReduc.getParent().getTableIndex();
-		} 
-		String funcName = null;
-		Reduction paramReduc = null;
-		switch (secRuleId) {
-		case RuleConstants.PROD_DIRECTDECL_IDENTIFIER:
-			funcName = getContent_R(secReduc, "");
-			break;
-		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN2:
-		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN3:
-			funcName = getContent_R(secReduc.get(0).asReduction(), "");
-			paramReduc = secReduc.get(2).asReduction();
-			break;
-		default: 
-			// Something weird like an array of functions or the like
-			content = getContent_R(_reduction, "");
-			weird = true;
-		}
+		StringList prefix = new StringList();
+		StringList suffix = new StringList();
+		StringList pascal = new StringList();
+		String funcId = this.getDeclarator(secReduc, prefix, suffix, pascal, null, _reduction.get(2).asReduction());
+		System.out.println(prefix.concatenate(" ") + funcId + suffix.concatenate());
+		System.out.println(pascal.concatenate());
+//		int nPointers = 0;
+//		// Drop redundant parentheses
+//		while (secRuleId == RuleConstants.PROD_DECLARATOR || secRuleId == RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN) {
+//			if (secRuleId == RuleConstants.PROD_DECLARATOR) {
+//				nPointers++;
+//			}
+//			secReduc = secReduc.get(1).asReduction();
+//			secRuleId = secReduc.getParent().getTableIndex();
+//		} 
+//		String funcName = null;
+//		Reduction paramReduc = null;
+//		switch (secRuleId) {
+//		case RuleConstants.PROD_DIRECTDECL_IDENTIFIER:
+//			funcName = getContent_R(secReduc, "");
+//			break;
+//		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN2:
+//		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN3:
+//			funcName = getContent_R(secReduc.get(0).asReduction(), "");
+//			paramReduc = secReduc.get(2).asReduction();
+//			break;
+//		default: 
+//			// Something weird like an array of functions or the like
+//			content = getContent_R(_reduction, "");
+//			weird = true;
+//		}
 		Root prevRoot = root;	// Cache the original root
 		root = new Root();	// Prepare a new root for the (sub)routine
 		root.setProgram(false);
@@ -1026,8 +1034,8 @@ public class C99Parser extends CPreParser
 			// We must have inserted some global stuff, so assume a dependency...
 			this.importingRoots.add(root);
 		}
-		// Is there a type specification different from void?
 		if (!weird) {
+			// Is there a type specification different from void?
 			Token typeToken = _reduction.get(0);
 			if (typeToken.getType() == SymbolType.CONTENT) {
 				content += typeToken.asString() + " ";
@@ -1036,80 +1044,88 @@ public class C99Parser extends CPreParser
 				// FIXME: We might need a more intelligent type analysis
 				content = getContent_R(typeToken.asReduction(), "").trim() + " ";
 			}
-			content = content.replace("const ", "");
+			content = content.replace("const ", "") + prefix.concatenate(" ").trim();
 			// Result type void should be suppressed
 			if (content.trim().equals("void")) {
 				content = "";
 			}
-			content += funcName + "(";
-			String params = "";
-			if (paramReduc != null) {
-				StringList paramList = new StringList();
-				String ellipse = "";
-				int ruleId =paramReduc.getParent().getTableIndex(); 
-				if (ruleId == RuleConstants.PROD_PARAMTYPELIST_COMMA_DOTDOTDOT) {
-					ellipse = ", ...";
-					paramReduc = paramReduc.get(0).asReduction();
-				}
-				switch (ruleId) {
-				case RuleConstants.PROD_IDLISTOPT2:
-					// Empty argument list
-					break;
-				case RuleConstants.PROD_IDENTIFIERLIST_IDENTIFIER:	// FIXME does is work for this rule?
-				case RuleConstants.PROD_IDENTIFIERLIST_COMMA_IDENTIFIER:
-					// Ancient function definition: type foo(a, b, c) type1 a; type2 b; type3 c; {...}
-					params = getContent_R(paramReduc, "");
-					{
-						StringList paramDecls = getDeclsFromDeclList(_reduction.get(2).asReduction());
-						StringList paramNames = StringList.explode(params, ",");
-						// Sort the parameter declarations according to the arg list (just in case...)
-						if (paramDecls.count() == paramNames.count()) {
-							StringList paramsOrdered = new StringList();
-							for (int p = 0; p < paramNames.count(); p++) {
-								Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
-								for (int q = 0; q < paramDecls.count(); q++) {
-									String pd = paramDecls.get(q);
-									if (pm.reset(pd).matches()) {
-										paramsOrdered.add(pd);
-										break;
-									}
-								}
-								if (paramsOrdered.count() < p+1) {
-									paramsOrdered.add(paramNames.get(p));
-								}
-							}
-							params = paramsOrdered.concatenate("; ");
-						}
-					}
-					break;
-				case RuleConstants.PROD_PARAMETERLIST_COMMA:
-					// More than one parameter
-					do {
-						String param = getContent_R(paramReduc.get(2).asReduction(), "");
-						paramReduc = paramReduc.get(0).asReduction();
-						ruleId = paramReduc.getParent().getTableIndex();
-						paramList.add(param);
-					} while (ruleId == RuleConstants.PROD_PARAMETERLIST_COMMA);
-					// no break here!
-				default: // Should be a <Parameter Decl>
-					paramList.add(getContent_R(paramReduc, ""));
-					params = paramList.reverse().concatenate(", ") + ellipse;
-					break;
-				}
+			//content += funcId + "(";
+			//String params = this.getParamList(paramReduc, null, true, _reduction.get(2).asReduction());
+//			if (paramReduc != null) {
+//				StringList paramList = new StringList();
+//				String ellipse = "";
+//				int ruleId = paramReduc.getParent().getTableIndex(); 
+//				if (ruleId == RuleConstants.PROD_PARAMTYPELIST_COMMA_DOTDOTDOT) {
+//					ellipse = ", ...";
+//					paramReduc = paramReduc.get(0).asReduction();
+//					ruleId = paramReduc.getParent().getTableIndex();
+//				}
+//				switch (ruleId) {
+//				case RuleConstants.PROD_IDLISTOPT2:
+//					// Empty argument list
+//					break;
+//				case RuleConstants.PROD_IDENTIFIERLIST_IDENTIFIER:	// FIXME does is work for this rule?
+//				case RuleConstants.PROD_IDENTIFIERLIST_COMMA_IDENTIFIER:
+//					// Ancient function definition: type foo(a, b, c) type1 a; type2 b; type3 c; {...}
+//					params = getContent_R(paramReduc, "");
+//					{
+//						StringList paramDecls = getDeclsFromDeclList(_reduction.get(2).asReduction());
+//						StringList paramNames = StringList.explode(params, ",");
+//						// Sort the parameter declarations according to the arg list (just in case...)
+//						if (paramDecls.count() == paramNames.count()) {
+//							StringList paramsOrdered = new StringList();
+//							for (int p = 0; p < paramNames.count(); p++) {
+//								Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
+//								for (int q = 0; q < paramDecls.count(); q++) {
+//									String pd = paramDecls.get(q);
+//									if (pm.reset(pd).matches()) {
+//										paramsOrdered.add(pd);
+//										break;
+//									}
+//								}
+//								if (paramsOrdered.count() < p+1) {
+//									paramsOrdered.add(paramNames.get(p));
+//								}
+//							}
+//							params = paramsOrdered.concatenate("; ");
+//						}
+//					}
+//					break;
+//				case RuleConstants.PROD_PARAMETERLIST_COMMA:
+//					// More than one parameter
+//					do {
+//						String param = getContent_R(paramReduc.get(2).asReduction(), "");
+//						paramReduc = paramReduc.get(0).asReduction();
+//						ruleId = paramReduc.getParent().getTableIndex();
+//						paramList.add(param);
+//					} while (ruleId == RuleConstants.PROD_PARAMETERLIST_COMMA);
+//					// no break here!
+//				default: // Should be a <Parameter Decl>
+//					paramList.add(getContent_R(paramReduc, ""));
+//					params = paramList.reverse().concatenate(", ") + ellipse;
+//					break;
+//				}
+//			}
+//			if (params.trim().equals("void")) {
+//				params = "";
+//			}
+//			content += params + ")";
+			content += " " + funcId;
+			String params = suffix.concatenate();
+			if (params.trim().equals("(void)")) {
+				params = "()";
 			}
-			if (params.trim().equals("void")) {
-				params = "";
-			}
-			content += params + ")";
+			content += params;
 		}
 		root.setText(content);
 		this.equipWithSourceComment(root, _reduction);
 		if (weird) {
 			root.comment.add("UNSUPPORTED SHAPE OF FUNCTION/PROCEDURE HEADER!");
 		}
-		if (_reduction.get(4).getType() == SymbolType.NON_TERMINAL)
+		Reduction bodyRed = _reduction.get(3).asReduction();
+		if (bodyRed.getParent().getTableIndex() == RuleConstants.PROD_COMPOUNDSTMT_LBRACE_RBRACE)
 		{
-			buildNSD_R(_reduction.get(4).asReduction(), root.children);
+			buildNSD_R(bodyRed.get(1).asReduction(), root.children);
 		}
 		// Restore the original root
 		root = prevRoot;
@@ -1118,28 +1134,37 @@ public class C99Parser extends CPreParser
 	/**
 	 * Is to extract the declarations from an old-style parameter declaration list
 	 * ({@code <DeclarationList>}) and to convert them into Structorizer-compatible
-	 * syntax.
+	 * syntax (Pascal style).
 	 * @param _declRed - the {@link Reduction} representing a {@code <Struct Decl>} rule.
 	 * @return {@link StringList} of the declaration strings in Structorizer syntax
 	 */
 	StringList getDeclsFromDeclList(Reduction _declRed)
 	{
+		// FIXME!
 		StringList decls = new StringList();
-		int ruleId = _declRed.getParent().getTableIndex();
-		do {
+		while (_declRed != null && _declRed.size() > 0) {
+			int ruleId = _declRed.getParent().getTableIndex();
 			Reduction varDecl = _declRed;
 			if (ruleId == RuleConstants.PROD_DECLARATIONLIST) {
 				varDecl = _declRed.get(1).asReduction();
 				_declRed = _declRed.get(0).asReduction();
+				ruleId = _declRed.getParent().getTableIndex();
 			}
 			else {
 				_declRed = null;
 			}
 //			int nameIx = varDecl.size() - 3;
-			String type = getContent_R(varDecl.get(0).asReduction(), "");
+			String type = "";
+			if (varDecl.get(0).getType() == SymbolType.CONTENT) {
+				type = varDecl.get(0).asString();
+			}
+			else {
+				type = getTypeSpec(varDecl.get(0).asReduction());
+			}
 //			StringList compNames = new StringList();
 			// FIXME May there be declaration groups? May type specifiers disrupt a group here?
-			decls.add(getContent_R(varDecl.get(1).asReduction(), type));
+			//decls.add(getContent_R(varDecl.get(1).asReduction(), type));
+			decls.add(this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, null, null, true));
 //			Reduction varRed = varDecl.get(1).asReduction();
 //			String name = varRed.get(0).asString();
 //			String index = getContent_R(varRed.get(1).asReduction(), "").trim();
@@ -1178,8 +1203,38 @@ public class C99Parser extends CPreParser
 //					components.add(compNames.concatenate(", ") + ": " + type);
 //				}
 //			}
-		} while (_declRed != null);
+		}
 		return decls;
+	}
+	
+	/**
+	 * 
+	 * @param _declSpecRed
+	 * @return
+	 */
+	String getTypeSpec(Reduction _declSpecRed) {
+		// FIXME: Drop superfluous stuff
+		StringList parts = new StringList();
+		while (_declSpecRed.getParent().getHead().toString().equals("<Decl Specifiers>")) {
+			Reduction partRed = _declSpecRed.get(0).asReduction();
+			String part = getContent_R(partRed, "").trim();
+			switch(_declSpecRed.getParent().getTableIndex()) {
+			case RuleConstants.PROD_DECLSPECIFIERS:
+				// <Decl Specifiers> ::= <Storage Class> <Decl Specs>
+			case RuleConstants.PROD_DECLSPECIFIERS3:
+				// <Decl Specifiers> ::= <Type Qualifier> <Decl Specs>
+				if (part.equals("typedef") || part.equals("const")) {
+					parts.add(part);
+				}
+				break;
+			case RuleConstants.PROD_DECLSPECIFIERS2:
+				// <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+				parts.add(part);
+				break;
+			}
+			_declSpecRed = _declSpecRed.get(1).asReduction();
+		}
+		return parts.concatenate(" ");
 	}
 	
 	/**
@@ -1342,19 +1397,23 @@ public class C99Parser extends CPreParser
 	}
 
 	/**
-	 * Converts a declaration list into a sequence of {@link Instruction} elements.  
+	 * Converts a declaration list and creates a sequence of {@link Instruction} elements into
+	 * {@code _parentNode if given}.  
 	 * @param _reduction - an {@code <InitDeclList>} rule, may be left-recursive
 	 * @param _type - the common data type as string
-	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to
+	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to or null
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
-	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type) 
+	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
+	 * @return - the {@link StringList} of declarations
 	 */
-	private void buildDeclsOrAssignments(Reduction _reduction, String _type, Subqueue _parentNode, String _comment,
+	private StringList buildDeclsOrAssignments(Reduction _reduction, String _type, Subqueue _parentNode, String _comment,
 			boolean _forceDecl) {
+		// FIXME!
 		log("\tanalyzing <InitDeclList> ...\n", false);
+		StringList declns = new StringList();
 		// Resolve the left recursion
 		LinkedList<Reduction> decls = new LinkedList<Reduction>();
-		while (_reduction  != null) {
+		while (_reduction != null) {
 			if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_INITDECLLIST_COMMA) {
 				// <InitDeclList> ::= <InitDeclList> ',' <Init Declarator>
 				decls.addFirst(_reduction.get(2).asReduction());
@@ -1367,55 +1426,66 @@ public class C99Parser extends CPreParser
 		}
 		// Now derive the declarations
 		for (Reduction red: decls) {
-			buildDeclOrAssignment(red, _type, _parentNode, _comment, _forceDecl);
+			declns.add(buildDeclOrAssignment(red, _type, _parentNode, _comment, _forceDecl));
 		}
 		log("\t<InitDeclList> done.\n", false);
+		return declns;
 	}
 
 	/**
-	 * Converts a rule with head &lt;Init Declarator&gt; (as part of a declaration) into an
-	 * Instruction element.  
+	 * Converts a rule with head {@code <Init Declarator>} (as part of a declaration) and casts it
+	 * into an Instruction element added to {@code _parentNode} if given.  
 	 * @param _reduc - the Reduction object (PROD_VAR_ID or PROD_VAR_ID_EQ)
 	 * @param _type - the data type as string
-	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to
+	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to or null
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
 	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
+	 * @return the built declaration or assignment
 	 */
-	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl)
+	private String buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl)
 	{
 		boolean isConstant = _type != null && _type.startsWith("const ");	// Is it sure that const will be at the beginning?
 		int ruleId = _reduc.getParent().getTableIndex();
-		String content = getContent_R(_reduc, "");	// Default???
+		String content = getContent_R(_reduc, "");	// Default (and for easier testing)
+		String id = "";
+		// FIXME: There may be pointer symbols on the left. Does this make sense?
 		String expr = null;
 		if (isConstant) {
 			_type = _type.substring("const ".length());
 		}
 		if (ruleId == RuleConstants.PROD_INITDECLARATOR_EQ) {
 			log("\ttrying <Declarator> '=' <Initializer> ...\n", false);
-			content = this.getContent_R(_reduc.get(0).asReduction(), "");
+			content = this.getContent_R(_reduc.get(0).asReduction(), "");	// Default
+			id = this.getDeclarator(_reduc.get(0).asReduction(), null, null, null, _parentNode, null);
 			expr = this.getContent_R(_reduc.get(2).asReduction(), "").trim();
 			_reduc = _reduc.get(0).asReduction();
+			ruleId = _reduc.getParent().getTableIndex();
 		}
 		else {
 			log("\ttrying <Declarator> ...\n", false);
+			id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
 			// Simple declaration - if allowed then make it to a Pascal decl.
 			_forceDecl = this.optionImportVarDecl || _forceDecl;
 		}
-		if (_forceDecl) {
+		TypeMapEntry typeEntry = typeMap.get(":" + _type.trim());
+		boolean isStruct = typeEntry != null && typeEntry.isRecord();
+		if (_forceDecl || isStruct) {
 			if (ruleId == RuleConstants.PROD_DECLARATOR) {
 				log("\ttrying <Pointer> <Direct Decl> ...\n", false);
 				// This should be the <Pointers> token...
 				_type = this.getContent_R(_reduc.get(0).asReduction(), _type);
+				//id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
 			}
 			if (isConstant) {
-				content = "const " + content + ": " + _type;
+				content = "const " + id + ": " + _type;
+			}
+			else if (_parentNode == null) {
+				content = id + ": " + _type;
 			}
 			else {
-				content = "var " + content + ": " + _type;
+				content = "var " + id + ": " + _type;
 			}
 		}
-		TypeMapEntry typeEntry = typeMap.get(":" + _type.trim());
-		boolean isStruct = typeEntry != null && typeEntry.isRecord();
 		if (_forceDecl || isStruct || expr != null) {
 			if (expr != null) {
 				if (isStruct && expr.startsWith("{") && expr.endsWith("}")) {
@@ -1423,27 +1493,29 @@ public class C99Parser extends CPreParser
 				}
 				content += " <- " + expr;
 			}
-			Element instr = new Instruction(translateContent(content));
-			if (_comment != null) {
-				instr.setComment(_comment);
-			}
-			if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
-				instr.getComment().add("Globally declared!");
-				instr.setColor(colorGlobal);
-				// FIXME
-				if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
-					this.importingRoots.add(root);
-					((Root)_parentNode.parent).addToIncludeList((Root)_parentNode.parent);
+			if (_parentNode != null) {
+				Element instr = new Instruction(translateContent(content));
+				if (_comment != null) {
+					instr.setComment(_comment);
 				}
+				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
+					instr.getComment().add("Globally declared!");
+					instr.setColor(colorGlobal);
+					// FIXME
+					if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
+						this.importingRoots.add(root);
+						((Root)_parentNode.parent).addToIncludeList((Root)_parentNode.parent);
+					}
+				}
+				else if (expr == null) {
+					instr.setColor(colorDecl);	// local declarations with a smooth green
+				}
+				// Constant colour has priority
+				if (isConstant) {
+					instr.setColor(colorConst);
+				}
+				_parentNode.addElement(instr);
 			}
-			else if (expr == null) {
-				instr.setColor(colorDecl);	// local declarations with a smooth green
-			}
-			// Constant colour has priority
-			if (isConstant) {
-				instr.setColor(colorConst);
-			}
-			_parentNode.addElement(instr);
 		}
 //		else {
 //			// assignment
@@ -1489,6 +1561,421 @@ public class C99Parser extends CPreParser
 //			_parentNode.addElement(instr);
 //		}
 		log("\tfallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")\n", false);
+		return content;
+	}
+	
+	/**
+	 * Collects all type name parts (including "const") in _typeSpecs and returns whether
+	 * "typedef" was among the storage class specifiers
+	 * @param _reduction - a {@code <Decl Specifiers>} rule is expected
+	 * @param _typeSpecs - a {@link StringList} to be filled
+	 * @param _parentNode - a {@link Subqueue} possible implicit type definitions should go to, may be null
+	 * @param _initDeclRed - if a declarator / initializer is following, then their reduction
+	 * @return true if "typedef" was among the storag class specifiers
+	 */
+	private boolean getDeclSpecifiers(Reduction _reduction, StringList _typeSpecs, Subqueue _parentNode, Reduction _initDeclRed)
+	{
+		boolean isTypedef = false;
+		boolean isStruct = false;
+		int ruleId = _reduction.getParent().getTableIndex();
+		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers>")) {
+			Token prefix = _reduction.get(0);	// May be <Storage Class> or <Type Specifier> or "inline"
+			switch (ruleId) {
+			case RuleConstants.PROD_DECLSPECIFIERS:
+				// <Decl Specifiers> ::= <Storage Class> <Decl Specs>
+				if (prefix.getType() == SymbolType.NON_TERMINAL) {
+					String prefixStr = getContent_R(prefix.asReduction(), "");
+					if (prefixStr.equals("typedef")) {
+						isTypedef = true;
+					}
+					else if (!prefixStr.equals("auto") && !isTypedef) {
+						// We should also add "extern" and "static" as they use to be important
+						_typeSpecs.add(prefixStr);
+					}
+				}
+				break;
+			case RuleConstants.PROD_DECLSPECIFIERS3:
+				if (prefix.asString().equals("const")) {
+					_typeSpecs.add("const");
+				}
+				break;
+			case RuleConstants.PROD_DECLSPECIFIERS2: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+				if (prefix.getType() == SymbolType.NON_TERMINAL) {
+					switch (prefix.asReduction().getParent().getTableIndex()) {
+					case RuleConstants.PROD_TYPESPECIFIER:	// rather unlikely (represented by one of the following)
+						// <Type Specifier> ::= <StructOrUnion Spec>
+					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER_LBRACE_RBRACE:
+						// <StructOrUnion Spec> ::= <StructOrUnion> Identifier '{' <StructDeclnList> '}'
+					case RuleConstants.PROD_STRUCTORUNIONSPEC_LBRACE_RBRACE:
+						// <StructOrUnion Spec> ::= <StructOrUnion> '{' <StructDeclnList> '}'
+					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER:
+						// <StructOrUnion Spec> ::= <StructOrUnion> Identifier
+					{
+						String type = null;
+						Reduction structRed = prefix.asReduction();
+						if (structRed.size() == 2) {
+							// <StructOrUnion> Identifier
+							// Skip the "struct" or "union" keyword if the type is known, otherwise put the keyword
+							type = structRed.get(1).asString();
+							if (!this.typeMap.containsKey(":"+type)) {
+								type = structRed.get(0).asString() + " " + type;
+							}
+						}
+						else {
+							String array = "";
+							String ptrs = "";
+							if (structRed.size() == 4) {
+								// <StructOrUnion> '{' <StructDeclnList> '}'
+								// It is actually totally ambiguous, in which of the reductions the identifier occurs! 
+								if (isTypedef && _initDeclRed != null || !(type = getContent_R(_reduction.get(1).asReduction(), "")).trim().isEmpty()) {
+									// FIXME: We must separate indices and pointers
+									if (_initDeclRed != null) {
+										type = getContent_R(_initDeclRed, "").trim();
+									}
+									if (MATCH_PTR_DECL.reset(type).matches()) {
+										ptrs = MATCH_PTR_DECL.group(1).trim();
+										type = MATCH_PTR_DECL.group(3).trim();
+									}
+									int pos = type.indexOf('[');
+									if (pos > 0) {
+										array = "array " + type.substring(pos) + " of ";
+										type = type.substring(0, pos).trim();
+									}
+								}
+								else {
+									type = String.format("AnonStruct%1$03d", typeCount++);
+								}
+							}
+							else {
+								// <StructOrUnion> Identifier '{' <StructDeclnList> '}'
+								// FIXME: Is this a NON_TERMINAL, such hat we should use getContent_R()?
+								type = structRed.get(1).asString();
+							}
+							StringList components = getCompsFromStructDef(structRed.get(structRed.size()-2).asReduction());
+							// compose and define type
+							components.insert("type " + type + " = " + array + ptrs + "struct{\\", 0);
+							String lastComp = components.get(components.count()-1);
+							components.set(components.count()-1, lastComp.replace('\\', '}'));
+							Instruction typedef = new Instruction(components);
+							if (_parentNode != null) {
+								_parentNode.addElement(typedef);
+							}
+							typedef.updateTypeMap(typeMap);
+						}
+						isStruct = true;
+						_typeSpecs.add(type);
+					}
+						break;
+					case RuleConstants.PROD_TYPESPECIFIER2:
+						// <Type Specifier> ::= <Enumerator Spec>
+						// FIXME Define the constants at least
+						break;
+					case RuleConstants.PROD_TYPEDEFNAME_USERTYPEID:
+						// <Typedef Name> ::= UserTypeId
+					case RuleConstants.PROD_TYPESPECIFIER3:
+						// <Type Specifier> ::= <Typedef Name>
+						_typeSpecs.add(getContent_R(prefix.asReduction(), "").trim());
+						break;
+					default:
+						System.out.println("getDeclSpecifiers() - Type specifier: " + prefix.asReduction().getParent().getTableIndex());	
+					}
+				}
+				break;
+			default:;
+			}
+			_reduction = _reduction.get(1).asReduction();
+			ruleId = _reduction.getParent().getTableIndex();
+		}
+		System.out.println("getDeclSpecifiers(): " + _typeSpecs.concatenate(", "));
+		return isTypedef;
+	}
+	
+	/**
+	 * Analyses the given {@link Reduction}, isolates and returns the declared identifier
+	 * and provides the structure in original C syntax ({@code _pointer}, {@code _arrays})
+	 * and in Pascal syntax {@code _asPascal}.
+	 * @param _reduction - {@link Reduction} of type {@code <Declarator>} or {@code <Abstract Declarator>}
+	 * @param _pointers - a {@link StringList} to be filled with the prefix (left of the identifier)
+	 * @param _arrays - a {@link StringList} to be filled with the postfix (right of the identifier)
+	 * @param _asPascal - a {@link StringList} to be filled with a Pascal like type specification
+	 * @param _parentNode - a {@link Subqueue} to append possible type definitions to 
+	 * @param _declListRed TODO
+	 * @return the isolated identifier or null of ther is none oder if it's ambiguous.
+	 */
+	String getDeclarator(Reduction _reduction, StringList _pointers, StringList _arrays, StringList _asPascal, Subqueue _parentNode, Reduction _declListRed)
+	{
+		// FIXME: This may be a function signature! So we should support the respective structure --> _asPascal?
+		// <Declarator> ::= <Pointer> <Direct Decl>   or
+		// <Declarator> ::= <Direct Decl>
+		String name = null;	// The declared identifier
+		int ruleId = _reduction.getParent().getTableIndex();
+		if (ruleId == RuleConstants.PROD_DECLARATOR || ruleId == RuleConstants.PROD_ABSTRACTDECL) {
+			// Analyse <Pointer>
+			if (_pointers != null || _asPascal != null) {
+				getPointers(_reduction, _pointers, _asPascal);
+			}
+			// Now the pointers are done, concentrate on the declarator
+			_reduction = _reduction.get(1).asReduction();
+			ruleId = _reduction.getParent().getTableIndex();
+		}
+		// Now process the <Direct Decl>
+		name = getDirectDecl(_reduction, _pointers, _arrays, _asPascal, _parentNode, _declListRed);
+		return name;
+	}
+
+	/**
+	 * Processes a {@code <Direct Decl>} or {@code <Direct Abstr Decl>} rule, extracts the declared name and
+	 * fills the given {@link StringList}s with the surrounding text fragments.
+	 * @param _reduction - a reduction dreived from of either {@code <Direct Decl>} or {@code <Direct Abstr Decl>}
+	 * @param _pointers - the {@link StringList} intended for the prefix of the name
+	 * @param _arrays - the {@link StringList} intended for the postfix of the name (index ranges, arg lists)
+	 * @param _asPascal - a {@link StringList} intended to accumulate a Pascal-like notation
+	 * @param _parentNode - if given, the {@link Subqueue} to add required type definitions
+	 * @param _declListRed TODO
+	 * @return the declared name (if any)
+	 */
+	private String getDirectDecl(Reduction _reduction, StringList _pointers, StringList _arrays, StringList _asPascal,
+			Subqueue _parentNode, Reduction _declListRed) {
+		String name = "";
+		int ruleId = _reduction.getParent().getTableIndex();
+		String nestedType = null;
+		int ixDim = -1;
+		String indexRange = "";
+		switch (ruleId) {
+		case RuleConstants.PROD_DIRECTDECL_IDENTIFIER:
+			name = getContent_R(_reduction, "");
+			break;
+		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN:
+			// <Direct Abstr Decl> ::= '(' <Abstract Decl> ')'
+		case RuleConstants.PROD_DIRECTABSTRDECL_LPAREN_RPAREN:
+			// <Direct Decl> ::= '(' <Declarator> ')'
+				// Now in Pascal, this should force us to define the type as far as possible
+				if (_parentNode != null && _asPascal != null) {
+					nestedType = String.format("AnonType%1$03d", typeCount++);
+					String content = "type " + nestedType + " = " + _asPascal.concatenate(" ");
+					_parentNode.addElement(new Instruction(content));
+					_asPascal.clear();
+					_asPascal.add(nestedType);
+				}
+				if (_pointers != null && _arrays != null) {
+					_pointers.add("(");
+					_arrays.insert(")", 0);
+				}					
+				name = getDeclarator(_reduction.get(1).asReduction(), _pointers, _arrays, _asPascal, _parentNode, null);
+			break;
+		case RuleConstants.PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET:
+		case RuleConstants.PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET2:
+		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET:
+		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET2:
+			ixDim += 1;
+		case RuleConstants.PROD_DIRECTDECL_LBRACKET_RBRACKET:
+		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET:
+			ixDim += 3;
+		case RuleConstants.PROD_DIRECTDECL_LBRACKET_TIMES_RBRACKET:
+		case RuleConstants.PROD_DIRECTDECL_LBRACKET_RBRACKET2:
+		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_TIMES_RBRACKET:
+		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET2:
+			if (ixDim > -1) {
+				Token dimToken = _reduction.get(ixDim);
+				if (dimToken.getType() != SymbolType.NON_TERMINAL) {
+					indexRange = "[" + getContent_R(dimToken.asReduction(), "") +"]";
+				}
+				else {
+					indexRange = "[" + dimToken.asString() + "]";
+				}
+			}
+			if (_arrays != null) {
+				_arrays.insert((indexRange == null ? "[]" : indexRange), 0);
+			}
+			if (_asPascal != null) {
+				_asPascal.insert("array " + (indexRange == null ? "" : indexRange) + "of ", 0);
+			}
+			name = getDirectDecl(_reduction.get(0).asReduction(), _pointers, _arrays, _asPascal, _parentNode, _declListRed);
+			break;
+		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN2: 
+		case RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN3: 
+		case RuleConstants.PROD_DIRECTABSTRDECL_LPAREN_RPAREN2: 
+		case RuleConstants.PROD_DIRECTABSTRDECL_LPAREN_RPAREN3:
+		{
+			String params = "";
+			if (ruleId != RuleConstants.PROD_DIRECTABSTRDECL_LPAREN_RPAREN3) {
+				params = this.getParamList(_reduction.get(2).asReduction(), _parentNode, _asPascal != null, _declListRed).trim();
+			}
+			if (_arrays != null) {
+				_arrays.insert("(" + params + ")", 0);
+			}
+			if (_asPascal != null) {
+				_asPascal.insert(": ", 0);	// Marker for function id
+				_asPascal.insert(")", 0);
+				if (!params.isEmpty()) {
+					_asPascal.insert(params, 0);
+				}
+				_asPascal.insert("(", 0);
+			}
+			name = getDirectDecl(_reduction.get(0).asReduction(), _pointers, _arrays, _asPascal, _parentNode, _declListRed);
+			break;
+		}			
+		}
+		return name;
+	}
+
+	/**
+	 * Extracts and returns a parameter list from the given {@link Reduction} {@code _paramReduc}.
+	 * @param _paramReduc - {@link Reduction} for head {@code <ParamTypeList>} or {@code <ParameterList>}
+	 * @param _parentNode - if a {@link Subqueue} is given here then possible intermediate type definitions may be added there
+	 * @param _pascalStyle - whether the parameter list is rather to look like a Pascal parameter list (may not always work) 
+	 * @param _declListRed - an optional declaration list reduction with exterenal parameter declarations to replace the mere
+	 * identifier list in such a case. 
+	 * @return
+	 */
+	private String getParamList(Reduction _paramReduc, Subqueue _parentNode, boolean _pascalStyle, Reduction _declListRed) {
+		String params = ""; 
+		StringList paramList = new StringList();
+		String ellipse = "";
+		int ruleId = _paramReduc.getParent().getTableIndex(); 
+		if (ruleId == RuleConstants.PROD_PARAMTYPELIST_COMMA_DOTDOTDOT) {
+			ellipse = ", ...";
+			_paramReduc = _paramReduc.get(0).asReduction();
+			ruleId = _paramReduc.getParent().getTableIndex();
+		}
+		switch (ruleId) {
+		case RuleConstants.PROD_IDLISTOPT2:
+			// Empty argument list
+			break;
+		case RuleConstants.PROD_IDENTIFIERLIST_IDENTIFIER:	// FIXME does is work for this rule?
+		case RuleConstants.PROD_IDENTIFIERLIST_COMMA_IDENTIFIER:
+			// Ancient function definition: type foo(a, b, c) type1 a; type2 b; type3 c; {...}
+			params = getContent_R(_paramReduc, "");
+			if (_declListRed != null) {
+				StringList paramDecls = getDeclsFromDeclList(_declListRed);
+				StringList paramNames = StringList.explode(params, ",");
+				// Sort the parameter declarations according to the arg list (just in case...)
+				if (paramDecls.count() == paramNames.count()) {
+					for (int p = 0; p < paramNames.count(); p++) {
+						Matcher pm = Pattern.compile("(^|.*?\\W)" + paramNames.get(p).trim() + ":.*").matcher("");
+						for (int q = 0; q < paramDecls.count(); q++) {
+							String pd = paramDecls.get(q);
+							if (pm.reset(pd).matches()) {
+								paramList.add(pd);
+								break;
+							}
+						}
+						if (paramList.count() < p+1) {
+							paramList.add(paramNames.get(p));
+						}
+					}
+					params = paramList.concatenate("; ");
+				}
+			}
+			break;
+		case RuleConstants.PROD_PARAMETERLIST_COMMA:
+			// More than one parameter
+			do {
+				String param = getContent_R(_paramReduc.get(2).asReduction(), "");
+				_paramReduc = _paramReduc.get(0).asReduction();
+				ruleId = _paramReduc.getParent().getTableIndex();
+				paramList.add(param);
+			} while (ruleId == RuleConstants.PROD_PARAMETERLIST_COMMA);
+			// no break here!
+		default: // Should be a <Parameter Decl>
+			paramList.add(getContent_R(_paramReduc, ""));
+			params = paramList.reverse().concatenate(", ") + ellipse;
+			break;
+		}
+		return params.trim();
+	}
+
+	/**
+	 * Analyses and extracts the relevant information from a {@code <Pointer} reduction
+	 * @param _reduction - a {@link Reduction} assumed to be a {@code <Pointer>} rule
+	 * @param _pointers - a {@link StringList} to be filled with the relevant tokens in C order
+	 * @param _asPascal - a {@link StringList} to be filled as good as possible with Pascal-like ref cascade
+	 */
+	private void getPointers(Reduction _reduction, StringList _pointers, StringList _asPascal) {
+		Token ptrToken = _reduction.get(0);
+		do {
+			// There is at least one asterisk
+			if (_pointers != null) {
+				_pointers.add("*");
+			}
+			if (_asPascal != null) {
+				_asPascal.insert("ref", 0);
+			}
+			if (ptrToken.getType() == SymbolType.CONTENT) {
+				// <Pointer> ::= '*'
+				ptrToken = null;
+			}
+			else {
+				Token qualToken = null;
+				switch (ptrToken.asReduction().getParent().getTableIndex()) {
+				case RuleConstants.PROD_POINTER_TIMES:
+					// <Pointer> ::= '*' <TypeQualList> <Pointer>
+					qualToken = ptrToken.asReduction().get(1);
+					ptrToken = ptrToken.asReduction().get(2);
+					break;
+				case RuleConstants.PROD_POINTER_TIMES2:
+					// <Pointer> ::= '*' <TypeQualList>
+					qualToken = ptrToken.asReduction().get(1);
+					ptrToken = null;
+					break;
+				case RuleConstants.PROD_POINTER_TIMES3:
+					// <Pointer> ::= '*' <Pointer>
+					ptrToken = ptrToken.asReduction().get(1);;
+					break;
+				default:
+						ptrToken = null;
+				}
+				// If there a <TypeQualList> then exhaust it
+				while (qualToken != null) {
+					if (qualToken.getType() == SymbolType.CONTENT && qualToken.asString().equals("const")) {
+						if (_pointers != null) {
+							_pointers.add("const");
+						}
+						// In Pascal this cannot sensibly be expressed. 
+						qualToken = null;
+					}
+					else if (qualToken.asReduction().get(1).asString().equals("const")) {
+						if (_pointers != null) {
+							_pointers.add("const");
+						}
+						// In Pascal this cannot sensibly be expressed. 
+						// There can't be several const tokens, others aren't of interest
+						qualToken = null;
+					}
+					else {
+						qualToken = qualToken.asReduction().get(0);
+					}
+				}
+			}
+		} while (ptrToken != null);
+		// <Pointer> part done, now adjust the  
+	}
+	
+	// New approach for a generic analysis of a Declaration
+	private String analyseDeclaration(Reduction _reduction, StringBuilder _pascalType, Subqueue _parentNode, boolean _forceDecl, boolean _something)
+	{
+		String initializer = "";
+		StringList array = new StringList();
+		StringList ptrs = new StringList();
+		StringList typeparts = new StringList();
+		String varName = null;
+		int ruleId = _reduction.getParent().getTableIndex();
+		if (ruleId == RuleConstants.PROD_DECLARATION_SEMI) {
+			// <Declaration> ::= <Decl Specifiers> <InitDeclList> ';'
+			// Evaluation of the <InitDeclList>
+			Reduction intDecl = _reduction.get(1).asReduction();
+		}
+		_reduction = _reduction.get(0).asReduction();
+		ruleId = _reduction.getParent().getTableIndex();
+		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers")) {
+			switch (ruleId) {
+			case RuleConstants.PROD_DECLSPECIFIERS:
+			case RuleConstants.PROD_DECLSPECIFIERS2:
+			case RuleConstants.PROD_DECLSPECIFIERS3:
+			}
+			
+		}
+		return varName;
 	}
 	
 	/**
@@ -1520,7 +2007,6 @@ public class C99Parser extends CPreParser
 		boolean isStruct = false;
 		boolean isTypedef = false;
 		String type = "int";
-		String typedefName = null;
 		boolean isConstant = false;
 		boolean addType = true;
 		StringList storage = new StringList();
@@ -1536,104 +2022,109 @@ public class C99Parser extends CPreParser
 			_reduction = _reduction.get(0).asReduction();
 			_ruleId = _reduction.getParent().getTableIndex();
 		}
-		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers>")) {
-			Token prefix = _reduction.get(0);	// May be <Storage Class> or <Type Specifier> or "inline"
-			switch (_ruleId) {
-			case RuleConstants.PROD_DECLSPECIFIERS: // <Decl Specifiers> ::= <Storage Class> <Decl Specs>
-			{
-				String storageClass = (prefix.getType() == SymbolType.NON_TERMINAL) ? getContent_R(prefix.asReduction(), "") : prefix.asString();
-				if (storageClass.equals("typedef")) {
-					isTypedef = true;
-				}
-				else {
-					// We don't actually need them but may add them to the comment.
-					storage.add(storageClass);
-				}
-			}
-				break;
-			case RuleConstants.PROD_DECLSPECIFIERS2: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
-				if (prefix.getType() == SymbolType.NON_TERMINAL) {
-					switch (prefix.asReduction().getParent().getTableIndex()) {
-					case RuleConstants.PROD_TYPESPECIFIER:	// rather unlikely (represented by one of the following)
-						// <Type Specifier> ::= <StructOrUnion Spec>
-					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER_LBRACE_RBRACE:
-						// <StructOrUnion Spec> ::= <StructOrUnion> Identifier '{' <StructDeclnList> '}'
-					case RuleConstants.PROD_STRUCTORUNIONSPEC_LBRACE_RBRACE:
-						// <StructOrUnion Spec> ::= <StructOrUnion> '{' <StructDeclnList> '}'
-					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER:
-						// <StructOrUnion Spec> ::= <StructOrUnion> Identifier
-					{
-						Reduction structRed = prefix.asReduction();
-						if (structRed.size() == 2) {
-							type = structRed.get(1).asString();
-							// TODO retrieve type
-						}
-						else {
-							String array = "";
-							String ptrs = "";
-							if (structRed.size() == 4) {
-								if (isTypedef && declRed == null) {
-									// FIXME: We must separate indices and pointers
-									type = getContent_R(_reduction.get(1).asReduction(), "").trim();
-									if (MATCH_PTR_DECL.reset(type).matches()) {
-										ptrs = MATCH_PTR_DECL.group(1).trim();
-										type = MATCH_PTR_DECL.group(3).trim();
-									}
-									int pos = type.indexOf('[');
-									if (pos > 0) {
-										array = "array " + type.substring(pos) + " of ";
-										type = type.substring(0, pos).trim();
-									}
-								}
-								else {
-									type = String.format("AnonStruct%1$03d", typeCount++);
-								}
-							}
-							else {
-								type = structRed.get(1).asString();
-							}
-							StringList components = getCompsFromStructDef(structRed.get(structRed.size()-2).asReduction());
-							// compose and define type
-							components.insert("type " + type + " = " + array + ptrs + "struct{\\", 0);
-							String lastComp = components.get(components.count()-1);
-							components.set(components.count()-1, lastComp.replace('\\', '}'));
-							Instruction typedef = new Instruction(components);
-							_parentNode.addElement(typedef);
-							typedef.updateTypeMap(typeMap);
-						}
-						isStruct = true;
-					}
-						break;
-					case RuleConstants.PROD_TYPESPECIFIER2:
-						// <Type Specifier> ::= <Enumerator Spec>
-						// FIXME Define the constants at least
-						break;
-					case RuleConstants.PROD_TYPEDEFNAME_USERTYPEID:
-						// <Typedef Name> ::= UserTypeId
-					case RuleConstants.PROD_TYPESPECIFIER3:
-						// <Type Specifier> ::= <Typedef Name>
-						type = getContent_R(prefix.asReduction(), "").trim();
-						break;
-					default:
-						System.out.println(prefix.asReduction().getParent().getTableIndex());	
-					}
-				}
-				else {
-					specifiers.add(prefix.toString());
-				}
-				break;
-			case RuleConstants.PROD_DECLSPECIFIERS3: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
-				qualifiers.add(prefix.toString());
-				break;
-			default:
-			}
-			_reduction = _reduction.get(1).asReduction();
-			_ruleId = _reduction.getParent().getTableIndex();
-			
+//		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers>")) {
+//			Token prefix = _reduction.get(0);	// May be <Storage Class> or <Type Specifier> or "inline"
+//			switch (_ruleId) {
+//			case RuleConstants.PROD_DECLSPECIFIERS: // <Decl Specifiers> ::= <Storage Class> <Decl Specs>
+//			{
+//				String storageClass = (prefix.getType() == SymbolType.NON_TERMINAL) ? getContent_R(prefix.asReduction(), "") : prefix.asString();
+//				if (storageClass.equals("typedef")) {
+//					isTypedef = true;
+//				}
+//				else {
+//					// We don't actually need them but may add them to the comment.
+//					storage.add(storageClass);
+//				}
+//			}
+//				break;
+//			case RuleConstants.PROD_DECLSPECIFIERS2: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+//				if (prefix.getType() == SymbolType.NON_TERMINAL) {
+//					switch (prefix.asReduction().getParent().getTableIndex()) {
+//					case RuleConstants.PROD_TYPESPECIFIER:	// rather unlikely (represented by one of the following)
+//						// <Type Specifier> ::= <StructOrUnion Spec>
+//					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER_LBRACE_RBRACE:
+//						// <StructOrUnion Spec> ::= <StructOrUnion> Identifier '{' <StructDeclnList> '}'
+//					case RuleConstants.PROD_STRUCTORUNIONSPEC_LBRACE_RBRACE:
+//						// <StructOrUnion Spec> ::= <StructOrUnion> '{' <StructDeclnList> '}'
+//					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER:
+//						// <StructOrUnion Spec> ::= <StructOrUnion> Identifier
+//					{
+//						Reduction structRed = prefix.asReduction();
+//						if (structRed.size() == 2) {
+//							type = structRed.get(1).asString();
+//							// TODO retrieve type
+//						}
+//						else {
+//							String array = "";
+//							String ptrs = "";
+//							if (structRed.size() == 4) {
+//								if (isTypedef && declRed == null) {
+//									// FIXME: We must separate indices and pointers
+//									type = getContent_R(_reduction.get(1).asReduction(), "").trim();
+//									if (MATCH_PTR_DECL.reset(type).matches()) {
+//										ptrs = MATCH_PTR_DECL.group(1).trim();
+//										type = MATCH_PTR_DECL.group(3).trim();
+//									}
+//									int pos = type.indexOf('[');
+//									if (pos > 0) {
+//										array = "array " + type.substring(pos) + " of ";
+//										type = type.substring(0, pos).trim();
+//									}
+//								}
+//								else {
+//									type = String.format("AnonStruct%1$03d", typeCount++);
+//								}
+//							}
+//							else {
+//								type = structRed.get(1).asString();
+//							}
+//							StringList components = getCompsFromStructDef(structRed.get(structRed.size()-2).asReduction());
+//							// compose and define type
+//							components.insert("type " + type + " = " + array + ptrs + "struct{\\", 0);
+//							String lastComp = components.get(components.count()-1);
+//							components.set(components.count()-1, lastComp.replace('\\', '}'));
+//							Instruction typedef = new Instruction(components);
+//							_parentNode.addElement(typedef);
+//							typedef.updateTypeMap(typeMap);
+//						}
+//						isStruct = true;
+//					}
+//						break;
+//					case RuleConstants.PROD_TYPESPECIFIER2:
+//						// <Type Specifier> ::= <Enumerator Spec>
+//						// FIXME Define the constants at least
+//						break;
+//					case RuleConstants.PROD_TYPEDEFNAME_USERTYPEID:
+//						// <Typedef Name> ::= UserTypeId
+//					case RuleConstants.PROD_TYPESPECIFIER3:
+//						// <Type Specifier> ::= <Typedef Name>
+//						type = getContent_R(prefix.asReduction(), "").trim();
+//						break;
+//					default:
+//						System.out.println(prefix.asReduction().getParent().getTableIndex());	
+//					}
+//				}
+//				else {
+//					specifiers.add(prefix.toString());
+//				}
+//				break;
+//			case RuleConstants.PROD_DECLSPECIFIERS3: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+//				qualifiers.add(prefix.toString());
+//				break;
+//			default:
+//			}
+//			_reduction = _reduction.get(1).asReduction();
+//			_ruleId = _reduction.getParent().getTableIndex();
+//			
+//		}
+		StringList typeSpecs = new StringList();
+		isTypedef = this.getDeclSpecifiers(_reduction, typeSpecs, _parentNode, declRed);
+		if (typeSpecs.count() > 0) {
+			type = typeSpecs.concatenate(" ");
 		}
-		if (isConstant && _declaringVars) {
-			type = "const " + type;
-		}
+//		if (isConstant && _declaringVars) {
+//			type = "const " + type;
+//		}
 		if (addType) {
 			_typeList.insert(type, 0);
 		}
@@ -1754,6 +2245,9 @@ public class C99Parser extends CPreParser
 	@Override
 	protected String getContent_R(Reduction _reduction, String _content)
 	{
+		if (_reduction == null) {
+			System.err.println("STOP!");
+		}
 		for(int i=0; i<_reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
