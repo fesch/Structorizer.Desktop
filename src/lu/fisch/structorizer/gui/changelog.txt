@@ -10,7 +10,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - C import fails if the code contains function pointers.
 
-Current development version: 3.28-05 (2018-06-24)
+Current development version: 3.28-05 (2018-06-27)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -47,6 +47,9 @@ Current development version: 3.28-05 (2018-06-24)
 - 05: Bugfix #549: The operator '%=' had been missing in the C grammar <2>
 - 05: Data protection information added to the update information hint <2>
 - 05: Bugfix #550: Defective import of C switch statements in certain cases <2>
+- 05: Issue #551: On webstart the hint about version check doesn't make sense <2>
+- 05: Enh. #552: Option to decide for all diagrams on serial file actions,
+      new opportunity to remove all diagrams from Arranger with few clicks <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

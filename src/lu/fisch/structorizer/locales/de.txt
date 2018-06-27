@@ -112,6 +112,7 @@
  *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
  *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
  *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
+ *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
  *
  ******************************************************************************************************
  *
@@ -373,12 +374,15 @@ Menu.msgWelcomeMessage.text=Willkommen beim Structorizer, Ihrem Struktogramm-Edi
 Menu.lblOk.text=OK
 Menu.lblYes.text=Ja, fortsetzen
 Menu.lblNo.text=Nein, abbrechen
+Menu.lblYesToAll.text=Ja für alle
+Menu.lblNoToAll.text=Nein für alle
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 Menu.lblHint.text=Tipp
 Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
 Menu.lblReduced.text=Ja, Einsteigerodus
 Menu.lblNormal.text=Nein, normaler Modus
-Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
+Menu.ttlCodeImport.text=Quellcode-Import
+Menu.msgSelectParser.text=Die Quellcode-Sprache von "%" ist nicht eindeutig.\nBitte geeignetste Import-Sprache / Parser wählen:
 Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
 Menu.msgIncludableName.text=Name eines (neuen) einbeziehbaren Diagramms für die geteilten Typen
@@ -628,6 +632,7 @@ Editor.popupIndexGet.text=Diagram holen
 Editor.popupIndexSave.text=Änderungen sichern
 Editor.popupIndexRemove.text=Entfernen
 Editor.popupIndexCovered.text=Testabdeckung an/aus
+Editor.popupIndexRemoveAll.text=Alle entfernen
 
 -----[ InputBox ]-----
 InputBox.title=Element bearbeiten
@@ -1086,6 +1091,8 @@ FindAndReplace.ttlSearchError.text=Suchfehler
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Neues Diagramm
 Arranger.btnRemoveDiagram.text=Entfernen
+Arranger.btnRemove1Diagram.text=Entfernen
+Arranger.btnRemoveAllDiagrams.text=- Leeren -
 Arranger.btnExportPNG.text=PNG-Export
 Arranger.btnSaveArr.text=Liste sichern
 Arranger.btnLoadArr.text=Liste laden
@@ -1098,6 +1105,8 @@ Arranger.btnExportPNG.tooltip=Diese Anordnung als Bilddatei im PNG-Format ausgeb
 Arranger.btnPinDiagram.tooltip=Diagramm anheften, um es gegen Ersetzung seitens Structorizer zu schützen.
 Arranger.btnSetCovered.tooltip=Unterprogrammdiagram für Routinenaufrufe als testabgedeckt markieren.
 Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
+Arranger.msgConfirmRemoveAll.text=Wollen Sie wirklich alle Diagramme aus Arranger entfernen?
+Arranger.msgTitleWarning.text=Warnung
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
 Surface.msgSavePortable.text=Als portables komprimiertes Archiv sichern?

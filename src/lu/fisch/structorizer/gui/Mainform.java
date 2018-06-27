@@ -68,7 +68,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.21      Enh. #490: DiagramController aliases saved and loaded to/from Ini
  *                                      Issue #455: Multiple redrawing of diagram avoided in loadFromIni().
  *      Kay Gürtzig     2018.02.09      Bugfix #507 had revealed an event queue issue in loadFromIni() on
- *                                      loading  preferences from explicitly chosen ini file. This is fixed now 
+ *                                      loading  preferences from explicitly chosen ini file. This is fixed now
+ *      Kay Gürtzig     2018.06.25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart 
  *
  ******************************************************************************************************
  *
@@ -153,6 +154,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/** Indicates whether Structorizer may have been started the first time */
 	boolean isNew = false;
 	// END KGU#456 2017-11-05
+	// START KGU#532 2018-06-25: To be able to suppress version hints on webstart (doesn't make sense)
+	public boolean isWebStart = false;
+	// END KGU#532 2018-06-25
 		
 	/******************************
  	 * Setup the Mainform
@@ -1124,7 +1128,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     	}
     	else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
     	// END KGU#456 2017-11-06
-    		if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
+    		// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense
+    		//if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
+    		if (!isWebStart && !Element.E_VERSION.equals(this.suppressUpdateHint)) {    	    		
+    		// END KGU#532 2018-06-25
     			int chosen = JOptionPane.showOptionDialog(this,
     					Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
     					Menu.lblHint.getText(),

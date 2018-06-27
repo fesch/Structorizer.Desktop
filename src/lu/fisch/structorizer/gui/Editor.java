@@ -293,7 +293,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JPopupMenu popupIndex = new JPopupMenu();
     protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.getIcon(0));
     protected final JMenuItem popupIndexSave = new JMenuItem("Save changes", IconLoader.getIcon(3));
-    protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(45));
+    // START KGU#534 2018-06-27: Enh. #552
+    //protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(45));
+    protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(100));
+    protected final JMenuItem popupIndexRemoveAll = new JMenuItem("Remove all", IconLoader.getIcon(45));    
+    // END KGU#534 2018-06-27
     protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.getIcon(46));
 	// END KGU#318 2017-01-05
     
@@ -590,6 +594,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         popupIndex.add(popupIndexCovered);
         popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
         // END KGU#318 2017-01-05
+
+        // START KGU#534 2018-06-27: Enh. #552
+        popupIndex.addSeparator();
+        popupIndex.add(popupIndexRemoveAll);
+        popupIndexRemoveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemoveAll(); } });
+        // END KGU#534 2018-06-27
 
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
@@ -1567,6 +1577,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			scrollarea.requestFocusInWindow();
 		}		
 	}
+	
+	// START KGU#534 2018-06-27: Enh. #552
+	public void arrangerIndexRemoveAll()
+	{
+		Arranger.getInstance().removeAllDiagrams();			
+	}
+	// END KGU#534 2018-06-27
 	
 	public void arrangerIndexToggleCovered()
 	{

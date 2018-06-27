@@ -153,6 +153,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.04.03      KGU#514: analyse() call on mere mouse clicking avoided
  *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble in openNsdOrArr()
  *      Kay Gürtzig     2018.06.11      Issue #143: Comment popup off on opening print preview
+ *      Kay Gürtzig     2018.06.27      Enh. #552: Mechanism for global decisions on serial actions (save, overwrite)
+ *                                      Usability of the parser choice dialog for code import improved.  
  *
  ******************************************************************************************************
  *
@@ -279,6 +281,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     
     private NSDController NSDControl = null;
     
+	// START KGU#534 2018-06-27: Enh. #552
+	private static boolean inSerialAction = false;
+	public enum SerialDecisionStatus {INDIVIDUAL, YES_TO_ALL, NO_TO_ALL};
+	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE};
+	private static final SerialDecisionStatus[] serialDecisions = {
+			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_SAVE
+			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_OVERWRITE
+	}; 
+	public static void setSerialMode(boolean on) {
+		for (int i = 0; i < serialDecisions.length; i++) {
+			serialDecisions[i] = SerialDecisionStatus.INDIVIDUAL;
+		}
+		inSerialAction = on;
+	}
+	public SerialDecisionStatus getSerialDecision(SerialDecisionAspect aspect) {
+		return serialDecisions[aspect.ordinal()]; 
+	}
+	private void setSerialDecision(SerialDecisionAspect aspect, boolean statusAll) {
+		serialDecisions[aspect.ordinal()] = (statusAll ? SerialDecisionStatus.YES_TO_ALL : SerialDecisionStatus.NO_TO_ALL); 
+	}
+	// END KGU#534 2018-06-27
+	
     // START KGU#2 2015-11-24 - KGU#280 2016-10-11 replaced by method consulting the Arranger class
     // Dependent Structorizer instances may otherwise be ignorant of the Arranger availability
     //public boolean isArrangerOpen = false;
@@ -1508,7 +1532,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Root oldRoot = root;
 		// END KGU#48 2015-10-17
 		// only save if something has been changed
-		saveNSD(true);
+		// START KGU#534 2018-06-27: Bugfix #552 We should not proceed if the user canceled the saving
+		//saveNSD(true);
+		if (!saveNSD(true)) {
+			return;
+		}
+		// END KGU#534 2018-06-27
 
 		// create an empty diagram
 		boolean HV = root.hightlightVars;
@@ -1879,12 +1908,48 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (f.exists())
 				{
 					writeNow=false;
-					int res = JOptionPane.showConfirmDialog(
-							this.NSDControl.getFrame(),
-							Menu.msgOverwriteFile.getText(),
-							Menu.btnConfirmOverwrite.getText(),
-							JOptionPane.YES_NO_OPTION);
-					if (res == JOptionPane.YES_OPTION) writeNow=true;
+					// START KGU#534 2018-06-27: Enh. #552
+					if (inSerialAction) {
+						switch (getSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE)) {
+						case INDIVIDUAL: {						
+							String[] options = {
+									Menu.lblYes.getText(),
+									Menu.lblNo.getText(),
+									Menu.lblYesToAll.getText(),
+									Menu.lblNoToAll.getText(),
+							};
+							String initialValue = options[0];
+							int res = JOptionPane.showOptionDialog(
+									this.NSDControl.getFrame(),
+									Menu.msgOverwriteFile.getText(),
+									Menu.btnConfirmOverwrite.getText(),
+									JOptionPane.DEFAULT_OPTION,
+									JOptionPane.QUESTION_MESSAGE,
+									null,
+									options,
+									initialValue);
+							if (res >= 2) {
+								this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, res == 2);
+							}
+							if (res == 0 || res == 2) writeNow=true;}
+							break;
+						case YES_TO_ALL:
+							writeNow = true;
+							break;
+						default: ;
+						}
+					}
+					else {
+					// END KGU#534 2018-06-27
+						int res = JOptionPane.showConfirmDialog(
+								this.NSDControl.getFrame(),
+								Menu.msgOverwriteFile.getText(),
+								Menu.btnConfirmOverwrite.getText(),
+								JOptionPane.YES_NO_OPTION);
+						if (res == JOptionPane.YES_OPTION) writeNow=true;
+					// START KGU#534 2018-06-27: Enh. #552
+					}
+					// END KGU#534 2018-06-27
 				}
 
 				if (!writeNow)
@@ -1958,7 +2023,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!root.isEmpty() && root.hasChanged())
 		// END KGU#137 2016-01-11
 		{
-
+			// START KGU#534 2018-06-27: Enh. #552
+			if (_askToSave && inSerialAction) {
+				switch (getSerialDecision(SerialDecisionAspect.SERIAL_SAVE)) {
+				case NO_TO_ALL:
+					res = 1;
+					// NO break here!
+				case YES_TO_ALL:
+					_askToSave = false;
+					break;
+				default:;
+				}
+			}
+			// END KGU#534 2018-06-27
 			if (_askToSave)
 			{
 				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous seeing the NSD name
@@ -1969,16 +2046,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					filename = root.proposeFileName();
 				}
+				String[] options = null;
+				Object initialValue = null;
+				if (inSerialAction) {
+					options = new String[]{
+							Menu.lblYes.getText(),
+							Menu.lblNo.getText(),
+							Menu.lblYesToAll.getText(),
+							Menu.lblNoToAll.getText()	// Well, this is less sensible...
+					};
+					initialValue = options[0];
+				}
 				res = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
 												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
 				// END KGU#49 2015-10-18
 												   Menu.msgTitleQuestion.getText(),
 												   JOptionPane.YES_NO_OPTION,
 												   JOptionPane.QUESTION_MESSAGE,
-												   null,null,null);
+												   // START KGU#534 2018-06-27: Enh. #552
+												   //null,null,null
+												   null,
+												   options,
+												   initialValue
+												   // END KGU#534 2018-06-27
+												   );
 			}
 			
-			if (res==0)
+			// START KGU#534 2018-06-27: Enh. #552
+			//if (res==0)
+			if (res >= 2) {
+				this.setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, res == 2);
+			}
+			if (res==0 || res==2)
+			// END KGU#534 2018-06-27
 			{
 				// Check whether root has already been loaded or saved once
 				//boolean saveIt = true;
@@ -5152,23 +5252,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		CodeParser parser = null;
 		
 		Vector<CodeParser> candidates = new Vector<CodeParser>();
-
+		String[] choice = new String[parsers.size()];
+		Vector<String> candStrings = new Vector<String>();
 		// We are better prepared for the ambiguous case...
 		int nr0 = 1, nr = 1;
-		final String format = "\n    %2d: %s";
-		String choice0 = "";	// Choice among all available parsers
-		String choice = "";		// Choice over concurrent parsers
+		final String format = "%2d: %s";
 		for (CodeParser psr: parsers)
 		{
 			String descr = psr.getDescription();
-			choice0 += String.format(format, nr0++, descr);
+			choice[nr0-1] = String.format(format, nr0, descr);
+			nr0++; 
 			if (usedFilter == psr) {
+				// The user had explicitly chosen this filter, so we are ready
 				parser = psr;
 				break;
 			}
 			else if (psr.accept(file)) {
 				candidates.add(psr);
-				choice += String.format(format, nr++, descr);
+				candStrings.add(String.format(format, nr++, descr));
 			}
 		}
 
@@ -5177,27 +5278,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				parser = candidates.get(0);
 			}
 			else {
-				if (candidates.isEmpty()) {
-					choice = choice0;
+				if (!candidates.isEmpty()) {
+					choice = (String[]) candStrings.toArray();
+				}
+				else {
 					candidates = parsers;
 				}
-				int index = -1;
-				choice = Menu.msgSelectParser.getText().replace("%1", choice).replaceAll("%2", file.getName());
-				do {
-					String sel = JOptionPane.showInputDialog(null, choice, null);
-					if (sel == null) {
-						index = 0;
+				JComboBox<String> cbParsers = new JComboBox<String>(choice);
+				String prompt = Menu.msgSelectParser.getText().replace("%", file.getName());
+				int resp = JOptionPane.showConfirmDialog(null,
+						new Object[]{prompt, cbParsers},
+						Menu.ttlCodeImport.getText(), 
+						JOptionPane.OK_CANCEL_OPTION);
+				if (resp == JOptionPane.OK_OPTION) {
+					int index = cbParsers.getSelectedIndex();
+					// Well this test is of course mere paranoia...
+					if (index >= 0 && index < candidates.size()) {
+						parser = candidates.get(index);
 					}
-					try {
-						index = Integer.parseInt(sel);
-						if (index < 0 || index > candidates.size()) {
-							index = -1;
-						}
-					}
-					catch (NumberFormatException ex) {}
-				} while (index < 0);
-				if (index > 0) {
-					parser = candidates.get(index-1);
 				}
 			}
 		}

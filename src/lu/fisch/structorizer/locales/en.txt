@@ -107,6 +107,7 @@
  *      Kay Gürtzig     2017.12.15      Element name place holders introduced
  *      Kay Gürtzig     2018.01.18      DiagramControllerAliases added
  *      Kay Gürtzig     2018.02.17      Arranger captions added (on occasion of enh. #512)
+ *      Kay Gürtzig     2018.06.27      Enh. #552: New messages in Menu, Editor, Arranger
  *
  ******************************************************************************************************
  *
@@ -370,12 +371,15 @@ Menu.msgWelcomeMessage.text=Welcome to Structorizer, your Nassi-Shneiderman diag
 Menu.lblOk.text=OK
 Menu.lblYes.text=Yes, continue
 Menu.lblNo.text=No, cancel
+Menu.lblYesToAll.text=Yes to all
+Menu.lblNoToAll.text=No to all
 Menu.lblSuppressUpdateHint.text=Don't show this window again
 Menu.lblHint.text=Hint
 Menu.lblCopyToClipBoard.text=OK + Copy to Clipboard
 Menu.lblReduced.text=Yes, reduced mode
 Menu.lblNormal.text=No, normal mode
-Menu.msgSelectParser.text=The source file type of "%2" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.
+Menu.ttlCodeImport.text=Source code import
+Menu.msgSelectParser.text=The source file type of \"%\" is ambiguous.\nPlease select an import language/parser:
 Menu.msgImportCancelled.text=Code import for file "%" cancelled.
 Menu.msgSubroutineName.text=Name of the new subroutine
 Menu.msgIncludableName.text=Name of a (new) includable diagram to move shared types to
@@ -625,7 +629,7 @@ Editor.popupIndexGet.text=Get diagram
 Editor.popupIndexSave.text=Save changes
 Editor.popupIndexRemove.text=Remove
 Editor.popupIndexCovered.text=Test-covered on/off
-
+Editor.popupIndexRemoveAll.text=Remove All
 -----[ InputBox ]-----
 InputBox.title=
 InputBox.lblText.text=Please enter a text
@@ -1083,6 +1087,8 @@ FindAndReplace.ttlSearchError.text=Search Error
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=New Diagram
 Arranger.btnRemoveDiagram.text=Drop Diagram
+Arranger.btnRemove1Diagram.text=Drop Diagram
+Arranger.btnRemoveAllDiagrams.text=Remove All
 Arranger.btnExportPNG.text=PNG Export
 Arranger.btnSaveArr.text=Save List
 Arranger.btnLoadArr.text=Load List
@@ -1095,6 +1101,8 @@ Arranger.btnExportPNG.tooltip=Draw this arrangement into a PNG file.
 Arranger.btnPinDiagram.tooltip=Pin a diagram to make it immune against replacement.
 Arranger.btnSetCovered.tooltip=Mark the routine diagram as test-covered for subroutine calls to it.
 Arranger.btnZoom.tooltip=Hold Shift key pressed to zoom in.
+Arranger.msgConfirmRemoveAll.text=Do you really want to remove all diagrams from Arranger?
+Arranger.msgTitleWarning.text=Warning
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:
 Surface.msgSavePortable.text=Save as portable compressed archive?
