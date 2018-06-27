@@ -5279,7 +5279,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else {
 				if (!candidates.isEmpty()) {
-					choice = (String[]) candStrings.toArray();
+					choice = candStrings.toArray(new String[candStrings.size()]);
 				}
 				else {
 					candidates = parsers;
