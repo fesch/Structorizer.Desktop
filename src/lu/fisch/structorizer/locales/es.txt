@@ -112,6 +112,7 @@
  *      Kay Gürtzig     2017.12.15  Element name placeholders introduced
  *      Kay Gürtzig     2018.01.18  DiagramControllerAliases added
  *      Kay Gürtzig     2018.02.17  Arranger captions added (on occasion of enh. #512)
+ *      Kay Gürtzig     2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
  *
  ******************************************************************************************************
  *
@@ -374,12 +375,15 @@ Menu.msgWelcomeMessage.text=¡Bienvenido/-a en Structorizer, su editor para diag
 Menu.lblOk.text=Visto
 Menu.lblYes.text=Si, continuar
 Menu.lblNo.text=No, cancelar
+Menu.lblYesToAll.text=Sí para todos
+Menu.lblNoToAll.text=No para todos
 Menu.lblSuppressUpdateHint.text=Jamás mostrar esta ventanilla
 Menu.lblHint.text=Aviso
 Menu.lblReduced.text=Sí, modo simplificado
 Menu.lblNormal.text=No, modo normal
 Menu.lblCopyToClipBoard.text=Copiar en el portapapeles
-Menu.msgSelectParser.text=Tipo de código del fichero "%2" es ambiguo. Escoge el idioma para el importe de código, por favor:%1\nIngresa el número más apropiado, por favor.
+Menu.ttlCodeImport.text=Importe de código
+Menu.msgSelectParser.text=Tipo de código del fichero "%" es ambiguo.\nEscoge el idioma / analizador más apropiado, por favor:
 Menu.msgImportCancelled.text=Importe de código para fichero "%" cancelado.
 Menu.msgSubroutineName.text=Nombre del nuevo subprograma 
 Menu.msgIncludableName.text=Nombre de (nuevo) incluíble diagrama para caber tipos comunes
@@ -629,6 +633,7 @@ Editor.popupIndexGet.text=Coger diagrama
 Editor.popupIndexSave.text=Guardar cambios
 Editor.popupIndexRemove.text=Quitar
 Editor.popupIndexCovered.text=Cambiar cobertura de test
+Editor.popupIndexRemoveAll.text=Quitar todos
 
 -----[ InputBox ]-----
 InputBox.title=
@@ -1085,6 +1090,8 @@ FindAndReplace.btnClose.text=Cerrar
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Nuevo diagrama
 Arranger.btnRemoveDiagram.text=Quita diagrama
+Arranger.btnRemove1Diagram.text=Quita diagrama
+Arranger.btnRemoveAllDiagrams.text=Quita todos
 Arranger.btnExportPNG.text=Exporte a PNG
 Arranger.btnSaveArr.text=Graba lista
 Arranger.btnLoadArr.text=Carga lista
@@ -1097,6 +1104,9 @@ Arranger.btnExportPNG.tooltip=Dibuja esta constelación en un fichero de imagen 
 Arranger.btnPinDiagram.tooltip=Grapa un diagrama para protejerlo de reemplazamiento por Structorizer.
 Arranger.btnSetCovered.tooltip=Marca el diagrama de rutina como completamente probado para llamadas.
 Arranger.btnZoom.tooltip=Deja presionada la tecla Shift para acercarse con el zoom.
+Arranger.msgConfirmRemoveAll.text=¿Quieres reálmente quitar todos los diagramas de Arranger?
+Arranger.msgTitleWarning.text=Advertencia
+
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Error abriendo archivo:
 Surface.msgSavePortable.text=¿Guardar como archivo portable y comprimido?

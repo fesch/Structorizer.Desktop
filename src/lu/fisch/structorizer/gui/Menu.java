@@ -609,7 +609,8 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#354 2017-03-04: Enh. #354 Now generic import menu
 	//public static final LangTextHolder lblImportCode = new LangTextHolder("% Code ...");
 	public static final LangTextHolder lblCopyToClipBoard = new LangTextHolder("OK + Copy to Clipboard");
-	public static final LangTextHolder msgSelectParser = new LangTextHolder("The source file type of \"%2\" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.");
+	public static final LangTextHolder ttlCodeImport = new LangTextHolder("Source code import");
+	public static final LangTextHolder msgSelectParser = new LangTextHolder("The source file type of \"%\" is ambiguous.\nPlease select an import language/parser:");
 	public static final LangTextHolder msgImportCancelled = new LangTextHolder("Code import for file \"%\" cancelled.");
 	public static final LangTextHolder msgImportFileReadError = new LangTextHolder("File \"%\" does not exist or cannot be read.");
 	// END KGU#354 2017-03-04
@@ -627,6 +628,10 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblYes = new LangTextHolder("Yes");
 	public static final LangTextHolder lblNo = new LangTextHolder("No");
 	// END KGU#365 2017-03-27
+	// START KGU#534 2018-06-27: Enh. #552
+	public static final LangTextHolder lblYesToAll = new LangTextHolder("Yes to all");
+	public static final LangTextHolder lblNoToAll = new LangTextHolder("No to all");
+	// END KGU#534 2018-06-27
 	// START KGU#506 2018-03-14: Issue #522 (for enh. #380)
 	public static final LangTextHolder msgIncludableName = new LangTextHolder("Name of a (new) includable diagram to move shared types to");
 	public static final LangTextHolder msgMustBeIdentifier = new LangTextHolder("Your chosen name was not suited as identifier!");

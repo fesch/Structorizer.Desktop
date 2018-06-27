@@ -79,7 +79,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
  *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
  *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
- *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations 
+ *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations
+ *      Kay Gürtzig     2018.06.27      Enh. #552: Serial decisions on saveAll allowed, remoeAllDiagrams() added
  *
  ******************************************************************************************************
  *
@@ -1890,44 +1891,54 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             HashSet<Root> handledRoots = new HashSet<Root>();
             HashSet<Mainform> mainforms = new HashSet<Mainform>();
             // END KGU#320 2017-01-04
-            Iterator<Diagram> iter = this.diagrams.iterator();
-            while (iter.hasNext())
-            {
-                Diagram diagram = iter.next();
-                Mainform form = diagram.mainform;
-                if (form != null)
+            // START KGU#534 2018-06-27: Enh. #552
+            lu.fisch.structorizer.gui.Diagram.setSerialMode(true);
+            try {
+            // END KGU#534 2018-06-27
+            	Iterator<Diagram> iter = this.diagrams.iterator();
+            	while (iter.hasNext())
             	{
-                    // START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
-                    //form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
-                    form.diagram.saveNSD(diagram.root, !dontAsk && !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
-                    mainforms.add(form);
-                    handledRoots.add(diagram.root);
-                    // END KGU#320 2017-01-04
+            		Diagram diagram = iter.next();
+            		Mainform form = diagram.mainform;
+            		if (form != null)
+            		{
+            			// START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
+            			//form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
+            			form.diagram.saveNSD(diagram.root, !dontAsk && !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+            			mainforms.add(form);
+            			handledRoots.add(diagram.root);
+            			// END KGU#320 2017-01-04
+            		}
+            		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
+            		else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
+            		{
+            			unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
+            			allDone = false;
+            		}
+            		else if (diagram.root.hasChanged())
+            		{
+            			unsaved.add(diagram.root.filename);
+            			allDone = false;
+            		}
+            		// END KGU#177 2016-04-14
             	}
-                // START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-                else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
-                {
-                    unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
-                    allDone = false;
-                }
-                else if (diagram.root.hasChanged())
-                {
-                    unsaved.add(diagram.root.filename);
-                    allDone = false;
-                }
-                // END KGU#177 2016-04-14
+            	// START KGU#320 2017-01-04: Bugfix #321
+            	// In case Arranger is closing give all dependent (and possibly doomed) Mainforms a
+            	// chance to save their currently maintained Root even if this was not arranged here.
+            	if (goingToClose) {
+            		for (Mainform form: mainforms) {
+            			if (!form.isStandalone() && !handledRoots.contains(form.getRoot())) {
+            				form.diagram.saveNSD(!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+            			}
+            		}
+            	}
+            	// END KGU#320 2017-01-04
+            // START KGU#534 2018-06-27: Enh. #552
             }
-            // START KGU#320 2017-01-04: Bugfix #321
-            // In case Arranger is closing give all dependent (and possibly doomed) Mainforms a
-            // chance to save their currently maintained Root even if this was not arranged here.
-            if (goingToClose) {
-                for (Mainform form: mainforms) {
-                    if (!form.isStandalone() && !handledRoots.contains(form.getRoot())) {
-                        form.diagram.saveNSD(!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
-                    }
-                }
+            finally {
+            	lu.fisch.structorizer.gui.Diagram.setSerialMode(false);
             }
-        	// END KGU#320 2017-01-04
+            // END KGU#534 2018-06-27
         }
         // START KGU#177 2016-04-14: Enh. #158
         if (!allDone)
@@ -1944,6 +1955,36 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     // END KGU#49 2015-10-18
     
+    // START KGU#534 2018-06-27: Enh. #552 - new opportunity to clear the entire Arranger
+    /**
+     * Removes all diagrams from the Arranger surface after having asked for changes to
+     * be saved.
+     * @return whether this action was complete.
+     */
+    public boolean removeAllDiagrams()
+    {
+    	boolean allDone = false;
+    	if (saveDiagrams()) {
+    		try {
+    			while (!diagrams.isEmpty()) {
+    				Diagram diagr = diagrams.firstElement();
+    				diagr.root.removeUpdater(this);
+    				if (diagr == this.mouseSelected) {
+    					this.mouseSelected = null;
+    				}
+    				diagrams.remove(diagr);
+    			}
+    		}
+    		finally {
+    			adaptLayout();
+    			repaint();
+    			notifyChangeListeners();
+    		}
+            allDone = true;
+    	}
+    	return allDone;
+    }
+    // END KGU#534 2018-06-27
 
     public void mouseClicked(MouseEvent e)
     {
