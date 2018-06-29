@@ -505,6 +505,18 @@ public class Parallel extends Element
     	return IconLoader.getIcon(91);
     }
     // END KGU#122 2016-01-03
+	// START KGU 2018-06-28
+    /**
+     * @return the element-type-specific somewhat smaller icon image intended to be used in
+     * Find & Replace dialog.
+     * @see #getIcon()
+     */
+	@Override
+    public ImageIcon getMiniIcon()
+    {
+    	return IconLoader.getIcon(48);
+    }
+    // END KGU 2018-06-28
 
     // START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
     @Override

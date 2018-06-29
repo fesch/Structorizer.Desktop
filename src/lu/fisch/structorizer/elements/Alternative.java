@@ -554,6 +554,17 @@ public class Alternative extends Element implements IFork {
 		return IconLoader.getIcon(60);
 	}
 	// END KGU#122 2016-01-03
+    /**
+     * @return the element-type-specific somewhat smaller icon image intended to be used in
+     * Find & Replace dialog.
+     * @see #getIcon()
+     */
+	@Override
+    public ImageIcon getMiniIcon()
+    {
+    	return IconLoader.getIcon(13);
+    }
+    // END KGU 2018-0628
 	
 	// START KGU 2015-10-09: On moving the cursor, substructures had been eclipsed
 	// by their containing box w.r.t. comment popping etc. This correction, however,

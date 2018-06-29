@@ -66,6 +66,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.09      Issue #4: Some icon renaming and reorganisation
  *      Kay Gürtzig     2018.02.12      Issue #4: Distinct set of FOR loop icons (no longer = forever/while)
  *      Kay Gürtzig     2018.02.14      Issue #510: Colour button icon shape changed from rectangle to circle.
+ *      Kay Gürtzig     2018.06.28      Smaller element symbols for Search + Replace (###_mini_???.png)
  *
  ******************************************************************************************************
  *
@@ -100,13 +101,13 @@ public class IconLoader {
 			"007_zoom_out.png",
 			"008_zoom_in.png",
 			"009_mouse.png",	// (#519)
-			null,	//"010_whileBefore.png",		// obsolete (#510)
-			null,	//"011_repeatBefore.png",		// obsolete (#510)
-			null,	//"012_intAfter.png",			// obsolete (#510)
-			null,	//"013_altAfter.png",			// obsolete (#510)
-			null,	//"014_foreverAfter.png",		// obsolete (#510)
-			null,	//"015_whileAfter.png",		// obsolete (#510)
-			null,	//"016_repeatAfter.png",		// obsolete (#510)
+			"010_mini_inst.png",	// ex "010_whileBefore.png"
+			"011_mini_call.png",	// ex "011_repeatBefore.png"
+			"012_mini_jump.png",	// ex "012_intAfter.png"
+			"013_mini_if.png",		// ex "013_altAfter.png"
+			"014_mini_forever.png",	// ex "014_foreverAfter.png"
+			"015_mini_while.png",	// ex "015_whileAfter.png"
+			"016_mini_repeat.png",	// ex "016_repeatAfter.png"
 			"017_Eye.png",
 			"018_add.png",
 			"019_Up.png",
@@ -135,12 +136,12 @@ public class IconLoader {
 			"042_copy.png",
 			"043_paste.png",
 			"044_cut.png",
-			"045_remove.png",	// used in Arranger index
+			"045_remove.png",	// used in Arranger and Arranger index
 			"046_covered.png",	// for Arranger toolbar
-			null,	//"047_casebefore.png",	// obsolete (#510)
-			null,	//"048_caseafter.png",	// obsolete (#510)
-			null,	//"049_callbefore.png",	// obsolete (#510)
-			null,	//"050_callafter.png",	// obsolete (#510)
+			"047_mini_case.png",	// ex "047_casebefore.png"
+			"048_mini_para.png",	// ex "048_caseafter.png",
+			"049_mini_for_din.png",	// ex "049_callbefore.png"
+			"050_mini_for.png",		// ex "050_callafter.png"
 			"051_scale_gui.png",
 			"052_update.png",
 			"053_elem_for.png",	// new
@@ -191,7 +192,7 @@ public class IconLoader {
 			null,	// 98
 			"099_pin_blue.png",	// for Arranger toolbar
 			"100_diagram_drop.png", // for Arranger toolbar
-			"101_diagram_new.png",	// for Arranger toolbar
+			"101_diagram_new.png",	// for Arranger toolbar and Arranger index
 			"102_switch.png",
 			"103_breakpt.png",
 			"104_nobreakpt.png",

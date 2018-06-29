@@ -1209,6 +1209,18 @@ public class Root extends Element {
     	return super.getIcon();
     }
     // END KGU#324 2017-06-16
+	// START KGU 2018-06-28
+    /**
+     * @return the element-type-specific somewhat smaller icon image intended to be used in
+     * Find & Replace dialog.
+     * @see #getIcon()
+     */
+	@Override
+    public ImageIcon getMiniIcon()
+    {
+    	return this.getIcon();
+    }
+    // END KGU 2018-06-28
 
     @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
@@ -1374,9 +1386,18 @@ public class Root extends Element {
         return this.prepareDraw(canvas);
     }
 
-    public Rect draw(Graphics _g, Point point, Updater updater)
+    /**
+     * Draws this diagram at anchor position {@code _point} (upper left corner) on {@link Graphics}
+     * {@code _g}, where {@link Updater} {@code _prohibitedUpdater} is NOT allowed to refresh (in order to avoid
+     * stack overflow due to endless recursion).
+     * @param _g - the target graphics environment
+     * @param _point - the target position
+     * @param _prohibitedUpdater - if given an updater not to be informed
+     * @return the area occupied by this diagram as {@link Rect}
+     */
+    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater)
     {
-        setDrawPoint(point);
+        setDrawPoint(_point);
 
         /*
         final Updater myUpdater = updater;
@@ -1400,7 +1421,7 @@ public class Root extends Element {
         // inform updaters
         for(int u=0; u<updaters.size(); u++)
         {
-            if(updaters.get(u)!=updater)
+            if(updaters.get(u)!=_prohibitedUpdater)
             {
                 updaters.get(u).update(this);
             }
@@ -1409,10 +1430,10 @@ public class Root extends Element {
         Canvas canvas = new Canvas((Graphics2D) _g);
         canvas.setFont(Element.getFont()); //?
         Rect myrect = this.prepareDraw(canvas);
-        myrect.left += point.x;
-        myrect.top += point.y;
-        myrect.right += point.x;
-        myrect.bottom += point.y;
+        myrect.left += _point.x;
+        myrect.top += _point.y;
+        myrect.right += _point.x;
+        myrect.bottom += _point.y;
         //this.drawBuffered(canvas,myrect);
         this.draw(canvas, myrect);
         //this.drawBuffered(canvas, myrect);
@@ -1420,9 +1441,9 @@ public class Root extends Element {
         return myrect;
     }
 
-    public Rect draw(Graphics _g, Point point)
+    public Rect draw(Graphics _g, Point _point)
     {
-        return draw(_g, point, null);
+        return draw(_g, _point, null);
     }
 
     public Rect draw(Graphics _g)

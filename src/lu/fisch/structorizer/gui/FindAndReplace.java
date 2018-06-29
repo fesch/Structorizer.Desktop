@@ -236,7 +236,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	    		else {
 	    			description = "---";
 	    		}
-	    		icon = ((Element)value).getIcon();
+	    		icon = ((Element)value).getMiniIcon();
 	    	} 
 	        super.getTreeCellRendererComponent(
 	                        tree, description, sel,

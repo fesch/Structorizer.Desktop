@@ -201,6 +201,18 @@ public class Jump extends Instruction {
 		return IconLoader.getIcon(59);
 	}
 	// END KGU#122 2016-01-03
+	// START KGU 2018-06-28
+    /**
+     * @return the element-type-specific somewhat smaller icon image intended to be used in
+     * Find & Replace dialog.
+     * @see #getIcon()
+     */
+	@Override
+    public ImageIcon getMiniIcon()
+    {
+    	return IconLoader.getIcon(12);
+    }
+    // END KGU 2018-06-28
 
 	public Element copy()
 	{

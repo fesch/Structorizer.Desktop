@@ -164,13 +164,6 @@ public class C99Parser extends CPreParser
 		return "ANSI-C99 Source Files";
 	}
 
- 	@Override
-	public String[] getFileExtensions() {
-		// TODO specify the usual file name extensions for ANSI-C99 source files here!";
-		final String[] exts = { "c" };
-		return exts;
-	}
-
 	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 

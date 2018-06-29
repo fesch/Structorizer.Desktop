@@ -809,6 +809,17 @@ public class Case extends Element implements IFork
     	return IconLoader.getIcon(64);
     }
     // END KGU#122 2016-01-03
+    /**
+     * @return the element-type-specific somewhat smaller icon image intended to be used in
+     * Find & Replace dialog.
+     * @see #getIcon()
+     */
+	@Override
+    public ImageIcon getMiniIcon()
+    {
+    	return IconLoader.getIcon(47);
+    }
+    // END KGU 2018-0628
 
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)

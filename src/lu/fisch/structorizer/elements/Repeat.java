@@ -247,6 +247,18 @@ public class Repeat extends Element implements ILoop {
 		return IconLoader.getIcon(63);
 	}
 	// END KGU#122 2016-01-03
+	// START KGU 2018-06-28
+    /**
+     * @return the element-type-specific somewhat smaller icon image intended to be used in
+     * Find & Replace dialog.
+     * @see #getIcon()
+     */
+	@Override
+    public ImageIcon getMiniIcon()
+    {
+    	return IconLoader.getIcon(16);
+    }
+    // END KGU 2018-06-28
 
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
