@@ -48,6 +48,7 @@
  *      Kay Gürtzig     2018.06.07      Issue #463: Logging configuration mechanism revised (to support WebStart)
  *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble
  *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
+ *      Kay Gürtzig     2018.06.25      Issue #551: No message informing about version check option on WebStart
  *
  ******************************************************************************************************
  *
@@ -101,7 +102,6 @@ public class Structorizer
 		// START KGU#484 2018-03-21: Issue #463 Configurability of the logging system ensured
 		// The logging configuration (for java.util.logging) is expected next to the jar file
 		// (or in the project directory while debugged from the IDE).
-		// FIXME: Check a proper configuration scenario for Java WebStart!
 		File iniDir = Ini.getIniDirectory();
 		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
 		// If the file doesn't exist then we'll copy it from the resource
@@ -121,7 +121,7 @@ public class Structorizer
 			}
 		}
 		// END KGU#484 2018-03-21
-		// START KGU#484 2018-04-05: Issue #463 - Find out where WebStart assumes the properties file
+		// START KGU#484 2018-04-05: Issue #463 - If the copy attempt failed too, try to leave a note..,
 		else {
 			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
 			try {
@@ -227,6 +227,10 @@ public class Structorizer
 		// load the mainform
 		final Mainform mainform = new Mainform();
 		
+		// START KGU#532 2018-06-25: Issue #551 Suppress version notification option hint
+		String appPath = getApplicationPath();
+		mainform.isWebStart = appPath.endsWith("webstart");
+		// END KGU#532 2018-06-25
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
         try {
         	EventQueue.invokeAndWait(new Runnable() {

@@ -1892,7 +1892,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             HashSet<Mainform> mainforms = new HashSet<Mainform>();
             // END KGU#320 2017-01-04
             // START KGU#534 2018-06-27: Enh. #552
-            lu.fisch.structorizer.gui.Diagram.setSerialMode(true);
+            lu.fisch.structorizer.gui.Diagram.startSerialMode();
             try {
             // END KGU#534 2018-06-27
             	Iterator<Diagram> iter = this.diagrams.iterator();
@@ -1933,12 +1933,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             		}
             	}
             	// END KGU#320 2017-01-04
-            // START KGU#534 2018-06-27: Enh. #552
+            // START KGU#534 2018-06-29: Enh. #552
             }
             finally {
-            	lu.fisch.structorizer.gui.Diagram.setSerialMode(false);
+            	lu.fisch.structorizer.gui.Diagram.endSerialMode();
             }
-            // END KGU#534 2018-06-27
+            // END KGU#534 2018-06-29
         }
         // START KGU#177 2016-04-14: Enh. #158
         if (!allDone)

@@ -625,9 +625,13 @@ public class Menu extends LangMenuBar implements NSDController
 			+ "The respective JUMPs are listed below and shown RED in the diagram:\n"
 			+ "%\n\n"
 			+ "Do you really still insist on continuing?");
-	public static final LangTextHolder lblYes = new LangTextHolder("Yes");
-	public static final LangTextHolder lblNo = new LangTextHolder("No");
+	public static final LangTextHolder lblYes = new LangTextHolder("Yes, continue");
+	public static final LangTextHolder lblNo = new LangTextHolder("No, cancel");
 	// END KGU#365 2017-03-27
+	// START KGU#534 2018-06-29: Enh. #552
+	public static final LangTextHolder lblSkip = new LangTextHolder("No, skip");
+	public static final LangTextHolder lblModify = new LangTextHolder("No, modify");
+	// END KGU#534 2018-06-29
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder lblYesToAll = new LangTextHolder("Yes to all");
 	public static final LangTextHolder lblNoToAll = new LangTextHolder("No to all");
