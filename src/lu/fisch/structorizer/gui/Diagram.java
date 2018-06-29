@@ -282,24 +282,84 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private NSDController NSDControl = null;
     
 	// START KGU#534 2018-06-27: Enh. #552
-	private static boolean inSerialAction = false;
+    /** Nesting depth of serial actions */
+	private static short serialActionDepth = 0;
 	public enum SerialDecisionStatus {INDIVIDUAL, YES_TO_ALL, NO_TO_ALL};
 	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE};
 	private static final SerialDecisionStatus[] serialDecisions = {
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_SAVE
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_OVERWRITE
 	}; 
-	public static void setSerialMode(boolean on) {
-		for (int i = 0; i < serialDecisions.length; i++) {
-			serialDecisions[i] = SerialDecisionStatus.INDIVIDUAL;
+	/**
+	 * Enters a serial action - thus allowing general decisions to certain aspects
+	 * of a serial action. Starts with INDIVIDIAL decision for all aspects.<br/>
+	 * Make sure to call {@link #endSerialMode()} on terminating the serial action.<br/>
+	 * Is nesting-aware.
+	 * @see #endSerialMode()
+	 * @see #isInSerialMode()
+	 * @see #setSerialDecision(SerialDecisionAspect, boolean)
+	 * @see #getSerialDecision(SerialDecisionAspect)
+	 */
+	public static void startSerialMode() {
+		if (serialActionDepth <= 0) {
+			for (int i = 0; i < serialDecisions.length; i++) {
+				serialDecisions[i] = SerialDecisionStatus.INDIVIDUAL;
+			}
+			serialActionDepth = 1;
 		}
-		inSerialAction = on;
+		else {
+			serialActionDepth++;
+		}
 	}
+	/**
+	 * Leaves a serial action (i.e. the current nesting level). On ending the outermost level,
+	 * all serial decisions are cleared.
+	 * @see #startSerialMode()
+	 * @see #isInSerialMode()
+	 * @see #setSerialDecision(SerialDecisionAspect, boolean)
+	 * @see #getSerialDecision(SerialDecisionAspect)
+	 */
+	public static void endSerialMode() {
+		if (serialActionDepth == 1) {
+			for (int i = 0; i < serialDecisions.length; i++) {
+				serialDecisions[i] = SerialDecisionStatus.INDIVIDUAL;
+			}
+		}
+		if (serialActionDepth > 0) {
+			serialActionDepth--;
+		}
+	}
+	/**
+	 * @return true if a serial action is going on such that serial decisions are relevant.
+	 * @see #startSerialMode()
+	 * @see #endSerialMode()
+	 * @see #getSerialDecision(SerialDecisionAspect)
+	 * @see #setSerialDecision(SerialDecisionAspect, boolean)
+	 */
+	public static boolean isInSerialMode()
+	{
+		return serialActionDepth > 0;
+	}
+	/**
+	 * Returns the valid decision for the given {@code aspect} of the current
+	 * serial action (INDIVIDUAL if there is no serial action context). 
+	 * @param aspect - one of the supported serial decision aspects
+	 * @return the decision value
+	 */
 	public SerialDecisionStatus getSerialDecision(SerialDecisionAspect aspect) {
 		return serialDecisions[aspect.ordinal()]; 
 	}
+	/**
+	 * Sets a general decision for all remaining files or other subjects fo the given
+	 * {@code aspect} of the current serial action (note that there is no way back to
+	 * INDIVIDUAL here). Is ignored if teher is no serial action context. 
+	 * @param aspect - one of the supported serial decision aspects
+	 * @param statusAll - yes to all (true) or no to all (false)
+	 */
 	private void setSerialDecision(SerialDecisionAspect aspect, boolean statusAll) {
-		serialDecisions[aspect.ordinal()] = (statusAll ? SerialDecisionStatus.YES_TO_ALL : SerialDecisionStatus.NO_TO_ALL); 
+		if (serialActionDepth > 0) {
+			serialDecisions[aspect.ordinal()] = (statusAll ? SerialDecisionStatus.YES_TO_ALL : SerialDecisionStatus.NO_TO_ALL);
+		}
 	}
 	// END KGU#534 2018-06-27
 	
@@ -1850,9 +1910,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void saveAllNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
-		saveNSD(false);
-		if (Arranger.hasInstance()) {
-			Arranger.getInstance().saveAll();
+		startSerialMode();
+		try {
+			saveNSD(false);
+			if (Arranger.hasInstance()) {
+				Arranger.getInstance().saveAll();
+			}
+		}
+		finally {
+			endSerialMode();
 		}
 	}
 	
@@ -1909,14 +1975,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					writeNow=false;
 					// START KGU#534 2018-06-27: Enh. #552
-					if (inSerialAction) {
+					if (isInSerialMode()) {
 						switch (getSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE)) {
 						case INDIVIDUAL: {						
 							String[] options = {
 									Menu.lblYes.getText(),
-									Menu.lblNo.getText(),
-									Menu.lblYesToAll.getText(),
-									Menu.lblNoToAll.getText(),
+									Menu.lblModify.getText(),
+									Menu.lblYesToAll.getText() 
 							};
 							String initialValue = options[0];
 							int res = JOptionPane.showOptionDialog(
@@ -1929,9 +1994,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									options,
 									initialValue);
 							if (res >= 2) {
-								this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, res == 2);
+								this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
 							}
-							if (res == 0 || res == 2) writeNow=true;}
+							if (res == 0 || res == 2) writeNow=true;
+							}
 							break;
 						case YES_TO_ALL:
 							writeNow = true;
@@ -2024,7 +2090,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#137 2016-01-11
 		{
 			// START KGU#534 2018-06-27: Enh. #552
-			if (_askToSave && inSerialAction) {
+			if (_askToSave && isInSerialMode()) {
 				switch (getSerialDecision(SerialDecisionAspect.SERIAL_SAVE)) {
 				case NO_TO_ALL:
 					res = 1;
@@ -2048,10 +2114,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				String[] options = null;
 				Object initialValue = null;
-				if (inSerialAction) {
+				if (isInSerialMode()) {
 					options = new String[]{
 							Menu.lblYes.getText(),
-							Menu.lblNo.getText(),
+							Menu.lblSkip.getText(),
 							Menu.lblYesToAll.getText(),
 							Menu.lblNoToAll.getText()	// Well, this is less sensible...
 					};
