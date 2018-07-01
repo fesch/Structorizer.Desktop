@@ -5245,7 +5245,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				for (int i = 0; i < parserPlugins.size(); i++) {
 					GENPlugin plug = parserPlugins.get(i);
 					if (plug.getKey().equals(parserClassName)) 
-					this.setPluginSpecificOptions(parser, parserClassName, plug.options);
+						this.setPluginSpecificOptions(parser, parserClassName, plug.options);
 				}
 				// END KGU#395 2017-07-02
 				// START KGU#537 2018-06-30: Enh. #553
