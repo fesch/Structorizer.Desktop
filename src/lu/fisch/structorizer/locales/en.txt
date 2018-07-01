@@ -108,6 +108,7 @@
  *      Kay Gürtzig     2018.01.18      DiagramControllerAliases added
  *      Kay Gürtzig     2018.02.17      Arranger captions added (on occasion of enh. #512)
  *      Kay Gürtzig     2018.06.27      Enh. #552: New messages in Menu, Editor, Arranger
+ *      Kay Gürtzig     2018.07.01      Enh. #553: New messages for CodeImportMonitor
  *
  ******************************************************************************************************
  *
@@ -369,8 +370,10 @@ Menu.msgNewerVersionAvail.text=Newer version % available for download.
 Menu.msgUpdateInfoHint.text=If you want Structorizer to check the availability of new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" ► "%2".\n(Data protection information: For the Html request, your IP address would be transmitted but not permanently stored.\nNo personal data will be transmitted, recorded, tracked, or otherwise processed.)
 Menu.msgWelcomeMessage.text=Welcome to Structorizer, your Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms and many things more.\nIt was designed for easy handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
 Menu.lblOk.text=OK
-Menu.lblYes.text=Yes, continue
-Menu.lblNo.text=No, cancel
+Menu.lblYes.text=Yes
+Menu.lblNo.text=No
+Menu.lblContinue.text=Yes, continue
+Menu.lblCancel.text=No, cancel
 Menu.lblSkip.text=No, skip
 Menu.lblModifiy.text=No, modify
 Menu.lblYesToAll.text=Yes to all
@@ -1048,6 +1051,18 @@ GUIScaleChooser.lblIcon.text=Icon (example)
 GUIScaleChooser.chkTest.text=CheckBox (check this!)
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Validate your choice for next start.
+
+-----[ CodeImportMonitor ]-----
+CodeImportMonitor.ttlImporting.text=Import % code ...
+CodeImportMonitor.phaseLabels.0.text=Pre-processing file
+CodeImportMonitor.phaseLabels.1.text=Parsing code
+CodeImportMonitor.phaseLabels.2.text=Building diagrams
+CodeImportMonitor.phaseLabels.3.text=Post-processing diagrams
+CodeImportMonitor.btnOk.text=OK
+CodeImportMonitor.btnCancel.text=Cancel
+CodeImportMonitor.lblRoots.text=Created diagrams:
+CodeImportMonitor.lblErrors.text=Errors occurred!
+CodeImportMonitor.msgInterrupted.text=Interrupted!
 
 -----[ FindAndReplace ]-----
 FindAndReplace.title=Find / Replace

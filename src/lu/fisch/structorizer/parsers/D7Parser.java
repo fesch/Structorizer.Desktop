@@ -889,26 +889,33 @@ public class D7Parser extends CodeParser
 
 	// START KGU#354 2017-03-03: Enh. #354 - generalized import mechanism
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding)
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
 	{
 		File interm = null;
 		try
 		{
+			String pasCode = new String();
 			DataInputStream in = new DataInputStream(new FileInputStream(_textToParse));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
 			// END KGU#193 2016-05-04
-			String strLine;
-			String pasCode = new String();
-			//Read File Line By Line
-			while ((strLine = br.readLine()) != null)   
-			{
-				// add no ending because of comment filter
-				pasCode += strLine+"\u2190";
-				//pasCode+=strLine+"\n";
+			try {
+				String strLine;
+				//Read File Line By Line
+				while ((strLine = br.readLine()) != null)   
+				{
+					// START KGU#537 2018-07-01: Enh. #553
+					checkCancelled();
+					// END KGU#537 2018-07-01
+					// add no ending because of comment filter
+					pasCode += strLine+"\u2190";
+					//pasCode+=strLine+"\n";
+				}
 			}
-			//Close the input stream
-			in.close();
+			finally {
+				//Close the input stream
+				in.close();
+			}
 
 			// filter out comments (KGU: Why? The GOLDParser can do it itself)
 //			Regex r = new Regex("(.*?)[(][*](.*?)[*][)](.*?)","$1$3"); 
@@ -933,9 +940,13 @@ public class D7Parser extends CodeParser
 			//interm = new File(_textToParse + ".structorizer");
 			interm = File.createTempFile("Structorizer", ".pas");
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "ISO-8859-1");
-			ow.write(filterNonAscii(pasCode.trim()+"\n"));
-			//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
-			ow.close();
+			try {
+				ow.write(filterNonAscii(pasCode.trim()+"\n"));
+				//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
+			}
+			finally {
+				ow.close();
+			}
 		}
 		catch (Exception e) 
 		{
@@ -946,7 +957,7 @@ public class D7Parser extends CodeParser
 	// END KGU#354 2017-03-03
 	
 	// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
-	private String embedSubroutineDeclaration(String _pasCode)
+	private String embedSubroutineDeclaration(String _pasCode) throws ParserCancelled
 	{
 		// Find the first non-empty line where line ends are encoded as "\u2190"
 		boolean headerFound = false;
@@ -954,6 +965,9 @@ public class D7Parser extends CodeParser
 		int lineEnd = -1;
 		while (!headerFound && (lineEnd = _pasCode.indexOf("\u2190", pos+1)) >= 0)
 		{
+			// START KGU#537 2018-07-01: Enh. #553
+			checkCancelled();
+			// END KGU#537 2018-07-01
 			String line = _pasCode.substring(pos+1, lineEnd).toLowerCase();
 			pos = lineEnd;
 			// If the file contains a program or unit then we leave it as is
@@ -982,7 +996,7 @@ public class D7Parser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#initializeBuildNSD()
 	 */
 	@Override
-	protected void initializeBuildNSD()
+	protected void initializeBuildNSD() throws ParserCancelled
 	{
 		// START KGU#194 2016-05-08: Bugfix #185
 		unitName = null;
@@ -992,8 +1006,12 @@ public class D7Parser extends CodeParser
 		// END KGU#407 2017-06-11
 	}
 	
-	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
+	@Override
+	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
 		String content = new String();
 	
 		if (_reduction.size() > 0)
@@ -1201,7 +1219,7 @@ public class D7Parser extends CodeParser
 				// If root this is top level and a program diagram then there may only have been declarations
 				// so far. And these may be global. So transfer them to a new includable diagram and act as if
 				// it were a unit.
-				if (unitName == null && subRoots.isEmpty() && prevRoot.isProgram()) {
+				if (unitName == null && this.getSubRootCount() == 0 && prevRoot.isProgram()) {
 					Root includable = new Root();
 					String progName = prevRoot.getMethodName();
 					unitName = progName;
@@ -1215,13 +1233,13 @@ public class D7Parser extends CodeParser
 					includable.setInclude();
 					prevRoot.children.removeElements();
 					prevRoot.includeList = StringList.getNew(unitName + DEFAULT_GLOBAL_SUFFIX);
-					subRoots.add(includable);
+					this.addRoot(includable);
 				}
 				root = new Root();	// Prepare a new root for the subroutine
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(root, _reduction);
 				// END KGU#407 2017-06-22
-				subRoots.add(root);
+				this.addRoot(root);
 				for (int i=0; i < _reduction.size(); i++)
 				{
 					if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
@@ -1540,63 +1558,58 @@ public class D7Parser extends CodeParser
 		return _content.trim();
 	}
 	
-	protected String getContent_R(Reduction _reduction, String _content)
+	protected String getContent_R(Reduction _reduction, String _content) throws ParserCancelled
 	{
-//		if (_reduction.size()>0)
-//		{
-			for(int i=0;i<_reduction.size();i++)
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
+		for(int i=0;i<_reduction.size();i++)
+		{
+			switch (_reduction.get(i).getType()) 
 			{
-				switch (_reduction.get(i).getType()) 
+			case NON_TERMINAL:
+				_content = getContent_R((Reduction) _reduction.get(i).getData(), _content);	
+				break;
+			case CONTENT:
+			{
+				String tokenData = (String) _reduction.get(i).getData();
+				// START KGU 2016-05-08: Avoid keyword concatenation
+				boolean tokenIsId = !tokenData.isEmpty() && Character.isJavaIdentifierStart(tokenData.charAt(0));
+				// END KGU 2016-05-08
+				if (tokenData.trim().equalsIgnoreCase("mod") ||
+						// START KGU#192 2016-05-02: There are more operators to be considered...
+						tokenData.trim().equalsIgnoreCase("shl") ||
+						tokenData.trim().equalsIgnoreCase("shr") ||
+						// END KGU#192 2016-05-02
+						tokenData.trim().equalsIgnoreCase("div"))
 				{
-					case NON_TERMINAL:
-						_content = getContent_R((Reduction) _reduction.get(i).getData(), _content);	
-						break;
-					case CONTENT:
-						{
-							String tokenData = (String) _reduction.get(i).getData();
-							// START KGU 2016-05-08: Avoid keyword concatenation
-							boolean tokenIsId = !tokenData.isEmpty() && Character.isJavaIdentifierStart(tokenData.charAt(0));
-							// END KGU 2016-05-08
-							if (tokenData.trim().equalsIgnoreCase("mod") ||
-									// START KGU#192 2016-05-02: There are more operators to be considered...
-									tokenData.trim().equalsIgnoreCase("shl") ||
-									tokenData.trim().equalsIgnoreCase("shr") ||
-									// END KGU#192 2016-05-02
-									tokenData.trim().equalsIgnoreCase("div"))
-							{
-								_content += " " + tokenData + " ";
-								// START KGU 2016-05-08: Avoid keyword concatenation
-								tokenIsId = false;
-								// END KGU 2016-05-08
-							}
-							// START KGU 2016-05-08: Avoid keyword concatenation
-							else if (
-									tokenIsId
-									&&
-									!_content.isEmpty()
-									&&
-									Character.isJavaIdentifierPart(_content.charAt(_content.length()-1))
-									)
-							{
-								_content += " " + tokenData;
-							}
-							// END KGU 2016-05-08
-							else
-							{
-								_content += tokenData;
-							}
-						}
-						break;
-					default:
-						break;
+					_content += " " + tokenData + " ";
+					// START KGU 2016-05-08: Avoid keyword concatenation
+					tokenIsId = false;
+					// END KGU 2016-05-08
+				}
+				// START KGU 2016-05-08: Avoid keyword concatenation
+				else if (
+						tokenIsId
+						&&
+						!_content.isEmpty()
+						&&
+						Character.isJavaIdentifierPart(_content.charAt(_content.length()-1))
+						)
+				{
+					_content += " " + tokenData;
+				}
+				// END KGU 2016-05-08
+				else
+				{
+					_content += tokenData;
 				}
 			}
-//		}
-//		else
-//		{
-//			// ?
-//			// _content:=_content+trim(R.ParentRule.Text)
-//		}
+			break;
+			default:
+				break;
+			}
+		}
 		
 		_content = BString.replaceInsensitive(_content,")and(",") and (");
 		_content = BString.replaceInsensitive(_content,")or(",") or (");
@@ -1610,7 +1623,7 @@ public class D7Parser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
 	@Override
-	protected void subclassUpdateRoot(Root root, String sourceFileName) {
+	protected void subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled {
 		getLogger().config(root.getSignatureString(false));
 		if (unitName != null && root.isProgram() && root.getMethodName().equals("???")) {
 			root.setText(unitName + DEFAULT_GLOBAL_SUFFIX);

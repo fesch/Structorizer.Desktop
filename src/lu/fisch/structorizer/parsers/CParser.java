@@ -69,6 +69,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Bugfix #550: Defective import of switch statements without break in the 1st branch 
  *      Kay Gürtzig     2018.06.24      Inheritance changed to CPreParser, all common stuff now inherited from there
  *      Kay Gürtzig     2018.06.24      Bugfix KGU#530 (missing assignment operator '%=' added).
+ *      Kay Gürtzig     2018.07.01      Enh. #553: Hooks for parser cancellation inserted
  *
  ******************************************************************************************************
  *
@@ -589,7 +590,7 @@ public class CParser extends CPreParser
 	 * @see CodeParser#initializeBuildNSD()
 	 */
 	@Override
-	protected void initializeBuildNSD()
+	protected void initializeBuildNSD() throws ParserCancelled
 	{
 		root.setProgram(false);	// C programs are functions, primarily
 		this.optionUpperCaseProgName = Root.check(6);
@@ -602,8 +603,11 @@ public class CParser extends CPreParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
 	 */
 	@Override
-	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
+	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
 		//String content = new String();
 	
 		if (_reduction.size() > 0)
@@ -1194,8 +1198,9 @@ public class CParser extends CPreParser
 	 * Processes a function definition from the given {@code _reduction}
 	 * @param _reduction - the {@link Reduction} of the parser
 	 * @param ruleId - the rule id of {@code _reduction} for further classification
+	 * @throws ParserCancelled 
 	 */
-	private void buildFunction(Reduction _reduction, int ruleId) {
+	private void buildFunction(Reduction _reduction, int ruleId) throws ParserCancelled {
 		// Find out the name of the function
 		Reduction secReduc = _reduction.get(0).asReduction();
 		int nameIx = -1;	// Token index of the function id
@@ -1227,7 +1232,7 @@ public class CParser extends CPreParser
 		Root prevRoot = root;	// Cache the original root
 		root = new Root();	// Prepare a new root for the (sub)routine
 		root.setProgram(false);
-		subRoots.add(root);
+		this.addRoot(root);
 		// START KGU#376 2017-09-30: Enh. #389
 		if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0) {
 			// We must have inserted some global stuff, so assume a dependency...
@@ -1323,9 +1328,10 @@ public class CParser extends CPreParser
 	 * @param _typeList - a container for type names, both for input and output 
 	 * @param _declaringVars - whether this is used by a variable/constant declaration (type definition otherwise)
 	 * @return a logical value indicating whether the current type is a structured one
+	 * @throws ParserCancelled 
 	 */
 	protected boolean processTypes(Reduction _reduction, int _ruleId, Subqueue _subqueue, boolean _isGlobal,
-			StringList _typeList, boolean _declaringVars) {
+			StringList _typeList, boolean _declaringVars) throws ParserCancelled {
 		boolean isStruct = false;
 		String type = "int";
 		boolean isConstant = false;
@@ -1445,8 +1451,9 @@ public class CParser extends CPreParser
 	 * {@code <Type> <Func ID> '(' <Id List> ')' <Struct Def> <Block>}
 	 * @param _structDef - the {@link Reduction} representing a {@code <Struct Decl>} rule.
 	 * @return the component declaration strings in Structorizer syntax
+	 * @throws ParserCancelled 
 	 */
-	private StringList getCompsFromStructDef(Reduction _structDef) {
+	private StringList getCompsFromStructDef(Reduction _structDef) throws ParserCancelled {
 		//String components = this.getContent_R(_structDef, "").replace("struct ", "").trim();
 		//if (components.endsWith(";")) components = components.substring(0, components.length()-1);
 		StringList components = new StringList();
@@ -1532,8 +1539,9 @@ public class CParser extends CPreParser
 	 * @param _parentNode - the Subqueue the built Instruction is to be appended to
 	 * @param _comment - a retrieved source code comment to be placed inthe element or null
 	 * @param _forceDecl TODO
+	 * @throws ParserCancelled 
 	 */
-	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl)
+	private void buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl) throws ParserCancelled
 	{
 		boolean isConstant = _type != null && _type.startsWith("const ");
 		int ruleId = _reduc.getParent().getTableIndex();
@@ -1634,8 +1642,9 @@ public class CParser extends CPreParser
 	 * skeleton of a Case element. The case branches will be handled separately
 	 * @param _reduction - Reduction rule of a switch instruction
 	 * @param _parentNode - the Subqueue this Case element is to be appended to
+	 * @throws ParserCancelled 
 	 */
-	private void buildCase(Reduction _reduction, Subqueue _parentNode)
+	private void buildCase(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
 		String content = new String();
 		// Put the discriminator into the first line of content
@@ -1699,7 +1708,7 @@ public class CParser extends CPreParser
 
 	}
 	
-	private void buildCaseBranch(Reduction _reduction, int _ruleId, Case _case)
+	private void buildCaseBranch(Reduction _reduction, int _ruleId, Case _case) throws ParserCancelled
 	{
 		// We should first make clear what could happen here. A case analysis
 		// switch(discriminator) {
@@ -1826,8 +1835,11 @@ public class CParser extends CPreParser
 	}
 	
 	@Override
-	protected String getContent_R(Reduction _reduction, String _content)
+	protected String getContent_R(Reduction _reduction, String _content) throws ParserCancelled
 	{
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
 		// If we hadn't to replace some things here, we might as well
 		// have used token.asString(), it seems (instead of passing the
 		// token as reduction to this method).
@@ -1953,8 +1965,9 @@ public class CParser extends CPreParser
 	 * than keep with the reduction tree.)
 	 * @param _reduc - a rule with head &lt;Expr&gt; or &lt;ExprIni&gt; 
 	 * @return the list of expressions as strings
+	 * @throws ParserCancelled 
 	 */
-	private StringList getExpressionList(Reduction _reduc)
+	private StringList getExpressionList(Reduction _reduc) throws ParserCancelled
 	{
 		StringList exprList = new StringList();
 		String ruleHead = _reduc.getParent().getHead().toString();

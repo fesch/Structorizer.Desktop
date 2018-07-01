@@ -35,6 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2018.06.19      First Issue (derived from the common parts of CParser and C99Parser)
  *      Kay Gürtzig     2018.06.23      Further common (i.e. C + C99) stuff placed here
+ *      Kay Gürtzig     2018.07.01      Enh. #553: Hooks for parser cancellation inserted 
  *
  ******************************************************************************************************
  *
@@ -164,7 +165,7 @@ public abstract class CPreParser extends CodeParser
 	 * @return The File object associated with the preprocessed source file.
 	 */
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding)
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
 	{	
 		this.ParserPath = null; // set after file object creation
 		this.ParserEncoding	= _encoding;
@@ -202,10 +203,19 @@ public abstract class CPreParser extends CodeParser
 				// trim and save as new file
 				interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
 				OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
-				ow.write(srcCode.trim()+"\n");
-				//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));
-				ow.close();
+				try {
+					ow.write(srcCode.trim()+"\n");
+					//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));
+				}
+				finally {
+					ow.close();
+				}
 			}
+			// START KGU#537 2018-07-01: Enh. #553 cancellation exception must be swallowed here
+			catch (ParserCancelled ex) {
+				throw ex;
+			}
+			// END KGU#537 2018-07-01
 			catch (Exception e) 
 			{
 				System.err.println("CParser.prepareTextfile() creation of intermediate file -> " + e.getMessage());
@@ -223,8 +233,9 @@ public abstract class CPreParser extends CodeParser
 	 * @param srcCodeSB - optional: StringBuilder to store the content of the preprocessing<br/>
 	 * if not given only the preprocessor handling (including #defines) will be done  
 	 * @return info if the preprocessing worked
+	 * @throws ParserCancelled 
 	 */
-	private boolean processSourceFile(String _textToParse, StringBuilder srcCodeSB) {
+	private boolean processSourceFile(String _textToParse, StringBuilder srcCodeSB) throws ParserCancelled {
 		
 		try
 		{
@@ -232,155 +243,168 @@ public abstract class CPreParser extends CodeParser
 			if (this.ParserPath == null) {
 				this.ParserPath = file.getAbsoluteFile().getParent() + File.separatorChar;
 			}
+			
+			// START KGU#519 2018-06-17: Enh. #541
+			registerRedundantDefines(defines);
+			// END KGU#519 2018-06-17
+
 			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, this.ParserEncoding));
 			// END KGU#193 2016-05-04
-			String strLine;
-			boolean inComment = false;
-
-			// START KGU#519 2018-06-17: Enh. #541
-			registerRedundantDefines(defines);
-			// END KGU#519 2018-06-17
 			
-			//Read File Line By Line
-			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the #define replacements (at least roughly...) which we do
-			while ((strLine = br.readLine()) != null)
-			{
-				String trimmedLine = strLine.trim();
-				if (trimmedLine.isEmpty()) {
-					if (srcCodeSB != null) {
-						// no processing if we only want to check for defines
-						srcCodeSB.append("\n");
-					}
-					continue;
-				}
-				
-				// the grammar doesn't know about continuation markers,
-				// concatenate the lines here
-				if (strLine.endsWith("\\")) {
-					String newlines = "";
-					strLine = strLine.substring(0, strLine.length() - 1);
-					String otherline = "";
-					while ((otherline = br.readLine()) != null) {
-						newlines += "\n";
-						if (otherline.endsWith("\\")) {
-							strLine += otherline.substring(0, otherline.length() - 1);
-						} else {
-							strLine += otherline;
-							break;
+			try {
+				String strLine;
+				boolean inComment = false;
+
+				//Read File Line By Line
+				// Preprocessor directives are not tolerated by the grammar, so drop them or try to
+				// do the #define replacements (at least roughly...) which we do
+				while ((strLine = br.readLine()) != null)
+				{
+					// START KGU#537 2018-07-01: Enh. #553
+					checkCancelled();
+					// END KGU#537 2018-07-01
+					String trimmedLine = strLine.trim();
+					if (trimmedLine.isEmpty()) {
+						if (srcCodeSB != null) {
+							// no processing if we only want to check for defines
+							srcCodeSB.append("\n");
 						}
+						continue;
 					}
-					trimmedLine = strLine.trim();
-					// add line breaks for better line counter,
-					// works but looks strange in the case of errors when
-					// the "preceding context" consist of 8 empty lines
-					strLine += newlines;
-				}
-				
-				// check if we are in a comment block, in this case look for the end
-				boolean commentsChecked = false;
-				String commentFree = "";
-				String lineTail = trimmedLine;
-				while (!lineTail.isEmpty() && !commentsChecked) {
-					if (inComment) {
-						// check if the line ends the current comment block
-						int commentPos = lineTail.indexOf("*/");
-						if (commentPos >= 0) {
-							inComment = false;
-							commentPos += 2;
-							if (lineTail.length() > commentPos) {
-								lineTail = " " + lineTail.substring(commentPos).trim();
+
+					// the grammar doesn't know about continuation markers,
+					// concatenate the lines here
+					if (strLine.endsWith("\\")) {
+						String newlines = "";
+						strLine = strLine.substring(0, strLine.length() - 1);
+						String otherline = "";
+						while ((otherline = br.readLine()) != null) {
+							newlines += "\n";
+							if (otherline.endsWith("\\")) {
+								strLine += otherline.substring(0, otherline.length() - 1);
 							} else {
+								strLine += otherline;
+								break;
+							}
+						}
+						trimmedLine = strLine.trim();
+						// add line breaks for better line counter,
+						// works but looks strange in the case of errors when
+						// the "preceding context" consist of 8 empty lines
+						strLine += newlines;
+					}
+
+					// check if we are in a comment block, in this case look for the end
+					boolean commentsChecked = false;
+					String commentFree = "";
+					String lineTail = trimmedLine;
+					while (!lineTail.isEmpty() && !commentsChecked) {
+						if (inComment) {
+							// check if the line ends the current comment block
+							int commentPos = lineTail.indexOf("*/");
+							if (commentPos >= 0) {
+								inComment = false;
+								commentPos += 2;
+								if (lineTail.length() > commentPos) {
+									lineTail = " " + lineTail.substring(commentPos).trim();
+								} else {
+									lineTail = "";
+								}
+							}
+							else {
+								commentsChecked = true;
 								lineTail = "";
 							}
 						}
-						else {
-							commentsChecked = true;
-							lineTail = "";
-						}
-					}
 
-					if (!inComment && !lineTail.isEmpty()) {
-						// remove inline comments
-						int commentPos = lineTail.indexOf("//");
-						if (commentPos > 0) {
-							lineTail = lineTail.substring(0, commentPos).trim(); 
-						}
-						// check if the line starts a new comment block
-						commentPos = lineTail.indexOf("/*");
-						if (commentPos >= 0) {
-							inComment = true;
+						if (!inComment && !lineTail.isEmpty()) {
+							// remove inline comments
+							int commentPos = lineTail.indexOf("//");
 							if (commentPos > 0) {
-								commentFree += " " + lineTail.substring(0, commentPos).trim();
+								lineTail = lineTail.substring(0, commentPos).trim(); 
 							}
-							commentPos += 2;
-							if (lineTail.length() > commentPos) {
-								lineTail = lineTail.substring(commentPos);
-							} else {
-								lineTail = "";
+							// check if the line starts a new comment block
+							commentPos = lineTail.indexOf("/*");
+							if (commentPos >= 0) {
+								inComment = true;
+								if (commentPos > 0) {
+									commentFree += " " + lineTail.substring(0, commentPos).trim();
+								}
+								commentPos += 2;
+								if (lineTail.length() > commentPos) {
+									lineTail = lineTail.substring(commentPos);
+								} else {
+									lineTail = "";
+								}
+							}
+							else {
+								commentsChecked = true;
 							}
 						}
-						else {
-							commentsChecked = true;
-						}
+
 					}
+					trimmedLine = (commentFree + lineTail).trim();
 
-				}
-				trimmedLine = (commentFree + lineTail).trim();
-
-				// Note: trimmedLine can be empty if we start a block comment only
-				if (trimmedLine.isEmpty()) {
-					if (srcCodeSB != null) {
-						// no processing if we only want to check for defines
+					// Note: trimmedLine can be empty if we start a block comment only
+					if (trimmedLine.isEmpty()) {
+						if (srcCodeSB != null) {
+							// no processing if we only want to check for defines
+							srcCodeSB.append(strLine);
+							srcCodeSB.append("\n");
+						}
+						continue;
+					}
+					// FIXME: try to take care for #if/#else/#endif, maybe depending upon an import setting
+					//        likely only useful if we parse includes...
+					//        and/or add a standard (dialect specific) list of defines
+					if (trimmedLine.charAt(0) == '#') {
+						if (srcCodeSB == null) {
+							handlePreprocessorLine(trimmedLine.substring(1), defines);
+							// no further processing if we only want to check for defines
+							continue;
+						}
+						srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
 						srcCodeSB.append(strLine);
-						srcCodeSB.append("\n");
-					}
-					continue;
-				}
-				// FIXME: try to take care for #if/#else/#endif, maybe depending upon an import setting
-				//        likely only useful if we parse includes...
-				//        and/or add a standard (dialect specific) list of defines
-				if (trimmedLine.charAt(0) == '#') {
-					if (srcCodeSB == null) {
-						handlePreprocessorLine(trimmedLine.substring(1), defines);
-						// no further processing if we only want to check for defines
-						continue;
-					}
-					srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
-					srcCodeSB.append(strLine);
-				} else {
-					if (srcCodeSB == null) {
-						// no further processing if we only want to check for defines
-						continue;
-					}
-					strLine = replaceDefinedEntries(strLine, defines);
-					// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
-					// replace as many as possible of them in advance.
-					// We cannot guess however, what's included since include files won't be available for us.
-					for (String[] pair: typeReplacements) {
-						String search = "(^|.*?\\W)"+Pattern.quote(pair[0])+"(\\W.*?|$)";
-						if (strLine.matches(search)) {
-							strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
+					} else {
+						if (srcCodeSB == null) {
+							// no further processing if we only want to check for defines
+							continue;
 						}
+						strLine = replaceDefinedEntries(strLine, defines);
+						// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
+						// replace as many as possible of them in advance.
+						// We cannot guess however, what's included since include files won't be available for us.
+						for (String[] pair: typeReplacements) {
+							String search = "(^|.*?\\W)"+Pattern.quote(pair[0])+"(\\W.*?|$)";
+							if (strLine.matches(search)) {
+								strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
+							}
+						}
+						mtchVoidCast.reset(strLine);
+						if (mtchVoidCast.matches()) {
+							strLine = mtchVoidCast.group(1) + mtchVoidCast.group(2);	// checkme
+						}
+						srcCodeSB.append(strLine);
 					}
-					mtchVoidCast.reset(strLine);
-					if (mtchVoidCast.matches()) {
-						strLine = mtchVoidCast.group(1) + mtchVoidCast.group(2);	// checkme
-					}
-					srcCodeSB.append(strLine);
+					srcCodeSB.append("\n");
 				}
-				srcCodeSB.append("\n");
+				// Input stream will be closed via finally
+				return true;
 			}
-			//Close the input stream
-			in.close();
-			return true;
+			finally {
+				in.close();
+			}
+		}
+		catch (ParserCancelled ex) {
+			// Rethrow this 
+			throw ex;
 		}
 		catch (Exception e) 
 		{
 			if (srcCodeSB != null) {
-				System.err.println("CParser.processSourcefile() -> " + e.getMessage());
+				System.err.println(this.getClass().getSimpleName() + ".processSourcefile() -> " + e.getMessage());
 			}
 			return false;
 		}
@@ -461,8 +485,9 @@ public abstract class CPreParser extends CodeParser
 	 * @param preprocessorLine	line for the preprocessor without leading '#'
 	 * @param defines 
 	 * @return comment string that can be used for prefixing the original source line
+	 * @throws ParserCancelled 
 	 */
-	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines)
+	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines) throws ParserCancelled
 	{
 		mtchDefineFunc.reset(preprocessorLine);
 		if (mtchDefineFunc.matches()) {
@@ -546,12 +571,13 @@ public abstract class CPreParser extends CodeParser
 	 * them throughout their definition scopes text with generic names "user_type_###" defined in the grammar
 	 * such that the parse won't fail. The type name map is represented by the static variable {@link #typedefs}
 	 * where the ith entry is mapped to a type id "user_type_&lt;i+1&gt;" for later backwards replacement.
-	 * @param srcCode - the pre-processed source code as long string
+	 * @param _srcCode - the pre-processed source code as long string
 	 * @param _textToParse - the original file name
 	 * @return the source code with replaced type names
 	 * @throws IOException
+	 * @throws ParserCancelled 
 	 */
-	private String prepareTypedefs(String srcCode, String _textToParse) throws IOException
+	private String prepareTypedefs(String _srcCode, String _textToParse) throws IOException, ParserCancelled
 	{
 		// In a first step we gather all type names defined via typedef in a
 		// StringList mapping them by their index to generic type ids being
@@ -590,7 +616,7 @@ public abstract class CPreParser extends CodeParser
 		String lastId = null;
 		char expected = '\0';
 		
-		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(srcCode));
+		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(_srcCode));
 		tokenizer.quoteChar('"');
 		tokenizer.quoteChar('\'');
 		tokenizer.slashStarComments(true);
@@ -615,6 +641,9 @@ public abstract class CPreParser extends CodeParser
 			switch (tokenizer.ttype) {
 			case StreamTokenizer.TT_EOL:
 				log("**newline**\n", false);
+				// START KGU#537 2018-07-01: Enh. #553
+				checkCancelled();
+				// END KGU#537 2018-07-01
 				if (!typedefStructPattern.isEmpty()) {
 					typedefStructPattern += ".*?\\v";
 				}
@@ -814,9 +843,12 @@ public abstract class CPreParser extends CodeParser
 			}
 			log("", false);
 		}
-		StringList srcLines = StringList.explode(srcCode, "\n");
+		StringList srcLines = StringList.explode(_srcCode, "\n");
 		// Now we replace the detected user-specific type names by the respective generic ones.
 		for (int i = 0; i < typedefs.count(); i++) {
+			// START KGU#537 2018-07-01: Enh. #553
+			checkCancelled();
+			// END KGU#537 2018-07-01
 			String typeName = typedefs.get(i);
 			Integer[] range = blockRanges.get(i);
 			// Global range?
@@ -833,14 +865,17 @@ public abstract class CPreParser extends CodeParser
 				}
 			}
 		}
-		srcCode = srcLines.concatenate("\n");
+		_srcCode = srcLines.concatenate("\n");
 		
 		// Now we try the impossible: to decompose compound struct/union/enum and type name definition
 		for (String pattern: typedefDecomposers) {
-			srcCode = srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
+			// START KGU#537 2018-07-01: Enh. #553
+			checkCancelled();
+			// END KGU#537 2018-07-01
+			_srcCode = _srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
 		}
 
-		return srcCode;
+		return _srcCode;
 	}
 
 	/**
@@ -850,8 +885,9 @@ public abstract class CPreParser extends CodeParser
 	 * @param toReplace - The string representation of (a part of) the input file.
 	 * @param defines - maps certain defined identifiers to more acceptable other ones.
 	 * @return The resulting string.
+	 * @throws ParserCancelled 
 	 */
-	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) {
+	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) throws ParserCancelled {
 		// START KGU#519 2018-06-17: Enh. #541 - The matching tends to fail if toReplace ends with newline characters
 		// (The trailing newlines were appended on concatenating lines broken by end-standing backslashes to preserve line counting.)
 		//if (toReplace.trim().isEmpty()) {
@@ -869,9 +905,11 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#519 2018-06-17
 		//log("CParser.replaceDefinedEntries(): " + Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", false);
 		for (Entry<String, String[]> entry: defines.entrySet()) {
+			// START KGU#537 2018-07-01: Enh. #553
+			checkCancelled();
+			// END KGU#537 2018-07-01
 			
-			// FIXME: doesn't work if entry is at start/end of toReplace 
-			
+			// FIXME: doesn't work if entry is at start/end of toReplace 			
 			
 			if (entry.getValue().length > 1) {
 				//          key<val[0]>     <   val[1]   >
@@ -988,8 +1026,9 @@ public abstract class CPreParser extends CodeParser
 	 * @param _name - the name of the encountered input function (e.g. "scanf")
 	 * @param _args - the argument expressions
 	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
+	 * @throws ParserCancelled 
 	 */
-	protected void buildInput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
+	protected void buildInput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) throws ParserCancelled {
 		//content = content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+" $2");
 		String content = getKeyword("input");
 		if (_args != null) {
@@ -1020,8 +1059,9 @@ public abstract class CPreParser extends CodeParser
 	 * @param _name - the name of the encountered output function (e.g. "printf")
 	 * @param _args - the argument expressions
 	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
+	 * @throws ParserCancelled 
 	 */
-	protected void buildOutput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) {
+	protected void buildOutput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) throws ParserCancelled {
 		//content = content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+" $1");
 		String content = getKeyword("output") + " ";
 		if (_args != null) {
@@ -1108,7 +1148,7 @@ public abstract class CPreParser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
 	@Override
-	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
+	protected void subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
 		if (aRoot.getMethodName().equals("main")) {
 			String fileName = new File(textToParse).getName();
 			if (fileName.contains(".")) {
@@ -1161,7 +1201,7 @@ public abstract class CPreParser extends CodeParser
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#postProcess(java.lang.String)
 	 */
-	protected void subclassPostProcess(String textToParse)
+	protected void subclassPostProcess(String textToParse) throws ParserCancelled
 	{
 		// Maybe there was no main function but global definitions
 		if (this.globalRoot != null && this.globalRoot.children.getSize() > 0) {

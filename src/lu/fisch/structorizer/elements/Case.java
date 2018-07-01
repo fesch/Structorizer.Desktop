@@ -76,6 +76,7 @@ import java.awt.Point;
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
@@ -91,7 +92,6 @@ public class Case extends Element implements IFork
 
     //private Rect r = new Rect();
     private int fullWidth = 0;
-    private int maxHeight = 0;
     // START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
     private Vector<Integer> x0Branches = new Vector<Integer>();
     private int y0Branches = 0;
@@ -99,7 +99,7 @@ public class Case extends Element implements IFork
     // START KGU#453 2017-11-01: Performance improvement - we cache the text width in prepareDraw() for draw()
     /** Widths of the selector texts per branch */
     private int[] textWidths;
-    /** meximum number of the selector lines over all branch selectors */
+    /** maximum number of the selector lines over all branch selectors */
     private int nSelectorLines = 1;
     // END KGU#453 2017-11-01
     // START KGU#227 2016-07-31: Enh. #128
@@ -434,7 +434,6 @@ public class Case extends Element implements IFork
             this.y0Branches = y0Branches;
             this.textWidths = textWidths;
             this.fullWidth = fullWidth;
-            this.maxHeight = maxHeight;
             // END KGU#516 2018-04-04
             // START KGU#136 2016-03-01: Bugfix #97
             isRectUpToDate = true;
@@ -806,20 +805,22 @@ public class Case extends Element implements IFork
     @Override
     public ImageIcon getIcon()
     {
-    	return IconLoader.getIcon(64);
+        return IconLoader.getIcon(64);
     }
     // END KGU#122 2016-01-03
+    
+    // START KGU#535 2018-06-28
     /**
-     * @return the element-type-specific somewhat smaller icon image intended to be used in
-     * Find & Replace dialog.
+     * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+     * the {@link FindAndReplace} dialog.
      * @see #getIcon()
      */
-	@Override
+    @Override
     public ImageIcon getMiniIcon()
     {
-    	return IconLoader.getIcon(47);
+        return IconLoader.getIcon(47);
     }
-    // END KGU 2018-0628
+    // END KGU#535 2018-06-28
 
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)

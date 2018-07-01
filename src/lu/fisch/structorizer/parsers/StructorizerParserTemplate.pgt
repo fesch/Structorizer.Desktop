@@ -52,6 +52,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.02      First Issue for Iden GOLDEngine
  *      Kay Gürtzig     2017.03.11      Parameter annotations and some comments corrected, indentation unified
  *      Kay Gürtzig     2018.03.26      Imports revised
+ *      Kay Gürtzig     2018.06.30      Enh. #553: hooks for possible thread cancellation inserted.
  *
  ******************************************************************************************************
  *
@@ -202,14 +203,18 @@ public class %Name%Parser extends CodeParser
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
 	 * file, filters it and writes a new temporary file "Structorizer&lt;random&gt;.{defaultExt}",
-	 * which is then actually parsed.
-	 * The preprocessed file will always be saved with UTF-8 encoding.
+	 * which is then actually parsed.<br/>
+	 * The preprocessed file will always be saved with UTF-8 encoding.<br/>
+	 * NOTE: For interactive mode, there should be frequent tests with either
+	 * {@link #isCancelled()} or {@link #doStandardCancelActionIfRequested()} whether
+	 * the parser thread was asked to stop. If so, then a return or an exception are
+	 * recommended in order to respond to the cancel request. 
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
 	 * @return The File object associated with the preprocessed source file.
 	 */
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding)
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
 	{
 		File interm = null;
 		try
@@ -220,32 +225,41 @@ public class %Name%Parser extends CodeParser
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
 			// END KGU#193 2016-05-04
-			String strLine;
 			String srcCode = new String();
-			//Read File Line By Line
-			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the #define replacements (at least roughly...)
-			while ((strLine = br.readLine()) != null)   
-			{
-				// TODO: Place preprocessing of strLine here if necessary
-				srcCode += strLine + "\n";
+			try {
+				String strLine;
+				//Read File Line By Line
+				// Preprocessor directives are not tolerated by the grammar, so drop them or try to
+				// do the #define replacements (at least roughly...)
+				while ((strLine = br.readLine()) != null)   
+				{
+					checkCancelled();
+					// TODO: Place preprocessing of strLine here if necessary
+					srcCode += strLine + "\n";
+				}
+				//Close the input stream
 			}
-			//Close the input stream
-			in.close();
+			finally {
+				in.close();
+			}
 
 			//System.out.println(srcCode);
 
 			// trim and save as new file
+			checkCancelled();
 			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
-			ow.write(srcCode.trim()+"\n");
-			ow.close();
+			try {
+				ow.write(srcCode.trim()+"\n");
+			}
+			finally {
+				ow.close();
+			}
 		}
 		catch (Exception e) 
 		{
-##PARAMETERS
-			System.err.println("%Name%Parser.prepareTextfile() -> " + e.getMessage());
-##END-PARAMETERS
+			getLogger().log(Level.WARNING, this.getClass().getSimpleName() + ".prepareTextfile()", e);
+			//System.err.println(this.getClass().getSimpleName() + ".prepareTextfile() -> " + e.getMessage());
 			e.printStackTrace();	
 		}
 		return interm;
@@ -257,7 +271,7 @@ public class %Name%Parser extends CodeParser
 //	 * @see CodeParser#initializeBuildNSD()
 //	 */
 //	@Override
-//	protected void initializeBuildNSD()
+//	protected void initializeBuildNSD() throws ParserCancelled
 //	{
 //		// TODO insert initializations for the build phase if necessary ...
 //		// START KGU#407 2018-03-26: Enh. #420: Configure the lookup table for comment retrieval
@@ -269,28 +283,29 @@ public class %Name%Parser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
 	 */
 	@Override
-	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
+	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
 		//String content = new String();
-	
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
 		if (_reduction.size() > 0)
 		{
 			String rule = _reduction.getParent().toString();
 			String ruleHead = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
 			//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+			// START KGU#537 2018-06-30: Enh. #553
+			checkCancelled();
+			// END KGU#537 2018-06-30
 
+			switch (ruleId) {
 			/* -------- Begin code example for tree analysis and build -------- */
-//			if (
-//					// Assignment or procedure call?
-//					ruleId == RuleConstants.PROD_OPASSIGN_EQ
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
-//					)
+//			// Assignment or procedure call?
+//			case RuleConstants.PROD_OPASSIGN_EQ:
+//			case RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN:
+//			case RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2:
+//			case RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN:
 //			{
 //				// Simply convert it as text and create an instruction. In case of a call
 //				// we'll try to transmute it after all subroutines will have been parsed.
@@ -303,16 +318,12 @@ public class %Name%Parser extends CodeParser
 //				//}
 //				_parentNode.addElement(new Instruction(translateContent(content)));
 //			}
-//			else if (ruleHead.equals("<Decls>") {
-//				...
-//			}
-//			/* -------- End code example for tree analysis and build -------- */
-//			// Block...?
-//			else
-			{
+//			break;
+			/* -------- End code example for tree analysis and build -------- */
+			default:
 				if (_reduction.size()>0)
 				{
-					for(int i=0; i<_reduction.size(); i++)
+					for (int i=0; i<_reduction.size(); i++)
 					{
 						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 						{
@@ -336,8 +347,11 @@ public class %Name%Parser extends CodeParser
 	{
 		String output = getKeyword("output");
 		String input = getKeyword("input");
-		_content = _content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+"$1");
-		_content = _content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+"$2");
+		
+		/* -------- Begin code example for C code import -------- */
+//		_content = _content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+"$1");
+//		_content = _content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+"$2");
+		/* -------- End code example for C code import -------- */
 		
 		//System.out.println(_content);
 		
@@ -360,8 +374,11 @@ public class %Name%Parser extends CodeParser
 	}
 	
 	@Override
-	protected String getContent_R(Reduction _reduction, String _content)
+	protected String getContent_R(Reduction _reduction, String _content) throws ParserCancelled
 	{
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
 		for(int i=0; i<_reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
@@ -406,7 +423,8 @@ public class %Name%Parser extends CodeParser
 //	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 //	 */
 //	@Override
-//	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
+//	protected void subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled
+//	{
 //		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
 //		if (aRoot.getMethodName().equals("main")) {
 //			if (aRoot.getParameterNames().count() == 0) {

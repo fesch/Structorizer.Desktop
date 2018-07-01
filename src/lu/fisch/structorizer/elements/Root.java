@@ -1209,18 +1209,19 @@ public class Root extends Element {
     	return super.getIcon();
     }
     // END KGU#324 2017-06-16
-	// START KGU 2018-06-28
+
+    // START KGU#535 2018-06-28
     /**
-     * @return the element-type-specific somewhat smaller icon image intended to be used in
-     * Find & Replace dialog.
+     * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+     * {@link FindAndReplace} dialog.
      * @see #getIcon()
      */
-	@Override
+    @Override
     public ImageIcon getMiniIcon()
     {
     	return this.getIcon();
     }
-    // END KGU 2018-06-28
+    // END KGU#535 2018-06-28
 
     @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)

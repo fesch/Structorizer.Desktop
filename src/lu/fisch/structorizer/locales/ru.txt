@@ -320,9 +320,11 @@ Menu.msgReplacementsDone.text=
 Menu.msgNewerVersionAvail.text=
 Menu.msgUpdateInfoHint.text=
 Menu.msgWelcomeMessage.text=
-Menu.lblOk.text=
-Menu.lblYes.text=
-Menu.lblNo.text=
+Menu.lblOk.text=ОК
+Menu.lblYes.text=Да
+Menu.lblNo.text=Нет
+Menu.lblContinue.text=Да, продолжить
+Menu.lblCancel.text=Нет, отменить
 Menu.lblSuppressUpdateHint.text=
 Menu.lblHint.text=Намек
 Menu.lblCopyToClipBoard.text=
@@ -451,7 +453,7 @@ AnalyserPreferences.checkboxes.23.text=
 AnalyserPreferences.checkboxes.24.text=
 AnalyserPreferences.checkboxes.25.text=
 AnalyserPreferences.checkboxes.26.text=
-AnalyserPreferences.okButton.text=OK
+AnalyserPreferences.okButton.text=ОК
 
 
 
@@ -582,7 +584,7 @@ InputBox.lblComment.text=Комментарий
 InputBox.lblComment.tooltip=
 InputBox.txtText.tooltip=Содержание элемента.
 InputBox.txtComment.tooltip=Комментарий элемента.
-InputBox.btnOK.text=OK
+InputBox.btnOK.text=ОК
 InputBox.btnOK.tooltip=Подтвердить ваш выбор.
 InputBox.btnCancel.text=Отменить
 InputBox.btnCancel.tooltip=Отменить ваш выбор.
@@ -632,7 +634,7 @@ InputBoxFor.lblComment.text=Комментарий
 InputBoxFor.lblComment.tooltip=Комментарий элемента.
 InputBoxFor.txtText.tooltip=Заглавие цикла текстом.
 InputBoxFor.txtComment.tooltip=Комментарий элемента.
-InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.text=ОК
 InputBoxFor.btnOK.tooltip=Подтвердить ваш выбор.
 InputBoxFor.btnCancel.text=Отменить
 InputBoxFor.btnCancel.tooltip=Отменить ваш выбор.
@@ -657,9 +659,9 @@ InputBoxRoot.lblText.text=
 InputBoxRoot.txtText.tooltip=
 InputBoxRoot.lblComment.text=
 InputBoxRoot.txtComment.tooltip=
-InputBoxRoot.btnOK.text=
+InputBoxRoot.btnOK.text=ОК
 InputBoxRoot.btnOK.tooltip=
-InputBoxRoot.btnCancel.text=
+InputBoxRoot.btnCancel.text=Отменить
 InputBoxRoot.btnCancel.tooltip=
 InputBoxRoot.btnAttributes.text=
 InputBoxRoot.btnAttributes.tooltip=
@@ -699,9 +701,9 @@ AttributeInspector.lblPrefsPre.text=
 AttributeInspector.lblPrefsPost.text=
 AttributeInspector.lblPrefsMore.text=
 AttributeInspector.btnParserPrefs.text=
-AttributeInspector.btnOk.text=
+AttributeInspector.btnOk.text=ОК
 AttributeInspector.btnOk.tooltip=
-AttributeInspector.btnCancel.text=
+AttributeInspector.btnCancel.text=Отменить
 AttributeInspector.btnCancel.tooltip=
 AttributeInspector.lblMain.text=
 AttributeInspector.lblSub.text=
@@ -774,7 +776,7 @@ Preferences.pnlRepeat.border=Цикл REPEAT
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Содержимое по умолчанию
 Preferences.lblRepeat.tooltip=Содержимое по умолчанию для REPEAT.
-Preferences.btnOK.text=OK
+Preferences.btnOK.text=ОК
 Preferences.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -783,7 +785,7 @@ About.title=About
 About.pnlTabbed.tab.0=Участники проекта
 About.pnlTabbed.tab.1=Изменения
 About.pnlTabbed.tab.2=
-About.btnOK.text=OK
+About.btnOK.text=ОК
 About.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -794,7 +796,7 @@ FontChooser.lblName.text=Имя
 FontChooser.lblName.tooltip=Название выбранного шрифта.
 FontChooser.lblSize.text=Размер
 FontChooser.lblSize.tooltip=Рамер выбранного шрифта.
-FontChooser.btnOK.text=OK
+FontChooser.btnOK.text=ОК
 FontChooser.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -830,7 +832,7 @@ Colors.color6.tooltip=Нажмите чтобы изменить ...
 Colors.color7.tooltip=Нажмите чтобы изменить ...
 Colors.color8.tooltip=Нажмите чтобы изменить ...
 Colors.color9.tooltip=Нажмите чтобы изменить ...
-Colors.btnOK.text=OK
+Colors.btnOK.text=ОК
 Colors.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -838,7 +840,7 @@ Colors.btnOK.tooltip=Подтвердите свой выбор.
 ColorChooser.title=Изменение цвета
 ColorChooser.btnCancel.text=Отменить
 ColorChooser.btnCancel.tooltip=Отвенить выбор.
-ColorChooser.btnOK.text=OK
+ColorChooser.btnOK.text=ОК
 ColorChooser.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -873,7 +875,7 @@ ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Вывод
 ParserPreferences.lblOutput.tooltip=
 ParserPreferences.chkIgnoreCase.text=
-ParserPreferences.btnOK.text=OK
+ParserPreferences.btnOK.text=ОК
 ParserPreferences.btnOK.tooltip=Подтвердите свой выбор.
 ParserPreferences.lblErrorSign.text=
 ParserPreferences.lblErrorSign2.text=
@@ -906,7 +908,7 @@ ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.btnPluginOptions.text=
 ExportOptionDialoge.msgOptionsForPlugin.text=
 ExportOptionDialoge.jLabel1.text=Выборите настройки, которые хочете активировать...
-ExportOptionDialoge.jButton1.text=OK
+ExportOptionDialoge.jButton1.text=ОК
 ExportOptionDialoge.jButton1.tooltip=Сохранить настройки.
 ExportOptionDialoge.includeLists.*.tooltip=
 
@@ -931,7 +933,7 @@ ImportOptionDialog.txtLogDir.tooltip=
 ImportOptionDialog.btnLogDir.tooltip=
 ImportOptionDialog.btnPluginOptions.text=
 ImportOptionDialog.msgOptionsForPlugin.text=
-ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.text=ОК
 ImportOptionDialog.btnOk.tooltip=Сохранить настройки.
 
 -----[ SaveOptionDialog ]-----
@@ -946,7 +948,7 @@ SaveOptionDialog.chkBackupFile.text=
 SaveOptionDialog.lblAuthorName.text=
 SaveOptionDialog.btnLicenseFile.text=
 SaveOptionDialog.btnLicenseFile.tooltip=
-SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.text=ОК
 SaveOptionDialog.btnOk.tooltip=
 
 -----[ PluginOptionDialog ]-----
@@ -955,8 +957,8 @@ PluginOptionDialog.msgNoValidUnsigned.text=
 PluginOptionDialog.msgNoValidCharacter.text=
 PluginOptionDialog.msgNoValidDouble.text=
 PluginOptionDialog.msgVerificationError.text=
-PluginOptionDialog.btnOk.text=
-PluginOptionDialog.btnCancel.text=
+PluginOptionDialog.btnOk.text=ОК
+PluginOptionDialog.btnCancel.text=Отменить
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=
@@ -964,7 +966,7 @@ ElementNamePreferences.lblExplanation.text=
 ElementNamePreferences.chkUseConfNames.text=
 ElementNamePreferences.lblLocalized.text=
 ElementNamePreferences.lblIndividual.text=
-ElementNamePreferences.btnOK.text=
+ElementNamePreferences.btnOK.text=ОК
 ElementNamePreferences.btnOK.tooltip=
 
 -----[ GUIScaleChooser ]-----
@@ -975,7 +977,7 @@ GUIScaleChooser.pnlTest.border=
 GUIScaleChooser.lblTest.text=
 GUIScaleChooser.lblIcon.text=
 GUIScaleChooser.chkTest.text=
-GUIScaleChooser.btnOK.text=
+GUIScaleChooser.btnOK.text=ОК
 GUIScaleChooser.btnOK.tooltip=
 
 -----[ FindAndReplace ]-----
@@ -1066,10 +1068,10 @@ Control.lbReturnedResult.text=
 Control.lbOutput.text=
 Control.lbInput.text=
 Control.lbAcknowledge.text=
-Control.lbOk.text=
+Control.lbOk.text=ОК
 Control.lbPause.text=
 Control.lbCommit.text=
-Control.lbDiscard.text=
+Control.lbDiscard.text=Отбросить
 Control.ttlCompName.text=
 Control.ttlIndex.text=
 Control.ttlContent.text=

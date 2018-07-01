@@ -113,6 +113,7 @@
  *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
  *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
  *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
+ *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
  *
  ******************************************************************************************************
  *
@@ -372,8 +373,10 @@ Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
 Menu.msgUpdateInfoHint.text=Um beim Start die Verfügbarkeit neuer Versionen angezeigt zu bekommen,\nkann mit Menüpunkt "%1" ► "%2"\ndie Online-Abfrage nach Updates auf der Structorizer-Homepage aktiviert werden.\n(Datenschutzhinweis: Für den Html-Request wird Ihre IP-Adresse übermittelt, aber nicht gespeichert.\nPersonenbezogene Daten werden darüber hinaus weder gesammelt noch übermittelt noch sonstwie verarbeitet.)
 Menu.msgWelcomeMessage.text=Willkommen beim Structorizer, Ihrem Struktogramm-Editor.\nMit diesem Programm können Sie Algorithmen entwerfen, testen, analysieren, in Programmiersprachen exportieren und vieles mehr.\nEs wurde für einfache Handhabung entwickelt, ist aber schon um viele Extras erweitert.\n\nHaben Sie noch wenig Erfahrung mit Algorithmen und Entwicklungsumgebungen?\nDann können Sie mit vereinfachter Werkzeugleiste beginnen und «%» aktivieren.\nWollen Sie zunächst im vereinfachten Einsteigermodus arbeiten?
 Menu.lblOk.text=OK
-Menu.lblYes.text=Ja, fortsetzen
-Menu.lblNo.text=Nein, abbrechen
+Menu.lblYes.text=Ja
+Menu.lblNo.text=Nein
+Menu.lblContinue.text=Ja, fortsetzen
+Menu.lblCancel.text=Nein, abbrechen
 Menu.lblSkip.text=Nein, überspringen
 Menu.lblModify.text=Nein, ändern
 Menu.lblYesToAll.text=Ja für alle
@@ -1052,6 +1055,18 @@ GUIScaleChooser.lblIcon.text=Icon-Größe
 GUIScaleChooser.chkTest.text=Optionselement (testen!)
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
+
+-----[ CodeImportMonitor ]-----
+CodeImportMonitor.ttlImporting.text=Importiere % ...
+CodeImportMonitor.phaseLabels.0.text=Datei-Vorbereitung
+CodeImportMonitor.phaseLabels.1.text=Code-Zerlegung
+CodeImportMonitor.phaseLabels.2.text=Diagramm-Generierung
+CodeImportMonitor.phaseLabels.3.text=Diagramm-Nachbereitung
+CodeImportMonitor.btnOk.text=Weiter
+CodeImportMonitor.btnCancel.text=Abbrechen
+CodeImportMonitor.lblRoots.text=Erzeugte Diagramme:
+CodeImportMonitor.lblErrors.text=Fehler aufgetreten!
+CodeImportMonitor.msgInterrupted.text=Abgebrochen!
 
 -----[ FindAndReplace ]-----
 FindAndReplace.title=Suchen / Ersetzen

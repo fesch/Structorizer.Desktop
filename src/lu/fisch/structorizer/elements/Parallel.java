@@ -67,6 +67,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
@@ -502,19 +503,20 @@ public class Parallel extends Element
     @Override
     public ImageIcon getIcon()
     {
-    	return IconLoader.getIcon(91);
+        return IconLoader.getIcon(91);
     }
     // END KGU#122 2016-01-03
-	// START KGU 2018-06-28
+
+    // START KGU#535 2018-06-28
     /**
-     * @return the element-type-specific somewhat smaller icon image intended to be used in
-     * Find & Replace dialog.
+     * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+     * the {@link FindAndReplace} dialog.
      * @see #getIcon()
      */
-	@Override
+    @Override
     public ImageIcon getMiniIcon()
     {
-    	return IconLoader.getIcon(48);
+        return IconLoader.getIcon(48);
     }
     // END KGU 2018-06-28
 

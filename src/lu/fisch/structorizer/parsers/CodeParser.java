@@ -43,6 +43,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
  *      Kay Gürtzig     2017.09.30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
  *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved.
+ *      Kay Gürtzig     2018.06.29      Enh. #553: Listener management added
  *
  ******************************************************************************************************
  *
@@ -58,6 +59,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -65,10 +67,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+
+import javax.swing.SwingWorker;
 
 import com.creativewidgetworks.goldparser.engine.ParserException;
 import com.creativewidgetworks.goldparser.engine.Position;
@@ -137,7 +142,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * List of the Roots of (all) imported diagrams - we may obtain a collection
 	 * of Roots (unit or program with subroutines)!
 	 */
-	protected List<Root> subRoots = new LinkedList<Root>();
+	private List<Root> subRoots = new LinkedList<Root>();
 	// START KGU#407 2017-06-22: Enh. #420 Optional comment import
 	/**
 	 * Value of the import option to import source code comments
@@ -166,6 +171,44 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
+	
+	// START KGU#537 2018-07-01: Enh. #533 - for progress notification we need control
+	/**
+	 * Adds the given {@link Root} to {@link #subRoots} and notifies about the new
+	 * Root count. There is no check for duplicity!
+	 * @param newRoot - the {@link Root} to be added.
+	 * @see #addAllRoots(Collection)
+	 * @see #getSubRootCount()
+	 */
+	protected void addRoot(Root newRoot)
+	{
+		int oldCount = this.subRoots.size();
+		this.subRoots.add(newRoot);
+		this.firePropertyChange("root_count", oldCount, this.subRoots.size());
+	}
+	/**
+	 * Adds all the given {@link Root}s to {@link #subRoots} and notifies about the new
+	 * Root count. There is no check for duplicity!
+	 * @param roots - a collection of {@link Root}s to be added.
+	 * @see #addRoot(Root)
+	 * @see #getSubRootCount()
+	 */
+	protected void addAllRoots(Collection<Root> roots)
+	{
+		int oldCount = this.subRoots.size();
+		this.subRoots.addAll(roots);
+		this.firePropertyChange("root_count", oldCount, this.subRoots.size());
+	}
+	/**
+	 * @return - the current number of created sub-{@link Root}s
+	 * @see #addRoot(Root)
+	 * @see #addAllRoots(Collection)
+	 */
+	protected int getSubRootCount()
+	{
+		return this.subRoots.size();
+	}
+	// END KGU#537 3018-07-01
 
 	// START KGU#395 2017-05-26: Enh. #357 - parser-specific options
 	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
@@ -255,9 +298,95 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * retrieval.
 	 */
 	private HashMap<Reduction, Token> commentMap = new HashMap<Reduction, Token>();
-	// This set 
+	/**
+	 * Set of rule ids for statement detection in comment retrieval (stopper). To be filled with
+	 * {@link #registerStatementRuleIds(int[])}
+	 */
 	private Set<Integer> statementRuleIds = new HashSet<Integer>();
 	// END KGU#407 2017-06-22
+	
+	// START KGU#537 2018-06-29: Enh. #553
+	/**
+	 * Internal exception to force termination in case of a cancelled thread
+	 */
+	@SuppressWarnings("serial")
+	public class ParserCancelled extends Exception
+	{
+	}
+	/**
+	 * Holds the controlling {@link SwingWorker} in case of an interactive background execution.
+	 * @see CodeParser#setSwingWorker(SwingWorker)
+	 */
+	private SwingWorker<?, ?> worker = null;
+	/** Giving the parser access to the worker that is performing it allows the parser to
+	 * inform about status or progress via property change notifications.
+	 * @param _worker - a {@link SwingWorker} representing the worker thread
+	 */
+	public void setSwingWorker(SwingWorker<?, ?> _worker)
+	{
+		this.worker = _worker;
+	}
+	/**
+	 * Returns true if the parser is running under the control of a cancelled {@link SwingWorker}
+	 * and hence is to stop as soon as possible.<br/>
+	 * Subclasses should test this method frequently in order to be able to end their actions if
+	 * true is returned.
+	 * @return true if there is a worker and te worker was stopped
+	 * @see #doStandardCancelActionIfReqested()
+	 */
+	public boolean isCancelled()
+	{
+		return this.worker != null && (this.worker.isCancelled() || Thread.interrupted());
+	}
+	/**
+	 * Checks whether the parser is running under the control of a cancelled {@link SwingWorker}
+	 * and if so, sets a cancelled message into the error field, does all necessary disposal of
+	 * general resources (e.g. log file) and returns true - such that the parser
+	 * may be left immediately.
+	 * @throws ParserCancelled 
+	 * @see #isCancelled()
+	 */
+	protected void checkCancelled() throws ParserCancelled
+	{
+		if (this.isCancelled()) {
+			error = this.getClass().getSimpleName() + " CANCELLED!";
+			if (logFile != null) {
+				try {
+					logFile.write(error);
+				}
+				catch (IOException e) {
+				}
+				try {
+					logFile.close();
+				}
+				catch (IOException e) {
+				}
+			}
+			getLogger().log(Level.WARNING, error);
+			System.err.println("++++ ParserCancelled thrown!");
+			throw new ParserCancelled();
+		}
+	}
+	/**
+	 * If this runs under the control of a non-terminated {@link SwingWorker} then has it report the
+	 * given bound property update to any registered listeners. In this case the result will be true,
+	 * otherwise false.
+	 * The {@link SwingWorker} will not fire an event if old and new are equal and non-null. 
+	 * @param propertyName - the programmatic name of the property that was changed
+	 * @param oldValue - the old value of the property
+	 * @param newValue - the new value of the property
+	 * @return true iff the property change could be propagated to an active worker.
+	 */
+	protected boolean firePropertyChange(String propertyName, Object oldValue, Object newValue)
+	{
+		boolean done = false;
+		if (this.worker != null && !this.worker.isDone()) {
+			this.worker.firePropertyChange(propertyName, oldValue, newValue);
+			done = true;
+		}
+		return done;
+	}
+	// END KGU#537 2018-06-29
 
 	/************ Abstract Methods *************/
 	
@@ -299,7 +428,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	public abstract String[] getFileExtensions();
 	
 	/**
-	 * Parses the ANSI-C source code from file _textToParse, which is supposed to be encoded
+	 * Parses the source code from file _textToParse, which is supposed to be encoded
 	 * with the charset _encoding, and returns a list of structograms - one for each function
 	 * or program contained in the source file.
 	 * Field `error' will either contain an empty string or an error message afterwards.
@@ -317,72 +446,372 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 */
 	public List<Root> parse(String _textToParse, String _encoding, String _logDir)
 	{
-		if (_logDir != null) {
-			File logDir = new File(_logDir);
-			if (logDir.isDirectory()) {
-				try {
-					File log = new File(_textToParse);
-					logFile = new OutputStreamWriter(new FileOutputStream(new File(logDir, log.getName() + ".log")), "UTF-8");
-				}
-				// START KGU#484 2018-04-05: Issue #463
-				//catch (UnsupportedEncodingException e) {
-				//	e.printStackTrace();
-				//}
-				//catch (FileNotFoundException e) {
-				//	e.printStackTrace();
-				//}
-				catch (Exception e) {
-					getLogger().log(Level.SEVERE, "Creation of parser log file failed.", e);
-				}
-				// END KGU#484 2018-04-05
-			}
-		}
-		// AuParser is a Structorizer subclass of GOLDParser (Au = gold)
- 		parser = new AuParser(
- 				getClass().getResourceAsStream(getCompiledGrammar()),
- 				getGrammarTableName(),
- 				// START KGU#354 2017-04-27: Enh. #354
- 				//true);
- 				true,
- 				logFile);
- 				// END KGU#354 2017-04-27
-
-		// Controls whether or not a parse tree is returned or the program executed.
- 		parser.setGenerateTree(optionSaveParseTree());
-
-		// create new root
-		root = new Root();
-		error = "";
-		
-		// START KGU#370 2017-03-25: Fix #357 - precaution against preparation failure
-		//File intermediate = prepareTextfile(textToParse, _encoding);
-		File intermediate = null;
-		if (logFile != null) {
-			try {
-				logFile.write("STARTING FILE PREPARATION...\n\n");
-			} catch (IOException e) {
-			}
-		}
+		// START KGU#537 2018-07-01: Enh. #553
 		try {
-			intermediate = prepareTextfile(_textToParse, _encoding);
-		}
-		catch (Exception ex) {
-			if ((error = ex.getMessage()) == null) {
-				error = ex.toString();
-			}
-			error = ":\n" + error;
-		}
-		if (intermediate == null) {
-			error = "**FILE PREPARATION ERROR** on file \"" + _textToParse + "\"" + error;
-			if (logFile != null) {
-				try {
-					logFile.write(error);
-				} catch (IOException e) {
+		// END KGU#537 2018-07-01
+			Random random = new Random();	// FIXME: for testing only
+			if (_logDir != null) {
+				File logDir = new File(_logDir);
+				if (logDir.isDirectory()) {
+					try {
+						File log = new File(_textToParse);
+						logFile = new OutputStreamWriter(new FileOutputStream(new File(logDir, log.getName() + ".log")), "UTF-8");
+					}
 					// START KGU#484 2018-04-05: Issue #463
-					//e.printStackTrace();
-					getLogger().log(Level.WARNING, "Failed to write parser log.", e);
+					//catch (UnsupportedEncodingException e) {
+					//	e.printStackTrace();
+					//}
+					//catch (FileNotFoundException e) {
+					//	e.printStackTrace();
+					//}
+					catch (Exception e) {
+						getLogger().log(Level.SEVERE, "Creation of parser log file failed.", e);
+					}
 					// END KGU#484 2018-04-05
 				}
+			}
+			// START KGU#537 2018-06-30: Enh. #553
+			this.checkCancelled();
+			// END KGU#537 2018-06-30
+			// AuParser is a Structorizer subclass of GOLDParser (Au = gold)
+			parser = new AuParser(
+					getClass().getResourceAsStream(getCompiledGrammar()),
+					getGrammarTableName(),
+					// START KGU#354 2017-04-27: Enh. #354
+					//true);
+					true,
+					logFile);
+			// END KGU#354 2017-04-27
+
+			// Controls whether or not a parse tree is returned or the program executed.
+			parser.setGenerateTree(optionSaveParseTree());
+
+			// create new root
+			root = new Root();
+			error = "";
+
+			// START KGU#537 2018-06-30: Enh. #553
+			this.checkCancelled();
+			// END KGU#537 2018-06-30
+
+			// START KGU#370 2017-03-25: Fix #357 - precaution against preparation failure
+			//File intermediate = prepareTextfile(textToParse, _encoding);
+			File intermediate = null;
+			if (logFile != null) {
+				try {
+					logFile.write("STARTING FILE PREPARATION...\n\n");
+				} catch (IOException e) {
+				}
+			}
+			// START KGU#537 2018-06-30: Enh. #553
+			this.firePropertyChange("phase_start", -1, 0);
+			//// DEBUG Sleep for up to one second.
+			//try {
+			//	Thread.sleep(random.nextInt(1000));
+			//} catch (InterruptedException ignore) {}
+			// END KGU#537 2018-06-30
+			try {
+				intermediate = prepareTextfile(_textToParse, _encoding);
+				// START KGU#537 2018-06-30: Enh. #553
+				//// DEBUG Sleep for up to one second.
+				//try {
+				//	Thread.sleep(random.nextInt(1000));
+				//} catch (InterruptedException ignore) {}
+				this.firePropertyChange("progress", 0, 100);
+				// END KGU#537 2018-06-30
+			}
+			catch (ParserCancelled ex) {
+				throw ex;
+			}
+			catch (Exception ex) {
+				if ((error = ex.getMessage()) == null) {
+					error = ex.toString();
+				}
+				error = ":\n" + error;
+			}
+
+			// START KGU#537 2018-06-30: Enh. #553
+			this.checkCancelled();
+			// END KGU#537 2018-06-30
+
+			if (intermediate == null) {
+				error = "**FILE PREPARATION ERROR** on file \"" + _textToParse + "\"" + error;
+				if (logFile != null) {
+					try {
+						logFile.write(error);
+					} catch (IOException e) {
+						// START KGU#484 2018-04-05: Issue #463
+						//e.printStackTrace();
+						getLogger().log(Level.WARNING, "Failed to write parser log.", e);
+						// END KGU#484 2018-04-05
+					}
+					try {
+						logFile.close();
+						logFile = null;
+					} catch (IOException e) {
+						// START KGU#484 2018-04-05: Issue #463
+						//e.printStackTrace();
+						getLogger().log(Level.WARNING, "Failed to close parser log.", e);
+						// END KGU#484 2018-04-05
+					}
+				}
+				// START KGU#537 2018-07-01: Enh. #553
+				this.firePropertyChange("root_count", 0, subRoots.size());
+				// END KGU#537 2018-07-01
+				return subRoots;	// It doesn't make sense to continue here (BTW subRoots is supposed to be empty)
+			}
+			// END KGU#370 2017-03-25
+			else if (logFile != null) {
+				try {
+					logFile.write("\nFILE PREPARATION COMPLETE -> \"" + intermediate.getAbsolutePath() + "\"\n\n");
+				} catch (IOException e) {}
+			}
+
+			String sourceCode = null;
+
+			boolean isSyntaxError = false;
+
+			// START KGU#537 2018-06-30: Enh. #553
+			this.checkCancelled();
+			// END KGU#537 2018-06-30
+
+			try {
+				// START KGU#537 2018-06-30: Enh. #553
+				this.firePropertyChange("phase_start", 0, 1);
+				//// DEBUG Sleep for up to one second.
+				//try {
+				//	Thread.sleep(random.nextInt(1000));
+				//} catch (InterruptedException ignore) {}
+				// END KGU#537 2018-06-30
+				sourceCode = loadSourceFile(intermediate.getAbsolutePath(), _encoding);
+				// START KGU#537 2018-06-30: Enh. #553
+				this.checkCancelled();
+				// END KGU#537 2018-06-30
+				// Parse the source statements to see if it is syntactically correct
+				boolean parsedWithoutError = parser.parseSourceStatements(sourceCode);
+
+				// Holds the parse tree if setGenerateTree(true) was called
+				//tree = parser.getParseTree();
+
+				// Either execute the code or print any error message
+				if (parsedWithoutError) {
+					// ************************************** log file
+					getLogger().info("Parsing complete.");	// System logging
+					log("\nParsing complete.\n\n", false);
+					// ************************************** end log
+					// START KGU#537 2018-06-30: Enh. #553
+					//// DEBUG Sleep for up to one second.
+					//try {
+					//	Thread.sleep(random.nextInt(1000));
+					//} catch (InterruptedException ignore) {}
+					this.firePropertyChange("progress", 0, 100);
+					// END KGU#537 2018-06-30
+					if (this.optionSaveParseTree()) {
+						try {
+							String tree = parser.getParseTree();
+							File treeLog = new File(_textToParse + ".parsetree.txt");
+							String encTree = Ini.getInstance().getProperty("genExportCharset", "UTF-8");
+							OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(treeLog), encTree);
+							ow.write(tree);
+							//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
+							ow.close();
+						}
+						catch (Exception ex) {
+							getLogger().log(Level.WARNING, "Saving .parsetree.txt failed: {0}", ex.getMessage());
+						}
+					}
+					// START KGU#537 2018-06-30: Enh. #553
+					this.firePropertyChange("phase_start", 1, 2);
+					//// DEBUG Sleep for up to one second.
+					//try {
+					//	Thread.sleep(random.nextInt(1000));
+					//} catch (InterruptedException ignore) {}
+					// END KGU#537 2018-06-30
+					if (this.optionImportComments) {
+						// Prepare the comment map for reductions
+						for (Token commentedToken: parser.commentMap.keySet()) {
+							if (commentedToken.getType() == SymbolType.NON_TERMINAL) {
+								this.commentMap.put(commentedToken.asReduction(), commentedToken);
+							}
+						}
+					}
+					buildNSD(parser.getCurrentReduction());
+					// START KGU#537 2018-06-30: Enh. #553
+					//// DEBUG Sleep for up to one second.
+					//try {
+					//	Thread.sleep(random.nextInt(1000));
+					//} catch (InterruptedException ignore) {}
+					this.worker.firePropertyChange("progress", 0, 100);
+					// END KGU#537 2018-06-30
+				} else {
+					isSyntaxError = true;
+					error = parser.getErrorMessage() + " in file \"" + _textToParse + "\"";
+				}
+			}
+			catch (ParserException e) {
+				error = "**PARSER ERROR** with file \"" + _textToParse + "\":\n" + e.getMessage();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				getLogger().log(Level.WARNING, error, e);
+				// END KGU#484 2018-04-05
+			}
+			catch (IOException e1) {
+				error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
+				// START KGU#484 2018-04-05: Issue #463
+				//e1.printStackTrace();
+				getLogger().log(Level.WARNING, error, e1);
+				// END KGU#484 2018-04-05
+			}
+			catch (Exception e2) {
+				error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
+				// START KGU#484 2018-04-05: Issue #463
+				//e2.printStackTrace();
+				getLogger().log(Level.WARNING, error, e2);
+				// END KGU#484 2018-04-05
+			}
+
+			// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
+			if (isSyntaxError && intermediate != null)
+			{
+				Position pos = parser.getCurrentPosition();
+				error += "\n\nPreceding source context:";
+				int lineNo = pos.getLine() - 1;
+				int colNo = pos.getColumn() - 1;
+				int start = (lineNo > 10) ? lineNo -10 : 0;
+				StringList sourceLines = StringList.explode(sourceCode, "\n");
+				// Note: position may not be correct if preprocessor dropped / added lines
+				for (int i = start; i < lineNo; i++) {
+					addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i).replace("\t", "    ")));
+				}
+				String line = sourceLines.get(lineNo);
+				if (line.length() >= colNo) {
+					line = undoIdReplacements(line.substring(0, colNo) + "» " + line.substring(colNo));
+				}
+				//			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
+				//				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
+				//			}
+				addLineToErrorString(lineNo+1, line.replace("\t", "    "));
+				SymbolList sl = parser.getExpectedSymbols();
+				Token token = parser.getCurrentToken();
+				// START KGU#511 2018-04-12: Issue #489
+				//final String tokVal = token.toString();
+				final String tokVal = (token == null) ? "ε (END OF TEXT)" : token.toString();
+				// END KGU#511 2018-04-12
+				error += "\n\nFound token " + tokVal;
+				if (token != null) {
+					String tokStr = token.asString().trim();
+					// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id  
+					tokStr = this.undoIdReplacements(tokStr);
+					// END KGU 2017-05-23
+					if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
+						error += " (" + tokStr + ")";
+					}
+				}
+				error += "\n\nExpected: ";
+				String sepa = "";
+				String exp = "";
+				for (Symbol sym: sl) {
+					exp += sepa + sym.toString();
+					sepa = " | ";
+					if (exp.length() > DLG_STR_WIDTH) {
+						error += exp;
+						exp = "";
+						sepa = "\n        | ";
+					}
+				}
+				error += exp;
+				// ************************************** log file
+				getLogger().warning("Parsing failed.");	// System logging
+				log("\n" + error + "\n\n", true);
+				// ************************************** end log
+			}
+			// END KGU#191 2016-04-30
+
+			// remove the temporary file
+			intermediate.delete();
+
+			// START KGU#537 2018-06-30: Enh. #553
+			if (!error.isEmpty()) {
+				this.firePropertyChange("error", "", error);
+				return this.subRoots;
+			}
+			
+			this.firePropertyChange("phase_start", 2, 3);
+			//// DEBUG Sleep for up to one second.
+			//try {
+			//	Thread.sleep(random.nextInt(1000));
+			//} catch (InterruptedException ignore) {}
+			// END KGU#537 2018-06-30
+			// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
+			StringList signatures = new StringList();
+			for (Root subroutine : subRoots)
+			{
+				// START KGU#354 2017-03-10: Hook for subclass postprocessing
+				this.subclassUpdateRoot(subroutine, _textToParse);
+				// END KGU#354 2017-03-10
+				if (subroutine.isSubroutine())
+				{
+					signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
+				}
+			}
+			// END KGU#194 2016-07-07
+			// START KGU#354 2017-03-10: Hook for subclass postprocessing
+			if (!subRoots.contains(root)) {
+				this.subclassUpdateRoot(root, _textToParse);
+			}
+			// END KGU#354 2017-03-10
+
+			// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
+			//return root;
+			if (subRoots.isEmpty() || root.children.getSize() > 0)
+			{
+				subRoots.add(0, root);
+				// START KGU#537 2018-07-01: Enh. #533
+				this.firePropertyChange("root_count", subRoots.size()-1, this.subRoots.size());
+				// END KGU#537 2017-07-01
+			}
+			// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
+			for (Root aRoot : subRoots)
+			{
+				aRoot.convertToCalls(signatures);
+				// START KGU#363 2017-05-22: Enh. #372
+				aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\""; 
+				// END KGU#363 2017-05-22
+			}
+			// END KGU#194 2016-07-07
+
+			// Sub-classable postprocessing
+			try {
+				subclassPostProcess(_textToParse);
+				// START KGU#537 2018-06-30: Enh. #553
+				//// DEBUG Sleep for up to one second.
+				//try {
+				//	Thread.sleep(random.nextInt(1000));
+				//} catch (InterruptedException ignore) {}
+				this.firePropertyChange("progress", 0, 100);
+				// END KGU#537 2018-06-30
+			}
+			// START KGU#537 2018-07-01: Enh. #553 We must not swallow this here
+			catch (ParserCancelled ex) {
+				throw ex;
+			}
+			// END KGU#537 2018-07-01
+			catch (Exception ex) {
+				if ((error = ex.getMessage()) == null) {
+					error = ex.toString();
+				}
+				error = "Problems in postprocess:\n" + error;
+			}
+
+			log("\nBUILD PHASE COMPLETE.\n", true);
+			if (subRoots.size() >= 1 && subRoots.get(0).children.getSize() > 0) {
+				log(subRoots.size() + " diagram(s) built.\n", true);
+			}
+			else {
+				log("No diagrams built.\n", true);
+			}
+
+			if (logFile != null) {
 				try {
 					logFile.close();
 					logFile = null;
@@ -393,209 +822,14 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 					// END KGU#484 2018-04-05
 				}
 			}
-			return subRoots;	// It doesn't make sense to continue here (BTW subRoots is supposed to be empty)
+			this.firePropertyChange("root_count", -1, subRoots.size());
+		// START KGU#537 2018-07-01: Enh. #553
 		}
-		// END KGU#370 2017-03-25
-		else if (logFile != null) {
-			try {
-				logFile.write("\nFILE PREPARATION COMPLETE -> \"" + intermediate.getAbsolutePath() + "\"\n\n");
-			} catch (IOException e) {}
+		catch (ParserCancelled ex) {}
+		if (!error.isEmpty()) {
+			this.firePropertyChange("error", "", error);
 		}
-		
-		String sourceCode = null;
-		
-		boolean isSyntaxError = false;
-		
-        try {
-			sourceCode = loadSourceFile(intermediate.getAbsolutePath(), _encoding);
-            // Parse the source statements to see if it is syntactically correct
-            boolean parsedWithoutError = parser.parseSourceStatements(sourceCode);
-
-            // Holds the parse tree if setGenerateTree(true) was called
-            //tree = parser.getParseTree();
-            
-            // Either execute the code or print any error message
-            if (parsedWithoutError) {
-				// ************************************** log file
-				getLogger().info("Parsing complete.");	// System logging
-				log("\nParsing complete.\n\n", false);
-				// ************************************** end log
-				if (this.optionSaveParseTree()) {
-					try {
-					String tree = parser.getParseTree();
-					File treeLog = new File(_textToParse + ".parsetree.txt");
-					String encTree = Ini.getInstance().getProperty("genExportCharset", "UTF-8");
-					OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(treeLog), encTree);
-					ow.write(tree);
-					//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
-					ow.close();
-					}
-					catch (Exception ex) {
-						getLogger().log(Level.WARNING, "Saving .parsetree.txt failed: {0}", ex.getMessage());
-					}
-				}
-				if (this.optionImportComments) {
-					// Prepare the comment map for reductions
-					for (Token commentedToken: parser.commentMap.keySet()) {
-						if (commentedToken.getType() == SymbolType.NON_TERMINAL) {
-							this.commentMap.put(commentedToken.asReduction(), commentedToken);
-						}
-					}
-				}
-				buildNSD(parser.getCurrentReduction());
-			} else {
-				isSyntaxError = true;
-				error = parser.getErrorMessage() + " in file \"" + _textToParse + "\"";
-			}
-		}
-		catch (ParserException e) {
-			error = "**PARSER ERROR** with file \"" + _textToParse + "\":\n" + e.getMessage();
-			// START KGU#484 2018-04-05: Issue #463
-			//e.printStackTrace();
-			getLogger().log(Level.WARNING, error, e);
-			// END KGU#484 2018-04-05
-		}
-		catch (IOException e1) {
-			error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
-			// START KGU#484 2018-04-05: Issue #463
-			//e1.printStackTrace();
-			getLogger().log(Level.WARNING, error, e1);
-			// END KGU#484 2018-04-05
-		}
-		catch (Exception e2) {
-			error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
-			// START KGU#484 2018-04-05: Issue #463
-			//e2.printStackTrace();
-			getLogger().log(Level.WARNING, error, e2);
-			// END KGU#484 2018-04-05
-		}
-
-		// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
-		if (isSyntaxError && intermediate != null)
-		{
-			Position pos = parser.getCurrentPosition();
-			error += "\n\nPreceding source context:";
-			int lineNo = pos.getLine() - 1;
-			int colNo = pos.getColumn() - 1;
-			int start = (lineNo > 10) ? lineNo -10 : 0;
-			StringList sourceLines = StringList.explode(sourceCode, "\n");
-			// Note: position may not be correct if preprocessor dropped / added lines
-			for (int i = start; i < lineNo; i++) {
-				addLineToErrorString(i+1, undoIdReplacements(sourceLines.get(i).replace("\t", "    ")));
-			}
-			String line = sourceLines.get(lineNo);
-			if (line.length() >= colNo) {
-				line = undoIdReplacements(line.substring(0, colNo) + "» " + line.substring(colNo));
-			}
-//			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
-//				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
-//			}
-			addLineToErrorString(lineNo+1, line.replace("\t", "    "));
-			SymbolList sl = parser.getExpectedSymbols();
-			Token token = parser.getCurrentToken();
-			// START KGU#511 2018-04-12: Issue #489
-			//final String tokVal = token.toString();
-			final String tokVal = (token == null) ? "ε (END OF TEXT)" : token.toString();
-			// END KGU#511 2018-04-12
-			error += "\n\nFound token " + tokVal;
-			if (token != null) {
-				String tokStr = token.asString().trim();
-				// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id  
-				tokStr = this.undoIdReplacements(tokStr);
-				// END KGU 2017-05-23
-				if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
-					error += " (" + tokStr + ")";
-				}
-			}
-			error += "\n\nExpected: ";
-			String sepa = "";
-			String exp = "";
-			for (Symbol sym: sl) {
-				exp += sepa + sym.toString();
-				sepa = " | ";
-				if (exp.length() > DLG_STR_WIDTH) {
-					error += exp;
-					exp = "";
-					sepa = "\n        | ";
-				}
-			}
-			error += exp;
-			// ************************************** log file
-			getLogger().warning("Parsing failed.");	// System logging
-			log("\n" + error + "\n\n", true);
-			// ************************************** end log
-		}
-		// END KGU#191 2016-04-30
-
-		// remove the temporary file
-		intermediate.delete();
-		
-		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
-		StringList signatures = new StringList();
-		for (Root subroutine : subRoots)
-		{
-			// START KGU#354 2017-03-10: Hook for subclass postprocessing
-			this.subclassUpdateRoot(subroutine, _textToParse);
-			// END KGU#354 2017-03-10
-			if (subroutine.isSubroutine())
-			{
-				signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
-			}
-		}
-		// END KGU#194 2016-07-07
-		// START KGU#354 2017-03-10: Hook for subclass postprocessing
-		if (!subRoots.contains(root)) {
-			this.subclassUpdateRoot(root, _textToParse);
-		}
-		// END KGU#354 2017-03-10
-		
-		// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
-		//return root;
-		if (subRoots.isEmpty() || root.children.getSize() > 0)
-		{
-			subRoots.add(0, root);
-		}
-		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
-		for (Root aRoot : subRoots)
-		{
-			aRoot.convertToCalls(signatures);
-			// START KGU#363 2017-05-22: Enh. #372
-			aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\""; 
-			// END KGU#363 2017-05-22
-		}
-		// END KGU#194 2016-07-07
-		
-		// Sub-classable postprocessing
-		try {
-			subclassPostProcess(_textToParse);
-		}
-		catch (Exception ex) {
-			if ((error = ex.getMessage()) == null) {
-				error = ex.toString();
-			}
-			error = "Problems in postprocess:\n" + error;
-		}
-
-		log("\nBUILD PHASE COMPLETE.\n", true);
-		if (subRoots.size() >= 1 && subRoots.get(0).children.getSize() > 0) {
-			log(subRoots.size() + " diagram(s) built.\n", true);
-		}
-		else {
-			log("No diagrams built.\n", true);
-		}
-		
-		if (logFile != null) {
-			try {
-				logFile.close();
-				logFile = null;
-			} catch (IOException e) {
-				// START KGU#484 2018-04-05: Issue #463
-				//e.printStackTrace();
-				getLogger().log(Level.WARNING, "Failed to close parser log.", e);
-				// END KGU#484 2018-04-05
-			}
-		}
-		
+		// END KGU#537 2018-07-01
 		return subRoots;
 	}
 
@@ -714,12 +948,16 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * might also be concatenated to the enclosing structured statement's comment.
 	 * @param _reduction
 	 * @return strung comprising the collected comment lines
+	 * @throws ParserCancelled 
 	 * @see #registerStatementRuleId(int)
 	 * @see #registerStatementRuleIds(int[])
 	 * @see #equipWithSourceComment(Element, Reduction)
 	 */
-	protected String retrieveComment(Reduction _reduction)
+	protected String retrieveComment(Reduction _reduction) throws ParserCancelled
 	{
+		// START KGU#537 2018-06-30: Enh. #553
+        this.checkCancelled();
+		// END KGU#537 2018-06-30		
 		if (this.optionImportComments) {
 			//System.out.println("START SEARCH FOR " + _reduction);
 			StringBuilder comment = new StringBuilder();
@@ -788,11 +1026,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @param _ele - The element built from Reduction {@code _reduction}
 	 * @param _reduction - The reduction, which led to the creation of {@code _ele}
 	 * @return The same element, but possibly with comment.
+	 * @throws ParserCancelled 
 	 * @see #optionImportComments
 	 * @see #retrieveComment(Reduction)
 	 * @see #registerStatementRuleIds(int[])
 	 */
-	protected Element equipWithSourceComment(Element _ele, Reduction _reduction)
+	protected Element equipWithSourceComment(Element _ele, Reduction _reduction) throws ParserCancelled
 	{
 		String comment = this.retrieveComment(_reduction);
 		if (comment != null) {
@@ -871,24 +1110,27 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @param _encoding - the expected encoding of the source file.
 	 * @return A temporary {@link java.io.File} object for the created intermediate file, null
 	 * if something went wrong.
+	 * @throws ParserCancelled TODO
 	 * @see #replacedIds
 	 */
-	protected abstract File prepareTextfile(String _textToParse, String _encoding);
+	protected abstract File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled;
 	
 	/**
 	 * Called after the build for every created Root and allows thus to do some
 	 * postprocessing for individual created Roots.
 	 * @param root - one of the build diagrams
 	 * @param sourceFileName - the name of the originating source file 
+	 * @throws ParserCancelled TODO
 	 */
-	protected abstract void subclassUpdateRoot(Root root, String sourceFileName);
+	protected abstract void subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled;
 
 	/**
 	 * Allows subclasses to do some finishing work after all general stuff after parsing and
 	 * NSD synthesis is practically done.
 	 * @param textToParse - path of the parsed source file
+	 * @throws ParserCancelled TODO
 	 */
-	protected void subclassPostProcess(String textToParse)
+	protected void subclassPostProcess(String textToParse) throws ParserCancelled
 	{
 	}
 
@@ -999,8 +1241,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @see #buildNSD_R(Reduction, Subqueue)
 	 * @see #getContent_R(Reduction, String)
 	 * @param _reduction the top Reduction of the parse tree.
+	 * @throws ParserCancelled 
 	 */
-	protected final void buildNSD(Reduction _reduction)
+	protected final void buildNSD(Reduction _reduction) throws ParserCancelled
 	{
 		// START KGU#358 2017-03-06: Enh. #368 - consider import options!
 		this.optionImportVarDecl = Ini.getInstance().getProperty("impVarDeclarations", "false").equals("true");
@@ -1019,8 +1262,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * from the given reduction subtree 
 	 * @param _reduction - the current reduction subtree to be converted
 	 * @param _parentNode - the Subqueue the emerging elements are to be added to.
+	 * @throws ParserCancelled TODO
 	 */
-	protected abstract void buildNSD_R(Reduction _reduction, Subqueue _parentNode);
+	protected abstract void buildNSD_R(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled;
 	
 	/**
 	 * Composes the parsed non-terminal _reduction to a Structorizer-compatible
@@ -1029,16 +1273,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @param _reduction - a reduction sub-tree
 	 * @param _content - partial translation result to be combined with the _reduction
 	 * @return the combined translated string
+	 * @throws ParserCancelled TODO
 	 */
-	protected abstract String getContent_R(Reduction _reduction, String _content);
+	protected abstract String getContent_R(Reduction _reduction, String _content) throws ParserCancelled;
 	
 	/**
 	 * Overridable method to do target-language-specific initialization before
 	 * the recursive method {@link #buildNSD_R(Reduction, Subqueue)} will be called.
 	 * Method is called in {@link #buildNSD(Reduction)}.<br/>
 	 * The subclass method should call {@link #registerStatementRuleIds(int[])} here.
+	 * @throws ParserCancelled TODO
 	 */
-	protected void initializeBuildNSD()
+	protected void initializeBuildNSD() throws ParserCancelled
 	{
 	}
 	

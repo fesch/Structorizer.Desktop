@@ -80,6 +80,7 @@ import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.*;
@@ -318,21 +319,22 @@ public class For extends Element implements ILoop {
 		// END KGU#493 2018-02-12
 	}
 	// END KGU#122 2016-01-03
-	// START KGU 2018-06-28
-    /**
-     * @return the element-type-specific somewhat smaller icon image intended to be used in
-     * Find & Replace dialog.
-     * @see #getIcon()
-     */
+
+	// START KGU#535 2018-06-28
+	/**
+	 * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+	 * the {@link FindAndReplace} dialog.
+	 * @see #getIcon()
+	 */
 	@Override
-    public ImageIcon getMiniIcon()
-    {
+	public ImageIcon getMiniIcon()
+	{
 		if (Element.E_DIN) {
 			return IconLoader.getIcon(49);
 		}
-    	return IconLoader.getIcon(50);
-    }
-    // END KGU 2018-06-28
+		return IconLoader.getIcon(50);
+	}
+	// END KGU#535 2018-06-28
 
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)

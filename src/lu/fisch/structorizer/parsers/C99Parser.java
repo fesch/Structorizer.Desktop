@@ -429,7 +429,7 @@ public class C99Parser extends CPreParser
 		final int PROD_POINTER_TIMES                                      =  72;  // <Pointer> ::= '*' <TypeQualList> <Pointer>
 		final int PROD_POINTER_TIMES2                                     =  73;  // <Pointer> ::= '*' <TypeQualList>
 		final int PROD_POINTER_TIMES3                                     =  74;  // <Pointer> ::= '*' <Pointer>
-		final int PROD_POINTER_TIMES4                                     =  75;  // <Pointer> ::= '*'
+//		final int PROD_POINTER_TIMES4                                     =  75;  // <Pointer> ::= '*'
 //		final int PROD_TYPEQUALLIST                                       =  76;  // <TypeQualList> ::= <Type Qualifier>
 //		final int PROD_TYPEQUALLIST2                                      =  77;  // <TypeQualList> ::= <TypeQualList> <Type Qualifier>
 //		final int PROD_TYPEQUALSOPT                                       =  78;  // <TypeQualsOpt> ::= <TypeQualList>
@@ -616,7 +616,7 @@ public class C99Parser extends CPreParser
 	 * @see CodeParser#initializeBuildNSD()
 	 */
 	@Override
-	protected void initializeBuildNSD()
+	protected void initializeBuildNSD() throws ParserCancelled
 	{
 		root.setProgram(false);	// C programs are functions, primarily
 		this.optionUpperCaseProgName = Root.check(6);
@@ -628,14 +628,14 @@ public class C99Parser extends CPreParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
 	 */
 	@Override
-	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
+	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
 		//String content = new String();
 	
 		if (_reduction.size() > 0)
 		{
 			String rule = _reduction.getParent().toString();
-			String ruleHead = _reduction.getParent().getHead().toString();
+			//String ruleHead = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
 			getLogger().log(Level.CONFIG, "Rule {0}, {1}", new Object[]{rule, _parentNode.parent});
 			log("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n", true);
@@ -979,8 +979,9 @@ public class C99Parser extends CPreParser
 	/**
 	 * Processes a function definition from the given {@code _reduction}
 	 * @param _reduction - the {@link Reduction} of the parser
+	 * @throws ParserCancelled 
 	 */
-	private void buildFunction(Reduction _reduction) {
+	private void buildFunction(Reduction _reduction) throws ParserCancelled {
 		// <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
 		// Find out the name of the function
 		Reduction secReduc = _reduction.get(1).asReduction();
@@ -1021,7 +1022,7 @@ public class C99Parser extends CPreParser
 		Root prevRoot = root;	// Cache the original root
 		root = new Root();	// Prepare a new root for the (sub)routine
 		root.setProgram(false);
-		subRoots.add(root);
+		addRoot(root);
 		// If the previous root was global and had collected elements then make the new root a potential importer
 		if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0) {
 			// We must have inserted some global stuff, so assume a dependency...
@@ -1130,8 +1131,9 @@ public class C99Parser extends CPreParser
 	 * syntax (Pascal style).
 	 * @param _declRed - the {@link Reduction} representing a {@code <Struct Decl>} rule.
 	 * @return {@link StringList} of the declaration strings in Structorizer syntax
+	 * @throws ParserCancelled 
 	 */
-	StringList getDeclsFromDeclList(Reduction _declRed)
+	StringList getDeclsFromDeclList(Reduction _declRed) throws ParserCancelled
 	{
 		// FIXME!
 		StringList decls = new StringList();
@@ -1204,8 +1206,9 @@ public class C99Parser extends CPreParser
 	 * 
 	 * @param _declSpecRed
 	 * @return
+	 * @throws ParserCancelled 
 	 */
-	String getTypeSpec(Reduction _declSpecRed) {
+	String getTypeSpec(Reduction _declSpecRed) throws ParserCancelled {
 		// FIXME: Drop superfluous stuff
 		StringList parts = new StringList();
 		while (_declSpecRed.getParent().getHead().toString().equals("<Decl Specifiers>")) {
@@ -1235,8 +1238,9 @@ public class C99Parser extends CPreParser
 	 * skeleton of a Case element. The case branches will be handled separately
 	 * @param _reduction - Reduction rule of a switch instruction
 	 * @param _parentNode - the Subqueue this Case element is to be appended to
+	 * @throws ParserCancelled 
 	 */
-	private void buildCase(Reduction _reduction, Subqueue _parentNode)
+	private void buildCase(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
 		String content = new String();
 		// Put the discriminator into the first line of content
@@ -1300,7 +1304,7 @@ public class C99Parser extends CPreParser
 
 	}
 
-	private void buildCaseBranch(Reduction _reduction, int _ruleId, Case _case)
+	private void buildCaseBranch(Reduction _reduction, int _ruleId, Case _case) throws ParserCancelled
 	{
 		// We should first make clear what could happen here. A case analysis
 		// switch(discriminator) {
@@ -1398,9 +1402,10 @@ public class C99Parser extends CPreParser
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
 	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
 	 * @return - the {@link StringList} of declarations
+	 * @throws ParserCancelled 
 	 */
 	private StringList buildDeclsOrAssignments(Reduction _reduction, String _type, Subqueue _parentNode, String _comment,
-			boolean _forceDecl) {
+			boolean _forceDecl) throws ParserCancelled {
 		// FIXME!
 		log("\tanalyzing <InitDeclList> ...\n", false);
 		StringList declns = new StringList();
@@ -1434,8 +1439,9 @@ public class C99Parser extends CPreParser
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
 	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
 	 * @return the built declaration or assignment
+	 * @throws ParserCancelled 
 	 */
-	private String buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl)
+	private String buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl) throws ParserCancelled
 	{
 		boolean isConstant = _type != null && _type.startsWith("const ");	// Is it sure that const will be at the beginning?
 		int ruleId = _reduc.getParent().getTableIndex();
@@ -1564,9 +1570,10 @@ public class C99Parser extends CPreParser
 	 * @param _typeSpecs - a {@link StringList} to be filled
 	 * @param _parentNode - a {@link Subqueue} possible implicit type definitions should go to, may be null
 	 * @param _initDeclRed - if a declarator / initializer is following, then their reduction
-	 * @return true if "typedef" was among the storag class specifiers
+	 * @return true if "typedef" was among the storage class specifiers
+	 * @throws ParserCancelled 
 	 */
-	private boolean getDeclSpecifiers(Reduction _reduction, StringList _typeSpecs, Subqueue _parentNode, Reduction _initDeclRed)
+	private boolean getDeclSpecifiers(Reduction _reduction, StringList _typeSpecs, Subqueue _parentNode, Reduction _initDeclRed) throws ParserCancelled
 	{
 		boolean isTypedef = false;
 		boolean isStruct = false;
@@ -1694,8 +1701,9 @@ public class C99Parser extends CPreParser
 	 * @param _parentNode - a {@link Subqueue} to append possible type definitions to 
 	 * @param _declListRed TODO
 	 * @return the isolated identifier or null of ther is none oder if it's ambiguous.
+	 * @throws ParserCancelled 
 	 */
-	String getDeclarator(Reduction _reduction, StringList _pointers, StringList _arrays, StringList _asPascal, Subqueue _parentNode, Reduction _declListRed)
+	String getDeclarator(Reduction _reduction, StringList _pointers, StringList _arrays, StringList _asPascal, Subqueue _parentNode, Reduction _declListRed) throws ParserCancelled
 	{
 		// FIXME: This may be a function signature! So we should support the respective structure --> _asPascal?
 		// <Declarator> ::= <Pointer> <Direct Decl>   or
@@ -1726,9 +1734,10 @@ public class C99Parser extends CPreParser
 	 * @param _parentNode - if given, the {@link Subqueue} to add required type definitions
 	 * @param _declListRed TODO
 	 * @return the declared name (if any)
+	 * @throws ParserCancelled 
 	 */
 	private String getDirectDecl(Reduction _reduction, StringList _pointers, StringList _arrays, StringList _asPascal,
-			Subqueue _parentNode, Reduction _declListRed) {
+			Subqueue _parentNode, Reduction _declListRed) throws ParserCancelled {
 		String name = "";
 		int ruleId = _reduction.getParent().getTableIndex();
 		String nestedType = null;
@@ -1820,8 +1829,9 @@ public class C99Parser extends CPreParser
 	 * @param _declListRed - an optional declaration list reduction with exterenal parameter declarations to replace the mere
 	 * identifier list in such a case. 
 	 * @return
+	 * @throws ParserCancelled 
 	 */
-	private String getParamList(Reduction _paramReduc, Subqueue _parentNode, boolean _pascalStyle, Reduction _declListRed) {
+	private String getParamList(Reduction _paramReduc, Subqueue _parentNode, boolean _pascalStyle, Reduction _declListRed) throws ParserCancelled {
 		String params = ""; 
 		StringList paramList = new StringList();
 		String ellipse = "";
@@ -1993,9 +2003,10 @@ public class C99Parser extends CPreParser
 	 * @param _typeList - a container for type names, both for input and output 
 	 * @param _declaringVars - whether this is used by a variable/constant declaration (type definition otherwise)
 	 * @return a logical value indicating whether the processed rule was a type definition
+	 * @throws ParserCancelled 
 	 */
 	protected boolean processTypes(Reduction _reduction, int _ruleId, Subqueue _parentNode, boolean _isGlobal,
-			StringList _typeList, boolean _declaringVars)
+			StringList _typeList, boolean _declaringVars) throws ParserCancelled
 	{
 		boolean isStruct = false;
 		boolean isTypedef = false;
@@ -2129,8 +2140,9 @@ public class C99Parser extends CPreParser
 	 * to convert them into Structorizer (Pascal-like) syntax.
 	 * @param _compListRed - the reduction representing a rule {@code <StructDeclnList>}
 	 * @return The {@link StringList} of processed component groups
+	 * @throws ParserCancelled 
 	 */
-	private StringList getCompsFromStructDef(Reduction _compListRed)
+	private StringList getCompsFromStructDef(Reduction _compListRed) throws ParserCancelled
 	{
 		// Resolve the left recursion non-recursively
 		StringList components = new StringList();
@@ -2172,8 +2184,9 @@ public class C99Parser extends CPreParser
 	 * @param _declRed - {@link Reduction} representing a declarator.
 	 * @param _declList - {@link StringList} of processed simple declarators of the {@code _baseType}, to be enhanced.
 	 * @param _groupList - {@link StringList} of component declarator groups, may be extended by e.g. array components.
+	 * @throws ParserCancelled 
 	 */
-	private void addProcessedCompDecl(String _baseType, Reduction _declRed, StringList _declList, StringList _groupList) {
+	private void addProcessedCompDecl(String _baseType, Reduction _declRed, StringList _declList, StringList _groupList) throws ParserCancelled {
 		String compDecl = getContent_R(_declRed, "");
 		int pos = compDecl.indexOf(':');	// bit field?
 		if (pos >= 0) {
@@ -2236,7 +2249,7 @@ public class C99Parser extends CPreParser
 	}
 	
 	@Override
-	protected String getContent_R(Reduction _reduction, String _content)
+	protected String getContent_R(Reduction _reduction, String _content) throws ParserCancelled
 	{
 		if (_reduction == null) {
 			System.err.println("STOP!");
@@ -2371,8 +2384,9 @@ public class C99Parser extends CPreParser
 	 * than keep with the reduction tree.)
 	 * @param _reduc - a rule with head &lt;Expr&gt; or &lt;ExprIni&gt; 
 	 * @return the list of expressions as strings
+	 * @throws ParserCancelled 
 	 */
-	private StringList getExpressionList(Reduction _reduc)
+	private StringList getExpressionList(Reduction _reduc) throws ParserCancelled
 	{
 		StringList exprList = new StringList();
 		String ruleHead = _reduc.getParent().getHead().toString();

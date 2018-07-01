@@ -1979,7 +1979,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						switch (getSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE)) {
 						case INDIVIDUAL: {						
 							String[] options = {
-									Menu.lblYes.getText(),
+									Menu.lblContinue.getText(),
 									Menu.lblModify.getText(),
 									Menu.lblYesToAll.getText() 
 							};
@@ -2116,7 +2116,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Object initialValue = null;
 				if (isInSerialMode()) {
 					options = new String[]{
-							Menu.lblYes.getText(),
+							Menu.lblContinue.getText(),
 							Menu.lblSkip.getText(),
 							Menu.lblYesToAll.getText(),
 							Menu.lblNoToAll.getText()	// Well, this is less sensible...
@@ -3374,7 +3374,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				int answer = JOptionPane.YES_OPTION;
 				try {
 					redraw();
-					String[] options = new String[]{Menu.lblYes.getText(), Menu.lblNo.getText()};
+					String[] options = new String[]{Menu.lblContinue.getText(), Menu.lblCancel.getText()};
 					answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
 							Menu.msgJumpsOutwardsScope.getText().replace("%", jumpTexts), 
 							Menu.msgTitleWarning.getText(),
@@ -5093,10 +5093,47 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		}
 //	} 
 
+	// START KGU#537 2018-06-29: Enh. #553
+	/**
+	 * Internal helper class for the background parsing of code to be imported.
+	 * @author Kay Gürtzig
+	 */
+	private class ImportWorker extends SwingWorker<List<Root>, Integer>
+	{
+		private CodeParser parser;
+		private File file;
+		private Ini ini;
+		private String logPath;
+		
+		public ImportWorker(CodeParser _parser, File _file, Ini _ini, String _logPath)
+		{
+			this.parser = _parser;
+			this.file = _file;
+			this.ini = _ini;
+			this.logPath = _logPath;
+		}
+
+		@Override
+		protected List<Root> doInBackground() throws Exception {
+			System.out.println("*** " + this.getClass().getSimpleName()+" going to work!");
+			this.parser.setSwingWorker(this);
+			List<Root> roots = null;
+			roots = parser.parse(file.getAbsolutePath(),
+					ini.getProperty("impImportCharset", "ISO-8859-1"),
+					// START KGU#354 2017-04-27: Enh. #354
+					logPath
+					// END KGU#354 2017-04-27
+					);
+			return roots;
+		}
+		
+	}
+	// END KGU#537 2018-06-30
+	
 	/**
 	 * Gets an instance of the given parser class, interactively selects a source file
 	 * for the chosen language parses the file and tries to build a structogram from
-	 * it.
+	 * it in a background thread.
 	 * @param options 
 	 */
 	public void importCode(/*String _parserClassName,*/)
@@ -5211,15 +5248,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					this.setPluginSpecificOptions(parser, parserClassName, plug.options);
 				}
 				// END KGU#395 2017-07-02
-				List<Root> newRoots = parser.parse(file.getAbsolutePath(),
-						ini.getProperty("impImportCharset", "ISO-8859-1"),
-						// START KGU#354 2017-04-27: Enh. #354
-						logPath
-						// END KGU#354 2017-04-27
-						);
+				// START KGU#537 2018-06-30: Enh. #553
+//				List<Root> newRoots = parser.parse(file.getAbsolutePath(),
+//						ini.getProperty("impImportCharset", "ISO-8859-1"),
+//						// START KGU#354 2017-04-27: Enh. #354
+//						logPath
+//						// END KGU#354 2017-04-27
+//						);
+				ImportWorker worker = new ImportWorker(parser, file, ini,logPath);
+				CodeImportMonitor monitor = new CodeImportMonitor(this.NSDControl.getFrame(), worker, parser.getDialogTitle());
+				List<Root> newRoots = worker.get();
+				// END KGU#537 2018-06-30
 				// END KGU#265 2016-09-28
 				// END KGU#194 2016-05-08
-				if (parser.error.equals(""))
+				if (parser.error.equals("") && !worker.isCancelled())
 				{
 					boolean hil = root.hightlightVars;
 					// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
@@ -5286,6 +5328,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#364 2017-12-12
 					// END KGU 2016-01-11
 				}
+			}
+			catch (java.util.concurrent.CancellationException ex) {
+				JOptionPane.showMessageDialog(this.NSDControl.getFrame(), 
+						Menu.msgImportCancelled.getText().replace("%", file.getPath()));				
 			}
 			catch(Exception ex)
 			{

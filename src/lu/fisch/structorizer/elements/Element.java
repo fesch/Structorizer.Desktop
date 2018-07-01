@@ -178,6 +178,7 @@ import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
@@ -3235,17 +3236,18 @@ public abstract class Element {
     	return IconLoader.getIcon(57);
     }
     // END KGU#122 2016-01-03
-    // START KGU 2018-06-28
+    
+    // START KGU#535 2018-06-28
     /**
-     * @return the element-type-specific somewhat smaller icon image intended to be used in
-     * Find & Replace dialog.
+     * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+     * the {@link FindAndReplace} dialog.
      * @see #getIcon()
      */
     public ImageIcon getMiniIcon()
     {
     	return IconLoader.getIcon(10);
     }
-    // END KGU 2018-0628
+    // END KGU#535 2018-06-28
 
     // START KGU 2015-10-16: Some Root stuff properly delegated to the Element subclasses
     // (The obvious disadvantage is slightly reduced performance, of course)

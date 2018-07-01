@@ -99,7 +99,7 @@ public class LangDialog extends JDialog {
                 adjustLangDependentComponents();
                 // END KGU#246 2016-09-21
                 // repack the dialog to possibly extend it to the new strings
-                if(LangDialog.this.packing) LangDialog.this.pack();
+                if (LangDialog.this.packing) LangDialog.this.pack();
             }
         });
     }
