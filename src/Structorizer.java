@@ -49,6 +49,7 @@
  *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble
  *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
  *      Kay Gürtzig     2018.06.25      Issue #551: No message informing about version check option on WebStart
+ *      Kay Gürtzig     2018.07.01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
  *
  ******************************************************************************************************
  *
@@ -74,6 +75,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -141,9 +143,12 @@ public class Structorizer
 		String options = "";
 		String outFileName = null;
 		String charSet = "UTF-8";
-		// START KGU#354 2017-04-27:Enh. #354
+		// START KGU#354 2017-04-27: Enh. #354
 		String logDir = null;
 		// END KGU#354 2017-04-27
+		// START KGU#538 2018-07-01: issue #554
+		String settingsFile = null;
+		// END KGU#538 2018-07-01
 		//System.out.println("arg 0: " + args[0]);
 		if (args.length == 1 && args[0].equals("-h"))
 		{
@@ -160,18 +165,36 @@ public class Structorizer
 			else if (i == 0 && args[i].equals("-p") && args.length > 1)
 			{
 				parser = "*";
+				// START KGU#538 2018-07-01: Bugfix #554 - was nonsense and had to be replaced
+				// In order to disambiguate alternative parsers for the same file type, there
+				// might be a given parser or language name again (3.28-05).
+				if (i+2 < args.length) {
+					// Legacy support - parsers will now be derived from the file extensions 
+					if (args[i+1].equalsIgnoreCase("pas") || args[i+1].equalsIgnoreCase("pascal")) {
+						parser = "D7Parser";
+					}
+					else if (args[i+1].startsWith("-")) {
+						// doesn't seem to be an option, so it might be a default parser name...
+						parser = args[i+1];
+					}
+				}
+				// END KGU#538 2018-07-01
 			}
+			// START KGU#538 2018-07-01: Bugfix #554 - was nonsense and had to be replaced 
 			// Legacy support - parsers will now be derived from the file extensions 
-			else if (i > 0 && (parser != null) && (args[i].equalsIgnoreCase("pas") || args[i].equalsIgnoreCase("pascal"))
-					&& !parser.endsWith("pas")) {
-				parser += "pas";
-			}
+			//else if (i > 0 && (parser != null) && (args[i].equalsIgnoreCase("pas") || args[i].equalsIgnoreCase("pascal"))
+			//		&& !parser.endsWith("pas")) {
+			//	parser += "pas";
+			//}
+			// END KGU#538 2018-07-01
 			else if (args[i].equals("-o") && i+1 < args.length)
 			{
+				// Output file name
 				outFileName = args[++i];
 			}
 			else if (args[i].equals("-e") && i+1 < args.length)
 			{
+				// Encoding
 				charSet = args[++i];
 			}
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode?
@@ -180,14 +203,18 @@ public class Structorizer
 				logDir = args[++i];
 			}
 			// END KGU#354 2017-04-27
-			// Target standard output?
-			else if (args[i].equals("-"))
+			// START KGU#538 2018-07-01: Issue #554 - new option for a settings file
+			else if (args[i].equals("-s") && i+1 < args.length)
 			{
+				settingsFile = args[++i];
+			}
+			// END KGU#538 2018-07-01
+			// Target standard output?
+			else if (args[i].equals("-")) {
 				options += "-";
 			}
 			// Other options
-			else if (args[i].startsWith("-"))
-			{
+			else if (args[i].startsWith("-")) {
 				options += args[i].substring(1);
 			}
 			else
@@ -197,14 +224,14 @@ public class Structorizer
 		}
 		if (generator != null)
 		{
-			Structorizer.export(generator, fileNames, outFileName, options, charSet);
+			Structorizer.export(generator, fileNames, outFileName, options, charSet, null);
 			return;
 		}
 		else if (parser != null)
 		{
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode
 			//Structorizer.parse(parser, fileNames, outFileName, options, charSet);
-			Structorizer.parse(parser, fileNames, outFileName, options, charSet, logDir);
+			Structorizer.parse(parser, fileNames, outFileName, options, charSet, settingsFile, logDir);
 			// END KGU#354 2017-04-27
 			return;
 		}
@@ -353,8 +380,9 @@ public class Structorizer
 	// START KGU#187 2016-04-28: Enh. #179
 	/*****************************************
 	 * batch code export methods
+	 * @param _settingsFileName TODO
 	 *****************************************/
-	public static void export(String _generatorName, Vector<String> _nsdFileNames, String _codeFileName, String _options, String _charSet)
+	public static void export(String _generatorName, Vector<String> _nsdFileNames, String _codeFileName, String _options, String _charSet, String _settingsFileName)
 	{
 		Vector<Root> roots = new Vector<Root>();
 		for (String fName : _nsdFileNames)
@@ -456,10 +484,16 @@ public class Structorizer
 	
 	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode
 	/*****************************************
-	 * batch code import methods
+	 * batch code import method
+	 * @param _parserName - name of a preferred default parser (just for the case of ambiguity)
+	 * @param _filenames - names of the files to be imported
+	 * @param _outFile - base name of the nsd file(s) to be created
+	 * @param _options - set of switches (either on or off)
+	 * @param _charSet - the encoding to be assumed or used 
+	 * @param _settingsFileName - path of a property file to be preferred against structorizer.ini 
 	 * @param _logDir - Path of the target folder for the parser log
 	 *****************************************/
-	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet, String _logDir)
+	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet, String _settingsFileName, String _logDir)
 	{
 		
 		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
@@ -474,7 +508,7 @@ public class Structorizer
 		try { buff.close();	} catch (IOException e) {}
 		HashMap<CodeParser, GENPlugin> parsers = new HashMap<CodeParser, GENPlugin>();
 		//String parsClassName = null;
-		CodeParser parser = null;
+		CodeParser preferredParser = null;
 		for (int i=0; i < plugins.size(); i++)
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
@@ -482,7 +516,7 @@ public class Structorizer
 			try
 			{
 				Class<?> parsClass = Class.forName(className);
-				parser = (CodeParser) parsClass.newInstance();
+				CodeParser parser = (CodeParser) parsClass.newInstance();
 				parsers.put(parser, plugin);
 				usage += "\n\t";
 				for (String ext: parser.getFileExtensions()) {
@@ -492,6 +526,11 @@ public class Structorizer
 				if (usage.endsWith(", ")) {
 					usage = usage.substring(0, usage.length()-2) + " for " + parser.getDialogTitle();
 				}
+				// START KGU#538 2018-07-01: Bugfix #554
+				if (_parserName.equalsIgnoreCase(plugin.getKey()) || _parserName.equalsIgnoreCase(parser.getDescription())) {
+					preferredParser = parser;
+				}
+				// END KGU#538 2018-07-01
 			}
 			catch(java.lang.ClassNotFoundException ex)
 			{
@@ -499,7 +538,10 @@ public class Structorizer
 			}
 			catch(Exception e)
 			{
-				System.err.println("*** Error on creating " + _parserName + "\n" + e.getMessage());
+				// START KGU#538 2018-07-01: Bugfix #554 
+				//System.err.println("*** Error on creating " + _parserName);
+				System.err.println("*** Error on creating " + className);
+				// END KGU#538 2018-07-01
 				e.printStackTrace();
 			}
 		}
@@ -515,7 +557,10 @@ public class Structorizer
 		// While there was only one input language candidate, a single Parser instance had been enough
 		//D7Parser d7 = new D7Parser("D7Grammar.cgt");
 		// END KGU#354 2017-03-04
-		
+
+		// START KGU#538 2018-07-01: Bugfix #554 - for the case there are alternatives
+		Vector<CodeParser> suitedParsers = new Vector<CodeParser>();
+		// END KGU#538 2018-07-01
 		for (String filename : _filenames)
 		{
 			// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
@@ -525,36 +570,53 @@ public class Structorizer
 			// START KGU#354 2017-03-04: Enh. #354
 			//if (fileExt.equals("pas"))
 			File importFile = new File(filename);
-			parser = null;
+			// START KGU#538 2018-07-01: Bugfix #554
+			suitedParsers.clear();
+			// END KGU#538 2018-07-01
+			CodeParser parser = null;
 			// START KGU#416 2017-07-02: Enh. #354, #409 Parser retrieval combined with option retrieval
 			for (Entry<CodeParser, GENPlugin> entry: parsers.entrySet()) {
 				if (entry.getKey().accept(importFile)) {
-					parser = cloneWithPluginOptions(entry.getValue());
-					break;
+					// START KGU#538 2018-07-01: Bugfix #554
+					//parser = cloneWithPluginOptions(entry.getValue());
+					//break;
+					// If the preferred parser is among the suited ones, select it
+					if (entry.getKey() == preferredParser) {
+						parser = preferredParser;
+						break;
+					}
+					suitedParsers.add(entry.getKey());
+					// END KGU#538 2018-07-01
 				}
 			}
+			// START KGU#538 2018-07-01: Bugfix #554
+			if (parser == null) {
+				parser = disambiguateParser(suitedParsers, filename);
+			}
+			// END KGU#538 2018-07-01
 			// END KGU#416 2017-07-02
-			if (parser != null)
+			if (parser == null) {
+				System.err.println("File \"" + filename + "\" skipped (not accepted by any parser)!");
+				continue;
+			}
 			// END KGU#354 2017-03-09
+
+			// START KGU#538 2018-07-01: Bugfix #554
+			// Unfortunately, CodeParsers aren't reusable, so we better create a new instance in any case.
+			parser = cloneWithPluginOptions(parsers.get(parser), _settingsFileName);
+			// END KGU#538 2018-07-01
+			// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
+			// START KGU#354 2017-04-27: Enh. #354 pass in the log directory path
+			//newRoots = parser.parse(filename, _charSet);
+			newRoots = parser.parse(filename, _charSet, _logDir);
+			// END KGU#354 2017-04-27
+			// END KGU#194 2016-05-04
+			if (!parser.error.isEmpty())
 			{
-				//D7Parser d7 = new D7Parser("D7Grammar.cgt");
-				// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
-				//rootNew = d7.parse(filename);
-				// START KGU#354 2017-04-27: Enh. #354 pass in the log directory path
-				//newRoots = parser.parse(filename, _charSet);
-				newRoots = parser.parse(filename, _charSet, _logDir);
-				// END KGU#354 2017-04-27
-				// END KGU#194 2016-05-04
-				if (!parser.error.isEmpty())
-				{
-					System.err.println("Parser error in file " + filename + "\n" + parser.error);
-					continue;
-				}
+				System.err.println("Parser error in file \"" + filename + "\":\n" + parser.error);
+				continue;
 			}
-			else {
-				System.err.println("File " + filename + " not accpeted by any parser!");
-			}
-		
+
 			// Now save the roots as NSD files. Derive the target file names from the source file name
 			// if _outFile isn't given.
 			// START KGU#193 2016-05-09: Output file name specification was ignred, optio f had to be tuned.
@@ -563,86 +625,168 @@ public class Structorizer
 				filename = _outFile;
 			}
 			// END KGU#193 2016-05-09
-			// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
-			//if (rootNew != null)
-			boolean multipleRoots = newRoots.size() > 1;
-			for (Root rootNew : newRoots)
-			// END KGU#194 2016-05-08
-			{
-				StringList nameParts = StringList.explode(filename, "[.]");
-				String ext = nameParts.get(nameParts.count()-1).toLowerCase();
-				if (ext.equals(fileExt))
-				{
-					nameParts.set(nameParts.count()-1, "nsd");
-				}
-				else if (!ext.equals("nsd"))
-				{
-					nameParts.add("nsd");
-				}
-				// In case of multiple roots (subroutines) insert the routine's proposed file name
-				if (multipleRoots && !rootNew.isProgram())
-				{
-					nameParts.insert(rootNew.proposeFileName(), nameParts.count()-1);
-				}
-				//System.out.println("File name raw: " + nameParts);
-				if (!overwrite)
-				{
-					int count = 0;
-					do {
-						File file = new File(nameParts.concatenate("."));
-						if (file.exists())
-						{
-							if (count == 0) {
-								nameParts.insert(Integer.toString(count), nameParts.count()-1);
-							}
-							else {
-								nameParts.set(nameParts.count()-2, Integer.toString(count));
-							}
-							count++;
-						}
-						else
-						{
-							overwrite = true;
-						}
-					} while (!overwrite);
-				}
-				String filenameToUse = nameParts.concatenate(".");
-				//System.out.println("Writing to " + filename);
-				try {
-					FileOutputStream fos = new FileOutputStream(filenameToUse);
-					Writer out = null;
-					out = new OutputStreamWriter(fos, "UTF8");
-					XmlGenerator xmlgen = new XmlGenerator();
-					out.write(xmlgen.generateCode(rootNew,"\t"));
-					out.close();
-				}
-				catch (UnsupportedEncodingException e) {
-					System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
-				}
-				catch (IOException e) {
-					System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
-				}
-			}
+			overwrite = writeRootsToFiles(newRoots, filename, fileExt, overwrite);
 		}
 	}
 	// END KGU#187 2016-04-29
+
+	// START KGU#538 2018-07-01: Bugfix #554
+	/**
+	 * Generates the nsd files from the given list of {@link Root}s
+	 * @param newRoots - list of generated {@link Root}s
+	 * @param filename - the base file name for the resulting nsd files
+	 * @param fileExt - the file name extension to be used.
+	 * @param overwrite
+	 * @return
+	 */
+	private static boolean writeRootsToFiles(List<Root> newRoots, String filename, String fileExt, boolean overwrite)
+	{
+		// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
+		//if (rootNew != null)
+		boolean multipleRoots = newRoots.size() > 1;
+		for (Root rootNew : newRoots)
+		// END KGU#194 2016-05-08
+		{
+			StringList nameParts = StringList.explode(filename, "[.]");
+			String ext = nameParts.get(nameParts.count()-1).toLowerCase();
+			if (ext.equals(fileExt))
+			{
+				nameParts.set(nameParts.count()-1, "nsd");
+			}
+			else if (!ext.equals("nsd"))
+			{
+				nameParts.add("nsd");
+			}
+			// In case of multiple roots (subroutines) insert the routine's proposed file name
+			if (multipleRoots && !rootNew.isProgram())
+			{
+				nameParts.insert(rootNew.proposeFileName(), nameParts.count()-1);
+			}
+			//System.out.println("File name raw: " + nameParts);
+			if (!overwrite)
+			{
+				int count = 0;
+				do {
+					File file = new File(nameParts.concatenate("."));
+					if (file.exists())
+					{
+						if (count == 0) {
+							nameParts.insert(Integer.toString(count), nameParts.count()-1);
+						}
+						else {
+							nameParts.set(nameParts.count()-2, Integer.toString(count));
+						}
+						count++;
+					}
+					else
+					{
+						overwrite = true;
+					}
+				} while (!overwrite);
+			}
+			String filenameToUse = nameParts.concatenate(".");
+			//System.out.println("Writing to " + filename);
+			try {
+				FileOutputStream fos = new FileOutputStream(filenameToUse);
+				Writer out = null;
+				out = new OutputStreamWriter(fos, "UTF8");
+				try {
+					XmlGenerator xmlgen = new XmlGenerator();
+					out.write(xmlgen.generateCode(rootNew,"\t"));
+				}
+				finally {
+					out.close();
+				}
+			}
+			catch (UnsupportedEncodingException e) {
+				System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+			catch (IOException e) {
+				System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+		}
+		return overwrite;
+	}
+	
+	/**
+	 * Chooses the parser to be used among the {@code suitedParsers}. If there are many
+	 * then the user will be asked interactively.<br/>
+	 * (Later there might be a change to get it from a configuration file.)
+	 * @param suitedParsers - a vector of parsers accepting the file extension
+	 * @param filename - name of the file to be parsed (for dialog purposes)
+	 * @param parser - 
+	 * @return
+	 */
+	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename)
+	{
+		CodeParser parser = null;
+		if (suitedParsers.size() == 1) {
+			parser = suitedParsers.get(0);
+		}
+		else if (suitedParsers.size() > 1) {
+			System.out.println("Several suited parsers found for file \"" + filename + "\":");
+			for (int i = 0; i < suitedParsers.size(); i++) {
+				System.out.println((i+1) + ": " + suitedParsers.get(i).getDialogTitle());
+			}
+			int chosen = -1;
+			Scanner scnr = new Scanner(System.in);
+			try {
+				while (chosen < 0) {
+					System.out.print("Please select the number of your favourite (0 = skip file): ");
+					String input = scnr.nextLine();
+					try {
+						chosen = Integer.parseInt(input);
+						if (chosen < 0 || chosen > suitedParsers.size()) {
+							System.err.println("*** Value out of range!");
+						}
+					}
+					catch (Exception ex) {
+						System.err.println("*** Wrong number format!");
+					}
+				}
+			}
+			finally {
+				scnr.close();
+			}
+			if (chosen == 0) {
+				// Skip this file as requested...
+				System.err.println("File \"" + filename + "\" skipped.");
+			}
+			else {
+				parser = suitedParsers.get(chosen-1);
+			}
+		}
+		return parser;
+	}
+	// END KGUä538 2018-07-01
 	
 	// START KGU#416 2017-07-03: Enh. #354, #409
-	private static CodeParser cloneWithPluginOptions(GENPlugin plugin) {
+	private static CodeParser cloneWithPluginOptions(GENPlugin plugin, String _settingsFile) {
 		CodeParser parser;
 		try {
-			parser = (CodeParser)Class.forName(plugin.getKey()).newInstance();
+			// START KGU#538 2018-07-01: Bugfix #554 Instantioation failed (missing path)
+			//parser = (CodeParser)Class.forName(plugin.getKey()).newInstance();
+			parser = (CodeParser)Class.forName(plugin.className).newInstance();
+			// END KGU#538 2018-07-01
 		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
 			System.err.println("Structorizer.CloneWithPluginSpecificOptions("
 					+ plugin.getKey()
-					+ "): " + ex.getMessage() + " on creating \"" + plugin.getKey()
+					+ "): " + ex.toString() + " on creating \"" + plugin.getKey()
 					+ "\"");
 			return null;
 		}
 		Ini ini = Ini.getInstance();
 		if (!plugin.options.isEmpty()) {
 			try {
-				ini.load();
+				// START KGU#538 2018-07-01: Issue #554 - a different properties file might be requested
+				//ini.load();
+				if (_settingsFile != null && (new File(_settingsFile)).canRead()) {
+					ini.load(_settingsFile);
+				}
+				else {
+					ini.load();
+				}
+				// END KGU#538 2018-07-01
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -686,6 +830,7 @@ public class Structorizer
 							+ valueStr + "\" to " + type + " for " + optionKey);
 				}
 			}
+			System.out.println(optionKey + " = " + value);
 			if (value != null) {
 				parser.setPluginOption(optionKey, value);
 			}
