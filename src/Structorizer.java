@@ -738,6 +738,7 @@ public class Structorizer
 						chosen = Integer.parseInt(input);
 						if (chosen < 0 || chosen > suitedParsers.size()) {
 							System.err.println("*** Value out of range!");
+							chosen = -1;
 						}
 					}
 					catch (Exception ex) {
@@ -748,11 +749,7 @@ public class Structorizer
 			finally {
 				scnr.close();
 			}
-			if (chosen == 0) {
-				// Skip this file as requested...
-				System.err.println("File \"" + filename + "\" skipped.");
-			}
-			else {
+			if (chosen != 0) {
 				parser = suitedParsers.get(chosen-1);
 			}
 		}

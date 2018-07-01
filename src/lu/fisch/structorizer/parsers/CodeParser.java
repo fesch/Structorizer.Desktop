@@ -641,7 +641,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 					//try {
 					//	Thread.sleep(random.nextInt(1000));
 					//} catch (InterruptedException ignore) {}
-					this.worker.firePropertyChange("progress", 0, 100);
+					this.firePropertyChange("progress", 0, 100);
 					// END KGU#537 2018-06-30
 				} else {
 					isSyntaxError = true;

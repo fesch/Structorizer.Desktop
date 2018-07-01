@@ -50,10 +50,10 @@ Current development version: 3.28-05 (2018-07-02)
 - 05: Issue #551: On webstart the hint about version check doesn't make sense <2>
 - 05: Enh. #552: Option to decide for all diagrams on serial file actions,
       new opportunity to remove all diagrams from Arranger with few clicks <2>
-- 05: Bugfix #554: Batch code import didn't work (parser instantiation bug) <2>
 - 05: Enh. #489: C99 parser pushed forward (though a little quick and dirty) <2>
 - 05: Set of smaller element icons for the tree view in Find&Replace <2>
-- 05: Enh. #533: Code import now with monitor dialog and cancel option <2>
+- 05: Enh. #553: Code import now with monitor dialog and cancel option <2>
+- 05: Bugfix #554: Batch code import didn't work (parser instantiation bug) <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
