@@ -391,17 +391,23 @@ public abstract class Element {
 //	public static Color color7 = Color.decode("0xC0C0C0");
 //	public static Color color8 = Color.decode("0xFF8000");
 //	public static Color color9 = Color.decode("0x8080FF");
-	public final static Color[] colors = {
-			Color.decode("0xFFFFFF"),
-			Color.decode("0xFF8080"),
-			Color.decode("0xFFFF80"),
-			Color.decode("0x80FF80"),
-			Color.decode("0x80FFFF"),
-			Color.decode("0x0080FF"),
-			Color.decode("0xFF80C0"),
-			Color.decode("0xC0C0C0"),
-			Color.decode("0xFF8000"),
-			Color.decode("0x8080FF")
+	private final static String[] defaultColors = {
+			"FFFFFF",
+			"FF8080",
+			"FFFF80",
+			"80FF80",
+			"80FFFF",
+			"0080FF",
+			"FF80C0",
+			"C0C0C0",
+			"FF8000",
+			"8080FF"			
+	};
+	public final static Color[] colors = new Color[defaultColors.length];
+	static {
+		for (int i = 0; i < colors.length; i++) {
+			colors[i] = Color.decode("0x" + defaultColors[i]);
+		}
 	};
 	// END KGU#245 2018-02-07
 
@@ -2096,7 +2102,7 @@ public abstract class Element {
 //			color8=Color.decode("0x"+ini.getProperty("color8","FF8000"));
 //			color9=Color.decode("0x"+ini.getProperty("color9","8080FF"));
 			for (int i = 0; i < colors.length; i++) {
-				colors[i] = Color.decode("0x"+ini.getProperty("color" + i,"FFFFFF"));
+				colors[i] = Color.decode("0x"+ini.getProperty("color" + i, defaultColors[i]));
 			}
 			// END KGU#245 2018-07-02
 		}

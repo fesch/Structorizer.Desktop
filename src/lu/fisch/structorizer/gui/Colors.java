@@ -96,6 +96,7 @@ public class Colors extends LangDialog {
 //	protected JPanel color9;
 	protected final JLabel[] lblColors;
 	protected final JPanel[] colors;
+	// Note that the following default colors differ from those of Element...
 	private final Color[] defaultColors = {
 			Color.white,				// 0
 			new Color(255, 204, 204),	// 1
@@ -106,7 +107,7 @@ public class Colors extends LangDialog {
 			new Color(255, 153, 255),	// 6
 			new Color(204, 204, 204),	// 7
 			new Color(255, 153, 102),	// 8
-			new Color(153, 102, 255)
+			new Color(153, 102, 255)	// 9
 	};
 	// END KGU#245 2018-07-02
 	protected JPanel buttonBar;

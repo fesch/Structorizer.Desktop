@@ -992,8 +992,8 @@ public class C99Parser extends CPreParser
 		StringList suffix = new StringList();
 		StringList pascal = new StringList();
 		String funcId = this.getDeclarator(secReduc, prefix, suffix, pascal, null, _reduction.get(2).asReduction());
-		System.out.println(prefix.concatenate(" ") + funcId + suffix.concatenate());
-		System.out.println(pascal.concatenate());
+		//System.out.println(prefix.concatenate(" ") + funcId + suffix.concatenate());
+		//System.out.println(pascal.concatenate());
 //		int nPointers = 0;
 //		// Drop redundant parentheses
 //		while (secRuleId == RuleConstants.PROD_DECLARATOR || secRuleId == RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN) {
@@ -1677,7 +1677,7 @@ public class C99Parser extends CPreParser
 						_typeSpecs.add(getContent_R(prefix.asReduction(), "").trim());
 						break;
 					default:
-						System.out.println("getDeclSpecifiers() - Type specifier: " + prefix.asReduction().getParent().getTableIndex());	
+						//System.out.println("getDeclSpecifiers() - Type specifier: " + prefix.asReduction().getParent().getTableIndex());	
 					}
 				}
 				break;
@@ -1686,7 +1686,7 @@ public class C99Parser extends CPreParser
 			_reduction = _reduction.get(1).asReduction();
 			ruleId = _reduction.getParent().getTableIndex();
 		}
-		System.out.println("getDeclSpecifiers(): " + _typeSpecs.concatenate(", "));
+		//System.out.println("getDeclSpecifiers(): " + _typeSpecs.concatenate(", "));
 		return isTypedef;
 	}
 	
