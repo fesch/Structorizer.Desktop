@@ -63,6 +63,7 @@
  *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.17  Still incomplete first replacements to support #492 
+ *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -72,9 +73,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -793,26 +795,8 @@ FontChooser.btnOK.tooltip=Подтвердите свой выбор.
 
 -----[ Colors ]-----
 Colors.title=Настройки цвета
-Colors.lblColors.0.text=Цвет 0
-Colors.lblColors.1.text=Цвет 1
-Colors.lblColors.2.text=Цвет 2
-Colors.lblColors.3.text=Цвет 3
-Colors.lblColors.4.text=Цвет 4
-Colors.lblColors.5.text=Цвет 5
-Colors.lblColors.6.text=Цвет 6
-Colors.lblColors.7.text=Цвет 7
-Colors.lblColors.8.text=Цвет 8
-Colors.lblColors.9.text=Цвет 9
-Colors.lblColors.0.tooltip=Ваш выбор для цвета nˇ 0.
-Colors.lblColors.1.tooltip=Ваш выбор для цвета nˇ 1.
-Colors.lblColors.2.tooltip=Ваш выбор для цвета nˇ 2.
-Colors.lblColors.3.tooltip=Ваш выбор для цвета nˇ 3.
-Colors.lblColors.4.tooltip=Ваш выбор для цвета nˇ 4.
-Colors.lblColors.5.tooltip=Ваш выбор для цвета nˇ 5.
-Colors.lblColors.6.tooltip=Ваш выбор для цвета nˇ 6.
-Colors.lblColors.7.tooltip=Ваш выбор для цвета nˇ 7.
-Colors.lblColors.8.tooltip=Ваш выбор для цвета nˇ 8.
-Colors.lblColors.9.tooltip=Ваш выбор для цвета nˇ 9.
+Colors.lblColors.*.text=Цвет [#]
+Colors.lblColors.*.tooltip=Ваш выбор для цвета nˇ [#].
 Colors.colors.*.tooltip=Нажмите чтобы изменить ...
 Colors.btnOK.text=ОК
 Colors.btnOK.tooltip=Подтвердите свой выбор.

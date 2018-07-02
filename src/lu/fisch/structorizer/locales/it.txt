@@ -67,6 +67,7 @@
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.16      Element name place holders introduced
+ *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *

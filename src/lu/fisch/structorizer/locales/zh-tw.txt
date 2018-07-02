@@ -52,6 +52,7 @@
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -369,26 +370,8 @@ FontChooser.btnOK.tooltip=驗證你的選擇.
 
 -----[ Colors ]-----
 Colors.title=色彩選項設定
-Colors.lblColors.0.text=色彩 0
-Colors.lblColors.1.text=色彩 1
-Colors.lblColors.2.text=色彩 2
-Colors.lblColors.3.text=色彩 3
-Colors.lblColors.4.text=色彩 4
-Colors.lblColors.5.text=色彩 5
-Colors.lblColors.6.text=色彩 6
-Colors.lblColors.7.text=色彩 7
-Colors.lblColors.8.text=色彩 8
-Colors.lblColors.9.text=色彩 9
-Colors.lblColors.0.tooltip=你選擇色彩編號 0.
-Colors.lblColors.1.tooltip=你選擇色彩編號 1.
-Colors.lblColors.2.tooltip=你選擇色彩編號 2.
-Colors.lblColors.3.tooltip=你選擇色彩編號 3.
-Colors.lblColors.4.tooltip=你選擇色彩編號 4.
-Colors.lblColors.5.tooltip=你選擇色彩編號 5.
-Colors.lblColors.6.tooltip=你選擇色彩編號 6.
-Colors.lblColors.7.tooltip=你選擇色彩編號 7.
-Colors.lblColors.8.tooltip=你選擇色彩編號 8.
-Colors.lblColors.9.tooltip=你選擇色彩編號 9.
+Colors.lblColors.*.text=色彩 [#]
+Colors.lblColors.*.tooltip=你選擇色彩編號 [#].
 Colors.colors.*.tooltip=按一下編輯 ...
 Colors.btnOK.text=確定
 Colors.btnOK.tooltip=驗證你的選擇.

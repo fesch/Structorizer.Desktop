@@ -53,6 +53,7 @@
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.12.14  New menu "Debug"
+ *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -382,26 +383,8 @@ FontChooser.btnOK.tooltip=确认你的选择。
 
 -----[ Colors ]-----
 Colors.title=颜色参数设置
-Colors.lblColors.0.text=颜色 0
-Colors.lblColors.1.text=颜色 1
-Colors.lblColors.2.text=颜色 2
-Colors.lblColors.3.text=颜色 3
-Colors.lblColors.4.text=颜色 4
-Colors.lblColors.5.text=颜色 5
-Colors.lblColors.6.text=颜色 6
-Colors.lblColors.7.text=颜色 7
-Colors.lblColors.8.text=颜色 8
-Colors.lblColors.9.text=颜色 9
-Colors.lblColors.0.tooltip=选择颜色 0。
-Colors.lblColors.1.tooltip=选择颜色 1。
-Colors.lblColors.2.tooltip=选择颜色 2。
-Colors.lblColors.3.tooltip=选择颜色 3。
-Colors.lblColors.4.tooltip=选择颜色 4。
-Colors.lblColors.5.tooltip=选择颜色 5。
-Colors.lblColors.6.tooltip=选择颜色 6。
-Colors.lblColors.7.tooltip=选择颜色 7。
-Colors.lblColors.8.tooltip=选择颜色 8。
-Colors.lblColors.9.tooltip=选择颜色 9。
+Colors.lblColors.*.text=颜色 [#]
+Colors.lblColors.*.tooltip=选择颜色 [#]。
 Colors.colors.*.tooltip=点击编辑 ...
 Colors.btnOK.text=确定
 Colors.btnOK.tooltip=确认你的选择。

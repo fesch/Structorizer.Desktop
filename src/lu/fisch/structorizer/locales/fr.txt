@@ -57,6 +57,7 @@
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.16      Element name placeholders introduced
+ *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -65,9 +66,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -509,26 +511,8 @@ FontChooser.btnOK.tooltip=Valider votre choix.
 
 -----[ Colors ]-----
 Colors.title=Préférences des couleurs
-Colors.lblColors.0.text=Couleur 0
-Colors.lblColors.1.text=Couleur 1
-Colors.lblColors.2.text=Couleur 2
-Colors.lblColors.3.text=Couleur 3
-Colors.lblColors.4.text=Couleur 4
-Colors.lblColors.5.text=Couleur 5
-Colors.lblColors.6.text=Couleur 6
-Colors.lblColors.7.text=Couleur 7
-Colors.lblColors.8.text=Couleur 8
-Colors.lblColors.9.text=Couleur 9
-Colors.lblColors.0.tooltip=Votre choix pour la couleur n° 0.
-Colors.lblColors.1.tooltip=Votre choix pour la couleur n° 1.
-Colors.lblColors.2.tooltip=Votre choix pour la couleur n° 2.
-Colors.lblColors.3.tooltip=Votre choix pour la couleur n° 3.
-Colors.lblColors.4.tooltip=Votre choix pour la couleur n° 4.
-Colors.lblColors.5.tooltip=Votre choix pour la couleur n° 5.
-Colors.lblColors.6.tooltip=Votre choix pour la couleur n° 6.
-Colors.lblColors.7.tooltip=Votre choix pour la couleur n° 7.
-Colors.lblColors.8.tooltip=Votre choix pour la couleur n° 8.
-Colors.lblColors.9.tooltip=Votre choix pour la couleur n° 9.
+Colors.lblColors.*.text=Couleur [#]
+Colors.lblColors.*.tooltip=Votre choix pour la couleur n° [#].
 Colors.color.*.tooltip=Cliquer pour éditer ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Valider votre choix.

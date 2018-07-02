@@ -109,6 +109,7 @@
  *      Kay Gürtzig     2018.02.17      Arranger captions added (on occasion of enh. #512)
  *      Kay Gürtzig     2018.06.27      Enh. #552: New messages in Menu, Editor, Arranger
  *      Kay Gürtzig     2018.07.01      Enh. #553: New messages for CodeImportMonitor
+ *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -118,9 +119,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -852,26 +854,8 @@ FontChooser.btnOK.tooltip=Validate your choice.
 
 -----[ Colors ]-----
 Colors.title=Color Preferences
-Colors.lblColors.0.text=Color 0
-Colors.lblColors.1.text=Color 1
-Colors.lblColors.2.text=Color 2
-Colors.lblColors.3.text=Color 3
-Colors.lblColors.4.text=Color 4
-Colors.lblColors.5.text=Color 5
-Colors.lblColors.6.text=Color 6
-Colors.lblColors.7.text=Color 7
-Colors.lblColors.8.text=Color 8
-Colors.lblColors.9.text=Color 9
-Colors.lblColors.0.tooltip=Your choice for color nˇ 0.
-Colors.lblColors.1.tooltip=Your choice for color nˇ 1.
-Colors.lblColors.2.tooltip=Your choice for color nˇ 2.
-Colors.lblColors.3.tooltip=Your choice for color nˇ 3.
-Colors.lblColors.4.tooltip=Your choice for color nˇ 4.
-Colors.lblColors.5.tooltip=Your choice for color nˇ 5.
-Colors.lblColors.6.tooltip=Your choice for color nˇ 6.
-Colors.lblColors.7.tooltip=Your choice for color nˇ 7.
-Colors.lblColors.8.tooltip=Your choice for color nˇ 8.
-Colors.lblColors.9.tooltip=Your choice for color nˇ 9.
+Colors.lblColors.*.text=Color [#]
+Colors.lblColors.*.tooltip=Your choice for color nˇ [#].
 Colors.colors.*.tooltip=Click to edit ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Validate your choice.

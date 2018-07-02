@@ -114,6 +114,7 @@
  *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
  *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
  *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
+ *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -122,9 +123,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -856,26 +858,8 @@ FontChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
 
 -----[ Colors ]-----
 Colors.title=Farb-Einstellungen
-Colors.lblColors.0.text=Farbe Nr. 0
-Colors.lblColors.1.text=Farbe Nr. 1
-Colors.lblColors.2.text=Farbe Nr. 2
-Colors.lblColors.3.text=Farbe Nr. 3
-Colors.lblColors.4.text=Farbe Nr. 4
-Colors.lblColors.5.text=Farbe Nr. 5
-Colors.lblColors.6.text=Farbe Nr. 6
-Colors.lblColors.7.text=Farbe Nr. 7
-Colors.lblColors.8.text=Farbe Nr. 8
-Colors.lblColors.9.text=Farbe Nr. 9
-Colors.lblColors.0.tooltip=Die gewählte Farbe Nr. 0.
-Colors.lblColors.1.tooltip=Die gewählte Farbe Nr. 1.
-Colors.lblColors.2.tooltip=Die gewählte Farbe Nr. 2.
-Colors.lblColors.3.tooltip=Die gewählte Farbe Nr. 3.
-Colors.lblColors.4.tooltip=Die gewählte Farbe Nr. 4.
-Colors.lblColors.5.tooltip=Die gewählte Farbe Nr. 5.
-Colors.lblColors.6.tooltip=Die gewählte Farbe Nr. 6.
-Colors.lblColors.7.tooltip=Die gewählte Farbe Nr. 7.
-Colors.lblColors.8.tooltip=Die gewählte Farbe Nr. 8.
-Colors.lblColors.9.tooltip=Die gewählte Farbe Nr. 9.
+Colors.lblColors.*.text=Farbe Nr. [#]
+Colors.lblColors.*.tooltip=Die gewählte Farbe Nr. [#].
 Colors.colors.*.tooltip=Zum Bearbeiten: Anklicken ...
 Colors.btnOK.text=Speichern
 Colors.btnOK.tooltip=Speichern der gewählten Einstellungen.

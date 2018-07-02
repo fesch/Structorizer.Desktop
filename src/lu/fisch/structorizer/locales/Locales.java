@@ -43,7 +43,8 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
  *      Kay Gürtzig     2016.02.03  Issue #340: registration without immediate update launch
  *      Kay Gürtzig     2017.02.27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
- *      Kay Gürtzig     2017.10.02  Enh. #415: The title localization wasn't done for JFrame offsprings 
+ *      Kay Gürtzig     2017.10.02  Enh. #415: The title localization wasn't done for JFrame offsprings
+ *      Kay Gürtzig     2018.07.02  KGU#245: Substrings "[#]" may be replaced by the actual index in an array target 
  *
  ******************************************************************************************************
  *
@@ -539,8 +540,10 @@ public class Locales {
 //    			e.printStackTrace();
 //    		}
 //    	}
-        StringList pieces;
+        // The parts on both sides of the equality sign (compound key and string value)
         StringList parts;
+    	// The pieces of the split key (i.e. parts[0])
+        StringList pieces;
         
         for (int i = 0; i < lines.count(); i++) {
             parts = StringList.explodeFirstOnly(lines.get(i), "=");
@@ -559,7 +562,7 @@ public class Locales {
 
                 // check for conditions
                 String key = parts.get(0);
-                if(key.contains("[") && key.endsWith("]"))
+                if (key.contains("[") && key.endsWith("]"))
                 {
                     // cut of last "]"
                     key=key.substring(0, key.length()-1);
@@ -664,7 +667,11 @@ public class Locales {
                                     	String piece3 = (pieces.count()>3) ? pieces.get(3) : "0";
                                     	for (int index = ixStart; index < ixEnd; index++) {
                                     		Object tgt = Array.get(target, index);
-                                    		this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, parts);
+                                    		// START KGU#245 2018-07-02: New mechanism to insert the index into the text
+                                    		//this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, parts.get(1));
+                                    		this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, 
+                                    				parts.get(1).replace("[#]", Integer.toString(index)));
+                                    		// END KGU#245 2018-07-02
                                     	}
                                     	// Target exhausted
                                     	target = null;
@@ -765,7 +772,7 @@ public class Locales {
 //                                    }
 //                                }
                                 String piece3 = (pieces.count() > 3) ? pieces.get(3) : "0";
-                                this.setFieldProperty(target, fieldClass, piece2, piece3, parts);
+                                this.setFieldProperty(target, fieldClass, piece2, piece3, parts.get(1));
                                 // END KGU#351 2017-02-26
                                 // END KGU#156 2016-03-13
                             } catch (Exception e) {
@@ -791,32 +798,32 @@ public class Locales {
     }
     
     // START KGU#351 2017-02-26: Outsourced from setLocale(Component, StringList)
-    private void setFieldProperty(Object _target, Class<?> _fieldClass, String _property, String _piece3, StringList _parts) throws Exception
+    private void setFieldProperty(Object _target, Class<?> _fieldClass, String _property, String _piece3, String _text) throws Exception
     {
     	if (_target == null) {
     		return;
     	}
         if (_property.equals("text")) {
             Method method = _fieldClass.getMethod("setText", new Class[]{String.class});
-            method.invoke(_target, new Object[]{_parts.get(1)});
+            method.invoke(_target, new Object[]{_text});
         } else if (_property.equals("tooltip")) {
             Method method = _fieldClass.getMethod("setToolTipText", new Class[]{String.class});
-            method.invoke(_target, new Object[]{_parts.get(1)});
+            method.invoke(_target, new Object[]{_text});
         } else if (_property.equals("border")) {
             Method method = _fieldClass.getMethod("setBorder", new Class[]{Border.class});
-            method.invoke(_target, new Object[]{new TitledBorder(_parts.get(1))});
+            method.invoke(_target, new Object[]{new TitledBorder(_text)});
         } else if (_property.equals("tab")) {
             Method method = _fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
-            method.invoke(_target, new Object[]{Integer.valueOf(_piece3), _parts.get(1)});
+            method.invoke(_target, new Object[]{Integer.valueOf(_piece3), _text});
         } else if (_property.equals("header")) {
             Method method = _fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
-            method.invoke(_target, new Object[]{Integer.valueOf(_piece3), _parts.get(1)});
+            method.invoke(_target, new Object[]{Integer.valueOf(_piece3), _text});
         } // START KGU#184 2016-04-24: Enh. #173 - new mnemonic support (only works from Java 1.7 on)
         else if (_property.equals("mnemonic")) {
             Method method = _fieldClass.getMethod("setMnemonic", new Class[]{int.class});
             // START KGU 2016-12-07: Issue #304 We must check the availability of a Java 1.7 method.
             try {
-                int keyCode = KeyEvent.getExtendedKeyCodeForChar(_parts.get(1).toLowerCase().charAt(0));
+                int keyCode = KeyEvent.getExtendedKeyCodeForChar(_text.toLowerCase().charAt(0));
                 if (keyCode != KeyEvent.VK_UNDEFINED) {
                     method.invoke(_target, new Object[]{Integer.valueOf(keyCode)});
                 }
@@ -835,7 +842,7 @@ public class Locales {
             if (item != null) {
             	Class<?> itemClass = item.getClass();
             	method = itemClass.getMethod("setText", new Class[]{String.class});
-            	method.invoke(item, new Object[]{_parts.get(1)});
+            	method.invoke(item, new Object[]{_text});
             }
         }
         // END KGU#156 2016-03-13

@@ -54,10 +54,42 @@
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu Debug, duplicate mnemonics (p) modified
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
  *      Comment:	
+ *          >>>         indicates the end of the header
+ *          ----->      indicates the start of a top-level section
+ *          -----[      indicates the start of a second-level section
+ *
+ *      The texts may contain three kinds of place holders that should be preserved at
+ *      appropriate positions in the translations:
+ *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
+ *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
+ *        element names. The localized element names are defined in (and retrieved
+ *        from) section / tab "Elements" with the following convention, where the
+ *        respective short and long place holders are equivalent (the short one is
+ *        more performant, the long one more readable):
+ *  
+ *        short long                    referenced key sequence
+ *        @a  = @{Instruction}      ->  ElementNames.localizedNames.0.text
+ *        @b  = @{Alternative}      ->  ElementNames.localizedNames.1.text
+ *        @c  = @{Case}             ->  ElementNames.localizedNames.2.text
+ *        @d  = @{For}              ->  ElementNames.localizedNames.3.text
+ *        @e  = @{For.COUNTER}      ->  ElementNames.localizedNames.4.text
+ *        @f  = @{For.TRAVERSAL}    ->  ElementNames.localizedNames.5.text
+ *        @g  = @{While}            ->  ElementNames.localizedNames.6.text
+ *        @h  = @{Repeat}           ->  ElementNames.localizedNames.7.text
+ *        @i  = @{Forever}          ->  ElementNames.localizedNames.8.text
+ *        @j  = @{Call}             ->  ElementNames.localizedNames.9.text
+ *        @k  = @{Jump}             ->  ElementNames.localizedNames.10.text
+ *        @l  = @{Parallel}         ->  ElementNames.localizedNames.11.text
+ *        @m  = @{Root}             ->  ElementNames.localizedNames.12.text
+ *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
+ *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
+ *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
  *
  ******************************************************************************************************/
 >>>
@@ -366,26 +398,8 @@ FontChooser.btnOK.tooltip=Zatwierdź swój wybór.
 
 -----[ Colors ]-----
 Colors.title=Color Preferences
-Colors.lblColors.0.text=Kolor 0
-Colors.lblColors.1.text=Kolor 1
-Colors.lblColors.2.text=Kolor 2
-Colors.lblColors.3.text=Kolor 3
-Colors.lblColors.4.text=Kolor 4
-Colors.lblColors.5.text=Kolor 5
-Colors.lblColors.6.text=Kolor 6
-Colors.lblColors.7.text=Kolor 7
-Colors.lblColors.8.text=Kolor 8
-Colors.lblColors.9.text=Kolor 9
-Colors.lblColors.0.tooltip=Wybrany przez Ciebie kolor nr 0.
-Colors.lblColors.1.tooltip=Wybrany przez Ciebie kolor nr 1.
-Colors.lblColors.2.tooltip=Wybrany przez Ciebie kolor nr 2.
-Colors.lblColors.3.tooltip=Wybrany przez Ciebie kolor nr 3.
-Colors.lblColors.4.tooltip=Wybrany przez Ciebie kolor nr 4.
-Colors.lblColors.5.tooltip=Wybrany przez Ciebie kolor nr 5.
-Colors.lblColors.6.tooltip=Wybrany przez Ciebie kolor nr 6.
-Colors.lblColors.7.tooltip=Wybrany przez Ciebie kolor nr 7.
-Colors.lblColors.8.tooltip=Wybrany przez Ciebie kolor nr 8.
-Colors.lblColors.9.tooltip=Wybrany przez Ciebie kolor nr 9.
+Colors.lblColors.*.text=Kolor [#]
+Colors.lblColors.*.tooltip=Wybrany przez Ciebie kolor nr [#].
 Colors.colors.*.tooltip=Kliknij, żeby edytować ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Zatwierdź swój wybór.
