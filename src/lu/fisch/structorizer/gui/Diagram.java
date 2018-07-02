@@ -154,7 +154,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble in openNsdOrArr()
  *      Kay Gürtzig     2018.06.11      Issue #143: Comment popup off on opening print preview
  *      Kay Gürtzig     2018.06.27      Enh. #552: Mechanism for global decisions on serial actions (save, overwrite)
- *                                      Usability of the parser choice dialog for code import improved.  
+ *                                      Usability of the parser choice dialog for code import improved.
+ *      Kay Gürtzig     2018.07.02      KGU#245: color preferences modified to work with arrays
  *
  ******************************************************************************************************
  *
@@ -5797,23 +5798,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void colorsNSD()
 	{
-		Colors colors = new Colors(NSDControl.getFrame());
+		// START KGU#245 2018-07-02: Converted to arrays
+		//Colors colors = new Colors(NSDControl.getFrame());
+		Colors colors = new Colors(NSDControl.getFrame(), Element.colors.length);
+		// END KGU#245 2018-07-02
 		Point p = getLocationOnScreen();
 		colors.setLocation(Math.round(p.x+(getVisibleRect().width-colors.getWidth())/2+this.getVisibleRect().x),
 						   Math.round(p.y+(getVisibleRect().height-colors.getHeight())/2+this.getVisibleRect().y));
 
 		// set fields
-		colors.color0.setBackground(Element.color0);
-		colors.color1.setBackground(Element.color1);
-		colors.color2.setBackground(Element.color2);
-		colors.color3.setBackground(Element.color3);
-		colors.color4.setBackground(Element.color4);
-		colors.color5.setBackground(Element.color5);
-		colors.color6.setBackground(Element.color6);
-		colors.color7.setBackground(Element.color7);
-		colors.color8.setBackground(Element.color8);
-		colors.color9.setBackground(Element.color9);
-
+		// START KGU#245 2018-07-02: Converted to arrays
+//		colors.color0.setBackground(Element.color0);
+//		colors.color1.setBackground(Element.color1);
+//		colors.color2.setBackground(Element.color2);
+//		colors.color3.setBackground(Element.color3);
+//		colors.color4.setBackground(Element.color4);
+//		colors.color5.setBackground(Element.color5);
+//		colors.color6.setBackground(Element.color6);
+//		colors.color7.setBackground(Element.color7);
+//		colors.color8.setBackground(Element.color8);
+//		colors.color9.setBackground(Element.color9);
+		for (int i = 0; i < Element.colors.length; i++) {
+			colors.colors[i].setBackground(Element.colors[i]);
+		}
+		// END KGU#245 2018-07-02
+		
 		colors.pack();
 		colors.setVisible(true);
 
@@ -5821,16 +5830,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (colors.OK) {
 		// END KGU#393 2017-05-09		
 			// get fields
-			Element.color0=colors.color0.getBackground();
-			Element.color1=colors.color1.getBackground();
-			Element.color2=colors.color2.getBackground();
-			Element.color3=colors.color3.getBackground();
-			Element.color4=colors.color4.getBackground();
-			Element.color5=colors.color5.getBackground();
-			Element.color6=colors.color6.getBackground();
-			Element.color7=colors.color7.getBackground();
-			Element.color8=colors.color8.getBackground();
-			Element.color9=colors.color9.getBackground();
+			// START KGU#245 2018-07-02: Converted to arrays
+//			Element.color0=colors.color0.getBackground();
+//			Element.color1=colors.color1.getBackground();
+//			Element.color2=colors.color2.getBackground();
+//			Element.color3=colors.color3.getBackground();
+//			Element.color4=colors.color4.getBackground();
+//			Element.color5=colors.color5.getBackground();
+//			Element.color6=colors.color6.getBackground();
+//			Element.color7=colors.color7.getBackground();
+//			Element.color8=colors.color8.getBackground();
+//			Element.color9=colors.color9.getBackground();
+			for (int i = 0; i < Element.colors.length; i++) {
+				Element.colors[i] = colors.colors[i].getBackground();
+			}
+			// END KGU#245 2018-07-02
 
 			NSDControl.updateColors();
 

@@ -372,7 +372,7 @@ public class Structorizer
 	private static String[] synopsis = {
 		"Structorizer [NSDFILE]",
 		"Structorizer -x GENERATOR [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
-		"Structorizer -p [pas|pascal] [-f] [-v LOGPATH] [-e CHARSET] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -p [PARSER] [-f] [-v LOGPATH] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h"
 	};
 	// END KGU#187 2016-05-02

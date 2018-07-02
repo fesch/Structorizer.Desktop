@@ -340,16 +340,7 @@ Editor.btnFontDown.tooltip=Diminuir o tamanho da fonte.
 Editor.btnAbout.tooltip=Mostrar informações sobre Structorizer.
 
 // colors
-Editor.btnColor0.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor1.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor2.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor3.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor4.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor5.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor6.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor7.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor8.tooltip=Colorir o elemento selecionado com esta cor.
-Editor.btnColor9.tooltip=Colorir o elemento selecionado com esta cor.
+Editor.btnColors.*.tooltip=Colorir o elemento selecionado com esta cor.
 
 // collapsing
 Editor.btnCollapse.tooltip=Colapsar o elemento selecionado.
@@ -498,36 +489,27 @@ FontChooser.btnOK.tooltip=Confirmar escolha.
 
 -----[ Colors ]-----
 Colors.title=Preferências de cor
-Colors.lblColor0.text=Cor 0
-Colors.lblColor1.text=Cor 1
-Colors.lblColor2.text=Cor 2
-Colors.lblColor3.text=Cor 3
-Colors.lblColor4.text=Cor 4
-Colors.lblColor5.text=Cor 5
-Colors.lblColor6.text=Cor 6
-Colors.lblColor7.text=Cor 7
-Colors.lblColor8.text=Cor 8
-Colors.lblColor9.text=Cor 9
-Colors.lblColor0.tooltip=Escolha da cor 0.
-Colors.lblColor1.tooltip=Escolha da cor 1.
-Colors.lblColor2.tooltip=Escolha da cor 2.
-Colors.lblColor3.tooltip=Escolha da cor 3.
-Colors.lblColor4.tooltip=Escolha da cor 4.
-Colors.lblColor5.tooltip=Escolha da cor 5.
-Colors.lblColor6.tooltip=Escolha da cor 6.
-Colors.lblColor7.tooltip=Escolha da cor 7.
-Colors.lblColor8.tooltip=Escolha da cor 8.
-Colors.lblColor9.tooltip=Escolha da cor 9.
-Colors.color0.tooltip=Clicar para editar ...
-Colors.color1.tooltip=Clicar para editar ...
-Colors.color2.tooltip=Clicar para editar ...
-Colors.color3.tooltip=Clicar para editar ...
-Colors.color4.tooltip=Clicar para editar ...
-Colors.color5.tooltip=Clicar para editar ...
-Colors.color6.tooltip=Clicar para editar ...
-Colors.color7.tooltip=Clicar para editar ...
-Colors.color8.tooltip=Clicar para editar ...
-Colors.color9.tooltip=Clicar para editar ...
+Colors.lblColors.0.text=Cor 0
+Colors.lblColors.1.text=Cor 1
+Colors.lblColors.2.text=Cor 2
+Colors.lblColors.3.text=Cor 3
+Colors.lblColors.4.text=Cor 4
+Colors.lblColors.5.text=Cor 5
+Colors.lblColors.6.text=Cor 6
+Colors.lblColors.7.text=Cor 7
+Colors.lblColors.8.text=Cor 8
+Colors.lblColors.9.text=Cor 9
+Colors.lblColors.0.tooltip=Escolha da cor 0.
+Colors.lblColors.1.tooltip=Escolha da cor 1.
+Colors.lblColors.2.tooltip=Escolha da cor 2.
+Colors.lblColors.3.tooltip=Escolha da cor 3.
+Colors.lblColors.4.tooltip=Escolha da cor 4.
+Colors.lblColors.5.tooltip=Escolha da cor 5.
+Colors.lblColors.6.tooltip=Escolha da cor 6.
+Colors.lblColors.7.tooltip=Escolha da cor 7.
+Colors.lblColors.8.tooltip=Escolha da cor 8.
+Colors.lblColors.9.tooltip=Escolha da cor 9.
+Colors.colors.*.tooltip=Clicar para editar ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Confirmar escolha.
 

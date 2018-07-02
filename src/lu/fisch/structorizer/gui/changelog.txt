@@ -54,6 +54,8 @@ Current development version: 3.28-05 (2018-07-02)
 - 05: Set of smaller element icons for the tree view in Find&Replace <2>
 - 05: Enh. #553: Code import now with monitor dialog and cancel option <2>
 - 05: Bugfix #554: Batch code import didn't work (parser instantiation bug) <2>
+- 05: Bugfix KGU#539: the operation count of CALL elements was incremented <2> 
+- 05: Bugfix KGU#540: Find & Replace didn't reset on element filter changes <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

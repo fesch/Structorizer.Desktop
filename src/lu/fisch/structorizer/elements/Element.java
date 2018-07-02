@@ -89,6 +89,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: Method access modifications to support hiding of declarations
  *      Kay Gürtzig     2018.01.21      Enh. #490: Methods for replacement of DiagramController aliases
  *      Kay Gürtzig     2018.02.02      Bugfix #501: Methods setAliasText() corrected (Case and Parallel elements)
+ *      Kay Gürtzig     2018.07.02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
  *
  ******************************************************************************************************
  *
@@ -379,16 +380,30 @@ public abstract class Element {
 	// END KGU#480 2018-01-21
 
 	// some colors
-	public static Color color0 = Color.decode("0xFFFFFF");
-	public static Color color1 = Color.decode("0xFF8080");
-	public static Color color2 = Color.decode("0xFFFF80");
-	public static Color color3 = Color.decode("0x80FF80");
-	public static Color color4 = Color.decode("0x80FFFF");
-	public static Color color5 = Color.decode("0x0080FF");
-	public static Color color6 = Color.decode("0xFF80C0");
-	public static Color color7 = Color.decode("0xC0C0C0");
-	public static Color color8 = Color.decode("0xFF8000");
-	public static Color color9 = Color.decode("0x8080FF");
+	// START KGU#245 2018-02-07
+//	public static Color color0 = Color.decode("0xFFFFFF");
+//	public static Color color1 = Color.decode("0xFF8080");
+//	public static Color color2 = Color.decode("0xFFFF80");
+//	public static Color color3 = Color.decode("0x80FF80");
+//	public static Color color4 = Color.decode("0x80FFFF");
+//	public static Color color5 = Color.decode("0x0080FF");
+//	public static Color color6 = Color.decode("0xFF80C0");
+//	public static Color color7 = Color.decode("0xC0C0C0");
+//	public static Color color8 = Color.decode("0xFF8000");
+//	public static Color color9 = Color.decode("0x8080FF");
+	public final static Color[] colors = {
+			Color.decode("0xFFFFFF"),
+			Color.decode("0xFF8080"),
+			Color.decode("0xFFFF80"),
+			Color.decode("0x80FF80"),
+			Color.decode("0x80FFFF"),
+			Color.decode("0x0080FF"),
+			Color.decode("0xFF80C0"),
+			Color.decode("0xC0C0C0"),
+			Color.decode("0xFF8000"),
+			Color.decode("0x8080FF")
+	};
+	// END KGU#245 2018-02-07
 
 	// text "constants"
 	public static String preAlt = "(?)";
@@ -475,12 +490,16 @@ public abstract class Element {
 	// END KGU#425 2017-09-29
 
 	// START KGU#156 2016-03-10; Enh. #124
-	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
-	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
-	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
+	/** Maximum number of executions of any element while runEventTracking has been on */
+	protected static int maxExecCount = 0;
+	/** Maximum number of operation steps carried out directly per element */
+	protected static int maxExecStepCount = 0;
+	/** Maximum combined number of directly and indirectly performed operation steps */
+	protected static int maxExecTotalCount = 0;
 	// END KGU156 2016-03-10
 	// START KGU#477 2017-12-10: Enh. #487 - mode E_HIDE_DECL required an additional max count
-	protected static int maxExecStepsEclCount = 0;	// Maximum combined number of performed steps including aggregated eclipsed declarations 
+	/** Maximum combined number of performed steps including aggregated eclipsed declarations */
+	protected static int maxExecStepsEclCount = 0; 
 	// END KGU#477 2017-12-10
 	// START KGU#225 2016-07-28: Bugfix #210
 	protected static Vector<Integer> execCounts = new Vector<Integer>();
@@ -510,17 +529,24 @@ public abstract class Element {
 	public Element parent = null;
 	public boolean selected = false;
 	// START KGU#41 2015-10-13: Execution mark had to be separated from selection
-	public boolean executed = false;	// Is set while being executed
+	/** Is set while being executed */
+	public boolean executed = false;
 	// END KGU#41 2015-10-13
-	public boolean waited = false;		// Is set while a substructure Element is under execution
+	/** Is set while a substructure Element is under execution */
+	public boolean waited = false;
 	// START KGU#117 2016-03-06: Enh. #77 - for test coverage mode
-	public boolean simplyCovered = false;	// Flag indicates shallow test coverage
-	public boolean deeplyCovered = false;	// Flag indicates full test coverage
+	/** Flag indicates shallow test coverage */
+	public boolean simplyCovered = false;
+	/** Flag indicates full test coverage */
+	public boolean deeplyCovered = false;
 	// END KGU#117 2016-03-06
 	// START KGU#156 2016-03-10; Enh. #124
-	//protected int execCount = 0;		// Number of times this was executed while runEventTracking has been on
-	protected int execStepCount = 0;	// Number of instructions carried out directly by this element
-	protected int execSubCount;			// Number of instructions carried out by substructures of this element
+	///** Number of times this was executed while runEventTracking has been on */
+	//protected int execCount = 0;
+	/** Number of instructions carried out directly by this element */
+	protected int execStepCount = 0;
+	/** Number of instructions carried out by substructures of this element */
+	protected int execSubCount;
 	// END KGU#156 2016-03-11
 	// START KGU#225 2016-07-28: Bugfix #210
 	protected int execCountIndex = -1;
@@ -548,13 +574,18 @@ public abstract class Element {
 
 	// used for drawing
 	// START KGU#136 2016-02-25: Bugfix #97 - New separate 0-based Rect for prepareDraw()
-	protected Rect rect = new Rect();			// bounds aligned to fit in the context, no longer public
-	protected Rect rect0 = new Rect();			// minimum bounds for stand-alone representation
-	protected Point topLeft = new Point(0, 0);	// upper left corner coordinate offset wrt drawPoint
+	/** bounds aligned to fit in the context, no longer public */
+	protected Rect rect = new Rect();
+	/** minimum bounds for stand-alone representation */
+	protected Rect rect0 = new Rect();
+	/** upper left corner coordinate offset wrt drawPoint */
+	protected Point topLeft = new Point(0, 0);
 	// END KGU#136 2016-03-01
 	// START KGU#64 2015-11-03: Is to improve drawing performance
-	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
-	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
+	/** Will be set and used by prepareDraw() (avoids repeated evaluation) - to be reset on changes */
+	protected boolean isRectUpToDate = false;
+	/** Strings to be highlighted in the element text (lazy initialisation) */
+	private static StringList specialSigns = null;
 
 	// START KGU#261 2017-01-19: Enh. #259 prepare the variable type map
 	private static long lastId = 0;
@@ -2053,16 +2084,21 @@ public abstract class Element {
 			String fontName = ini.getProperty("Name","Dialog");	// legacy property name, will be overridden by the newer "Font" if present
 			setFont(new Font(ini.getProperty("Font",fontName), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
 			// colors
-			color0=Color.decode("0x"+ini.getProperty("color0","FFFFFF"));
-			color1=Color.decode("0x"+ini.getProperty("color1","FF8080"));
-			color2=Color.decode("0x"+ini.getProperty("color2","FFFF80"));
-			color3=Color.decode("0x"+ini.getProperty("color3","80FF80"));
-			color4=Color.decode("0x"+ini.getProperty("color4","80FFFF"));
-			color5=Color.decode("0x"+ini.getProperty("color5","0080FF"));
-			color6=Color.decode("0x"+ini.getProperty("color6","FF80C0"));
-			color7=Color.decode("0x"+ini.getProperty("color7","C0C0C0"));
-			color8=Color.decode("0x"+ini.getProperty("color8","FF8000"));
-			color9=Color.decode("0x"+ini.getProperty("color9","8080FF"));
+			// START KGU#245 2018-07-02
+//			color0=Color.decode("0x"+ini.getProperty("color0","FFFFFF"));
+//			color1=Color.decode("0x"+ini.getProperty("color1","FF8080"));
+//			color2=Color.decode("0x"+ini.getProperty("color2","FFFF80"));
+//			color3=Color.decode("0x"+ini.getProperty("color3","80FF80"));
+//			color4=Color.decode("0x"+ini.getProperty("color4","80FFFF"));
+//			color5=Color.decode("0x"+ini.getProperty("color5","0080FF"));
+//			color6=Color.decode("0x"+ini.getProperty("color6","FF80C0"));
+//			color7=Color.decode("0x"+ini.getProperty("color7","C0C0C0"));
+//			color8=Color.decode("0x"+ini.getProperty("color8","FF8000"));
+//			color9=Color.decode("0x"+ini.getProperty("color9","8080FF"));
+			for (int i = 0; i < colors.length; i++) {
+				colors[i] = Color.decode("0x"+ini.getProperty("color" + i,"FFFFFF"));
+			}
+			// END KGU#245 2018-07-02
 		}
 		catch (Exception e)
 		{
@@ -2102,16 +2138,21 @@ public abstract class Element {
 			// END KGU#264 2016-09-28
 			ini.setProperty("Size",Integer.toString(getFont().getSize()));
 			// colors
-			ini.setProperty("color0", getHexColor(color0));
-			ini.setProperty("color1", getHexColor(color1));
-			ini.setProperty("color2", getHexColor(color2));
-			ini.setProperty("color3", getHexColor(color3));
-			ini.setProperty("color4", getHexColor(color4));
-			ini.setProperty("color5", getHexColor(color5));
-			ini.setProperty("color6", getHexColor(color6));
-			ini.setProperty("color7", getHexColor(color7));
-			ini.setProperty("color8", getHexColor(color8));
-			ini.setProperty("color9", getHexColor(color9));
+			// START KGU#245 2018-07-02
+//			ini.setProperty("color0", getHexColor(color0));
+//			ini.setProperty("color1", getHexColor(color1));
+//			ini.setProperty("color2", getHexColor(color2));
+//			ini.setProperty("color3", getHexColor(color3));
+//			ini.setProperty("color4", getHexColor(color4));
+//			ini.setProperty("color5", getHexColor(color5));
+//			ini.setProperty("color6", getHexColor(color6));
+//			ini.setProperty("color7", getHexColor(color7));
+//			ini.setProperty("color8", getHexColor(color8));
+//			ini.setProperty("color9", getHexColor(color9));
+			for (int i = 0; i < colors.length; i++) {
+				ini.setProperty("color" + i, getHexColor(colors[i]));
+			}
+			// END KGU#245 2018-07-02
 
 			ini.save();
 		}
