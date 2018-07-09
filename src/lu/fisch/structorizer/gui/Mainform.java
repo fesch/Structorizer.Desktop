@@ -69,7 +69,8 @@ package lu.fisch.structorizer.gui;
  *                                      Issue #455: Multiple redrawing of diagram avoided in loadFromIni().
  *      Kay Gürtzig     2018.02.09      Bugfix #507 had revealed an event queue issue in loadFromIni() on
  *                                      loading  preferences from explicitly chosen ini file. This is fixed now
- *      Kay Gürtzig     2018.06.25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart 
+ *      Kay Gürtzig     2018.06.25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart
+ *      Kay Gürtzig     2018.07.09      Bugfix #555: Failing restoration of the previous comment popup status
  *
  ******************************************************************************************************
  *
@@ -612,7 +613,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				if (ini.getProperty("showComments","1").equals("0")) // default = 1
 				{
 					//diagram.setComments(false);
-					Element.E_SHOWCOMMENTS = true;
+					// START KGU#549 2018-07-09: Bugfix #555 - the mode of the last session wasn't restored anymore 
+					//Element.E_SHOWCOMMENTS = true;
+					Element.E_SHOWCOMMENTS = false;
+					// END KGU#549 2018-07-09
 				}
 				// START KGU#227 2016-08-01: Enh. #128
 				//diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0

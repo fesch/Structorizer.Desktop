@@ -156,6 +156,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.06.27      Enh. #552: Mechanism for global decisions on serial actions (save, overwrite)
  *                                      Usability of the parser choice dialog for code import improved.
  *      Kay Gürtzig     2018.07.02      KGU#245: color preferences modified to work with arrays
+ *      Kay Gürtzig     2018.07.09      KGU#548: The import option dialog now retains the plugin for specific options
  *
  ******************************************************************************************************
  *
@@ -6550,6 +6551,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));            
             // START KGU#416 2017-06-20: Enh. #354,#357
             if (parserPlugins != null) {
+                // START KGU#548 2018-07-09: Restore the last selected plugin choice
+                iod.cbOptionPlugins.setSelectedItem(ini.getProperty("impPluginChoice", ""));
+                // END KGU#548 2018-07-09
                 for (int i = 0; i < parserPlugins.size(); i++) {
                 	GENPlugin plugin = parserPlugins.get(i);
                     HashMap<String, String> optionValues = new HashMap<String, String>();
@@ -6593,6 +6597,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 	}
                 }
             	// END KGU#416 2017-06-20
+                // START KGU#548 2018-07-09: Restore the last selected plugin choice
+                ini.setProperty("impPluginChoice", (String)iod.cbOptionPlugins.getSelectedItem());
+                // END KGU#548 2018-07-09
                 ini.save();
             }
         } 

@@ -50,6 +50,7 @@
  *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
  *      Kay Gürtzig     2018.06.25      Issue #551: No message informing about version check option on WebStart
  *      Kay Gürtzig     2018.07.01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
+ *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *
  ******************************************************************************************************
  *
@@ -173,7 +174,7 @@ public class Structorizer
 					if (args[i+1].equalsIgnoreCase("pas") || args[i+1].equalsIgnoreCase("pascal")) {
 						parser = "D7Parser";
 					}
-					else if (args[i+1].startsWith("-")) {
+					else if (!args[i+1].startsWith("-")) {
 						// doesn't seem to be an option, so it might be a default parser name...
 						parser = args[i+1];
 					}
@@ -498,17 +499,22 @@ public class Structorizer
 		
 		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
 
+		Vector<GENPlugin> plugins = null;
 		String fileExt = null;
 		// START KGU#354 2017-03-10: Enh. #354 configurable parser plugins
 		// Initialize the mapping file extensions -> CodeParser
 		// We just (ab)use some class residing in package gui to fetch the plugin configuration 
 		BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("parsers.xml"));
-		GENParser genp = new GENParser();
-		Vector<GENPlugin> plugins = genp.parse(buff);
-		try { buff.close();	} catch (IOException e) {}
+		try {
+			GENParser genp = new GENParser();
+			plugins = genp.parse(buff);
+		}
+		finally {
+			try { buff.close();	} catch (IOException e) {}
+		}
 		HashMap<CodeParser, GENPlugin> parsers = new HashMap<CodeParser, GENPlugin>();
 		//String parsClassName = null;
-		CodeParser preferredParser = null;
+		CodeParser specifiedParser = null;
 		for (int i=0; i < plugins.size(); i++)
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
@@ -527,8 +533,10 @@ public class Structorizer
 					usage = usage.substring(0, usage.length()-2) + " for " + parser.getDialogTitle();
 				}
 				// START KGU#538 2018-07-01: Bugfix #554
-				if (_parserName.equalsIgnoreCase(plugin.getKey()) || _parserName.equalsIgnoreCase(parser.getDescription())) {
-					preferredParser = parser;
+				if (_parserName.equalsIgnoreCase(plugin.getKey()) 
+						|| _parserName.equalsIgnoreCase(parser.getDialogTitle())
+						|| _parserName.equalsIgnoreCase(plugin.title)) {
+					specifiedParser = parser;
 				}
 				// END KGU#538 2018-07-01
 			}
@@ -545,8 +553,12 @@ public class Structorizer
 				e.printStackTrace();
 			}
 		}
-
 		// END KGU#354 2017-03-10
+		// START KGU#538 2018-07-03: Bugfix #554
+		if (!_parserName.equals("*") && specifiedParser == null) {
+			System.err.println("*** No parser \"" + _parserName+ "\" found! Trying standard parsers.");
+		}
+		// END KGU#538 2018-07-03
 		
 		// START KGU#193 2016-05-09: Output file name specification was ignored, option f had to be tuned.
 		boolean overwrite = _options.indexOf("f") >= 0 && 
@@ -563,6 +575,11 @@ public class Structorizer
 		// END KGU#538 2018-07-01
 		for (String filename : _filenames)
 		{
+			// START KGU#538 2018-07-04: Bugfix #554 - the 1st "filename" might be the parser name
+			if (specifiedParser != null && filename.equals(_parserName)) {
+				continue;
+			}
+			// END KGU#538 2018-07-04
 			// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
 			//Root rootNew = null;
 			List<Root> newRoots = new LinkedList<Root>();
@@ -573,35 +590,38 @@ public class Structorizer
 			// START KGU#538 2018-07-01: Bugfix #554
 			suitedParsers.clear();
 			// END KGU#538 2018-07-01
-			CodeParser parser = null;
-			// START KGU#416 2017-07-02: Enh. #354, #409 Parser retrieval combined with option retrieval
-			for (Entry<CodeParser, GENPlugin> entry: parsers.entrySet()) {
-				if (entry.getKey().accept(importFile)) {
-					// START KGU#538 2018-07-01: Bugfix #554
-					//parser = cloneWithPluginOptions(entry.getValue());
-					//break;
-					// If the preferred parser is among the suited ones, select it
-					if (entry.getKey() == preferredParser) {
-						parser = preferredParser;
-						break;
+			CodeParser parser = specifiedParser;
+			// If the parser wasn't specified explicitly then search for suited parsers
+			if (parser == null) {
+				// START KGU#416 2017-07-02: Enh. #354, #409 Parser retrieval combined with option retrieval
+				for (Entry<CodeParser, GENPlugin> entry: parsers.entrySet()) {
+					if (entry.getKey().accept(importFile)) {
+						// START KGU#538 2018-07-01: Bugfix #554
+						//parser = cloneWithPluginOptions(entry.getValue());
+						//break;
+						// If the preferred parser is among the suited ones, select it
+						if (entry.getKey() == specifiedParser) {
+							parser = specifiedParser;
+							break;
+						}
+						suitedParsers.add(entry.getKey());
+						// END KGU#538 2018-07-01
 					}
-					suitedParsers.add(entry.getKey());
-					// END KGU#538 2018-07-01
 				}
+				// START KGU#538 2018-07-01: Bugfix #554
+				if (parser == null) {
+					parser = disambiguateParser(suitedParsers, filename);
+				}
+				// END KGU#538 2018-07-01
+				// END KGU#416 2017-07-02
+				if (parser == null) {
+					System.out.println("--- File \"" + filename + "\" skipped (not accepted by any parser)!");
+					continue;
+				}
+				// END KGU#354 2017-03-09
 			}
 			// START KGU#538 2018-07-01: Bugfix #554
-			if (parser == null) {
-				parser = disambiguateParser(suitedParsers, filename);
-			}
-			// END KGU#538 2018-07-01
-			// END KGU#416 2017-07-02
-			if (parser == null) {
-				System.err.println("File \"" + filename + "\" skipped (not accepted by any parser)!");
-				continue;
-			}
-			// END KGU#354 2017-03-09
-
-			// START KGU#538 2018-07-01: Bugfix #554
+			System.out.println("--- Processing file \"" + filename + "\" with " + parser.getClass().getSimpleName() + " ...");
 			// Unfortunately, CodeParsers aren't reusable, so we better create a new instance in any case.
 			parser = cloneWithPluginOptions(parsers.get(parser), _settingsFileName);
 			// END KGU#538 2018-07-01
@@ -613,7 +633,7 @@ public class Structorizer
 			// END KGU#194 2016-05-04
 			if (!parser.error.isEmpty())
 			{
-				System.err.println("Parser error in file \"" + filename + "\":\n" + parser.error);
+				System.err.println("*** Parser error in file \"" + filename + "\":\n" + parser.error);
 				continue;
 			}
 
@@ -699,10 +719,10 @@ public class Structorizer
 				}
 			}
 			catch (UnsupportedEncodingException e) {
-				System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
+				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
 			catch (IOException e) {
-				System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
+				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
 		}
 		return overwrite;
@@ -774,6 +794,7 @@ public class Structorizer
 		}
 		Ini ini = Ini.getInstance();
 		if (!plugin.options.isEmpty()) {
+			System.out.println("Retrieved parser-specific options:");
 			try {
 				// START KGU#538 2018-07-01: Issue #554 - a different properties file might be requested
 				//ini.load();
@@ -821,16 +842,19 @@ public class Structorizer
 					}
 				}
 				catch (NumberFormatException ex) {
-					System.err.println("Structorizer.CloneWithPluginSpecificOptions("
+					System.err.println("*** Structorizer.CloneWithPluginSpecificOptions("
 							+ plugin.getKey()
 							+ "): " + ex.getMessage() + " on converting \""
 							+ valueStr + "\" to " + type + " for " + optionKey);
 				}
 			}
-			System.out.println(optionKey + " = " + value);
+			System.out.println(" + " + optionKey + " = " + value);
 			if (value != null) {
 				parser.setPluginOption(optionKey, value);
 			}
+		}
+		if (!plugin.options.isEmpty()) {
+			System.out.println("");
 		}
 		return parser;
 	}
@@ -859,7 +883,7 @@ public class Structorizer
 			System.out.print( (i>0 ? " |" : "") + "\n\t\t" + className );
 			for (int j = 0; j < names.count(); j++)
 			{
-				System.out.print(" | " + names.get(j).trim());
+				System.err.print(" | " + names.get(j).trim());
 			}
 		}
 		System.out.println("\n\tPARSER = ");

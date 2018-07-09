@@ -3955,36 +3955,46 @@ public class Root extends Element {
 					String typename = tokens.concatenate("", 1, posAsgnmt).trim();
 					String typeSpec = tokens.concatenate("", posAsgnmt + 1, tokens.count()).trim();
 					int posBrace = typeSpec.indexOf("{");
-					StringList compNames = new StringList();
-					StringList compTypes = new StringList();
-					// We test here against type-associated variable names and an existing type name
-					if (!Function.testIdentifier(typename, null) || _types.containsKey(typename) || _types.containsKey(":" + typename)) {
-						//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
-						addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
-					}
-					this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes);
-					for (int j = 0; j < compNames.count(); j++) {
-						String compName = compNames.get(j);
-						if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
-							//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
-							addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+					// START KGU#543 2018-07-05 We have to face indirections now.
+					if (posBrace >= 0) {
+					// END KGU#543 2018-07-05
+						StringList compNames = new StringList();
+						StringList compTypes = new StringList();
+						// We test here against type-associated variable names and an existing type name
+						if (!Function.testIdentifier(typename, null) || _types.containsKey(typename) || _types.containsKey(":" + typename)) {
+							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
+							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
 						}
-						String type = compTypes.get(j).trim();
-						// Clear off array specifiers, but the check is still too restrictive...
-						if (type != null) {
-							String typeLower;
-							if (type.endsWith("]") && type.contains("[")) {
-								type = type.substring(0, type.indexOf("[")).trim();
+						this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes);
+						for (int j = 0; j < compNames.count(); j++) {
+							String compName = compNames.get(j);
+							if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
+								//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
 							}
-							else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-								type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
-							}
-							if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-								//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-								addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+							String type = compTypes.get(j).trim();
+							// Clear off array specifiers, but the check is still too restrictive...
+							if (type != null) {
+								String typeLower;
+								if (type.endsWith("]") && type.contains("[")) {
+									type = type.substring(0, type.indexOf("[")).trim();
+								}
+								else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+									type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+								}
+								if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+									//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+									addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+								}
 							}
 						}
+					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
+					else if (Function.testIdentifier(typeSpec, null) && !_types.containsKey(":" + typeSpec)) {
+						//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);														
+					}
+					// END KGU#543 2018-07-05
 				}
 			}
 			// END KGU#388 2017-09-13

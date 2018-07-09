@@ -350,18 +350,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	{
 		if (this.isCancelled()) {
 			error = this.getClass().getSimpleName() + " CANCELLED!";
-			if (logFile != null) {
-				try {
-					logFile.write(error);
-				}
-				catch (IOException e) {
-				}
-				try {
-					logFile.close();
-				}
-				catch (IOException e) {
-				}
-			}
+			log(error, false);
+			closeLog();
 			getLogger().log(Level.WARNING, error);
 			System.err.println("++++ ParserCancelled thrown!");
 			throw new ParserCancelled();
@@ -497,12 +487,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			// START KGU#370 2017-03-25: Fix #357 - precaution against preparation failure
 			//File intermediate = prepareTextfile(textToParse, _encoding);
 			File intermediate = null;
-			if (logFile != null) {
-				try {
-					logFile.write("STARTING FILE PREPARATION...\n\n");
-				} catch (IOException e) {
-				}
-			}
+			log("STARTING FILE PREPARATION...\n\n", false);
 			// START KGU#537 2018-06-30: Enh. #553
 			this.firePropertyChange("phase_start", -1, 0);
 			//// DEBUG Sleep for up to one second.
@@ -524,10 +509,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				throw ex;
 			}
 			catch (Exception ex) {
-				if ((error = ex.getMessage()) == null) {
-					error = ex.toString();
+				String errText = ex.getMessage();
+				if (errText == null) {
+					errText = ex.toString();
 				}
-				error = ":\n" + error;
+				error = ":\n" + errText + (error.isEmpty() ? "" : (":\n" + error));
 			}
 
 			// START KGU#537 2018-06-30: Enh. #553
@@ -535,36 +521,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			// END KGU#537 2018-06-30
 
 			if (intermediate == null) {
-				error = "**FILE PREPARATION ERROR** on file \"" + _textToParse + "\"" + error;
-				if (logFile != null) {
-					try {
-						logFile.write(error);
-					} catch (IOException e) {
-						// START KGU#484 2018-04-05: Issue #463
-						//e.printStackTrace();
-						getLogger().log(Level.WARNING, "Failed to write parser log.", e);
-						// END KGU#484 2018-04-05
-					}
-					try {
-						logFile.close();
-						logFile = null;
-					} catch (IOException e) {
-						// START KGU#484 2018-04-05: Issue #463
-						//e.printStackTrace();
-						getLogger().log(Level.WARNING, "Failed to close parser log.", e);
-						// END KGU#484 2018-04-05
-					}
-				}
+				error = "**FILE PREPARATION ERROR** on file \"" + _textToParse + "\"" + (error.isEmpty() ? "" : (":\n" + error));
+				log(error, false);
+				closeLog();
 				// START KGU#537 2018-07-01: Enh. #553
-				this.firePropertyChange("root_count", 0, subRoots.size());
+				this.firePropertyChange("error", "", error);
 				// END KGU#537 2018-07-01
 				return subRoots;	// It doesn't make sense to continue here (BTW subRoots is supposed to be empty)
 			}
 			// END KGU#370 2017-03-25
-			else if (logFile != null) {
-				try {
-					logFile.write("\nFILE PREPARATION COMPLETE -> \"" + intermediate.getAbsolutePath() + "\"\n\n");
-				} catch (IOException e) {}
+			else {
+				log("\nFILE PREPARATION COMPLETE -> \"" + intermediate.getAbsolutePath() + "\"\n\n", false);
 			}
 
 			String sourceCode = null;
@@ -727,13 +694,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			}
 			// END KGU#191 2016-04-30
 
-			// remove the temporary file
-			intermediate.delete();
-
 			// START KGU#537 2018-06-30: Enh. #553
 			if (!error.isEmpty()) {
 				this.firePropertyChange("error", "", error);
 				return this.subRoots;
+			} else {
+				// remove the temporary file
+				//intermediate.delete();
 			}
 			
 			this.firePropertyChange("phase_start", 2, 3);
@@ -810,27 +777,36 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			else {
 				log("No diagrams built.\n", true);
 			}
-
-			if (logFile != null) {
-				try {
-					logFile.close();
-					logFile = null;
-				} catch (IOException e) {
-					// START KGU#484 2018-04-05: Issue #463
-					//e.printStackTrace();
-					getLogger().log(Level.WARNING, "Failed to close parser log.", e);
-					// END KGU#484 2018-04-05
-				}
-			}
+			closeLog();
 			this.firePropertyChange("root_count", -1, subRoots.size());
 		// START KGU#537 2018-07-01: Enh. #553
 		}
 		catch (ParserCancelled ex) {}
+		finally {
+			closeLog();
+		}
 		if (!error.isEmpty()) {
 			this.firePropertyChange("error", "", error);
 		}
 		// END KGU#537 2018-07-01
 		return subRoots;
+	}
+
+	/**
+	 * Closes the specific parser log (if it had been set up)
+	 */
+	private void closeLog() {
+		if (logFile != null) {
+			try {
+				logFile.close();
+				logFile = null;
+			} catch (IOException e) {
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				getLogger().log(Level.WARNING, "Failed to close parser log.", e);
+				// END KGU#484 2018-04-05
+			}
+		}
 	}
 
 	/**

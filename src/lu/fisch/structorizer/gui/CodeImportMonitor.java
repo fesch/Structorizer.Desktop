@@ -186,6 +186,9 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 				//System.out.println("*** PropertyChange state: " + evt.getNewValue());
 				if (this.worker.isDone()) {
 					btnCancel.setEnabled(false);
+					if (this.phase < 0) {
+						this.phase = 0;
+					}
 					if (this.phase < this.progressBars.length && this.progressBars[this.phase].isIndeterminate()) {
 						JProgressBar progBar = this.progressBars[this.phase];
 						progBar.setIndeterminate(false);
@@ -197,6 +200,9 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 			}
 			else if (aspect.equals("progress")) {
 				//System.out.println("*** PropertyChange progress: " + evt.getNewValue() + " (" + this.phase + ")");
+				if (this.phase < 0) {
+					this.phase = 0;
+				}
 				this.progressBars[this.phase].setIndeterminate(false);
 				this.progressBars[this.phase].setValue((Integer)evt.getNewValue());
 				this.progressBars[this.phase].setString(null);
@@ -204,7 +210,7 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 			else if (aspect.equals("phase_start")) {
 				//System.out.println("*** PropertyChange phase_start: " + evt.getNewValue());
 				this.phase = (Integer)evt.getNewValue();
-				for (int i = 0; i < this.phase; i++) {
+				for (int i = 0; i < this.phase && i < this.progressBars.length; i++) {
 					//this.progressBars[i].setValue(100);
 					this.progressBars[i].setIndeterminate(false);
 					if (this.progressBars[i].getValue() == 0) {

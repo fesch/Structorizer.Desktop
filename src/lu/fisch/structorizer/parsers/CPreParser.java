@@ -35,7 +35,10 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2018.06.19      First Issue (derived from the common parts of CParser and C99Parser)
  *      Kay Gürtzig     2018.06.23      Further common (i.e. C + C99) stuff placed here
- *      Kay Gürtzig     2018.07.01      Enh. #553: Hooks for parser cancellation inserted 
+ *      Kay Gürtzig     2018.07.01      Enh. #553: Checks for parser thread cancellation inserted
+ *      Kay Gürtzig     2018.07.04      Bugfix #554: StreamTokenizer lineno() lag workaround in prepareTypeDefs
+ *      Kay Gürtzig     2018.07.09      KGU#546/KGU#547: Further StreamTokenizer workaround, include guard surrogate
+ *                                      typedef collection now recursive in included header files.
  *
  ******************************************************************************************************
  *
@@ -45,11 +48,14 @@ package lu.fisch.structorizer.parsers;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -121,6 +127,7 @@ public abstract class CPreParser extends CodeParser
 
 	private static enum PreprocState {TEXT, TYPEDEF, STRUCT_UNION_ENUM, STRUCT_UNION_ENUM_ID, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
 	private StringList typedefs = new StringList();
+	private Vector<Integer[]> blockRanges = new Vector<Integer[]>();
 	// START KGU#388 2017-09-30: Enh. #423 counter for anonymous types
 	protected int typeCount = 0;
 	// END KGU#388 2017-09-30
@@ -142,6 +149,11 @@ public abstract class CPreParser extends CodeParser
 	};
 	
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
+	
+	// START KGU#547 2018-07-09: We should prevent headers from being included repeatedly.
+	/** Set of the paths of already processed (included) header files */
+	private Set<String> includedHeaders = new HashSet<String>();
+	// END KGU#547 2018-07-09
 
 	final static Pattern PTRN_VOID_CAST = Pattern.compile("(^\\s*|.*?[^\\w\\s]+\\s*)\\(\\s*void\\s*\\)(.*?)");
 	static Matcher mtchVoidCast = PTRN_VOID_CAST.matcher("");
@@ -180,6 +192,12 @@ public abstract class CPreParser extends CodeParser
 		//                  +"cob_content,cob_pic_symbol,cob_field_attr");
 		//========================================================================!!!
 		
+		// START KGU#519 2018-06-17: Enh. #541
+		registerRedundantDefines(defines);
+		// END KGU#519 2018-06-17
+
+		initializeTypedefs();
+		
 		boolean parsed = false;
 		
 		StringBuilder srcCodeSB = new StringBuilder();
@@ -211,14 +229,14 @@ public abstract class CPreParser extends CodeParser
 					ow.close();
 				}
 			}
-			// START KGU#537 2018-07-01: Enh. #553 cancellation exception must be swallowed here
+			// START KGU#537 2018-07-01: Enh. #553 cancellation exception must not be swallowed here
 			catch (ParserCancelled ex) {
 				throw ex;
 			}
 			// END KGU#537 2018-07-01
 			catch (Exception e) 
 			{
-				System.err.println("CParser.prepareTextfile() creation of intermediate file -> " + e.getMessage());
+				System.err.println("CParser.prepareTextfile() creation of intermediate file -> " + e);
 			}
 		}
 		return interm;
@@ -226,7 +244,7 @@ public abstract class CPreParser extends CodeParser
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it places its contents into the given StringBuilder (if set).
+	 * file, filters it, places its contents into the given StringBuilder (if set).
 	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
 	 * be executed (at least the defines. with #if it would get difficult).
 	 * @param _textToParse - name (path) of the source file
@@ -239,15 +257,14 @@ public abstract class CPreParser extends CodeParser
 		
 		try
 		{
+			// START KGU#547 2018-07-09: Headers shouldn't be processed several times...
+			includedHeaders.add(_textToParse);
+			// END KGU#547 2018-07-09
 			File file = new File(_textToParse);
 			if (this.ParserPath == null) {
 				this.ParserPath = file.getAbsoluteFile().getParent() + File.separatorChar;
 			}
 			
-			// START KGU#519 2018-06-17: Enh. #541
-			registerRedundantDefines(defines);
-			// END KGU#519 2018-06-17
-
 			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, this.ParserEncoding));
@@ -263,7 +280,7 @@ public abstract class CPreParser extends CodeParser
 				while ((strLine = br.readLine()) != null)
 				{
 					// START KGU#537 2018-07-01: Enh. #553
-					checkCancelled();
+					checkCancelled();	// check that the parser thread hasn't been cancelled
 					// END KGU#537 2018-07-01
 					String trimmedLine = strLine.trim();
 					if (trimmedLine.isEmpty()) {
@@ -404,7 +421,7 @@ public abstract class CPreParser extends CodeParser
 		catch (Exception e) 
 		{
 			if (srcCodeSB != null) {
-				System.err.println(this.getClass().getSimpleName() + ".processSourcefile() -> " + e.getMessage());
+				log(this.getClass().getSimpleName() + ".processSourcefile() -> " + e.toString() + "\n", true);
 			}
 			return false;
 		}
@@ -548,12 +565,33 @@ public abstract class CPreParser extends CodeParser
 			} else {
 				incName = incName.replaceAll("\\\\", File.separator);
 			}
-			
-			if (processSourceFile(this.ParserPath + incName, null)) {
-				return "// preparser include (parsed): ";
-			} else {
-				return "// preparser include (failed): ";
+
+			// START KGU#547 2018-07-09: Headers shouldn't be processed several times...
+			//if (processSourceFile(this.ParserPath + incName, null)) {
+			//	return "// preparser include (parsed): ";
+			//} else {
+			//	return "// preparser include (failed): ";
+			//}
+			if (includedHeaders.contains(this.ParserPath + incName)) {
+				return "// preparser include (skipped): ";
 			}
+			else {
+				String path = this.ParserPath + incName;
+				StringBuilder subSB = new StringBuilder();
+				if (processSourceFile(path, subSB)) {
+					try {
+						collectTypedefs(subSB.toString(), path, null);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						log(this.getClass().getSimpleName() + ".collectTypedefs() failed for file \"" + path + "\" with\n" + e.toString(), false);
+						this.getLogger().log(Level.WARNING, "typedef collection in file \"" + path + "\" failed!", e);
+					}
+					return "// preparser include (parsed): ";
+				} else {
+					return "// preparser include (failed): ";
+				}
+			}
+			// END KGU#547 2018-07-09
 		}
 
 		mtchIgnore.reset(preprocessorLine);
@@ -568,14 +606,16 @@ public abstract class CPreParser extends CodeParser
 
 	/**
 	 * Detects typedef declarations in the {@code srcCode}, identifies the defined type names and replaces
-	 * them throughout their definition scopes text with generic names "user_type_###" defined in the grammar
+	 * them throughout their definition scopes with generic names "user_type_###" as defined in the grammar
 	 * such that the parse won't fail. The type name map is represented by the static variable {@link #typedefs}
-	 * where the ith entry is mapped to a type id "user_type_&lt;i+1&gt;" for later backwards replacement.
+	 * where the i-th entry is mapped to a type id "user_type_&lt;i+1&gt;" for later backward replacement.
 	 * @param _srcCode - the pre-processed source code as long string
 	 * @param _textToParse - the original file name
 	 * @return the source code with replaced type names
 	 * @throws IOException
 	 * @throws ParserCancelled 
+	 * @see #initializeTypedefs()
+	 * @see #collectTypedefs(String, String, LinkedList)
 	 */
 	private String prepareTypedefs(String _srcCode, String _textToParse) throws IOException, ParserCancelled
 	{
@@ -588,11 +628,67 @@ public abstract class CPreParser extends CodeParser
 		// In the second step we replace all identifiers occurring in the map with
 		// their associated generic name, respecting the definition scope.
 		
-		typedefs.clear();
-
-		Vector<Integer[]> blockRanges = new Vector<Integer[]>();
+		//Vector<Integer[]> blockRanges = new Vector<Integer[]>();
 		LinkedList<String> typedefDecomposers = new LinkedList<String>();
 		
+		// Scan for typedef and struct definitions 
+		StringList srcLines = collectTypedefs(_srcCode, _textToParse, typedefDecomposers);
+		
+		//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+		log("\nTYPE DEFINITIONS AND DECLARATION RANGES\n", false);
+		//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+		// Now we replace the detected user-specific type names by the respective generic ones.
+		for (int i = 0; i < typedefs.count(); i++) {
+			// START KGU#537 2018-07-01: Enh. #553
+			checkCancelled();	// check that the parser thread hasn't been cancelled
+			// END KGU#537 2018-07-01
+			String typeName = typedefs.get(i);
+			Integer[] range = blockRanges.get(i);
+			// Global range?
+			if (range[1] < 0) {
+				range[1] = srcLines.count()-1;
+			}
+			//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			log(typeName + ": " + range[0] + " - " + range[1] + "\n", false);
+			//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			String pattern = "(^|.*?\\W)("+typeName+")(\\W.*?|$)";
+			String subst = String.format(USER_TYPE_ID_MASK, i+1);
+			this.replacedIds.put(subst, typeName);
+			subst = "$1" + subst + "$3";
+			for (int j = range[0]; j <= range[1]; j++) {
+				if (srcLines.get(j).matches(pattern)) {
+					srcLines.set(j, srcLines.get(j).replaceAll(pattern, subst));
+				}
+			}
+		}
+		_srcCode = srcLines.concatenate("\n");
+		
+		// Now we try the impossible: to decompose compound struct/union/enum and type name definition
+		// FIXME this works sometimes but by far not in all cases. But this doesn't seem to matter...
+		for (String pattern: typedefDecomposers) {
+			// START KGU#537 2018-07-01: Enh. #553
+			checkCancelled();	// check that the parser thread hasn't been cancelled
+			// END KGU#537 2018-07-01
+			_srcCode = _srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
+		}
+
+		// START KGU#546 2018-07-07: Issue #556 - If we get here then a registered error may not have been so bad
+		this.error = "";
+		// END KGU#546 2018-07-07
+		return _srcCode;
+	}
+
+	/**
+	 * Initializes the typedef retrieval (which is now done recursively for header files, too).
+	 * Clears {@link #typedefs} and {@link #blockRanges} and then registers the externally declared
+	 * typedefs according to the plugin options.
+	 * @see #prepareTypedefs(String, String)
+	 * @see #collectTypedefs(String, String, LinkedList)
+	 */
+	private void initializeTypedefs() {
+		typedefs.clear();
+		blockRanges.clear();
+
 		// START KGU 2017-05-26: workaround for the typeId deficiency of the grammar: allow configured global typenames
 		String configuredTypeNames = (String)this.getPluginOption("typeNames", null);
 		if (configuredTypeNames != null) {
@@ -606,7 +702,27 @@ public abstract class CPreParser extends CodeParser
 			}
 		}
 		// END KGU 2017-05-26
-			
+	}
+
+	/**
+	 * Collects all typedef declarations in given source code {@code _srcCode} from the source file
+	 * {@code _textToParse} and adds their names to {@link #typedefs} and their block ranges to
+	 * {@link #blockRanges}. 
+	 * @param _srcCode - the source code as slightly preprocessed long string (including newlines)
+	 * @param _textToParse - the path of the processed file.
+	 * @param _blockRanges - a vector of line number pairs denoting the definition scopes of the {@link #typedefs}
+	 * @param _typedefDecomposers - A list of patterns to decompose combined typedefs and struct definitions, may be null
+	 * @return the exploded source code string
+	 * @throws IOException
+	 * @throws ParserCancelled
+	 * @see #initializeTypedefs()
+	 * @see #prepareTypedefs(String, String)
+	 */
+	private StringList collectTypedefs(String _srcCode, String _textToParse, 
+			LinkedList<String> _typedefDecomposers) throws IOException, ParserCancelled {
+		
+		log("START: COLLECTING TYPEDEFS in \"" + _textToParse + "\" ...\n", false);
+		
 		Stack<Character> parenthStack = new Stack<Character>();
 		Stack<Integer> blockStarts = new Stack<Integer>();
 		int blockStartLine = -1;
@@ -614,7 +730,15 @@ public abstract class CPreParser extends CodeParser
 		int indexDepth = 0;
 		PreprocState state = PreprocState.TEXT;
 		String lastId = null;
-		char expected = '\0';
+		
+		// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so we must check
+		int minLineOffset = 0;	// minimum detected line number offset
+		StringList srcLines = StringList.explode(_srcCode, "\n");
+		// END KGU#541 2018-07-04
+		
+		// START KGU#546 2018-07-09: Workaround #556 for a StreamTokenizer bug (takes slashes as double slashes at certain positions)
+		_srcCode = _srcCode.replaceAll("(.*[^/*])/([^/*].*)", "$1Ⱦ$2");
+		// END KGU#546 2018-07-09
 		
 		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(_srcCode));
 		tokenizer.quoteChar('"');
@@ -637,12 +761,12 @@ public abstract class CPreParser extends CodeParser
 		
 		while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
 			String word = null;
-			log("[" + tokenizer.lineno() + "]: ", false);
+			log("[" + tokenizer.lineno() + " + " + minLineOffset + "]: ", false);
 			switch (tokenizer.ttype) {
 			case StreamTokenizer.TT_EOL:
 				log("**newline**\n", false);
 				// START KGU#537 2018-07-01: Enh. #553
-				checkCancelled();
+				checkCancelled();	// check that the parser thread hasn't been cancelled
 				// END KGU#537 2018-07-01
 				if (!typedefStructPattern.isEmpty()) {
 					typedefStructPattern += ".*?\\v";
@@ -670,7 +794,20 @@ public abstract class CPreParser extends CodeParser
 				}
 				else if (state == PreprocState.TYPEID && indexDepth == 0) {
 					typedefs.add(word);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
+					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					Matcher wordMatcher = Pattern.compile("(^|.*\\W)"+word+"(\\W.*|$)").matcher("");
+					int lineNo = tokenizer.lineno() + minLineOffset - 1;
+					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
+						lineNo++; minLineOffset++;
+					}
+					if (_typedefDecomposers == null) {
+						blockRanges.add(new Integer[]{0, -1});
+					}
+					else {
+						blockRanges.add(new Integer[]{lineNo+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					}
+					// END KGU#541 2018-07-04
 					if (!typedefStructPattern.isEmpty()) {
 						if (typedefStructPattern.matches(".*?\\W")) {
 							typedefStructPattern += "\\s*" + word;
@@ -689,12 +826,32 @@ public abstract class CPreParser extends CodeParser
 				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
 					// We have read the struct/union/enum id already, so this must be the first type id.
 					typedefs.add(word);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
+					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					Matcher wordMatcher = Pattern.compile("(^|.*\\W)"+word+"(\\W.*|$)").matcher("");
+					int lineNo = tokenizer.lineno() + minLineOffset - 1;
+					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
+						lineNo++; minLineOffset++;
+					}
+					if (_typedefDecomposers == null) {
+						blockRanges.add(new Integer[]{0, -1});
+					}
+					else {
+						blockRanges.add(new Integer[]{lineNo+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					}
+					// END KGU#541 2018-07-04
 					typedefStructPattern = "";	// ... but it's definitely no combined struct and type definition
 					state = PreprocState.TYPEID;
 				}
 				// END KGU 2017-05-23
 				else if (word.equals("typedef")) {
+					// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
+					Matcher wordMatcher = Pattern.compile("(^|.*\\W)typedef(\\W.*|$)").matcher("");
+					int lineNo = tokenizer.lineno() + minLineOffset - 1;
+					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
+						lineNo++; minLineOffset++;
+					}
+					// END KGU#541 2018-07-04
 					typedefLevel = blockStarts.size();
 					state = PreprocState.TYPEDEF;
 				}
@@ -711,6 +868,15 @@ public abstract class CPreParser extends CodeParser
 					}
 					typedefStructPattern += word;
 				}
+				// START KGU#541 2018-07-09: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
+				else if (word.length() > 8) {
+					Matcher wordMatcher = Pattern.compile("(^|.*\\W)"+word+"(\\W.*|$)").matcher("");
+					int lineNo = tokenizer.lineno() + minLineOffset - 1;
+					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
+						lineNo++; minLineOffset++;
+					}
+				}
+				// END KGU#541 2018-07-09
 				break;
 			case '\'':
 				log("character: '" + tokenizer.sval + "'\n", false);
@@ -736,12 +902,14 @@ public abstract class CPreParser extends CodeParser
 					state = PreprocState.COMPLIST;
 				}
 				parenthStack.push('}');
+				log("{ (" + parenthStack.size() + ")\n", false);
 				break;
 			case '(':
 				if (!typedefStructPattern.isEmpty()) {
 					typedefStructPattern += "\\s*\\(";
 				}
 				parenthStack.push(')');
+				log("( (" + parenthStack.size() + ")\n", false);
 				break;
 			case '[':	// FIXME: Handle index lists in typedefs!
 				if (!typedefStructPattern.isEmpty()) {
@@ -751,11 +919,16 @@ public abstract class CPreParser extends CodeParser
 					indexDepth++;
 				}
 				parenthStack.push(']');
+				log("[ (" + parenthStack.size() + ")\n", false);
 				break;
 			case '}':
 				blockStartLine = blockStarts.pop();
 				// Store the start and current line no as block range if there are typedefs on this block level
-				int blockEndLine = tokenizer.lineno();
+				// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so we must check
+				//int blockEndLine = tokenizer.lineno();
+				// FIXME this line no. correction may not be sufficient but there isn't enough data to track more precisely
+				int blockEndLine = tokenizer.lineno() + minLineOffset;
+				// END KGU#541 2018-07-04
 				Integer[] entry;
 				for (int i = blockRanges.size()-1; i >= 0 && (entry = blockRanges.get(i))[1] >= blockStartLine; i--) {
 					if (entry[1] == blockStartLine && entry[1] < entry[0]) {
@@ -769,15 +942,33 @@ public abstract class CPreParser extends CodeParser
 					}
 					state = PreprocState.TYPEID;
 				}
+				// No break here!
 			case ')':
 			case ']':	// Handle index lists in typedef!s
 				{
+					char expected = '\0';
+					if (!parenthStack.isEmpty()) expected = parenthStack.peek();
+					log((char)tokenizer.ttype + " (" + parenthStack.size() + ") " + expected + "\n", false);
 					if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
-						String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
-						+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
-						+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
+						// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - apply correction
+						//String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
+						//		+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
+						//		+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
+						// We don't want this information getting lost of (though it's logged) if the preparation crashes
+						String errText1 = "line " + (tokenizer.lineno() + minLineOffset) + " (or somewhat beneath)";
+						String errText2 = ": unmatched '" + (char)tokenizer.ttype
+								+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
+						this.error = errText1 + errText2;
+						String errText = "**FILE PREPARATION TROUBLE** " + errText1
+								+ " of file \"" + _textToParse + "\"" + errText2;;
+						// END KGU#541 2018-07-04
 						System.err.println(errText);
 						log(errText, false);
+						//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+						//for (int i = tokenizer.lineno() + minLineOffset - 20; i < tokenizer.lineno() + minLineOffset + 20; i++) {
+						//	System.err.println(i + ": " + srcLines.get(i));
+						//}
+						//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 					}
 					else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
 						indexDepth--;
@@ -788,6 +979,7 @@ public abstract class CPreParser extends CodeParser
 				}
 					break;
 			case '*':
+				log("*\n", false);
 				if (state == PreprocState.TYPEDEF) {
 					state = PreprocState.TYPEID;
 				}
@@ -799,9 +991,13 @@ public abstract class CPreParser extends CodeParser
 				}
 				break;
 			case ',':
+				log(",\n", false);
 				if (state == PreprocState.TYPEDEF && lastId != null) {
 					typedefs.add(lastId);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					// START KGU#541 2018-07-06: Bugfix #489 The line counting of StreamTokenizer isn't reliable - apply correction
+					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					blockRanges.add(new Integer[]{tokenizer.lineno()+minLineOffset+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					// END KGU#541 2018-07-06
 					if (!typedefStructPattern.isEmpty()) {
 						// Type name won't be replaced within the typedef clause
 						//typedefStructPattern += "\\s+" + String.format(USER_TYPE_ID_MASK, typedefs.count()) + "\\s*,";
@@ -816,16 +1012,22 @@ public abstract class CPreParser extends CodeParser
 				}
 				break;
 			case ';':
+				log(";\n", false);
 				if (state == PreprocState.TYPEDEF && lastId != null) {
 					typedefs.add(lastId);
-					blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					// START KGU#541 2018-07-06: Bugfix #489 The line counting of StreamTokenizer isn't reliable - apply correction
+					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					blockRanges.add(new Integer[]{tokenizer.lineno()+minLineOffset+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					//END KGU#541 2018-07-06
 					typedefStructPattern = "";
 					state = PreprocState.TEXT;
 				}
 				else if (state == PreprocState.TYPEID) {
 					if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
 						typedefStructPattern += ")\\s*;";
-						typedefDecomposers.add(typedefStructPattern);
+						if (_typedefDecomposers != null) {
+							_typedefDecomposers.add(typedefStructPattern);
+						}
 					}
 					typedefStructPattern = "";
 					state = PreprocState.TEXT;						
@@ -841,41 +1043,11 @@ public abstract class CPreParser extends CodeParser
 				}
 				log("other: " + tokenChar + "\n", false);
 			}
-			log("", false);
 		}
-		StringList srcLines = StringList.explode(_srcCode, "\n");
-		// Now we replace the detected user-specific type names by the respective generic ones.
-		for (int i = 0; i < typedefs.count(); i++) {
-			// START KGU#537 2018-07-01: Enh. #553
-			checkCancelled();
-			// END KGU#537 2018-07-01
-			String typeName = typedefs.get(i);
-			Integer[] range = blockRanges.get(i);
-			// Global range?
-			if (range[1] < 0) {
-				range[1] = srcLines.count()-1;
-			}
-			String pattern = "(^|.*?\\W)("+typeName+")(\\W.*?|$)";
-			String subst = String.format(USER_TYPE_ID_MASK, i+1);
-			this.replacedIds.put(subst, typeName);
-			subst = "$1" + subst + "$3";
-			for (int j = range[0]; j <= range[1]; j++) {
-				if (srcLines.get(j).matches(pattern)) {
-					srcLines.set(j, srcLines.get(j).replaceAll(pattern, subst));
-				}
-			}
-		}
-		_srcCode = srcLines.concatenate("\n");
 		
-		// Now we try the impossible: to decompose compound struct/union/enum and type name definition
-		for (String pattern: typedefDecomposers) {
-			// START KGU#537 2018-07-01: Enh. #553
-			checkCancelled();
-			// END KGU#537 2018-07-01
-			_srcCode = _srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
-		}
-
-		return _srcCode;
+		log("DONE: COLLECTING TYPEDEFS in \"" + _textToParse + "\" ...\n", false);
+		
+		return srcLines;
 	}
 
 	/**
@@ -906,7 +1078,7 @@ public abstract class CPreParser extends CodeParser
 		//log("CParser.replaceDefinedEntries(): " + Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", false);
 		for (Entry<String, String[]> entry: defines.entrySet()) {
 			// START KGU#537 2018-07-01: Enh. #553
-			checkCancelled();
+			checkCancelled();	// check that the parser thread hasn't been cancelled
 			// END KGU#537 2018-07-01
 			
 			// FIXME: doesn't work if entry is at start/end of toReplace 			

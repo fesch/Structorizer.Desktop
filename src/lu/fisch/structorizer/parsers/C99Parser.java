@@ -371,7 +371,7 @@ public class C99Parser extends CPreParser
 //		final int PROD_STORAGECLASS_STATIC                                =  14;  // <Storage Class> ::= static
 //		final int PROD_STORAGECLASS_AUTO                                  =  15;  // <Storage Class> ::= auto
 //		final int PROD_STORAGECLASS_REGISTER                              =  16;  // <Storage Class> ::= register
-//		final int PROD_TYPESPECIFIER_VOID                                 =  17;  // <Type Specifier> ::= void
+		final int PROD_TYPESPECIFIER_VOID                                 =  17;  // <Type Specifier> ::= void
 //		final int PROD_TYPESPECIFIER_CHAR                                 =  18;  // <Type Specifier> ::= char
 //		final int PROD_TYPESPECIFIER_WCHAR_T                              =  19;  // <Type Specifier> ::= 'wchar_t'
 //		final int PROD_TYPESPECIFIER_SHORT                                =  20;  // <Type Specifier> ::= short
@@ -382,7 +382,7 @@ public class C99Parser extends CPreParser
 //		final int PROD_TYPESPECIFIER_SIGNED                               =  25;  // <Type Specifier> ::= signed
 //		final int PROD_TYPESPECIFIER_UNSIGNED                             =  26;  // <Type Specifier> ::= unsigned
 //		final int PROD_TYPESPECIFIER__BOOL                                =  27;  // <Type Specifier> ::= '_Bool'
-//		final int PROD_TYPESPECIFIER__COMPLEX                             =  28;  // <Type Specifier> ::= '_Complex'
+		final int PROD_TYPESPECIFIER__COMPLEX                             =  28;  // <Type Specifier> ::= '_Complex'
 		final int PROD_TYPESPECIFIER                                      =  29;  // <Type Specifier> ::= <StructOrUnion Spec>
 		final int PROD_TYPESPECIFIER2                                     =  30;  // <Type Specifier> ::= <Enumerator Spec>
 		final int PROD_TYPESPECIFIER3                                     =  31;  // <Type Specifier> ::= <Typedef Name>
@@ -753,15 +753,28 @@ public class C99Parser extends CPreParser
 					parentNode = this.globalRoot.children;
 				}
 				boolean isTypedef = processTypes(_reduction, ruleId, parentNode, isGlobal, tmpTypes, true);
-				if (!isTypedef) {
-					String type = tmpTypes.concatenate();
-					// START KGU#407 2017-06-22: Enh.#420 grope for possible source comments
-					String comment = this.retrieveComment(_reduction);
-					// END KGU#407 2017-06-22
-					Reduction declReduc = _reduction.get(1).asReduction();
-					// Now concern on the declarations of the list (FIXME: test for last argument is too vague) 
-					buildDeclsOrAssignments(declReduc, type, parentNode, comment, tmpTypes.contains("struct"));
+				String type = tmpTypes.concatenate();
+				// START KGU#407 2017-06-22: Enh.#420 grope for possible source comments
+				String comment = this.retrieveComment(_reduction);
+				// END KGU#407 2017-06-22
+				Reduction declReduc = _reduction.get(1).asReduction();
+				// Now concern on the declarations of the list (FIXME: test for last argument is too vague)
+				// START KGU#545 2018-07-05: There might still be pointer symbols!
+				//buildDeclsOrAssignments(declReduc, type, parentNode, comment, tmpTypes.contains("struct"));
+				if (declReduc != null) {
+					int declIx = declReduc.getParent().getTableIndex();
+					String ptrs = "";
+					while (declIx == RuleConstants.PROD_DECLARATOR) {
+						ptrs += " *";
+						declReduc = declReduc.get(1).asReduction();
+						declIx = declReduc.getParent().getTableIndex();
+					}
+					// We don't want to produce variable declarations from function prototypes!
+					if (declIx != RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN2 && declIx != RuleConstants.PROD_DIRECTDECL_LPAREN_RPAREN3) {
+						buildDeclsOrAssignments(declReduc, type + ptrs, parentNode, comment, tmpTypes.contains("struct"), isTypedef);
+					}
 				}
+				// END KGU#545 2018-07-05
 				// CHECKME!
 				if (isGlobal && root != globalRoot && !importingRoots.contains(root)) {
 					importingRoots.add(root);
@@ -1159,7 +1172,7 @@ public class C99Parser extends CPreParser
 //			StringList compNames = new StringList();
 			// FIXME May there be declaration groups? May type specifiers disrupt a group here?
 			//decls.add(getContent_R(varDecl.get(1).asReduction(), type));
-			decls.add(this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, null, null, true));
+			decls.add(this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, null, null, true, false));
 //			Reduction varRed = varDecl.get(1).asReduction();
 //			String name = varRed.get(0).asString();
 //			String index = getContent_R(varRed.get(1).asReduction(), "").trim();
@@ -1401,11 +1414,12 @@ public class C99Parser extends CPreParser
 	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to or null
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
 	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
+	 * @param _asTypeDef - if a type definition is to be created
 	 * @return - the {@link StringList} of declarations
 	 * @throws ParserCancelled 
 	 */
 	private StringList buildDeclsOrAssignments(Reduction _reduction, String _type, Subqueue _parentNode, String _comment,
-			boolean _forceDecl) throws ParserCancelled {
+			boolean _forceDecl, boolean _asTypeDef) throws ParserCancelled {
 		// FIXME!
 		log("\tanalyzing <InitDeclList> ...\n", false);
 		StringList declns = new StringList();
@@ -1424,7 +1438,7 @@ public class C99Parser extends CPreParser
 		}
 		// Now derive the declarations
 		for (Reduction red: decls) {
-			declns.add(buildDeclOrAssignment(red, _type, _parentNode, _comment, _forceDecl));
+			declns.add(buildDeclOrAssignment(red, _type, _parentNode, _comment, _forceDecl, _asTypeDef));
 		}
 		log("\t<InitDeclList> done.\n", false);
 		return declns;
@@ -1438,11 +1452,16 @@ public class C99Parser extends CPreParser
 	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to or null
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
 	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
+	 * @param _asTypeDef - if a type definitin is to be created
 	 * @return the built declaration or assignment
 	 * @throws ParserCancelled 
 	 */
-	private String buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl) throws ParserCancelled
+	private String buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl, boolean _asTypeDef) throws ParserCancelled
 	{
+		_type = _type.replace("extern ","");
+		if (_type.equals("extern")) {
+			System.out.println("C99Parser(1463): extern found"); 
+		}
 		boolean isConstant = _type != null && _type.startsWith("const ");	// Is it sure that const will be at the beginning?
 		int ruleId = _reduc.getParent().getTableIndex();
 		String content = getContent_R(_reduc, "");	// Default (and for easier testing)
@@ -1475,7 +1494,10 @@ public class C99Parser extends CPreParser
 				_type = this.getContent_R(_reduc.get(0).asReduction(), _type);
 				//id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
 			}
-			if (isConstant) {
+			if (_asTypeDef) {
+				content = "type " + id + " = " + _type;
+			}
+			else if (isConstant) {
 				content = "const " + id + ": " + _type;
 			}
 			else if (_parentNode == null) {
@@ -1498,19 +1520,24 @@ public class C99Parser extends CPreParser
 					instr.setComment(_comment);
 				}
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
-					instr.getComment().add("Globally declared!");
-					instr.setColor(colorGlobal);
+					if (!_asTypeDef) {
+						instr.getComment().add("Globally declared!");
+						instr.setColor(colorGlobal);
+					}
 					// FIXME
 					if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
 						this.importingRoots.add(root);
 						((Root)_parentNode.parent).addToIncludeList((Root)_parentNode.parent);
 					}
 				}
-				else if (expr == null) {
+				else if (expr == null && !_asTypeDef) {
 					instr.setColor(colorDecl);	// local declarations with a smooth green
 				}
+				if (_asTypeDef && expr != null) {
+					instr.setColor(Color.RED);
+				}
 				// Constant colour has priority
-				if (isConstant) {
+				if (isConstant && !_asTypeDef) {
 					instr.setColor(colorConst);
 				}
 				_parentNode.addElement(instr);
@@ -1601,7 +1628,8 @@ public class C99Parser extends CPreParser
 				break;
 			case RuleConstants.PROD_DECLSPECIFIERS2: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
 				if (prefix.getType() == SymbolType.NON_TERMINAL) {
-					switch (prefix.asReduction().getParent().getTableIndex()) {
+					int prefixId = prefix.asReduction().getParent().getTableIndex();
+					switch (prefixId) {
 					case RuleConstants.PROD_TYPESPECIFIER:	// rather unlikely (represented by one of the following)
 						// <Type Specifier> ::= <StructOrUnion Spec>
 					case RuleConstants.PROD_STRUCTORUNIONSPEC_IDENTIFIER_LBRACE_RBRACE:
@@ -1658,6 +1686,9 @@ public class C99Parser extends CPreParser
 							components.set(components.count()-1, lastComp.replace('\\', '}'));
 							Instruction typedef = new Instruction(components);
 							if (_parentNode != null) {
+								if (isTypedef) {
+									this.equipWithSourceComment(typedef, _reduction);
+								}
 								_parentNode.addElement(typedef);
 							}
 							typedef.updateTypeMap(typeMap);
@@ -1674,10 +1705,28 @@ public class C99Parser extends CPreParser
 						// <Typedef Name> ::= UserTypeId
 					case RuleConstants.PROD_TYPESPECIFIER3:
 						// <Type Specifier> ::= <Typedef Name>
-						_typeSpecs.add(getContent_R(prefix.asReduction(), "").trim());
+						// We must produce a (further) type definition here
+//					{
+//						String typeid = getContent_R(prefix.asReduction(), "").trim();
+//						Instruction typedef = new Instruction("type " + typeid + " = " + _typeSpecs.concatenate(" "));
+//						if (_parentNode != null) {
+//							if (isTypedef) {
+//								this.equipWithSourceComment(typedef, _reduction);
+//							}
+//							_parentNode.addElement(typedef);
+//						}
+//						typedef.updateTypeMap(typeMap);
+//						
+//						//_typeSpecs.add(typeid);// Produce typedef here?
+//					}
 						break;
 					default:
-						//System.out.println("getDeclSpecifiers() - Type specifier: " + prefix.asReduction().getParent().getTableIndex());	
+						if (prefixId >= RuleConstants.PROD_TYPESPECIFIER_VOID && prefixId <= RuleConstants.PROD_TYPESPECIFIER__COMPLEX) {
+							_typeSpecs.add(getContent_R(prefix.asReduction(), "").trim());
+						}
+						else {
+							System.out.println("getDeclSpecifiers() default - Type specifier: " + prefix.asReduction().getParent().getTableIndex());
+						}
 					}
 				}
 				break;
@@ -1751,19 +1800,19 @@ public class C99Parser extends CPreParser
 			// <Direct Abstr Decl> ::= '(' <Abstract Decl> ')'
 		case RuleConstants.PROD_DIRECTABSTRDECL_LPAREN_RPAREN:
 			// <Direct Decl> ::= '(' <Declarator> ')'
-				// Now in Pascal, this should force us to define the type as far as possible
-				if (_parentNode != null && _asPascal != null) {
-					nestedType = String.format("AnonType%1$03d", typeCount++);
-					String content = "type " + nestedType + " = " + _asPascal.concatenate(" ");
-					_parentNode.addElement(new Instruction(content));
-					_asPascal.clear();
-					_asPascal.add(nestedType);
-				}
-				if (_pointers != null && _arrays != null) {
-					_pointers.add("(");
-					_arrays.insert(")", 0);
-				}					
-				name = getDeclarator(_reduction.get(1).asReduction(), _pointers, _arrays, _asPascal, _parentNode, null);
+			// Now in Pascal style, this should force us to define the type as far as possible
+			if (_parentNode != null && _asPascal != null) {
+				nestedType = String.format("AnonType%1$03d", typeCount++);
+				String content = "type " + nestedType + " = " + _asPascal.concatenate(" ");
+				_parentNode.addElement(new Instruction(content));
+				_asPascal.clear();
+				_asPascal.add(nestedType);
+			}
+			if (_pointers != null && _arrays != null) {
+				_pointers.add("(");
+				_arrays.insert(")", 0);
+			}					
+			name = getDeclarator(_reduction.get(1).asReduction(), _pointers, _arrays, _asPascal, _parentNode, null);
 			break;
 		case RuleConstants.PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET:
 		case RuleConstants.PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET2:
