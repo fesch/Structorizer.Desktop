@@ -51,6 +51,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.20      Most algorithmic structures implemented, bugfixes #545, #546 integrated
  *      Kay Gürtzig     2018.06.23      Function definitions, struct definitions, and struct initializers
  *      Kay Gürtzig     2018.07.10      Precaution against incomplete FOR loops (index error on colouring parts)
+ *                                      Provisional enum type import as constant definition sequence.
  *
  ******************************************************************************************************
  *
@@ -404,15 +405,15 @@ public class C99Parser extends CPreParser
 //		final int PROD_STRUCTDECL_COLON                                   =  46;  // <Struct Decl> ::= <Declarator> ':' <Constant Exp>
 //		final int PROD_STRUCTDECL                                         =  47;  // <Struct Decl> ::= <Declarator>
 //		final int PROD_STRUCTDECL_COLON2                                  =  48;  // <Struct Decl> ::= ':' <Constant Exp>
-//		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_RBRACE       =  49;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> '}'
-//		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_COMMA_RBRACE =  50;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> ',' '}'
-//		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE                  =  51;  // <Enumerator Spec> ::= enum '{' <EnumList> '}'
-//		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE            =  52;  // <Enumerator Spec> ::= enum '{' <EnumList> ',' '}'
-//		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER                     =  53;  // <Enumerator Spec> ::= enum Identifier
-//		final int PROD_ENUMLIST_COMMA                                     =  54;  // <EnumList> ::= <EnumList> ',' <Enumerator>
-//		final int PROD_ENUMLIST                                           =  55;  // <EnumList> ::= <Enumerator>
-//		final int PROD_ENUMERATOR_IDENTIFIER_EQ                           =  56;  // <Enumerator> ::= Identifier '=' <Constant Exp>
-//		final int PROD_ENUMERATOR_IDENTIFIER                              =  57;  // <Enumerator> ::= Identifier
+		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_RBRACE       =  49;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> '}'
+		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_COMMA_RBRACE =  50;  // <Enumerator Spec> ::= enum Identifier '{' <EnumList> ',' '}'
+		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE                  =  51;  // <Enumerator Spec> ::= enum '{' <EnumList> '}'
+		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE            =  52;  // <Enumerator Spec> ::= enum '{' <EnumList> ',' '}'
+		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER                     =  53;  // <Enumerator Spec> ::= enum Identifier
+		final int PROD_ENUMLIST_COMMA                                     =  54;  // <EnumList> ::= <EnumList> ',' <Enumerator>
+		final int PROD_ENUMLIST                                           =  55;  // <EnumList> ::= <Enumerator>
+		final int PROD_ENUMERATOR_IDENTIFIER_EQ                           =  56;  // <Enumerator> ::= Identifier '=' <Constant Exp>
+		final int PROD_ENUMERATOR_IDENTIFIER                              =  57;  // <Enumerator> ::= Identifier
 //		final int PROD_TYPEQUALIFIER_CONST                                =  58;  // <Type Qualifier> ::= const
 //		final int PROD_TYPEQUALIFIER_RESTRICT                             =  59;  // <Type Qualifier> ::= restrict
 //		final int PROD_TYPEQUALIFIER_VOLATILE                             =  60;  // <Type Qualifier> ::= volatile
@@ -1735,28 +1736,87 @@ public class C99Parser extends CPreParser
 						_typeSpecs.add(type);
 					}
 						break;
-					case RuleConstants.PROD_TYPESPECIFIER2:
+					case RuleConstants.PROD_TYPESPECIFIER2:	// rather unlikely (represented by one of the following)
 						// <Type Specifier> ::= <Enumerator Spec>
-						// FIXME Define the constants at least
+					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_RBRACE:
+					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_COMMA_RBRACE:
+					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE:
+					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE:
+					{
+						// FIXME actual enum type support? Define the constants at least
+						String typeName = null;
+						int ixEnum = 3;
+						if (prefixId == RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE
+								|| prefixId == RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE) {
+							ixEnum = 2;
+						}
+						else {
+							typeName = prefix.asReduction().get(1).asString();
+						}
+						Reduction redEnumL = prefix.asReduction().get(ixEnum).asReduction();
+						StringList names = new StringList();
+						StringList values = new StringList();
+						while (redEnumL != null) {
+							Reduction redEnum = redEnumL;
+							if (redEnumL.getParent().getTableIndex() == RuleConstants.PROD_ENUMLIST_COMMA) {
+								redEnum = redEnumL.get(2).asReduction();
+								redEnumL = redEnumL.get(0).asReduction();
+							}
+							else {
+								redEnumL = null;
+							}
+							String constId = "";
+							if (redEnum.getParent().getTableIndex() == RuleConstants.PROD_ENUMERATOR_IDENTIFIER_EQ) {
+								names.add(redEnum.get(0).asString());
+								values.add(this.getContent_R(redEnum.get(2).asReduction(), ""));
+							}
+							else {
+								names.add(this.getContent_R(redEnum, ""));
+								values.add("");
+							}
+						}
+						if (names.count() > 0 && _parentNode != null) {
+							names = names.reverse();
+							values = values.reverse();
+							int val = 0;
+							String baseVal = "";
+							for (int i = 0; i < names.count(); i++) {
+								if (!values.get(i).isEmpty()) {
+									baseVal = values.get(i);
+									try {
+										val = Integer.parseInt(baseVal);
+										baseVal = "";	// If the value was an int literal, we don't need an expr. string
+									}
+									catch (NumberFormatException ex) {
+										val = 0;
+									}
+								}
+								names.set(i, "const " + names.get(i) + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
+								val++;
+							}
+							Instruction enumDef = new Instruction(names);
+							this.equipWithSourceComment(enumDef, prefix.asReduction());
+							if (typeName != null) {
+								enumDef.getComment().add("Enumeration type " + typeName);
+							}
+							enumDef.setColor(colorConst);
+							_parentNode.addElement(enumDef);
+						}
+						_typeSpecs.add("int");
+					}	
+						break;
+					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER:
+						// FIXME actual enum type support?
+						_typeSpecs.add("int");
 						break;
 					case RuleConstants.PROD_TYPEDEFNAME_USERTYPEID:
 						// <Typedef Name> ::= UserTypeId
 					case RuleConstants.PROD_TYPESPECIFIER3:
 						// <Type Specifier> ::= <Typedef Name>
-						// We must produce a (further) type definition here
-//					{
-//						String typeid = getContent_R(prefix.asReduction(), "").trim();
-//						Instruction typedef = new Instruction("type " + typeid + " = " + _typeSpecs.concatenate(" "));
-//						if (_parentNode != null) {
-//							if (isTypedef) {
-//								this.equipWithSourceComment(typedef, _reduction);
-//							}
-//							_parentNode.addElement(typedef);
-//						}
-//						typedef.updateTypeMap(typeMap);
-//						
-//						//_typeSpecs.add(typeid);// Produce typedef here?
-//					}
+					{
+						String typeid = getContent_R(prefix.asReduction(), "").trim();
+						_typeSpecs.add(typeid);// Produce typedef here? No, maybe a configured external type
+					}
 						break;
 					default:
 						if (prefixId >= RuleConstants.PROD_TYPESPECIFIER_VOID && prefixId <= RuleConstants.PROD_TYPESPECIFIER__COMPLEX) {

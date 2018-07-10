@@ -5221,7 +5221,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //						// END KGU#354 2017-04-27
 //						);
 				ImportWorker worker = new ImportWorker(parser, file, ini,logPath);
-				CodeImportMonitor monitor = new CodeImportMonitor(this.NSDControl.getFrame(), worker, parser.getDialogTitle());
+				// Pop up the progress monitor (it will be closed via the OK buttons).
+				new CodeImportMonitor(this.NSDControl.getFrame(), worker, parser.getDialogTitle());
 				List<Root> newRoots = worker.get();
 				// END KGU#537 2018-06-30
 				// END KGU#265 2016-09-28
