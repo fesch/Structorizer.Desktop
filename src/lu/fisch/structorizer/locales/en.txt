@@ -326,6 +326,8 @@ Menu.msgDialogExpCols.text=Into how many columns do you want to split the output
 Menu.msgDialogExpRows.text=Into how many rows do you want to split the output?
 Menu.msgOverwriteFile.text=Overwrite existing file?
 Menu.msgOverwriteFiles.text=Existing file(s) detected. Overwrite?
+Menu.msgOverwriteFile1.text=Overwrite existing file "%"?
+Menu.msgCancelAll.text=Cancel the saving of all remaining files?
 Menu.btnConfirmOverwrite.text=Confirm Overwrite
 Menu.msgRepeatSaveAttempt.text=Your file has not been saved. Please repeat the save operation!
 Menu.msgErrorFileSave.text=Error on saving the file: %!
@@ -399,9 +401,11 @@ Menu.msgGuidedTours.text=You activated guided tours.\n\nWatch out for recommenda
 Menu.msgGuidedTourDone.text=Congratulations - you finished the tutorial «%».
 Menu.msgGuidedTourNext.text=%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first: → Menu "%3"
 Menu.ttlGuidedTours.text=Guided Tours
+Menu.msgTooManyDiagrams.text=The number of created diagrams exceeds the simultaneous rendering capacity.\nSave all obtained diagrams as files just now?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
+
 	
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".

@@ -50,6 +50,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.19      File decomposed and inheritance changed
  *      Kay Gürtzig     2018.06.20      Most algorithmic structures implemented, bugfixes #545, #546 integrated
  *      Kay Gürtzig     2018.06.23      Function definitions, struct definitions, and struct initializers
+ *      Kay Gürtzig     2018.07.10      Precaution against incomplete FOR loops (index error on colouring parts)
  *
  ******************************************************************************************************
  *
@@ -885,9 +886,13 @@ public class C99Parser extends CPreParser
 				// get first part - should be an assignment...
 				// We make a separate instruction out of it
 				Reduction secReduc = _reduction.get(2).asReduction();
+				int oldSize = _parentNode.getSize();
 				buildNSD_R(secReduc, _parentNode);
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				_parentNode.getElement(_parentNode.getSize()-1).setColor(colorMisc);
+				// (maybe the initialization part was empty, though!)
+				for (int i = oldSize; i < _parentNode.getSize(); i++) {
+					_parentNode.getElement(i).setColor(colorMisc);
+				}
 				
 				// get the second part - should be an ordinary condition
 				int condIx = 4;
@@ -920,11 +925,13 @@ public class C99Parser extends CPreParser
 				secReduc = _reduction.get(condIx + 2).asReduction();
 				// Problem is that it is typically a simple operator expression,
 				// e.g. i++ or --i, so it won't be recognized as statement unless we
-				/// impose some extra status
+				// impose some extra status
+				oldSize = body.getSize();	// Maybe (though little likely) the increment part is empty
 				buildNSD_R(secReduc, body);
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				body.getElement(body.getSize()-1).setColor(colorMisc);
-
+				for (int i = oldSize; i < body.getSize(); i++) {
+					body.getElement(i).setColor(colorMisc);
+				}
 			}
 			else if (
 					// Alternative?
@@ -1037,7 +1044,7 @@ public class C99Parser extends CPreParser
 		root.setProgram(false);
 		addRoot(root);
 		// If the previous root was global and had collected elements then make the new root a potential importer
-		if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0) {
+		if (prevRoot.getMethodName().equals("???") && prevRoot.children.getSize() > 0 && !this.importingRoots.contains(root)) {
 			// We must have inserted some global stuff, so assume a dependency...
 			this.importingRoots.add(root);
 		}
@@ -1444,6 +1451,10 @@ public class C99Parser extends CPreParser
 		return declns;
 	}
 
+	private static final Matcher MTCHR_EXTERN = Pattern.compile("(^|.*\\W)extern(\\s+)(.*)").matcher("");
+	private static final Matcher MTCHR_STATIC = Pattern.compile("(^|.*\\W)static(\\s+)(.*)").matcher("");
+	private static final Matcher MTCHR_REGISTER = Pattern.compile("(^|.*\\W)register(\\s+)(.*)").matcher("");
+	
 	/**
 	 * Converts a rule with head {@code <Init Declarator>} (as part of a declaration) and casts it
 	 * into an Instruction element added to {@code _parentNode} if given.  
@@ -1458,9 +1469,24 @@ public class C99Parser extends CPreParser
 	 */
 	private String buildDeclOrAssignment(Reduction _reduc, String _type, Subqueue _parentNode, String _comment, boolean _forceDecl, boolean _asTypeDef) throws ParserCancelled
 	{
-		_type = _type.replace("extern ","");
-		if (_type.equals("extern")) {
-			System.out.println("C99Parser(1463): extern found"); 
+		boolean isGlobal = false;
+		StringList extraComments = new StringList();
+		if (MTCHR_EXTERN.reset(_type).matches()) {
+			extraComments.add("extern");
+			_type = MTCHR_EXTERN.replaceAll("$1$2$3");
+			isGlobal = true;
+		}
+		if (MTCHR_STATIC.reset(_type).matches()) {
+			extraComments.add("static");
+			_type = MTCHR_STATIC.replaceAll("$1$2$3");
+			isGlobal = true;
+		}
+		if (MTCHR_REGISTER.reset(_type).matches()) {
+			extraComments.add("register");
+			_type = MTCHR_REGISTER.replaceAll("$1$2$3");
+		}
+		if (_type.equals("extern") || _type.equals("static")) {
+			System.out.println("C99Parser(1489): extern or static found"); 
 		}
 		boolean isConstant = _type != null && _type.startsWith("const ");	// Is it sure that const will be at the beginning?
 		int ruleId = _reduc.getParent().getTableIndex();
@@ -1472,6 +1498,7 @@ public class C99Parser extends CPreParser
 			_type = _type.substring("const ".length());
 		}
 		if (ruleId == RuleConstants.PROD_INITDECLARATOR_EQ) {
+			// Initialized declaration
 			log("\ttrying <Declarator> '=' <Initializer> ...\n", false);
 			content = this.getContent_R(_reduc.get(0).asReduction(), "");	// Default
 			id = this.getDeclarator(_reduc.get(0).asReduction(), null, null, null, _parentNode, null);
@@ -1480,11 +1507,11 @@ public class C99Parser extends CPreParser
 			ruleId = _reduc.getParent().getTableIndex();
 		}
 		else {
+			// Simple declaration - if allowed then make it to a Pascal decl.
 			log("\ttrying <Declarator> ...\n", false);
 			id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
-			// Simple declaration - if allowed then make it to a Pascal decl.
-			_forceDecl = this.optionImportVarDecl || _forceDecl;
 		}
+		_forceDecl = this.optionImportVarDecl || _forceDecl;
 		TypeMapEntry typeEntry = typeMap.get(":" + _type.trim());
 		boolean isStruct = typeEntry != null && typeEntry.isRecord();
 		if (_forceDecl || isStruct) {
@@ -1501,6 +1528,7 @@ public class C99Parser extends CPreParser
 				content = "const " + id + ": " + _type;
 			}
 			else if (_parentNode == null) {
+				// This seems to be for a component list
 				content = id + ": " + _type;
 			}
 			else {
@@ -1519,6 +1547,9 @@ public class C99Parser extends CPreParser
 				if (_comment != null) {
 					instr.setComment(_comment);
 				}
+				if (extraComments.count() > 0) {
+					instr.getComment().add(extraComments.concatenate(" + "));
+				}
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
 					if (!_asTypeDef) {
 						instr.getComment().add("Globally declared!");
@@ -1527,7 +1558,14 @@ public class C99Parser extends CPreParser
 					// FIXME
 					if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
 						this.importingRoots.add(root);
-						((Root)_parentNode.parent).addToIncludeList((Root)_parentNode.parent);
+						(root).addToIncludeList((Root)_parentNode.parent);
+					}
+				}
+				else if (isGlobal && this.globalRoot != null) {
+					_parentNode = this.globalRoot.children;
+					if (root != this.globalRoot && !this.importingRoots.contains(root)) {
+						this.importingRoots.add(root);
+						root.addToIncludeList(this.globalRoot);						
 					}
 				}
 				else if (expr == null && !_asTypeDef) {
@@ -1586,7 +1624,7 @@ public class C99Parser extends CPreParser
 //			}
 //			_parentNode.addElement(instr);
 //		}
-		log("\tfallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")\n", false);
+		log("\tFallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")\n", false);
 		return content;
 	}
 	
@@ -1646,7 +1684,7 @@ public class C99Parser extends CPreParser
 							// Skip the "struct" or "union" keyword if the type is known, otherwise put the keyword
 							type = structRed.get(1).asString();
 							if (!this.typeMap.containsKey(":"+type)) {
-								type = structRed.get(0).asString() + " " + type;
+								type = getContent_R(structRed.get(0).asReduction(), "") + " " + type;
 							}
 						}
 						else {
@@ -1830,6 +1868,9 @@ public class C99Parser extends CPreParser
 				Token dimToken = _reduction.get(ixDim);
 				if (dimToken.getType() != SymbolType.NON_TERMINAL) {
 					indexRange = "[" + getContent_R(dimToken.asReduction(), "") +"]";
+				}
+				else if (dimToken.asReduction().size() == 0) {
+					indexRange = "";
 				}
 				else {
 					indexRange = "[" + dimToken.asString() + "]";
@@ -2258,7 +2299,7 @@ public class C99Parser extends CPreParser
 					_groupList.add(_declList.reverse().concatenate(", ") + ": " + _baseType + ";\\");
 					_declList.clear();
 				}
-				_groupList.add(compDecl + ": " + index + ptrs + _baseType + ";\\");
+				_groupList.add(compDecl + ": " + index + _baseType + ptrs + ";\\");
 			}
 			else {
 				_declList.add(compDecl);

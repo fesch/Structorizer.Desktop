@@ -329,6 +329,8 @@ Menu.msgDialogExpCols.text=In wie viele Spalten soll das Bild zerlegt werden?
 Menu.msgDialogExpRows.text=In wie viele Zeilen soll das Bild zerlegt werden?
 Menu.msgOverwriteFile.text=Bestehende Datei überschreiben?
 Menu.msgOverwriteFiles.text=Gleichnamige Datei(en) vorhanden. Überschreiben?
+Menu.msgOverwriteFile1.text=Bestehende Datei "%" überschreiben?
+Menu.msgCancelAll.text=CDie Sicherung aller verbleibenden Dateien abbrechen?
 Menu.btnConfirmOverwrite.text=Überschreiben bestätigen
 Menu.msgRepeatSaveAttempt.text=Die Datei konnte nicht gesichert werden. Versuchen Sie es bitte erneut!
 Menu.msgErrorFileSave.text=Fehler beim Sichern der Datei: %!
@@ -402,6 +404,7 @@ Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf 
 Menu.msgGuidedTourDone.text=Gratulation - Sie haben den Kurs «%» geschafft.
 Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten dazu ein neues Diagramm starten → Menü "%3"
 Menu.ttlGuidedTours.text=Geführte Kurse
+Menu.msgTooManyDiagrams.text=Die Zahl der erzeugten Diagramme übersteigt die gleichzeitige Darstellungsfähigkeit.\nAlle erhaltenen Diagramme sofort speichern?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)

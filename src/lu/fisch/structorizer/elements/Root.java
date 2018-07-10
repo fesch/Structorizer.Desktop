@@ -285,7 +285,7 @@ public class Root extends Element {
 	public StringList includeList = null;
 	// END KGU#376 2017-06-30
 	/**
-	 * Checks, whether {@code aRoot} is includable and if so, ensures that its name is
+	 * Checks, whether {@code aRoot} is includable and if so, ensures that its name
 	 * becomes member of this' include list.
 	 * @param aRoot - a diagram to be added to the include list of this
 	 * @return true if {@code aRoot} is includable and new to the include list

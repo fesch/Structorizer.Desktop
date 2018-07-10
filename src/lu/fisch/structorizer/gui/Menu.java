@@ -521,6 +521,10 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgDialogExpRows = new LangTextHolder("Into how many rows do you want to split the output?");
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file?");
 	public static final LangTextHolder msgOverwriteFiles = new LangTextHolder("Existing file(s) detected. Overwrite?");
+	// START KGU#553 2018-07-10: Issue #557
+	public static final LangTextHolder msgOverwriteFile1 = new LangTextHolder("Overwrite existing file \"%\"?");
+	public static final LangTextHolder msgCancelAll = new LangTextHolder("Cancel the saving of all remaining files?");
+	// END KGU#553 2018-07-10
 	public static final LangTextHolder btnConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	public static final LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
 	// END KGU#218 2016-07-28
@@ -617,6 +621,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#392 2017-05-07: Enh. #354, #399
 	public static final LangTextHolder msgUnsupportedFileFormat = new LangTextHolder("These files couldn't be loaded because their format is not known or not supported:\n%");
 	// END KGU#392 2017-05-07
+	// START KGU#553 2018-07-10: Workaround #557
+	public static final LangTextHolder msgTooManyDiagrams = new LangTextHolder("The number of created diagrams exceeds the simultaneous rendering capacity.\nSave all obtained diagrams as files just now?");
+	// END KGU#553 2018-07-10
 	// START KGU#365 2017-03-27: Enh. #380
 	public static final LangTextHolder msgSubroutineName = new LangTextHolder("Name of the subroutine");
 	public static final LangTextHolder msgJumpsOutwardsScope = new LangTextHolder(

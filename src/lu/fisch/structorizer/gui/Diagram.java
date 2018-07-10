@@ -1936,13 +1936,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private void saveAsNSD(Root root)
 	// END KGU#320 2017-01-04
 	{
+		// propose name
+		String nsdName = root.proposeFileName();
+		
+		// START KGU#534/KGU#553 2018-07-10: Enh. #552, issue #557 - special treatment for mass serial save
+		boolean done = false;
+		File dir = this.currentDirectory;
+		if (dir != null && isInSerialMode() && getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) == SerialDecisionStatus.YES_TO_ALL) {
+			if (!dir.isDirectory()) {
+				dir = dir.getParentFile();
+			}
+			File f = new File(dir.getAbsolutePath() + File.separator + nsdName + ".nsd");
+			if (this.checkOverwrite(f, true)) {
+				root.filename = f.getAbsolutePath();
+				root.shadowFilepath = null;
+				done = doSaveNSD(root);
+			}			
+		}
+		if (done) {
+			return;
+		}
+		// END KGU#534/KGU#553 2018-07-10
+
 		JFileChooser dlgSave = new JFileChooser();
 		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
 		GUIScaler.rescaleComponents(dlgSave);
 		// END KGU#287 2017-01-09
 		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
 		// set directory
-		if(root.getFile()!=null)
+		if (root.getFile() != null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -1951,8 +1973,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgSave.setCurrentDirectory(currentDirectory);
 		}
 
-		// propose name
-		String nsdName = root.proposeFileName();
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new StructogramFilter());
@@ -1972,53 +1992,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 
 				File f = new File(newFilename);
-				boolean writeNow = true;
-				if (f.exists())
-				{
-					writeNow=false;
-					// START KGU#534 2018-06-27: Enh. #552
-					if (isInSerialMode()) {
-						switch (getSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE)) {
-						case INDIVIDUAL: {						
-							String[] options = {
-									Menu.lblContinue.getText(),
-									Menu.lblModify.getText(),
-									Menu.lblYesToAll.getText() 
-							};
-							String initialValue = options[0];
-							int res = JOptionPane.showOptionDialog(
-									this.NSDControl.getFrame(),
-									Menu.msgOverwriteFile.getText(),
-									Menu.btnConfirmOverwrite.getText(),
-									JOptionPane.DEFAULT_OPTION,
-									JOptionPane.QUESTION_MESSAGE,
-									null,
-									options,
-									initialValue);
-							if (res >= 2) {
-								this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
-							}
-							if (res == 0 || res == 2) writeNow=true;
-							}
-							break;
-						case YES_TO_ALL:
-							writeNow = true;
-							break;
-						default: ;
-						}
-					}
-					else {
-					// END KGU#534 2018-06-27
-						int res = JOptionPane.showConfirmDialog(
-								this.NSDControl.getFrame(),
-								Menu.msgOverwriteFile.getText(),
-								Menu.btnConfirmOverwrite.getText(),
-								JOptionPane.YES_NO_OPTION);
-						if (res == JOptionPane.YES_OPTION) writeNow=true;
-					// START KGU#534 2018-06-27: Enh. #552
-					}
-					// END KGU#534 2018-06-27
-				}
+				boolean writeNow = checkOverwrite(f, false);
 
 				if (!writeNow)
 				{
@@ -2052,7 +2026,66 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		} while (result == JFileChooser.ERROR_OPTION);
 		// END KGU#248 2016-09-15
-
+	}
+	/**
+	 * Checks if a file {@code _file} already exists and requests overwrite permission in this case.
+	 * @param f - The proposed file path
+	 * @param showFilename - whether the file name is to be presented in the message
+	 * @return whether writing is permitted
+	 */
+	private boolean checkOverwrite(File f, boolean showFilename) {
+		boolean writeNow = true;
+		if (f.exists())
+		{
+			writeNow=false;
+			// START KGU#534 2018-06-27: Enh. #552
+			if (isInSerialMode()) {
+				switch (getSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE)) {
+				case INDIVIDUAL: {						
+					String[] options = {
+							Menu.lblContinue.getText(),
+							Menu.lblModify.getText(),
+							Menu.lblYesToAll.getText() 
+					};
+					String initialValue = options[0];
+					String message = Menu.msgOverwriteFile.getText();
+					if (showFilename) {
+						message = Menu.msgOverwriteFile1.getText().replaceAll("%", f.getAbsolutePath());
+					}
+					int res = JOptionPane.showOptionDialog(
+							this.NSDControl.getFrame(),
+							message,
+							Menu.btnConfirmOverwrite.getText(),
+							JOptionPane.DEFAULT_OPTION,
+							JOptionPane.QUESTION_MESSAGE,
+							null,
+							options,
+							initialValue);
+					if (res >= 2) {
+						this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
+					}
+					if (res == 0 || res == 2) writeNow=true;
+					}
+					break;
+				case YES_TO_ALL:
+					writeNow = true;
+					break;
+				default: ;
+				}
+			}
+			else {
+			// END KGU#534 2018-06-27
+				int res = JOptionPane.showConfirmDialog(
+						this.NSDControl.getFrame(),
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
+						JOptionPane.YES_NO_OPTION);
+				if (res == JOptionPane.YES_OPTION) writeNow=true;
+			// START KGU#534 2018-06-27: Enh. #552
+			}
+			// END KGU#534 2018-06-27
+		}
+		return writeNow;
 	}
 
 	/*****************************************
@@ -4434,21 +4467,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			boolean writeDown = true;
-
-			if(file.exists())
-			{
-				int response = JOptionPane.showConfirmDialog (null,
-						Menu.msgOverwriteFile.getText(),
-						Menu.btnConfirmOverwrite.getText(),
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE);
-				if (response == JOptionPane.NO_OPTION)
-				{
-					writeDown=false;
-				}
-			}
-			if(writeDown==true)
+			if (checkOverwrite(file, false))
 			{
 				BufferedImage bi = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
 				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
@@ -4540,21 +4559,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			boolean writeDown = true;
-
-			if(file.exists())
-			{
-				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
-						Menu.msgOverwriteFile.getText(),
-						Menu.btnConfirmOverwrite.getText(),
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE);
-				if (response == JOptionPane.NO_OPTION)
-				{
-					writeDown=false;
-				}
-			}
-			if(writeDown==true)
+			if(checkOverwrite(file, false))
 			{
 				try
 				{
@@ -4649,21 +4654,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			boolean writeDown = true;
-
-			if(file.exists())
-			{
-				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
-						Menu.msgOverwriteFile.getText(),
-						Menu.btnConfirmOverwrite.getText(),
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE);
-				if (response == JOptionPane.NO_OPTION)
-				{
-					writeDown=false;
-				}
-			}
-			if(writeDown==true)
+			if (checkOverwrite(file, false))
 			{
 				try
 				{
@@ -4779,21 +4770,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			boolean writeDown = true;
-
-			if(file.exists())
-			{
-				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
-						Menu.msgOverwriteFile.getText(),
-						Menu.btnConfirmOverwrite.getText(),
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE);
-				if (response == JOptionPane.NO_OPTION)
-				{
-					writeDown=false;
-				}
-			}
-			if(writeDown==true)
+			if (checkOverwrite(file, false))
 			{
 				try
 				{
@@ -4888,21 +4865,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			boolean writeDown = true;
-
-			if(file.exists())
-			{
-				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
-						Menu.msgOverwriteFile.getText(),
-						Menu.btnConfirmOverwrite.getText(),
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE);
-				if (response == JOptionPane.NO_OPTION)
-				{
-					writeDown=false;
-				}
-			}
-			if(writeDown==true)
+			if (checkOverwrite(file, false))
 			{
 				try
 				{
@@ -5273,6 +5236,47 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (iter.hasNext()){
 						firstRoot = iter.next();
 					}
+					// START KGU#553 2018-07-10: In case of too many diagrams Structorizer would go zombie
+					int nRoots = newRoots.size();
+					int maxRoots = Integer.parseInt(ini.getProperty("maxImportableRoots", "20"));
+					// FIXME: replace the magic number with a configurable limit
+					if (nRoots > maxRoots) {
+						String[] options = {Menu.lblContinue.getText(), Menu.lblCancel.getText()};
+						int chosen = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+								Menu.msgTooManyDiagrams.getText(),
+								Menu.ttlCodeImport.getText(),
+								JOptionPane.YES_NO_OPTION,
+								JOptionPane.WARNING_MESSAGE, null,
+								options, 0);
+						if (chosen != JOptionPane.OK_OPTION) {
+							newRoots.clear();
+							iter = newRoots.iterator();
+						}
+						startSerialMode();
+						try {
+							while (iter.hasNext() && this.getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
+								Root nextRoot = iter.next();
+								nextRoot.hightlightVars = hil;
+								nextRoot.setChanged();
+								if (!this.saveNSD(nextRoot, false)) {
+									if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+											Menu.msgCancelAll.getText(),
+											Menu.ttlCodeImport.getText(),
+											JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+										setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, false);
+									}
+								}
+								else {
+									setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, true);
+								}
+							}
+						}
+						finally {
+							endSerialMode();
+						}
+						nRoots = 1;
+					}
+					// END KGU#553 2018-07-10
 					while (iter.hasNext())
 					{
 						root = iter.next();
@@ -5295,7 +5299,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						root.setChanged();
 						// END KGU#192 2016-05-02
 						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
-						if (newRoots.size() > 2 || !root.isProgram()) {
+						if (nRoots > 2 || !root.isProgram()) {
 							this.arrangeNSD();
 						}
 						// END KGU#354 2017-05-23
@@ -5526,7 +5530,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
 						value = Integer.parseInt(valueStr);
 					}
-					else if (type.equalsIgnoreCase("unsiged")) {
+					else if (type.equalsIgnoreCase("unsigned")) {
 						value = Integer.parseUnsignedInt(valueStr);
 					}
 					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {

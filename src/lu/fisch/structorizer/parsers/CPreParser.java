@@ -39,6 +39,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.07.04      Bugfix #554: StreamTokenizer lineno() lag workaround in prepareTypeDefs
  *      Kay Gürtzig     2018.07.09      KGU#546/KGU#547: Further StreamTokenizer workaround, include guard surrogate
  *                                      typedef collection now recursive in included header files.
+ *                                      KGU#550 through KGU#552: Macro replacement refined, new options use_XXX_defines
  *
  ******************************************************************************************************
  *
@@ -52,6 +53,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
@@ -145,9 +147,26 @@ public abstract class CPreParser extends CodeParser
 	private	final String[][] typeReplacements = new String[][] {
 		{"size_t", "unsigned long"},
 		{"time_t", "unsigned long"},
-		{"ptrdiff_t", "unsigned long"}
+		{"ptrdiff_t", "unsigned long"},
+		{"errno_t", "int"},
+		{"va_list", "char*"}		// from <stdarg.h>
 	};
 	
+	// START KGU#550 2018-07-09: Enh. #489
+	/** Library names for which there might be sets of type names or dummy symbols to be registered */
+	protected static final String[] standardLibs = new String[] {
+			"WINAPI",
+			"MinGw"
+	};
+	// END KGU#550 2018-07-09
+	
+	/**
+	 * Maps the name of a preprocessor define to a string array consisting of:<br/>
+	 * [0]: Replacement for the macro (possibly containing argument strings)
+	 * [1] (if existing): 1st argument name
+	 * [2] (if existing): 2nd argument name
+	 * [.] ...
+	 */
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
 	
 	// START KGU#547 2018-07-09: We should prevent headers from being included repeatedly.
@@ -185,6 +204,9 @@ public abstract class CPreParser extends CodeParser
 		// START KGU#519 2018-06-17: Enh. 541 Empty the defines before general start
 		defines.clear();
 		// END KGU#519 2018-06-17
+		// START KGU#551 2018-07-09: Precaution against va_arg macro
+		defines.put("va_arg", new String[]{"va_arg_REPL(ap, \"tp\")", "ap", "tp"});
+		// END KGU#551 2018-07-09
 
 		//========================================================================!!!
 		// Now introduced as plugin-defined option configuration for C
@@ -197,6 +219,10 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#519 2018-06-17
 
 		initializeTypedefs();
+		
+		// START KGU#550 2018-07-09: Enh. #489 Default additions for well-known libraries
+		applyUseDefinesOptions();
+		// END KGU#550 2018-07-09
 		
 		boolean parsed = false;
 		
@@ -237,10 +263,54 @@ public abstract class CPreParser extends CodeParser
 			catch (Exception e) 
 			{
 				System.err.println("CParser.prepareTextfile() creation of intermediate file -> " + e);
+				this.error += e.toString();
 			}
 		}
 		return interm;
 	}
+
+	// START KGU#550 2018-07-09: Enh. #489 Default additions for well-known libraries
+	/**
+	 * Reads all plugin-specific options of kind "use_XXX_defines" to make use of predefined
+	 * types or preprocessor defines for the respective library and adds them either to
+	 * {@link #typedefs} or to {@link #defines}, depending on the value mapped in the
+	 * associated resource file.
+	 */
+	private void applyUseDefinesOptions() {
+		for (String libName: standardLibs) {
+			boolean useLib = (boolean)this.getPluginOption("use_" + libName + "_defines", false);
+			if (!useLib) {
+				continue;
+			}
+			InputStream istr = getClass().getResourceAsStream("defsImportC_" + libName + ".txt");
+			if (istr != null) {
+				Properties defs = new Properties();
+				try {
+					defs.load(istr);
+					for (Object key: defs.keySet()) {
+						String name = (String)key;
+						String value = defs.getProperty(name).trim();
+						if (value.equals("type")) {
+							typedefs.add(name);
+							blockRanges.addElement(new Integer[]{0, -1});							
+						}
+						else {
+							defines.put(name, new String[]{value});
+						}
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					log ("*** Read error in definition file for library " + libName + ":\n" + e.toString(), false);
+				}
+				finally {
+					try {
+						istr.close();
+					} catch (IOException ex) {}
+				}
+			}
+		}
+	}
+	// END KGU#550 2018-07-09
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
@@ -499,10 +569,11 @@ public abstract class CPreParser extends CodeParser
 
 	/**
 	 * Helper function for prepareTextfile to handle C preprocessor commands
-	 * @param preprocessorLine	line for the preprocessor without leading '#'
-	 * @param defines 
+	 * @param preprocessorLine - line for the preprocessor without leading '#'
+	 * @param defines - symbols or macros mapped to their pre-processed replacement data - to be updated
 	 * @return comment string that can be used for prefixing the original source line
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
+	 * @see {@link #defines}
 	 */
 	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines) throws ParserCancelled
 	{
@@ -583,7 +654,7 @@ public abstract class CPreParser extends CodeParser
 						collectTypedefs(subSB.toString(), path, null);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
-						log(this.getClass().getSimpleName() + ".collectTypedefs() failed for file \"" + path + "\" with\n" + e.toString(), false);
+						log("*** " + this.getClass().getSimpleName() + ".collectTypedefs() failed for file \"" + path + "\" with\n" + e.toString(), false);
 						this.getLogger().log(Level.WARNING, "typedef collection in file \"" + path + "\" failed!", e);
 					}
 					return "// preparser include (parsed): ";
@@ -737,7 +808,7 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#541 2018-07-04
 		
 		// START KGU#546 2018-07-09: Workaround #556 for a StreamTokenizer bug (takes slashes as double slashes at certain positions)
-		_srcCode = _srcCode.replaceAll("(.*[^/*])/([^/*].*)", "$1Ⱦ$2");
+		_srcCode = _srcCode.replaceAll("(.*[^/*])/([^/*].*)", "$1?$2");
 		// END KGU#546 2018-07-09
 		
 		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(_srcCode));
@@ -1065,6 +1136,9 @@ public abstract class CPreParser extends CodeParser
 		//if (toReplace.trim().isEmpty()) {
 		//	return "";
 		//}
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();	// check that the parser thread hasn't been cancelled
+		// END KGU#537 2018-07-01
 		String nlTail = "";
 		int nlPos = toReplace.indexOf('\n');
 		if (nlPos >= 0) {
@@ -1077,11 +1151,6 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#519 2018-06-17
 		//log("CParser.replaceDefinedEntries(): " + Matcher.quoteReplacement((String)entry.getValue().toString()) + "\n", false);
 		for (Entry<String, String[]> entry: defines.entrySet()) {
-			// START KGU#537 2018-07-01: Enh. #553
-			checkCancelled();	// check that the parser thread hasn't been cancelled
-			// END KGU#537 2018-07-01
-			
-			// FIXME: doesn't work if entry is at start/end of toReplace 			
 			
 			if (entry.getValue().length > 1) {
 				//          key<val[0]>     <   val[1]   >
@@ -1152,6 +1221,20 @@ public abstract class CPreParser extends CodeParser
 								String part = parts.get(i);
 								if (!part.isEmpty() && argMap.containsKey(part)) {
 									parts.set(i, argMap.get(part));
+									// START KGU#552 2018-07-09: Try to address stringification (#) and agglutination (##)
+									if (i > 0) {
+										String prevPart = parts.get(i-1);
+										if (prevPart.endsWith("##")) {
+											// Agglutination, just drop the "##".
+											parts.set(i-1, prevPart.substring(0, prevPart.length()-2));
+										}
+										else if (prevPart.endsWith("#")) {
+											// Stringification - enclose the substitute in quotes
+											parts.set(i-1, prevPart.substring(0, prevPart.length()-1));
+											parts.set(i, "\"" + parts.get(i) + "\"");
+										}
+									}
+									// END KGU#552 2018-07-09
 								}
 							}
 							// Now we correct possible matching defects
@@ -1173,7 +1256,7 @@ public abstract class CPreParser extends CodeParser
 				}
 			} else {
 				// from: #define	a	b, b can also be empty
-				toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\W.*?)",
+				toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\W.*?|$)",
 						"$1" + Matcher.quoteReplacement((String) entry.getValue()[0]) + "$2");
 			}
 		}
