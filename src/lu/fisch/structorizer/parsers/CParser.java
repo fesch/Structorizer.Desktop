@@ -97,6 +97,7 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
@@ -1138,59 +1139,59 @@ public class CParser extends CPreParser
 					 ruleId == RuleConstants.PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN
 					 )
 			{
-				// The easiest (and default) approach is always to build WHILE loops here
-				// Only in very few cases which are difficult to verify, a FOR loop might
-				// be built: The first part must be a single assignment, the variable of
-				// which must occur in a comparison in part 2 and in a simple incrementation
-				// or decrementation in part3. The next trouble. The incrementation/decremention
-				// should only have one of the forms i++, ++i, i--, --i - only then can we be
-				// sure it's an integer increment/decrement and the step sign is clear such
-				// that the comparison will not have to be modified fundamentally.
-				
-				// get first part - should be an assignment...
-				// We make a separate instruction out of it
-				Reduction secReduc = _reduction.get(2).asReduction();
-				buildNSD_R(secReduc, _parentNode);
-				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				_parentNode.getElement(_parentNode.getSize()-1).setColor(colorMisc);
-				
-				// get the second part - should be an ordinary condition
-				String content = getContent_R(_reduction.get(4).asReduction(), "");
-				// START KGU#527 2018-06-20: Bugfix #545
-				//While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
 				Subqueue body = null;
-				Element ele = null;
-				if (content.trim().isEmpty()) {
-					Forever lp0 = new Forever();
-					ele = lp0;
-					body = lp0.getBody();
+				
+				Element ele = this.checkAndMakeFor(_reduction.get(2), _reduction.get(4), _reduction.get(6));
+				if (ele != null) {
+					body = ((For)ele).getBody();
 				}
 				else {
-					While lp0 = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
-					ele = lp0;
-					body = lp0.getBody();
+					// The attempt to forma FOR loop directly failed, so we have to decompose it 
+					// get first part - should be an assignment...
+					// We make a separate instruction out of it
+					Reduction secReduc = _reduction.get(2).asReduction();
+					buildNSD_R(secReduc, _parentNode);
+					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+					_parentNode.getElement(_parentNode.getSize()-1).setColor(colorMisc);
+
+					// get the second part - should be an ordinary condition
+					String content = getContent_R(_reduction.get(4).asReduction(), "");
+					// START KGU#527 2018-06-20: Bugfix #545
+					//While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+					if (content.trim().isEmpty()) {
+						Forever lp0 = new Forever();
+						ele = lp0;
+						body = lp0.getBody();
+					}
+					else {
+						While lp0 = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+						ele = lp0;
+						body = lp0.getBody();
+					}
+					// END KGU#527 2018-06-20
+					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+					ele.setColor(colorMisc);
+					
 				}
-				// END KGU#527 2018-06-20
+				
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
-				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				ele.setColor(colorMisc);
 				_parentNode.addElement(ele);
 				
 				// Get and convert the body
-				secReduc = _reduction.get(8).asReduction();
-				buildNSD_R(secReduc, body);
+				Reduction bodyReduc = _reduction.get(8).asReduction();
+				buildNSD_R(bodyReduc, body);
 
-				// get the last part of the header now and append it to the body
-				secReduc = _reduction.get(6).asReduction();
-				// Problem is that it is typically a simple operator expression,
-				// e.g. i++ or --i, so it won't be recognized as statement unless we
-				/// impose some extra status
-				buildNSD_R(secReduc, body);
-				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				body.getElement(body.getSize()-1).setColor(colorMisc);
-
+				if (!(ele instanceof For)) {
+					// get the last part of the header now in order to append it to the body
+					// Problem is that it is typically a simple operator expression,
+					// e.g. i++ or --i, so it won't be recognized as statement unless we
+					/// impose some extra status
+					buildNSD_R(_reduction.get(6).asReduction(), body);
+					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+					body.getElement(body.getSize()-1).setColor(colorMisc);
+				}
 			}
 			else if (
 					// IF statement?

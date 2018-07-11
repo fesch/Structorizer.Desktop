@@ -62,8 +62,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.creativewidgetworks.goldparser.engine.Reduction;
+import com.creativewidgetworks.goldparser.engine.Token;
 
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
@@ -1360,7 +1362,7 @@ public abstract class CPreParser extends CodeParser
 		_parentNode.addElement(this.equipWithSourceComment(new Instruction(content.trim()), _reduction));
 		// END KGU#407 2017-06-22
 	}
-
+	
 	/**
 	 * Converts a C initializer expression for a struct type to a corresponding
 	 * record initializer for Structorizer.
@@ -1395,6 +1397,104 @@ public abstract class CPreParser extends CodeParser
 			}
 		}
 		return _expr;
+	}
+	
+	/**
+	 * Checks the three header zones (given by the {@link Token}s) of a C {@code for} loop being
+	 * imported and decides by means of methods {@link #checkForInit(Token, String)},
+	 * {@link #checkForCond(Token, String, boolean)}, and {@link #checkForIncr(Token)}
+	 * whether a Structorizer {@link For} loop may be formed from them. If so returns the {@link For}
+	 * element for further processing, otherwise returns {@code null}.<br/>
+	 * Subclasses must overwrite methods {@link #checkForInit(Token, String)},
+	 * {@link #checkForCond(Token, String, boolean)}, and {@link #checkForIncr(Token)} in a
+	 * grammar-dependent way. The versions of {@link CPreParser} return just null and thus avert
+	 * the generation of a {@link For} element.
+	 * @param initToken - {@link Token} representing the first header zone 
+	 * @param condToken - {@link Token} representing the second header zone
+	 * @param incrToken - {@link Token} representing the third header zone
+	 * @return either a {@link For} element or null.
+	 * @see #checkForInit(Token, String)
+	 * @see #checkForCond(Token, String, boolean)
+	 * @see #checkForIncr(Token)
+	 */
+	protected final For checkAndMakeFor(Token initToken, Token condToken, Token incrToken) throws ParserCancelled
+	{
+		For loop = null;
+		String[] idAndIncr = this.checkForIncr(incrToken);
+		if (idAndIncr != null) {
+			String id = idAndIncr[0];
+			String last = this.checkForCond(condToken, id, idAndIncr[1].equals("+"));
+			if (last != null) {
+				String first = this.checkForInit(initToken, id);
+				if (first != null) {
+					int incr = Integer.parseUnsignedInt(idAndIncr[2]);
+					if (idAndIncr[1].equals("-")) {
+						incr = -incr;
+					}
+					loop = new For(id, first, last, incr);
+				}
+			}
+		}
+		return loop;
+	}
+
+	/**
+	 * Checks the increment zone of a C {@code for} loop given by {@link #Token} {@code incrToken} 
+	 * whether the instruction is suited for a Structorizer FOR loop.<br/>
+	 * This is assumed in exactly the following cases:<br/>
+	 * 1. {@code <id>++}, {@code ++<id>}, {@code <id> += <intlit>}, or {@code <id> = <id> + <intlit>}<br/>  
+	 * 2. {@code <id>--}, {@code --<id>}, {@code <id> -= <intlit>}, or {@code <id> = <id> - <intlit>}  
+	 * @param incrToken - the token representing the third zone of a {@code for} loop header
+	 * @return null or a string array of: [0] the id, [1] '+' or '-', [2] the int literal of the increment/decrement
+	 * @see #checkAndMakeFor(Token, Token, Token)
+	 * @see #checkForCond(Token, String, boolean)
+	 * @see #checkForInit(Token, String)
+	 */
+	protected String[] checkForIncr(Token incrToken) throws ParserCancelled
+	{
+		return null;
+	}
+
+	/**
+	 * Checks the condition zone of a C {@code for} loop given by {@link #Token} {@code incrToken} 
+	 * whether the expression is suited for a Structorizer FOR loop.<br/>
+	 * Only the following cases are accepted where the expression {@code <expr>} must not contain
+	 * any comparison or logical operator like {@code &&}, {@code ||}, and {@code !}:<br/>
+	 * 1. {@code <id> < <expr>} or {@code <id> <= <expr>} where {@code <id>} is the given {@code <id>}
+	 * and {@code upward} is true<br/>  
+	 * 2. {@code <id> > <expr>} or {@code <id> >= <expr>} where {@code <id>} is the given {@code <id>}
+	 * and {@code upward} is false  
+	 * @param condToken - the token representing the second zone of a {@code for} loop header
+	 * @param id - the expected loop variable id to be tested
+	 * @param upward - whether there is an increment or decrement
+	 * @return the end value of the Structorizer counting FOR loop if suited, null otherwise
+	 * @see #checkAndMakeFor(Token, Token, Token)
+	 * @see #checkForIncr(Token)
+	 * @see #checkForInit(Token, String)
+	 */
+	protected String checkForCond(Token condToken, String id, boolean upward) throws ParserCancelled
+	{
+		return null;
+	}
+	
+	/**
+	 * Checks the initialization zone of a C {@code for} loop given by {@link #Token} {@code initToken} 
+	 * whether the statement is suited for a Structorizer FOR loop.<br/>
+	 * Only the following cases are accepted where the expression {@code <expr>} must not be composed
+	 * of several instructions:<br/>
+	 * 1. {@code <id> = <expr>} or<br/>
+	 * 2. {@code <type> <id> = <expr>}<br/>
+	 * where {@code <id>} is the given {@code <id>}. 
+	 * @param initToken - the token representing the first zone of a {@code for} loop header
+	 * @param id - the expected loop variable id to be tested
+	 * @return the start value expression or null if the {@code id} doesn't match or the staeement isn't suited
+	 * @see #checkAndMakeFor(Token, Token, Token)
+	 * @see #checkForIncr(Token)
+	 * @see #checkForCond(Token, String, boolean)
+	 */
+	protected String checkForInit(Token initToken, String id) throws ParserCancelled
+	{
+		return null;
 	}
 	
 	//------------------------- Postprocessor ---------------------------

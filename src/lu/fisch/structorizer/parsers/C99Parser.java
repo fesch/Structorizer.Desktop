@@ -79,6 +79,7 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
@@ -87,6 +88,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.parsers.CodeParser.ParserCancelled;
 import lu.fisch.utils.StringList;
 
 /**
@@ -521,12 +523,12 @@ public class C99Parser extends CPreParser
 //		final int PROD_EXPRESSION                                         = 162;  // <Expression> ::= <Assign Exp>
 		final int PROD_ASSIGNEXP                                          = 163;  // <Assign Exp> ::= <Unary Exp> <Assign Op> <Assign Exp>
 //		final int PROD_ASSIGNEXP2                                         = 164;  // <Assign Exp> ::= <Cond Exp>
-//		final int PROD_ASSIGNOP_EQ                                        = 165;  // <Assign Op> ::= '='
+		final int PROD_ASSIGNOP_EQ                                        = 165;  // <Assign Op> ::= '='
 //		final int PROD_ASSIGNOP_TIMESEQ                                   = 166;  // <Assign Op> ::= '*='
 //		final int PROD_ASSIGNOP_DIVEQ                                     = 167;  // <Assign Op> ::= '/='
 //		final int PROD_ASSIGNOP_PERCENTEQ                                 = 168;  // <Assign Op> ::= '%='
-//		final int PROD_ASSIGNOP_PLUSEQ                                    = 169;  // <Assign Op> ::= '+='
-//		final int PROD_ASSIGNOP_MINUSEQ                                   = 170;  // <Assign Op> ::= '-='
+		final int PROD_ASSIGNOP_PLUSEQ                                    = 169;  // <Assign Op> ::= '+='
+		final int PROD_ASSIGNOP_MINUSEQ                                   = 170;  // <Assign Op> ::= '-='
 //		final int PROD_ASSIGNOP_LTLTEQ                                    = 171;  // <Assign Op> ::= '<<='
 //		final int PROD_ASSIGNOP_GTGTEQ                                    = 172;  // <Assign Op> ::= '>>='
 //		final int PROD_ASSIGNOP_AMPEQ                                     = 173;  // <Assign Op> ::= '&='
@@ -547,16 +549,16 @@ public class C99Parser extends CPreParser
 //		final int PROD_EQUATEXP_EQEQ                                      = 188;  // <Equat Exp> ::= <Equat Exp> '==' <Relat Exp>
 //		final int PROD_EQUATEXP_EXCLAMEQ                                  = 189;  // <Equat Exp> ::= <Equat Exp> '!=' <Relat Exp>
 //		final int PROD_EQUATEXP                                           = 190;  // <Equat Exp> ::= <Relat Exp>
-//		final int PROD_RELATEXP_GT                                        = 191;  // <Relat Exp> ::= <Relat Exp> '>' <Shift Exp>
-//		final int PROD_RELATEXP_LT                                        = 192;  // <Relat Exp> ::= <Relat Exp> '<' <Shift Exp>
-//		final int PROD_RELATEXP_LTEQ                                      = 193;  // <Relat Exp> ::= <Relat Exp> '<=' <Shift Exp>
-//		final int PROD_RELATEXP_GTEQ                                      = 194;  // <Relat Exp> ::= <Relat Exp> '>=' <Shift Exp>
+		final int PROD_RELATEXP_GT                                        = 191;  // <Relat Exp> ::= <Relat Exp> '>' <Shift Exp>
+		final int PROD_RELATEXP_LT                                        = 192;  // <Relat Exp> ::= <Relat Exp> '<' <Shift Exp>
+		final int PROD_RELATEXP_LTEQ                                      = 193;  // <Relat Exp> ::= <Relat Exp> '<=' <Shift Exp>
+		final int PROD_RELATEXP_GTEQ                                      = 194;  // <Relat Exp> ::= <Relat Exp> '>=' <Shift Exp>
 //		final int PROD_RELATEXP                                           = 195;  // <Relat Exp> ::= <Shift Exp>
 //		final int PROD_SHIFTEXP_LTLT                                      = 196;  // <Shift Exp> ::= <Shift Exp> '<<' <Add Exp>
 //		final int PROD_SHIFTEXP_GTGT                                      = 197;  // <Shift Exp> ::= <Shift Exp> '>>' <Add Exp>
 //		final int PROD_SHIFTEXP                                           = 198;  // <Shift Exp> ::= <Add Exp>
-//		final int PROD_ADDEXP_PLUS                                        = 199;  // <Add Exp> ::= <Add Exp> '+' <Mult Exp>
-//		final int PROD_ADDEXP_MINUS                                       = 200;  // <Add Exp> ::= <Add Exp> '-' <Mult Exp>
+		final int PROD_ADDEXP_PLUS                                        = 199;  // <Add Exp> ::= <Add Exp> '+' <Mult Exp>
+		final int PROD_ADDEXP_MINUS                                       = 200;  // <Add Exp> ::= <Add Exp> '-' <Mult Exp>
 //		final int PROD_ADDEXP                                             = 201;  // <Add Exp> ::= <Mult Exp>
 //		final int PROD_MULTEXP_TIMES                                      = 202;  // <Mult Exp> ::= <Mult Exp> '*' <Cast Exp>
 //		final int PROD_MULTEXP_DIV                                        = 203;  // <Mult Exp> ::= <Mult Exp> '/' <Cast Exp>
@@ -875,63 +877,64 @@ public class C99Parser extends CPreParser
 			{
 				// <Iteration Stmt> ::= for '(' <ExprOpt> ';' <ExprOpt> ';' <ExprOpt> ')' <Statement>
 				// <Iteration Stmt> ::= for '(' <Declaration> <ExprOpt> ';' <ExprOpt> ')' <Statement>
-				// The easiest (and default) approach is always to build WHILE loops here
-				// Only in very few cases which are difficult to verify, a FOR loop might
-				// be built: The first part must be a single assignment, the variable of
-				// which must occur in a comparison in part 2 and in a simple incrementation
-				// or decrementation in part3. The next trouble: The incrementation/decremention
-				// should only have one of the forms i++, ++i, i--, --i - only then can we be
-				// sure it's an integer increment/decrement and the step sign is clear such
-				// that the comparison will not have to be modified fundamentally.
 				
-				// get first part - should be an assignment...
-				// We make a separate instruction out of it
-				Reduction secReduc = _reduction.get(2).asReduction();
-				int oldSize = _parentNode.getSize();
-				buildNSD_R(secReduc, _parentNode);
-				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				// (maybe the initialization part was empty, though!)
-				for (int i = oldSize; i < _parentNode.getSize(); i++) {
-					_parentNode.getElement(i).setColor(colorMisc);
-				}
-				
-				// get the second part - should be an ordinary condition
+				// get the second header part index
 				int condIx = 4;
 				if (ruleId == RuleConstants.PROD_ITERATIONSTMT_FOR_LPAREN_SEMI_RPAREN) {
 					condIx = 3;
 				}
-				String content = getContent_R(_reduction.get(condIx).asReduction(), "");
 				Subqueue body = null;
-				Element ele = null;
-				if (content.trim().isEmpty()) {
-					Forever loop = new Forever();
-					ele = loop;
-					body = loop.getBody();
+				// First try to produce an actual FOR loop.
+				Element ele = this.checkAndMakeFor(_reduction.get(2), _reduction.get(condIx), _reduction.get(condIx + 2));
+				int oldSize = _parentNode.getSize();
+				
+				if (ele != null) {
+					body = ((For)ele).getBody();
 				}
 				else {
-					While loop = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
-					ele = loop;
-					body = loop.getBody();
+					// The fallback approach now is always to build WHILE loops here
+
+					// get first part - should be an assignment...
+					// We make a separate instruction out of it
+					Reduction secReduc = _reduction.get(2).asReduction();
+					buildNSD_R(secReduc, _parentNode);
+					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+					// (maybe the initialization part was empty, though!)
+					for (int i = oldSize; i < _parentNode.getSize(); i++) {
+						_parentNode.getElement(i).setColor(colorMisc);
+					}
+
+					// get the second part - should be an ordinary condition
+					String content = getContent_R(_reduction.get(condIx).asReduction(), "");
+					if (content.trim().isEmpty()) {
+						Forever loop = new Forever();
+						ele = loop;
+						body = loop.getBody();
+					}
+					else {
+						While loop = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+						ele = loop;
+						body = loop.getBody();
+					}
+					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+					ele.setColor(colorMisc);
 				}
+				
 				this.equipWithSourceComment(ele, _reduction);
-				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				ele.setColor(colorMisc);
 				_parentNode.addElement(ele);
 				
 				// Get and convert the body
-				secReduc = _reduction.get(condIx + 4).asReduction();
-				buildNSD_R(secReduc, body);
+				Reduction bodyRed = _reduction.get(condIx + 4).asReduction();
+				buildNSD_R(bodyRed, body);
 
-				// get the last part of the header now and append it to the body
-				secReduc = _reduction.get(condIx + 2).asReduction();
-				// Problem is that it is typically a simple operator expression,
-				// e.g. i++ or --i, so it won't be recognized as statement unless we
-				// impose some extra status
-				oldSize = body.getSize();	// Maybe (though little likely) the increment part is empty
-				buildNSD_R(secReduc, body);
-				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				for (int i = oldSize; i < body.getSize(); i++) {
-					body.getElement(i).setColor(colorMisc);
+				if (!(ele instanceof For)) {
+					// get the last part of the header now and append it to the body
+					oldSize = body.getSize();	// Maybe (though little likely) the increment part is empty
+					buildNSD_R(_reduction.get(condIx + 2).asReduction(), body);
+					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+					for (int i = oldSize; i < body.getSize(); i++) {
+						body.getElement(i).setColor(colorMisc);
+					}
 				}
 			}
 			else if (
@@ -1413,6 +1416,150 @@ public class C99Parser extends CPreParser
 		}
 		
 	}
+	
+	@Override
+	protected String[] checkForIncr(Token incrToken) throws ParserCancelled
+	{
+		String[] parts = null;
+		if (incrToken.getType() == SymbolType.NON_TERMINAL) {
+			// Should be some kind of <ExprOpt>
+			Reduction incrRed = incrToken.asReduction();
+			if (incrRed.size() > 0) {
+				Token nxtToken;
+				int ruleId = incrRed.getParent().getTableIndex();
+				switch (ruleId) {
+				case RuleConstants.PROD_POSTFIXEXP_PLUSPLUS:
+				case RuleConstants.PROD_POSTFIXEXP_MINUSMINUS:
+					nxtToken = incrRed.get(0);
+					if (nxtToken.getType() == SymbolType.NON_TERMINAL && nxtToken.asReduction().getParent().getTableIndex() == RuleConstants.PROD_VALUE_IDENTIFIER) {
+						parts = new String[3];
+						parts[0] = nxtToken.asReduction().get(0).asString();
+						parts[1] = (ruleId == RuleConstants.PROD_POSTFIXEXP_PLUSPLUS) ? "+" : "-";
+						parts[2] = "1";
+					}
+					break;
+				case RuleConstants.PROD_UNARYEXP_PLUSPLUS:
+				case RuleConstants.PROD_UNARYEXP_MINUSMINUS:
+					nxtToken = incrRed.get(1);
+					if (nxtToken.getType() == SymbolType.NON_TERMINAL && nxtToken.asReduction().getParent().getTableIndex() == RuleConstants.PROD_VALUE_IDENTIFIER) {
+						parts = new String[3];
+						parts[0] = nxtToken.asReduction().get(0).asString();
+						parts[1] = (ruleId == RuleConstants.PROD_UNARYEXP_PLUSPLUS) ? "+" : "-";
+						parts[2] = "1";
+					}
+					break;
+				case RuleConstants.PROD_ASSIGNEXP:
+					// The first part must be an id
+					nxtToken = incrRed.get(0);
+					if (nxtToken.getType() == SymbolType.NON_TERMINAL 
+							&& nxtToken.asReduction().getParent().getTableIndex() == RuleConstants.PROD_VALUE_IDENTIFIER) {
+						parts = new String[3];
+						parts[0] = nxtToken.asReduction().get(0).asString();
+						// Now identify the operator
+						nxtToken = incrRed.get(1);
+						switch (nxtToken.asReduction().getParent().getTableIndex()) {
+						case RuleConstants.PROD_ASSIGNOP_EQ: 
+						{
+							// Now we must have an addition or subtraction on the right side
+							// and its first operand must be identical to parts[0]
+							Reduction rightRed = incrRed.get(2).asReduction();
+							ruleId = rightRed.getParent().getTableIndex();
+							if ((ruleId == RuleConstants.PROD_ADDEXP_PLUS || ruleId == RuleConstants.PROD_ADDEXP_MINUS)
+									&& this.getContent_R(rightRed.get(0).asReduction(), "").trim().equals(parts[0])) {
+								parts[1] = (ruleId == RuleConstants.PROD_ADDEXP_PLUS) ? "+" : "-";
+								nxtToken = rightRed.get(2);
+							}
+							else {
+								parts = null;
+							}
+						} // case RuleConstants.PROD_ASSIGNOP_EQ
+						break;
+						case RuleConstants.PROD_ASSIGNOP_PLUSEQ:
+							parts[1] = "+";
+							nxtToken = incrRed.get(2);
+							break;
+						case RuleConstants.PROD_ASSIGNOP_MINUSEQ:
+							parts[1] = "-";
+							nxtToken = incrRed.get(2);
+							break;
+						default:
+							// Not allowed
+							parts = null;
+						}
+						if (parts != null) {
+							// Now check the last operand - must be an int literal
+							String opdStr = this.getContent_R(nxtToken.asReduction(), "").trim();
+							try {
+								int opd = Integer.parseInt(opdStr);
+								if (opd < 0) {
+									opdStr = Integer.toString(-opd);
+									parts[1] = (parts[1].equals("+")) ? "-" : "+";
+								}
+								parts[2] = opdStr;
+							}
+							catch (NumberFormatException ex) {
+								parts = null;
+							}
+						} // if (parts != null)
+						break;
+					} // if (nxtToken.getType() == SymbolType.NON_TERMINAL && ...)
+				} // switch (ruleId)
+			} // if (incrRed.size() > 0)
+		} // if (incrToken.getType() == SymbolType.NON_TERMINAL)
+		return parts;
+	}
+
+	@Override
+	protected String checkForCond(Token condToken, String id, boolean upward) throws ParserCancelled
+	{
+		String lastVal = null;
+		if (condToken.getType() == SymbolType.NON_TERMINAL) {
+			// Should be some kind of <ExprOpt>
+			Reduction condRed = condToken.asReduction();
+			int ruleId = condRed.getParent().getTableIndex();
+			if ((upward && (ruleId == RuleConstants.PROD_RELATEXP_LT || ruleId == RuleConstants.PROD_RELATEXP_LTEQ)
+					|| !upward && (ruleId == RuleConstants.PROD_RELATEXP_GT || ruleId == RuleConstants.PROD_RELATEXP_GTEQ))
+					&& this.getContent_R(condRed.get(0).asReduction(), "").trim().equals(id)) {
+				lastVal = this.getContent_R(condRed.get(2).asReduction(), "");
+				if (ruleId == RuleConstants.PROD_RELATEXP_LT) {
+					lastVal += " - 1";
+				}
+				else if (ruleId == RuleConstants.PROD_RELATEXP_GT) {
+					lastVal += " + 1";
+				}
+			}
+		}		
+		return lastVal;
+	}
+
+	@Override
+	protected String checkForInit(Token initToken, String id) throws ParserCancelled
+	{
+		String firstVal = null;
+		Reduction initRed = null;
+		if (initToken.getType() == SymbolType.NON_TERMINAL && (initRed = initToken.asReduction()).size() > 0) {
+			// Now there are two cases: <ExprOpt> or <Declarator>, first we try <ExprOpt>
+			int ruleId = initRed.getParent().getTableIndex();
+			if (ruleId == RuleConstants.PROD_ASSIGNEXP
+					&& initRed.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD_ASSIGNOP_EQ) {
+				if (this.getContent_R(initRed.get(0).asReduction(), "").trim().equals(id)) {
+					firstVal = this.getContent_R(initRed.get(2).asReduction(), "");
+				}
+			}
+			else if (ruleId == RuleConstants.PROD_DECLARATION_SEMI 
+					&& initRed.get(1).asReduction().getParent().getTableIndex() != RuleConstants.PROD_INITDECLLIST_COMMA){
+				initRed = initRed.get(1).asReduction();
+				ruleId = initRed.getParent().getTableIndex();
+				if (ruleId == RuleConstants.PROD_INITDECLARATOR_EQ &&
+					id.equals(this.getDeclarator(initRed.get(0).asReduction(), null, null, null, null, null))) {
+					firstVal = this.getContent_R(initRed.get(2).asReduction(), "");
+				}
+				//this.analyseDeclaration(_reduction, _pascalType, _parentNode, _forceDecl, _something)
+			}			
+		}
+		return firstVal;
+	}
+
 
 	/**
 	 * Converts a declaration list and creates a sequence of {@link Instruction} elements into
@@ -1975,7 +2122,7 @@ public class C99Parser extends CPreParser
 	 * @param _paramReduc - {@link Reduction} for head {@code <ParamTypeList>} or {@code <ParameterList>}
 	 * @param _parentNode - if a {@link Subqueue} is given here then possible intermediate type definitions may be added there
 	 * @param _pascalStyle - whether the parameter list is rather to look like a Pascal parameter list (may not always work) 
-	 * @param _declListRed - an optional declaration list reduction with exterenal parameter declarations to replace the mere
+	 * @param _declListRed - an optional declaration list reduction with external parameter declarations to replace the mere
 	 * identifier list in such a case. 
 	 * @return
 	 * @throws ParserCancelled 

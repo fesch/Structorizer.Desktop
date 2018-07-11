@@ -63,6 +63,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.11.02      Issue #447: Precaution against line-continuating backslashes 
  *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.07.12      Separator bug in For(String,String,String,int) fixed.
  *
  ******************************************************************************************************
  *
@@ -178,7 +179,7 @@ public class For extends Element implements ILoop {
 	 * counting loop. 
 	 * @param varName - the counter variable name
 	 * @param startValStr - the expression for the initial counting value
-	 * @param endValStr - the exression for the final counting value
+	 * @param endValStr - the expression for the final counting value
 	 * @param stepVal - increment or decrement constant
 	 */
 	public For(String varName, String startValStr, String endValStr, int stepVal)
@@ -186,7 +187,7 @@ public class For extends Element implements ILoop {
 		this(CodeParser.getKeywordOrDefault("preFor", "for") + " " + varName
 				+ " <- " + startValStr + " "
 				+ CodeParser.getKeywordOrDefault("postFor", "to") + " " + endValStr
-				+ (stepVal != 1 ? (CodeParser.getKeywordOrDefault("stepFor", " by ") + stepVal) : ""));
+				+ (stepVal != 1 ? (" " + CodeParser.getKeywordOrDefault("stepFor", "by") + " " + stepVal) : ""));
 	}
 	
 	/**
