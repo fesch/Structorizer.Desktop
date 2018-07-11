@@ -1765,7 +1765,6 @@ public class C99Parser extends CPreParser
 							else {
 								redEnumL = null;
 							}
-							String constId = "";
 							if (redEnum.getParent().getTableIndex() == RuleConstants.PROD_ENUMERATOR_IDENTIFIER_EQ) {
 								names.add(redEnum.get(0).asString());
 								values.add(this.getContent_R(redEnum.get(2).asReduction(), ""));

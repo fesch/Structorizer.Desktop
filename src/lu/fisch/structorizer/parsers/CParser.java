@@ -70,6 +70,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.24      Inheritance changed to CPreParser, all common stuff now inherited from there
  *      Kay Gürtzig     2018.06.24      Bugfix KGU#530 (missing assignment operator '%=' added).
  *      Kay Gürtzig     2018.07.01      Enh. #553: Hooks for parser cancellation inserted
+ *      Kay Gürtzig     2018.07.11      Enh. #558: Provisional support for enumeration types.
  *
  ******************************************************************************************************
  *
@@ -416,7 +417,7 @@ public class CParser extends CPreParser
 //		final int PROD_MOD_AUTO                                     =  56;  // <Mod> ::= auto
 //		final int PROD_MOD_VOLATILE                                 =  57;  // <Mod> ::= volatile
 		final int PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE               =  58;  // <Enum Decl> ::= enum Id '{' <Enum Def> '}' <Decl End>
-//		final int PROD_ENUMDEF_COMMA                                =  59;  // <Enum Def> ::= <Enum Val> ',' <Enum Def>
+		final int PROD_ENUMDEF_COMMA                                =  59;  // <Enum Def> ::= <Enum Val> ',' <Enum Def>
 //		final int PROD_ENUMDEF                                      =  60;  // <Enum Def> ::= <Enum Val>
 //		final int PROD_ENUMVAL_ID                                   =  61;  // <Enum Val> ::= Id
 //		final int PROD_ENUMVAL_ID_EQ_OCTLITERAL                     =  62;  // <Enum Val> ::= Id '=' OctLiteral
@@ -752,7 +753,7 @@ public class CParser extends CPreParser
 				// definition with variable declarations. So we will have to handle them as well.
 				String rootName = root.getMethodName();
 				Subqueue parentNode = _parentNode;
-				boolean isGlobal = rootName.equals("???"); 
+				boolean isGlobal = rootName.equals("???");
 				if (isGlobal) {
 					if (this.globalRoot == null) {
 						this.globalRoot = root;
@@ -780,6 +781,54 @@ public class CParser extends CPreParser
 					isValid = true;
 				}
 				// END KGU#388 2017-09-30
+				// START KGU#542 2018-07-11: Enh. #558 (?) Support for enumeration types
+				else if (ruleId == RuleConstants.PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE) {
+					// FIXME actual enum type support? Define the constants at least
+					String typeName = _reduction.get(1).asString();
+					Reduction redEnumL = _reduction.get(3).asReduction();
+					int val = 0;
+					String baseVal = "";
+					StringList enumConsts = new StringList();
+					while (redEnumL != null) {
+						Reduction redEnum = redEnumL;
+						if (redEnumL.getParent().getTableIndex() == RuleConstants.PROD_ENUMDEF_COMMA) {
+							redEnum = redEnumL.get(0).asReduction();
+							redEnumL = redEnumL.get(2).asReduction();
+						}
+						else {
+							redEnumL = null;
+						}
+						String constId = "";
+						if (redEnum.size() == 3) {
+							constId = redEnum.get(0).asString();
+							baseVal = redEnum.get(2).asString();
+							try {
+								val = Integer.parseInt(baseVal);
+								baseVal = "";	// If the value was an int literal, we don't need an expr. string
+							}
+							catch (NumberFormatException ex) {
+								val = 0;
+							}							
+						}
+						else {
+							constId = this.getContent_R(redEnum, "");
+						}
+						enumConsts.add("const " + constId + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
+						val++;
+					}
+					if (enumConsts.count() > 0) {
+						Instruction enumDef = new Instruction(enumConsts);
+						this.equipWithSourceComment(enumDef, _reduction);
+						if (typeName != null) {
+							enumDef.getComment().add("Enumeration type " + typeName);
+						}
+						enumDef.setColor(colorConst);
+						_parentNode.addElement(enumDef);
+					}
+					content = "int";
+					isValid = true;
+				}
+				// END KGU#542 2018-07-11
 				if (ruleId == RuleConstants.PROD_TYPEDEFDECL_TYPEDEF) {
 					// <Typedef Decl> ::= typedef <Var Decl>
 					StringList typeNames = new StringList();
@@ -863,17 +912,36 @@ public class CParser extends CPreParser
 				}
 				else {
 					Reduction varDecl = _reduction.get(5).asReduction();
+					// START KGU#542 2018-07-11: Enh. #558 - provisional support for enum types
+					boolean isExplicit =content.contains("{"); 
+					// END KGU#542 2018-07-11
 					// Does it contain variable declarations?
 					if (varDecl.getParent().getTableIndex() == RuleConstants.PROD_DECLEND_SEMI2) {
-						String type = content.substring(0, content.indexOf("{")).trim();
+						// START KGU#542 2018-07-11: Enh. #558 - provisional support for enum types
+						//String type = content.substring(0, content.indexOf("{")).trim();
+						String type = content.trim();
+						if (isExplicit) {
+							type = content.substring(0, content.indexOf("{")).trim();
+						}
+						// END KGU#542 2018-07-11
 						this.buildDeclOrAssignment(varDecl.get(0).asReduction(), type, _parentNode, comment, false);
 						varDecl = varDecl.get(1).asReduction();
 						while (varDecl.getParent().getTableIndex() == RuleConstants.PROD_VARLIST_COMMA) {
 							this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, _parentNode, comment, false);
 							varDecl = varDecl.get(2).asReduction();
 						}
-						content = this.getContent_R(_reduction.get(3).asReduction(), type + " {") + "}";
+						// START KGU#542 2018-07-11: Enh. #558 - provisional support for enum types
+						//content = this.getContent_R(_reduction.get(3).asReduction(), type + " {") + "}";
+						if (isExplicit) {
+							content = this.getContent_R(_reduction.get(3).asReduction(), type + " {") + "}";
+						}
+						// END KGU#542 2018-07-11
 					}
+					// START KGU#542 2018-07-11: Enh. #558 - provisional support for enum types
+					if (!isExplicit) {
+						content = "";
+					}
+					// END KGU#542 2018-07-11
 				}
 				if (!content.trim().isEmpty()) {
 					Instruction decl = new Instruction(StringList.explode(translateContent(content), "\n"));
