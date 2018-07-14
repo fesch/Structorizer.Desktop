@@ -353,7 +353,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			log(error, false);
 			closeLog();
 			getLogger().log(Level.WARNING, error);
-			System.err.println("++++ ParserCancelled thrown!");
+			//System.err.println("+++ ParserCancelled thrown!");
 			throw new ParserCancelled();
 		}
 	}

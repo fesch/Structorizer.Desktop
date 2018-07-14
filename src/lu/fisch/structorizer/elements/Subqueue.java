@@ -125,10 +125,11 @@ public class Subqueue extends Element implements IElementSequence {
 		{
 			for(int i = 0; i < children.size(); i++)
 			{
+				//System.out.println(children.get(i) + ".prepareDraw()");
 				// START KGU#136 2016-03-01: Bugfix #97
 				y0Children.addElement(rect0.bottom);
 				// END KGU#136 2016-03-01
-				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
+				subrect = children.get(i).prepareDraw(_canvas);
 				rect0.right = Math.max(rect0.right, subrect.right);
 				rect0.bottom += subrect.bottom;
 			}
@@ -182,7 +183,8 @@ public class Subqueue extends Element implements IElementSequence {
 			// draw children
 			for(int i=0; i<children.size(); i++)
 			{
-				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
+				//System.out.println(children.get(i) + "prepareraw()");
+				subrect = children.get(i).prepareDraw(_canvas);
 				myrect.bottom += subrect.bottom;
 				if (i==children.size()-1)
 				{

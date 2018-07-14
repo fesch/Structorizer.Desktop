@@ -196,6 +196,7 @@ import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
+import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.Ini;
@@ -326,6 +327,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         		g2d.scale(1/zoomFactor, 1/zoomFactor);
         	}
         	// END KGU#497 2018-03-19
+//        	System.out.println("Surface.paintComponent()");
             for(int d=0; d<diagrams.size(); d++)
             {
                 Diagram diagram = diagrams.get(d);
@@ -1904,7 +1906,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             		{
             			// START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
             			//form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
-            			form.diagram.saveNSD(diagram.root, !dontAsk && !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+            			if (!form.diagram.saveNSD(diagram.root, !dontAsk && !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE))
+            					&& JOptionPane.showConfirmDialog(form.getFrame(),
+            							Menu.msgCancelAll.getText(),
+										Menu.ttlCodeImport.getText(),
+										JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+            			{
+            				break;
+            			}
             			mainforms.add(form);
             			handledRoots.add(diagram.root);
             			// END KGU#320 2017-01-04

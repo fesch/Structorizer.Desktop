@@ -208,6 +208,12 @@ public class Alternative extends Element implements IFork {
 		//logger.debug("AX : "+ax);
 		double ay =  0;
 		// gradient coefficient of the left traverse line
+//		if (cx - ax == 0) {
+//			System.err.println(this + "prepareDraw(212): cx-ax = 0");
+//		}
+//		if (cy - ay == 0) {
+//			System.err.println(this + "prepareDraw(215): cy-ay = 0");
+//		}
 		double coeffleft = (cy-ay)/(cx-ax);
 
 
@@ -258,6 +264,12 @@ public class Alternative extends Element implements IFork {
 			//logger.debug("LS : "+leftside);
 
 			// check if this is the one we need to do calculations
+//			if (bx - ax == 0) {
+//				System.err.println(this + "prepareDraw(268): bx-ax = 0");
+//			}
+//			if (by - ay == 0) {
+//				System.err.println(this + "prepareDraw(271): by-ay = 0");
+//			}
 			double coeff = (by-ay)/(bx-ax);
 
 			// the point height we need

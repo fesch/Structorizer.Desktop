@@ -199,6 +199,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.imageio.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -899,6 +900,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void mousePressed(MouseEvent e)
 	{
+		//System.out.println("MousePressed at (" + e.getX() + ", " + e.getY() + ")");
 		if(e.getSource()==this)
 		{
 			//System.out.println("Pressed");
@@ -1143,6 +1145,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public void mouseClicked(MouseEvent e)
 	{
+		//System.out.println("MouseClicked at (" + e.getX() + ", " + e.getY() + ")");
     	// select the element
 		if (e.getClickCount() == 1)
 		{
@@ -1914,8 +1917,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		startSerialMode();
 		try {
-			saveNSD(false);
-			if (Arranger.hasInstance()) {
+			if ((saveNSD(false)
+					|| JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+							Menu.msgCancelAll.getText(),
+							Menu.msgTitleSave.getText(),
+							JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+					&& Arranger.hasInstance()) {
 				Arranger.getInstance().saveAll();
 			}
 		}
@@ -1927,38 +1934,54 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * SaveAs method
 	 *****************************************/
-	public void saveAsNSD()
+	public boolean saveAsNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
-		saveAsNSD(this.root);
+		return saveAsNSD(this.root);
 	}
 	
-	private void saveAsNSD(Root root)
+	private boolean saveAsNSD(Root root)
 	// END KGU#320 2017-01-04
 	{
 		// propose name
 		String nsdName = root.proposeFileName();
 		
 		// START KGU#534/KGU#553 2018-07-10: Enh. #552, issue #557 - special treatment for mass serial save
-		boolean done = false;
 		File dir = this.currentDirectory;
 		if (dir != null && isInSerialMode() && getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) == SerialDecisionStatus.YES_TO_ALL) {
+			// We have a target directory and the user has already confirmed to save all with proposed names 
 			if (!dir.isDirectory()) {
+				// A file name had been stored as current directory, so reduce it to its directory
 				dir = dir.getParentFile();
 			}
+			// Accomplish the proposed file name...
 			File f = new File(dir.getAbsolutePath() + File.separator + nsdName + ".nsd");
-			if (this.checkOverwrite(f, true)) {
+			// ... check whether a file with this name has existed
+			int answer = this.checkOverwrite(f, true);
+			if (answer == 0) {
+				// Okay, we are entitled to overwrite
 				root.filename = f.getAbsolutePath();
 				root.shadowFilepath = null;
-				done = doSaveNSD(root);
-			}			
-		}
-		if (done) {
-			return;
+				return doSaveNSD(root);
+			}
+			else if (answer < 0) {
+				// User wants to cancel the serial saving
+				return false;
+			}
+			else if (answer == 2) {
+				// Skip this file here, no further attempt
+				return true;
+			}
 		}
 		// END KGU#534/KGU#553 2018-07-10
+		
+		// Now we are either not in serial mode or a name conflict is to be solved via file chooser
 
 		JFileChooser dlgSave = new JFileChooser();
+		// START KGU#553 2018-07-13: Issue #557
+		// Add a checkbox to adhere to the proposed names for all remaining roots if we are in serial mode
+		JCheckBox chkAcceptProposals = addSerialAccessory(dlgSave);
+		// END KGU#553 2018-07-13
 		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
 		GUIScaler.rescaleComponents(dlgSave);
 		// END KGU#287 2017-01-09
@@ -1990,11 +2013,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					newFilename += ".nsd";
 				}
+				if (chkAcceptProposals != null && chkAcceptProposals.isSelected()) {
+					this.setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, true);
+				}
 
 				File f = new File(newFilename);
-				boolean writeNow = checkOverwrite(f, false);
+				int writePerm = checkOverwrite(f, false);
 
-				if (!writeNow)
+				if (writePerm < 0) {
+					// Cancelled all
+					return false;
+				}
+				else if (writePerm == 2) {
+					// No further attempt
+					return true;
+				}
+				else if (writePerm != 0)
 				{
 					// START KGU#248 2016-09-15: Bugfix #244 - message no longer needed (due to new loop)
 					//JOptionPane.showMessageDialog(this, Menu.msgRepeatSaveAttempt.getText());
@@ -2019,25 +2053,64 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		// START KGU#248 2016-09-15: Bugfix #244 - allow to leave the new loop
-			else
-			{
-				// User cancelled the file dialog -> leave the loop
-				result = JFileChooser.CANCEL_OPTION;
-			}
+//			else
+//			{
+//				// User cancelled the file dialog -> leave the loop
+//				result = JFileChooser.CANCEL_OPTION;
+//			}
 		} while (result == JFileChooser.ERROR_OPTION);
 		// END KGU#248 2016-09-15
+		return result != JFileChooser.CANCEL_OPTION;
 	}
+	
+	/**
+	 * In case of serial mode adds a checkbox to {@code fileChooser}
+	 * @param fileChooser - the {@link JFileChooser} to be decorated if in serial mode.
+	 * @return the checkbox if it was created
+	 */
+	private JCheckBox addSerialAccessory(JFileChooser fileChooser) {
+		JCheckBox chkAcceptProposals = null;
+		if (isInSerialMode() && getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) == SerialDecisionStatus.INDIVIDUAL) {
+			// Unfortunateley, the accessory is usally placed right of the file view.
+			// So we split the caption for the checkbox to be added into words and
+			// and "verticalize" the text by distributing the words over as many
+			// vertically boxed labels as needed.
+			JPanel pnlAccept = new JPanel();
+			pnlAccept.setLayout(new BoxLayout(pnlAccept, BoxLayout.PAGE_AXIS));
+			String[] words = Menu.lblAcceptProposedNames.getText().split("\\s+");
+			chkAcceptProposals = new JCheckBox(words[0]);
+			// Find out the maximum word length such that we may combine shorter words
+			int maxWordLen = words[0].length() + 5;
+			for (int i = 1; i < words.length; i++) {
+				maxWordLen = Math.max(maxWordLen, words[i].length());
+			}
+			pnlAccept.add(chkAcceptProposals);
+			int i = 1;
+			while (i < words.length) {
+				String word = words[i++];
+				while (i < words.length && word.length() + 1 + words[i].length() <= maxWordLen) {
+					word += " " + words[i++];
+				}
+				JLabel lbl = new JLabel(word);
+				lbl.setBorder(new EmptyBorder(0, 5, 2, 0));
+				pnlAccept.add(lbl);
+			}
+			fileChooser.setAccessory(pnlAccept);
+		}
+		return chkAcceptProposals;
+	}
+	
 	/**
 	 * Checks if a file {@code _file} already exists and requests overwrite permission in this case.
 	 * @param f - The proposed file path
 	 * @param showFilename - whether the file name is to be presented in the message
-	 * @return whether writing is permitted
+	 * @return 0 = writing is permitted, 1 = modification requested, 2 = skip (don't write), -1 - cancel all
 	 */
-	private boolean checkOverwrite(File f, boolean showFilename) {
-		boolean writeNow = true;
+	private int checkOverwrite(File f, boolean showFilename) {
+		int writeNow = 0;
 		if (f.exists())
 		{
-			writeNow=false;
+			writeNow = 1;
 			// START KGU#534 2018-06-27: Enh. #552
 			if (isInSerialMode()) {
 				switch (getSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE)) {
@@ -2045,7 +2118,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					String[] options = {
 							Menu.lblContinue.getText(),
 							Menu.lblModify.getText(),
-							Menu.lblYesToAll.getText() 
+							Menu.lblYesToAll.getText(),
+							Menu.lblSkip.getText()
 					};
 					String initialValue = options[0];
 					String message = Menu.msgOverwriteFile.getText();
@@ -2061,14 +2135,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							null,
 							options,
 							initialValue);
-					if (res >= 2) {
+					if (res < 0) {
+						writeNow = -1;
+					}
+					else if (res > 2) {
+						writeNow = 2;
+					}
+					else if (res == 2) {
 						this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
 					}
-					if (res == 0 || res == 2) writeNow=true;
+					if (res == 0 || res == 2) writeNow = 0;
 					}
 					break;
 				case YES_TO_ALL:
-					writeNow = true;
+					writeNow = 0;
 					break;
 				default: ;
 				}
@@ -2080,7 +2160,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						Menu.msgOverwriteFile.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION);
-				if (res == JOptionPane.YES_OPTION) writeNow=true;
+				if (res == JOptionPane.YES_OPTION) writeNow = 0;
 			// START KGU#534 2018-06-27: Enh. #552
 			}
 			// END KGU#534 2018-06-27
@@ -2114,6 +2194,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 	
+	/**
+	 * Stores unsaved changes (if any) of the give {@link Root} {@code root}. If {@code _askToSave} is true
+	 * then the user may confirm or deny saving or cancel the inducing request.
+	 * @param root - {@link Root} to be saved
+	 * @param _askToSave - if true and the given {@code root} has unsaved changes then a user dialog will be
+	 * popped up first.
+	 * @return true if the user did not cancel the save request
+	 */
 	public boolean saveNSD(Root root, boolean _askToSave)
 	// END KGU#320 2017-01-04
 	{
@@ -2226,7 +2314,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //				if (saveIt == true)
 					// START KGU#320 2017-01-04: Bugfix (#321)
 					//saveAsNSD();
-					saveAsNSD(root);
+					if (!saveAsNSD(root)){
+						res = -1;	// Cancel all
+					}
 					// END KGU#320 2017-01-04
 				}
 				else
@@ -4467,7 +4557,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			if (checkOverwrite(file, false))
+			if (checkOverwrite(file, false) == 0)
 			{
 				BufferedImage bi = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
 				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
@@ -4559,7 +4649,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			if(checkOverwrite(file, false))
+			if (checkOverwrite(file, false) == 0)
 			{
 				try
 				{
@@ -4654,7 +4744,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			if (checkOverwrite(file, false))
+			if (checkOverwrite(file, false) == 0)
 			{
 				try
 				{
@@ -4770,7 +4860,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			if (checkOverwrite(file, false))
+			if (checkOverwrite(file, false) == 0)
 			{
 				try
 				{
@@ -4865,7 +4955,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-			if (checkOverwrite(file, false))
+			if (checkOverwrite(file, false) == 0)
 			{
 				try
 				{
@@ -5080,7 +5170,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		@Override
 		protected List<Root> doInBackground() throws Exception {
-			System.out.println("*** " + this.getClass().getSimpleName()+" going to work!");
+			//System.out.println("*** " + this.getClass().getSimpleName()+" going to work!");
 			this.parser.setSwingWorker(this);
 			List<Root> roots = null;
 			roots = parser.parse(file.getAbsolutePath(),
@@ -5239,12 +5329,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					// START KGU#553 2018-07-10: In case of too many diagrams Structorizer would go zombie
 					int nRoots = newRoots.size();
-					int maxRoots = Integer.parseInt(ini.getProperty("maxImportableRoots", "20"));
+					int maxRoots = Integer.parseInt(ini.getProperty("impMaxRootsForDisplay", "20"));
 					// FIXME: replace the magic number with a configurable limit
 					if (nRoots > maxRoots) {
 						String[] options = {Menu.lblContinue.getText(), Menu.lblCancel.getText()};
 						int chosen = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
-								Menu.msgTooManyDiagrams.getText(),
+								Menu.msgTooManyDiagrams.getText().replace("%", Integer.toString(maxRoots)),
 								Menu.ttlCodeImport.getText(),
 								JOptionPane.YES_NO_OPTION,
 								JOptionPane.WARNING_MESSAGE, null,
@@ -5259,23 +5349,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								Root nextRoot = iter.next();
 								nextRoot.hightlightVars = hil;
 								nextRoot.setChanged();
+								// If the saving attempt fails, ask whether the saving loop is to be cancelled 
 								if (!this.saveNSD(nextRoot, false)) {
-									if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+									if (JOptionPane.showConfirmDialog(
+											this.NSDControl.getFrame(),
 											Menu.msgCancelAll.getText(),
 											Menu.ttlCodeImport.getText(),
 											JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+										// User decided not to save further diagrams.
 										setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, false);
 									}
-								}
-								else {
-									setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, true);
+									// Saving failed, but no abort, so go on with next file (don't change status)
 								}
 							}
 						}
 						finally {
 							endSerialMode();
+							newRoots.clear();
+							iter = newRoots.iterator();
+							nRoots = 1;
 						}
-						nRoots = 1;
 					}
 					// END KGU#553 2018-07-10
 					while (iter.hasNext())
@@ -6551,6 +6644,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
             iod.chkSaveParseTree.setSelected(ini.getProperty("impSaveParseTree", "false").equals("true"));
             // END KGU#354 2017-03-08
+            // START KGU#553 2018-07-13: Issue #557
+            iod.spnLimit.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxRootsForDisplay", "20")));
+            // END KGU#354 2018-07-13
             // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
             iod.chkLogDir.setSelected(ini.getProperty("impLogToDir", "false").equals("true"));
             iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));            
@@ -6593,6 +6689,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("impLogToDir", String.valueOf(iod.chkLogDir.isSelected()));
                 ini.setProperty("impLogDir", iod.txtLogDir.getText());
                 // END KGU#354 2017-04-27
+                // START KGU#553 2018-07-13: Issue #557
+                ini.setProperty("impMaxRootsForDisplay", String.valueOf(iod.spnLimit.getValue()));
+                // END KGU#553 2018-07-13
                 // START KGU#416 2017-02-26: Enh. #354, #357
                 for (int i = 0; i < parserPlugins.size(); i++) {
                 	GENPlugin plugin = parserPlugins.get(i);

@@ -401,7 +401,8 @@ Menu.msgGuidedTours.text=You activated guided tours.\n\nWatch out for recommenda
 Menu.msgGuidedTourDone.text=Congratulations - you finished the tutorial «%».
 Menu.msgGuidedTourNext.text=%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first: → Menu "%3"
 Menu.ttlGuidedTours.text=Guided Tours
-Menu.msgTooManyDiagrams.text=The number of created diagrams exceeds the simultaneous rendering capacity.\nSave all obtained diagrams as files just now?
+Menu.msgTooManyDiagrams.text=The number of created diagrams exceeds the configured threshold (%) for direct rendering.\nSave all obtained diagrams as files just now?
+Menu.lblAcceptProposedNames.text=Accept proposed names for all files
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name

@@ -579,6 +579,11 @@ public abstract class CPreParser extends CodeParser
 	 */
 	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines) throws ParserCancelled
 	{
+		// FIXME (KGU): There are cases where within the preprocessor line a multi-line comment starts with "/*"
+		// (with the "*/" not following in the very line!).
+		// In these cases the prefix "// preparser ..." will cause syntax errors on end, because the next comment
+		// lines won't be detected as such. If we could be sure then (and only then) our returned comment prefix
+		// should better start with "/*" instead of "//". 
 		mtchDefineFunc.reset(preprocessorLine);
 		if (mtchDefineFunc.matches()) {
 			// #define	a1(a2,a3,a4)	stuff  ( a2 ) 

@@ -43,7 +43,6 @@ package lu.fisch.structorizer.gui;
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -101,9 +100,7 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
         
         this.setTitle(ttlImporting.getText().replace("%", _title));
 
-        Rectangle bounds = _owner.getBounds();
-        Rectangle myBounds = this.getBounds();
-        this.setLocation(bounds.x + bounds.width/2 - myBounds.width/2, bounds.y + bounds.height/2 - myBounds.height/2);
+        this.setLocationRelativeTo(_owner);
         
         this.setVisible(true);
 	}
@@ -236,7 +233,7 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 		if (evt.getSource() == btnCancel) {
-			System.out.println("Worker could be interrupted: " + this.worker.cancel(true));
+			this.worker.cancel(true);
 		}
 		else if (evt.getSource() == btnOk) {
 			this.dispose();
