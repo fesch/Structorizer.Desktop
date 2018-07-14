@@ -280,10 +280,10 @@ public class Root extends Element {
 	public String licenseName = null;
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
+	
 	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now managed directly by Root
 	/** List of the names of the diagrams to be included by this Root (may be null!) */
 	public StringList includeList = null;
-	// END KGU#376 2017-06-30
 	/**
 	 * Checks, whether {@code aRoot} is includable and if so, ensures that its name
 	 * becomes member of this' include list.
@@ -314,6 +314,7 @@ public class Root extends Element {
 		}
 		return this.includeList.addIfNew(rootName);
 	}
+	// END KGU#376 2017-06-30
 	
 	/**
 	 * @return true if and only if the diagram type is "main program"
@@ -1004,7 +1005,6 @@ public class Root extends Element {
 		children.draw(_canvas, bodyRect);
 		// END KGU#227 2016-07-31
 
-
 		// draw box around
 		canvas.setColor(Color.BLACK);
 		// START KGU#221 2016-07-27: Bugfix #208
@@ -1435,9 +1435,7 @@ public class Root extends Element {
         myrect.top += _point.y;
         myrect.right += _point.x;
         myrect.bottom += _point.y;
-        //this.drawBuffered(canvas,myrect);
         this.draw(canvas, myrect);
-        //this.drawBuffered(canvas, myrect);
 
         return myrect;
     }

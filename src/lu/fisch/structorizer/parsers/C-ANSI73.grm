@@ -112,7 +112,7 @@
 ! -----------------------------------------------------------------------
 
 
-"Name"    = 'ANSI-Cplus' 
+"Name"    = 'ANSI-C73' 
 "Version" = '1973'
 "Author"  = 'Dennis Ritchie, Ken Thompson, Martin Richards' 
 "About"   = 'C is one of the most common, and complex, programming languages in use today.'

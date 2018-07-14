@@ -1061,9 +1061,11 @@ public class C99Parser extends CPreParser
 			else {
 				// FIXME: We might need a more intelligent type analysis
 				content = getContent_R(typeToken.asReduction(), "").trim() + " ";
+				content = content.replaceAll("(^|\\.*\\W)static(\\s+.*)", "$1$2");
+				content = content.replaceAll("(^|\\.*\\W)const(\\s+.*)", "$1$2");
 			}
-			content = content.replace("const ", "") + prefix.concatenate(" ").trim();
-			// Result type void should be suppressed
+			content += prefix.concatenate(" ").trim();
+			// Result type "void" should be suppressed
 			if (content.trim().equals("void")) {
 				content = "";
 			}

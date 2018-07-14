@@ -49,7 +49,8 @@ Current development version: 3.28-05 (2018-07-14)
 - 05: Issue #551: On webstart the hint about version check doesn't make sense <2>
 - 05: Enh. #552: Option to decide for all diagrams on serial file actions,
       new opportunity to remove all diagrams from Arranger with few clicks <2>
-- 05: Enh. #489 - First version of ANSI C99 parser (full syntax) <2>
+- 05: Enh. #489 - First version of ANSI C99 parser (full C syntax)
+      recent ANSI C import renamed to ANSI C73 for clarity <2>
 - 05: Set of smaller element icons for the tree view in Find&Replace <2>
 - 05: Enh. #553: Code import now with monitor dialog and cancel option <2>
 - 05: Bugfix #554: Batch code import didn't work (parser instantiation bug) <2>

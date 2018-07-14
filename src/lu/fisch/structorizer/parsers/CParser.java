@@ -71,6 +71,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.24      Bugfix KGU#530 (missing assignment operator '%=' added).
  *      Kay Gürtzig     2018.07.01      Enh. #553: Hooks for parser cancellation inserted
  *      Kay Gürtzig     2018.07.11      Enh. #558: Provisional support for enumeration types.
+ *      Kay Gürtzig     2018.07.14      Grammar and table file renamed (ANSI-Cplus -> ANSI-C73, C-ANSIplus.egt -> C-ANSI73.egt)
  *
  ******************************************************************************************************
  *
@@ -174,24 +175,24 @@ public class CParser extends CPreParser
 	@Override
 	protected final String getCompiledGrammar()
 	{
-		return "C-ANSIplus.egt";
+		return "C-ANSI73.egt";
 	}
 	
 	@Override
 	protected final String getGrammarTableName() {
-		return "ANSI-Cplus";
+		return "ANSI-C73";
 	}
 	
 	//---------------------- File Filter configuration ---------------------------
 	
 	@Override
 	public String getDialogTitle() {
-		return "ANSI C";
+		return "ANSI-C73";
 	}
 
 	@Override
 	protected String getFileDescription() {
-		return "ANSI C Source Code";
+		return "ANSI-C73 Source Files";
 	}
 
 	//------------------- Grammar table constants DON'T MODIFY! ---------------------------
