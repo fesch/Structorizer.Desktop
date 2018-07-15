@@ -64,6 +64,7 @@ import java.awt.Point;
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
@@ -196,6 +197,19 @@ public class Forever extends Element implements ILoop {
 		return IconLoader.getIcon(61);
 	}
 	// END KGU#122 2016-01-03
+	
+	// START KGU#535 2018-06-28
+	/**
+	 * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+	 * the {@link FindAndReplace} dialog.
+	 * @see #getIcon()
+	 */
+	@Override
+	public ImageIcon getMiniIcon()
+	{
+		return IconLoader.getIcon(14);
+	}
+	// END KGU#535 2018-06-28
 
 	// START KGU 2015-10-11: Merged with selectElementByCoord
 	@Override

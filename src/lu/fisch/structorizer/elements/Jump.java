@@ -118,6 +118,7 @@ import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
 
@@ -201,6 +202,19 @@ public class Jump extends Instruction {
 		return IconLoader.getIcon(59);
 	}
 	// END KGU#122 2016-01-03
+	
+	// START KGU#535 2018-06-28
+	/**
+	 * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+	 * the {@link FindAndReplace} dialog.
+	 * @see #getIcon()
+	 */
+	@Override
+	public ImageIcon getMiniIcon()
+	{
+		return IconLoader.getIcon(12);
+	}
+	// END KGU#535 2018-06-28
 
 	public Element copy()
 	{

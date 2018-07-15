@@ -61,6 +61,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.12      Issues #4, #510: element toolbars merged, icon numbers modified
  *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by pure element icons
  *      Kay Gürtzig     2018.02.14      Issue #510: btnUnboxed and its solitary toolbar disabled.
+ *      Kay Gürtzig     2018.07.02      KGU#245: color buttons converted into an array
  *
  ******************************************************************************************************
  *
@@ -214,17 +215,19 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JButton btnDropBrk = new JButton(IconLoader.getIcon(104));
     // END KGU 2015-10-12
 	// colors
-    protected ColorButton btnColor0 = new ColorButton(Element.color0);
-    protected ColorButton btnColor1 = new ColorButton(Element.color1);
-    protected ColorButton btnColor2 = new ColorButton(Element.color2);
-    protected ColorButton btnColor3 = new ColorButton(Element.color3);
-    protected ColorButton btnColor4 = new ColorButton(Element.color4);
-    protected ColorButton btnColor5 = new ColorButton(Element.color5);
-    protected ColorButton btnColor6 = new ColorButton(Element.color6);
-    protected ColorButton btnColor7 = new ColorButton(Element.color7);
-    protected ColorButton btnColor8 = new ColorButton(Element.color8);
-    protected ColorButton btnColor9 = new ColorButton(Element.color9);
-	
+    // START KGU#245 2018-07-02: Converted to arrays
+//    protected ColorButton btnColor0 = new ColorButton(Element.color0);
+//    protected ColorButton btnColor1 = new ColorButton(Element.color1);
+//    protected ColorButton btnColor2 = new ColorButton(Element.color2);
+//    protected ColorButton btnColor3 = new ColorButton(Element.color3);
+//    protected ColorButton btnColor4 = new ColorButton(Element.color4);
+//    protected ColorButton btnColor5 = new ColorButton(Element.color5);
+//    protected ColorButton btnColor6 = new ColorButton(Element.color6);
+//    protected ColorButton btnColor7 = new ColorButton(Element.color7);
+//    protected ColorButton btnColor8 = new ColorButton(Element.color8);
+//    protected ColorButton btnColor9 = new ColorButton(Element.color9);
+    protected ColorButton[] btnColors = new ColorButton[Element.colors.length];
+	// END KGU#245 2018-07-02	
 	
     // Popup menu
     protected final JPopupMenu popup = new JPopupMenu();
@@ -293,7 +296,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JPopupMenu popupIndex = new JPopupMenu();
     protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.getIcon(0));
     protected final JMenuItem popupIndexSave = new JMenuItem("Save changes", IconLoader.getIcon(3));
-    protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(45));
+    // START KGU#534 2018-06-27: Enh. #552
+    //protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(45));
+    protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(100));
+    protected final JMenuItem popupIndexRemoveAll = new JMenuItem("Remove all", IconLoader.getIcon(45));    
+    // END KGU#534 2018-06-27
     protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.getIcon(46));
 	// END KGU#318 2017-01-05
     
@@ -439,8 +446,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
     private void create()
     {
-    	MyToolbar toolbar = null;
-    	
+        MyToolbar toolbar = null;
+
+    	// START KGU#245 2018-07-02: Serial buttons converted to array
+        for (int i = 0; i < Element.colors.length; i++) {
+            btnColors[i] = new ColorButton(Element.colors[i]);
+        }
+        // END KGU#245 2018-07-02
+        
         // Setting up "this" ;-)
         addComponentListener(this);
         this.setDoubleBuffered(false);
@@ -590,6 +603,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         popupIndex.add(popupIndexCovered);
         popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
         // END KGU#318 2017-01-05
+
+        // START KGU#534 2018-06-27: Enh. #552
+        popupIndex.addSeparator();
+        popupIndex.add(popupIndexRemoveAll);
+        popupIndexRemoveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemoveAll(); } });
+        // END KGU#534 2018-06-27
 
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
@@ -795,36 +814,53 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		// Colors
 		//toolbar.addSeparator();
-        toolbar.add(btnColor0);
-        toolbar.add(btnColor1);
-        toolbar.add(btnColor2);
-        toolbar.add(btnColor3);
-        toolbar.add(btnColor4);
-        toolbar.add(btnColor5);
-        toolbar.add(btnColor6);
-        toolbar.add(btnColor7);
-        toolbar.add(btnColor8);
-        toolbar.add(btnColor9);
-		btnColor0.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor0.getColor()); doButtons(); } } );
-		btnColor1.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor1.getColor()); doButtons(); } } );
-		btnColor2.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor2.getColor()); doButtons(); } } );
-		btnColor3.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor3.getColor()); doButtons(); } } );
-		btnColor4.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor4.getColor()); doButtons(); } } );
-		btnColor5.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor5.getColor()); doButtons(); } } );
-		btnColor6.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor6.getColor()); doButtons(); } } );
-		btnColor7.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor7.getColor()); doButtons(); } } );
-		btnColor8.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor8.getColor()); doButtons(); } } );
-		btnColor9.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor9.getColor()); doButtons(); } } );
-		btnColor0.setFocusable(false);
-		btnColor1.setFocusable(false);
-		btnColor2.setFocusable(false);
-		btnColor3.setFocusable(false);
-		btnColor4.setFocusable(false);
-		btnColor5.setFocusable(false);
-		btnColor6.setFocusable(false);
-		btnColor7.setFocusable(false);
-		btnColor8.setFocusable(false);
-		btnColor9.setFocusable(false);
+    	// START KGU#245 2018-07-02: Serial buttons converted to array
+//        toolbar.add(btnColor0);
+//        toolbar.add(btnColor1);
+//        toolbar.add(btnColor2);
+//        toolbar.add(btnColor3);
+//        toolbar.add(btnColor4);
+//        toolbar.add(btnColor5);
+//        toolbar.add(btnColor6);
+//        toolbar.add(btnColor7);
+//        toolbar.add(btnColor8);
+//        toolbar.add(btnColor9);
+//		btnColor0.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor0.getColor()); doButtons(); } } );
+//		btnColor1.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor1.getColor()); doButtons(); } } );
+//		btnColor2.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor2.getColor()); doButtons(); } } );
+//		btnColor3.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor3.getColor()); doButtons(); } } );
+//		btnColor4.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor4.getColor()); doButtons(); } } );
+//		btnColor5.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor5.getColor()); doButtons(); } } );
+//		btnColor6.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor6.getColor()); doButtons(); } } );
+//		btnColor7.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor7.getColor()); doButtons(); } } );
+//		btnColor8.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor8.getColor()); doButtons(); } } );
+//		btnColor9.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setColor(btnColor9.getColor()); doButtons(); } } );
+//		btnColor0.setFocusable(false);
+//		btnColor1.setFocusable(false);
+//		btnColor2.setFocusable(false);
+//		btnColor3.setFocusable(false);
+//		btnColor4.setFocusable(false);
+//		btnColor5.setFocusable(false);
+//		btnColor6.setFocusable(false);
+//		btnColor7.setFocusable(false);
+//		btnColor8.setFocusable(false);
+//		btnColor9.setFocusable(false);
+        for (int i = 0; i < Element.colors.length; i++) {
+            toolbar.add(btnColors[i]);
+            {
+        		final ColorButton btnColor = btnColors[i];            	
+            	btnColors[i].addActionListener(new ActionListener() {
+            		private ColorButton btn = btnColor;
+            		public void actionPerformed(ActionEvent event) {
+            			diagram.setColor(btn.getColor());
+            			doButtons();
+            		}
+            	}
+            			);
+            }
+    		btnColors[i].setFocusable(false);
+        }
+        // END KGU#245 2018-07-02
 
 		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
 		toolbar = newToolBar("Collapsing", false);
@@ -1179,17 +1215,22 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupAddAfterPara.setEnabled(condition);
 		
 		// colors
-		btnColor0.setEnabled(condition);
-		btnColor1.setEnabled(condition);
-		btnColor2.setEnabled(condition);
-		btnColor3.setEnabled(condition);
-		btnColor4.setEnabled(condition);
-		btnColor5.setEnabled(condition);
-		btnColor6.setEnabled(condition);
-		btnColor7.setEnabled(condition);
-		btnColor8.setEnabled(condition);
-		btnColor9.setEnabled(condition);
-		
+		// START KGU#245 2018-07-02: Serial buttons converted to array
+//		btnColor0.setEnabled(condition);
+//		btnColor1.setEnabled(condition);
+//		btnColor2.setEnabled(condition);
+//		btnColor3.setEnabled(condition);
+//		btnColor4.setEnabled(condition);
+//		btnColor5.setEnabled(condition);
+//		btnColor6.setEnabled(condition);
+//		btnColor7.setEnabled(condition);
+//		btnColor8.setEnabled(condition);
+//		btnColor9.setEnabled(condition);
+		for (int i = 0; i < Element.colors.length; i++) {
+			btnColors[i].setEnabled(condition);
+		}
+		// END KGU#245 2018-07-02
+
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
 		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
@@ -1385,16 +1426,21 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     @Override
     public void updateColors() 
     {	
-            btnColor0.setColor(Element.color0);
-            btnColor1.setColor(Element.color1);
-            btnColor2.setColor(Element.color2);
-            btnColor3.setColor(Element.color3);
-            btnColor4.setColor(Element.color4);
-            btnColor5.setColor(Element.color5);
-            btnColor6.setColor(Element.color6);
-            btnColor7.setColor(Element.color7);
-            btnColor8.setColor(Element.color8);
-            btnColor9.setColor(Element.color9);
+		// START KGU#245 2018-07-02: Serial buttons converted to array
+//    	btnColor0.setColor(Element.color0);
+//    	btnColor1.setColor(Element.color1);
+//    	btnColor2.setColor(Element.color2);
+//    	btnColor3.setColor(Element.color3);
+//    	btnColor4.setColor(Element.color4);
+//    	btnColor5.setColor(Element.color5);
+//    	btnColor6.setColor(Element.color6);
+//    	btnColor7.setColor(Element.color7);
+//    	btnColor8.setColor(Element.color8);
+//    	btnColor9.setColor(Element.color9);
+    	for (int i = 0; i < Element.colors.length; i++) {
+        	btnColors[i].setColor(Element.colors[i]);
+    	}
+    	// END KGU#245 2018-07-02
     }
 
     public Editor()
@@ -1567,6 +1613,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			scrollarea.requestFocusInWindow();
 		}		
 	}
+	
+	// START KGU#534 2018-06-27: Enh. #552
+	public void arrangerIndexRemoveAll()
+	{
+		Arranger.getInstance().removeAllDiagrams();			
+	}
+	// END KGU#534 2018-06-27
 	
 	public void arrangerIndexToggleCovered()
 	{

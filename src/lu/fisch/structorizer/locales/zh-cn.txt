@@ -53,6 +53,7 @@
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.12.14  New menu "Debug"
+ *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -277,16 +278,7 @@ Editor.btnFontDown.tooltip=减小字体大小。
 // copyright 
 Editor.btnAbout.tooltip=显示Structorizer的相关信息。
 // colors
-Editor.btnColor0.tooltip=用该颜色着色选中的元素。
-Editor.btnColor1.tooltip=用该颜色着色选中的元素。
-Editor.btnColor2.tooltip=用该颜色着色选中的元素。
-Editor.btnColor3.tooltip=用该颜色着色选中的元素。
-Editor.btnColor4.tooltip=用该颜色着色选中的元素。
-Editor.btnColor5.tooltip=用该颜色着色选中的元素。
-Editor.btnColor6.tooltip=用该颜色着色选中的元素。
-Editor.btnColor7.tooltip=用该颜色着色选中的元素。
-Editor.btnColor8.tooltip=用该颜色着色选中的元素。
-Editor.btnColor9.tooltip=用该颜色着色选中的元素。
+Editor.btnColors.*.tooltip=用该颜色着色选中的元素。
 // Popup menu
 Editor.popupCut.text=剪切
 Editor.popupCopy.text=复制
@@ -391,36 +383,9 @@ FontChooser.btnOK.tooltip=确认你的选择。
 
 -----[ Colors ]-----
 Colors.title=颜色参数设置
-Colors.lblColor0.text=颜色 0
-Colors.lblColor1.text=颜色 1
-Colors.lblColor2.text=颜色 2
-Colors.lblColor3.text=颜色 3
-Colors.lblColor4.text=颜色 4
-Colors.lblColor5.text=颜色 5
-Colors.lblColor6.text=颜色 6
-Colors.lblColor7.text=颜色 7
-Colors.lblColor8.text=颜色 8
-Colors.lblColor9.text=颜色 9
-Colors.lblColor0.tooltip=选择颜色 0。
-Colors.lblColor1.tooltip=选择颜色 1。
-Colors.lblColor2.tooltip=选择颜色 2。
-Colors.lblColor3.tooltip=选择颜色 3。
-Colors.lblColor4.tooltip=选择颜色 4。
-Colors.lblColor5.tooltip=选择颜色 5。
-Colors.lblColor6.tooltip=选择颜色 6。
-Colors.lblColor7.tooltip=选择颜色 7。
-Colors.lblColor8.tooltip=选择颜色 8。
-Colors.lblColor9.tooltip=选择颜色 9。
-Colors.color0.tooltip=点击编辑 ...
-Colors.color1.tooltip=点击编辑 ...
-Colors.color2.tooltip=点击编辑 ...
-Colors.color3.tooltip=点击编辑 ...
-Colors.color4.tooltip=点击编辑 ...
-Colors.color5.tooltip=点击编辑 ...
-Colors.color6.tooltip=点击编辑 ...
-Colors.color7.tooltip=点击编辑 ...
-Colors.color8.tooltip=点击编辑 ...
-Colors.color9.tooltip=点击编辑 ...
+Colors.lblColors.*.text=颜色 [#]
+Colors.lblColors.*.tooltip=选择颜色 [#]。
+Colors.colors.*.tooltip=点击编辑 ...
 Colors.btnOK.text=确定
 Colors.btnOK.tooltip=确认你的选择。
 

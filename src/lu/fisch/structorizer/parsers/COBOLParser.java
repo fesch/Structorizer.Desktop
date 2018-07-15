@@ -86,6 +86,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled
  *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
  *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
+ *      Kay Gürtzig     2018.07.01      Enh. #553 - thread cancellation hooks added
  *
  ******************************************************************************************************
  *
@@ -150,6 +151,7 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
+import lu.fisch.structorizer.parsers.CodeParser.ParserCancelled;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -4604,7 +4606,7 @@ public class COBOLParser extends CodeParser
 	 * @return The File object associated with the preprocessed source file.
 	 */
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding)
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
 	{
 		/* TODO for preparsing:
 		 * minimal handling compiler directives, at least SOURCE FORMAT [IS] FREE|FIXED
@@ -5102,7 +5104,7 @@ public class COBOLParser extends CodeParser
 	 * @see CodeParser#initializeBuildNSD()
 	 */
 	@Override
-	protected void initializeBuildNSD()
+	protected void initializeBuildNSD() throws ParserCancelled
 	{
 		// START KGU#407 2017-10-01: Enh. #420: Configure the lookup table for comment retrieval
 		this.registerStatementRuleIds(statementIds);
@@ -5135,8 +5137,11 @@ public class COBOLParser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
 	 */
 	@Override
-	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
+	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
 		if (_reduction.isEmpty()) {
 			return;
 		}
@@ -5169,7 +5174,7 @@ public class COBOLParser extends CodeParser
 			Root prevRoot = root;	// Cache the original root
 			root = new Root();	// Prepare a new root for the (sub)routine
 			this.equipWithSourceComment(root, _reduction);
-			subRoots.add(root);
+			this.addRoot(root);
 			Reduction secRed = _reduction.get(1).asReduction();	// program or function id paragraph
 			boolean isFunction = secRed.getParent().getTableIndex() == RuleConstants.PROD_FUNCTION_ID_PARAGRAPH_FUNCTION_ID_TOK_DOT_TOK_DOT;
 			if (isFunction) {
@@ -5666,7 +5671,7 @@ public class COBOLParser extends CodeParser
 					else i++;
 				}
 				if (incl.children.getSize() > 0) {
-					subRoots.add(incl);
+					this.addRoot(incl);
 					root.addToIncludeList(incl);
 				}
 			}
@@ -5766,8 +5771,9 @@ public class COBOLParser extends CodeParser
 	 *
 	 * @param _reduction - the statement reduction
 	 * @param _parentNode - the
+	 * @throws ParserCancelled 
 	 */
-	private void importSearch(Reduction _reduction, Subqueue _parentNode) {
+	private void importSearch(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		/*
 		 * FIXME: At least add variable name parsing the same way we have in
 		 * other places and add some line breaks
@@ -5884,8 +5890,9 @@ public class COBOLParser extends CodeParser
 	 * @param _reduction - the STRING statement reduction
 	 * @param _parentNode - {@link Subqueue} to append the resulting elements to
 	 * @return indicates whether some halfway usable element (sequence) could be generated
+	 * @throws ParserCancelled 
 	 */
-	private boolean importString(Reduction _reduction, Subqueue _parentNode) {
+	private boolean importString(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
 		// <string_body> ::= <string_item_list> INTO <identifier> <_with_pointer> <_on_overflow_phrases>
 		String varName = this.getContent_R(secRed.get(2).asReduction(), "");	// target variable
@@ -5953,7 +5960,7 @@ public class COBOLParser extends CodeParser
 		return true;
 	}
 
-	private boolean importUnstring(Reduction _reduction, Subqueue _parentNode) {
+	private boolean importUnstring(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean done = false;
 		Reduction secRed = _reduction.get(1).asReduction();
 		// <unstring_body> ::= <identifier> <_unstring_delimited> <unstring_into> <_with_pointer> <_unstring_tallying> <_on_overflow_phrases>
@@ -6122,7 +6129,7 @@ public class COBOLParser extends CodeParser
 		return done;
 	}
 
-	private boolean importAccept(Reduction _reduction, Subqueue _parentNode) {
+	private boolean importAccept(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean done = false;
 		Reduction secRed = _reduction.get(1).asReduction();		// <accept_body>
 		int secRuleId = secRed.getParent().getTableIndex();
@@ -6172,7 +6179,7 @@ public class COBOLParser extends CodeParser
 		return done;
 	}
 
-	private void importMove(Reduction _reduction, Subqueue _parentNode) {
+	private void importMove(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
 		String expr = this.getContent_R(secRed.get(0).asReduction(), "");
 		// FIXME: This doesn't work for array elements - we need an expression list splitter
@@ -6210,7 +6217,7 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
-	private void importIf(Reduction _reduction, Subqueue _parentNode) {
+	private void importIf(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		String content = this.transformCondition(_reduction.get(1).asReduction(), "");
 		//System.out.println("\tCondition: " + content);
 		Reduction secRed = _reduction.get(3).asReduction();
@@ -6249,8 +6256,9 @@ public class COBOLParser extends CodeParser
 		//System.out.println("\tEND_IF");
 	}
 
-	/** Resolve SET var [var2,var3] TO TRUE | FLASE */
-	private boolean importSet(Reduction _reduction, Subqueue _parentNode) {
+	/** Resolve SET var [var2,var3] TO TRUE | FLASE 
+	 * @throws ParserCancelled */
+	private boolean importSet(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean done = false;
 		Reduction secRed = _reduction.get(1).asReduction();	// <set_body>
 		int secRuleId = secRed.getParent().getTableIndex();
@@ -6340,8 +6348,9 @@ public class COBOLParser extends CodeParser
 	 * of the <target_x_list> of the given reduction {@code setRed} to {@code assignments}
 	 * @param setRed
 	 * @param assignments
+	 * @throws ParserCancelled 
 	 */
-	private void addBoolAssignments(Reduction setRed, StringList assignments) {
+	private void addBoolAssignments(Reduction setRed, StringList assignments) throws ParserCancelled {
 		String value = setRed.get(2).asString().toLowerCase();	// gets "true" or "false"
 		StringList targets = this.getExpressionList(setRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		for (int i = 0; i < targets.count(); i++) {
@@ -6374,7 +6383,7 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
-	private void importCall(Reduction _reduction, Subqueue _parentNode) {
+	private void importCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean callOk = false;
 		Reduction secRed = _reduction.get(1).asReduction();	// <call_body>
 		String name = this.getContent_R(secRed.get(1).asReduction(), "").trim();
@@ -6404,7 +6413,7 @@ public class COBOLParser extends CodeParser
 		ele.getComment().add(StringList.explode(comment, "\n"));
 	}
 
-	private void importFileControl(Reduction _reduction, Subqueue _subqueue) {
+	private void importFileControl(Reduction _reduction, Subqueue _subqueue) throws ParserCancelled {
 		String fileDescr = this.getContent_R(_reduction.get(2).asReduction(), "");
 		boolean isSuited = true;
 		// Now fetch the file name (if available) and make sure it's a line-sequential file
@@ -6465,14 +6474,14 @@ public class COBOLParser extends CodeParser
 				}
 				fileStatusFct.children.addElement(fileStatusCase);
 				fileStatusFct.children.addElement(new Instruction(CodeParser.getKeywordOrDefault("preReturn", "return") + " file_status"));
-				subRoots.add(fileStatusFct);
+				this.addRoot(fileStatusFct);
 				this.fileStatusFctAdded = true;
 			}
 		}
 		return statusCheck;
 	}
 
-	private boolean importWrite(Reduction _reduction, Subqueue _parentNode) {
+	private boolean importWrite(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// TODO: Find a sensible conversion!
 		boolean done = false;
 		Reduction secRed = _reduction.get(1).asReduction();	// <write_body>
@@ -6509,7 +6518,7 @@ public class COBOLParser extends CodeParser
 		return done;
 	}
 
-	private boolean importRead(Reduction _reduction, Subqueue _parentNode) {
+	private boolean importRead(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean done = false;
 		// <read_body> ::= <file_name> <_flag_next> <_record> <read_into> <lock_phrases> <read_key> <read_handler>
 		Reduction bodyRed = _reduction.get(1).asReduction();
@@ -6562,7 +6571,7 @@ public class COBOLParser extends CodeParser
 		return done;
 	}
 
-	private boolean importOpen(Reduction _reduction, Subqueue _parentNode) {
+	private boolean importOpen(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean done = false;
 		Reduction bodyRed = _reduction.get(1).asReduction();
 		int pos = _parentNode.getSize();	// Insertion position at end (to compensate reverse retrieval)
@@ -6625,8 +6634,9 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the ADD statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed ADD statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private void importAdd(Reduction _reduction, Subqueue _parentNode) {
+	private void importAdd(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
 		int targetIx = -1;			// token index for the targets
 		String summands1 = null;
@@ -6676,8 +6686,9 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the SUBTRACT statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed SUBTRACT statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private final void importSubtract(Reduction _reduction, Subqueue _parentNode) {
+	private final void importSubtract(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
 		int targetIx = 2;
@@ -6716,8 +6727,9 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the MULTIPLY statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed MULTIPLY statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private final void importMultiply(Reduction _reduction, Subqueue _parentNode) {
+	private final void importMultiply(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
 		int targetIx = 2;
@@ -6759,8 +6771,9 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the DIVIDE statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed DIVIDE statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private final void importDivide(Reduction _reduction, Subqueue _parentNode) {
+	private final void importDivide(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
 		int targetIx = 4;
@@ -6820,8 +6833,9 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Jump element from the EXIT statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed EXIT statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private final void importExit(Reduction _reduction, Subqueue _parentNode) {
+	private final void importExit(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		String content = "";
 		String comment = "";
 		Color color = null;
@@ -6910,8 +6924,9 @@ public class COBOLParser extends CodeParser
 	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private final void importPerform(Reduction _reduction, Subqueue _parentNode) {
+	private final void importPerform(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// We will have to find out what kind of loop this is.
 		// In the worst case the body is just a paragraph name (PROD_PERFORM_BODY), which
 		// forces us to find that paragraph and to copy its content into the body Subqueue.
@@ -7067,8 +7082,9 @@ public class COBOLParser extends CodeParser
 	 * Builds a Call element from the PERFORM statement for PROD_PERFORM_BODY represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) {
+	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// <perform_body> ::= <perform_procedure> <perform_option>
 		// Ideally we find the named label and either copy its content into the body Subqueue or
 		// export it to a new NSD.
@@ -7096,8 +7112,9 @@ public class COBOLParser extends CodeParser
 	 * represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed EVALUATE statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled 
 	 */
-	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) {
+	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// Possibly a CASE instruction, may have to be decomposed to an IF chain.
 		Reduction secRed = _reduction.get(1).asReduction();	// <evaluate_body>
 		Reduction subjlRed = secRed.get(0).asReduction();	// <evaluate_subject_list>
@@ -7432,7 +7449,7 @@ public class COBOLParser extends CodeParser
 		return pattern;
 	}
 
-	private final void processDataDescriptions(Reduction _reduction, HashMap<String, String> _typeInfo)
+	private final void processDataDescriptions(Reduction _reduction, HashMap<String, String> _typeInfo) throws ParserCancelled
 	{
 		int ruleId = _reduction.getParent().getTableIndex();
 		if (ruleId == RuleConstants.PROD_DATA_DESCRIPTION4)
@@ -7776,9 +7793,10 @@ public class COBOLParser extends CodeParser
 	 * @param _ruleId - id of a rule terminating the exploration
 	 * @param _nameIx - index of the name token within the reduction  
 	 * @return list of expressions as strings
+	 * @throws ParserCancelled 
 	 * @see #getParameterList(Reduction, String, int, int)
 	 */
-	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) {
+	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) throws ParserCancelled {
 		StringList args = new StringList();
 		do {
 			String paramHead = _paramlRed.getParent().getHead().toString();
@@ -7806,9 +7824,10 @@ public class COBOLParser extends CodeParser
 	 * @param _listHead - the rule head representing the recursive part 
 	 * @param _exclRuleId - id of a rule terminating the exploration
 	 * @return list of expressions as strings
+	 * @throws ParserCancelled 
 	 * @see #getParameterList(Reduction, String, int, int)
 	 */
-	private final StringList getExpressionList(Reduction _exprlRed, String _listHead, int _exclRuleId) {
+	private final StringList getExpressionList(Reduction _exprlRed, String _listHead, int _exclRuleId) throws ParserCancelled {
 		StringList exprs = new StringList();
 		do {
 			String exprlHead = _exprlRed.getParent().getHead().toString();
@@ -7836,8 +7855,9 @@ public class COBOLParser extends CodeParser
 	 * @param _lastSubject - a comparison subject in case of an incomplete expression
 	 * (e.g. the discriminator in a CASE structure)
 	 * @return the derived expression in Structorizer-compatible syntax
+	 * @throws ParserCancelled 
 	 */
-	private final String transformCondition(Reduction _reduction, String _lastSubject) {
+	private final String transformCondition(Reduction _reduction, String _lastSubject) throws ParserCancelled {
 		// We must resolve expressions like "expr1 = expr2 or > expr3".
 		// Unfortunately the <condition> node is not defined as hierarchical expression
 		// tree dominated by operator nodes but as left-recursive "list".
@@ -8074,7 +8094,7 @@ public class COBOLParser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#getContent_R(com.creativewidgetworks.goldparser.engine.Reduction, java.lang.String)
 	 */
 	@Override
-	protected String getContent_R(Reduction _reduction, String _content)
+	protected String getContent_R(Reduction _reduction, String _content) throws ParserCancelled
 	{
 		return getContent_R(_reduction, _content, "");
 	}
@@ -8086,10 +8106,14 @@ public class COBOLParser extends CodeParser
 	 * @param _content - previous content the string representation of {@code _reduction} is to be appended to. 
 	 * @param _separator - a separator string to be put among sub-token results
 	 * @return the composed string
+	 * @throws ParserCancelled 
 	 * @see #getContentToken_R(Token, String, String, boolean)
 	 */
-	protected String getContent_R(Reduction _reduction, String _content, String _separator)
+	protected String getContent_R(Reduction _reduction, String _content, String _separator) throws ParserCancelled
 	{
+		// START KGU#537 2018-07-01: Enh. #553
+		checkCancelled();
+		// END KGU#537 2018-07-01
 		int ruleId = _reduction.getParent().getTableIndex();
 		String ruleHead = _reduction.getParent().getHead().toString();
 		if (ruleHead.equals("<function>") && ruleId != RuleConstants.PROD_FUNCTION) {
@@ -8253,8 +8277,9 @@ public class COBOLParser extends CodeParser
 	 * @param _separator - a string to be put between the result for sub-tokens
 	 * @param _isFirst - whether this token is the first in a sequence (i.e. if a separator isn't needed before)
 	 * @return the string composed from {@code _content} and this {@link Token}.
+	 * @throws ParserCancelled 
 	 */
-	private String getContentToken_R(Token _token, String _content, String _separator, boolean _isFirst) {
+	private String getContentToken_R(Token _token, String _content, String _separator, boolean _isFirst) throws ParserCancelled {
 		switch (_token.getType()) 
 		{
 		case NON_TERMINAL:
@@ -8789,7 +8814,7 @@ public class COBOLParser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
 	@Override
-	protected void subclassUpdateRoot(Root aRoot, String textToParse) {
+	protected void subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
 		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
 		if (aRoot.getMethodName().equals("???")) {
 			if (aRoot.getParameterNames().count() == 0) {	// How could there be arguments?
@@ -8831,7 +8856,7 @@ public class COBOLParser extends CodeParser
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassPostProcess(java.lang.String)
 	 */
-	protected void subclassPostProcess(String _textToParse)
+	protected void subclassPostProcess(String _textToParse) throws ParserCancelled
 	{
 		// The automatic conversion of Instructions to Calls may have invalidated element references.
 		// Hence update the procedureList before elements are going to be moved.
@@ -8955,12 +8980,12 @@ public class COBOLParser extends CodeParser
 		}
 		// START KGU#376 2017-10-04: Enh. #389
 		if (externalRoot != null && externalRoot.children.getSize() > 0) {
-			this.subRoots.add(externalRoot);
+			this.addRoot(externalRoot);
 		}
 		// END KGU#376 2017-10-04
 		// START KGU#376 2017-10-19: Enh. #389
 		if (!declaredGlobals.isEmpty()) {
-			this.subRoots.addAll(declaredGlobals.keySet());
+			this.addAllRoots(declaredGlobals.keySet());
 		}
 		// END KGU#376 2017-10-19
 	}
@@ -9006,7 +9031,7 @@ public class COBOLParser extends CodeParser
 		}
 		
 		// Put the new subroutine diagram to the set of results as well
-		subRoots.add(proc);	
+		this.addRoot(proc);	
 		
 		return replacingCall;
 	}
@@ -9033,7 +9058,7 @@ public class COBOLParser extends CodeParser
 				owner.children.removeElement(0);
 				shared.children.addElement(el);
 			}
-			subRoots.add(shared);			// Put the new diagram to the set of results
+			this.addRoot(shared);			// Put the new diagram to the set of results
 			dataSectionEnds.remove(owner);	// Un-register the root from those holding their own data declarations
 			dataSectionIncludes.put(owner, dataName);	// register the mapped includable instead
 			owner.addToIncludeList(dataName);	// ... and let the former owner include it

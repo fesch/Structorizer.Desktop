@@ -35,7 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.09      First Issue (solving the legacy cgt problem)
  *      Kay Gürtzig     2017.04.27      File logging option added
  *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
- *      Kay Gürtzig     2018.04.12      Comments reorganized 
+ *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved, logger added, comments reorganized
  *
  ******************************************************************************************************
  *
@@ -57,8 +57,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.creativewidgetworks.goldparser.engine.Group;
 import com.creativewidgetworks.goldparser.engine.Parser;
@@ -117,14 +117,19 @@ import com.creativewidgetworks.goldparser.util.ResourceHelper;
  */
 public class AuParser extends GOLDParser {
 	
+	// START KGU#484 2018-04-12: Issue #463 - regular logging mechanism
+	/** General logger instance for product maintenance. */
+	private static final Logger logger = Logger.getLogger(AuParser.class.getName());
+	// END KU#484 2018-04-12
 	// START KGU#354 2017-04-27: Enh. #354
-	OutputStreamWriter logFile = null;
+	/** Specific logging stream for verbose Structorizer code import. */
+	private OutputStreamWriter logFile = null;
 	// END KGU#354 2017-04-27
 	
 	// START KGU#407 2017-07-21: Enh. #420: Prerequisites to map comment tokens.
 	/** Most recent comment */
 	private String lastComment = null;
-	/** most recent token */
+	/** Most recent token */
 	private Token lastToken = null;
 	/**
 	 * Maps tokens to neighbouring comment texts for possible comment import. The
@@ -249,6 +254,11 @@ public class AuParser extends GOLDParser {
 
     protected boolean processTokenRead() {
     	Token token = this.getCurrentToken();
+    	// START KGU#511 2018-04-12: Issue #489
+    	if (token == null) {
+    		return false;
+    	}
+    	// END KGU#511 2018-04-12
     	// START KGU#407 2017-06-21: Enh. #420 Set the token - comment mapping
     	String name = token.getName();	// FIXME: Is this sufficient for a classification?
     	if (name.equalsIgnoreCase("comment")) {
@@ -288,10 +298,10 @@ public class AuParser extends GOLDParser {
     			}
     			logFile.write("\n");
     		} catch (IOException e) {
-    			// START KGU#484 2018-04-05: Issue #463
+    			// START KGU#484 2018-04-12: Issue #463
     			//e.printStackTrace();
-    			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Parser logging failed.", e);
-    			// END KGU#484 2018-04-05
+    			logger.log(Level.WARNING, getClass().getSimpleName() + " logging failed!", e);
+    			// END KGU#484 2018-04-12
     		}
     	}
     	return false;
@@ -301,6 +311,16 @@ public class AuParser extends GOLDParser {
      * Just allowing public access to the current token 
      */
     public Token getCurrentToken() {
-    	return super.getCurrentToken();
+    	// START KGU#511 2018-04-12: Issue #489
+    	//return super.getCurrentToken();
+    	Token currentToken = null;
+    	try {
+    		currentToken = super.getCurrentToken();
+    	}
+    	catch (java.util.EmptyStackException ex) {
+    		logger.log(Level.SEVERE, "No current token", ex);
+    	}
+    	return currentToken;
+    	// END KGU#511 2018-04-12
     }
 }

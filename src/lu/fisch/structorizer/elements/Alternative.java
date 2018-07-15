@@ -73,6 +73,7 @@ import java.awt.Point;
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
@@ -207,6 +208,12 @@ public class Alternative extends Element implements IFork {
 		//logger.debug("AX : "+ax);
 		double ay =  0;
 		// gradient coefficient of the left traverse line
+//		if (cx - ax == 0) {
+//			System.err.println(this + "prepareDraw(212): cx-ax = 0");
+//		}
+//		if (cy - ay == 0) {
+//			System.err.println(this + "prepareDraw(215): cy-ay = 0");
+//		}
 		double coeffleft = (cy-ay)/(cx-ax);
 
 
@@ -257,6 +264,12 @@ public class Alternative extends Element implements IFork {
 			//logger.debug("LS : "+leftside);
 
 			// check if this is the one we need to do calculations
+//			if (bx - ax == 0) {
+//				System.err.println(this + "prepareDraw(268): bx-ax = 0");
+//			}
+//			if (by - ay == 0) {
+//				System.err.println(this + "prepareDraw(271): by-ay = 0");
+//			}
 			double coeff = (by-ay)/(bx-ax);
 
 			// the point height we need
@@ -554,6 +567,19 @@ public class Alternative extends Element implements IFork {
 		return IconLoader.getIcon(60);
 	}
 	// END KGU#122 2016-01-03
+	
+	// START KGU#535 2018-06-28
+	/**
+	 * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+	 * the {@link FindAndReplace} dialog.
+	 * @see #getIcon()
+	 */
+	@Override
+	public ImageIcon getMiniIcon()
+	{
+		return IconLoader.getIcon(13);
+	}
+	// END KGU 2018-06-28
 	
 	// START KGU 2015-10-09: On moving the cursor, substructures had been eclipsed
 	// by their containing box w.r.t. comment popping etc. This correction, however,

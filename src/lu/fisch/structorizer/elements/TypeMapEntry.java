@@ -40,6 +40,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.09.18      Enh. #423: dummy singleton introduced (impacts poorly tested!)
  *      Kay Gürtzig     2017.09.22      Bugfix #428 Defective replacement pattern for "short" in canonicalizeType(String)
  *      Kay Gürtzig     2017.09.29      Regex stuff revised (final Strings -> final Patterns)
+ *      Kay Gürtzig     2018.07.12      Canonicalisation of type name "unsigned short" added.
  *
  ******************************************************************************************************
  *
@@ -408,7 +409,7 @@ public class TypeMapEntry {
 	}
 
 	/**
-	 * Tries to map the given type name to a unified type name for easer comparison.
+	 * Tries to map the given type name to a unified type name for easier comparison.
 	 * The unified type names are similar to elementary C or Java type names but
 	 * strictly lower-case
 	 * @param type - a type-designating string
@@ -422,6 +423,9 @@ public class TypeMapEntry {
 		type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$1short$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
+		// START KGU 2018-07-12
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned short") + ")($|\\W.*)", "$1short$3");
+		// END KGU 2018-07-12
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
 		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");

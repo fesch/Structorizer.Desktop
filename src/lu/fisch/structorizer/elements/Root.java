@@ -280,12 +280,12 @@ public class Root extends Element {
 	public String licenseName = null;
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
+	
 	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now managed directly by Root
 	/** List of the names of the diagrams to be included by this Root (may be null!) */
 	public StringList includeList = null;
-	// END KGU#376 2017-06-30
 	/**
-	 * Checks, whether {@code aRoot} is includable and if so, ensures that its name is
+	 * Checks, whether {@code aRoot} is includable and if so, ensures that its name
 	 * becomes member of this' include list.
 	 * @param aRoot - a diagram to be added to the include list of this
 	 * @return true if {@code aRoot} is includable and new to the include list
@@ -314,6 +314,7 @@ public class Root extends Element {
 		}
 		return this.includeList.addIfNew(rootName);
 	}
+	// END KGU#376 2017-06-30
 	
 	/**
 	 * @return true if and only if the diagram type is "main program"
@@ -1004,7 +1005,6 @@ public class Root extends Element {
 		children.draw(_canvas, bodyRect);
 		// END KGU#227 2016-07-31
 
-
 		// draw box around
 		canvas.setColor(Color.BLACK);
 		// START KGU#221 2016-07-27: Bugfix #208
@@ -1210,6 +1210,19 @@ public class Root extends Element {
     }
     // END KGU#324 2017-06-16
 
+    // START KGU#535 2018-06-28
+    /**
+     * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+     * {@link FindAndReplace} dialog.
+     * @see #getIcon()
+     */
+    @Override
+    public ImageIcon getMiniIcon()
+    {
+    	return this.getIcon();
+    }
+    // END KGU#535 2018-06-28
+
     @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
@@ -1374,9 +1387,18 @@ public class Root extends Element {
         return this.prepareDraw(canvas);
     }
 
-    public Rect draw(Graphics _g, Point point, Updater updater)
+    /**
+     * Draws this diagram at anchor position {@code _point} (upper left corner) on {@link Graphics}
+     * {@code _g}, where {@link Updater} {@code _prohibitedUpdater} is NOT allowed to refresh (in order to avoid
+     * stack overflow due to endless recursion).
+     * @param _g - the target graphics environment
+     * @param _point - the target position
+     * @param _prohibitedUpdater - if given an updater not to be informed
+     * @return the area occupied by this diagram as {@link Rect}
+     */
+    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater)
     {
-        setDrawPoint(point);
+        setDrawPoint(_point);
 
         /*
         final Updater myUpdater = updater;
@@ -1400,7 +1422,7 @@ public class Root extends Element {
         // inform updaters
         for(int u=0; u<updaters.size(); u++)
         {
-            if(updaters.get(u)!=updater)
+            if(updaters.get(u)!=_prohibitedUpdater)
             {
                 updaters.get(u).update(this);
             }
@@ -1409,20 +1431,18 @@ public class Root extends Element {
         Canvas canvas = new Canvas((Graphics2D) _g);
         canvas.setFont(Element.getFont()); //?
         Rect myrect = this.prepareDraw(canvas);
-        myrect.left += point.x;
-        myrect.top += point.y;
-        myrect.right += point.x;
-        myrect.bottom += point.y;
-        //this.drawBuffered(canvas,myrect);
+        myrect.left += _point.x;
+        myrect.top += _point.y;
+        myrect.right += _point.x;
+        myrect.bottom += _point.y;
         this.draw(canvas, myrect);
-        //this.drawBuffered(canvas, myrect);
 
         return myrect;
     }
 
-    public Rect draw(Graphics _g, Point point)
+    public Rect draw(Graphics _g, Point _point)
     {
-        return draw(_g, point, null);
+        return draw(_g, _point, null);
     }
 
     public Rect draw(Graphics _g)
@@ -3933,36 +3953,46 @@ public class Root extends Element {
 					String typename = tokens.concatenate("", 1, posAsgnmt).trim();
 					String typeSpec = tokens.concatenate("", posAsgnmt + 1, tokens.count()).trim();
 					int posBrace = typeSpec.indexOf("{");
-					StringList compNames = new StringList();
-					StringList compTypes = new StringList();
-					// We test here against type-associated variable names and an existing type name
-					if (!Function.testIdentifier(typename, null) || _types.containsKey(typename) || _types.containsKey(":" + typename)) {
-						//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
-						addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
-					}
-					this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes);
-					for (int j = 0; j < compNames.count(); j++) {
-						String compName = compNames.get(j);
-						if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
-							//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
-							addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+					// START KGU#543 2018-07-05 We have to face indirections now.
+					if (posBrace >= 0) {
+					// END KGU#543 2018-07-05
+						StringList compNames = new StringList();
+						StringList compTypes = new StringList();
+						// We test here against type-associated variable names and an existing type name
+						if (!Function.testIdentifier(typename, null) || _types.containsKey(typename) || _types.containsKey(":" + typename)) {
+							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
+							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
 						}
-						String type = compTypes.get(j).trim();
-						// Clear off array specifiers, but the check is still too restrictive...
-						if (type != null) {
-							String typeLower;
-							if (type.endsWith("]") && type.contains("[")) {
-								type = type.substring(0, type.indexOf("[")).trim();
+						this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes);
+						for (int j = 0; j < compNames.count(); j++) {
+							String compName = compNames.get(j);
+							if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
+								//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
 							}
-							else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-								type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
-							}
-							if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-								//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-								addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+							String type = compTypes.get(j).trim();
+							// Clear off array specifiers, but the check is still too restrictive...
+							if (type != null) {
+								String typeLower;
+								if (type.endsWith("]") && type.contains("[")) {
+									type = type.substring(0, type.indexOf("[")).trim();
+								}
+								else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+									type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+								}
+								if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+									//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+									addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+								}
 							}
 						}
+					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
+					else if (Function.testIdentifier(typeSpec, null) && !_types.containsKey(":" + typeSpec)) {
+						//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);														
+					}
+					// END KGU#543 2018-07-05
 				}
 			}
 			// END KGU#388 2017-09-13

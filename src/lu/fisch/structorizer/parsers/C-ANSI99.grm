@@ -1,0 +1,528 @@
+﻿! -----------------------------------------------------------------------
+! ANSI C 99
+!
+! The C programming language evolved at Bell Labs from a series of 
+! programming languages: 'CPL', 'BCPL', and then 'B'. As a result, C's
+! development was a combined effort between Dennis Ritchie, Ken Thompson,
+! and Martin Richards.  
+!
+! C was designed for the creation and implementation of low-level systems
+! such as operating systems, device drivers, firmware, etc... To realize 
+! this goal, the language contains the ability to perform operations 
+! directly on memory and has direct access to system pointers. While this 
+! gives an enormous amount of control and flexibility, it also makes C a 
+! professional programming language - not to be used by an inexperienced
+! programmer.
+!
+! C (and later C++) quickly became the de facto standard for developing
+! operating systems, applications and most other large projects. UNIX as 
+! well as Windows, Linux, and Mac-OS X were developed using this 
+! language (and its successors).
+!
+! More information is available at Dennis Ritchie's website:
+!     http://cm.bell-labs.com/cm/cs/who/dmr/
+!
+! The C grammar is inherently ambigious and requires a large number of
+! LALR(1) states to parse. As a result, the time required by the GOLD 
+! Parser Builder to compile this grammar may be extensive.
+!
+! C is not a line-based grammar with the notable exception of compiler
+! directives (which are preceeded by a '#' character). These are usually not
+! handled directly by the actual parser, but, rather, the pre-processor. 
+! Before the program is analyzed by the parser, C compilers scan the code and
+! act on these commands. The final C program is then passed to the parser.
+! -----------------------------------------------------------------------
+
+! -----------------------------------------------------------------------
+! This grammar is a more or less direct adaptation of the grammar published
+! in Annex A of the ANSI C99 (ISO/IEC 9899:TC3) draft from September 7, 2007.
+! The grammar does not reflect any compiler directives.
+! The preprocessor directives part is disabled because it doesn't go well
+! with the actual grammar for the compiler. The respective non-terminals
+! start with a prefix PP such that they could easily be detected and moved
+! to a preprocessor project.
+! A little trick was used to resolve the conflict between general
+! identifiers, standard type names and those introduced by typedef.
+! For typedef names the pseudo-terminal "UserTypeId" was introduced.
+! This allows the grammar to be processed in the grammar tables but
+! requires a preprocessing replacing all type names introduced by typedef
+! with generic type names "user_type_000" through "user_type_999". Using
+! a map, these substitutions may be reverted after the prepared source
+! file will have passed the parser.
+! Type wchar_t from <stddef.h> was added to the grammar for convenience.
+! The declaration rules of the adopted grammar allow some modifier
+! combinations like unsigned double that are semantically illegal.
+! To sort out the nonsense combinations will be semantic task of the
+! embedding parser, the grammar can't do that without either inducing
+! giant decision tables or getting too restrictive or even contradictive.
+! The literal section, on the other hand, was somehwat simplified in
+! comparison to Annex A of the ANSI C99 draft of 2007.
+!
+! This grammar file was created for the code import feature of "Structorizer"
+! (a free Nassi-Shneiderman diagram editor see http://structorizer.fisch.lu)
+!
+! Created: 2018-03-27
+!
+! Modified 2018-04-12
+!   * The missing rule variant for <Declaration> was added
+!   * The erroneous ',' was removed from the <StructDeclnList> rule
+!   * Rule for function call with empty argument list had been missing
+! Modified 2018-06-20
+!   * Erroneous use of "Literal" in >Selector> rule corrected to <Literal>
+!   * Forgotten equality sign in assign operator '^=' added
+! Modified 2018-06-24
+!   * Forgotten empty block (without <BlockItemList>) as possible
+!     <Compound Stmt> added.
+!   * Identifiers allowed as CASE selectors.
+! -----------------------------------------------------------------------
+"Name"     = 'ANSI-C99'
+"Author"   = 'Kay Gürtzig'
+"Version"  = '1.3'
+"About"    = 'ANSI C99 (ISO/IEC 9899:TC3 draft from September 7, 2007)'
+
+"Case Sensitive" = True
+
+"Start Symbol" = <Translation Unit>
+
+! -------------------------------------------------
+! Character Sets
+! -------------------------------------------------
+
+{Hex Digit}      = {Digit} + [abcdefABCDEF]
+{Oct Digit}      = [01234567]
+
+{ID Head}      = {Letter} + [_]
+{ID Tail}      = {Alphanumeric} + [_]
+
+{String Ch}      = {All Printable} - ["]
+{Char Ch}        = {All Printable} - ['']
+                 
+!{H Ch}         = {All Printable} - [>]
+
+! -------------------------------------------------
+! Terminals
+! -------------------------------------------------
+
+!NewLine          = {CR}{LF} | {CR} | {LF}
+              
+DecLiteral       = [123456789]{digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
+OctLiteral       = 0{Oct Digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
+HexLiteral       = 0[xX]{Hex Digit}+([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
+FloatLiteral     = {Digit}*'.'{Digit}+([eE]('+'|'-')?{Digit}+)?[fFlL]?
+
+StringLiteral    = 'L'? ( '"'( {String Ch} | '\'{Printable} )* '"' {Whitespace}* )+
+CharLiteral      = '' ( {Char Ch} | '\'{Printable} )''
+
+Identifier       = {ID Head}{ID Tail}*
+                 
+!Punctuator       = '['|']'|'('|')'|'{'|'}'|'.'|'->'|'++'|'--'|'&'|'*'|'+'|'-'|'~'|'!'|'/'|'%'|'<<'|'>>'|'<'|'>'|'<='|'>='|'=='|'!='|'^'|'|'|'&&'|'||'|'?'|':'|';'|'...'|'='|'*='|'/='|'%='|'+='|'-='|'<<='|'>>='|'&='|'^='|'|='|','|'#'|'##'|'<:'|':>'|'<%'|'%>'|'%:'|'%:%:'
+!              
+!PPHeader         = '<' {H Ch}+ '>' | '"' {String Ch}* '"'
+!                 
+!PPNumber         = '.'?{Digit}({Digit}|{ID Head}|[eEpP][+-]|'.')*
+!
+!PPToken          = Identifier | PPNumber | CharLiteral | StringLiteral | Punctuator | PPHeader
+
+! Workaround for the ambiuity between Identifier and name defined via typedef                
+UserTypeId       = 'user_type_'{Digit}{Digit}{Digit}
+                 
+! ===================================================================
+! Comments
+! ===================================================================
+
+Comment Start = '/*'
+Comment End   = '*/'
+Comment Line  = '//'
+
+! ===================================================================
+! Rules
+! ===================================================================
+
+! The grammar starts below
+
+! -------------------------------------------------
+! Declarations
+! -------------------------------------------------
+
+<Declaration>     ::= <Decl Specifiers> <InitDeclList> ';'
+                   | <Decl Specifiers> ';'
+                
+<Decl Specifiers> ::= <Storage Class> <Decl Specs>
+                   | <Type Specifier> <Decl Specs>
+                   | <Type Qualifier> <Decl Specs>
+                   | inline <Decl Specs>
+                   
+<Decl Specs>      ::= <Decl Specifiers>
+                   |
+                   
+<InitDeclList>    ::= <InitDeclList> ',' <Init Declarator>
+                   |  <Init Declarator>
+                   
+<Init Declarator> ::= <Declarator> '=' <Initializer>
+                   |  <Declarator>
+                   
+<Storage Class>   ::= typedef
+                   |  extern
+                   |  static
+                   |  auto
+                   |  register
+                   
+<Type Specifier>  ::= void
+                   |  char
+                   |  wchar_t           ! Added for convenience (from <stddef.h>)
+                   |  short
+                   |  int
+                   |  long
+                   |  float
+                   |  double
+                   |  signed
+                   |  unsigned
+                   |  _Bool
+                   |  _Complex
+                   |  <StructOrUnion Spec>
+                   |  <Enumerator Spec>
+                   |  <Typedef Name>
+                   
+<StructOrUnion Spec> ::= <StructOrUnion> Identifier '{' <StructDeclnList> '}'
+                      |  <StructOrUnion> '{' <StructDeclnList> '}'
+                      |  <StructOrUnion> Identifier
+                      
+<StructOrUnion>   ::= struct
+                   | union
+                   
+<StructDeclnList>  ::= <StructDeclnList> <Struct Declaration>
+                   | <Struct Declaration>
+                   
+<Struct Declaration> ::= <SpecQualList> <StructDeclList> ';'
+                      
+<SpecQualList>    ::= <Type Specifier> <SpecQuals>
+                   |  <Type Qualifier> <SpecQuals>
+                   
+<SpecQuals>       ::= <SpecQualList>
+                   |
+                   
+<StructDeclList>  ::= <StructDeclList> ',' <Struct Decl>
+                   |  <Struct Decl>
+                   
+<Struct Decl>     ::= <Declarator> ':' <Constant Exp>
+                   |  <Declarator>
+                   |  ':' <Constant Exp>
+
+<Enumerator Spec> ::= enum Identifier '{' <EnumList> '}'
+                   | enum Identifier '{' <EnumList> ',' '}'
+                   | enum '{' <EnumList> '}'
+                   | enum '{' <EnumList> ',' '}'
+                   | enum Identifier
+
+<EnumList>        ::= <EnumList> ',' <Enumerator>
+                   |  <Enumerator>
+                   
+<Enumerator>      ::= Identifier '=' <Constant Exp>
+                   |  Identifier
+                   
+<Type Qualifier>  ::= const
+                   |  restrict
+                   |  volatile
+                   
+<Declarator>      ::= <Pointer> <Direct Decl>
+                   |  <Direct Decl>
+                   
+<Direct Decl>     ::= Identifier
+                   |  '(' <Declarator> ')'
+                   |  <Direct Decl> '[' <TypeQualsOpt> <Assign Exp> ']'
+                   |  <Direct Decl> '[' <TypeQualsOpt> '*' ']'
+                   |  <Direct Decl> '[' <TypeQualList> static <Assign Exp> ']'
+                   |  <Direct Decl> '[' <TypeQualsOpt> ']'
+                   |  <Direct Decl> '[' static <TypeQualsOpt> <Assign Exp> ']'
+                   |  <Direct Decl> '(' <ParamTypeList> ')'
+                   |  <Direct Decl> '(' <IdListOpt> ')'
+                   
+<Pointer>         ::= '*' <TypeQualList> <Pointer>
+                   |  '*' <TypeQualList>
+                   |  '*' <Pointer>
+                   |  '*'
+
+<TypeQualList>    ::= <Type Qualifier>
+                   |  <TypeQualList> <Type Qualifier>
+                   
+<TypeQualsOpt>    ::= <TypeQualList>
+                   |
+                   
+<ParamTypeList>   ::= <ParameterList> ',' '...'
+                   |  <ParameterList>
+                   
+<ParameterList>   ::= <ParameterList> ',' <Parameter Decl>
+                   |  <Parameter Decl>
+                   
+<Parameter Decl>  ::= <Decl Specifiers> <Declarator>
+                   |  <Decl Specifiers> <Abstract Decl>
+                   |  <Decl Specifiers>
+                   
+<IdentifierList>  ::= <IdentifierList> ',' Identifier
+                   | Identifier
+                   
+<IdListOpt>       ::= <IdentifierList>
+                   |
+                   
+<Typename>        ::= <SpecQualList> <Abstract Decl>
+                   |  <SpecQualList>
+                   
+<Abstract Decl>   ::= <Pointer> <Direct Abstr Decl>
+                   |  <Pointer>
+                   |  <Direct Abstr Decl>
+                   
+<Direct Abstr Decl> ::= '(' <Abstract Decl> ')'
+                   |  <DirAbstrDeclOpt> '[' <TypeQualsOpt> <Assign Exp> ']'
+                   |  <DirAbstrDeclOpt> '[' '*' ']'
+                   |  <DirAbstrDeclOpt> '[' <TypeQualList> static <Assign Exp> ']'
+                   |  <DirAbstrDeclOpt> '[' <TypeQualsOpt> ']'
+                   |  <DirAbstrDeclOpt> '[' static <TypeQualsOpt> <Assign Exp> ']'
+                   |  <DirAbstrDeclOpt> '(' <ParamTypeList> ')'
+                   |  <DirAbstrDeclOpt> '(' ')'
+                   
+<DirAbstrDeclOpt> ::= <Direct Abstr Decl>
+                   |
+                   
+<Typedef Name>    ::= UserTypeId
+                   
+<Initializer>     ::= <Assign Exp>
+                   | '{' <InitializerList> '}'
+                   | '{' <InitializerList> ',' '}'
+                   
+<InitializerList>  ::= <InitializerList> ',' <Designation>
+                   | <Designation>
+                   
+<Designation>     ::= <DesignatorList> '=' <Initializer>
+                   |  <Initializer>
+
+<DesignatorList>  ::= <DesignatorList> <Designator>
+                   |  <Designator>
+                   
+<Designator>      ::= '[' <Constant Exp> ']'
+                   |  '.' Identifier
+                   
+! -------------------------------------------------
+! Statements
+! -------------------------------------------------
+
+<Statement>       ::= <Labelled Stmt>
+                   |  <Compound Stmt>
+                   |  <Expression Stmt>
+                   |  <Selection Stmt>
+                   |  <Iteration Stmt>
+                   |  <Jump Stmt>
+                   
+<Labelled Stmt>   ::= Identifier ':' <Statement>
+                   
+<Compound Stmt>   ::= '{' <BlockItemList> '}'
+                   | '{' '}'
+                   
+<BlockItemList>   ::= <BlockItemList> <BlockItem>
+                   |  <BlockItem>
+                   
+<BlockItem>       ::= <Declaration>
+                   |  <Statement>
+                   
+<Expression Stmt> ::= <Expression> ';'
+                   |  ';'
+                   
+<Selection Stmt>  ::= if '(' <Expression> ')' <Statement>
+                   |  if '(' <Expression> ')' <Statement> else <Statement>
+                   |  switch '(' <Expression> ')' '{' <Case Stmts> '}'
+
+<Case Stmts>      ::= case <Selector> ':' <StmtList> <Case Stmts>
+                   | default ':' <StmtList>                  
+                   |
+
+<Selector>        ::= <Literal>
+                   |  Identifier
+                   |  '(' <Expression> ')'
+                   
+<StmtList>        ::= <Statement> <StmtList>
+                   |
+                      
+<Iteration Stmt>  ::= while '(' <Expression> ')' <Statement>
+                   |  do <Statement> while '(' <Expression> ')' ';'
+                   |  for '(' <ExprOpt> ';' <ExprOpt> ';' <ExprOpt> ')' <Statement>
+                   |  for '(' <Declaration> <ExprOpt> ';' <ExprOpt> ')' <Statement>
+                   
+<Jump Stmt>       ::= goto Identifier ';'
+                   | continue ';'
+                   | break ';'
+                   | return <ExprOpt> ';'
+                   
+! -------------------------------------------------
+! External definitions
+! -------------------------------------------------
+
+<Translation Unit> ::= <External Decl>
+                    |  <Translation Unit> <External Decl>
+
+<External Decl>   ::= <Function Def>
+                   |  <Declaration>
+
+<Function Def>    ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
+                   
+<DeclarationList> ::= <DeclarationList> <Declaration>
+                   |  <Declaration>
+                   
+<DeclListOpt>     ::= <DeclarationList>
+                   |
+
+! -------------------------------------------------
+! Expressions
+! -------------------------------------------------
+
+<Expression>  ::= <Expression> ',' <Assign Exp>
+               |  <Assign Exp>
+
+<Assign Exp>  ::= <Unary Exp> <Assign Op> <Assign Exp>
+               |  <Cond Exp> 
+               
+<Assign Op>   ::= '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
+
+<Cond Exp>    ::= <LogOr Exp> '?' <Expression> ':' <Cond Exp>
+               |  <LogOr Exp>
+               
+<LogOr Exp>   ::= <LogOr Exp> '||' <LogAnd Exp>
+               |  <LogAnd Exp>
+               
+<LogAnd Exp>  ::= <LogAnd Exp> '&&' <Or Exp>
+               |  <Or Exp>
+               
+<Or Exp>      ::= <Or Exp> '|' <ExclOr Exp>
+               |  <ExclOr Exp>
+               
+<ExclOr Exp>  ::= <ExclOr Exp> '^' <And Exp>
+               |  <And Exp>
+               
+<And Exp>     ::= <And Exp> '&' <Equat Exp>
+               |  <Equat Exp>
+               
+<Equat Exp>   ::= <Equat Exp> '==' <Relat Exp>    !Equal
+               |  <Equat Exp> '!=' <Relat Exp>    !Not equal
+               |  <Relat Exp> 
+               
+<Relat Exp>   ::= <Relat Exp> '>'  <Shift Exp> 
+               |  <Relat Exp> '<'  <Shift Exp> 
+               |  <Relat Exp> '<=' <Shift Exp> 
+               |  <Relat Exp> '>=' <Shift Exp>
+               |  <Shift Exp>
+               
+<Shift Exp>   ::= <Shift Exp> '<<' <Add Exp>
+               |  <Shift Exp> '>>' <Add Exp>
+               |  <Add Exp>
+
+<Add Exp>     ::= <Add Exp> '+' <Mult Exp>
+               |  <Add Exp> '-' <Mult Exp>
+               |  <Mult Exp> 
+
+<Mult Exp>    ::= <Mult Exp> '*' <Cast Exp> 
+               |  <Mult Exp> '/' <Cast Exp> 
+               |  <Mult Exp> '%' <Cast Exp> 
+               |  <Cast Exp>
+
+<Postfix Exp> ::= <Value>
+               |  <Postfix Exp> '[' <Expression> ']'
+               |  <Postfix Exp> '(' <ArgExpList> ')'
+               |  <Postfix Exp> '(' ')'
+               |  <Postfix Exp> '.' Identifier
+               |  <Postfix Exp> '->' Identifier
+               |  <Postfix Exp> '++'
+               |  <Postfix Exp> '--'
+               |  '(' <Typename> ')' '{' <InitializerList> '}'
+               |  '(' <Typename> ')' '{' <InitializerList> ',' '}'
+               
+<ArgExpList>  ::=  <Assign Exp>
+               |  <ArgExpList> ',' <Assign Exp>
+               
+<Unary Exp>   ::= <Postfix Exp>
+               |  '++' <Unary Exp>
+               |  '--' <Unary Exp>
+               |  <Unary Op> <Cast Exp>
+               |  sizeof <Unary Exp>
+               |  sizeof '(' <Typename> ')'     ! sizeof '(' <Expression> ')' is already covered by the previous rule
+              
+<Unary Op>    ::= '&' | '*' | '+' | '-' | '~' | '!'
+               
+<Cast Exp>    ::= <Unary Exp>
+               | '(' <Typename> ')' <Cast Exp>
+
+<Value>       ::= Identifier
+               |  <Literal>
+               |  '(' <Expression> ')'
+               
+<Literal>     ::= DecLiteral
+               |  OctLiteral
+               |  HexLiteral
+               |  FloatLiteral
+               |  StringLiteral
+               |  CharLiteral
+               
+<Constant Exp> ::= <Cond Exp>
+                
+<ExprOpt>      ::= <Expression>
+                |
+
+! -------------------------------------------------
+! Preprocessor directives
+! -------------------------------------------------
+
+!<PP File>       ::= <PP Group>
+!                 |
+!             
+!<PP Group>      ::= <PP Group> <PP Group Part>
+!                 |  <PP Group Part>
+!                 
+!<PP Group Opt>  ::= <PP Group>
+!                 |
+!             
+!<PP Group Part> ::= <PP If Section>
+!                 | <PP Control Line>
+!                 | <PP Text Line>
+!                 | '#' <PP Non-directive>
+!                 
+!<PP If Section> ::= <PP If Group> <PP ElifGroupsOpt> <PP ElseGroupOpt> <PP Endif Line>
+!                 
+!<PP If Group>   ::= '#' if <Constant Exp> Newline <PP Group Opt>
+!                 |  '#' ifdef Identifier Newline <PP Group Opt>
+!                 |  '#' ifndef Identifier Newline <PP Group Opt>
+!                 
+!<PP Elif Groups> ::= <PP Elif Groups> <PP Elif Group>
+!                  | <PP Elif Group>
+!                  
+!<PP ElifGroupsOpt> ::= <PP Elif Groups>
+!                    |
+!                    
+!<PP Elif Group> ::= '#' elif <Constant Exp> Newline <PP Group Opt>
+!                 
+!<PP Else Group> ::= '#' else <PP Group Opt>
+!                 
+!<PP ElseGroupOpt> ::= <PP Else Group>
+!                   |
+!                   
+!<PP Endif Line> ::= '#' endif Newline
+!                 
+!<PP Control Line> ::= '#' include <PP Tokens> Newline
+!                   |  '#' define Identifier <PP Repl List> Newline
+!                   |  '#' define Identifier '(' <IdListOpt> ')' <PP Repl List> Newline
+!                   |  '#' define Identifier '(' '...' ')' <PP Repl List> Newline
+!                   |  '#' define Identifier '(' <IdentifierList> ',' '...' ')' <PP Repl List> Newline 
+!                   |  '#' undef Identifier Newline
+!                   |  '#' line <PP Tokens> Newline
+!                   |  '#' error <PP Tokens Opt> Newline
+!                   |  '#' pragma <PP Tokens Opt> Newline
+!                   |  Newline
+!                   
+!<PP Text Line>     ::= <PP Tokens Opt> Newline
+!                 
+!<PP Non-directive> ::= <PP Tokens> Newline
+!                    
+!<PP Repl List>     ::= <PP Tokens Opt>
+!
+!<PP Tokens>        ::= <PP Tokens> PPToken
+!                    | PPToken
+!                 
+!<PP Tokens Opt>    ::= <PP Tokens>
+!                    |
+!                    

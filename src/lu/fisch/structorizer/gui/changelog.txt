@@ -8,9 +8,8 @@
 Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
-- C import fails if the code contains function pointers.
 
-Current development version: 3.28-04 (2018-06-20)
+Current development version: 3.28-05 (2018-07-14)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -44,6 +43,24 @@ Current development version: 3.28-04 (2018-06-20)
 - 04: Bugfix #533: Effort to import C struct initializers as record literals <2>
 - 04: Bugfix #545: Defective C import of FOR loops without condition <2>
 - 04: Bugfix #546: C import failed to split certain printf format strings <2>
+- 05: Bugfix #549: The operator '%=' had been missing in the C grammar <2>
+- 05: Data protection information added to the update information hint <2>
+- 05: Bugfix #550: Defective import of C switch statements in certain cases <2>
+- 05: Issue #551: On webstart the hint about version check doesn't make sense <2>
+- 05: Enh. #552: Option to decide for all diagrams on serial file actions,
+      new opportunity to remove all diagrams from Arranger with few clicks <2>
+- 05: Enh. #489 - First version of ANSI C99 parser (full C syntax)
+      recent ANSI C import renamed to ANSI C73 for clarity <2>
+- 05: Set of smaller element icons for the tree view in Find&Replace <2>
+- 05: Enh. #553: Code import now with monitor dialog and cancel option <2>
+- 05: Bugfix #554: Batch code import didn't work (parser instantiation bug) <2>
+- 05: Bugfix KGU#539: the operation count of CALL elements was incremented <2> 
+- 05: Bugfix KGU#540: Find & Replace didn't reset on element filter changes <2>
+- 05: Bugfix #555 - Mode "Show comments?" was always active on start <2>
+- 05: Bugfix #556 - Workaround for file preparation error in C import <2>
+- 05: Bugfix #557 - potential endless loop on instruction classification <2>
+- 05: Issue #557 - Workaround for huge diagram numbers on code import <2>
+- 05: Enh. #558 - Provisional C/Pascal enum type import (as const defs.) <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

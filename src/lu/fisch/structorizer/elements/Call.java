@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -88,8 +87,7 @@ package lu.fisch.structorizer.elements;
  *      7. Whether a returned value is required and in this case of what type will only dynamically be
  *         relevant on execution (interpreted code). There is no check in advance.
  *
- ******************************************************************************************************
- */
+ *****************************************************************************************************///
 
 import java.awt.Color;
 import java.util.HashMap;
@@ -101,6 +99,7 @@ import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 
 public class Call extends Instruction {
@@ -195,6 +194,19 @@ public class Call extends Instruction {
 		return IconLoader.getIcon(58);
 	}
 	// END KGU#122 2016-01-03
+	
+	// START KGU 2018-06-28
+	/**
+	 * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+	 * the {@link FindAndReplace} dialog.
+	 * @see #getIcon()
+	 */
+	@Override
+	public ImageIcon getMiniIcon()
+	{
+		return IconLoader.getIcon(11);
+	}
+	// END KGU 2018-06-28
 
 	public Element copy()
 	{

@@ -81,6 +81,7 @@ import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 
 import lu.fisch.structorizer.elements.Element;
@@ -88,6 +89,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangFrame;
@@ -107,7 +109,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
 
-    // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
+	// START KGU#534 2018-06-27: Enh. #552
+	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
+	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
+	public static final LangTextHolder btnRemove1Diagram = new LangTextHolder("Drop Diagram");
+	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
+	// END KGU#534 2018-06-27
+
+	// START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
     //public Arranger() {
     //    initComponents();
@@ -521,7 +530,18 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#85 2015-11-17
     private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt) {
-        surface.removeDiagram();
+    	// START KGU#534 2018-06-27: Enh.#552    	
+        //surface.removeDiagram();
+		if (this.isShiftPressed) {
+			removeAllDiagrams();
+			// We must make sure that the shift key status is reset - this doesn't work automatically!
+			// Seems that the keyReleased event gets lost...
+			this.setShiftPressed(false);
+		}
+		else {
+	        surface.removeDiagram();
+		}
+        // END KGU#534 2018-06-27
     }
     // END KGU#85 2015-11-17
 
@@ -651,7 +671,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         if (ev.getSource() == this) {
             switch (ev.getKeyCode()) {
                 case KeyEvent.VK_DELETE:
-                    surface.removeDiagram();
+                	// START KGU#534 2018-06-27: Enh. #552
+                    //surface.removeDiagram();
+                    if (ev.isShiftDown()) {
+                        surface.removeDiagram();
+                    } else if (ev.isControlDown()) {
+                        surface.removeAllDiagrams();
+                    }
+                    // END KGU#534 2018-06-27
                     break;
                 // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
                 case KeyEvent.VK_X:
@@ -680,11 +707,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 // START KGU#497 2018-02-17: Enh. #512 - zooming introduced
                 case KeyEvent.VK_SHIFT:
                     if (!this.isShiftPressed) {
-                        this.btnZoom.setIcon(IconLoader.getIconImage("008_zoom_in.png", ICON_FACTOR));
-                        this.isShiftPressed = true;
-                        if (surface.getZoom() <= 1) {
-                            btnZoom.setEnabled(false);
-                        }
+                    	setShiftPressed(true);
                     }
                 	break;
                 case KeyEvent.VK_ADD:
@@ -697,6 +720,32 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             }
         }
     }
+
+	/**
+	 * Sets or unsets the shift flag and changes the appearance of dependent buttons accordingly
+	 */
+	private void setShiftPressed(boolean isPressed) {
+		if (isPressed) {
+			this.btnZoom.setIcon(IconLoader.getIconImage("008_zoom_in.png", ICON_FACTOR));
+			// START KGU#534 2018-06-27: Enh. #552
+			this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("045_remove.png", ICON_FACTOR));
+			this.btnRemoveDiagram.setText(btnRemoveAllDiagrams.getText());
+			// END KGU#534 2018-06-27
+			this.isShiftPressed = true;
+			if (surface.getZoom() <= 1) {
+				btnZoom.setEnabled(false);
+			}
+		}
+		else {
+        	this.isShiftPressed = false;
+        	this.btnZoom.setEnabled(true);
+    		this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
+            // START KGU#534 2018-06-27: Enh. #552
+            this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR));
+			this.btnRemoveDiagram.setText(btnRemove1Diagram.getText());
+            // END KGU#534 2018-06-27			
+		}
+	}
     // END KGU#85 2015-11-30
 
     @Override
@@ -705,9 +754,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         if (ev.getSource() == this) {
             switch (ev.getKeyCode()) {
                 case KeyEvent.VK_SHIFT:
-                	this.isShiftPressed = false;
-                	this.btnZoom.setEnabled(true);
-            		this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
+                	setShiftPressed(false);
                 	break;
             }
         }
@@ -839,6 +886,25 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END #305 2016-12-17
+	
+	// START KGU#534 2018-06-27: Enh. #552
+	/**
+	 * Removes all diagrams from the Arranger surface.
+	 * @return true if this was accomplished
+	 */
+	public boolean removeAllDiagrams() {
+		boolean done = false;
+		if (surface != null && !this.getAllRoots().isEmpty()) {
+			if (JOptionPane.showConfirmDialog(this, 
+					msgConfirmRemoveAll.getText(), 
+					msgTitleWarning.getText(),
+					JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
+			done = surface.removeAllDiagrams();
+			}
+		}
+		return done;
+	}
+	// END KGU#534 2018-06-27
 
 	// START KGU#373 2017-03-28: Enh. #386
 	/**

@@ -63,6 +63,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.11.02      Issue #447: Precaution against line-continuating backslashes 
  *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.07.12      Separator bug in For(String,String,String,int) fixed.
  *
  ******************************************************************************************************
  *
@@ -80,6 +81,7 @@ import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.*;
@@ -177,7 +179,7 @@ public class For extends Element implements ILoop {
 	 * counting loop. 
 	 * @param varName - the counter variable name
 	 * @param startValStr - the expression for the initial counting value
-	 * @param endValStr - the exression for the final counting value
+	 * @param endValStr - the expression for the final counting value
 	 * @param stepVal - increment or decrement constant
 	 */
 	public For(String varName, String startValStr, String endValStr, int stepVal)
@@ -185,7 +187,7 @@ public class For extends Element implements ILoop {
 		this(CodeParser.getKeywordOrDefault("preFor", "for") + " " + varName
 				+ " <- " + startValStr + " "
 				+ CodeParser.getKeywordOrDefault("postFor", "to") + " " + endValStr
-				+ (stepVal != 1 ? (CodeParser.getKeywordOrDefault("stepFor", " by ") + stepVal) : ""));
+				+ (stepVal != 1 ? (" " + CodeParser.getKeywordOrDefault("stepFor", "by") + " " + stepVal) : ""));
 	}
 	
 	/**
@@ -318,6 +320,22 @@ public class For extends Element implements ILoop {
 		// END KGU#493 2018-02-12
 	}
 	// END KGU#122 2016-01-03
+
+	// START KGU#535 2018-06-28
+	/**
+	 * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+	 * the {@link FindAndReplace} dialog.
+	 * @see #getIcon()
+	 */
+	@Override
+	public ImageIcon getMiniIcon()
+	{
+		if (Element.E_DIN) {
+			return IconLoader.getIcon(49);
+		}
+		return IconLoader.getIcon(50);
+	}
+	// END KGU#535 2018-06-28
 
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)

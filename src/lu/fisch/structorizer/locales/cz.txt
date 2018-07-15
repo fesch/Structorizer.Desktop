@@ -57,6 +57,7 @@
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.16      Element name place holders introduced
+ *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -65,9 +66,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -360,16 +362,7 @@ Editor.btnFontDown.tooltip=Zmenšit velikost písma.
 // copyright
 Editor.btnAbout.tooltip=Ukázat informace o aplikaci Structorizer.
 // colors
-Editor.btnColor0.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor1.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor2.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor3.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor4.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor5.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor6.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor7.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor8.tooltip=Obarvit vybraný element touto barvou.
-Editor.btnColor9.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColors.*.tooltip=Obarvit vybraný element touto barvou.
 // collapsing
 Editor.btnCollapse.tooltip=
 Editor.btnExpand.tooltip=
@@ -509,36 +502,9 @@ FontChooser.btnOK.tooltip=Potvrďte svou volbu.
 
 -----[ Colors ]-----
 Colors.title=Nastavení barev
-Colors.lblColor0.text=Barva 0
-Colors.lblColor1.text=Barva 1
-Colors.lblColor2.text=Barva 2
-Colors.lblColor3.text=Barva 3
-Colors.lblColor4.text=Barva 4
-Colors.lblColor5.text=Barva 5
-Colors.lblColor6.text=Barva 6
-Colors.lblColor7.text=Barva 7
-Colors.lblColor8.text=Barva 8
-Colors.lblColor9.text=Barva 9
-Colors.lblColor0.tooltip=Volba pro barvu č. 0.
-Colors.lblColor1.tooltip=Volba pro barvu č. 1.
-Colors.lblColor2.tooltip=Volba pro barvu č. 2.
-Colors.lblColor3.tooltip=Volba pro barvu č. 3.
-Colors.lblColor4.tooltip=Volba pro barvu č. 4.
-Colors.lblColor5.tooltip=Volba pro barvu č. 5.
-Colors.lblColor6.tooltip=Volba pro barvu č. 6.
-Colors.lblColor7.tooltip=Volba pro barvu č. 7.
-Colors.lblColor8.tooltip=Volba pro barvu č. 8.
-Colors.lblColor9.tooltip=Volba pro barvu č. 9.
-Colors.color0.tooltip=Kliknutím editovat ...
-Colors.color1.tooltip=Kliknutím editovat ...
-Colors.color2.tooltip=Kliknutím editovat ...
-Colors.color3.tooltip=Kliknutím editovat ...
-Colors.color4.tooltip=Kliknutím editovat ...
-Colors.color5.tooltip=Kliknutím editovat ...
-Colors.color6.tooltip=Kliknutím editovat ...
-Colors.color7.tooltip=Kliknutím editovat ...
-Colors.color8.tooltip=Kliknutím editovat ...
-Colors.color9.tooltip=Kliknutím editovat ...
+Colors.lblColors.*.text=Barva [#]
+Colors.lblColors.*.tooltip=Volba pro barvu č. [#].
+Colors.colors.*.tooltip=Kliknutím editovat ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Potvrďte svou volbu.
 

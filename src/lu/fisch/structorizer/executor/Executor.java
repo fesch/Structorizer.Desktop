@@ -152,7 +152,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.02.11      Bugfix #509: Built-in function copyArray had a defective definition
  *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
  *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext
- *      Kay Gürtzig     2018.04.03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body) 
+ *      Kay Gürtzig     2018.04.03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
+ *      Kay Gürtzig     2018.07.02      KGU#539: Fixed the operation step counting for CALL elements 
  *
  ******************************************************************************************************
  *
@@ -1507,7 +1508,7 @@ public class Executor implements Runnable
 		}
 		// END KGU#430 2017-10-12
 		// END KGU 2015-10-11/13
-		// START KGU#376 2017-04-11: Enh. #389 - Must no longer done here but in execute() and executeCall()
+		// START KGU#376 2017-04-11: Enh. #389 - Must no longer be done here but in execute() and executeCall()
 		//initInterpreter();
 		// END KGU#376 2017-04-11
 		String trouble = "";
@@ -2159,7 +2160,10 @@ public class Executor implements Runnable
 		
 		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
 		if (caller != null) {
-			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
+			// START KGU#539 2018-07-02 Bugfix - the call itself is also to be counted as an operation
+			//caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
+			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore + 1, true);
+			// END KGU#539 2018-07-02
 			if (cloned || root.isTestCovered(true))	
 			{
 				caller.deeplyCovered = true;

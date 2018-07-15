@@ -521,6 +521,11 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgDialogExpRows = new LangTextHolder("Into how many rows do you want to split the output?");
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file?");
 	public static final LangTextHolder msgOverwriteFiles = new LangTextHolder("Existing file(s) detected. Overwrite?");
+	// START KGU#553 2018-07-10: Issue #557
+	public static final LangTextHolder msgOverwriteFile1 = new LangTextHolder("Overwrite existing file \"%\"?");
+	public static final LangTextHolder msgCancelAll = new LangTextHolder("Cancel the saving of all remaining files?");
+	public static final LangTextHolder lblAcceptProposedNames = new LangTextHolder("Accept proposed names for all files");
+	// END KGU#553 2018-07-10
 	public static final LangTextHolder btnConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	public static final LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
 	// END KGU#218 2016-07-28
@@ -609,13 +614,17 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#354 2017-03-04: Enh. #354 Now generic import menu
 	//public static final LangTextHolder lblImportCode = new LangTextHolder("% Code ...");
 	public static final LangTextHolder lblCopyToClipBoard = new LangTextHolder("OK + Copy to Clipboard");
-	public static final LangTextHolder msgSelectParser = new LangTextHolder("The source file type of \"%2\" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.");
+	public static final LangTextHolder ttlCodeImport = new LangTextHolder("Source code import");
+	public static final LangTextHolder msgSelectParser = new LangTextHolder("The source file type of \"%\" is ambiguous.\nPlease select an import language/parser:");
 	public static final LangTextHolder msgImportCancelled = new LangTextHolder("Code import for file \"%\" cancelled.");
 	public static final LangTextHolder msgImportFileReadError = new LangTextHolder("File \"%\" does not exist or cannot be read.");
 	// END KGU#354 2017-03-04
 	// START KGU#392 2017-05-07: Enh. #354, #399
 	public static final LangTextHolder msgUnsupportedFileFormat = new LangTextHolder("These files couldn't be loaded because their format is not known or not supported:\n%");
 	// END KGU#392 2017-05-07
+	// START KGU#553 2018-07-10: Workaround #557
+	public static final LangTextHolder msgTooManyDiagrams = new LangTextHolder("The number of created diagrams exceeds the configured threshold (%) for direct rendering.\nSave all obtained diagrams as files just now?");
+	// END KGU#553 2018-07-10
 	// START KGU#365 2017-03-27: Enh. #380
 	public static final LangTextHolder msgSubroutineName = new LangTextHolder("Name of the subroutine");
 	public static final LangTextHolder msgJumpsOutwardsScope = new LangTextHolder(
@@ -624,9 +633,19 @@ public class Menu extends LangMenuBar implements NSDController
 			+ "The respective JUMPs are listed below and shown RED in the diagram:\n"
 			+ "%\n\n"
 			+ "Do you really still insist on continuing?");
+	public static final LangTextHolder lblContinue = new LangTextHolder("Yes, continue");
+	public static final LangTextHolder lblCancel = new LangTextHolder("No, cancel");
+	// END KGU#365 2017-03-27
+	// START KGU#534 2018-06-29: Enh. #552
 	public static final LangTextHolder lblYes = new LangTextHolder("Yes");
 	public static final LangTextHolder lblNo = new LangTextHolder("No");
-	// END KGU#365 2017-03-27
+	public static final LangTextHolder lblSkip = new LangTextHolder("No, skip");
+	public static final LangTextHolder lblModify = new LangTextHolder("No, modify");
+	// END KGU#534 2018-06-29
+	// START KGU#534 2018-06-27: Enh. #552
+	public static final LangTextHolder lblYesToAll = new LangTextHolder("Yes to all");
+	public static final LangTextHolder lblNoToAll = new LangTextHolder("No to all");
+	// END KGU#534 2018-06-27
 	// START KGU#506 2018-03-14: Issue #522 (for enh. #380)
 	public static final LangTextHolder msgIncludableName = new LangTextHolder("Name of a (new) includable diagram to move shared types to");
 	public static final LangTextHolder msgMustBeIdentifier = new LangTextHolder("Your chosen name was not suited as identifier!");

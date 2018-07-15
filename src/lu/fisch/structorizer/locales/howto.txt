@@ -9,8 +9,8 @@
 
 USE STRUCTORIZER LOCALES
 ========================
-Author:      Bob Fisch
-Last Update: 2017-02-27
+Authors:     Bob Fisch, Kay Gürtzig
+Last Update: 2018-07-02
 
 1) All language files ...
     - reside inside the package lu.fisch.structorizer.locales
@@ -47,7 +47,10 @@ Last Update: 2017-02-27
 
     - A parsed line looks like this: key=value
 
-        "value" can be any text you want to put inside the key.
+        "value" can be any text you want to put into the target specified by the key
+        
+        	* Yet there are some kind of place holders in the texts, which are
+        	  used for certain replacements (see section 4 below). 
         
         "key" is a dot-separated string:
             
@@ -58,7 +61,7 @@ Last Update: 2017-02-27
               the object's title, or the name of the field that is to
               be modified.
               (If the field happens to be an array or another indexed collection
-              then an additional integer part will have to inserted here.)
+              then an additional integer part will have to be inserted here.)
 
             * The third part is the attribute to be modified. This can
               be for now:
@@ -105,9 +108,43 @@ Last Update: 2017-02-27
     >>> The common tooltip of all text fields held in an array (asterisk means all indices):
         ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of ... 
         
+    >>> A common, but modified text of all labels held in an array (asterisk means all indices),
+            but with inserted index (note that "[#]" will be replaced with the actual array index):
+        lblColors.*.text=Color [#] 
+        
     >>> Conditional text of a label:
         InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
 
     >>> Conditional (combined) title of a dialog
         InputBox.title[elementType:Repeat,getInsertionType():insert]=Neue REPEAT-Schleife hinzufügen...
                 
+4) Place holders in the text values:
+
+       The texts may contain three kinds of place holders that should be preserved
+       at appropriate positions in the translations:
+       - "%", "%1", "%2" etc. for message-specific replacements;
+       - "[#]" to be substituted with the current array index for array targets
+         (particularly those with "*" as index in the key);
+       - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
+         element names. The localized element names are defined in (and retrieved
+         from) section / tab "Elements" with the following convention, where the
+         respective short and long place holders are equivalent (the short one is
+         more performant, the long one more readable):
+   
+         short long                    referenced key sequence
+         @a  = @{Instruction}      ->  ElementNames.localizedNames.0.text
+         @b  = @{Alternative}      ->  ElementNames.localizedNames.1.text
+         @c  = @{Case}             ->  ElementNames.localizedNames.2.text
+         @d  = @{For}              ->  ElementNames.localizedNames.3.text
+         @e  = @{For.COUNTER}      ->  ElementNames.localizedNames.4.text
+         @f  = @{For.TRAVERSAL}    ->  ElementNames.localizedNames.5.text
+         @g  = @{While}            ->  ElementNames.localizedNames.6.text
+         @h  = @{Repeat}           ->  ElementNames.localizedNames.7.text
+         @i  = @{Forever}          ->  ElementNames.localizedNames.8.text
+         @j  = @{Call}             ->  ElementNames.localizedNames.9.text
+         @k  = @{Jump}             ->  ElementNames.localizedNames.10.text
+         @l  = @{Parallel}         ->  ElementNames.localizedNames.11.text
+         @m  = @{Root}             ->  ElementNames.localizedNames.12.text
+         @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
+         @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
+         @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text

@@ -107,6 +107,9 @@
  *      Kay Gürtzig     2017.12.15      Element name place holders introduced
  *      Kay Gürtzig     2018.01.18      DiagramControllerAliases added
  *      Kay Gürtzig     2018.02.17      Arranger captions added (on occasion of enh. #512)
+ *      Kay Gürtzig     2018.06.27      Enh. #552: New messages in Menu, Editor, Arranger
+ *      Kay Gürtzig     2018.07.01      Enh. #553: New messages for CodeImportMonitor
+ *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -116,9 +119,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -255,7 +259,7 @@ Menu.menuPreferences.text=Preferences
 Menu.menuPreferences.mnemonic=p
 // Submenu of "Preferences"
 Menu.menuPreferencesNotifyUpdate.text=Notify of new versions?
-Menu.menuPreferencesNotifyUpdate.tooltip=Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.
+Menu.menuPreferencesNotifyUpdate.tooltip=Allow Structorizer to retrieve version info from Structorizer homepage and to indicate new releases.
 Menu.menuPreferencesSimplified.text=Simplified toolbars?
 Menu.menuPreferencesFont.text=Font ...
 Menu.menuPreferencesColors.text=Colors ...
@@ -322,6 +326,8 @@ Menu.msgDialogExpCols.text=Into how many columns do you want to split the output
 Menu.msgDialogExpRows.text=Into how many rows do you want to split the output?
 Menu.msgOverwriteFile.text=Overwrite existing file?
 Menu.msgOverwriteFiles.text=Existing file(s) detected. Overwrite?
+Menu.msgOverwriteFile1.text=Overwrite existing file "%"?
+Menu.msgCancelAll.text=Cancel the saving of all remaining files?
 Menu.btnConfirmOverwrite.text=Confirm Overwrite
 Menu.msgRepeatSaveAttempt.text=Your file has not been saved. Please repeat the save operation!
 Menu.msgErrorFileSave.text=Error on saving the file: %!
@@ -365,17 +371,24 @@ Menu.lblLeaveAsIs.text=Leave diagram as is
 Menu.lblAllowChanges.text=Allow to change now
 Menu.msgReplacementsDone.text=% instructions replaced.
 Menu.msgNewerVersionAvail.text=Newer version % available for download.
-Menu.msgUpdateInfoHint.text=If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" ► "%2".
+Menu.msgUpdateInfoHint.text=If you want Structorizer to check the availability of new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" ► "%2".\n(Data protection information: For the Html request, your IP address would be transmitted but not permanently stored.\nNo personal data will be transmitted, recorded, tracked, or otherwise processed.)
 Menu.msgWelcomeMessage.text=Welcome to Structorizer, your Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms and many things more.\nIt was designed for easy handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
 Menu.lblOk.text=OK
-Menu.lblYes.text=Yes, continue
-Menu.lblNo.text=No, cancel
+Menu.lblYes.text=Yes
+Menu.lblNo.text=No
+Menu.lblContinue.text=Yes, continue
+Menu.lblCancel.text=No, cancel
+Menu.lblSkip.text=No, skip
+Menu.lblModifiy.text=No, modify
+Menu.lblYesToAll.text=Yes to all
+Menu.lblNoToAll.text=No to all
 Menu.lblSuppressUpdateHint.text=Don't show this window again
 Menu.lblHint.text=Hint
 Menu.lblCopyToClipBoard.text=OK + Copy to Clipboard
 Menu.lblReduced.text=Yes, reduced mode
 Menu.lblNormal.text=No, normal mode
-Menu.msgSelectParser.text=The source file type of "%2" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.
+Menu.ttlCodeImport.text=Source code import
+Menu.msgSelectParser.text=The source file type of \"%\" is ambiguous.\nPlease select an import language/parser:
 Menu.msgImportCancelled.text=Code import for file "%" cancelled.
 Menu.msgSubroutineName.text=Name of the new subroutine
 Menu.msgIncludableName.text=Name of a (new) includable diagram to move shared types to
@@ -388,9 +401,12 @@ Menu.msgGuidedTours.text=You activated guided tours.\n\nWatch out for recommenda
 Menu.msgGuidedTourDone.text=Congratulations - you finished the tutorial «%».
 Menu.msgGuidedTourNext.text=%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first: → Menu "%3"
 Menu.ttlGuidedTours.text=Guided Tours
+Menu.msgTooManyDiagrams.text=The number of created diagrams exceeds the configured threshold (%) for direct rendering.\nSave all obtained diagrams as files just now?
+Menu.lblAcceptProposedNames.text=Accept proposed names for all files
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
+
 	
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".
@@ -556,16 +572,7 @@ Editor.btnFontDown.tooltip=Decrease the font size.
 Editor.btnAbout.tooltip=Show the information message about Structorizer.
 Editor.btnHelp.tooltip=Show the Online User Guide in the browser.
 // colors
-Editor.btnColor0.tooltip=Colorize the selected element with this color.
-Editor.btnColor1.tooltip=Colorize the selected element with this color.
-Editor.btnColor2.tooltip=Colorize the selected element with this color.
-Editor.btnColor3.tooltip=Colorize the selected element with this color.
-Editor.btnColor4.tooltip=Colorize the selected element with this color.
-Editor.btnColor5.tooltip=Colorize the selected element with this color.
-Editor.btnColor6.tooltip=Colorize the selected element with this color.
-Editor.btnColor7.tooltip=Colorize the selected element with this color.
-Editor.btnColor8.tooltip=Colorize the selected element with this color.
-Editor.btnColor9.tooltip=Colorize the selected element with this color.
+Editor.btnColors.*.tooltip=Colorize the selected element with this color.
 // collapsing
 Editor.btnCollapse.tooltip=Collapse the selected element.
 Editor.btnExpand.tooltip=Expand the selected element.
@@ -625,7 +632,7 @@ Editor.popupIndexGet.text=Get diagram
 Editor.popupIndexSave.text=Save changes
 Editor.popupIndexRemove.text=Remove
 Editor.popupIndexCovered.text=Test-covered on/off
-
+Editor.popupIndexRemoveAll.text=Remove All
 -----[ InputBox ]-----
 InputBox.title=
 InputBox.lblText.text=Please enter a text
@@ -852,36 +859,9 @@ FontChooser.btnOK.tooltip=Validate your choice.
 
 -----[ Colors ]-----
 Colors.title=Color Preferences
-Colors.lblColor0.text=Color 0
-Colors.lblColor1.text=Color 1
-Colors.lblColor2.text=Color 2
-Colors.lblColor3.text=Color 3
-Colors.lblColor4.text=Color 4
-Colors.lblColor5.text=Color 5
-Colors.lblColor6.text=Color 6
-Colors.lblColor7.text=Color 7
-Colors.lblColor8.text=Color 8
-Colors.lblColor9.text=Color 9
-Colors.lblColor0.tooltip=Your choice for color nˇ 0.
-Colors.lblColor1.tooltip=Your choice for color nˇ 1.
-Colors.lblColor2.tooltip=Your choice for color nˇ 2.
-Colors.lblColor3.tooltip=Your choice for color nˇ 3.
-Colors.lblColor4.tooltip=Your choice for color nˇ 4.
-Colors.lblColor5.tooltip=Your choice for color nˇ 5.
-Colors.lblColor6.tooltip=Your choice for color nˇ 6.
-Colors.lblColor7.tooltip=Your choice for color nˇ 7.
-Colors.lblColor8.tooltip=Your choice for color nˇ 8.
-Colors.lblColor9.tooltip=Your choice for color nˇ 9.
-Colors.color0.tooltip=Click to edit ...
-Colors.color1.tooltip=Click to edit ...
-Colors.color2.tooltip=Click to edit ...
-Colors.color3.tooltip=Click to edit ...
-Colors.color4.tooltip=Click to edit ...
-Colors.color5.tooltip=Click to edit ...
-Colors.color6.tooltip=Click to edit ...
-Colors.color7.tooltip=Click to edit ...
-Colors.color8.tooltip=Click to edit ...
-Colors.color9.tooltip=Click to edit ...
+Colors.lblColors.*.text=Color [#]
+Colors.lblColors.*.tooltip=Your choice for color nˇ [#].
+Colors.colors.*.tooltip=Click to edit ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Validate your choice.
 
@@ -1043,6 +1023,18 @@ GUIScaleChooser.chkTest.text=CheckBox (check this!)
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Validate your choice for next start.
 
+-----[ CodeImportMonitor ]-----
+CodeImportMonitor.ttlImporting.text=Import % code ...
+CodeImportMonitor.phaseLabels.0.text=Pre-processing file
+CodeImportMonitor.phaseLabels.1.text=Parsing code
+CodeImportMonitor.phaseLabels.2.text=Building diagrams
+CodeImportMonitor.phaseLabels.3.text=Post-processing diagrams
+CodeImportMonitor.btnOk.text=OK
+CodeImportMonitor.btnCancel.text=Cancel
+CodeImportMonitor.lblRoots.text=Created diagrams:
+CodeImportMonitor.lblErrors.text=Errors occurred!
+CodeImportMonitor.msgInterrupted.text=Interrupted!
+
 -----[ FindAndReplace ]-----
 FindAndReplace.title=Find / Replace
 FindAndReplace.lblSearchPattern.text=Find:
@@ -1083,6 +1075,8 @@ FindAndReplace.ttlSearchError.text=Search Error
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=New Diagram
 Arranger.btnRemoveDiagram.text=Drop Diagram
+Arranger.btnRemove1Diagram.text=Drop Diagram
+Arranger.btnRemoveAllDiagrams.text=Remove All
 Arranger.btnExportPNG.text=PNG Export
 Arranger.btnSaveArr.text=Save List
 Arranger.btnLoadArr.text=Load List
@@ -1095,6 +1089,8 @@ Arranger.btnExportPNG.tooltip=Draw this arrangement into a PNG file.
 Arranger.btnPinDiagram.tooltip=Pin a diagram to make it immune against replacement.
 Arranger.btnSetCovered.tooltip=Mark the routine diagram as test-covered for subroutine calls to it.
 Arranger.btnZoom.tooltip=Hold Shift key pressed to zoom in.
+Arranger.msgConfirmRemoveAll.text=Do you really want to remove all diagrams from Arranger?
+Arranger.msgTitleWarning.text=Warning
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:
 Surface.msgSavePortable.text=Save as portable compressed archive?

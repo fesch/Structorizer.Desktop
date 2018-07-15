@@ -52,6 +52,7 @@
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -266,16 +267,7 @@ Editor.btnFontDown.tooltip=減少字型尺寸.
 // copyright 
 Editor.btnAbout.tooltip=顯示關於Structorizer的資訊.
 // colors
-Editor.btnColor0.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor1.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor2.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor3.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor4.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor5.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor6.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor7.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor8.tooltip=使用此色彩來著色選取元素.
-Editor.btnColor9.tooltip=使用此色彩來著色選取元素.
+Editor.btnColors.*.tooltip=使用此色彩來著色選取元素.
 // Popup menu
 Editor.popupCut.text=剪下
 Editor.popupCopy.text=複製
@@ -378,36 +370,9 @@ FontChooser.btnOK.tooltip=驗證你的選擇.
 
 -----[ Colors ]-----
 Colors.title=色彩選項設定
-Colors.lblColor0.text=色彩 0
-Colors.lblColor1.text=色彩 1
-Colors.lblColor2.text=色彩 2
-Colors.lblColor3.text=色彩 3
-Colors.lblColor4.text=色彩 4
-Colors.lblColor5.text=色彩 5
-Colors.lblColor6.text=色彩 6
-Colors.lblColor7.text=色彩 7
-Colors.lblColor8.text=色彩 8
-Colors.lblColor9.text=色彩 9
-Colors.lblColor0.tooltip=你選擇色彩編號 0.
-Colors.lblColor1.tooltip=你選擇色彩編號 1.
-Colors.lblColor2.tooltip=你選擇色彩編號 2.
-Colors.lblColor3.tooltip=你選擇色彩編號 3.
-Colors.lblColor4.tooltip=你選擇色彩編號 4.
-Colors.lblColor5.tooltip=你選擇色彩編號 5.
-Colors.lblColor6.tooltip=你選擇色彩編號 6.
-Colors.lblColor7.tooltip=你選擇色彩編號 7.
-Colors.lblColor8.tooltip=你選擇色彩編號 8.
-Colors.lblColor9.tooltip=你選擇色彩編號 9.
-Colors.color0.tooltip=按一下編輯 ...
-Colors.color1.tooltip=按一下編輯 ...
-Colors.color2.tooltip=按一下編輯 ...
-Colors.color3.tooltip=按一下編輯 ...
-Colors.color4.tooltip=按一下編輯 ...
-Colors.color5.tooltip=按一下編輯 ...
-Colors.color6.tooltip=按一下編輯 ...
-Colors.color7.tooltip=按一下編輯 ...
-Colors.color8.tooltip=按一下編輯 ...
-Colors.color9.tooltip=按一下編輯 ...
+Colors.lblColors.*.text=色彩 [#]
+Colors.lblColors.*.tooltip=你選擇色彩編號 [#].
+Colors.colors.*.tooltip=按一下編輯 ...
 Colors.btnOK.text=確定
 Colors.btnOK.tooltip=驗證你的選擇.
 

@@ -112,6 +112,9 @@
  *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
  *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
  *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
+ *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
+ *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
+ *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -120,9 +123,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -285,7 +289,7 @@ Menu.menuPreferencesLanguageItems.cz.text=Tschechisch
 Menu.menuPreferencesLanguageItems.ru.text=Russisch
 Menu.menuPreferencesLanguageItems.pl.text=Polnisch
 Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
-Menu.menuPreferencesLanguageFromFile.tooltip=Sie könnnen mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
+Menu.menuPreferencesLanguageFromFile.tooltip=Sie können mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
 Menu.menuPreferencesWheel.text=Mausrad
 Menu.menuPreferencesWheelCollapse.text=Mausrad zum Reduzieren?
 Menu.menuPreferencesWheelZoom.text=Umgekehrter Zoom mit Strg?
@@ -325,6 +329,8 @@ Menu.msgDialogExpCols.text=In wie viele Spalten soll das Bild zerlegt werden?
 Menu.msgDialogExpRows.text=In wie viele Zeilen soll das Bild zerlegt werden?
 Menu.msgOverwriteFile.text=Bestehende Datei überschreiben?
 Menu.msgOverwriteFiles.text=Gleichnamige Datei(en) vorhanden. Überschreiben?
+Menu.msgOverwriteFile1.text=Bestehende Datei "%" überschreiben?
+Menu.msgCancelAll.text=Die Sicherung aller verbleibenden Dateien abbrechen?
 Menu.btnConfirmOverwrite.text=Überschreiben bestätigen
 Menu.msgRepeatSaveAttempt.text=Die Datei konnte nicht gesichert werden. Versuchen Sie es bitte erneut!
 Menu.msgErrorFileSave.text=Fehler beim Sichern der Datei: %!
@@ -368,17 +374,24 @@ Menu.lblLeaveAsIs.text=Diagramm so belassen
 Menu.lblAllowChanges.text=Diagrammänderung erlauben
 Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
 Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
-Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" ► "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
+Menu.msgUpdateInfoHint.text=Um beim Start die Verfügbarkeit neuer Versionen angezeigt zu bekommen,\nkann mit Menüpunkt "%1" ► "%2"\ndie Online-Abfrage nach Updates auf der Structorizer-Homepage aktiviert werden.\n(Datenschutzhinweis: Für den Html-Request wird Ihre IP-Adresse übermittelt, aber nicht gespeichert.\nPersonenbezogene Daten werden darüber hinaus weder gesammelt noch übermittelt noch sonstwie verarbeitet.)
 Menu.msgWelcomeMessage.text=Willkommen beim Structorizer, Ihrem Struktogramm-Editor.\nMit diesem Programm können Sie Algorithmen entwerfen, testen, analysieren, in Programmiersprachen exportieren und vieles mehr.\nEs wurde für einfache Handhabung entwickelt, ist aber schon um viele Extras erweitert.\n\nHaben Sie noch wenig Erfahrung mit Algorithmen und Entwicklungsumgebungen?\nDann können Sie mit vereinfachter Werkzeugleiste beginnen und «%» aktivieren.\nWollen Sie zunächst im vereinfachten Einsteigermodus arbeiten?
 Menu.lblOk.text=OK
-Menu.lblYes.text=Ja, fortsetzen
-Menu.lblNo.text=Nein, abbrechen
+Menu.lblYes.text=Ja
+Menu.lblNo.text=Nein
+Menu.lblContinue.text=Ja, fortsetzen
+Menu.lblCancel.text=Nein, abbrechen
+Menu.lblSkip.text=Nein, überspringen
+Menu.lblModify.text=Nein, ändern
+Menu.lblYesToAll.text=Ja für alle
+Menu.lblNoToAll.text=Nein für alle
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 Menu.lblHint.text=Tipp
 Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
 Menu.lblReduced.text=Ja, Einsteigerodus
 Menu.lblNormal.text=Nein, normaler Modus
-Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
+Menu.ttlCodeImport.text=Quellcode-Import
+Menu.msgSelectParser.text=Die Quellcode-Sprache von "%" ist nicht eindeutig.\nBitte geeignetste Import-Sprache / Parser wählen:
 Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
 Menu.msgIncludableName.text=Name eines (neuen) einbeziehbaren Diagramms für die geteilten Typen
@@ -391,6 +404,8 @@ Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf 
 Menu.msgGuidedTourDone.text=Gratulation - Sie haben den Kurs «%» geschafft.
 Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten dazu ein neues Diagramm starten → Menü "%3"
 Menu.ttlGuidedTours.text=Geführte Kurse
+Menu.msgTooManyDiagrams.text=Die Zahl der erzeugten Diagramme übersteigt die konfigurierte Grenze (%) für direktes Darstellen.\nAlle erhaltenen Diagramme sofort speichern?
+Menu.lblAcceptProposedNames.text=Alle vorschlagenen Dateinamen akzeptieren. 
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
@@ -559,16 +574,7 @@ Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
 Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
 Editor.btnHelp.tooltip=Öffnen des Online-Nutzerhandbuchs
 // colors
-Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor1.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor2.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor3.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor4.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor5.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor6.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor7.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor8.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
-Editor.btnColor9.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColors.*.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 // collapsing
 Editor.btnCollapse.tooltip=Reduzieren des ausgewählten Elements.
 Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.
@@ -628,6 +634,7 @@ Editor.popupIndexGet.text=Diagram holen
 Editor.popupIndexSave.text=Änderungen sichern
 Editor.popupIndexRemove.text=Entfernen
 Editor.popupIndexCovered.text=Testabdeckung an/aus
+Editor.popupIndexRemoveAll.text=Alle entfernen
 
 -----[ InputBox ]-----
 InputBox.title=Element bearbeiten
@@ -855,36 +862,9 @@ FontChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
 
 -----[ Colors ]-----
 Colors.title=Farb-Einstellungen
-Colors.lblColor0.text=Farbe Nr. 0
-Colors.lblColor1.text=Farbe Nr. 1
-Colors.lblColor2.text=Farbe Nr. 2
-Colors.lblColor3.text=Farbe Nr. 3
-Colors.lblColor4.text=Farbe Nr. 4
-Colors.lblColor5.text=Farbe Nr. 5
-Colors.lblColor6.text=Farbe Nr. 6
-Colors.lblColor7.text=Farbe Nr. 7
-Colors.lblColor8.text=Farbe Nr. 8
-Colors.lblColor9.text=Farbe Nr. 9
-Colors.lblColor0.tooltip=Die gewählte Farbe Nr. 0.
-Colors.lblColor1.tooltip=Die gewählte Farbe Nr. 1.
-Colors.lblColor2.tooltip=Die gewählte Farbe Nr. 2.
-Colors.lblColor3.tooltip=Die gewählte Farbe Nr. 3.
-Colors.lblColor4.tooltip=Die gewählte Farbe Nr. 4.
-Colors.lblColor5.tooltip=Die gewählte Farbe Nr. 5.
-Colors.lblColor6.tooltip=Die gewählte Farbe Nr. 6.
-Colors.lblColor7.tooltip=Die gewählte Farbe Nr. 7.
-Colors.lblColor8.tooltip=Die gewählte Farbe Nr. 8.
-Colors.lblColor9.tooltip=Die gewählte Farbe Nr. 9.
-Colors.color0.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color1.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color2.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color3.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color4.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color5.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color6.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color7.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color8.tooltip=Zum Bearbeiten: Anklicken ...
-Colors.color9.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.lblColors.*.text=Farbe Nr. [#]
+Colors.lblColors.*.tooltip=Die gewählte Farbe Nr. [#].
+Colors.colors.*.tooltip=Zum Bearbeiten: Anklicken ...
 Colors.btnOK.text=Speichern
 Colors.btnOK.tooltip=Speichern der gewählten Einstellungen.
 
@@ -1046,6 +1026,18 @@ GUIScaleChooser.chkTest.text=Optionselement (testen!)
 GUIScaleChooser.btnOK.text=OK
 GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
 
+-----[ CodeImportMonitor ]-----
+CodeImportMonitor.ttlImporting.text=Importiere % ...
+CodeImportMonitor.phaseLabels.0.text=Datei-Vorbereitung
+CodeImportMonitor.phaseLabels.1.text=Code-Zerlegung
+CodeImportMonitor.phaseLabels.2.text=Diagramm-Generierung
+CodeImportMonitor.phaseLabels.3.text=Diagramm-Nachbereitung
+CodeImportMonitor.btnOk.text=OK
+CodeImportMonitor.btnCancel.text=Abbrechen
+CodeImportMonitor.lblRoots.text=Erzeugte Diagramme:
+CodeImportMonitor.lblErrors.text=Fehler aufgetreten!
+CodeImportMonitor.msgInterrupted.text=Abgebrochen!
+
 -----[ FindAndReplace ]-----
 FindAndReplace.title=Suchen / Ersetzen
 FindAndReplace.lblSearchPattern.text=Suche:
@@ -1086,6 +1078,8 @@ FindAndReplace.ttlSearchError.text=Suchfehler
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Neues Diagramm
 Arranger.btnRemoveDiagram.text=Entfernen
+Arranger.btnRemove1Diagram.text=Entfernen
+Arranger.btnRemoveAllDiagrams.text=- Leeren -
 Arranger.btnExportPNG.text=PNG-Export
 Arranger.btnSaveArr.text=Liste sichern
 Arranger.btnLoadArr.text=Liste laden
@@ -1098,6 +1092,8 @@ Arranger.btnExportPNG.tooltip=Diese Anordnung als Bilddatei im PNG-Format ausgeb
 Arranger.btnPinDiagram.tooltip=Diagramm anheften, um es gegen Ersetzung seitens Structorizer zu schützen.
 Arranger.btnSetCovered.tooltip=Unterprogrammdiagram für Routinenaufrufe als testabgedeckt markieren.
 Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
+Arranger.msgConfirmRemoveAll.text=Wollen Sie wirklich alle Diagramme aus Arranger entfernen?
+Arranger.msgTitleWarning.text=Warnung
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
 Surface.msgSavePortable.text=Als portables komprimiertes Archiv sichern?

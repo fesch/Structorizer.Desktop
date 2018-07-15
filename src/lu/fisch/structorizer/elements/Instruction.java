@@ -62,6 +62,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.12.10/11   Enh. #487: Run data support for new display mode "Hide declarations"
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *      Kay Gürtzig     2018.02.15      Issue #508: Workaround for large-scaled collapse symbols eclipsing the text
+ *      Kay Gürtzig     2018.07.12      Bugfix #557: potential endless loop in isDeclaration(String)
  *
  ******************************************************************************************************
  *
@@ -723,10 +724,16 @@ public class Instruction extends Element {
     		// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
     		if (tokens.contains(".")) {
     			int i = 1;
+    			// FIXME (KGU#553): The exact idea here isn't so clear anymore
     			while (i < tokens.count() - 1) {
     				if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), null) && Function.testIdentifier(tokens.get(i+1), null)) {
     					tokens.remove(i, i+2);
     				}
+    				// START KGU#553 2018-07-12: Bugfix #557 We could get stuck in an endless loop here
+    				else {
+    					break;
+    				}
+    				// END KGU#553 2018-07-12
     			}
     		}
     		// END KGU#388 2017-09-27
@@ -778,10 +785,10 @@ public class Instruction extends Element {
 	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br>
 	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br>
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br>
-	 * d)...f) same as a)...c) but with struct instead of record.
+	 * d)...f) same as a)...c) but with struct instead of record.<br/>
 	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
 	 * @param line - String comprising one line of code
-	 * @return true iff line is of one of the forms a), b), c)
+	 * @return true iff line is of one of the forms a) through e)
 	 * @see #isTypeDefinition(String, HashMap)
 	 * @see #isTypeDefinition()
 	 */
@@ -801,7 +808,7 @@ public class Instruction extends Element {
 	 * @param line - String comprising one line of code
 	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
 	 * an appropriate syntax is okay.
-	 * @return true iff line is of one of the forms a), b), c)
+	 * @return true iff line is of one of the forms a) through e)
 	 * @see #isTypeDefinition(String)
 	 * @see #isTypeDefinition(HashMap, boolean)
 	 * @see #isTypeDefinition()
@@ -817,6 +824,7 @@ public class Instruction extends Element {
     	if (posDef < 2) {
     		return false;
     	}
+    	// FIXME why would we allow to define multi-word type names?
 		String typename = tokens.concatenate("", 1, posDef).trim();
 		tokens = tokens.subSequence(posDef+1, tokens.count());
 		tokens.removeAll(" ");
@@ -832,9 +840,12 @@ public class Instruction extends Element {
 	}
 
 	/**
-	 * @param typeMap TODO
-	 * @param allLines TODO
-	 * @return true if this elemet contains type definitions */
+	 * Determines if this element contains valid type definitions
+	 * @param typeMap - a type map for verification of types
+	 * @param allLines - if the result should only be true if all lines are type definitions
+	 * @return true if this element contains type definitions
+	 * @see #isTypeDefinition(String, HashMap)
+	 */
 	public boolean isTypeDefinition(HashMap<String, TypeMapEntry> typeMap, boolean allLines)
 	{
 		boolean isTypeDef = false;

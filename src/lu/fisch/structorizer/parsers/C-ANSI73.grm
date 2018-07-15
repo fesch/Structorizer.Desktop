@@ -103,10 +103,16 @@
 !     in order to allow combined struct/union/enum and variable declarations (was easier here
 !     than in <Var Decl>)
 !
+! Modified 17/06/2018 (Kay Gürtzig)
+!   * Rule for return statement without expression had been missing.
+!
+! Modified 24/06/2018 (Kay Gürtzig)
+!   * Operator %= had been missing.
+!
 ! -----------------------------------------------------------------------
 
 
-"Name"    = 'ANSI-Cplus' 
+"Name"    = 'ANSI-C73' 
 "Version" = '1973'
 "Author"  = 'Dennis Ritchie, Ken Thompson, Martin Richards' 
 "About"   = 'C is one of the most common, and complex, programming languages in use today.'
@@ -380,6 +386,7 @@ Comment Line  = '//'
                | <Op If> '-='  <Op Assign>
                | <Op If> '*='  <Op Assign>
                | <Op If> '/='  <Op Assign>
+               | <Op If> '%='  <Op Assign>
                | <Op If> '^='  <Op Assign>
                | <Op If> '&='  <Op Assign>
                | <Op If> '|='  <Op Assign>

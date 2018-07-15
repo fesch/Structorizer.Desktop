@@ -63,6 +63,7 @@
  *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.17  Still incomplete first replacements to support #492 
+ *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *
  ******************************************************************************************************
  *
@@ -72,9 +73,10 @@
  *          ----->      indicates the start of a top-level section
  *          -----[      indicates the start of a second-level section
  *
- *      The texts may contain two kinds of place holders that should be preserved at
+ *      The texts may contain three kinds of place holders that should be preserved at
  *      appropriate positions in the translations:
  *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
  *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
  *        element names. The localized element names are defined in (and retrieved
  *        from) section / tab "Elements" with the following convention, where the
@@ -320,9 +322,11 @@ Menu.msgReplacementsDone.text=
 Menu.msgNewerVersionAvail.text=
 Menu.msgUpdateInfoHint.text=
 Menu.msgWelcomeMessage.text=
-Menu.lblOk.text=
-Menu.lblYes.text=
-Menu.lblNo.text=
+Menu.lblOk.text=ОК
+Menu.lblYes.text=Да
+Menu.lblNo.text=Нет
+Menu.lblContinue.text=Да, продолжить
+Menu.lblCancel.text=Нет, отменить
 Menu.lblSuppressUpdateHint.text=
 Menu.lblHint.text=Намек
 Menu.lblCopyToClipBoard.text=
@@ -451,7 +455,7 @@ AnalyserPreferences.checkboxes.23.text=
 AnalyserPreferences.checkboxes.24.text=
 AnalyserPreferences.checkboxes.25.text=
 AnalyserPreferences.checkboxes.26.text=
-AnalyserPreferences.okButton.text=OK
+AnalyserPreferences.okButton.text=ОК
 
 
 
@@ -504,16 +508,7 @@ Editor.btnFontDown.tooltip=Уменьшить размера шрифта.
 Editor.btnAbout.tooltip=Показать информационное сообщение о Structorizer.
 Editor.btnHelp.tooltip=
 // colors
-Editor.btnColor0.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor1.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor2.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor3.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor4.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor5.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor6.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor7.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor8.tooltip=Окрасить выбранный элемент этим цветом.
-Editor.btnColor9.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColors.*.tooltip=Окрасить выбранный элемент этим цветом.
 // collapsing
 Editor.btnCollapse.tooltip=Сжать выбранный элемент.
 Editor.btnExpand.tooltip=Увеличить выбранный элемент .
@@ -582,7 +577,7 @@ InputBox.lblComment.text=Комментарий
 InputBox.lblComment.tooltip=
 InputBox.txtText.tooltip=Содержание элемента.
 InputBox.txtComment.tooltip=Комментарий элемента.
-InputBox.btnOK.text=OK
+InputBox.btnOK.text=ОК
 InputBox.btnOK.tooltip=Подтвердить ваш выбор.
 InputBox.btnCancel.text=Отменить
 InputBox.btnCancel.tooltip=Отменить ваш выбор.
@@ -632,7 +627,7 @@ InputBoxFor.lblComment.text=Комментарий
 InputBoxFor.lblComment.tooltip=Комментарий элемента.
 InputBoxFor.txtText.tooltip=Заглавие цикла текстом.
 InputBoxFor.txtComment.tooltip=Комментарий элемента.
-InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.text=ОК
 InputBoxFor.btnOK.tooltip=Подтвердить ваш выбор.
 InputBoxFor.btnCancel.text=Отменить
 InputBoxFor.btnCancel.tooltip=Отменить ваш выбор.
@@ -657,9 +652,9 @@ InputBoxRoot.lblText.text=
 InputBoxRoot.txtText.tooltip=
 InputBoxRoot.lblComment.text=
 InputBoxRoot.txtComment.tooltip=
-InputBoxRoot.btnOK.text=
+InputBoxRoot.btnOK.text=ОК
 InputBoxRoot.btnOK.tooltip=
-InputBoxRoot.btnCancel.text=
+InputBoxRoot.btnCancel.text=Отменить
 InputBoxRoot.btnCancel.tooltip=
 InputBoxRoot.btnAttributes.text=
 InputBoxRoot.btnAttributes.tooltip=
@@ -699,9 +694,9 @@ AttributeInspector.lblPrefsPre.text=
 AttributeInspector.lblPrefsPost.text=
 AttributeInspector.lblPrefsMore.text=
 AttributeInspector.btnParserPrefs.text=
-AttributeInspector.btnOk.text=
+AttributeInspector.btnOk.text=ОК
 AttributeInspector.btnOk.tooltip=
-AttributeInspector.btnCancel.text=
+AttributeInspector.btnCancel.text=Отменить
 AttributeInspector.btnCancel.tooltip=
 AttributeInspector.lblMain.text=
 AttributeInspector.lblSub.text=
@@ -774,7 +769,7 @@ Preferences.pnlRepeat.border=Цикл REPEAT
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Содержимое по умолчанию
 Preferences.lblRepeat.tooltip=Содержимое по умолчанию для REPEAT.
-Preferences.btnOK.text=OK
+Preferences.btnOK.text=ОК
 Preferences.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -783,7 +778,7 @@ About.title=About
 About.pnlTabbed.tab.0=Участники проекта
 About.pnlTabbed.tab.1=Изменения
 About.pnlTabbed.tab.2=
-About.btnOK.text=OK
+About.btnOK.text=ОК
 About.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -794,43 +789,16 @@ FontChooser.lblName.text=Имя
 FontChooser.lblName.tooltip=Название выбранного шрифта.
 FontChooser.lblSize.text=Размер
 FontChooser.lblSize.tooltip=Рамер выбранного шрифта.
-FontChooser.btnOK.text=OK
+FontChooser.btnOK.text=ОК
 FontChooser.btnOK.tooltip=Подтвердите свой выбор.
 
 
 -----[ Colors ]-----
 Colors.title=Настройки цвета
-Colors.lblColor0.text=Цвет 0
-Colors.lblColor1.text=Цвет 1
-Colors.lblColor2.text=Цвет 2
-Colors.lblColor3.text=Цвет 3
-Colors.lblColor4.text=Цвет 4
-Colors.lblColor5.text=Цвет 5
-Colors.lblColor6.text=Цвет 6
-Colors.lblColor7.text=Цвет 7
-Colors.lblColor8.text=Цвет 8
-Colors.lblColor9.text=Цвет 9
-Colors.lblColor0.tooltip=Ваш выбор для цвета nˇ 0.
-Colors.lblColor1.tooltip=Ваш выбор для цвета nˇ 1.
-Colors.lblColor2.tooltip=Ваш выбор для цвета nˇ 2.
-Colors.lblColor3.tooltip=Ваш выбор для цвета nˇ 3.
-Colors.lblColor4.tooltip=Ваш выбор для цвета nˇ 4.
-Colors.lblColor5.tooltip=Ваш выбор для цвета nˇ 5.
-Colors.lblColor6.tooltip=Ваш выбор для цвета nˇ 6.
-Colors.lblColor7.tooltip=Ваш выбор для цвета nˇ 7.
-Colors.lblColor8.tooltip=Ваш выбор для цвета nˇ 8.
-Colors.lblColor9.tooltip=Ваш выбор для цвета nˇ 9.
-Colors.color0.tooltip=Нажмите чтобы изменить ...
-Colors.color1.tooltip=Нажмите чтобы изменить ...
-Colors.color2.tooltip=Нажмите чтобы изменить ...
-Colors.color3.tooltip=Нажмите чтобы изменить ...
-Colors.color4.tooltip=Нажмите чтобы изменить ...
-Colors.color5.tooltip=Нажмите чтобы изменить ...
-Colors.color6.tooltip=Нажмите чтобы изменить ...
-Colors.color7.tooltip=Нажмите чтобы изменить ...
-Colors.color8.tooltip=Нажмите чтобы изменить ...
-Colors.color9.tooltip=Нажмите чтобы изменить ...
-Colors.btnOK.text=OK
+Colors.lblColors.*.text=Цвет [#]
+Colors.lblColors.*.tooltip=Ваш выбор для цвета nˇ [#].
+Colors.colors.*.tooltip=Нажмите чтобы изменить ...
+Colors.btnOK.text=ОК
 Colors.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -838,7 +806,7 @@ Colors.btnOK.tooltip=Подтвердите свой выбор.
 ColorChooser.title=Изменение цвета
 ColorChooser.btnCancel.text=Отменить
 ColorChooser.btnCancel.tooltip=Отвенить выбор.
-ColorChooser.btnOK.text=OK
+ColorChooser.btnOK.text=ОК
 ColorChooser.btnOK.tooltip=Подтвердите свой выбор.
 
 
@@ -873,7 +841,7 @@ ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Вывод
 ParserPreferences.lblOutput.tooltip=
 ParserPreferences.chkIgnoreCase.text=
-ParserPreferences.btnOK.text=OK
+ParserPreferences.btnOK.text=ОК
 ParserPreferences.btnOK.tooltip=Подтвердите свой выбор.
 ParserPreferences.lblErrorSign.text=
 ParserPreferences.lblErrorSign2.text=
@@ -906,7 +874,7 @@ ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.btnPluginOptions.text=
 ExportOptionDialoge.msgOptionsForPlugin.text=
 ExportOptionDialoge.jLabel1.text=Выборите настройки, которые хочете активировать...
-ExportOptionDialoge.jButton1.text=OK
+ExportOptionDialoge.jButton1.text=ОК
 ExportOptionDialoge.jButton1.tooltip=Сохранить настройки.
 ExportOptionDialoge.includeLists.*.tooltip=
 
@@ -931,7 +899,7 @@ ImportOptionDialog.txtLogDir.tooltip=
 ImportOptionDialog.btnLogDir.tooltip=
 ImportOptionDialog.btnPluginOptions.text=
 ImportOptionDialog.msgOptionsForPlugin.text=
-ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.text=ОК
 ImportOptionDialog.btnOk.tooltip=Сохранить настройки.
 
 -----[ SaveOptionDialog ]-----
@@ -946,7 +914,7 @@ SaveOptionDialog.chkBackupFile.text=
 SaveOptionDialog.lblAuthorName.text=
 SaveOptionDialog.btnLicenseFile.text=
 SaveOptionDialog.btnLicenseFile.tooltip=
-SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.text=ОК
 SaveOptionDialog.btnOk.tooltip=
 
 -----[ PluginOptionDialog ]-----
@@ -955,8 +923,8 @@ PluginOptionDialog.msgNoValidUnsigned.text=
 PluginOptionDialog.msgNoValidCharacter.text=
 PluginOptionDialog.msgNoValidDouble.text=
 PluginOptionDialog.msgVerificationError.text=
-PluginOptionDialog.btnOk.text=
-PluginOptionDialog.btnCancel.text=
+PluginOptionDialog.btnOk.text=ОК
+PluginOptionDialog.btnCancel.text=Отменить
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=
@@ -964,7 +932,7 @@ ElementNamePreferences.lblExplanation.text=
 ElementNamePreferences.chkUseConfNames.text=
 ElementNamePreferences.lblLocalized.text=
 ElementNamePreferences.lblIndividual.text=
-ElementNamePreferences.btnOK.text=
+ElementNamePreferences.btnOK.text=ОК
 ElementNamePreferences.btnOK.tooltip=
 
 -----[ GUIScaleChooser ]-----
@@ -975,7 +943,7 @@ GUIScaleChooser.pnlTest.border=
 GUIScaleChooser.lblTest.text=
 GUIScaleChooser.lblIcon.text=
 GUIScaleChooser.chkTest.text=
-GUIScaleChooser.btnOK.text=
+GUIScaleChooser.btnOK.text=ОК
 GUIScaleChooser.btnOK.tooltip=
 
 -----[ FindAndReplace ]-----
@@ -1066,10 +1034,10 @@ Control.lbReturnedResult.text=
 Control.lbOutput.text=
 Control.lbInput.text=
 Control.lbAcknowledge.text=
-Control.lbOk.text=
+Control.lbOk.text=ОК
 Control.lbPause.text=
 Control.lbCommit.text=
-Control.lbDiscard.text=
+Control.lbDiscard.text=Отбросить
 Control.ttlCompName.text=
 Control.ttlIndex.text=
 Control.ttlContent.text=

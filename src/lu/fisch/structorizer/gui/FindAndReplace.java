@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *                                      (minimum-invasive revision)
  *      Kay Gürtzig     2018.01.22      Enh. #490: The dialog now works on the controller alias texts if enabled
  *      Kay Gürtzig     2018.04.05      Issue #463: Plain console messages replaced by logging mechanism
+ *      Kay Gürtzig     2018.07.02      Bugfix KGU#540 - An element filter change didn't reset the result
  *
  ******************************************************************************************************
  *
@@ -236,7 +237,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	    		else {
 	    			description = "---";
 	    		}
-	    		icon = ((Element)value).getIcon();
+	    		icon = ((Element)value).getMiniIcon();
 	    	} 
 	        super.getTreeCellRendererComponent(
 	                        tree, description, sel,
@@ -715,6 +716,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 						btnReplace.setEnabled(currentElement != null);
 						btnReplaceAll.setEnabled(true);
 					}
+					// START KGU#540 2018-07-02: Bugfix a filter change didn't reset the selection result
+					// FIXME: In case it is a stronger restriction, we might perhaps just refilter the results?
+					resetResults();
+					// END KGU#540 2018-07-02
 				}
 			};
 
