@@ -110,6 +110,7 @@
  *      Kay Gürtzig     2018.06.27      Enh. #552: New messages in Menu, Editor, Arranger
  *      Kay Gürtzig     2018.07.01      Enh. #553: New messages for CodeImportMonitor
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2018.07.17      Issue #561: Some AttributeInspector texts converted to tooltips
  *
  ******************************************************************************************************
  *
@@ -735,14 +736,17 @@ AttributeInspector.txtShadowPath.tooltip=This path (usually into a temporary fil
 AttributeInspector.lblOrigin.text=Origin
 AttributeInspector.btnClearOrigin.text=Clear
 AttributeInspector.btnClearOrigin.tooltip=Clears the origin entry
-AttributeInspector.lblElements.text=Elements total
-AttributeInspector.lblInstrs.text=@as
-AttributeInspector.lblAlts.text=@b statements
-AttributeInspector.lblCases.text=@c statements
-AttributeInspector.lblLoops.text=Loops
-AttributeInspector.lblCalls.text=@js
-AttributeInspector.lblJumps.text=@ks
-AttributeInspector.lblPars.text=@l sections
+AttributeInspector.lblElements.tooltip=Elements total
+AttributeInspector.lblInstrs.tooltip=@as
+AttributeInspector.lblAlts.tooltip=@b statements
+AttributeInspector.lblCases.tooltip=@c statements
+AttributeInspector.lblFors.tooltip=@d loops
+AttributeInspector.lblWhiles.tooltip=@g loops
+AttributeInspector.lblRepeats.tooltip=@h loops
+AttributeInspector.lblForevers.tooltip=@i loops
+AttributeInspector.lblCalls.tooltip=@js
+AttributeInspector.lblJumps.tooltip=@ks
+AttributeInspector.lblPars.tooltip=@l sections
 AttributeInspector.btnShowLicense.text=License text
 AttributeInspector.btnShowLicense.tooltip=Press this button to open edit or review the text for the selected license.
 AttributeInspector.cbLicenseName.tooltip=Select an available license from the personal license pool or the current one to edit it.

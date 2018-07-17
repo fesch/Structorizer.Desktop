@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-06 (2018-07-16)
+Current development version: 3.28-06 (2018-07-17)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -61,6 +61,8 @@ Current development version: 3.28-06 (2018-07-16)
 - 05: Bugfix #557 - potential endless loop on instruction classification <2>
 - 05: Issue #557 - Workaround for huge diagram numbers on code import <2>
 - 05: Enh. #558 - Provisional C/Pascal enum type import (as const defs.) <2>
+- 06: Issue #561 - new design of the statistics in Attribute Inspector <2>
+- 06: Bugfix #562 - Wrong "origin" attribute for loaded older diagrams <2> 
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.04.28      Created
  *      Kay Gürtzig     2017.05.20      First usable issue
+ *      Kay Gürtzig     2018.07.17      Issue #561: Statistics panel refurbished (icon labels now)
  *
  ******************************************************************************************************
  *
@@ -73,6 +74,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.io.Ini;
@@ -119,21 +121,27 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	// END KGU#363 2017-05-22
 
 	// Statistics / metrics
-	protected final JLabel lblElements = new JLabel("Elements total");
+	protected final JLabel lblElements = new JLabel(IconLoader.getIcon(55));
 	//protected final JLabel lblPaths = new JLabel();
-	protected final JLabel lblInstrs = new JLabel("Instructions");
-	protected final JLabel lblAlts = new JLabel("Alternatives");
-	protected final JLabel lblCases = new JLabel("Case selections");
-	protected final JLabel lblLoops = new JLabel("Loops");
-	protected final JLabel lblCalls = new JLabel("Calls");
-	protected final JLabel lblJumps = new JLabel("Jumps");
-	protected final JLabel lblPars = new JLabel("Parallel sections");
+	protected final JLabel lblInstrs = new JLabel(IconLoader.getIcon(57));
+	protected final JLabel lblAlts = new JLabel(IconLoader.getIcon(60));
+	protected final JLabel lblCases = new JLabel(IconLoader.getIcon(64));
+	protected final JLabel lblFors = new JLabel(IconLoader.getIcon(Element.E_DIN ? 74 : 53));
+	protected final JLabel lblWhiles = new JLabel(IconLoader.getIcon(62));
+	protected final JLabel lblRepeats = new JLabel(IconLoader.getIcon(63));
+	protected final JLabel lblForevers = new JLabel(IconLoader.getIcon(61));
+	protected final JLabel lblCalls = new JLabel(IconLoader.getIcon(58));
+	protected final JLabel lblJumps = new JLabel(IconLoader.getIcon(59));
+	protected final JLabel lblPars = new JLabel(IconLoader.getIcon(91));
 	protected final JLabel lblNoOfElements = new JLabel();
 	//protected final JLabel lblNoOfPaths = new JLabel();
 	protected final JLabel lblNoOfInstrs = new JLabel();
 	protected final JLabel lblNoOfAlts = new JLabel();
 	protected final JLabel lblNoOfCases = new JLabel();
-	protected final JLabel lblNoOfLoops = new JLabel();
+	protected final JLabel lblNoOfFors = new JLabel();
+	protected final JLabel lblNoOfWhiles = new JLabel();
+	protected final JLabel lblNoOfRepeats = new JLabel();
+	protected final JLabel lblNoOfForevers = new JLabel();
 	protected final JLabel lblNoOfCalls = new JLabel();
 	protected final JLabel lblNoOfJumps = new JLabel();
 	protected final JLabel lblNoOfPars = new JLabel();
@@ -330,7 +338,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
                 lblInstrs,
                 lblAlts,
                 lblCases,
-                lblLoops,
+                lblFors,
+                lblWhiles,
+                lblRepeats,
+                lblForevers,
                 lblCalls,
                 lblJumps,
                 lblPars
@@ -340,7 +351,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
                 lblNoOfInstrs,
                 lblNoOfAlts,
                 lblNoOfCases,
-                lblNoOfLoops,
+                lblNoOfFors,
+                lblNoOfWhiles,
+                lblNoOfRepeats,
+                lblNoOfForevers,
                 lblNoOfCalls,
                 lblNoOfJumps,
                 lblNoOfPars
@@ -587,26 +601,24 @@ public class AttributeInspector extends LangDialog implements WindowListener {
         pnDialogPane.add(pnStatistics);
         
         {
-            final short N_COLS = 4;
-
             Integer[] statistics = root.getElementCounts();
             int nElements = 0;
             for (int i = 0; i < statistics.length; i++) {
             	nElements += statistics[i];
+            	statNoLabels[i + 1].setText(statistics[i].toString());
+            	statNoLabels[i + 1].setHorizontalAlignment(JLabel.CENTER);
             }
             lblNoOfElements.setText(Integer.toString(nElements));
-            for (int i = 0; i < statistics.length; i++) {
-            	statNoLabels[i + 1].setText(statistics[i].toString());
-            }
+            lblNoOfElements.setHorizontalAlignment(JLabel.CENTER);
 
             pnStatistics.setBorder(new TitledBorder("Statistics"));
-        	pnStatistics.setLayout(new GridLayout(0, N_COLS, 0, 1));
+        	pnStatistics.setLayout(new GridLayout(0, statLabels.length, 0, 1));
 
-        	for (int i = 0; i < 2 * statLabels.length; i++) {
-
-        		int ix = i % N_COLS + i / (2*N_COLS) * N_COLS;
-        		JLabel lbl = ((i / N_COLS % 2 == 0) ? statLabels : statNoLabels)[ix];
-        		pnStatistics.add(lbl);
+        	for (JLabel label: statLabels) {
+        		pnStatistics.add(label);
+        	}
+        	for (JLabel label: statNoLabels) {
+        		pnStatistics.add(label);
         	}
         	
         	// TODO: Add some software complexity measures!

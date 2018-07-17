@@ -114,7 +114,8 @@
  *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
  *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
  *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
- *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig         2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
  *
  ******************************************************************************************************
  *
@@ -738,14 +739,17 @@ AttributeInspector.txtShadowPath.tooltip=Dieser Pfad (meist in einem Temp.-Verze
 AttributeInspector.lblOrigin.text=Herkunft
 AttributeInspector.btnClearOrigin.text=Säubern
 AttributeInspector.btnClearOrigin.tooltip=Löscht den Herkunftseintrag
-AttributeInspector.lblElements.text=Elemente insges.
-AttributeInspector.lblInstrs.text=@a
-AttributeInspector.lblAlts.text=@b-Anweisungen
-AttributeInspector.lblCases.text=@c
-AttributeInspector.lblLoops.text=Schleifen
-AttributeInspector.lblCalls.text=@j
-AttributeInspector.lblJumps.text=@k
-AttributeInspector.lblPars.text=@l-Abschnitte
+AttributeInspector.lblElements.tooltip=Elemente insges.
+AttributeInspector.lblInstrs.tooltip=@a
+AttributeInspector.lblAlts.tooltip=@b-Anweisungen
+AttributeInspector.lblCases.tooltip=@c
+AttributeInspector.lblFors.tooltip=@d-Schleifen
+AttributeInspector.lblWhiles.tooltip=@g-Schleifen
+AttributeInspector.lblRepeats.tooltip=@h-Schleifen
+AttributeInspector.lblForevers.tooltip=@i-Schleifen
+AttributeInspector.lblCalls.tooltip=@j
+AttributeInspector.lblJumps.tooltip=@k
+AttributeInspector.lblPars.tooltip=@l-Abschnitte
 AttributeInspector.btnShowLicense.text=Lizenztext
 AttributeInspector.btnShowLicense.tooltip=Diese Schaltfläche drücken, um den Text der gewählten Lizenz einzusehen, zu kopieren oder zu bearbeiten.
 AttributeInspector.cbLicenseName.tooltip=Eine verfügbare Lizenz unter den persönlichen Lizenz-Vorlagen oder die aktuelle wählen.

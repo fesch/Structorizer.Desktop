@@ -52,6 +52,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.05.22      Enh. #372: Attribute "origin" added.
  *      Kay Gürtzig     2017.06.20      Issue #404: Attempt to improve validation by providing a schema - in vain
  *      Kay Gürtzig     2018.03.22      Issue #463: Direct console output replaced with logging
+ *      Kay Gürtzig     2018.07.17      Bugfix #562: Attribute "origin" must be set (overwritten) in any case
  *
  ******************************************************************************************************
  *
@@ -242,6 +243,14 @@ public class NSDParser extends DefaultHandler {
 				root.origin = attributes.getValue("origin");
 			}
 			// END KGU#363 2017-05-22
+			// START KGU#557 2018-07-17: Bugfix #562 We should replace the default origin of a new Root (= current Structorizer version)
+			else if (!fileVersion.isEmpty()) {
+				root.origin = "Structorizer " + fileVersion;
+			}
+			else {
+				root.origin = "Structorizer < 3.23-12 (legacy NSD file)";
+			}
+			// END KGU#557 2018-07-17
 			
 			// START KGU#363 2017-03-10: Enh. #372
 			root.fetchAuthorDates(attributes);

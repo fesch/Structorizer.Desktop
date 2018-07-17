@@ -115,6 +115,7 @@
  *      Kay Gürtzig     2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
  *      Kay Gürtzig     2018.07.01  Enh. #553: New messages for CodeImportMonitor
  *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
  *
  ******************************************************************************************************
  *
@@ -739,14 +740,17 @@ AttributeInspector.txtShadowPath.tooltip=Ubicación del diagrama extraído (típ
 AttributeInspector.lblOrigin.text=Origen
 AttributeInspector.btnClearOrigin.text=Borrar
 AttributeInspector.btnClearOrigin.tooltip=Quita la información del origen
-AttributeInspector.lblElements.text=Número total de elementos
-AttributeInspector.lblInstrs.text@aes
-AttributeInspector.lblAlts.text=Declaraciones @b
-AttributeInspector.lblCases.text=Declaraciones @c
-AttributeInspector.lblLoops.text=Bucles
-AttributeInspector.lblCalls.text=@js
-AttributeInspector.lblJumps.text=@ks
-AttributeInspector.lblPars.text=Secciones @ls
+AttributeInspector.lblElements.tooltip=Número total de elementos
+AttributeInspector.lblInstrs.tooltip=@aes
+AttributeInspector.lblAlts.tooltip=Declaraciones @b
+AttributeInspector.lblCases.tooltip=Declaraciones @c
+AttributeInspector.lblFors.tooltip=Bucles @d
+AttributeInspector.lblWhiles.tooltip=Bucles @g
+AttributeInspector.lblRepeats.tooltip=Bucles @h
+AttributeInspector.lblForevers.tooltip=Bucles @i
+AttributeInspector.lblCalls.tooltip=@js
+AttributeInspector.lblJumps.tooltip=@ks
+AttributeInspector.lblPars.tooltip=Secciones @ls
 AttributeInspector.btnShowLicense.text=Texto de licencia
 AttributeInspector.btnShowLicense.tooltip=Toca este botón para mirar, editar o revisar el texto de la licencia seleccionaada.
 AttributeInspector.cbLicenseName.tooltip=Selecciona una licencia ofrecida desde su colección o la designada para modificarla.

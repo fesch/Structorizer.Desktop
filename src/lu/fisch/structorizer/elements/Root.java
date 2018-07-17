@@ -125,6 +125,7 @@ package lu.fisch.structorizer.elements;
  *                                      KGU#505: Analyser now copes better with lists of record access expressions
  *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
  *      
  ******************************************************************************************************
  *
@@ -5469,30 +5470,35 @@ public class Root extends Element {
 	// END KGU#365 2017-03-14
 
 	// START KGU#363 2017-05-08: Enh. #372 - some statistics
+	// KGU#556 2018-07-17: Issue #561 (loops differentiated, array enlarged)
 	/**
 	 * Retrieves the counts of contained elements per category:<br/>
 	 * 0. Instructions<br/>
 	 * 1. Alternatives<br/>
 	 * 2. Selections<br/>
-	 * 3. Loops<br/>
-	 * 4. Calls<br/>
-	 * 5. Jumps<br/>
-	 * 6. Parallel sections<br/>
+	 * 3. FOR loops<br/>
+	 * 4. WHILE loops<br/>
+	 * 5. REPEAT loops<br/>
+	 * 6. FOREVER loops<br/>
+	 * 7. Calls<br/>
+	 * 8. Jumps<br/>
+	 * 9. Parallel sections<br/>
 	 * @return an integer array with element counts according to the index map above 
 	 */
 	public Integer[] getElementCounts()
 	{
-		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0};
+		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0};
 		
 		IElementVisitor counter = new IElementVisitor() {
 
 			@Override
 			public boolean visitPreOrder(Element _ele) {
+				// Since Call and Jump extend Instruction, they must be tested first
 				if (_ele instanceof Call) {
-					counts[4]++;
+					counts[7]++;
 				}
 				else if (_ele instanceof Jump) {
-					counts[5]++;
+					counts[8]++;
 				}
 				else if (_ele instanceof Instruction) {
 					counts[0]++;
@@ -5503,11 +5509,20 @@ public class Root extends Element {
 				else if (_ele instanceof Case) {
 					counts[2]++;
 				}
-				else if (_ele instanceof ILoop) {
+				else if (_ele instanceof For) {
 					counts[3]++;
 				}
-				else if (_ele instanceof Parallel) {
+				else if (_ele instanceof While) {
+					counts[4]++;
+				}
+				else if (_ele instanceof Repeat) {
+					counts[5]++;
+				}
+				else if (_ele instanceof Forever) {
 					counts[6]++;
+				}
+				else if (_ele instanceof Parallel) {
+					counts[9]++;
 				}	
 				return true;
 			}

@@ -67,6 +67,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.12      Issue #4: Distinct set of FOR loop icons (no longer = forever/while)
  *      Kay Gürtzig     2018.02.14      Issue #510: Colour button icon shape changed from rectangle to circle.
  *      Kay Gürtzig     2018.06.28      Smaller element symbols for Search + Replace (###_mini_???.png)
+ *      Kay Gürtzig     2018.07.17      Issue #561: New icon 055_sigma (sum symbol) added
  *
  ******************************************************************************************************
  *
@@ -146,7 +147,7 @@ public class IconLoader {
 			"052_update.png",
 			"053_elem_for.png",	// new
 			"054_tortoise.png",
-			null,	//"055_jumpafter.png",	// obsolete (#510)
+			"055_sigma.png",	//"055_jumpafter.png",	// obsolete (#510)
 			null,	//"056_jumpbefore.png",	// obsolete (#510)
 			"057_elem_inst.png",
 			"058_elem_call.png",
