@@ -126,6 +126,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
+ *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
  *      
  ******************************************************************************************************
  *
@@ -2341,7 +2342,7 @@ public class Root extends Element {
 		int posBrace = 0;
 		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
 			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
-				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1));
+				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), null);
 				if (components != null) {
 					// Remove all tokens from the type name on (they are in the HashMap now)
 					tokens.remove(posBrace-1, tokens.count());
@@ -4024,7 +4025,10 @@ public class Root extends Element {
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_5, typeName), _instr), 24);												
 						}
 						else {
-							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
+							// START KGU#559 2018-07-20: Enh. #563  more intelligent initializer evaluation
+							//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
+							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType);
+							// END KGU#559 2018-07-20
 							Set<String> compNames = recType.getComponentInfo(true).keySet();
 							for (String compName: compNames) {
 								if (!compName.startsWith("§") && !components.containsKey(compName)) {

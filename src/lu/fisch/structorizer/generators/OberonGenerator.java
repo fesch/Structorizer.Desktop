@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.10.24      Enh. #389, #423: Export strategy for includables and records
  *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
  *      Kay Gürtzig             2018.03.13      Bugfix #259,#335,#520,#521: Mode suppressTransform enforced for declarations
+ *      Kay Gürtzig             2018.07.22      Enh. #563 (simplified record initializers), bugfix #564 (array initializers)
  *
  ******************************************************************************************************
  *
@@ -527,6 +528,11 @@ public class OberonGenerator extends Generator {
 						isComplexInit = bracePos == 0 && expr.endsWith("}");
 						if (isComplexInit)
 						{
+							// START KGU#560 2018-07-22: Bugfix #564
+							if (Instruction.isDeclaration(line) && varName.contains("[")) {
+								varName = varName.substring(0, varName.indexOf('['));
+							}
+							// END KGU#56 2018-07-22
 							// START KGU#100 2017-10-24: Enh. #84
 //							StringList elements = Element.splitExpressionList(
 //									expr.substring(1, expr.length()-1), ",");
@@ -535,7 +541,9 @@ public class OberonGenerator extends Generator {
 //								addCode(varName + "[" + el + "] := " + elements.get(el) + ";",
 //										_indent, isDisabled);
 //							}
-							this.generateArrayInit(varName, expr, _indent, null, isDisabled);
+							StringList elements = Element.splitExpressionList(
+									expr.substring(1, expr.length()-1), ",");
+							this.generateArrayInit(varName, elements, _indent, isDisabled);
 							// END KGU#100 2017-10-24
 						}
 						// START KGU#388 2017-10-24: Enh. #423 cope with record initializers
@@ -543,7 +551,10 @@ public class OberonGenerator extends Generator {
 								&& Function.testIdentifier(expr.substring(0, bracePos), null))
 						{
 							isComplexInit = true;
-							this.generateRecordInit(varName, expr, _indent, isConstant, isDisabled);
+							// START KGU#559 2018-07-22: Enh. #563
+							//this.generateRecordInit(varName, expr, _indent, isConstant, isDisabled);
+							this.generateRecordInit(varName, expr, _indent, isConstant, isDisabled, typeMap.get(":"+expr.substring(0, bracePos)));
+							// END KGU#559 2018-07-22
 						}
 						// END KGU#388 2017-10-24
 					}
@@ -681,29 +692,26 @@ public class OberonGenerator extends Generator {
 	 * Appends the code for an array initialisation of variable {@code _varName} from
 	 * the pre-transformed expression {@code _expr}.
 	 * @param _varName - name of the variable to be initialized
-	 * @param _expr - transformed initializer
+	 * @param _elemExprs - transformed initializer
 	 * @param _indent - current indentation string
-	 * @param _constType - in case of a constant the array type description (otherwise null)
 	 * @param _isDisabled - whether the source element is disabled (means to comment out the code)
 	 */
-	private void generateArrayInit(String _varName, String _expr, String _indent, String _constType, boolean _isDisabled) {
-		StringList elements = Element.splitExpressionList(
-				_expr.substring(1, _expr.length()-1), ",");
+	private void generateArrayInit(String _varName, StringList _elements, String _indent, boolean _isDisabled) {
 		insertComment("Hint: Automatically decomposed array initialization", _indent);
-		if (_constType != null) {
-			insertComment("Note: This was meant to be a constant (immutable) array!", _indent);
-		}
 		if (_varName.matches("\\w+\\[.*\\]")) {
 			_varName = _varName.replace("]", ", ");
 		}
 		else {
 			_varName = _varName + "[";
 		}
-		for (int ix = 0; ix < elements.count(); ix++)
+		for (int ix = 0; ix < _elements.count(); ix++)
 		{
-			addCode(_varName + ix + "] := " + 
-					elements.get(ix) + ";",
-					_indent, _isDisabled);
+			// START KGU#560 2018-07-22: Bugfix #564
+			//addCode(_varName + ix + "] := " + 
+			//		_elements.get(ix) + ";",
+			//		_indent, _isDisabled);
+			generateAssignment(_varName + ix + "]", _elements.get(ix), _indent, _isDisabled);
+			// END KGU#560 2018-07-22
 		}
 	}
 
@@ -715,9 +723,14 @@ public class OberonGenerator extends Generator {
 	 * @param _indent - current indentation string
 	 * @param _forConstant - whether this initializer is needed for a constant (a variable otherwise)
 	 * @param _isDisabled - whether the source element is disabled (means to comment out the code)
+	 * @param _recType - used for component name retrieval if the initializer omits them (may be null)
 	 */
-	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled) {
-		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
+	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled, TypeMapEntry _recType)
+	{
+		// START KGU#559 2018-07-22: Enh. #563
+		//HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
+		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, this.typeMap.get(_varName));
+		// END KGU#559 2018-07-22
 		if (_forConstant) {
 			insertComment("Note: " + _varName + " was meant to be a record CONSTANT...", _indent);
 		}
@@ -725,13 +738,53 @@ public class OberonGenerator extends Generator {
 		{
 			String compName = comp.getKey();
 			if (!compName.startsWith("§")) {
-				addCode(_varName + "." + comp.getKey() + " := " + comp.getValue() + ";",
-						_indent, _isDisabled);
+				// START KGU#560 2018-07-22: Enh. #564 - on occasion of #563, we fix recursive initializers, too
+				//addCode(_varName + "." + compName + " := " + comp.getValue() + ";",
+				//		_indent, _isDisabled);
+				generateAssignment(_varName + "." + compName, comp.getValue(), _indent, _isDisabled);
+				// END KGU#560 2018-07-22
 			}
 		}
 	}
 	// END KGU#388 2017-10-24
    
+	// START KGU#560 2018-07-22: Bugfix #564 Array initializers have to be decomposed if not occurring in a declaration
+	/**
+	 * Generates code that decomposes possible initializers into a series of separate assignments if
+	 * there no compact translation, otherwise just adds appropriate transformed code.
+	 * @param _target - the left side of the assignment (without modifiers!)
+	 * @param _expr - the expression in Structorizer syntax
+	 * @param _indent - current indentation level (as String)
+	 * @param _isDisabled - indicates whether the code is o be commented out
+	 */
+    private void generateAssignment(String _target, String _expr, String _indent, boolean _isDisabled) {
+		if (_expr.contains("{") && _expr.endsWith("}")) {
+			StringList pureExprTokens = Element.splitLexically(_expr, true);
+			pureExprTokens.removeAll(" ");
+			int posBrace = pureExprTokens.indexOf("{");
+			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
+				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+					// Record initializer
+					String typeName = pureExprTokens.get(0);							
+					TypeMapEntry recType = this.typeMap.get(":"+typeName);
+					this.generateRecordInit(_target, _expr, _indent, false, _isDisabled, recType);
+				}
+				else {
+					// Array initializer
+					StringList items = Element.splitExpressionList(pureExprTokens.subSequence(1, pureExprTokens.count()-1), ",", true);
+					this.generateArrayInit(_target, items.subSequence(0, items.count()-1), _indent, _isDisabled);
+				}
+			}
+			else {
+				addCode(_target + " := " + _expr + ";", _indent, _isDisabled);
+			}
+		}
+		else {
+			addCode(_target + " := " + _expr + ";", _indent, _isDisabled);
+		}
+	}
+	// END KGU#560 2018-07-22
+
 	protected void generateCode(Alternative _alt, String _indent)
 	{
 		boolean isDisabled = _alt.isDisabled();
@@ -1564,7 +1617,7 @@ public class OberonGenerator extends Generator {
 	protected boolean generateVarDecls(Root _root, String _indent, StringList _varNames, StringList _complexConsts, boolean _sectionBegun) {
 		String indentPlus1 = _indent + this.getIndent();
 		// Insert actual declarations if possible
-		HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();
+		//HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();	// 2017-01-30: Became obsolete by field
 		// START KGU#236 2016-08-10: Issue #227: Declare this variable only if needed
 		//code.add(indentPlusOne + "dummyInputChar: Char;	" +
 		//		this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());

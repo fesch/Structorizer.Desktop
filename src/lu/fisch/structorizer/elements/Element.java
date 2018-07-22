@@ -90,11 +90,15 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.01.21      Enh. #490: Methods for replacement of DiagramController aliases
  *      Kay Gürtzig     2018.02.02      Bugfix #501: Methods setAliasText() corrected (Case and Parallel elements)
  *      Kay Gürtzig     2018.07.02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
+ *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2018-07-20: Enh.
+ *      - splitRecordInitializer can now also associate bare initializers (i.e. without explicit component names),
+ *        provided that it obtains a valid record type entry as parameter.
  *      2016-07-28: Bugfix #210 (KGU#225)
  *      - Before this fix the execution count values were held locally in the Elements. Without recursion,
  *        this wasn't a problem. But for recursive algorithms, particularly for spawning recursion as
@@ -2782,12 +2786,16 @@ public abstract class Element {
 	 * mapping the component names to the corresponding value strings.
 	 * If there is text following the closing brace it will be mapped to key "§TAIL§".
 	 * If the typename is given then it will be provided mapped to key "§TYPENAME§".
+	 * If {@code _typeInfo} is given and either {@code typename} was omitted or matches
+	 * name of {@code _typeInfo} then unprefixed component values will be associated
+	 * to the component names of the type in order of occurrence unless an explicit
+	 * component name prefix occurs. 
 	 * @param _text - the initializer expression with or without typename but with braces.
+	 * @param _typeInfo - the type map entry for the corresponding record type if available
 	 * @return the component map (or null if there are no braces).
 	 */
-	public static HashMap<String, String> splitRecordInitializer(String _text)
+	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo)
 	{
-		// Version 
 		HashMap<String, String> components = new HashMap<String, String>();
 		int posBrace = _text.indexOf("{");
 		if (posBrace < 0) {
@@ -2805,6 +2813,15 @@ public abstract class Element {
 		else if (!(tail = tail.substring(1).trim()).isEmpty()) {
 			components.put("§TAIL§", tail);
 		}
+		// START KGU#559 2018-07-20: Enh. #563 In case of a given type, we may guess the target fields
+		boolean guessComponents = _typeInfo != null && _typeInfo.isRecord()
+				&& (typename.isEmpty() || typename.equals(_typeInfo.typeName));
+		String[] compNames = null;
+		if (guessComponents) {
+			Set<String> keys = _typeInfo.getComponentInfo(true).keySet();
+			compNames = keys.toArray(new String[keys.size()]);
+		}
+		// END KGU#559 2018-07-20
 		for (int i = 0; i < parts.count()-1; i++) {
 			StringList tokens = splitLexically(parts.get(i), true);
 			int posColon = tokens.indexOf(":");
@@ -2813,8 +2830,16 @@ public abstract class Element {
 				String expr = tokens.subSequence(posColon + 1, tokens.count()).concatenate().trim();
 				if (Function.testIdentifier(name, null)) {
 					components.put(name, expr);
+					// START KGU#559 2018-07-20: Enh. #563 Stop associating from type as soon as an explicit name is given
+					guessComponents = false;
+					// END KGU#559 2018-07-20
 				}
 			}
+			// START KGU#559 2018-07-20: Enh. #563
+			else if (guessComponents && i < compNames.length) {
+				components.put(compNames[i], parts.get(i));
+			}
+			// END KGU#559 2018-07-20
 		}
 		return components;
 	}

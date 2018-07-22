@@ -80,6 +80,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
  *      Kay Gürtzig             2017.11.06      Issue #453: Modifications for string type and input and output instructions
  *      Kay Gürtzig             2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
+ *      Kay Gürtzig             2018.07.21      Enh. #563, Bugfix #564: Smarter record initializers / array initializer defects
  *
  ******************************************************************************************************
  *
@@ -156,7 +157,6 @@ import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
-import lu.fisch.structorizer.arranger.Surface;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -541,7 +541,10 @@ public class CGenerator extends Generator {
 	 * @return the equivalent target code as expression string
 	 */
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
+		// START KGU#559 2018-07-20: Enh. #563 - smarter initializer evaluation
+		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		String recordInit = "{";
 		boolean isFirst = true;
@@ -813,7 +816,11 @@ public class CGenerator extends Generator {
 								if (this.isInternalDeclarationAllowed()) {
 									// Insert the type description
 									String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
-									codeLine = transform(transformType(type, "")) + " " + codeLine;
+									// START KGU#561 2018-07-21: Bugfix #564
+									//codeLine = transform(transformType(type, "")) + " " + codeLine;
+									type = transformType(type, "");
+									codeLine = this.transformArrayDeclaration(type, codeLine);
+									// END KGU#561 2018-07-21
 								}
 							}
 						}
@@ -822,14 +829,31 @@ public class CGenerator extends Generator {
 							// Must be C-style declaration
 							if (this.isInternalDeclarationAllowed()) {
 								// Case 2.2c (allowed) or 1.1.2c
-								// Combine type and variable as is
-								codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+								// START KGU#560 2018-07-22: Bugfix #564
+								//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+								TypeMapEntry type = this.typeMap.get(varName);
+								if (type != null && type.isArray()) {
+									String elemType = type.getCanonicalType(true, false);
+									codeLine = this.makeArrayDeclaration(this.transformType(elemType, "int"), varName, type);
+								}
+								else {
+									// Combine type and variable as is
+									codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+								}
+								// END KGU#560 2018-07-22
 							}
 							else if (exprTokens != null) {
 								// Case 1.1.2c (2.2c not allowed)
 								// Cut out leading type specification
 								int posVar = tokens.indexOf(varName);
-								codeLine = transform(tokens.subSequence(posVar, posAsgn).concatenate().trim());
+								// START KGU#560 2018-07-21: Bugfix #564 In case of an array declaration we must wipe off the array stuff
+								//codeLine = transform(tokens.subSequence(posVar, posAsgn).concatenate().trim());
+								int posEnd = tokens.indexOf("[", posVar+1);
+								if (!isDecl || posEnd < 0 || posEnd > posAsgn) {
+									posEnd = posAsgn;
+								}
+								codeLine = transform(tokens.subSequence(posVar, posEnd).concatenate().trim());
+								// END KGU#560 2018-07-21
 							}
 //							// START KGU#375 2017-04-13: Enh. #388
 //							//codeLine = transform(tokens.concatenate().trim());
@@ -853,29 +877,51 @@ public class CGenerator extends Generator {
 					}
 					// Now we care for a possible assignment
 					if (codeLine != null && exprTokens != null && pureExprTokens.count() > 0) {
-						
-						if (pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), null)
-							&& pureExprTokens.get(1).equals("{") && pureExprTokens.get(pureExprTokens.count()-1).equals("}")) {
-							HashMap<String, String> comps = Element.splitRecordInitializer(pureExprTokens.concatenate());
-							String typeName = comps.get("§TYPENAME§");
-							if (isDecl && this.isInternalDeclarationAllowed() && this.typeMap.containsKey(":"+typeName)) {
-								// transforms the Structorizer record initializer into a C-conform one
-								expr = this.transformRecordInit(exprTokens.concatenate().trim(), this.typeMap.get(":"+typeName));
+						// START KGU#560 2018-07-21: Bugfix #564 - several problems with array initializers
+						int posBrace = pureExprTokens.indexOf("{");
+						if (posBrace >= 0 && posBrace <= 1 && pureExprTokens.get(pureExprTokens.count()-1).equals("}")) {
+							// Case 1.1 or 1.2.1 (either array or record initializer)
+							if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+								String typeName = pureExprTokens.get(0);							
+								TypeMapEntry recType = this.typeMap.get(":"+typeName);
+								if (isDecl && this.isInternalDeclarationAllowed() && recType != null) {
+									// transforms the Structorizer record initializer into a C-conform one
+									expr = this.transformRecordInit(exprTokens.concatenate().trim(), recType);
+								}
+								else {
+									// In this case it's either no declaration or the declaration has already been generated
+									// at the block beginning
+									if (!commentInserted) {
+										insertComment(_inst, _indent);
+										commentInserted = true;
+									}
+									// END KGU#424 2017-09-26
+									// FIXME: Possibly codeLine (the lval string) might be too much as first argument
+									// START KGU#559 2018-07-20: Enh. #563
+									//this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, null);
+									this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, recType);
+									// END KGU#559 2018-07-20
+									// All done already
+									continue;
+								}
 							}
 							else {
-								// In this case it's either no declaration or the declaration has already been generated
-								// at the block beginning
-								if (!commentInserted) {
-									insertComment(_inst, _indent);
-									commentInserted = true;
+								StringList items = Element.splitExpressionList(pureExprTokens.subSequence(1, pureExprTokens.count()), ",", true);
+								String elemType = null;
+								TypeMapEntry arrType = this.typeMap.get(varName);
+								if (arrType != null && arrType.isArray()) {
+									elemType = arrType.getCanonicalType(true, false);
+									if (elemType != null && elemType.startsWith("@")) {
+										elemType = elemType.substring(1);
+									}
 								}
-								// END KGU#424 2017-09-26
-								// FIXME: Possibly codeLine (the lval string) might be too much as first argument
-								this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled);
-								// All done already
-								continue;
+								expr = this.generateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
+								if (expr == null) {
+									continue;
+								}
 							}
 						}
+						// END KGU#560 2018-07-21
 						else {
 							expr = this.transform(exprTokens.concatenate()).trim();
 						}
@@ -884,7 +930,7 @@ public class CGenerator extends Generator {
 						// In this case codeLine must be different from null
 						codeLine += " = " + expr;
 					}
-				}
+				} // if (!this.suppressTransformation && (isDecl || exprTokens != null))
 				// START KGU#388 2017-09-25: Enh. #423
 				else if (!this.suppressTransformation && Instruction.isTypeDefinition(line, typeMap)) {
 					// Attention! The following condition must not be combined with the above one! 
@@ -1810,21 +1856,91 @@ public class CGenerator extends Generator {
 	/**
 	 * Generates code that decomposes a record initializer into separate component assignments
 	 * @param _lValue - the left side of the assignment (without modifiers!)
-	 * @param _recordValue - the record initializier according to Structorizer syntax
+	 * @param _recordValue - the record initializer according to Structorizer syntax
 	 * @param _indent - current indentation level (as String)
 	 * @param _isDisabled - indicates whether the code is o be commented out
+	 * @param _typeEntry - used to interpret a simplified record initializer (may be null)
 	 */
-	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue);
+	// START KGU#559 2018-07-20: Enh. #563
+	//protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
+	//	HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, null);
+	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry)
+	{
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry);
+	// END KGU#559 2018-07-20
 		for (Entry<String, String> comp: comps.entrySet()) {
 			String compName = comp.getKey();
 			String compVal = comp.getValue();
 			if (!compName.startsWith("§") && compVal != null) {
-				addCode(transform(_lValue + "." + compName + " <- " + compVal) + ";", _indent, _isDisabled);
+				// START KGU#560 2018-07-21: Enh. #564 - on occasion of #563, we fix recursive initializers, too
+				//addCode(transform(_lValue + "." + compName + " <- " + compVal) + ";", _indent, _isDisabled);
+				generateAssignment(_lValue + "." + compName, compVal, _indent, _isDisabled);
+				// END KGU#560 2018-07-21
 			}
 		}
 	}
 	// END KGU#388 2017-09-26
+
+	// START KGU#560 2018-07-21: Bugfix #564 Array initializers have to be decomposed if not occurring in a declaration
+	/**
+	 * Generates code that decomposes possible initializers into a series of separate assignments if
+	 * there no compact translation, otherwise just adds appropriate transformed code.
+	 * @param _lValue - the left side of the assignment (without modifiers!)
+	 * @param _expr - the expression in Structorizer syntax
+	 * @param _indent - current indentation level (as String)
+	 * @param _isDisabled - indicates whether the code is o be commented out
+	 */
+	protected void generateAssignment(String _lValue, String _expr, String _indent, boolean _isDisabled) {
+		if (_expr.contains("{") && _expr.endsWith("}")) {
+			StringList pureExprTokens = Element.splitLexically(_expr, true);
+			pureExprTokens.removeAll(" ");
+			int posBrace = pureExprTokens.indexOf("{");
+			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
+				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+					// Record initializer
+					String typeName = pureExprTokens.get(0);							
+					TypeMapEntry recType = this.typeMap.get(":"+typeName);
+					this.generateRecordInit(_lValue, _expr, _indent, _isDisabled, recType);
+				}
+				else {
+					// Array initializer
+					StringList items = Element.splitExpressionList(pureExprTokens.subSequence(1, pureExprTokens.count()-1), ",", true);
+					this.generateArrayInit(_lValue, items.subSequence(0, items.count()-1), _indent, _isDisabled, null, false);
+				}
+			}
+			else {
+				// FIXME Array initializers must be handled recursively!
+				addCode(transform(_lValue + " <- " + _expr) + ";", _indent, _isDisabled);
+			}
+		}
+		else {
+			// FIXME Array initializers must be handled recursively!
+			addCode(transform(_lValue + " <- " + _expr) + ";", _indent, _isDisabled);
+		}
+	}
+	
+	/**
+	 * Generates code that decomposes an array initializer into a series of element assignments if there no
+	 * compact translation.
+	 * @param _lValue - the left side of the assignment (without modifiers!), i.e. the array name
+	 * @param _arrayItems - the {@link StringList} of element expressions to be assigned (in index order)
+	 * @param _indent - the current indentation level
+	 * @param _isDisabled - whether the code is commented out
+	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
+	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
+	 */
+	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	{
+		if (_isDecl && this.isInternalDeclarationAllowed()) {
+			return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		}
+		for (int i = 0; i < _arrayItems.count(); i++) {
+			// initializers must be handled recursively!
+			generateAssignment(_lValue + "[" + i + "]", _arrayItems.get(i), _indent, _isDisabled);
+		}
+		return null;
+	}
+	// END KGU#560 2018-07-21
 
 	// START KGU#332 2017-01-30: Decomposition of generatePreamble() to ease sub-classing
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
