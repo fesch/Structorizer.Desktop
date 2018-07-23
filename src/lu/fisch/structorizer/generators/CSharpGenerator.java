@@ -190,6 +190,14 @@ public class CSharpGenerator extends CGenerator
 
 	/************ Code Generation **************/
 
+	// START KGU#560 2018-07-22 Bugfix #564
+	@Override
+	protected boolean wantsSizeInArrayType()
+	{
+		return false;
+	}
+	// END KGU#560 2018-07-22
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#getInputReplacer(boolean)
@@ -954,10 +962,15 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
-		while (_elementType.startsWith("@")) {
-			_elementType = _elementType.substring(1) + "[]";
+		String sepa = " ";
+		if (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + "[";
+			sepa = "] ";
 		}
-		return (_elementType + " " + _varName).trim(); 
+		while (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + ",";
+		}
+		return (_elementType + sepa + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

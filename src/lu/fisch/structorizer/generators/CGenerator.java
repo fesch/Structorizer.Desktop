@@ -272,6 +272,14 @@ public class CGenerator extends Generator {
 
 	/************ Code Generation **************/
 
+	// START KGU#560 2018-07-22 Bugfix #564
+	/** @return whether the element number is to be given in array type specifiers */
+	protected boolean wantsSizeInArrayType()
+	{
+		return true;
+	}
+	// END KGU#560 2018-07-22
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
@@ -646,15 +654,17 @@ public class CGenerator extends Generator {
 		_typeDescr = elType;
 		for (int i = 0; i < nLevels; i++) {
 			_typeDescr += "[";
-			int minIndex = typeInfo.getMinIndex(i);
-			int maxIndex = typeInfo.getMaxIndex(i);
-			int indexRange = maxIndex+1 - minIndex;
-			// We try a workaround for negative minIndex...
-			if (indexRange > maxIndex + 1) {
-				maxIndex = indexRange - 1;
-			}
-			if (maxIndex > 0) {
-				_typeDescr += Integer.toString(maxIndex+1);
+			if (this.wantsSizeInArrayType()) {
+				int minIndex = typeInfo.getMinIndex(i);
+				int maxIndex = typeInfo.getMaxIndex(i);
+				int indexRange = maxIndex+1 - minIndex;
+				// We try a workaround for negative minIndex...
+				if (indexRange > maxIndex + 1) {
+					maxIndex = indexRange - 1;
+				}
+				if (maxIndex > 0) {
+					_typeDescr += Integer.toString(maxIndex+1);
+				}
 			}
 			_typeDescr += "]";
 		}

@@ -629,7 +629,7 @@ public class BASHGenerator extends Generator {
 					}
 				}
 			}
-			// START KGU#388 2017-10-05: Enh. #423
+			// START KGU#388 2017-10-05: Enh. #423 (record export)
 			else if (nextToken.equals(".") && posNext+1 < _end && Function.testIdentifier(_tokens.get(posNext+1), null))
 			{
 				// FIXME: Handle multi-level record access! We might also check type

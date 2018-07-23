@@ -224,6 +224,14 @@ public class JavaGenerator extends CGenerator
 
 	/************ Code Generation **************/
 	
+	// START KGU#560 2018-07-22 Bugfix #564
+	@Override
+	protected boolean wantsSizeInArrayType()
+	{
+		return false;
+	}
+	// END KGU#560 2018-07-22
+
 	// START KGU#480 2018-01-21: Enh. #490 Improved support for Turtleizer export
 	/**
 	 * Maps light-weight instances of DiagramControllers for API retrieval
