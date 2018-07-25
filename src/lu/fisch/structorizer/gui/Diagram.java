@@ -487,9 +487,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			this.unselectAll(draw);
 
-			boolean hil = this.root.hightlightVars;
+			//boolean hil = root.highlightVars;
 			this.root = root;
-			root.hightlightVars = hil;
+			//root.highlightVars = hil;
 			//System.out.println(root.getFullText().getText());
 			//root.getVarNames();
 			//root.hasChanged = true;
@@ -1333,7 +1333,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		return;
     	}
     	// END KGU#440 2017-11-06
-    	boolean wasHighLight = root.hightlightVars; 
+    	boolean wasHighLight = Element.E_VARHIGHLIGHT; 
     	if (wasHighLight)
     	{
         	// START KGU#430 2017-10-10: Issue #432
@@ -1343,8 +1343,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		}
     		catch (Exception ex) {
     			logger.log(Level.WARNING, "*** Possible sync problem:", ex);
-    			// Avoid trouble
-    			root.hightlightVars = false;
+    			// Avoid trouble (highlighting would require variable retrieval)
+    			Element.E_VARHIGHLIGHT = false;
     		}
     		// END KGU#430 2017-10-10
     	}
@@ -1364,7 +1364,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	this.repaint();
     	
     	// START KGU#430 2017-10-10: Issue #432
-    	root.hightlightVars = wasHighLight;
+    	Element.E_VARHIGHLIGHT = wasHighLight;
 		// END KGU#430 2017-10-10
     }
 
@@ -1463,9 +1463,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Invalidates the cached prepareDraw info of the current diagram (Root)
 	 * (to be called on events with global impact on the size or shape of Elements)
-	 * @param _all are Roots parked in the Arranger to be invalidated, too?
 	 */
-	public void resetDrawingInfo(boolean _all)
+	public void resetDrawingInfo()
 	{
 		root.resetDrawingInfoDown();
 		if (isArrangerOpen())
@@ -1605,9 +1604,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#534 2018-06-27
 
 		// create an empty diagram
-		boolean HV = root.hightlightVars;
 		root = new Root();
-		root.hightlightVars=HV;
+		//root.highlightVars = Element.E_VARHIGHLIGHT; 
 		// START KGU 2015-10-29: This didn't actually make sense
 		//root.hasChanged=true;
 		// END KGU 2015-10-29
@@ -1733,12 +1731,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				// open an existing file
 				NSDParser parser = new NSDParser();
-				boolean hil = root.hightlightVars;
+				//boolean hil = root.highlightVars;
 				// START KGU#363 2017-05-21: Issue #372 API change
 				//root = parser.parse(f.toURI().toString());
 				root = parser.parse(f);
 				// END KGU#363 2017-05-21
-				root.hightlightVars = hil;
+				//root.highlightVars = hil;
+				if (Element.E_VARHIGHLIGHT) {
+					root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+				}
 				root.filename = _filename;
 				currentDirectory = new File(root.filename);
 				addRecentFile(root.filename);
@@ -3539,7 +3540,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
 				if (sub != null) {
 					// adopt presentation properties from root
-					sub.hightlightVars = root.hightlightVars;
+					//sub.highlightVars = Element.E_VARHIGHLIGHT;
 					sub.isBoxed = root.isBoxed;
 					// START KGU#506 2018-03-14: issue #522 - we need to check for record types
 					//sub.getVarNames();	// just to prepare proper drawing.
@@ -3583,7 +3584,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							incl.setText(includableName);
 							incl.setInclude();
 							// adopt presentation properties from root
-							incl.hightlightVars = root.hightlightVars;
+							//incl.highlightVars = Element.E_VARHIGHLIGHT;
 							incl.isBoxed = root.isBoxed;
 						}
 						for (Element source: sharedTypesMap.values()) {
@@ -5029,10 +5030,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// react to result
 			if (result == JFileChooser.APPROVE_OPTION)
 			{
-				boolean hil = root.hightlightVars;
+				boolean hil = Element.E_VARHIGHLIGHT;
 				// FIXME: Replace this with a generalized version of openNSD(String)
 				root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
-				root.hightlightVars = hil;
+				//root.highlightVars = hil;
+				if (Element.E_VARHIGHLIGHT) {
+					root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+				}
 				currentDirectory = dlgOpen.getSelectedFile();
 				redraw();
 			}
@@ -5319,7 +5323,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#194 2016-05-08
 				if (parser.error.equals("") && !worker.isCancelled())
 				{
-					boolean hil = root.hightlightVars;
+					boolean hil = Element.E_VARHIGHLIGHT;
 					// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
 					Root firstRoot = null;
 					//root = rootNew;
@@ -5347,7 +5351,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						try {
 							while (iter.hasNext() && this.getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
 								Root nextRoot = iter.next();
-								nextRoot.hightlightVars = hil;
+								//nextRoot.highlightVars = hil;
 								nextRoot.setChanged();
 								// If the saving attempt fails, ask whether the saving loop is to be cancelled 
 								if (!this.saveNSD(nextRoot, false)) {
@@ -5374,7 +5378,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					while (iter.hasNext())
 					{
 						root = iter.next();
-						root.hightlightVars = hil;
+						//root.highlightVars = hil;
+						if (Element.E_VARHIGHLIGHT) {
+							root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+						}
 						// The Root must be marked for saving
 						root.setChanged();
 						// ... and be added to the Arranger
@@ -5384,7 +5391,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					{
 						root = firstRoot;
 						// END KGU#194 2016-05-08
-						root.hightlightVars = hil;
+						//root.highlightVars = hil;
+						if (Element.E_VARHIGHLIGHT) {
+							root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+						}
 						// START KGU#183 2016-04-24: Enh. #169
 						selected = root;
 						selected.setSelected(true);
@@ -6141,7 +6151,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (Element.E_VARHIGHLIGHT && !redrawn)
 			{
 				// Parser keyword changes may have an impact on the text width ...
-				this.resetDrawingInfo(true);
+				this.resetDrawingInfo();
 				
 				// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
 				analyse();
@@ -6424,7 +6434,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			
 			// Parser keyword changes may have an impact on the text width ...
-			this.resetDrawingInfo(true);
+			this.resetDrawingInfo();
 			
 			// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
 			analyse();
@@ -6494,7 +6504,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#456 2017-11-15
 			// re-analyse
-			root.getVarNames();
+			//root.getVarNames();	// Is done by root.analyse() itself
 			analyse();
 		// START KGU#393 2017-05-09: Issue #400
 		}
@@ -6791,7 +6801,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.saveToINI();
 
 			// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-			this.resetDrawingInfo(true);
+			this.resetDrawingInfo();
 			// END KGU#136 2016-03-02
 
 			// redraw diagram
@@ -6811,7 +6821,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.saveToINI();
 
 		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		this.resetDrawingInfo(true);
+		this.resetDrawingInfo();
 		// END KGU#136 2016-03-02
 
 		// redraw diagram
@@ -6829,7 +6839,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.saveToINI();
 
 			// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-			this.resetDrawingInfo(true);
+			this.resetDrawingInfo();
 			// END KGU#136 2016-03-02
 
 			// redraw diagram
@@ -6845,7 +6855,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.E_DIN = !(Element.E_DIN);
 		NSDControl.doButtons();
 		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		this.resetDrawingInfo(true);
+		this.resetDrawingInfo();
 		// END KGU#136 2016-03-02		
 		redraw();
 	}
@@ -6855,7 +6865,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.E_DIN = true;
 		NSDControl.doButtons();
 		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		this.resetDrawingInfo(true);
+		this.resetDrawingInfo();
 		// END KGU#136 2016-03-02
 		redraw();
 	}
@@ -6962,7 +6972,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     void setCommentsPlusText(boolean _activate)
     {
     	Element.E_COMMENTSPLUSTEXT = _activate;
-    	this.resetDrawingInfo(true);
+    	this.resetDrawingInfo();
     	analyse();
     	repaint();
     }
@@ -6972,7 +6982,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		Element.E_TOGGLETC=_tc;
 		// START KGU#136 2016-03-01: Bugfix #97
-		this.resetDrawingInfo(true);
+		this.resetDrawingInfo();
 		// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
@@ -6980,10 +6990,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setHightlightVars(boolean _highlight)
 	{
-		Element.E_VARHIGHLIGHT = _highlight;	// this isn't used for drawing, actually
-		root.hightlightVars = _highlight;
+		Element.E_VARHIGHLIGHT = _highlight;	// this is now directly used for drawing
+		//root.highlightVars = _highlight;	// FIXME: Why only this Root?
 		// START KGU#136 2016-03-01: Bugfix #97
-		this.resetDrawingInfo(false);	// Only current root is involved (is that true?)
+		this.resetDrawingInfo();
 		// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
@@ -7476,7 +7486,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     void toggleTextComments() {
     	Element.E_TOGGLETC=!Element.E_TOGGLETC;
     	// START KGU#136 2016-03-01: Bugfix #97
-    	this.resetDrawingInfo(true);
+    	this.resetDrawingInfo();
     	// END KGU#136 2016-03-01
     	// START KGU#220 2016-07-27: Enh. #207
     	analyse();
@@ -8158,7 +8168,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setHideDeclarations(boolean _activate) {
 		Element selectedElement = this.selected;
     	Element.E_HIDE_DECL = _activate;
-    	this.resetDrawingInfo(true);
+    	this.resetDrawingInfo();
     	analyse();
 		repaint();
     	if (selectedElement != null) {
@@ -8263,7 +8273,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void setApplyAliases(boolean apply) {
 		Element.E_APPLY_ALIASES = apply;
-		this.resetDrawingInfo(true);
+		this.resetDrawingInfo();
 		redraw();
 	}
 	// END KGU#480 2018-01-18

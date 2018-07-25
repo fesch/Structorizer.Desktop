@@ -958,7 +958,7 @@ public abstract class Element {
 		if (getText(false).count() > 0) {
 			StringList myText = getText(false);
 			if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
-				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 			}
 			sl.add(myText.get(0));
 		}
@@ -2943,7 +2943,7 @@ public abstract class Element {
 		{
 			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
 			//if (root.hightlightVars==true)
-			if (root.hightlightVars && !root.isSwitchTextCommentMode())
+			if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode())
 			// END KGU#226 2016-07-29
 			{
 				StringList parts = Element.splitLexically(_text, true);

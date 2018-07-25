@@ -126,7 +126,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
- *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
+ *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers#
+ *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly)
  *      
  ******************************************************************************************************
  *
@@ -244,7 +245,7 @@ public class Root extends Element {
 	private boolean hasChanged = false;		// Now only for global, not undoable changes
 	private int undoLevelOfLastSave = 0;	// Undo stack level recorded on saving
 	// END KGU#137 2016-01-11
-	public boolean hightlightVars = false;
+	//public boolean highlightVars = false;
 	// START KGU#2 (#9) 2015-11-13:
 	/** Executor: Is this routine currently waiting for a called subroutine? */
 	public boolean isCalling = false;

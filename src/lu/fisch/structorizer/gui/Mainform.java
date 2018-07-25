@@ -643,9 +643,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
 				{
 					//diagram.setHightlightVars(true);
-					Element.E_VARHIGHLIGHT = true;	// this isn't used for drawing, actually
-					diagram.getRoot().hightlightVars = true;
-
+					Element.E_VARHIGHLIGHT = true;	// this is now directly used for drawing
+					diagram.resetDrawingInfo();
 				}
 				// START KGU#477 2017-12-06: Enh. #487
 				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
@@ -706,7 +705,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 							public void run() {
 								doButtons();
 								diagram.analyse();
-								diagram.resetDrawingInfo(true);
+								diagram.resetDrawingInfo();
 								diagram.redraw();
 							}
 						});
@@ -726,7 +725,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					// Already in an event dispatcher thread
 					this.doButtons();
 					diagram.analyse();
-					diagram.resetDrawingInfo(true);
+					diagram.resetDrawingInfo();
 					diagram.redraw();
 				}
 			}

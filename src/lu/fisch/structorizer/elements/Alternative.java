@@ -357,7 +357,7 @@ public class Alternative extends Element implements IFork {
 		StringList myText = getCuteText(false);
 		// START KGU#480 2018-01-21: Enh. #490
 		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
-			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
 		int nLines = myText.count();

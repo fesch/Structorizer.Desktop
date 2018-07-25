@@ -293,7 +293,7 @@ public class Instruction extends Element {
 		
 		// START KGU#480 2018-01-21: Enh. #490
 		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
-			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.getRoot(_element).hightlightVars), "\n");
+			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
 		// START KGU#494 2018-02-15: Enh. #408
