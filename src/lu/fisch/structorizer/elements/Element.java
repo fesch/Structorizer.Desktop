@@ -91,6 +91,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.02.02      Bugfix #501: Methods setAliasText() corrected (Case and Parallel elements)
  *      Kay Gürtzig     2018.07.02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
  *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
+ *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
  *
  ******************************************************************************************************
  *
@@ -214,7 +215,7 @@ public abstract class Element {
 	// Program CONSTANTS
 	// START KGU#562 2018-07-26: Issue #566 - we need a central homepage URL
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
-	public static final String E_HELP_PAGE = "http://help.structorizer.fisch.lu/index.php";
+	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#562 2018-007-26
 	public static final String E_VERSION = "3.28-06";
 	public static final String E_THANKS =
