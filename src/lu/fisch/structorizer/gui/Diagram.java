@@ -5689,10 +5689,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //					Menu.msgTitleURLError.getText(),
 //					JOptionPane.ERROR_MESSAGE);
 //		}
-		String help = "http://help.structorizer.fisch.lu/index.php";
+		// START KGU#562 2018-07-26: Issue #566
+		//String help = "http://help.structorizer.fisch.lu/index.php";
+		String help = Element.E_HELP_PAGE;
+		// END KGU#562 2018-07-26
 		boolean isLaunched = false;
 		try {
-			isLaunched = lu.fisch.utils.Desktop.browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+			isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
 		} catch (URISyntaxException ex) {
 			// START KGU#484 2018-04-05: Issue #463
 			//ex.printStackTrace();
@@ -5724,8 +5727,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void updateNSD(boolean evenWithoutNewerVersion)
 	// END KGU#300 2016-12-02
 	{
-		// KGU#35 2015-07-29: Bob's code adopted with slight modification (Homepage URL put into a variable) 
-		final String home = "http://structorizer.fisch.lu";
+		// KGU#35 2015-07-29: Bob's code adopted with slight modification (Homepage URL put into a variable)
+		// START KGU#562 2018-07-26: Issue #566
+		//final String home = "https://structorizer.fisch.lu";
+		final String home = Element.E_HOME_PAGE;
+		// END KGU#562 2018-07-26
 		
 		// START KGU#300 2016-12-02: Enh. #300
 		String latestVersion = getLatestVersionIfNewer();
@@ -5817,7 +5823,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#300 2016-12-02 Enh. #300 Support for version retrieval
 	private String retrieveLatestVersion()
 	{
-		final String http_url = "http://structorizer.fisch.lu/version.txt";
+		// START KGU#562 2018-07-26: Issue #566
+		//final String http_url = "https://structorizer.fisch.lu/version.txt";
+		final String http_url = Element.E_HOME_PAGE + "/version.txt";
+		// END KGU#562 2018-07-26
 
 		String version = null;
 		if (retrieveVersion) {

@@ -1187,7 +1187,10 @@ public class JavaGenerator extends CGenerator
 		// END KGU#311 2016-12-22
 		// START KGU#446 2017-10-27: Enh. #441
 		if (topLevel && this.usesTurtleizer) {
-			code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
+			// START KGU#562 2018-07-26: Issue #566
+			//code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
+			code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from " + Element.E_HOME_PAGE + " and put it into this project", this.includeInsertionLine++);
+			// END KGU#562 2018-07-26
 			code.insert((_root.isSubroutine() ? this.commentSymbolLeft() : "") + "import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
 		}
 		// END KGU#446 2017-10-27
