@@ -156,7 +156,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.06.27      Enh. #552: Mechanism for global decisions on serial actions (save, overwrite)
  *                                      Usability of the parser choice dialog for code import improved.
  *      Kay Gürtzig     2018.07.02      KGU#245: color preferences modified to work with arrays
- *      Kay Gürtzig     2018.07.09      KGU#548: The import option dialog now retains the plugin for specific options
+ *      Kay Gürtzig     2018.07.09      KGU#548: The import option dialog now retains the selected plugin for specific options
+ *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line 
  *
  ******************************************************************************************************
  *
@@ -1149,73 +1150,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// select the element
 		if (e.getClickCount() == 1)
 		{
-			if (e.getSource()==this)
-			{
-                                //System.out.println("Clicked");
-                                // KGU 2015-10-11: In case of reactivation replace the following by ...root.getElementByCoord(e.getX(),e.getY(),true); !
-                                /*Element selly = root.selectElementByCoord(e.getX(),e.getY());
-                                if(selly!=selected && selected!=null) 
-                                {
-                                    selected.setSelected(false);
-                                }
-                                selected=selly;
-
-                                // redraw the diagram
-                                //redraw();
-                                // do the button thing
-                                if(NSDControl!=null) NSDControl.doButtons();
-/**/
-                               /*
-                                // select the element
-				Element selly = root.selectElementByCoord(e.getX(),e.getY());
-				if(selected!=selly)
-				{
-                                        selected=selly;
-                                        if(selected!=null)
-                                        {
-        					selected.setSelected(true);
-                                        }
-                                        // redra the diagram
-                                        redraw();
-                                        // do the button thing
-                                        if(NSDControl!=null) NSDControl.doButtons();
-				}*/
+			// START KGU#565 2018-07-27: Bugfix #569 We must react to a click in the errorlist if it contains only a single entry 
+			//if (e.getSource()==this)
+			//{
+			//}
+			if (e.getSource() == errorlist) {
+				this.handleErrorListSelection();
 			}
-			// START KGU#305 2016-12-15: Enh. #312 - content moved to method valueChanged(e) 
-//			else if (e.getSource() == errorlist)
-//			{
-//				// an error list entry has been selected
-//				if(errorlist.getSelectedIndex()!=-1)
-//				{
-//					// get the selected error
-//					DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
-//					Element ele = err.getElement();
-//					if(ele!=null)
-//					{
-//						// deselect the previously selected element (if any)
-//						if (selected!=null) {selected.setSelected(false);}
-//						// select the new one
-//						selected = ele;
-//						ele.setSelected(true);
-//						
-//						// redraw the diagram
-//						// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
-//						//redraw();
-//						redraw(ele);
-//						// END KGU#276 2016-11-18
-//						
-//						// do the button thing
-//						if(NSDControl!=null) NSDControl.doButtons();
-//					}
-//					// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
-//					//else if (err.getError().equals(Menu.warning_1.getText()))
-//					//{
-//					//	this.toggleTextComments();
-//					//}
-//					// END KGU#200 2016-07-27
-//				}
-//			}
-			// END KGU305 2016-12-15
+			// END KGU#565 2018-07-27
 			// START KGU#305 2016-12-12: Enh. #305
 			else if (e.getSource() == diagramIndex)
 			{
@@ -1258,10 +1200,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			else if (e.getSource() == errorlist)
 			{
 				// the error list has been clicked
-				if(errorlist.getSelectedIndex()!=-1)
+				if (errorlist.getSelectedIndex() >= 0)
 				{
 					// select the right element
-					selected = (root.errors.get(errorlist.getSelectedIndex())).getElement();
+					// START KGU#565 2018-07-27: Bugfix #569 - We must first unselect the previous selection
+					//selected = (root.errors.get(errorlist.getSelectedIndex())).getElement();
+					Element errElem = (root.errors.get(errorlist.getSelectedIndex())).getElement();
+					if (selected != null && errElem != selected) {
+						selected.setSelected(false);
+						selected = errElem.setSelected(true);
+					}
+					// END KGU#565 2018-07-27
 					// edit it
 					editNSD();
 					// do the button things
@@ -2953,7 +2902,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void editNSD()
 	{
 		Element element = getSelected();
-		if(element!=null)
+		if (element!=null)
 		{
 			if (element.getClass().getSimpleName().equals("Subqueue"))
 			{
@@ -3004,8 +2953,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else
 			{
-				EditData data = new EditData();
-				data.title="Edit element ...";
+				EditData data = new EditData(); 				data.title="Edit element ...";
 				// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
 				//data.text.setText(element.getText().getText());
 				data.text.setText(element.getAliasText().getText());
@@ -8027,40 +7975,52 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void valueChanged(ListSelectionEvent ev) {
 		if (ev.getSource() == errorlist) {
 			// an error list entry has been selected
-			if(errorlist.getSelectedIndex()!=-1)
-			{
-				// get the selected error
-				DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
-				Element ele = err.getElement();
-				if (ele != null)
-				{
-					// deselect the previously selected element (if any)
-					if (selected!=null) {selected.setSelected(false);}
-					// select the new one
-					selected = ele;
-					ele.setSelected(true);
-					
-					// redraw the diagram
-					// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
-					//redraw();
-					redraw(ele);
-					// END KGU#276 2016-11-18
-					
-					// do the button thing
-					if(NSDControl!=null) NSDControl.doButtons();
-					
-					errorlist.requestFocusInWindow();
-				}
-				// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
-				//else if (err.getError().equals(Menu.warning_1.getText()))
-				//{
-				//	this.toggleTextComments();
-				//}
-				// END KGU#200 2016-07-27
-			}
+			// START KGU#565 2018-07-27: Bugfix #569 - content outsourced (as it may also be needed in mouseClicked())
+			handleErrorListSelection();
+			// END KGU#565 2018-07-27
 		}
 	}
 	// END KGU#305
+	
+	// START KGU#565 2018-07-27: Bugfix #569 - errorlist selection without index change wasn't recognised
+	/**
+	 * Handles a single-click selection in the {@link #errorlist} (ensures the corresponding
+	 * diagram element gets selected
+	 */
+	private void handleErrorListSelection() {
+		if (errorlist.getSelectedIndex() >= 0)
+		{
+			// get the selected error
+			DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
+			Element ele = err.getElement();
+			if (ele != null && ele != selected)
+			{
+				// deselect the previously selected element (if any)
+				if (selected != null) {
+					selected.setSelected(false);
+				}
+				// select the new one
+				selected = ele.setSelected(true);
+				
+				// redraw the diagram
+				// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
+				//redraw();
+				redraw(ele);
+				// END KGU#276 2016-11-18
+				
+				// do the button thing
+				if (NSDControl!=null) NSDControl.doButtons();
+				
+				errorlist.requestFocusInWindow();
+			}
+			// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
+			//else if (err.getError().equals(Menu.warning_1.getText()))
+			//{
+			//	this.toggleTextComments();
+			//}
+			// END KGU#200 2016-07-27
+		}
+	}
 
 	// START KGU#363 2017-05-19: Enh. #372
 	public void attributesNSD() {
