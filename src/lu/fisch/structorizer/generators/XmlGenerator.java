@@ -457,10 +457,10 @@ public class XmlGenerator extends Generator
 		//code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" text=\""+BString.encodeToHtml(_root.getText().getCommaText())+"\" comment=\""+
 		// START KGU#257 2016-09-25: Enh. #253: Add all current parser preferences
 		//code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" version=\"" + Element.E_VERSION + "\" text=\"" +
-		// START KGU#562 2018-07-26: Issue #566
+		// START KGU#563 2018-07-26: Issue #566
 		//code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" version=\"" + Element.E_VERSION + "\"" +
 		code.add("<root xmlns:nsd=\"" + Element.E_HOME_PAGE + "\" version=\"" + Element.E_VERSION + "\"" +
-		// END KGU#562 2018-07-26
+		// END KGU#563 2018-07-26
 								pp_attributes + " text=\"" + 
 		// END KGU#257 2016-09-25
 								BString.encodeToHtml(_root.getText().getCommaText()) + "\" comment=\"" +

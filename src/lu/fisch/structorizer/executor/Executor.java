@@ -155,6 +155,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.04.03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
  *      Kay Gürtzig     2018.07.02      KGU#539: Fixed the operation step counting for CALL elements 
  *      Kay Gürtzig     2018.07.20      Enh. #563 - support for simplified record initializers
+ *      Kay Gürtzig     2018.07.27      Issue #432: Deficient redrawing in step mode with delay 0 fixed
  *
  ******************************************************************************************************
  *
@@ -1661,9 +1662,9 @@ public class Executor implements Runnable
 			}
 		}
 
-		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls with delay 0
+		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls with delay 0 (KGU#558: unless we are in step mode)
 		//diagram.redraw();
-		if (delay > 0) {
+		if (delay > 0 || step) {
 			diagram.redraw();
 		}
 		// END KGU#430 2017-10-12

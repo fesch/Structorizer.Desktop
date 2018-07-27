@@ -5030,7 +5030,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// react to result
 			if (result == JFileChooser.APPROVE_OPTION)
 			{
-				boolean hil = Element.E_VARHIGHLIGHT;
+				//boolean hil = root.highlightVars;
 				// FIXME: Replace this with a generalized version of openNSD(String)
 				root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
 				//root.highlightVars = hil;
@@ -5323,7 +5323,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#194 2016-05-08
 				if (parser.error.equals("") && !worker.isCancelled())
 				{
-					boolean hil = Element.E_VARHIGHLIGHT;
+					//boolean hil = root.highlightVars;
 					// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
 					Root firstRoot = null;
 					//root = rootNew;
@@ -5689,10 +5689,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //					Menu.msgTitleURLError.getText(),
 //					JOptionPane.ERROR_MESSAGE);
 //		}
-		// START KGU#562 2018-07-26: Issue #566
+		// START KGU#563 2018-07-26: Issue #566
 		//String help = "http://help.structorizer.fisch.lu/index.php";
 		String help = Element.E_HELP_PAGE;
-		// END KGU#562 2018-07-26
+		// END KGU#563 2018-07-26
 		boolean isLaunched = false;
 		try {
 			isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
@@ -5728,10 +5728,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#300 2016-12-02
 	{
 		// KGU#35 2015-07-29: Bob's code adopted with slight modification (Homepage URL put into a variable)
-		// START KGU#562 2018-07-26: Issue #566
+		// START KGU#563 2018-07-26: Issue #566
 		//final String home = "https://structorizer.fisch.lu";
 		final String home = Element.E_HOME_PAGE;
-		// END KGU#562 2018-07-26
+		// END KGU#563 2018-07-26
 		
 		// START KGU#300 2016-12-02: Enh. #300
 		String latestVersion = getLatestVersionIfNewer();
@@ -5823,10 +5823,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#300 2016-12-02 Enh. #300 Support for version retrieval
 	private String retrieveLatestVersion()
 	{
-		// START KGU#562 2018-07-26: Issue #566
+		// START KGU#563 2018-07-26: Issue #566
 		//final String http_url = "https://structorizer.fisch.lu/version.txt";
 		final String http_url = Element.E_HOME_PAGE + "/version.txt";
-		// END KGU#562 2018-07-26
+		// END KGU#563 2018-07-26
 
 		String version = null;
 		if (retrieveVersion) {

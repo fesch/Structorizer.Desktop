@@ -561,7 +561,7 @@ Editor.btnEdit.tooltip=Edit the selected element.
 Editor.btnDelete.tooltip=Delete the selected element.
 Editor.btnMoveUp.tooltip=Move the selected element one position up.
 Editor.btnMoveDown.tooltip=Move the selected element one position down.
-Editor.btnTransmute.tooltip=Transmute instructions to @js or @ks, merge or split sequences
+Editor.btnTransmute.tooltip=Transmute e.g. instructions to @js or @ks, merge or split sequences
 Editor.btnOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 //printing
 Editor.btnPrint.tooltip=Print the diagram.

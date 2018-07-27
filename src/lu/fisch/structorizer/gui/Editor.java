@@ -394,7 +394,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     	
     	ArrangerIndexAction(boolean isDoubleClick)
     	{
-    		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLCK");
+    		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLICK");	// KGU#564 2018-07-27: Bugfix #568 (mis-spelled action name)
     	}
     	
 		// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
