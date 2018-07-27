@@ -154,6 +154,7 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext
  *      Kay Gürtzig     2018.04.03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
  *      Kay Gürtzig     2018.07.02      KGU#539: Fixed the operation step counting for CALL elements 
+ *      Kay Gürtzig     2018.07.20      Enh. #563 - support for simplified record initializers
  *
  ******************************************************************************************************
  *
@@ -6480,15 +6481,18 @@ public class Executor implements Runnable
 	// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
 	/**
 	 * Recursively pre-evaluates record initializer expressions
-	 * @param _expr
-	 * @param value
-	 * @param tokens
-	 * @return
+	 * @param _expr - the expression
+	 * @param tokens - the splitting result
+	 * @param recordType - the identified record type entry
+	 * @return the filled {@link HashMap} of component name - value pairs
 	 * @throws EvalError
 	 */
 	private Object evaluateRecordInitializer(String _expr, StringList tokens, TypeMapEntry recordType) throws EvalError {
 //		this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
-		HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate(null));
+		// START KGU#559 2018-07-20: Enh. #563 - simplified record initializers (smarter interpretation)
+		//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate(null));
+		HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate(null), recordType);
+		// END KGU#559 2018-07-20
 		if (components == null || components.containsKey("§TAIL§")) {
 			throw new EvalError(control.msgInvalidExpr.getText().replace("%1", _expr), null, null);
 		}

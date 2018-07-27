@@ -63,6 +63,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.05.24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
  *      Kay Gürtzig             2017.10.02/03   Enh. #389, #423: Export of globals and mutable record types implemented
  *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation and Case elements supported
+ *      Kay Gürtzig             2018.07.20      Enh. #563 - support for simplified record initializers
  *
  ******************************************************************************************************
  *
@@ -298,7 +299,10 @@ public class PythonGenerator extends Generator
 					// Should be a record type but we better make sure.
 					&& typeEntry.isRecord()) {
 				// We will now reorder the elements and drop the names
-				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace));
+				// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
+				//HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace));
+				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry);
+				// END KGU#559 2018-07-20
 				LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);
 				String tail = comps.get("§TAIL§");	// String part beyond the initializer
 				String sepa = "(";	// initial "separator" is the opening parenthesis, then it will be comma

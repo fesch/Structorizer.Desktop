@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
  *      Kay Gürtzig             2017.12.22      Issue #496: Autodoc comment style changed from /**... to ///...
  *      Kay Gürtzig             2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
+ *      Kay Gürtzig             2018.07.21      Ebh. #563 (smarter record initializers), bugfix #564 (array initializer trouble)
  *
  ******************************************************************************************************
  *
@@ -188,6 +189,14 @@ public class CSharpGenerator extends CGenerator
 	// END KGU#351 2017-02-26
 
 	/************ Code Generation **************/
+
+	// START KGU#560 2018-07-22 Bugfix #564
+	@Override
+	protected boolean wantsSizeInArrayType()
+	{
+		return false;
+	}
+	// END KGU#560 2018-07-22
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -349,7 +358,10 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
 		// This is practically identical to Java
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
+		// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
+		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		String recordInit = "new " + typeInfo.typeName + "(";
 		boolean isFirst = true;
@@ -369,6 +381,12 @@ public class CSharpGenerator extends CGenerator
 				else if (compEntry.getValue().isRecord()) {
 					recordInit += transformRecordInit(compVal, compEntry.getValue());
 				}
+				// START KGU#561 2018-07-21: Bugfix #564
+				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+					String elemType = compEntry.getValue().getCanonicalType(true, false).substring(1);
+					recordInit += "new " + this.transformType(elemType, "object") + "[]" + compVal;
+				}
+				// END KGU#561 2018-07-21
 				else {
 					recordInit += transform(compVal);
 				}
@@ -382,22 +400,51 @@ public class CSharpGenerator extends CGenerator
 	 * Generates code that either allows direct assignment or decomposes the record
 	 * initializer into separate component assignments
 	 * @param _lValue - the left side of the assignment (without modifiers!)
-	 * @param _recordValue - the record initializier according to Structorizer syntax
+	 * @param _recordValue - the record initializer according to Structorizer syntax
 	 * @param _indent - current indentation level (as String)
 	 * @param _isDisabled - indicates whether the code is o be commented out
+	 * @param _typeEntry - an existing {@link TyeMapEntry} for the assumed record type (or null)
 	 */
-	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
+	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry) {
 		// This is practically identical to Java
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue);
-		String typeName = comps.get("§TYPENAME§");
-		TypeMapEntry recordType = null;
-		if (typeName == null || (recordType = typeMap.get(":"+typeName)) == null || !recordType.isRecord()) {
+		// START KGU#559 2018-07-21: Enh. #563 - Radically revised
+		if (_typeEntry == null || !_typeEntry.isRecord()) {
 			// Just decompose it (requires that the target variable has been initialized before).
-			super.generateRecordInit(_lValue, _recordValue, _indent, _isDisabled);
+			super.generateRecordInit(_lValue, _recordValue, _indent, _isDisabled, _typeEntry);
 		}
-		// This way has the particular advantage not to fail with an uninitialized variable (important for Java!). 
-		addCode(_lValue + " = " + this.transformRecordInit(_recordValue, recordType) + ";", _indent, _isDisabled);
+		else {
+			// This way has the particular advantage not to fail with an uninitialized variable (important for Java!). 
+			addCode(_lValue + " = " + this.transformRecordInit(_recordValue, _typeEntry) + ";", _indent, _isDisabled);
+		}
+		// END KGU#559 2018-07-21
 	}
+	
+	// START KGU#560 2018-07-21: Issue #563 Array initializers have to be decomposed if not occurring in a declaration
+	/**
+	 * Generates code that decomposes an array initializer into a series of element assignments if there no
+	 * compact translation.
+	 * @param _lValue - the left side of the assignment (without modifiers!), i.e. the array name
+	 * @param _arrayItems - the {@link StringList} of element expressions to be assigned (in index order)
+	 * @param _indent - the current indentation level
+	 * @param _isDisabled - whether the code is commented out
+	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
+	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
+	 */
+	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	{
+		if (_isDecl) {
+			return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		}
+		else if (_elemType != null) {
+			return "new " + this.transformType(_elemType, "object") + "[]{" + _arrayItems.concatenate(", ") + "}";
+		}
+		else {
+			super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
+		}
+		return null;
+	}
+	// END KGU#560 2018-07-21
+
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#generateTypeDef(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry, java.lang.String, boolean)
@@ -412,7 +459,7 @@ public class CSharpGenerator extends CGenerator
 		if (_type.isRecord()) {
 			String indentPlus1 = _indent + this.getIndent();
 			String indentPlus2 = indentPlus1 + this.getIndent();
-			addCode("public struct " + _typeName + "{", _indent, _asComment);
+			addCode((_root.isInclude() ? "public " : "") + "struct " + _typeName + "{", _indent, _asComment);
 			boolean isFirst = true;
 			StringBuffer constructor = new StringBuffer();
 			StringList constrBody = new StringList();
@@ -915,10 +962,15 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
-		while (_elementType.startsWith("@")) {
-			_elementType = _elementType.substring(1) + "[]";
+		String sepa = " ";
+		if (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + "[";
+			sepa = "] ";
 		}
-		return (_elementType + " " + _varName).trim(); 
+		while (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + ",";
+		}
+		return (_elementType + sepa + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

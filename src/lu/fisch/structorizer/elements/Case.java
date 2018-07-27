@@ -451,7 +451,7 @@ public class Case extends Element implements IFork
     	// START KGU#172 2016-04-01: Bugfix #145
     	boolean isSwitchMode = this.isSwitchTextCommentMode();
     	// END KGU#172 2016-04-01
-    	boolean isHighlight = Element.getRoot(this).hightlightVars;
+    	//boolean isHighlight = Element.getRoot(this).highlight;
 
     	Rect myrect = new Rect();
     	// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
@@ -578,7 +578,7 @@ public class Case extends Element implements IFork
     			//text = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);	// Text can't be empty, see setText()
     			String discr = unbrokenText.get(0);	// Text can't be empty, see setText()
     	    	if (Element.E_APPLY_ALIASES) {
-    				discr = Element.replaceControllerAliases(discr, true, isHighlight);
+    				discr = Element.replaceControllerAliases(discr, true, Element.E_VARHIGHLIGHT);
     			}
     			text = StringList.explode(discr, SOFT_LINE_BREAK);
     			// END KGU#480 2018-01-21
@@ -766,7 +766,7 @@ public class Case extends Element implements IFork
     			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
     			String selectors = unbrokenText.get(i+1);
     	    	if (Element.E_APPLY_ALIASES) {
-    				selectors = Element.replaceControllerAliases(selectors, true, isHighlight);
+    				selectors = Element.replaceControllerAliases(selectors, true, Element.E_VARHIGHLIGHT);
     			}
     	    	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
     			// END KGU#480 2018-01-21

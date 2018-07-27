@@ -332,38 +332,50 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                                     // the user, we can neither wait nor proceed here. So we just leave.
                             }
                             else
-                            // END KGU#157
-                            if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
+                            // END KGU#157 2016-03-16
+                            // START KGU#534 2018-07-16: Enh. #552
                             {
-                                    // START KGU#287 2017-01-11: Issue #81/#330
-                                    if (isStandalone) {
-                                    	if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
-                                    		Element.E_NEXT_SCALE_FACTOR = 1.0;
-                                    	}
-                                    	preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
-                                    }
-                                    // END KGU#287 2017-01-11
-                                    saveToINI();
-                                    // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-                                    if (isStandalone) {
-                                            // START KGU#49 2017-01-04 Care for potential Arranger dependants
-                                            if (Arranger.hasInstance()) {
-                                                Arranger.getInstance().windowClosing(e);
-                                            }
-                                            // END KGU#49 2017-01-04
-                                            // START KGU#484 2018-03-22: Issue #463
-                                            logger.info("Structorizer " + instanceNo + " shutting down.");
-                                            // START KGU#305 2016-12-16: Code revision                              
-                                            System.exit(0);	// This kills all related frames and threads as well!
-                                    }
-                                    else {
-                                            // START KGU#484 2018-03-22: Issue #463
-                                            logger.info("Structorizer " + instanceNo + " going to dispose.");
-                                            // START KGU#305 2016-12-16: Code revision                              
-                                            dispose();
-                                    }
-                                    // END KGU#49/KGU#66 (#6/#16) 2015-11-14
+                            	diagram.startSerialMode();
+                            	try {
+                            // END KGU#534 2018-07-16
+                            		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
+                            		{
+                            			// START KGU#287 2017-01-11: Issue #81/#330
+                            			if (isStandalone) {
+                            				if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
+                            					Element.E_NEXT_SCALE_FACTOR = 1.0;
+                            				}
+                            				preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                            			}
+                            			// END KGU#287 2017-01-11
+                            			saveToINI();
+                            			// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
+                            			if (isStandalone) {
+                            				// START KGU#49 2017-01-04 Care for potential Arranger dependants
+                            				if (Arranger.hasInstance()) {
+                            					Arranger.getInstance().windowClosing(e);
+                            				}
+                            				// END KGU#49 2017-01-04
+                            				// START KGU#484 2018-03-22: Issue #463
+                            				logger.info("Structorizer " + instanceNo + " shutting down.");
+                            				// END KGU#484 2018-03-22
+                            				System.exit(0);	// This kills all related frames and threads as well!
+                            			}
+                            			else {
+                            				// START KGU#484 2018-03-22: Issue #463
+                            				logger.info("Structorizer " + instanceNo + " going to dispose.");
+                            				// END KGU#484 2018-03-22
+                            				dispose();
+                            			}
+                            			// END KGU#49/KGU#66 (#6/#16) 2015-11-14
+                            		}
+                            // START KGU#534 2018-07-16: Enh. #552
+                            	}
+                            	finally {
+                            		diagram.endSerialMode();
+                            	}
                             }
+                            // END KGU#534 2018-07-16
                     }
 
                     @Override
@@ -631,9 +643,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
 				{
 					//diagram.setHightlightVars(true);
-					Element.E_VARHIGHLIGHT = true;	// this isn't used for drawing, actually
-					diagram.getRoot().hightlightVars = true;
-
+					Element.E_VARHIGHLIGHT = true;	// this is now directly used for drawing
+					diagram.resetDrawingInfo();
 				}
 				// START KGU#477 2017-12-06: Enh. #487
 				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
@@ -694,7 +705,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 							public void run() {
 								doButtons();
 								diagram.analyse();
-								diagram.resetDrawingInfo(true);
+								diagram.resetDrawingInfo();
 								diagram.redraw();
 							}
 						});
@@ -714,7 +725,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					// Already in an event dispatcher thread
 					this.doButtons();
 					diagram.analyse();
-					diagram.resetDrawingInfo(true);
+					diagram.resetDrawingInfo();
 					diagram.redraw();
 				}
 			}

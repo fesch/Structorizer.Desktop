@@ -455,7 +455,10 @@ public class BASHGenerator extends Generator {
 		// START KGU#388 2017-10-24: Enh. #423
 		else if (tokens.count() > 2 && Function.testIdentifier(tokens.get(0), null)
 				&& tokens.get(1).equals("{") && expr.endsWith("}")
-				&& (recordIni = Element.splitRecordInitializer(expr)) != null) {
+				// START KGU#559 2018-07-20: Enh. #  Try to fetch sufficient type info
+				//&& (recordIni = Element.splitRecordInitializer(expr, null)) != null) {
+				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)))) != null) {
+				// END KGU#559 2018-07-20
 			StringBuilder sb = new StringBuilder(15 * recordIni.size());
 			String sepa = "(";
 			for (Entry<String, String> entry: recordIni.entrySet()) {
@@ -626,7 +629,7 @@ public class BASHGenerator extends Generator {
 					}
 				}
 			}
-			// START KGU#388 2017-10-05: Enh. #423
+			// START KGU#388 2017-10-05: Enh. #423 (record export)
 			else if (nextToken.equals(".") && posNext+1 < _end && Function.testIdentifier(_tokens.get(posNext+1), null))
 			{
 				// FIXME: Handle multi-level record access! We might also check type

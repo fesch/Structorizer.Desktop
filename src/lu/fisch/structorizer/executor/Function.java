@@ -20,9 +20,6 @@
 
 package lu.fisch.structorizer.executor;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -47,6 +44,9 @@ import java.util.Map;
  *      Comment:		/
  *
  ******************************************************************************************************///
+
+import java.util.HashMap;
+import java.util.Map;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.utils.StringList;
@@ -205,7 +205,10 @@ public class Function
     {
     	expr = expr.trim();
         int posLP = expr.indexOf("(");
-        boolean isFunc = posLP < expr.indexOf(")") && posLP >=0 &&
+        // START KGU#560 2018-07-22: Bugfix #564 - Parenthesis may not be on index 0
+        //boolean isFunc = posLP < expr.indexOf(")") && posLP >=0 &&
+        boolean isFunc = posLP < expr.indexOf(")") && posLP >0 &&
+        // END KGU#560 2018-07
         		countChar(expr,'(') == countChar(expr,')') &&
         		expr.endsWith(")");
         // The test above is way too easy, it would also hold for e.g. "(a+b)*(c+d)";
