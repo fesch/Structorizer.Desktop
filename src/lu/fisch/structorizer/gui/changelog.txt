@@ -70,6 +70,7 @@ Current development version: 3.28-07 (2018-07-27)
 - 06: Issue #566 - Version retrieval adapted to new home page URL (https) <2>
 - 07: Bugfix #568 - Key binding "space" didn't work in the Arranger index <2>
 - 07: Issue #432 - In step mode with delay 0 diagram refresh was deficient <2>
+- 07: Some updates for the Russian locale <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
