@@ -7,7 +7,7 @@ Beyond mere editing, it even allows to execute and debug them (within certain re
 The debugging features include stepwise execution, highlighting, pausing, breakpoints, variable display (with value editing), and configurable running speed, and eventually the possibility to call other diagrams as subroutine.
 An impressive feature is the "Run Data Tracker" collecting and visualising execution counts and test coverage.
 
-The website can be found at http://structorizer.fisch.lu
+The website can be found at https://structorizer.fisch.lu
 
 
 # Why having started this project?
