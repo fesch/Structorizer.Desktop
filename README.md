@@ -1,13 +1,13 @@
 # Structorizer
 
-Structorizer is a little tool to create Nassi-Shneiderman Diagrams (NSD).
+Structorizer is a little tool to create Nassi-Shneiderman Diagrams (NSD):
 
 ![newton](https://user-images.githubusercontent.com/15326471/43420482-1f1edaac-9444-11e8-8c36-ccb8e084c615.png)
 
 Beyond mere editing, it even allows to execute and debug them (within certain restrictions), to control a painting turtle on a drawing canvas, and to export the formed algorithms to several programming languages (still requiring postprocessing, of course). You may also derive diagrams from source code (by now languages Pascal/Delphi, ANSI-C, and COBOL).
 
 The debugging features include stepwise execution, highlighting, pausing, breakpoints, variable display (with value editing), and configurable running speed, and eventually the possibility to call other diagrams as subroutine.
-An impressive feature is the "Runtim Analysis" collecting and visualising execution counts, operation loads, and test coverage.
+An impressive feature is the "Runtime Analysis" collecting and visualising execution counts, operation loads, and test coverage.
 
 The website can be found at https://structorizer.fisch.lu
 
