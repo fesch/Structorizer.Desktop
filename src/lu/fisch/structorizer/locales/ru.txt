@@ -541,11 +541,11 @@ Editor.popupCopy.text=Копировать
 Editor.popupPaste.text=Вставить
 Editor.popupAdd.text=Добавить
 // Submenu of "Add"
-Editor.popupAddBefore.text=До
+Editor.popupAddBefore.text=Перед
 // Submenus of "Add -> Before"
 Editor.popupAddBeforeInst.text=Инструкцию
 Editor.popupAddBeforeAlt.text=Разветвление @{Alternative}
-Editor.popupAddBeforeCase.text=Выбор @{Case}
+Editor.popupAddBeforeCase.text=Многократный выбор @{Case}
 Editor.popupAddBeforeFor.text=Цикл @{For}
 Editor.popupAddBeforeWhile.text=Цикл @{While}
 Editor.popupAddBeforeRepeat.text=Цикл @{Repeat}
@@ -554,11 +554,11 @@ Editor.popupAddBeforeCall.text=Вызов процедуры
 Editor.popupAddBeforeJump.text=Переход (Выход)
 Editor.popupAddBeforePara.text=Параллельное разветвление
 // After
-Editor.popupAddAfter.text=После
+Editor.popupAddAfter.text=Позади
 // Submenus of "Add -> After"
 Editor.popupAddAfterInst.text=Инструкцию
 Editor.popupAddAfterAlt.text=Разветвление @{Alternative}
-Editor.popupAddAfterCase.text=Выбор @{Case}
+Editor.popupAddAfterCase.text=Многократный выбор @{Case}
 Editor.popupAddAfterFor.text=Цикл @{For}
 Editor.popupAddAfterWhile.text=Цикл @{While}
 Editor.popupAddAfterRepeat.text=Цикл @{Repeat}
