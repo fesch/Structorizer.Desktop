@@ -5,10 +5,11 @@ Structorizer is a little tool to create Nassi-Shneiderman Diagrams (NSD).
 Beyond mere editing, it even allows to execute and debug them (within certain restrictions), to control a painting turtle on a drawing canvas, and to export the formed algorithms to several programming languages (still requiring postprocessing, of course). You may also derive diagrams from source code (by now languages Pascal/Delphi, ANSI-C, and COBOL).
 
 The debugging features include stepwise execution, highlighting, pausing, breakpoints, variable display (with value editing), and configurable running speed, and eventually the possibility to call other diagrams as subroutine.
-An impressive feature is the "Run Data Tracker" collecting and visualising execution counts and test coverage.
+An impressive feature is the "Runtim Analysis" collecting and visualising execution counts, operation loads, and test coverage.
 
 The website can be found at https://structorizer.fisch.lu
 
+You may have look at the elaborate [user guide](https://help.structorizer.fisch.lu/index.php) in particular.
 
 # Why having started this project?
 
@@ -17,7 +18,7 @@ In fact, I was not satisfied by the result of other NSD-editors, so I started wr
 
 # Project history
 
-I will not recite the entire changelog here, but just a few lines that, I think so, could be of interest:
+I will not recite the entire [changelog](https://github.com/fesch/Structorizer.Desktop/blob/master/src/lu/fisch/structorizer/gui/changelog.txt) here, but just a few lines that, I think so, could be of interest:
 
 * The first version, called "Structorizer 2006", was written in "Delphi 6 PE".
 * In January 2007 I decided to rename the project as "Structorizer", since "2006" did no longer apply and a lot of new features waited to be integrated.
