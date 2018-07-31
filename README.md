@@ -11,7 +11,7 @@ For latest changes see the [changelog](https://github.com/fesch/Structorizer.Des
 
 The website can be found at https://structorizer.fisch.lu.
 
-Structurizer comes with an elaborate [user guide](https://help.structorizer.fisch.lu/index.php), available online and for download.
+Structorizer comes with an elaborate [user guide](https://help.structorizer.fisch.lu/index.php), available online and for download.
 
 
 
