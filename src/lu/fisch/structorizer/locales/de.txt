@@ -116,6 +116,7 @@
  *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
  *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig         2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
+ *      Kay Gürtzig         2018.08.03  Enh. #577: OutputConsole keys renamed and new messages added
  *
  ******************************************************************************************************
  *
@@ -1198,10 +1199,14 @@ Control.tblVar.header.0=Variablenname
 Control.tblVar.header.2=Inhalt
 
 -----[ OutputConsole ]-----
-OutputConsole.menu.text=Eigenschaften
-OutputConsole.menuFont.text=Schriftart ...
-OutputConsole.menuFontUp.text=Schrift vergrößern
-OutputConsole.menuFontDown.text=Schrift verkleinern
+OutputConsole.menuProps.text=Eigenschaften
+OutputConsole.menuPropFont.text=Schriftart ...
+OutputConsole.menuPropFontUp.text=Schrift vergrößern
+OutputConsole.menuPropFontDown.text=Schrift verkleinern
+OutputConsole.menuContent.text=Inhalt
+OutputConsole.menuLogCalls.text=Aufrufe protokollieren
+OutputConsole.menuLogMeta.text=Metainfos protokollieren
+OutputConsole.menuLogMeta.tooltip=Hinweise wie Start-/Endzeitpunkt, manuelle Variablenänderungen etc. mit ausgeben (Standard)
 
 -----> Elements
 ElementNames.localizedNames.0.text=Verarbeitung

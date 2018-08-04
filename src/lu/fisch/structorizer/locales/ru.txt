@@ -65,6 +65,7 @@
  *      Kay Gürtzig     2017.12.17  Still incomplete first replacements to support #492 
  *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig     2018.07.27  Several missing messages added.
+ *      Kay Gürtzig     2018.08.03  Enh. #577: OutputConsole keys renamed
  *
  ******************************************************************************************************
  *
@@ -1148,10 +1149,10 @@ Control.tblVar.header.0=
 Control.tblVar.header.2=
 
 -----[ OutputConsole ]-----
-OutputConsole.menu.text=
-OutputConsole.menuFont.text=
-OutputConsole.menuFontUp.text=
-OutputConsole.menuFontDown.text=
+OutputConsole.menuProps.text=
+OutputConsole.menuPropFont.text=
+OutputConsole.menuPropFontUp.text=
+OutputConsole.menuPropFontDown.text=
 
 -----> Elements
 ElementNames.localizedNames.0.text=Инструкция

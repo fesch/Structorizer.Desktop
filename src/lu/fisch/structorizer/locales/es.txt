@@ -116,6 +116,7 @@
  *      Kay Gürtzig     2018.07.01  Enh. #553: New messages for CodeImportMonitor
  *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
+ *      Kay Gürtzig     2018.08.03  Enh. #577: OutputConsole keys renamed and new messages added
  *
  ******************************************************************************************************
  *
@@ -1130,7 +1131,7 @@ Control.title=Control de Ejecución
 Control.lblSpeed.text=Demora:
 Control.btnCallStack.text=Lote de llamadas
 Control.lblCallLevel.text=Nivel:
-Control.chkCollectRuntimeData.text=Coleccionar datos on ejec.
+Control.chkCollectRuntimeData.text=Contar pasos de ejec.
 Control.cbRunDataDisplay.item.0=no tinción
 Control.cbRunDataDisplay.item.1=plana cobertura de test
 Control.cbRunDataDisplay.item.2=prof. cobertura de test
@@ -1198,10 +1199,14 @@ Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.2=Contenido
 
 -----[ OutputConsole ]-----
-OutputConsole.menu.text=Propiedades
-OutputConsole.menuFont.text=Fuente ...
-OutputConsole.menuFontUp.text=Aumentar grado de letra
-OutputConsole.menuFontDown.text=Disminuir grado de letra
+OutputConsole.menuProps.text=Propiedades
+OutputConsole.menuPropFont.text=Fuente ...
+OutputConsole.menuPropFontUp.text=Aumentar grado de letra
+OutputConsole.menuPropFontDown.text=Disminuir grado de letra
+OutputConsole.menuContent.text=Contenido
+OutputConsole.menuLogCalls.text=Protocolar llamadas
+OutputConsole.menuLogMeta.text=Protocolar meta informaciones
+OutputConsole.menuLogMeta.tooltip=Incluir mensages como instante de arrranque/terminación, modificaciones manuales de variables etc. (estándar)
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instrucción

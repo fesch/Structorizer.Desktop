@@ -41,6 +41,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.17      Issue #268: Font setting source and target corrected (doc's default style)
  *      Kay Gürtzig     2016.11.22      Enh.#284: Font resizing accelerators modified (CTRL_DOWN_MASK added)
  *      Kay Gürtzig     2018.03.13      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal)
+ *      Kay Gürtzig     2018.08.03      Enh. #577: New checkbox menu items "menuLogMeta" and "menuLogCalls"
  *
  ******************************************************************************************************
  *
@@ -60,6 +61,7 @@ import java.awt.event.MouseWheelListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -67,6 +69,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.UIDefaults;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.MutableAttributeSet;
@@ -92,11 +95,20 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 	private JTextPane textPane;
 	private StyledDocument doc = null;
 	// START KGU#279 2016-10-11: Enh. #268 Font change opportunity
-	public JMenu menu;
-	public JMenuItem menuFont;
-	public JMenuItem menuFontUp;
-	public JMenuItem menuFontDown;
+	public JMenu menuProps;
+	public JMenuItem menuPropFont;
+	public JMenuItem menuPropFontUp;
+	public JMenuItem menuPropFontDown;
 	// END KGU#279 2016-10-11
+	// START KGU#569 2018-08-03: Enh. #577
+	public JMenu menuContent;
+	public JCheckBoxMenuItem menuLogMeta;
+	public JCheckBoxMenuItem menuLogCalls;
+	// END KGU#569 2018-08-03
+	// START KGU#569 2018-08-04: Enh. #577 - more precise scrolling control
+	/** cached height of the {@link #textPane} for detection of the need to scroll */
+	private int textHeight = 0;
+	// END KGU#569 2018-08-04
 	
 	public OutputConsole()
 	{
@@ -116,21 +128,33 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     	this.setIconImage(IconLoader.getIcon(4).getImage());
     	
     	// START KGU#279 2016-10-11: Enh. #268: Font selection opportunity
-    	menu = new JMenu("Properties");
-    	menuFont = new JMenuItem("Font ...",IconLoader.getIcon(23));
-    	menuFont.addActionListener(this);
-    	menuFontUp = new JMenuItem("Enlarge font", IconLoader.getIcon(33));
-    	menuFontUp.addActionListener(this);
-    	menuFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK));
-    	menuFontDown = new JMenuItem("Diminish font", IconLoader.getIcon(34));
-    	menuFontDown.addActionListener(this);
-    	menuFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK));
+    	menuProps = new JMenu("Properties");
+    	menuPropFont = new JMenuItem("Font ...",IconLoader.getIcon(23));
+    	menuPropFont.addActionListener(this);
+    	menuPropFontUp = new JMenuItem("Enlarge font", IconLoader.getIcon(33));
+    	menuPropFontUp.addActionListener(this);
+    	menuPropFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK));
+    	menuPropFontDown = new JMenuItem("Diminish font", IconLoader.getIcon(34));
+    	menuPropFontDown.addActionListener(this);
+    	menuPropFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK));
+    	
+    	// START KGU#569 2018-08-03: Enh. #577
+    	menuContent = new JMenu("Contents");
+    	menuLogMeta = new JCheckBoxMenuItem("Log meta-info");
+    	menuLogMeta.setSelected(true);
+    	menuLogCalls = new JCheckBoxMenuItem("Log calls");
+    	// END KGU#569 2018-08-03
     	
     	JMenuBar menuBar = new JMenuBar();
-    	menuBar.add(menu);
-    	menu.add(menuFont);
-    	menu.add(menuFontUp);
-    	menu.add(menuFontDown);
+    	menuBar.add(menuProps);
+    	menuProps.add(menuPropFont);
+    	menuProps.add(menuPropFontUp);
+    	menuProps.add(menuPropFontDown);
+    	// START KGU#569 2018-08-03: Enh. #577
+    	menuBar.add(menuContent);
+    	menuContent.add(menuLogMeta);
+    	menuContent.add(menuLogCalls);
+    	// END KGU#569 2018-08-03
     	setJMenuBar(menuBar);
     	// END KGU#279 2016-10-11
     	
@@ -166,6 +190,9 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     	// START KGU#503 2018-03-13: Enh. #519 - Allow ctrl + mouse wheel to "zoom"
     	scrText.addMouseWheelListener(this);
     	// END KGU#503 2018-03-13
+    	// START KGU#569 2018-08-04: Enh. #577 - more precise scrolling control
+    	textHeight = textPane.getHeight();
+    	// END KGU#569 2018-08-04
     }
     
     public void clear()
@@ -178,6 +205,9 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     		Logger.getLogger(getClass().getName()).log(Level.WARNING, "Trouble clearing the content.", ex);
     		// END KGU#484 2018-04-05
     	}
+    	// START KGU#569 2018-08-04: Enh. #577 - more precise scrolling control
+    	textHeight = textPane.getHeight();
+    	// END KGU#569 2018-08-04
     }
     
     /**
@@ -207,10 +237,43 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     		// END KGU#484 2018-04-05
     	}
     	// Scroll to end (if there is an easier way, I just didn't find it).
-    	Rectangle rect = this.textPane.getBounds();
-    	rect.y = rect.height - 1;
-    	rect.height = 1;
-    	this.textPane.scrollRectToVisible(rect);
+    	// START KGU#569 2018-08-04: Enh. #577 - safer and more precise scrolling control
+		//Rectangle rect = textPane.getBounds();
+		//rect.y = rect.height - 1;
+		//rect.height = 1;
+		//textPane.scrollRectToVisible(rect);
+    	int newHeight = textPane.getHeight();
+    	if (newHeight != textHeight) {
+    		textHeight = newHeight;
+    		SwingUtilities.invokeLater(new Runnable() {
+    			public void run() {
+    				Rectangle rect = textPane.getBounds();
+    				rect.y = rect.height - 1;
+    				rect.height = 1;
+
+    				try {
+    					textPane.scrollRectToVisible(rect);
+    				}
+    				catch (ArrayIndexOutOfBoundsException ex) {
+    					Logger.getLogger(getClass().getName()).log(Level.WARNING, "Output console ran out of bounds.", ex);
+    					System.err.println(doc.getLength());
+    					// TODO Shall we remove some doc lines? Or just refocus the textPane?
+//    					try {
+//    						View baseView = this.textPane.getUI().getRootView( this.textPane );
+//    						View rootView = baseView.getView(0);
+//    						for( int i = 0; i < rootView.getViewCount()-3000; i++ ) {
+//    							int line = rootView.getViewIndex( i, Bias.Forward );
+//    							View lineview = rootView.getView(line);
+//    							this.doc.remove( lineview.getStartOffset(), lineview.getEndOffset() );
+//    						}
+//    					} catch( BadLocationException e1 ) {
+//    						e1.printStackTrace();
+//    					}
+    				}
+    			}
+    		});
+    	}
+    	// END KGU#569 2018-08-04
     }
 
     /**
@@ -287,13 +350,13 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 	@Override
 	public void actionPerformed(ActionEvent actev) {
 		Object src = actev.getSource();
-		if (src == menuFont) {
+		if (src == menuPropFont) {
 			selectFont();
 		}
-		else if (src == menuFontUp) {
+		else if (src == menuPropFontUp) {
 			fontUp();
 		}
-		else if (src == menuFontDown)
+		else if (src == menuPropFontDown)
 		{
 			fontDown();
 		}
@@ -320,12 +383,24 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 	}
 	// END KGU#503 2018-03-13
 
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new OutputConsole().setVisible(true);
-            }
-        });
-    }
+	// START KGU#569 2018-08-03: Enh. #577 - convenience methods for the check of log options
+	/** @return true if the logging of calls (in/out) is enabled */
+	public boolean logCalls() {
+		return (menuLogCalls != null && menuLogCalls.isSelected());
+	}
+	
+	/** @return true if the logging of meta information is enabled */
+	public boolean logMeta() {
+		return (menuLogMeta != null && menuLogMeta.isSelected());
+	}
+	// END KGU#569 2018-08-03
+
+//    public static void main(String args[]) {
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                new OutputConsole().setVisible(true);
+//            }
+//        });
+//    }
 
 }

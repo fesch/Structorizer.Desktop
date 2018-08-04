@@ -111,6 +111,7 @@
  *      Kay Gürtzig     2018.07.01      Enh. #553: New messages for CodeImportMonitor
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2018.07.17      Issue #561: Some AttributeInspector texts converted to tooltips
+ *      Kay Gürtzig     2018.08.03      Enh. #577: OutputConsole keys renamed and new messages added
  *
  ******************************************************************************************************
  *
@@ -1179,6 +1180,7 @@ Control.msgEndOfFile.text=Attempt to read data past end of file!
 Control.msgUseStopButton.text=There is a running or pending execution!\nUse the STOP button to abort and close.
 Control.msgConstantRedefinition.text=Illegal attempt to redefine or modify constant «%»!
 Control.msgConstantArrayElement.text=An array element «%» may not be made a constant by assignment!
+Control.msgInvalidRecord.text=«%1» is not a valid record (%2)!
 Control.msgInvalidComponent.text=There is no component «%1» in record type or variable «%2»!
 Control.msgConstantRecordComponent.text=A record component «%» may not be made a constant by assignment!
 Control.msgTypeMismatch.text=Value type «%1» is incompatible with type «%2» of variable/component «%3»!
@@ -1195,10 +1197,14 @@ Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 
 -----[ OutputConsole ]-----
-OutputConsole.menu.text=Properties
-OutputConsole.menuFont.text=Font ...
-OutputConsole.menuFontUp.text=Enlarge font
-OutputConsole.menuFontDown.text=Diminish font
+OutputConsole.menuProps.text=Properties
+OutputConsole.menuPropFont.text=Font ...
+OutputConsole.menuPropFontUp.text=Enlarge font
+OutputConsole.menuPropFontDown.text=Diminish font
+OutputConsole.menuContent.text=Contents
+OutputConsole.menuLogCalls.text=Log calls
+OutputConsole.menuLogMeta.text=Log meta-info
+OutputConsole.menuLogMeta.tooltip=Log messages like time of start/termination, manual variable changes etc. (default)
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instruction

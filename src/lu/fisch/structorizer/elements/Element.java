@@ -2801,7 +2801,10 @@ public abstract class Element {
 	 */
 	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo)
 	{
-		HashMap<String, String> components = new HashMap<String, String>();
+		// START KGU#526 2018-08-01: Enh. #423 - effort to make the component order more stable (at higher costs, though)
+		//HashMap<String, String> components = new HashMap<String, String>();
+		HashMap<String, String> components = new LinkedHashMap<String, String>();
+		// END KGU#526 2018-08-01
 		int posBrace = _text.indexOf("{");
 		if (posBrace < 0) {
 			return null;

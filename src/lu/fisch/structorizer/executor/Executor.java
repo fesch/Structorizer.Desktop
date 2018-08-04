@@ -156,6 +156,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.07.02      KGU#539: Fixed the operation step counting for CALL elements 
  *      Kay Gürtzig     2018.07.20      Enh. #563 - support for simplified record initializers
  *      Kay Gürtzig     2018.07.27      Issue #432: Deficient redrawing in step mode with delay 0 fixed
+ *      Kay Gürtzig     2018.08.01      Enh. #423/#563: Effort to preserve component order for record display
+ *      Kay Gürtzig     2018.08.03      Enh. #577: Meta information to output console now conditioned
  *
  ******************************************************************************************************
  *
@@ -945,6 +947,7 @@ public class Executor implements Runnable
 	// START KGU#510 2018-03-20: Issue ??? Possible pattern for index problem
 	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.get").matcher("");
 	// END KGU#510 2018-03-20
+	private static final int MAX_STACK_INDENT = 40;
 
 	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
 	//private Executor(Diagram diagram, DiagramController diagramController)
@@ -1427,8 +1430,10 @@ public class Executor implements Runnable
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
 		this.console.clear();
 		SimpleDateFormat sdf = new SimpleDateFormat();
-		this.console.writeln("*** STARTED \"" + root.getText().getLongString() +
-				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		if (this.console.logMeta()) {
+			this.console.writeln("*** STARTED \"" + root.getText().getLongString() +
+					"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		}
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
 		// START KGU#384 2017-04-22
@@ -1456,8 +1461,10 @@ public class Executor implements Runnable
 		this.openFiles.clear();
 		// END KGU 2016-12-18
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
-		this.console.writeln("*** TERMINATED \"" + root.getText().getLongString() +
-				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		if (this.console.logMeta()) {
+			this.console.writeln("*** TERMINATED \"" + root.getText().getLongString() +
+					"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		}
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
 		//System.out.println("stackTrace size: " + stackTrace.count());
@@ -1600,7 +1607,9 @@ public class Executor implements Runnable
 						arguments[i] = context.interpreter.get(in);
 						// END KGU#2 2015-11-24
 						// START KGU#160 2016-04-26: Issue #137 - document the arguments
-						this.console.writeln("*** Argument <" + in + "> = " + prepareValueForDisplay(arguments[i]), Color.CYAN);
+						if (this.console.logMeta()) {
+							this.console.writeln("*** Argument <" + in + "> = " + prepareValueForDisplay(arguments[i], context.dynTypeMap), Color.CYAN);
+						}
 						// END KGU#160 2016-04-26
 					} catch (EvalError ex)
 					{
@@ -1777,7 +1786,9 @@ public class Executor implements Runnable
 								else if (step)
 								{
 									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-									this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
+									if (this.console.logMeta()) {
+										this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
+									}
 									// END KGU#160 2016-04-26
 									JOptionPane.showMessageDialog(diagram.getParent(), resObj,
 											header, JOptionPane.INFORMATION_MESSAGE);
@@ -1785,7 +1796,9 @@ public class Executor implements Runnable
 								else
 								{
 									// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
-									this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
+									if (this.console.logMeta()) {
+										this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
+									}
 									// END KGU#198 2016-05-25
 									Object[] options = {
 											Control.lbOk.getText(),
@@ -2017,7 +2030,9 @@ public class Executor implements Runnable
 		
 		// END KGU#147 2016-01-29
 		// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-		this.console.writeln("*** " + _title + ":", Color.CYAN);
+		if (this.console.logMeta()) {
+			this.console.writeln("*** " + _title + ":", Color.CYAN);
+		}
 		// END KGU#160 2016-04-26
 		List arrayContent = new List(10);
 		if (_arrayOrRecord instanceof ArrayList<?>) {
@@ -2025,9 +2040,11 @@ public class Executor implements Runnable
 			ArrayList<Object> array = (ArrayList<Object>)_arrayOrRecord;
 			for (int i = 0; i < array.size(); i++)
 			{
+				String valLine = "[" + i + "]  " + prepareValueForDisplay(array.get(i), context.dynTypeMap);
 				// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-				String valLine = "[" + i + "]  " + prepareValueForDisplay(array.get(i));
-				this.console.writeln("\t" + valLine, Color.CYAN);
+				if (this.console.logMeta()) {
+					this.console.writeln("\t" + valLine, Color.CYAN);
+				}
 				// END KGU#160 2016-04-26
 				arrayContent.add(valLine);
 			}
@@ -2037,21 +2054,27 @@ public class Executor implements Runnable
 			HashMap<String, Object> record = (HashMap<String, Object>)_arrayOrRecord;
 			if (record.containsKey("§TYPENAME§")) {
 				String valLine = "== " + record.get("§TYPENAME§") + " ==";
-				this.console.writeln("\t" + valLine, Color.CYAN);
+				if (this.console.logMeta()) {
+					this.console.writeln("\t" + valLine, Color.CYAN);
+				}
 				arrayContent.add(valLine);				
 			}
 			for (Entry<String, Object> entry: record.entrySet())
 			{
 				if (!entry.getKey().startsWith("§")) {
-					String valLine = entry.getKey() + ":  " + prepareValueForDisplay(entry.getValue());
-					this.console.writeln("\t" + valLine, Color.CYAN);
+					String valLine = entry.getKey() + ":  " + prepareValueForDisplay(entry.getValue(), context.dynTypeMap);
+					if (this.console.logMeta()) {
+						this.console.writeln("\t" + valLine, Color.CYAN);
+					}
 					arrayContent.add(valLine);
 				}
 			}
 		}
 		else {
-			String valLine = prepareValueForDisplay(_arrayOrRecord);
-			this.console.writeln("\t" + valLine, Color.CYAN);
+			String valLine = prepareValueForDisplay(_arrayOrRecord, context.dynTypeMap);
+			if (this.console.logMeta()) {
+				this.console.writeln("\t" + valLine, Color.CYAN);
+			}
 			arrayContent.add(valLine);
 		}
 //		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
@@ -2285,20 +2308,44 @@ public class Executor implements Runnable
 		{
 			for (int i = 0; i < _arguments.length; i++)
 			{
-				argumentString = argumentString + (i>0 ? ", " : "") + prepareValueForDisplay(_arguments[i]);					
+				argumentString = argumentString + (i>0 ? ", " : "") + prepareValueForDisplay(_arguments[i], context.dynTypeMap);					
 			}
 			argumentString = "(" + argumentString + ")";
 		}
 		this.stackTrace.add(_root.getMethodName() + argumentString);
+		// START KGU#569 2018-08-03: Enh. #577 - optional call trace in console window
+		if (this.console.logCalls()) {
+			int depth = this.stackTrace.count() - 1;
+			for (int i = 0; i < Math.min(MAX_STACK_INDENT, depth); i++) {
+				this.console.write("  ");
+			}
+			if (depth > MAX_STACK_INDENT) {
+				this.console.write("[" + depth + "]", Color.GRAY);
+			}
+			this.console.writeln(">>> " + this.stackTrace.get(depth), Color.GRAY);
+		}
+		// END KGU#569 2018-08-03
 	}
 	
-	// START KGU#159 2016-03-17: Stacktrace should always be available on demand, not only on error
+	// START KGU#159 2016-03-17: #133 Stacktrace should always be available on demand, not only on error
 	private void dropFromStackTrace()
 	{
 		int size = this.stackTrace.count();
 		if (size > 0)
 		{
-			this.stackTrace.delete(size-1);
+			size--;
+			// START KGU#569 2018-08-03: Enh. #577 - optional call trace in console window
+			if (this.console.logCalls()) {
+				for (int i = 0; i < Math.min(MAX_STACK_INDENT, size); i++) {
+					this.console.write("  ");
+				}
+				if (size > MAX_STACK_INDENT) {
+					this.console.write("[" + size + "]", Color.GRAY);
+				}
+				this.console.writeln("<<< " + this.stackTrace.get(size), Color.GRAY);
+			}
+			// END KGU#569 2018-08-03
+			this.stackTrace.delete(size);
 		}
 	}
 	// END KGU#159 2016-03-17
@@ -3287,7 +3334,9 @@ public class Executor implements Runnable
 		// START KGU#388 2017-09-14: Enh. #423
 		else if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			content = new HashMap<String, Object>((HashMap<String, Object>)content);
+			// START KGU#526 2018-08-01: Preserve component order
+			content = new LinkedHashMap<String, Object>((HashMap<String, Object>)content);
+			// END KGU#526 2018-08-01
 		}
 		// END KGU#388 2017-09-14
 		
@@ -3357,7 +3406,7 @@ public class Executor implements Runnable
 				}
 				else {
 					// FIXME: Produce a more meaningful EvalError
-					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false, true);
+					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content, context.dynTypeMap), false, true);
 				}
 				// END KGU#439 2017-10-13
 			}
@@ -3386,7 +3435,7 @@ public class Executor implements Runnable
 					oldSize = objectArray.size();
 				}
 				else {
-					String valueType = Instruction.identifyExprType(context.dynTypeMap, prepareValueForDisplay(comp), true);
+					String valueType = Instruction.identifyExprType(context.dynTypeMap, prepareValueForDisplay(comp, null), true);
 					throw new EvalError(control.msgTypeMismatch.getText().
 							replace("%1", valueType).
 									replace("%2", compType.getCanonicalType(true, true)).
@@ -3447,6 +3496,11 @@ public class Executor implements Runnable
 				if (record == null && path.count() == 2) {
 					record = createEmptyRecord(path, 0);
 				}
+				// START KGU#568 2018-08-01: Avoid a dull NullPointerException
+				else if (record == null || !(record instanceof HashMap)) {
+					throw new EvalError(control.msgInvalidRecord.getText().replace("%1", recordName).replaceAll("%2", String.valueOf(record)), null, null);
+				}
+				// END KGU#568 2018-08-01 
 				Object comp = record;
 				for (int i = 1; i < path.count()-1; i++) {
 					Object subComp = ((HashMap<?, ?>)comp).get(path.get(i));
@@ -3614,7 +3668,10 @@ public class Executor implements Runnable
 		return createEmptyRecord(recordType);
 	}
 	private HashMap<String, Object> createEmptyRecord(TypeMapEntry recordType) {
-		HashMap<String, Object> record = new HashMap<String, Object>();
+		// START KGU#526 2018-08-01: Preserve component order
+		//HashMap<String, Object> record = new HashMap<String, Object>();
+		HashMap<String, Object> record = new LinkedHashMap<String, Object>();
+		// END KGU#526 2018-08-01
 		for (String compName: recordType.getComponentInfo(true).keySet()) {
 			record.put(compName, null);
 		}
@@ -3654,7 +3711,7 @@ public class Executor implements Runnable
 			// START KGU#67 2015-11-08: We had to find a solution for displaying arrays in a sensible way
 			//myVar.add(this.interpreter.get(this.variables.get(i)));
 			Object val = context.interpreter.get(varName);
-			String valStr = prepareValueForDisplay(val);
+			String valStr = prepareValueForDisplay(val, context.dynTypeMap);
 			// END KGU#67 2015-11-08
 			vars.add(new String[]{varName, valStr});
 		}
@@ -3666,7 +3723,10 @@ public class Executor implements Runnable
 	// END KGU#20 2015-10-13
 	
 	// START KGU#67/KGU#68 2015-11-08: We have to present values in an editable way (recursively!)
-	protected static String prepareValueForDisplay(Object val)
+	// START KGU#526 2018-08-01: Enh. #423 - new optional argument to improve record presentation
+	//protected static String prepareValueForDisplay(Object val, HashMap<String)
+	protected static String prepareValueForDisplay(Object val, HashMap<String, TypeMapEntry> typeMap)
+	// END KGU#526 2018-08-01
 	{
 		String valStr = "";
 		if (val != null)
@@ -3679,30 +3739,45 @@ public class Executor implements Runnable
 				ArrayList<Object> valArray = (ArrayList<Object>)val;
 				for (int j = 0; j < valArray.size(); j++)
 				{
-					String elementStr = prepareValueForDisplay(valArray.get(j));
+					String elementStr = prepareValueForDisplay(valArray.get(j), typeMap);
 					valStr = valStr + ((j > 0) ? ", " : "") + elementStr;
 				}
 				valStr = valStr + "}";
 			}
 			// START KGU#388 2017-09-14: Enh. #423
-			if (val.getClass().getSimpleName().equals("HashMap"))
-			{
-				// Unfortunately we haven't access to the type map since this is a static method,
-				// so we can't provide the declared component order and will present the components
-				// in random order.
-				// The method must be static because Control also needs access to it.
+			// START KGU#526 2018-08-01: Enh. #423
+			//if (val.getClass().getSimpleName().equals("HashMap")) {
+			if (val instanceof HashMap) {
+			// END KGU#526 2018-08-01
+				// In case we have access to a type map provide the declared component order.
 				@SuppressWarnings("unchecked")
 				HashMap<String, Object> hmVal = (HashMap<String, Object>)val;
-				valStr = hmVal.get("§TYPENAME§") + "{";
+				String typeName = String.valueOf(hmVal.get("§TYPENAME§"));
+				valStr = typeName + "{";
+				// START KGU#526 2018-08-01: Enh. #423 - Try to preserve component order
+				TypeMapEntry typeInfo = null;
 				int j = 0;
-				for (Entry<String, Object> entry: hmVal.entrySet())
-				{
-					String key = entry.getKey();
-					if (!key.startsWith("§")) {
-						String elementStr = prepareValueForDisplay(entry.getValue());
-						valStr = valStr + ((j++ > 0) ? ", " : "") + key + ": " + elementStr;
+				if (typeMap != null && (typeInfo = typeMap.get(":"+typeName)) != null && typeInfo.isRecord()) {
+					for (String compName: typeInfo.getComponentInfo(true).keySet()) {
+						if (hmVal.containsKey(compName)) {
+							String elementStr = prepareValueForDisplay(hmVal.get(compName), typeMap);
+							valStr += ((j++ > 0) ? ", " : "") + compName + ": " + elementStr;
+						}
 					}
 				}
+				else {
+				// END KGU#526 2018-08-01
+					for (Entry<String, Object> entry: hmVal.entrySet())
+					{
+						String key = entry.getKey();
+						if (!key.startsWith("§")) {
+							String elementStr = prepareValueForDisplay(entry.getValue(), typeMap);
+							valStr += ((j++ > 0) ? ", " : "") + key + ": " + elementStr;
+						}
+					}
+				// START KGU#526 2018-08-01: Enh. #423 (continuation)
+				}
+				// END KGU#526 2018-08-01
 				valStr = valStr + "}";
 			}
 			// END KGU#388 2017-09-14
@@ -3747,7 +3822,7 @@ public class Executor implements Runnable
 				Object oldValue = context.interpreter.get(varName);
 				Object newValue = entry.getValue();
 				// START KGU#443 2017-10-29: Issue #439 Precaution against unnecessary value overwriting
-				String oldValStr = prepareValueForDisplay(oldValue);
+				String oldValStr = prepareValueForDisplay(oldValue, context.dynTypeMap);
 				if (oldValStr.equals(newValue.toString())) {
 					// If there are no visible changes then we avoid reconstruction of the value
 					// from string because this might lead to broken references without need.
@@ -3757,7 +3832,9 @@ public class Executor implements Runnable
 				// START KGU#160 2016-04-12: Enh. #137 - text window output
 				// START KGU#197 2016-05-05: Language support extended
 				//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
-				this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValue.toString()), Color.RED);
+				if (this.console.logMeta()) {				
+					this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValue.toString()), Color.RED);
+				}
 				// END KGU#197 2016-05-05
 				if (isConsoleEnabled)
 				{
@@ -5026,7 +5103,9 @@ public class Executor implements Runnable
 				// END KGU#439 2017-10-13
 				else if (step) {
 					// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-					this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
+					if (this.console.logMeta()) {
+						this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
+					}
 					// END KGU#160 2016-04-26
 					// START KGU#147 2016-01-29: This "unconverting" copied from tryOutput() didn't make sense...
 					//String s = unconvert(resObj.toString());
@@ -5039,7 +5118,9 @@ public class Executor implements Runnable
 				}
 				else {
 					// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
-					this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj), Color.CYAN);
+					if (this.console.logMeta()) {
+						this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
+					}
 					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {
@@ -6083,7 +6164,7 @@ public class Executor implements Runnable
 				// In case it was a variable or function, it MUST contain or return an array to be acceptable
 				if (value != null && /*!(value instanceof Object[]) &&*/ !(value instanceof ArrayList<?>) && !(value instanceof String)) {
 					valueNoArray = true;
-					problem += valueListString + " = " + prepareValueForDisplay(value);
+					problem += valueListString + " = " + prepareValueForDisplay(value, context.dynTypeMap);
 				}
 				// END KGU#429 2017-10-08
 			}
@@ -6497,7 +6578,7 @@ public class Executor implements Runnable
 		if (components == null || components.containsKey("§TAIL§")) {
 			throw new EvalError(control.msgInvalidExpr.getText().replace("%1", _expr), null, null);
 		}
-		HashMap<String, Object> valueRecord = new HashMap<String, Object>();
+		HashMap<String, Object> valueRecord = new LinkedHashMap<String, Object>();
 		valueRecord.put("§TYPENAME§", components.remove("§TYPENAME§"));
 		LinkedHashMap<String, TypeMapEntry> compDefs = recordType.getComponentInfo(false);
 		for (Entry<String, String> comp: components.entrySet()) {
