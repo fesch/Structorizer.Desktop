@@ -51,6 +51,7 @@
  *      Kay Gürtzig     2018.06.25      Issue #551: No message informing about version check option on WebStart
  *      Kay Gürtzig     2018.07.01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
+ *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *
  ******************************************************************************************************
  *
@@ -883,14 +884,25 @@ public class Structorizer
 			System.out.print( (i>0 ? " |" : "") + "\n\t\t" + className );
 			for (int j = 0; j < names.count(); j++)
 			{
-				System.err.print(" | " + names.get(j).trim());
+				System.out.print(" | " + names.get(j).trim());
 			}
 		}
 		System.out.println("\n\tPARSER = ");
-		String[] names = {"pas", "pascal"};
-		for (int j = 0; j < names.length; j++)
+		// We just (ab)use some class residing in package gui to fetch the plugin configuration 
+		buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("parsers.xml"));
+		genp = new GENParser();
+		plugins = genp.parse(buff);
+		try { buff.close();	} catch (IOException e) {}
+		for (int i=0; i < plugins.size(); i++)
 		{
-			System.out.print((j > 0 ? " | " : "\t\t") + names[j]);
+			GENPlugin plugin = (GENPlugin) plugins.get(i);
+			StringList names = StringList.explode(plugin.title, "/");
+			String className = plugin.getKey();
+			System.out.print( (i>0 ? " |" : "") + "\n\t\t" + className );
+			for (int j = 0; j < names.count(); j++)
+			{
+				System.err.print(" | " + names.get(j).trim());
+			}
 		}
 		System.out.println("");
 	}
