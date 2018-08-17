@@ -92,6 +92,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
  *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
  *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
+ *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
  *
  ******************************************************************************************************
  *
@@ -1677,7 +1678,10 @@ public abstract class Element {
 	 */
 	public boolean isConditionedBreakpoint()
 	{
-		return this.breakpoint && this.breakTriggerCount > 0;
+		// START KGU#570 2018-08-17: Bugfix #579 Dynamic triggers hadn't been detected (i.e. if set after debugging started)
+		//return this.breakpoint && this.breakTriggerCount > 0;
+		return this.breakpoint && this.getBreakTriggerCount() > 0;
+		// END KGU#570 2018-08-17
 	}
 	
 	/**
@@ -1691,8 +1695,8 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Gets the current 
-	 * @return
+	 * Gets the current break trigger value for this element
+	 * @return either the permanent or the temporary (runtime) trigger value (0 if there isn't any)
 	 */
 	public int getBreakTriggerCount()
 	{

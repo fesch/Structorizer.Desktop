@@ -158,6 +158,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.07.27      Issue #432: Deficient redrawing in step mode with delay 0 fixed
  *      Kay Gürtzig     2018.08.01      Enh. #423/#563: Effort to preserve component order for record display
  *      Kay Gürtzig     2018.08.03      Enh. #577: Meta information to output console now conditioned
+ *      Kay Gürtzig     2018.08.06      Some prevention against running status lock on occasion of Issue #577
  *
  ******************************************************************************************************
  *

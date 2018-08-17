@@ -77,6 +77,7 @@ Current development version: 3.28-07 (2018-08-17)
 - 07: Issue #423/#563 - Display of records better preserves component order <2>
 - 07: Enh. #577 - Output console may show call trace and suppress meta info,
       new menu item to save the execution log to file (if copy & paste fails) <2>
+- 07: Bugfix #579 - Conditional breakpoints didn't always show correctly <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

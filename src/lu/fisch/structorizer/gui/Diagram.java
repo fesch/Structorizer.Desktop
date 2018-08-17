@@ -4139,6 +4139,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// We assume the intention to activate the breakpoint with the configuration
 					if (!ele.isBreakpoint())
 					{
+						// FIXME This might not work properly with recursive algorithms (i.e. on stack unwinding)
 						ele.toggleBreakpoint();
 					}
 					redraw();
