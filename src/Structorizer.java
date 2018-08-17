@@ -52,6 +52,7 @@
  *      Kay Gürtzig     2018.07.01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
+ *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
  *
  ******************************************************************************************************
  *
@@ -271,17 +272,14 @@ public class Structorizer
         			if (args.length > 0 && args[0].equals("-open")) {
         				start = 1;
         			}
-        			// FIXME (KGU 2016-12-12): This concatenation still doesn't make sense...
-        			// (If the file name contained blanks then the OS should have quoted it,
-        			// if the command line contained several file names, on the other hand, then
-        			// they would have to be loaded separately - this could be done by moving
-        			// the previously loaded one to the Arranger on each consecutive load.)
+        			// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
+        			// them all ...
+    				String lastExt = "";	// Last file extension
         			for (int i=start; i<args.length; i++)
         			{
         				// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
         				//s += args[i];
         				String s = args[i].trim();
-        				String lastExt = "";	// Last file extension
         				if (!s.isEmpty())
         				{
         					if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
@@ -372,8 +370,8 @@ public class Structorizer
 	
 	// START KGU#187 2016-05-02: Enh. #179
 	private static String[] synopsis = {
-		"Structorizer [NSDFILE]",
-		"Structorizer -x GENERATOR [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
+		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]",
+		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
 		"Structorizer -p [PARSER] [-f] [-v LOGPATH] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h"
 	};
@@ -887,8 +885,8 @@ public class Structorizer
 				System.out.print(" | " + names.get(j).trim());
 			}
 		}
-		System.out.println("\n\tPARSER = ");
-		// We just (ab)use some class residing in package gui to fetch the plugin configuration 
+		System.out.print("\n\tPARSER = ");
+		// Again we (ab)use some class residing in package gui to fetch the plugin configuration 
 		buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("parsers.xml"));
 		genp = new GENParser();
 		plugins = genp.parse(buff);
