@@ -19,10 +19,6 @@
  */
 package lu.fisch.structorizer.executor;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -35,7 +31,9 @@ import java.awt.Component;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      kay       31.10.2017      First Issue
+ *      Kay Gürtzig     2017.01.31      First Issue
+ *      Kay Gürtzig     2017.10.31      Tweaked for result value presentation (routine execution at top level)
+ *      Kay Gürtzig     2018.08.01      KGU#526: Modifications to preserve order of record components (#423)
  *
  ******************************************************************************************************
  *
@@ -43,6 +41,10 @@ import java.awt.Component;
  *      
  *
  ******************************************************************************************************///
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -52,7 +54,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import javax.swing.AbstractCellEditor;
@@ -91,7 +93,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 	JTable tblFields = new JTable();
 	
 	/** Ought to be either an {@link ArrayList} or a {@link HashMap} */
-	private HashMap<String, Object> record = null;
+	private LinkedHashMap<String, Object> record = null;
 	private ArrayList<Object> array = null;
 	private String[] oldValStrings = null;
 	private HashMap<Integer, String> editedLines = new HashMap<Integer, String>();
@@ -138,13 +140,8 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
     		if (_value instanceof JButton) {
     			table = _table;
     			button = (JButton)_value;
-    			//        			if (isSelected) {
     			button.setForeground(table.getSelectionForeground());
     			button.setBackground(table.getSelectionBackground());
-    			//        			} else {
-    			//        				button.setForeground(table.getForeground());
-    			//        				button.setBackground(table.getBackground());
-    			//        			}
     		}
     		else {
     			button = null;
@@ -184,15 +181,15 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		if (_value instanceof ArrayList<?>) {
 			this.array = (ArrayList<Object>)_value;
 		}
-		else if (_value instanceof HashMap<?,?>) {
-			this.record = (HashMap<String, Object>)_value;
+		else if (_value instanceof LinkedHashMap<?,?>) {
+			this.record = (LinkedHashMap<String, Object>)_value;
 		}
 		this.editable = _editable;
-		// START KGU#147 2017-10-31: Enh. #84
+		// START KGU#147 2017-10-31: Enh. #84, #115 - Specific addition for result value presentation
 		if (!this.editable && _addButton != null) {
 			this.extButton = _addButton;
 		}
-		// END KGU#14 2017-10-31
+		// END KGU#147 2017-10-31
 		initComponents();
 	}
 	
@@ -245,7 +242,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 			for (int i = 0; i < array.size(); i++)
 			{
 				Object[] rowData = {"[" + i + "]", null,
-						oldValStrings[i] = Executor.prepareValueForDisplay(array.get(i))};
+						oldValStrings[i] = Executor.prepareValueForDisplay(array.get(i), null)};
 				tm.addRow(rowData);    				
 			}
 		}
@@ -256,7 +253,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 			{
 				if (!entry.getKey().startsWith("§")) {
 					Object[] rowData = {entry.getKey(), null,
-							oldValStrings[i++] = Executor.prepareValueForDisplay(entry.getValue())};
+							oldValStrings[i++] = Executor.prepareValueForDisplay(entry.getValue(), null)};
 					tm.addRow(rowData);
 				}
 			}
@@ -372,7 +369,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 								this.editable,
 								(JButton)evtSource);
 						if (val != null) {
-							tm.setValueAt(Executor.prepareValueForDisplay(val), rowNr, 2);
+							tm.setValueAt(Executor.prepareValueForDisplay(val, null), rowNr, 2);
 						}
 					}
 				} catch (EvalError er) {

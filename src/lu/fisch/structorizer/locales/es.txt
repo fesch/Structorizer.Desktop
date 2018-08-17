@@ -1187,7 +1187,7 @@ Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura 
 Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
 Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
 Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
-Control.msgIndexOutOfBounds.text=Indice «%1» (%2) está fuera de los márgines del array «%3»!
+Control.msgIndexOutOfBounds.text=¡Indice «%1» (%2) está fuera de los márgines del array «%3»!
 Control.msgBadValueListDetails.text=Detalles: %
 Control.msgVarUpdateErrors.text=Problemas poniendo nuevos valores
 Control.msgVarUpdatesFailed.text=Estas modificaciones de variables no valen por faltas sintacticas:\n\n%
@@ -1195,18 +1195,24 @@ Control.msgEndEditing.text=Para continuar cesa editar variables (Enter o Esc).
 Control.msgFunctionConflict.text=\nFunción «%1(%2)» de %3 aplastada por %4
 Control.msgProcedureConflict.text=\nProcedura «%1(%2)» de %3 aplastada por %4
 Control.msgSignatureConflicts.text=Hay conflictos en el API entre los elegidos módulos de mando:%
+Control.msgGUISyncFault.text=Problemas con la sincronización de la ventana ejecutando «%».\n¿Tratar de continuar ejecución?
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.2=Contenido
 
 -----[ OutputConsole ]-----
-OutputConsole.menuProps.text=Propiedades
+OutputConsole.title=Structorizer Ventana de Salidas
+OutputConsole.menuProp.text=Propiedades
 OutputConsole.menuPropFont.text=Fuente ...
 OutputConsole.menuPropFontUp.text=Aumentar grado de letra
 OutputConsole.menuPropFontDown.text=Disminuir grado de letra
 OutputConsole.menuContent.text=Contenido
-OutputConsole.menuLogCalls.text=Protocolar llamadas
-OutputConsole.menuLogMeta.text=Protocolar meta informaciones
-OutputConsole.menuLogMeta.tooltip=Incluir mensages como instante de arrranque/terminación, modificaciones manuales de variables etc. (estándar)
+OutputConsole.menuContentLogCalls.text=Protocolar llamadas
+OutputConsole.menuContentLogMeta.text=Protocolar meta informaciones
+OutputConsole.menuContentLogMeta.tooltip=Incluir mensages como instante de arrranque/terminación, modificaciones manuales de variables etc. (estándar)
+OutputConsole.menuContentSave.text=Guardar contenido ...
+OutputConsole.msgOverwriteFile.text=¿Grabar encima del archivo existente?
+OutputConsole.msgErrorFileSave.text=¡Error grabando fichero: %!
+OutputConsole.msgTitleError.text=Error
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instrucción

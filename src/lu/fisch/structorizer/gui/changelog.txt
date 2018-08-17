@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-07 (2018-08-04)
+Current development version: 3.28-07 (2018-08-17)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -75,7 +75,8 @@ Current development version: 3.28-07 (2018-08-04)
 - 07: Bugfix #571 - About => license showed the changelog instead <2>
 - 07: Enh. #576 - New Turtleizer procedure "clear()" to wipe the canvas <2>
 - 07: Issue #423/#563 - Display of records better preserves component order <2>
-- 07: Enh. #577 - Output console may show call trace or suppress meta info <2>
+- 07: Enh. #577 - Output console may show call trace and suppress meta info,
+      new menu item to save the execution log to file (if copy & paste fails) <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

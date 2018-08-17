@@ -732,14 +732,15 @@ Control.tblVar.header.0=
 Control.tblVar.header.2=
 
 -----[ OutputConsole ]-----
-OutputConsole.menuProps.text=Impostazione
+OutputConsole.menuProp.text=Impostazione
 OutputConsole.menuPropFont.text=Caratteri ...
 OutputConsole.menuPropFontUp.text=Aumenta caratteri
 OutputConsole.menuPropFontDown.text=Diminuisci caratteri
 OutputConsole.menuContent.text=Contenti
-OutputConsole.menuLogCalls.text=Protocollare chiamati
-OutputConsole.menuLogMeta.text=Protocollare metainformazioni
-OutputConsole.menuLogMeta.tooltip=Protocolare informazioni como momento de partenza/terminazione, manipulazioni di variabili ecc. (standard)
+OutputConsole.menuContentLogCalls.text=Protocollare chiamati
+OutputConsole.menuContentLogMeta.text=Protocollare metainformazioni
+OutputConsole.menuContentLogMeta.tooltip=Protocolare informazioni como momento de partenza/terminazione, manipulazioni di variabili ecc. (standard)
+OutputConsole.menuContentSave.text=Salva ...
 
 -----> Elements
 ElementNames.localizedNames.0.text=Istruzione

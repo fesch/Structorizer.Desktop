@@ -1193,18 +1193,24 @@ Control.msgEndEditing.text=To continue, first release the variable cell editor (
 Control.msgFunctionConflict.text=\nFunction «%1(%2)» of %3 overridden by %4
 Control.msgProcedureConflict.text=\nProcedure «%1(%2)» of %3 overridden by %4
 Control.msgSignatureConflicts.text=There are API conflicts among the chosen controller plugins:%
+Control.msgGUISyncFault.text=Possible GUI synchronisation fault on executing «%».\nTry to resume execution?
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 
 -----[ OutputConsole ]-----
-OutputConsole.menuProps.text=Properties
+OutputConsole.title=Structorizer Output Console
+OutputConsole.menuProp.text=Properties
 OutputConsole.menuPropFont.text=Font ...
 OutputConsole.menuPropFontUp.text=Enlarge font
 OutputConsole.menuPropFontDown.text=Diminish font
 OutputConsole.menuContent.text=Contents
-OutputConsole.menuLogCalls.text=Log calls
-OutputConsole.menuLogMeta.text=Log meta-info
-OutputConsole.menuLogMeta.tooltip=Log messages like time of start/termination, manual variable changes etc. (default)
+OutputConsole.menuContentLogCalls.text=Log calls
+OutputConsole.menuContentLogMeta.text=Log meta-info
+OutputConsole.menuContentLogMeta.tooltip=Log messages like time of start/termination, manual variable changes etc. (default)
+OutputConsole.menuContentSave.text=Save log ...
+OutputConsole.msgOverwriteFile.text=Overwrite existing file?
+OutputConsole.msgErrorFileSave.text=Error on saving the file: %!
+OutputConsole.msgTitleError.text=Error
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instruction

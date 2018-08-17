@@ -756,6 +756,12 @@ public class Executor implements Runnable
 					   null,null,null);
 			if (res == 0)
 			{
+				// START KGU 2018-08-08: If it had already been stopped make sure new start will be possible
+				if (mySelf.stop) {
+					mySelf.running = false;
+					mySelf.control.init();
+				}
+				// END KGU 2018-08-08
 				mySelf.setStop(true);
 				mySelf.reopenFor = diagram;
 			}
@@ -1427,8 +1433,18 @@ public class Executor implements Runnable
 		}
 		this.isErrorReported = false;
 		root.isCalling = false;
-		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
-		this.console.clear();
+		// START KGU#160 2016-04-12: Enh. #137 - Address the console window
+		// START KGU#569 2018-08-08: Issue #577: Replace the console if it has become inconsistent
+		//this.console.clear();
+		try {
+			this.console.clear();			
+		}
+		catch (NullPointerException ex) {
+			this.console.setVisible(false);
+			this.console.dispose();
+			this.console = new OutputConsole();
+		}
+		// END KGU#569 2018-08-08
 		SimpleDateFormat sdf = new SimpleDateFormat();
 		if (this.console.logMeta()) {
 			this.console.writeln("*** STARTED \"" + root.getText().getLongString() +
@@ -4127,6 +4143,9 @@ public class Executor implements Runnable
 		// END KGU#477 2017-12-10
 		int i = 0;
 
+		// START KGU#569 2018-08-06: Issue #577 - circumvent GUI trouble on window output
+		boolean repeated = false;
+		// END KGU#569 2018-08-06
 		// START KGU#77/KGU#78 2015-11-25: Leave if some kind of leave statement has been executed
 		//while ((i < sl.count()) && trouble.equals("") && (stop == false))
 		while ((i < sl.count()) && trouble.equals("") && (stop == false) &&
@@ -4137,6 +4156,10 @@ public class Executor implements Runnable
 			// START KGU#388 2017-09-13: Enh. #423 We shouldn't do this for type definitions
 			//cmd = convert(cmd).trim();
 			// END KGU#388 2017-09-13
+			// START KGU#569 2018-08-06: Issue #577 - circumvent GUI trouble on window output
+			boolean isOutput = false;
+			boolean outputDone = false;
+			// END KGU#569 2018-08-06
 			try
 			{
 				// START KGU#508 2018-03-19: Bugfix #525 operation count for all non-typedefs
@@ -4162,7 +4185,13 @@ public class Executor implements Runnable
 				else if (cmd.matches(
 						this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
 				{
+					// START KGU#569 2018-08-06: Issue #577 - circumvent GUI trouble on window output
+					isOutput = true;
+					// END KGU#569 2018-08-06
 					trouble = tryOutput(cmd);
+					// START KGU#569 2018-08-06: Issue #577 - circumvent GUI trouble on window output
+					outputDone = true;
+					// END KGU#569 2018-08-06
 				}
 				// return statement
 				// The "return" keyword ought to be the first word of the instruction,
@@ -4278,6 +4307,9 @@ public class Executor implements Runnable
 					delay();
 				}
 				// END KGU#271 2016-10-06
+				// START KGU#569 2018-08-06: Issue #577 - circumvent GUI trouble on window output
+				repeated = false;
+				// END KGU#569 2018-08-06
 			} catch (EvalError ex)
 			{
 				trouble = ex.getLocalizedMessage();
@@ -4294,9 +4326,29 @@ public class Executor implements Runnable
 			}
 			catch (Exception ex)
 			{
-				trouble = ex.getLocalizedMessage();
-				if (trouble == null || trouble.length() < 5) trouble = ex.getMessage();
-				if (trouble == null || trouble.length() < 5) trouble = ex.toString();
+				// START KGU#569 2018-08-06: Issue #577 - Might be some trouble resulting from the output console...
+				// (Sometimes there occurred asynchronous NullPointerExceptions from the OutputConsole textPane here)
+				//trouble = ex.getLocalizedMessage();
+				//if (trouble == null || trouble.length() < 5) trouble = ex.getMessage();
+				//if (trouble == null || trouble.length() < 5) trouble = ex.toString();
+				logger.log(Level.WARNING, "Unspecific error during execution of " + element.toString(), ex);
+				if (trouble.isEmpty() && isOutput && !repeated && JOptionPane.showConfirmDialog(
+						this.control, Control.msgGUISyncFault.getText().replace("%", cmd),
+						control.msgTitleError.getText(),
+						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					if (!outputDone) {
+						// Try to repeat it once
+						i--;
+						repeated = true;
+					}
+					// Otherwise ignore it since execution was done.
+				}
+				else {
+					trouble = ex.getLocalizedMessage();
+					if (trouble == null || trouble.length() < 5) trouble = ex.getMessage();
+					if (trouble == null || trouble.length() < 5) trouble = ex.toString();
+				}
+				// END KGU#569 2018-08-06
 			}
 			i++;
 		}
@@ -6716,7 +6768,16 @@ public class Executor implements Runnable
 	public void setOutputWindowEnabled(boolean _enabled)
 	{
 		this.isConsoleEnabled = _enabled;
-		this.console.setVisible(_enabled);
+		// START KGU#569 2018-08-09: Issue #577 - console window might have got corrupted
+		//this.console.setVisible(_enabled);
+		try {
+			this.console.setVisible(_enabled);
+		}
+		catch (NullPointerException ex) {
+			this.console.dispose();
+			this.console = new OutputConsole();
+			this.console.setVisible(_enabled);
+		}
 	}
 	// END KGU#160 2016-04-12
 

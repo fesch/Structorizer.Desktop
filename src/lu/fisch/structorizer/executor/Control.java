@@ -786,7 +786,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 								!Executor.getInstance().isConstant(varName),
 								(JButton)evtSource);
 						if (val != null) {
-							tm.setValueAt(Executor.prepareValueForDisplay(val), rowNr, 2);
+							tm.setValueAt(Executor.prepareValueForDisplay(val, null), rowNr, 2);
 						}
 					}
 				} catch (EvalError er) {
@@ -1004,6 +1004,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgConstantArrayElement =
     		new LangTextHolder("An array element «%» may not be made a constant by assignment!");
     // END KGU#375 2017-03-30
+    // START KGU#568 2018-08-01
+    public final LangTextHolder msgInvalidRecord =
+    		new LangTextHolder("«%1» is not a valid record (%2)!");
+    // END KGU#568 2018-08-01
     // START KGU#388 2017-09-14: Enh. #423 - support for record types
     public final LangTextHolder msgInvalidComponent =
     		new LangTextHolder("There is no component «%1» in record type or variable «%2»!");
@@ -1060,6 +1064,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public static final LangTextHolder msgProcedureConflict = new LangTextHolder("\nProcedure «%1(%2)» of %3 overridden by %4");
     public static final LangTextHolder msgSignatureConflicts = new LangTextHolder("There are API conflicts among the chosen controller plugins:%");
     // END KGU#448 2017-10-28
+    // START KGU#569 2018-08-09: New messages for issue #577
+    public static final LangTextHolder msgGUISyncFault = new LangTextHolder("Possible GUI synchronisation fault on executing «%».\nTry to resume execution?");
+    
+    // END KGU#5689 2018-08-09
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 

@@ -279,11 +279,11 @@ Menu.menuHelpUpdate.text=Обновления ...
 // Dialog messages
 Menu.msgDialogExpCols.text=
 Menu.msgDialogExpRows.text=
-Menu.msgOverwriteFile.text=
-Menu.msgOverwriteFiles.text=
-Menu.msgOverwriteFile1.text=
+Menu.msgOverwriteFile.text=Переписать существующий файл?
+Menu.msgOverwriteFiles.text=Переписать существующие файлы?
+Menu.msgOverwriteFile1.text=Переписать существующий файл "%"?
 Menu.msgCancelAll.text=
-Menu.btnConfirmOverwrite.text=
+Menu.btnConfirmOverwrite.text=Утвердить переписание
 Menu.msgRepeatSaveAttempt.text=
 Menu.msgErrorFileSave.text=
 Menu.msgErrorFileRename.text=
@@ -292,7 +292,7 @@ Menu.msgBreakTriggerIgnored.text=
 Menu.msgOpenLangFile.text=
 Menu.msgLangFile.text=
 Menu.msgGotoHomepage.text=
-Menu.msgTitleError.text=
+Menu.msgTitleError.text=Дефект
 Menu.msgTitleWarning.text=
 Menu.msgTitleLoadingError.text=
 Menu.msgTitleParserError.text=
@@ -757,7 +757,7 @@ LicenseEditor.msgCouldntRenameLicense.text=
 LicenseEditor.msgSureToDelete.text=
 LicenseEditor.msgSureToDiscard.text=
 LicenseEditor.msgPendingChanges.text=
-LicenseEditor.msgOverwriteExisting.text=
+LicenseEditor.msgOverwriteExisting.text=Переписать существующий текст?
 
 -----[ Preferences ]-----
 Preferences.title=Настройка структур
@@ -1072,13 +1072,13 @@ Surface.titleDiagramConflict.text=
 Surface.msgInsertionConflict.0.text=
 Surface.msgInsertionConflict.1.text=
 Surface.msgInsertionConflict.2.text=
-Surface.msgOverwriteFile.text=
-Surface.msgConfirmOverwrite.text=
+Surface.msgOverwriteFile.text=Переписать существующий файл?
+Surface.msgConfirmOverwrite.text=Утвердить переписание
 
 -----> Executor
 -----[ Control ]-----
-Control.title=
-Control.lblSpeed.text=
+Control.title=Управление выполнения
+Control.lblSpeed.text=Замедление
 Control.btnCallStack.text=
 Control.lblCallLevel.text=
 Control.chkCollectRuntimeData.text=
@@ -1108,7 +1108,7 @@ Control.lbDiscard.text=Отбросить
 Control.ttlCompName.text=
 Control.ttlIndex.text=
 Control.ttlContent.text=
-Control.msgTitleError.text=
+Control.msgTitleError.text=Дефект
 Control.msgTitleQuestion.text=
 Control.msgTitleParallel.text=
 Control.msgNoSubroutine.text=
@@ -1149,10 +1149,19 @@ Control.tblVar.header.0=
 Control.tblVar.header.2=
 
 -----[ OutputConsole ]-----
-OutputConsole.menuProps.text=
-OutputConsole.menuPropFont.text=
-OutputConsole.menuPropFontUp.text=
-OutputConsole.menuPropFontDown.text=
+OutputConsole.title=Журнал вывода
+OutputConsole.menuProp.text=Свойства
+OutputConsole.menuPropFont.text=Шрифт ...
+OutputConsole.menuPropFontUp.text=Увеличить шрифт
+OutputConsole.menuPropFontDown.text=Уменьшить шрифт
+OutputConsole.menuContent.text=Содержимое
+OutputConsole.menuContentLogCalls.text=Учесть вызовы
+OutputConsole.menuContentLogMeta.text=Учесть сообщения управления
+OutputConsole.menuContentLogMeta.tooltip=Учесть сообщения как времена начала/конца выполнения, манипулирование переменных и т.д. (стандарт)
+OutputConsole.menuContentSave.text=Сохранить журнал ...
+OutputConsole.msgOverwriteFile.text=Переписать существующий файл?
+OutputConsole.msgErrorFileSave.text=Дефект сохранив журнал: %!
+OutputConsole.msgTitleError.text=Дефект
 
 -----> Elements
 ElementNames.localizedNames.0.text=Инструкция
