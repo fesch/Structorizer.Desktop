@@ -1497,10 +1497,10 @@ public class CParser extends CPreParser
 				default:
 					// Something strange or more complicated might go on - put a remark to the log
 					this.log(this.getContent_R(_reduction,
-							// START KGU#562 2018-07-26: Issue #566
+							// START KGU#563 2018-07-26: Issue #566
 							//"Unclear occurrence of \"struct\" detected, consider reporting this issue to http://structorizer.fisch.lu:\n"),
 							"Unclear occurrence of \"struct\" detected, consider reporting this issue to " + Element.E_HOME_PAGE + ":\n"),
-							// END KGU#562 2018-07-26
+							// END KGU#563 2018-07-26
 							false);
 				}
 			}

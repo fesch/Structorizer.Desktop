@@ -34,6 +34,7 @@ package lu.fisch.turtle.adapters;
  *      Kay Gürtzig     2017.10.28      First issue for enhancement request #441 (possibility to use
  *                                      Turtleizer functionality by Java code e.g. exported from Structorizer)
  *      Kay Gürtzig     2018.01.21      Enh. #441, #443: Retrieval methods for API put deprecated
+ *      Kay Gürtzig     2018.07.30      Enh. #576: New procedure clear() added to the API
  *
  ******************************************************************************************************
  *
@@ -88,6 +89,9 @@ public class Turtleizer {
 		put("gotoy", "gotoY");
 		put("hideturtle", "hideTurtle");
 		put("showturtle", "showTurtle");
+		// START KGU#566 2018-07-20: Enh. #576
+		put("clear", "clear");
+		// END KGU#566 2018-07-20
 		put("getorientation", "getOrientation");
 		put("getx", "getX");
 		put("gety", "getY");
@@ -342,4 +346,12 @@ public class Turtleizer {
     public static double getY() {
     	return getTurtleBox().getY();
     }
+    // START KGU#566 2018-07-30: Enh. API function allowing the user algorithm to wipe the box
+    /** Wipes the Turle canvas from all content */
+    public static void clear()
+    {
+    	getTurtleBox().clear();
+    }
+    // END KGU#566 2018-07-30
+
 }

@@ -1423,9 +1423,9 @@ public class Root extends Element {
         ).start();/**/
 
         // inform updaters
-        for(int u=0; u<updaters.size(); u++)
+        for (int u = 0; u < updaters.size(); u++)
         {
-            if(updaters.get(u)!=_prohibitedUpdater)
+            if (updaters.get(u) != _prohibitedUpdater)
             {
                 updaters.get(u).update(this);
             }

@@ -19,11 +19,13 @@
  */
 package lu.fisch.structorizer.io;
 
+import java.io.File;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Abstract extended FileFilter class with file extension support
+ *      Description:    File filter class for log and text files.
  *
  ******************************************************************************************************
  *
@@ -31,47 +33,40 @@ package lu.fisch.structorizer.io;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018.06.08      First Issue
+ *      Kay Gürtzig     2018.08.09      First Issue
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      getExtension() ensures a non-null return value (in case of a missing extension,
- *      an empty string will be returned)
+ *      
  *
  ******************************************************************************************************///
 
-import java.io.File;
-
-import javax.swing.filechooser.FileFilter;
 /**
- * This is an extended abstract subclass of {@link javax.swing.filechooser.FileFilter}
- * providing two basic static methods for file name extension extraction 
+ * File filter class for log (and, more generally, text) files.
  * @author Kay Gürtzig
  */
-public abstract class ExtFileFilter extends FileFilter {
-	
-	public static String getExtension(String s) 
-	{
-		// START KGU#521 2018-06-08: Bugfix #536 We shouldn't return null in any case
-		//String ext = null;
-		String ext = "";
-		// END KGU#521 2018-06-08
-		// START KGU 2018-08-09: We must face cases where entire paths might be passed in
-		s = (new File(s)).getName();
-		// END KGU 2018-08-09
-		int i = s.lastIndexOf('.');
-		
-		if (i > 0) 
+public class LogFilter extends ExtFileFilter {
+
+	/* (non-Javadoc)
+	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
+	 */
+	@Override
+	public boolean accept(File f) {
+		if (f.isDirectory()) 
 		{
-			ext = s.substring(i+1).toLowerCase();
+			return true;
 		}
-		return ext;
+		String ext = getExtension(f);
+		return (ext.equals("log") || ext.equals("txt"));
 	}
-	
-	public static String getExtension(File f) 
-	{
-		return getExtension(f.getName());
+
+	/* (non-Javadoc)
+	 * @see javax.swing.filechooser.FileFilter#getDescription()
+	 */
+	@Override
+	public String getDescription() {
+		return "Log and text files";
 	}
 
 }

@@ -92,6 +92,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
  *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
  *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
+ *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
  *
  ******************************************************************************************************
  *
@@ -213,11 +214,11 @@ public abstract class Element {
 	// END KGU#484 2018-03-22
 
 	// Program CONSTANTS
-	// START KGU#562 2018-07-26: Issue #566 - we need a central homepage URL
+	// START KGU#563 2018-07-26: Issue #566 - we need a central homepage URL
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
-	// END KGU#562 2018-007-26
-	public static final String E_VERSION = "3.28-06";
+	// END KGU#563 2018-007-26
+	public static final String E_VERSION = "3.28-07";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1677,7 +1678,10 @@ public abstract class Element {
 	 */
 	public boolean isConditionedBreakpoint()
 	{
-		return this.breakpoint && this.breakTriggerCount > 0;
+		// START KGU#570 2018-08-17: Bugfix #579 Dynamic triggers hadn't been detected (i.e. if set after debugging started)
+		//return this.breakpoint && this.breakTriggerCount > 0;
+		return this.breakpoint && this.getBreakTriggerCount() > 0;
+		// END KGU#570 2018-08-17
 	}
 	
 	/**
@@ -1691,8 +1695,8 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Gets the current 
-	 * @return
+	 * Gets the current break trigger value for this element
+	 * @return either the permanent or the temporary (runtime) trigger value (0 if there isn't any)
 	 */
 	public int getBreakTriggerCount()
 	{
@@ -2801,7 +2805,10 @@ public abstract class Element {
 	 */
 	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo)
 	{
-		HashMap<String, String> components = new HashMap<String, String>();
+		// START KGU#526 2018-08-01: Enh. #423 - effort to make the component order more stable (at higher costs, though)
+		//HashMap<String, String> components = new HashMap<String, String>();
+		HashMap<String, String> components = new LinkedHashMap<String, String>();
+		// END KGU#526 2018-08-01
 		int posBrace = _text.indexOf("{");
 		if (posBrace < 0) {
 			return null;

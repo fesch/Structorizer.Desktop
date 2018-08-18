@@ -37,7 +37,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as workaround for lacking DPI awareness
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling done by GUIScaler
- *      Kay Gürtzig     2018.03-21      Logger introduced, two file reading sequences extracted to method readTextFile()
+ *      Kay Gürtzig     2018.03.21      Logger introduced, two file reading sequences extracted to method readTextFile()
+ *      Kay Gürtzig     2018.07.30      Bugfix #571 - about -> license also showed the changelog.txt
  *
  ******************************************************************************************************
  *
@@ -284,7 +285,8 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		BufferedReader in = null;
 		try
 		{
-			in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("changelog.txt"),"UTF8"));
+			// KGU#567 2018-07-30: Bugfix #571 - argument has to be used instead of hard-coded name.
+			in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName), "UTF8"));
 			String str;
 			while ((str = in.readLine()) != null)
 			{

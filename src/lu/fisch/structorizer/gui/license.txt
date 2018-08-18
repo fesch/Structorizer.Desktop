@@ -2,7 +2,7 @@ Structorizer licenses file
 --------------------------
 
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009 Bob Fisch
 
@@ -14,7 +14,8 @@ Structorizer licenses file
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License for more details:
+    <https://github.com/fesch/Structorizer.Desktop/blob/master/LICENSE>
 
     You should have received a copy of the GNU General Public License
     along with this program. If not, see <http://www.gnu.org/licenses/>.

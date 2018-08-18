@@ -68,6 +68,7 @@
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.16      Element name place holders introduced
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2018.08.03      Enh. #577: OutputConsole keys renamed and new messages added
  *
  ******************************************************************************************************
  *
@@ -731,10 +732,15 @@ Control.tblVar.header.0=
 Control.tblVar.header.2=
 
 -----[ OutputConsole ]-----
-OutputConsole.menu.text=Impostazione
-OutputConsole.menuFont.text=Caratteri ...
-OutputConsole.menuFontUp.text=Aumenta caratteri
-OutputConsole.menuFontDown.text=Diminuisci caratteri
+OutputConsole.menuProp.text=Impostazione
+OutputConsole.menuPropFont.text=Caratteri ...
+OutputConsole.menuPropFontUp.text=Aumenta caratteri
+OutputConsole.menuPropFontDown.text=Diminuisci caratteri
+OutputConsole.menuContent.text=Contenti
+OutputConsole.menuContentLogCalls.text=Protocollare chiamati
+OutputConsole.menuContentLogMeta.text=Protocollare metainformazioni
+OutputConsole.menuContentLogMeta.tooltip=Protocolare informazioni como momento de partenza/terminazione, manipulazioni di variabili ecc. (standard)
+OutputConsole.menuContentSave.text=Salva ...
 
 -----> Elements
 ElementNames.localizedNames.0.text=Istruzione
