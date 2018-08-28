@@ -20,7 +20,7 @@ set -e
 ################################################################################
 
 # check for jar in PATH
-jar 2>/dev/null 1&>2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
+jar 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
 
 # check for correct Java version
 JAVAVER=$(java -version 2>&1)
