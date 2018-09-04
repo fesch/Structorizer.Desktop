@@ -319,8 +319,7 @@ public class Structorizer
         // END KGU#440 2017-11-06
         mainform.diagram.redraw();
 
-
-		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+                if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
 
 			System.setProperty("apple.laf.useScreenMenuBar", "true");

@@ -1,5 +1,5 @@
 /*
-    THIS FILE SHOULD ALWAYS BE A COPY OF THE FILE, BUT *WITHOUT* THE APPLE PART
+    THIS FILE SHOULD ALWAYS BE AN EXACT COPY OF THE FILE: 
         
         Structorizer.java
         
@@ -325,7 +325,7 @@ public class Structorizer
         // END KGU#440 2017-11-06
         mainform.diagram.redraw();
 
-                /*
+
 		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
 
