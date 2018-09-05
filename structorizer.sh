@@ -24,7 +24,13 @@ set -e
 DIR="$(dirname "$(readlink -f "$0")")"
 
 # check for jar in PATH
-jar 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
+#jar 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
+JAR=$(find $DIR/Structorizer.app/ | grep Structorizer.jar | wc -l)
+if [ $JAR -lt 1 ]
+then
+	echo "Structorizer.jar not found or sub-directory $DIR/Structorizer.app not present."
+	exit
+fi
 
 # check for correct Java version
 JAVAVER=$(java -version 2>&1)
