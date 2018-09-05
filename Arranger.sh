@@ -16,8 +16,12 @@ set -e
 #      Bob Fisch                     2017.??.??    Check for Java > 8
 #      Rolf Schmidt                  2018.06.03    fixed version check for OpenJDK 10+, Java 8
 #      Simon Sobisch                 2018.06.03    Check for jar, tweaked version checks
+#      Bob Fisch                     2018.09.05    get correct dir if symlinked
 #
 ################################################################################
+
+# get dir of symblic
+DIR="$(dirname "$(readlink -f "$0")")"
 
 # check for jar in PATH
 jar 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
@@ -41,4 +45,4 @@ fi
 
 # actual start
 #echo "Your Java Version is $VERSION, all fine."
-java -cp Structorizer.app/Contents/Java/Structorizer.jar lu.fisch.structorizer.arranger.Arranger
+java -cp $DIR/Structorizer.app/Contents/Java/Structorizer.jar lu.fisch.structorizer.arranger.Arranger
