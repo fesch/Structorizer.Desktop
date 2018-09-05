@@ -17,20 +17,15 @@ set -e
 #      Rolf Schmidt                  2018.06.03    fixed version check for OpenJDK 10+, Java 8
 #      Simon Sobisch                 2018.06.03    Check for jar, tweaked version checks
 #      Bob Fisch                     2018.09.05    get correct dir if symlinked
+#      Simon Sobisch                 2018.09.05    Check for java instead of jar
 #
 ################################################################################
 
 # get dir of symblic
 DIR="$(dirname "$(readlink -f "$0")")"
 
-# check for jar in PATH
-java 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
-JAR=$(find $DIR/Structorizer.app/ | grep Structorizer.jar | wc -l)
-if [ $JAR -lt 1 ]
-then
-	echo "Structorizer.jar not found or sub-directory $DIR/Structorizer.app not present."
-	exit
-fi
+# check for java in PATH
+java 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'java not found in $PATH' && exit $rc); fi)
 
 # check for correct Java version
 JAVAVER=$(java -version 2>&1)
@@ -49,6 +44,13 @@ then
   exit 1
 fi
 
+# CHECKME: Do we need this?
+if [ ! test -f "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" ]
+then
+	echo "$DIR/Structorizer.app/Contents/Java/Structorizer.jar not found."
+	exit
+fi
+
 # actual start
 #echo "Your Java Version is $VERSION, all fine."
-java -jar $DIR/Structorizer.app/Contents/Java/Structorizer.jar "$@"
+java -jar "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" "$@"
