@@ -23,8 +23,10 @@ set -e
 # get dir of symblic
 DIR="$(dirname "$(readlink -f "$0")")"
 
-# check for jar in PATH
+# check if JAVA binary is found
 java 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'JAVA not found in $PATH' && exit $rc); fi)
+
+# check for jar in PATH
 JAR=$(find $DIR/Structorizer.app/ | grep Structorizer.jar | wc -l)
 if [ $JAR -lt 1 ]
 then
