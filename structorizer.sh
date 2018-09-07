@@ -27,10 +27,9 @@ DIR="$(dirname "$(readlink -f "$0")")"
 java 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'JAVA not found in $PATH' && exit $rc); fi)
 
 # check for jar in PATH
-JAR=$(find $DIR/Structorizer.app/ | grep Structorizer.jar | wc -l)
-if [ $JAR -lt 1 ]
+if [ ! test -f "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" ]
 then
-	echo "Structorizer.jar not found or sub-directory $DIR/Structorizer.app not present."
+	echo "$DIR/Structorizer.app/Contents/Java/Structorizer.jar not found."
 	exit
 fi
 
