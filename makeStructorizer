@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 ################################################################################
 #
@@ -42,6 +42,10 @@ find bin -name '*.class' -exec rm {} \;
 echo Changing into src directory
 pushd src
 
+# remove apple support
+mv Structorizer.java Structorizer.apple
+mv Structorizer.clean Structorizer.java
+
 # compile the generator classes (non-dependant classes)
 echo Compiling non-dependant classes
 javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar lu/fisch/structorizer/generators/*.java
@@ -67,6 +71,10 @@ cp -R lu/fisch/structorizer/locales/*.txt ../bin/lu/fisch/structorizer/locales/
 cp -R lu/fisch/structorizer/generators/*.txt ../bin/lu/fisch/structorizer/generators/
 cp -R goldengine/java/*.cgt ../bin/goldengine/java/
 cp -r goldengine/java/*.grm ../bin/goldengine/java/
+
+# put back apple support
+mv Structorizer.java Structorizer.clean
+mv Structorizer.apple Structorizer.java
 
 # changing into binary directory
 echo Changing into binary directory

@@ -63,6 +63,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *      Kay Gürtzig     2018.02.15      Issue #508: Workaround for large-scaled collapse symbols eclipsing the text
  *      Kay Gürtzig     2018.07.12      Bugfix #557: potential endless loop in isDeclaration(String)
+ *      Bob Fisch       2018.09.08      Reducing top padding from E_PADDING/2 to E_PADDING/3
  *
  ******************************************************************************************************
  *
@@ -288,7 +289,7 @@ public class Instruction extends Element {
 					true);
 			commentHeight = commentRect.bottom - commentRect.top;
 		}
-		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fm.getHeight()*/;
+		int yTextline = _top_left.top + (Element.E_PADDING / 3) + commentHeight/* + fm.getHeight()*/;
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
