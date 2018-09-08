@@ -188,7 +188,7 @@ public class Instruction extends Element {
 				rect.right = lineWidth;
 			}
 		}
-		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * fm.getHeight();
+		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * (fm.getLeading()+fm.getAscent()); //fm.getHeight();
 		// START KGU#227 2016-07-30: Enh. #128
 		rect.bottom += commentHeight;
 		// END KGU#227 2016-07-30
@@ -289,7 +289,7 @@ public class Instruction extends Element {
 					true);
 			commentHeight = commentRect.bottom - commentRect.top;
 		}
-		int yTextline = _top_left.top + (Element.E_PADDING / 3) + commentHeight/* + fm.getHeight()*/;
+		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fm.getHeight()*/;
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
@@ -327,7 +327,7 @@ public class Instruction extends Element {
 					myrect.left + leftPadding + _element.getTextDrawingOffset(),
 					// START KGU#227 2016-07-30: Enh. #128
 					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
-					yTextline += fm.getHeight(),
+					yTextline += (fm.getLeading()+fm.getAscent()), //fm.getHeight(),
 					// END KGU#227 2016-07-30
 					text,
 					_element
@@ -385,19 +385,19 @@ public class Instruction extends Element {
 		// END KGU#477 2017-12-06
 		
 		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
-        //draw(_canvas, _top_left, getText(false), this);
-		// START KGU#477 2017-12-06: Enh. #487
-        //if (isCollapsed() && getText(false).count() > 2)
-        if (isCollapsed(true) && getText(false).count() > 2)
-        // END KGU#477 2017-12-06
-        {
-        	draw(_canvas, _top_left, getCollapsedText(), this);
-        }
-        else
-        {
-            draw(_canvas, _top_left, getText(false), this);
-        }
-        // END KGU#124 2016-01-03
+                //draw(_canvas, _top_left, getText(false), this);
+                        // START KGU#477 2017-12-06: Enh. #487
+                //if (isCollapsed() && getText(false).count() > 2)
+                if (isCollapsed(true) && getText(false).count() > 2)
+                // END KGU#477 2017-12-06
+                {
+                        draw(_canvas, _top_left, getCollapsedText(), this);
+                }
+                else
+                {
+                    draw(_canvas, _top_left, getText(false), this);
+                }
+                // END KGU#124 2016-01-03
 	}
 	
 	// START KGU#477 2017-12-06: Enh. #487
