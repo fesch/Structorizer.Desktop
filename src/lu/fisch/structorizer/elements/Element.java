@@ -2052,7 +2052,12 @@ public abstract class Element {
 
 	public static void setFont(Font _font)
 	{
-		font=_font;
+		font = _font;
+        // START KGU#572 2018-09-09: Issue #508 
+        // set the padding relative to the used font size
+        // by using a padding of 20 px as reference with a default font of 12 pt
+        E_PADDING = (int)(20./12 * font.getSize());
+        // END KGU#572 2018-09-08: Issue #508
 	}
 
 	/************************
@@ -3208,7 +3213,7 @@ public abstract class Element {
 		// smaller font
 		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize() * 2 / 3);
 		FontMetrics fm = _canvas.getFontMetrics(smallFont);
-		int fontHeight = fm.getHeight();
+		int fontHeight = fm.getHeight();	// Here we don't reduce to fm.getLeading() + fm.getAscend()
 		int extraHeight = this.isBreakpoint() ? fontHeight/2 : 0;
 		// backup the original font
 		Font backupFont = _canvas.getFont();

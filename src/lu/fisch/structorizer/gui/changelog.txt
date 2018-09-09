@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-08 (2018-09-09)
+Current development version: 3.28-08 (2018-09-10)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -83,6 +83,7 @@ Current development version: 3.28-08 (2018-09-09)
 - 08: Bugfix #583: Shell scripts corrected (Java tests) [K. Brodowski, S. Sobisch]
 - 08: Enh. #585: Debian install packages now derived via scripts [K. Brodowski]
 - 08: Fix #508: Padding of diagram elements now proportional to font size [2]
+- 08: Bugfix #512: Arranger zoom could compromise the diagram size by rounding <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
@@ -1146,4 +1147,3 @@ Version 1.01 (2006-09-01)
 - Added click-to-open support, so you now
   only need to double-click an NSD-File to
   open it immediately. [FISRO]
-
