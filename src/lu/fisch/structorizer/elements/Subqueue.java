@@ -141,7 +141,7 @@ public class Subqueue extends Element implements IElementSequence {
 			// END KGU#136 2016-03-01
 			rect0.right = 2*Element.E_PADDING;
 			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-			rect0.bottom = fm.getHeight() + 2*(Element.E_PADDING/2);
+			rect0.bottom = (fm.getLeading()+fm.getAscent()) + 2*(Element.E_PADDING/2);
 
 		}
 		
@@ -208,7 +208,7 @@ public class Subqueue extends Element implements IElementSequence {
 			
 			canvas.setColor(Color.BLACK);
 			canvas.writeOut(_top_left.left+((_top_left.right-_top_left.left) / 2) - (_canvas.stringWidth("\u2205") / 2),
-							_top_left.top +((_top_left.bottom-_top_left.top) / 2) + (fm.getHeight() / 2),
+							_top_left.top +((_top_left.bottom-_top_left.top) / 2) + ((fm.getLeading()+fm.getAscent()) / 2),
 							"\u2205"
 							);  	
 

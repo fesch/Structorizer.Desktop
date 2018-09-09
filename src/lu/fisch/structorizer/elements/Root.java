@@ -128,6 +128,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
  *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers#
  *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly)
+ *      Bob Fisch       2018.09.08      Issue #508: Why is the element padding constant (and not proportional to the font size)? 
  *      
  ******************************************************************************************************
  *
@@ -764,7 +765,9 @@ public class Root extends Element {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
+                adjustPadding();
+                
+                // START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0.copy();
 		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
 		//pt0Sub.x = 0;
@@ -1389,6 +1392,15 @@ public class Root extends Element {
         canvas.setFont(Element.getFont()); //?
         return this.prepareDraw(canvas);
     }
+    
+    private void adjustPadding()
+    {
+        // START BOB## 2018-09-08: Issue #508 
+        // set the padding relative to the used font size
+        // by using a padding of 20px as reference with a default font of 10pt
+        Element.E_PADDING = (int)(20./10*Element.font.getSize());
+        // END BOB## 2018-09-08: Issue #508
+    }
 
     /**
      * Draws this diagram at anchor position {@code _point} (upper left corner) on {@link Graphics}
@@ -1401,6 +1413,8 @@ public class Root extends Element {
      */
     public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater)
     {
+        adjustPadding();
+        
         setDrawPoint(_point);
 
         /*

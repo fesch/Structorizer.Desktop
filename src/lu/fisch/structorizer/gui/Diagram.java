@@ -1310,7 +1310,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	((JViewport) this.getParent()).revalidate();
 
     	//redraw(this.getGraphics());
-    	this.repaint();
+        this.repaint();
     	
     	// START KGU#430 2017-10-10: Issue #432
     	Element.E_VARHIGHLIGHT = wasHighLight;
