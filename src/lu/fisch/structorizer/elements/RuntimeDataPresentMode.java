@@ -48,9 +48,9 @@ public enum RuntimeDataPresentMode {
 	DEEPCOVERAGE("deep test coverage"),
 	EXECCOUNTS("execution counts"),
 	EXECSTEPS_LIN("done operations, lin."),
-	EXECSTEPS_LOG("done operations, log."),
+	EXECSTEPS_LOG("done operations, logar."),
 	TOTALSTEPS_LIN("total operations, lin."),
-	TOTALSTEPS_LOG("total operations, log.");
+	TOTALSTEPS_LOG("total operations, logar.");
 	
 	private String text;
 	private RuntimeDataPresentMode(String _caption)

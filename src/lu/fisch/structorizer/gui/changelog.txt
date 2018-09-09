@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-07 (2018-08-18)
+Current development version: 3.28-08 (2018-09-09)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -79,6 +79,10 @@ Current development version: 3.28-07 (2018-08-18)
       new menu item to save the execution log to file (if copy & paste fails) <2>
 - 07: Bugfix #579 - Conditional breakpoints didn't always show correctly <2>
 - 07: Bugfix #581 - To start Structorizer with a list of files failed. <2>
+- 08: Several locale updates <2>
+- 08: Bugfix #583: Shell scripts corrected (Java tests) [K. Brodowski, S. Sobisch]
+- 08: Enh. #585: Debian install packages now derived via scripts [K. Brodowski]
+- 08: Fix #508: Padding of diagram elements now proportional to font size [2]
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
