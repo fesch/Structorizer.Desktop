@@ -63,6 +63,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *      Kay Gürtzig     2018.02.15      Issue #508: Workaround for large-scaled collapse symbols eclipsing the text
  *      Kay Gürtzig     2018.07.12      Bugfix #557: potential endless loop in isDeclaration(String)
+ *      Bob Fisch       2018.09.08      Reducing top padding from E_PADDING/2 to E_PADDING/3
  *
  ******************************************************************************************************
  *
@@ -187,7 +188,7 @@ public class Instruction extends Element {
 				rect.right = lineWidth;
 			}
 		}
-		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * fm.getHeight();
+		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * (fm.getLeading()+fm.getAscent()); //fm.getHeight();
 		// START KGU#227 2016-07-30: Enh. #128
 		rect.bottom += commentHeight;
 		// END KGU#227 2016-07-30
@@ -293,7 +294,7 @@ public class Instruction extends Element {
 		
 		// START KGU#480 2018-01-21: Enh. #490
 		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
-			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.getRoot(_element).hightlightVars), "\n");
+			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
 		// START KGU#494 2018-02-15: Enh. #408
@@ -326,7 +327,7 @@ public class Instruction extends Element {
 					myrect.left + leftPadding + _element.getTextDrawingOffset(),
 					// START KGU#227 2016-07-30: Enh. #128
 					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
-					yTextline += fm.getHeight(),
+					yTextline += (fm.getLeading()+fm.getAscent()), //fm.getHeight(),
 					// END KGU#227 2016-07-30
 					text,
 					_element
@@ -384,19 +385,19 @@ public class Instruction extends Element {
 		// END KGU#477 2017-12-06
 		
 		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
-        //draw(_canvas, _top_left, getText(false), this);
-		// START KGU#477 2017-12-06: Enh. #487
-        //if (isCollapsed() && getText(false).count() > 2)
-        if (isCollapsed(true) && getText(false).count() > 2)
-        // END KGU#477 2017-12-06
-        {
-        	draw(_canvas, _top_left, getCollapsedText(), this);
-        }
-        else
-        {
-            draw(_canvas, _top_left, getText(false), this);
-        }
-        // END KGU#124 2016-01-03
+                //draw(_canvas, _top_left, getText(false), this);
+                        // START KGU#477 2017-12-06: Enh. #487
+                //if (isCollapsed() && getText(false).count() > 2)
+                if (isCollapsed(true) && getText(false).count() > 2)
+                // END KGU#477 2017-12-06
+                {
+                        draw(_canvas, _top_left, getCollapsedText(), this);
+                }
+                else
+                {
+                    draw(_canvas, _top_left, getText(false), this);
+                }
+                // END KGU#124 2016-01-03
 	}
 	
 	// START KGU#477 2017-12-06: Enh. #487

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Structorizer" default="default" basedir=".">
+<!-- <project name="Structorizer" default="default" basedir="."> -->
+<project name="Structorizer" basedir=".">
     <description>Build Structorizer.app</description>
 
 	<target name="Structorizer">
@@ -14,8 +15,8 @@
 	        name="Structorizer"
 	        displayname="Structorizer"
 	        identifier="lu.fisch.Structorizer"
-	        shortversion="3.24-05"
-	        version="3.24-05"
+	        shortversion="3.28-07"
+	        version="3.28-07"
 	        icon="icons/Structorizer.icns"
 	        mainclassname="Structorizer"
 	        copyright="Bob Fisch"
@@ -30,14 +31,20 @@
 	      <arch name="x86_64"/>
 	      <arch name="i386"/>
 	
-	      <!-- Register the application as an editor for PNG and JPG files -->
-	      <bundledocument extensions=".nsd"
+	      <!-- Register the application as an editor for NSD files -->
+	      <bundledocument extensions="nsd"
 	        icon="Structorizer.icns"
 	        name="Structorizer File"
 	        role="editor">
 	      </bundledocument>
 	
-	
+	      <!-- Register the application as an editor for ARR/ARRZ files -->
+	      <bundledocument extensions="arr,arrz"
+	        icon="Structorizer.icns"
+	        name="Arranger File"
+	        role="editor">
+	      </bundledocument>
+		
 	      <!-- Register the application with your custom format, 
 	      bundled as a package -->
 	<!--      <bundledocument extensions="custom"

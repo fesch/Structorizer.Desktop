@@ -90,11 +90,18 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.01.21      Enh. #490: Methods for replacement of DiagramController aliases
  *      Kay Gürtzig     2018.02.02      Bugfix #501: Methods setAliasText() corrected (Case and Parallel elements)
  *      Kay Gürtzig     2018.07.02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
+ *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
+ *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
+ *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
+ *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2018-07-20: Enh.
+ *      - splitRecordInitializer can now also associate bare initializers (i.e. without explicit component names),
+ *        provided that it obtains a valid record type entry as parameter.
  *      2016-07-28: Bugfix #210 (KGU#225)
  *      - Before this fix the execution count values were held locally in the Elements. Without recursion,
  *        this wasn't a problem. But for recursive algorithms, particularly for spawning recursion as
@@ -208,7 +215,11 @@ public abstract class Element {
 	// END KGU#484 2018-03-22
 
 	// Program CONSTANTS
-	public static final String E_VERSION = "3.28-05";
+	// START KGU#563 2018-07-26: Issue #566 - we need a central homepage URL
+	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
+	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
+	// END KGU#563 2018-007-26
+	public static final String E_VERSION = "3.28-08";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -290,12 +301,12 @@ public abstract class Element {
 	" - Pat Niemeyer <pat@pat.net>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
-	// START KGU#494 2018-02-14: Enh. #508
-	/** basic padding value for scaling with scale_factor */
-	public static final int E_PADDING_BASE = 20;
-	// END KGU#494 2018-02-14
 
 	// some static quasi-constants
+	// START KGU#494 2018-09-10: Enh. #508
+	/** Mode for fixed i.e. font-independent E_PADDING (= standard behaviour before 3.28-07) */
+	public static boolean E_PADDING_FIX = false;
+	// END KGU#494 2018-09-10
 	/** Padding between e.g. the content of elements and their borders */
 	protected static int E_PADDING = 20;
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
@@ -954,7 +965,7 @@ public abstract class Element {
 		if (getText(false).count() > 0) {
 			StringList myText = getText(false);
 			if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
-				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 			}
 			sl.add(myText.get(0));
 		}
@@ -1668,7 +1679,10 @@ public abstract class Element {
 	 */
 	public boolean isConditionedBreakpoint()
 	{
-		return this.breakpoint && this.breakTriggerCount > 0;
+		// START KGU#570 2018-08-17: Bugfix #579 Dynamic triggers hadn't been detected (i.e. if set after debugging started)
+		//return this.breakpoint && this.breakTriggerCount > 0;
+		return this.breakpoint && this.getBreakTriggerCount() > 0;
+		// END KGU#570 2018-08-17
 	}
 	
 	/**
@@ -1682,8 +1696,8 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Gets the current 
-	 * @return
+	 * Gets the current break trigger value for this element
+	 * @return either the permanent or the temporary (runtime) trigger value (0 if there isn't any)
 	 */
 	public int getBreakTriggerCount()
 	{
@@ -2039,7 +2053,18 @@ public abstract class Element {
 
 	public static void setFont(Font _font)
 	{
-		font=_font;
+		font = _font;
+        // START KGU#572 2018-09-10: Issue #508
+		if (!E_PADDING_FIX) {
+			// set the padding relative to the used font size
+			// by using a padding of 20 px as reference with a default font of 12 pt
+			E_PADDING = (int)(20./12 * font.getSize());
+		}
+		else {
+			// Adhere to the old 
+			E_PADDING = 20;
+		}
+        // END KGU#572 2018-09-10: Issue #508
 	}
 
 	/************************
@@ -2782,13 +2807,20 @@ public abstract class Element {
 	 * mapping the component names to the corresponding value strings.
 	 * If there is text following the closing brace it will be mapped to key "§TAIL§".
 	 * If the typename is given then it will be provided mapped to key "§TYPENAME§".
+	 * If {@code _typeInfo} is given and either {@code typename} was omitted or matches
+	 * name of {@code _typeInfo} then unprefixed component values will be associated
+	 * to the component names of the type in order of occurrence unless an explicit
+	 * component name prefix occurs. 
 	 * @param _text - the initializer expression with or without typename but with braces.
+	 * @param _typeInfo - the type map entry for the corresponding record type if available
 	 * @return the component map (or null if there are no braces).
 	 */
-	public static HashMap<String, String> splitRecordInitializer(String _text)
+	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo)
 	{
-		// Version 
-		HashMap<String, String> components = new HashMap<String, String>();
+		// START KGU#526 2018-08-01: Enh. #423 - effort to make the component order more stable (at higher costs, though)
+		//HashMap<String, String> components = new HashMap<String, String>();
+		HashMap<String, String> components = new LinkedHashMap<String, String>();
+		// END KGU#526 2018-08-01
 		int posBrace = _text.indexOf("{");
 		if (posBrace < 0) {
 			return null;
@@ -2805,6 +2837,15 @@ public abstract class Element {
 		else if (!(tail = tail.substring(1).trim()).isEmpty()) {
 			components.put("§TAIL§", tail);
 		}
+		// START KGU#559 2018-07-20: Enh. #563 In case of a given type, we may guess the target fields
+		boolean guessComponents = _typeInfo != null && _typeInfo.isRecord()
+				&& (typename.isEmpty() || typename.equals(_typeInfo.typeName));
+		String[] compNames = null;
+		if (guessComponents) {
+			Set<String> keys = _typeInfo.getComponentInfo(true).keySet();
+			compNames = keys.toArray(new String[keys.size()]);
+		}
+		// END KGU#559 2018-07-20
 		for (int i = 0; i < parts.count()-1; i++) {
 			StringList tokens = splitLexically(parts.get(i), true);
 			int posColon = tokens.indexOf(":");
@@ -2813,8 +2854,16 @@ public abstract class Element {
 				String expr = tokens.subSequence(posColon + 1, tokens.count()).concatenate().trim();
 				if (Function.testIdentifier(name, null)) {
 					components.put(name, expr);
+					// START KGU#559 2018-07-20: Enh. #563 Stop associating from type as soon as an explicit name is given
+					guessComponents = false;
+					// END KGU#559 2018-07-20
 				}
 			}
+			// START KGU#559 2018-07-20: Enh. #563
+			else if (guessComponents && i < compNames.length) {
+				components.put(compNames[i], parts.get(i));
+			}
+			// END KGU#559 2018-07-20
 		}
 		return components;
 	}
@@ -2918,7 +2967,7 @@ public abstract class Element {
 		{
 			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
 			//if (root.hightlightVars==true)
-			if (root.hightlightVars && !root.isSwitchTextCommentMode())
+			if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode())
 			// END KGU#226 2016-07-29
 			{
 				StringList parts = Element.splitLexically(_text, true);
@@ -3171,7 +3220,7 @@ public abstract class Element {
 		// smaller font
 		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize() * 2 / 3);
 		FontMetrics fm = _canvas.getFontMetrics(smallFont);
-		int fontHeight = fm.getHeight();
+		int fontHeight = fm.getHeight();	// Here we don't reduce to fm.getLeading() + fm.getAscend()
 		int extraHeight = this.isBreakpoint() ? fontHeight/2 : 0;
 		// backup the original font
 		Font backupFont = _canvas.getFont();

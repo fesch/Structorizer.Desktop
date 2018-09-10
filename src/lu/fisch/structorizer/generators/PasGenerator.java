@@ -24,7 +24,7 @@ package lu.fisch.structorizer.generators;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class generates PAscal code.
+ *      Description:    This class generates Pascal code.
  *
  ******************************************************************************************************
  *
@@ -75,6 +75,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.09.25      Enh. #388, #423: Positioning of declaration comments revised
  *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
  *      Kay Gürtzig         2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
+ *      Kay Gürtzig         2018.07.20      Enh. #563: support for simplified record initializers
+ *      Kay Gürtzig         2018.07.22      Bugfix #564: defects with nested record/array initializers mended
  *
  ******************************************************************************************************
  *
@@ -109,6 +111,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
@@ -213,6 +216,10 @@ public class PasGenerator extends Generator
 	
 	/************ Code Generation **************/
 	
+	// START KGU#559/KGU#560 2018-07-22: Enh. #563, bugfix #564
+	private Map<String,TypeMapEntry> typeMap;
+	// END KGU#559/KGU#560 2018-07-22
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
@@ -552,14 +559,25 @@ public class PasGenerator extends Generator
 						// START KGU#504 2018-03-13 A: Bugfix #520, #521
 						if (!this.suppressTransformation) {
 						// END KGU#504 2018-03-13 A
+							String potTypeName = expr.substring(0,  posBrace);
 							isArrayOrRecordInit = posBrace == 0 && expr.endsWith("}");	// only true at this moment on array init
 							if (isArrayOrRecordInit)
 							{
+								// START KGU#560 2018-07-22: Bugfix #564 - with C-like declarations, the index range must be wiped off
+								if (varName.contains("[") && Instruction.isDeclaration(line)) {
+									varName = varName.substring(0, varName.indexOf('['));
+								}
+								// END KGU#560 2018-07-22
 								generateArrayInit(varName, expr, _indent, null, isDisabled);
 							}
-							else if (posBrace > 0 && Function.testIdentifier(expr.substring(0,  posBrace), ".") && expr.endsWith("}"))
+							else if (posBrace > 0 && Function.testIdentifier(potTypeName, ".") && expr.endsWith("}"))
 							{
-								generateRecordInit(varName, expr, _indent, false, isDisabled);
+								// START KGU#559 2018-07-20: Enh. #563 - smarter record initializer interpretation
+								//generateRecordInit(varName, expr, _indent, false, isDisabled, null);
+								Root root = Element.getRoot(_inst);
+								TypeMapEntry recType = typeMap.get(":" + potTypeName);
+								generateRecordInit(varName, expr, _indent, false, isDisabled, recType);
+								// END KGU#559 2018-07-20
 								isArrayOrRecordInit = true;
 							}
 						// START KGU#504 2018-03-13 B: Bugfix #520, #521
@@ -679,9 +697,11 @@ public class PasGenerator extends Generator
 			//		_indent.length());
 			for (int ix = 0; ix < elements.count(); ix++)
 			{
-				addCode(_varName /*+ "indexBase_" + baseName + " + "*/ + ix + "] := " + 
-						elements.get(ix) + ";",
-						_indent, _isDisabled);
+				// START KGU#560 2018-07-22: Bugfix #564 - initializers must be handled recursively!
+				//addCode(_varName /*+ "indexBase_" + baseName + " + "*/ + ix + "] := " + 
+				//		_elements.get(ix) + ";",
+				//		_indent, _isDisabled);
+				generateAssignment(_varName + ix + "]", elements.get(ix), _indent, _isDisabled);
 			}
 			// END KGU#332 2017-01-30
 		}
@@ -695,9 +715,16 @@ public class PasGenerator extends Generator
 	 * @param _indent - current indentation string
 	 * @param _forConstant - whether this initializer is needed for a constant (a variable otherwise)
 	 * @param _isDisabled - whether the source element is disabled (means to comment out the code)
+	 * @param _typeEntry - used for component name retrieval if the initializer omits them (may be null)
 	 */
-	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled) {
-		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
+	// START KGU#559 2018-07-20: Enh. #563 - loosened record initializer syntax
+	//private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled)
+	//{
+	//	HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
+	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled, TypeMapEntry _typeEntry)
+	{
+		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry);
+	// END KGU#559 2018-07-20
 		if (_forConstant) {
 			String typeName = components.get("§TYPENAME§");
 			String indentPlus1 = _indent + this.getIndent();
@@ -718,15 +745,54 @@ public class PasGenerator extends Generator
 			{
 				String compName = comp.getKey();
 				if (!compName.startsWith("§")) {
-					addCode(_varName + "." + comp.getKey() + " := " + comp.getValue() + ";",
-							_indent, _isDisabled);
+					// START KGU#560 2018-07-22: Enh. #564 - on occasion of #563, we fix recursive initializers, too
+					//addCode(_varName + "." + compName + " := " + comp.getValue() + ";",
+					//		_indent, _isDisabled);
+					generateAssignment(_varName + "." + compName, comp.getValue(), _indent, _isDisabled);
+					// END KGU#560 2018-07-22
 				}
 			}
 		}
 	}
 	// END KGU#388 2017-09-20
    
-    @Override
+	// START KGU#560 2018-07-22: Bugfix #564 Array initializers have to be decomposed if not occurring in a declaration
+	/**
+	 * Generates code that decomposes possible initializers into a series of separate assignments if
+	 * there no compact translation, otherwise just adds appropriate transformed code.
+	 * @param _target - the left side of the assignment (without modifiers!)
+	 * @param _expr - the expression in Structorizer syntax
+	 * @param _indent - current indentation level (as String)
+	 * @param _isDisabled - indicates whether the code is o be commented out
+	 */
+    private void generateAssignment(String _target, String _expr, String _indent, boolean _isDisabled) {
+		if (_expr.contains("{") && _expr.endsWith("}")) {
+			StringList pureExprTokens = Element.splitLexically(_expr, true);
+			pureExprTokens.removeAll(" ");
+			int posBrace = pureExprTokens.indexOf("{");
+			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
+				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+					// Record initializer
+					String typeName = pureExprTokens.get(0);							
+					TypeMapEntry recType = this.typeMap.get(":"+typeName);
+					this.generateRecordInit(_target, _expr, _indent, false, _isDisabled, recType);
+				}
+				else {
+					// Array initializer
+					this.generateArrayInit(_target, _expr, _indent, null, _isDisabled);
+				}
+			}
+			else {
+				addCode(_target + " := " + transform(_expr) + ";", _indent, _isDisabled);
+			}
+		}
+		else {
+			addCode(_target + " := " + transform(_expr) + ";", _indent, _isDisabled);
+		}
+	}
+	// END KGU#560 2018-07-22
+
+	@Override
     protected void generateCode(Alternative _alt, String _indent)
     {
     	boolean isDisabled = _alt.isDisabled();
@@ -1362,6 +1428,9 @@ public class PasGenerator extends Generator
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
+        // START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
+		typeMap = _root.getTypeInfo();
+		// END KGU#261 2017-01-30
 		// START KGU#388 2017-09-20: Enh. #423
 		StringList complexConsts = new StringList();
 		// END KGU#388 2017-09-20
@@ -1533,7 +1602,7 @@ public class PasGenerator extends Generator
 				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
 				//code.add(indentPlus1 + constEntry.getKey() + " = " + transform(constEntry.getValue()) + ";");
 				String expr = transform(constEntry.getValue());
-				TypeMapEntry constType = _root.getTypeInfo().get(constEntry.getKey()); 
+				TypeMapEntry constType = typeMap.get(constEntry.getKey()); 
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
 						code.add(_indent + "const");
@@ -1557,7 +1626,7 @@ public class PasGenerator extends Generator
 							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType, null), false);
 						}
 						else {
-							generateRecordInit(constEntry.getKey(), expr, "", true, false);
+							generateRecordInit(constEntry.getKey(), expr, "", true, false, constType);
 						}
 						generatedInit = code.subSequence(lineNo, code.count());						
 						code.remove(lineNo, code.count());
@@ -1586,7 +1655,7 @@ public class PasGenerator extends Generator
 	}
 
 	/**
-	 * Adds type definitions for all types in {@code _root.getTypeInfo()}.
+	 * Adds type definitions for all types in {@link #typeMap}.
 	 * @param _root - originating Root
 	 * @param _indent - current indentation level (as String)
 	 * @param _sectionBegun - whether the TYPE section had already been introduced by keyword CONST
@@ -1596,7 +1665,7 @@ public class PasGenerator extends Generator
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
 		String indentPlus3 = indentPlus2 + this.getIndent();
-		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo().entrySet()) {
+		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
 				if (wasDefHandled(_root, key, true)) {
@@ -1639,7 +1708,7 @@ public class PasGenerator extends Generator
 	protected boolean generateVarDecls(Root _root, String _indent, StringList _varNames, StringList _complexConsts, boolean _sectionBegun) {
 		String indentPlus1 = _indent + this.getIndent();
 		// START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
-		HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();
+		//HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();	// KGU 2018-07-22: became obsolete by new field typeMap
 		// END KGU#261 2017-01-16
 		for (int v = 0; v < _varNames.count(); v++) {
 			// START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible

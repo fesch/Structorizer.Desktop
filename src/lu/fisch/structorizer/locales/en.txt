@@ -110,6 +110,8 @@
  *      Kay Gürtzig     2018.06.27      Enh. #552: New messages in Menu, Editor, Arranger
  *      Kay Gürtzig     2018.07.01      Enh. #553: New messages for CodeImportMonitor
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2018.07.17      Issue #561: Some AttributeInspector texts converted to tooltips
+ *      Kay Gürtzig     2018.08.03      Enh. #577: OutputConsole keys renamed and new messages added
  *
  ******************************************************************************************************
  *
@@ -379,7 +381,7 @@ Menu.lblNo.text=No
 Menu.lblContinue.text=Yes, continue
 Menu.lblCancel.text=No, cancel
 Menu.lblSkip.text=No, skip
-Menu.lblModifiy.text=No, modify
+Menu.lblModify.text=No, modify
 Menu.lblYesToAll.text=Yes to all
 Menu.lblNoToAll.text=No to all
 Menu.lblSuppressUpdateHint.text=Don't show this window again
@@ -560,7 +562,7 @@ Editor.btnEdit.tooltip=Edit the selected element.
 Editor.btnDelete.tooltip=Delete the selected element.
 Editor.btnMoveUp.tooltip=Move the selected element one position up.
 Editor.btnMoveDown.tooltip=Move the selected element one position down.
-Editor.btnTransmute.tooltip=Transmute instructions to @js or @ks, merge or split sequences
+Editor.btnTransmute.tooltip=Transmute e.g. instructions to @js or @ks, merge or split sequences
 Editor.btnOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 //printing
 Editor.btnPrint.tooltip=Print the diagram.
@@ -735,14 +737,17 @@ AttributeInspector.txtShadowPath.tooltip=This path (usually into a temporary fil
 AttributeInspector.lblOrigin.text=Origin
 AttributeInspector.btnClearOrigin.text=Clear
 AttributeInspector.btnClearOrigin.tooltip=Clears the origin entry
-AttributeInspector.lblElements.text=Elements total
-AttributeInspector.lblInstrs.text=@as
-AttributeInspector.lblAlts.text=@b statements
-AttributeInspector.lblCases.text=@c statements
-AttributeInspector.lblLoops.text=Loops
-AttributeInspector.lblCalls.text=@js
-AttributeInspector.lblJumps.text=@ks
-AttributeInspector.lblPars.text=@l sections
+AttributeInspector.lblElements.tooltip=Elements total
+AttributeInspector.lblInstrs.tooltip=@as
+AttributeInspector.lblAlts.tooltip=@b statements
+AttributeInspector.lblCases.tooltip=@c statements
+AttributeInspector.lblFors.tooltip=@d loops
+AttributeInspector.lblWhiles.tooltip=@g loops
+AttributeInspector.lblRepeats.tooltip=@h loops
+AttributeInspector.lblForevers.tooltip=@i loops
+AttributeInspector.lblCalls.tooltip=@js
+AttributeInspector.lblJumps.tooltip=@ks
+AttributeInspector.lblPars.tooltip=@l sections
 AttributeInspector.btnShowLicense.text=License text
 AttributeInspector.btnShowLicense.tooltip=Press this button to open edit or review the text for the selected license.
 AttributeInspector.cbLicenseName.tooltip=Select an available license from the personal license pool or the current one to edit it.
@@ -855,7 +860,7 @@ FontChooser.lblSize.text=Size
 FontChooser.lblSize.tooltip=The sizes of the selectable fonts.
 FontChooser.btnOK.text=OK
 FontChooser.btnOK.tooltip=Validate your choice.
-
+FontChooser.cbFixPadding.text=Fixed (font-independent) padding
 
 -----[ Colors ]-----
 Colors.title=Color Preferences
@@ -1129,9 +1134,9 @@ Control.cbRunDataDisplay.item.1=shallow test coverage
 Control.cbRunDataDisplay.item.2=deep test coverage
 Control.cbRunDataDisplay.item.3=execution counts
 Control.cbRunDataDisplay.item.4=done operations, lin.
-Control.cbRunDataDisplay.item.5=done operations, log.
+Control.cbRunDataDisplay.item.5=done operations, logar.
 Control.cbRunDataDisplay.item.6=total operations, lin.
-Control.cbRunDataDisplay.item.7=total operations, log.
+Control.cbRunDataDisplay.item.7=total operations, logar.
 Control.chkOutputToTextWindow.text=Output to window
 Control.lbStopRunningProc.text=This action is not allowed while a diagram is being executed.\nDo you want to stop the current execution?
 Control.lbInputValue.text=Please enter a value for <%>
@@ -1175,6 +1180,7 @@ Control.msgEndOfFile.text=Attempt to read data past end of file!
 Control.msgUseStopButton.text=There is a running or pending execution!\nUse the STOP button to abort and close.
 Control.msgConstantRedefinition.text=Illegal attempt to redefine or modify constant «%»!
 Control.msgConstantArrayElement.text=An array element «%» may not be made a constant by assignment!
+Control.msgInvalidRecord.text=«%1» is not a valid record (%2)!
 Control.msgInvalidComponent.text=There is no component «%1» in record type or variable «%2»!
 Control.msgConstantRecordComponent.text=A record component «%» may not be made a constant by assignment!
 Control.msgTypeMismatch.text=Value type «%1» is incompatible with type «%2» of variable/component «%3»!
@@ -1187,14 +1193,24 @@ Control.msgEndEditing.text=To continue, first release the variable cell editor (
 Control.msgFunctionConflict.text=\nFunction «%1(%2)» of %3 overridden by %4
 Control.msgProcedureConflict.text=\nProcedure «%1(%2)» of %3 overridden by %4
 Control.msgSignatureConflicts.text=There are API conflicts among the chosen controller plugins:%
+Control.msgGUISyncFault.text=Possible GUI synchronisation fault on executing «%».\nTry to resume execution?
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 
 -----[ OutputConsole ]-----
-OutputConsole.menu.text=Properties
-OutputConsole.menuFont.text=Font ...
-OutputConsole.menuFontUp.text=Enlarge font
-OutputConsole.menuFontDown.text=Diminish font
+OutputConsole.title=Structorizer Output Console
+OutputConsole.menuProp.text=Properties
+OutputConsole.menuPropFont.text=Font ...
+OutputConsole.menuPropFontUp.text=Enlarge font
+OutputConsole.menuPropFontDown.text=Diminish font
+OutputConsole.menuContent.text=Contents
+OutputConsole.menuContentLogCalls.text=Log calls
+OutputConsole.menuContentLogMeta.text=Log meta-info
+OutputConsole.menuContentLogMeta.tooltip=Log messages like time of start/termination, manual variable changes etc. (default)
+OutputConsole.menuContentSave.text=Save log ...
+OutputConsole.msgOverwriteFile.text=Overwrite existing file?
+OutputConsole.msgErrorFileSave.text=Error on saving the file: %!
+OutputConsole.msgTitleError.text=Error
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instruction

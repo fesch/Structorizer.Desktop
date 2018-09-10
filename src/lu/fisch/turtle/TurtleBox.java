@@ -41,7 +41,8 @@ package lu.fisch.turtle;
  *                                      structure of function map modified, procedure map added, execution
  *                                      mechanism fundamentally revised
  *                                      Concurrency issue fixed (KGU#449).
- *      Kay Gürtzig     2018.01.16      Enh. #490: Class decomposed to allow a mere API use without realising the GUI 
+ *      Kay Gürtzig     2018.01.16      Enh. #490: Class decomposed to allow a mere API use without realising the GUI
+ *      Kay Gürtzig     2018.07.30      Enh. #576: New procedure clear() added to the API
  *
  ******************************************************************************************************
  *
@@ -135,6 +136,9 @@ public class TurtleBox implements DelayableDiagramController
 			definedProcedures.put("showturtle#0", TurtleBox.class.getMethod("showTurtle", (Class<?>[])null));
 			definedProcedures.put("setpencolor#3", TurtleBox.class.getMethod("setPenColor", new Class<?>[]{Integer.class, Integer.class, Integer.class}));
 			definedProcedures.put("setbackground#3", TurtleBox.class.getMethod("setBackgroundColor", new Class<?>[]{Integer.class, Integer.class, Integer.class}));
+			// START KGU#566 2018-07-30: Enh. #576
+			definedProcedures.put("clear#0", TurtleBox.class.getMethod("clear", (Class<?>[])null));
+			// END KGU#566 2018-07-30
 		} catch (NoSuchMethodException | SecurityException ex) {
 			ex.printStackTrace();
 		}
@@ -853,16 +857,28 @@ public class TurtleBox implements DelayableDiagramController
      * Returns the current horizontal pixel coordinate.
      * @return the precise result of preceding moves, i.e. as double value
      */
-    public double getX() {
+    public double getX()
+    {
     	return this.posX;
     }
     /**
      * Returns the current vertical pixel coordinate (from top downwards).
      * @return the precise result of preceding moves, i.e. as double value
      */
-    public double getY() {
+    public double getY()
+    {
     	return this.posY;
     }
     // END KGU#448 2017-10-28
 
+    // START KGU#566 2018-07-30: Enh. #576 API procedure allowing the user algorithm to wipe the box
+    /**
+     * Delayed API function to wipe the TurleBox from all content
+     */
+    public void clear()
+    {
+    	this.elements.clear();
+    	this.delay();
+    }
+    // END KGU#566 2018-07-30
 }

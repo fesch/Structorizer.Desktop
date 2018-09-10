@@ -114,7 +114,9 @@
  *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
  *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
  *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
- *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig         2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
+ *      Kay Gürtzig         2018.08.03  Enh. #577: OutputConsole keys renamed and new messages added
  *
  ******************************************************************************************************
  *
@@ -738,14 +740,17 @@ AttributeInspector.txtShadowPath.tooltip=Dieser Pfad (meist in einem Temp.-Verze
 AttributeInspector.lblOrigin.text=Herkunft
 AttributeInspector.btnClearOrigin.text=Säubern
 AttributeInspector.btnClearOrigin.tooltip=Löscht den Herkunftseintrag
-AttributeInspector.lblElements.text=Elemente insges.
-AttributeInspector.lblInstrs.text=@a
-AttributeInspector.lblAlts.text=@b-Anweisungen
-AttributeInspector.lblCases.text=@c
-AttributeInspector.lblLoops.text=Schleifen
-AttributeInspector.lblCalls.text=@j
-AttributeInspector.lblJumps.text=@k
-AttributeInspector.lblPars.text=@l-Abschnitte
+AttributeInspector.lblElements.tooltip=Elemente insges.
+AttributeInspector.lblInstrs.tooltip=@a
+AttributeInspector.lblAlts.tooltip=@b-Anweisungen
+AttributeInspector.lblCases.tooltip=@c
+AttributeInspector.lblFors.tooltip=@d-Schleifen
+AttributeInspector.lblWhiles.tooltip=@g-Schleifen
+AttributeInspector.lblRepeats.tooltip=@h-Schleifen
+AttributeInspector.lblForevers.tooltip=@i-Schleifen
+AttributeInspector.lblCalls.tooltip=@j
+AttributeInspector.lblJumps.tooltip=@k
+AttributeInspector.lblPars.tooltip=@l-Abschnitte
 AttributeInspector.btnShowLicense.text=Lizenztext
 AttributeInspector.btnShowLicense.tooltip=Diese Schaltfläche drücken, um den Text der gewählten Lizenz einzusehen, zu kopieren oder zu bearbeiten.
 AttributeInspector.cbLicenseName.tooltip=Eine verfügbare Lizenz unter den persönlichen Lizenz-Vorlagen oder die aktuelle wählen.
@@ -858,6 +863,7 @@ FontChooser.lblSize.text=Größe
 FontChooser.lblSize.tooltip=Die Größe des gewählten Zeichensatzes.
 FontChooser.btnOK.text=Speichern
 FontChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
+FontChooser.cbFixPadding.text=Fester (schriftgrößenunabhängiger) Rand
 
 
 -----[ Colors ]-----
@@ -1132,9 +1138,9 @@ Control.cbRunDataDisplay.item.1=Testabdeckung flach
 Control.cbRunDataDisplay.item.2=Testabdeckung tief
 Control.cbRunDataDisplay.item.3=Ausführungszähler
 Control.cbRunDataDisplay.item.4=Anzahl Schritte, lin.
-Control.cbRunDataDisplay.item.5=Anzahl Schritte, log.
+Control.cbRunDataDisplay.item.5=Anzahl Schritte, logar.
 Control.cbRunDataDisplay.item.6=aggreg. Schritte, lin.
-Control.cbRunDataDisplay.item.7=aggreg. Schritte, log.
+Control.cbRunDataDisplay.item.7=aggreg. Schritte, logar.
 Control.chkOutputToTextWindow.text=Ausgabe in Fenster
 Control.lbStopRunningProc.text=Diese Aktion ist während der Ausführung eines Diagramms nicht erlaubt.\nLaufende Ausführung abbrechen?
 Control.lbInputValue.text=Bitte Wert für <%> eingeben
@@ -1190,14 +1196,24 @@ Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Ent
 Control.msgFunctionConflict.text=\nFunktion «%1(%2)» von %3 verdrängt durch %4
 Control.msgProcedureConflict.text=\nProzedur «%1(%2)» von %3 vedrängt durch %4
 Control.msgSignatureConflicts.text=Es treten API-Konflikte zwischen den gewählten Steuerungs-Plugins auf:%
+Control.msgGUISyncFault.text=Synchronisationsprobleme im Ausgabefenster bei Ausführung von «%».\nAbarbeitung versuchsweise fortsetzen?
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.2=Inhalt
 
 -----[ OutputConsole ]-----
-OutputConsole.menu.text=Eigenschaften
-OutputConsole.menuFont.text=Schriftart ...
-OutputConsole.menuFontUp.text=Schrift vergrößern
-OutputConsole.menuFontDown.text=Schrift verkleinern
+OutputConsole.title=Structorizer Ausgabefenster
+OutputConsole.menuProp.text=Eigenschaften
+OutputConsole.menuPropFont.text=Schriftart ...
+OutputConsole.menuPropFontUp.text=Schrift vergrößern
+OutputConsole.menuPropFontDown.text=Schrift verkleinern
+OutputConsole.menuContent.text=Inhalt
+OutputConsole.menuContentLogCalls.text=Aufrufe protokollieren
+OutputConsole.menuContentLogMeta.text=Metainfos protokollieren
+OutputConsole.menuContentLogMeta.tooltip=Hinweise wie Start-/Endzeitpunkt, manuelle Variablenänderungen etc. mit ausgeben (Standard)
+OutputConsole.menuContentSave.text=Log sichern ...
+OutputConsole.msgOverwriteFile.text=Vorhandene Datei überschreiben?
+OutputConsole.msgErrorFileSave.text=Fehler beim Sichern in Datei: %!
+OutputConsole.msgTitleError.text=Fehler
 
 -----> Elements
 ElementNames.localizedNames.0.text=Verarbeitung

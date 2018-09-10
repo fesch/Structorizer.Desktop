@@ -71,6 +71,7 @@ package lu.fisch.structorizer.gui;
  *                                      loading  preferences from explicitly chosen ini file. This is fixed now
  *      Kay Gürtzig     2018.06.25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart
  *      Kay Gürtzig     2018.07.09      Bugfix #555: Failing restoration of the previous comment popup status
+ *      Kay Gürtzig     2018.09.10      Issue #508: New option Element.E_PADDING_FIX in load/save INI 
  *
  ******************************************************************************************************
  *
@@ -332,38 +333,50 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                                     // the user, we can neither wait nor proceed here. So we just leave.
                             }
                             else
-                            // END KGU#157
-                            if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
+                            // END KGU#157 2016-03-16
+                            // START KGU#534 2018-07-16: Enh. #552
                             {
-                                    // START KGU#287 2017-01-11: Issue #81/#330
-                                    if (isStandalone) {
-                                    	if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
-                                    		Element.E_NEXT_SCALE_FACTOR = 1.0;
-                                    	}
-                                    	preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
-                                    }
-                                    // END KGU#287 2017-01-11
-                                    saveToINI();
-                                    // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-                                    if (isStandalone) {
-                                            // START KGU#49 2017-01-04 Care for potential Arranger dependants
-                                            if (Arranger.hasInstance()) {
-                                                Arranger.getInstance().windowClosing(e);
-                                            }
-                                            // END KGU#49 2017-01-04
-                                            // START KGU#484 2018-03-22: Issue #463
-                                            logger.info("Structorizer " + instanceNo + " shutting down.");
-                                            // START KGU#305 2016-12-16: Code revision                              
-                                            System.exit(0);	// This kills all related frames and threads as well!
-                                    }
-                                    else {
-                                            // START KGU#484 2018-03-22: Issue #463
-                                            logger.info("Structorizer " + instanceNo + " going to dispose.");
-                                            // START KGU#305 2016-12-16: Code revision                              
-                                            dispose();
-                                    }
-                                    // END KGU#49/KGU#66 (#6/#16) 2015-11-14
+                            	diagram.startSerialMode();
+                            	try {
+                            // END KGU#534 2018-07-16
+                            		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
+                            		{
+                            			// START KGU#287 2017-01-11: Issue #81/#330
+                            			if (isStandalone) {
+                            				if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
+                            					Element.E_NEXT_SCALE_FACTOR = 1.0;
+                            				}
+                            				preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                            			}
+                            			// END KGU#287 2017-01-11
+                            			saveToINI();
+                            			// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
+                            			if (isStandalone) {
+                            				// START KGU#49 2017-01-04 Care for potential Arranger dependants
+                            				if (Arranger.hasInstance()) {
+                            					Arranger.getInstance().windowClosing(e);
+                            				}
+                            				// END KGU#49 2017-01-04
+                            				// START KGU#484 2018-03-22: Issue #463
+                            				logger.info("Structorizer " + instanceNo + " shutting down.");
+                            				// END KGU#484 2018-03-22
+                            				System.exit(0);	// This kills all related frames and threads as well!
+                            			}
+                            			else {
+                            				// START KGU#484 2018-03-22: Issue #463
+                            				logger.info("Structorizer " + instanceNo + " going to dispose.");
+                            				// END KGU#484 2018-03-22
+                            				dispose();
+                            			}
+                            			// END KGU#49/KGU#66 (#6/#16) 2015-11-14
+                            		}
+                            // START KGU#534 2018-07-16: Enh. #552
+                            	}
+                            	finally {
+                            		diagram.endSerialMode();
+                            	}
                             }
+                            // END KGU#534 2018-07-16
                     }
 
                     @Override
@@ -586,6 +599,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#503 2018-03-14: Enh. #519
 			Element.E_WHEEL_REVERSE_ZOOM = ini.getProperty("wheelCtrlReverse", "0").equals("1");
 			// END KGU#503 2018-03-14
+			// START KGU#494 2018-09-10: Issue #508
+			Element.E_PADDING_FIX = ini.getProperty("fixPadding", "0").equals("1");
+			// END KGU#494 2018-09-10
 
 			// START KGU#300 2016-12-02: Enh. #300
 			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
@@ -631,9 +647,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
 				{
 					//diagram.setHightlightVars(true);
-					Element.E_VARHIGHLIGHT = true;	// this isn't used for drawing, actually
-					diagram.getRoot().hightlightVars = true;
-
+					Element.E_VARHIGHLIGHT = true;	// this is now directly used for drawing
+					diagram.resetDrawingInfo();
 				}
 				// START KGU#477 2017-12-06: Enh. #487
 				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
@@ -694,7 +709,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 							public void run() {
 								doButtons();
 								diagram.analyse();
-								diagram.resetDrawingInfo(true);
+								diagram.resetDrawingInfo();
 								diagram.redraw();
 							}
 						});
@@ -714,7 +729,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					// Already in an event dispatcher thread
 					this.doButtons();
 					diagram.analyse();
-					diagram.resetDrawingInfo(true);
+					diagram.resetDrawingInfo();
 					diagram.redraw();
 				}
 			}
@@ -840,6 +855,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#503 2018-03-14: Enh. #519
 			ini.setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
 			// END KGU#503 2018-03-14
+			// START KGU#494 2018-09-10: Issue #508
+			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
+			// END KGU#494 2018-09-10
 			
 		    // START KGU#309 2016-12-15: Enh. #310 new saving options
 		    ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));

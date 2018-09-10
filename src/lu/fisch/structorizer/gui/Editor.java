@@ -62,6 +62,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by pure element icons
  *      Kay Gürtzig     2018.02.14      Issue #510: btnUnboxed and its solitary toolbar disabled.
  *      Kay Gürtzig     2018.07.02      KGU#245: color buttons converted into an array
+ *      Kay Gürtzig     2018.07.27      Bugfix #568: Action name for space key binding in arranger list corrected
  *
  ******************************************************************************************************
  *
@@ -394,7 +395,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     	
     	ArrangerIndexAction(boolean isDoubleClick)
     	{
-    		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLCK");
+    		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLICK");	// KGU#564 2018-07-27: Bugfix #568 (mis-spelled action name)
     	}
     	
 		// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger

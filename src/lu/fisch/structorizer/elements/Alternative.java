@@ -200,8 +200,8 @@ public class Alternative extends Element implements IFork {
 		// the upper left corner
 		double cx = 0;
 		// START KGU#227 2016-07-31: Enh. #128 - we need additional space for the comment
-		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
-		//double cy = nLines*fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
+		double cy = nLines*(fm.getLeading()+fm.getAscent()) + 4*(E_PADDING/2);
+		//double cy = nLines*(fm.getLeading()+fm.getAscent()) + 4*(E_PADDING/2) + commentRect.bottom;
 		// END KGU#227 2016-07-31
 		// the lowest point of the triangle
 		double ax =  rTrue.right - rTrue.left;
@@ -225,9 +225,9 @@ public class Alternative extends Element implements IFork {
 //		int yOffset = 4*(E_PADDING/2) - (E_PADDING/3) + commentRect.bottom;
 //		if (commentRect.bottom > 0)
 //		{
-//			// THis code is derived from the FOR loop body below. yOffset had to be reduced by the bias fm.getHeight().
+//			// THis code is derived from the FOR loop body below. yOffset had to be reduced by the bias (fm.getLeading()+fm.getAscent()).
 //			// part on the left side
-//			double by = yOffset - fm.getHeight() - commentRect.bottom;
+//			double by = yOffset - (fm.getLeading()+fm.getAscent()) - commentRect.bottom;
 //			double leftside = by/coeffleft + ax - ay/coeffleft;
 //			double bx = commentRect.right + 2*(E_PADDING/2) + leftside;
 //			double coeff = (by-ay)/(bx-ax);
@@ -250,8 +250,8 @@ public class Alternative extends Element implements IFork {
 
 			// bottom line of the text
 			// START KGU#227 2016-07-31: Enh. #128 - withdrawn KGU#435 2017-10-22
-			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1) * fm.getHeight();
-			//double by = yOffset + (nLines-i-1) * fm.getHeight();
+			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1) * (fm.getLeading()+fm.getAscent());
+			//double by = yOffset + (nLines-i-1) * (fm.getLeading()+fm.getAscent());
 			// END KGU#227 2016-07-31
 			// part on the left side
 			double leftside = by/coeffleft + ax - ay/coeffleft;
@@ -273,7 +273,7 @@ public class Alternative extends Element implements IFork {
 			double coeff = (by-ay)/(bx-ax);
 
 			// the point height we need
-			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
+			//double y = nLines * (fm.getLeading()+fm.getAscent()) + 4*(E_PADDING/2);
 			//double x = y/coeff + ax - ay/coeff;
 			//logger.debug(i+" => "+coeff+" --> "+String.valueOf(x));
 
@@ -288,8 +288,8 @@ public class Alternative extends Element implements IFork {
 		{
 			// the point height we need
 			// START KGU#227 2016-07-31: Enh. #128 - withdrawn KGU#435 2017-10-22
-			double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
-			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
+			double y = nLines * (fm.getLeading()+fm.getAscent()) + 4*(E_PADDING/2);
+			//double y = nLines * (fm.getLeading()+fm.getAscent()) + 4*(E_PADDING/2) + commentRect.bottom;
 			// END KGU#227 2016-07-31
 			double x = y/lowest + ax - ay/lowest;
 			// START KGU#435 2017-10-22: Enh. #128 revised
@@ -304,10 +304,10 @@ public class Alternative extends Element implements IFork {
 		}
 
 		// START KGU#207 2016-07-21: Bugfix #198 - Inconsistency with draw() mended 
-		//rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight();
+		//rect0.bottom = 4*(E_PADDING/2) + nLines*(fm.getLeading()+fm.getAscent());
 		// START KGU#227 2016-07-31: Enh. #128
-		//rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight() - 1;
-		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight() - 1 + commentRect.bottom;
+		//rect0.bottom = 4*(E_PADDING/2) + nLines*(fm.getLeading()+fm.getAscent()) - 1;
+		rect0.bottom = 4*(E_PADDING/2) + nLines*(fm.getLeading()+fm.getAscent()) - 1 + commentRect.bottom;
 		// END KGU#227 2016-07-31
 		// END KGU#207 2016-07-21
 		pt0Parting.y = rect0.bottom;
@@ -357,7 +357,7 @@ public class Alternative extends Element implements IFork {
 		StringList myText = getCuteText(false);
 		// START KGU#480 2018-01-21: Enh. #490
 		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
-			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.getRoot(this).hightlightVars), "\n");
+			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
 		int nLines = myText.count();
@@ -376,7 +376,7 @@ public class Alternative extends Element implements IFork {
 		// END KGU#136 2016-03-01
 		
 		// START KGU#227 2016-07-31: Enh. #128
-		//myrect.bottom = _top_left.top + nLines*fm.getHeight() + 4*(E_PADDING/2);
+		//myrect.bottom = _top_left.top + nLines*(fm.getLeading()+fm.getAscent()) + 4*(E_PADDING/2);
 		myrect.bottom = _top_left.top + pt0Parting.y;
 		// END KGU#227 2016-07-31
 
@@ -394,7 +394,7 @@ public class Alternative extends Element implements IFork {
 		// the upper left corner point (with reversed y coordinates)
 		double cx = 0;
 		// START KGU#227 2016-07-31: Enh. #128 - we rely on the cached value
-		//double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		//double cy = nLines*(fm.getLeading()+fm.getAscent()) + 4*(E_PADDING/2);
 		// START KGU#435 2017-10-22: Enh. #128 revised
 		//double cy = pt0Parting.y + 1;
 		double cy = pt0Parting.y + 1 - commentRect.bottom;
@@ -416,7 +416,7 @@ public class Alternative extends Element implements IFork {
 		// draw comment if required
 		if (commentRect.bottom > 0)
 		{			
-//			double by = yOffset - fm.getHeight();
+//			double by = yOffset - (fm.getLeading()+fm.getAscent());
 //            double leftside = by/coeffleft + ax - ay/coeffleft;
 //            double bx = by/coeffright + ax - ay/coeffright;
 //            int boxWidth = (int) (bx-leftside);
@@ -439,8 +439,8 @@ public class Alternative extends Element implements IFork {
 
 			// bottom line of the text
 			// START KGU#435 2017-10-22: Enh. #128 revised
-			//double by = yOffset + (nLines-i-1)*fm.getHeight();
-			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1)*fm.getHeight();
+			//double by = yOffset + (nLines-i-1)*(fm.getLeading()+fm.getAscent());
+			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1)*(fm.getLeading()+fm.getAscent());
 			// END KGU#435 2017-10-22
 			// part on the left side
 			double leftside = by/coeffleft + ax - ay/coeffleft;
@@ -462,8 +462,8 @@ public class Alternative extends Element implements IFork {
 			writeOutVariables(canvas,
 					_top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - textWidth)/2,
 					// START KGU#227 2016-07-31: Enh. #128
-					//_top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
-					_top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fm.getHeight(),
+					//_top_left.top + (E_PADDING / 3) + (i+1)*(fm.getLeading()+fm.getAscent()),
+					_top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*(fm.getLeading()+fm.getAscent()),
 					// END KGU#227 2016-07-31
 					myLine, this
 					);
@@ -474,7 +474,7 @@ public class Alternative extends Element implements IFork {
 				canvas.setColor(Color.BLACK);
 				writeOutVariables(canvas,
 								  x-Math.round(_canvas.stringWidth(text)/2),
-								_top_left.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
+								_top_left.top+Math.round(E_PADDING / 3)+(i+1)*(fm.getLeading()+fm.getAscent()),
 								text
 								);  	
 			}
@@ -509,9 +509,9 @@ public class Alternative extends Element implements IFork {
 		// write the run-time info if enabled
 		// START KGU#435 2017-10-22: Enh. #128 revised
 		//this.writeOutRuntimeInfo(_canvas, 
-		//		_top_left.left + rect.right - (int)Math.round(fm.getHeight() / coeffright),
+		//		_top_left.left + rect.right - (int)Math.round((fm.getLeading()+fm.getAscent()) / coeffright),
 		//		_top_left.top);
-		int rightOffset = (int)Math.round(fm.getHeight() / coeffright);
+		int rightOffset = (int)Math.round((fm.getLeading()+fm.getAscent()) / coeffright);
 		if (commentRect.right > 0) rightOffset = E_PADDING/2;
 		this.writeOutRuntimeInfo(_canvas, 
 				_top_left.left + rect.right - rightOffset,
@@ -540,7 +540,7 @@ public class Alternative extends Element implements IFork {
 		myrect = _top_left.copy();
 
 		// START KGU#207 2016-07-21: Bugfix #198 - this offset difference to pt0Parting.y spoiled selection traversal 
-		//myrect.top = _top_left.top + fm.getHeight()*nLines + 4*(E_PADDING / 2)-1;
+		//myrect.top = _top_left.top + (fm.getLeading()+fm.getAscent())*nLines + 4*(E_PADDING / 2)-1;
 		myrect.top = _top_left.top + this.pt0Parting.y;
 		// END KGU#207 2016-07-21
 		myrect.right = myrect.left + rTrue.right-1 + remain;

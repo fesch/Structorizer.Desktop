@@ -299,7 +299,7 @@ public class Case extends Element implements IFork
     		}
     		// END KGU#480 2018-01-21
             // FIXME: The required extra padding must be proportional to the font size
-            int extrapadding = padding + (discrLines.count()-1) * (3 * padding + fm.getHeight());
+            int extrapadding = padding + (discrLines.count()-1) * (3 * padding + (fm.getLeading()+fm.getAscent()));
             // START KGU#227 2016-07-31: Enh. #128 - compute the dimensions of the comment area
             commentRect = new Rect();
             if (Element.E_COMMENTSPLUSTEXT)
@@ -360,10 +360,10 @@ public class Case extends Element implements IFork
         	}
 
         	// START KGU#172 2016-04-01: Bugfix #144: The header my contain more than one line if comments are visible
-            //rect0.bottom = 2 * (padding) + 2 * fm.getHeight();
+            //rect0.bottom = 2 * (padding) + 2 * (fm.getLeading()+fm.getAscent());
         	// START KGU#453 2017-11-01: Issue #447 - there may also be more selector lines
-            //rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * fm.getHeight();
-            rect0.bottom = 2 * (padding) + (discrLines.count() + nSelectorLines) * fm.getHeight();
+            //rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * (fm.getLeading()+fm.getAscent());
+            rect0.bottom = 2 * (padding) + (discrLines.count() + nSelectorLines) * (fm.getLeading()+fm.getAscent());
             // END KGU#453 2017-11-01
             // END KGU#172 2016-04-01
         	// START KGU#227 2016-07-31: Enh. #128 - add the height if the comment area
@@ -451,7 +451,7 @@ public class Case extends Element implements IFork
     	// START KGU#172 2016-04-01: Bugfix #145
     	boolean isSwitchMode = this.isSwitchTextCommentMode();
     	// END KGU#172 2016-04-01
-    	boolean isHighlight = Element.getRoot(this).hightlightVars;
+    	//boolean isHighlight = Element.getRoot(this).highlight;
 
     	Rect myrect = new Rect();
     	// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
@@ -473,8 +473,8 @@ public class Case extends Element implements IFork
     	// END KGU#136 2016-03-01
 
     	// START KGU#453 2017-11-02: Issue #447
-    	//int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
-    	int minHeight = (1 + nSelectorLines) * fm.getHeight() + 4 * (E_PADDING / 2);
+    	//int minHeight = 2 * (fm.getLeading()+fm.getAscent()) + 4 * (E_PADDING / 2);
+    	int minHeight = (1 + nSelectorLines) * (fm.getLeading()+fm.getAscent()) + 4 * (E_PADDING / 2);
     	// END KGU#453 2017-11-02
     	// START KGU#172 2016-04-01: Bugfix #145 - we might have to put several comment lines in here
     	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
@@ -488,7 +488,7 @@ public class Case extends Element implements IFork
     	}
     	if (discrLines.count() > 1)
     	{
-    		minHeight += (discrLines.count()-1) * fm.getHeight();
+    		minHeight += (discrLines.count()-1) * (fm.getLeading()+fm.getAscent());
     	}
     	// END KGU#172 2016-04-01
     	// START KGU#227 2016-07-31: Enh. #128 - add the height of the embedded comment
@@ -561,7 +561,7 @@ public class Case extends Element implements IFork
 //    		if (nLines > 1 && this.getText().get(nLines-1).equals("%")) divisor = nLines;
 //    		writeOutVariables(canvas,
 //    				x - getWidthOutVariables(_canvas, text, this) / divisor,
-//    				myrect.top + E_PADDING / 3 + fm.getHeight(),
+//    				myrect.top + E_PADDING / 3 + (fm.getLeading()+fm.getAscent()),
 //    				text,this
 //    				);
     		// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
@@ -578,7 +578,7 @@ public class Case extends Element implements IFork
     			//text = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);	// Text can't be empty, see setText()
     			String discr = unbrokenText.get(0);	// Text can't be empty, see setText()
     	    	if (Element.E_APPLY_ALIASES) {
-    				discr = Element.replaceControllerAliases(discr, true, isHighlight);
+    				discr = Element.replaceControllerAliases(discr, true, Element.E_VARHIGHLIGHT);
     			}
     			text = StringList.explode(discr, SOFT_LINE_BREAK);
     			// END KGU#480 2018-01-21
@@ -599,8 +599,8 @@ public class Case extends Element implements IFork
     	  		writeOutVariables(canvas,
         				xStart,
         				// START KGU#227 2016-07-31: Enh. #128 - consider comment
-        				//myrect.top + E_PADDING / 3 + (ln + 1) * fm.getHeight(),
-        				myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * fm.getHeight(),
+        				//myrect.top + E_PADDING / 3 + (ln + 1) * (fm.getLeading()+fm.getAscent()),
+        				myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * (fm.getLeading()+fm.getAscent()),
         				// END KGU#227 2016-07-31
         				text.get(ln), this
         				);
@@ -680,8 +680,8 @@ public class Case extends Element implements IFork
     	int ay = myrect.top + commentRect.bottom;
     	// END KGU#435 2017-10-22
     	int bx = myrect.left + lineWidth;
-    	//int by = myrect.bottom-1 - fm.getHeight() - E_PADDING / 2;
-    	int by = myrect.bottom-1 - (nSelectorLines * fm.getHeight()) - E_PADDING / 2;
+    	//int by = myrect.bottom-1 - (fm.getLeading()+fm.getAscent()) - E_PADDING / 2;
+    	int by = myrect.bottom-1 - (nSelectorLines * (fm.getLeading()+fm.getAscent())) - E_PADDING / 2;
 
     	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
     	//if(  ((String) getText().get(getText().count()-1)).equals("%") )
@@ -760,20 +760,20 @@ public class Case extends Element implements IFork
     			//		//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
     			//		myrect.right + (myrect.left-myrect.right) / 2 - textWidths[i] / 2,
     			//		// END KGU#91 2915-12-01
-    			//		myrect.top - E_PADDING / 4, //+fm.getHeight(),
+    			//		myrect.top - E_PADDING / 4, //+(fm.getLeading()+fm.getAscent()),
     			//		getText().get(i+1),this);
     			// START KGU#480 2018-01-21: Enh. #490
     			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
     			String selectors = unbrokenText.get(i+1);
     	    	if (Element.E_APPLY_ALIASES) {
-    				selectors = Element.replaceControllerAliases(selectors, true, isHighlight);
+    				selectors = Element.replaceControllerAliases(selectors, true, Element.E_VARHIGHLIGHT);
     			}
     	    	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
     			// END KGU#480 2018-01-21
     			for (int j = 0; j < brokenLine.length; j++) {
     				writeOutVariables(canvas,
     						myrect.right + (myrect.left-myrect.right) / 2 - (textWidths[i] - E_PADDING/2)/ 2,
-    						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * fm.getHeight(),
+    						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * (fm.getLeading()+fm.getAscent()),
     						brokenLine[j], this);
     			}
 				// END KGU#354 2017-11-01
@@ -783,7 +783,7 @@ public class Case extends Element implements IFork
     			{
     				canvas.moveTo(myrect.right-1, myrect.top);
     				int mx = myrect.right-1;
-    				//int my = myrect.top-fm.getHeight();
+    				//int my = myrect.top-(fm.getLeading()+fm.getAscent());
     				int sx = mx;
     				int sy = (sx*(by-ay) - ax*by + ay*bx) / (bx-ax);
     				canvas.lineTo(sx,sy+1);

@@ -295,7 +295,7 @@ public class Parallel extends Element
 //            	{
 //            		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, this.comment.get(ci), this) + 2 * E_PADDING);
 //            	}
-//            	int extraHeight = this.comment.count() * fm.getHeight();
+//            	int extraHeight = this.comment.count() * (fm.getLeading()+fm.getAscent());
 //            	rect0.bottom += extraHeight;
 //            	this.y0Branches += extraHeight;
 //            }
@@ -465,7 +465,7 @@ public class Parallel extends Element
                             {
                                     canvas.moveTo(myrect.right-1,myrect.top);
                                     int mx=myrect.right-1;
-                                    int my=myrect.top-fm.getHeight();
+                                    int my=myrect.top-(fm.getLeading()+fm.getAscent());
                                     int sx=mx;
                                     int sy=Math.round((sx*(by-ay)-ax*by+ay*bx)/(bx-ax));
                                     canvas.lineTo(sx,sy+1);

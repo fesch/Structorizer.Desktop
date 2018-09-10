@@ -1597,7 +1597,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramUnboxed.setSelected(diagram.isUnboxed());
 
 			// variable highlighting
-			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
+			menuDiagramMarker.setSelected(Element.E_VARHIGHLIGHT);
 
 			// show comments?
 			menuDiagramComment.setSelected(Element.E_SHOWCOMMENTS);
