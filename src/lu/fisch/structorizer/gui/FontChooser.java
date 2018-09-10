@@ -353,6 +353,8 @@ public class FontChooser extends LangDialog
 		if (lsSizes.getSelectedIndex() < 0) {
 			// (in this case the listSelectionListener won't work)
 			lblSizeValue.setText(" (" + font.getSize() + ") ");
+			lblTest.setFont(font);
+			pack();
 		}
 		// END KGU#494 2018-09-10
 		
