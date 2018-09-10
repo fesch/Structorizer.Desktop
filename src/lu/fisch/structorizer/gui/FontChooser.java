@@ -35,8 +35,9 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2007.12.31      First Issue
  *      Kay Gürtzig     2016.10.11      Minimum font size 2 dropped from the sizes array.
  *      Kay Gürtzig     2016.11.02      Issue #81: Scaling Factor considered (DPI awareness workarond)
- *      Kay Güertig     2016.11.09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
- *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls 
+ *      Kay Gürtzig     2016.11.09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
+ *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
+ *      Kay Gürtzig     2018.09.10      Issue #508: displays current size in label if not in list, re-pack after font change
  *
  ******************************************************************************************************
  *
@@ -67,9 +68,8 @@ import javax.swing.event.*;
 
 /*
  * Created by JFormDesigner on Mon Dec 31 12:44:23 CET 2007
+ * No longer maintained with JFormDesigner, but manually!
  */
-
-
 
 /**
  * @author Robert Fisch
@@ -92,6 +92,9 @@ public class FontChooser extends LangDialog
 	protected JList<String> lsNames;
 	protected JPanel pnlSize;
 	protected JLabel lblSize;
+	// START KGU#494 2018-09-10: Issue #508
+	protected JLabel lblSizeValue;
+	// END KGU#494 2018-09-10
 	protected JScrollPane scrollPane2;
 	protected JList<String> lsSizes;
 	protected JPanel buttonBar;
@@ -130,6 +133,10 @@ public class FontChooser extends LangDialog
 		lsNames = new JList<String>(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
 		pnlSize = new JPanel();
 		lblSize = new JLabel();
+		// START KGU#494 2018-09-10: Issue #508
+		lblSizeValue = new JLabel();
+		// END KGU#494 2018-09-10
+		
 		scrollPane2 = new JScrollPane();
 		lsSizes = new JList<String>(sizes);
 		buttonBar = new JPanel();
@@ -174,7 +181,7 @@ public class FontChooser extends LangDialog
 					// END KGU#287 2016-11-02
 
 					//---- lblTest ----
-					lblTest.setText("Test: Structorizer (Symboltest: [\u2190 - \u2205 - \u2260 - \u2264 - \u2265])");
+					lblTest.setText("Test: Structorizer (symbols: [\u2190 - \u2205 - \u2260 - \u2264 - \u2265])");
 					contentPanel.add(lblTest, BorderLayout.SOUTH);
 
 					//======== pnlName ========
@@ -201,7 +208,14 @@ public class FontChooser extends LangDialog
 
 						//---- lblSize ----
 						lblSize.setText("Size");
-						pnlSize.add(lblSize, BorderLayout.NORTH);
+						// START KGU#494 2018-09-10: Issue #508
+						//pnlSize.add(lblSize, BorderLayout.NORTH);
+						JPanel pnlSizeSub = new JPanel();
+						pnlSizeSub.setLayout(new BorderLayout());
+						pnlSizeSub.add(lblSize, BorderLayout.LINE_START);
+						pnlSizeSub.add(lblSizeValue, BorderLayout.CENTER);
+						pnlSize.add(pnlSizeSub, BorderLayout.NORTH);
+						// END KGU#494 2018-09-10
 
 						//======== scrollPane2 ========
 						{
@@ -248,7 +262,17 @@ public class FontChooser extends LangDialog
 		{
 			public void valueChanged(ListSelectionEvent e)
 			{ 
-				lblTest.setFont(getCurrentFont()); 
+				Font font = getCurrentFont();
+				lblTest.setFont(font); 
+				// START KGU#494 2018-09-10: Issue #508 (symbol test could become invisible on enlarging the font)
+				if (lsSizes.getSelectedIndex() < 0) {
+					lblSizeValue.setText(" (" + font.getSize() + ") ");
+				}
+				else {
+					lblSizeValue.setText(" ");
+				}
+				pack();
+				// END KGU#494 2018-09-10
 			}
 		};
 		lsSizes.addListSelectionListener(listListener);
@@ -325,10 +349,15 @@ public class FontChooser extends LangDialog
 		lsNames.ensureIndexIsVisible(lsNames.getSelectedIndex()); 
 		lsSizes.setSelectedValue("" + font.getSize(), true);
 		lsSizes.ensureIndexIsVisible(lsSizes.getSelectedIndex());
+		// START KGU#494 2018-09-10: Issue #508 (font size is not necessarily in the choice list)
+		if (lsSizes.getSelectedIndex() < 0) {
+			// (in this case the listSelectionListener won't work)
+			lblSizeValue.setText(" (" + font.getSize() + ") ");
+		}
+		// END KGU#494 2018-09-10
 		
 		//cbBold.setSelected(font.isBold());
 		//cbItalic.setSelected(font.isItalic());
 	}
 	
-
 }

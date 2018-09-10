@@ -82,8 +82,10 @@ Current development version: 3.28-08 (2018-09-10)
 - 08: Several locale updates <2>
 - 08: Bugfix #583: Shell scripts corrected (Java tests) [K. Brodowski, S. Sobisch]
 - 08: Enh. #585: Debian install packages now derived via scripts [K. Brodowski]
-- 08: Fix #508: Padding of diagram elements now proportional to font size [2]
-- 08: Bugfix #512: Arranger zoom could compromise the diagram size by rounding <2>
+- 08: Issue #508: Padding of diagram elements now proportional to font size [2],
+      line spacing in multi-line texts reduced
+- 08: Issue #508: Slight improvements of font chooser dialog and font resizing <2>
+- 08: Bugfix #512: Arranger zoom compromised the diagram size (rounding impact) <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
