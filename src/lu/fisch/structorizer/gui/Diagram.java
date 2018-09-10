@@ -579,7 +579,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							loadArrangement(files[i]);
 						}
 						// END KGU#289 2016-11-15
-						// FIXME: Find a way to go over all the parser plugins
 						else {
 							Ini ini = Ini.getInstance();
 							String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
@@ -1326,18 +1325,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
-		// FIXME: This "background filling" isn't necessary, at least not under windows
-//		rect = new Rect(root.width+1,0,this.getWidth(),this.getHeight());
-//		canvas.setColor(Color.LIGHT_GRAY);
-//		canvas.fillRect(rect);
-//		rect = new Rect(0,root.height+1,this.getWidth(),this.getHeight());
-//		canvas.setColor(Color.LIGHT_GRAY);
-//		canvas.fillRect(rect);
-		// START KGU 2016-02-27: This area has already been filled twice
-//		rect = new Rect(root.width+1,root.height+1,this.getWidth(),this.getHeight());
-//		canvas.setColor(Color.LIGHT_GRAY);
-//		canvas.fillRect(rect);
-		// END KGU 2016-02-27
         
 		// draw dragged element
 		if (selX != -1 && selY != -1 && selectedDown!=null && mX!=mouseX && mY!=mouseY)
@@ -2945,7 +2932,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#137 2016-01-11
 					((Subqueue) element).addElement(ele);
 					// START KGU#136 2016-03-01: Bugfix #97
-					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					selected = ele.setSelected(true);
@@ -3046,7 +3032,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
 					// START KGU#136 2016-03-01: Bugfix #97
-					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					redraw();
@@ -5284,7 +5269,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#553 2018-07-10: In case of too many diagrams Structorizer would go zombie
 					int nRoots = newRoots.size();
 					int maxRoots = Integer.parseInt(ini.getProperty("impMaxRootsForDisplay", "20"));
-					// FIXME: replace the magic number with a configurable limit
 					if (nRoots > maxRoots) {
 						String[] options = {Menu.lblContinue.getText(), Menu.lblCancel.getText()};
 						int chosen = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
@@ -6360,7 +6344,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				@Override
 				public boolean visitPostOrder(Element _ele) {
-					// FIXME It should be okay to cut off the recursion in  post order...?
 					return true;
 				}
 				Refactorer(HashMap<String, StringList> _keyMap, boolean _caseIndifferent)
@@ -6399,7 +6382,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			analyse();
 			// END KGU#258 2016-09-26
 
-			// FIXME: This doesn't seem to work 
 			doButtons();
 			
 			// redraw diagram
@@ -6959,7 +6941,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setHightlightVars(boolean _highlight)
 	{
 		Element.E_VARHIGHLIGHT = _highlight;	// this is now directly used for drawing
-		//root.highlightVars = _highlight;	// FIXME: Why only this Root?
+		//root.highlightVars = _highlight;
 		// START KGU#136 2016-03-01: Bugfix #97
 		this.resetDrawingInfo();
 		// END KGU#136 2016-03-01
@@ -7241,7 +7223,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				_data.forParts.add(((InputBoxFor)inputbox).txtIncr.getText());
 				// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
 				//_data.forPartsConsistent = !((InputBoxFor)inputbox).chkTextInput.isSelected();
-				// FIXME!
 				//if (!((InputBoxFor)inputbox).chkTextInput.isSelected())
 				//{
 				//	_data.forLoopStyle = For.ForLoopStyle.COUNTER;
@@ -7978,7 +7959,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	@Override
 	public void lostOwnership(Clipboard arg0, Transferable arg1) {
-		// TODO Auto-generated method stub
+		// Nothing to do here
 	}
 
 	// START KGU#305 2016-12-15: Issues #305, #312

@@ -531,7 +531,7 @@ public abstract class Element {
 
 	// START KGU#365 2017-04-14: Enh. #380 - New mechanism to mark trouble-making elements
 	/**
-	 * Set for quick highlighting element that cause trouble in some complex GUI activities.
+	 * Set for quick highlighting elements that cause trouble in some complex GUI activities.
 	 * Intended to be highlighted in the E_TROUBLECOLOR with high fill color priority
 	 */
 	public static final Set<Element> troubleMakers = new HashSet<Element>();
@@ -770,7 +770,7 @@ public abstract class Element {
 		// START KGU#277 2016-10-13: Enh. #270
 		_ele.disabled = this.disabled;
 		// END KGU#277 2016-10-13
-		// FIXME: Shouldn't we also copy the collapsed status?
+		_ele.collapsed = this.collapsed;
 	}
 	// END KGU#213 2016-08-01
 
@@ -1512,7 +1512,7 @@ public abstract class Element {
 		// This priority might be arguable but represents more or less what was found in the draw methods before
 		if (this.waited) {
 			// FIXME (KGU#117): Need a combined colour for waited + tested
-			return Element.E_WAITCOLOR; 
+			return Element.E_WAITCOLOR;
 		}
 		else if (this.executed) {
 			return Element.E_RUNNINGCOLOR;
@@ -3613,15 +3613,15 @@ public abstract class Element {
      * Looks up the associated token sequence in _splitOldKeys for any of the parser preference names
      * provided by _prefNames. If there is such a token sequence then it will be
      * replaced throughout my text by the associated current parser preference for the respective name
-	 * @param line - line of element text
+	 * @param _line - line of element text
 	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
 	 * @param _prefNames - Array of parser preference names being relevant for this kind of element
 	 * @param _ignoreCase - whether case is to be ignored on comparison
 	 * @return refactored line
 	 */
-	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _prefNames, boolean _ignoreCase)
+	protected final String refactorLine(String _line, HashMap<String, StringList> _splitOldKeys, String[] _prefNames, boolean _ignoreCase)
 	{
-		StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(_line, true);
 		boolean isModified = false;
 		// FIXME: We should order the keys by decreasing length first!
 		for (int i = 0; i < _prefNames.length; i++)
@@ -3661,9 +3661,9 @@ public abstract class Element {
 		}
 		if (isModified)
 		{
-			line = tokens.concatenate().trim();
+			_line = tokens.concatenate().trim();
 		}
-		return line;
+		return _line;
 	}
 	// END KGU#258 2016-09-25
 

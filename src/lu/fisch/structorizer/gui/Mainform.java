@@ -336,7 +336,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             // END KGU#157 2016-03-16
                             // START KGU#534 2018-07-16: Enh. #552
                             {
-                            	diagram.startSerialMode();
+                            	Diagram.startSerialMode();
                             	try {
                             // END KGU#534 2018-07-16
                             		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
@@ -373,7 +373,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             // START KGU#534 2018-07-16: Enh. #552
                             	}
                             	finally {
-                            		diagram.endSerialMode();
+                            		Diagram.endSerialMode();
                             	}
                             }
                             // END KGU#534 2018-07-16
