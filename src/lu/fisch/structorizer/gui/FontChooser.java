@@ -100,6 +100,9 @@ public class FontChooser extends LangDialog
 	protected JPanel buttonBar;
 	protected JButton btnOK;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
+	// START KGU#494 2018-09-10: Issue #508
+	protected int fontSize = 12;	// Caches a non-selectable font size
+	// END KGU#494 2018-09-10
 	
 	private String[] sizes = new String[] { "4","6","8","10","12","14","16","18","20","22","24","30","36","48","72" };
 
@@ -319,20 +322,28 @@ public class FontChooser extends LangDialog
 	
 	public Font getCurrentFont()
 	{	
-		Font font = new Font("Helvetica", Font.PLAIN, 12);
-
+		// Provide default font (Helvetica 12 is usually both available and suited)
+		// START KGU#494 2018-09-10: Issue #508
+		//Font font = new Font("Helvetica", Font.PLAIN, 12);
+		Font font = new Font("Helvetica", Font.PLAIN, fontSize);
+		// END KGU#494 2018-09-10
 		
 		try
 		{
 			String fontFamily = (String)lsNames.getSelectedValue();
-			int fontSize = Integer.parseInt((String)lsSizes.getSelectedValue());
+			// START KGU#494 2018-09-10: Issue #508	We don't want to lose the former size if selection is void	
+			//int fontSize = Integer.parseInt((String)lsSizes.getSelectedValue());
+			if (lsSizes.getSelectedIndex() >= 0) {
+				fontSize = Integer.parseInt((String)lsSizes.getSelectedValue());
+			}
+			// END KGU#494 2018-09-10
 			
 			int fontType = Font.PLAIN;
 			
 			//if (cbBold.isSelected()) fontType += Font.BOLD;
 			//if (cbItalic.isSelected()) fontType += Font.ITALIC;
 			
-			font= new Font(fontFamily, fontType, fontSize);		
+			font = new Font(fontFamily, fontType, fontSize);		
 		}
 		catch (Exception e) 
 		{
@@ -346,14 +357,15 @@ public class FontChooser extends LangDialog
 		if (font == null) font = lblTest.getFont();
 		
 		lsNames.setSelectedValue(font.getName(), true);
-		lsNames.ensureIndexIsVisible(lsNames.getSelectedIndex()); 
+		lsNames.ensureIndexIsVisible(lsNames.getSelectedIndex());
 		lsSizes.setSelectedValue("" + font.getSize(), true);
 		lsSizes.ensureIndexIsVisible(lsSizes.getSelectedIndex());
 		// START KGU#494 2018-09-10: Issue #508 (font size is not necessarily in the choice list)
 		if (lsSizes.getSelectedIndex() < 0) {
 			// (in this case the listSelectionListener won't work)
-			lblSizeValue.setText(" (" + font.getSize() + ") ");
-			lblTest.setFont(font);
+			fontSize = font.getSize();
+			lblSizeValue.setText(" (" + fontSize + ") ");
+			lblTest.setFont(font); 
 			pack();
 		}
 		// END KGU#494 2018-09-10
