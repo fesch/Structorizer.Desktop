@@ -157,7 +157,8 @@ package lu.fisch.structorizer.gui;
  *                                      Usability of the parser choice dialog for code import improved.
  *      Kay Gürtzig     2018.07.02      KGU#245: color preferences modified to work with arrays
  *      Kay Gürtzig     2018.07.09      KGU#548: The import option dialog now retains the selected plugin for specific options
- *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line 
+ *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line
+ *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD() 
  *
  ******************************************************************************************************
  *
@@ -1310,7 +1311,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	((JViewport) this.getParent()).revalidate();
 
     	//redraw(this.getGraphics());
-        this.repaint();
+    	this.repaint();
     	
     	// START KGU#430 2017-10-10: Issue #432
     	Element.E_VARHIGHLIGHT = wasHighLight;
@@ -6740,12 +6741,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void fontNSD()
 	{
-		FontChooser fontChooser = new FontChooser(NSDControl.getFrame());
+		// START KGU#494 2018-09-10: Issue #508 - support option among fix / proportional padding
+		//FontChooser fontChooser = new FontChooser(NSDControl.getFrame());
+		FontChooser fontChooser = new FontChooser(NSDControl.getFrame(), true);
+		// END KGU#494 2018-09-10
 		Point p = getLocationOnScreen();
 		fontChooser.setLocation(Math.round(p.x+(getVisibleRect().width-fontChooser.getWidth())/2+this.getVisibleRect().x),
 								Math.round(p.y+(getVisibleRect().height-fontChooser.getHeight())/2+this.getVisibleRect().y));
 
 		// set fields
+		// START KGU#494 2018-09-10: Issue #508
+		fontChooser.setFixPadding(Element.E_PADDING_FIX);
+		// END KGU#494 2018-09-10
 		fontChooser.setFont(Element.getFont());
 		fontChooser.setVisible(true);
 
@@ -6753,6 +6760,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (fontChooser.OK) {
 		// END KGU#393 2017-05-09		
 			// get fields
+			// START KGU#494 2018-09-10: Issue #508
+			Element.E_PADDING_FIX = fontChooser.getFixPadding();
+			// END KGU#494 2018-09-10
 			Element.setFont(fontChooser.getCurrentFont());
 
 			// save fields to ini-file

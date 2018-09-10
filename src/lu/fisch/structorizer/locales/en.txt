@@ -860,7 +860,7 @@ FontChooser.lblSize.text=Size
 FontChooser.lblSize.tooltip=The sizes of the selectable fonts.
 FontChooser.btnOK.text=OK
 FontChooser.btnOK.tooltip=Validate your choice.
-
+FontChooser.cbFixPadding.text=Fixed (font-independent) padding
 
 -----[ Colors ]-----
 Colors.title=Color Preferences

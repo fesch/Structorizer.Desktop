@@ -101,12 +101,14 @@ public class FontChooser extends LangDialog
 	protected JButton btnOK;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
 	// START KGU#494 2018-09-10: Issue #508
+	protected JCheckBox cbFixPadding;
 	protected int fontSize = 12;	// Caches a non-selectable font size
+	private boolean offerPadding = false; 
 	// END KGU#494 2018-09-10
 	
 	private String[] sizes = new String[] { "4","6","8","10","12","14","16","18","20","22","24","30","36","48","72" };
 
-        /*
+	/*
 	public FontChooser() {
 		super();
 		setModal(true);
@@ -114,8 +116,13 @@ public class FontChooser extends LangDialog
 	}*/
 	
 	public FontChooser(Frame owner) {
+		this(owner, false);
+	}
+
+	public FontChooser(Frame owner, boolean withPaddingControl) {
 		super(owner);
-                setModal(true);
+		offerPadding = withPaddingControl;
+		setModal(true);
 		initComponents();
 	}
 	
@@ -240,6 +247,15 @@ public class FontChooser extends LangDialog
 					((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, (int)(80*scaleFactor)};
 					((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
 
+					// START KGU#494 2018-09-10: Issue #508 - Allow fix padding (legacy mode)
+					//---- cbFixPadding ----
+					cbFixPadding = new JCheckBox("Fixed (font-independent) padding");
+					if (offerPadding) {
+						buttonBar.add(cbFixPadding, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+								GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+								new Insets(0, 0, 0, 0), 0, 0));
+					}
+					// END KGU#494 2018-09-10
 					//---- btnOK ----
 					btnOK.setText("OK");
 					buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
@@ -331,7 +347,7 @@ public class FontChooser extends LangDialog
 		try
 		{
 			String fontFamily = (String)lsNames.getSelectedValue();
-			// START KGU#494 2018-09-10: Issue #508	We don't want to lose the former size if selection is void	
+			// START KGU#494 2018-09-10: Issue #508			
 			//int fontSize = Integer.parseInt((String)lsSizes.getSelectedValue());
 			if (lsSizes.getSelectedIndex() >= 0) {
 				fontSize = Integer.parseInt((String)lsSizes.getSelectedValue());
@@ -373,5 +389,17 @@ public class FontChooser extends LangDialog
 		//cbBold.setSelected(font.isBold());
 		//cbItalic.setSelected(font.isItalic());
 	}
+	
+	// START KGU#494 2018-09-10: Issue #508
+	public boolean getFixPadding()
+	{
+		return this.cbFixPadding.isSelected();
+	}
+
+	public void setFixPadding(boolean fixPadding)
+	{
+		this.cbFixPadding.setSelected(fixPadding);
+	}
+	// END KGU#494 2018-09-10
 	
 }

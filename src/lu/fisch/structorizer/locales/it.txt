@@ -573,6 +573,7 @@ FontChooser.lblSize.text=Grandezza
 FontChooser.lblSize.tooltip=La grandezza dei caratteri selezionabili.
 FontChooser.btnOK.text=OK
 FontChooser.btnOK.tooltip=Valida le tue scelte.
+FontChooser.cbFixPadding.text=Margine fisso (indipendente da grandezza)
 
 
 -----[ Colors ]-----

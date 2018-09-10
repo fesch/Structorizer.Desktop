@@ -864,6 +864,7 @@ FontChooser.lblSize.text=Tamaño
 FontChooser.lblSize.tooltip=El tamaño de la fuente a seleccionar.
 FontChooser.btnOK.text=Aceptar
 FontChooser.btnOK.tooltip=Aceptar los cambios.
+FontChooser.cbFixPadding.text=Márgenes fijos (no proporcionales)
 
 
 -----[ Colors ]-----

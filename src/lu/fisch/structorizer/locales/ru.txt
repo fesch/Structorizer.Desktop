@@ -810,9 +810,10 @@ FontChooser.lblTest.tooltip=Тестовая строка. Так шрифт б�
 FontChooser.lblName.text=Имя
 FontChooser.lblName.tooltip=Название выбранного шрифта.
 FontChooser.lblSize.text=Размер
-FontChooser.lblSize.tooltip=Рамер выбранного шрифта.
+FontChooser.lblSize.tooltip=Размер выбранного шрифта.
 FontChooser.btnOK.text=ОК
 FontChooser.btnOK.tooltip=Подтвердите свой выбор.
+FontChooser.cbFixPadding.text=Неизменные кромки (независ. от размера)
 
 
 -----[ Colors ]-----

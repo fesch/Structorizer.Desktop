@@ -93,6 +93,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
  *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
  *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
+ *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
  *
  ******************************************************************************************************
  *
@@ -300,12 +301,12 @@ public abstract class Element {
 	" - Pat Niemeyer <pat@pat.net>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
-	// START KGU#494 2018-02-14: Enh. #508
-	/** basic padding value for scaling with scale_factor */
-	public static final int E_PADDING_BASE = 20;
-	// END KGU#494 2018-02-14
 
 	// some static quasi-constants
+	// START KGU#494 2018-09-10: Enh. #508
+	/** Mode for fixed i.e. font-independent E_PADDING (= standard behaviour before 3.28-07) */
+	public static boolean E_PADDING_FIX = false;
+	// END KGU#494 2018-09-10
 	/** Padding between e.g. the content of elements and their borders */
 	protected static int E_PADDING = 20;
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
@@ -2053,11 +2054,17 @@ public abstract class Element {
 	public static void setFont(Font _font)
 	{
 		font = _font;
-        // START KGU#572 2018-09-09: Issue #508 
-        // set the padding relative to the used font size
-        // by using a padding of 20 px as reference with a default font of 12 pt
-        E_PADDING = (int)(20./12 * font.getSize());
-        // END KGU#572 2018-09-08: Issue #508
+        // START KGU#572 2018-09-10: Issue #508
+		if (!E_PADDING_FIX) {
+			// set the padding relative to the used font size
+			// by using a padding of 20 px as reference with a default font of 12 pt
+			E_PADDING = (int)(20./12 * font.getSize());
+		}
+		else {
+			// Adhere to the old 
+			E_PADDING = 20;
+		}
+        // END KGU#572 2018-09-10: Issue #508
 	}
 
 	/************************

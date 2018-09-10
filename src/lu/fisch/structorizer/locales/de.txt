@@ -863,6 +863,7 @@ FontChooser.lblSize.text=Größe
 FontChooser.lblSize.tooltip=Die Größe des gewählten Zeichensatzes.
 FontChooser.btnOK.text=Speichern
 FontChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
+FontChooser.cbFixPadding.text=Fester (schriftgrößenunabhängiger) Rand
 
 
 -----[ Colors ]-----

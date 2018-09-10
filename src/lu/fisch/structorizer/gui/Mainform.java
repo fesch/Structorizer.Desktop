@@ -71,6 +71,7 @@ package lu.fisch.structorizer.gui;
  *                                      loading  preferences from explicitly chosen ini file. This is fixed now
  *      Kay Gürtzig     2018.06.25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart
  *      Kay Gürtzig     2018.07.09      Bugfix #555: Failing restoration of the previous comment popup status
+ *      Kay Gürtzig     2018.09.10      Issue #508: New option Element.E_PADDING_FIX in load/save INI 
  *
  ******************************************************************************************************
  *
@@ -598,6 +599,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#503 2018-03-14: Enh. #519
 			Element.E_WHEEL_REVERSE_ZOOM = ini.getProperty("wheelCtrlReverse", "0").equals("1");
 			// END KGU#503 2018-03-14
+			// START KGU#494 2018-09-10: Issue #508
+			Element.E_PADDING_FIX = ini.getProperty("fixPadding", "0").equals("1");
+			// END KGU#494 2018-09-10
 
 			// START KGU#300 2016-12-02: Enh. #300
 			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
@@ -851,6 +855,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#503 2018-03-14: Enh. #519
 			ini.setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
 			// END KGU#503 2018-03-14
+			// START KGU#494 2018-09-10: Issue #508
+			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
+			// END KGU#494 2018-09-10
 			
 		    // START KGU#309 2016-12-15: Enh. #310 new saving options
 		    ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
