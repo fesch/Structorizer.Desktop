@@ -126,8 +126,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
- *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers#
+ *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
  *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
+ *      Kay Gürtzig     2018.09.11      Refinement to #372: More file attributes used to initialize author attributes 
  *      
  ******************************************************************************************************
  *
@@ -170,6 +171,12 @@ import javax.swing.JOptionPane;
 import org.xml.sax.Attributes;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileOwnerAttributeView;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.awt.Color;
@@ -402,6 +409,11 @@ public class Root extends Element {
 		}
 		return dateFormat.format(this.modified);
 	}
+	/**
+	 * Retrieves the author attributes from the XML node {@code attributes}
+	 * @param attributes - The {@link Attributes} of the originating XML node
+	 * @see #fetchAuthorDates(File)
+	 */
 	public void fetchAuthorDates(Attributes attributes)
 	{
 		if(attributes.getIndex("author")!=-1)  {
@@ -423,14 +435,39 @@ public class Root extends Element {
 	}
 	// END KGU#363 2017-03-10
 	// START KGU#363 2017-05-21: Enh. #372
+	/**
+	 * Tries to extract sensible file attribute values and to use them to initialize the
+	 * author attributes before {@link #fetchAuthorDates(Attributes)} is called.
+	 * @param _file - the file from which this diagram was loaded
+	 * @see #fetchAuthorDates(Attributes)
+	 */
 	public void fetchAuthorDates(File _file) {
 		// Override the constructor settings if the Root is loaded from file
 		this.created = null;
 		this.author = "???";
+		// START KGU#363 2018-09-11: Improvement to retrieve suited file attributes as defaults
+		Path path = _file.toPath();
+		try {
+			BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+			this.created = new Date(attrs.creationTime().toMillis());
+			Date modified = new Date(attrs.lastModifiedTime().toMillis());
+			FileOwnerAttributeView view = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+			if (modified.before(this.created)) {
+				// It is hard to understand but this constellation often occurs - so produce something more plausible
+				this.modified = this.created;
+				this.created = modified;
+				this.modifiedby = view.getOwner().getName();
+			}
+			else {
+				this.author = view.getOwner().getName();
+			}
+		} catch (IOException e) {}
+		// END KGU#363 2018-09-11
 		this.licenseName = null;
 		if (_file.canRead()) {
 			long modTime = _file.lastModified();
-			if (modTime != 0L) {
+			if (modTime != 0L && (this.modified == null || this.modified.getTime() < modTime) &&
+					(this.created == null || this.created.getTime() < modTime)) {
 				this.modified = new Date(modTime);
 			}
 		}

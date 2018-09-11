@@ -472,6 +472,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#316 2016-12-28
     // END KGU#289 2016-11-15
     {
+		// START KGU#363 2018-09-11: Improvement for temporary legacy nsd files extracted from arrz files
+    	File zipFile = null;
+    	if (unzippedFrom != null) {
+    		zipFile = new File(unzippedFrom);
+    	}
+		// END KGU#363 2018-09-11
     	String errorMessage = "";
     	String ext = filename.substring(Math.max(filename.lastIndexOf("."),0));
 		if (ext.equalsIgnoreCase(".nsd"))
@@ -484,7 +490,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#111 2015-12-17
 				// START KGU#363 2017-05-21: Issue #372 API change
 				//Root root = parser.parse(f.toURI().toString());
-				Root root = parser.parse(f);
+				// START KGU#363 2018-09-11: Improvement for temporary legacy nsd files extracted from arrz files
+				//Root root = parser.parse(f);
+				Root root = parser.parse(f, zipFile);
+				// END KGU#363 2018-09-11
 				// END KGU#363 2017-05-21
 
 				root.filename = filename;

@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-08 (2018-09-11)
+Current development version: 3.28-08 (2018-09-12)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -86,6 +86,7 @@ Current development version: 3.28-08 (2018-09-11)
       line spacing in multi-line texts reduced
 - 08: Issue #508: Slight improvements of font chooser dialog and font resizing <2>
 - 08: Bugfix #512: Arranger zoom compromised the diagram size (rounding impact) <2>
+- 08: Issue #372: Attribute setting for diagrams from an arrz file improved <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
