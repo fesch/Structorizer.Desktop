@@ -53,6 +53,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
  *
  ******************************************************************************************************
  *
@@ -290,12 +291,15 @@ public class Parallel extends Element
 //            // START KGU#172 2016-04-01: Issue #145 Show comment in switch text/comment mode
 //            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
 //            {
-//                FontMetrics fm = _canvas.getFontMetrics(Element.font);
+//              // START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+//              //FontMetrics fm = _canvas.getFontMetrics(Element.font);
+//              int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+//              // END KGU#494 2018-09-11
 //            	for (int ci = 0; ci < this.comment.count(); ci++)
 //            	{
 //            		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, this.comment.get(ci), this) + 2 * E_PADDING);
 //            	}
-//            	int extraHeight = this.comment.count() * (fm.getLeading()+fm.getAscent());
+//            	int extraHeight = this.comment.count() * fontHeight;
 //            	rect0.bottom += extraHeight;
 //            	this.y0Branches += extraHeight;
 //            }
@@ -465,7 +469,7 @@ public class Parallel extends Element
                             {
                                     canvas.moveTo(myrect.right-1,myrect.top);
                                     int mx=myrect.right-1;
-                                    int my=myrect.top-(fm.getLeading()+fm.getAscent());
+                                    int my=myrect.top-fontHeight;
                                     int sx=mx;
                                     int sy=Math.round((sx*(by-ay)-ax*by+ay*bx)/(bx-ax));
                                     canvas.lineTo(sx,sy+1);

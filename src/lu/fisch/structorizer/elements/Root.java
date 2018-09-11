@@ -127,7 +127,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
  *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers#
- *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly)
+ *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
  *      
  ******************************************************************************************************
  *

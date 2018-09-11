@@ -2066,6 +2066,22 @@ public abstract class Element {
 		}
         // END KGU#572 2018-09-10: Issue #508
 	}
+	
+	// START KGU#494 2018-09-11: Bundle the font height retrieval strewn over several subclasss and methods
+	/**
+	 * Derives the font height to be used for drawing preparation and drawing itself
+	 * from the given {@link FontMetrics} (should correspond to on an UNzoomed (!) {@link Graphics2D}
+	 * object).<br/>
+	 * Note: This method is possibly subject to tuning.
+	 * @param fm - the underlying {@link FontMetrics}
+	 * @return the font height in px.
+	 */
+	protected static int getFontHeight(FontMetrics fm)
+	{
+		//return fm.getHeight();					// Original measure (before and up to version 3.28-07)
+		return fm.getLeading() + fm.getAscent();	// As introduced by Bob Fisch 2018-09-08 (omits the descent, stronger rounding impact)
+	}
+	// END KGU#494 2018-09-11
 
 	/************************
 	 * static things
