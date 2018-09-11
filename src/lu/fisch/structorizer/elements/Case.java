@@ -59,6 +59,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.11.01/02   Issue #447: Line continuation (backslash at line end) is to be supported
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
  *
  ******************************************************************************************************
  *
@@ -70,7 +71,6 @@ package lu.fisch.structorizer.elements;
 import java.util.HashMap;
 import java.util.Vector;
 import java.awt.Color;
-import java.awt.FontMetrics;
 import java.awt.Point;
 
 import javax.swing.ImageIcon;
@@ -260,7 +260,10 @@ public class Case extends Element implements IFork
             int fullWidth = 0, maxHeight = 0;
             // END KGU#516 2018-04-04
 
-            FontMetrics fm = _canvas.getFontMetrics(font);
+    		// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+    		//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+    		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+    		// END KGU#494 2018-09-11
 
             // Lest the sum of the paddings per branch should gather too many lost remainders 
             int padding = 2 * (E_PADDING/2);
@@ -299,7 +302,7 @@ public class Case extends Element implements IFork
     		}
     		// END KGU#480 2018-01-21
             // FIXME: The required extra padding must be proportional to the font size
-            int extrapadding = padding + (discrLines.count()-1) * (3 * padding + (fm.getLeading()+fm.getAscent()));
+            int extrapadding = padding + (discrLines.count()-1) * (3 * padding + fontHeight);
             // START KGU#227 2016-07-31: Enh. #128 - compute the dimensions of the comment area
             commentRect = new Rect();
             if (Element.E_COMMENTSPLUSTEXT)
@@ -360,10 +363,10 @@ public class Case extends Element implements IFork
         	}
 
         	// START KGU#172 2016-04-01: Bugfix #144: The header my contain more than one line if comments are visible
-            //rect0.bottom = 2 * (padding) + 2 * (fm.getLeading()+fm.getAscent());
+            //rect0.bottom = 2 * (padding) + 2 * fontHeight;
         	// START KGU#453 2017-11-01: Issue #447 - there may also be more selector lines
-            //rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * (fm.getLeading()+fm.getAscent());
-            rect0.bottom = 2 * (padding) + (discrLines.count() + nSelectorLines) * (fm.getLeading()+fm.getAscent());
+            //rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * fontHeight;
+            rect0.bottom = 2 * (padding) + (discrLines.count() + nSelectorLines) * fontHeight;
             // END KGU#453 2017-11-01
             // END KGU#172 2016-04-01
         	// START KGU#227 2016-07-31: Enh. #128 - add the height if the comment area
@@ -457,7 +460,10 @@ public class Case extends Element implements IFork
     	// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
     	Color drawColor = getFillColor();
     	// END KGU 2015-10-13
-    	FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+		//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+		// END KGU#494 2018-09-11
 
     	Canvas canvas = _canvas;
     	canvas.setBackground(drawColor);
@@ -473,8 +479,8 @@ public class Case extends Element implements IFork
     	// END KGU#136 2016-03-01
 
     	// START KGU#453 2017-11-02: Issue #447
-    	//int minHeight = 2 * (fm.getLeading()+fm.getAscent()) + 4 * (E_PADDING / 2);
-    	int minHeight = (1 + nSelectorLines) * (fm.getLeading()+fm.getAscent()) + 4 * (E_PADDING / 2);
+    	//int minHeight = 2 * fontHeight + 4 * (E_PADDING / 2);
+    	int minHeight = (1 + nSelectorLines) * fontHeight + 4 * (E_PADDING / 2);
     	// END KGU#453 2017-11-02
     	// START KGU#172 2016-04-01: Bugfix #145 - we might have to put several comment lines in here
     	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
@@ -488,7 +494,7 @@ public class Case extends Element implements IFork
     	}
     	if (discrLines.count() > 1)
     	{
-    		minHeight += (discrLines.count()-1) * (fm.getLeading()+fm.getAscent());
+    		minHeight += (discrLines.count()-1) * fontHeight;
     	}
     	// END KGU#172 2016-04-01
     	// START KGU#227 2016-07-31: Enh. #128 - add the height of the embedded comment
@@ -561,7 +567,7 @@ public class Case extends Element implements IFork
 //    		if (nLines > 1 && this.getText().get(nLines-1).equals("%")) divisor = nLines;
 //    		writeOutVariables(canvas,
 //    				x - getWidthOutVariables(_canvas, text, this) / divisor,
-//    				myrect.top + E_PADDING / 3 + (fm.getLeading()+fm.getAscent()),
+//    				myrect.top + E_PADDING / 3 + fontHeight,
 //    				text,this
 //    				);
     		// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
@@ -599,8 +605,8 @@ public class Case extends Element implements IFork
     	  		writeOutVariables(canvas,
         				xStart,
         				// START KGU#227 2016-07-31: Enh. #128 - consider comment
-        				//myrect.top + E_PADDING / 3 + (ln + 1) * (fm.getLeading()+fm.getAscent()),
-        				myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * (fm.getLeading()+fm.getAscent()),
+        				//myrect.top + E_PADDING / 3 + (ln + 1) * fontHeight,
+        				myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * fontHeight,
         				// END KGU#227 2016-07-31
         				text.get(ln), this
         				);
@@ -680,8 +686,8 @@ public class Case extends Element implements IFork
     	int ay = myrect.top + commentRect.bottom;
     	// END KGU#435 2017-10-22
     	int bx = myrect.left + lineWidth;
-    	//int by = myrect.bottom-1 - (fm.getLeading()+fm.getAscent()) - E_PADDING / 2;
-    	int by = myrect.bottom-1 - (nSelectorLines * (fm.getLeading()+fm.getAscent())) - E_PADDING / 2;
+    	//int by = myrect.bottom-1 - fontHeight - E_PADDING / 2;
+    	int by = myrect.bottom-1 - (nSelectorLines * fontHeight) - E_PADDING / 2;
 
     	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
     	//if(  ((String) getText().get(getText().count()-1)).equals("%") )
@@ -760,7 +766,7 @@ public class Case extends Element implements IFork
     			//		//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
     			//		myrect.right + (myrect.left-myrect.right) / 2 - textWidths[i] / 2,
     			//		// END KGU#91 2915-12-01
-    			//		myrect.top - E_PADDING / 4, //+(fm.getLeading()+fm.getAscent()),
+    			//		myrect.top - E_PADDING / 4, //+fontHeight,
     			//		getText().get(i+1),this);
     			// START KGU#480 2018-01-21: Enh. #490
     			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
@@ -773,7 +779,7 @@ public class Case extends Element implements IFork
     			for (int j = 0; j < brokenLine.length; j++) {
     				writeOutVariables(canvas,
     						myrect.right + (myrect.left-myrect.right) / 2 - (textWidths[i] - E_PADDING/2)/ 2,
-    						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * (fm.getLeading()+fm.getAscent()),
+    						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * fontHeight,
     						brokenLine[j], this);
     			}
 				// END KGU#354 2017-11-01
@@ -783,7 +789,7 @@ public class Case extends Element implements IFork
     			{
     				canvas.moveTo(myrect.right-1, myrect.top);
     				int mx = myrect.right-1;
-    				//int my = myrect.top-(fm.getLeading()+fm.getAscent());
+    				//int my = myrect.top-fontHeight;
     				int sx = mx;
     				int sy = (sx*(by-ay) - ax*by + ay*bx) / (bx-ax);
     				canvas.lineTo(sx,sy+1);

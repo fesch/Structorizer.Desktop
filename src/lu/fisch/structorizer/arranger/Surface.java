@@ -81,6 +81,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
  *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations
  *      Kay Gürtzig     2018.06.27      Enh. #552: Serial decisions on saveAll allowed, remoeAllDiagrams() added
+ *      Kay Gürtzig     2018.09.10      Bugfix #508/#512: A diagram loaded into a zoomed Surface first could have too small a shape
+ *                                      for the text drawing in Structorizer due to font height/width rounding effects
  *
  ******************************************************************************************************
  *
@@ -311,6 +313,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         {
             // START KGU#497 2018-02-17: Enh. #512
         	Graphics2D g2d = (Graphics2D) g;
+        	// START KGU#572 2018-09-09: Bugfix #508/#512 - ensure all diagrams have shape without rounding defects
+            for(int d=0; d<diagrams.size(); d++)
+            {
+            	// If the diagram had already been drawn or prepared this will return immediately
+                diagrams.get(d).root.prepareDraw(g2d);
+            }
+            // END KGU#572 2018-09-09
         	// START KGU#497 2018-03-19: Enh. #512
     		//g2d.scale(1/zoomFactor, 1/zoomFactor);
             // END KGU#497 2018-02-17

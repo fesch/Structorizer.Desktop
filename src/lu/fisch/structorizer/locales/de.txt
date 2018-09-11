@@ -863,6 +863,7 @@ FontChooser.lblSize.text=Größe
 FontChooser.lblSize.tooltip=Die Größe des gewählten Zeichensatzes.
 FontChooser.btnOK.text=Speichern
 FontChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
+FontChooser.cbFixPadding.text=Fester (schriftgrößenunabhängiger) Rand
 
 
 -----[ Colors ]-----
@@ -1137,9 +1138,9 @@ Control.cbRunDataDisplay.item.1=Testabdeckung flach
 Control.cbRunDataDisplay.item.2=Testabdeckung tief
 Control.cbRunDataDisplay.item.3=Ausführungszähler
 Control.cbRunDataDisplay.item.4=Anzahl Schritte, lin.
-Control.cbRunDataDisplay.item.5=Anzahl Schritte, log.
+Control.cbRunDataDisplay.item.5=Anzahl Schritte, logar.
 Control.cbRunDataDisplay.item.6=aggreg. Schritte, lin.
-Control.cbRunDataDisplay.item.7=aggreg. Schritte, log.
+Control.cbRunDataDisplay.item.7=aggreg. Schritte, logar.
 Control.chkOutputToTextWindow.text=Ausgabe in Fenster
 Control.lbStopRunningProc.text=Diese Aktion ist während der Ausführung eines Diagramms nicht erlaubt.\nLaufende Ausführung abbrechen?
 Control.lbInputValue.text=Bitte Wert für <%> eingeben

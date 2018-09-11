@@ -63,7 +63,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
  *      Kay Gürtzig     2018.02.15      Issue #508: Workaround for large-scaled collapse symbols eclipsing the text
  *      Kay Gürtzig     2018.07.12      Bugfix #557: potential endless loop in isDeclaration(String)
- *      Bob Fisch       2018.09.08      Reducing top padding from E_PADDING/2 to E_PADDING/3
+ *      Bob Fisch       2018.09.08      Issue #508: Reducing top padding from E_PADDING/2 to E_PADDING/3
+ *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
  *
  ******************************************************************************************************
  *
@@ -143,7 +144,10 @@ public class Instruction extends Element {
 		int commentHeight = 0;
 		// END KGU#227 2016-07-30
 
-		FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+		//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+		// END KGU#494 2018-09-11
 
 		// START KGU#227 2016-07-30: Enh. #128
 		// START KGU#477 2017-12-06: Enh. #487
@@ -188,7 +192,7 @@ public class Instruction extends Element {
 				rect.right = lineWidth;
 			}
 		}
-		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * (fm.getLeading()+fm.getAscent()); //fm.getHeight();
+		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * fontHeight;
 		// START KGU#227 2016-07-30: Enh. #128
 		rect.bottom += commentHeight;
 		// END KGU#227 2016-07-30
@@ -238,7 +242,10 @@ public class Instruction extends Element {
 		//Color drawColor = _element.getColor();
 		Color drawColor = _element.getFillColor();
 		// END KGU 2015-10-13
-		FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+		//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+		// END KGU#494 2018-09-11
 			
 		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
 		//_element.rect = _top_left.copy();
@@ -289,7 +296,10 @@ public class Instruction extends Element {
 					true);
 			commentHeight = commentRect.bottom - commentRect.top;
 		}
-		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fm.getHeight()*/;
+		// START BOB## 2018-09-08: Issue  #508
+		//int yTextline = _top_left.top + (Element.E_PADDING / 3) + commentHeight/* + fontHeight*/;
+		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fontHeight*/;
+		// END BOB## 2018-09-08
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
@@ -326,8 +336,8 @@ public class Instruction extends Element {
 //					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
 					myrect.left + leftPadding + _element.getTextDrawingOffset(),
 					// START KGU#227 2016-07-30: Enh. #128
-					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
-					yTextline += (fm.getLeading()+fm.getAscent()), //fm.getHeight(),
+					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fontHeight,
+					yTextline += fontHeight,
 					// END KGU#227 2016-07-30
 					text,
 					_element

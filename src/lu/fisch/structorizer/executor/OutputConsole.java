@@ -248,7 +248,6 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     /**
      * Appends string _text in the specified (foreground) colour to the textArea
      * as is, i.e. without additional newline.
-     * TODO Remark: Color attribute doesn't work in the current version
      * @param _text - a string
      * @param _colour - the text colour to use
      */
@@ -304,7 +303,7 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 //    					try {
 //    						View rootView = textPane.getUI().getRootView( textPane );
 //    						View boxView = rootView.getView(0);
-//    						// FIXME: This is likely to be based on some misconceptions 
+//    						// The following is likely to be based on some misconceptions! 
 //    						for( int i = 0; i < boxView.getViewCount()-3000; i++ ) {
 //    							int line = boxView.getViewIndex( i, Bias.Forward );
 //    							View paragrView = boxView.getView(line);
@@ -336,7 +335,6 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     /**
      * Appends string _text in the specified (foreground) colour to the textArea
      * with additional newline.
-     * TODO Remark: Color attribute doesn't work in the current version
      * @param _text - a string
      * @param _colour - the text colour to use
      */
@@ -355,7 +353,6 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     	boolean done = false;
 		JFileChooser dlgSave = new JFileChooser();
 		GUIScaler.rescaleComponents(dlgSave);
-		// FIXME: Define message on Control instead
 		dlgSave.setDialogTitle(menuContentSave.getText());
 		if (lastSaved != null) {
 			dlgSave.setCurrentDirectory(lastSaved);
@@ -375,7 +372,6 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
     			outFile = new File(outFile.getAbsolutePath() + ".log");
     		}
     		// Do existence check and allow the user to cancel
-			// FIXME: Define text on Control
     		if (outFile.exists() && (JOptionPane.showConfirmDialog(this,
     				msgOverwriteFile.getText(),
     				menuContentSave.getText(),

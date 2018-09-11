@@ -253,7 +253,7 @@ Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=¿Diagrama sin caja?
 Menu.menuDiagramComment.text=¿Mostrar comentarios?
 Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
-Menu.menuDiagramCommentsPlusText.text=¿Ambos commentarios y textos?
+Menu.menuDiagramCommentsPlusText.text=¿Tanto comentarios como textos?
 Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto de menú
 Menu.menuDiagramHideDeclarations.text=¿Esconder puras declaraciónes?
 Menu.menuDiagramMarker.text=¿Resaltar variables?
@@ -522,7 +522,7 @@ AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables id
 AnalyserPreferences.checkboxes.22.text=Comprobar que constantes no son comprometidas.
 AnalyserPreferences.checkboxes.23.text=Comprobar si la lista de diagramas a ser incluídos causa problemas.
 AnalyserPreferences.checkboxes.24.text=Combrobar las definiciones y el uso de tipos (variables compuestas).
-AnalyserPreferences.checkboxes.25.text=Recommendaciones para primeras instrucciones 
+AnalyserPreferences.checkboxes.25.text=Recomendaciones para primeras instrucciones 
 AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mundo"
 AnalyserPreferences.okButton.text=Aceptar
 
@@ -864,6 +864,7 @@ FontChooser.lblSize.text=Tamaño
 FontChooser.lblSize.tooltip=El tamaño de la fuente a seleccionar.
 FontChooser.btnOK.text=Aceptar
 FontChooser.btnOK.tooltip=Aceptar los cambios.
+FontChooser.cbFixPadding.text=Márgenes fijos (no proporcionales)
 
 
 -----[ Colors ]-----
@@ -1136,10 +1137,10 @@ Control.cbRunDataDisplay.item.0=no tinción
 Control.cbRunDataDisplay.item.1=plana cobertura de test
 Control.cbRunDataDisplay.item.2=prof. cobertura de test
 Control.cbRunDataDisplay.item.3=número de ejecuciones
-Control.cbRunDataDisplay.item.4=hechas operaciones, lin.
-Control.cbRunDataDisplay.item.5=hechas operaciones, log.
-Control.cbRunDataDisplay.item.6=acum. operaciones, lin.
-Control.cbRunDataDisplay.item.7=acum. operaciones, log.
+Control.cbRunDataDisplay.item.4=carga de operaciones, lin.
+Control.cbRunDataDisplay.item.5=carga de operaciones, logar.
+Control.cbRunDataDisplay.item.6=carga acum. de op., lin.
+Control.cbRunDataDisplay.item.7=carga acum. de op., logar.
 Control.chkOutputToTextWindow.text=Salidas a ventana
 Control.lbStopRunningProc.text=Esta acción no está permitida mientras que un diagrama está ejecutido.\n¿Quieres abortar la ejecución?
 Control.lbInputValue.text=Inserta un valor para <%>

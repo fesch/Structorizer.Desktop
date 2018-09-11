@@ -533,7 +533,6 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 			doc.insertString(0, content, null);
 			this.licenseFromPool = true;
 		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
 			error = e.getMessage();
 		}
 		return error;	
@@ -668,7 +667,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 			saveAs();
 		}
 		else if (src == menuFileRename) {
-			// FIXME should we offer to save? In theory no need, file isn't open
+			// Should we offer to save? In theory there's no need, file isn't open
 			if (!this.licenseFile.isDirectory()) {
 				this.rename();
 			}

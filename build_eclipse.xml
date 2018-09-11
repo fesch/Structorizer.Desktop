@@ -31,6 +31,9 @@
                 <exclude name="**/*.launch"/>
                 <exclude name="**/*.java"/>
                 <exclude name="._*.*"/>
+                <exclude name="lu/fisch/structorizer/gui/icons_256/"/>
+                <exclude name="lu/fisch/structorizer/gui/icons_128/"/>
+                <exclude name="lu/fisch/structorizer/gui/icons_16/"/>
             </fileset>
         </copy>
     </target>
@@ -45,6 +48,9 @@
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
             <src path="src"/>
             <exclude name="._*.*"/>
+            <exclude name="lu/fisch/structorizer/gui/icons_256/"/>
+            <exclude name="lu/fisch/structorizer/gui/icons_128/"/>
+            <exclude name="lu/fisch/structorizer/gui/icons_16/"/>
             <classpath refid="Structorizer.classpath"/>
         </javac>
     </target>
@@ -94,6 +100,11 @@
     </target>
     <target name="Structorizer">
         <java classname="Structorizer" failonerror="true" fork="yes">
+            <classpath refid="Structorizer.classpath"/>
+        </java>
+    </target>
+    <target name="Translator">
+        <java classname="lu.fisch.structorizer.locales.Translator" failonerror="true" fork="yes">
             <classpath refid="Structorizer.classpath"/>
         </java>
     </target>

@@ -93,6 +93,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
  *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
  *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
+ *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
  *
  ******************************************************************************************************
  *
@@ -218,7 +219,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.28-07";
+	public static final String E_VERSION = "3.28-08";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -300,12 +301,12 @@ public abstract class Element {
 	" - Pat Niemeyer <pat@pat.net>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
-	// START KGU#494 2018-02-14: Enh. #508
-	/** basic padding value for scaling with scale_factor */
-	public static final int E_PADDING_BASE = 20;
-	// END KGU#494 2018-02-14
 
 	// some static quasi-constants
+	// START KGU#494 2018-09-10: Enh. #508
+	/** Mode for fixed i.e. font-independent E_PADDING (= standard behaviour before 3.28-07) */
+	public static boolean E_PADDING_FIX = false;
+	// END KGU#494 2018-09-10
 	/** Padding between e.g. the content of elements and their borders */
 	protected static int E_PADDING = 20;
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
@@ -530,7 +531,7 @@ public abstract class Element {
 
 	// START KGU#365 2017-04-14: Enh. #380 - New mechanism to mark trouble-making elements
 	/**
-	 * Set for quick highlighting element that cause trouble in some complex GUI activities.
+	 * Set for quick highlighting elements that cause trouble in some complex GUI activities.
 	 * Intended to be highlighted in the E_TROUBLECOLOR with high fill color priority
 	 */
 	public static final Set<Element> troubleMakers = new HashSet<Element>();
@@ -769,7 +770,7 @@ public abstract class Element {
 		// START KGU#277 2016-10-13: Enh. #270
 		_ele.disabled = this.disabled;
 		// END KGU#277 2016-10-13
-		// FIXME: Shouldn't we also copy the collapsed status?
+		_ele.collapsed = this.collapsed;
 	}
 	// END KGU#213 2016-08-01
 
@@ -1511,7 +1512,7 @@ public abstract class Element {
 		// This priority might be arguable but represents more or less what was found in the draw methods before
 		if (this.waited) {
 			// FIXME (KGU#117): Need a combined colour for waited + tested
-			return Element.E_WAITCOLOR; 
+			return Element.E_WAITCOLOR;
 		}
 		else if (this.executed) {
 			return Element.E_RUNNINGCOLOR;
@@ -2052,8 +2053,35 @@ public abstract class Element {
 
 	public static void setFont(Font _font)
 	{
-		font=_font;
+		font = _font;
+        // START KGU#572 2018-09-10: Issue #508
+		if (!E_PADDING_FIX) {
+			// set the padding relative to the used font size
+			// by using a padding of 20 px as reference with a default font of 12 pt
+			E_PADDING = (int)(20./12 * font.getSize());
+		}
+		else {
+			// Adhere to the old 
+			E_PADDING = 20;
+		}
+        // END KGU#572 2018-09-10: Issue #508
 	}
+	
+	// START KGU#494 2018-09-11: Bundle the font height retrieval strewn over several subclasss and methods
+	/**
+	 * Derives the font height to be used for drawing preparation and drawing itself
+	 * from the given {@link FontMetrics} (should correspond to on an UNzoomed (!) {@link Graphics2D}
+	 * object).<br/>
+	 * Note: This method is possibly subject to tuning.
+	 * @param fm - the underlying {@link FontMetrics}
+	 * @return the font height in px.
+	 */
+	protected static int getFontHeight(FontMetrics fm)
+	{
+		//return fm.getHeight();					// Original measure (before and up to version 3.28-07)
+		return fm.getLeading() + fm.getAscent();	// As introduced by Bob Fisch 2018-09-08 (omits the descent, stronger rounding impact)
+	}
+	// END KGU#494 2018-09-11
 
 	/************************
 	 * static things
@@ -3208,7 +3236,7 @@ public abstract class Element {
 		// smaller font
 		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize() * 2 / 3);
 		FontMetrics fm = _canvas.getFontMetrics(smallFont);
-		int fontHeight = fm.getHeight();
+		int fontHeight = fm.getHeight();	// Here we don't reduce to fm.getLeading() + fm.getAscend()
 		int extraHeight = this.isBreakpoint() ? fontHeight/2 : 0;
 		// backup the original font
 		Font backupFont = _canvas.getFont();
@@ -3601,15 +3629,15 @@ public abstract class Element {
      * Looks up the associated token sequence in _splitOldKeys for any of the parser preference names
      * provided by _prefNames. If there is such a token sequence then it will be
      * replaced throughout my text by the associated current parser preference for the respective name
-	 * @param line - line of element text
+	 * @param _line - line of element text
 	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
 	 * @param _prefNames - Array of parser preference names being relevant for this kind of element
 	 * @param _ignoreCase - whether case is to be ignored on comparison
 	 * @return refactored line
 	 */
-	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _prefNames, boolean _ignoreCase)
+	protected final String refactorLine(String _line, HashMap<String, StringList> _splitOldKeys, String[] _prefNames, boolean _ignoreCase)
 	{
-		StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(_line, true);
 		boolean isModified = false;
 		// FIXME: We should order the keys by decreasing length first!
 		for (int i = 0; i < _prefNames.length; i++)
@@ -3649,9 +3677,9 @@ public abstract class Element {
 		}
 		if (isModified)
 		{
-			line = tokens.concatenate().trim();
+			_line = tokens.concatenate().trim();
 		}
-		return line;
+		return _line;
 	}
 	// END KGU#258 2016-09-25
 
