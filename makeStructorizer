@@ -21,7 +21,8 @@ set -e
 #      Kay Gürtzig                    2016.12.27   More resource files copied
 #      Simon Sobisch                  2017.03.06   Check for javac
 #      Kay Gürtzig                    2018.01.26   Additional icon directories copied
-#      Simon Sobisch                  2018.06.08   create bin directory, if missing
+#      Simon Sobisch                  2018.06.08   Create bin directory, if missing
+#      Bob Fisch                      2018.09.12   Auto disabling the apple extentions
 #
 ################################################################################
 
@@ -42,10 +43,9 @@ find bin -name '*.class' -exec rm {} \;
 echo Changing into src directory
 pushd src
 
-# remove apple support
+# remove apple support if present
 echo Disable Apple dependant code
-mv Structorizer.java Structorizer.apple
-mv Structorizer.clean Structorizer.java
+sed -i "s/\/\/ DISABLE-BY-SCRIPT/\/\*/g" Structorizer.java
 
 # compile the generator classes (non-dependant classes)
 echo Compiling non-dependant classes
@@ -56,11 +56,6 @@ echo "Compiling Structorizer"
 javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer.java
 echo "Compiling Structorizer Applet"
 javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar StructorizerApplet.java
-
-# put back apple support
-echo Enable Apple dependant code
-mv Structorizer.java Structorizer.clean
-mv Structorizer.apple Structorizer.java
 
 # copying some other files to binary tree
 echo Copying resources
