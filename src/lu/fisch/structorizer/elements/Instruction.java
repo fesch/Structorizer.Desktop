@@ -74,7 +74,6 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Color;
-import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;

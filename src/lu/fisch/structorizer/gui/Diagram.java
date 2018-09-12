@@ -648,7 +648,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 										}
 										// END KGU#354 2017-05-23
 										for (Root rootNew: newRoots) {
-											rootNew.setChanged();
+											rootNew.setChanged(false);
 										}
 									}
 									else {
@@ -3525,7 +3525,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							((Subqueue)source.parent).removeElement(source);
 							incl.children.addElement(source);
 						}
-						incl.setChanged();
+						incl.setChanged(false);
 						if (isNewIncl) {
 							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());;
 						}
@@ -3533,7 +3533,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						sub.addToIncludeList(includableName);
 					}
 					// END KGU#506 2018-03-14
-					sub.setChanged();
+					sub.setChanged(false);
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
 					arr.setVisible(true);
@@ -5286,7 +5286,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							while (iter.hasNext() && this.getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
 								Root nextRoot = iter.next();
 								//nextRoot.highlightVars = hil;
-								nextRoot.setChanged();
+								nextRoot.setChanged(false);
 								// If the saving attempt fails, ask whether the saving loop is to be cancelled 
 								if (!this.saveNSD(nextRoot, false)) {
 									if (JOptionPane.showConfirmDialog(
@@ -5317,7 +5317,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 						}
 						// The Root must be marked for saving
-						root.setChanged();
+						root.setChanged(false);
 						// ... and be added to the Arranger
 						this.arrangeNSD();
 					}
@@ -5334,7 +5334,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						selected.setSelected(true);
 						// END KGU#183 2016-04-24
 						// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
-						root.setChanged();
+						root.setChanged(false);
 						// END KGU#192 2016-05-02
 						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
 						if (nRoots > 2 || !root.isProgram()) {
@@ -6830,7 +6830,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.isBoxed = !_unboxed;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
-		root.setChanged();
+		root.setChanged(true);
 		// END KGU#137 2016-01-11
     	// START KGU#136 2016-03-01: Bugfix #97
     	root.resetDrawingInfoUp();	// Only affects Root
@@ -6854,7 +6854,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.setProgram(false);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
-		root.setChanged();
+		root.setChanged(true);
 		// END KGU#137 2016-01-11
 		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
 		analyse();
@@ -6873,7 +6873,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.setProgram(true);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
-		root.setChanged();
+		root.setChanged(true);
 		// END KGU#137 2016-01-11
 		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
 		analyse();
@@ -6891,7 +6891,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		root.setInclude();
 		// Record this change in addition to the undoable ones
-		root.setChanged();
+		root.setChanged(true);
 		// check absense of parameter list
 		analyse();
 		redraw();

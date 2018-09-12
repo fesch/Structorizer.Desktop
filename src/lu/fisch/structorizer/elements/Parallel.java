@@ -78,8 +78,6 @@ public class Parallel extends Element
 	
     public Vector<Subqueue> qs = new Vector<Subqueue>();
 
-    private int fullWidth = 0;
-    private int maxHeight = 0;
     // START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
     private Vector<Integer> x0Branches = new Vector<Integer>();
     private int y0Branches = 0;
@@ -354,8 +352,6 @@ public class Parallel extends Element
             this.rect0 = rect0;
             this.x0Branches = x0Branches;
             this.y0Branches = y0Branches;
-            this.fullWidth = fullWidth;
-            this.maxHeight = maxHeight;
             // END KGU#516 2018-04-04
     		// START KGU#136 2016-03-01: Bugfix #97
     		isRectUpToDate = true;

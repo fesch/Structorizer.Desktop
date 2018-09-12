@@ -69,7 +69,6 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Color;
-import java.awt.FontMetrics;
 import java.awt.Point;
 
 import javax.swing.ImageIcon;

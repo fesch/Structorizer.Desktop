@@ -64,9 +64,10 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
+import java.util.Date;
 import java.util.Vector;
+
 import java.awt.Color;
-import java.awt.FontMetrics;
 import java.awt.Point;
 
 import lu.fisch.graphics.*;
@@ -97,6 +98,9 @@ public class Subqueue extends Element implements IElementSequence {
 	// START KGU#363 2017-05-21: Enh. #372 - for the undo/redo list we need to cache Root attributes
 	public RootAttributes rootAttributes = null;
 	// END KGU#363 2017-05-21
+	// START KGU#363 2018-09-12: Enh. #372 - for the undo/redo list we need to cache former modification date
+	public Date modified = null;
+	// END KGU#363 2017-09-12
 	// START KGU#376 2017-07-01: Enh. #389: comma-separated diagram names
 	public String diagramRefs = null;
 	// END KGU#376 2017-07-01
