@@ -1910,8 +1910,11 @@ public class Root extends Element {
                     children.comment.clear();
                     // END KGU#120 2016-01-02
                     // START KGU#363 2017-05-21: Enh. #372
-                    this.adoptAttributes(children.rootAttributes);
-                    children.rootAttributes = null;
+                    if (children.rootAttributes != null) {
+                	    undoList.peek().rootAttributes = new RootAttributes(this);
+                	    this.adoptAttributes(children.rootAttributes);
+                	    children.rootAttributes = null;
+                    }
                     // END KGU#363 2017-05-21
                     // START KGU#363 2018-09-12: Enh. #372
                     this.modified = children.modified;

@@ -42,7 +42,9 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************
  *
- *      Comment:		I used JFormDesigner to desin this window graphically.
+ *      Comment:
+ *      - 2007.12.29 Robert Fisch
+ *      	I used JFormDesigner to design this window graphically.
  *
  ******************************************************************************************************
  */
@@ -272,6 +274,32 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		txtLicense.setCaretPosition(0);
 		
 		lblVersion.setText("Version "+Element.E_VERSION);
+		
+		// KGU 2018-08-01 Failed attempt to force flushing of the log file
+//		Logger lgr = logger;
+//		lgr.log(Level.INFO, "Trying to flush this now...");
+//		while (lgr != null && lgr.getHandlers().length == 0) {
+//			lgr = lgr.getParent();
+//			System.out.print("^");
+//		}
+//		System.out.println("");
+//		if (lgr != null) {
+//			for (Handler hdlr: lgr.getHandlers()) {
+//				System.out.println("Flushing " + hdlr + " ...");
+//				hdlr.flush();
+//			}
+//		}
+//		while (lgr != null) {
+//			lgr = lgr.getParent();
+//			if (lgr != null) {
+//				if (lgr.getHandlers().length > 0) {
+//					System.out.print("#");
+//				}
+//				else {
+//					System.out.print("^");
+//				}
+//			}
+//		}
 	}
 
 	/**

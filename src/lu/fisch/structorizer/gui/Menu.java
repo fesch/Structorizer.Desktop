@@ -180,7 +180,7 @@ public class Menu extends LangMenuBar implements NSDController
 
 	
 	// START KGU#363 2017-05-19: Enh. #372
-	protected final JMenuItem menuFileAttributes = new JMenuItem("Inspect attributes", IconLoader.getIcon(86));
+	protected final JMenuItem menuFileAttributes = new JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
 	// END KGU#363 2017-05-19
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.getIcon(105));

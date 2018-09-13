@@ -158,7 +158,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.07.02      KGU#245: color preferences modified to work with arrays
  *      Kay Gürtzig     2018.07.09      KGU#548: The import option dialog now retains the selected plugin for specific options
  *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line
- *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD() 
+ *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD()
+ *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
  *
  ******************************************************************************************************
  *
@@ -8015,15 +8016,29 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#363 2017-05-19: Enh. #372
-	public void attributesNSD() {
-		RootAttributes licInfo = new RootAttributes(root);
+	/**
+	 * Opens the {@link AttributeInspector} for the current {@link Root}.
+	 * @see #attributesNSD(Root)
+	 */
+	public void attributesNSD()
+	{
+		attributesNSD(root);
+	}
+	
+	/**
+	 * Opens the {@link AttributeInspector} for the specified {@code _root}.
+	 * @param _root - a {@link Root} the attributes of which are to be presented
+	 * @see #attributesNSD()
+	 */
+	public void attributesNSD(Root _root) {
+		RootAttributes licInfo = new RootAttributes(_root);
 		AttributeInspector attrInsp = new AttributeInspector(
 				this.NSDControl.getFrame(), licInfo);
 		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
 		attrInsp.setVisible(true);
 		if (attrInsp.isCommitted()) {
-			root.addUndo(true);
-			root.adoptAttributes(attrInsp.licenseInfo);
+			_root.addUndo(true);
+			_root.adoptAttributes(attrInsp.licenseInfo);
 		}
 	}
 	// END KGU#363 2017-05-17

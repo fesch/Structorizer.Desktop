@@ -60,7 +60,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import lu.fisch.structorizer.elements.RootAttributes;
-import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
 
 /**
@@ -303,123 +302,6 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
     	}
     }
     
-//    private String getLicenseTextFromPool(String licenseName) {
-//		String content = "";
-//		String error = null;
-//		BufferedReader br = null;
-//		File licDir = Ini.getIniDirectory();
-//		String fileName = licDir.getAbsolutePath() + File.separator + LicFilter.getNamePrefix() +
-//				licenseName + "." + LicFilter.acceptedExtension();
-//		try {
-//			InputStreamReader isr = new InputStreamReader(new FileInputStream(fileName), "UTF-8");
-//			br = new BufferedReader(isr);
-//			String line = null;
-//			while ((line = br.readLine()) != null) {
-//				content += line + '\n';
-//			};
-//		} catch (Exception ex) {
-//			error = ex.getMessage();
-//		}
-//		if (br != null) {
-//			
-//			try {
-//				br.close();
-//			} catch (IOException ex) {}
-//		}
-//		if (error != null) {
-//			JOptionPane.showMessageDialog(frame, msgLicenseLoadError.getText().
-//					replace("%1", licenseName).replace("%2", error),
-//					"Error " + fileName, JOptionPane.ERROR_MESSAGE);
-//		}
-//		return content;	
-//	}
-//
-//	private void updateLicenseChoice()
-//    {
-//    	String oldSel = licenseInfo.licenseName;
-//    	int selIx = cbLicenseName.getSelectedIndex();
-//    	if (selIx >= 0) {
-//    		oldSel = cbLicenseName.getItemAt(selIx);
-//    	}
-//    	selIx = -1;
-//    	cbLicenseName.setSelectedIndex(selIx);
-//    	cbLicenseName.removeAllItems();
-//		File licDir = Ini.getIniDirectory();
-//		File[] licFiles = licDir.listFiles(new LicFilter());
-//		String prefix = LicFilter.getNamePrefix();
-//		String ext = LicFilter.acceptedExtension();
-//		boolean rootContained = false;
-//		for (File licFile: licFiles) {
-//			String fileName = licFile.getName();
-//			String licName = fileName.substring(prefix.length(), fileName.lastIndexOf("."+ext)) + " (pool)";
-//			cbLicenseName.addItem(licName);
-//			if (licName.equals(oldSel)) {
-//				selIx = cbLicenseName.getItemCount() - 1;
-//			}
-//			if (licName.equals(licenseInfo.licenseName)) {
-//				rootContained = true;
-//			}
-//		}
-//		if (!rootContained && this.licenseInfo.licenseName != null && !this.licenseInfo.licenseName.isEmpty()) {
-//			cbLicenseName.addItem(this.licenseInfo.licenseName);
-//			cbLicenseName.setSelectedItem(this.licenseInfo.licenseName);
-//		}
-//		if (selIx >= 0) {
-//			cbLicenseName.setSelectedIndex(selIx);
-//		}
-//    }
-
-//	@Override
-//	public void windowActivated(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		//System.out.println(arg0.getSource() + " activated...");
-//		
-//	}
-//
-//	@Override
-//	public void windowClosed(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowClosing(WindowEvent evt) {
-//		if (evt.getSource() instanceof LicenseEditor) {
-//			this.updateLicenseChoice();
-//		}
-//	}
-//
-//	@Override
-//	public void windowDeactivated(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowDeiconified(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowIconified(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowOpened(WindowEvent evt) {
-//		Object source = evt.getSource();
-//		//System.out.println(source + " opened...");
-//		if (source instanceof LicenseEditor) {
-//			LicenseEditor led = (LicenseEditor)source;
-//			led.setSize(LicenseEditor.PREFERRED_WIDTH, LicenseEditor.PREFERRED_HEIGHT);
-//		}
-//		else if (source == this) {
-//			this.updateLicenseChoice();
-//		}
-//	}
-    
     // START KGU#376 2017-07-01: Enh. #389 display-width-aware text setting
     /**
      * Fills the Include List text area with the names of includable diagrams given
@@ -432,7 +314,7 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
     		return;
     	}
     	FontMetrics fm = txtIncludeList.getFontMetrics(txtIncludeList.getFont());
-    	int width = txtIncludeList.getWidth();	// FIXME: Either this width is wrong or the font metrics result
+    	int width = txtIncludeList.getWidth();	// FIXME: Either this width is wrong or the font metrics result is
     	StringList lines = new StringList();
     	String line = "";
     	for (int i = 0; i < includeNames.count(); i++) {

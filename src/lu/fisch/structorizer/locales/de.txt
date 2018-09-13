@@ -633,6 +633,7 @@ Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
 // Arranger index
 Editor.popupIndexGet.text=Diagram holen
+Editor.popupIndexAttributes.text=Eigenschaften anzeigen ...
 Editor.popupIndexSave.text=Änderungen sichern
 Editor.popupIndexRemove.text=Entfernen
 Editor.popupIndexCovered.text=Testabdeckung an/aus

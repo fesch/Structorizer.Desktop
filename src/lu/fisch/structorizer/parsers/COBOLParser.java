@@ -151,7 +151,6 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
-import lu.fisch.structorizer.parsers.CodeParser.ParserCancelled;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
