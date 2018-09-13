@@ -634,6 +634,7 @@ Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
 // Arranger index
 Editor.popupIndexGet.text=Coger diagrama
+Editor.popupIndexAttributes.text=Inspiciar propiedades ...
 Editor.popupIndexSave.text=Guardar cambios
 Editor.popupIndexRemove.text=Quitar
 Editor.popupIndexCovered.text=Cambiar cobertura de test

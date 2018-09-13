@@ -190,7 +190,7 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 						JProgressBar progBar = this.progressBars[this.phase];
 						progBar.setIndeterminate(false);
 						progBar.setValue(50);
-						progBar.setString(this.msgInterrupted.getText());
+						progBar.setString(msgInterrupted.getText());
 					}
 					btnOk.setEnabled(true);
 				}

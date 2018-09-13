@@ -53,6 +53,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.06.20      Issue #404: Attempt to improve validation by providing a schema - in vain
  *      Kay Gürtzig     2018.03.22      Issue #463: Direct console output replaced with logging
  *      Kay Gürtzig     2018.07.17      Bugfix #562: Attribute "origin" must be set (overwritten) in any case
+ *      Kay Gürtzig     2018.09.11      Refines #372: More sensible attributes for Roots from an arrz file.
  *
  ******************************************************************************************************
  *
@@ -809,21 +810,37 @@ public class NSDParser extends DefaultHandler {
 //     */
 //	public Root parse(String _filename) throws SAXException, IOException
     /**
-     * Parses the NSD file specified by the given {@code File} object and returns the composed Root (if possible),
-     * otherwise raises exceptions. 
+     * Parses the NSD file specified by the given {@code File} object {@code _file} and returns the
+     * composed {@link Root} (if possible), otherwise raises exceptions. 
      * @param _file - a {@code File} object representing the NSD file to be parsed.  
      * @return the built diagram
      * @throws SAXException
      * @throws IOException
      */
 	public Root parse(File _file) throws SAXException, IOException
+	{
+		return parse(_file, null);
+	}
+    /**
+     * Parses the NSD file specified by the given {@code File} object {@code _file} and returns the
+     * composed {@link Root} (if possible), otherwise raises exceptions. 
+     * @param _file - a {@code File} object representing the NSD file to be parsed.  
+     * @param _zipFile - the arrz file if {@code _file} is a temporary file unzipped from it, null otherwise
+     * @return the built diagram
+     * @throws SAXException
+     * @throws IOException
+     */
+	public Root parse(File _file, File _zipFile) throws SAXException, IOException
 	// END KGU#363 2017-05-21
 	{
 		// setup a new root
 		root = new Root();
 		
     	// START KGU#363 2017-05-21: Enh. #372: Fetch the default modification data from the file
-		root.fetchAuthorDates(_file);
+		// START KGU#363 2018-09-11: Bugfix - Zipped legacy diagrams without modification attribute always got current date
+		//root.fetchAuthorDates(_file);
+		root.fetchAuthorDates(_file, _zipFile);
+		// END KGU#363 2018-09-11
 		// END KGU#363 2017-05-21
 
 		// clear stacks

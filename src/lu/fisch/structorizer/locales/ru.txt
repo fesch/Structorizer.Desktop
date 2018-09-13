@@ -134,7 +134,7 @@ Menu.menuFileImport.text=Импорт
 Menu.menuFileImportCode.text=Язык (код) ...
 Menu.menuFilePrint.text=Печать ...
 Menu.menuFileArrange.text=Распределить к Arranger
-Menu.menuFileAttributes.text=Показать свойства файла ...
+Menu.menuFileAttributes.text=Показать свойства схемы ...
 Menu.menuFileTranslator.text=Переводчик ...
 Menu.menuFileQuit.text=Выход
 
@@ -583,11 +583,12 @@ Editor.popupDisable.text=Подавить
 Editor.popupBreakpoint.text=Сменить точку останова
 Editor.popupBreakTrigger.text=Счетчик точки останова
 // Arranger index
-Editor.popupIndexGet.text=
-Editor.popupIndexSave.text=
-Editor.popupIndexRemove.text=
+Editor.popupIndexGet.text=Принести схему
+Editor.popupIndexAttributes.text=Показать свойства схемы ...
+Editor.popupIndexSave.text=Сохранить
+Editor.popupIndexRemove.text=Устранить
 Editor.popupIndexCovered.text=
-Editor.popupIndexRemoveAll.text=
+Editor.popupIndexRemoveAll.text=Устранить все
 -----[ InputBox ]-----
 InputBox.title=
 InputBox.lblText.text=Пожалуйста, введите текст

@@ -126,8 +126,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
- *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers#
+ *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
  *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
+ *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
  *      
  ******************************************************************************************************
  *
@@ -170,6 +171,11 @@ import javax.swing.JOptionPane;
 import org.xml.sax.Attributes;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileOwnerAttributeView;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.awt.Color;
@@ -260,7 +266,6 @@ public class Root extends Element {
 	public int width = 0;
 	
 	// START KGU#136 2016-03-01: Bugfix #97 - sensibly, we cache the subqueue extensions
-	private Rect subrect0 = new Rect();
 	private Point pt0Sub = new Point(0,0);
 	// END KGU#136 2016-03-01
 
@@ -279,6 +284,9 @@ public class Root extends Element {
 	private String modifiedby = null;
 	private Date created = null;
 	private Date modified = null;
+	// START KGU#363 2018-09-12: Enh. #372 - for undo/redo we need to cache some original meta info
+	public String modifiedby0 = null;		// Original entry for modifiedby
+	// END KGU#363 2018-09-12	
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	public String licenseName = null;
 	public String licenseText = null;
@@ -402,6 +410,11 @@ public class Root extends Element {
 		}
 		return dateFormat.format(this.modified);
 	}
+	/**
+	 * Retrieves the author attributes from the XML node {@code attributes}
+	 * @param attributes - The {@link Attributes} of the originating XML node
+	 * @see #fetchAuthorDates(File,File)
+	 */
 	public void fetchAuthorDates(Attributes attributes)
 	{
 		if(attributes.getIndex("author")!=-1)  {
@@ -423,14 +436,59 @@ public class Root extends Element {
 	}
 	// END KGU#363 2017-03-10
 	// START KGU#363 2017-05-21: Enh. #372
-	public void fetchAuthorDates(File _file) {
+	/**
+	 * Tries to extract sensible file attribute values and to use them to initialize the
+	 * author attributes before {@link #fetchAuthorDates(Attributes)} is called.<br/>
+	 * Be aware that the diagram meta data are meant to override the file meta data, the
+	 * use of which is only a workaround for legacy nsd files that didn't store own
+	 * meta data.  
+	 * @param _file - the file from which this diagram was loaded
+	 * @param _arrzFile - the arrz file, which {@code _file} was extracted from, or null
+	 * @see #fetchAuthorDates(Attributes)
+	 */
+	public void fetchAuthorDates(File _file, File _arrzFile) {
 		// Override the constructor settings if the Root is loaded from file
 		this.created = null;
 		this.author = "???";
+		// START KGU#363 2018-09-11: Improvement to retrieve suited file attributes as defaults
+		Path path = _file.toPath();
+		Path ownerPath = path;
+		if (_arrzFile != null) {
+			ownerPath = _arrzFile.toPath();
+		}
+		try {
+			BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+			long createTime = attrs.creationTime().toMillis();
+			// If the file was unzipped then the creation time of the arrz file is more sensible
+			if (_arrzFile != null) {
+				createTime = Files.readAttributes(ownerPath, BasicFileAttributes.class).creationTime().toMillis();
+			}
+			Date created = null;
+			// Check if the OS supports creation time attributes at all
+			if (createTime > 0) {
+				created = new Date(createTime);
+			}
+			this.modified = new Date(attrs.lastModifiedTime().toMillis());
+			FileOwnerAttributeView view = Files.getFileAttributeView(ownerPath, FileOwnerAttributeView.class);
+			// Ignore creation times later than the last modification (usually this means that the
+			// file has been copied after its last modification - creation time has a rather physical
+			// meaning, it does not refer to the content)
+			if (created.before(this.modified)) {
+				this.created = created;
+				// The owner might be the author
+				this.author = view.getOwner().getName();
+			}
+			else {
+				// This may be disputed but the owner is more likely the last modifier
+				this.modifiedby = view.getOwner().getName();
+			}
+		} catch (IOException e) {}
+		// END KGU#363 2018-09-11
 		this.licenseName = null;
 		if (_file.canRead()) {
 			long modTime = _file.lastModified();
-			if (modTime != 0L) {
+			if (modTime != 0L && (this.modified == null || this.modified.getTime() < modTime) &&
+					(this.created == null || this.created.getTime() < modTime)) {
 				this.modified = new Date(modTime);
 			}
 		}
@@ -708,17 +766,24 @@ public class Root extends Element {
     /**
      * Sets an additional sticky changed flag for saveable global settings that are not subject
      * of the undo/redo stacks
+     * @param setModifiedAttrs - if true then attributes {@link #modified} and {@link #modifiedby} will be set (not undoable!) 
      */
-    public void setChanged()
+    // START KGU#363 2018-09-12: Fixes #372 - not always it is sensible to set modified attributes
+    public void setChanged(boolean setModifiedAttrs)
     {
     	this.hasChanged = true;
-    	// START KGU#363 2017-03-10: Enh. #372
-    	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
-		if (modifiedby.trim().isEmpty()) {
-			modifiedby = System.getProperty("user.name");
-		}
-    	this.modified = new Date();
+    	// START KGU#363 2017-03-10: Enh. #372, KGU#363 2018-09-12 made dependent on argument
+    	if (setModifiedAttrs) {
+    		// END KGU#363 2018-09-12
+    		this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+    		if (modifiedby.trim().isEmpty()) {
+    			modifiedby = System.getProperty("user.name");
+    		}
+    		this.modified = new Date();
     	// END KGU#363 2017-03-10
+    	// START KGU#363 2017-03-10: Enh. #372, KGU#363 2018-09-12 made dependent on argument
+    	}
+		// END KGU#363 2018-09-12
     }
 
     /**
@@ -853,7 +918,6 @@ public class Root extends Element {
 		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
 		this.rect0 = rect0;
 		this.pt0Sub = pt0Sub;
-		this.subrect0 = subrect0;
 		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
@@ -1607,6 +1671,12 @@ public class Root extends Element {
 		// START KGU#363 2017-05-21: Enh. #372: Care for the new attributes
 		if (_cacheAttributes) oldChildren.rootAttributes = new RootAttributes(this);
 		// END KGU#363 3017-05-21
+		// START KGU#363 2018-09-12: Enh. #372: Some meta data must always be cached
+		oldChildren.modified = this.modified;
+		if (undoList.empty()) {
+			this.modifiedby0 = this.modifiedby;
+		}
+		// END KGU#363 3018-09-12
 		// START KGU#376 2017-07-01: Enh. #389
 		if (this.includeList != null) {
 			oldChildren.diagramRefs = this.includeList.concatenate(",");
@@ -1739,6 +1809,9 @@ public class Root extends Element {
                     redoList.peek().diagramRefs = this.includeList.concatenate(",");
                 }
                 // END KGU#507 2018-03-15
+        		// START KGU#363 2018-09-12 
+                redoList.peek().modified = this.modified;
+        		// END KGU#363 2018-09-12
             // START KGU#365 2017-03-19: Enh. #380
             }
             // END KGU#365 2017-03-19
@@ -1762,6 +1835,14 @@ public class Root extends Element {
                 children.rootAttributes = null;
             }
             // END KGU#363 2017-05-21
+    		// START KGU#363 2018-09-12
+        	this.modified = children.modified;	// Restore the former modification date
+        	children.modified = null;
+        	// Special action if all changes have been undone.
+            if (undoList.empty()) {
+            	this.modifiedby = this.modifiedby0;
+            }
+    		// END KGU#363 2018-09-12
             // START KGU#376 2017-07-01: Enh. #389
             if (children.diagramRefs != null) {
                 this.includeList = StringList.explode(children.diagramRefs, ",");
@@ -1817,8 +1898,11 @@ public class Root extends Element {
                         undoList.peek().diagramRefs = this.includeList.concatenate(",");
                     }
                     // END KGU#507 2018-03-15
+            		// START KGU#363 2018-09-12: Enh. #372
+                	undoList.peek().modified = this.modified;	// Save the current modification date
+            		// END KGU#363 2018-09-12
                     children = redoList.pop();
-                    children.parent=this;
+                    children.parent = this;
                     // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
                     this.setText(children.getText().copy());
                     this.setComment(children.getComment().copy());
@@ -1826,9 +1910,16 @@ public class Root extends Element {
                     children.comment.clear();
                     // END KGU#120 2016-01-02
                     // START KGU#363 2017-05-21: Enh. #372
-                    this.adoptAttributes(children.rootAttributes);
-                    children.rootAttributes = null;
+                    if (children.rootAttributes != null) {
+                	    undoList.peek().rootAttributes = new RootAttributes(this);
+                	    this.adoptAttributes(children.rootAttributes);
+                	    children.rootAttributes = null;
+                    }
                     // END KGU#363 2017-05-21
+                    // START KGU#363 2018-09-12: Enh. #372
+                    this.modified = children.modified;
+                    children.modified = null;
+                    // END KGU#363 2018-09-12
                     // START KGU#507 2018-03-15: Bugfix #523
                     if (children.diagramRefs != null) {
                         this.includeList = StringList.explode(children.diagramRefs, ",");
@@ -4016,7 +4107,7 @@ public class Root extends Element {
 				// START KGU#388 2017-09-17: Enh. #423 Check the definition of type names and components
 				if (check(24)) {
 					StringList tokens = Element.splitLexically(line, true);
-					int nTokens = tokens.count();
+					//int nTokens = tokens.count();
 					int posBrace = 0;
 					String typeName = "";
 					while ((posBrace = tokens.indexOf("{", posBrace + 1)) > 1 && Function.testIdentifier((typeName = tokens.get(posBrace-1)), null)) {
