@@ -53,6 +53,7 @@
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
+ *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
  *
  ******************************************************************************************************
  *
@@ -87,6 +88,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -319,50 +321,48 @@ public class Structorizer
         // END KGU#440 2017-11-06
         mainform.diagram.redraw();
 
-                // /!\ Don't remove the next line, it will be autodisabled by the makeStructorizer script
-                // DISABLE-BY-SCRIPT
-                if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
-		{
+        if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+        {
 
-			System.setProperty("apple.laf.useScreenMenuBar", "true");
-			System.setProperty("apple.awt.graphics.UseQuartz", "true");
+//        	System.setProperty("apple.laf.useScreenMenuBar", "true");
+//        	System.setProperty("apple.awt.graphics.UseQuartz", "true");
+//
+//        	com.apple.eawt.Application application = com.apple.eawt.Application.getApplication();
+//
+//        	try
+//        	{
+//        		application.setEnabledPreferencesMenu(true);
+//        		application.addApplicationListener(new com.apple.eawt.ApplicationAdapter() {
+//        			public void handleAbout(com.apple.eawt.ApplicationEvent e) {
+//        				mainform.diagram.aboutNSD();
+//        				e.setHandled(true);
+//        			}
+//        			public void handleOpenApplication(com.apple.eawt.ApplicationEvent e) {
+//        			}
+//        			public void handleOpenFile(com.apple.eawt.ApplicationEvent e) {
+//        				if(e.getFilename()!=null)
+//        				{
+//        					mainform.diagram.openNSD(e.getFilename());
+//        				}
+//        			}
+//        			public void handlePreferences(com.apple.eawt.ApplicationEvent e) {
+//        				mainform.diagram.preferencesNSD();
+//        			}
+//        			public void handlePrintFile(com.apple.eawt.ApplicationEvent e) {
+//        				mainform.diagram.printNSD();
+//        			}
+//        			public void handleQuit(com.apple.eawt.ApplicationEvent e) {
+//        				mainform.saveToINI();
+//        				mainform.dispose();
+//        			}
+//        		});
+//        	}
+//        	catch (Exception e)
+//        	{
+//        	}
+        	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
 
-			com.apple.eawt.Application application = com.apple.eawt.Application.getApplication();
-
-			try
-			{
-				application.setEnabledPreferencesMenu(true);
-				application.addApplicationListener(new com.apple.eawt.ApplicationAdapter() {
-					public void handleAbout(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.aboutNSD();
-						e.setHandled(true);
-					}
-					public void handleOpenApplication(com.apple.eawt.ApplicationEvent e) {
-					}
-					public void handleOpenFile(com.apple.eawt.ApplicationEvent e) {
-						if(e.getFilename()!=null)
-						{
-							mainform.diagram.openNSD(e.getFilename());
-						}
-					}
-					public void handlePreferences(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.preferencesNSD();
-					}
-					public void handlePrintFile(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.printNSD();
-					}
-					public void handleQuit(com.apple.eawt.ApplicationEvent e) {
-						mainform.saveToINI();
-						mainform.dispose();
-					}
-				});
-			}
-			catch (Exception e)
-			{
-			}
-		}
-                // /!\ Don't remove the next line either, because otherwise the makeStructorizer won't work anymore!
-                /**/
+        }
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();
