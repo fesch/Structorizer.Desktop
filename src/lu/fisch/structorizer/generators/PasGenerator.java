@@ -574,7 +574,6 @@ public class PasGenerator extends Generator
 							{
 								// START KGU#559 2018-07-20: Enh. #563 - smarter record initializer interpretation
 								//generateRecordInit(varName, expr, _indent, false, isDisabled, null);
-								Root root = Element.getRoot(_inst);
 								TypeMapEntry recType = typeMap.get(":" + potTypeName);
 								generateRecordInit(varName, expr, _indent, false, isDisabled, recType);
 								// END KGU#559 2018-07-20

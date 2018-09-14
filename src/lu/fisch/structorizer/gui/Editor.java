@@ -63,6 +63,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.14      Issue #510: btnUnboxed and its solitary toolbar disabled.
  *      Kay Gürtzig     2018.07.02      KGU#245: color buttons converted into an array
  *      Kay Gürtzig     2018.07.27      Bugfix #568: Action name for space key binding in arranger list corrected
+ *      Kay Gürtzig     2018.09.13      Enh. #590: New entry "Inspect attributes..." in the Arranger Index popup menu
  *
  ******************************************************************************************************
  *
@@ -304,6 +305,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // END KGU#534 2018-06-27
     protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.getIcon(46));
 	// END KGU#318 2017-01-05
+    // START KGU#573 2018-09-13: Enh. #590 - allow to open attribute inspector
+    protected final JMenuItem popupIndexAttributes = new JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
+    // END KGU#573 2018-09-13
     
     // START KGU#177 2016-04-06: Enh. #158
     // Action names
@@ -594,6 +598,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
         popupIndex.add(popupIndexGet);
         popupIndexGet.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {	arrangerIndexGet();	} });
+
+        // START KGU#573 2018-09-13: Enh. #590  - Attribute inspector for selected index entry
+        popupIndex.add(popupIndexAttributes);
+        popupIndexAttributes.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexAttributes(); } });
+        // END KGU#573 2018-09-13
         
         popupIndex.add(popupIndexSave);
         popupIndexSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSave(); } });
@@ -1408,6 +1417,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupIndexRemove.setEnabled(indexSelected);
 		popupIndexCovered.setEnabled(indexSelected && Element.E_COLLECTRUNTIMEDATA && !diagramIndex.getSelectedValue().isProgram());
 		// END KGU#318 2017-01-05
+		// START KGU#573 2018-09-13: Enh. #590 
+		popupIndexAttributes.setEnabled(indexSelected);
+		// END KGU#573 2018-09-13
            
                 //
                 /*
@@ -1639,5 +1651,15 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 	}
 	// END KGU#305/KGU#318 2017-01-05
+
+	// START KGU#573 2018-09-13: Enh. #590
+	protected void arrangerIndexAttributes() {
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null) {
+			diagram.attributesNSD(selectedRoot);			
+			diagramIndex.repaint();			
+		}
+	}
+	// END KGU#573 2018-09-13
 
 }

@@ -56,6 +56,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.05.21      Enh. #372: Additional field for RootAttributes to be cached on undoing/redoing
  *      Kay Gürtzig     2017.07.01      Enh. #389: Additional field for caching the includeList on undoing/redoing 
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
  *
  ******************************************************************************************************
  *
@@ -63,9 +64,10 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
+import java.util.Date;
 import java.util.Vector;
+
 import java.awt.Color;
-import java.awt.FontMetrics;
 import java.awt.Point;
 
 import lu.fisch.graphics.*;
@@ -96,6 +98,9 @@ public class Subqueue extends Element implements IElementSequence {
 	// START KGU#363 2017-05-21: Enh. #372 - for the undo/redo list we need to cache Root attributes
 	public RootAttributes rootAttributes = null;
 	// END KGU#363 2017-05-21
+	// START KGU#363 2018-09-12: Enh. #372 - for the undo/redo list we need to cache former modification date
+	public Date modified = null;
+	// END KGU#363 2017-09-12
 	// START KGU#376 2017-07-01: Enh. #389: comma-separated diagram names
 	public String diagramRefs = null;
 	// END KGU#376 2017-07-01
@@ -140,8 +145,11 @@ public class Subqueue extends Element implements IElementSequence {
 			y0Children.addElement(rect0.bottom);
 			// END KGU#136 2016-03-01
 			rect0.right = 2*Element.E_PADDING;
-			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-			rect0.bottom = (fm.getLeading()+fm.getAscent()) + 2*(Element.E_PADDING/2);
+			// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+			//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+			int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+			// END KGU#494 2018-09-11
+			rect0.bottom = fontHeight + 2*(Element.E_PADDING/2);
 
 		}
 		
@@ -163,7 +171,10 @@ public class Subqueue extends Element implements IElementSequence {
 		//Color drawColor = getColor();
 		Color drawColor = getFillColor();
 		// END KGU 2015-10-13
-		FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+		//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+		// END KGU#494 2018-09-11
 		Canvas canvas = _canvas;		
 		
 		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
@@ -208,7 +219,7 @@ public class Subqueue extends Element implements IElementSequence {
 			
 			canvas.setColor(Color.BLACK);
 			canvas.writeOut(_top_left.left+((_top_left.right-_top_left.left) / 2) - (_canvas.stringWidth("\u2205") / 2),
-							_top_left.top +((_top_left.bottom-_top_left.top) / 2) + ((fm.getLeading()+fm.getAscent()) / 2),
+							_top_left.top +((_top_left.bottom-_top_left.top) / 2) + (fontHeight / 2),
 							"\u2205"
 							);  	
 

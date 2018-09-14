@@ -88,7 +88,6 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
-import lu.fisch.structorizer.parsers.CodeParser.ParserCancelled;
 import lu.fisch.utils.StringList;
 
 /**
@@ -413,9 +412,9 @@ public class C99Parser extends CPreParser
 		final int PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE            =  52;  // <Enumerator Spec> ::= enum '{' <EnumList> ',' '}'
 		final int PROD_ENUMERATORSPEC_ENUM_IDENTIFIER                     =  53;  // <Enumerator Spec> ::= enum Identifier
 		final int PROD_ENUMLIST_COMMA                                     =  54;  // <EnumList> ::= <EnumList> ',' <Enumerator>
-		final int PROD_ENUMLIST                                           =  55;  // <EnumList> ::= <Enumerator>
+//		final int PROD_ENUMLIST                                           =  55;  // <EnumList> ::= <Enumerator>
 		final int PROD_ENUMERATOR_IDENTIFIER_EQ                           =  56;  // <Enumerator> ::= Identifier '=' <Constant Exp>
-		final int PROD_ENUMERATOR_IDENTIFIER                              =  57;  // <Enumerator> ::= Identifier
+//		final int PROD_ENUMERATOR_IDENTIFIER                              =  57;  // <Enumerator> ::= Identifier
 //		final int PROD_TYPEQUALIFIER_CONST                                =  58;  // <Type Qualifier> ::= const
 //		final int PROD_TYPEQUALIFIER_RESTRICT                             =  59;  // <Type Qualifier> ::= restrict
 //		final int PROD_TYPEQUALIFIER_VOLATILE                             =  60;  // <Type Qualifier> ::= volatile
@@ -1011,7 +1010,7 @@ public class C99Parser extends CPreParser
 		Reduction secReduc = _reduction.get(1).asReduction();
 		String content = new String();
 		boolean weird = false;
-		int secRuleId = secReduc.getParent().getTableIndex();
+		//int secRuleId = secReduc.getParent().getTableIndex();
 		StringList prefix = new StringList();
 		StringList suffix = new StringList();
 		StringList pascal = new StringList();
@@ -1791,7 +1790,7 @@ public class C99Parser extends CPreParser
 	private boolean getDeclSpecifiers(Reduction _reduction, StringList _typeSpecs, Subqueue _parentNode, Reduction _initDeclRed) throws ParserCancelled
 	{
 		boolean isTypedef = false;
-		boolean isStruct = false;
+		//boolean isStruct = false;
 		int ruleId = _reduction.getParent().getTableIndex();
 		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers>")) {
 			Token prefix = _reduction.get(0);	// May be <Storage Class> or <Type Specifier> or "inline"
@@ -1881,7 +1880,7 @@ public class C99Parser extends CPreParser
 							}
 							typedef.updateTypeMap(typeMap);
 						}
-						isStruct = true;
+						//isStruct = true;
 						_typeSpecs.add(type);
 					}
 						break;
@@ -2252,32 +2251,32 @@ public class C99Parser extends CPreParser
 		// <Pointer> part done, now adjust the  
 	}
 	
-	// New approach for a generic analysis of a Declaration
-	private String analyseDeclaration(Reduction _reduction, StringBuilder _pascalType, Subqueue _parentNode, boolean _forceDecl, boolean _something)
-	{
-		String initializer = "";
-		StringList array = new StringList();
-		StringList ptrs = new StringList();
-		StringList typeparts = new StringList();
-		String varName = null;
-		int ruleId = _reduction.getParent().getTableIndex();
-		if (ruleId == RuleConstants.PROD_DECLARATION_SEMI) {
-			// <Declaration> ::= <Decl Specifiers> <InitDeclList> ';'
-			// Evaluation of the <InitDeclList>
-			Reduction intDecl = _reduction.get(1).asReduction();
-		}
-		_reduction = _reduction.get(0).asReduction();
-		ruleId = _reduction.getParent().getTableIndex();
-		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers")) {
-			switch (ruleId) {
-			case RuleConstants.PROD_DECLSPECIFIERS:
-			case RuleConstants.PROD_DECLSPECIFIERS2:
-			case RuleConstants.PROD_DECLSPECIFIERS3:
-			}
-			
-		}
-		return varName;
-	}
+	// New approach for a generic analysis of a Declaration, remained a fragment (superfluous?)
+//	private String analyseDeclaration(Reduction _reduction, StringBuilder _pascalType, Subqueue _parentNode, boolean _forceDecl, boolean _something)
+//	{
+//		String initializer = "";
+//		StringList array = new StringList();
+//		StringList ptrs = new StringList();
+//		StringList typeparts = new StringList();
+//		String varName = null;
+//		int ruleId = _reduction.getParent().getTableIndex();
+//		if (ruleId == RuleConstants.PROD_DECLARATION_SEMI) {
+//			// <Declaration> ::= <Decl Specifiers> <InitDeclList> ';'
+//			// Evaluation of the <InitDeclList>
+//			Reduction intDecl = _reduction.get(1).asReduction();
+//		}
+//		_reduction = _reduction.get(0).asReduction();
+//		ruleId = _reduction.getParent().getTableIndex();
+//		while (_reduction.getParent().getHead().toString().equals("<Decl Specifiers")) {
+//			switch (ruleId) {
+//			case RuleConstants.PROD_DECLSPECIFIERS:
+//			case RuleConstants.PROD_DECLSPECIFIERS2:
+//			case RuleConstants.PROD_DECLSPECIFIERS3:
+//			}
+//			
+//		}
+//		return varName;
+//	}
 	
 	/**
 	 * Processes type specifications for a variable / constant declaration or a
@@ -2306,14 +2305,14 @@ public class C99Parser extends CPreParser
 	protected boolean processTypes(Reduction _reduction, int _ruleId, Subqueue _parentNode, boolean _isGlobal,
 			StringList _typeList, boolean _declaringVars) throws ParserCancelled
 	{
-		boolean isStruct = false;
+		//boolean isStruct = false;
 		boolean isTypedef = false;
 		String type = "int";
-		boolean isConstant = false;
+		//boolean isConstant = false;
 		boolean addType = true;
-		StringList storage = new StringList();
-		StringList specifiers = new StringList();
-		StringList qualifiers = new StringList();
+		//StringList storage = new StringList();
+		//StringList specifiers = new StringList();
+		//StringList qualifiers = new StringList();
 		Reduction declRed = null;
 		// Will a variable or type be declared / defined here?
 		boolean hasDecl = _ruleId == RuleConstants.PROD_DECLARATION_SEMI;

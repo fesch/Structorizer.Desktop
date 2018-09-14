@@ -158,7 +158,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.07.02      KGU#245: color preferences modified to work with arrays
  *      Kay Gürtzig     2018.07.09      KGU#548: The import option dialog now retains the selected plugin for specific options
  *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line
- *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD() 
+ *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD()
+ *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
  *
  ******************************************************************************************************
  *
@@ -579,7 +580,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							loadArrangement(files[i]);
 						}
 						// END KGU#289 2016-11-15
-						// FIXME: Find a way to go over all the parser plugins
 						else {
 							Ini ini = Ini.getInstance();
 							String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
@@ -649,7 +649,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 										}
 										// END KGU#354 2017-05-23
 										for (Root rootNew: newRoots) {
-											rootNew.setChanged();
+											rootNew.setChanged(false);
 										}
 									}
 									else {
@@ -1326,18 +1326,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
-		// FIXME: This "background filling" isn't necessary, at least not under windows
-//		rect = new Rect(root.width+1,0,this.getWidth(),this.getHeight());
-//		canvas.setColor(Color.LIGHT_GRAY);
-//		canvas.fillRect(rect);
-//		rect = new Rect(0,root.height+1,this.getWidth(),this.getHeight());
-//		canvas.setColor(Color.LIGHT_GRAY);
-//		canvas.fillRect(rect);
-		// START KGU 2016-02-27: This area has already been filled twice
-//		rect = new Rect(root.width+1,root.height+1,this.getWidth(),this.getHeight());
-//		canvas.setColor(Color.LIGHT_GRAY);
-//		canvas.fillRect(rect);
-		// END KGU 2016-02-27
         
 		// draw dragged element
 		if (selX != -1 && selY != -1 && selectedDown!=null && mX!=mouseX && mY!=mouseY)
@@ -2945,7 +2933,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#137 2016-01-11
 					((Subqueue) element).addElement(ele);
 					// START KGU#136 2016-03-01: Bugfix #97
-					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					selected = ele.setSelected(true);
@@ -3046,7 +3033,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
 					// START KGU#136 2016-03-01: Bugfix #97
-					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					redraw();
@@ -3540,7 +3526,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							((Subqueue)source.parent).removeElement(source);
 							incl.children.addElement(source);
 						}
-						incl.setChanged();
+						incl.setChanged(false);
 						if (isNewIncl) {
 							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());;
 						}
@@ -3548,7 +3534,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						sub.addToIncludeList(includableName);
 					}
 					// END KGU#506 2018-03-14
-					sub.setChanged();
+					sub.setChanged(false);
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
 					arr.setVisible(true);
@@ -5284,7 +5270,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#553 2018-07-10: In case of too many diagrams Structorizer would go zombie
 					int nRoots = newRoots.size();
 					int maxRoots = Integer.parseInt(ini.getProperty("impMaxRootsForDisplay", "20"));
-					// FIXME: replace the magic number with a configurable limit
 					if (nRoots > maxRoots) {
 						String[] options = {Menu.lblContinue.getText(), Menu.lblCancel.getText()};
 						int chosen = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
@@ -5302,7 +5287,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							while (iter.hasNext() && this.getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
 								Root nextRoot = iter.next();
 								//nextRoot.highlightVars = hil;
-								nextRoot.setChanged();
+								nextRoot.setChanged(false);
 								// If the saving attempt fails, ask whether the saving loop is to be cancelled 
 								if (!this.saveNSD(nextRoot, false)) {
 									if (JOptionPane.showConfirmDialog(
@@ -5333,7 +5318,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 						}
 						// The Root must be marked for saving
-						root.setChanged();
+						root.setChanged(false);
 						// ... and be added to the Arranger
 						this.arrangeNSD();
 					}
@@ -5350,7 +5335,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						selected.setSelected(true);
 						// END KGU#183 2016-04-24
 						// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
-						root.setChanged();
+						root.setChanged(false);
 						// END KGU#192 2016-05-02
 						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
 						if (nRoots > 2 || !root.isProgram()) {
@@ -6360,7 +6345,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				@Override
 				public boolean visitPostOrder(Element _ele) {
-					// FIXME It should be okay to cut off the recursion in  post order...?
 					return true;
 				}
 				Refactorer(HashMap<String, StringList> _keyMap, boolean _caseIndifferent)
@@ -6399,7 +6383,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			analyse();
 			// END KGU#258 2016-09-26
 
-			// FIXME: This doesn't seem to work 
 			doButtons();
 			
 			// redraw diagram
@@ -6848,7 +6831,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.isBoxed = !_unboxed;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
-		root.setChanged();
+		root.setChanged(true);
 		// END KGU#137 2016-01-11
     	// START KGU#136 2016-03-01: Bugfix #97
     	root.resetDrawingInfoUp();	// Only affects Root
@@ -6872,7 +6855,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.setProgram(false);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
-		root.setChanged();
+		root.setChanged(true);
 		// END KGU#137 2016-01-11
 		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
 		analyse();
@@ -6891,7 +6874,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.setProgram(true);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
-		root.setChanged();
+		root.setChanged(true);
 		// END KGU#137 2016-01-11
 		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
 		analyse();
@@ -6909,7 +6892,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		root.setInclude();
 		// Record this change in addition to the undoable ones
-		root.setChanged();
+		root.setChanged(true);
 		// check absense of parameter list
 		analyse();
 		redraw();
@@ -6959,7 +6942,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setHightlightVars(boolean _highlight)
 	{
 		Element.E_VARHIGHLIGHT = _highlight;	// this is now directly used for drawing
-		//root.highlightVars = _highlight;	// FIXME: Why only this Root?
+		//root.highlightVars = _highlight;
 		// START KGU#136 2016-03-01: Bugfix #97
 		this.resetDrawingInfo();
 		// END KGU#136 2016-03-01
@@ -7241,7 +7224,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				_data.forParts.add(((InputBoxFor)inputbox).txtIncr.getText());
 				// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
 				//_data.forPartsConsistent = !((InputBoxFor)inputbox).chkTextInput.isSelected();
-				// FIXME!
 				//if (!((InputBoxFor)inputbox).chkTextInput.isSelected())
 				//{
 				//	_data.forLoopStyle = For.ForLoopStyle.COUNTER;
@@ -7978,7 +7960,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	@Override
 	public void lostOwnership(Clipboard arg0, Transferable arg1) {
-		// TODO Auto-generated method stub
+		// Nothing to do here
 	}
 
 	// START KGU#305 2016-12-15: Issues #305, #312
@@ -8034,15 +8016,29 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#363 2017-05-19: Enh. #372
-	public void attributesNSD() {
-		RootAttributes licInfo = new RootAttributes(root);
+	/**
+	 * Opens the {@link AttributeInspector} for the current {@link Root}.
+	 * @see #attributesNSD(Root)
+	 */
+	public void attributesNSD()
+	{
+		attributesNSD(root);
+	}
+	
+	/**
+	 * Opens the {@link AttributeInspector} for the specified {@code _root}.
+	 * @param _root - a {@link Root} the attributes of which are to be presented
+	 * @see #attributesNSD()
+	 */
+	public void attributesNSD(Root _root) {
+		RootAttributes licInfo = new RootAttributes(_root);
 		AttributeInspector attrInsp = new AttributeInspector(
 				this.NSDControl.getFrame(), licInfo);
 		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
 		attrInsp.setVisible(true);
 		if (attrInsp.isCommitted()) {
-			root.addUndo(true);
-			root.adoptAttributes(attrInsp.licenseInfo);
+			_root.addUndo(true);
+			_root.adoptAttributes(attrInsp.licenseInfo);
 		}
 	}
 	// END KGU#363 2017-05-17

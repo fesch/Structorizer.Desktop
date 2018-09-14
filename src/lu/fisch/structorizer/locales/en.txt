@@ -631,6 +631,7 @@ Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
 // Arranger index
 Editor.popupIndexGet.text=Get diagram
+Editor.popupIndexAttributes.text=Inspect attributes ...
 Editor.popupIndexSave.text=Save changes
 Editor.popupIndexRemove.text=Remove
 Editor.popupIndexCovered.text=Test-covered on/off

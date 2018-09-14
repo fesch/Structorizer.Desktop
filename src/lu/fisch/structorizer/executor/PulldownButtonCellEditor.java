@@ -1,11 +1,5 @@
 package lu.fisch.structorizer.executor;
 
-import java.awt.Component;
-
-import javax.swing.DefaultCellEditor;
-import javax.swing.JButton;
-import javax.swing.JTable;
-
 /******************************************************************************************************
  *
  *      Author:         kay
@@ -27,10 +21,17 @@ import javax.swing.JTable;
  *
  ******************************************************************************************************///
 
+import java.awt.Component;
+
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JTable;
+
 /**
  * Specific table cell editor for the pulldown buttons in the variable display
  * @author Kay Gürtzig
  */
+@SuppressWarnings("serial")
 public class PulldownButtonCellEditor extends DefaultCellEditor {
 	protected JButton button;
 	private JTable table;

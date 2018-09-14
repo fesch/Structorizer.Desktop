@@ -41,6 +41,7 @@ package lu.fisch.utils;
  *                                      be broken up for regex matching. Code revision, several redundant
  *                                      methods declared as deprecated
  *      Kay Gürtzig     2017.11.03      Bugfix #448: Method breakup(String) revised again
+ *      Kay Gürtzig     2018.09.12      Method name typo refactored: enocodeVectorToHtml() --> encodeVectorToHtml()
  *
  ******************************************************************************************************
  *
@@ -58,7 +59,7 @@ public abstract class BString
 		 * Encodes some characters to HTML-encoded symbols
 		 * @return The encoded string
 		 * @param str The string to encode
-		 * @see #enocodeVectorToHtml(Vector)
+		 * @see #encodeVectorToHtml(Vector)
 		 * @see #encodeToXML(String)
 		 */
 		public static String encodeToHtml(String str)
@@ -201,7 +202,7 @@ public abstract class BString
 		 * @see #encodeToHtml(String)
 		 * @see #encodeToXML(String)
 		 */
-		public static Vector<String> enocodeVectorToHtml(Vector<String> vec)
+		public static Vector<String> encodeVectorToHtml(Vector<String> vec)
 		{
 			Vector<String> myvec=new Vector<String>();
 			for (int i = 0; i<vec.size() ;i++)

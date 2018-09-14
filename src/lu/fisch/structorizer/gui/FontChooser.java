@@ -347,7 +347,7 @@ public class FontChooser extends LangDialog
 		try
 		{
 			String fontFamily = (String)lsNames.getSelectedValue();
-			// START KGU#494 2018-09-10: Issue #508			
+			// START KGU#494 2018-09-10: Issue #508	We don't want to lose the former size if selection is void
 			//int fontSize = Integer.parseInt((String)lsSizes.getSelectedValue());
 			if (lsSizes.getSelectedIndex() >= 0) {
 				fontSize = Integer.parseInt((String)lsSizes.getSelectedValue());

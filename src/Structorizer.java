@@ -319,6 +319,8 @@ public class Structorizer
         // END KGU#440 2017-11-06
         mainform.diagram.redraw();
 
+                // /!\ Don't remove the next line, it will be autodisabled by the makeStructorizer script
+                // DISABLE-BY-SCRIPT
                 if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
 
@@ -358,7 +360,9 @@ public class Structorizer
 			catch (Exception e)
 			{
 			}
-		}/**/
+		}
+                // /!\ Don't remove the next line either, because otherwise the makeStructorizer won't work anymore!
+                /**/
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();

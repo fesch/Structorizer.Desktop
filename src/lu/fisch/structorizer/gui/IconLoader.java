@@ -419,7 +419,7 @@ public class IconLoader {
 	 * @param iconNo - the index of he requested icon
 	 * @return the {@linkImageIcon} object for the requested icon if available, null otherwise
 	 * @see #getIconImage(java.net.URL)
-	 * @see #setScaleFactor(double)
+	 * @see #getIconImage(String, double)
 	 * @see #setScaleFactor(double)
 	 */
 	public static ImageIcon getIcon(int iconNo)
@@ -444,6 +444,12 @@ public class IconLoader {
 	}
 	// END KGU#486 2018-01-25
 
+	/**
+	 * Stores the given scale factor, clears the general icon cache (such that icon retrieval
+	 * refills it by lazy initialization with the new scale), and immediately rescales all
+	 * separately cached icons (e.g. product icon, locale icons).
+	 * @param scale - the new scale factor.
+	 */
 	public static void setScaleFactor(double scale)
 	{
 		scaleFactor = scale;
