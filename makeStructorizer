@@ -15,51 +15,100 @@ set -e
 #      Author                         Date         Description
 #      ------                         ----         -----------
 #      Klaus-Peter Reimers            2008.06.04   First Issue
-#      Bob Fisch                      2006.06.06   Script modified to work within
-#                                                  an Eclipse project
+#      Bob Fisch                      2006.06.06   Script modified to work
+#                                                  within an Eclipse project
 #      Bob Fisch & Philipp Hübner     2009.07.08   Scripting ameliorations
 #      Kay Gürtzig                    2016.12.27   More resource files copied
 #      Simon Sobisch                  2017.03.06   Check for javac
-#      Kay Gürtzig                    2018.01.26   Additional icon directories copied
-#      Simon Sobisch                  2018.06.08   Create bin directory, if missing
-#      Bob Fisch                      2018.09.12   Auto disabling the apple extentions
-#      Simon Sobisch                  2018.09.17   added missing ressources
+#      Kay Gürtzig                    2018.01.26   Additional icon directories
+#                                                  copied
+#      Simon Sobisch                  2018.09.17   added missing ressources;
+#                                                  fix msys classpath;
+#                                                  Include Apple extensions if
+#                                                  OS matches;
+#                                                  changed script output
 #
 ################################################################################
 
 # check for javac in PATH
-javac -version 2>/dev/null || (rc=$? && echo 'javac not found in $PATH' && exit $rc)
+javac -version 2>/dev/null || \
+  (rc=$? && echo 'javac not found in $PATH' && exit $rc)
+  
+# common javac opts
+str_javac_opts="-d ../bin/ -encoding utf8 $*"
 
-# create bin directory if missing
-if ! test -d bin; then
-  mkdir bin
-fi
+# jar list
+jars="bsh-2.0b4                     \
+      swing-layout-1.0.3            \
+      freehep-graphics2d-2.1.1      \
+      freehep-graphicsio-2.1.1      \
+      freehep-graphicsio-svg-2.1.1  \
+      freehep-io-2.0.2              \
+      freehep-swing-2.0.3           \
+      freehep-util-2.0.2            \
+      freehep-xml-2.1.1             \
+      freehep"
+
+# add OS specific jars if present
+do_apple=""
+case $OSTYPE in
+  darwin*)
+    jars="$jars AppleJavaExtensions"
+    do_apple="x"
+    ;;
+esac
+
+# common classpath
+str_classpath="."
+for jar in $jars
+do
+  str_classpath="$str_classpath:../lib/$jar.jar"
+done
+
+# assume we have a win-native java/javac when running on msys,
+# fixing classpath entry
+case $OSTYPE in
+  msys)
+    echo "Using Windows Style classpath"
+    str_classpath=$(echo "$str_classpath" | sed -e 's/:/;/g')
+    ;;
+esac
 
 # delete old class files from "lu" package
-echo Removing .class files
+echo "Removing old files..."
+[ -d bin ] && rm -R bin
+mkdir bin
 find src -name '*.class' -exec rm {} \;
-find bin -name '*.class' -exec rm {} \;
+echo "Done"
 
 # change into the "src" directory
-echo Changing into src directory
-pushd src
-
-# remove apple support if present
-echo Disable Apple dependant code
-sed -i "s/\/\/ DISABLE-BY-SCRIPT/\/\*/g" Structorizer.java
+# // echo "Changing into src directory"
+pushd src >/dev/null
 
 # compile the generator classes (non-dependant classes)
-echo Compiling non-dependant classes
-javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar lu/fisch/structorizer/generators/*.java
+echo; echo "Compiling non-dependant classes..."
+javac $str_javac_opts -classpath "$str_classpath" lu/fisch/structorizer/generators/*.java
+echo "Done"
 
 # compile the application itself (and all dependent classes)
-echo "Compiling Structorizer"
-javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer.java
-echo "Compiling Structorizer Applet"
-javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar StructorizerApplet.java
+echo; echo "Compiling Structorizer..."
+javac $str_javac_opts -classpath "$str_classpath" Structorizer.java
+echo "Done"
+echo; echo "Compiling Structorizer Applet..."
+javac $str_javac_opts -classpath "$str_classpath" StructorizerApplet.java
+echo "Done"
+
+# OS specific classes
+if test -n "$do_apple"; then
+  echo; echo "Compiling Apple specific code..."
+  javac $str_javac_opts -classpath "$str_classpath" lu/fisch/structorizer/application/AppleStructorizerApplication.java
+  echo "Done"
+else
+  echo; echo "Apple specific code skipped"
+fi
 
 # copying some other files to binary tree
-echo Copying resources
+echo; echo "Copying resources..."
 for icondir in icons icons_24 icons_32 icons_48 icons_64
 do
   [ -d ../bin/lu/fisch/structorizer/gui/$icondir ] && rm -R ../bin/lu/fisch/structorizer/gui/$icondir
@@ -79,14 +128,15 @@ cp lu/fisch/structorizer/generators/*.txt ../bin/lu/fisch/structorizer/generator
 #cp  goldengine/java/*.grm ../bin/goldengine/java/
 cp lu/fisch/structorizer/parsers/*.grm ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.xsd ../bin/lu/fisch/structorizer/parsers/
+echo "Done"
 
 # changing into binary directory
-echo Changing into binary directory
+# // echo "Changing into binary directory"
 cd ../bin/
 
 # run the application
-echo "Running Structorizer"
-java -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer
+echo; echo "Running Structorizer from compiled class files"
+java -cp $str_classpath Structorizer
 
 # move back into the folder where we started
-popd
+popd >/dev/null

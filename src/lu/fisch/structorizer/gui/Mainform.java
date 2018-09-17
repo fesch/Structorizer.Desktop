@@ -30,8 +30,8 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.11      First Issue
  *      Kay Gürtzig     2015.10.18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
  *      Kay Gürtzig     2015.10.30      Issue #6 fixed properly (see comment)
