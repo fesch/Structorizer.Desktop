@@ -336,7 +336,8 @@ public class TurtleBox implements DelayableDiagramController
         };
 
         frame.setTitle(TITLE);
-        frame.setIconImage((new ImageIcon(this.getClass().getResource("turtle.png"))).getImage());
+        //frame.setIconImage((new ImageIcon(this.getClass().getResource("turtle.png"))).getImage());
+        frame.setIconImage(image);
 
         //this.setDefaultCloseOperation(TurtleBox.EXIT_ON_CLOSE);
         //this.setDefaultCloseOperation(TurtleBox.DISPOSE_ON_CLOSE);
