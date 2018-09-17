@@ -23,6 +23,7 @@ set -e
 #      Kay Gürtzig                    2018.01.26   Additional icon directories copied
 #      Simon Sobisch                  2018.06.08   Create bin directory, if missing
 #      Bob Fisch                      2018.09.12   Auto disabling the apple extentions
+#      Simon Sobisch                  2018.09.17   added missing ressources
 #
 ################################################################################
 
@@ -66,13 +67,18 @@ do
   echo "Copying icon dir $icondir .."
   cp -R lu/fisch/structorizer/gui/$icondir/* ../bin/lu/fisch/structorizer/gui/$icondir/
 done
-cp -R lu/fisch/structorizer/gui/*.txt ../bin/lu/fisch/structorizer/gui/
-cp -R lu/fisch/structorizer/gui/*.xml ../bin/lu/fisch/structorizer/gui/
-cp -R lu/fisch/structorizer/locales/*.txt ../bin/lu/fisch/structorizer/locales/
-cp -R lu/fisch/structorizer/generators/*.txt ../bin/lu/fisch/structorizer/generators/
-#cp -R goldengine/java/*.cgt ../bin/goldengine/java/
-#cp -r goldengine/java/*.grm ../bin/goldengine/java/
-cp -r lu/fisch/structorizer/parsers/*.grm ../bin/lu/fisch/structorizer/parsers/
+
+cp lu/fisch/turtle/*.png ../bin/lu/fisch/turtle/
+cp lu/fisch/structorizer/executor/*.png ../bin/lu/fisch/structorizer/executor/
+
+cp lu/fisch/structorizer/gui/*.txt ../bin/lu/fisch/structorizer/gui/
+cp lu/fisch/structorizer/gui/*.xml ../bin/lu/fisch/structorizer/gui/
+cp lu/fisch/structorizer/locales/*.txt ../bin/lu/fisch/structorizer/locales/
+cp lu/fisch/structorizer/generators/*.txt ../bin/lu/fisch/structorizer/generators/
+#cp  goldengine/java/*.cgt ../bin/goldengine/java/
+#cp  goldengine/java/*.grm ../bin/goldengine/java/
+cp lu/fisch/structorizer/parsers/*.grm ../bin/lu/fisch/structorizer/parsers/
+cp lu/fisch/structorizer/parsers/*.xsd ../bin/lu/fisch/structorizer/parsers/
 
 # changing into binary directory
 echo Changing into binary directory
