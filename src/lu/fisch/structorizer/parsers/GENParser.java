@@ -37,6 +37,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.04.23      Enh. #231: reserved words configuration moved to plugin file
  *      Kay Gürtzig     2017.06.20      Enh. #354,#357: Option retrieval added, #404: test with schema file (failed)
  *      Kay Gürtzig     2018.03.22      Issue #463: Standard logging mechanism instead of console messages
+ *      Simon Sobisch   2018.09.17      Issue #595: Fix NullPointerException for missing/broken schema
  *
  ******************************************************************************************************
  *
@@ -195,19 +196,25 @@ public class GENParser extends DefaultHandler {
 		// START KGU#400 2017-06-20: Issue #404
 		if (pluginSchema == null) {
 			URL schemaLocal = this.getClass().getResource("plugin.xsd");
-			SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-			try {
-				pluginSchema = sFactory.newSchema(schemaLocal);
-			} catch (SAXException e) {
-				// START KGU#484 2018-04-05: Issue #463
-				//e.printStackTrace();
-				logger.log(Level.WARNING, "Plugin schema failed.", e);
-				// END KGU#484 2018-04-05
+			if (schemaLocal != null) {
+				SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+				try {
+					pluginSchema = sFactory.newSchema(schemaLocal);
+				} catch (SAXException e) {
+					// START KGU#484 2018-04-05: Issue #463
+					//e.printStackTrace();
+					logger.log(Level.WARNING, "Plugin schema failed.", e);
+					// END KGU#484 2018-04-05
+				}
+			} else {
+				logger.log(Level.SEVERE, "Plugin schema load failed.");
 			}
 		}
-		//factory.setNamespaceAware(true);
-		factory.setValidating(true);
-		factory.setSchema(pluginSchema);
+		if (pluginSchema != null) {
+			//factory.setNamespaceAware(true);
+			factory.setValidating(true);
+			factory.setSchema(pluginSchema);
+		}
 		// END KGU#400 2017-06-20: Issue #404
 		try		
 		{
