@@ -28,9 +28,9 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------          ----			-----------
- *      Bob Fisch       2007.12.27		First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.27      First Issue
  *      Kay Gürtzig     2015.12.16      Bugfix #63 - no open attempt without need
  *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
  *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
@@ -57,8 +57,8 @@
  *
  ******************************************************************************************************
  *
- *      Comment:		
- *      
+ *      Comment:
+ *
  ******************************************************************************************************///
 
 
@@ -323,45 +323,8 @@ public class Structorizer
 
         if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
         {
-
-//        	System.setProperty("apple.laf.useScreenMenuBar", "true");
-//        	System.setProperty("apple.awt.graphics.UseQuartz", "true");
-//
-//        	com.apple.eawt.Application application = com.apple.eawt.Application.getApplication();
-//
-//        	try
-//        	{
-//        		application.setEnabledPreferencesMenu(true);
-//        		application.addApplicationListener(new com.apple.eawt.ApplicationAdapter() {
-//        			public void handleAbout(com.apple.eawt.ApplicationEvent e) {
-//        				mainform.diagram.aboutNSD();
-//        				e.setHandled(true);
-//        			}
-//        			public void handleOpenApplication(com.apple.eawt.ApplicationEvent e) {
-//        			}
-//        			public void handleOpenFile(com.apple.eawt.ApplicationEvent e) {
-//        				if(e.getFilename()!=null)
-//        				{
-//        					mainform.diagram.openNSD(e.getFilename());
-//        				}
-//        			}
-//        			public void handlePreferences(com.apple.eawt.ApplicationEvent e) {
-//        				mainform.diagram.preferencesNSD();
-//        			}
-//        			public void handlePrintFile(com.apple.eawt.ApplicationEvent e) {
-//        				mainform.diagram.printNSD();
-//        			}
-//        			public void handleQuit(com.apple.eawt.ApplicationEvent e) {
-//        				mainform.saveToINI();
-//        				mainform.dispose();
-//        			}
-//        		});
-//        	}
-//        	catch (Exception e)
-//        	{
-//        	}
+        	// KGU#537 2018-09-14:
         	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
-
         }
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
