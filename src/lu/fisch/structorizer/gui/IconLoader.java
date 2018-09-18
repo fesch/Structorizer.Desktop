@@ -68,7 +68,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.14      Issue #510: Colour button icon shape changed from rectangle to circle.
  *      Kay Gürtzig     2018.06.28      Smaller element symbols for Search + Replace (###_mini_???.png)
  *      Kay Gürtzig     2018.07.17      Issue #561: New icon 055_sigma (sum symbol) added
- *      Kay Gürtzig     2018.09.17      Issue #601: More safety on icon request (dummy icon, log).
+ *      Kay Gürtzig     2018.09.18      Issue #601: More safety on icon request (dummy icon, log).
  *
  ******************************************************************************************************
  *
@@ -228,7 +228,10 @@ public class IconLoader {
 
 	// Icons
 	/** A fixed-size product image for Mac or Translator */
-	public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
+	// START KGU#577 2018-09-18: Issue #601
+	//public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
+	public static ImageIcon icoNSD = getIconImage(getURI(from+"icons/structorizer.png"), true);
+	// END KGU#577 2018-09-18
 	// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 	//public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
 	// START KGU#486 2018-02-06: Issue #4 (Icon redesign)
@@ -479,6 +482,11 @@ public class IconLoader {
 	 */
 	public static void setScaleFactor(double scale)
 	{
+		// START KGU#577 2018-09-18: Issue #601 replace the scaled dummy
+		if (scale != scaleFactor) {
+			dummyIcon = null;	// Is going to be reproduced as soon as needed
+		}
+		// END KGU#577 2018-09-18
 		scaleFactor = scale;
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		// START KGU#486 2018-02-06: Issue #4 (icon redesign)
@@ -756,6 +764,54 @@ public class IconLoader {
 	}
 
 	/**
+	 * Produces a new, scaled {@link ImageIcon} from icon file at the given {@code url}
+	 * for the currently specified scale.
+	 * @param url - the source URL for the icon file.
+	 * @return A scaled {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
+	 * @see #getIcon(int)
+	 * @see #getIconImage(java.net.URL,boolean)
+	 * @see #getIconImage(String)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIconImage(java.net.URL url)
+	{
+		return getIconImage(url, false);
+	}
+
+	/**
+	 * Produces a new, {@link ImageIcon} from icon file at the given {@code url}.
+	 * If {@code fixed} is true then the icon will be scaled for the currently set
+	 * {@link #scaleFactor}.
+	 * @param url - the source URL for the icon file.
+	 * @param fixed - if the icon is to be scaled with the current factor
+	 * @return An {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
+	 * @see #getIcon(int)
+	 * @see #getIconImage(java.net.URL)
+	 * @see #getIconImage(String)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIconImage(java.net.URL url, boolean fixed)
+	{
+		// START KGU#577 2018-09-18: Issue #601 
+		//ImageIcon ii = new ImageIcon(url);
+		//ii = scale(ii, scaleFactor);
+		ImageIcon ii = null;
+		try {
+			ii = new ImageIcon(url);	// This will raise an exception if url = null or the file is unsuited
+		}
+		catch (Exception ex) {
+			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "*** Unable to retrieve the requested icon " + url + "!", ex);
+			return getMissingIcon();
+		}
+		if (!fixed) {
+			ii = scale(ii, scaleFactor);
+		}
+		// END KGU#577 2018-09-18
+		return ii;
+	}
+
+	// STRT KGU#577 2018-09-18: Issue #601
+	/**
 	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
 	 * for the currently specified scale.
 	 * @param url - the source URL for the icon file.
@@ -763,7 +819,7 @@ public class IconLoader {
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
-	public static ImageIcon getIconImage(java.net.URL url)
+	public static ImageIcon getIconImageSafely(java.net.URL url)
 	{
 		ImageIcon ii = new ImageIcon(url);
 		ii = scale(ii, scaleFactor);
