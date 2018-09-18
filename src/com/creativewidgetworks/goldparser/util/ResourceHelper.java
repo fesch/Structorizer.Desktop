@@ -1,3 +1,14 @@
+/*
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2018-09-18      Raw types (Class etc.) replaced by type inference 
+ *      
+ ******************************************************************************************************
+ */
 package com.creativewidgetworks.goldparser.util;
 
 import java.io.File;
@@ -24,10 +35,10 @@ public class ResourceHelper {
      * @throws ClassNotFoundException
      * @throws IOException
      */
-    public static List<Class> findClassesInPackage(String packageName) throws ClassNotFoundException, IOException {
+    public static List<Class<?>> findClassesInPackage(String packageName) throws ClassNotFoundException, IOException {
 
         if (packageName == null) {
-            return new ArrayList<Class>();
+            return new ArrayList<Class<?>>();
         }
         
         JarFile jarFile = null;
@@ -46,7 +57,7 @@ public class ResourceHelper {
             dirs.add(new File(path));
         }
         
-        ArrayList<Class> classes = new ArrayList<Class>();
+        ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
 
         if (jarFile != null ) {
             classes.addAll(findClassesFromJar(jarFile, packageName));
@@ -71,8 +82,8 @@ public class ResourceHelper {
      * @throws ClassNotFoundException
      * @throws IOException
      */    
-    public static List<Class> findClassesFromJar(JarFile jarFile, String packageName) throws ClassNotFoundException, MalformedURLException {
-        List<Class> classes = new ArrayList<Class>();
+    public static List<Class<?>> findClassesFromJar(JarFile jarFile, String packageName) throws ClassNotFoundException, MalformedURLException {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         if (jarFile == null || packageName == null) {
             return classes;
         }
@@ -87,7 +98,7 @@ public class ResourceHelper {
                if (className.startsWith(packageName)) {
                    if (className.endsWith(".class") && !className.contains("$")) {
                        className = className.substring(0, className.lastIndexOf('.'));
-                       Class clazz = loader.loadClass(className);
+                       Class<?> clazz = loader.loadClass(className);
                        if (!classes.contains(clazz)) { //Needed to handle a bug in Maven that causes duplicate files to be jarred.
                            classes.add(loader.loadClass(className));
                        }
@@ -109,8 +120,8 @@ public class ResourceHelper {
      * @return list of classes found (never null)
      * @throws ClassNotFoundException
      */
-    private static List<Class> findClasses(File directory, String packageName) throws ClassNotFoundException {
-        List<Class> classes = new ArrayList<Class>();
+    private static List<Class<?>> findClasses(File directory, String packageName) throws ClassNotFoundException {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         if (directory == null || packageName == null || !directory.exists()) {
             return classes;
         }
