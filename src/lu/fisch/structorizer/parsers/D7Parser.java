@@ -59,7 +59,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.09.22      Enh. #388 + #423: Import of types and structured initializers (var/const) fixed
  *                                      Enh. #389 Import of Units and program declarations to includables
  *      Kay Gürtzig     2018.07.11      Enh. #558: Provisional enumeration type import (as constant defs.), un-used
- *                                      rule constants disabled,
+ *                                      rule constants disabled
+ *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
  *
  ******************************************************************************************************
  *
@@ -102,8 +103,6 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.logging.Level;
-
-import com.stevesoft.pat.Regex;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the ObjectPascal, Pascal
@@ -845,6 +844,11 @@ public class D7Parser extends CodeParser
     };
     // END KGU#407 2017-06-22
 
+    // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party regex library
+    /** Matcher for temporary newline surrogates */
+	private static final java.util.regex.Matcher NEWLINE_MATCHER = java.util.regex.Pattern.compile("(.*?)[\u2190](.*?)").matcher("");
+	// END KGU#575 2018-09-17
+
 	// START KGU#354 2017-03-04: Now inherited from CodeParser
 	//Root root = null;
 	// START KGU#194 2016-05-08: Bugfix #185
@@ -929,9 +933,12 @@ public class D7Parser extends CodeParser
 			// END KGU#195 2016-05-04
 
 			// reset correct endings
-			Regex r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
-			pasCode = r.replaceAll(pasCode);
-			// START KGU#354 2017-03-07: Workaround for missing second commet delimiter pair in GOLDParser 5.0
+			// START KGU#575 2018-09-17: Issue #594 - replacing obsolete 3rd-party regex library
+			//Regex r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
+			//pasCode = r.replaceAll(pasCode);
+			pasCode = NEWLINE_MATCHER.reset(pasCode).replaceAll("$1\n$2");
+			// END KGU#575 2018-09-17
+			// START KGU#354 2017-03-07: Workaround for missing second comment delimiter pair in GOLDParser 5.0
 //			pasCode = pasCode.replaceAll("(.*?)(\\(\\*)(.*?)(\\*\\))(.*?)", "$1\\{$3\\}$5");
 			// END KGU#354 2017-03-07
 

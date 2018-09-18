@@ -129,6 +129,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
  *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
  *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
+ *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
  *      
  ******************************************************************************************************
  *
@@ -164,6 +165,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -184,6 +186,11 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Font;
 import java.awt.image.*;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -194,14 +201,6 @@ import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
-
-import com.stevesoft.pat.*;
-
-import java.awt.Point;
-import java.awt.Polygon;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
 
 /**
  * This class represents the "root" of a diagram or the program/sub itself.
@@ -231,11 +230,15 @@ public class Root extends Element {
 	};
 	// END KGU#305 2016-12-12
 	
-	private final static java.util.regex.Pattern INC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern INC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern DEC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern DEC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern INDEX_PATTERN = java.util.regex.Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
+	// START KGU#575 2018-09-17: Issue #594 - we delegate the replacement to a static method on Element 
+	//private final static java.util.regex.Pattern INC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern INC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern DEC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern DEC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern INDEX_PATTERN = java.util.regex.Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
+	private final static Pattern INDEX_PATTERN = Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
+	private final static Pattern INDEX_PATTERN_GREEDY = java.util.regex.Pattern.compile("(.*?)[\\[](.*)[\\]](.*?)");
+	// END KGU#575 2018-09-17
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
@@ -2157,11 +2160,14 @@ public class Root extends Element {
     	{
     		_s = _s.substring(1,  _s.length()-1).trim();
     	}
+    	// START KGU#575 2018-09-17: Issue #594 - Get rid of an obsolete 3rd-party Regex library
     	// START KGU 2016-03-29: Bugfix - nested index expressions were defectively split (a bracket remained)
     	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-    	Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
+    	//Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
     	// END KGU 2016-03-29
-    	_s = r.replaceAll(_s);
+    	//_s = r.replaceAll(_s);
+    	_s = INDEX_PATTERN_GREEDY.matcher(_s).replaceAll("$1 $3");
+    	// END KGU#575 2018-09-17
     	// START KGU#141 2016-01-16: Bugfix #112 Cut off component and method names
     	if (_s.indexOf(".") >= 0)
     	{
@@ -2295,10 +2301,13 @@ public class Root extends Element {
 //		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
-		_line = INC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 + $2");
-		_line = INC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 + 1");
-		_line = DEC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 - $2");
-		_line = DEC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 - 1");
+    	// START KGU#575 2018-09-17: Issue #594 - we may simply use the equivalent matchers inherited from Element
+		//_line = INC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 + $2");
+		//_line = INC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 + 1");
+		//_line = DEC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 - $2");
+		//_line = DEC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 - 1");
+    	_line = transform_inc_dec(_line);
+		// END KGU#575 2018-09-17
 
 		StringList tokens = Element.splitLexically(_line.trim(), true);
 
@@ -2491,14 +2500,15 @@ public class Root extends Element {
     	for(int i=0; i<lines.count(); i++)
     	{
     		String allText = lines.get(i);
-    		Regex r;
-
     		// modify "inc" and "dec" function (Pascal)
-    		r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
-    		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
-    		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
-    		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
-
+            // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
+            //Regex r;
+    		//r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
+    		//r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
+    		//r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
+    		//r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
+    		allText = transform_inc_dec(allText);
+            // END KGU#575 2018-09-17
 
     		StringList tokens = Element.splitLexically(allText, true);
 

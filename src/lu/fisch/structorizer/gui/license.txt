@@ -31,9 +31,6 @@ Used third party components licenses
 http://goldparser.org/about/license.htm
 (http://www.opensource.org/licenses/zlib-license.html)
 
-* Regex Engine > LGPL
-http://www.gnu.org/copyleft/lesser.txt
-
 * FileDropper > Public Domain
 
 * VectorGraphics > LGPL

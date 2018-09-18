@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-09 (2018-09-13)
+Current development version: 3.28-09 (2018-09-17)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -89,6 +89,8 @@ Current development version: 3.28-09 (2018-09-13)
 - 08: Issue #372: Attribute setting for diagrams from an arrz file improved <2>
 - 08: Enh. #590: Arranger index popup menu now allows to inspect attributes <2>
 - 09: Enh. #552: A tooltip was missing on the Arranger button "Drop Diagram" <2>
+- 09: Issue #594: Obsolete slow 3rd-party regex library removed [S. Sobisch]2
+- 09: Issue #601: More safety on loading icons from file.
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
