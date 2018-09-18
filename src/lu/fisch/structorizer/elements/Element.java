@@ -291,9 +291,6 @@ public abstract class Element {
 	"Delphi grammar by\n"+
 	" - Rob F.M. van den Brink <R.F.M.vandenBrink@hccnet.nl>\n"+
 	"\n"+
-	"Regular expression engine by\n"+
-	" - Steven R. Brandt, <sbrandt@javaregex.com>\n"+
-	"\n"+
 	"Vector graphics export by\n"+
 	" - FreeHEP Team <http://java.freehep.org/vectorgraphics>\n"+
 	"\n"+
