@@ -1,4 +1,4 @@
-#!/bin/sh
+﻿#!/bin/sh
 set -e
 ################################################################################
 #
@@ -17,6 +17,7 @@ set -e
 #      Bob Fisch                     2010.01.25    Update for new libraries and signature removing
 #      Simon Sobisch                 2017.03.06    Check for jar, use comments instead of `echo`,
 #                                                  using recursive cp for libs
+#      Kay Gürtzig                   2018.09.18    bsh-2.0b4.jar replaced with bsh-2.0b6.jar
 #
 ################################################################################
 
@@ -38,7 +39,7 @@ pushd jar
 
 # decompress jars
 echo "Decompressing jars ..."
-jar xf bsh-2.0b4.jar
+jar xf bsh-2.0b6.jar
 jar xf swing-layout-1.0.3.jar
 jar xf freehep-graphics2d-2.1.1.jar
 jar xf freehep-graphicsio-2.1.1.jar

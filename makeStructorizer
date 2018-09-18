@@ -22,8 +22,9 @@ set -e
 #      Simon Sobisch                  2017.03.06   Check for javac
 #      Kay Gürtzig                    2018.01.26   Additional icon directories copied
 #      Simon Sobisch                  2018.06.08   Create bin directory, if missing
-#      Bob Fisch                      2018.09.12   Auto disabling the apple extentions
-#      Simon Sobisch                  2018.09.17   added missing ressources
+#      Bob Fisch                      2018.09.12   Auto-disabling the apple extensions
+#      Simon Sobisch                  2018.09.17   added missing resources
+#      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
 #
 ################################################################################
 
@@ -50,13 +51,13 @@ sed -i "s/\/\/ DISABLE-BY-SCRIPT/\/\*/g" Structorizer.java
 
 # compile the generator classes (non-dependant classes)
 echo Compiling non-dependant classes
-javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar lu/fisch/structorizer/generators/*.java
+javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b6.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar lu/fisch/structorizer/generators/*.java
 
 # compile the application itself (and all dependent classes)
 echo "Compiling Structorizer"
-javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer.java
+javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b6.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer.java
 echo "Compiling Structorizer Applet"
-javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar StructorizerApplet.java
+javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b6.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar StructorizerApplet.java
 
 # copying some other files to binary tree
 echo Copying resources
@@ -86,7 +87,7 @@ cd ../bin/
 
 # run the application
 echo "Running Structorizer"
-java -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer
+java -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b6.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer
 
 # move back into the folder where we started
 popd

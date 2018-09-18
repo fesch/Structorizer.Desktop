@@ -3356,13 +3356,13 @@ public class Executor implements Runnable
 		// START KGU#439 2017-10-13: Enh. #436
 		else if (isConstant && content instanceof ArrayList<?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			content = new ArrayList<Object>((ArrayList<Object>)content);
+			content = new ArrayList<Object>((ArrayList<?>)content);
 		}
 		// END KGU#439 2017-10-13
 		// START KGU#388 2017-09-14: Enh. #423
 		else if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			// START KGU#526 2018-08-01: Preserve component order
+			// START KGU#526 2018-08-01: Preserve component order (if it had actually been a LinkedHashMap all the better)
 			content = new LinkedHashMap<String, Object>((HashMap<String, Object>)content);
 			// END KGU#526 2018-08-01
 		}
