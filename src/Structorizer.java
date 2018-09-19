@@ -359,8 +359,8 @@ public class Structorizer
 					if (!iniDir.exists())
 					{
 						iniDir.mkdir();
-						copyStream(configStr, configFile);
 					}
+					copyStream(configStr, configFile);
 				}
 				catch (Exception ex) {
 					ex.printStackTrace();

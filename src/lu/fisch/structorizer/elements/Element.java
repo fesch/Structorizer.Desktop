@@ -95,7 +95,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
  *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
  *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
- *      Kay Gürtzig     2018.09.19      Structure preference field initialization unified with ini defaults
+ *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
  *
  ******************************************************************************************************
  *
