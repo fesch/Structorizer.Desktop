@@ -17,6 +17,7 @@ set -e
 #      Rolf Schmidt                  2018.06.03    fixed version check for OpenJDK 10+, Java 8
 #      Simon Sobisch                 2018.06.03    Check for jar, tweaked version checks
 #      Bob Fisch                     2018.09.05    get correct dir if symlinked
+#      Kay Gürtzig                   2018.09.19    Bugfix #604: Condition in jar test (line 31) corrected (#586)
 #
 ################################################################################
 
@@ -27,7 +28,7 @@ DIR="$(dirname "$(readlink -f "$0")")"
 java 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'JAVA not found in $PATH' && exit $rc); fi)
 
 # check for jar in PATH
-if [ ! test -f "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" ]
+if [ ! -f "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" ]
 then
 	echo "$DIR/Structorizer.app/Contents/Java/Structorizer.jar not found."
 	exit
