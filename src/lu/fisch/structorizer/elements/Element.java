@@ -30,8 +30,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2014.11.11      Operator highlighting modified (sse comment)
  *      Kay Gürtzig     2015.10.09      Methods selectElementByCoord(x,y) and getElementByCoord() merged
@@ -95,6 +95,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
  *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
  *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.19      Structure preference field initialization unified with ini defaults
  *
  ******************************************************************************************************
  *
@@ -423,7 +424,7 @@ public abstract class Element {
 	public static String preAlt = "(?)";
 	public static String preAltT = "T";
 	public static String preAltF = "F";
-	public static String preCase = "(?)\n?\n?\nelse";
+	public static String preCase = "(?)\n!\n!\ndefault";
 	public static String preFor = "for ? <- ? to ?";
 	public static String preWhile = "while (?)";
 	public static String preRepeat = "until (?)";
@@ -445,7 +446,7 @@ public abstract class Element {
 	// END KGU#480 2018-01-19
 	
 	/** Used font for drawing element text */
-	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
+	protected static Font font = new Font("Dialog", Font.PLAIN, 12);
 	/** A string indicating that the shortened text in collapsed elements may continue (an ellipse) */
 	public static final String COLLAPSED =  "...";
 	/** Whether the right branch of an alternative is to be padded (width enlarged) */
@@ -2114,20 +2115,20 @@ public abstract class Element {
 			// START KGU 2017-01-06: Issue #327: Default changed to English
 			preAltT=ini.getProperty("IfTrue","T");
 			preAltF=ini.getProperty("IfFalse","F");
-			preAlt=ini.getProperty("If","()");
+			preAlt=ini.getProperty("If","(?)");
 			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
 			//altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
 			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
 			// END KGU#228 2016-07-31
 			StringList sl = new StringList();
-			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"default\""));
+			sl.setCommaText(ini.getProperty("Case","\"(?)\",\"!\",\"!\",\"default\""));
 			preCase=sl.getText();
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
-			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "0"));
+			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "8"));
 			// END KGU#401 2017-05-18
 			preFor=ini.getProperty("For","for ? <- ? to ?");
-			preWhile=ini.getProperty("While","while ()");
-			preRepeat=ini.getProperty("Repeat","until ()");
+			preWhile=ini.getProperty("While","while (?)");
+			preRepeat=ini.getProperty("Repeat","until (?)");
 			// END KGU 2017-01-06 #327
 			// START KGU#376 2017-07-02: Enh. #389
 			preImport = ini.getProperty("Import", "Included diagrams:");

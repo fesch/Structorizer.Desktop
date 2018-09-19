@@ -30,7 +30,7 @@ java 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'JAVA not found
 # check for jar in PATH
 if [ ! -f "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" ]
 then
-	echo "$DIR/Structorizer.app/Contents/Java/Structorizer.jar not found."
+	echo "Error: $DIR/Structorizer.app/Contents/Java/Structorizer.jar not found."
 	exit
 fi
 
