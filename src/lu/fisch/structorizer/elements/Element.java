@@ -30,8 +30,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2014.11.11      Operator highlighting modified (sse comment)
  *      Kay Gürtzig     2015.10.09      Methods selectElementByCoord(x,y) and getElementByCoord() merged
@@ -94,6 +94,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
  *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
  *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
+ *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
  *
  ******************************************************************************************************
  *
@@ -190,8 +192,6 @@ import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
-import com.stevesoft.pat.*;  //http://www.javaregex.com/
-
 import java.awt.Point;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
@@ -205,6 +205,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 
@@ -219,7 +220,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.28-08";
+	public static final String E_VERSION = "3.28-09";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -290,9 +291,6 @@ public abstract class Element {
 	"\n"+
 	"Delphi grammar by\n"+
 	" - Rob F.M. van den Brink <R.F.M.vandenBrink@hccnet.nl>\n"+
-	"\n"+
-	"Regular expression engine by\n"+
-	" - Steven R. Brandt, <sbrandt@javaregex.com>\n"+
 	"\n"+
 	"Vector graphics export by\n"+
 	" - FreeHEP Team <http://java.freehep.org/vectorgraphics>\n"+
@@ -426,7 +424,7 @@ public abstract class Element {
 	public static String preAlt = "(?)";
 	public static String preAltT = "T";
 	public static String preAltF = "F";
-	public static String preCase = "(?)\n?\n?\nelse";
+	public static String preCase = "(?)\n!\n!\ndefault";
 	public static String preFor = "for ? <- ? to ?";
 	public static String preWhile = "while (?)";
 	public static String preRepeat = "until (?)";
@@ -448,7 +446,7 @@ public abstract class Element {
 	// END KGU#480 2018-01-19
 	
 	/** Used font for drawing element text */
-	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
+	protected static Font font = new Font("Dialog", Font.PLAIN, 12);
 	/** A string indicating that the shortened text in collapsed elements may continue (an ellipse) */
 	public static final String COLLAPSED =  "...";
 	/** Whether the right branch of an alternative is to be padded (width enlarged) */
@@ -459,17 +457,27 @@ public abstract class Element {
 	// END KGU#401 2017-05-17
 	
 	// START KGU 2017-09-19: Performance tuning for syntax analysis
-	private static final java.util.regex.Pattern FLOAT_PATTERN1 = java.util.regex.Pattern.compile("[0-9]+([eE][0-9]+)?");
-	private static final java.util.regex.Pattern FLOAT_PATTERN2 = java.util.regex.Pattern.compile("[0-9]+[eE]");
-	private static final java.util.regex.Pattern INT_PATTERN = java.util.regex.Pattern.compile("[0-9]+");
-	private static final java.util.regex.Pattern BIN_PATTERN = java.util.regex.Pattern.compile("0b[01]+");
-	private static final java.util.regex.Pattern OCT_PATTERN = java.util.regex.Pattern.compile("0[0-7]+");
-	private static final java.util.regex.Pattern HEX_PATTERN = java.util.regex.Pattern.compile("0x[0-9A-Fa-f]+");
-	private static final java.util.regex.Pattern SIGN_PATTERN = java.util.regex.Pattern.compile("[+-]");
+	private static final Pattern FLOAT_PATTERN1 = Pattern.compile("[0-9]+([eE][0-9]+)?");
+	private static final Pattern FLOAT_PATTERN2 = Pattern.compile("[0-9]+[eE]");
+	private static final Pattern INT_PATTERN = Pattern.compile("[0-9]+");
+	private static final Pattern BIN_PATTERN = Pattern.compile("0b[01]+");
+	private static final Pattern OCT_PATTERN = Pattern.compile("0[0-7]+");
+	private static final Pattern HEX_PATTERN = Pattern.compile("0x[0-9A-Fa-f]+");
+	private static final Pattern SIGN_PATTERN = Pattern.compile("[+-]");
 	//private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("(\\w.*)(\\[.*\\])$"); // seems to have been wrong
 	private static final Matcher RECORD_MATCHER = java.util.regex.Pattern.compile("([A-Za-z]\\w*)\\s*\\{.*\\}").matcher("");
 	// END KGU 2017-09-19
-	// START KGU#425 2017-09-29: Lexical core mechanisms revised
+	// START KGU#575 2018-09-17: Issue #594 - replace an obsolete 3rd-party Regex library
+	// Remark: It would not be a good idea to define the Matchers here because these aren't really constant but must be
+	// reset for any new string which is likely to cause severe concurrency trouble as the patterns are used on drawing etc.
+	private static final Pattern STRING_PATTERN = Pattern.compile("(^\\\".*\\\"$)|(^\\\'.*\\\'$)");
+	private static final Pattern INC_PATTERN1 = Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
+    private static final Pattern INC_PATTERN2 = Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
+    private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
+    private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
+	// END KGU#575 2018-09-17
+
+    // START KGU#425 2017-09-29: Lexical core mechanisms revised
 	private static final String[] LEXICAL_DELIMITERS = new String[] {
 			" ",
 			"\t",
@@ -2107,20 +2115,20 @@ public abstract class Element {
 			// START KGU 2017-01-06: Issue #327: Default changed to English
 			preAltT=ini.getProperty("IfTrue","T");
 			preAltF=ini.getProperty("IfFalse","F");
-			preAlt=ini.getProperty("If","()");
+			preAlt=ini.getProperty("If","(?)");
 			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
 			//altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
 			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
 			// END KGU#228 2016-07-31
 			StringList sl = new StringList();
-			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"default\""));
+			sl.setCommaText(ini.getProperty("Case","\"(?)\",\"!\",\"!\",\"default\""));
 			preCase=sl.getText();
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
-			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "0"));
+			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "8"));
 			// END KGU#401 2017-05-18
 			preFor=ini.getProperty("For","for ? <- ? to ?");
-			preWhile=ini.getProperty("While","while ()");
-			preRepeat=ini.getProperty("Repeat","until ()");
+			preWhile=ini.getProperty("While","while (?)");
+			preRepeat=ini.getProperty("Repeat","until (?)");
 			// END KGU 2017-01-06 #327
 			// START KGU#376 2017-07-02: Enh. #389
 			preImport = ini.getProperty("Import", "Included diagrams:");
@@ -2923,7 +2931,7 @@ public abstract class Element {
 		else if (Function.isFunction(expr)) {
 			typeSpec = (new Function(expr).getResultType(""));
 		}
-		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
+		else if (STRING_PATTERN.matcher(expr).matches()) {
 			typeSpec = "String";
 		}
 		// START KGU#388 2017-09-12: Enh. #423: Record initializer support (name-prefixed!)
@@ -3481,6 +3489,21 @@ public abstract class Element {
     }
     
     /**
+     * Translates the Pascal procedure calls {@code inc(var), inc(var, offs), dec(var)},
+     * and {@code dec(var, offs)} into simple assignments in Structorizer syntax. 
+     * @param code - the piece of text possibly containing {@code inc} or {@code dec} references
+     * @return the transformed string.
+     */
+    public static String transform_inc_dec(String code)
+    {
+        code = INC_PATTERN1.matcher(code).replaceAll("$1 <- $1 + $2");
+        code = INC_PATTERN2.matcher(code).replaceAll("$1 <- $1 + 1");
+        code = DEC_PATTERN1.matcher(code).replaceAll("$1 <- $1 - $2");
+        code = DEC_PATTERN2.matcher(code).replaceAll("$1 <- $1 - 1");
+        return code;
+    }
+    
+    /**
      * Creates a (hopefully) lossless representation of the _text String as a
      * tokens list of a common intermediate language (code generation phase 1).
      * This allows the language-specific Generator subclasses to concentrate
@@ -3519,12 +3542,15 @@ public abstract class Element {
 		// START KGU 2015-11-30: Adopted from Root.getVarNames(): 
         // pascal: convert "inc" and "dec" procedures
         // (Of course we could omit it for Pascal, and for C offsprings there are more efficient translations, but this
-        // works for all, and so we avoid trouble. 
-        Regex r;
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); interm = r.replaceAll(interm);
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); interm = r.replaceAll(interm);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); interm = r.replaceAll(interm);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); interm = r.replaceAll(interm);
+        // works for all, and so we avoid trouble.
+        // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
+        //Regex r;
+        //r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); interm = r.replaceAll(interm);
+        //r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); interm = r.replaceAll(interm);
+        //r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); interm = r.replaceAll(interm);
+        //r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); interm = r.replaceAll(interm);
+        interm = transform_inc_dec(interm);
+        // END KGU#575 2018-09-17
         // END KGU 2015-11-30
 
         // START KGU#93 2015-12-21 Bugfix #41/#68/#69 Get rid of padding defects and string damages

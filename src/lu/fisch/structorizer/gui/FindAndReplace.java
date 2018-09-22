@@ -177,6 +177,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	// Pre-compiled matchers for word separation
 	private static final Pattern PTRN_WORDL = Pattern.compile("(\\n|.)*?\\W");
 	private static final Pattern PTRN_WORDR = Pattern.compile("\\W(\\n|.)*?");
+	// Caution! Can we be sure these "constants" aren't concurrently used?
 	private static Matcher mtchWordL = PTRN_WORDL.matcher("");
 	private static Matcher mtchWordR = PTRN_WORDR.matcher("");
 

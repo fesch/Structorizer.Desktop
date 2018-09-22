@@ -53,6 +53,7 @@
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
+ *      Kay Gürtzig     2018.08.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
  *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
  *
  ******************************************************************************************************
@@ -60,7 +61,6 @@
  *      Comment:
  *
  ******************************************************************************************************///
-
 
 import java.awt.EventQueue;
 import java.io.BufferedInputStream;
@@ -106,41 +106,9 @@ public class Structorizer
 	// entry point
 	public static void main(String args[])
 	{
-		// START KGU#484 2018-03-21: Issue #463 Configurability of the logging system ensured
-		// The logging configuration (for java.util.logging) is expected next to the jar file
-		// (or in the project directory while debugged from the IDE).
-		File iniDir = Ini.getIniDirectory();
-		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
-		// If the file doesn't exist then we'll copy it from the resource
-		if (!configFile.exists()) {
-			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
-			if (configStr != null) {
-				copyStream(configStr, configFile);
-			}
-		}
-		if (configFile.exists()) {
-			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
-			try {
-				LogManager.getLogManager().readConfiguration();
-			} catch (SecurityException | IOException e) {
-				// Just write the trace to System.err
-				e.printStackTrace();
-			}
-		}
+		// START KGU#484 2018-03-21: Issue #463 - Configurability of the logging system ensured
+		setupLogging();
 		// END KGU#484 2018-03-21
-		// START KGU#484 2018-04-05: Issue #463 - If the copy attempt failed too, try to leave a note..,
-		else {
-			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
-			try {
-				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
-				logLog.write("No logging config file in dir " + iniDir + " - using Java logging standard.");
-				logLog.close();
-			} catch (IOException e) {
-				// Just write the trace to System.err
-				e.printStackTrace();
-			}
-		}
-		// END KGU#484 2018-04-05
 		// START KGU#187 2016-04-28: Enh. #179
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
@@ -333,6 +301,68 @@ public class Structorizer
 		mainform.popupWelcomePane();
 		// END KGU#300 2016-12-02
 	}
+
+	// START KGU#579 2018-09-19: Logging setup extracted on occasion of a #463 fix
+	/**
+	 * Initializes the logging system and tries to ensure a product-specific
+	 * default logging configuration in the anticipated Structorizer ini directory
+	 */
+	private static void setupLogging() {
+		// The logging configuration (for java.util.logging) is expected next to the jar file
+		// (or in the project directory while debugged from the IDE).
+		File iniDir = Ini.getIniDirectory();
+		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
+		// If the file doesn't exist then we'll copy it from the resource
+		if (!configFile.exists()) {
+			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
+			if (configStr != null) {
+				// START KGU#579 2018-09-19: Bugfix #603 On the very first use of Structorizer, iniDir won't exist (Ini() hasn't run yet)
+				//copyStream(configStr, configFile);
+				try {
+					if (!iniDir.exists())
+					{
+						iniDir.mkdir();
+					}
+					copyStream(configStr, configFile);
+				}
+				catch (Exception ex) {
+					ex.printStackTrace();
+					try {
+						configStr.close();
+					} catch (IOException e) {}
+				}
+				// END KGU#579 2018-09-19
+			}
+		}
+		if (configFile.exists()) {
+			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
+			try {
+				LogManager.getLogManager().readConfiguration();
+			} catch (SecurityException | IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// START KGU#484 2018-04-05: Issue #463 - If the copy attempt failed too, try to leave a note..,
+		else {
+			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
+			try {
+				// Better check twice, we may not know at what point the first try block failed...
+				if (!iniDir.exists())
+				{
+					iniDir.mkdir();
+				}
+				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
+				logLog.write("No logging config file in dir " + iniDir + " - using Java logging standard.");
+				logLog.close();
+			} catch (IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// END KGU#484 2018-04-05
+	}
+	// END KGU#579 2018-09-19
 	
 	// START KGU#187 2016-05-02: Enh. #179
 	private static String[] synopsis = {
@@ -886,14 +916,11 @@ public class Structorizer
     }
 		
 	/**
-	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
-	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
-	 * target file exists after the copy the source file will be removed
-	 * @param sourceFile
-	 * @param targetFile
-	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
-	 * copy
-	 * @return in case of errors, a string describing them.
+	 * Performs a bytewise copy of {@code sourceStrm} to {@code targetFile}. Closes
+	 * {@code siourceStrm} afterwards.
+	 * @param sourceStrm - opened source {@link InputStream}
+	 * @param targetFile - {@link File} object for the copy target
+	 * @return a string describing occurred errors or an empty string.
 	 */
 	private static String copyStream(InputStream sourceStrm, File targetFile) {
 		String problems = "";

@@ -159,6 +159,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.08.01      Enh. #423/#563: Effort to preserve component order for record display
  *      Kay Gürtzig     2018.08.03      Enh. #577: Meta information to output console now conditioned
  *      Kay Gürtzig     2018.08.06      Some prevention against running status lock on occasion of Issue #577
+ *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
  *
  ******************************************************************************************************
  *
@@ -323,8 +324,6 @@ import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 import bsh.EvalError;
 import bsh.Interpreter;
-
-import com.stevesoft.pat.Regex;
 
 /**
  * Singleton class controlling the execution of a Nassi-Shneiderman diagram.
@@ -917,6 +916,7 @@ public class Executor implements Runnable
 	// END KGU#477 2017-12-10
 	
 	// Constant set of matchers for unicode literals that cause harm in interpreter
+	// (Concurrent execution of the using method is rather unlikely, so we dare to reuse the Matchers) 
 	private static final Matcher[] MTCHs_BAD_UNICODE = new Matcher[]{
 			Pattern.compile("(.*)\\\\u000[aA](.*)").matcher(""),
 			Pattern.compile("(.*?)\\\\u000[dD](.*?)").matcher(""),
@@ -938,12 +938,18 @@ public class Executor implements Runnable
 	/** Matcher for split function */
 	//private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
 	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
-	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
-	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
-	private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
-	private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
-	private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
-	private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+	// START KGU#575 2018-09-17: Issue #594 - we replace it anyway now
+	//private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
+	//private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
+	//private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
+	//private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
+	//private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
+	//private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+	private static final Matcher DELETE_PROC_MATCHER = java.util.regex.Pattern.compile("delete\\((.*),(.*),(.*)\\)").matcher("");
+	private static final Matcher INSERT_PROC_MATCHER = java.util.regex.Pattern.compile("insert\\((.*),(.*),(.*)\\)").matcher("");
+	private static final String DELETE_PROC_SUBST = "$1 <- delete($1,$2,$3)";
+	private static final String INSERT_PROC_SUBST = "$2 <- insert($1,$2,$3)";
+	// END KGU#575 2018-09-17
 	
 	private static final StringList OBJECT_ARRAY = StringList.explode("Object,[,]", ",");
 	
@@ -1138,10 +1144,14 @@ public class Executor implements Runnable
 		// MODIFIED BY GENNARO DONNARUMMA, NEXT LINE COMMENTED -->
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
+		// START KGU#575 2018-09-17: Issue #594 - replacing obsolete 3rd-party Regex library
+		//s = RPLC_DELETE_PROC.replaceAll(s);
+		//s = RPLC_INSERT_PROC.replaceAll(s);
 		// pascal: delete
-		s = RPLC_DELETE_PROC.replaceAll(s);
+		s = DELETE_PROC_MATCHER.reset(s).replaceAll(DELETE_PROC_SUBST);
 		// pascal: insert
-		s = RPLC_INSERT_PROC.replaceAll(s);
+		s = INSERT_PROC_MATCHER.reset(s).replaceAll(INSERT_PROC_SUBST);
+		// END KGU#575 2018-09-17
 		// START KGU#285 2016-10-16: Bugfix #276 - this spoiled apostrophes because misplaced here
 //		// pascal: quotes
 //		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
@@ -1150,10 +1160,11 @@ public class Executor implements Runnable
 		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
         // pascal: convert "inc" and "dec" procedures
-		s = RPLC_INC2_PROC.replaceAll(s);
-		s = RPLC_INC1_PROC.replaceAll(s);
-		s = RPLC_DEC2_PROC.replaceAll(s);
-		s = RPLC_DEC1_PROC.replaceAll(s);
+		//s = RPLC_INC2_PROC.replaceAll(s);
+		//s = RPLC_INC1_PROC.replaceAll(s);
+		//s = RPLC_DEC2_PROC.replaceAll(s);
+		//s = RPLC_DEC1_PROC.replaceAll(s);
+		s = Element.transform_inc_dec(s);
         // END KGU 2015-11-29
 		
         // START KGU 2017-04-22: now done above in the string token conversion
@@ -3345,13 +3356,13 @@ public class Executor implements Runnable
 		// START KGU#439 2017-10-13: Enh. #436
 		else if (isConstant && content instanceof ArrayList<?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			content = new ArrayList<Object>((ArrayList<Object>)content);
+			content = new ArrayList<Object>((ArrayList<?>)content);
 		}
 		// END KGU#439 2017-10-13
 		// START KGU#388 2017-09-14: Enh. #423
 		else if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			// START KGU#526 2018-08-01: Preserve component order
+			// START KGU#526 2018-08-01: Preserve component order (if it had actually been a LinkedHashMap all the better)
 			content = new LinkedHashMap<String, Object>((HashMap<String, Object>)content);
 			// END KGU#526 2018-08-01
 		}

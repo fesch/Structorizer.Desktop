@@ -22,11 +22,13 @@ set -e
 #      Simon Sobisch                  2017.03.06   Check for javac
 #      Kay Gürtzig                    2018.01.26   Additional icon directories
 #                                                  copied
+#      Simon Sobisch                  2018.06.08   Create bin directory, if missing
 #      Simon Sobisch                  2018.09.17   added missing ressources;
 #                                                  fix msys classpath;
 #                                                  Include Apple extensions if
 #                                                  OS matches;
 #                                                  changed script output
+#      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
 #
 ################################################################################
 
@@ -38,7 +40,7 @@ javac -version 2>/dev/null || \
 str_javac_opts="-d ../bin/ -encoding utf8 $*"
 
 # jar list
-jars="bsh-2.0b4                     \
+jars="bsh-2.0b6                     \
       swing-layout-1.0.3            \
       freehep-graphics2d-2.1.1      \
       freehep-graphicsio-2.1.1      \

@@ -12,7 +12,7 @@
     <!-- import file="build.xml"/ -->
     <path id="Structorizer.classpath">
         <pathelement location="bin"/>
-        <pathelement location="lib/bsh-2.0b4.jar"/>
+        <pathelement location="lib/bsh-2.0b6.jar"/>
         <pathelement location="lib/swing-layout-1.0.3.jar"/>
         <pathelement location="lib/freehep-graphics2d-2.1.1.jar"/>
         <pathelement location="lib/freehep-graphicsio-2.1.1.jar"/>

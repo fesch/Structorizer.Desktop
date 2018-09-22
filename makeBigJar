@@ -1,4 +1,4 @@
-#!/bin/sh
+﻿#!/bin/sh
 set -e
 ################################################################################
 #
@@ -22,6 +22,7 @@ set -e
 #      Simon Sobisch                  2018.09.17   Include Apple extensions if
 #                                                  available;
 #                                                  changed script output
+#      Kay Gürtzig                    2018.09.18   bsh-2.0b4.jar replaced with bsh-2.0b6.jar
 #
 ################################################################################
 
@@ -44,7 +45,7 @@ cp -R lib/* jar
 # change into jar directory
 pushd jar >/dev/null
 
-jars="bsh-2.0b4                     \
+jars="bsh-2.0b6                     \
       swing-layout-1.0.3            \
       freehep-graphics2d-2.1.1      \
       freehep-graphicsio-2.1.1      \
