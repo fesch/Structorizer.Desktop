@@ -53,8 +53,8 @@
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
- *      Kay Gürtzig     2018.08.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
  *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
+ *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
  *
  ******************************************************************************************************
  *
