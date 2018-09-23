@@ -291,7 +291,7 @@ public class Structorizer
 
         if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
         {
-        	// KGU#537 2018-09-14:
+        	// KGU 2018-09-14: Issue #537
         	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
         }
 
