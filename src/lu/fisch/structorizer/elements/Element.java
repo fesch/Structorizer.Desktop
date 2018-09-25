@@ -96,6 +96,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
  *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
  *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
+ *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const modifiers in declaration lists fixed
  *
  ******************************************************************************************************
  *
@@ -2797,19 +2798,28 @@ public abstract class Element {
 								}
 							}
 							else {
+								// START KGU#580 2018-09-24: Bugfix #605
+								if (tokens.get(0).equals("const")) {
+									prefix = "const ";
+									tokens.remove(0);
+								}
+								// END KGU#580 2018-09-24
 								type = tokens.concatenate(null, 0, tokens.count()-1);
 								decl = tokens.get(tokens.count()-1);
 							}
 						}
 						// START KGU#375 2017-03-30: New for enh. #388 (constants)
 						else if (tokens.get(0).equals("const")) {
+							// START KGU#580 2018-09-24: Bugfix #605							
+							decl = decl.substring(6).trim();
+							// END KGU#580 2018-09-24
 							prefix = "const ";
 						}
 						// END KGU#375 2017-03-30
 					}
 					//System.out.println("Adding parameter: " + vars.get(j).trim());
 					if (declNames != null) declNames.add(decl);
-					// START KGU#375 2017-03-30: New for enh. #388 (constants)
+					// START KGU#375 2017-03-30: New for enh. #388 (constants) 
 					//if (declTypes != null)	declTypes.add(type);
 					if (declTypes != null){
 						if (!prefix.isEmpty() || type != null) {

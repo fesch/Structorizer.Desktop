@@ -130,6 +130,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
  *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
  *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
  *      
  ******************************************************************************************************
  *
@@ -239,6 +240,9 @@ public class Root extends Element {
 	private final static Pattern INDEX_PATTERN = Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
 	private final static Pattern INDEX_PATTERN_GREEDY = java.util.regex.Pattern.compile("(.*?)[\\[](.*)[\\]](.*?)");
 	// END KGU#575 2018-09-17
+	// START KGU#580 2018-09-24: Bugfix #605
+	private final static Pattern VAR_PATTERN = Pattern.compile("(^|.*?\\W)var\\s(.*?)");
+	// END KGU#580 2018-09-24
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
@@ -4817,7 +4821,13 @@ public class Root extends Element {
         	try
         	{
         		String rootText = this.getText().getText();
-        		rootText = rootText.replace("var ", "");
+        		// START KGU#580 2018-09-24: Bugfix #605 we must not mutilate identifiers ending with "var".
+        		//rootText = rootText.replace("var ", "");
+        		Matcher varMatcher = VAR_PATTERN.matcher(rootText);
+        		if (varMatcher.matches()) {
+        			rootText = varMatcher.replaceAll("$1$2");
+        		}
+        		// END KGU#580
         		if(rootText.indexOf("(")>=0)
         		{
         			rootText=rootText.substring(rootText.indexOf("(")+1).trim();

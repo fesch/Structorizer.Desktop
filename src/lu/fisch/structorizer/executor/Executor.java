@@ -160,6 +160,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.08.03      Enh. #577: Meta information to output console now conditioned
  *      Kay Gürtzig     2018.08.06      Some prevention against running status lock on occasion of Issue #577
  *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const arguments on top level fixed
  *
  ******************************************************************************************************
  *
@@ -1621,13 +1622,11 @@ public class Executor implements Runnable
 					try
 					{
 						// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
-						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
-						//setVarRaw(in, str);
+						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept (KGU#580 2018-09-24 corrected)
+						String varName = setVarRaw(in, str);
 						if (isConstant) {
-							setVarRaw("const " + in, str);
-						}
-						else {
-							setVarRaw(in, str);
+							this.context.constants.put(varName, this.context.interpreter.get(varName));
+							this.updateVariableDisplay();
 						}
 						// END KGU#375 2017-03-30
 						// END KGU#69 2015-11-08
@@ -3018,18 +3017,22 @@ public class Executor implements Runnable
 	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object)}.
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param rawInput - the raw input string to be interpreted
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the resulting
 	 * value is inappropriate, if both don't match or if a loop variable violation is detected.
 	 * @see #setVar(String, Object) 
 	 */
-	private void setVarRaw(String target, String rawInput) throws EvalError
+	private String setVarRaw(String target, String rawInput) throws EvalError
 	{
+		// START KGU#580 2018-09-24: Issue #605
+		String varName = target;
+		// END KGU#580 2018-09-24
 		// first add as string (lest we should end with nothing at all...)
 		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
 		//setVar(name, rawInput);
 		EvalError finalError = null;
 		try {
-			setVar(target, rawInput);
+			varName = setVar(target, rawInput);
 		}
 		catch (EvalError ex)
 		{
@@ -3047,21 +3050,21 @@ public class Executor implements Runnable
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
 					this.evaluateExpression(target + " = " + rawInput, false, false);
-					setVar(target, context.interpreter.get(target));
+					varName = setVar(target, context.interpreter.get(target));
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
 					this.evaluateExpression(target + " = \"" + rawInput + "\"", false, false);
-					setVar(target, context.interpreter.get(target));					
+					varName = setVar(target, context.interpreter.get(target));					
 				}
 				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
 					Character charInput = rawInput.charAt(0);
-					setVar(target, charInput);
+					varName = setVar(target, charInput);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
 //				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
@@ -3091,12 +3094,12 @@ public class Executor implements Runnable
 				// END KGU#388 2017-09-18
 				else if (strInput.endsWith("}") && (strInput.startsWith("{") ||
 						strInput.indexOf("{") > 0 && Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null))) {
-					setVar(target, this.evaluateExpression(strInput, true, false));
+					varName = setVar(target, this.evaluateExpression(strInput, true, false));
 				}
 				// START KGU#283 2016-10-16: Enh. #273
 				else if (strInput.equals("true") || strInput.equals("false"))
 				{
-					setVar(target, Boolean.valueOf(strInput));
+					varName = setVar(target, Boolean.valueOf(strInput));
 				}
 				// END KGU#283 2016-10-16
 			}
@@ -3114,7 +3117,7 @@ public class Executor implements Runnable
 		try
 		{
 			double dblInput = Double.parseDouble(rawInput);
-			setVar(target, dblInput);
+			varName = setVar(target, dblInput);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3127,7 +3130,7 @@ public class Executor implements Runnable
 		try
 		{
 			int intInput = Integer.parseInt(rawInput);
-			setVar(target, intInput);
+			varName = setVar(target, intInput);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3139,6 +3142,7 @@ public class Executor implements Runnable
 		if (finalError != null) {
 			throw finalError;
 		}
+		return varName;
 	}
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
@@ -3171,15 +3175,16 @@ public class Executor implements Runnable
 	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both aren't compatible
 	 * or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object, int) 
 	 */
-	private void setVar(String target, Object content) throws EvalError
+	private String setVar(String target, Object content) throws EvalError
 	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
-		setVar(target, content, context.forLoopVars.count()-1);
+		return setVar(target, content, context.forLoopVars.count()-1);
 	}
 
 	/**
@@ -3190,12 +3195,13 @@ public class Executor implements Runnable
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
 	 * @param ignoreLoopStackLevel - the loop nesting level beyond which loop variables aren't critical.
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
 	 * match or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object)
 	 */
-	private void setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
+	private String setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
 	// END KGU#307 2016-12-12
 	{
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
@@ -3544,6 +3550,9 @@ public class Executor implements Runnable
 				}
 				((HashMap<String, Object>)comp).put(path.get(path.count()-1), content);
 				context.interpreter.set(recordName, record);
+				// START KGU#580 2018-09-24
+				target = recordName;	// this is the variable name to be returned
+				// END KGU#580 2018-09-24
 			}
 			catch (EvalError ex) {
 				throw ex;
@@ -3670,6 +3679,9 @@ public class Executor implements Runnable
 			updateVariableDisplay();
 		}
 		// END KGU#20 2015-10-13
+		// START KGU#580 2018-09-24: Bugfix #605
+		return target;	// Base name of the assigned variable or constant
+		// END KGU#580 2018-09-24
 	}
 
 	/**

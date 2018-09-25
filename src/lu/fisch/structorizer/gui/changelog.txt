@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-09 (2018-09-19)
+Current development version: 3.28-09 (2018-09-25)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -95,6 +95,7 @@ Current development version: 3.28-09 (2018-09-19)
 - 09: Newer and safer version (V0.2b6) of bean shell interpreter integrated <2>
 - 09: Bugfix #603: Logging setup failed on a virgin start (for a new user) <2>
 - 09: Bugfix #604: Syntax error in structorizer.sh / Arranger.sh <2>
+- 09: Bugfix #605: Defects with var and const keywords in argument lists <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
