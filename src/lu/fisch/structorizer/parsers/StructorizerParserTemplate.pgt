@@ -182,7 +182,7 @@ public class %Name%Parser extends CodeParser
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 
 	@SuppressWarnings("unused")
-	private interface SymbolConstants 
+	private myEnum SymbolConstants 
 	{
 ##SYMBOLS
 		final int %ID.Padded% = %Value.Padded%;  // %Description%
@@ -194,8 +194,9 @@ public class %Name%Parser extends CodeParser
 	private interface RuleConstants
 	{
 ##RULES
-		final int %ID.Padded% = %Value.Padded%;  // %Description%
+		%ID.Padded%(%Value.Padded%, "%ID.Padded%", "%Description%"),
 ##END-RULES
+		END_ENUM(-1,"","");
 	};
 
 	//----------------------------- Preprocessor -----------------------------
