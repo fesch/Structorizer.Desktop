@@ -28,9 +28,9 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------          ----			-----------
- *      Bob Fisch       2007.12.27		First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.27      First Issue
  *      Kay Gürtzig     2015.12.16      Bugfix #63 - no open attempt without need
  *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
  *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
@@ -53,13 +53,14 @@
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
+ *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
  *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
  *      Kay Gürtzig     2018.09.27      Slight modification to verbose option (-v may also be used without argument)
  *
  ******************************************************************************************************
  *
- *      Comment:		
- *      
+ *      Comment:
+ *
  ******************************************************************************************************///
 
 import java.awt.EventQueue;
@@ -88,6 +89,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -298,50 +300,11 @@ public class Structorizer
         // END KGU#440 2017-11-06
         mainform.diagram.redraw();
 
-                // /!\ Don't remove the next line, it will be autodisabled by the makeStructorizer script
-                // DISABLE-BY-SCRIPT
-                if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
-		{
-
-			System.setProperty("apple.laf.useScreenMenuBar", "true");
-			System.setProperty("apple.awt.graphics.UseQuartz", "true");
-
-			com.apple.eawt.Application application = com.apple.eawt.Application.getApplication();
-
-			try
-			{
-				application.setEnabledPreferencesMenu(true);
-				application.addApplicationListener(new com.apple.eawt.ApplicationAdapter() {
-					public void handleAbout(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.aboutNSD();
-						e.setHandled(true);
-					}
-					public void handleOpenApplication(com.apple.eawt.ApplicationEvent e) {
-					}
-					public void handleOpenFile(com.apple.eawt.ApplicationEvent e) {
-						if(e.getFilename()!=null)
-						{
-							mainform.diagram.openNSD(e.getFilename());
-						}
-					}
-					public void handlePreferences(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.preferencesNSD();
-					}
-					public void handlePrintFile(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.printNSD();
-					}
-					public void handleQuit(com.apple.eawt.ApplicationEvent e) {
-						mainform.saveToINI();
-						mainform.dispose();
-					}
-				});
-			}
-			catch (Exception e)
-			{
-			}
-		}
-                // /!\ Don't remove the next line either, because otherwise the makeStructorizer won't work anymore!
-                /**/
+        if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+        {
+        	// KGU 2018-09-14: Issue #537
+        	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
+        }
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();
