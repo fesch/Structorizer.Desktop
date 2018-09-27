@@ -54,6 +54,7 @@
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
  *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
+ *      Kay Gürtzig     2018.09.27      Slight modification to verbose option (-v may also be used without argument)
  *
  ******************************************************************************************************
  *
@@ -171,7 +172,17 @@ public class Structorizer
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode?
 			else if (args[i].equals("-v") && i+1 < args.length)
 			{
-				logDir = args[++i];
+				// START KGU#354 2018-09-27: More tolerance spent
+				//logDir = args[++i];
+				String dirName = args[i+1]; 
+				if (dirName.startsWith("-") || !(new File(dirName)).isDirectory()) {
+					// No valid path given, so use "."
+					logDir = ".";
+				}
+				else {
+					logDir = args[++i];
+				}
+				// END KGU#354 2018-09-27
 			}
 			// END KGU#354 2017-04-27
 			// START KGU#538 2018-07-01: Issue #554 - new option for a settings file
@@ -402,10 +413,10 @@ public class Structorizer
 	// END KGU#579 2018-09-19
 	
 	// START KGU#187 2016-05-02: Enh. #179
-	private static String[] synopsis = {
+	private static final String[] synopsis = {
 		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]",
 		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
-		"Structorizer -p [PARSER] [-f] [-v LOGPATH] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -p [PARSER] [-f] [-v [LOGPATH]] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h"
 	};
 	// END KGU#187 2016-05-02
@@ -766,8 +777,7 @@ public class Structorizer
 	 * (Later there might be a change to get it from a configuration file.)
 	 * @param suitedParsers - a vector of parsers accepting the file extension
 	 * @param filename - name of the file to be parsed (for dialog purposes)
-	 * @param parser - 
-	 * @return
+	 * @return a {@link CodeParser} instance if there was a valid choice or null 
 	 */
 	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename)
 	{
