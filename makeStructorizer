@@ -29,6 +29,7 @@ set -e
 #                                                  OS matches;
 #                                                  changed script output
 #      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
+#      Kay Gürtzig                    2018.09.27   Added missing *.cgt and *.egt ressources
 #
 ################################################################################
 
@@ -128,6 +129,8 @@ cp lu/fisch/structorizer/locales/*.txt ../bin/lu/fisch/structorizer/locales/
 cp lu/fisch/structorizer/generators/*.txt ../bin/lu/fisch/structorizer/generators/
 #cp  goldengine/java/*.cgt ../bin/goldengine/java/
 #cp  goldengine/java/*.grm ../bin/goldengine/java/
+cp lu/fisch/structorizer/parsers/*.cgt ../bin/lu/fisch/structorizer/parsers/
+cp lu/fisch/structorizer/parsers/*.egt ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.grm ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.xsd ../bin/lu/fisch/structorizer/parsers/
 echo "Done"
