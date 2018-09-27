@@ -380,7 +380,6 @@ public class %Name%Parser extends CodeParser implements GPMessageConstants
      */
     private void prepareTextfile(String _textToParse, String _encoding)
     {
-        File interm = null;
         try
         {
             File file = new File(_textToParse);
@@ -406,8 +405,7 @@ public class %Name%Parser extends CodeParser implements GPMessageConstants
             //////////////////////////////////////////////
 
             // trim and save as new file
-            interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
-            OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
+            OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(_textToParse+".structorizer"), "UTF-8");
             ow.write(srcCode.trim()+"\n");
             //System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
             ow.close();
