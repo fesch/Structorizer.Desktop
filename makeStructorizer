@@ -29,7 +29,7 @@ set -e
 #                                                  OS matches;
 #                                                  changed script output
 #      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
-#      Kay Gürtzig                    2018.09.27   Added missing *.cgt and *.egt ressources
+#      Kay Gürtzig                    2018.09.27   Added missing *.cgt and *.egt resources
 #
 ################################################################################
 
