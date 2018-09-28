@@ -549,7 +549,7 @@ Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach (+Umschalt:
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
 // find & replace
-Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Erseiten.
+Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Ersetzen.
 // copy & paste
 Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
