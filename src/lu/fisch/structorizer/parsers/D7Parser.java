@@ -61,6 +61,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.07.11      Enh. #558: Provisional enumeration type import (as constant defs.), un-used
  *                                      rule constants disabled
  *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.28      Bugfix #613: Include relations with empty includables should be eliminated
  *
  ******************************************************************************************************
  *
@@ -102,6 +103,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.util.LinkedList;
 import java.util.logging.Level;
 
 /**
@@ -1000,6 +1002,12 @@ public class D7Parser extends CodeParser
 	}
 	// END KGU#195 2016-05-04
 
+	// START KGU#586 2018-09-28: Bugfix #613 - modified include mechanism
+	// Include lists should be filled immediately - the includables might remain empty
+	/** Holds the {@link Root}s including the unit globals (if there are any) */
+	protected LinkedList<Root> includerList = new LinkedList<Root>();
+	// END KGU#586 2018-09-28
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#initializeBuildNSD()
 	 */
@@ -1253,7 +1261,10 @@ public class D7Parser extends CodeParser
 					}
 					includable.setInclude();
 					prevRoot.children.removeElements();
-					prevRoot.includeList = StringList.getNew(unitName + DEFAULT_GLOBAL_SUFFIX);
+					prevRoot.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
+					// START KGU#586 2018-09-28: Bugfix #613 - Register the inclusion, allowing the postprocess to check it
+					this.includerList.add(prevRoot);
+					// END KGU#586 2018-09-28
 					this.addRoot(includable);
 				}
 				root = new Root();	// Prepare a new root for the subroutine
@@ -1324,10 +1335,10 @@ public class D7Parser extends CodeParser
 				{
 					// START KGU#376 2017-09-22: Enh. #389 - the unit will be an includable now
 					//root.setComment("(UNIT " + unitName + ")");
-					if (root.includeList == null) {
-						root.includeList = new StringList();
-					}
-					root.includeList.addIfNew(unitName + DEFAULT_GLOBAL_SUFFIX);
+					root.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
+					// START KGU#586 2018-09-28: Bugfix #613 - register the established include relation
+					this.includerList.add(root);
+					// END KGU#586 2018-09-28
 					// END KGU#376 2017-09-22
 				}
 				// END KGU#194 2016-05-08
@@ -1697,6 +1708,14 @@ public class D7Parser extends CodeParser
 			root.setInclude();
 			root.getComment().insert("(UNIT " + unitName + ")", 0);
 		}
+		// START KGU#586 2018-09-28: Bugfix #613 check the established inclusions for necessity
+		if (root.isInclude() && root.children.getSize() == 0) {
+			for (Root includer: this.includerList) {
+				includer.removeFromIncludeList(root);
+			}
+		}
+		// END KGU#586 2018-09-28
 	}
 
+	
 }

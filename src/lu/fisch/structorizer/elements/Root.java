@@ -131,6 +131,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
  *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
+ *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
  *      
  ******************************************************************************************************
  *
@@ -308,6 +309,7 @@ public class Root extends Element {
 	 * @param aRoot - a diagram to be added to the include list of this
 	 * @return true if {@code aRoot} is includable and new to the include list
 	 * @see #addToIncludeList(String)
+	 * @see #removeFromIncludeList(Root)
 	 */
 	public boolean addToIncludeList(Root aRoot)
 	{
@@ -324,6 +326,7 @@ public class Root extends Element {
 	 * @param rootName - assumed name of an includable Root
 	 * @return true if {@code rootName} was new
 	 * @see #addToIncludeList(Root)
+	 * @see #removeFromIncludeList(String)
 	 */
 	public boolean addToIncludeList(String rootName)
 	{
@@ -333,6 +336,35 @@ public class Root extends Element {
 		return this.includeList.addIfNew(rootName);
 	}
 	// END KGU#376 2017-06-30
+	// START KGU#586 2018-09-28: Introduced on occasion of #613
+	/**
+	 * Ensures that {@link Root} {@code aRoot} is not member of the {@link #includeList}
+	 * @param aRoot - an includable {@link Root}
+	 * @return true if {@code aRoot} had been included before
+	 * @see #removeFromIncludeList(String)
+	 * @see #addToIncludeList(Root)
+	 */
+	public boolean removeFromIncludeList(Root aRoot)
+	{
+		return aRoot.isInclude() && this.removeFromIncludeList(aRoot.getMethodName());
+	}
+	/**
+	 * Ensures that the given {@code rootName} (which is assumed to be the name of an
+	 * includable diagram, but not verified) is NOT member of this' include list.
+	 * @param rootName - assumed name of an includable {@link Root}
+	 * @return true if the assumed includable had been member of the include list
+	 * @see #removeFromIncludeList(Root)
+	 * @see #addToIncludeList(String)
+	 */
+	public boolean removeFromIncludeList(String rootName)
+	{
+		boolean done = false;
+		if (this.includeList != null) {
+			done = this.includeList.removeAll(rootName) > 0;
+		}
+		return done;
+	}
+	// END KGU#586 2018-09-28
 	
 	/**
 	 * @return true if and only if the diagram type is "main program"

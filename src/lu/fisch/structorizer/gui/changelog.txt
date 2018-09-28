@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-09 (2018-09-27)
+Current development version: 3.28-10 (2018-09-28)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -99,6 +99,7 @@ Current development version: 3.28-09 (2018-09-27)
 - 09: Bugfix #608: C code import hardening against preproc./comment trouble <2>
 - 09: Made the argument of the batch import option -v optional (uses "." then) <2>
 - 09: Bugfix #611: Pascal code import had failed due to missing rule table <2>
+- 10: Bugfix #613: Invalid include lists after import of Pascal/Delphi units <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
