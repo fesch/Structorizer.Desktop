@@ -33,6 +33,7 @@ import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.parsers.CodeParser;
 
+@SuppressWarnings("serial")
 public class StructorizerApplet extends JApplet  implements NSDController
 {
 	

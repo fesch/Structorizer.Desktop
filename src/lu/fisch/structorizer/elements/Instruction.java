@@ -97,7 +97,7 @@ public class Instruction extends Element {
 	// END KGU#258 2016-09-25
 	// START KGU#413 2017-06-09: Enh. #416
 	//protected static final String indentPattern = "(\\s*)(.*)";
-	protected static final Matcher INDENT_MATCHER = Pattern.compile("(\\s*)(.*)").matcher("");
+	protected static final Pattern INDENT_PATTERN = Pattern.compile("(\\s*)(.*)");
 	// END KGU#413 2017-06-09
 	// START KGU#388 2017-07-03: Enh. #423
 	//protected static final String TYPE_DEF_PATTERN = "^[tT][yY][pP][eE]\\s+\\w+\\s*=\\s*\\S*$";
@@ -132,6 +132,8 @@ public class Instruction extends Element {
 	
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
+		// Within the method we may reuse the matcher, as it is local
+		Matcher indentMatcher = INDENT_PATTERN.matcher("");
 		// START KGU#494 2018-02-15: Enh. #408
 		int leftPadding = Element.E_PADDING/2;
 		if (_element.isCollapsed(true)) {
@@ -174,11 +176,11 @@ public class Instruction extends Element {
 			// START KGU#413 2017-06-09: Enh. #416
 			//int lineWidth = getWidthOutVariables(_canvas, _text.get(i), _element) + Element.E_PADDING;
 			String line = _text.get(i);
-			if (isContinuation && INDENT_MATCHER.reset(line).matches()) {
+			if (isContinuation && indentMatcher.reset(line).matches()) {
 				//String indent = line.replaceAll(indentPattern, "$1");
 				//String rest = line.replaceAll(indentPattern, "$2");
-				String indent = INDENT_MATCHER.group(1);
-				String rest = INDENT_MATCHER.group(2);
+				String indent = indentMatcher.group(1);
+				String rest = indentMatcher.group(2);
 				if (indent.length() < Element.E_INDENT) {
 					line = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
 				}
@@ -236,6 +238,8 @@ public class Instruction extends Element {
 
 	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
 	{
+		// Within the method we may reuse the matcher, as it is local
+		Matcher indentMatcher = INDENT_PATTERN.matcher("");
 		Rect myrect = new Rect();
 		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
 		//Color drawColor = _element.getColor();
@@ -319,11 +323,11 @@ public class Instruction extends Element {
 		{
 			String text = _text.get(i);
 			// START KGU#413 2017-06-09: Enh. #416
-			if (isContinuation && INDENT_MATCHER.reset(text).matches()) {
+			if (isContinuation && indentMatcher.reset(text).matches()) {
 				//String indent = text.replaceAll(indentPattern, "$1");
 				//String rest = text.replaceAll(indentPattern, "$2");
-				String indent = INDENT_MATCHER.group(1);
-				String rest = INDENT_MATCHER.group(2);
+				String indent = indentMatcher.group(1);
+				String rest = indentMatcher.group(2);
 				if (indent.length() < Element.E_INDENT) {
 					text = String.format("%1$" + Element.E_INDENT + "s%2$s", indent, rest);
 				}

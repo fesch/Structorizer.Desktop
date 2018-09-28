@@ -28,9 +28,9 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------          ----			-----------
- *      Bob Fisch       2007.12.27		First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.27      First Issue
  *      Kay Gürtzig     2015.12.16      Bugfix #63 - no open attempt without need
  *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
  *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
@@ -53,13 +53,15 @@
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
- * 
+ *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
+ *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
+ *      Kay Gürtzig     2018.09.27      Slight modification to verbose option (-v may also be used without argument)
+ *
  ******************************************************************************************************
  *
- *      Comment:		
- *      
+ *      Comment:
+ *
  ******************************************************************************************************///
-
 
 import java.awt.EventQueue;
 import java.io.BufferedInputStream;
@@ -87,6 +89,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -104,41 +107,9 @@ public class Structorizer
 	// entry point
 	public static void main(String args[])
 	{
-		// START KGU#484 2018-03-21: Issue #463 Configurability of the logging system ensured
-		// The logging configuration (for java.util.logging) is expected next to the jar file
-		// (or in the project directory while debugged from the IDE).
-		File iniDir = Ini.getIniDirectory();
-		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
-		// If the file doesn't exist then we'll copy it from the resource
-		if (!configFile.exists()) {
-			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
-			if (configStr != null) {
-				copyStream(configStr, configFile);
-			}
-		}
-		if (configFile.exists()) {
-			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
-			try {
-				LogManager.getLogManager().readConfiguration();
-			} catch (SecurityException | IOException e) {
-				// Just write the trace to System.err
-				e.printStackTrace();
-			}
-		}
+		// START KGU#484 2018-03-21: Issue #463 - Configurability of the logging system ensured
+		setupLogging();
 		// END KGU#484 2018-03-21
-		// START KGU#484 2018-04-05: Issue #463 - If the copy attempt failed too, try to leave a note..,
-		else {
-			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
-			try {
-				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
-				logLog.write("No logging config file in dir " + iniDir + " - using Java logging standard.");
-				logLog.close();
-			} catch (IOException e) {
-				// Just write the trace to System.err
-				e.printStackTrace();
-			}
-		}
-		// END KGU#484 2018-04-05
 		// START KGU#187 2016-04-28: Enh. #179
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
@@ -203,7 +174,17 @@ public class Structorizer
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode?
 			else if (args[i].equals("-v") && i+1 < args.length)
 			{
-				logDir = args[++i];
+				// START KGU#354 2018-09-27: More tolerance spent
+				//logDir = args[++i];
+				String dirName = args[i+1]; 
+				if (dirName.startsWith("-") || !(new File(dirName)).isDirectory()) {
+					// No valid path given, so use "."
+					logDir = ".";
+				}
+				else {
+					logDir = args[++i];
+				}
+				// END KGU#354 2018-09-27
 			}
 			// END KGU#354 2017-04-27
 			// START KGU#538 2018-07-01: Issue #554 - new option for a settings file
@@ -319,50 +300,11 @@ public class Structorizer
         // END KGU#440 2017-11-06
         mainform.diagram.redraw();
 
-                // /!\ Don't remove the next line, it will be autodisabled by the makeStructorizer script
-                // DISABLE-BY-SCRIPT
-                if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
-		{
-
-			System.setProperty("apple.laf.useScreenMenuBar", "true");
-			System.setProperty("apple.awt.graphics.UseQuartz", "true");
-
-			com.apple.eawt.Application application = com.apple.eawt.Application.getApplication();
-
-			try
-			{
-				application.setEnabledPreferencesMenu(true);
-				application.addApplicationListener(new com.apple.eawt.ApplicationAdapter() {
-					public void handleAbout(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.aboutNSD();
-						e.setHandled(true);
-					}
-					public void handleOpenApplication(com.apple.eawt.ApplicationEvent e) {
-					}
-					public void handleOpenFile(com.apple.eawt.ApplicationEvent e) {
-						if(e.getFilename()!=null)
-						{
-							mainform.diagram.openNSD(e.getFilename());
-						}
-					}
-					public void handlePreferences(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.preferencesNSD();
-					}
-					public void handlePrintFile(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.printNSD();
-					}
-					public void handleQuit(com.apple.eawt.ApplicationEvent e) {
-						mainform.saveToINI();
-						mainform.dispose();
-					}
-				});
-			}
-			catch (Exception e)
-			{
-			}
-		}
-                // /!\ Don't remove the next line either, because otherwise the makeStructorizer won't work anymore!
-                /**/
+        if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+        {
+        	// KGU 2018-09-14: Issue #537
+        	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
+        }
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();
@@ -370,12 +312,74 @@ public class Structorizer
 		mainform.popupWelcomePane();
 		// END KGU#300 2016-12-02
 	}
+
+	// START KGU#579 2018-09-19: Logging setup extracted on occasion of a #463 fix
+	/**
+	 * Initializes the logging system and tries to ensure a product-specific
+	 * default logging configuration in the anticipated Structorizer ini directory
+	 */
+	private static void setupLogging() {
+		// The logging configuration (for java.util.logging) is expected next to the jar file
+		// (or in the project directory while debugged from the IDE).
+		File iniDir = Ini.getIniDirectory();
+		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
+		// If the file doesn't exist then we'll copy it from the resource
+		if (!configFile.exists()) {
+			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
+			if (configStr != null) {
+				// START KGU#579 2018-09-19: Bugfix #603 On the very first use of Structorizer, iniDir won't exist (Ini() hasn't run yet)
+				//copyStream(configStr, configFile);
+				try {
+					if (!iniDir.exists())
+					{
+						iniDir.mkdir();
+					}
+					copyStream(configStr, configFile);
+				}
+				catch (Exception ex) {
+					ex.printStackTrace();
+					try {
+						configStr.close();
+					} catch (IOException e) {}
+				}
+				// END KGU#579 2018-09-19
+			}
+		}
+		if (configFile.exists()) {
+			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
+			try {
+				LogManager.getLogManager().readConfiguration();
+			} catch (SecurityException | IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// START KGU#484 2018-04-05: Issue #463 - If the copy attempt failed too, try to leave a note..,
+		else {
+			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
+			try {
+				// Better check twice, we may not know at what point the first try block failed...
+				if (!iniDir.exists())
+				{
+					iniDir.mkdir();
+				}
+				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
+				logLog.write("No logging config file in dir " + iniDir + " - using Java logging standard.");
+				logLog.close();
+			} catch (IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// END KGU#484 2018-04-05
+	}
+	// END KGU#579 2018-09-19
 	
 	// START KGU#187 2016-05-02: Enh. #179
-	private static String[] synopsis = {
+	private static final String[] synopsis = {
 		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]",
 		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
-		"Structorizer -p [PARSER] [-f] [-v LOGPATH] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -p [PARSER] [-f] [-v [LOGPATH]] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h"
 	};
 	// END KGU#187 2016-05-02
@@ -736,8 +740,7 @@ public class Structorizer
 	 * (Later there might be a change to get it from a configuration file.)
 	 * @param suitedParsers - a vector of parsers accepting the file extension
 	 * @param filename - name of the file to be parsed (for dialog purposes)
-	 * @param parser - 
-	 * @return
+	 * @return a {@link CodeParser} instance if there was a valid choice or null 
 	 */
 	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename)
 	{
@@ -923,14 +926,11 @@ public class Structorizer
     }
 		
 	/**
-	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
-	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
-	 * target file exists after the copy the source file will be removed
-	 * @param sourceFile
-	 * @param targetFile
-	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
-	 * copy
-	 * @return in case of errors, a string describing them.
+	 * Performs a bytewise copy of {@code sourceStrm} to {@code targetFile}. Closes
+	 * {@code siourceStrm} afterwards.
+	 * @param sourceStrm - opened source {@link InputStream}
+	 * @param targetFile - {@link File} object for the copy target
+	 * @return a string describing occurred errors or an empty string.
 	 */
 	private static String copyStream(InputStream sourceStrm, File targetFile) {
 		String problems = "";
