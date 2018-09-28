@@ -61,7 +61,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.07.11      Enh. #558: Provisional enumeration type import (as constant defs.), un-used
  *                                      rule constants disabled
  *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
- *      Kay Gürtzig     2018.09.28      Bugfix #613: Include relations with empty includables should be eliminated
+ *      Kay Gürtzig     2018.09.28      Bugfix #613: Include relations with empty includables should be eliminated;
+ *                                      Bugfix #614: Redundant result assignments in function diagrams removed
  *
  ******************************************************************************************************
  *
@@ -1715,6 +1716,17 @@ public class D7Parser extends CodeParser
 			}
 		}
 		// END KGU#586 2018-09-28
+		// START KGU#587 2018-09-28: Issue #614 - remove redundant result instruction
+		else if (root.isSubroutine() && root.children.getSize() > 1) {
+			int ixLast = root.children.getSize() - 1;
+			Element lastEl = root.children.getElement(ixLast);
+			if (lastEl.getClass().getSimpleName().equals("Instruction") &&
+					lastEl.getText().getText().matches("\\s*" + root.getMethodName() + "\\s*<-\\s*" + BString.breakup("result") + "\\s*")) {
+				// An end-standing instruction "<function-name> <- result" is redundant, so remove it.
+				root.children.removeElement(ixLast);
+			}
+		}
+		// END KGU#587 2018-09-28
 	}
 
 	
