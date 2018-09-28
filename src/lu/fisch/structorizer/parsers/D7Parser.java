@@ -63,6 +63,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
  *      Kay Gürtzig     2018.09.28      Bugfix #613: Include relations with empty includables should be eliminated;
  *                                      Bugfix #614: Redundant result assignments in function diagrams removed
+ *                                      Workaround #615: Replace comment delimiters (* *) with { } in preparation phase
  *
  ******************************************************************************************************
  *
@@ -909,12 +910,19 @@ public class D7Parser extends CodeParser
 			// END KGU#193 2016-05-04
 			try {
 				String strLine;
+				// START KGU#589 2018-09-28: Workaround #615
+				// First item means within "(* *)", second item means within "{ }"
+				boolean[] inComments = {false, false};
+				// END KGU#589 2018-09-28
 				//Read File Line By Line
 				while ((strLine = br.readLine()) != null)   
 				{
-					// START KGU#537 2018-07-01: Enh. #553
+					// START KGU#537 2018-07-01: Enh. #553 Make parser interruptable
 					checkCancelled();
 					// END KGU#537 2018-07-01
+					// START KGU#589 2018-09-28: Workaround #615
+					strLine = unifyComments(strLine, inComments);
+					// END KGU#589 2018-09-28
 					// add no ending because of comment filter
 					pasCode += strLine+"\u2190";
 					//pasCode+=strLine+"\n";
@@ -967,6 +975,66 @@ public class D7Parser extends CodeParser
 	}
 	// END KGU#354 2017-03-03
 	
+	// START KGU589 2018-09-28: Issue #615
+	/**
+	 * Replaces all comment delimiters of kind (* *) by pairs of curly braces (and therefore closing
+	 * braces within (* *) former comments with "[brace-close]" to avoid comment corruption as comments
+	 * of same kind cannot be nested.
+	 * FIXME: This method is only a workaround while the grammar doesn't cope with (* *) comments.  
+	 * @param pasLine - the original Pascal line
+	 * @param withinComments - a pair of flags: [0] for inside (* *), [1] for inside { }.
+	 * @return the Pascal line with unified comments (length may have changed) 
+	 */
+	private String unifyComments(String pasLine, boolean[] withinComments) {
+		// Let's do a quick test first
+		if (withinComments[0] && (pasLine.contains("*)") || (pasLine.contains("}")))
+				|| !withinComments[0] && pasLine.contains("(*")) {
+			// Now we must have a closer look to exclude false positives in string constants
+			StringBuilder sb = new StringBuilder();
+			boolean inString = false;
+			int len = pasLine.length();
+			int i = 0;
+			while (i < len) {
+				char c = pasLine.charAt(i);
+				if (!withinComments[0] && !withinComments[1]) {
+					if (c == '\'') {
+						inString = !inString;
+					}
+					else if (c == '{') {
+						withinComments[1] = true;
+					}
+					else if (!inString && c == '(' && i+1 < len && pasLine.charAt(i+1) == '*') {
+						withinComments[0] = true;
+						c = '{';
+						i++;
+					}
+				}
+				else if (withinComments[1]) {
+					if (c == '}') {
+						withinComments[1] = false;
+					}
+				}
+				// So we must be within a comment of type (* *)
+				else if (c == '*' && i+1 < len && pasLine.charAt(i+1) == ')') {
+					withinComments[0] = false;
+					c = '}';
+					i++;
+				}
+				else if (c == '}') {
+					// This might cause trouble as it would shorten the comment!
+					// so replace it by something irrelevant within a comment
+					sb.append("[brace-close");
+					c = ']';
+				}
+				sb.append(c);
+				i++;
+			}
+			pasLine = sb.toString();
+		}
+		return pasLine;
+	}
+	// END KGU#589 2018-09-28
+
 	// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
 	private String embedSubroutineDeclaration(String _pasCode) throws ParserCancelled
 	{
@@ -1236,6 +1304,12 @@ public class D7Parser extends CodeParser
 					 )
 			{
 				unitName = getContent_R((Reduction) _reduction.get(1).getData(), "");
+				// START KGU#407 2018-09-28: Enh. #420 - comments already here
+				String comment = this.retrieveComment(_reduction);
+				if (comment != null) {
+					root.getComment().add(StringList.explode(comment, "\n"));
+				}
+				// END KGU#407 2018-09-28
 			}
 			else if (
 					ruleHead.equals("<ProcedureDecl>")
@@ -1711,8 +1785,13 @@ public class D7Parser extends CodeParser
 		}
 		// START KGU#586 2018-09-28: Bugfix #613 check the established inclusions for necessity
 		if (root.isInclude() && root.children.getSize() == 0) {
+			StringList comment = root.getComment();
 			for (Root includer: this.includerList) {
-				includer.removeFromIncludeList(root);
+				// Give the unit comment a chance to survive if there is only a single dependent
+				if (includer.removeFromIncludeList(root)
+						&& comment.count() > 0 && this.includerList.size() == 1) {
+					includer.comment.add(comment);
+				}
 			}
 		}
 		// END KGU#586 2018-09-28
