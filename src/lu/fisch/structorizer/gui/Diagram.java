@@ -160,6 +160,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line
  *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD()
  *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
+ *      Kay Gürtzig     2018.10.01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
  *
  ******************************************************************************************************
  *
@@ -3663,7 +3664,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Subqueue temp = _alt.qFalse;
 		_alt.qFalse = _alt.qTrue;
 		_alt.qTrue = temp;
-		_alt.resetDrawingInfoDown();
+		// The width of the condition is likely to have changed
+		_alt.resetDrawingInfoUp();	// KGU 2018-10-01: Corrected Down -> Up
 		redraw();
 		analyse();
 	}
