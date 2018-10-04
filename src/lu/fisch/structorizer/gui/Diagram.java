@@ -3665,7 +3665,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		_alt.qFalse = _alt.qTrue;
 		_alt.qTrue = temp;
 		// The width of the condition is likely to have changed
-		_alt.resetDrawingInfoUp();	// KGU 2018-10-01: Corrected Down -> Up
+		_alt.resetDrawingInfoUp();	// KGU#590 2018-10-01: Corrected Down -> Up
 		redraw();
 		analyse();
 	}
