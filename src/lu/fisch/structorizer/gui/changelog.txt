@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-10 (2018-10-04)
+Current development version: 3.28-10 (2018-10-06)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -105,6 +105,9 @@ Current development version: 3.28-10 (2018-10-04)
 - 10: Issue #367: Diagram reshaping after IF branch swapping hadn't worked <2>
 - 10: Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins <2>
 - 10: Bugfix #617: Expressions with more than one turtle function failed <2>
+- 10: Bugfix #618: Analyser reported function names as not initialized <2>
+- 10: Bugfix #619: Code export defects with respect to result variables <2>
+- 10: Issue #552: Unnecessary serial action buttons on closing Structorizer <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

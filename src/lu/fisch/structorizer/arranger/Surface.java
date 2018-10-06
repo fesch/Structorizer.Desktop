@@ -80,7 +80,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
  *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
  *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations
- *      Kay Gürtzig     2018.06.27      Enh. #552: Serial decisions on saveAll allowed, remoeAllDiagrams() added
+ *      Kay Gürtzig     2018.06.27      Enh. #552: Serial decisions on saveAll allowed, removeAllDiagrams() added
  *      Kay Gürtzig     2018.09.10      Bugfix #508/#512: A diagram loaded into a zoomed Surface first could have too small a shape
  *                                      for the text drawing in Structorizer due to font height/width rounding effects
  *      Kay Gürtzig     2018.09.12      Issue #372: Attribute handling, particularly for arrz file members, improved

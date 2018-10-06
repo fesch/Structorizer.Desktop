@@ -132,6 +132,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
  *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
+ *      Kay Gürtzig     2018.10.04      Bugfix #618: Function names shouldn't be reported as used variables
  *      
  ******************************************************************************************************
  *
@@ -2448,9 +2449,13 @@ public class Root extends Element {
 		while(i < tokens.count())
 		{
 			String token = tokens.get(i);
-			if((Function.testIdentifier(token, null)
-					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
-					|| this.variables.contains(token)))
+			// START KGU#588 2018-10-04: Bugfix #618 Function names shouldn't be gathered here
+			//if((Function.testIdentifier(token, null)
+			//		&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
+			//		|| this.variables.contains(token)))
+			if((Function.testIdentifier(token, null) || this.variables.contains(token))
+					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("(")))
+			// END KGU#588 2018-10-04
 			{
 				// keep the id
 				//System.out.println("Adding to used var names: " + token);
@@ -2807,7 +2812,14 @@ public class Root extends Element {
 		if (this.isSubroutine()) {
 			typeSpec = this.getResultType();
 			if (typeSpec != null) {
-				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, true, false);
+				// START KGU#593 2018-10-05: Issue #619 - missing declarations on C++ export
+				// This is somewhat tricky here: The result type is an explicit return variable declaration for
+				// Pascal, but it's not for C++, Java etc. So, for code export consistency we must take into
+				// consideration where we check whether an explicit variable declaration will come (mostly C++,
+				// C#, Java) we drive better if we don't set the "explicitly" flag here.
+				//this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, true, false);
+				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false, false);
+				// END KGU#593 2018-10-05
 			}
 		}
 	}

@@ -97,6 +97,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
  *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const modifiers in declaration lists fixed
+ *      Kay Gürtzig     2018.10.05      Bugfix #619: Declaration status of function result variable fixed
  *
  ******************************************************************************************************
  *
@@ -3870,6 +3871,11 @@ public abstract class Element {
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {
+				// START KGU#593 2018-10-05: Bugfix #619
+				if (explicitly && !entry.isDeclaredWithin(null)) {
+					entry.isDeclared = true;
+				}
+				// END KGU#593 2018-10-05
 				// add an alternative declaration to the type map entry
 				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
 			}
