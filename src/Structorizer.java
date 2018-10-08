@@ -56,6 +56,7 @@
  *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
  *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
  *      Kay Gürtzig     2018.09.27      Slight modification to verbose option (-v may also be used without argument)
+ *      Kay Gürtzig     2018.10.08      Bugfix #620: Logging path setup revised
  *
  ******************************************************************************************************
  *
@@ -65,11 +66,15 @@
 
 import java.awt.EventQueue;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -322,7 +327,7 @@ public class Structorizer
 		// The logging configuration (for java.util.logging) is expected next to the jar file
 		// (or in the project directory while debugged from the IDE).
 		File iniDir = Ini.getIniDirectory();
-		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
+		File configFile = new File(iniDir.getAbsolutePath(), "logging.properties");
 		// If the file doesn't exist then we'll copy it from the resource
 		if (!configFile.exists()) {
 			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
@@ -330,11 +335,19 @@ public class Structorizer
 				// START KGU#579 2018-09-19: Bugfix #603 On the very first use of Structorizer, iniDir won't exist (Ini() hasn't run yet)
 				//copyStream(configStr, configFile);
 				try {
-					if (!iniDir.exists())
-					{
-						iniDir.mkdir();
+					// START KGU#595 2018-10-07: Bugfix #620 - We ought to check the success 
+					//if (!iniDir.exists())
+					//{
+					//	iniDir.mkdir();
+					//}
+					//copyStream(configStr, configFile);
+					if (!iniDir.exists() &&	!iniDir.mkdir()) {
+						System.err.println("*** Creation of folder \"" + iniDir + "\" failed!");
+						iniDir = new File(System.getProperty("user.home"));
+						configFile = new File(iniDir.getAbsolutePath(), "logging.properties");
 					}
-					copyStream(configStr, configFile);
+					copyLogProperties(configStr, configFile);
+					// END KGU#595 2018-10-07
 				}
 				catch (Exception ex) {
 					ex.printStackTrace();
@@ -372,6 +385,7 @@ public class Structorizer
 			}
 		}
 		// END KGU#484 2018-04-05
+		//System.out.println(System.getProperty("java.util.logging.config.file"));
 	}
 	// END KGU#579 2018-09-19
 	
@@ -386,8 +400,13 @@ public class Structorizer
 	
 	// START KGU#187 2016-04-28: Enh. #179
 	/*****************************************
-	 * batch code export methods
-	 * @param _settingsFileName TODO
+	 * batch code export method
+	 * @param _generatorName - name of the target language or generator class
+	 * @param _nsdFileNames - vector of the diagram file names
+	 * @param _codeFileName - name or path of the code file to be created
+	 * @param _options - set of switches (on / off)
+	 * @param _charSet - the encoding to be used. 
+	 * @param _settingsFileName - path of a property file to be preferred against structorizer.ini
 	 *****************************************/
 	public static void export(String _generatorName, Vector<String> _nsdFileNames, String _codeFileName, String _options, String _charSet, String _settingsFileName)
 	{
@@ -925,42 +944,110 @@ public class Structorizer
         return rootPath.getParentFile().getPath();
     }
 		
+// START KGU#595 2018-10-07: Bugfix #620 - we must adapt the log pattern
+//	/**
+//	 * Performs a bytewise copy of {@code sourceStrm} to {@code targetFile}. Closes
+//	 * {@code sourceStrm} afterwards.
+//	 * @param sourceStrm - opened source {@link InputStream}
+//	 * @param targetFile - {@link File} object for the copy target
+//	 * @return a string describing occurred errors or an empty string.
+//	 */
+//	private static String copyStream(InputStream sourceStrm, File targetFile) {
+//		String problems = "";
+//		final int BLOCKSIZE = 512;
+//		byte[] buffer = new byte[BLOCKSIZE];
+//		FileOutputStream fos = null;
+//		try {
+//			fos = new FileOutputStream(targetFile.getAbsolutePath());
+//			int readBytes = 0;
+//			do {
+//				readBytes = sourceStrm.read(buffer);
+//				if (readBytes > 0) {
+//					fos.write(buffer, 0, readBytes);
+//				}
+//			} while (readBytes > 0);
+//		} catch (FileNotFoundException e) {
+//			problems += e + "\n";
+//		} catch (IOException e) {
+//			problems += e + "\n";
+//		}
+//		finally {
+//			if (fos != null) {
+//				try {
+//					fos.close();
+//				} catch (IOException e) {}
+//			}
+//			try {
+//				sourceStrm.close();
+//			} catch (IOException e) {}
+//		}
+//		return problems;
+//	}
+	
 	/**
-	 * Performs a bytewise copy of {@code sourceStrm} to {@code targetFile}. Closes
-	 * {@code siourceStrm} afterwards.
+	 * Performs a linewise filtered copy of {@code sourceStrm} to {@code targetFile}. Closes
+	 * {@code sourceStrm} afterwards.
 	 * @param sourceStrm - opened source {@link InputStream}
 	 * @param targetFile - {@link File} object for the copy target
 	 * @return a string describing occurred errors or an empty string.
 	 */
-	private static String copyStream(InputStream sourceStrm, File targetFile) {
+	private static String copyLogProperties(InputStream configStr, File configFile) {
+		
+		final String pattern = "java.util.logging.FileHandler.pattern = ";
 		String problems = "";
-		final int BLOCKSIZE = 512;
-		byte[] buffer = new byte[BLOCKSIZE];
+		File configDir = configFile.getParentFile();
+		File homeDir = new File(System.getProperty("user.home"));
+		StringList pathParts = new StringList();
+		while (configDir != null && homeDir != null) {
+			if (homeDir.equals(configDir)) {
+				pathParts.add("%h");
+				homeDir = null;
+			}
+			else if (configDir.getName().isEmpty()) {
+				pathParts.add(configDir.toString().replace(":\\", ":"));
+			}
+			else {
+				pathParts.add(configDir.getName());
+			}
+			configDir = configDir.getParentFile();
+		}
+		String logPath = pathParts.reverse().concatenate("/") + "/structorizer%u.log";
+		DataInputStream in = new DataInputStream(configStr);
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
 		FileOutputStream fos = null;
 		try {
-			fos = new FileOutputStream(targetFile.getAbsolutePath());
-			int readBytes = 0;
-			do {
-				readBytes = sourceStrm.read(buffer);
-				if (readBytes > 0) {
-					fos.write(buffer, 0, readBytes);
+			fos = new FileOutputStream(configFile);
+			DataOutputStream out = new DataOutputStream(fos);
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
+			String line = null;
+			try {
+				while ((line = br.readLine()) != null) {
+					if (line.startsWith(pattern)) {
+						line = pattern + logPath;
+					}
+					bw.write(line + "\n");
 				}
-			} while (readBytes > 0);
-		} catch (FileNotFoundException e) {
-			problems += e + "\n";
-		} catch (IOException e) {
-			problems += e + "\n";
+			} catch (IOException e) {
+				problems += e + "\n";
+				e.printStackTrace();
+			}
+			finally {
+				if (fos != null) {
+					bw.close();
+				}
+			}
+		} catch (IOException e1) {
+			problems += e1 + "\n";
+			e1.printStackTrace();
 		}
 		finally {
-			if (fos != null) {
-				try {
-					fos.close();
-				} catch (IOException e) {}
-			}
 			try {
-				sourceStrm.close();
+				br.close();
 			} catch (IOException e) {}
 		}
 		return problems;
 	}
+// END KGU#595 2018-10-07
+
+
 }

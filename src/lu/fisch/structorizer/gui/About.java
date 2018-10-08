@@ -39,6 +39,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling done by GUIScaler
  *      Kay Gürtzig     2018.03.21      Logger introduced, two file reading sequences extracted to method readTextFile()
  *      Kay Gürtzig     2018.07.30      Bugfix #571 - about -> license also showed the changelog.txt
+ *      Kay Gürtzig     2018.10.08      Issue #620: a fourth tab "Paths" added.
  *
  ******************************************************************************************************
  *
@@ -57,6 +58,7 @@ import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 import java.io.*;
+import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.*;
@@ -92,6 +94,11 @@ public class About extends LangDialog implements ActionListener, KeyListener
 	protected JTextPane txtChangelog;
 	protected JScrollPane scrollPane3;
 	protected JTextPane txtLicense;
+	// START KGU#595 2018-10-08: Issue #620
+	protected JScrollPane scrollPane4;
+	protected JTextPane txtPaths;
+	public LangTextHolder msgPaths = new LangTextHolder("Ini path:\n%1\n\nLog path:\n%2\n\nInstallation path:\n%3\n");
+	// END KGU#595 2018-10-08
 	protected JPanel buttonBar;
 	protected JButton btnOK;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
@@ -131,6 +138,10 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		scrollPane3 = new JScrollPane();
 		txtChangelog = new JTextPane();
 		txtLicense = new JTextPane();
+		// START KGU#595 2018-10-08: Issue #620
+		scrollPane4 = new JScrollPane();
+		txtPaths = new JTextPane();
+		// END KGU#595 2018-10-08
 		buttonBar = new JPanel();
 		btnOK = new JButton();
 
@@ -217,6 +228,14 @@ public class About extends LangDialog implements ActionListener, KeyListener
 						scrollPane3.setViewportView(txtLicense);
 					}
 					pnlTabbed.addTab("License", scrollPane3);
+
+					// START KGU#595 2018-10-08: Issue #620
+					//======== scrollPane4 ========
+					{
+						scrollPane4.setViewportView(txtPaths);
+					}
+					pnlTabbed.addTab("Paths", scrollPane4);
+					// END KGU#595 2018-10-08
 				}
 				contentPanel.add(pnlTabbed, BorderLayout.CENTER);
 			}
@@ -252,21 +271,37 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		txtThanks.addKeyListener(this);
 		txtChangelog.addKeyListener(this);
 		txtLicense.addKeyListener(this);
+		// START KGU#595 2018-10-08: Issue #620
+		txtPaths.addKeyListener(this);
+		// END KGU#595 2018-10-08
 		pnlTabbed.addKeyListener(this);
 		addKeyListener(this);
 		
 		txtThanks.setEditable(false);
 		txtChangelog.setEditable(false);
 		txtLicense.setEditable(false);
+		// START KGU#595 2018-10-08: Issue #620
+		txtPaths.setEditable(false);
+		// END KGU#595 2018-10-08
 		
 		
 		txtChangelog.setText(readTextFile(CHANGELOG_FILE));
 
 		txtLicense.setText(readTextFile(LICENSE_FILE));
 
-		
 		txtThanks.setText(Element.E_THANKS);
 		txtThanks.setCaretPosition(0);
+		
+		// START KGU#595 2018-10-08: Issue #620
+		URL mySource = Ini.class.getProtectionDomain().getCodeSource().getLocation();
+		File sourceFile = new File(mySource.getPath());
+		String prodDir = sourceFile.getAbsolutePath();
+		txtPaths.setText(msgPaths.getText().
+				replace("%1", Ini.getIniDirectory().getAbsolutePath()).
+				replace("%2", new File(System.getProperty("java.util.logging.config.file", "???")).getParent()).
+				replace("%3", prodDir));
+		txtPaths.setCaretPosition(0);
+		// END KGU#595 2018-10-08
 		
 		//txtChangelog.setText(Element.E_CHANGELOG);
 		txtChangelog.setCaretPosition(0);

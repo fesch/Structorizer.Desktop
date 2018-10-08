@@ -851,6 +851,8 @@ About.title=Über Structorizer
 About.pnlTabbed.tab.0=Beteiligte Personen
 About.pnlTabbed.tab.1=Änderungs-Protokoll
 About.pnlTabbed.tab.2=Lizenzen
+About.pnlTabbed.tab.3=Dateipfade
+About.msgPaths.text=Konfigurationsordner:\n%1\n\nLog-Verzeichnis:\n%2\n\nInstallationspfad:\n%3\n
 About.btnOK.text=Schließen
 About.btnOK.tooltip=Schließen des Fensters.
 
