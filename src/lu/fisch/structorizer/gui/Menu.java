@@ -117,6 +117,7 @@ import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangMenuBar;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.locales.Translator;

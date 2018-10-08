@@ -91,6 +91,7 @@ import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
 
 /**
  * Simple frame to allow users to edit their license file(s) as plain text.

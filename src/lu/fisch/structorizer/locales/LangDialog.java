@@ -54,11 +54,14 @@ import javax.swing.*;
 import lu.fisch.structorizer.gui.IconLoader;
 
 /**
- * Extends JDialog to facilitate language localization, also provides static
- * methods applicable to other GUI classes not inheriting from LangDialog.
- *
+ * Extends {@link JDialog} to facilitate language localization. The constructor
+ * establishes the instance as {@link WindowAdapter} requesting localization at
+ * the {@link Locales} singleton when the dialog is opening. Some adjustments of
+ * components depending on other localized texts can be achieved by implementing
+ * (overriding) {@link #adjustLangDependentComponents()}, which is run after text
+ * localization has finished, or by registering as {@link LangEventListener} with
+ * some member {@link LangTextHolder}.
  * @author Robert Fisch
- *
  */
 @SuppressWarnings("serial")
 public class LangDialog extends JDialog {
@@ -116,7 +119,10 @@ public class LangDialog extends JDialog {
     /**
      * This method is called on opening after setLocale and before re-packing
      * and allows subclasses to adjust components that may require so after the
-     * translation of captions and texts. 
+     * translation of all captions and texts.<br/>
+     * Alternatively, it could be considered to register as {@link LangEventListener}
+     * with a {@link LangTextHolder} other components depend on the localized text of
+     * which.
      */
     protected void adjustLangDependentComponents()
     {

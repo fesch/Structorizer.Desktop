@@ -341,7 +341,7 @@ public class Structorizer
 					//	iniDir.mkdir();
 					//}
 					//copyStream(configStr, configFile);
-					if (!iniDir.exists() &&	!iniDir.mkdir()) {
+					if (!iniDir.exists() &&	!iniDir.mkdirs()) {
 						System.err.println("*** Creation of folder \"" + iniDir + "\" failed!");
 						iniDir = new File(System.getProperty("user.home"));
 						configFile = new File(iniDir.getAbsolutePath(), "logging.properties");

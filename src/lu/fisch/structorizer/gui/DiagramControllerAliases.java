@@ -100,6 +100,7 @@ import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.utils.StringList;
 
 /**
