@@ -969,6 +969,7 @@ ImportOptionDialog.chkLogDir.text=Log to folder
 ImportOptionDialog.chkLogDir.tooltip=Enable saving a log file during import
 ImportOptionDialog.txtLogDir.tooltip=The empty path stands for the home directory of the source code file, "." for the current directory.
 ImportOptionDialog.btnLogDir.tooltip=Select a path via dialog.
+ImportOptionDialog.lblLimit.text=Maximum number of imported diagrams for direct display:
 ImportOptionDialog.btnPluginOptions.text=Language-specific Options
 ImportOptionDialog.msgOptionsForPlugin.text=Options for % Parser
 ImportOptionDialog.btnOk.text=OK

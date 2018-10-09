@@ -973,6 +973,7 @@ ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
 ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Protokolldatei je Import erlauben
 ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
 ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
+ImportOptionDialog.lblLimit.text=Größte Anzahl importierter Diagramme für unmittelbare Anzeige:
 ImportOptionDialog.btnPluginOptions.text=Sprachspezifische Optionen
 ImportOptionDialog.msgOptionsForPlugin.text=Parser-Optionen für %
 ImportOptionDialog.btnOk.text=OK
