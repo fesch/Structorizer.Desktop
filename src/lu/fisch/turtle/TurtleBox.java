@@ -874,7 +874,7 @@ public class TurtleBox implements DelayableDiagramController
 
     // START KGU#566 2018-07-30: Enh. #576 API procedure allowing the user algorithm to wipe the box
     /**
-     * Delayed API function to wipe the TurleBox from all content
+     * Delayed API function to wipe the TurtleBox from all content
      */
     public void clear()
     {
