@@ -568,7 +568,7 @@ public class For extends Element implements ILoop {
 		}
 		else
 		{
-			return this.splitForClause()[3]; // Or should we provide this.splitClause()[4]?
+			return this.splitForClause()[3]; // Or should we provide this.splitForClause()[4]?
 		}
 	}
 	

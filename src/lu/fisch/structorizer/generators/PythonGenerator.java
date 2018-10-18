@@ -64,6 +64,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.10.02/03   Enh. #389, #423: Export of globals and mutable record types implemented
  *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation and Case elements supported
  *      Kay Gürtzig             2018.07.20      Enh. #563 - support for simplified record initializers
+ *      Kay Gürtzig             2018.10.17      Issue #623: Turtleizer support was defective (moves, color, new routines),
+ *                                              bugfix #624 - FOR loop translation into range() fixed
  *
  ******************************************************************************************************
  *
@@ -107,11 +109,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.turtle.TurtleBox;
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -203,6 +208,32 @@ public class PythonGenerator extends Generator
 	private static Matcher mtchTypename = PTRN_TYPENAME.matcher("");
 	// END KGU#388 2017-10-02
 
+	// START KGU#598 2018-10-17: Enh. #490 Improved support for Turtleizer export
+	/**
+	 * Maps light-weight instances of DiagramControllers for API retrieval
+	 * to their respective adapter class names
+	 */
+	protected static HashMap<DiagramController, String> controllerMap = new HashMap<DiagramController, String>();
+	static {
+		// FIXME: The controllers should be retrieved from controllers.xml
+		// FIXME: For a more generic approach, the adapter class names should be fully qualified
+		controllerMap.put(new TurtleBox(), "Turtleizer");
+	}
+	
+	/**
+	 * Defines the translations of Turtleizer subroutine names to the turtle module equivalents 
+	 */
+	private static HashMap<String, String> turtleMap = new HashMap<String, String>();
+	static {
+		turtleMap.put("gotoXY", "goto");
+		turtleMap.put("getX", "xcor");
+		turtleMap.put("getY", "ycor");
+		turtleMap.put("getOrientation", "heading");
+		turtleMap.put("setPenColor", "pencolor");
+		turtleMap.put("setBackgroundColor", "bgcolor");
+	}
+	// END KGU#598 2018-10-17
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
@@ -256,6 +287,39 @@ public class PythonGenerator extends Generator
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			if (Function.testIdentifier(token, null)) {
+				int j = i;
+				// Skip all whitespace
+				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
+				// START KGU#480 2018-01-21: Enh. 490 - more precise detection
+				//String turtleMethod = null;
+				//if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
+				//	tokens.set(i, turtleMethod);
+				//	this.usesTurtleizer = true;
+				//}
+				if (j+1 < tokens.count() && tokens.get(j).equals("(")) {
+					int nArgs = Element.splitExpressionList(tokens.subSequence(j+1, tokens.count()), ",", false).count();
+					for (Entry<DiagramController, String> entry: controllerMap.entrySet()) {
+						String name = entry.getKey().providedRoutine(token, nArgs);
+						if (name != null) {
+							if (entry.getKey() instanceof TurtleBox) {
+								this.usesTurtleizer = true;
+								if (turtleMap.containsKey(name)) {
+									name = turtleMap.get(name);
+								}
+								tokens.set(i, "turtle." + name.toLowerCase());
+							}
+							else {
+								tokens.set(i, entry.getValue() + "." +name);
+							}
+						}
+					}
+				}
+				// END KGU#480 2018-01-21
+			}
+		}
 		// START KGU 2014-11-16: C comparison operator required conversion before logical ones
 		// START KGU#367 2017-03-10: Bugfix #379 - this conversion was wrong
 		//tokens.replaceAll("!="," <> ");
@@ -453,6 +517,7 @@ public class PythonGenerator extends Generator
 			insertComment(_inst, _indent);
 			// END KGU 2014-11-16
 			StringList lines = _inst.getUnbrokenText();
+			String tmpCol = null;
 			for(int i = 0; i < lines.count(); i++)
 			{
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
@@ -461,8 +526,17 @@ public class PythonGenerator extends Generator
 				String codeLine = transform(line);
 				boolean done = false;
 				if (Instruction.isTurtleizerMove(line)) {
-					codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
-					done = true;
+					// START KGU#599 2018-10-17: Bugfix #623 (turtle moves hadn't been exported)
+					//codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+					//done = true;
+					if (tmpCol == null) {
+						tmpCol = "col" + Integer.toHexString(_inst.hashCode());
+						String hexCol = _inst.getHexColor();
+						// White elements induce black pen colour
+						if (hexCol.equals("ffffff")) hexCol = "000000";
+						addCode(tmpCol + " = turtle.pencolor(); turtle.pencolor(\"#" + hexCol + "\")", _indent, isDisabled);
+					}
+					// END KGU#599 2018-10-17
 				}
 				// START KGU#388 2017-10-02: Enh. #423 translate record types into mutable recordtype
 				else if (Instruction.isTypeDefinition(line)) {
@@ -476,6 +550,11 @@ public class PythonGenerator extends Generator
 				}
 				// END KGU#277/KGU#284 2016-10-13/16
 			}
+			// START KGU#599 2018-10-17: Bugfix #623 make color effective
+			if (tmpCol != null) {
+				addCode("turtle.pencolor(" + tmpCol + ")", _indent, isDisabled);
+			}
+			// END KGU#599 2018-10-17
 		}
 	}
 
@@ -579,6 +658,14 @@ public class PythonGenerator extends Generator
 			String startValueStr = this.transform(_for.getStartValue());
 			String endValueStr = this.transform(_for.getEndValue());
 			String stepValueStr = _for.getStepString();
+			// START KGU#600 2018-10-17: Bugfix #624 - range implements a half-open interval ...
+			if (stepValueStr.startsWith("-")) {
+				endValueStr += "-1";
+			}
+			else {
+				endValueStr += "+1";
+			}
+			// END KGU#600 2018-10-17
 			valueList = "range("+startValueStr+", "+endValueStr+", "+stepValueStr+")";
 		}
 		addCode("for "+counterStr+" in " + valueList + ":", _indent, isDisabled);
@@ -977,12 +1064,21 @@ public class PythonGenerator extends Generator
 				code.add(_indent + "from threading import Thread");
 			}
 			// END KGU#348 2017-02-19
-			// STARTB KGU#351 2017-02-26: Enh. #346
+			// START KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes(indent);
 			// END KGU#351 2017-02-26
+			// START KGU#600 2018-10-17: It is too cumbersome to check if math is actually needed
+			code.add(_indent + "import math");
+			// END KGU#600 2018-10-17
+			// START KGU#598 2018-10-17: Enh. #623
+			this.includeInsertionLine = code.count();
+			// END KGU#598 2018-10-17
 			// START KGU#376 2017-10-02: Enh. #389 - insert the code of the includables first
 			this.insertGlobalInitialisations(_indent);
 			// END KGU#376 2017-10-02
+//			if (code.count() == this.includeInsertionLine) {
+//				code.add(_indent);
+//			}
 			subroutineInsertionLine = code.count();
 			// START KGU#311 2016-12-27: Enh. #314: File API support
 			if (this.usesFileAPI) {
@@ -1045,5 +1141,29 @@ public class PythonGenerator extends Generator
 		return _indent;
 	}
 	// END KGU#78 2015-12-17
+
+	// START KGU#598 2018-10-17: Enh. #  turtle import may have to be inserted
+	/**
+	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
+	 * @param _root 
+	 * @param _indent
+	 */
+	@Override
+	protected void generateFooter(Root _root, String _indent)
+	{
+		// Just pro forma
+		super.generateFooter(_root, _indent + this.getIndent());
+
+		// START KGU#598 2018-10-17: Enh. #623
+		if (topLevel && this.usesTurtleizer) {
+			code.insert("import turtle", this.includeInsertionLine);
+			code.insert("turtle.colormode(255)", this.includeInsertionLine+1);
+			code.insert("turtle.mode(\"logo\")", this.includeInsertionLine+2);
+			this.subroutineInsertionLine += 3;
+			addCode("turtle.bye()\t" + this.commentSymbolLeft() + " TODO: re-enable this if you want to close the turtle window.", _indent, true);
+		}
+		// END KGU#598 2018-10-17
+	}
+	// END KGU 2015-12-15
 
 }

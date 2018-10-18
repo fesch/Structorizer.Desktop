@@ -36,6 +36,7 @@ package lu.fisch.diagrcontrol;
  *      Kay Gürtzig     2017.10.28      Sub-interface FunctionProvidingDiagramControl integrated and enhanced )
  *      Kay Gürtzig     2018.01.21      Enh. #443, #490: Additional method for retrieval of Java adapter class
  *      Kay Gürtzig     2018.03.21      Issue #463: console output replaced by standard JDK4 (= j.u.l.) logging
+ *      Kay Gürtzig     2018.10.12      Issue #622: Logging of API calls introduced (level CONFIG)
  *
  ******************************************************************************************************
  *
@@ -55,6 +56,8 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import lu.fisch.utils.StringList;
+
 /**
  * Interface for classes that provide an API for being controlled e.g. by executed Structorizer
  * diagrams.<br/>
@@ -71,19 +74,19 @@ import java.util.logging.Logger;
  */
 public interface DiagramController
 {
-	// START KGU# 2017-10-28: Enh. #443 FunctionProvidingDiagramControl integrated
+	// START KGU#448 2017-10-28: Enh. #443 FunctionProvidingDiagramControl integrated
 	@SuppressWarnings("serial")
 	public class FunctionException extends RuntimeException {
 
-		public FunctionException() {
+	    public FunctionException() {
 	        super();
 	    }
 
-		public FunctionException(Throwable throwable) {
+	    public FunctionException(Throwable throwable) {
 	        super(throwable);
 	    }
 
-		public FunctionException(String msg) {
+	    public FunctionException(String msg) {
 	        super(msg);
 	    }
 
@@ -184,14 +187,14 @@ public interface DiagramController
     		method = this.getFunctionMap().get(key);
     	}
     	if (method != null) {
-			Class<?>[] argClasses = method.getParameterTypes();
+    		Class<?>[] argClasses = method.getParameterTypes();
     		for (int i = 0; ok && i < arguments.length; i++) {
-				try {
-					castArgument(arguments[i], argClasses[i]);
-				}
-				catch (Exception ex) {
-					ok = false;
-				}
+    			try {
+    				castArgument(arguments[i], argClasses[i]);
+    			}
+    			catch (Exception ex) {
+    				ok = false;
+    			}
     		}
     	}
     	else {
@@ -199,7 +202,7 @@ public interface DiagramController
     	}
     	return ok;
     }
-   
+    
     /**
      * Executes a function or procedure registered in either the function map (obtainable
      * by {@link #getFunctionMap()}) or the procedure map (obtainable via {@link #getProcedureMap()})
@@ -222,36 +225,46 @@ public interface DiagramController
     		method = this.getFunctionMap().get(key);
     	}
     	if (method != null) {
-			Class<?>[] argClasses = method.getParameterTypes();
+    		Class<?>[] argClasses = method.getParameterTypes();
     		for (int i = 0; i < arguments.length; i++) {
-				try {
-					arguments[i] = castArgument(arguments[i], argClasses[i]);
-				}
-				catch (Exception ex) {
-					FunctionException err = new FunctionException(
-							this.getClass().getSimpleName() + ": "
-							+ category + " <" + name + "> argument " + (i+1)
-							+ ": <" + arguments[i] + "> could not be converted to "
-							+ argClasses[i].getSimpleName());
-					err.setStackTrace(ex.getStackTrace());
-					throw err;
-				}
+    			try {
+    				arguments[i] = castArgument(arguments[i], argClasses[i]);
+    			}
+    			catch (Exception ex) {
+    				FunctionException err = new FunctionException(
+    						this.getClass().getSimpleName() + ": "
+    						+ category + " <" + name + "> argument " + (i+1)
+    						+ ": <" + arguments[i] + "> could not be converted to "
+    						+ argClasses[i].getSimpleName());
+    				err.setStackTrace(ex.getStackTrace());
+    				throw err;
+    			}
     		}
+    		Logger logger = Logger.getLogger(getClass().getName());
     		try {
-				result = method.invoke(this, arguments);
-			} catch (Exception e) {
-				// START KGU#484 2018-03-21: Issue #463
-				//System.err.println("Defective DiagramControl class " + method + ": " + e.toString());
-				//e.printStackTrace();
-				Logger logger = Logger.getLogger(getClass().getName());
-				logger.log(Level.SEVERE, "Defective DiagramControl class " + method + ": " + e.toString(), e);
-				// END KGU#484 2018-03-21
-			}
+    			// START KGU#597 2018-10-12: Issue #622 - better monitoring of controller activity
+    			if (logger.isLoggable(Level.CONFIG)) {
+    				StringList argStrings = new StringList();
+    				for (Object arg: arguments) {
+    					argStrings.add(String.valueOf(arg));
+    				}
+    				logger.config("Executing " + name + "(" + argStrings.concatenate(",") + ")");
+    			}
+    			// END KGU#597 2018-10-12
+    			result = method.invoke(this, arguments);
+    		} catch (Exception e) {
+    			// START KGU#484 2018-03-21: Issue #463
+    			//System.err.println("Defective DiagramControl class " + method + ": " + e.toString());
+    			//e.printStackTrace();
+    			//Logger logger = Logger.getLogger(getClass().getName());
+    			logger.log(Level.SEVERE, "Defective DiagramControl class " + method + ": " + e.toString(), e);
+    			// END KGU#484 2018-03-21
+    		}
     	}
     	else {
-        	throw new FunctionException(
-        			this.getClass().getSimpleName() + ": No " + category.toLowerCase()
-        			+ " <" + name + "> with " + arguments.length + " arguments defined.");
+    		throw new FunctionException(
+    				this.getClass().getSimpleName() + ": No " + category.toLowerCase()
+    				+ " <" + name + "> with " + arguments.length + " arguments defined.");
     	}
     	return result;
     }
@@ -291,7 +304,7 @@ public interface DiagramController
 		}
 		return argClass.cast(argument);
 	}
-    // END KGU 2017-10-28
+	// END KGU#448 2017-10-28
 	
     @Deprecated
     public String execute(String message);

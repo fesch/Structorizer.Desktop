@@ -43,6 +43,7 @@ package lu.fisch.turtle;
  *                                      Concurrency issue fixed (KGU#449).
  *      Kay Gürtzig     2018.01.16      Enh. #490: Class decomposed to allow a mere API use without realising the GUI
  *      Kay Gürtzig     2018.07.30      Enh. #576: New procedure clear() added to the API
+ *      Kay Gürtzig     2018.10.12      Issue #622: Modification apparently helping to overcome drawing contention
  *
  ******************************************************************************************************
  *
@@ -65,6 +66,7 @@ import java.awt.RenderingHints;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Vector;
+//import java.util.logging.Logger;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -109,6 +111,9 @@ public class TurtleBox implements DelayableDiagramController
 //		definedFunctions.put("getorientation", new Class<?>[]{Double.class});
 //	}
 //	// END KGU#417 2017-06-29
+	// START KGU#597 2018-10-12: Issue #622 Analysis of drawing contention on some Macbook
+	//public static final Logger logger = Logger.getLogger(TurtleBox.class.getName());
+	// END KGU#597 2018-10-12
 	// START KGU#417/KGU#448 2017-10-28: Enh. #424, #443 Function capability map
 	private static final HashMap<String, Method> definedProcedures = new HashMap<String, Method>();
 	static {
@@ -307,6 +312,9 @@ public class TurtleBox implements DelayableDiagramController
                 //    ele.draw(g);
                 //}
                 int nElements = elements.size();
+                // START KGU#597 2018-10-12: Issue #622 - Monitoring drawing detention underMac
+                //logger.config("Painting " + nElements + " elements...");
+                // END KGU#597 2018-10-12
                 for (int i = 0; i < nElements; i++) {
                 	elements.get(i).draw(g);
                 }
@@ -404,21 +412,29 @@ public class TurtleBox implements DelayableDiagramController
     {
         //panel.repaint();
         // force repaint (not recommended!)
-    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
-    	if (frame == null) {
-    		init(300, 300);
-    	}
-    	// END KGU#480 2018-01-16
+        // START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+        if (frame == null) {
+        	init(300, 300);
+        }
+        // END KGU#480 2018-01-16
+        // START KGU#597 2018-10-12: Issue #622 Attempt to fix a drawing contention on some Macbook
+        //logger.config(panel + " enqueuing repaint()...");
+        panel.repaint();
+        // END KGU#597 2018-10-12
         if (delay!=0)
         {
-            panel.paint(panel.getGraphics());
+            // START KGU#597 2018-10-12: Issue #622 Replaced by the queued repaint() above
+            //panel.paint(panel.getGraphics());
+            // END KGU#597 2018-10-12
             try { Thread.sleep(delay); }
             catch (InterruptedException e) { System.out.println(e.getMessage());}
         }
-        else
-        {
-            panel.repaint();
-        }
+        // START KGU#597 2018-10-12: Issue #622 Now done before the alternative
+//        else
+//        {
+//            panel.repaint();
+//        }
+        // END KGU#597 2018-10-12
     }
 
     public void fd(Integer pixels)
@@ -445,8 +461,8 @@ public class TurtleBox implements DelayableDiagramController
 //    }
     public void forward(Double pixels)
     {
-    	double newX = posX - Math.cos(angle/180*Math.PI) * pixels;
-    	double newY = posY + Math.sin(angle/180*Math.PI) * pixels;
+        double newX = posX - Math.cos(angle/180*Math.PI) * pixels;
+        double newY = posY + Math.sin(angle/180*Math.PI) * pixels;
         Point newPos = new Point((int)Math.round(newX), (int)Math.round(newY));
         if (isPenDown)
         {
@@ -459,7 +475,6 @@ public class TurtleBox implements DelayableDiagramController
         //System.out.println("from: ("+pos.x+","+pos.y+") => to: ("+newPos.x+","+newPos.y+")");
         setPos(newX, newY);
         delay();
-    	
     }
     // END #272 2016-10-16
 
@@ -582,7 +597,7 @@ public class TurtleBox implements DelayableDiagramController
     // KGU: Where is this method used?
     public double getAngleToHome()
     {
-    	// START #272 2016-10-16 (KGU)
+        // START #272 2016-10-16 (KGU)
         //double hypo = Math.sqrt(Math.pow((pos.x-home.x), 2)+Math.pow((pos.y-home.y),2));
         //double base = (home.x-pos.x);
         //double haut = (home.y-pos.y);
@@ -755,26 +770,26 @@ public class TurtleBox implements DelayableDiagramController
         return execute(message);
     }
 
-	/**
-	 * Sets the given color except in case of WHITE where the {@link #defaultPenColor} is used instead.
-	 * Does not influence the default pen colour.
-	 * @param color - the specified colour (where WHITE means default)
-	 * @see #setColor(Color)
-	 * @see #setPenColor(Color)
-	 * @see #setBackground(Color)
-	 */
-	private void setColorNonWhite(Color color) {
-		if(color.equals(Color.WHITE))
+    /**
+     * Sets the given color except in case of WHITE where the {@link #defaultPenColor} is used instead.
+     * Does not influence the default pen colour.
+     * @param color - the specified colour (where WHITE means default)
+     * @see #setColor(Color)
+     * @see #setPenColor(Color)
+     * @see #setBackground(Color)
+     */
+    private void setColorNonWhite(Color color) {
+        if(color.equals(Color.WHITE))
         {
-        	// START KGU#303 2016-12-03: Enh. #302
+            // START KGU#303 2016-12-03: Enh. #302
             //this.setColor(Color.BLACK);
             this.setColor(defaultPenColor);
             // END KGU#303 2016-12-03
         }
         else this.setColor(color);
-	}
+    }
 
-	@Deprecated
+    @Deprecated
     public String execute(String message)
     {
         String name = parseFunctionName(message);
@@ -786,63 +801,63 @@ public class TurtleBox implements DelayableDiagramController
         String res = new String();
         if(name!=null)
         {
-           if (name.equals("init")) {
+            if (name.equals("init")) {
 // START KGU#303 2016-12-03: Issue #302 - replaced by reinit() call
-//        	   elements.clear();
-//        	   angle=-90;
-//        	   // START KGU#303 2016-12-02: Enh. #302
-//        	   backgroundColor = Color.WHITE;
-//        	   // END KGU#3032016-12-02
-//        	   // START KGU#303 2016-12-03: Enh. #302
-//        	   defaultPenColor = Color.BLACK;
-//        	   turtleHidden = false;
-//        	   // END KGU#3032016-12-03
-//        	   setPos(home.getLocation());
-//        	   penDown();
-//        	   reinit();
+//                elements.clear();
+//                angle=-90;
+//                // START KGU#303 2016-12-02: Enh. #302
+//                backgroundColor = Color.WHITE;
+//                // END KGU#3032016-12-02
+//                // START KGU#303 2016-12-03: Enh. #302
+//                defaultPenColor = Color.BLACK;
+//                turtleHidden = false;
+//                // END KGU#3032016-12-03
+//                setPos(home.getLocation());
+//                penDown();
+//                reinit();
 // END KGU#303 2016-12-03
-        	   setAnimationDelay((int) param1, true);
-           }
-           // START #272 2016-10-16 (KGU): Now different types (to allow to study rounding behaviour)
-           //else if (name.equals("forward") || name.equals("fd")) { forward((int) param1); }
-           //else if (name.equals("backward") || name.equals("bk")) { backward((int) param1); }
-           else if (name.equals("forward")) { forward(param1); }
-           else if (name.equals("backward")) { backward(param1); }
-           else if (name.equals("fd")) { fd((int)param1); }
-           else if (name.equals("bk")) { bk((int)param1); }
-           // END #272 2016-10-16
-           // START KGU 20141007: Wrong type casting mended (led to rotation biases)
-           //else if (name.equals("left") || name.equals("rl")) { left((int) param1); }
-           //else if (name.equals("right") || name.equals("rr")) { right((int) param1); }
-           else if (name.equals("left") || name.equals("rl")) { left(param1); }
-           else if (name.equals("right") || name.equals("rr")) { right(param1); }
-           // END KGU 20141007
-           else if (name.equals("penup") || name.equals("up")) { penUp(); }
-           else if (name.equals("pendown") || name.equals("down")) { penDown(); }
-           else if (name.equals("gotoxy")) { gotoXY((int) param1, (int) param2); }
-           else if (name.equals("gotox")) { gotoX((int) param1); }
-           else if (name.equals("gotoy")) { gotoY((int) param1); }
-           else if (name.equals("hideturtle")) { hideTurtle(); }
-           else if (name.equals("showturtle")) { showTurtle(); }
-           // START KGU#303 2016-12-02: Enh. #302 - A procedure to set the backgroud colour was requested
-           else if (name.equals("setbackground")) { setBackgroundColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
-           else if (name.equals("setpencolor")) { setPenColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
-           // END KGU#303 2016-12-02
-           else { res="Procedure <"+name+"> not implemented!"; }
+                setAnimationDelay((int) param1, true);
+            }
+            // START #272 2016-10-16 (KGU): Now different types (to allow to study rounding behaviour)
+            //else if (name.equals("forward") || name.equals("fd")) { forward((int) param1); }
+            //else if (name.equals("backward") || name.equals("bk")) { backward((int) param1); }
+            else if (name.equals("forward")) { forward(param1); }
+            else if (name.equals("backward")) { backward(param1); }
+            else if (name.equals("fd")) { fd((int)param1); }
+            else if (name.equals("bk")) { bk((int)param1); }
+            // END #272 2016-10-16
+            // START KGU 20141007: Wrong type casting mended (led to rotation biases)
+            //else if (name.equals("left") || name.equals("rl")) { left((int) param1); }
+            //else if (name.equals("right") || name.equals("rr")) { right((int) param1); }
+            else if (name.equals("left") || name.equals("rl")) { left(param1); }
+            else if (name.equals("right") || name.equals("rr")) { right(param1); }
+            // END KGU 20141007
+            else if (name.equals("penup") || name.equals("up")) { penUp(); }
+            else if (name.equals("pendown") || name.equals("down")) { penDown(); }
+            else if (name.equals("gotoxy")) { gotoXY((int) param1, (int) param2); }
+            else if (name.equals("gotox")) { gotoX((int) param1); }
+            else if (name.equals("gotoy")) { gotoY((int) param1); }
+            else if (name.equals("hideturtle")) { hideTurtle(); }
+            else if (name.equals("showturtle")) { showTurtle(); }
+            // START KGU#303 2016-12-02: Enh. #302 - A procedure to set the backgroud colour was requested
+            else if (name.equals("setbackground")) { setBackgroundColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
+            else if (name.equals("setpencolor")) { setPenColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
+            // END KGU#303 2016-12-02
+            else { res="Procedure <"+name+"> not implemented!"; }
         }
         
         return res;
     }
 
     // START KGU#448 2017-10-28: Enh. #443
-	/* (non-Javadoc)
-	 * @see lu.fisch.diagrcontrol.DiagramController#getProcedureMap()
-	 */
-	@Override
-	public HashMap<String, Method> getProcedureMap() {
-		return definedProcedures;
-	}
-	// END KGU#448 2017-10-28
+    /* (non-Javadoc)
+     * @see lu.fisch.diagrcontrol.DiagramController#getProcedureMap()
+     */
+    @Override
+    public HashMap<String, Method> getProcedureMap() {
+    	return definedProcedures;
+    }
+    // END KGU#448 2017-10-28
 
     // START KGU#417 2017-06-29: Enh. #424, #443 - Allow function getX(), getY(), getOrientation();
     /* (non-Javadoc)

@@ -6540,7 +6540,7 @@ public class Executor implements Runnable
 			tokens.replaceAll("]", ")");
 		}
 		// END KGU#439 2017-10-13
-		// Special treatment for inc() and dec functions? - no need if convert was applied before
+		// Special treatment for inc() and dec() functions? - no need if convert was applied before
 		int i = 0;
 		while ((i = tokens.indexOf(".", i+1)) > 0) {
 			// FIXME: We should check for either declared type or actual object type of what's on the left of the dot.
