@@ -2176,7 +2176,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					filename = root.proposeFileName();
 				}
 				String[] options = null;
-				Object initialValue = null;
 				if (isInSerialMode()) {
 					options = new String[]{
 							Menu.lblContinue.getText(),
@@ -2184,8 +2183,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							Menu.lblYesToAll.getText(),
 							Menu.lblNoToAll.getText()	// Well, this is less sensible...
 					};
-					initialValue = options[0];
 				}
+				else {
+					options = new String[] {
+							Menu.lblYes.getText(),
+							Menu.lblNo.getText()
+					};
+				}
+				Object initialValue = options[0];
 				res = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
 												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
 				// END KGU#49 2015-10-18
@@ -3076,7 +3081,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#480 2018-01-22
 			_data.forParts.add(valueList);
 		}
-		
 	}
 	
 	private void postEditFor(EditData _data, For _for)
