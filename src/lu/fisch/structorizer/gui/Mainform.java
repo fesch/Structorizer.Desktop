@@ -71,7 +71,9 @@ package lu.fisch.structorizer.gui;
  *                                      loading  preferences from explicitly chosen ini file. This is fixed now
  *      Kay Gürtzig     2018.06.25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart
  *      Kay Gürtzig     2018.07.09      Bugfix #555: Failing restoration of the previous comment popup status
- *      Kay Gürtzig     2018.09.10      Issue #508: New option Element.E_PADDING_FIX in load/save INI 
+ *      Kay Gürtzig     2018.09.10      Issue #508: New option Element.E_PADDING_FIX in load/save INI
+ *      Kay Gürtzig     2018.10.06      Issue #552: No need for serial action on closing if Arranger
+ *                                      doesn't hold dirty diagrams
  *
  ******************************************************************************************************
  *
@@ -336,7 +338,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             // END KGU#157 2016-03-16
                             // START KGU#534 2018-07-16: Enh. #552
                             {
-                            	Diagram.startSerialMode();
+                            	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
+                        		//Diagram.startSerialMode();
+                            	boolean serialModeEntered = false;
+                            	if (Arranger.hasInstance() && Arranger.getInstance().hasUnsavedChanges(diagram.getRoot())) {
+                            		Diagram.startSerialMode();
+                            		serialModeEntered = true;
+                            	}
+                            	// END KGU#594 2018-10-06
                             	try {
                             // END KGU#534 2018-07-16
                             		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
@@ -373,7 +382,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             // START KGU#534 2018-07-16: Enh. #552
                             	}
                             	finally {
-                            		Diagram.endSerialMode();
+                                	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
+                            		//Diagram.endSerialMode();
+                                	if (serialModeEntered) {
+                                		Diagram.endSerialMode();
+                                	}
+                                	// END KGU#594 2018-10-06
                             	}
                             }
                             // END KGU#534 2018-07-16

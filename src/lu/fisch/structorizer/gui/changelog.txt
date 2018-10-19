@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-09 (2018-09-27)
+Current development version: 3.28-10 (2018-10-19)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -97,8 +97,22 @@ Current development version: 3.28-09 (2018-09-27)
 - 09: Bugfix #604: Syntax error in structorizer.sh / Arranger.sh <2>
 - 09: Bugfix #605: Defects with var and const keywords in argument lists <2>
 - 09: Bugfix #608: C code import hardening against preproc./comment trouble <2>
-- 09: Made the argument of the batch import option -v optional (uses "." then) <2>
+- 09: Made the argument of the batch import option -v optional (default ".") <2>
 - 09: Bugfix #611: Pascal code import had failed due to missing rule table <2>
+- 10: Bugfix #613: Invalid include lists after import of Pascal/Delphi units <2>
+- 10: Bugfix #614: Redundant result assignments removed on Pascal import <2>
+- 10: Workaround #615: Comment delimiters (* *) didn't pass Pascal import <2>
+- 10: Issue #367: Diagram reshaping after IF branch swapping hadn't worked <2>
+- 10: Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins <2>
+- 10: Bugfix #617: Expressions with more than one turtle function failed <2>
+- 10: Bugfix #618: Analyser reported function names as not initialized <2>
+- 10: Bugfix #619: Code export defects with respect to result variables <2>
+- 10: Issue #552: Unnecessary serial action buttons on closing Structorizer <2>
+- 10: Issue #400: Spinner in Preferences=>GUI Scaling with initial focus <2>
+- 10: Bugfix #620: Adaptive logging setup, path display in About window <2>
+- 10: Bugfix #622: Turtle drawing could fall behind on some Macbooks <2>
+- 10: Bugfix #623: Turtleizer instruction export to Python was defective <2>
+- 10: Bugfix #624: Translation of FOR loops into Python range() was wrong <2> 
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

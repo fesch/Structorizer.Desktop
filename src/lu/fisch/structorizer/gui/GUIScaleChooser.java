@@ -34,7 +34,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.11      First Issue
  *      Kay Gürtzig     2017.05.09      Issue #400: keyListener at all controls, initial focus to spinner
  *      Kay Gürtzig     2018.02.06      Issue #4/#81: Icon scaling preview adapted 
- *      Kay Gürtzig     2018.02.08      Put a titled border around the preview controls 
+ *      Kay Gürtzig     2018.02.08      Put a titled border around the preview controls
+ *      Kay Gürtzig     2018.10.07      Issue #400: Effective approach to put initial focus to spinner
  *
  ******************************************************************************************************
  *
@@ -196,7 +197,7 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 					//======== pnlTest ========
 					{
 						// START KGU 2018-02-08: panel border allows to shorten the labels
-						// FIXME: How do I get insets working here (CompundBorder doesn't help)?
+						// FIXME: How do I get insets working here (CompoundBorder doesn't help)?
 						pnlTest.setBorder(new TitledBorder("Preview"));
 						// END KGU 2018-02-08
 						pnlTest.setLayout(new GridLayout(0, 1));
@@ -236,29 +237,29 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 			// add the KEY-listener
 			KeyListener keyListener = new KeyListener()
 			{
-				public void keyPressed(KeyEvent e) 
+				public void keyPressed(KeyEvent kevt) 
 				{
-					if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+					if(kevt.getKeyCode() == KeyEvent.VK_ESCAPE)
 					{
 						setVisible(false);
 					}
-					else if(e.getKeyCode() == KeyEvent.VK_ENTER)
+					else if(kevt.getKeyCode() == KeyEvent.VK_ENTER)
 					{
 						Element.E_NEXT_SCALE_FACTOR = (Double)spnScale.getValue();
 						setVisible(false);
 					}
 				}
 				
-				public void keyReleased(KeyEvent ke) {} 
+				public void keyReleased(KeyEvent kevt) {} 
 				public void keyTyped(KeyEvent kevt) {}
 			};
 			btnOK.addKeyListener(keyListener);
 			((JSpinner.DefaultEditor)spnScale.getEditor()).getTextField().addKeyListener(keyListener);
-			// START KGU#393 2017-05-09: Issue #400 - involve all controls
-			txtComment.addKeyListener(keyListener);
+			// START KGU#393 2018-10-07: Issue #400 - involve all accessible controls and ensure the focus on spinner
+			txtComment.setFocusable(false);
 			this.chkTest.addKeyListener(keyListener);
-			spnScale.requestFocusInWindow();
-			// END KGU#393 2017-05-09
+			((JSpinner.DefaultEditor)spnScale.getEditor()).getTextField().requestFocusInWindow();
+			// END KGU#393 2018-10-07
 			
 			// add the ACTION-listeners
 			ActionListener actionListener = new ActionListener()
@@ -359,49 +360,50 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 		pack();
 	}
 	
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[])
-    {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try
-        {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
-            {
-                if ("Metal".equals(info.getName()))
-                {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex)
-        {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable()
-        {
-
-            public void run()
-            {
-                new GUIScaleChooser().setVisible(true);
-            }
-        });
-    }
+// For debugging purposes only
+//    /**
+//     * @param args the command line arguments
+//     */
+//    public static void main(String args[])
+//    {
+//        /* Set the Nimbus look and feel */
+//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+//         */
+//        try
+//        {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
+//            {
+//                if ("Metal".equals(info.getName()))
+//                {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+//        } catch (ClassNotFoundException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (InstantiationException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (IllegalAccessException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (javax.swing.UnsupportedLookAndFeelException ex)
+//        {
+//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        }
+//        //</editor-fold>
+//
+//        /* Create and display the form */
+//        java.awt.EventQueue.invokeLater(new Runnable()
+//        {
+//
+//            public void run()
+//            {
+//                new GUIScaleChooser().setVisible(true);
+//            }
+//        });
+//    }
 }

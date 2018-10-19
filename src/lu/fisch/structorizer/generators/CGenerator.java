@@ -1781,6 +1781,7 @@ public class CGenerator extends Generator {
 		// declared between instructions then add the declaration here
 		if (types != null && types.count() == 1 && 
 				// FIXME: Replace isCStyleDeclared() with isDeclared()?
+				// FIXME (#619) What we may want to know here is if there is an explicit declaration in some element
 				//(typeInfo != null && !typeInfo.isCStyleDeclaredAt(null) || _fullDecl)) {			
 				(typeInfo != null && !typeInfo.isDeclaredWithin(null) || _fullDecl)) {			
 			String decl = types.get(0).trim();

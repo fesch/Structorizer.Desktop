@@ -549,7 +549,7 @@ Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach (+Umschalt:
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
 // find & replace
-Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Erseiten.
+Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Ersetzen.
 // copy & paste
 Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
@@ -851,6 +851,8 @@ About.title=Über Structorizer
 About.pnlTabbed.tab.0=Beteiligte Personen
 About.pnlTabbed.tab.1=Änderungs-Protokoll
 About.pnlTabbed.tab.2=Lizenzen
+About.pnlTabbed.tab.3=Dateipfade
+About.msgPaths.text=Konfigurationsordner:\n%1\n\nLog-Verzeichnis:\n%2\n\nInstallationspfad:\n%3\n
 About.btnOK.text=Schließen
 About.btnOK.tooltip=Schließen des Fensters.
 
@@ -971,6 +973,7 @@ ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
 ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Protokolldatei je Import erlauben
 ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
 ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
+ImportOptionDialog.lblLimit.text=Größte Anzahl importierter Diagramme für unmittelbare Anzeige:
 ImportOptionDialog.btnPluginOptions.text=Sprachspezifische Optionen
 ImportOptionDialog.msgOptionsForPlugin.text=Parser-Optionen für %
 ImportOptionDialog.btnOk.text=OK

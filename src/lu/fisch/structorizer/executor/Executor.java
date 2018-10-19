@@ -161,6 +161,9 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.08.06      Some prevention against running status lock on occasion of Issue #577
  *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const arguments on top level fixed
+ *      Kay Gürtzig     2018.10.02/04   Bugfix #617: evaluateDiagramControllerFunctions used to fail when
+ *                                      several controller functions occurred in an expression or raised an
+ *                                      NullPointerException if a controller function was called with wrong arg number 
  *
  ******************************************************************************************************
  *
@@ -4618,7 +4621,10 @@ public class Executor implements Runnable
 				String token = null;
 				while (pos > 0 && (token = tokens.get(--pos).trim()).isEmpty());
 				if (pos >= 0 && token != null && this.controllerFunctionNames.contains(token.toLowerCase())) {
-					positions.addFirst(pos);
+					// START KGU#592 2018-10-02: Bugfix #617 The evaluation is to be done in reverse order as well
+					//positions.addFirst(pos);
+					positions.addLast(pos);
+					// END KGU#591 2018-10-02
 				}
 			}
 			Iterator<Integer> iter = positions.iterator();
@@ -4631,26 +4637,32 @@ public class Executor implements Runnable
 					int nArgs = args.count();
 					String fSign = fName + "#" + nArgs;
 					DiagramController controller = this.controllerFunctions.get(fSign);
-					//Method function = controller.getFunctionMap().get(fSign);
-					// Now we must know what is beyond the function call (the tail)
-					String tail = "";
-					StringList parts = Element.splitExpressionList(exprTail, ",", true);
-					if (parts.count() > nArgs) {
-						tail = parts.get(parts.count()-1).trim();
+					// START KGU#592 2018-10-04 - Bugfix #617 If the signature doesn't match exactly then skip
+					if (controller != null) {
+					// END KGU#592 2018-10-04
+						//Method function = controller.getFunctionMap().get(fSign);
+						// Now we must know what is beyond the function call (the tail)
+						String tail = "";
+						StringList parts = Element.splitExpressionList(exprTail, ",", true);
+						if (parts.count() > nArgs) {
+							tail = parts.get(parts.count()-1).trim();
+						}
+						Object argVals[] = new Object[nArgs];
+						for (int i = 0; i < nArgs; i++) {
+							// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
+							argVals[i] = this.evaluateExpression(args.get(i), false, false);
+						}
+						// Passed till here, we try to execute the function - this may throw a FunctionException
+						Object result = controller.execute(fName, argVals);
+						tokens.remove(pos, tokens.count());
+						//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
+						tokens.add(result.toString());
+						if (!tail.isEmpty()) {
+							tokens.add(Element.splitLexically(tail.substring(1), true));
+						}
+					// START KGU#592 2018-10-04 - Bugfix #617 (continued)
 					}
-					Object argVals[] = new Object[nArgs];
-					for (int i = 0; i < nArgs; i++) {
-						// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
-						argVals[i] = this.evaluateExpression(args.get(i), false, false);
-					}
-					// Passed till here, we try to execute the function - this may throw a FunctionException
-					Object result = controller.execute(fName, argVals);
-					tokens.remove(pos, tokens.count());
-					//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
-					tokens.add(result.toString());
-					if (!tail.isEmpty()) {
-						tokens.add(Element.splitLexically(tail.substring(1), true));
-					}
+					// END KGU#592 2018-10-04
 				}
 			}
 			catch (EvalError ex) {
@@ -6528,7 +6540,7 @@ public class Executor implements Runnable
 			tokens.replaceAll("]", ")");
 		}
 		// END KGU#439 2017-10-13
-		// Special treatment for inc() and dec functions? - no need if convert was applied before
+		// Special treatment for inc() and dec() functions? - no need if convert was applied before
 		int i = 0;
 		while ((i = tokens.indexOf(".", i+1)) > 0) {
 			// FIXME: We should check for either declared type or actual object type of what's on the left of the dot.

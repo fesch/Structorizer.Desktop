@@ -50,6 +50,7 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.LangTextHolder;
 
 /**
  * Lightweight class holding both user-specific GUI designations for Element types

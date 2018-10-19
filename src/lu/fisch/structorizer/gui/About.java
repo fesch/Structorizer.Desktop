@@ -39,6 +39,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling done by GUIScaler
  *      Kay Gürtzig     2018.03.21      Logger introduced, two file reading sequences extracted to method readTextFile()
  *      Kay Gürtzig     2018.07.30      Bugfix #571 - about -> license also showed the changelog.txt
+ *      Kay Gürtzig     2018.10.08      Issue #620: a fourth tab "Paths" added.
  *
  ******************************************************************************************************
  *
@@ -55,8 +56,12 @@ package lu.fisch.structorizer.gui;
 
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
+import lu.fisch.structorizer.locales.LangTextHolder;
 
 import java.io.*;
+import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.*;
@@ -68,7 +73,10 @@ import javax.swing.border.*;
 import lu.fisch.structorizer.elements.*;
 
 @SuppressWarnings("serial")
-public class About extends LangDialog implements ActionListener, KeyListener
+// START KGU#595/KGU#596 2018-10-08: Issue #620 - inheritance change fot more diagnostic transparency
+//public class About extends LangDialog implements ActionListener, KeyListener
+public class About extends LangDialog implements ActionListener, KeyListener, LangEventListener
+// END KGU#595/KGU#596 2018-10-8
 {
 	// START KGU 2018-03-21
 	private static final String CHANGELOG_FILE = "changelog.txt";
@@ -92,6 +100,11 @@ public class About extends LangDialog implements ActionListener, KeyListener
 	protected JTextPane txtChangelog;
 	protected JScrollPane scrollPane3;
 	protected JTextPane txtLicense;
+	// START KGU#595 2018-10-08: Issue #620
+	protected JScrollPane scrollPane4;
+	protected JTextPane txtPaths;
+	public LangTextHolder msgPaths = new LangTextHolder("Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	// END KGU#595 2018-10-08
 	protected JPanel buttonBar;
 	protected JButton btnOK;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
@@ -131,6 +144,10 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		scrollPane3 = new JScrollPane();
 		txtChangelog = new JTextPane();
 		txtLicense = new JTextPane();
+		// START KGU#595 2018-10-08: Issue #620
+		scrollPane4 = new JScrollPane();
+		txtPaths = new JTextPane();
+		// END KGU#595 2018-10-08
 		buttonBar = new JPanel();
 		btnOK = new JButton();
 
@@ -217,6 +234,14 @@ public class About extends LangDialog implements ActionListener, KeyListener
 						scrollPane3.setViewportView(txtLicense);
 					}
 					pnlTabbed.addTab("License", scrollPane3);
+
+					// START KGU#595 2018-10-08: Issue #620
+					//======== scrollPane4 ========
+					{
+						scrollPane4.setViewportView(txtPaths);
+					}
+					pnlTabbed.addTab("Paths", scrollPane4);
+					// END KGU#595 2018-10-08
 				}
 				contentPanel.add(pnlTabbed, BorderLayout.CENTER);
 			}
@@ -244,7 +269,7 @@ public class About extends LangDialog implements ActionListener, KeyListener
         GUIScaler.rescaleComponents(this);
         // END KGU#287 2017-01-09
         		
-		//pack();
+		//pack();	// Don't pack here (would minimize all tabs)!
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents
 
@@ -252,21 +277,31 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		txtThanks.addKeyListener(this);
 		txtChangelog.addKeyListener(this);
 		txtLicense.addKeyListener(this);
+		// START KGU#595 2018-10-08: Issue #620
+		txtPaths.addKeyListener(this);
+		// END KGU#595 2018-10-08
 		pnlTabbed.addKeyListener(this);
 		addKeyListener(this);
 		
 		txtThanks.setEditable(false);
 		txtChangelog.setEditable(false);
 		txtLicense.setEditable(false);
+		// START KGU#595 2018-10-08: Issue #620
+		txtPaths.setEditable(false);
+		// END KGU#595 2018-10-08
 		
 		
 		txtChangelog.setText(readTextFile(CHANGELOG_FILE));
 
 		txtLicense.setText(readTextFile(LICENSE_FILE));
 
-		
 		txtThanks.setText(Element.E_THANKS);
 		txtThanks.setCaretPosition(0);
+		
+		// START KGU#595 2018-10-08: Issue #620
+		updatePaths();
+		msgPaths.addLangEventListener(this);
+		// END KGU#595 2018-10-08
 		
 		//txtChangelog.setText(Element.E_CHANGELOG);
 		txtChangelog.setCaretPosition(0);
@@ -301,6 +336,28 @@ public class About extends LangDialog implements ActionListener, KeyListener
 //			}
 //		}
 	}
+
+	// START KGU#595 2018-10-08: Issue #620 - more transparency for diagnosis
+	/**
+	 * Sets (or updates) the content of {@link #txtPaths}.
+	 */
+	private void updatePaths() {
+		URL mySource = Ini.class.getProtectionDomain().getCodeSource().getLocation();
+		String prodPath = mySource.getPath();
+		try {
+			File sourceFile = new File(prodPath);
+			if (sourceFile.exists()) {
+				prodPath = sourceFile.getAbsolutePath();
+			}
+		}
+		catch (Exception ex) {}
+		txtPaths.setText(msgPaths.getText().
+				replace("%1", Ini.getIniDirectory().getAbsolutePath()).
+				replace("%2", new File(System.getProperty("java.util.logging.config.file", "???")).getParent()).
+				replace("%3", prodPath));
+		txtPaths.setCaretPosition(0);
+	}
+	// END KGU#595 2018-10-08
 
 	/**
 	 * Reads the file given by the resource name {@code fileName} and returns its
@@ -368,5 +425,14 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		this.setModal(true);
 		create();
 	}
+
+	// START KGU#595/KGU#596 2018-10-08: Issue #620
+	@Override
+	public void LangChanged(LangEvent evt) {
+		if (evt.getSource() == msgPaths) {
+			updatePaths();
+		}
+	}
+	// END KGU#595/KGU#596 2018-10-08
 
 }

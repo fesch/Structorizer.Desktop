@@ -65,6 +65,7 @@ import javax.swing.border.TitledBorder;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
 
 /**
  * Dialog for the configuration of diagram saving options

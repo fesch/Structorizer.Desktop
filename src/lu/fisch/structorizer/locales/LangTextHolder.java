@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package lu.fisch.structorizer.gui;
+package lu.fisch.structorizer.locales;
 
 /******************************************************************************************************
  *
@@ -35,6 +35,8 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Kay Gürtzig     2016.03.25      First Issue
  *      Kay Gürtzig     2017.09.29      Method toString overridden
+ *      Kay Gürtzig     2018.10.08      Moved from package lu.fisch.structorizer.gui to ~.locales,
+ *                                      added LangEvent support
  *
  ******************************************************************************************************
  *
@@ -42,18 +44,25 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
+import java.util.HashSet;
+
 /**
  * A simple String wrapper responding to the messages getText() and setText() in order
  * to serve as light-weight translation holder compatible to the language localisation
  * mechanism of LangDialog. Translations for messages and other texts not permanently
  * visible in the GUI should better be stored in an instance of this class than e,g, in a
- * hidden JLabel.
+ * hidden {@link JLabel}.<br/>
+ * Objects interested in text changes of an object of this class may register as listeners
+ * to {@link LangEvent}s via {@link #addLangEventListener(LangEventListener)}.
  * @author Kay Gürtzig
- *
  */
 public class LangTextHolder
 {
 	private String text = "";
+	// START KGU#596 2018-10-08: listener API added
+	/** Set of {@link LangEventListener}s with lazy initialization */
+	private HashSet<LangEventListener> listeners = null;
+	// START KGU#596 2018-10-08: listener API added
 	public LangTextHolder() {}
 	public LangTextHolder(String _text)
 	{
@@ -62,6 +71,14 @@ public class LangTextHolder
 	public void setText(String _text)
 	{
 		this.text = _text;
+		// START KGU#596 2018-10-08: listener API added
+		if (listeners != null) {
+			LangEvent evt = new LangEvent(this);
+			for (LangEventListener lsnr: listeners) {
+				lsnr.LangChanged(evt);
+			}
+		}
+		// END KGU#596 2018-10-08
 	}
 	public String getText()
 	{
@@ -75,4 +92,38 @@ public class LangTextHolder
 	{
 		return this.getClass().getName() + "[text=" + this.text + "]";
 	}
+	
+	// START KGU#596 2018-10-08: New event API on occasion of issue #620
+	/**
+	 * Adds {@code listener} to the set of {@link LangEvent} listeners.<br/>
+	 * An alternative mechanism (only available for classes extending {@link LangDialog},
+	 * however) is implementing {@link LangDialog#adjustLangDependentComponents()}.
+	 * @param listener - an object interested in {@link LangEvent}s
+	 * @see #removeLangEventListener(LangEventListener)
+	 * @see LangEventListener#LangChanged(LangEvent)
+	 * @see LangDialog#adjustLangDependentComponents()
+	 */
+	public void addLangEventListener(LangEventListener listener)
+	{
+		if (listeners == null) {
+			listeners = new HashSet<LangEventListener>();
+		}
+		listeners.add(listener);
+	}
+	
+	/**
+	 * Removes {@code listener} from the set of {@link LangEvent} listeners.
+	 * @param listener - an object no longer interested in {@link LangEvent}s
+	 * @return true if {@code listener} had been registered as {@link LangEventListener}
+	 * @see #addLangEventListener(LangEventListener)
+	 */
+	public boolean removeLangEventListener(LangEventListener listener)
+	{
+		boolean done = false;
+		if (listeners != null) {
+			done = listeners.remove(listener);
+		}
+		return done;
+	}
+	// END KGU#596 2018-10-08
 }

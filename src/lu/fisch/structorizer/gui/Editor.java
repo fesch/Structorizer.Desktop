@@ -64,6 +64,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.07.02      KGU#245: color buttons converted into an array
  *      Kay Gürtzig     2018.07.27      Bugfix #568: Action name for space key binding in arranger list corrected
  *      Kay Gürtzig     2018.09.13      Enh. #590: New entry "Inspect attributes..." in the Arranger Index popup menu
+ *      Kay Gürtzig     2018.10.02      Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins
  *
  ******************************************************************************************************
  *
@@ -990,6 +991,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "REDO");
 		// END KGU#347 2017-02-09
+		// START KGU#591 2018-10-02: Enh. #616
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), "COPY");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), "CUT");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), "PASTE");
+		// END KGU#591 2018-10-02
 		actMap.put(CursorMoveDirection.CMD_UP, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_UP));
 		actMap.put(CursorMoveDirection.CMD_DOWN, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_DOWN));
 		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
@@ -1010,6 +1016,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
 		actMap.put("REDO", new AbstractAction("REDO") { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); }});
 		// END KGU#347 2017-02-09
+		// START KGU#591 2018-10-02: Enh. #616
+		actMap.put("COPY", new AbstractAction("COPY") { public void actionPerformed(ActionEvent event) { if (diagram.canCopy()) {diagram.copyNSD(); doButtons(); }}});
+		actMap.put("CUT", new AbstractAction("CUT") { public void actionPerformed(ActionEvent event) { if (diagram.canCut()) {diagram.cutNSD(); doButtons(); }}});
+		actMap.put("PASTE", new AbstractAction("PASTE") { public void actionPerformed(ActionEvent event) { if (diagram.canPaste()) {diagram.pasteNSD(); doButtons(); }}});
+		// END KGU#591 2018-10-02
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
 		
 		// START KGU#239 2017-01-13: Bugfix #233 SplitPanes had snatched away accelerator keys F6 and F8

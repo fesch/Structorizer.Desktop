@@ -36,7 +36,7 @@ import lu.fisch.structorizer.parsers.CodeParser;
 @SuppressWarnings("serial")
 public class StructorizerApplet extends JApplet  implements NSDController
 {
-	
+
     private Diagram diagram = null;
     private Menu menu = null;
     private Editor editor = null;
@@ -44,7 +44,7 @@ public class StructorizerApplet extends JApplet  implements NSDController
     private String lang = "en.txt";
     private String laf = "";
 
-    
+
     @Override
     public void init()
     {
@@ -64,31 +64,31 @@ public class StructorizerApplet extends JApplet  implements NSDController
     // setup the form
     public void createGUI()
     {
-            // setting up the editor
-            editor = new Editor(this);
-            diagram = editor.diagram;
-            Container container = getContentPane();
-            container.setLayout(new BorderLayout());
-            container.add(editor,BorderLayout.CENTER);
+        // setting up the editor
+        editor = new Editor(this);
+        diagram = editor.diagram;
+        Container container = getContentPane();
+        container.setLayout(new BorderLayout());
+        container.add(editor,BorderLayout.CENTER);
 
-            // add menu
-            menu = new Menu(diagram,this);
-            setJMenuBar(menu);
+        // add menu
+        menu = new Menu(diagram,this);
+        setJMenuBar(menu);
 
-            doButtons();
+        doButtons();
     }
 
     public void doButtons()
     {
-            if(menu!=null)
-            {
-                    menu.doButtonsLocal();
-            }
+        if(menu!=null)
+        {
+            menu.doButtonsLocal();
+        }
 
-            if (editor!=null)
-            {
-                    editor.doButtonsLocal();
-            }
+        if (editor!=null)
+        {
+            editor.doButtonsLocal();
+        }
     }
 
     public void doButtonsLocal() {}
@@ -101,127 +101,127 @@ public class StructorizerApplet extends JApplet  implements NSDController
     
     public void setLookAndFeel(String _laf)
     {
-            laf=_laf;
-            UIManager.LookAndFeelInfo plafs[] = UIManager.getInstalledLookAndFeels();
-            for(int j = 0; j < plafs.length; ++j)
+        laf=_laf;
+        UIManager.LookAndFeelInfo plafs[] = UIManager.getInstalledLookAndFeels();
+        for(int j = 0; j < plafs.length; ++j)
+        {
+            if(_laf.equals(plafs[j].getName()))
             {
-                    if(_laf.equals(plafs[j].getName()))
-                    {
-                            try
-                            {
-                                    UIManager.setLookAndFeel(plafs[j].getClassName());
-                                    SwingUtilities.updateComponentTreeUI(this);
-                            }
-                            catch (Exception e)
-                            {
-                                    // show error
-                                    JOptionPane.showOptionDialog(null,e.getMessage(),
-                                                                 "Error ...",
-                                                                 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-                            }
-                    }
+                try
+                {
+                    UIManager.setLookAndFeel(plafs[j].getClassName());
+                    SwingUtilities.updateComponentTreeUI(this);
+                }
+                catch (Exception e)
+                {
+                    // show error
+                    JOptionPane.showOptionDialog(null,e.getMessage(),
+                            "Error ...",
+                            JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                }
             }
+        }
     }
 
     public String getLookAndFeel()
     {
-            return laf;
+        return laf;
     }
 
     public void savePreferences() {};
 
     public JFrame getFrame()
     {
-         return null;
+        return null;
     }
 
 
-	public void loadFromINI()
-	{
-		try
-		{
-			Ini ini = Ini.getInstance();
-			ini.load();
-			ini.load();
+    public void loadFromINI()
+    {
+        try
+        {
+            Ini ini = Ini.getInstance();
+            ini.load();
+            ini.load();
 
-			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
-                        IconLoader.setScaleFactor(scaleFactor);
-			
+            double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
+                    IconLoader.setScaleFactor(scaleFactor);
+            
 
-			// language	
-			lang=ini.getProperty("Lang","en");
-                        Locales.getInstance().setLocale(lang);
+            // language	
+            lang = ini.getProperty("Lang","en");
+            Locales.getInstance().setLocale(lang);
 
-                        // colors
-                        Element.loadFromINI();
-                        updateColors();
-                        
-                        // parser
-                        CodeParser.loadFromINI();
+            // colors
+            Element.loadFromINI();
+            updateColors();
 
-                        // look & feel
-			laf=ini.getProperty("laf","Mac OS X");
-			setLookAndFeel(laf);
-			
-			if(diagram!=null) 
-			{
-				// current directories
-				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
-				// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
-				diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("file.separator")));
-				diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("file.separator")));
-				diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
-				// END KGU#354 2017-04-26
-				
-				// din
-				if (ini.getProperty("DIN","0").equals("1")) // default = 0
-				{
-					diagram.setDIN();
-				}
-				// comments
-				if (ini.getProperty("showComments","1").equals("0")) // default = 1
-				{
-					diagram.setComments(false);
-				}
-				// comments
-				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
-				{
-					diagram.setHightlightVars(true);
-				}
-				// analyser
+            // parser
+            CodeParser.loadFromINI();
+
+            // look & feel
+            laf = ini.getProperty("laf","Mac OS X");
+            setLookAndFeel(laf);
+
+            if(diagram!=null) 
+            {
+                // current directories (KGU#95 2018-10-08: Issue #42 - defaults changed from root to home)
+                diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
+                // START KGU#354 2017-04-26: Enh. #354 Also retain the other directories
+                diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
+                diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
+                diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+                // END KGU#354 2017-04-26
+
+                // din
+                if (ini.getProperty("DIN","0").equals("1")) // default = 0
+                {
+                    diagram.setDIN();
+                }
+                // comments
+                if (ini.getProperty("showComments","1").equals("0")) // default = 1
+                {
+                    diagram.setComments(false);
+                }
+                // comments
+                if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
+                {
+                    diagram.setHightlightVars(true);
+                }
+                // analyser
                 /*
-				if (ini.getProperty("analyser","0").equals("0")) // default = 0
-				{
-					diagram.setAnalyser(false);
-				}
+                if (ini.getProperty("analyser","0").equals("0")) // default = 0
+                {
+                    diagram.setAnalyser(false);
+                }
                  * */
-			}
-			
-			// recent files
-			try
-			{	
-				if(diagram!=null)
-				{
-					for(int i=9;i>=0;i--)
-					{
-						if(ini.keySet().contains("recent"+i))
-						{
-							if(!ini.getProperty("recent"+i,"").trim().equals(""))
-							{
-								diagram.addRecentFile(ini.getProperty("recent"+i,""),false);
-							}
-						}
-					}
-				}
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-				System.out.println(e.getMessage());
-			}
-			
-			// analyser
-			// START KGU#239 2016-08-12: Enh. #231 + Code revision
+            }
+
+            // recent files
+            try
+            {
+                if(diagram!=null)
+                {
+                    for (int i = 9; i >= 0; i--)
+                    {
+                        if (ini.keySet().contains("recent"+i))
+                        {
+                            if (!ini.getProperty("recent"+i,"").trim().equals(""))
+                            {
+                                diagram.addRecentFile(ini.getProperty("recent"+i,""),false);
+                            }
+                        }
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+                System.out.println(e.getMessage());
+            }
+
+            // analyser
+            // START KGU#239 2016-08-12: Enh. #231 + Code revision
 //			Root.check1 = ini.getProperty("check1","1").equals("1");
 //			Root.check2 = ini.getProperty("check2","1").equals("1");
 //			Root.check3 = ini.getProperty("check3","1").equals("1");
@@ -235,22 +235,20 @@ public class StructorizerApplet extends JApplet  implements NSDController
 //			Root.check11 = ini.getProperty("check11","1").equals("1");
 //			Root.check12 = ini.getProperty("check12","1").equals("1");
 //			Root.check13 = ini.getProperty("check13","1").equals("1");
-//			// START KGU#3 2015-11-03: New check for enhanced FOR loops
 //			Root.check14 = ini.getProperty("check14","1").equals("1");
-//			// END KGU#3 2015-11-03
-			for (int i = 1; i <= Root.numberOfChecks(); i++)
-			{
-				Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
-			}
-			// END KGU#239 2016-08-12
-			
-			doButtons();
-		}
-		catch (Exception e) 
-		{
-			e.printStackTrace();
-			System.out.println(e);
-		}
-	}    
-    
+            for (int i = 1; i <= Root.numberOfChecks(); i++)
+            {
+                Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
+            }
+            // END KGU#239 2016-08-12
+
+            doButtons();
+        }
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+            System.out.println(e);
+        }
+    }
+
 }

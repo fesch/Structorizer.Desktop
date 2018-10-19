@@ -60,6 +60,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.03.28  Enh. #386: New method saveAll()
  *      Kay Gürtzig     2018.02.17  Enh. #512: Zoom mechanism implemented (zoom button + key actions)
  *      Kay Gürtzig     2018.06.12  Issue #536: Experimental workaround for Direct3D trouble
+ *      Kay Gürtzig     2018.10.06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
  *
  ******************************************************************************************************
  *
@@ -89,10 +90,10 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangFrame;
+import lu.fisch.structorizer.locales.LangTextHolder;
 
 /**
  *
@@ -926,5 +927,22 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     	ini.setProperty("arrangerZoom", Float.toString(surface.getZoom()));
 	}
 	// END KGU#497 2018-02-17
+
+	// START KGU#594 2018-10-06: Issue #552 - help to reduce unnecessary serial approval questions
+	/**
+	 * Checks if there are {@link Root}s with unsaved changes held by the {@link Surface}. 
+	 * The given {@link Root} {@code toBeIgnored} is not checked. 
+	 * @param toBeIgnored - null or a {@link Root} the status of which is irrelevant
+	 * @return true in case there is a dirty {@link Root} other than {@code toBeIgnored}
+	 */
+	public boolean hasUnsavedChanges(Root toBeIgnored) {
+		for (Root root: surface.getAllRoots()) {
+			if (root.hasChanged() && root != toBeIgnored) {
+				return true;
+			}
+		}
+		return false;
+	}
+	// END KGU#594 2018-10-06
 
 }

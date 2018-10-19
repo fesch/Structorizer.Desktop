@@ -117,6 +117,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangFrame;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 

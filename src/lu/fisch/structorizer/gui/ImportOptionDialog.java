@@ -77,6 +77,7 @@ import javax.swing.border.TitledBorder;
 
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.GENParser;
 
 /**
