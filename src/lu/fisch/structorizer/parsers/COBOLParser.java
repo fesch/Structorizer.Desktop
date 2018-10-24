@@ -88,6 +88,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
  *      Kay Gürtzig     2018.07.01      Enh. #553 - thread cancellation hooks added
  *      Simon Sobisch   2018.10.24      Fix #626 IndexOutOfBoundsException on parsing empty single-quoted strings
+ *                                      Auto-switch to free-format before preparsing if source looks preprocessed by cobc
+ *                                      Skip lines that look like preprocessor directives (starting with #)
  *
  ******************************************************************************************************
  *
@@ -4656,7 +4658,18 @@ public class COBOLParser extends CodeParser
 			is32bit = (boolean)this.getPluginOption("is32bit", true);
 
 			if (settingFixedForm) {
-				setColumns(settingFixedColumnIndicator, settingFixedColumnText);
+				// check for pre-processed by OpenCOBOL/GnuCOBOL --> set to free-form
+				br.mark(8);
+				if ((strLine = br.readLine()) != null) {
+					if (strLine.startsWith("# 1") || strLine.toUpperCase().startsWith("#LINE")) {
+						// assume pre-processed by OpenCOBOL/GnuCOBOL --> set to free-form
+						this.adjustSourceFormat("FREE");
+					}
+				}
+				br.reset();
+				if (settingFixedForm) {
+					setColumns(settingFixedColumnIndicator, settingFixedColumnText);
+				}
 			}
 
 			int srcCodeLastPos = 0;
@@ -4845,6 +4858,11 @@ public class COBOLParser extends CodeParser
 			handleDirective(codeLine);
 			// Directive --> added as comment
 			resultLine = "*> DIRECTIVE: " + codeLine;
+
+		// check for preprocessor directive
+		} else if (firstToken.startsWith("#")) {
+			// Directive --> added as comment
+			resultLine = "*> PREPROCESSOR DIRECTIVE: " + codeLine;
 
 		// check for COPY or REPLACE statements (rough check, only first token)
 		} else if (firstToken.equals("COPY")) {
