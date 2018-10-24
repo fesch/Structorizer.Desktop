@@ -87,6 +87,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
  *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
  *      Kay Gürtzig     2018.07.01      Enh. #553 - thread cancellation hooks added
+ *      Simon Sobisch   2018.10.24      Fix #626 IndexOutOfBoundsException on parsing empty single-quoted strings
  *
  ******************************************************************************************************
  *
@@ -8408,9 +8409,13 @@ public class COBOLParser extends CodeParser
 			else if (name.equals("StringLiteral")) {
 				// convert from 'COBOL " Literal' --> "COBOL "" Literal"
 				if (toAdd.startsWith("'")) {
-					toAdd = toAdd.replace("\"", "\"\"")
-								.replace("''", "'");
-					toAdd = "\"" + toAdd.substring(1, toAdd.length() - 1) + "\"";
+					if (toAdd.equals("''")) {
+						toAdd = "";
+					} else {
+						toAdd = toAdd.replace("\"", "\"\"")
+									.replace("''", "'");
+						toAdd = "\"" + toAdd.substring(1, toAdd.length() - 1) + "\"";
+					}
 				}
 				// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
 				toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
