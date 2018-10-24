@@ -1,6 +1,6 @@
 /*
     Structorizer
- ",   A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
     Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
@@ -87,10 +87,11 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
  *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
  *      Kay Gürtzig     2018.07.01      Enh. #553 - thread cancellation hooks added
+ *      Simon Sobisch   2018.10.24      Fix #626 IndexOutOfBoundsException on parsing empty single-quoted strings
  *
  ******************************************************************************************************
  *
- *     Comment:		
+ *     Comment:
  *     Licensed Material - Property of Ralph Iden (GOLDParser) and Mathew Hawkins (parts of the template)
  *     GOLDParser - code downloaded from https://github.com/ridencww/goldengine on 2017-03-05.<br>
  *     Modifications to this code are allowed as it is a helper class to use the engine.<br>
@@ -101,21 +102,26 @@ package lu.fisch.structorizer.parsers;
  *     Note:
  *     Process the grammar to get a ".skel" file to merge changes in the grammar:
  *     GOLDbuild.exe GnuCOBOL.grm && GOLDprog.exe GnuCOBOL.egt StructorizerParserTemplate.pgt COBOLParser.java.skel && dos2unix COBOLParser.java.skel
- *     
+ *
  *     Language-specific options:
  *     - debugLines: boolean, default = false;
  *     - decimalComma: boolean, default = false;
  *     - fixedForm: boolean, default = true;
  *     - fixedColumnIndicator: integer, default = 7;
- *     - fixedColumnText: integer, defualt = 73;
+ *     - fixedColumnText: integer, default = 73;
  *     - ignoreUnstringAll: boolean, default = true;
  *     - is32bit, default = true;
- *     
+ *
  ******************************************************************************************************/
 
 import java.awt.Color;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -130,7 +136,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.creativewidgetworks.goldparser.engine.*;
+import com.creativewidgetworks.goldparser.engine.Reduction;
+import com.creativewidgetworks.goldparser.engine.Token;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
@@ -157,7 +164,7 @@ import lu.fisch.utils.StringList;
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the GnuCOBOL language.
  * This file contains grammar-specific constants and individual routines to build
- * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
+ * structograms (Nassi-Shneiderman diagrams) from the parsing tree.
  * @author Kay Gürtzig
  */
 public class COBOLParser extends CodeParser
@@ -170,7 +177,7 @@ public class COBOLParser extends CodeParser
 	{
 		return "GnuCOBOL.egt";
 	}
-	
+
 	@Override
 	protected final String getGrammarTableName()
 	{
@@ -179,7 +186,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * If this flag is set then program names derived from file name will be made uppercase
-	 * This default will be initialized in consistency with the Analyser check 
+	 * This default will be initialized in consistency with the Analyser check
 	 */
 	private boolean optionUpperCaseProgName = false;
 
@@ -193,7 +200,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	//---------------------- File Filter configuration -----------------------
-	
+
 	@Override
 	public String getDialogTitle() {
 		return "COBOL";
@@ -211,7 +218,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	//------------------- Comment delimiter specification ---------------------------------
-	
+
 	// START KGU#407 2017-09-30: Enh. #420
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#getCommentDelimiters()
@@ -224,12 +231,12 @@ public class COBOLParser extends CodeParser
 		};
 	}
 	// END KGU#407 2017-09-30
-	
+
 	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
-	// Symbolic constants naming the table indices of the symbols of the grammar 
+	// Symbolic constants naming the table indices of the symbols of the grammar
 	//@SuppressWarnings("unused")
-//	private interface SymbolConstants 
+//	private interface SymbolConstants
 //	{
 //		final int SYM_EOF                                        =    0;  // (EOF)
 //		final int SYM_ERROR                                      =    1;  // (Error)
@@ -1922,7 +1929,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_PROGRAM_DEFINITION                                                    =  131;  // <program_definition> ::= <_identification_header> <program_id_paragraph> <_Comment Items> <_options_paragraph> <_program_body> <_end_program_list>
 		final int PROD_FUNCTION_DEFINITION                                                   =  132;  // <function_definition> ::= <_identification_header> <function_id_paragraph> <_Comment Items> <_options_paragraph> <_program_body> <end_function>
 //		final int PROD__COMMENTITEMS                                                         =  133;  // <_Comment Items> ::= <_Comment Items> <Comment Item>
-//		final int PROD__COMMENTITEMS2                                                        =  134;  // <_Comment Items> ::= 
+//		final int PROD__COMMENTITEMS2                                                        =  134;  // <_Comment Items> ::=
 //		final int PROD_COMMENTITEM_AUTHOR_TOK_DOT_TOK_DOT                                    =  135;  // <Comment Item> ::= AUTHOR 'TOK_DOT' <NoiseList> 'TOK_DOT'
 //		final int PROD_COMMENTITEM_INSTALLATION_TOK_DOT_TOK_DOT                              =  136;  // <Comment Item> ::= INSTALLATION 'TOK_DOT' <NoiseList> 'TOK_DOT'
 //		final int PROD_COMMENTITEM_DATE_WRITTEN_TOK_DOT_TOK_DOT                              =  137;  // <Comment Item> ::= 'DATE_WRITTEN' 'TOK_DOT' <NoiseList> 'TOK_DOT'
@@ -1935,14 +1942,14 @@ public class COBOLParser extends CodeParser
 //		final int PROD_NOISE_DECIMALLITERAL                                                  =  144;  // <Noise> ::= DecimalLiteral
 //		final int PROD_NOISE_COBOLWORD                                                       =  145;  // <Noise> ::= COBOLWord
 //		final int PROD_NOISE_COMMA_DELIM                                                     =  146;  // <Noise> ::= 'COMMA_DELIM'
-//		final int PROD__END_PROGRAM_LIST                                                     =  147;  // <_end_program_list> ::= 
+//		final int PROD__END_PROGRAM_LIST                                                     =  147;  // <_end_program_list> ::=
 //		final int PROD__END_PROGRAM_LIST2                                                    =  148;  // <_end_program_list> ::= <end_program_list>
 //		final int PROD_END_PROGRAM_LIST                                                      =  149;  // <end_program_list> ::= <end_program>
 //		final int PROD_END_PROGRAM_LIST2                                                     =  150;  // <end_program_list> ::= <end_program_list> <end_program>
 //		final int PROD_END_PROGRAM_END_PROGRAM_TOK_DOT                                       =  151;  // <end_program> ::= 'END_PROGRAM' <end_program_name> 'TOK_DOT'
 //		final int PROD_END_FUNCTION_END_FUNCTION_TOK_DOT                                     =  152;  // <end_function> ::= 'END_FUNCTION' <end_program_name> 'TOK_DOT'
 //		final int PROD__PROGRAM_BODY                                                         =  153;  // <_program_body> ::= <_environment_division> <_data_division> <_procedure_division>
-//		final int PROD__IDENTIFICATION_HEADER                                                =  154;  // <_identification_header> ::= 
+//		final int PROD__IDENTIFICATION_HEADER                                                =  154;  // <_identification_header> ::=
 //		final int PROD__IDENTIFICATION_HEADER_DIVISION_TOK_DOT                               =  155;  // <_identification_header> ::= <identification_or_id> DIVISION 'TOK_DOT'
 //		final int PROD_IDENTIFICATION_OR_ID_IDENTIFICATION                                   =  156;  // <identification_or_id> ::= IDENTIFICATION
 //		final int PROD_IDENTIFICATION_OR_ID_ID                                               =  157;  // <identification_or_id> ::= ID
@@ -1952,9 +1959,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_PROGRAM_ID_NAME2                                                      =  161;  // <program_id_name> ::= <LITERAL_TOK>
 //		final int PROD_END_PROGRAM_NAME                                                      =  162;  // <end_program_name> ::= <PROGRAM_NAME>
 //		final int PROD_END_PROGRAM_NAME2                                                     =  163;  // <end_program_name> ::= <LITERAL_TOK>
-//		final int PROD__AS_LITERAL                                                           =  164;  // <_as_literal> ::= 
+//		final int PROD__AS_LITERAL                                                           =  164;  // <_as_literal> ::=
 //		final int PROD__AS_LITERAL_AS                                                        =  165;  // <_as_literal> ::= AS <LITERAL_TOK>
-//		final int PROD__PROGRAM_TYPE                                                         =  166;  // <_program_type> ::= 
+//		final int PROD__PROGRAM_TYPE                                                         =  166;  // <_program_type> ::=
 //		final int PROD__PROGRAM_TYPE2                                                        =  167;  // <_program_type> ::= <_is> <program_type_clause> <_program>
 //		final int PROD_PROGRAM_TYPE_CLAUSE_COMMON                                            =  168;  // <program_type_clause> ::= COMMON
 //		final int PROD_PROGRAM_TYPE_CLAUSE                                                   =  169;  // <program_type_clause> ::= <init_or_recurse_and_common>
@@ -1964,40 +1971,40 @@ public class COBOLParser extends CodeParser
 //		final int PROD_INIT_OR_RECURSE_AND_COMMON_COMMON2                                    =  173;  // <init_or_recurse_and_common> ::= COMMON <init_or_recurse>
 //		final int PROD_INIT_OR_RECURSE_TOK_INITIAL                                           =  174;  // <init_or_recurse> ::= 'TOK_INITIAL'
 //		final int PROD_INIT_OR_RECURSE_RECURSIVE                                             =  175;  // <init_or_recurse> ::= RECURSIVE
-//		final int PROD__OPTIONS_PARAGRAPH                                                    =  176;  // <_options_paragraph> ::= 
+//		final int PROD__OPTIONS_PARAGRAPH                                                    =  176;  // <_options_paragraph> ::=
 //		final int PROD__OPTIONS_PARAGRAPH_OPTIONS_TOK_DOT                                    =  177;  // <_options_paragraph> ::= OPTIONS 'TOK_DOT' <_options_clauses>
 //		final int PROD__OPTIONS_CLAUSES_TOK_DOT                                              =  178;  // <_options_clauses> ::= <_default_rounded_clause> <_entry_convention_clause> <_intermediate_rounding_clause> 'TOK_DOT'
-//		final int PROD__DEFAULT_ROUNDED_CLAUSE                                               =  179;  // <_default_rounded_clause> ::= 
+//		final int PROD__DEFAULT_ROUNDED_CLAUSE                                               =  179;  // <_default_rounded_clause> ::=
 //		final int PROD__DEFAULT_ROUNDED_CLAUSE_DEFAULT_ROUNDED                               =  180;  // <_default_rounded_clause> ::= DEFAULT ROUNDED <_mode> <_is> <round_choice>
-//		final int PROD__ENTRY_CONVENTION_CLAUSE                                              =  181;  // <_entry_convention_clause> ::= 
+//		final int PROD__ENTRY_CONVENTION_CLAUSE                                              =  181;  // <_entry_convention_clause> ::=
 //		final int PROD__ENTRY_CONVENTION_CLAUSE_ENTRY_CONVENTION                             =  182;  // <_entry_convention_clause> ::= 'ENTRY_CONVENTION' <_is> <convention_type>
 //		final int PROD_CONVENTION_TYPE_COBOL                                                 =  183;  // <convention_type> ::= COBOL
 //		final int PROD_CONVENTION_TYPE_TOK_EXTERN                                            =  184;  // <convention_type> ::= 'TOK_EXTERN'
 //		final int PROD_CONVENTION_TYPE_STDCALL                                               =  185;  // <convention_type> ::= STDCALL
-//		final int PROD__INTERMEDIATE_ROUNDING_CLAUSE                                         =  186;  // <_intermediate_rounding_clause> ::= 
+//		final int PROD__INTERMEDIATE_ROUNDING_CLAUSE                                         =  186;  // <_intermediate_rounding_clause> ::=
 //		final int PROD__INTERMEDIATE_ROUNDING_CLAUSE_INTERMEDIATE_ROUNDING                   =  187;  // <_intermediate_rounding_clause> ::= INTERMEDIATE ROUNDING <_is> <intermediate_rounding_choice>
 //		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_NEAREST_AWAY_FROM_ZERO                   =  188;  // <intermediate_rounding_choice> ::= 'NEAREST_AWAY_FROM_ZERO'
 //		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_NEAREST_EVEN                             =  189;  // <intermediate_rounding_choice> ::= 'NEAREST_EVEN'
 //		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_PROHIBITED                               =  190;  // <intermediate_rounding_choice> ::= PROHIBITED
 //		final int PROD_INTERMEDIATE_ROUNDING_CHOICE_TRUNCATION                               =  191;  // <intermediate_rounding_choice> ::= TRUNCATION
 //		final int PROD__ENVIRONMENT_DIVISION                                                 =  192;  // <_environment_division> ::= <_environment_header> <_configuration_section> <_input_output_section>
-//		final int PROD__ENVIRONMENT_HEADER                                                   =  193;  // <_environment_header> ::= 
+//		final int PROD__ENVIRONMENT_HEADER                                                   =  193;  // <_environment_header> ::=
 //		final int PROD__ENVIRONMENT_HEADER_ENVIRONMENT_DIVISION_TOK_DOT                      =  194;  // <_environment_header> ::= ENVIRONMENT DIVISION 'TOK_DOT'
 //		final int PROD__CONFIGURATION_SECTION                                                =  195;  // <_configuration_section> ::= <_configuration_header> <_source_object_computer_paragraphs> <_special_names_paragraph> <_special_names_sentence_list> <_repository_paragraph>
-//		final int PROD__CONFIGURATION_HEADER                                                 =  196;  // <_configuration_header> ::= 
+//		final int PROD__CONFIGURATION_HEADER                                                 =  196;  // <_configuration_header> ::=
 //		final int PROD__CONFIGURATION_HEADER_CONFIGURATION_SECTION_TOK_DOT                   =  197;  // <_configuration_header> ::= CONFIGURATION SECTION 'TOK_DOT'
-//		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS                                    =  198;  // <_source_object_computer_paragraphs> ::= 
+//		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS                                    =  198;  // <_source_object_computer_paragraphs> ::=
 //		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS2                                   =  199;  // <_source_object_computer_paragraphs> ::= <source_computer_paragraph>
 //		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS3                                   =  200;  // <_source_object_computer_paragraphs> ::= <object_computer_paragraph>
 //		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS4                                   =  201;  // <_source_object_computer_paragraphs> ::= <source_computer_paragraph> <object_computer_paragraph>
 //		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS5                                   =  202;  // <_source_object_computer_paragraphs> ::= <object_computer_paragraph> <source_computer_paragraph>
 //		final int PROD_SOURCE_COMPUTER_PARAGRAPH_SOURCE_COMPUTER_TOK_DOT                     =  203;  // <source_computer_paragraph> ::= 'SOURCE_COMPUTER' 'TOK_DOT' <_source_computer_entry>
-//		final int PROD__SOURCE_COMPUTER_ENTRY                                                =  204;  // <_source_computer_entry> ::= 
+//		final int PROD__SOURCE_COMPUTER_ENTRY                                                =  204;  // <_source_computer_entry> ::=
 //		final int PROD__SOURCE_COMPUTER_ENTRY_TOK_DOT                                        =  205;  // <_source_computer_entry> ::= <computer_words> <_with_debugging_mode> 'TOK_DOT'
-//		final int PROD__WITH_DEBUGGING_MODE                                                  =  206;  // <_with_debugging_mode> ::= 
+//		final int PROD__WITH_DEBUGGING_MODE                                                  =  206;  // <_with_debugging_mode> ::=
 //		final int PROD__WITH_DEBUGGING_MODE_DEBUGGING_MODE                                   =  207;  // <_with_debugging_mode> ::= <_with> DEBUGGING MODE
 //		final int PROD_OBJECT_COMPUTER_PARAGRAPH_OBJECT_COMPUTER_TOK_DOT                     =  208;  // <object_computer_paragraph> ::= 'OBJECT_COMPUTER' 'TOK_DOT' <_object_computer_entry>
-//		final int PROD__OBJECT_COMPUTER_ENTRY                                                =  209;  // <_object_computer_entry> ::= 
+//		final int PROD__OBJECT_COMPUTER_ENTRY                                                =  209;  // <_object_computer_entry> ::=
 //		final int PROD__OBJECT_COMPUTER_ENTRY_TOK_DOT                                        =  210;  // <_object_computer_entry> ::= <computer_words> 'TOK_DOT'
 //		final int PROD__OBJECT_COMPUTER_ENTRY_TOK_DOT2                                       =  211;  // <_object_computer_entry> ::= <computer_words> <object_clauses_list> 'TOK_DOT'
 //		final int PROD__OBJECT_COMPUTER_ENTRY_TOK_DOT3                                       =  212;  // <_object_computer_entry> ::= <object_clauses_list> 'TOK_DOT'
@@ -2017,9 +2024,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_LOCALE_CLASS_SYSTEM_DEFAULT                                           =  226;  // <locale_class> ::= 'SYSTEM_DEFAULT'
 //		final int PROD_COMPUTER_WORDS                                                        =  227;  // <computer_words> ::= <WORD>
 //		final int PROD_COMPUTER_WORDS2                                                       =  228;  // <computer_words> ::= <computer_words> <WORD>
-//		final int PROD__REPOSITORY_PARAGRAPH                                                 =  229;  // <_repository_paragraph> ::= 
+//		final int PROD__REPOSITORY_PARAGRAPH                                                 =  229;  // <_repository_paragraph> ::=
 //		final int PROD__REPOSITORY_PARAGRAPH_REPOSITORY_TOK_DOT                              =  230;  // <_repository_paragraph> ::= REPOSITORY 'TOK_DOT' <_repository_entry>
-//		final int PROD__REPOSITORY_ENTRY                                                     =  231;  // <_repository_entry> ::= 
+//		final int PROD__REPOSITORY_ENTRY                                                     =  231;  // <_repository_entry> ::=
 //		final int PROD__REPOSITORY_ENTRY_TOK_DOT                                             =  232;  // <_repository_entry> ::= <repository_list> 'TOK_DOT'
 //		final int PROD_REPOSITORY_LIST                                                       =  233;  // <repository_list> ::= <repository_name>
 //		final int PROD_REPOSITORY_LIST2                                                      =  234;  // <repository_list> ::= <repository_list> <repository_name>
@@ -2029,9 +2036,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_REPOSITORY_NAME_PROGRAM                                               =  238;  // <repository_name> ::= PROGRAM <WORD> <_as_literal>
 //		final int PROD_REPOSITORY_NAME_LIST                                                  =  239;  // <repository_name_list> ::= <FUNCTION_NAME>
 //		final int PROD_REPOSITORY_NAME_LIST2                                                 =  240;  // <repository_name_list> ::= <repository_name_list> <FUNCTION_NAME>
-//		final int PROD__SPECIAL_NAMES_PARAGRAPH                                              =  241;  // <_special_names_paragraph> ::= 
+//		final int PROD__SPECIAL_NAMES_PARAGRAPH                                              =  241;  // <_special_names_paragraph> ::=
 //		final int PROD__SPECIAL_NAMES_PARAGRAPH_SPECIAL_NAMES_TOK_DOT                        =  242;  // <_special_names_paragraph> ::= 'SPECIAL_NAMES' 'TOK_DOT'
-//		final int PROD__SPECIAL_NAMES_SENTENCE_LIST                                          =  243;  // <_special_names_sentence_list> ::= 
+//		final int PROD__SPECIAL_NAMES_SENTENCE_LIST                                          =  243;  // <_special_names_sentence_list> ::=
 //		final int PROD__SPECIAL_NAMES_SENTENCE_LIST2                                         =  244;  // <_special_names_sentence_list> ::= <special_names_sentence_list>
 //		final int PROD_SPECIAL_NAMES_SENTENCE_LIST_TOK_DOT                                   =  245;  // <special_names_sentence_list> ::= <special_name_list> 'TOK_DOT'
 //		final int PROD_SPECIAL_NAMES_SENTENCE_LIST_TOK_DOT2                                  =  246;  // <special_names_sentence_list> ::= <special_names_sentence_list> <special_name_list> 'TOK_DOT'
@@ -2055,7 +2062,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MNEMONIC_CHOICES                                                      =  264;  // <mnemonic_choices> ::= <integer> <_is> <undefined_word>
 //		final int PROD_MNEMONIC_CHOICES2                                                     =  265;  // <mnemonic_choices> ::= <_is> <undefined_word> <_special_name_mnemonic_on_off>
 //		final int PROD_MNEMONIC_CHOICES3                                                     =  266;  // <mnemonic_choices> ::= <on_off_clauses>
-//		final int PROD__SPECIAL_NAME_MNEMONIC_ON_OFF                                         =  267;  // <_special_name_mnemonic_on_off> ::= 
+//		final int PROD__SPECIAL_NAME_MNEMONIC_ON_OFF                                         =  267;  // <_special_name_mnemonic_on_off> ::=
 //		final int PROD__SPECIAL_NAME_MNEMONIC_ON_OFF2                                        =  268;  // <_special_name_mnemonic_on_off> ::= <on_off_clauses>
 //		final int PROD_ON_OFF_CLAUSES                                                        =  269;  // <on_off_clauses> ::= <on_off_clauses_1>
 //		final int PROD_ON_OFF_CLAUSES_1                                                      =  270;  // <on_off_clauses_1> ::= <on_or_off> <_onoff_status> <undefined_word>
@@ -2083,7 +2090,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SPACE_OR_ZERO_SPACE                                                   =  292;  // <space_or_zero> ::= SPACE
 //		final int PROD_SPACE_OR_ZERO_ZERO                                                    =  293;  // <space_or_zero> ::= ZERO
 //		final int PROD_SYMBOLIC_CHARACTERS_CLAUSE                                            =  294;  // <symbolic_characters_clause> ::= <symbolic_collection> <_sym_in_word>
-//		final int PROD__SYM_IN_WORD                                                          =  295;  // <_sym_in_word> ::= 
+//		final int PROD__SYM_IN_WORD                                                          =  295;  // <_sym_in_word> ::=
 //		final int PROD__SYM_IN_WORD_IN                                                       =  296;  // <_sym_in_word> ::= IN <WORD>
 //		final int PROD_SYMBOLIC_COLLECTION_SYMBOLIC                                          =  297;  // <symbolic_collection> ::= SYMBOLIC <_characters> <symbolic_chars_list>
 //		final int PROD_SYMBOLIC_CHARS_LIST                                                   =  298;  // <symbolic_chars_list> ::= <symbolic_chars_phrase>
@@ -2100,7 +2107,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_CLASS_ITEM_THRU                                                       =  309;  // <class_item> ::= <class_value> THRU <class_value>
 //		final int PROD_LOCALE_CLAUSE_LOCALE                                                  =  310;  // <locale_clause> ::= LOCALE <undefined_word> <_is> <LITERAL_TOK>
 //		final int PROD_CURRENCY_SIGN_CLAUSE_CURRENCY                                         =  311;  // <currency_sign_clause> ::= CURRENCY <_sign> <_is> <LITERAL_TOK> <_with_pic_symbol>
-//		final int PROD__WITH_PIC_SYMBOL                                                      =  312;  // <_with_pic_symbol> ::= 
+//		final int PROD__WITH_PIC_SYMBOL                                                      =  312;  // <_with_pic_symbol> ::=
 //		final int PROD__WITH_PIC_SYMBOL_PICTURE_SYMBOL                                       =  313;  // <_with_pic_symbol> ::= <_with> 'PICTURE_SYMBOL' <LITERAL_TOK>
 //		final int PROD_DECIMAL_POINT_CLAUSE_DECIMAL_POINT_COMMA                              =  314;  // <decimal_point_clause> ::= 'DECIMAL_POINT' <_is> COMMA
 //		final int PROD_NUMERIC_SIGN_CLAUSE_NUMERIC_SIGN_TRAILING_SEPARATE                    =  315;  // <numeric_sign_clause> ::= NUMERIC SIGN <_is> TRAILING SEPARATE
@@ -2109,17 +2116,17 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SCREEN_CONTROL_SCREEN_CONTROL                                         =  318;  // <screen_control> ::= 'SCREEN_CONTROL' <_is> <reference>
 //		final int PROD_EVENT_STATUS_EVENT_STATUS                                             =  319;  // <event_status> ::= 'EVENT_STATUS' <_is> <reference>
 //		final int PROD__INPUT_OUTPUT_SECTION                                                 =  320;  // <_input_output_section> ::= <_input_output_header> <_file_control_header> <_file_control_sequence> <_i_o_control_header> <_i_o_control>
-//		final int PROD__INPUT_OUTPUT_HEADER                                                  =  321;  // <_input_output_header> ::= 
+//		final int PROD__INPUT_OUTPUT_HEADER                                                  =  321;  // <_input_output_header> ::=
 //		final int PROD__INPUT_OUTPUT_HEADER_INPUT_OUTPUT_SECTION_TOK_DOT                     =  322;  // <_input_output_header> ::= 'INPUT_OUTPUT' SECTION 'TOK_DOT'
-//		final int PROD__FILE_CONTROL_HEADER                                                  =  323;  // <_file_control_header> ::= 
+//		final int PROD__FILE_CONTROL_HEADER                                                  =  323;  // <_file_control_header> ::=
 //		final int PROD__FILE_CONTROL_HEADER_FILE_CONTROL_TOK_DOT                             =  324;  // <_file_control_header> ::= 'FILE_CONTROL' 'TOK_DOT'
-//		final int PROD__I_O_CONTROL_HEADER                                                   =  325;  // <_i_o_control_header> ::= 
+//		final int PROD__I_O_CONTROL_HEADER                                                   =  325;  // <_i_o_control_header> ::=
 //		final int PROD__I_O_CONTROL_HEADER_I_O_CONTROL_TOK_DOT                               =  326;  // <_i_o_control_header> ::= 'I_O_CONTROL' 'TOK_DOT'
-//		final int PROD__FILE_CONTROL_SEQUENCE                                                =  327;  // <_file_control_sequence> ::= 
+//		final int PROD__FILE_CONTROL_SEQUENCE                                                =  327;  // <_file_control_sequence> ::=
 //		final int PROD__FILE_CONTROL_SEQUENCE2                                               =  328;  // <_file_control_sequence> ::= <_file_control_sequence> <file_control_entry>
 		final int PROD_FILE_CONTROL_ENTRY_SELECT                                             =  329;  // <file_control_entry> ::= SELECT <flag_optional> <undefined_word> <_select_clauses_or_error>
 //		final int PROD__SELECT_CLAUSES_OR_ERROR_TOK_DOT                                      =  330;  // <_select_clauses_or_error> ::= <_select_clause_sequence> 'TOK_DOT'
-//		final int PROD__SELECT_CLAUSE_SEQUENCE                                               =  331;  // <_select_clause_sequence> ::= 
+//		final int PROD__SELECT_CLAUSE_SEQUENCE                                               =  331;  // <_select_clause_sequence> ::=
 		final int PROD__SELECT_CLAUSE_SEQUENCE2                                              =  332;  // <_select_clause_sequence> ::= <_select_clause_sequence> <select_clause>
 //		final int PROD_SELECT_CLAUSE                                                         =  333;  // <select_clause> ::= <assign_clause>
 //		final int PROD_SELECT_CLAUSE2                                                        =  334;  // <select_clause> ::= <access_mode_clause>
@@ -2154,14 +2161,14 @@ public class COBOLParser extends CodeParser
 //		final int PROD_LINE_SEQ_DEVICE_NAME_INPUT_OUTPUT                                     =  363;  // <line_seq_device_name> ::= 'INPUT_OUTPUT'
 //		final int PROD_LINE_SEQ_DEVICE_NAME_MAGNETIC_TAPE                                    =  364;  // <line_seq_device_name> ::= 'MAGNETIC_TAPE'
 //		final int PROD_LINE_SEQ_DEVICE_NAME_OUTPUT                                           =  365;  // <line_seq_device_name> ::= OUTPUT
-//		final int PROD__LINE_ADV_FILE                                                        =  366;  // <_line_adv_file> ::= 
+//		final int PROD__LINE_ADV_FILE                                                        =  366;  // <_line_adv_file> ::=
 //		final int PROD__LINE_ADV_FILE_LINE_ADVANCING                                         =  367;  // <_line_adv_file> ::= LINE ADVANCING <_file>
-//		final int PROD__EXT_CLAUSE                                                           =  368;  // <_ext_clause> ::= 
+//		final int PROD__EXT_CLAUSE                                                           =  368;  // <_ext_clause> ::=
 //		final int PROD__EXT_CLAUSE_EXTERNAL                                                  =  369;  // <_ext_clause> ::= EXTERNAL
 //		final int PROD__EXT_CLAUSE_DYNAMIC                                                   =  370;  // <_ext_clause> ::= DYNAMIC
 //		final int PROD_ASSIGNMENT_NAME                                                       =  371;  // <assignment_name> ::= <LITERAL_TOK>
 //		final int PROD_ASSIGNMENT_NAME2                                                      =  372;  // <assignment_name> ::= <qualified_word>
-//		final int PROD__ASSIGNMENT_NAME                                                      =  373;  // <_assignment_name> ::= 
+//		final int PROD__ASSIGNMENT_NAME                                                      =  373;  // <_assignment_name> ::=
 //		final int PROD__ASSIGNMENT_NAME2                                                     =  374;  // <_assignment_name> ::= <LITERAL_TOK>
 //		final int PROD__ASSIGNMENT_NAME3                                                     =  375;  // <_assignment_name> ::= <qualified_word>
 //		final int PROD_ACCESS_MODE_CLAUSE_ACCESS                                             =  376;  // <access_mode_clause> ::= ACCESS <_mode> <_is> <access_mode>
@@ -2169,20 +2176,20 @@ public class COBOLParser extends CodeParser
 //		final int PROD_ACCESS_MODE_DYNAMIC                                                   =  378;  // <access_mode> ::= DYNAMIC
 //		final int PROD_ACCESS_MODE_RANDOM                                                    =  379;  // <access_mode> ::= RANDOM
 //		final int PROD_ALTERNATIVE_RECORD_KEY_CLAUSE_ALTERNATE                               =  380;  // <alternative_record_key_clause> ::= ALTERNATE <_record> <_key> <_is> <key_or_split_keys> <flag_duplicates> <_suppress_clause>
-//		final int PROD__SUPPRESS_CLAUSE                                                      =  381;  // <_suppress_clause> ::= 
+//		final int PROD__SUPPRESS_CLAUSE                                                      =  381;  // <_suppress_clause> ::=
 //		final int PROD__SUPPRESS_CLAUSE_SUPPRESS_WHEN_ALL                                    =  382;  // <_suppress_clause> ::= SUPPRESS WHEN ALL <basic_value>
 //		final int PROD__SUPPRESS_CLAUSE_SUPPRESS_WHEN                                        =  383;  // <_suppress_clause> ::= SUPPRESS WHEN <space_or_zero>
 //		final int PROD_COLLATING_SEQUENCE_CLAUSE                                             =  384;  // <collating_sequence_clause> ::= <coll_sequence> <_is> <alphabet_name>
 //		final int PROD_ALPHABET_NAME                                                         =  385;  // <alphabet_name> ::= <WORD>
 //		final int PROD_FILE_STATUS_CLAUSE_STATUS                                             =  386;  // <file_status_clause> ::= <_file_or_sort> STATUS <_is> <reference>
-//		final int PROD__FILE_OR_SORT                                                         =  387;  // <_file_or_sort> ::= 
+//		final int PROD__FILE_OR_SORT                                                         =  387;  // <_file_or_sort> ::=
 		final int PROD__FILE_OR_SORT_TOK_FILE                                                =  388;  // <_file_or_sort> ::= 'TOK_FILE'
 //		final int PROD__FILE_OR_SORT_SORT                                                    =  389;  // <_file_or_sort> ::= SORT
 //		final int PROD_LOCK_MODE_CLAUSE_LOCK                                                 =  390;  // <lock_mode_clause> ::= LOCK <_mode> <_is> <lock_mode>
 //		final int PROD_LOCK_MODE_MANUAL                                                      =  391;  // <lock_mode> ::= MANUAL <_lock_with>
 //		final int PROD_LOCK_MODE_AUTOMATIC                                                   =  392;  // <lock_mode> ::= AUTOMATIC <_lock_with>
 //		final int PROD_LOCK_MODE_EXCLUSIVE                                                   =  393;  // <lock_mode> ::= EXCLUSIVE
-//		final int PROD__LOCK_WITH                                                            =  394;  // <_lock_with> ::= 
+//		final int PROD__LOCK_WITH                                                            =  394;  // <_lock_with> ::=
 //		final int PROD__LOCK_WITH_WITH_LOCK_ON                                               =  395;  // <_lock_with> ::= WITH LOCK ON <lock_records>
 //		final int PROD__LOCK_WITH_WITH_LOCK_ON_MULTIPLE                                      =  396;  // <_lock_with> ::= WITH LOCK ON MULTIPLE <lock_records>
 //		final int PROD__LOCK_WITH_WITH_ROLLBACK                                              =  397;  // <_lock_with> ::= WITH ROLLBACK
@@ -2206,14 +2213,14 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SHARING_OPTION_ALL                                                    =  415;  // <sharing_option> ::= ALL <_other>
 //		final int PROD_SHARING_OPTION_NO                                                     =  416;  // <sharing_option> ::= NO <_other>
 //		final int PROD_SHARING_OPTION_READ_ONLY                                              =  417;  // <sharing_option> ::= READ ONLY
-//		final int PROD__I_O_CONTROL                                                          =  418;  // <_i_o_control> ::= 
+//		final int PROD__I_O_CONTROL                                                          =  418;  // <_i_o_control> ::=
 //		final int PROD__I_O_CONTROL_TOK_DOT                                                  =  419;  // <_i_o_control> ::= <i_o_control_list> 'TOK_DOT'
 //		final int PROD_I_O_CONTROL_LIST                                                      =  420;  // <i_o_control_list> ::= <i_o_control_clause>
 //		final int PROD_I_O_CONTROL_LIST2                                                     =  421;  // <i_o_control_list> ::= <i_o_control_list> <i_o_control_clause>
 //		final int PROD_I_O_CONTROL_CLAUSE                                                    =  422;  // <i_o_control_clause> ::= <same_clause>
 //		final int PROD_I_O_CONTROL_CLAUSE2                                                   =  423;  // <i_o_control_clause> ::= <multiple_file_tape_clause>
 //		final int PROD_SAME_CLAUSE_SAME                                                      =  424;  // <same_clause> ::= SAME <_same_option> <_area> <_for> <file_name_list>
-//		final int PROD__SAME_OPTION                                                          =  425;  // <_same_option> ::= 
+//		final int PROD__SAME_OPTION                                                          =  425;  // <_same_option> ::=
 //		final int PROD__SAME_OPTION_RECORD                                                   =  426;  // <_same_option> ::= RECORD
 //		final int PROD__SAME_OPTION_SORT                                                     =  427;  // <_same_option> ::= SORT
 //		final int PROD__SAME_OPTION_SORT_MERGE                                               =  428;  // <_same_option> ::= 'SORT_MERGE'
@@ -2221,20 +2228,20 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MULTIPLE_FILE_LIST                                                    =  430;  // <multiple_file_list> ::= <multiple_file>
 //		final int PROD_MULTIPLE_FILE_LIST2                                                   =  431;  // <multiple_file_list> ::= <multiple_file_list> <multiple_file>
 //		final int PROD_MULTIPLE_FILE                                                         =  432;  // <multiple_file> ::= <file_name> <_multiple_file_position>
-//		final int PROD__MULTIPLE_FILE_POSITION                                               =  433;  // <_multiple_file_position> ::= 
+//		final int PROD__MULTIPLE_FILE_POSITION                                               =  433;  // <_multiple_file_position> ::=
 //		final int PROD__MULTIPLE_FILE_POSITION_POSITION                                      =  434;  // <_multiple_file_position> ::= POSITION <integer>
 //		final int PROD__DATA_DIVISION                                                        =  435;  // <_data_division> ::= <_data_division_header> <_file_section_header> <_file_description_sequence> <_working_storage_section> <_communication_section> <_local_storage_section> <_linkage_section> <_report_section> <_screen_section>
-//		final int PROD__DATA_DIVISION_HEADER                                                 =  436;  // <_data_division_header> ::= 
+//		final int PROD__DATA_DIVISION_HEADER                                                 =  436;  // <_data_division_header> ::=
 //		final int PROD__DATA_DIVISION_HEADER_DATA_DIVISION_TOK_DOT                           =  437;  // <_data_division_header> ::= DATA DIVISION 'TOK_DOT'
-//		final int PROD__FILE_SECTION_HEADER                                                  =  438;  // <_file_section_header> ::= 
+//		final int PROD__FILE_SECTION_HEADER                                                  =  438;  // <_file_section_header> ::=
 		final int PROD__FILE_SECTION_HEADER_TOK_FILE_SECTION_TOK_DOT                         =  439;  // <_file_section_header> ::= 'TOK_FILE' SECTION 'TOK_DOT'
-//		final int PROD__FILE_DESCRIPTION_SEQUENCE                                            =  440;  // <_file_description_sequence> ::= 
+//		final int PROD__FILE_DESCRIPTION_SEQUENCE                                            =  440;  // <_file_description_sequence> ::=
 //		final int PROD__FILE_DESCRIPTION_SEQUENCE2                                           =  441;  // <_file_description_sequence> ::= <_file_description_sequence> <file_description>
 		final int PROD_FILE_DESCRIPTION                                                      =  442;  // <file_description> ::= <file_description_entry> <_record_description_list>
 //		final int PROD_FILE_DESCRIPTION_ENTRY_TOK_DOT                                        =  443;  // <file_description_entry> ::= <file_type> <file_name> <_file_description_clause_sequence> 'TOK_DOT'
 //		final int PROD_FILE_TYPE_FD                                                          =  444;  // <file_type> ::= FD
 //		final int PROD_FILE_TYPE_SD                                                          =  445;  // <file_type> ::= SD
-//		final int PROD__FILE_DESCRIPTION_CLAUSE_SEQUENCE                                     =  446;  // <_file_description_clause_sequence> ::= 
+//		final int PROD__FILE_DESCRIPTION_CLAUSE_SEQUENCE                                     =  446;  // <_file_description_clause_sequence> ::=
 //		final int PROD__FILE_DESCRIPTION_CLAUSE_SEQUENCE2                                    =  447;  // <_file_description_clause_sequence> ::= <_file_description_clause_sequence> <file_description_clause>
 //		final int PROD_FILE_DESCRIPTION_CLAUSE_EXTERNAL                                      =  448;  // <file_description_clause> ::= <_is> EXTERNAL
 //		final int PROD_FILE_DESCRIPTION_CLAUSE_GLOBAL                                        =  449;  // <file_description_clause> ::= <_is> GLOBAL
@@ -2248,17 +2255,17 @@ public class COBOLParser extends CodeParser
 //		final int PROD_FILE_DESCRIPTION_CLAUSE8                                              =  457;  // <file_description_clause> ::= <code_set_clause>
 //		final int PROD_FILE_DESCRIPTION_CLAUSE9                                              =  458;  // <file_description_clause> ::= <report_clause>
 //		final int PROD_BLOCK_CONTAINS_CLAUSE_BLOCK                                           =  459;  // <block_contains_clause> ::= BLOCK <_contains> <integer> <_to_integer> <_records_or_characters>
-//		final int PROD__RECORDS_OR_CHARACTERS                                                =  460;  // <_records_or_characters> ::= 
+//		final int PROD__RECORDS_OR_CHARACTERS                                                =  460;  // <_records_or_characters> ::=
 //		final int PROD__RECORDS_OR_CHARACTERS_RECORDS                                        =  461;  // <_records_or_characters> ::= RECORDS
 //		final int PROD__RECORDS_OR_CHARACTERS_CHARACTERS                                     =  462;  // <_records_or_characters> ::= CHARACTERS
 //		final int PROD_RECORD_CLAUSE_RECORD                                                  =  463;  // <record_clause> ::= RECORD <_contains> <integer> <_characters>
 //		final int PROD_RECORD_CLAUSE_RECORD_TO                                               =  464;  // <record_clause> ::= RECORD <_contains> <integer> TO <integer> <_characters>
 //		final int PROD_RECORD_CLAUSE_RECORD_VARYING                                          =  465;  // <record_clause> ::= RECORD <_is> VARYING <_in> <_size> <_from_integer> <_to_integer> <_characters> <_record_depending>
-//		final int PROD__RECORD_DEPENDING                                                     =  466;  // <_record_depending> ::= 
+//		final int PROD__RECORD_DEPENDING                                                     =  466;  // <_record_depending> ::=
 //		final int PROD__RECORD_DEPENDING_DEPENDING                                           =  467;  // <_record_depending> ::= DEPENDING <_on> <reference>
-//		final int PROD__FROM_INTEGER                                                         =  468;  // <_from_integer> ::= 
+//		final int PROD__FROM_INTEGER                                                         =  468;  // <_from_integer> ::=
 //		final int PROD__FROM_INTEGER2                                                        =  469;  // <_from_integer> ::= <_from> <integer>
-//		final int PROD__TO_INTEGER                                                           =  470;  // <_to_integer> ::= 
+//		final int PROD__TO_INTEGER                                                           =  470;  // <_to_integer> ::=
 //		final int PROD__TO_INTEGER_TO                                                        =  471;  // <_to_integer> ::= TO <integer>
 //		final int PROD_LABEL_RECORDS_CLAUSE_LABEL                                            =  472;  // <label_records_clause> ::= LABEL <records> <label_option>
 //		final int PROD_VALUE_OF_CLAUSE_VALUE_OF                                              =  473;  // <value_of_clause> ::= VALUE OF <file_id> <_is> <valueof_name>
@@ -2269,7 +2276,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_VALUEOF_NAME2                                                         =  478;  // <valueof_name> ::= <qualified_word>
 //		final int PROD_DATA_RECORDS_CLAUSE_DATA                                              =  479;  // <data_records_clause> ::= DATA <records> <optional_reference_list>
 //		final int PROD_LINAGE_CLAUSE_LINAGE                                                  =  480;  // <linage_clause> ::= LINAGE <_is> <reference_or_literal> <_lines> <_linage_sequence>
-//		final int PROD__LINAGE_SEQUENCE                                                      =  481;  // <_linage_sequence> ::= 
+//		final int PROD__LINAGE_SEQUENCE                                                      =  481;  // <_linage_sequence> ::=
 //		final int PROD__LINAGE_SEQUENCE2                                                     =  482;  // <_linage_sequence> ::= <_linage_sequence> <linage_lines>
 //		final int PROD_LINAGE_LINES                                                          =  483;  // <linage_lines> ::= <linage_footing>
 //		final int PROD_LINAGE_LINES2                                                         =  484;  // <linage_lines> ::= <linage_top>
@@ -2286,25 +2293,25 @@ public class COBOLParser extends CodeParser
 //		final int PROD_U_OR_S_U                                                              =  495;  // <u_or_s> ::= U
 //		final int PROD_U_OR_S_S                                                              =  496;  // <u_or_s> ::= S
 //		final int PROD_CODE_SET_CLAUSE_CODE_SET                                              =  497;  // <code_set_clause> ::= 'CODE_SET' <_is> <alphabet_name> <_for_sub_records_clause>
-//		final int PROD__FOR_SUB_RECORDS_CLAUSE                                               =  498;  // <_for_sub_records_clause> ::= 
+//		final int PROD__FOR_SUB_RECORDS_CLAUSE                                               =  498;  // <_for_sub_records_clause> ::=
 //		final int PROD__FOR_SUB_RECORDS_CLAUSE_FOR                                           =  499;  // <_for_sub_records_clause> ::= FOR <reference_list>
 //		final int PROD_REPORT_CLAUSE                                                         =  500;  // <report_clause> ::= <report_keyword> <rep_name_list>
 //		final int PROD_REPORT_KEYWORD_REPORT                                                 =  501;  // <report_keyword> ::= REPORT <_is>
 //		final int PROD_REPORT_KEYWORD_REPORTS                                                =  502;  // <report_keyword> ::= REPORTS <_are>
 //		final int PROD_REP_NAME_LIST                                                         =  503;  // <rep_name_list> ::= <undefined_word>
 //		final int PROD_REP_NAME_LIST2                                                        =  504;  // <rep_name_list> ::= <rep_name_list> <undefined_word>
-//		final int PROD__COMMUNICATION_SECTION                                                =  505;  // <_communication_section> ::= 
+//		final int PROD__COMMUNICATION_SECTION                                                =  505;  // <_communication_section> ::=
 //		final int PROD__COMMUNICATION_SECTION_COMMUNICATION_SECTION_TOK_DOT                  =  506;  // <_communication_section> ::= COMMUNICATION SECTION 'TOK_DOT' <_communication_description_sequence>
-//		final int PROD__COMMUNICATION_DESCRIPTION_SEQUENCE                                   =  507;  // <_communication_description_sequence> ::= 
+//		final int PROD__COMMUNICATION_DESCRIPTION_SEQUENCE                                   =  507;  // <_communication_description_sequence> ::=
 //		final int PROD__COMMUNICATION_DESCRIPTION_SEQUENCE2                                  =  508;  // <_communication_description_sequence> ::= <_communication_description_sequence> <communication_description>
 //		final int PROD_COMMUNICATION_DESCRIPTION                                             =  509;  // <communication_description> ::= <communication_description_entry> <_record_description_list>
 //		final int PROD_COMMUNICATION_DESCRIPTION_ENTRY_CD_TOK_DOT                            =  510;  // <communication_description_entry> ::= CD <undefined_word> <_communication_description_clause_sequence> 'TOK_DOT'
-//		final int PROD__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE                            =  511;  // <_communication_description_clause_sequence> ::= 
+//		final int PROD__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE                            =  511;  // <_communication_description_clause_sequence> ::=
 //		final int PROD__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE2                           =  512;  // <_communication_description_clause_sequence> ::= <_communication_description_clause_sequence> <communication_description_clause>
 //		final int PROD_COMMUNICATION_DESCRIPTION_CLAUSE_INPUT                                =  513;  // <communication_description_clause> ::= <_for> <_initial> INPUT <_input_cd_clauses>
 //		final int PROD_COMMUNICATION_DESCRIPTION_CLAUSE_OUTPUT                               =  514;  // <communication_description_clause> ::= <_for> OUTPUT <_output_cd_clauses>
 //		final int PROD_COMMUNICATION_DESCRIPTION_CLAUSE_I_O                                  =  515;  // <communication_description_clause> ::= <_for> <_initial> 'I_O' <_i_o_cd_clauses>
-//		final int PROD__INPUT_CD_CLAUSES                                                     =  516;  // <_input_cd_clauses> ::= 
+//		final int PROD__INPUT_CD_CLAUSES                                                     =  516;  // <_input_cd_clauses> ::=
 //		final int PROD__INPUT_CD_CLAUSES2                                                    =  517;  // <_input_cd_clauses> ::= <named_input_cd_clauses>
 //		final int PROD__INPUT_CD_CLAUSES3                                                    =  518;  // <_input_cd_clauses> ::= <unnamed_input_cd_clauses>
 //		final int PROD_NAMED_INPUT_CD_CLAUSES                                                =  519;  // <named_input_cd_clauses> ::= <named_input_cd_clause>
@@ -2321,7 +2328,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_NAMED_INPUT_CD_CLAUSE_STATUS_KEY                                      =  530;  // <named_input_cd_clause> ::= STATUS KEY <_is> <identifier>
 //		final int PROD_NAMED_INPUT_CD_CLAUSE_COUNT                                           =  531;  // <named_input_cd_clause> ::= <_message> COUNT <_is> <identifier>
 //		final int PROD_UNNAMED_INPUT_CD_CLAUSES                                              =  532;  // <unnamed_input_cd_clauses> ::= <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier> <identifier>
-//		final int PROD__OUTPUT_CD_CLAUSES                                                    =  533;  // <_output_cd_clauses> ::= 
+//		final int PROD__OUTPUT_CD_CLAUSES                                                    =  533;  // <_output_cd_clauses> ::=
 //		final int PROD__OUTPUT_CD_CLAUSES2                                                   =  534;  // <_output_cd_clauses> ::= <output_cd_clauses>
 //		final int PROD_OUTPUT_CD_CLAUSES                                                     =  535;  // <output_cd_clauses> ::= <output_cd_clause>
 //		final int PROD_OUTPUT_CD_CLAUSES2                                                    =  536;  // <output_cd_clauses> ::= <output_cd_clauses> <output_cd_clause>
@@ -2332,7 +2339,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_OUTPUT_CD_CLAUSE_ERROR_KEY                                            =  541;  // <output_cd_clause> ::= ERROR KEY <_is> <identifier>
 //		final int PROD_OUTPUT_CD_CLAUSE_DESTINATION                                          =  542;  // <output_cd_clause> ::= DESTINATION <_is> <identifier>
 //		final int PROD_OUTPUT_CD_CLAUSE_SYMBOLIC_DESTINATION                                 =  543;  // <output_cd_clause> ::= SYMBOLIC DESTINATION <_is> <identifier>
-//		final int PROD__I_O_CD_CLAUSES                                                       =  544;  // <_i_o_cd_clauses> ::= 
+//		final int PROD__I_O_CD_CLAUSES                                                       =  544;  // <_i_o_cd_clauses> ::=
 //		final int PROD__I_O_CD_CLAUSES2                                                      =  545;  // <_i_o_cd_clauses> ::= <named_i_o_cd_clauses>
 //		final int PROD__I_O_CD_CLAUSES3                                                      =  546;  // <_i_o_cd_clauses> ::= <unnamed_i_o_cd_clauses>
 //		final int PROD_NAMED_I_O_CD_CLAUSES                                                  =  547;  // <named_i_o_cd_clauses> ::= <named_i_o_cd_clause>
@@ -2344,9 +2351,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_NAMED_I_O_CD_CLAUSE_END_KEY                                           =  553;  // <named_i_o_cd_clause> ::= END KEY <_is> <identifier>
 //		final int PROD_NAMED_I_O_CD_CLAUSE_STATUS_KEY                                        =  554;  // <named_i_o_cd_clause> ::= STATUS KEY <_is> <identifier>
 //		final int PROD_UNNAMED_I_O_CD_CLAUSES                                                =  555;  // <unnamed_i_o_cd_clauses> ::= <identifier> <identifier> <identifier> <identifier> <identifier> <identifier>
-//		final int PROD__WORKING_STORAGE_SECTION                                              =  556;  // <_working_storage_section> ::= 
+//		final int PROD__WORKING_STORAGE_SECTION                                              =  556;  // <_working_storage_section> ::=
 		final int PROD__WORKING_STORAGE_SECTION_WORKING_STORAGE_SECTION_TOK_DOT              =  557;  // <_working_storage_section> ::= 'WORKING_STORAGE' SECTION 'TOK_DOT' <_record_description_list>
-		final int PROD__RECORD_DESCRIPTION_LIST                                              =  558;  // <_record_description_list> ::= 
+		final int PROD__RECORD_DESCRIPTION_LIST                                              =  558;  // <_record_description_list> ::=
 //		final int PROD__RECORD_DESCRIPTION_LIST2                                             =  559;  // <_record_description_list> ::= <record_description_list>
 //		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT                                       =  560;  // <record_description_list> ::= <data_description> 'TOK_DOT'
 		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2                                      =  561;  // <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
@@ -2355,12 +2362,12 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DATA_DESCRIPTION3                                                     =  564;  // <data_description> ::= <condition_name_entry>
 		final int PROD_DATA_DESCRIPTION4                                                     =  565;  // <data_description> ::= <level_number> <_entry_name> <_data_description_clause_sequence>
 //		final int PROD_LEVEL_NUMBER_INTLITERAL                                               =  566;  // <level_number> ::= IntLiteral
-//		final int PROD__FILLER                                                               =  567;  // <_filler> ::= 
+//		final int PROD__FILLER                                                               =  567;  // <_filler> ::=
 //		final int PROD__FILLER_FILLER                                                        =  568;  // <_filler> ::= FILLER
 //		final int PROD__ENTRY_NAME                                                           =  569;  // <_entry_name> ::= <_filler>
 //		final int PROD__ENTRY_NAME2                                                          =  570;  // <_entry_name> ::= <user_entry_name>
 //		final int PROD_USER_ENTRY_NAME                                                       =  571;  // <user_entry_name> ::= <WORD>
-//		final int PROD_CONST_GLOBAL                                                          =  572;  // <const_global> ::= 
+//		final int PROD_CONST_GLOBAL                                                          =  572;  // <const_global> ::=
 		final int PROD_CONST_GLOBAL_GLOBAL                                                   =  573;  // <const_global> ::= <_is> GLOBAL
 //		final int PROD_LIT_OR_LENGTH                                                         =  574;  // <lit_or_length> ::= <literal>
 //		final int PROD_LIT_OR_LENGTH_LENGTH_OF                                               =  575;  // <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
@@ -2388,14 +2395,14 @@ public class COBOLParser extends CodeParser
 //		final int PROD_POINTER_LEN_POINTER                                                   =  597;  // <pointer_len> ::= POINTER
 //		final int PROD_POINTER_LEN_PROGRAM_POINTER                                           =  598;  // <pointer_len> ::= 'PROGRAM_POINTER'
 //		final int PROD_RENAMES_ENTRY_SIXTY_SIX_RENAMES                                       =  599;  // <renames_entry> ::= 'SIXTY_SIX' <user_entry_name> RENAMES <qualified_word> <_renames_thru>
-//		final int PROD__RENAMES_THRU                                                         =  600;  // <_renames_thru> ::= 
+//		final int PROD__RENAMES_THRU                                                         =  600;  // <_renames_thru> ::=
 //		final int PROD__RENAMES_THRU_THRU                                                    =  601;  // <_renames_thru> ::= THRU <qualified_word>
 		final int PROD_CONDITION_NAME_ENTRY_EIGHTY_EIGHT                                     =  602;  // <condition_name_entry> ::= 'EIGHTY_EIGHT' <user_entry_name> <value_clause>
 		final int PROD_CONSTANT_ENTRY_CONSTANT                                               =  603;  // <constant_entry> ::= <level_number> <user_entry_name> CONSTANT <const_global> <constant_source>
 		final int PROD_CONSTANT_ENTRY_SEVENTY_EIGHT                                          =  604;  // <constant_entry> ::= 'SEVENTY_EIGHT' <user_entry_name> <_global_clause> <value_clause>
 //		final int PROD_CONSTANT_SOURCE                                                       =  605;  // <constant_source> ::= <_as> <lit_or_length>
 //		final int PROD_CONSTANT_SOURCE_FROM                                                  =  606;  // <constant_source> ::= FROM <WORD>
-//		final int PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE                                     =  607;  // <_data_description_clause_sequence> ::= 
+//		final int PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE                                     =  607;  // <_data_description_clause_sequence> ::=
 		final int PROD__DATA_DESCRIPTION_CLAUSE_SEQUENCE2                                    =  608;  // <_data_description_clause_sequence> ::= <_data_description_clause_sequence> <data_description_clause>
 //		final int PROD_DATA_DESCRIPTION_CLAUSE                                               =  609;  // <data_description_clause> ::= <redefines_clause>
 //		final int PROD_DATA_DESCRIPTION_CLAUSE2                                              =  610;  // <data_description_clause> ::= <external_clause>
@@ -2412,9 +2419,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DATA_DESCRIPTION_CLAUSE13                                             =  621;  // <data_description_clause> ::= <any_length_clause>
 		final int PROD_REDEFINES_CLAUSE_REDEFINES                                            =  622;  // <redefines_clause> ::= REDEFINES <identifier_1>
 		final int PROD_EXTERNAL_CLAUSE_EXTERNAL                                              =  623;  // <external_clause> ::= <_is> EXTERNAL <_as_extname>
-//		final int PROD__AS_EXTNAME                                                           =  624;  // <_as_extname> ::= 
+//		final int PROD__AS_EXTNAME                                                           =  624;  // <_as_extname> ::=
 //		final int PROD__AS_EXTNAME_AS                                                        =  625;  // <_as_extname> ::= AS <LITERAL_TOK>
-//		final int PROD__GLOBAL_CLAUSE                                                        =  626;  // <_global_clause> ::= 
+//		final int PROD__GLOBAL_CLAUSE                                                        =  626;  // <_global_clause> ::=
 //		final int PROD__GLOBAL_CLAUSE2                                                       =  627;  // <_global_clause> ::= <global_clause>
 		final int PROD_GLOBAL_CLAUSE_GLOBAL                                                  =  628;  // <global_clause> ::= <_is> GLOBAL
 		final int PROD_PICTURE_CLAUSE_PICTURE_DEF                                            =  629;  // <picture_clause> ::= 'Picture_Def'
@@ -2463,26 +2470,26 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SIGN_CLAUSE_LEADING                                                   =  672;  // <sign_clause> ::= <_sign_is> LEADING <flag_separate>
 //		final int PROD_SIGN_CLAUSE_TRAILING                                                  =  673;  // <sign_clause> ::= <_sign_is> TRAILING <flag_separate>
 //		final int PROD_REPORT_OCCURS_CLAUSE_OCCURS                                           =  674;  // <report_occurs_clause> ::= OCCURS <integer_or_word> <_occurs_to_integer> <_times> <_occurs_depending> <_occurs_step>
-//		final int PROD__OCCURS_STEP                                                          =  675;  // <_occurs_step> ::= 
+//		final int PROD__OCCURS_STEP                                                          =  675;  // <_occurs_step> ::=
 //		final int PROD__OCCURS_STEP_STEP                                                     =  676;  // <_occurs_step> ::= STEP <integer_or_word>
 		final int PROD_OCCURS_CLAUSE_OCCURS                                                  =  677;  // <occurs_clause> ::= OCCURS <integer_or_word> <_occurs_to_integer> <_times> <_occurs_depending> <_occurs_keys_and_indexed>
 //		final int PROD_OCCURS_CLAUSE_OCCURS_UNBOUNDED_DEPENDING                              =  678;  // <occurs_clause> ::= OCCURS <_occurs_integer_to> UNBOUNDED <_times> DEPENDING <_on> <reference> <_occurs_keys_and_indexed>
 //		final int PROD_OCCURS_CLAUSE_OCCURS_DYNAMIC                                          =  679;  // <occurs_clause> ::= OCCURS DYNAMIC <_capacity_in> <_occurs_from_integer> <_occurs_to_integer> <_occurs_initialized> <_occurs_keys_and_indexed>
-//		final int PROD__OCCURS_TO_INTEGER                                                    =  680;  // <_occurs_to_integer> ::= 
+//		final int PROD__OCCURS_TO_INTEGER                                                    =  680;  // <_occurs_to_integer> ::=
 		final int PROD__OCCURS_TO_INTEGER_TO                                                 =  681;  // <_occurs_to_integer> ::= TO <integer_or_word>
-//		final int PROD__OCCURS_FROM_INTEGER                                                  =  682;  // <_occurs_from_integer> ::= 
+//		final int PROD__OCCURS_FROM_INTEGER                                                  =  682;  // <_occurs_from_integer> ::=
 //		final int PROD__OCCURS_FROM_INTEGER_FROM                                             =  683;  // <_occurs_from_integer> ::= FROM <integer_or_word>
-//		final int PROD__OCCURS_INTEGER_TO                                                    =  684;  // <_occurs_integer_to> ::= 
+//		final int PROD__OCCURS_INTEGER_TO                                                    =  684;  // <_occurs_integer_to> ::=
 //		final int PROD__OCCURS_INTEGER_TO_TO                                                 =  685;  // <_occurs_integer_to> ::= <integer_or_word> TO
 //		final int PROD_INTEGER_OR_WORD                                                       =  686;  // <integer_or_word> ::= <integer>
 //		final int PROD_INTEGER_OR_WORD_COBOLWORD                                             =  687;  // <integer_or_word> ::= COBOLWord
-//		final int PROD__OCCURS_DEPENDING                                                     =  688;  // <_occurs_depending> ::= 
+//		final int PROD__OCCURS_DEPENDING                                                     =  688;  // <_occurs_depending> ::=
 //		final int PROD__OCCURS_DEPENDING_DEPENDING                                           =  689;  // <_occurs_depending> ::= DEPENDING <_on> <reference>
-//		final int PROD__CAPACITY_IN                                                          =  690;  // <_capacity_in> ::= 
+//		final int PROD__CAPACITY_IN                                                          =  690;  // <_capacity_in> ::=
 //		final int PROD__CAPACITY_IN_CAPACITY                                                 =  691;  // <_capacity_in> ::= CAPACITY <_in> <WORD>
-//		final int PROD__OCCURS_INITIALIZED                                                   =  692;  // <_occurs_initialized> ::= 
+//		final int PROD__OCCURS_INITIALIZED                                                   =  692;  // <_occurs_initialized> ::=
 //		final int PROD__OCCURS_INITIALIZED_INITIALIZED                                       =  693;  // <_occurs_initialized> ::= INITIALIZED
-//		final int PROD__OCCURS_KEYS_AND_INDEXED                                              =  694;  // <_occurs_keys_and_indexed> ::= 
+//		final int PROD__OCCURS_KEYS_AND_INDEXED                                              =  694;  // <_occurs_keys_and_indexed> ::=
 		final int PROD__OCCURS_KEYS_AND_INDEXED2                                             =  695;  // <_occurs_keys_and_indexed> ::= <occurs_keys> <occurs_indexed>
 		final int PROD__OCCURS_KEYS_AND_INDEXED3                                             =  696;  // <_occurs_keys_and_indexed> ::= <occurs_indexed> <occurs_keys>
 		final int PROD__OCCURS_KEYS_AND_INDEXED4                                             =  697;  // <_occurs_keys_and_indexed> ::= <occurs_indexed>
@@ -2493,7 +2500,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_OCCURS_KEY_FIELD                                                      =  702;  // <occurs_key_field> ::= <ascending_or_descending> <_key> <_is> <reference_list>
 //		final int PROD_ASCENDING_OR_DESCENDING_ASCENDING                                     =  703;  // <ascending_or_descending> ::= ASCENDING
 //		final int PROD_ASCENDING_OR_DESCENDING_DESCENDING                                    =  704;  // <ascending_or_descending> ::= DESCENDING
-//		final int PROD__OCCURS_INDEXED                                                       =  705;  // <_occurs_indexed> ::= 
+//		final int PROD__OCCURS_INDEXED                                                       =  705;  // <_occurs_indexed> ::=
 //		final int PROD__OCCURS_INDEXED2                                                      =  706;  // <_occurs_indexed> ::= <occurs_indexed>
 		final int PROD_OCCURS_INDEXED_INDEXED                                                =  707;  // <occurs_indexed> ::= INDEXED <_by> <occurs_index_list>
 //		final int PROD_OCCURS_INDEX_LIST                                                     =  708;  // <occurs_index_list> ::= <occurs_index>
@@ -2509,20 +2516,20 @@ public class COBOLParser extends CodeParser
 //		final int PROD_VALUE_ITEM                                                            =  718;  // <value_item> ::= <lit_or_length>
 //		final int PROD_VALUE_ITEM_THRU                                                       =  719;  // <value_item> ::= <lit_or_length> THRU <lit_or_length>
 		final int PROD_VALUE_ITEM_COMMA_DELIM                                                =  720;  // <value_item> ::= 'COMMA_DELIM'
-//		final int PROD__FALSE_IS                                                             =  721;  // <_false_is> ::= 
+//		final int PROD__FALSE_IS                                                             =  721;  // <_false_is> ::=
 //		final int PROD__FALSE_IS_TOK_FALSE                                                   =  722;  // <_false_is> ::= <_when_set_to> 'TOK_FALSE' <_is> <lit_or_length>
 		final int PROD_ANY_LENGTH_CLAUSE_ANY_LENGTH                                          =  723;  // <any_length_clause> ::= ANY LENGTH
 		final int PROD_ANY_LENGTH_CLAUSE_ANY_NUMERIC                                         =  724;  // <any_length_clause> ::= ANY NUMERIC
-//		final int PROD__LOCAL_STORAGE_SECTION                                                =  725;  // <_local_storage_section> ::= 
+//		final int PROD__LOCAL_STORAGE_SECTION                                                =  725;  // <_local_storage_section> ::=
 		final int PROD__LOCAL_STORAGE_SECTION_LOCAL_STORAGE_SECTION_TOK_DOT                  =  726;  // <_local_storage_section> ::= 'LOCAL_STORAGE' SECTION 'TOK_DOT' <_record_description_list>
-//		final int PROD__LINKAGE_SECTION                                                      =  727;  // <_linkage_section> ::= 
+//		final int PROD__LINKAGE_SECTION                                                      =  727;  // <_linkage_section> ::=
 		final int PROD__LINKAGE_SECTION_LINKAGE_SECTION_TOK_DOT                              =  728;  // <_linkage_section> ::= LINKAGE SECTION 'TOK_DOT' <_record_description_list>
-//		final int PROD__REPORT_SECTION                                                       =  729;  // <_report_section> ::= 
+//		final int PROD__REPORT_SECTION                                                       =  729;  // <_report_section> ::=
 		final int PROD__REPORT_SECTION_REPORT_SECTION_TOK_DOT                                =  730;  // <_report_section> ::= REPORT SECTION 'TOK_DOT' <_report_description_sequence>
-//		final int PROD__REPORT_DESCRIPTION_SEQUENCE                                          =  731;  // <_report_description_sequence> ::= 
+//		final int PROD__REPORT_DESCRIPTION_SEQUENCE                                          =  731;  // <_report_description_sequence> ::=
 //		final int PROD__REPORT_DESCRIPTION_SEQUENCE2                                         =  732;  // <_report_description_sequence> ::= <_report_description_sequence> <report_description>
 //		final int PROD_REPORT_DESCRIPTION_RD_TOK_DOT                                         =  733;  // <report_description> ::= RD <report_name> <_report_description_options> 'TOK_DOT' <_report_group_description_list>
-//		final int PROD__REPORT_DESCRIPTION_OPTIONS                                           =  734;  // <_report_description_options> ::= 
+//		final int PROD__REPORT_DESCRIPTION_OPTIONS                                           =  734;  // <_report_description_options> ::=
 //		final int PROD__REPORT_DESCRIPTION_OPTIONS2                                          =  735;  // <_report_description_options> ::= <_report_description_options> <report_description_option>
 //		final int PROD_REPORT_DESCRIPTION_OPTION_GLOBAL                                      =  736;  // <report_description_option> ::= <_is> GLOBAL
 //		final int PROD_REPORT_DESCRIPTION_OPTION_CODE                                        =  737;  // <report_description_option> ::= CODE <_is> <id_or_lit>
@@ -2536,7 +2543,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_PAGE_LINE_COLUMN                                                      =  745;  // <page_line_column> ::= <report_integer>
 //		final int PROD_PAGE_LINE_COLUMN2                                                     =  746;  // <page_line_column> ::= <report_integer> <line_or_lines> <report_integer> <columns_or_cols>
 //		final int PROD_PAGE_LINE_COLUMN3                                                     =  747;  // <page_line_column> ::= <report_integer> <line_or_lines>
-//		final int PROD__PAGE_HEADING_LIST                                                    =  748;  // <_page_heading_list> ::= 
+//		final int PROD__PAGE_HEADING_LIST                                                    =  748;  // <_page_heading_list> ::=
 //		final int PROD__PAGE_HEADING_LIST2                                                   =  749;  // <_page_heading_list> ::= <_page_heading_list> <page_detail>
 //		final int PROD_PAGE_DETAIL                                                           =  750;  // <page_detail> ::= <heading_clause>
 //		final int PROD_PAGE_DETAIL2                                                          =  751;  // <page_detail> ::= <first_detail>
@@ -2548,10 +2555,10 @@ public class COBOLParser extends CodeParser
 //		final int PROD_LAST_HEADING_LAST                                                     =  757;  // <last_heading> ::= LAST <ch_keyword> <_is> <report_integer>
 //		final int PROD_LAST_DETAIL_LAST                                                      =  758;  // <last_detail> ::= LAST <detail_keyword> <_is> <report_integer>
 //		final int PROD_FOOTING_CLAUSE_FOOTING                                                =  759;  // <footing_clause> ::= FOOTING <_is> <report_integer>
-//		final int PROD__REPORT_GROUP_DESCRIPTION_LIST                                        =  760;  // <_report_group_description_list> ::= 
+//		final int PROD__REPORT_GROUP_DESCRIPTION_LIST                                        =  760;  // <_report_group_description_list> ::=
 //		final int PROD__REPORT_GROUP_DESCRIPTION_LIST2                                       =  761;  // <_report_group_description_list> ::= <_report_group_description_list> <report_group_description_entry>
 //		final int PROD_REPORT_GROUP_DESCRIPTION_ENTRY_TOK_DOT                                =  762;  // <report_group_description_entry> ::= <level_number> <_entry_name> <_report_group_options> 'TOK_DOT'
-//		final int PROD__REPORT_GROUP_OPTIONS                                                 =  763;  // <_report_group_options> ::= 
+//		final int PROD__REPORT_GROUP_OPTIONS                                                 =  763;  // <_report_group_options> ::=
 //		final int PROD__REPORT_GROUP_OPTIONS2                                                =  764;  // <_report_group_options> ::= <_report_group_options> <report_group_option>
 //		final int PROD_REPORT_GROUP_OPTION                                                   =  765;  // <report_group_option> ::= <type_clause>
 //		final int PROD_REPORT_GROUP_OPTION2                                                  =  766;  // <report_group_option> ::= <next_group_clause>
@@ -2577,14 +2584,14 @@ public class COBOLParser extends CodeParser
 //		final int PROD_TYPE_OPTION5                                                          =  786;  // <type_option> ::= <cf_keyword> <_control_final>
 //		final int PROD_TYPE_OPTION6                                                          =  787;  // <type_option> ::= <pf_keyword>
 //		final int PROD_TYPE_OPTION7                                                          =  788;  // <type_option> ::= <rf_keyword>
-//		final int PROD__CONTROL_FINAL                                                        =  789;  // <_control_final> ::= 
+//		final int PROD__CONTROL_FINAL                                                        =  789;  // <_control_final> ::=
 //		final int PROD__CONTROL_FINAL2                                                       =  790;  // <_control_final> ::= <identifier> <_or_page>
 //		final int PROD__CONTROL_FINAL_FINAL                                                  =  791;  // <_control_final> ::= FINAL <_or_page>
-//		final int PROD__OR_PAGE                                                              =  792;  // <_or_page> ::= 
+//		final int PROD__OR_PAGE                                                              =  792;  // <_or_page> ::=
 //		final int PROD__OR_PAGE_OR_PAGE                                                      =  793;  // <_or_page> ::= OR PAGE
 //		final int PROD_NEXT_GROUP_CLAUSE_NEXT_GROUP                                          =  794;  // <next_group_clause> ::= NEXT GROUP <_is> <line_or_plus>
 //		final int PROD_SUM_CLAUSE_LIST_SUM                                                   =  795;  // <sum_clause_list> ::= SUM <_of> <report_x_list> <_reset_clause>
-//		final int PROD__RESET_CLAUSE                                                         =  796;  // <_reset_clause> ::= 
+//		final int PROD__RESET_CLAUSE                                                         =  796;  // <_reset_clause> ::=
 //		final int PROD__RESET_CLAUSE_RESET                                                   =  797;  // <_reset_clause> ::= RESET <_on> <data_or_final>
 //		final int PROD_DATA_OR_FINAL                                                         =  798;  // <data_or_final> ::= <identifier>
 //		final int PROD_DATA_OR_FINAL_FINAL                                                   =  799;  // <data_or_final> ::= FINAL
@@ -2608,15 +2615,15 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SOURCE_CLAUSE_SOURCE                                                  =  817;  // <source_clause> ::= SOURCE <_is> <arith_x> <flag_rounded>
 //		final int PROD_GROUP_INDICATE_CLAUSE_GROUP                                           =  818;  // <group_indicate_clause> ::= GROUP <_indicate>
 //		final int PROD_REPORT_USAGE_CLAUSE_USAGE_DISPLAY                                     =  819;  // <report_usage_clause> ::= USAGE <_is> DISPLAY
-//		final int PROD__SCREEN_SECTION                                                       =  820;  // <_screen_section> ::= 
+//		final int PROD__SCREEN_SECTION                                                       =  820;  // <_screen_section> ::=
 		final int PROD__SCREEN_SECTION_SCREEN_SECTION_TOK_DOT                                =  821;  // <_screen_section> ::= SCREEN SECTION 'TOK_DOT' <_screen_description_list>
-//		final int PROD__SCREEN_DESCRIPTION_LIST                                              =  822;  // <_screen_description_list> ::= 
+//		final int PROD__SCREEN_DESCRIPTION_LIST                                              =  822;  // <_screen_description_list> ::=
 //		final int PROD__SCREEN_DESCRIPTION_LIST2                                             =  823;  // <_screen_description_list> ::= <screen_description_list>
 //		final int PROD_SCREEN_DESCRIPTION_LIST_TOK_DOT                                       =  824;  // <screen_description_list> ::= <screen_description> 'TOK_DOT'
 //		final int PROD_SCREEN_DESCRIPTION_LIST_TOK_DOT2                                      =  825;  // <screen_description_list> ::= <screen_description_list> <screen_description> 'TOK_DOT'
 //		final int PROD_SCREEN_DESCRIPTION                                                    =  826;  // <screen_description> ::= <constant_entry>
 //		final int PROD_SCREEN_DESCRIPTION2                                                   =  827;  // <screen_description> ::= <level_number> <_entry_name> <_screen_options>
-//		final int PROD__SCREEN_OPTIONS                                                       =  828;  // <_screen_options> ::= 
+//		final int PROD__SCREEN_OPTIONS                                                       =  828;  // <_screen_options> ::=
 //		final int PROD__SCREEN_OPTIONS2                                                      =  829;  // <_screen_options> ::= <_screen_options> <screen_option>
 //		final int PROD_SCREEN_OPTION_BLANK_LINE                                              =  830;  // <screen_option> ::= BLANK LINE
 //		final int PROD_SCREEN_OPTION_BLANK_SCREEN                                            =  831;  // <screen_option> ::= BLANK SCREEN
@@ -2664,55 +2671,55 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MINUS_MINUS_MINUS                                                     =  873;  // <minus_minus> ::= MINUS
 //		final int PROD_MINUS_MINUS_TOK_MINUS                                                 =  874;  // <minus_minus> ::= 'TOK_MINUS'
 //		final int PROD_SCREEN_LINE_NUMBER                                                    =  875;  // <screen_line_number> ::= <_number> <_is> <_screen_line_plus_minus> <num_id_or_lit>
-//		final int PROD__SCREEN_LINE_PLUS_MINUS                                               =  876;  // <_screen_line_plus_minus> ::= 
+//		final int PROD__SCREEN_LINE_PLUS_MINUS                                               =  876;  // <_screen_line_plus_minus> ::=
 //		final int PROD__SCREEN_LINE_PLUS_MINUS2                                              =  877;  // <_screen_line_plus_minus> ::= <plus_plus>
 //		final int PROD__SCREEN_LINE_PLUS_MINUS3                                              =  878;  // <_screen_line_plus_minus> ::= <minus_minus>
 //		final int PROD_SCREEN_COL_NUMBER                                                     =  879;  // <screen_col_number> ::= <_number> <_is> <_screen_col_plus_minus> <num_id_or_lit>
-//		final int PROD__SCREEN_COL_PLUS_MINUS                                                =  880;  // <_screen_col_plus_minus> ::= 
+//		final int PROD__SCREEN_COL_PLUS_MINUS                                                =  880;  // <_screen_col_plus_minus> ::=
 //		final int PROD__SCREEN_COL_PLUS_MINUS2                                               =  881;  // <_screen_col_plus_minus> ::= <plus_plus>
 //		final int PROD__SCREEN_COL_PLUS_MINUS3                                               =  882;  // <_screen_col_plus_minus> ::= <minus_minus>
 //		final int PROD_SCREEN_OCCURS_CLAUSE_OCCURS                                           =  883;  // <screen_occurs_clause> ::= OCCURS <integer> <_times>
 //		final int PROD_SCREEN_GLOBAL_CLAUSE_GLOBAL                                           =  884;  // <screen_global_clause> ::= <_is> GLOBAL
-//		final int PROD__PROCEDURE_DIVISION                                                   =  885;  // <_procedure_division> ::= 
+//		final int PROD__PROCEDURE_DIVISION                                                   =  885;  // <_procedure_division> ::=
 //		final int PROD__PROCEDURE_DIVISION_PROCEDURE_DIVISION_TOK_DOT                        =  886;  // <_procedure_division> ::= PROCEDURE DIVISION <_mnemonic_conv> <_procedure_using_chaining> <_procedure_returning> 'TOK_DOT' <_procedure_declaratives> <_procedure_list>
 //		final int PROD__PROCEDURE_DIVISION_TOK_DOT                                           =  887;  // <_procedure_division> ::= <statements> 'TOK_DOT' <_procedure_list>
-//		final int PROD__PROCEDURE_USING_CHAINING                                             =  888;  // <_procedure_using_chaining> ::= 
+//		final int PROD__PROCEDURE_USING_CHAINING                                             =  888;  // <_procedure_using_chaining> ::=
 		final int PROD__PROCEDURE_USING_CHAINING_USING                                       =  889;  // <_procedure_using_chaining> ::= USING <procedure_param_list>
 //		final int PROD__PROCEDURE_USING_CHAINING_CHAINING                                    =  890;  // <_procedure_using_chaining> ::= CHAINING <procedure_param_list>
 //		final int PROD_PROCEDURE_PARAM_LIST                                                  =  891;  // <procedure_param_list> ::= <procedure_param>
 //		final int PROD_PROCEDURE_PARAM_LIST2                                                 =  892;  // <procedure_param_list> ::= <procedure_param_list> <procedure_param>
 		final int PROD_PROCEDURE_PARAM                                                       =  893;  // <procedure_param> ::= <_procedure_type> <_size_optional> <_procedure_optional> <WORD>
 //		final int PROD_PROCEDURE_PARAM_COMMA_DELIM                                           =  894;  // <procedure_param> ::= 'COMMA_DELIM'
-//		final int PROD__PROCEDURE_TYPE                                                       =  895;  // <_procedure_type> ::= 
+//		final int PROD__PROCEDURE_TYPE                                                       =  895;  // <_procedure_type> ::=
 //		final int PROD__PROCEDURE_TYPE_REFERENCE                                             =  896;  // <_procedure_type> ::= <_by> REFERENCE
 //		final int PROD__PROCEDURE_TYPE_VALUE                                                 =  897;  // <_procedure_type> ::= <_by> VALUE
-//		final int PROD__SIZE_OPTIONAL                                                        =  898;  // <_size_optional> ::= 
+//		final int PROD__SIZE_OPTIONAL                                                        =  898;  // <_size_optional> ::=
 //		final int PROD__SIZE_OPTIONAL_SIZE_AUTO                                              =  899;  // <_size_optional> ::= SIZE <_is> AUTO
 //		final int PROD__SIZE_OPTIONAL_SIZE_DEFAULT                                           =  900;  // <_size_optional> ::= SIZE <_is> DEFAULT
 //		final int PROD__SIZE_OPTIONAL_UNSIGNED_SIZE_AUTO                                     =  901;  // <_size_optional> ::= UNSIGNED SIZE <_is> AUTO
 //		final int PROD__SIZE_OPTIONAL_UNSIGNED                                               =  902;  // <_size_optional> ::= UNSIGNED <size_is_integer>
 //		final int PROD__SIZE_OPTIONAL2                                                       =  903;  // <_size_optional> ::= <size_is_integer>
 //		final int PROD_SIZE_IS_INTEGER_SIZE                                                  =  904;  // <size_is_integer> ::= SIZE <_is> <integer>
-//		final int PROD__PROCEDURE_OPTIONAL                                                   =  905;  // <_procedure_optional> ::= 
+//		final int PROD__PROCEDURE_OPTIONAL                                                   =  905;  // <_procedure_optional> ::=
 //		final int PROD__PROCEDURE_OPTIONAL_OPTIONAL                                          =  906;  // <_procedure_optional> ::= OPTIONAL
-//		final int PROD__PROCEDURE_RETURNING                                                  =  907;  // <_procedure_returning> ::= 
+//		final int PROD__PROCEDURE_RETURNING                                                  =  907;  // <_procedure_returning> ::=
 //		final int PROD__PROCEDURE_RETURNING_RETURNING_OMITTED                                =  908;  // <_procedure_returning> ::= RETURNING OMITTED
 		final int PROD__PROCEDURE_RETURNING_RETURNING                                        =  909;  // <_procedure_returning> ::= RETURNING <WORD>
-//		final int PROD__PROCEDURE_DECLARATIVES                                               =  910;  // <_procedure_declaratives> ::= 
+//		final int PROD__PROCEDURE_DECLARATIVES                                               =  910;  // <_procedure_declaratives> ::=
 //		final int PROD__PROCEDURE_DECLARATIVES_DECLARATIVES_TOK_DOT_END_DECLARATIVES_TOK_DOT =  911;  // <_procedure_declaratives> ::= DECLARATIVES 'TOK_DOT' <_procedure_list> END DECLARATIVES 'TOK_DOT'
-//		final int PROD__PROCEDURE_LIST                                                       =  912;  // <_procedure_list> ::= 
+//		final int PROD__PROCEDURE_LIST                                                       =  912;  // <_procedure_list> ::=
 //		final int PROD__PROCEDURE_LIST2                                                      =  913;  // <_procedure_list> ::= <_procedure_list> <procedure>
 //		final int PROD_PROCEDURE                                                             =  914;  // <procedure> ::= <section_header>
 //		final int PROD_PROCEDURE2                                                            =  915;  // <procedure> ::= <paragraph_header>
 		final int PROD_PROCEDURE_TOK_DOT                                                     =  916;  // <procedure> ::= <statements> 'TOK_DOT'
 		final int PROD_PROCEDURE_TOK_DOT2                                                    =  917;  // <procedure> ::= 'TOK_DOT'
 		final int PROD_SECTION_HEADER_SECTION_TOK_DOT                                        =  918;  // <section_header> ::= <WORD> SECTION <_segment> 'TOK_DOT' <_use_statement>
-//		final int PROD__USE_STATEMENT                                                        =  919;  // <_use_statement> ::= 
+//		final int PROD__USE_STATEMENT                                                        =  919;  // <_use_statement> ::=
 //		final int PROD__USE_STATEMENT_TOK_DOT                                                =  920;  // <_use_statement> ::= <use_statement> 'TOK_DOT'
 		final int PROD_PARAGRAPH_HEADER_TOK_DOT                                              =  921;  // <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
 //		final int PROD_INTLITERALORWORD_INTLITERAL                                           =  922;  // <IntLiteral or WORD> ::= IntLiteral
 //		final int PROD_INTLITERALORWORD                                                      =  923;  // <IntLiteral or WORD> ::= <WORD>
-//		final int PROD__SEGMENT                                                              =  924;  // <_segment> ::= 
+//		final int PROD__SEGMENT                                                              =  924;  // <_segment> ::=
 //		final int PROD__SEGMENT2                                                             =  925;  // <_segment> ::= <integer>
 //		final int PROD_STATEMENT_LIST                                                        =  926;  // <statement_list> ::= <statements>
 //		final int PROD_STATEMENTS                                                            =  927;  // <statements> ::= <statement>
@@ -2795,7 +2802,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_ACCEPT_BODY_COUNT                                                     = 1004;  // <accept_body> ::= <cd_name> <_message> COUNT
 //		final int PROD_ACCP_IDENTIFIER                                                       = 1005;  // <accp_identifier> ::= <identifier>
 //		final int PROD_ACCP_IDENTIFIER_OMITTED                                               = 1006;  // <accp_identifier> ::= OMITTED
-//		final int PROD__ACCEPT_CLAUSES                                                       = 1007;  // <_accept_clauses> ::= 
+//		final int PROD__ACCEPT_CLAUSES                                                       = 1007;  // <_accept_clauses> ::=
 //		final int PROD__ACCEPT_CLAUSES2                                                      = 1008;  // <_accept_clauses> ::= <accept_clauses>
 //		final int PROD_ACCEPT_CLAUSES                                                        = 1009;  // <accept_clauses> ::= <accept_clause>
 //		final int PROD_ACCEPT_CLAUSES2                                                       = 1010;  // <accept_clauses> ::= <accept_clauses> <accept_clause>
@@ -2849,31 +2856,31 @@ public class COBOLParser extends CodeParser
 //		final int PROD_REVERSE_VIDEO_REVERSE                                                 = 1058;  // <reverse_video> ::= REVERSE
 //		final int PROD_UPDATE_DEFAULT_UPDATE                                                 = 1059;  // <update_default> ::= UPDATE
 //		final int PROD_UPDATE_DEFAULT_DEFAULT                                                = 1060;  // <update_default> ::= DEFAULT
-//		final int PROD_END_ACCEPT                                                            = 1061;  // <end_accept> ::= 
+//		final int PROD_END_ACCEPT                                                            = 1061;  // <end_accept> ::=
 //		final int PROD_END_ACCEPT_END_ACCEPT                                                 = 1062;  // <end_accept> ::= 'END_ACCEPT'
 		final int PROD_ADD_STATEMENT_ADD                                                     = 1063;  // <add_statement> ::= ADD <add_body> <end_add>
 		final int PROD_ADD_BODY_TO                                                           = 1064;  // <add_body> ::= <x_list> TO <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_ADD_BODY_GIVING                                                       = 1065;  // <add_body> ::= <x_list> <_add_to> GIVING <arithmetic_x_list> <on_size_error_phrases>
 //		final int PROD_ADD_BODY_CORRESPONDING_TO                                             = 1066;  // <add_body> ::= CORRESPONDING <identifier> TO <identifier> <flag_rounded> <on_size_error_phrases>
 //		final int PROD_ADD_BODY_TABLE_TO                                                     = 1067;  // <add_body> ::= TABLE <table_identifier> TO <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
-//		final int PROD__ADD_TO                                                               = 1068;  // <_add_to> ::= 
+//		final int PROD__ADD_TO                                                               = 1068;  // <_add_to> ::=
 //		final int PROD__ADD_TO_TO                                                            = 1069;  // <_add_to> ::= TO <x>
-//		final int PROD_END_ADD                                                               = 1070;  // <end_add> ::= 
+//		final int PROD_END_ADD                                                               = 1070;  // <end_add> ::=
 //		final int PROD_END_ADD_END_ADD                                                       = 1071;  // <end_add> ::= 'END_ADD'
 //		final int PROD_ALLOCATE_STATEMENT_ALLOCATE                                           = 1072;  // <allocate_statement> ::= ALLOCATE <allocate_body>
 //		final int PROD_ALLOCATE_BODY                                                         = 1073;  // <allocate_body> ::= <identifier> <flag_initialized> <allocate_returning>
 //		final int PROD_ALLOCATE_BODY_CHARACTERS                                              = 1074;  // <allocate_body> ::= <exp> CHARACTERS <flag_initialized_to> <allocate_returning>
-//		final int PROD_ALLOCATE_RETURNING                                                    = 1075;  // <allocate_returning> ::= 
+//		final int PROD_ALLOCATE_RETURNING                                                    = 1075;  // <allocate_returning> ::=
 //		final int PROD_ALLOCATE_RETURNING_RETURNING                                          = 1076;  // <allocate_returning> ::= RETURNING <target_x>
 //		final int PROD_ALTER_STATEMENT_ALTER                                                 = 1077;  // <alter_statement> ::= ALTER <alter_body>
 //		final int PROD_ALTER_BODY                                                            = 1078;  // <alter_body> ::= <alter_entry>
 //		final int PROD_ALTER_BODY2                                                           = 1079;  // <alter_body> ::= <alter_body> <alter_entry>
 //		final int PROD_ALTER_ENTRY_TO                                                        = 1080;  // <alter_entry> ::= <procedure_name> TO <_proceed_to> <procedure_name>
-//		final int PROD__PROCEED_TO                                                           = 1081;  // <_proceed_to> ::= 
+//		final int PROD__PROCEED_TO                                                           = 1081;  // <_proceed_to> ::=
 //		final int PROD__PROCEED_TO_PROCEED_TO                                                = 1082;  // <_proceed_to> ::= PROCEED TO
 		final int PROD_CALL_STATEMENT_CALL                                                   = 1083;  // <call_statement> ::= CALL <call_body> <end_call>
 //		final int PROD_CALL_BODY                                                             = 1084;  // <call_body> ::= <_mnemonic_conv> <program_or_prototype> <call_using> <call_returning> <call_exception_phrases>
-//		final int PROD__MNEMONIC_CONV                                                        = 1085;  // <_mnemonic_conv> ::= 
+//		final int PROD__MNEMONIC_CONV                                                        = 1085;  // <_mnemonic_conv> ::=
 //		final int PROD__MNEMONIC_CONV_STATIC                                                 = 1086;  // <_mnemonic_conv> ::= STATIC
 //		final int PROD__MNEMONIC_CONV_STDCALL                                                = 1087;  // <_mnemonic_conv> ::= STDCALL
 //		final int PROD__MNEMONIC_CONV_TOK_EXTERN                                             = 1088;  // <_mnemonic_conv> ::= 'TOK_EXTERN'
@@ -2882,18 +2889,18 @@ public class COBOLParser extends CodeParser
 //		final int PROD_PROGRAM_OR_PROTOTYPE2                                                 = 1091;  // <program_or_prototype> ::= <id_or_lit_or_func_as> <PROGRAM_NAME>
 //		final int PROD_PROGRAM_OR_PROTOTYPE_AS_NESTED                                        = 1092;  // <program_or_prototype> ::= <LITERAL_TOK> AS NESTED
 //		final int PROD_ID_OR_LIT_OR_FUNC_AS_AS                                               = 1093;  // <id_or_lit_or_func_as> ::= <id_or_lit_or_func> AS
-//		final int PROD_CALL_USING                                                            = 1094;  // <call_using> ::= 
+//		final int PROD_CALL_USING                                                            = 1094;  // <call_using> ::=
 //		final int PROD_CALL_USING_USING                                                      = 1095;  // <call_using> ::= USING <call_param_list>
 //		final int PROD_CALL_PARAM_LIST                                                       = 1096;  // <call_param_list> ::= <call_param>
 //		final int PROD_CALL_PARAM_LIST2                                                      = 1097;  // <call_param_list> ::= <call_param_list> <call_param>
 		final int PROD_CALL_PARAM_OMITTED                                                    = 1098;  // <call_param> ::= <call_type> OMITTED
 		final int PROD_CALL_PARAM                                                            = 1099;  // <call_param> ::= <call_type> <_size_optional> <call_x>
 //		final int PROD_CALL_PARAM_COMMA_DELIM                                                = 1100;  // <call_param> ::= 'COMMA_DELIM'
-//		final int PROD_CALL_TYPE                                                             = 1101;  // <call_type> ::= 
+//		final int PROD_CALL_TYPE                                                             = 1101;  // <call_type> ::=
 //		final int PROD_CALL_TYPE_REFERENCE                                                   = 1102;  // <call_type> ::= <_by> REFERENCE
 //		final int PROD_CALL_TYPE_CONTENT                                                     = 1103;  // <call_type> ::= <_by> CONTENT
 //		final int PROD_CALL_TYPE_VALUE                                                       = 1104;  // <call_type> ::= <_by> VALUE
-//		final int PROD_CALL_RETURNING                                                        = 1105;  // <call_returning> ::= 
+//		final int PROD_CALL_RETURNING                                                        = 1105;  // <call_returning> ::=
 		final int PROD_CALL_RETURNING2                                                       = 1106;  // <call_returning> ::= <return_give> <_into> <identifier>
 //		final int PROD_CALL_RETURNING3                                                       = 1107;  // <call_returning> ::= <return_give> <null_or_omitted>
 //		final int PROD_CALL_RETURNING_NOTHING                                                = 1108;  // <call_returning> ::= <return_give> NOTHING
@@ -2902,17 +2909,17 @@ public class COBOLParser extends CodeParser
 //		final int PROD_RETURN_GIVE_GIVING                                                    = 1111;  // <return_give> ::= GIVING
 //		final int PROD_NULL_OR_OMITTED_TOK_NULL                                              = 1112;  // <null_or_omitted> ::= 'TOK_NULL'
 //		final int PROD_NULL_OR_OMITTED_OMITTED                                               = 1113;  // <null_or_omitted> ::= OMITTED
-//		final int PROD_CALL_EXCEPTION_PHRASES                                                = 1114;  // <call_exception_phrases> ::= 
+//		final int PROD_CALL_EXCEPTION_PHRASES                                                = 1114;  // <call_exception_phrases> ::=
 //		final int PROD_CALL_EXCEPTION_PHRASES2                                               = 1115;  // <call_exception_phrases> ::= <call_on_exception> <_call_not_on_exception>
 //		final int PROD_CALL_EXCEPTION_PHRASES3                                               = 1116;  // <call_exception_phrases> ::= <call_not_on_exception> <_call_on_exception>
-//		final int PROD__CALL_ON_EXCEPTION                                                    = 1117;  // <_call_on_exception> ::= 
+//		final int PROD__CALL_ON_EXCEPTION                                                    = 1117;  // <_call_on_exception> ::=
 //		final int PROD__CALL_ON_EXCEPTION2                                                   = 1118;  // <_call_on_exception> ::= <call_on_exception>
 //		final int PROD_CALL_ON_EXCEPTION_EXCEPTION                                           = 1119;  // <call_on_exception> ::= EXCEPTION <statement_list>
 //		final int PROD_CALL_ON_EXCEPTION_TOK_OVERFLOW                                        = 1120;  // <call_on_exception> ::= 'TOK_OVERFLOW' <statement_list>
-//		final int PROD__CALL_NOT_ON_EXCEPTION                                                = 1121;  // <_call_not_on_exception> ::= 
+//		final int PROD__CALL_NOT_ON_EXCEPTION                                                = 1121;  // <_call_not_on_exception> ::=
 //		final int PROD__CALL_NOT_ON_EXCEPTION2                                               = 1122;  // <_call_not_on_exception> ::= <call_not_on_exception>
 //		final int PROD_CALL_NOT_ON_EXCEPTION_NOT_EXCEPTION                                   = 1123;  // <call_not_on_exception> ::= 'NOT_EXCEPTION' <statement_list>
-//		final int PROD_END_CALL                                                              = 1124;  // <end_call> ::= 
+//		final int PROD_END_CALL                                                              = 1124;  // <end_call> ::=
 //		final int PROD_END_CALL_END_CALL                                                     = 1125;  // <end_call> ::= 'END_CALL'
 //		final int PROD_CANCEL_STATEMENT_CANCEL                                               = 1126;  // <cancel_statement> ::= CANCEL <cancel_body>
 //		final int PROD_CANCEL_BODY                                                           = 1127;  // <cancel_body> ::= <id_or_lit_or_program_name>
@@ -2921,14 +2928,14 @@ public class COBOLParser extends CodeParser
 		final int PROD_CLOSE_STATEMENT_CLOSE                                                 = 1130;  // <close_statement> ::= CLOSE <close_body>
 //		final int PROD_CLOSE_BODY                                                            = 1131;  // <close_body> ::= <file_name> <close_option>
 //		final int PROD_CLOSE_BODY2                                                           = 1132;  // <close_body> ::= <close_body> <file_name> <close_option>
-//		final int PROD_CLOSE_OPTION                                                          = 1133;  // <close_option> ::= 
+//		final int PROD_CLOSE_OPTION                                                          = 1133;  // <close_option> ::=
 //		final int PROD_CLOSE_OPTION2                                                         = 1134;  // <close_option> ::= <reel_or_unit>
 //		final int PROD_CLOSE_OPTION_REMOVAL                                                  = 1135;  // <close_option> ::= <reel_or_unit> <_for> REMOVAL
 //		final int PROD_CLOSE_OPTION_NO_REWIND                                                = 1136;  // <close_option> ::= <_with> NO REWIND
 //		final int PROD_CLOSE_OPTION_LOCK                                                     = 1137;  // <close_option> ::= <_with> LOCK
 		final int PROD_COMPUTE_STATEMENT_COMPUTE                                             = 1138;  // <compute_statement> ::= COMPUTE <compute_body> <end_compute>
 //		final int PROD_COMPUTE_BODY                                                          = 1139;  // <compute_body> ::= <arithmetic_x_list> <comp_equal> <exp> <on_size_error_phrases>
-//		final int PROD_END_COMPUTE                                                           = 1140;  // <end_compute> ::= 
+//		final int PROD_END_COMPUTE                                                           = 1140;  // <end_compute> ::=
 //		final int PROD_END_COMPUTE_END_COMPUTE                                               = 1141;  // <end_compute> ::= 'END_COMPUTE'
 //		final int PROD_COMMIT_STATEMENT_COMMIT                                               = 1142;  // <commit_statement> ::= COMMIT
 //		final int PROD_CONTINUE_STATEMENT_CONTINUE                                           = 1143;  // <continue_statement> ::= CONTINUE
@@ -2937,13 +2944,13 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DELETE_BODY_TOK_FILE                                                  = 1146;  // <delete_body> ::= 'TOK_FILE' <delete_file_list>
 //		final int PROD_DELETE_FILE_LIST                                                      = 1147;  // <delete_file_list> ::= <file_name>
 //		final int PROD_DELETE_FILE_LIST2                                                     = 1148;  // <delete_file_list> ::= <delete_file_list> <file_name>
-//		final int PROD_END_DELETE                                                            = 1149;  // <end_delete> ::= 
+//		final int PROD_END_DELETE                                                            = 1149;  // <end_delete> ::=
 //		final int PROD_END_DELETE_END_DELETE                                                 = 1150;  // <end_delete> ::= 'END_DELETE'
 //		final int PROD_DISABLE_STATEMENT_DISABLE                                             = 1151;  // <disable_statement> ::= DISABLE <enable_disable_handling>
 //		final int PROD_ENABLE_DISABLE_HANDLING                                               = 1152;  // <enable_disable_handling> ::= <communication_mode> <cd_name> <_enable_disable_key>
-//		final int PROD__ENABLE_DISABLE_KEY                                                   = 1153;  // <_enable_disable_key> ::= 
+//		final int PROD__ENABLE_DISABLE_KEY                                                   = 1153;  // <_enable_disable_key> ::=
 //		final int PROD__ENABLE_DISABLE_KEY_KEY                                               = 1154;  // <_enable_disable_key> ::= <_with> KEY <id_or_lit>
-//		final int PROD_COMMUNICATION_MODE                                                    = 1155;  // <communication_mode> ::= 
+//		final int PROD_COMMUNICATION_MODE                                                    = 1155;  // <communication_mode> ::=
 //		final int PROD_COMMUNICATION_MODE_INPUT                                              = 1156;  // <communication_mode> ::= INPUT <_terminal>
 //		final int PROD_COMMUNICATION_MODE_OUTPUT                                             = 1157;  // <communication_mode> ::= OUTPUT
 //		final int PROD_COMMUNICATION_MODE_I_O_TERMINAL                                       = 1158;  // <communication_mode> ::= 'I_O' TERMINAL
@@ -2991,7 +2998,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DISP_ATTR_BACKGROUND_COLOR                                            = 1200;  // <disp_attr> ::= 'BACKGROUND_COLOR' <_is> <num_id_or_lit>
 //		final int PROD_DISP_ATTR_SCROLL_UP                                                   = 1201;  // <disp_attr> ::= SCROLL UP <_scroll_lines>
 //		final int PROD_DISP_ATTR_SCROLL_DOWN                                                 = 1202;  // <disp_attr> ::= SCROLL DOWN <_scroll_lines>
-//		final int PROD_END_DISPLAY                                                           = 1203;  // <end_display> ::= 
+//		final int PROD_END_DISPLAY                                                           = 1203;  // <end_display> ::=
 //		final int PROD_END_DISPLAY_END_DISPLAY                                               = 1204;  // <end_display> ::= 'END_DISPLAY'
 		final int PROD_DIVIDE_STATEMENT_DIVIDE                                               = 1205;  // <divide_statement> ::= DIVIDE <divide_body> <end_divide>
 		final int PROD_DIVIDE_BODY_INTO                                                      = 1206;  // <divide_body> ::= <x> INTO <arithmetic_x_list> <on_size_error_phrases>
@@ -2999,7 +3006,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_DIVIDE_BODY_BY_GIVING                                                 = 1208;  // <divide_body> ::= <x> BY <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_DIVIDE_BODY_INTO_GIVING_REMAINDER                                     = 1209;  // <divide_body> ::= <x> INTO <x> GIVING <arithmetic_x> REMAINDER <arithmetic_x> <on_size_error_phrases>
 		final int PROD_DIVIDE_BODY_BY_GIVING_REMAINDER                                       = 1210;  // <divide_body> ::= <x> BY <x> GIVING <arithmetic_x> REMAINDER <arithmetic_x> <on_size_error_phrases>
-//		final int PROD_END_DIVIDE                                                            = 1211;  // <end_divide> ::= 
+//		final int PROD_END_DIVIDE                                                            = 1211;  // <end_divide> ::=
 //		final int PROD_END_DIVIDE_END_DIVIDE                                                 = 1212;  // <end_divide> ::= 'END_DIVIDE'
 //		final int PROD_ENABLE_STATEMENT_ENABLE                                               = 1213;  // <enable_statement> ::= ENABLE <enable_disable_handling>
 //		final int PROD_ENTRY_STATEMENT_ENTRY                                                 = 1214;  // <entry_statement> ::= ENTRY <entry_body>
@@ -3025,19 +3032,19 @@ public class COBOLParser extends CodeParser
 		final int PROD_EVALUATE_OBJECT_ANY                                                   = 1234;  // <evaluate_object> ::= ANY
 //		final int PROD_EVALUATE_OBJECT_TOK_TRUE                                              = 1235;  // <evaluate_object> ::= 'TOK_TRUE'
 //		final int PROD_EVALUATE_OBJECT_TOK_FALSE                                             = 1236;  // <evaluate_object> ::= 'TOK_FALSE'
-		final int PROD__EVALUATE_THRU_EXPR                                                   = 1237;  // <_evaluate_thru_expr> ::= 
+		final int PROD__EVALUATE_THRU_EXPR                                                   = 1237;  // <_evaluate_thru_expr> ::=
 		final int PROD__EVALUATE_THRU_EXPR_THRU                                              = 1238;  // <_evaluate_thru_expr> ::= THRU <expr>
-//		final int PROD_END_EVALUATE                                                          = 1239;  // <end_evaluate> ::= 
+//		final int PROD_END_EVALUATE                                                          = 1239;  // <end_evaluate> ::=
 //		final int PROD_END_EVALUATE_END_EVALUATE                                             = 1240;  // <end_evaluate> ::= 'END_EVALUATE'
 		final int PROD_EXIT_STATEMENT_EXIT                                                   = 1241;  // <exit_statement> ::= EXIT <exit_body>
-		final int PROD_EXIT_BODY                                                             = 1242;  // <exit_body> ::= 
+		final int PROD_EXIT_BODY                                                             = 1242;  // <exit_body> ::=
 		final int PROD_EXIT_BODY_PROGRAM                                                     = 1243;  // <exit_body> ::= PROGRAM <exit_program_returning>
 		final int PROD_EXIT_BODY_FUNCTION                                                    = 1244;  // <exit_body> ::= FUNCTION
 		final int PROD_EXIT_BODY_PERFORM_CYCLE                                               = 1245;  // <exit_body> ::= PERFORM CYCLE
 		final int PROD_EXIT_BODY_PERFORM                                                     = 1246;  // <exit_body> ::= PERFORM
 		final int PROD_EXIT_BODY_SECTION                                                     = 1247;  // <exit_body> ::= SECTION
 		final int PROD_EXIT_BODY_PARAGRAPH                                                   = 1248;  // <exit_body> ::= PARAGRAPH
-//		final int PROD_EXIT_PROGRAM_RETURNING                                                = 1249;  // <exit_program_returning> ::= 
+//		final int PROD_EXIT_PROGRAM_RETURNING                                                = 1249;  // <exit_program_returning> ::=
 		final int PROD_EXIT_PROGRAM_RETURNING2                                               = 1250;  // <exit_program_returning> ::= <return_give> <x>
 //		final int PROD_FREE_STATEMENT_FREE                                                   = 1251;  // <free_statement> ::= FREE <free_body>
 //		final int PROD_FREE_BODY                                                             = 1252;  // <free_body> ::= <target_x_list>
@@ -3045,23 +3052,23 @@ public class COBOLParser extends CodeParser
 //		final int PROD_GENERATE_BODY                                                         = 1254;  // <generate_body> ::= <qualified_word>
 		final int PROD_GOTO_STATEMENT_GO                                                     = 1255;  // <goto_statement> ::= GO <go_body>
 //		final int PROD_GO_BODY                                                               = 1256;  // <go_body> ::= <_to> <procedure_name_list> <goto_depending>
-//		final int PROD_GOTO_DEPENDING                                                        = 1257;  // <goto_depending> ::= 
+//		final int PROD_GOTO_DEPENDING                                                        = 1257;  // <goto_depending> ::=
 //		final int PROD_GOTO_DEPENDING_DEPENDING                                              = 1258;  // <goto_depending> ::= DEPENDING <_on> <identifier>
 		final int PROD_GOBACK_STATEMENT_GOBACK                                               = 1259;  // <goback_statement> ::= GOBACK <exit_program_returning>
 		final int PROD_IF_STATEMENT_IF                                                       = 1260;  // <if_statement> ::= IF <condition> <_then> <if_else_statements> <end_if>
 		final int PROD_IF_ELSE_STATEMENTS_ELSE                                               = 1261;  // <if_else_statements> ::= <statement_list> ELSE <statement_list>
 		final int PROD_IF_ELSE_STATEMENTS_ELSE2                                              = 1262;  // <if_else_statements> ::= ELSE <statement_list>
 //		final int PROD_IF_ELSE_STATEMENTS                                                    = 1263;  // <if_else_statements> ::= <statement_list>
-//		final int PROD_END_IF                                                                = 1264;  // <end_if> ::= 
+//		final int PROD_END_IF                                                                = 1264;  // <end_if> ::=
 //		final int PROD_END_IF_END_IF                                                         = 1265;  // <end_if> ::= 'END_IF'
 //		final int PROD_INITIALIZE_STATEMENT_INITIALIZE                                       = 1266;  // <initialize_statement> ::= INITIALIZE <initialize_body>
 //		final int PROD_INITIALIZE_BODY                                                       = 1267;  // <initialize_body> ::= <target_x_list> <_initialize_filler> <_initialize_value> <_initialize_replacing> <_initialize_default>
-//		final int PROD__INITIALIZE_FILLER                                                    = 1268;  // <_initialize_filler> ::= 
+//		final int PROD__INITIALIZE_FILLER                                                    = 1268;  // <_initialize_filler> ::=
 //		final int PROD__INITIALIZE_FILLER_FILLER                                             = 1269;  // <_initialize_filler> ::= <_with> FILLER
-//		final int PROD__INITIALIZE_VALUE                                                     = 1270;  // <_initialize_value> ::= 
+//		final int PROD__INITIALIZE_VALUE                                                     = 1270;  // <_initialize_value> ::=
 //		final int PROD__INITIALIZE_VALUE_ALL_VALUE                                           = 1271;  // <_initialize_value> ::= ALL <_to> VALUE
 //		final int PROD__INITIALIZE_VALUE_VALUE                                               = 1272;  // <_initialize_value> ::= <initialize_category> <_to> VALUE
-//		final int PROD__INITIALIZE_REPLACING                                                 = 1273;  // <_initialize_replacing> ::= 
+//		final int PROD__INITIALIZE_REPLACING                                                 = 1273;  // <_initialize_replacing> ::=
 //		final int PROD__INITIALIZE_REPLACING_REPLACING                                       = 1274;  // <_initialize_replacing> ::= <_then> REPLACING <initialize_replacing_list>
 //		final int PROD_INITIALIZE_REPLACING_LIST                                             = 1275;  // <initialize_replacing_list> ::= <initialize_replacing_item>
 //		final int PROD_INITIALIZE_REPLACING_LIST2                                            = 1276;  // <initialize_replacing_list> ::= <initialize_replacing_list> <initialize_replacing_item>
@@ -3073,7 +3080,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_INITIALIZE_CATEGORY_NUMERIC_EDITED                                    = 1282;  // <initialize_category> ::= 'NUMERIC_EDITED'
 //		final int PROD_INITIALIZE_CATEGORY_NATIONAL                                          = 1283;  // <initialize_category> ::= NATIONAL
 //		final int PROD_INITIALIZE_CATEGORY_NATIONAL_EDITED                                   = 1284;  // <initialize_category> ::= 'NATIONAL_EDITED'
-//		final int PROD__INITIALIZE_DEFAULT                                                   = 1285;  // <_initialize_default> ::= 
+//		final int PROD__INITIALIZE_DEFAULT                                                   = 1285;  // <_initialize_default> ::=
 //		final int PROD__INITIALIZE_DEFAULT_DEFAULT                                           = 1286;  // <_initialize_default> ::= <_then> <_to> DEFAULT
 //		final int PROD_INITIATE_STATEMENT_INITIATE                                           = 1287;  // <initiate_statement> ::= INITIATE <initiate_body>
 //		final int PROD_INITIATE_BODY                                                         = 1288;  // <initiate_body> ::= <report_name>
@@ -3102,13 +3109,13 @@ public class COBOLParser extends CodeParser
 //		final int PROD_REPLACING_LIST2                                                       = 1311;  // <replacing_list> ::= <replacing_list> <replacing_item>
 //		final int PROD_REPLACING_ITEM_CHARACTERS_BY                                          = 1312;  // <replacing_item> ::= CHARACTERS BY <simple_display_value> <inspect_region>
 //		final int PROD_REPLACING_ITEM                                                        = 1313;  // <replacing_item> ::= <rep_keyword> <replacing_region>
-//		final int PROD_REP_KEYWORD                                                           = 1314;  // <rep_keyword> ::= 
+//		final int PROD_REP_KEYWORD                                                           = 1314;  // <rep_keyword> ::=
 //		final int PROD_REP_KEYWORD_ALL                                                       = 1315;  // <rep_keyword> ::= ALL
 //		final int PROD_REP_KEYWORD_LEADING                                                   = 1316;  // <rep_keyword> ::= LEADING
 //		final int PROD_REP_KEYWORD_FIRST                                                     = 1317;  // <rep_keyword> ::= FIRST
 //		final int PROD_REP_KEYWORD_TRAILING                                                  = 1318;  // <rep_keyword> ::= TRAILING
 //		final int PROD_REPLACING_REGION_BY                                                   = 1319;  // <replacing_region> ::= <simple_display_value> BY <simple_display_all_value> <inspect_region>
-//		final int PROD_INSPECT_REGION                                                        = 1320;  // <inspect_region> ::= 
+//		final int PROD_INSPECT_REGION                                                        = 1320;  // <inspect_region> ::=
 //		final int PROD_INSPECT_REGION2                                                       = 1321;  // <inspect_region> ::= <inspect_before>
 //		final int PROD_INSPECT_REGION3                                                       = 1322;  // <inspect_region> ::= <inspect_after>
 //		final int PROD_INSPECT_REGION4                                                       = 1323;  // <inspect_region> ::= <inspect_before> <inspect_after>
@@ -3122,7 +3129,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_MULTIPLY_STATEMENT_MULTIPLY                                           = 1331;  // <multiply_statement> ::= MULTIPLY <multiply_body> <end_multiply>
 //		final int PROD_MULTIPLY_BODY_BY                                                      = 1332;  // <multiply_body> ::= <x> BY <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_MULTIPLY_BODY_BY_GIVING                                               = 1333;  // <multiply_body> ::= <x> BY <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
-//		final int PROD_END_MULTIPLY                                                          = 1334;  // <end_multiply> ::= 
+//		final int PROD_END_MULTIPLY                                                          = 1334;  // <end_multiply> ::=
 //		final int PROD_END_MULTIPLY_END_MULTIPLY                                             = 1335;  // <end_multiply> ::= 'END_MULTIPLY'
 		final int PROD_OPEN_STATEMENT_OPEN                                                   = 1336;  // <open_statement> ::= OPEN <open_body>
 //		final int PROD_OPEN_BODY                                                             = 1337;  // <open_body> ::= <open_file_entry>
@@ -3132,9 +3139,9 @@ public class COBOLParser extends CodeParser
 		final int PROD_OPEN_MODE_OUTPUT                                                      = 1341;  // <open_mode> ::= OUTPUT
 		final int PROD_OPEN_MODE_I_O                                                         = 1342;  // <open_mode> ::= 'I_O'
 		final int PROD_OPEN_MODE_EXTEND                                                      = 1343;  // <open_mode> ::= EXTEND
-//		final int PROD_OPEN_SHARING                                                          = 1344;  // <open_sharing> ::= 
+//		final int PROD_OPEN_SHARING                                                          = 1344;  // <open_sharing> ::=
 //		final int PROD_OPEN_SHARING_SHARING                                                  = 1345;  // <open_sharing> ::= SHARING <_with> <sharing_option>
-//		final int PROD_OPEN_OPTION                                                           = 1346;  // <open_option> ::= 
+//		final int PROD_OPEN_OPTION                                                           = 1346;  // <open_option> ::=
 //		final int PROD_OPEN_OPTION_NO_REWIND                                                 = 1347;  // <open_option> ::= <_with> NO REWIND
 //		final int PROD_OPEN_OPTION_LOCK                                                      = 1348;  // <open_option> ::= <_with> LOCK
 //		final int PROD_OPEN_OPTION_REVERSED                                                  = 1349;  // <open_option> ::= REVERSED
@@ -3142,18 +3149,18 @@ public class COBOLParser extends CodeParser
 		final int PROD_PERFORM_BODY                                                          = 1351;  // <perform_body> ::= <perform_procedure> <perform_option>
 		final int PROD_PERFORM_BODY2                                                         = 1352;  // <perform_body> ::= <perform_option> <statement_list> <end_perform>
 //		final int PROD_PERFORM_BODY3                                                         = 1353;  // <perform_body> ::= <perform_option> <term_or_dot>
-//		final int PROD_END_PERFORM                                                           = 1354;  // <end_perform> ::= 
+//		final int PROD_END_PERFORM                                                           = 1354;  // <end_perform> ::=
 //		final int PROD_END_PERFORM_END_PERFORM                                               = 1355;  // <end_perform> ::= 'END_PERFORM'
 //		final int PROD_TERM_OR_DOT_END_PERFORM                                               = 1356;  // <term_or_dot> ::= 'END_PERFORM'
 //		final int PROD_TERM_OR_DOT_TOK_DOT                                                   = 1357;  // <term_or_dot> ::= 'TOK_DOT'
 //		final int PROD_PERFORM_PROCEDURE                                                     = 1358;  // <perform_procedure> ::= <procedure_name>
 //		final int PROD_PERFORM_PROCEDURE_THRU                                                = 1359;  // <perform_procedure> ::= <procedure_name> THRU <procedure_name>
-		final int PROD_PERFORM_OPTION                                                        = 1360;  // <perform_option> ::= 
+		final int PROD_PERFORM_OPTION                                                        = 1360;  // <perform_option> ::=
 		final int PROD_PERFORM_OPTION_TIMES                                                  = 1361;  // <perform_option> ::= <id_or_lit_or_length_or_func> TIMES
 		final int PROD_PERFORM_OPTION_FOREVER                                                = 1362;  // <perform_option> ::= FOREVER
 		final int PROD_PERFORM_OPTION_UNTIL                                                  = 1363;  // <perform_option> ::= <perform_test> UNTIL <cond_or_exit>
 		final int PROD_PERFORM_OPTION_VARYING                                                = 1364;  // <perform_option> ::= <perform_test> VARYING <perform_varying_list>
-		final int PROD_PERFORM_TEST                                                          = 1365;  // <perform_test> ::= 
+		final int PROD_PERFORM_TEST                                                          = 1365;  // <perform_test> ::=
 		final int PROD_PERFORM_TEST_TEST                                                     = 1366;  // <perform_test> ::= <_with> TEST <before_or_after>
 //		final int PROD_COND_OR_EXIT_EXIT                                                     = 1367;  // <cond_or_exit> ::= EXIT
 //		final int PROD_COND_OR_EXIT                                                          = 1368;  // <cond_or_exit> ::= <condition>
@@ -3163,9 +3170,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_PURGE_STATEMENT_PURGE                                                 = 1372;  // <purge_statement> ::= PURGE <cd_name>
 		final int PROD_READ_STATEMENT_READ                                                   = 1373;  // <read_statement> ::= READ <read_body> <end_read>
 //		final int PROD_READ_BODY                                                             = 1374;  // <read_body> ::= <file_name> <_flag_next> <_record> <read_into> <lock_phrases> <read_key> <read_handler>
-//		final int PROD_READ_INTO                                                             = 1375;  // <read_into> ::= 
+//		final int PROD_READ_INTO                                                             = 1375;  // <read_into> ::=
 		final int PROD_READ_INTO_INTO                                                        = 1376;  // <read_into> ::= INTO <identifier>
-//		final int PROD_LOCK_PHRASES                                                          = 1377;  // <lock_phrases> ::= 
+//		final int PROD_LOCK_PHRASES                                                          = 1377;  // <lock_phrases> ::=
 //		final int PROD_LOCK_PHRASES2                                                         = 1378;  // <lock_phrases> ::= <ignoring_lock>
 //		final int PROD_LOCK_PHRASES3                                                         = 1379;  // <lock_phrases> ::= <advancing_lock_or_retry> <_extended_with_lock>
 //		final int PROD_LOCK_PHRASES4                                                         = 1380;  // <lock_phrases> ::= <extended_with_lock>
@@ -3173,78 +3180,78 @@ public class COBOLParser extends CodeParser
 //		final int PROD_IGNORING_LOCK_IGNORE_LOCK                                             = 1382;  // <ignoring_lock> ::= <_with> IGNORE LOCK
 //		final int PROD_ADVANCING_LOCK_OR_RETRY_ADVANCING_LOCK                                = 1383;  // <advancing_lock_or_retry> ::= ADVANCING <_on> LOCK
 //		final int PROD_ADVANCING_LOCK_OR_RETRY                                               = 1384;  // <advancing_lock_or_retry> ::= <retry_phrase>
-//		final int PROD__RETRY_PHRASE                                                         = 1385;  // <_retry_phrase> ::= 
+//		final int PROD__RETRY_PHRASE                                                         = 1385;  // <_retry_phrase> ::=
 //		final int PROD__RETRY_PHRASE2                                                        = 1386;  // <_retry_phrase> ::= <retry_phrase>
 //		final int PROD_RETRY_PHRASE                                                          = 1387;  // <retry_phrase> ::= <retry_options>
 //		final int PROD_RETRY_OPTIONS_RETRY_TIMES                                             = 1388;  // <retry_options> ::= RETRY <_for> <exp> TIMES
 //		final int PROD_RETRY_OPTIONS_RETRY_SECONDS                                           = 1389;  // <retry_options> ::= RETRY <_for> <exp> SECONDS
 //		final int PROD_RETRY_OPTIONS_RETRY_FOREVER                                           = 1390;  // <retry_options> ::= RETRY FOREVER
-//		final int PROD__EXTENDED_WITH_LOCK                                                   = 1391;  // <_extended_with_lock> ::= 
+//		final int PROD__EXTENDED_WITH_LOCK                                                   = 1391;  // <_extended_with_lock> ::=
 //		final int PROD__EXTENDED_WITH_LOCK2                                                  = 1392;  // <_extended_with_lock> ::= <extended_with_lock>
 //		final int PROD_EXTENDED_WITH_LOCK                                                    = 1393;  // <extended_with_lock> ::= <with_lock>
 //		final int PROD_EXTENDED_WITH_LOCK_KEPT_LOCK                                          = 1394;  // <extended_with_lock> ::= <_with> KEPT LOCK
 //		final int PROD_EXTENDED_WITH_LOCK_WAIT                                               = 1395;  // <extended_with_lock> ::= <_with> WAIT
-//		final int PROD_READ_KEY                                                              = 1396;  // <read_key> ::= 
+//		final int PROD_READ_KEY                                                              = 1396;  // <read_key> ::=
 //		final int PROD_READ_KEY_KEY                                                          = 1397;  // <read_key> ::= KEY <_is> <identifier>
 //		final int PROD_READ_HANDLER                                                          = 1398;  // <read_handler> ::= <_invalid_key_phrases>
 //		final int PROD_READ_HANDLER2                                                         = 1399;  // <read_handler> ::= <at_end>
-//		final int PROD_END_READ                                                              = 1400;  // <end_read> ::= 
+//		final int PROD_END_READ                                                              = 1400;  // <end_read> ::=
 //		final int PROD_END_READ_END_READ                                                     = 1401;  // <end_read> ::= 'END_READ'
 //		final int PROD_READY_STATEMENT_READY_TRACE                                           = 1402;  // <ready_statement> ::= 'READY_TRACE'
 //		final int PROD_RECEIVE_STATEMENT_RECEIVE                                             = 1403;  // <receive_statement> ::= RECEIVE <receive_body> <end_receive>
 //		final int PROD_RECEIVE_BODY_INTO                                                     = 1404;  // <receive_body> ::= <cd_name> <message_or_segment> INTO <identifier> <_data_sentence_phrases>
 //		final int PROD_MESSAGE_OR_SEGMENT_MESSAGE                                            = 1405;  // <message_or_segment> ::= MESSAGE
 //		final int PROD_MESSAGE_OR_SEGMENT_SEGMENT                                            = 1406;  // <message_or_segment> ::= SEGMENT
-//		final int PROD__DATA_SENTENCE_PHRASES                                                = 1407;  // <_data_sentence_phrases> ::= 
+//		final int PROD__DATA_SENTENCE_PHRASES                                                = 1407;  // <_data_sentence_phrases> ::=
 //		final int PROD__DATA_SENTENCE_PHRASES2                                               = 1408;  // <_data_sentence_phrases> ::= <no_data_sentence> <_with_data_sentence>
 //		final int PROD__DATA_SENTENCE_PHRASES3                                               = 1409;  // <_data_sentence_phrases> ::= <with_data_sentence> <_no_data_sentence>
-//		final int PROD__NO_DATA_SENTENCE                                                     = 1410;  // <_no_data_sentence> ::= 
+//		final int PROD__NO_DATA_SENTENCE                                                     = 1410;  // <_no_data_sentence> ::=
 //		final int PROD__NO_DATA_SENTENCE2                                                    = 1411;  // <_no_data_sentence> ::= <no_data_sentence>
 //		final int PROD_NO_DATA_SENTENCE_NO_DATA                                              = 1412;  // <no_data_sentence> ::= 'NO_DATA' <statement_list>
-//		final int PROD__WITH_DATA_SENTENCE                                                   = 1413;  // <_with_data_sentence> ::= 
+//		final int PROD__WITH_DATA_SENTENCE                                                   = 1413;  // <_with_data_sentence> ::=
 //		final int PROD__WITH_DATA_SENTENCE2                                                  = 1414;  // <_with_data_sentence> ::= <with_data_sentence>
 //		final int PROD_WITH_DATA_SENTENCE_WITH_DATA                                          = 1415;  // <with_data_sentence> ::= 'WITH_DATA' <statement_list>
-//		final int PROD_END_RECEIVE                                                           = 1416;  // <end_receive> ::= 
+//		final int PROD_END_RECEIVE                                                           = 1416;  // <end_receive> ::=
 //		final int PROD_END_RECEIVE_END_RECEIVE                                               = 1417;  // <end_receive> ::= 'END_RECEIVE'
 //		final int PROD_RELEASE_STATEMENT_RELEASE                                             = 1418;  // <release_statement> ::= RELEASE <release_body>
 //		final int PROD_RELEASE_BODY                                                          = 1419;  // <release_body> ::= <record_name> <from_option>
 //		final int PROD_RESET_STATEMENT_RESET_TRACE                                           = 1420;  // <reset_statement> ::= 'RESET_TRACE'
 //		final int PROD_RETURN_STATEMENT_RETURN                                               = 1421;  // <return_statement> ::= RETURN <return_body> <end_return>
 //		final int PROD_RETURN_BODY                                                           = 1422;  // <return_body> ::= <file_name> <_record> <read_into> <return_at_end>
-//		final int PROD_END_RETURN                                                            = 1423;  // <end_return> ::= 
+//		final int PROD_END_RETURN                                                            = 1423;  // <end_return> ::=
 //		final int PROD_END_RETURN_END_RETURN                                                 = 1424;  // <end_return> ::= 'END_RETURN'
 		final int PROD_REWRITE_STATEMENT_REWRITE                                             = 1425;  // <rewrite_statement> ::= REWRITE <rewrite_body> <end_rewrite>
 //		final int PROD_REWRITE_BODY                                                          = 1426;  // <rewrite_body> ::= <file_or_record_name> <from_option> <_retry_phrase> <_with_lock> <_invalid_key_phrases>
-//		final int PROD__WITH_LOCK                                                            = 1427;  // <_with_lock> ::= 
+//		final int PROD__WITH_LOCK                                                            = 1427;  // <_with_lock> ::=
 //		final int PROD__WITH_LOCK2                                                           = 1428;  // <_with_lock> ::= <with_lock>
 //		final int PROD_WITH_LOCK_LOCK                                                        = 1429;  // <with_lock> ::= <_with> LOCK
 //		final int PROD_WITH_LOCK_NO_LOCK                                                     = 1430;  // <with_lock> ::= <_with> NO LOCK
-//		final int PROD_END_REWRITE                                                           = 1431;  // <end_rewrite> ::= 
+//		final int PROD_END_REWRITE                                                           = 1431;  // <end_rewrite> ::=
 //		final int PROD_END_REWRITE_END_REWRITE                                               = 1432;  // <end_rewrite> ::= 'END_REWRITE'
 //		final int PROD_ROLLBACK_STATEMENT_ROLLBACK                                           = 1433;  // <rollback_statement> ::= ROLLBACK
 		final int PROD_SEARCH_STATEMENT_SEARCH                                               = 1434;  // <search_statement> ::= SEARCH <search_body> <end_search>
 		final int PROD_SEARCH_BODY                                                           = 1435;  // <search_body> ::= <table_name> <search_varying> <search_at_end> <search_whens>
 //		final int PROD_SEARCH_BODY_ALL_WHEN                                                  = 1436;  // <search_body> ::= ALL <table_name> <search_at_end> WHEN <expr> <statement_list>
-//		final int PROD_SEARCH_VARYING                                                        = 1437;  // <search_varying> ::= 
+//		final int PROD_SEARCH_VARYING                                                        = 1437;  // <search_varying> ::=
 		final int PROD_SEARCH_VARYING_VARYING                                                = 1438;  // <search_varying> ::= VARYING <identifier>
-//		final int PROD_SEARCH_AT_END                                                         = 1439;  // <search_at_end> ::= 
+//		final int PROD_SEARCH_AT_END                                                         = 1439;  // <search_at_end> ::=
 		final int PROD_SEARCH_AT_END_END                                                     = 1440;  // <search_at_end> ::= END <statement_list>
 //		final int PROD_SEARCH_WHENS                                                          = 1441;  // <search_whens> ::= <search_when>
 		final int PROD_SEARCH_WHENS2                                                         = 1442;  // <search_whens> ::= <search_when> <search_whens>
 //		final int PROD_SEARCH_WHEN_WHEN                                                      = 1443;  // <search_when> ::= WHEN <condition> <statement_list>
-//		final int PROD_END_SEARCH                                                            = 1444;  // <end_search> ::= 
+//		final int PROD_END_SEARCH                                                            = 1444;  // <end_search> ::=
 //		final int PROD_END_SEARCH_END_SEARCH                                                 = 1445;  // <end_search> ::= 'END_SEARCH'
 //		final int PROD_SEND_STATEMENT_SEND                                                   = 1446;  // <send_statement> ::= SEND <send_body>
 //		final int PROD_SEND_BODY                                                             = 1447;  // <send_body> ::= <cd_name> <from_identifier>
 //		final int PROD_SEND_BODY2                                                            = 1448;  // <send_body> ::= <cd_name> <_from_identifier> <with_indicator> <write_option> <_replacing_line>
-//		final int PROD__FROM_IDENTIFIER                                                      = 1449;  // <_from_identifier> ::= 
+//		final int PROD__FROM_IDENTIFIER                                                      = 1449;  // <_from_identifier> ::=
 //		final int PROD__FROM_IDENTIFIER2                                                     = 1450;  // <_from_identifier> ::= <from_identifier>
 //		final int PROD_FROM_IDENTIFIER_FROM                                                  = 1451;  // <from_identifier> ::= FROM <identifier>
 //		final int PROD_WITH_INDICATOR                                                        = 1452;  // <with_indicator> ::= <_with> <identifier>
 //		final int PROD_WITH_INDICATOR_ESI                                                    = 1453;  // <with_indicator> ::= <_with> ESI
 //		final int PROD_WITH_INDICATOR_EMI                                                    = 1454;  // <with_indicator> ::= <_with> EMI
 //		final int PROD_WITH_INDICATOR_EGI                                                    = 1455;  // <with_indicator> ::= <_with> EGI
-//		final int PROD__REPLACING_LINE                                                       = 1456;  // <_replacing_line> ::= 
+//		final int PROD__REPLACING_LINE                                                       = 1456;  // <_replacing_line> ::=
 //		final int PROD__REPLACING_LINE_REPLACING                                             = 1457;  // <_replacing_line> ::= REPLACING <_line>
 		final int PROD_SET_STATEMENT_SET                                                     = 1458;  // <set_statement> ::= SET <set_body>
 //		final int PROD_SET_BODY                                                              = 1459;  // <set_body> ::= <set_environment>
@@ -3283,25 +3290,25 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SET_LAST_EXCEPTION_TO_OFF_LAST_EXCEPTION_TO_OFF                       = 1492;  // <set_last_exception_to_off> ::= LAST EXCEPTION TO OFF
 //		final int PROD_SORT_STATEMENT_SORT                                                   = 1493;  // <sort_statement> ::= SORT <sort_body>
 //		final int PROD_SORT_BODY                                                             = 1494;  // <sort_body> ::= <table_identifier> <sort_key_list> <_sort_duplicates> <sort_collating> <sort_input> <sort_output>
-//		final int PROD_SORT_KEY_LIST                                                         = 1495;  // <sort_key_list> ::= 
+//		final int PROD_SORT_KEY_LIST                                                         = 1495;  // <sort_key_list> ::=
 //		final int PROD_SORT_KEY_LIST2                                                        = 1496;  // <sort_key_list> ::= <sort_key_list> <_on> <ascending_or_descending> <_key> <_key_list>
-//		final int PROD__KEY_LIST                                                             = 1497;  // <_key_list> ::= 
+//		final int PROD__KEY_LIST                                                             = 1497;  // <_key_list> ::=
 //		final int PROD__KEY_LIST2                                                            = 1498;  // <_key_list> ::= <_key_list> <qualified_word>
-//		final int PROD__SORT_DUPLICATES                                                      = 1499;  // <_sort_duplicates> ::= 
+//		final int PROD__SORT_DUPLICATES                                                      = 1499;  // <_sort_duplicates> ::=
 //		final int PROD__SORT_DUPLICATES2                                                     = 1500;  // <_sort_duplicates> ::= <with_dups> <_in_order>
-//		final int PROD_SORT_COLLATING                                                        = 1501;  // <sort_collating> ::= 
+//		final int PROD_SORT_COLLATING                                                        = 1501;  // <sort_collating> ::=
 //		final int PROD_SORT_COLLATING2                                                       = 1502;  // <sort_collating> ::= <coll_sequence> <_is> <reference>
-//		final int PROD_SORT_INPUT                                                            = 1503;  // <sort_input> ::= 
+//		final int PROD_SORT_INPUT                                                            = 1503;  // <sort_input> ::=
 //		final int PROD_SORT_INPUT_USING                                                      = 1504;  // <sort_input> ::= USING <file_name_list>
 //		final int PROD_SORT_INPUT_INPUT_PROCEDURE                                            = 1505;  // <sort_input> ::= INPUT PROCEDURE <_is> <perform_procedure>
-//		final int PROD_SORT_OUTPUT                                                           = 1506;  // <sort_output> ::= 
+//		final int PROD_SORT_OUTPUT                                                           = 1506;  // <sort_output> ::=
 //		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
 //		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
 		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
 //		final int PROD_START_BODY                                                            = 1510;  // <start_body> ::= <file_name> <start_key> <sizelen_clause> <_invalid_key_phrases>
-//		final int PROD_SIZELEN_CLAUSE                                                        = 1511;  // <sizelen_clause> ::= 
+//		final int PROD_SIZELEN_CLAUSE                                                        = 1511;  // <sizelen_clause> ::=
 //		final int PROD_SIZELEN_CLAUSE2                                                       = 1512;  // <sizelen_clause> ::= <_with> <size_or_length> <exp>
-//		final int PROD_START_KEY                                                             = 1513;  // <start_key> ::= 
+//		final int PROD_START_KEY                                                             = 1513;  // <start_key> ::=
 //		final int PROD_START_KEY_KEY                                                         = 1514;  // <start_key> ::= KEY <_is> <start_op> <identifier>
 //		final int PROD_START_KEY_FIRST                                                       = 1515;  // <start_key> ::= FIRST
 //		final int PROD_START_KEY_LAST                                                        = 1516;  // <start_key> ::= LAST
@@ -3314,16 +3321,16 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DISALLOWED_OP                                                         = 1523;  // <disallowed_op> ::= <not_equal_op>
 //		final int PROD_NOT_EQUAL_OP_NOT                                                      = 1524;  // <not_equal_op> ::= NOT <eq>
 //		final int PROD_NOT_EQUAL_OP_NOT_EQUAL                                                = 1525;  // <not_equal_op> ::= 'NOT_EQUAL'
-//		final int PROD_END_START                                                             = 1526;  // <end_start> ::= 
+//		final int PROD_END_START                                                             = 1526;  // <end_start> ::=
 //		final int PROD_END_START_END_START                                                   = 1527;  // <end_start> ::= 'END_START'
 		final int PROD_STOP_STATEMENT_STOP_RUN                                               = 1528;  // <stop_statement> ::= STOP RUN <stop_returning>
 		final int PROD_STOP_STATEMENT_STOP                                                   = 1529;  // <stop_statement> ::= STOP <stop_literal>
-//		final int PROD_STOP_RETURNING                                                        = 1530;  // <stop_returning> ::= 
+//		final int PROD_STOP_RETURNING                                                        = 1530;  // <stop_returning> ::=
 //		final int PROD_STOP_RETURNING2                                                       = 1531;  // <stop_returning> ::= <return_give> <x>
 //		final int PROD_STOP_RETURNING3                                                       = 1532;  // <stop_returning> ::= <x>
 //		final int PROD_STOP_RETURNING_ERROR                                                  = 1533;  // <stop_returning> ::= <_with> ERROR <_status> <_status_x>
 //		final int PROD_STOP_RETURNING_NORMAL                                                 = 1534;  // <stop_returning> ::= <_with> NORMAL <_status> <_status_x>
-//		final int PROD__STATUS_X                                                             = 1535;  // <_status_x> ::= 
+//		final int PROD__STATUS_X                                                             = 1535;  // <_status_x> ::=
 //		final int PROD__STATUS_X2                                                            = 1536;  // <_status_x> ::= <x>
 //		final int PROD_STOP_LITERAL                                                          = 1537;  // <stop_literal> ::= <LITERAL_TOK>
 //		final int PROD_STOP_LITERAL_SPACE                                                    = 1538;  // <stop_literal> ::= SPACE
@@ -3334,23 +3341,23 @@ public class COBOLParser extends CodeParser
 //		final int PROD_STRING_ITEM_LIST                                                      = 1543;  // <string_item_list> ::= <string_item>
 		final int PROD_STRING_ITEM_LIST2                                                     = 1544;  // <string_item_list> ::= <string_item_list> <string_item>
 //		final int PROD_STRING_ITEM                                                           = 1545;  // <string_item> ::= <x> <_string_delimited>
-//		final int PROD__STRING_DELIMITED                                                     = 1546;  // <_string_delimited> ::= 
+//		final int PROD__STRING_DELIMITED                                                     = 1546;  // <_string_delimited> ::=
 //		final int PROD__STRING_DELIMITED_DELIMITED                                           = 1547;  // <_string_delimited> ::= DELIMITED <_by> <string_delimiter>
 //		final int PROD_STRING_DELIMITER_SIZE                                                 = 1548;  // <string_delimiter> ::= SIZE
 //		final int PROD_STRING_DELIMITER                                                      = 1549;  // <string_delimiter> ::= <x>
-//		final int PROD__WITH_POINTER                                                         = 1550;  // <_with_pointer> ::= 
+//		final int PROD__WITH_POINTER                                                         = 1550;  // <_with_pointer> ::=
 //		final int PROD__WITH_POINTER_POINTER                                                 = 1551;  // <_with_pointer> ::= <_with> POINTER <_is> <identifier>
-//		final int PROD_END_STRING                                                            = 1552;  // <end_string> ::= 
+//		final int PROD_END_STRING                                                            = 1552;  // <end_string> ::=
 //		final int PROD_END_STRING_END_STRING                                                 = 1553;  // <end_string> ::= 'END_STRING'
 		final int PROD_SUBTRACT_STATEMENT_SUBTRACT                                           = 1554;  // <subtract_statement> ::= SUBTRACT <subtract_body> <end_subtract>
 //		final int PROD_SUBTRACT_BODY_FROM                                                    = 1555;  // <subtract_body> ::= <x_list> FROM <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_SUBTRACT_BODY_FROM_GIVING                                             = 1556;  // <subtract_body> ::= <x_list> FROM <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
 //		final int PROD_SUBTRACT_BODY_CORRESPONDING_FROM                                      = 1557;  // <subtract_body> ::= CORRESPONDING <identifier> FROM <identifier> <flag_rounded> <on_size_error_phrases>
 //		final int PROD_SUBTRACT_BODY_TABLE_FROM                                              = 1558;  // <subtract_body> ::= TABLE <table_identifier> FROM <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
-//		final int PROD_END_SUBTRACT                                                          = 1559;  // <end_subtract> ::= 
+//		final int PROD_END_SUBTRACT                                                          = 1559;  // <end_subtract> ::=
 //		final int PROD_END_SUBTRACT_END_SUBTRACT                                             = 1560;  // <end_subtract> ::= 'END_SUBTRACT'
 //		final int PROD_SUPPRESS_STATEMENT_SUPPRESS                                           = 1561;  // <suppress_statement> ::= SUPPRESS <_printing>
-//		final int PROD__PRINTING                                                             = 1562;  // <_printing> ::= 
+//		final int PROD__PRINTING                                                             = 1562;  // <_printing> ::=
 //		final int PROD__PRINTING_PRINTING                                                    = 1563;  // <_printing> ::= PRINTING
 //		final int PROD_TERMINATE_STATEMENT_TERMINATE                                         = 1564;  // <terminate_statement> ::= TERMINATE <terminate_body>
 //		final int PROD_TERMINATE_BODY                                                        = 1565;  // <terminate_body> ::= <report_name>
@@ -3361,7 +3368,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_UNLOCK_BODY                                                           = 1570;  // <unlock_body> ::= <file_name> <_records>
 		final int PROD_UNSTRING_STATEMENT_UNSTRING                                           = 1571;  // <unstring_statement> ::= UNSTRING <unstring_body> <end_unstring>
 //		final int PROD_UNSTRING_BODY                                                         = 1572;  // <unstring_body> ::= <identifier> <_unstring_delimited> <unstring_into> <_with_pointer> <_unstring_tallying> <_on_overflow_phrases>
-//		final int PROD__UNSTRING_DELIMITED                                                   = 1573;  // <_unstring_delimited> ::= 
+//		final int PROD__UNSTRING_DELIMITED                                                   = 1573;  // <_unstring_delimited> ::=
 //		final int PROD__UNSTRING_DELIMITED_DELIMITED                                         = 1574;  // <_unstring_delimited> ::= DELIMITED <_by> <unstring_delimited_list>
 //		final int PROD_UNSTRING_DELIMITED_LIST                                               = 1575;  // <unstring_delimited_list> ::= <unstring_delimited_item>
 //		final int PROD_UNSTRING_DELIMITED_LIST_OR                                            = 1576;  // <unstring_delimited_list> ::= <unstring_delimited_list> OR <unstring_delimited_item>
@@ -3370,13 +3377,13 @@ public class COBOLParser extends CodeParser
 //		final int PROD_UNSTRING_INTO                                                         = 1579;  // <unstring_into> ::= <unstring_into> <unstring_into_item>
 		final int PROD_UNSTRING_INTO_ITEM                                                    = 1580;  // <unstring_into_item> ::= <identifier> <_unstring_into_delimiter> <_unstring_into_count>
 //		final int PROD_UNSTRING_INTO_ITEM_COMMA_DELIM                                        = 1581;  // <unstring_into_item> ::= 'COMMA_DELIM'
-//		final int PROD__UNSTRING_INTO_DELIMITER                                              = 1582;  // <_unstring_into_delimiter> ::= 
+//		final int PROD__UNSTRING_INTO_DELIMITER                                              = 1582;  // <_unstring_into_delimiter> ::=
 //		final int PROD__UNSTRING_INTO_DELIMITER_DELIMITER                                    = 1583;  // <_unstring_into_delimiter> ::= DELIMITER <_in> <identifier>
-//		final int PROD__UNSTRING_INTO_COUNT                                                  = 1584;  // <_unstring_into_count> ::= 
+//		final int PROD__UNSTRING_INTO_COUNT                                                  = 1584;  // <_unstring_into_count> ::=
 //		final int PROD__UNSTRING_INTO_COUNT_COUNT                                            = 1585;  // <_unstring_into_count> ::= COUNT <_in> <identifier>
-//		final int PROD__UNSTRING_TALLYING                                                    = 1586;  // <_unstring_tallying> ::= 
+//		final int PROD__UNSTRING_TALLYING                                                    = 1586;  // <_unstring_tallying> ::=
 //		final int PROD__UNSTRING_TALLYING_TALLYING                                           = 1587;  // <_unstring_tallying> ::= TALLYING <_in> <identifier>
-//		final int PROD_END_UNSTRING                                                          = 1588;  // <end_unstring> ::= 
+//		final int PROD_END_UNSTRING                                                          = 1588;  // <end_unstring> ::=
 //		final int PROD_END_UNSTRING_END_UNSTRING                                             = 1589;  // <end_unstring> ::= 'END_UNSTRING'
 //		final int PROD_USE_STATEMENT_USE                                                     = 1590;  // <use_statement> ::= USE <use_phrase>
 //		final int PROD_USE_PHRASE                                                            = 1591;  // <use_phrase> ::= <use_file_exception>
@@ -3385,7 +3392,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_USE_PHRASE4                                                           = 1594;  // <use_phrase> ::= <use_reporting>
 //		final int PROD_USE_PHRASE5                                                           = 1595;  // <use_phrase> ::= <use_exception>
 //		final int PROD_USE_FILE_EXCEPTION                                                    = 1596;  // <use_file_exception> ::= <use_global> <_after> <_standard> <exception_or_error> <_procedure> <_on> <use_file_exception_target>
-//		final int PROD_USE_GLOBAL                                                            = 1597;  // <use_global> ::= 
+//		final int PROD_USE_GLOBAL                                                            = 1597;  // <use_global> ::=
 //		final int PROD_USE_GLOBAL_GLOBAL                                                     = 1598;  // <use_global> ::= GLOBAL
 //		final int PROD_USE_FILE_EXCEPTION_TARGET                                             = 1599;  // <use_file_exception_target> ::= <file_name_list>
 //		final int PROD_USE_FILE_EXCEPTION_TARGET_INPUT                                       = 1600;  // <use_file_exception_target> ::= INPUT
@@ -3398,7 +3405,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DEBUGGING_TARGET                                                      = 1607;  // <debugging_target> ::= <label>
 //		final int PROD_DEBUGGING_TARGET_ALL_PROCEDURES                                       = 1608;  // <debugging_target> ::= ALL PROCEDURES
 //		final int PROD_DEBUGGING_TARGET_ALL                                                  = 1609;  // <debugging_target> ::= ALL <_all_refs> <qualified_word>
-//		final int PROD__ALL_REFS                                                             = 1610;  // <_all_refs> ::= 
+//		final int PROD__ALL_REFS                                                             = 1610;  // <_all_refs> ::=
 //		final int PROD__ALL_REFS_REFERENCES                                                  = 1611;  // <_all_refs> ::= REFERENCES
 //		final int PROD__ALL_REFS_REFERENCES_OF                                               = 1612;  // <_all_refs> ::= REFERENCES OF
 //		final int PROD__ALL_REFS_OF                                                          = 1613;  // <_all_refs> ::= OF
@@ -3411,88 +3418,88 @@ public class COBOLParser extends CodeParser
 //		final int PROD_USE_EX_KEYW_EC                                                        = 1620;  // <use_ex_keyw> ::= EC
 		final int PROD_WRITE_STATEMENT_WRITE                                                 = 1621;  // <write_statement> ::= WRITE <write_body> <end_write>
 //		final int PROD_WRITE_BODY                                                            = 1622;  // <write_body> ::= <file_or_record_name> <from_option> <write_option> <_retry_phrase> <_with_lock> <write_handler>
-//		final int PROD_FROM_OPTION                                                           = 1623;  // <from_option> ::= 
+//		final int PROD_FROM_OPTION                                                           = 1623;  // <from_option> ::=
 		final int PROD_FROM_OPTION_FROM                                                      = 1624;  // <from_option> ::= FROM <from_parameter>
-//		final int PROD_WRITE_OPTION                                                          = 1625;  // <write_option> ::= 
+//		final int PROD_WRITE_OPTION                                                          = 1625;  // <write_option> ::=
 //		final int PROD_WRITE_OPTION2                                                         = 1626;  // <write_option> ::= <before_or_after> <_advancing> <num_id_or_lit> <_line_or_lines>
 //		final int PROD_WRITE_OPTION3                                                         = 1627;  // <write_option> ::= <before_or_after> <_advancing> <mnemonic_name>
 //		final int PROD_WRITE_OPTION_PAGE                                                     = 1628;  // <write_option> ::= <before_or_after> <_advancing> PAGE
 		final int PROD_BEFORE_OR_AFTER_BEFORE                                                = 1629;  // <before_or_after> ::= BEFORE
 		final int PROD_BEFORE_OR_AFTER_AFTER                                                 = 1630;  // <before_or_after> ::= AFTER
-//		final int PROD_WRITE_HANDLER                                                         = 1631;  // <write_handler> ::= 
+//		final int PROD_WRITE_HANDLER                                                         = 1631;  // <write_handler> ::=
 //		final int PROD_WRITE_HANDLER2                                                        = 1632;  // <write_handler> ::= <invalid_key_phrases>
 //		final int PROD_WRITE_HANDLER3                                                        = 1633;  // <write_handler> ::= <at_eop_clauses>
-//		final int PROD_END_WRITE                                                             = 1634;  // <end_write> ::= 
+//		final int PROD_END_WRITE                                                             = 1634;  // <end_write> ::=
 //		final int PROD_END_WRITE_END_WRITE                                                   = 1635;  // <end_write> ::= 'END_WRITE'
-//		final int PROD__ACCEPT_EXCEPTION_PHRASES                                             = 1636;  // <_accept_exception_phrases> ::= 
+//		final int PROD__ACCEPT_EXCEPTION_PHRASES                                             = 1636;  // <_accept_exception_phrases> ::=
 //		final int PROD__ACCEPT_EXCEPTION_PHRASES2                                            = 1637;  // <_accept_exception_phrases> ::= <accp_on_exception> <_accp_not_on_exception>
 //		final int PROD__ACCEPT_EXCEPTION_PHRASES3                                            = 1638;  // <_accept_exception_phrases> ::= <accp_not_on_exception> <_accp_on_exception>
-//		final int PROD__ACCP_ON_EXCEPTION                                                    = 1639;  // <_accp_on_exception> ::= 
+//		final int PROD__ACCP_ON_EXCEPTION                                                    = 1639;  // <_accp_on_exception> ::=
 //		final int PROD__ACCP_ON_EXCEPTION2                                                   = 1640;  // <_accp_on_exception> ::= <accp_on_exception>
 //		final int PROD_ACCP_ON_EXCEPTION                                                     = 1641;  // <accp_on_exception> ::= <escape_or_exception> <statement_list>
 //		final int PROD_ESCAPE_OR_EXCEPTION_ESCAPE                                            = 1642;  // <escape_or_exception> ::= ESCAPE
 //		final int PROD_ESCAPE_OR_EXCEPTION_EXCEPTION                                         = 1643;  // <escape_or_exception> ::= EXCEPTION
-//		final int PROD__ACCP_NOT_ON_EXCEPTION                                                = 1644;  // <_accp_not_on_exception> ::= 
+//		final int PROD__ACCP_NOT_ON_EXCEPTION                                                = 1644;  // <_accp_not_on_exception> ::=
 //		final int PROD__ACCP_NOT_ON_EXCEPTION2                                               = 1645;  // <_accp_not_on_exception> ::= <accp_not_on_exception>
 //		final int PROD_ACCP_NOT_ON_EXCEPTION                                                 = 1646;  // <accp_not_on_exception> ::= <not_escape_or_not_exception> <statement_list>
 //		final int PROD_NOT_ESCAPE_OR_NOT_EXCEPTION_NOT_ESCAPE                                = 1647;  // <not_escape_or_not_exception> ::= 'NOT_ESCAPE'
 //		final int PROD_NOT_ESCAPE_OR_NOT_EXCEPTION_NOT_EXCEPTION                             = 1648;  // <not_escape_or_not_exception> ::= 'NOT_EXCEPTION'
-//		final int PROD__DISPLAY_EXCEPTION_PHRASES                                            = 1649;  // <_display_exception_phrases> ::= 
+//		final int PROD__DISPLAY_EXCEPTION_PHRASES                                            = 1649;  // <_display_exception_phrases> ::=
 //		final int PROD__DISPLAY_EXCEPTION_PHRASES2                                           = 1650;  // <_display_exception_phrases> ::= <disp_on_exception> <_disp_not_on_exception>
 //		final int PROD__DISPLAY_EXCEPTION_PHRASES3                                           = 1651;  // <_display_exception_phrases> ::= <disp_not_on_exception> <_disp_on_exception>
-//		final int PROD__DISP_ON_EXCEPTION                                                    = 1652;  // <_disp_on_exception> ::= 
+//		final int PROD__DISP_ON_EXCEPTION                                                    = 1652;  // <_disp_on_exception> ::=
 //		final int PROD__DISP_ON_EXCEPTION2                                                   = 1653;  // <_disp_on_exception> ::= <disp_on_exception>
 //		final int PROD_DISP_ON_EXCEPTION_EXCEPTION                                           = 1654;  // <disp_on_exception> ::= EXCEPTION <statement_list>
-//		final int PROD__DISP_NOT_ON_EXCEPTION                                                = 1655;  // <_disp_not_on_exception> ::= 
+//		final int PROD__DISP_NOT_ON_EXCEPTION                                                = 1655;  // <_disp_not_on_exception> ::=
 //		final int PROD__DISP_NOT_ON_EXCEPTION2                                               = 1656;  // <_disp_not_on_exception> ::= <disp_not_on_exception>
 //		final int PROD_DISP_NOT_ON_EXCEPTION_NOT_EXCEPTION                                   = 1657;  // <disp_not_on_exception> ::= 'NOT_EXCEPTION' <statement_list>
-//		final int PROD_ON_SIZE_ERROR_PHRASES                                                 = 1658;  // <on_size_error_phrases> ::= 
+//		final int PROD_ON_SIZE_ERROR_PHRASES                                                 = 1658;  // <on_size_error_phrases> ::=
 //		final int PROD_ON_SIZE_ERROR_PHRASES2                                                = 1659;  // <on_size_error_phrases> ::= <on_size_error> <_not_on_size_error>
 //		final int PROD_ON_SIZE_ERROR_PHRASES3                                                = 1660;  // <on_size_error_phrases> ::= <not_on_size_error> <_on_size_error>
-//		final int PROD__ON_SIZE_ERROR                                                        = 1661;  // <_on_size_error> ::= 
+//		final int PROD__ON_SIZE_ERROR                                                        = 1661;  // <_on_size_error> ::=
 //		final int PROD__ON_SIZE_ERROR2                                                       = 1662;  // <_on_size_error> ::= <on_size_error>
 //		final int PROD_ON_SIZE_ERROR_SIZE_ERROR                                              = 1663;  // <on_size_error> ::= 'SIZE_ERROR' <statement_list>
-//		final int PROD__NOT_ON_SIZE_ERROR                                                    = 1664;  // <_not_on_size_error> ::= 
+//		final int PROD__NOT_ON_SIZE_ERROR                                                    = 1664;  // <_not_on_size_error> ::=
 //		final int PROD__NOT_ON_SIZE_ERROR2                                                   = 1665;  // <_not_on_size_error> ::= <not_on_size_error>
 //		final int PROD_NOT_ON_SIZE_ERROR_NOT_SIZE_ERROR                                      = 1666;  // <not_on_size_error> ::= 'NOT_SIZE_ERROR' <statement_list>
-//		final int PROD__ON_OVERFLOW_PHRASES                                                  = 1667;  // <_on_overflow_phrases> ::= 
+//		final int PROD__ON_OVERFLOW_PHRASES                                                  = 1667;  // <_on_overflow_phrases> ::=
 //		final int PROD__ON_OVERFLOW_PHRASES2                                                 = 1668;  // <_on_overflow_phrases> ::= <on_overflow> <_not_on_overflow>
 //		final int PROD__ON_OVERFLOW_PHRASES3                                                 = 1669;  // <_on_overflow_phrases> ::= <not_on_overflow> <_on_overflow>
-//		final int PROD__ON_OVERFLOW                                                          = 1670;  // <_on_overflow> ::= 
+//		final int PROD__ON_OVERFLOW                                                          = 1670;  // <_on_overflow> ::=
 //		final int PROD__ON_OVERFLOW2                                                         = 1671;  // <_on_overflow> ::= <on_overflow>
 //		final int PROD_ON_OVERFLOW_TOK_OVERFLOW                                              = 1672;  // <on_overflow> ::= 'TOK_OVERFLOW' <statement_list>
-//		final int PROD__NOT_ON_OVERFLOW                                                      = 1673;  // <_not_on_overflow> ::= 
+//		final int PROD__NOT_ON_OVERFLOW                                                      = 1673;  // <_not_on_overflow> ::=
 //		final int PROD__NOT_ON_OVERFLOW2                                                     = 1674;  // <_not_on_overflow> ::= <not_on_overflow>
 //		final int PROD_NOT_ON_OVERFLOW_NOT_OVERFLOW                                          = 1675;  // <not_on_overflow> ::= 'NOT_OVERFLOW' <statement_list>
 //		final int PROD_RETURN_AT_END                                                         = 1676;  // <return_at_end> ::= <at_end_clause> <_not_at_end_clause>
 //		final int PROD_RETURN_AT_END2                                                        = 1677;  // <return_at_end> ::= <not_at_end_clause> <at_end_clause>
 //		final int PROD_AT_END                                                                = 1678;  // <at_end> ::= <at_end_clause> <_not_at_end_clause>
 //		final int PROD_AT_END2                                                               = 1679;  // <at_end> ::= <not_at_end_clause> <_at_end_clause>
-//		final int PROD__AT_END_CLAUSE                                                        = 1680;  // <_at_end_clause> ::= 
+//		final int PROD__AT_END_CLAUSE                                                        = 1680;  // <_at_end_clause> ::=
 //		final int PROD__AT_END_CLAUSE2                                                       = 1681;  // <_at_end_clause> ::= <at_end_clause>
 //		final int PROD_AT_END_CLAUSE_END                                                     = 1682;  // <at_end_clause> ::= END <statement_list>
-//		final int PROD__NOT_AT_END_CLAUSE                                                    = 1683;  // <_not_at_end_clause> ::= 
+//		final int PROD__NOT_AT_END_CLAUSE                                                    = 1683;  // <_not_at_end_clause> ::=
 //		final int PROD__NOT_AT_END_CLAUSE2                                                   = 1684;  // <_not_at_end_clause> ::= <not_at_end_clause>
 //		final int PROD_NOT_AT_END_CLAUSE_NOT_END                                             = 1685;  // <not_at_end_clause> ::= 'NOT_END' <statement_list>
 //		final int PROD_AT_EOP_CLAUSES                                                        = 1686;  // <at_eop_clauses> ::= <at_eop_clause> <_not_at_eop_clause>
 //		final int PROD_AT_EOP_CLAUSES2                                                       = 1687;  // <at_eop_clauses> ::= <not_at_eop_clause> <_at_eop_clause>
-//		final int PROD__AT_EOP_CLAUSE                                                        = 1688;  // <_at_eop_clause> ::= 
+//		final int PROD__AT_EOP_CLAUSE                                                        = 1688;  // <_at_eop_clause> ::=
 //		final int PROD__AT_EOP_CLAUSE2                                                       = 1689;  // <_at_eop_clause> ::= <at_eop_clause>
 //		final int PROD_AT_EOP_CLAUSE_EOP                                                     = 1690;  // <at_eop_clause> ::= EOP <statement_list>
-//		final int PROD__NOT_AT_EOP_CLAUSE                                                    = 1691;  // <_not_at_eop_clause> ::= 
+//		final int PROD__NOT_AT_EOP_CLAUSE                                                    = 1691;  // <_not_at_eop_clause> ::=
 //		final int PROD__NOT_AT_EOP_CLAUSE2                                                   = 1692;  // <_not_at_eop_clause> ::= <not_at_eop_clause>
 //		final int PROD_NOT_AT_EOP_CLAUSE_NOT_EOP                                             = 1693;  // <not_at_eop_clause> ::= 'NOT_EOP' <statement_list>
-//		final int PROD__INVALID_KEY_PHRASES                                                  = 1694;  // <_invalid_key_phrases> ::= 
+//		final int PROD__INVALID_KEY_PHRASES                                                  = 1694;  // <_invalid_key_phrases> ::=
 //		final int PROD__INVALID_KEY_PHRASES2                                                 = 1695;  // <_invalid_key_phrases> ::= <invalid_key_phrases>
 //		final int PROD_INVALID_KEY_PHRASES                                                   = 1696;  // <invalid_key_phrases> ::= <invalid_key_sentence> <_not_invalid_key_sentence>
 //		final int PROD_INVALID_KEY_PHRASES2                                                  = 1697;  // <invalid_key_phrases> ::= <not_invalid_key_sentence> <_invalid_key_sentence>
-//		final int PROD__INVALID_KEY_SENTENCE                                                 = 1698;  // <_invalid_key_sentence> ::= 
+//		final int PROD__INVALID_KEY_SENTENCE                                                 = 1698;  // <_invalid_key_sentence> ::=
 //		final int PROD__INVALID_KEY_SENTENCE2                                                = 1699;  // <_invalid_key_sentence> ::= <invalid_key_sentence>
 //		final int PROD_INVALID_KEY_SENTENCE_INVALID_KEY                                      = 1700;  // <invalid_key_sentence> ::= 'INVALID_KEY' <statement_list>
-//		final int PROD__NOT_INVALID_KEY_SENTENCE                                             = 1701;  // <_not_invalid_key_sentence> ::= 
+//		final int PROD__NOT_INVALID_KEY_SENTENCE                                             = 1701;  // <_not_invalid_key_sentence> ::=
 //		final int PROD__NOT_INVALID_KEY_SENTENCE2                                            = 1702;  // <_not_invalid_key_sentence> ::= <not_invalid_key_sentence>
 //		final int PROD_NOT_INVALID_KEY_SENTENCE_NOT_INVALID_KEY                              = 1703;  // <not_invalid_key_sentence> ::= 'NOT_INVALID_KEY' <statement_list>
-//		final int PROD__SCROLL_LINES                                                         = 1704;  // <_scroll_lines> ::= 
+//		final int PROD__SCROLL_LINES                                                         = 1704;  // <_scroll_lines> ::=
 //		final int PROD__SCROLL_LINES2                                                        = 1705;  // <_scroll_lines> ::= <pos_num_id_or_lit> <scroll_line_or_lines>
 //		final int PROD_CONDITION                                                             = 1706;  // <condition> ::= <expr>
 //		final int PROD_EXPR                                                                  = 1707;  // <expr> ::= <partial_expr>
@@ -3514,7 +3521,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_EXPR_TOKEN3                                                           = 1723;  // <expr_token> ::= <not>
 		final int PROD_EXPR_TOKEN_AND                                                        = 1724;  // <expr_token> ::= AND
 		final int PROD_EXPR_TOKEN_OR                                                         = 1725;  // <expr_token> ::= OR
-//		final int PROD__NOT                                                                  = 1726;  // <_not> ::= 
+//		final int PROD__NOT                                                                  = 1726;  // <_not> ::=
 		final int PROD__NOT2                                                                 = 1727;  // <_not> ::= <not>
 //		final int PROD_NOT_NOT                                                               = 1728;  // <not> ::= NOT
 		final int PROD_CONDITION_OR_CLASS                                                    = 1729;  // <condition_or_class> ::= <CLASS_NAME>
@@ -3542,7 +3549,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_LE_LESS_OR_EQUAL                                                      = 1751;  // <le> ::= 'LESS_OR_EQUAL'
 //		final int PROD_EXP_LIST                                                              = 1752;  // <exp_list> ::= <exp>
 //		final int PROD_EXP_LIST2                                                             = 1753;  // <exp_list> ::= <exp_list> <_e_sep> <exp>
-//		final int PROD__E_SEP                                                                = 1754;  // <_e_sep> ::= 
+//		final int PROD__E_SEP                                                                = 1754;  // <_e_sep> ::=
 //		final int PROD__E_SEP_COMMA_DELIM                                                    = 1755;  // <_e_sep> ::= 'COMMA_DELIM'
 //		final int PROD__E_SEP_SEMI_COLON                                                     = 1756;  // <_e_sep> ::= 'SEMI_COLON'
 //		final int PROD_EXP_TOK_PLUS                                                          = 1757;  // <exp> ::= <exp> 'TOK_PLUS' <exp_term>
@@ -3579,7 +3586,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MNEMONIC_NAME_LIST                                                    = 1788;  // <mnemonic_name_list> ::= <mnemonic_name>
 //		final int PROD_MNEMONIC_NAME_LIST2                                                   = 1789;  // <mnemonic_name_list> ::= <mnemonic_name_list> <mnemonic_name>
 //		final int PROD_MNEMONIC_NAME                                                         = 1790;  // <mnemonic_name> ::= <MNEMONIC_NAME_TOK>
-//		final int PROD_PROCEDURE_NAME_LIST                                                   = 1791;  // <procedure_name_list> ::= 
+//		final int PROD_PROCEDURE_NAME_LIST                                                   = 1791;  // <procedure_name_list> ::=
 //		final int PROD_PROCEDURE_NAME_LIST2                                                  = 1792;  // <procedure_name_list> ::= <procedure_name_list> <procedure_name>
 //		final int PROD_PROCEDURE_NAME                                                        = 1793;  // <procedure_name> ::= <label>
 //		final int PROD_LABEL                                                                 = 1794;  // <label> ::= <qualified_word>
@@ -3603,7 +3610,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_TARGET_X2                                                             = 1812;  // <target_x> ::= <basic_literal>
 //		final int PROD_TARGET_X_ADDRESS                                                      = 1813;  // <target_x> ::= ADDRESS <_of> <identifier_1>
 		final int PROD_TARGET_X_COMMA_DELIM                                                  = 1814;  // <target_x> ::= 'COMMA_DELIM'
-//		final int PROD__X_LIST                                                               = 1815;  // <_x_list> ::= 
+//		final int PROD__X_LIST                                                               = 1815;  // <_x_list> ::=
 //		final int PROD__X_LIST2                                                              = 1816;  // <_x_list> ::= <x_list>
 //		final int PROD_X_LIST                                                                = 1817;  // <x_list> ::= <x>
 //		final int PROD_X_LIST2                                                               = 1818;  // <x_list> ::= <x_list> <x>
@@ -3729,10 +3736,10 @@ public class COBOLParser extends CodeParser
 //		final int PROD_FUNC_MULTI_PARM2                                                      = 1938;  // <func_multi_parm> ::= <FORMATTED_DATE_FUNC>
 //		final int PROD_FUNC_MULTI_PARM3                                                      = 1939;  // <func_multi_parm> ::= <SUBSTITUTE_FUNC>
 //		final int PROD_FUNC_MULTI_PARM4                                                      = 1940;  // <func_multi_parm> ::= <SUBSTITUTE_CASE_FUNC>
-//		final int PROD_FUNC_REFMOD                                                           = 1941;  // <func_refmod> ::= 
+//		final int PROD_FUNC_REFMOD                                                           = 1941;  // <func_refmod> ::=
 //		final int PROD_FUNC_REFMOD_TOK_OPEN_PAREN_TOK_COLON_TOK_CLOSE_PAREN                  = 1942;  // <func_refmod> ::= 'TOK_OPEN_PAREN' <exp> 'TOK_COLON' 'TOK_CLOSE_PAREN'
 //		final int PROD_FUNC_REFMOD_TOK_OPEN_PAREN_TOK_COLON_TOK_CLOSE_PAREN2                 = 1943;  // <func_refmod> ::= 'TOK_OPEN_PAREN' <exp> 'TOK_COLON' <exp> 'TOK_CLOSE_PAREN'
-//		final int PROD_FUNC_ARGS                                                             = 1944;  // <func_args> ::= 
+//		final int PROD_FUNC_ARGS                                                             = 1944;  // <func_args> ::=
 //		final int PROD_FUNC_ARGS_TOK_OPEN_PAREN_TOK_CLOSE_PAREN                              = 1945;  // <func_args> ::= 'TOK_OPEN_PAREN' <exp_list> 'TOK_CLOSE_PAREN'
 //		final int PROD_FUNC_ARGS_TOK_OPEN_PAREN_TOK_CLOSE_PAREN2                             = 1946;  // <func_args> ::= 'TOK_OPEN_PAREN' 'TOK_CLOSE_PAREN'
 //		final int PROD_TRIM_ARGS                                                             = 1947;  // <trim_args> ::= <expr_x>
@@ -3747,27 +3754,27 @@ public class COBOLParser extends CodeParser
 //		final int PROD_FORMATTED_DATETIME_ARGS_SYSTEM_OFFSET                                 = 1956;  // <formatted_datetime_args> ::= <exp_list> <_e_sep> 'SYSTEM_OFFSET'
 //		final int PROD_FORMATTED_TIME_ARGS                                                   = 1957;  // <formatted_time_args> ::= <exp_list>
 //		final int PROD_FORMATTED_TIME_ARGS_SYSTEM_OFFSET                                     = 1958;  // <formatted_time_args> ::= <exp_list> <_e_sep> 'SYSTEM_OFFSET'
-//		final int PROD_FLAG_ALL                                                              = 1959;  // <flag_all> ::= 
+//		final int PROD_FLAG_ALL                                                              = 1959;  // <flag_all> ::=
 //		final int PROD_FLAG_ALL_ALL                                                          = 1960;  // <flag_all> ::= ALL
-//		final int PROD_FLAG_DUPLICATES                                                       = 1961;  // <flag_duplicates> ::= 
+//		final int PROD_FLAG_DUPLICATES                                                       = 1961;  // <flag_duplicates> ::=
 //		final int PROD_FLAG_DUPLICATES2                                                      = 1962;  // <flag_duplicates> ::= <with_dups>
-//		final int PROD_FLAG_INITIALIZED                                                      = 1963;  // <flag_initialized> ::= 
+//		final int PROD_FLAG_INITIALIZED                                                      = 1963;  // <flag_initialized> ::=
 //		final int PROD_FLAG_INITIALIZED_INITIALIZED                                          = 1964;  // <flag_initialized> ::= INITIALIZED
-//		final int PROD_FLAG_INITIALIZED_TO                                                   = 1965;  // <flag_initialized_to> ::= 
+//		final int PROD_FLAG_INITIALIZED_TO                                                   = 1965;  // <flag_initialized_to> ::=
 //		final int PROD_FLAG_INITIALIZED_TO_INITIALIZED                                       = 1966;  // <flag_initialized_to> ::= INITIALIZED <to_init_val>
-//		final int PROD_TO_INIT_VAL                                                           = 1967;  // <to_init_val> ::= 
+//		final int PROD_TO_INIT_VAL                                                           = 1967;  // <to_init_val> ::=
 //		final int PROD_TO_INIT_VAL_TO                                                        = 1968;  // <to_init_val> ::= TO <simple_all_value>
-//		final int PROD__FLAG_NEXT                                                            = 1969;  // <_flag_next> ::= 
+//		final int PROD__FLAG_NEXT                                                            = 1969;  // <_flag_next> ::=
 //		final int PROD__FLAG_NEXT_NEXT                                                       = 1970;  // <_flag_next> ::= NEXT
 		final int PROD__FLAG_NEXT_PREVIOUS                                                   = 1971;  // <_flag_next> ::= PREVIOUS
-//		final int PROD__FLAG_NOT                                                             = 1972;  // <_flag_not> ::= 
+//		final int PROD__FLAG_NOT                                                             = 1972;  // <_flag_not> ::=
 //		final int PROD__FLAG_NOT_NOT                                                         = 1973;  // <_flag_not> ::= NOT
-//		final int PROD_FLAG_OPTIONAL                                                         = 1974;  // <flag_optional> ::= 
+//		final int PROD_FLAG_OPTIONAL                                                         = 1974;  // <flag_optional> ::=
 //		final int PROD_FLAG_OPTIONAL_OPTIONAL                                                = 1975;  // <flag_optional> ::= OPTIONAL
 //		final int PROD_FLAG_OPTIONAL_NOT_OPTIONAL                                            = 1976;  // <flag_optional> ::= NOT OPTIONAL
-//		final int PROD_FLAG_ROUNDED                                                          = 1977;  // <flag_rounded> ::= 
+//		final int PROD_FLAG_ROUNDED                                                          = 1977;  // <flag_rounded> ::=
 //		final int PROD_FLAG_ROUNDED_ROUNDED                                                  = 1978;  // <flag_rounded> ::= ROUNDED <round_mode>
-//		final int PROD_ROUND_MODE                                                            = 1979;  // <round_mode> ::= 
+//		final int PROD_ROUND_MODE                                                            = 1979;  // <round_mode> ::=
 //		final int PROD_ROUND_MODE_MODE                                                       = 1980;  // <round_mode> ::= MODE <_is> <round_choice>
 //		final int PROD_ROUND_CHOICE_AWAY_FROM_ZERO                                           = 1981;  // <round_choice> ::= 'AWAY_FROM_ZERO'
 //		final int PROD_ROUND_CHOICE_NEAREST_AWAY_FROM_ZERO                                   = 1982;  // <round_choice> ::= 'NEAREST_AWAY_FROM_ZERO'
@@ -3777,11 +3784,11 @@ public class COBOLParser extends CodeParser
 //		final int PROD_ROUND_CHOICE_TOWARD_GREATER                                           = 1986;  // <round_choice> ::= 'TOWARD_GREATER'
 //		final int PROD_ROUND_CHOICE_TOWARD_LESSER                                            = 1987;  // <round_choice> ::= 'TOWARD_LESSER'
 //		final int PROD_ROUND_CHOICE_TRUNCATION                                               = 1988;  // <round_choice> ::= TRUNCATION
-//		final int PROD_FLAG_SEPARATE                                                         = 1989;  // <flag_separate> ::= 
+//		final int PROD_FLAG_SEPARATE                                                         = 1989;  // <flag_separate> ::=
 //		final int PROD_FLAG_SEPARATE_SEPARATE                                                = 1990;  // <flag_separate> ::= SEPARATE <_character>
-//		final int PROD__FROM_IDX_TO_IDX                                                      = 1991;  // <_from_idx_to_idx> ::= 
+//		final int PROD__FROM_IDX_TO_IDX                                                      = 1991;  // <_from_idx_to_idx> ::=
 //		final int PROD__FROM_IDX_TO_IDX_FROM_TO                                              = 1992;  // <_from_idx_to_idx> ::= FROM <_index> <pos_num_id_or_lit> TO <pos_num_id_or_lit>
-//		final int PROD__DEST_INDEX                                                           = 1993;  // <_dest_index> ::= 
+//		final int PROD__DEST_INDEX                                                           = 1993;  // <_dest_index> ::=
 //		final int PROD__DEST_INDEX_DESTINATION                                               = 1994;  // <_dest_index> ::= DESTINATION <_index> <pos_num_id_or_lit>
 //		final int PROD_ERROR_STMT_RECOVER_TOK_DOT                                            = 1995;  // <error_stmt_recover> ::= 'TOK_DOT'
 //		final int PROD_ERROR_STMT_RECOVER                                                    = 1996;  // <error_stmt_recover> ::= <verb>
@@ -3856,141 +3863,141 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SCOPE_TERMINATOR_END_SUBTRACT                                         = 2065;  // <scope_terminator> ::= 'END_SUBTRACT'
 //		final int PROD_SCOPE_TERMINATOR_END_UNSTRING                                         = 2066;  // <scope_terminator> ::= 'END_UNSTRING'
 //		final int PROD_SCOPE_TERMINATOR_END_WRITE                                            = 2067;  // <scope_terminator> ::= 'END_WRITE'
-//		final int PROD__ADVANCING                                                            = 2068;  // <_advancing> ::= 
+//		final int PROD__ADVANCING                                                            = 2068;  // <_advancing> ::=
 //		final int PROD__ADVANCING_ADVANCING                                                  = 2069;  // <_advancing> ::= ADVANCING
-//		final int PROD__AFTER                                                                = 2070;  // <_after> ::= 
+//		final int PROD__AFTER                                                                = 2070;  // <_after> ::=
 //		final int PROD__AFTER_AFTER                                                          = 2071;  // <_after> ::= AFTER
-//		final int PROD__ARE                                                                  = 2072;  // <_are> ::= 
+//		final int PROD__ARE                                                                  = 2072;  // <_are> ::=
 //		final int PROD__ARE_ARE                                                              = 2073;  // <_are> ::= ARE
-//		final int PROD__AREA                                                                 = 2074;  // <_area> ::= 
+//		final int PROD__AREA                                                                 = 2074;  // <_area> ::=
 //		final int PROD__AREA_AREA                                                            = 2075;  // <_area> ::= AREA
-//		final int PROD__AREAS                                                                = 2076;  // <_areas> ::= 
+//		final int PROD__AREAS                                                                = 2076;  // <_areas> ::=
 //		final int PROD__AREAS_AREA                                                           = 2077;  // <_areas> ::= AREA
 //		final int PROD__AREAS_AREAS                                                          = 2078;  // <_areas> ::= AREAS
-//		final int PROD__AS                                                                   = 2079;  // <_as> ::= 
+//		final int PROD__AS                                                                   = 2079;  // <_as> ::=
 //		final int PROD__AS_AS                                                                = 2080;  // <_as> ::= AS
-//		final int PROD__AT                                                                   = 2081;  // <_at> ::= 
+//		final int PROD__AT                                                                   = 2081;  // <_at> ::=
 //		final int PROD__AT_AT                                                                = 2082;  // <_at> ::= AT
-//		final int PROD__BEFORE                                                               = 2083;  // <_before> ::= 
+//		final int PROD__BEFORE                                                               = 2083;  // <_before> ::=
 //		final int PROD__BEFORE_BEFORE                                                        = 2084;  // <_before> ::= BEFORE
-//		final int PROD__BINARY                                                               = 2085;  // <_binary> ::= 
+//		final int PROD__BINARY                                                               = 2085;  // <_binary> ::=
 //		final int PROD__BINARY_BINARY                                                        = 2086;  // <_binary> ::= BINARY
-//		final int PROD__BY                                                                   = 2087;  // <_by> ::= 
+//		final int PROD__BY                                                                   = 2087;  // <_by> ::=
 //		final int PROD__BY_BY                                                                = 2088;  // <_by> ::= BY
-//		final int PROD__CHARACTER                                                            = 2089;  // <_character> ::= 
+//		final int PROD__CHARACTER                                                            = 2089;  // <_character> ::=
 //		final int PROD__CHARACTER_CHARACTER                                                  = 2090;  // <_character> ::= CHARACTER
-//		final int PROD__CHARACTERS                                                           = 2091;  // <_characters> ::= 
+//		final int PROD__CHARACTERS                                                           = 2091;  // <_characters> ::=
 //		final int PROD__CHARACTERS_CHARACTERS                                                = 2092;  // <_characters> ::= CHARACTERS
-//		final int PROD__CONTAINS                                                             = 2093;  // <_contains> ::= 
+//		final int PROD__CONTAINS                                                             = 2093;  // <_contains> ::=
 //		final int PROD__CONTAINS_CONTAINS                                                    = 2094;  // <_contains> ::= CONTAINS
-//		final int PROD__DATA                                                                 = 2095;  // <_data> ::= 
+//		final int PROD__DATA                                                                 = 2095;  // <_data> ::=
 //		final int PROD__DATA_DATA                                                            = 2096;  // <_data> ::= DATA
-//		final int PROD__END_OF                                                               = 2097;  // <_end_of> ::= 
+//		final int PROD__END_OF                                                               = 2097;  // <_end_of> ::=
 //		final int PROD__END_OF_END                                                           = 2098;  // <_end_of> ::= END <_of>
-//		final int PROD__FILE                                                                 = 2099;  // <_file> ::= 
+//		final int PROD__FILE                                                                 = 2099;  // <_file> ::=
 //		final int PROD__FILE_TOK_FILE                                                        = 2100;  // <_file> ::= 'TOK_FILE'
-//		final int PROD__FINAL                                                                = 2101;  // <_final> ::= 
+//		final int PROD__FINAL                                                                = 2101;  // <_final> ::=
 //		final int PROD__FINAL_FINAL                                                          = 2102;  // <_final> ::= FINAL
-//		final int PROD__FOR                                                                  = 2103;  // <_for> ::= 
+//		final int PROD__FOR                                                                  = 2103;  // <_for> ::=
 //		final int PROD__FOR_FOR                                                              = 2104;  // <_for> ::= FOR
-//		final int PROD__FROM                                                                 = 2105;  // <_from> ::= 
+//		final int PROD__FROM                                                                 = 2105;  // <_from> ::=
 //		final int PROD__FROM_FROM                                                            = 2106;  // <_from> ::= FROM
-//		final int PROD__IN                                                                   = 2107;  // <_in> ::= 
+//		final int PROD__IN                                                                   = 2107;  // <_in> ::=
 //		final int PROD__IN_IN                                                                = 2108;  // <_in> ::= IN
-//		final int PROD__IN_ORDER                                                             = 2109;  // <_in_order> ::= 
+//		final int PROD__IN_ORDER                                                             = 2109;  // <_in_order> ::=
 //		final int PROD__IN_ORDER_ORDER                                                       = 2110;  // <_in_order> ::= ORDER
 //		final int PROD__IN_ORDER_IN_ORDER                                                    = 2111;  // <_in_order> ::= IN ORDER
-//		final int PROD__INDEX                                                                = 2112;  // <_index> ::= 
+//		final int PROD__INDEX                                                                = 2112;  // <_index> ::=
 //		final int PROD__INDEX_INDEX                                                          = 2113;  // <_index> ::= INDEX
-//		final int PROD__INDICATE                                                             = 2114;  // <_indicate> ::= 
+//		final int PROD__INDICATE                                                             = 2114;  // <_indicate> ::=
 //		final int PROD__INDICATE_INDICATE                                                    = 2115;  // <_indicate> ::= INDICATE
-//		final int PROD__INITIAL                                                              = 2116;  // <_initial> ::= 
+//		final int PROD__INITIAL                                                              = 2116;  // <_initial> ::=
 //		final int PROD__INITIAL_TOK_INITIAL                                                  = 2117;  // <_initial> ::= 'TOK_INITIAL'
-//		final int PROD__INTO                                                                 = 2118;  // <_into> ::= 
+//		final int PROD__INTO                                                                 = 2118;  // <_into> ::=
 //		final int PROD__INTO_INTO                                                            = 2119;  // <_into> ::= INTO
-//		final int PROD__IS                                                                   = 2120;  // <_is> ::= 
+//		final int PROD__IS                                                                   = 2120;  // <_is> ::=
 //		final int PROD__IS_IS                                                                = 2121;  // <_is> ::= IS
-//		final int PROD__IS_ARE                                                               = 2122;  // <_is_are> ::= 
+//		final int PROD__IS_ARE                                                               = 2122;  // <_is_are> ::=
 //		final int PROD__IS_ARE_IS                                                            = 2123;  // <_is_are> ::= IS
 //		final int PROD__IS_ARE_ARE                                                           = 2124;  // <_is_are> ::= ARE
-//		final int PROD__KEY                                                                  = 2125;  // <_key> ::= 
+//		final int PROD__KEY                                                                  = 2125;  // <_key> ::=
 //		final int PROD__KEY_KEY                                                              = 2126;  // <_key> ::= KEY
-//		final int PROD__LEFT_OR_RIGHT                                                        = 2127;  // <_left_or_right> ::= 
+//		final int PROD__LEFT_OR_RIGHT                                                        = 2127;  // <_left_or_right> ::=
 //		final int PROD__LEFT_OR_RIGHT_LEFT                                                   = 2128;  // <_left_or_right> ::= LEFT
 //		final int PROD__LEFT_OR_RIGHT_RIGHT                                                  = 2129;  // <_left_or_right> ::= RIGHT
-//		final int PROD__LINE                                                                 = 2130;  // <_line> ::= 
+//		final int PROD__LINE                                                                 = 2130;  // <_line> ::=
 //		final int PROD__LINE_LINE                                                            = 2131;  // <_line> ::= LINE
-//		final int PROD__LINE_OR_LINES                                                        = 2132;  // <_line_or_lines> ::= 
+//		final int PROD__LINE_OR_LINES                                                        = 2132;  // <_line_or_lines> ::=
 //		final int PROD__LINE_OR_LINES_LINE                                                   = 2133;  // <_line_or_lines> ::= LINE
 //		final int PROD__LINE_OR_LINES_LINES                                                  = 2134;  // <_line_or_lines> ::= LINES
-//		final int PROD__LIMITS                                                               = 2135;  // <_limits> ::= 
+//		final int PROD__LIMITS                                                               = 2135;  // <_limits> ::=
 //		final int PROD__LIMITS_LIMIT                                                         = 2136;  // <_limits> ::= LIMIT <_is>
 //		final int PROD__LIMITS_LIMITS                                                        = 2137;  // <_limits> ::= LIMITS <_are>
-//		final int PROD__LINES                                                                = 2138;  // <_lines> ::= 
+//		final int PROD__LINES                                                                = 2138;  // <_lines> ::=
 //		final int PROD__LINES_LINES                                                          = 2139;  // <_lines> ::= LINES
-//		final int PROD__MESSAGE                                                              = 2140;  // <_message> ::= 
+//		final int PROD__MESSAGE                                                              = 2140;  // <_message> ::=
 //		final int PROD__MESSAGE_MESSAGE                                                      = 2141;  // <_message> ::= MESSAGE
-//		final int PROD__MODE                                                                 = 2142;  // <_mode> ::= 
+//		final int PROD__MODE                                                                 = 2142;  // <_mode> ::=
 //		final int PROD__MODE_MODE                                                            = 2143;  // <_mode> ::= MODE
-//		final int PROD__NUMBER                                                               = 2144;  // <_number> ::= 
+//		final int PROD__NUMBER                                                               = 2144;  // <_number> ::=
 //		final int PROD__NUMBER_NUMBER                                                        = 2145;  // <_number> ::= NUMBER
-//		final int PROD__NUMBERS                                                              = 2146;  // <_numbers> ::= 
+//		final int PROD__NUMBERS                                                              = 2146;  // <_numbers> ::=
 //		final int PROD__NUMBERS_NUMBER                                                       = 2147;  // <_numbers> ::= NUMBER
 //		final int PROD__NUMBERS_NUMBERS                                                      = 2148;  // <_numbers> ::= NUMBERS
-//		final int PROD__OF                                                                   = 2149;  // <_of> ::= 
+//		final int PROD__OF                                                                   = 2149;  // <_of> ::=
 //		final int PROD__OF_OF                                                                = 2150;  // <_of> ::= OF
-//		final int PROD__ON                                                                   = 2151;  // <_on> ::= 
+//		final int PROD__ON                                                                   = 2151;  // <_on> ::=
 //		final int PROD__ON_ON                                                                = 2152;  // <_on> ::= ON
-//		final int PROD__ONOFF_STATUS                                                         = 2153;  // <_onoff_status> ::= 
+//		final int PROD__ONOFF_STATUS                                                         = 2153;  // <_onoff_status> ::=
 //		final int PROD__ONOFF_STATUS_STATUS_IS                                               = 2154;  // <_onoff_status> ::= STATUS IS
 //		final int PROD__ONOFF_STATUS_STATUS                                                  = 2155;  // <_onoff_status> ::= STATUS
 //		final int PROD__ONOFF_STATUS_IS                                                      = 2156;  // <_onoff_status> ::= IS
-//		final int PROD__OTHER                                                                = 2157;  // <_other> ::= 
+//		final int PROD__OTHER                                                                = 2157;  // <_other> ::=
 //		final int PROD__OTHER_OTHER                                                          = 2158;  // <_other> ::= OTHER
-//		final int PROD__PROCEDURE                                                            = 2159;  // <_procedure> ::= 
+//		final int PROD__PROCEDURE                                                            = 2159;  // <_procedure> ::=
 //		final int PROD__PROCEDURE_PROCEDURE                                                  = 2160;  // <_procedure> ::= PROCEDURE
-//		final int PROD__PROGRAM                                                              = 2161;  // <_program> ::= 
+//		final int PROD__PROGRAM                                                              = 2161;  // <_program> ::=
 //		final int PROD__PROGRAM_PROGRAM                                                      = 2162;  // <_program> ::= PROGRAM
-//		final int PROD__RECORD                                                               = 2163;  // <_record> ::= 
+//		final int PROD__RECORD                                                               = 2163;  // <_record> ::=
 //		final int PROD__RECORD_RECORD                                                        = 2164;  // <_record> ::= RECORD
-//		final int PROD__RECORDS                                                              = 2165;  // <_records> ::= 
+//		final int PROD__RECORDS                                                              = 2165;  // <_records> ::=
 //		final int PROD__RECORDS_RECORD                                                       = 2166;  // <_records> ::= RECORD
 //		final int PROD__RECORDS_RECORDS                                                      = 2167;  // <_records> ::= RECORDS
-//		final int PROD__RIGHT                                                                = 2168;  // <_right> ::= 
+//		final int PROD__RIGHT                                                                = 2168;  // <_right> ::=
 //		final int PROD__RIGHT_RIGHT                                                          = 2169;  // <_right> ::= RIGHT
-//		final int PROD__SIGN                                                                 = 2170;  // <_sign> ::= 
+//		final int PROD__SIGN                                                                 = 2170;  // <_sign> ::=
 //		final int PROD__SIGN_SIGN                                                            = 2171;  // <_sign> ::= SIGN
-//		final int PROD__SIGNED                                                               = 2172;  // <_signed> ::= 
+//		final int PROD__SIGNED                                                               = 2172;  // <_signed> ::=
 //		final int PROD__SIGNED_SIGNED                                                        = 2173;  // <_signed> ::= SIGNED
-//		final int PROD__SIGN_IS                                                              = 2174;  // <_sign_is> ::= 
+//		final int PROD__SIGN_IS                                                              = 2174;  // <_sign_is> ::=
 //		final int PROD__SIGN_IS_SIGN                                                         = 2175;  // <_sign_is> ::= SIGN
 //		final int PROD__SIGN_IS_SIGN_IS                                                      = 2176;  // <_sign_is> ::= SIGN IS
-//		final int PROD__SIZE                                                                 = 2177;  // <_size> ::= 
+//		final int PROD__SIZE                                                                 = 2177;  // <_size> ::=
 //		final int PROD__SIZE_SIZE                                                            = 2178;  // <_size> ::= SIZE
-//		final int PROD__STANDARD                                                             = 2179;  // <_standard> ::= 
+//		final int PROD__STANDARD                                                             = 2179;  // <_standard> ::=
 //		final int PROD__STANDARD_STANDARD                                                    = 2180;  // <_standard> ::= STANDARD
-//		final int PROD__STATUS                                                               = 2181;  // <_status> ::= 
+//		final int PROD__STATUS                                                               = 2181;  // <_status> ::=
 //		final int PROD__STATUS_STATUS                                                        = 2182;  // <_status> ::= STATUS
-//		final int PROD__SYMBOLIC                                                             = 2183;  // <_symbolic> ::= 
+//		final int PROD__SYMBOLIC                                                             = 2183;  // <_symbolic> ::=
 //		final int PROD__SYMBOLIC_SYMBOLIC                                                    = 2184;  // <_symbolic> ::= SYMBOLIC
-//		final int PROD__TAPE                                                                 = 2185;  // <_tape> ::= 
+//		final int PROD__TAPE                                                                 = 2185;  // <_tape> ::=
 //		final int PROD__TAPE_TAPE                                                            = 2186;  // <_tape> ::= TAPE
-//		final int PROD__TERMINAL                                                             = 2187;  // <_terminal> ::= 
+//		final int PROD__TERMINAL                                                             = 2187;  // <_terminal> ::=
 //		final int PROD__TERMINAL_TERMINAL                                                    = 2188;  // <_terminal> ::= TERMINAL
-//		final int PROD__THEN                                                                 = 2189;  // <_then> ::= 
+//		final int PROD__THEN                                                                 = 2189;  // <_then> ::=
 //		final int PROD__THEN_THEN                                                            = 2190;  // <_then> ::= THEN
-//		final int PROD__TIMES                                                                = 2191;  // <_times> ::= 
+//		final int PROD__TIMES                                                                = 2191;  // <_times> ::=
 //		final int PROD__TIMES_TIMES                                                          = 2192;  // <_times> ::= TIMES
-//		final int PROD__TO                                                                   = 2193;  // <_to> ::= 
+//		final int PROD__TO                                                                   = 2193;  // <_to> ::=
 //		final int PROD__TO_TO                                                                = 2194;  // <_to> ::= TO
-//		final int PROD__TO_USING                                                             = 2195;  // <_to_using> ::= 
+//		final int PROD__TO_USING                                                             = 2195;  // <_to_using> ::=
 //		final int PROD__TO_USING_TO                                                          = 2196;  // <_to_using> ::= TO
 //		final int PROD__TO_USING_USING                                                       = 2197;  // <_to_using> ::= USING
-//		final int PROD__WHEN                                                                 = 2198;  // <_when> ::= 
+//		final int PROD__WHEN                                                                 = 2198;  // <_when> ::=
 //		final int PROD__WHEN_WHEN                                                            = 2199;  // <_when> ::= WHEN
-//		final int PROD__WHEN_SET_TO                                                          = 2200;  // <_when_set_to> ::= 
+//		final int PROD__WHEN_SET_TO                                                          = 2200;  // <_when_set_to> ::=
 //		final int PROD__WHEN_SET_TO_WHEN_SET_TO                                              = 2201;  // <_when_set_to> ::= WHEN SET TO
-//		final int PROD__WITH                                                                 = 2202;  // <_with> ::= 
+//		final int PROD__WITH                                                                 = 2202;  // <_with> ::=
 //		final int PROD__WITH_WITH                                                            = 2203;  // <_with> ::= WITH
 //		final int PROD_COLL_SEQUENCE_COLLATING_SEQUENCE                                      = 2204;  // <coll_sequence> ::= COLLATING SEQUENCE
 //		final int PROD_COLL_SEQUENCE_SEQUENCE                                                = 2205;  // <coll_sequence> ::= SEQUENCE
@@ -4042,9 +4049,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_CONTROL_KEYWORD_CONTROL                                               = 2251;  // <control_keyword> ::= CONTROL <_is>
 //		final int PROD_CONTROL_KEYWORD_CONTROLS                                              = 2252;  // <control_keyword> ::= CONTROLS <_are>
 	};
-	
+
 	//------------------- Comment association specification ---------------------------------
-	
+
 	// START KGU#407 2017-10-01: Enh. #420 - Slightly improved approach - still to be tuned
 	/** rule ids representing statements, used as stoppers for comment retrieval */
 	private static final int[] statementIds = new int[]{
@@ -4099,7 +4106,7 @@ public class COBOLParser extends CodeParser
 	//----------------------- Local helper functions -------------------------
 
 //	/**
-//	 * replace a single character at offset {@code pos} in {@code oldString} with another char 
+//	 * replace a single character at offset {@code pos} in {@code oldString} with another char
 //	 * @param oldString
 //	 * @param newChar
 //	 * @param pos
@@ -4113,7 +4120,7 @@ public class COBOLParser extends CodeParser
 //		if (oldString == null || strLen < 2) {
 //			return newChar + ""; // convert char to String
 //		} else if (pos >= 0 && pos <= strLen-1) {
-//			return oldString.substring(0, pos) + newChar + oldString.substring(pos + 1);			
+//			return oldString.substring(0, pos) + newChar + oldString.substring(pos + 1);
 //		}
 //		return oldString;
 //	}
@@ -4122,7 +4129,7 @@ public class COBOLParser extends CodeParser
 
 	// line length for source if source format is VARIABLE
 	private static final int TEXTCOLUMN_VARIABLE = 500;
-	
+
 	// START KGU#473 2017-12-04: Bugfix #485
 	/** Names of all known intrinsic functions to be prefixed with "FUNCTION" for the parser */
 	private static final String[] INTRINSIC_FUNCTION_NAMES = {
@@ -4243,7 +4250,7 @@ public class COBOLParser extends CodeParser
 			RA_PROC0, RA_PROC1, RA_PROC2, RA_PROC,
 			RA_END
 			};
-		
+
 		private State state = State.RA_START;
 		private static HashSet<String> intrinsicFunctions = new HashSet<String>();
 		static {
@@ -4253,7 +4260,7 @@ public class COBOLParser extends CodeParser
 		}
 		private HashSet<String> privilegedFunctions = new HashSet<String>();
 		private String pendingName = null;
-		
+
 		public String process(String line)
 		{
 			boolean replacementsDone = false;
@@ -4267,7 +4274,7 @@ public class COBOLParser extends CodeParser
 //			// Underscore must be added to word characters!
 //			tokenizer.wordChars('_', '_');
 //			tokenizer.wordChars('-', '-');
-			
+
 			StringList tokens = StringList.explodeWithDelimiter(line.trim(), ".");
 			tokens = StringList.explode(tokens, "\\s+");
 			if (tokens.count() == 0 || tokens.get(0).startsWith("*") || state == State.RA_END) {
@@ -4310,7 +4317,7 @@ public class COBOLParser extends CodeParser
 						state = State.RA_START;
 					}
 					break;
-					
+
 				case RA_ENV0:	// "ENVIRONMENT" seen, waiting for "DIVISION"
 					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
 						// ENVIRONMENT SECTION beginning?
@@ -4350,7 +4357,7 @@ public class COBOLParser extends CodeParser
 						state = State.RA_ENV;
 					}
 					break;
-					
+
 				case RA_CONF0:	// "CONFIGURATION" seen, waiting for "SECTION"
 					if (tokens.get(++pos).equalsIgnoreCase("SECTION")) {
 						state = State.RA_CONF1;
@@ -4392,7 +4399,7 @@ public class COBOLParser extends CodeParser
 						state = State.RA_CONF;
 					}
 					break;
-					
+
 				case RA_REP0:	// Seen "REPOSITORY", waiting for TOK-DOT
 					if (tokens.get(++pos).equals(".")) {
 						state = State.RA_REP1;
@@ -4480,7 +4487,7 @@ public class COBOLParser extends CodeParser
 					pendingName = null;
 					break;
 				}
-				case RA_REP4b:	// Having seen "FUNCTION <name> AS", waiting for alias 
+				case RA_REP4b:	// Having seen "FUNCTION <name> AS", waiting for alias
 					privilegedFunctions.add(tokens.get(++pos));
 					// Still wait for the TOK-DOT
 					state = State.RA_REP5b;
@@ -4498,14 +4505,14 @@ public class COBOLParser extends CodeParser
 						// Apparently syntax error
 						state = State.RA_READY;
 					}
-					
+
 				case RA_READY:	// Ready with REPOSITORY, waiting for PROCEDURE DIVISION
 					if ((pos1 = tokens.indexOf("PROCEDURE", ++pos, false)) >= 0) {
 						pos = pos1;
 						state = State.RA_PROC0;
 					}
 					break;
-					
+
 				case RA_PROC0:	// Seen "PROCEDURE", waiting for "DIVISION"
 					if (tokens.get(++pos).equalsIgnoreCase("DIVISION")) {
 						state = State.RA_PROC1;
@@ -4528,7 +4535,7 @@ public class COBOLParser extends CodeParser
 						followsFUNCTION = true;
 						break;
 					}
-					StringList parts = StringList.explodeWithDelimiter(token, "("); 
+					StringList parts = StringList.explodeWithDelimiter(token, "(");
 					parts = StringList.explodeWithDelimiter(parts, ")");
 					for (int i = 0; i < parts.count(); i++) {
 						String part = parts.get(i);
@@ -4567,25 +4574,25 @@ public class COBOLParser extends CodeParser
 		}
 	};
 	// END KGU#473 2017-12-04
-	
+
 	/* configuration settings */
 	// reference-format with column aware-parts
 	private boolean settingFixedForm;
 	private int settingFixedColumnIndicator;
 	private int settingFixedColumnText;
-	
+
 	// special columns-> only set via setColumns as this recalculates settingCodeLength
 	private int settingColumnIndicator;
 	private int settingColumnText;
-	
+
 	private boolean srcCodeDebugLines;
 	private boolean decimalComma;
-	
+
 	private boolean ignoreUnstringAllClauses;
-	
+
 	// 32 or 64 bit, used for different size calculations and possibly in preparser
 	private boolean is32bit;
-	
+
 	// FIXME If the refrenced fields are options then this wil have to be recalculated
 	private int settingCodeLength = settingColumnText - settingColumnIndicator - 1;
 
@@ -4594,7 +4601,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it and writes a new temporary file "Structorizer.COB", which is 
+	 * file, filters it and writes a new temporary file "Structorizer.COB", which is
 	 * then actually parsed.
 	 * For the COBOL Parser e.g. the compiler directives must be removed and possibly
 	 * be executed (at least the [COPY] REPLACE, with >> IF it should be possible as
@@ -4623,16 +4630,16 @@ public class COBOLParser extends CodeParser
 		 * and replace them by tokens (must be redone during parsing)
 		 * Register all intrinsic functions named in the repository
 		 */
-		
+
 		// START KGU#473 2017-12-04: Bugfix #485
 		RepositoryAutomaton repAuto = new RepositoryAutomaton();
 		// END KGU#473 2017-12-04
-		
+
 		File interm = null;
 		try
 		{
 			File file = new File(_textToParse);
-			storeFileName(file); 
+			storeFileName(file);
 			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
@@ -4647,34 +4654,34 @@ public class COBOLParser extends CodeParser
 			settingFixedColumnText = (int)this.getPluginOption("fixedColumnText", 73);
 			ignoreUnstringAllClauses = (boolean)this.getPluginOption("ignoreUnstringAll", true);
 			is32bit = (boolean)this.getPluginOption("is32bit", true);
-			
+
 			if (settingFixedForm) {
 				setColumns(settingFixedColumnIndicator, settingFixedColumnText);
 			}
-			
+
 			int srcCodeLastPos = 0;
 			int srcLastCodeLength = settingCodeLength;
-			
+
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the [COPY] REPLACE replacements (at least roughly...)
-			while ((strLine = br.readLine()) != null)   
+			while ((strLine = br.readLine()) != null)
 			{
 				if (settingFixedForm) { // fixed-form reference-format
-					
+
 					if (strLine.length() < settingColumnIndicator) {
 						srcCode.append (strLine + "\n");
-						srcCodeLastPos += strLine.length() + 1;	
+						srcCodeLastPos += strLine.length() + 1;
 						continue; // read next line
 					}
-					
+
 					String srcLineCode = strLine.substring(settingColumnIndicator);
 					if (srcLineCode.length() > settingCodeLength) {
 						// FIXME: Better check if the string contains *> already and is not part of a literal,
-						//        if yes don't cut the string; if not: insert "*> TEXT AREA" in   
+						//        if yes don't cut the string; if not: insert "*> TEXT AREA" in
 						srcLineCode = srcLineCode.substring(0, settingCodeLength);
 					}
-					
+
 					char srcLineIndicator = strLine.charAt(settingColumnIndicator - 1);
 					if (srcLineIndicator == '*') {
 						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
@@ -4735,7 +4742,7 @@ public class COBOLParser extends CodeParser
 //								if (lastLit == ' ') {
 //									// check if new literal starts
 //									if (currChar == '"' || currChar == '\'') {
-//										lastLit = currChar; 
+//										lastLit = currChar;
 //									}
 //									// check if we want to replace last separator comma/semicolon
 //									if (lastChar == ';' || (lastChar == ',' && !decimalComma)) {
@@ -4746,7 +4753,7 @@ public class COBOLParser extends CodeParser
 //										}
 //									}
 //								// within a literal --> only check if literal ends
-//								} else if (lastLit == currChar && currChar != lastChar) {								
+//								} else if (lastLit == currChar && currChar != lastChar) {
 //									lastLit = ' ';
 //								}
 //								lastChar = currChar;
@@ -4795,7 +4802,7 @@ public class COBOLParser extends CodeParser
 			ow.write(srcCode.toString()+"\n");
 			ow.close();
 		}
-		catch (Exception e) 
+		catch (Exception e)
 		{
 			getLogger().log(Level.SEVERE, " -> ", e);
 		}
@@ -4812,7 +4819,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * function for checking the line for compiler directives and handle them appropriate 
+	 * function for checking the line for compiler directives and handle them appropriate
 	 * @param codeLine   String to check
 	 * @return true = directive found, line has not to be pre-parsed anymore
 	 */
@@ -4822,7 +4829,7 @@ public class COBOLParser extends CodeParser
 
 		String[] tokenSeparator = codeLine.trim().split("\\s", 2); // we only want the first token here
 		String firstToken = tokenSeparator[0].toUpperCase();
-		
+
 		// check for GnuCOBOL extension floating debugging line, no space here
 		if (firstToken.startsWith(">>D")) {
 			if (!srcCodeDebugLines) {
@@ -4832,18 +4839,18 @@ public class COBOLParser extends CodeParser
 					resultLine = "*> DEBUG: " + codeLine;
 				}
 			}
-			
+
 		// check for "normal" directive
 		} else if (firstToken.startsWith(">>") || firstToken.startsWith("$")) {
 			handleDirective(codeLine);
 			// Directive --> added as comment
 			resultLine = "*> DIRECTIVE: " + codeLine;
-			
+
 		// check for COPY or REPLACE statements (rough check, only first token)
 		} else if (firstToken.equals("COPY")) {
 			// handleCopyStatement(strLine);
 			// removed because must be set as comment until next period (multiple lines):
-			// resultLine = "*> COPY book included: " + codeLine; 
+			// resultLine = "*> COPY book included: " + codeLine;
 			// TODO log error - no support for COPY statement and present it to the user
 			// as a warning after the parsing is finished
 			// HACK for now: replace as comment if it looks like a one-line statement
@@ -4860,7 +4867,7 @@ public class COBOLParser extends CodeParser
 			// TODO log error - no support for REPLACE statement and present it to the user
 			// as a warning after the parsing is finished
 		}
-		
+
 		return resultLine;
 	}
 
@@ -4881,7 +4888,7 @@ public class COBOLParser extends CodeParser
 			// handling >>SOURCE [FORMAT] [IS] format
 			if (tokens[readToken].equals("SOURCE")) {
 				readToken++;
-				
+
 				// skip optional FORMAT
 				if (tokens.length > readToken && tokens[readToken].equals("FORMAT")) {
 					readToken++;
@@ -4901,10 +4908,10 @@ public class COBOLParser extends CodeParser
 			} else {
 				// TODO: log unknown >> directive
 			}
-			
-			
+
+
 		} else { // handling MicroFocus $ directives
-			
+
 			// handling $SET directives
 			if (tokens[0].equals("$SET")) {
 				// handling $SET SOURCEFORMAT format
@@ -4932,9 +4939,9 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * adjust the parameters for format (settingFixedForm, settingColumnIndicator, SettingColumnText)
-	 * for the given format 
+	 * for the given format
 	 * @param sourceFormat as string: FIXED / FREE / VARIABLE are recognized
-	 * @return false if format wasn't recognized 
+	 * @return false if format wasn't recognized
 	 */
 	private boolean adjustSourceFormat(String sourceFormat) {
 		if (sourceFormat.equals("FIXED")) {
@@ -4949,7 +4956,7 @@ public class COBOLParser extends CodeParser
 			return false;
 		}
 		return true;
-		
+
 	}
 
 	//---------------------- Build fields and methods for structograms ---------------------------
@@ -4958,8 +4965,8 @@ public class COBOLParser extends CodeParser
 	/** Target type for accomplishment of a {@link SectionOrParagraph} object */
 	private static enum SoPTarget {SOP_SECTION, SOP_PARAGRAPH, SOP_ANY};
 	// END KGU#464 2017-12-03
-	
-	/** Record for detected sections and paragraphs if needed as reference for possible calls */ 
+
+	/** Record for detected sections and paragraphs if needed as reference for possible calls */
 	private class SectionOrParagraph {
 		public String name;
 		public boolean isSection = true;
@@ -4972,7 +4979,7 @@ public class COBOLParser extends CodeParser
 		public LinkedList<Jump> sectionExits = new LinkedList<Jump>();
 		public LinkedList<Jump> paragraphExits = new LinkedList<Jump>();
 		// END KGU#464 2017-12-03
-		
+
 		public SectionOrParagraph(String _name, boolean _isSection, int _startIndex, Subqueue _parentNode, SectionOrParagraph _containingSoP)
 		{
 			name = _name;
@@ -4981,12 +4988,12 @@ public class COBOLParser extends CodeParser
 			parent = _parentNode;
 			containedBy = _containingSoP;
 		}
-		
+
 		public String toString()
 		{
 			return getClass().getSimpleName() + "(" + (this.isSection ? "SECTION " : "") + this.name + ":" + this.startsAt + ".." + this.endsBefore + ")";
 		}
-		
+
 		// START KGU#464 2017-12-03: Bugfix #475 - these methods replace the former fields
 		public Element getFirstElement()
 		{
@@ -5008,7 +5015,7 @@ public class COBOLParser extends CodeParser
 		}
 		public int getSize()
 		{
-			return (this.endsBefore < 0 ? this.parent.getSize() : this.endsBefore) - this.startsAt; 
+			return (this.endsBefore < 0 ? this.parent.getSize() : this.endsBefore) - this.startsAt;
 		}
 		// END KGU#464 2017-12-03
 	}
@@ -5022,7 +5029,7 @@ public class COBOLParser extends CodeParser
 //		@Override
 //		public boolean visitPreOrder(Element _ele) {
 //			String text = _ele.getText().getLongString();
-//			if (_ele instanceof Jump && _ele.disabled && 
+//			if (_ele instanceof Jump && _ele.disabled &&
 //					(text.equalsIgnoreCase("EXIT SECTION") || text.equalsIgnoreCase("EXIT PARAGRAPH"))) {
 //				// Replace the comment by the previous text
 //				_ele.setComment(text);
@@ -5039,19 +5046,19 @@ public class COBOLParser extends CodeParser
 //	};
 	// END KGU#464 2017-12-04
 	// START KGU#475 2017-12-05: Bugfix #486 - New mechanism to enforce value return
-	/** 
+	/**
 	 * Visitor class responsible for adding the result variable name to otherwise
 	 * empty return Jumps
 	 */
 	private final class ReturnEnforcer implements IElementVisitor
 	{
 		String resultVar;
-		
+
 		ReturnEnforcer(String _resultVar)
 		{
 			resultVar = _resultVar;
 		}
-		
+
 		@Override
 		public boolean visitPreOrder(Element _ele) {
 			String text = _ele.getText().getLongString();
@@ -5070,15 +5077,15 @@ public class COBOLParser extends CodeParser
 		}
 	};
 	// END KGU#475 2017-12-05
-	
+
 	/** During build phase, all detected sections and paragraphs are listed here for resolution of internal calls */
 	private LinkedList<SectionOrParagraph> procedureList = new LinkedList<SectionOrParagraph>();
-	
+
 	private LinkedHashMap< String, LinkedList<Call> > internalCalls = new LinkedHashMap< String, LinkedList<Call> >();
 	// START KGU#476 2017-12-05: Try to distinguish superfluous paragraph labels
 	private LinkedHashMap< String, HashSet<Root> > internalGotos = new LinkedHashMap< String, HashSet<Root> >();
 	// END KGU#476 2017-12-05
-	
+
 	/**
 	 * Associates the name of the result variable to the respective function Root
 	 */
@@ -5098,7 +5105,7 @@ public class COBOLParser extends CodeParser
 //	private Instruction previousDeclaration = null;
 //	private int	previousDeclarationLevelDepth = 0;
 //	private int	previousDeclarationLevelNumber = 0;
-	
+
 	/* (non-Javadoc)
 	 * @see CodeParser#initializeBuildNSD()
 	 */
@@ -5111,7 +5118,7 @@ public class COBOLParser extends CodeParser
 		externalRoot = new Root(StringList.getNew(this.sourceName + "Externals"));
 		externalRoot.setInclude();
 	}
-	
+
 	private CobTools cobTools = new CobTools();
 	private CobProg currentProg = null;
 	final static String STRUCTORIZER_PARTIAL = "Structorizer Partial";
@@ -5129,7 +5136,7 @@ public class COBOLParser extends CodeParser
 	private HashMap<Root, String> dataSectionIncludes = new HashMap<Root, String>();
 	/** List of declared function names and aliases to distinguish them from e.g. array variables */
 	private StringList functionNames = new StringList();
-	
+
 	private static Matcher mCopyFunction = Pattern.compile("^copy\\((.*),(.*),(.*)\\)$").matcher("");
 
 	/* (non-Javadoc)
@@ -5164,7 +5171,7 @@ public class COBOLParser extends CodeParser
 //			}
 //		}
 //		// END KGU#464 2017-12-03
-		
+
 		switch (ruleId) {
 		case RuleConstants.PROD_PROGRAM_DEFINITION:
 		case RuleConstants.PROD_FUNCTION_DEFINITION:
@@ -5288,7 +5295,7 @@ public class COBOLParser extends CodeParser
 			// Note: this starts a new section AND is the only way (despite of END PROGRAM / EOF)
 			//       to close the previous section and the previous paragraph
 			accomplishPrevSoP(_parentNode, SoPTarget.SOP_SECTION);
-			
+
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 			// We ignore segment number (if given) and delaratives i.e. <_use_statemant>
 
@@ -5297,7 +5304,7 @@ public class COBOLParser extends CodeParser
 			sec.disabled = true;
 			_parentNode.addElement(this.equipWithSourceComment(sec, _reduction));
 			sec.getComment().insert("Definition of section " + name, 0);
-			
+
 			// add to procedureList for later handling
 			addProcedureToList(_parentNode, name, true);
 		}
@@ -5306,10 +5313,10 @@ public class COBOLParser extends CodeParser
 		{
 			// <paragraph_header> ::= <IntLiteral or WORD> 'TOK_DOT'
 			// Note: this starts a new paragraph AND closes the previous paragraph (if existent)
-			// START KGU#464 2017-11-27: Bugfix #475 
+			// START KGU#464 2017-11-27: Bugfix #475
 			accomplishPrevSoP(_parentNode, SoPTarget.SOP_PARAGRAPH);
 			// END KGU#464 2017-11-27
-			
+
 			String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
 
 			// add to NSD
@@ -5317,7 +5324,7 @@ public class COBOLParser extends CodeParser
 			par.disabled = true;
 			_parentNode.addElement(this.equipWithSourceComment(par, _reduction));
 			par.getComment().insert("Definition of paragraph " + name, 0);
-			
+
 			// add to procedureList for later handling
 			if (Character.isDigit(name.charAt(0))) {
 				name = "sub" + name;
@@ -5380,7 +5387,7 @@ public class COBOLParser extends CodeParser
 					content.add(targets.get(i) + " <- " + targets.get(0));
 				}
 				_parentNode.addElement(this.equipWithSourceComment(new Instruction(content), _reduction));
-			}				
+			}
 		}
 		break;
 		case RuleConstants.PROD_ADD_STATEMENT_ADD:
@@ -5428,7 +5435,7 @@ public class COBOLParser extends CodeParser
 			if (content.endsWith(", ")) {
 				content = content.substring(0,  content.length()-2);
 			}
-			content = CodeParser.getKeyword("output") + " " + content;				
+			content = CodeParser.getKeyword("output") + " " + content;
 			Instruction instr = new Instruction(content);
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 		}
@@ -5457,7 +5464,7 @@ public class COBOLParser extends CodeParser
 						reclRed = null;
 					}
 					HashMap<String, String> typeMap = new HashMap<String, String>();
-					// START KGU 2017-05-24: We do not only want the type info here but also create declarations 
+					// START KGU 2017-05-24: We do not only want the type info here but also create declarations
 					//this.processDataDescriptions(datRed, null, typeMap);
 					this.processDataDescriptions(datRed, typeMap);
 					// END KGU 2017-05-24
@@ -5713,7 +5720,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Inserts a new {@link SectionOrParagraph} object at the front of {@link #procedureList}.
-	 * The new procedure reference object will start at the current end of @{@link Subqueue} {@code _parentNode}.   
+	 * The new procedure reference object will start at the current end of @{@link Subqueue} {@code _parentNode}.
 	 * @param _parentNode - the {@link Subqueue} we are referrung to
 	 * @param _name - name of the section or paragraph starting here
 	 * @param _asSection - whether it is a SECTION.
@@ -5770,7 +5777,7 @@ public class COBOLParser extends CodeParser
 	 *
 	 * @param _reduction - the statement reduction
 	 * @param _parentNode - the
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private void importSearch(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		/*
@@ -5889,7 +5896,7 @@ public class COBOLParser extends CodeParser
 	 * @param _reduction - the STRING statement reduction
 	 * @param _parentNode - {@link Subqueue} to append the resulting elements to
 	 * @return indicates whether some halfway usable element (sequence) could be generated
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private boolean importString(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
@@ -5907,10 +5914,10 @@ public class COBOLParser extends CodeParser
 		// and then decide if their concatenation might fit into a single line.
 		StringList assignments = new StringList();
 		StringList preparations = new StringList();
-		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables 
+		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables
 		Reduction itemlRed = secRed.get(0).asReduction();
 		do {
-			// The first assigment (produced as the last one here) will just overwrite the target variable 
+			// The first assigment (produced as the last one here) will just overwrite the target variable
 			String asgnmt = varName + " <- ";
 			Reduction itemRed = itemlRed;	// <string_item> ::= <x> <_string_delimited>
 			if (itemlRed.getParent().getTableIndex() == RuleConstants.PROD_STRING_ITEM_LIST2) {
@@ -6087,7 +6094,7 @@ public class COBOLParser extends CodeParser
 					}
 					expr = "unstring_" + suffix + "[" + indexVar + "]";
 				}
-				
+
 				StringList assignments = new StringList();
 				if (mCopyFunction.reset(target[0]).matches()) {
 					assignments.add(mCopyFunction.replaceFirst("delete($1, $2, $3)"));
@@ -6255,14 +6262,14 @@ public class COBOLParser extends CodeParser
 		//System.out.println("\tEND_IF");
 	}
 
-	/** Resolve SET var [var2,var3] TO TRUE | FLASE 
+	/** Resolve SET var [var2,var3] TO TRUE | FLASE
 	 * @throws ParserCancelled */
 	private boolean importSet(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean done = false;
 		Reduction secRed = _reduction.get(1).asReduction();	// <set_body>
 		int secRuleId = secRed.getParent().getTableIndex();
 		switch (secRuleId) {
-		// COBOL: SET index1, index2 index3 TO index (or number) 
+		// COBOL: SET index1, index2 index3 TO index (or number)
 		case RuleConstants.PROD_SET_TO_TO:	// <set_to> ::= <target_x_list> TO <x>
 		{
 			String expr = this.getContent_R(secRed.get(2).asReduction(), "");
@@ -6298,7 +6305,7 @@ public class COBOLParser extends CodeParser
 			}
 			break;
 		}
-		// COBOL: SET var1 TO TRUE  var2 TO TRUE  var3 TO FALSE 
+		// COBOL: SET var1 TO TRUE  var2 TO TRUE  var3 TO FALSE
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE:
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_SEQUENCE2:
 		{
@@ -6325,7 +6332,7 @@ public class COBOLParser extends CodeParser
 			done = true;
 			break;
 		}
-		// COBOL: SET var1 TO TRUE | FALSE 
+		// COBOL: SET var1 TO TRUE | FALSE
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_TRUE:
 		case RuleConstants.PROD_SET_TO_TRUE_FALSE_TO_TOK_FALSE:
 		{
@@ -6347,14 +6354,14 @@ public class COBOLParser extends CodeParser
 	 * of the <target_x_list> of the given reduction {@code setRed} to {@code assignments}
 	 * @param setRed
 	 * @param assignments
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private void addBoolAssignments(Reduction setRed, StringList assignments) throws ParserCancelled {
 		String value = setRed.get(2).asString().toLowerCase();	// gets "true" or "false"
 		StringList targets = this.getExpressionList(setRed.get(0).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		for (int i = 0; i < targets.count(); i++) {
 			// resolve condName to get the original name and value assigned to the condition
-			// Note: this can only work correctly for "complete" sources, 
+			// Note: this can only work correctly for "complete" sources,
 			//       not possible if we haven't parsed the condition variable before
 			//       therefore we leave the fallback "condition-name <- true/false"
 			String condName = targets.get(i);
@@ -6397,7 +6404,7 @@ public class COBOLParser extends CodeParser
 		if (secRed.get(2).asReduction().size() > 0) {
 			args = this.getParameterList(secRed.get(2).asReduction().get(1).asReduction(), "<call_param_list>", RuleConstants.PROD_CALL_PARAM, 2);
 		}
-		String content = name + "(" + args.concatenate(", ") + ")"; 
+		String content = name + "(" + args.concatenate(", ") + ")";
 		Reduction retRed = secRed.get(3).asReduction();
 		if (retRed.getParent().getTableIndex() == RuleConstants.PROD_CALL_RETURNING2) {
 			content = this.getContent_R(retRed.get(2).asReduction(), "") + " <- " + content;
@@ -6421,7 +6428,7 @@ public class COBOLParser extends CodeParser
 		while (selsRed.getParent().getTableIndex() == RuleConstants.PROD__SELECT_CLAUSE_SEQUENCE2) {
 			Reduction selRed = selsRed.get(1).asReduction();
 			selsRed = selsRed.get(0).asReduction();
-			String selHead = selRed.getParent().getHead().toString(); 
+			String selHead = selRed.getParent().getHead().toString();
 			if (selHead.equals("<assign_clause>")) {
 				String fileName = this.getContent_R(selRed.get(4).asReduction(), "");
 				currentProg.fileMap.put(fileDescr, fileName);
@@ -6529,7 +6536,7 @@ public class COBOLParser extends CodeParser
 		String target = null;
 		Reduction intoRed = bodyRed.get(3).asReduction();
 		if (intoRed.getParent().getTableIndex() == RuleConstants.PROD_READ_INTO_INTO) {
-			target = this.getContent_R(intoRed.get(1).asReduction(), ""); 
+			target = this.getContent_R(intoRed.get(1).asReduction(), "");
 		}
 		// Without an INTO clause we will have to search the file record map
 		if (target == null) {
@@ -6551,7 +6558,7 @@ public class COBOLParser extends CodeParser
 					fnName = "fileReadInit";
 				}
 				else if (type.equals("double") || type.equals("float")) {
-					fnName = "fileReadDouble"; 
+					fnName = "fileReadDouble";
 				}
 				else if (type.equals("char")) {
 					fnName = "fileReadChar";
@@ -6560,7 +6567,7 @@ public class COBOLParser extends CodeParser
 					fnName = "fileReadLine";
 				}
 			}
-			// we just ignore the lock clause 
+			// we just ignore the lock clause
 			Instruction instr = new Instruction(target + " <- " + fnName + "(" + fdName + ")");
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 			instr.getComment().add(this.getOriginalText(_reduction, ""));
@@ -6620,7 +6627,7 @@ public class COBOLParser extends CodeParser
 				instr.setColor(Color.RED);
 			}
 			_parentNode.insertElementAt(instr, pos);
-			Element statusEl = addStatusAssignment(_parentNode, fileDescr); 
+			Element statusEl = addStatusAssignment(_parentNode, fileDescr);
 			if (unsupportedMode) {
 				statusEl.disabled = true;
 			}
@@ -6633,7 +6640,7 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the ADD statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed ADD statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private void importAdd(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
@@ -6685,7 +6692,7 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the SUBTRACT statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed SUBTRACT statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final void importSubtract(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
@@ -6726,7 +6733,7 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the MULTIPLY statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed MULTIPLY statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final void importMultiply(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
@@ -6770,7 +6777,7 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Instruction element from the DIVIDE statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed DIVIDE statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final void importDivide(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
@@ -6787,7 +6794,7 @@ public class COBOLParser extends CodeParser
 		}
 		if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING
 				|| secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING_REMAINDER) {
-			// In the BY statements the operand roles are swapped 
+			// In the BY statements the operand roles are swapped
 			String tmp = dividend;
 			dividend = divisor;
 			divisor = tmp;
@@ -6798,7 +6805,7 @@ public class COBOLParser extends CodeParser
 		}
 		StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(),
 				"<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
-		
+
 		//else if (secRuleId == RuleConstants.PROD_DIVIDE_BODY_BY_GIVING || )
 		// FIXME: Handle the <flag rounded>
 		if (targets.count() > 0) {
@@ -6832,7 +6839,7 @@ public class COBOLParser extends CodeParser
 	 * Builds an approptiate Jump element from the EXIT statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed EXIT statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final void importExit(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		String content = "";
@@ -6897,10 +6904,10 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Checks whether there is a open section or paragraph context and if so marks it as
 	 * containing an EXIT statement. Returns true if the category of the innermost context
-	 * matches the argument. 
-	 * @param _exitSection - true if the EXIT statement was an EXIT SECTION 
+	 * matches the argument.
+	 * @param _exitSection - true if the EXIT statement was an EXIT SECTION
 	 * @return true if the current procedure context is a section and {@code _exitSection} is true or
-	 * if the context is a paragraph and {@code _exitSection} is false 
+	 * if the context is a paragraph and {@code _exitSection} is false
 	 */
 	private void registerExitInProcedureContext(Jump _jump, SoPTarget _target) {
 		if (!this.procedureList.isEmpty()) {
@@ -6923,7 +6930,7 @@ public class COBOLParser extends CodeParser
 	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final void importPerform(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// We will have to find out what kind of loop this is.
@@ -7017,7 +7024,7 @@ public class COBOLParser extends CodeParser
 					}
 					loop = new For(varName, from, cond.trim(), step);
 					this.equipWithSourceComment((For)loop, _reduction);
-					// FIXME: This should have become superfluous as soon as the conversion to a REPEAT loop above is implemented  
+					// FIXME: This should have become superfluous as soon as the conversion to a REPEAT loop above is implemented
 					if (testAfter) {
 						((For)loop).setComment("WARNING: In the original code this loop was specified to do the test AFTER the body!");
 					}
@@ -7081,7 +7088,7 @@ public class COBOLParser extends CodeParser
 	 * Builds a Call element from the PERFORM statement for PROD_PERFORM_BODY represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// <perform_body> ::= <perform_procedure> <perform_option>
@@ -7111,7 +7118,7 @@ public class COBOLParser extends CodeParser
 	 * represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed EVALUATE statement
 	 * @param _parentNode - the Subqueue to append the built elements to
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// Possibly a CASE instruction, may have to be decomposed to an IF chain.
@@ -7173,7 +7180,7 @@ public class COBOLParser extends CodeParser
 					for (Reduction objRed: objReds) {
 						if (objRed.getParent().getTableIndex() != RuleConstants.PROD_EVALUATE_OBJECT_ANY) {
 							if (i >= subjects.count()) {
-								log(this.getOriginalText(_reduction, "Too many selection objects in the WHEN clause of: "), true); 
+								log(this.getOriginalText(_reduction, "Too many selection objects in the WHEN clause of: "), true);
 								break;
 							}
 							boolean negated = false;
@@ -7214,7 +7221,7 @@ public class COBOLParser extends CodeParser
 			if (elseBranch != null) {
 				// elseBranch should not be a Subqueue here!
 				_parentNode.addElement(elseBranch);
-			}	
+			}
 		}
 		else if (
 				subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_TOK_TRUE
@@ -7282,7 +7289,7 @@ public class COBOLParser extends CodeParser
 			if (elseBranch != null) {
 				// elseBranch should not be a Subqueue here!
 				_parentNode.addElement(elseBranch);
-			}	
+			}
 		}
 		else {
 			// Single discriminator expression - there might be a chance to convert this to a CASE element
@@ -7390,12 +7397,12 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Helper method for importing ADD, SUBTRACT, MULTIPLY, and DIVIDE statements, generates the text for the
 	 * arithmetic instruction series
-	 * @param content - the multi-line Instruction text to append the specified assignment to 
+	 * @param content - the multi-line Instruction text to append the specified assignment to
 	 * @param operator - the operator symbol t be used (one of "+", "-", "*", "/").
 	 * @param target - the variable (name) the expression result is to be assigned to (as string)
 	 * @param operand1 - first operand (as string)
 	 * @param operand2 - second operand (as string)
-	 * @param prevResult - the result of the previous operation (an expression, preferrably a variable name) 
+	 * @param prevResult - the result of the previous operation (an expression, preferrably a variable name)
 	 * @return a String representing the result of the assignment (to be used as prevResult in the next
 	 *  call of this routine)
 	 */
@@ -7417,7 +7424,7 @@ public class COBOLParser extends CodeParser
 		}
 		content.add(target + " <- " + rounder.replace("%%%", prevResult));
 		// If the current target is not identical to the dividend and it does not contain
-		// a rounded result then we may reuse the result saved in target 
+		// a rounded result then we may reuse the result saved in target
 		if (!operand1.trim().equalsIgnoreCase(target) && rounder.equals("%%%")) {
 			prevResult = target;
 		}
@@ -7486,7 +7493,7 @@ public class COBOLParser extends CodeParser
 				case RuleConstants.PROD_PICTURE_CLAUSE_PICTURE_DEF: // <picture_clause> --> type info
 					picture = descrRed.get(0).asString().split("\\s+", 3)[1];
 					// assume the first token to be PIC or PICTURE and a second token to be available
-					//(otherwise the grammar has a defect) 
+					//(otherwise the grammar has a defect)
 					break;
 				case RuleConstants.PROD_USAGE_CLAUSE_USAGE: // <usage_clause> ::= USAGE <_is> <usage> --> type info
 					usage = getUsageFromReduction(descrRed.get(2).asReduction());
@@ -7522,13 +7529,13 @@ public class COBOLParser extends CodeParser
 					anyLength = 2;
 					break;
 					// START KGU 2017-10-04: We should of course be aware of array structure, too
-					// FIXME handle the other types of OCCURS clause, too 
+					// FIXME handle the other types of OCCURS clause, too
 				case RuleConstants.PROD_OCCURS_CLAUSE_OCCURS:
 				{
 					// FIXME: What about a possible integer-2 value?
 					String int1 = this.getContent_R(descrRed.get(1).asReduction(), "");
 					// It could be an integer literal, but be prepared to find a constant identifier instead
-					CobVar int1const = currentProg.getCobVar(int1); 
+					CobVar int1const = currentProg.getCobVar(int1);
 					if (int1const != null && int1const.isConstant(true)) {
 						// This is quite nice but bad in practise: we lose the connection to the constant
 						int1 = int1const.getValueFirst();
@@ -7616,8 +7623,8 @@ public class COBOLParser extends CodeParser
 
 			// The generation of NSD elements is postponed until everything will heve been parsed.
 			// We may always get the start variable of each section via CobProg.getWorkingStorage(),
-			// CobProg.getLinkage(), ... 
-			// and iterate by CobVar.sister, subs in CobVar.child, ... - with the complete type declarations! 
+			// CobProg.getLinkage(), ...
+			// and iterate by CobVar.sister, subs in CobVar.child, ... - with the complete type declarations!
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_CONSTANT) {
 			boolean isGlobal = _reduction.get(3).asReduction().getParent().getTableIndex() == RuleConstants.PROD_CONST_GLOBAL_GLOBAL;
@@ -7625,16 +7632,16 @@ public class COBOLParser extends CodeParser
 			// NOTE: While the current grammar does not allow it we could have a constant expression here:
 			// 01 myconst AS CONSTANT 55 - 33 / 12.
 			String value = this.getContent_R(_reduction.get(4).asReduction().get(1).asReduction(), "");
-			
+
 			CobVar currentVar = cobTools.new CobVar(1, constName, value, isGlobal);
 			currentVar.setComment(this.retrieveComment(_reduction));
 			currentProg.insertVar(currentVar);
-			
+
 			String type = Element.identifyExprType(null, value, true);
 			if (!type.isEmpty() && _typeInfo != null) {
 				_typeInfo.put(constName, type);
 			}
-			// Leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode); 
+			// Leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode);
 		}
 		else if (ruleId == RuleConstants.PROD_CONSTANT_ENTRY_SEVENTY_EIGHT) {
 			// Note: Though the current grammar still doesn't allow it, we could have a constant expression here e.g.:
@@ -7644,12 +7651,12 @@ public class COBOLParser extends CodeParser
 			Reduction valClRed = _reduction.get(3).asReduction(); // <value_clause>
 			StringList values = this.getExpressionList(valClRed.get(2).asReduction(), "<value_item_list>",
 					RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM); // FIXME: the parser should not get the COMMA_DELIM and normally spaces are used
-			
+
 			cobTools.setProgram(currentProg);
 			CobVar currentVar = cobTools.new CobVar(78, constName, values.get(0), isGlobal);
 			currentVar.setComment(this.retrieveComment(_reduction));
 			currentProg.insertVar(currentVar);
-			
+
 //			String value = null;
 //			String type = ""; // unused
 //			if (values.count() == 1) {
@@ -7659,7 +7666,7 @@ public class COBOLParser extends CodeParser
 //			else {
 //				value = "{" + values.concatenate(", ") + "}";
 //			}
-//			// START KGU 2017-10-04 Now leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode); 
+//			// START KGU 2017-10-04 Now leave this to this.buildDataSection(varRoot, externalNode, globalNode, localNode);
 //			if (_parentNode != null && value != null) {
 //				// FIXME: in case of isGlobal enforce the placement in a global diagram to be imported wherever needed
 //				Instruction def = new Instruction("const " + currentVar.getName() + " <- " + value);
@@ -7673,7 +7680,7 @@ public class COBOLParser extends CodeParser
 			String condName = this.getContent_R(_reduction.get(1).asReduction(), "");
 			String valueFalse = null;
 			String[] values = null;
-			
+
 			Reduction valClRed = _reduction.get(2).asReduction(); // result: <value_clause> ::= VALUE <_is_are> <value_item_list> <_false_is>
 			StringList valuesList = this.getExpressionList(valClRed.get(2).asReduction(), "<value_item_list>",
 					RuleConstants.PROD_VALUE_ITEM_COMMA_DELIM); // FIXME: the parser should not get the COMMA_DELIM and normally spaces are used
@@ -7681,7 +7688,7 @@ public class COBOLParser extends CodeParser
 			if (valFalseRed != null && !valFalseRed.isEmpty()) {
 				valueFalse = this.getContent_R(valFalseRed.get(3).asReduction(), "");
 			}
-			
+
 			values = valuesList.toArray();
 
 			CobVar currentVar = cobTools.new CobVar(condName, values, valueFalse);
@@ -7790,9 +7797,9 @@ public class COBOLParser extends CodeParser
 	 * @param _paramRed - the rule recursively comprising the argument list
 	 * @param _listHead - the rule head representing the recursive part
 	 * @param _ruleId - id of a rule terminating the exploration
-	 * @param _nameIx - index of the name token within the reduction  
+	 * @param _nameIx - index of the name token within the reduction
 	 * @return list of expressions as strings
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 * @see #getParameterList(Reduction, String, int, int)
 	 */
 	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) throws ParserCancelled {
@@ -7820,10 +7827,10 @@ public class COBOLParser extends CodeParser
 	 * Traverses the recursive rule to obtain a left-to-right list of expressions (e.g.
 	 * as argument list for a function call)
 	 * @param _exprlRed - the rule recursively comprising the expression
-	 * @param _listHead - the rule head representing the recursive part 
+	 * @param _listHead - the rule head representing the recursive part
 	 * @param _exclRuleId - id of a rule terminating the exploration
 	 * @return list of expressions as strings
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 * @see #getParameterList(Reduction, String, int, int)
 	 */
 	private final StringList getExpressionList(Reduction _exprlRed, String _listHead, int _exclRuleId) throws ParserCancelled {
@@ -7833,7 +7840,7 @@ public class COBOLParser extends CodeParser
 			Reduction exprRed = _exprlRed;	// could be <call_param>
 			if (exprlHead.equals(_listHead)) {
 				exprRed = _exprlRed.get(_exprlRed.size()-1).asReduction();	// get the <evaluate_case>
-				_exprlRed = _exprlRed.get(0).asReduction(); 
+				_exprlRed = _exprlRed.get(0).asReduction();
 			}
 			else {
 				_exprlRed = null;
@@ -7849,12 +7856,12 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Derives an expression that makes some sense as Boolean condition from the given
 	 * {@link Reduction} {@code _reduction}. Tries to handle incomplete expressions,
-	 * condition names as variable attributes etc. 
+	 * condition names as variable attributes etc.
 	 * @param _reduction - the top rule for the condition
 	 * @param _lastSubject - a comparison subject in case of an incomplete expression
 	 * (e.g. the discriminator in a CASE structure)
 	 * @return the derived expression in Structorizer-compatible syntax
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private final String transformCondition(Reduction _reduction, String _lastSubject) throws ParserCancelled {
 		// We must resolve expressions like "expr1 = expr2 or > expr3".
@@ -7876,7 +7883,7 @@ public class COBOLParser extends CodeParser
 			}
 			return qualName;
 		}
-		
+
 		if (ruleId == RuleConstants.PROD_EVALUATE_OBJECT) {
 			Reduction thruRed = _reduction.get(1).asReduction();
 			if (thruRed.getParent().getTableIndex() == RuleConstants.PROD__EVALUATE_THRU_EXPR_THRU) {
@@ -7959,7 +7966,7 @@ public class COBOLParser extends CodeParser
 						if (!condString.isEmpty()) {
 							tokStr = condString;
 						}
-					} 
+					}
 				}
 			}
 			if (!tokStr.trim().isEmpty()) {
@@ -7985,7 +7992,7 @@ public class COBOLParser extends CodeParser
 //		}
 		return cond.trim();	// This is just an insufficient first default approach
 	}
-	
+
 	private final boolean isComparisonOpRuleId(int ruleId)
 	{
 		switch (ruleId) {
@@ -8002,14 +8009,14 @@ public class COBOLParser extends CodeParser
 		case RuleConstants.PROD_EXPR_TOKEN_IS2:
 			return true;
 		default:
-			return false;	
+			return false;
 		}
 	}
 
 	/**
 	 * Converts the left-recursive token list representing the non-terminal {@code _listRuleHead} and
 	 * held by {@link Reduction} {@code _reduction} into a {@link LinkedList}, appending its item {@link Token}s
-	 * to {@code _tokens}.  
+	 * to {@code _tokens}.
 	 * @param _tokens - the list the {@link Token}s are to be added to
 	 * @param _reduction - the {@link Reduction} representing the recursive token list rule
 	 * @param _listRuleHead - the name of the non-terminal (e.g. "{@code <expr_tokens>}")
@@ -8050,13 +8057,13 @@ public class COBOLParser extends CodeParser
 	private final String negateCondition(String condStr) {
 		return Element.negateCondition(condStr);
 	}
-	
+
 	private String getOriginalText(Reduction _reduction, String _content)
 	{
 		for(int i=0; i<_reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
-			switch (token.getType()) 
+			switch (token.getType())
 			{
 			case NON_TERMINAL:
 				{
@@ -8088,7 +8095,7 @@ public class COBOLParser extends CodeParser
 	private static Matcher mHexLiteral = pHexLiteral.matcher("");
 	private static Matcher mIntLiteral = pIntLiteral.matcher("");
 	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
-	
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#getContent_R(com.creativewidgetworks.goldparser.engine.Reduction, java.lang.String)
 	 */
@@ -8097,15 +8104,15 @@ public class COBOLParser extends CodeParser
 	{
 		return getContent_R(_reduction, _content, "");
 	}
-	
+
 	/**
 	 * Recursively converts the substructure of {@link Reduction} {@code _reduction} into a target code string
-	 * and appens it to the given string {@code _content}. 
+	 * and appens it to the given string {@code _content}.
 	 * @param _reduction - the current {@link Reduction} object
-	 * @param _content - previous content the string representation of {@code _reduction} is to be appended to. 
+	 * @param _content - previous content the string representation of {@code _reduction} is to be appended to.
 	 * @param _separator - a separator string to be put among sub-token results
 	 * @return the composed string
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 * @see #getContentToken_R(Token, String, String, boolean)
 	 */
 	protected String getContent_R(Reduction _reduction, String _content, String _separator) throws ParserCancelled
@@ -8227,7 +8234,7 @@ public class COBOLParser extends CodeParser
 				}
 				break;
 			}
-			case RuleConstants.PROD_EXP_FACTOR_EXPONENTIATION: 
+			case RuleConstants.PROD_EXP_FACTOR_EXPONENTIATION:
 			{
 				_content += " pow(" + this.getContent_R(_reduction.get(0).asReduction(), "")
 				+ this.getContent_R(_reduction.get(2).asReduction(), ", ") + ")";
@@ -8250,7 +8257,7 @@ public class COBOLParser extends CodeParser
 				break;
 			}
 			case RuleConstants.PROD__EVALUATE_THRU_EXPR:
-			// FIXME: likely relevant for more items that are optional -> emtpy 
+			// FIXME: likely relevant for more items that are optional -> emtpy
 			{
 				// Empty THRU expression --> don't change _content
 				break;
@@ -8270,16 +8277,16 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Subroutine of {@link #getContent_R(Reduction, String, String)} for the conversion of sub-tokens,
-	 * which are not necessarily non-terminals. 
+	 * which are not necessarily non-terminals.
 	 * @param _token - the current token
-	 * @param _content - previous content the string representation of this token is to be appended to. 
+	 * @param _content - previous content the string representation of this token is to be appended to.
 	 * @param _separator - a string to be put between the result for sub-tokens
 	 * @param _isFirst - whether this token is the first in a sequence (i.e. if a separator isn't needed before)
 	 * @return the string composed from {@code _content} and this {@link Token}.
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	private String getContentToken_R(Token _token, String _content, String _separator, boolean _isFirst) throws ParserCancelled {
-		switch (_token.getType()) 
+		switch (_token.getType())
 		{
 		case NON_TERMINAL:
 		{
@@ -8341,7 +8348,7 @@ public class COBOLParser extends CodeParser
 					// entire expression but again: the left operand cannot be identified (not part of this reduction,
 					// might even be a composed expression).
 					// We would have to analyse _content though we cannot even be sure that it's complete...
-					// So we place the not operator at this awkward position and leave the correction to the user. 
+					// So we place the not operator at this awkward position and leave the correction to the user.
 					_content += " not instanceof (" + this.getContent_R(subRed.get(2).asReduction(), "") + ") ";
 				} else {
 					_content += " <> " + this.getContent_R(subRed.get(2).asReduction(), "");
@@ -8402,9 +8409,13 @@ public class COBOLParser extends CodeParser
 			else if (name.equals("StringLiteral")) {
 				// convert from 'COBOL " Literal' --> "COBOL "" Literal"
 				if (toAdd.startsWith("'")) {
-					toAdd = toAdd.replace("\"", "\"\"")
-								.replace("''", "'");
-					toAdd = "\"" + toAdd.substring(1, toAdd.length() - 1) + "\"";
+					if (toAdd.equals("''")) {
+						toAdd = "";
+					} else {
+						toAdd = toAdd.replace("\"", "\"\"")
+									.replace("''", "'");
+						toAdd = "\"" + toAdd.substring(1, toAdd.length() - 1) + "\"";
+					}
 				}
 				// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
 				toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
@@ -8441,7 +8452,7 @@ public class COBOLParser extends CodeParser
 				mIntLiteral.reset(toAdd);
 				toAdd = mIntLiteral.replaceAll("$1");
 			}
-			// NOTE: if we do convert Decimals to BigDecimal some day the following is needed 
+			// NOTE: if we do convert Decimals to BigDecimal some day the following is needed
 			//       we may set this as primitive type and add "/ 100" for 2 decimal places
 			else if (name.equals("DecimalLiteral")) {
 				//toAdd = toAdd + "b";
@@ -8479,7 +8490,7 @@ public class COBOLParser extends CodeParser
 				toAdd = "\'\\0\'";
 			}
 			else if (name.equals("TOK_TRUE") || name.equals("TOK_FALSE")) {
-				// FIXME This branch is never entered - how can we get hold of TRUE and FALSE? 
+				// FIXME This branch is never entered - how can we get hold of TRUE and FALSE?
 				toAdd = toAdd.substring(4).toLowerCase();
 			}
 //			else {
@@ -8500,7 +8511,7 @@ public class COBOLParser extends CodeParser
 		}
 		return _content;
 	}
-	
+
 	/**
 	 * Drastically simplified method to retrieve a name expected as (optional) content of the given {@link Token}
 	 * {@code _token}.
@@ -8526,9 +8537,9 @@ public class COBOLParser extends CodeParser
 		}
 		return word;
 	}
-	
+
 	//------------------------- Data Conversion -------------------------
-	
+
 	// START KGU#388 2017-10-03: Enh.#423
 	/**
 	 * Generates the necessary tye definitions, constant definitions and variable declarations (initialization
@@ -8559,7 +8570,7 @@ public class COBOLParser extends CodeParser
 			if (isExternal && this.declaredExternals.contains(varName)) {
 				containsExternals = true;
 				// Don't add a declaration in case of a reference to a former external declaration
-				// (but declarations list must contain an empty entry for the final CobVar loop)) 
+				// (but declarations list must contain an empty entry for the final CobVar loop))
 				declarations.add("");
 			}
 			else {
@@ -8641,7 +8652,7 @@ public class COBOLParser extends CodeParser
 			root.addToIncludeList(globalRoot);
 		}
 		else {
-			// Prepares the recursive inclusion of super-globals 
+			// Prepares the recursive inclusion of super-globals
 			globalRoot = root;
 		}
 		// Now check whether the current prog is a subprogram of another one defining global data ...
@@ -8733,11 +8744,11 @@ public class COBOLParser extends CodeParser
 			// FIXME: For global types we must not repeat this within a routine but refer to the globally defined name!!!
 			if (var.isExternal()) {
 				instr.setColor(colorGlobal);
-				externalNode.addElement(instr);					
+				externalNode.addElement(instr);
 			}
 			if (var.isGlobal()) {
 				instr.setColor(colorGlobal);
-				globalNode.addElement(instr);					
+				globalNode.addElement(instr);
 			}
 			else {
 				localNode.addElement(instr);
@@ -8775,7 +8786,7 @@ public class COBOLParser extends CodeParser
 				String value = makeInitialization(child, declLevel+1);
 				if (value != null) {
 					init.append(sepa + child.forceName() + ": " + value);
-					sepa = ",\\\n";					
+					sepa = ",\\\n";
 				}
 				child = child.getSister();
 			} while (child != null);
@@ -8805,7 +8816,7 @@ public class COBOLParser extends CodeParser
 		return initialization;
 	}
 	// END KGU#388 2017-10-03
-	
+
 	//------------------------- Postprocessor ---------------------------
 
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
@@ -8850,7 +8861,7 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}
-	
+
 	// START KGU 2017-05-28: Now we try to resolve internal calls
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassPostProcess(java.lang.String)
@@ -8860,7 +8871,7 @@ public class COBOLParser extends CodeParser
 		// The automatic conversion of Instructions to Calls may have invalidated element references.
 		// Hence update the procedureList before elements are going to be moved.
 		finishProcedureList();
-		
+
 		// Now the actual extraction of local procedures may begin.
 		for (SectionOrParagraph sop: this.procedureList) {
 			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
@@ -8932,7 +8943,7 @@ public class COBOLParser extends CodeParser
 						// END KGU#464 2017-12-03
 					}
 				}
-				// Not explicitly used anywhere and just consisting of a disabled dummy jump? 
+				// Not explicitly used anywhere and just consisting of a disabled dummy jump?
 				else if (sop.getSize() == 1 && firstElement instanceof Jump) {
 					Element dummyCall = null;
 					Jump dummyJump = (Jump)firstElement;
@@ -8996,10 +9007,10 @@ public class COBOLParser extends CodeParser
 	 * Usually this is accompanied by the extraction of all potentially shared data declarations (type
 	 * and constant definitions, variable declarations and initialisations) from the owning {@link Root}
 	 * to a new includable diagram, which will be registered in {@link #dataSectionIncludes} (if all that hadn't
-	 * already been done in relation with another extraction from the owning {@link Root}). 
+	 * already been done in relation with another extraction from the owning {@link Root}).
 	 * @param sop - the {@link SectionOrParagraph} to be outsourced.
 	 * @param callText - the text to be placed in the substituting Call.
-	 * @return the {@link Call} element replacing the section or paragraph in {@code owner}. 
+	 * @return the {@link Call} element replacing the section or paragraph in {@code owner}.
 	 */
 	private Call extractSectionOrParagraph(SectionOrParagraph sop, String callText) {
 		Root owner = Element.getRoot(sop.parent);
@@ -9010,7 +9021,7 @@ public class COBOLParser extends CodeParser
 		//System.out.println("==== Extracting " + sop.name + " ===...");
 		for (int i = 0; i < nElements; i++) {
 			proc.children.addElement(sop.parent.getElement(sop.startsAt));
-			//System.out.println("\t" + (callIndex + i) + " " + elements.getElement(0)); 
+			//System.out.println("\t" + (callIndex + i) + " " + elements.getElement(0));
 			sop.parent.removeElement(sop.startsAt);
 			sop.endsBefore--;
 		}
@@ -9028,10 +9039,10 @@ public class COBOLParser extends CodeParser
 		if (dataSectionIncludes.containsKey(owner)) {
 			proc.addToIncludeList(dataSectionIncludes.get(owner));
 		}
-		
+
 		// Put the new subroutine diagram to the set of results as well
-		this.addRoot(proc);	
-		
+		this.addRoot(proc);
+
 		return replacingCall;
 	}
 
@@ -9044,9 +9055,9 @@ public class COBOLParser extends CodeParser
 	 * @param owner - the diagram to ripped
 	 */
 	private void extractShareableData(Root owner) {
-		Integer endDataIx = dataSectionEnds.get(owner); 
+		Integer endDataIx = dataSectionEnds.get(owner);
 		if (endDataIx != null && endDataIx <= owner.children.getSize()) {
-			// Move all data declarations to a new shared includable 
+			// Move all data declarations to a new shared includable
 			//System.out.println("=== Removing " + endDataIx + " lines of shared data...");
 			String dataName = owner.getMethodName() + "_Shared";
 			Root shared = new Root();
@@ -9077,9 +9088,9 @@ public class COBOLParser extends CodeParser
 	// START KGU#464 2017-12-03: Bugfix #475 - we have to face nested paragraphs with require reference modifications
 	/**
 	 * Checks all {@link SectioOrParagraph} entries in {@code this.}{@link #procedureList} for open
-	 * ends and sets the size of the respective parent {@link Subqueue} as end index in these cases. 
+	 * ends and sets the size of the respective parent {@link Subqueue} as end index in these cases.
 	 * This is due before the extraction of sections and paragraphs to subdiagrams.
-	 * (Submethod of {@link #subclassPostProcess(String)}) 
+	 * (Submethod of {@link #subclassPostProcess(String)})
 	 */
 	private void finishProcedureList() {
 		for (SectionOrParagraph sop: this.procedureList) {
@@ -9121,7 +9132,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Checks and updates element index ranges in all {@link SectionOrParagraph} entries directly or
-	 * indirectly including the given {@code _sop} along the containdBy links in 
+	 * indirectly including the given {@code _sop} along the containdBy links in
 	 * {@code this.}{@link #procedureList}. This is due whenever a modification (subroutine extraction or
 	 * elimination of dummy calls or jumps) was done.
 	 * Ensures that the index references will match again.
@@ -9169,7 +9180,7 @@ class CobTools {
 	// START KGU 2018-03-21
 	public static final Logger logger = Logger.getLogger(CobTools.class.getName());
 	// END KGU 2018-03-21
-	
+
 	/** COBOL field types */
 	public static enum Usage {
 		USAGE_BINARY,
@@ -9229,38 +9240,38 @@ class CobTools {
 	/** A dummy string specifying an un-recognized type (neither pic nor usage) */
 	private static final String UNKNOWN_TYPE = "-unknown-type-";
 	// END KGU#465 2017-12-04
-	
+
 	/**
-	 * Current node in the CobProg tree 
+	 * Current node in the CobProg tree
 	 */
 	private CobProg currentProgram = null;
 //	private CobProg lastProgram = null;
-	
+
 	/**
 	 * Resource node in the tree of callable entities of a COBOL source,
 	 * holds different storage areas with their respective variable trees.
 	 * Is linked to the parent node, the next sibling and the first child.
 	 */
 	class CobProg {
-		
+
 		private String name = null;
 		private String extName = null;
 		private boolean isFunction = false;
-		
+
 		private CobProg parent = null;
 		private CobProg child = null;
 		private CobProg sister = null;
-	
+
 		/** internal map for faster lookup of a variable by its name */
 		private HashMap<String,ArrayList<CobVar>> varNames = null;
-		
+
 		/* first variable in different sections for possible IMPORT nsd generation */
 		private CobVar workingStorage = null;
-		private CobVar localStorage = null;	
+		private CobVar localStorage = null;
 		private CobVar linkageStorage = null;
 		private CobVar screenStorage = null;
 		private CobVar reportStorage = null;
-		
+
 		private Storage currentStorage = Storage.STORAGE_UNKNOWN;
 
 		/**
@@ -9276,7 +9287,7 @@ class CobTools {
 		 */
 		public HashMap<String, String> fileStatusMap = new HashMap<String, String>();
 
-		/** Set the new storage for the program and resets lastVar 
+		/** Set the new storage for the program and resets lastVar
 		 * @param currentStorage the currentStorage to set
 		 */
 		public void setCurrentStorage(Storage currentStorage) {
@@ -9285,7 +9296,7 @@ class CobTools {
 		}
 
 		public void insertVar(CobVar variable) {
-			
+
 			/* store first entry in current storage enabling iterations later */
 			switch (currentStorage) {
 			case STORAGE_LINKAGE:
@@ -9318,12 +9329,12 @@ class CobTools {
 				}
 				break;
 			case STORAGE_FILE:
-				// TODO add handling - per file 
+				// TODO add handling - per file
 				break;
 			}
-			
+
 			String varName = variable.getName();
-			
+
 			// check if we already have a List of variables with the given name
 			ArrayList<CobVar> varList = null;
 			if (varNames != null) {
@@ -9331,13 +9342,13 @@ class CobTools {
 			} else {
 				varNames = new HashMap<String,ArrayList<CobVar>>();
 			}
-			
+
 			// Otherwise create the List entry and add it to the name Map
 			if (varList == null) {
 				varList = new ArrayList<CobVar>();
 				varNames.put(varName, varList);
 			}
-			
+
 			// finally insert the variable to the new/found List
 			varList.add(variable);
 		}
@@ -9354,7 +9365,7 @@ class CobTools {
 			this.isFunction = isFunction;
 			this.parent = parent;
 		}
-		
+
 		/** check if the program has any content (currently only variables) */
 		public boolean isEmtpy() {
 			if (varNames != null || currentStorage != Storage.STORAGE_UNKNOWN) {
@@ -9447,9 +9458,9 @@ class CobTools {
 			if (varNames == null || nameOfVar == null || nameOfVar.isEmpty()) {
 				return null;
 			}
-			
+
 			nameOfVar = nameOfVar.toLowerCase();
-			
+
 			// get unqualified name (1st part) and possible qualifiers
 			String names[];
 			if (nameOfVar.contains(".")) {
@@ -9468,21 +9479,21 @@ class CobTools {
 			else {
 				names = nameOfVar.split("\\s+(in|of)\\s+");
 			}
-			
+
 			// search for List of variables with the given (unqualified) name
 			ArrayList<CobVar> varList = varNames.get(names[0]);
-			
+
 			// if the entry exists check for neccessary qualification
 			if (varList == null) {
 				return null;
-			}		
+			}
 			if (varList.size() == 1 && names.length == 1) {
 				return varList.get(0);
 			}
-			
+
 			for (Iterator<CobVar> iterator = varList.iterator(); iterator.hasNext();) {
 				CobVar candidate = iterator.next();
-				
+
 //				if (candidate.hasParent()) {
 //					if (candidate.getParent().getName().equals(names[0])) {
 //						// TODO add code for qualified search
@@ -9516,17 +9527,17 @@ class CobTools {
 					return candidate;
 				}
 			}
-			
+
 			return varList.get(0);	// FIXME: Shouldn't this rather be null?
 		}
-		
+
 	}
-	
+
 	private CobVar lastVar;
 	//private static CobVar lastRealVar;
 	private int fillerCount = 0;
-	
-	
+
+
 	class CobVar {
 
 		/** level of COBOL field */
@@ -9541,7 +9552,7 @@ class CobTools {
 		private boolean hasSign;
 		/** COBOL field is Decimal (TODO: replace with decimal position) */
 		private boolean hasDecimal;
-		
+
 		/** length of COBOL field, mostly relevant for STRING and record-handling */
 		private int charLength;
 
@@ -9557,7 +9568,7 @@ class CobTools {
 		private CobVar sister;
 		private CobVar redefines;
 		private CobVar redefinedBy;	// FIXME: In theory, there might be several redefinitions...
-		
+
 		/** Array of COBOL values */
 		private String[] values;
 		/** converted ArrayList as Java Expression - done on first request */
@@ -9573,7 +9584,7 @@ class CobTools {
 		private boolean isGlobal;
 		/** variable is EXTERNAL --> should be considered to put in a single NSD */
 		private boolean isExternal;
-		/** variable is edited --> must be handled on MOVE (editing/de-editing) */ 
+		/** variable is edited --> must be handled on MOVE (editing/de-editing) */
 		private boolean isEdited;
 		/** variable is filler */
 		private boolean isFiller;
@@ -9589,7 +9600,7 @@ class CobTools {
 		private String occursString = null;
 		/** Memorizes whether this was declared as constant */
 		private boolean constant = false;
-		
+
 		/**
 		 * In case of a condition name returns a Boolean expression suited for comparison
 		 * with unqualified component names.
@@ -9669,7 +9680,7 @@ class CobTools {
 			case USAGE_FLOAT:
 			case USAGE_FP_BIN32:
 			case USAGE_DOUBLE:
-			case USAGE_FP_BIN64: 
+			case USAGE_FP_BIN64:
 			case USAGE_FP_BIN128:
 			case USAGE_FP_DEC64:
 			case USAGE_FP_DEC128:
@@ -9750,7 +9761,7 @@ class CobTools {
 		public String getValueFalse() {
 			return valueFalse;
 		}
-		
+
 		/**
 		 * If there are any stored values at all (check with {@link #getValueFirst()}!) then composes
 		 * as string containing value literals or expressions for the array elements. Otherwise returns
@@ -9758,7 +9769,7 @@ class CobTools {
 		 * @param separator - the separator string to be put between two value strings
 		 * @param defaultString - a string that is to be placed for unset element values. If null then
 		 * missing values at the end (less value stored than elements declared) will be omitted, missing
-		 * value inbetween will produce an empty item.		 * 
+		 * value inbetween will produce an empty item.		 *
 		 * @return a String composed of the value strings separated by {@code searator} or null!
 		 * @see #isArray()
 		 * @see #getValueFirst()
@@ -9782,7 +9793,7 @@ class CobTools {
 					valueList.append(separator);
 				}
 				if (i >= values.length || values[i] == null) {
-					
+
 					valueList.append(defaultString);
 				}
 				else {
@@ -9791,7 +9802,7 @@ class CobTools {
 			}
 			return valueList.toString();
 		}
-		
+
 		/**
 		 * Detects, based on the specific declaration levels and - if {@code checkValue} is
 		 * true - the existence of a value, whether this variable is meant to be a constant.
@@ -9801,14 +9812,14 @@ class CobTools {
 		public boolean isConstant(boolean checkValue) {
 			return (this.constant) && (!checkValue || this.values != null);
 		}
-		
+
 		/**
 		 * @return whether this "component" merely represents a condition phrase (could be regarded as a Boolean method)
 		 */
 		public boolean isConditionName() {
 			return this.level == 88;
 		}
-		
+
 		/**
 		 * Attach the associated comment to this variable
 		 * @param comment - the comment found in the source code near the declaration
@@ -9824,7 +9835,7 @@ class CobTools {
 		public String getComment() {
 			return this.comment;
 		}
-		
+
 		/** @return a corresponding type name for this variable respecting */
 		public String deriveTypeName() {
 			// At top-level a simple "_type" name suffix will be sufficient but at lower levels
@@ -9843,7 +9854,7 @@ class CobTools {
 		public boolean isArray() {
 			return (this.occurs > 0) || (this.occursString != null);
 		}
-		
+
 		/**
 		 * @return element number if this variable/component is an array and its value could be identified (otherwise 0)
 		 * @see #isArray()
@@ -9864,14 +9875,14 @@ class CobTools {
 		/**
 		 * @return the list of possibly associated index variables if this is a table (array), or null.
 		 * @see #getIndexedBy(int)
-		 */ 
+		 */
 		public ArrayList<CobVar> getIndexedBy() {
 			return this.indexedBy;
 		}
 		/**
 		 * @return the n-th one of the possibly associated index variables if this is a table (array), or null.
 		 * @see #getIndexedBy()
-		 */ 
+		 */
 		public CobVar getIndexedBy(int n) {
 			CobVar ixdVar = null;
 			if (this.indexedBy != null && n >= 0 && n < this.indexedBy.size()) {
@@ -9883,7 +9894,7 @@ class CobTools {
 		 * Associates the given index variable {@code indexVar} with this variable occording to
 		 * an OCCURS ... INDEXED BY clause.
 		 * @param indexVarNames
-		 * @param currentProg 
+		 * @param currentProg
 		 */
 		public void setIndexedBy(StringList indexVarNames, CobProg currentProg) {
 			this.indexedBy = new ArrayList<CobVar>(indexVarNames.count());
@@ -9893,7 +9904,7 @@ class CobTools {
 				currentProg.insertVar(ixdVar);
 			}
 		}
-		
+
 		@Override
 		public String toString()
 		{
@@ -9903,26 +9914,26 @@ class CobTools {
 		/**
 		 * General constructor<br/>
 		 * Use {@link #setIndexedBy(CobVar)} afterwards to if in case of a table (array) an index variable was specified
-		 * @param level COBOL level number	
+		 * @param level COBOL level number
 		 * @param name
 		 * @param picture
 		 * @param usage
 		 * @param redefines
-		 * @param isGlobal 
-		 * @param isExternal 
-		 * @param anyLength 
+		 * @param isGlobal
+		 * @param isExternal
+		 * @param anyLength
 		 * @param times - the maximum number of occurrences of this component (array elements)
 		 * @param timesString - the (transformed) expression from which the {@code times} value was computed
 		 */
 		public CobVar(int level, String name, String picture, Usage usage, String value, CobVar redefines, boolean isGlobal, boolean isExternal, int anyLength, int times, String timesString) {
 			super();
-			
+
 			// FIXME: check for level 66 before calling constructor
 			if (level != 1 && level != 77 && lastVar == null) {
 				// partial code import, generate implicit filler
 				lastVar = new CobVar (1, null, null, null, null, null, false, false, 0, times, timesString);
 			}
-			
+
 			this.level = level;
 			// START KGU#467 2017-12-01: Bugfix #480 - level 77 data had been handled in a wrong way
 			// Handle level 77 data as if they had level 1 (we avoid further consistency checks here)
@@ -9974,7 +9985,7 @@ class CobTools {
 			}
 			this.child = null;
 			this.sister = null;
-			
+
 			// usage explicitly given overrides usage calculated from PICTURE
 			if (usage != null) {
 				this.usage = usage;
@@ -9986,7 +9997,7 @@ class CobTools {
 					} else if (this.usage == null) {
 						this.usage = Usage.USAGE_NOT_SET;
 					}
-				// normal item, take the usage from parent, if set, otherwise from picture 
+				// normal item, take the usage from parent, if set, otherwise from picture
 				} else if (this.parent != null && this.parent.usage != Usage.USAGE_NOT_SET) {
 					this.usage = this.parent.usage;
 				// no usage set by picture --> explicit set to standard value
@@ -9994,21 +10005,21 @@ class CobTools {
 					if (this.usage == null) {
 						this.usage = Usage.USAGE_DISPLAY;
 					}
-				} 
+				}
 			}
 
 			if (value != null) {
 				this.values = new String[] { value };
 				this.valueFirst = value;
 			}
-			
+
 			this.redefines = redefines;
 			if (redefines != null) {
 				redefines.redefinedBy = this;
 			}
 			this.isGlobal = isGlobal;
 			this.isExternal = isExternal;
-			this.anyLength = anyLength; 
+			this.anyLength = anyLength;
 			this.occurs = times;
 			this.occursString = timesString;
 			// lastRealVar = this;
@@ -10026,7 +10037,7 @@ class CobTools {
 			super();
 
 			this.level = 88;
-			
+
 			if (name != null && !name.isEmpty()) {
 				this.name = name.trim().toLowerCase();
 			} else {
@@ -10047,7 +10058,7 @@ class CobTools {
 				// partial code import, generate implicit filler
 				CobTools.this.lastVar = new CobVar(1, null, picString, null, null, null, false, false, 0, 0, null);
 			}
-			
+
 			this.picture = null;
 
 			/* set relation to other fields */
@@ -10063,10 +10074,10 @@ class CobTools {
 			this.child = null;
 			this.sister = null;
 			this.constant  = true;
-			
+
 			/* set usage from parent */
 			this.usage = this.parent.usage;
-			
+
 			CobTools.this.lastVar = this;
 		}
 
@@ -10079,9 +10090,9 @@ class CobTools {
 		 */
 		public CobVar(int level, String constName, String value, boolean isGlobal) {
 			super();
-			
+
 			this.level = level;
-			
+
 			if (constName != null && !constName.isEmpty()) {
 				this.name = constName.trim().toLowerCase();
 			} else {
@@ -10104,7 +10115,7 @@ class CobTools {
 				if (CobTools.this.lastVar.level == level) {
 					this.parent = CobTools.this.lastVar.parent;
 					CobTools.this.lastVar.sister = this;
-				} else { 
+				} else {
 					/* set relation to other fields */
 					for (CobVar v = CobTools.this.lastVar; v != null; v = v.parent) {
 						if (v.level == 01 || v.level == 78) {
@@ -10112,18 +10123,18 @@ class CobTools {
 							v.sister = this;
 							break;
 						}
-					}	
+					}
 				}
 			}
 			this.child = null;
 			this.sister = null;
-			
+
 			/* set usage from picture */
 			CobTools.this.setVarAttributesFromPic(this, this.picture);
-			
+
 			this.isGlobal = isGlobal;
 			this.constant = true;
-			
+
 			CobTools.this.lastVar = this;
 		}
 
@@ -10137,7 +10148,7 @@ class CobTools {
 			super();
 
 			this.level = 100;	// This is an artificial invented level in order to distinguish them easier
-			
+
 			if (name != null && !name.isEmpty()) {
 				this.name = name.trim().toLowerCase();
 			} else {
@@ -10154,37 +10165,37 @@ class CobTools {
 			this.child = null;
 			this.sister = null;
 			this.constant  = true;
-			
+
 			this.isGlobal = table.isGlobal;
 			this.isExternal = table.isExternal;
-			
+
 			this.isEdited = false;
 			this.isFiller = false;
 			this.redefines = null;
-			
+
 			// This comment might get used in a SET statement (there won't be a declaration for this...)
 			this.comment = "Index variable for " + table.getQualifiedName();
-			
+
 			// This constructor will definitely not modify lastVar!
 		}
 
 		/** create an implicit FILLER into parentVar and adjust childVar to be its sister */
 		private void insertFiller(CobVar parentVar, CobVar childVar) {
-			
+
 			/* sample code (compiling with "relaxed" syntax from different vendors)
-			  01 var1. 
+			  01 var1.
 			     <- FILLER INSERTED HERE with level 02 ->
 			        03 var2
 			           04 var3 pic x.
 			     02 var4 pic x.
 			 */
-			
+
 			lastVar = parentVar;
 			CobVar fillerVar = new CobVar (childVar.level, null, null, null, null, null, false, false, 0, 0, null);
 			fillerVar.child = parentVar.child;
 			parentVar.child = fillerVar;
 			fillerVar.sister = childVar;
-			
+
 		}
 
 		public boolean hasParent() {
@@ -10211,7 +10222,7 @@ class CobTools {
 		public String getName() {
 			return this.name;
 		}
-		
+
 		// START KGU#388 2017-10-03: Enh. #423
 		/**
 		 * Garantees a (local) name for this variable, i.e. if it hasn't been named
@@ -10221,7 +10232,7 @@ class CobTools {
 		 * in any case now.
 		 * @return the actually associated or generated name
 		 */
-		// 
+		//
 		public String forceName() {
 			String myName = this.name;
 			if (myName == null && this.parent != null) {
@@ -10246,7 +10257,7 @@ class CobTools {
 			return myName;
 		}
 		// END KGU#388 2017-10-03
-		
+
 		// START KGU388 2017-06-26: Enh. #423
 		/**
 		 * Returns a fully qualified variable name for this CobVar (i.e. the complete
@@ -10304,7 +10315,7 @@ class CobTools {
 				if (firstValue) {
 					firstValue = false;
 				} else {
-					valueComparison += " || "; 
+					valueComparison += " || ";
 				}
 				valueComparison += value.toString();
 			}
@@ -10318,9 +10329,9 @@ class CobTools {
 		public boolean isAnyNumeric() {
 			return (this.anyLength == 2);
 		}
-		
+
 	}
-	
+
 	/**
 	 * set attributes to a given variable from a valid (!) PICTURE clause
 	 * sample inputs:  "s9(5)v9(2)", "zzzz999.99", "x(5000)", 9(number-of-items)
@@ -10331,12 +10342,12 @@ class CobTools {
 		boolean wantsDecimal = false;
 		int vPos = 0;
 		boolean wantsSign = false;
-		
+
 		Matcher picMatcher = null;
 		StringBuffer picSB = null;
-		
+
 		picString = picString.toUpperCase();
-		
+
 		// replace constant values first (can be removed if we move this to the preparser later)
 		picMatcher = Pattern.compile("\\(([^)]*[A-Z_-][^)]*)\\)").matcher(picString);
 		picSB  = new StringBuffer(picString.length());
@@ -10352,7 +10363,7 @@ class CobTools {
 		}
 		picMatcher.appendTail(picSB);
 		picString = picSB.toString();
-		
+
 		vPos = picString.indexOf('V');
 		if (picString.matches(".*P.+")) {
 			// no remove for P as we'd need to shift the value in all places
@@ -10362,7 +10373,7 @@ class CobTools {
 			wantsDecimal = true;
 			picString = picString.substring(0, vPos) + picString.substring(vPos + 1);
 		}
-		
+
 		if (picString.startsWith("S")) {
 			picString = picString.substring(1);
 			wantsSign = true;
@@ -10377,7 +10388,7 @@ class CobTools {
 		// get length of value and remove the group part
 		picMatcher = Pattern.compile("(.\\([0-9]+\\))").matcher(picString);
 		picSB  = new StringBuffer(picString.length());
-		
+
 		variable.charLength = 0;
 
 		while (picMatcher.find()) {
@@ -10389,9 +10400,9 @@ class CobTools {
 		}
 		picMatcher.appendTail(picSB);
 		variable.charLength += picSB.length();
-	
+
 		picString = picSB.toString();
-	
+
 		// calculate usage
 		if (picString.contains("N")) {
 			variable.usage = Usage.USAGE_NATIONAL;
@@ -10407,7 +10418,7 @@ class CobTools {
 			variable.isEdited = true;
 		}
 	}
-	
+
 	// START KGU#427 2017-10-05: Quick hack as workaround for the
 	// NullPointerException in setVarAttributesFromPic()
 	public void setProgram(CobProg currentProg) {
@@ -10452,7 +10463,7 @@ class CobTools {
 				len = (len - 4) / 4;
 			}
 			picString += "(" + len + ")";
-			
+
 		}
 		return picString;
 	}
@@ -10487,10 +10498,10 @@ class CobTools {
 		case USAGE_BIT: // CHECKME
 			return "";
 		case USAGE_FLOAT:		// "plain" float  --> mapping to IEEE Std 754-1985 bin 32
-		case USAGE_FP_BIN32:	// IEEE Std 754-2008 bin  32 
+		case USAGE_FP_BIN32:	// IEEE Std 754-2008 bin  32
 			return "float" + arraySuffix;
 		case USAGE_DOUBLE:		// "plain" double --> mapping to IEEE Std 754-1985 bin 64
-		case USAGE_FP_BIN64:	// IEEE Std 754-2008 bin  64 
+		case USAGE_FP_BIN64:	// IEEE Std 754-2008 bin  64
 		case USAGE_FP_BIN128:	// IEEE Std 754-2008 bin 128 - no 128bit floating point data in Java...
 		case USAGE_FP_DEC64:	// IEEE Std 754-2008 dec  64 - no decimal floating point data in Java...
 		case USAGE_FP_DEC128:	// IEEE Std 754-2008 dec 128 - no decimal/128bit floating point data in Java...
@@ -10500,7 +10511,7 @@ class CobTools {
 		case USAGE_LENGTH:
 			return "integer" + arraySuffix;
 		case USAGE_DISPLAY:
-			// Note: this isn't "correct" as String (and char) are already 16-bit Unicode types 
+			// Note: this isn't "correct" as String (and char) are already 16-bit Unicode types
 			// CHECKME: maybe return char[picsize]
 			return "String";
 		case USAGE_NATIONAL:
@@ -10570,7 +10581,7 @@ class CobTools {
 		}
 		return "";
 	}
-	
+
 	// START KGU#465 2017-12-04: Bugfix #473 - For hierarchical arguments we need a type name
 	public static String getTypeName (CobVar variable, boolean withArraySize) {
 		String typeName = getTypeString(variable, withArraySize);
@@ -10580,5 +10591,5 @@ class CobTools {
 		return typeName;
 	}
 	// END KGU#465 2017-12-04
-	
+
 }
