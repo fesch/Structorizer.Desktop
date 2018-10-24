@@ -36,10 +36,10 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.30      Standard colours for declarations, constant definitions and global stuff
  *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display
  *      Kay Gürtzig     2017.04.16      New hook method postProcess(String textToParse) for sub classes
- *      Kay Gürtzig     2017.04.27      File logging mechanism added (former debug prints) 
+ *      Kay Gürtzig     2017.04.27      File logging mechanism added (former debug prints)
  *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute
  *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced
- *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream 
+ *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream
  *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
  *      Kay Gürtzig     2017.09.30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
  *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved.
@@ -48,12 +48,11 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************
  *
  *      Comment:
- *      
+ *
  *
  ******************************************************************************************************///
 
 import java.awt.Color;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -67,7 +66,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -83,7 +81,9 @@ import com.creativewidgetworks.goldparser.engine.SymbolList;
 import com.creativewidgetworks.goldparser.engine.Token;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
-import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
@@ -95,7 +95,7 @@ import lu.fisch.utils.StringList;
  * A compiled grammar file (version 1.0, with extension cgt) given, the respectie
  * subclass can be generated with the GOLDprog.exe tool using ParserTemplate.pgt
  * as template file, e.g.:
- * {@code GOLDprog.exe Ada.cgt ParserTemplate.pgt AdaParser.java} 
+ * {@code GOLDprog.exe Ada.cgt ParserTemplate.pgt AdaParser.java}
  * The generated subclass woud be able to parse code but must manually be accomplished
  * in order to build a structogram from the obtained parse tree. Override the methods
  * {@link #buildNSD_R(Reduction, Subqueue)} and {@link #getContent_R(Reduction, String)}
@@ -107,7 +107,7 @@ import lu.fisch.utils.StringList;
 public abstract class CodeParser extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	/************ Common fields *************/
-	
+
 	// START KGU#484 2018-03-22 Issue #463
 	private Logger logger;
 	/** @return the standard Java logger for this class */
@@ -121,7 +121,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	// END KGU#484 2018-03-22
 	/**
 	 * String field holding the message of error occurred during parsing or build phase
-	 * for later evaluation (empty if there was no error) 
+	 * for later evaluation (empty if there was no error)
 	 */
 	public String error;
 	/**
@@ -171,7 +171,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
-	
+
 	// START KGU#537 2018-07-01: Enh. #533 - for progress notification we need control
 	/**
 	 * Adds the given {@link Root} to {@link #subRoots} and notifies about the new
@@ -241,7 +241,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		this.optionMap.put(fullKey, _value);
 	}
 	// END KGU#395 2017-05-26
-	
+
 	// START KGU#354 2017-04-27
 	/**
 	 * An open log file for verbose parsing and building if not null
@@ -249,7 +249,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 */
 	private OutputStreamWriter logFile = null;
 	// END KGU#354 2017-04-27
-	
+
 	/**
 	 * Standard element colour for imported constant definitions
 	 * @see #colorDecl
@@ -278,7 +278,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @see #colorGlobal
 	 */
 	protected static final Color colorMisc = Color.decode("0xFFFFE0");
-	
+
 	// START KGU 2017-04-11
 	/**
 	 * Identifier replacement map to be filled by the file preparation method if identifiers
@@ -286,11 +286,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * file to pass the parsing.
 	 * Must map the substitutes to the original identifiers such that the replacements may be
 	 * reverted on error display.
-	 * @see #prepareTextfile(String, String)   
+	 * @see #prepareTextfile(String, String)
 	 */
 	protected HashMap<String, String> replacedIds = new HashMap<String, String>();
 	// END KGU 2017-04-11
-	
+
 	// START KGU#407 2017-06-22: Enh. #420: Comment import
 	/**
 	 * Maps Reductions back their respective "owning" Tokens if the latter is directly
@@ -304,7 +304,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 */
 	private Set<Integer> statementRuleIds = new HashSet<Integer>();
 	// END KGU#407 2017-06-22
-	
+
 	// START KGU#537 2018-06-29: Enh. #553
 	/**
 	 * Internal exception to force termination in case of a cancelled thread
@@ -343,7 +343,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * and if so, sets a cancelled message into the error field, does all necessary disposal of
 	 * general resources (e.g. log file) and returns true - such that the parser
 	 * may be left immediately.
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 * @see #isCancelled()
 	 */
 	protected void checkCancelled() throws ParserCancelled
@@ -361,7 +361,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * If this runs under the control of a non-terminated {@link SwingWorker} then has it report the
 	 * given bound property update to any registered listeners. In this case the result will be true,
 	 * otherwise false.
-	 * The {@link SwingWorker} will not fire an event if old and new are equal and non-null. 
+	 * The {@link SwingWorker} will not fire an event if old and new are equal and non-null.
 	 * @param propertyName - the programmatic name of the property that was changed
 	 * @param oldValue - the old value of the property
 	 * @param newValue - the new value of the property
@@ -379,44 +379,44 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	// END KGU#537 2018-06-29
 
 	/************ Abstract Methods *************/
-	
+
 	/**
 	 * Is to provide the file name of the compiled grammar the parser class is made for
 	 * @return a grammar file name retrievable as resource (a cgt or egt file).
 	 */
 	protected abstract String getCompiledGrammar();
-	
+
 	/**
 	 * Is to return the internal name of the grammar table as given in the grammar file
 	 * parameters
 	 * @return Name string as specified in the grammar file header
 	 */
 	protected abstract String getGrammarTableName();
-	
+
 	/**
 	 * Is to return a replacement for the FileChooser title. Ideally its just
 	 * the name of the source language imported by this parser.
-	 * @return Source language name to be inserted in the file open dialog title. 
+	 * @return Source language name to be inserted in the file open dialog title.
 	 */
 	public abstract String getDialogTitle();
-	
+
 	/**
 	 * Is to return a short description of the source file type, ideally in English.
 	 * @see #getFileExtensions()
 	 * @return File type description, e.g. "Ada source files"
 	 */
 	protected abstract String getFileDescription();
-	
+
 	/**
 	 * Return a string array with file name extensions to be recognized and accepted
 	 * as source files of the input language of this parser.<br>
 	 * The extensions must not start with a dot!
-	 * Correct: { "cpp", "cc" }, WRONG: { ".cpp", ".cc" } 
+	 * Correct: { "cpp", "cc" }, WRONG: { ".cpp", ".cc" }
 	 * @see #getFileDescription()
 	 * @return the array of associated file name extensions
 	 */
 	public abstract String[] getFileExtensions();
-	
+
 	/**
 	 * Parses the source code from file _textToParse, which is supposed to be encoded
 	 * with the charset _encoding, and returns a list of structograms - one for each function
@@ -426,20 +426,20 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @param _encoding - name of the charset to be used for decoding
 	 * @param _logDir - null or a directory path to direct the parsing and building log to.
 	 * @return A list containing composed diagrams (if successful, otherwise field error will contain an error description)
-	 * @throws Exception 
+	 * @throws Exception
 	 * @see #prepareTextfile(String, String)
 	 * @see #initializeBuildNSD()
 	 * @see #buildNSD_R(Reduction, Subqueue)
 	 * @see #getContent_R(Reduction, String)
 	 * @see #subclassUpdateRoot(Root, String)
-	 * @see #subclassPostProcess(String) 
+	 * @see #subclassPostProcess(String)
 	 */
 	public List<Root> parse(String _textToParse, String _encoding, String _logDir)
 	{
 		// START KGU#537 2018-07-01: Enh. #553
 		try {
 		// END KGU#537 2018-07-01
-			Random random = new Random();	// FIXME: for testing only
+			// Random random = new Random();	// FIXME: for testing only
 			if (_logDir != null) {
 				File logDir = new File(_logDir);
 				if (logDir.isDirectory()) {
@@ -637,7 +637,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				// END KGU#484 2018-04-05
 			}
 
-			// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
+			// START KGU#191 2016-04-30: Issue #182 - In error case append the context
 			if (isSyntaxError && intermediate != null)
 			{
 				Position pos = parser.getCurrentPosition();
@@ -667,7 +667,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				error += "\n\nFound token " + tokVal;
 				if (token != null) {
 					String tokStr = token.asString().trim();
-					// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id  
+					// START KGU 2017-05-23: The token might be a generic surrogate for preprocessing, show the original id
 					tokStr = this.undoIdReplacements(tokStr);
 					// END KGU 2017-05-23
 					if (!tokVal.equals(tokStr) && !tokVal.equals("'" + tokStr + "'")) {
@@ -702,7 +702,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				// remove the temporary file
 				//intermediate.delete();
 			}
-			
+
 			this.firePropertyChange("phase_start", 2, 3);
 			//// DEBUG Sleep for up to one second.
 			//try {
@@ -742,7 +742,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			{
 				aRoot.convertToCalls(signatures);
 				// START KGU#363 2017-05-22: Enh. #372
-				aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\""; 
+				aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\"";
 				// END KGU#363 2017-05-22
 			}
 			// END KGU#194 2016-07-07
@@ -816,14 +816,14 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 */
 	private void addLineToErrorString(int lineNum, String line) {
 		error += String.format("\n%5d:   %."+DLG_STR_WIDTH+"s", lineNum, line);
-		
+
 		// simple approach to insert line break by width, better approach would be
 		// breaking at word boundary
 		final int strLen = line.length();
 		for (int j = DLG_STR_WIDTH; j < strLen; j += DLG_STR_WIDTH) {
 			error += String.format("\n%5s+   %."+DLG_STR_WIDTH+"s", "", line.substring(j));
 		}
-		
+
 	}
 
 	/**
@@ -836,7 +836,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	protected void log(String _logContent, boolean _toSystemOutInstead)
 	{
 		boolean done = false;
-		
+
 		// START SSO 2017-06-07
 		// Hack for replacing non-printable characters that we may have to log,
 		// for example from StreamTokenizer value of '\0'
@@ -883,20 +883,20 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			getLogger().log(Level.WARNING, "Failed to write user log entry.", e);
 		}
 		if (!done && _toSystemOutInstead) {
-			// START KGU#484 2018-03-22: Issue #463 
+			// START KGU#484 2018-03-22: Issue #463
 			//System.out.print(_logContent);
 			getLogger().info(_logContent);
 			// END KGU#484 2018-03-22
 		}
 	}
-	
+
 	// START KGU#407 2017-06-22: Enh. #420 allow subclasses a comment retrieval
 	/**
 	 * Adds all rule ids given by the array to the registered rule ids for statement
 	 * detection in comment retrieval.
 	 * @param _ruleIds - production table indices indicating a statement in the source language
 	 * @see #registerStatementRuleId(int)
-	 * @see #retrieveComment(Reduction) 
+	 * @see #retrieveComment(Reduction)
 	 */
 	protected void registerStatementRuleIds(int[] _ruleIds)
 	{
@@ -909,7 +909,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * in comment retrieval.
 	 * @param _ruleIds - production table indices indicating a statement in the source language
 	 * @see #registerStatementRuleIds(int[])
-	 * @see #retrieveComment(Reduction) 
+	 * @see #retrieveComment(Reduction)
 	 */
 	protected void registerStatementRuleId(int _ruleId)
 	{
@@ -924,7 +924,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * might also be concatenated to the enclosing structured statement's comment.
 	 * @param _reduction
 	 * @return strung comprising the collected comment lines
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 * @see #registerStatementRuleId(int)
 	 * @see #registerStatementRuleIds(int[])
 	 * @see #equipWithSourceComment(Element, Reduction)
@@ -933,11 +933,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	{
 		// START KGU#537 2018-06-30: Enh. #553
         this.checkCancelled();
-		// END KGU#537 2018-06-30		
+		// END KGU#537 2018-06-30
 		if (this.optionImportComments) {
 			//System.out.println("START SEARCH FOR " + _reduction);
 			StringBuilder comment = new StringBuilder();
-			// First we look if the reduction's token itself might have a comment 
+			// First we look if the reduction's token itself might have a comment
 			Token topToken = this.commentMap.get(_reduction);
 			if (topToken != null) {
 				comment.append("\n" + parser.commentMap.get(topToken));
@@ -1002,7 +1002,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @param _ele - The element built from Reduction {@code _reduction}
 	 * @param _reduction - The reduction, which led to the creation of {@code _ele}
 	 * @return The same element, but possibly with comment.
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 * @see #optionImportComments
 	 * @see #retrieveComment(Reduction)
 	 * @see #registerStatementRuleIds(int[])
@@ -1049,7 +1049,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * 1. a single String representing a line comment delimiter, or<br/>
 	 * 2. a pair of comment delimiters ([0] the left and [1] the right one)
 	 * <p>
-	 * This method is to be implemented by the subclasses. 
+	 * This method is to be implemented by the subclasses.
 	 * @return the array of single delimiters and delimiter pairs
 	 */
 	abstract protected String[][] getCommentDelimiters();
@@ -1090,12 +1090,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @see #replacedIds
 	 */
 	protected abstract File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled;
-	
+
 	/**
 	 * Called after the build for every created Root and allows thus to do some
 	 * postprocessing for individual created Roots.
 	 * @param root - one of the build diagrams
-	 * @param sourceFileName - the name of the originating source file 
+	 * @param sourceFileName - the name of the originating source file
 	 * @throws ParserCancelled TODO
 	 */
 	protected abstract void subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled;
@@ -1111,19 +1111,19 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	/******* FileFilter Extension *********/
-	
+
 	/**
 	 * Internal check for acceptable input files. The default implementation just
 	 * compares the filename extension with the extensions configured in and
-	 * provided by {@link #getFileExtensions()}. Helper method for method 
+	 * provided by {@link #getFileExtensions()}. Helper method for method
 	 * {@link #accept(File)}.
 	 * @param _filename
-	 * @return true if the import file is formally welcome. 
+	 * @return true if the import file is formally welcome.
 	 */
 	protected final boolean isOK(String _filename)
 	{
 		boolean res = false;
-		String ext = getExtension(_filename); 
+		String ext = getExtension(_filename);
 		if (ext != null)
 		{
 			for (int i =0; i<getFileExtensions().length; i++)
@@ -1133,68 +1133,68 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 		return res;
 	}
-	
-	private static final String getExtension(String s) 
+
+	private static final String getExtension(String s)
 	{
 		String ext = null;
 		int i = s.lastIndexOf('.');
-		
-		if (i > 0 &&  i < s.length() - 1) 
+
+		if (i > 0 &&  i < s.length() - 1)
 		{
 			ext = s.substring(i+1).toLowerCase();
 		}
 		return ext;
 	}
-	
-	private static final String getExtension(File f) 
+
+	private static final String getExtension(File f)
 	{
 		String ext = null;
 		String s = f.getName();
 		int i = s.lastIndexOf('.');
-		
-		if (i > 0 &&  i < s.length() - 1) 
+
+		if (i > 0 &&  i < s.length() - 1)
 		{
 			ext = s.substring(i+1).toLowerCase();
 		}
-		
+
 		return ext;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see javax.swing.filechooser.FileFilter#getDescription()
 	 */
 	@Override
-	public final String getDescription() 
+	public final String getDescription()
 	{
         return getFileDescription();
     }
-	
+
 	/* (non-Javadoc)
 	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
 	 */
 	@Override
-    public final boolean accept(File f) 
+    public final boolean accept(File f)
 	{
-        if (f.isDirectory()) 
+        if (f.isDirectory())
 		{
             return true;
         }
-		
+
         String extension = getExtension(f);
-        if (extension != null) 
+        if (extension != null)
 		{
             return isOK(f.getName());
 		}
-		
+
         return false;
     }
-	
-	
+
+
     /**
-     * Load a source file to be interpreted by the engine.  
+     * Load a source file to be interpreted by the engine.
      * @param filename of a source file
      * @return source code to be interpreted
-     * @throws IOException 
+     * @throws IOException
      */
     public String loadSourceFile(String filename, String encoding) throws IOException {
         File file = new File(filename);
@@ -1204,9 +1204,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
         fis.close();
         return new String(buf);
     }
-   
+
 	/******* Diagram Synthesis *********/
-	
+
 	/**
 	 * This is the entry point for the Nassi-Shneiderman diagram construction
 	 * from the successfully established parse tree.
@@ -1217,7 +1217,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @see #buildNSD_R(Reduction, Subqueue)
 	 * @see #getContent_R(Reduction, String)
 	 * @param _reduction the top Reduction of the parse tree.
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
 	 */
 	protected final void buildNSD(Reduction _reduction) throws ParserCancelled
 	{
@@ -1232,16 +1232,16 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		this.initializeBuildNSD();
 		buildNSD_R(_reduction, root.children);
 	}
-	
+
 	/**
 	 * Recursively constructs the Nassi-Shneiderman diagram into the _parentNode
-	 * from the given reduction subtree 
+	 * from the given reduction subtree
 	 * @param _reduction - the current reduction subtree to be converted
 	 * @param _parentNode - the Subqueue the emerging elements are to be added to.
 	 * @throws ParserCancelled TODO
 	 */
 	protected abstract void buildNSD_R(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled;
-	
+
 	/**
 	 * Composes the parsed non-terminal _reduction to a Structorizer-compatible
 	 * terminal string, combines it with the given _content string and returns the
@@ -1252,7 +1252,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @throws ParserCancelled TODO
 	 */
 	protected abstract String getContent_R(Reduction _reduction, String _content) throws ParserCancelled;
-	
+
 	/**
 	 * Overridable method to do target-language-specific initialization before
 	 * the recursive method {@link #buildNSD_R(Reduction, Subqueue)} will be called.
@@ -1263,18 +1263,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	protected void initializeBuildNSD() throws ParserCancelled
 	{
 	}
-	
+
 	/************************
 	 * static things
 	 ************************/
-	
+
 	// START KGU#165 2016-03-25: Once and for all: It should be a transparent choice, ...
 	/**
 	 * whether or not the keywords are to be handled in a case-independent way
 	 */
 	public static boolean ignoreCase = true;
 	// END KGU#165 2016-03-25
-	
+
 	// START KGU#288 2016-11-06: Issue #279: Access limited to private, compensated by new methods
 	//public static final HashMap<String, String> keywordMap = new LinkedHashMap<String, String>();
 	private static final HashMap<String, String> keywordMap = new LinkedHashMap<String, String>();
@@ -1299,7 +1299,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		keywordMap.put("input",      "INPUT");
 		keywordMap.put("output",     "OUTPUT");
 	}
-	
+
 	public static void loadFromINI()
 	{
 		final HashMap<String, String> defaultKeys = new HashMap<String, String>();
@@ -1337,18 +1337,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
                                     keywordMap.put(key, ini.getProperty(propertyName, ""));
                                 }
 			}
-			
+
 			// START KGU#165 2016-03-25: Enhancement configurable case awareness
 			ignoreCase = ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");
 			// END KGU#3 2016-03-25
-			
+
 		}
-		catch (Exception e) 
+		catch (Exception e)
 		{
 			Logger.getLogger(CodeParser.class.getName()).log(Level.WARNING, "Ini", e);
 		}
 	}
-	
+
 	public static void saveToINI()
 	{
 		try
@@ -1360,18 +1360,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				String propertyName = "Parser" + Character.toUpperCase(entry.getKey().charAt(0)) + entry.getKey().substring(1);
 				ini.setProperty(propertyName, entry.getValue());
 			}
-			
+
 			ini.save();
 		}
-		catch (Exception e) 
+		catch (Exception e)
 		{
 			Logger.getLogger(CodeParser.class.getName()).log(Level.WARNING, "Ini", e);
 		}
 	}
-	
+
 	// START KGU#163 2016-03-25: For syntax analysis purposes
 	/**
-	 * Returns the complete set of configurable parser keywords for Elements 
+	 * Returns the complete set of configurable parser keywords for Elements
 	 * @return array of current keyword strings
 	 */
 	public static String[] getAllProperties()
@@ -1380,7 +1380,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return keywordMap.values().toArray(props);
 	}
 	// END KGU#163 2016-03-25
-	
+
 	// START KGU#258 2016-09-25: Enh. #253 (temporary workaround for the needed Hashmap)
 	/**
 	 * Returns a Hashmap mapping parser preference labels like "preAlt" to the
@@ -1400,7 +1400,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return keywords;
 	}
 	// END KGU#258 2016-09-25
-	
+
 	// START KGU#288 2016-11-06: New methods to facilitate bugfix #278, #279
 	/**
 	 * Returns the set of the parser preference names
@@ -1410,7 +1410,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	{
 		return keywordMap.keySet();
 	}
-	
+
 	/**
 	 * Returns the cached keyword for parser preference _key or null
 	 * @param _key - the name of the requested parser preference
@@ -1420,7 +1420,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	{
 		return keywordMap.get(_key);
 	}
-	
+
 	/**
 	 * Returns the cached keyword for parser preference _key or the given _defaultVal if no
 	 * entry or only an empty entry is found for _key.
@@ -1438,12 +1438,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 		return keyword;
 	}
-	
+
 	/**
 	 * Replaces the cached parser preference _key with the new keyword _keyword for this session.
 	 * Note:
 	 * 1. This does NOT influence the Ini file!
-	 * 2. Only for existing keys a new mapping may be set 
+	 * 2. Only for existing keys a new mapping may be set
 	 * @param _key - name of the parser preference
 	 * @param _keyword - new value of the parser preference or null
 	 */
@@ -1458,5 +1458,5 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 	}
 	// END KGU#288 2016-11-06
-	
+
 }
