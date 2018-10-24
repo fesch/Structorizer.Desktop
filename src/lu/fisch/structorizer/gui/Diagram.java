@@ -160,6 +160,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line
  *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD()
  *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
+ *      Kay Gürtzig     2018.10.01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
  *
  ******************************************************************************************************
  *
@@ -2175,7 +2176,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					filename = root.proposeFileName();
 				}
 				String[] options = null;
-				Object initialValue = null;
 				if (isInSerialMode()) {
 					options = new String[]{
 							Menu.lblContinue.getText(),
@@ -2183,8 +2183,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							Menu.lblYesToAll.getText(),
 							Menu.lblNoToAll.getText()	// Well, this is less sensible...
 					};
-					initialValue = options[0];
 				}
+				else {
+					options = new String[] {
+							Menu.lblYes.getText(),
+							Menu.lblNo.getText()
+					};
+				}
+				Object initialValue = options[0];
 				res = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
 												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
 				// END KGU#49 2015-10-18
@@ -3075,7 +3081,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#480 2018-01-22
 			_data.forParts.add(valueList);
 		}
-		
 	}
 	
 	private void postEditFor(EditData _data, For _for)
@@ -3663,7 +3668,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Subqueue temp = _alt.qFalse;
 		_alt.qFalse = _alt.qTrue;
 		_alt.qTrue = temp;
-		_alt.resetDrawingInfoDown();
+		// The width of the condition is likely to have changed
+		_alt.resetDrawingInfoUp();	// KGU#590 2018-10-01: Corrected Down -> Up
 		redraw();
 		analyse();
 	}

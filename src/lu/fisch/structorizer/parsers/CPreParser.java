@@ -40,6 +40,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.07.09      KGU#546/KGU#547: Further StreamTokenizer workaround, include guard surrogate
  *                                      typedef collection now recursive in included header files.
  *                                      KGU#550 through KGU#552: Macro replacement refined, new options use_XXX_defines
+ *      Kay Gürtzig     2018.09.25      Bugfix #608 Makeshift fix for a broken comment block issue in preproc. lines
  *
  ******************************************************************************************************
  *
@@ -301,7 +302,6 @@ public abstract class CPreParser extends CodeParser
 						}
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					log ("*** Read error in definition file for library " + libName + ":\n" + e.toString(), false);
 				}
 				finally {
@@ -321,8 +321,8 @@ public abstract class CPreParser extends CodeParser
 	 * be executed (at least the defines. with #if it would get difficult).
 	 * @param _textToParse - name (path) of the source file
 	 * @param srcCodeSB - optional: StringBuilder to store the content of the preprocessing<br/>
-	 * if not given only the preprocessor handling (including #defines) will be done  
-	 * @return info if the preprocessing worked
+	 * if not given then only the preprocessor handling (including #defines) will be done  
+	 * @return flag signaling whether the preprocessing worked
 	 * @throws ParserCancelled 
 	 */
 	private boolean processSourceFile(String _textToParse, StringBuilder srcCodeSB) throws ParserCancelled {
@@ -386,55 +386,60 @@ public abstract class CPreParser extends CodeParser
 					}
 
 					// check if we are in a comment block, in this case look for the end
-					boolean commentsChecked = false;
-					String commentFree = "";
-					String lineTail = trimmedLine;
-					while (!lineTail.isEmpty() && !commentsChecked) {
-						if (inComment) {
-							// check if the line ends the current comment block
-							int commentPos = lineTail.indexOf("*/");
-							if (commentPos >= 0) {
-								inComment = false;
-								commentPos += 2;
-								if (lineTail.length() > commentPos) {
-									lineTail = " " + lineTail.substring(commentPos).trim();
-								} else {
-									lineTail = "";
-								}
-							}
-							else {
-								commentsChecked = true;
-								lineTail = "";
-							}
-						}
-
-						if (!inComment && !lineTail.isEmpty()) {
-							// remove inline comments
-							int commentPos = lineTail.indexOf("//");
-							if (commentPos > 0) {
-								lineTail = lineTail.substring(0, commentPos).trim(); 
-							}
-							// check if the line starts a new comment block
-							commentPos = lineTail.indexOf("/*");
-							if (commentPos >= 0) {
-								inComment = true;
-								if (commentPos > 0) {
-									commentFree += " " + lineTail.substring(0, commentPos).trim();
-								}
-								commentPos += 2;
-								if (lineTail.length() > commentPos) {
-									lineTail = lineTail.substring(commentPos);
-								} else {
-									lineTail = "";
-								}
-							}
-							else {
-								commentsChecked = true;
-							}
-						}
-
-					}
-					trimmedLine = (commentFree + lineTail).trim();
+					// START KGU#582 2018-09-25: Workaround for #608 - code sequence extracted
+//					boolean commentsChecked = false;
+//					String commentFree = "";
+//					String lineTail = trimmedLine;
+//					while (!lineTail.isEmpty() && !commentsChecked) {
+//						if (inComment) {
+//							// check if the line ends the current comment block
+//							int commentPos = lineTail.indexOf("*/");
+//							if (commentPos >= 0) {
+//								inComment = false;
+//								commentPos += 2;
+//								if (lineTail.length() > commentPos) {
+//									lineTail = " " + lineTail.substring(commentPos).trim();
+//								} else {
+//									lineTail = "";
+//								}
+//							}
+//							else {
+//								commentsChecked = true;
+//								lineTail = "";
+//							}
+//						}
+//
+//						if (!inComment && !lineTail.isEmpty()) {
+//							// remove inline comments
+//							int commentPos = lineTail.indexOf("//");
+//							if (commentPos > 0) {
+//								lineTail = lineTail.substring(0, commentPos).trim(); 
+//							}
+//							// check if the line starts a new comment block
+//							commentPos = lineTail.indexOf("/*");
+//							if (commentPos >= 0) {
+//								inComment = true;
+//								if (commentPos > 0) {
+//									commentFree += " " + lineTail.substring(0, commentPos).trim();
+//								}
+//								commentPos += 2;
+//								if (lineTail.length() > commentPos) {
+//									lineTail = lineTail.substring(commentPos);
+//								} else {
+//									lineTail = "";
+//								}
+//							}
+//							else {
+//								commentsChecked = true;
+//							}
+//						}
+//
+//					}
+//					trimmedLine = (commentFree + lineTail).trim();
+					String[] arg = {trimmedLine};
+					inComment = checkComments(arg, inComment);
+					trimmedLine = arg[0];
+					// END KGU#582 2018-09-25
 
 					// Note: trimmedLine can be empty if we start a block comment only
 					if (trimmedLine.isEmpty()) {
@@ -454,7 +459,19 @@ public abstract class CPreParser extends CodeParser
 							// no further processing if we only want to check for defines
 							continue;
 						}
-						srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
+						// START KGU#582 2018-09-25: Bugfix #608 (makeshift approach) 
+						// There are cases where within the preprocessor line a multi-line comment starts with "/*"
+						// (i.e. with the "*/" not following in the very line!).
+						// In these cases the prefix "// preparser ..." will cause syntax errors on end, because the
+						// next comment lines won't be detected as such. If we could be sure then (and only then) our
+						// returned comment prefix should better start with "/*" instead of "//".
+						//srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
+						String prefix = handlePreprocessorLine(trimmedLine.substring(1), defines);
+						if (prefix.startsWith("//") && checkComments(new String[]{strLine}, false)) {
+							prefix = "/*" + prefix.substring(2);
+						}
+						srcCodeSB.append(prefix);
+						// END KGU#582 2018-09-25
 						srcCodeSB.append(strLine);
 					} else {
 						if (srcCodeSB == null) {
@@ -499,6 +516,73 @@ public abstract class CPreParser extends CodeParser
 		}
 	}
 
+	// START KGU#582 2018-09-25: Workaround #608 - method extracted from processSourceFile(String, StringBuilder)
+	/**
+	 * Method analyses the comment block structure (FIXME: doesn't care for string literals such
+	 * that a string "foo/*bar" might fool the analysis!) in the string passed in via {@code trimmed},
+	 * replaces the latter with a comment-free string part plus a line tail and returns whether a
+	 * there is a pending open comment block.
+	 * @param trimmed - a string array with the trimmed input string - content may be modified!
+	 * @param inComment - true if the line started within an comment block
+	 * @return whether the line ends with an opened comment block
+	 */
+	private boolean checkComments(String[] trimmed, boolean inComment)
+	{
+		String trimmedLine = trimmed[0];	// fetch the passed-in string
+		boolean commentsChecked = false;
+		String commentFree = "";
+		String lineTail = trimmedLine;
+		while (!lineTail.isEmpty() && !commentsChecked) {
+			if (inComment) {
+				// check if the line ends the current comment block
+				int commentPos = lineTail.indexOf("*/");
+				if (commentPos >= 0) {
+					inComment = false;
+					commentPos += 2;
+					if (lineTail.length() > commentPos) {
+						lineTail = " " + lineTail.substring(commentPos).trim();
+					} else {
+						lineTail = "";
+					}
+				}
+				else {
+					commentsChecked = true;
+					lineTail = "";
+				}
+			}
+
+			if (!inComment && !lineTail.isEmpty()) {
+				// remove inline comments
+				int commentPos = lineTail.indexOf("//");
+				if (commentPos > 0) {
+					lineTail = lineTail.substring(0, commentPos).trim(); 
+				}
+				// check if the line starts a new comment block
+				commentPos = lineTail.indexOf("/*");
+				if (commentPos >= 0) {
+					inComment = true;
+					if (commentPos > 0) {
+						commentFree += " " + lineTail.substring(0, commentPos).trim();
+					}
+					commentPos += 2;
+					if (lineTail.length() > commentPos) {
+						lineTail = lineTail.substring(commentPos);
+					} else {
+						lineTail = "";
+					}
+				}
+				else {
+					commentsChecked = true;
+				}
+			}
+
+		}
+		// re-pack the resulting "trimmed" string for the caller
+		trimmed[0] = (commentFree + lineTail).trim();
+		return inComment;
+	}
+	// END KGU#582 2018-09-25
+	
 	// START KGU#519 2018-06-17: Enh. #541
 	/**
 	 * Analyses the import option "redundantNames" and derives dummy defines from
@@ -579,11 +663,6 @@ public abstract class CPreParser extends CodeParser
 	 */
 	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines) throws ParserCancelled
 	{
-		// FIXME (KGU): There are cases where within the preprocessor line a multi-line comment starts with "/*"
-		// (with the "*/" not following in the very line!).
-		// In these cases the prefix "// preparser ..." will cause syntax errors on end, because the next comment
-		// lines won't be detected as such. If we could be sure then (and only then) our returned comment prefix
-		// should better start with "/*" instead of "//". 
 		mtchDefineFunc.reset(preprocessorLine);
 		if (mtchDefineFunc.matches()) {
 			// #define	a1(a2,a3,a4)	stuff  ( a2 ) 

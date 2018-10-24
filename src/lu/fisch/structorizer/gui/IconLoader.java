@@ -68,6 +68,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.14      Issue #510: Colour button icon shape changed from rectangle to circle.
  *      Kay Gürtzig     2018.06.28      Smaller element symbols for Search + Replace (###_mini_???.png)
  *      Kay Gürtzig     2018.07.17      Issue #561: New icon 055_sigma (sum symbol) added
+ *      Kay Gürtzig     2018.09.18      Issue #601: More safety on icon request (dummy icon, log).
  *
  ******************************************************************************************************
  *
@@ -78,6 +79,8 @@ package lu.fisch.structorizer.gui;
 import java.awt.*;
 import java.awt.image.*;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 
@@ -224,15 +227,23 @@ public class IconLoader {
 	// END KGU#486 2018-01-24
 
 	// Icons
-	public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
+	/** A fixed-size product image for Mac or Translator */
+	// START KGU#577 2018-09-18: Issue #601
+	//public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
+	public static ImageIcon icoNSD = getIconImage(getURI(from+"icons/structorizer.png"), true);
+	// END KGU#577 2018-09-18
 	// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 	//public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
 	// START KGU#486 2018-02-06: Issue #4 (Icon redesign)
 	//public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+	/** A scaled product image with basic size of 48 pixels */
 	public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons_48/000_structorizer.png"));
 	// END KGU#486 2018-02-06
 	// END KGU#287 2016-11-02
-	
+	// START KGU#577 2018-09-17: Issue #601 - we use lazy initialization
+	private static ImageIcon dummyIcon = null;
+	// END KGU#577 2018-09-17
+		
 //	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
 //	public static ImageIcon ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
 //	public static ImageIcon ico003 = getIconImage(getURI(from+"icons/003_Save.png"));
@@ -424,23 +435,42 @@ public class IconLoader {
 	 */
 	public static ImageIcon getIcon(int iconNo)
 	{
-		if (iconNo < 0 || iconNo >= ICON_FILES.length) {
-			return null;
-		}
-		if (icons == null) {
-			// Lazy initialization of the icon cache
-			icons = new ImageIcon[ICON_FILES.length];
-			for (int i = 0; i < ICON_FILES.length; i++) {
-				String fileName = ICON_FILES[i];
-				if (fileName != null) {
-					icons[i] = getIconImage(fileName);
-				}
-				else {
-					icons[i] = null;
+		// START KGU#577 2018-09-17: Issue #601
+		//if (iconNo < 0 || iconNo >= ICON_FILES.length) {
+		//	return null;
+		//}
+		ImageIcon icon = null;
+		if (iconNo >= 0 && iconNo < ICON_FILES.length) {
+		// END KGU#577 2018-09-17
+			if (icons == null) {
+				// Lazy initialization of the icon cache
+				icons = new ImageIcon[ICON_FILES.length];
+				for (int i = 0; i < ICON_FILES.length; i++) {
+					String fileName = ICON_FILES[i];
+					if (fileName != null) {
+						icons[i] = getIconImage(fileName);
+					}
+					else {
+						icons[i] = null;
+					}
 				}
 			}
+			icon = icons[iconNo];
+		// START KGU#577 2018-09-17: Issue #601
 		}
-		return icons[iconNo];
+		else {
+			try {
+				// Force a stacktrace into the log file
+				throw new Exception("Invalid icon number " + iconNo);
+			}
+			catch (Exception ex) {
+				Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsitent", ex);
+			}
+		}
+		if (icon == null) {
+			icon = getMissingIcon();
+		}
+		return icon;
 	}
 	// END KGU#486 2018-01-25
 
@@ -452,6 +482,11 @@ public class IconLoader {
 	 */
 	public static void setScaleFactor(double scale)
 	{
+		// START KGU#577 2018-09-18: Issue #601 replace the scaled dummy
+		if (scale != scaleFactor) {
+			dummyIcon = null;	// Is going to be reproduced as soon as needed
+		}
+		// END KGU#577 2018-09-18
 		scaleFactor = scale;
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		// START KGU#486 2018-02-06: Issue #4 (icon redesign)
@@ -668,12 +703,22 @@ public class IconLoader {
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
+	//@SuppressWarnings("unused")
 	public static ImageIcon getIconImage(String fileName, double extraFactor)
 	// END KGU#486 2018-02-06
 	{
 		//System.out.println("getIconImage(\"" + fileName + "\")");
+		// START KGU#577 2018-09-17: Issue #601 - precautions against inconsistent resources or code
 		// First we fetch the base icon (size 16 pixels = scalefactor 1)
-		ImageIcon ii = new ImageIcon(getURI(from + "icons/" + fileName));
+		ImageIcon ii = null;
+		try {
+			ii = new ImageIcon(getURI(from + "icons/" + fileName));
+		}
+		catch (Exception ex) {
+			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsitent!", ex);
+			return getMissingIcon();
+		}
+		// END KGU#577 2018-09-17
 		// We coerce the scale factor to multiples of 0.5 and compute the wanted size
 		long pixels = 8 * Math.round(scaleFactor * extraFactor * 2);
 		int size = 16;
@@ -710,9 +755,62 @@ public class IconLoader {
 		if (largestURL != null) {
 			ii = new ImageIcon(largestURL);
 		}
+		// FIXME: Why is this signaled as dead code? (without being commented out, of course)
+		//if (ii == null) {
+		//	Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "No resource " + fileName + " with size " + extraFactor);
+		//	return getMissingIcon();			
+		//}
 		return scale(ii, factor);
 	}
 
+	/**
+	 * Produces a new, scaled {@link ImageIcon} from icon file at the given {@code url}
+	 * for the currently specified scale.
+	 * @param url - the source URL for the icon file.
+	 * @return A scaled {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
+	 * @see #getIcon(int)
+	 * @see #getIconImage(java.net.URL,boolean)
+	 * @see #getIconImage(String)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIconImage(java.net.URL url)
+	{
+		return getIconImage(url, false);
+	}
+
+	/**
+	 * Produces a new, {@link ImageIcon} from icon file at the given {@code url}.
+	 * If {@code fixed} is true then the icon will be scaled for the currently set
+	 * {@link #scaleFactor}.
+	 * @param url - the source URL for the icon file.
+	 * @param fixed - if the icon is to be scaled with the current factor
+	 * @return An {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
+	 * @see #getIcon(int)
+	 * @see #getIconImage(java.net.URL)
+	 * @see #getIconImage(String)
+	 * @see #setScaleFactor(double)
+	 */
+	public static ImageIcon getIconImage(java.net.URL url, boolean fixed)
+	{
+		// START KGU#577 2018-09-18: Issue #601 
+		//ImageIcon ii = new ImageIcon(url);
+		//ii = scale(ii, scaleFactor);
+		ImageIcon ii = null;
+		try {
+			ii = new ImageIcon(url);	// This will raise an exception if url = null or the file is unsuited
+		}
+		catch (Exception ex) {
+			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "*** Unable to retrieve the requested icon " + url + "!", ex);
+			return getMissingIcon();
+		}
+		if (!fixed) {
+			ii = scale(ii, scaleFactor);
+		}
+		// END KGU#577 2018-09-18
+		return ii;
+	}
+
+	// STRT KGU#577 2018-09-18: Issue #601
 	/**
 	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
 	 * for the currently specified scale.
@@ -721,7 +819,7 @@ public class IconLoader {
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
-	public static ImageIcon getIconImage(java.net.URL url)
+	public static ImageIcon getIconImageSafely(java.net.URL url)
 	{
 		ImageIcon ii = new ImageIcon(url);
 		ii = scale(ii, scaleFactor);
@@ -785,9 +883,10 @@ public class IconLoader {
 		return new ImageIcon(dst);
 	}
 
+	/** May return null if the resource is not found or not usable; otherwise an {@link java.net.URL} */
 	public static java.net.URL getURI(String _filename)
 	{
-		IconLoader icol = new IconLoader();
+		IconLoader icol = new IconLoader();	// Is this to trigger the static initialization?
 		return icol.getClass().getResource(_filename);
 	}
 	
@@ -809,8 +908,47 @@ public class IconLoader {
 		//graphics.fillRect(1,1,size-2,size-2);
 		graphics.fillOval(1, 1, size-2, size-2);
 		// END KGU#493 2018-02-14
+		// START KGU 2018-09-17 free resources no longer needed
+		graphics.dispose();
+		// END KGU 2018-09-17
 		return new ImageIcon(image);
 	}
+	
+	// START KGU#577 2018-09-17: Issue #601
+	/** Produces a dummy icon showing that the intended icon wasn't available */
+	private static ImageIcon generateMissingIcon()
+	{
+		int size = (int) (16 * scaleFactor);
+		BasicStroke stroke = new BasicStroke((int)(2 * scaleFactor));
+		int padding = (int) (5 * scaleFactor);
+		
+		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = (Graphics2D) image.getGraphics();
+        
+        graphics.setColor(Color.WHITE);
+        graphics.fillRect(1, 1, size-2, size-2);
+        
+        graphics.setColor(Color.BLACK);
+        graphics.drawRect(1, 1, size-2, size-2);
+        
+        graphics.setColor(Color.RED);
+        
+        graphics.setStroke(stroke);
+        graphics.drawLine(padding, padding, size - padding, size - padding);
+        graphics.drawLine(padding, size - padding, size - padding, padding);
+        
+        graphics.dispose(); // free resources no longer needed
+		return new ImageIcon(image);
+	}
+	
+	private static ImageIcon getMissingIcon()
+	{
+		if (dummyIcon == null) {
+			dummyIcon = generateMissingIcon();
+		}
+		return dummyIcon;
+	}
+	// END KGU#577 2018-09-17
 	
 	/**
 	 * Sets a new absolute or relative base directory for the icon file retrieval. 

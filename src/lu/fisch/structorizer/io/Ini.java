@@ -273,10 +273,10 @@ public class Ini
 			alternateExists = file.exists();
 		} catch (Error e)
 		{
-			logger.warning("looking for alterntive ini " + e.getMessage());
+			logger.warning("looking for alternative ini " + e.getMessage());
 		} catch (Exception e)
 		{
-			logger.warning("looking for alterntive ini " + e.getMessage());
+			logger.warning("looking for alternative ini " + e.getMessage());
 		}
 
 		// JOptionPane.showMessageDialog(null, filename+" ==> "+regularExists);

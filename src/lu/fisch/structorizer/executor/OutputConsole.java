@@ -88,9 +88,9 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.gui.FontChooser;
 import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.io.LogFilter;
 import lu.fisch.structorizer.locales.LangFrame;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.utils.BTextfile;
 
 @SuppressWarnings("serial")

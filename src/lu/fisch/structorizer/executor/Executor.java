@@ -159,6 +159,11 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018.08.01      Enh. #423/#563: Effort to preserve component order for record display
  *      Kay Gürtzig     2018.08.03      Enh. #577: Meta information to output console now conditioned
  *      Kay Gürtzig     2018.08.06      Some prevention against running status lock on occasion of Issue #577
+ *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const arguments on top level fixed
+ *      Kay Gürtzig     2018.10.02/04   Bugfix #617: evaluateDiagramControllerFunctions used to fail when
+ *                                      several controller functions occurred in an expression or raised an
+ *                                      NullPointerException if a controller function was called with wrong arg number 
  *
  ******************************************************************************************************
  *
@@ -323,8 +328,6 @@ import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 import bsh.EvalError;
 import bsh.Interpreter;
-
-import com.stevesoft.pat.Regex;
 
 /**
  * Singleton class controlling the execution of a Nassi-Shneiderman diagram.
@@ -917,6 +920,7 @@ public class Executor implements Runnable
 	// END KGU#477 2017-12-10
 	
 	// Constant set of matchers for unicode literals that cause harm in interpreter
+	// (Concurrent execution of the using method is rather unlikely, so we dare to reuse the Matchers) 
 	private static final Matcher[] MTCHs_BAD_UNICODE = new Matcher[]{
 			Pattern.compile("(.*)\\\\u000[aA](.*)").matcher(""),
 			Pattern.compile("(.*?)\\\\u000[dD](.*?)").matcher(""),
@@ -938,12 +942,18 @@ public class Executor implements Runnable
 	/** Matcher for split function */
 	//private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
 	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
-	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
-	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
-	private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
-	private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
-	private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
-	private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+	// START KGU#575 2018-09-17: Issue #594 - we replace it anyway now
+	//private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
+	//private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
+	//private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
+	//private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
+	//private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
+	//private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+	private static final Matcher DELETE_PROC_MATCHER = java.util.regex.Pattern.compile("delete\\((.*),(.*),(.*)\\)").matcher("");
+	private static final Matcher INSERT_PROC_MATCHER = java.util.regex.Pattern.compile("insert\\((.*),(.*),(.*)\\)").matcher("");
+	private static final String DELETE_PROC_SUBST = "$1 <- delete($1,$2,$3)";
+	private static final String INSERT_PROC_SUBST = "$2 <- insert($1,$2,$3)";
+	// END KGU#575 2018-09-17
 	
 	private static final StringList OBJECT_ARRAY = StringList.explode("Object,[,]", ",");
 	
@@ -1138,10 +1148,14 @@ public class Executor implements Runnable
 		// MODIFIED BY GENNARO DONNARUMMA, NEXT LINE COMMENTED -->
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
+		// START KGU#575 2018-09-17: Issue #594 - replacing obsolete 3rd-party Regex library
+		//s = RPLC_DELETE_PROC.replaceAll(s);
+		//s = RPLC_INSERT_PROC.replaceAll(s);
 		// pascal: delete
-		s = RPLC_DELETE_PROC.replaceAll(s);
+		s = DELETE_PROC_MATCHER.reset(s).replaceAll(DELETE_PROC_SUBST);
 		// pascal: insert
-		s = RPLC_INSERT_PROC.replaceAll(s);
+		s = INSERT_PROC_MATCHER.reset(s).replaceAll(INSERT_PROC_SUBST);
+		// END KGU#575 2018-09-17
 		// START KGU#285 2016-10-16: Bugfix #276 - this spoiled apostrophes because misplaced here
 //		// pascal: quotes
 //		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
@@ -1150,10 +1164,11 @@ public class Executor implements Runnable
 		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
         // pascal: convert "inc" and "dec" procedures
-		s = RPLC_INC2_PROC.replaceAll(s);
-		s = RPLC_INC1_PROC.replaceAll(s);
-		s = RPLC_DEC2_PROC.replaceAll(s);
-		s = RPLC_DEC1_PROC.replaceAll(s);
+		//s = RPLC_INC2_PROC.replaceAll(s);
+		//s = RPLC_INC1_PROC.replaceAll(s);
+		//s = RPLC_DEC2_PROC.replaceAll(s);
+		//s = RPLC_DEC1_PROC.replaceAll(s);
+		s = Element.transform_inc_dec(s);
         // END KGU 2015-11-29
 		
         // START KGU 2017-04-22: now done above in the string token conversion
@@ -1610,13 +1625,11 @@ public class Executor implements Runnable
 					try
 					{
 						// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
-						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
-						//setVarRaw(in, str);
+						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept (KGU#580 2018-09-24 corrected)
+						String varName = setVarRaw(in, str);
 						if (isConstant) {
-							setVarRaw("const " + in, str);
-						}
-						else {
-							setVarRaw(in, str);
+							this.context.constants.put(varName, this.context.interpreter.get(varName));
+							this.updateVariableDisplay();
 						}
 						// END KGU#375 2017-03-30
 						// END KGU#69 2015-11-08
@@ -3007,18 +3020,22 @@ public class Executor implements Runnable
 	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object)}.
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param rawInput - the raw input string to be interpreted
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the resulting
 	 * value is inappropriate, if both don't match or if a loop variable violation is detected.
 	 * @see #setVar(String, Object) 
 	 */
-	private void setVarRaw(String target, String rawInput) throws EvalError
+	private String setVarRaw(String target, String rawInput) throws EvalError
 	{
+		// START KGU#580 2018-09-24: Issue #605
+		String varName = target;
+		// END KGU#580 2018-09-24
 		// first add as string (lest we should end with nothing at all...)
 		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
 		//setVar(name, rawInput);
 		EvalError finalError = null;
 		try {
-			setVar(target, rawInput);
+			varName = setVar(target, rawInput);
 		}
 		catch (EvalError ex)
 		{
@@ -3036,21 +3053,21 @@ public class Executor implements Runnable
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
 					this.evaluateExpression(target + " = " + rawInput, false, false);
-					setVar(target, context.interpreter.get(target));
+					varName = setVar(target, context.interpreter.get(target));
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
 					this.evaluateExpression(target + " = \"" + rawInput + "\"", false, false);
-					setVar(target, context.interpreter.get(target));					
+					varName = setVar(target, context.interpreter.get(target));					
 				}
 				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
 					Character charInput = rawInput.charAt(0);
-					setVar(target, charInput);
+					varName = setVar(target, charInput);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
 //				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
@@ -3080,12 +3097,12 @@ public class Executor implements Runnable
 				// END KGU#388 2017-09-18
 				else if (strInput.endsWith("}") && (strInput.startsWith("{") ||
 						strInput.indexOf("{") > 0 && Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null))) {
-					setVar(target, this.evaluateExpression(strInput, true, false));
+					varName = setVar(target, this.evaluateExpression(strInput, true, false));
 				}
 				// START KGU#283 2016-10-16: Enh. #273
 				else if (strInput.equals("true") || strInput.equals("false"))
 				{
-					setVar(target, Boolean.valueOf(strInput));
+					varName = setVar(target, Boolean.valueOf(strInput));
 				}
 				// END KGU#283 2016-10-16
 			}
@@ -3103,7 +3120,7 @@ public class Executor implements Runnable
 		try
 		{
 			double dblInput = Double.parseDouble(rawInput);
-			setVar(target, dblInput);
+			varName = setVar(target, dblInput);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3116,7 +3133,7 @@ public class Executor implements Runnable
 		try
 		{
 			int intInput = Integer.parseInt(rawInput);
-			setVar(target, intInput);
+			varName = setVar(target, intInput);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3128,6 +3145,7 @@ public class Executor implements Runnable
 		if (finalError != null) {
 			throw finalError;
 		}
+		return varName;
 	}
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
@@ -3160,15 +3178,16 @@ public class Executor implements Runnable
 	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both aren't compatible
 	 * or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object, int) 
 	 */
-	private void setVar(String target, Object content) throws EvalError
+	private String setVar(String target, Object content) throws EvalError
 	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
-		setVar(target, content, context.forLoopVars.count()-1);
+		return setVar(target, content, context.forLoopVars.count()-1);
 	}
 
 	/**
@@ -3179,12 +3198,13 @@ public class Executor implements Runnable
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
 	 * @param ignoreLoopStackLevel - the loop nesting level beyond which loop variables aren't critical.
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
 	 * match or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object)
 	 */
-	private void setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
+	private String setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
 	// END KGU#307 2016-12-12
 	{
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
@@ -3345,13 +3365,13 @@ public class Executor implements Runnable
 		// START KGU#439 2017-10-13: Enh. #436
 		else if (isConstant && content instanceof ArrayList<?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			content = new ArrayList<Object>((ArrayList<Object>)content);
+			content = new ArrayList<Object>((ArrayList<?>)content);
 		}
 		// END KGU#439 2017-10-13
 		// START KGU#388 2017-09-14: Enh. #423
 		else if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			// START KGU#526 2018-08-01: Preserve component order
+			// START KGU#526 2018-08-01: Preserve component order (if it had actually been a LinkedHashMap all the better)
 			content = new LinkedHashMap<String, Object>((HashMap<String, Object>)content);
 			// END KGU#526 2018-08-01
 		}
@@ -3533,6 +3553,9 @@ public class Executor implements Runnable
 				}
 				((HashMap<String, Object>)comp).put(path.get(path.count()-1), content);
 				context.interpreter.set(recordName, record);
+				// START KGU#580 2018-09-24
+				target = recordName;	// this is the variable name to be returned
+				// END KGU#580 2018-09-24
 			}
 			catch (EvalError ex) {
 				throw ex;
@@ -3659,6 +3682,9 @@ public class Executor implements Runnable
 			updateVariableDisplay();
 		}
 		// END KGU#20 2015-10-13
+		// START KGU#580 2018-09-24: Bugfix #605
+		return target;	// Base name of the assigned variable or constant
+		// END KGU#580 2018-09-24
 	}
 
 	/**
@@ -4595,7 +4621,10 @@ public class Executor implements Runnable
 				String token = null;
 				while (pos > 0 && (token = tokens.get(--pos).trim()).isEmpty());
 				if (pos >= 0 && token != null && this.controllerFunctionNames.contains(token.toLowerCase())) {
-					positions.addFirst(pos);
+					// START KGU#592 2018-10-02: Bugfix #617 The evaluation is to be done in reverse order as well
+					//positions.addFirst(pos);
+					positions.addLast(pos);
+					// END KGU#591 2018-10-02
 				}
 			}
 			Iterator<Integer> iter = positions.iterator();
@@ -4608,26 +4637,32 @@ public class Executor implements Runnable
 					int nArgs = args.count();
 					String fSign = fName + "#" + nArgs;
 					DiagramController controller = this.controllerFunctions.get(fSign);
-					//Method function = controller.getFunctionMap().get(fSign);
-					// Now we must know what is beyond the function call (the tail)
-					String tail = "";
-					StringList parts = Element.splitExpressionList(exprTail, ",", true);
-					if (parts.count() > nArgs) {
-						tail = parts.get(parts.count()-1).trim();
+					// START KGU#592 2018-10-04 - Bugfix #617 If the signature doesn't match exactly then skip
+					if (controller != null) {
+					// END KGU#592 2018-10-04
+						//Method function = controller.getFunctionMap().get(fSign);
+						// Now we must know what is beyond the function call (the tail)
+						String tail = "";
+						StringList parts = Element.splitExpressionList(exprTail, ",", true);
+						if (parts.count() > nArgs) {
+							tail = parts.get(parts.count()-1).trim();
+						}
+						Object argVals[] = new Object[nArgs];
+						for (int i = 0; i < nArgs; i++) {
+							// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
+							argVals[i] = this.evaluateExpression(args.get(i), false, false);
+						}
+						// Passed till here, we try to execute the function - this may throw a FunctionException
+						Object result = controller.execute(fName, argVals);
+						tokens.remove(pos, tokens.count());
+						//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
+						tokens.add(result.toString());
+						if (!tail.isEmpty()) {
+							tokens.add(Element.splitLexically(tail.substring(1), true));
+						}
+					// START KGU#592 2018-10-04 - Bugfix #617 (continued)
 					}
-					Object argVals[] = new Object[nArgs];
-					for (int i = 0; i < nArgs; i++) {
-						// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
-						argVals[i] = this.evaluateExpression(args.get(i), false, false);
-					}
-					// Passed till here, we try to execute the function - this may throw a FunctionException
-					Object result = controller.execute(fName, argVals);
-					tokens.remove(pos, tokens.count());
-					//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
-					tokens.add(result.toString());
-					if (!tail.isEmpty()) {
-						tokens.add(Element.splitLexically(tail.substring(1), true));
-					}
+					// END KGU#592 2018-10-04
 				}
 			}
 			catch (EvalError ex) {
@@ -6505,7 +6540,7 @@ public class Executor implements Runnable
 			tokens.replaceAll("]", ")");
 		}
 		// END KGU#439 2017-10-13
-		// Special treatment for inc() and dec functions? - no need if convert was applied before
+		// Special treatment for inc() and dec() functions? - no need if convert was applied before
 		int i = 0;
 		while ((i = tokens.indexOf(".", i+1)) > 0) {
 			// FIXME: We should check for either declared type or actual object type of what's on the left of the dot.

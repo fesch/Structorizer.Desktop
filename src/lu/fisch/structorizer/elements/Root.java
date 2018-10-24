@@ -129,6 +129,10 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
  *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
  *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
+ *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
+ *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
+ *      Kay Gürtzig     2018.10.04      Bugfix #618: Function names shouldn't be reported as used variables
  *      
  ******************************************************************************************************
  *
@@ -164,6 +168,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -184,24 +189,22 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Font;
 import java.awt.image.*;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
-
-import com.stevesoft.pat.*;
-
-import java.awt.Point;
-import java.awt.Polygon;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
 
 /**
  * This class represents the "root" of a diagram or the program/sub itself.
@@ -231,11 +234,18 @@ public class Root extends Element {
 	};
 	// END KGU#305 2016-12-12
 	
-	private final static java.util.regex.Pattern INC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern INC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern DEC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern DEC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
-	private final static java.util.regex.Pattern INDEX_PATTERN = java.util.regex.Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
+	// START KGU#575 2018-09-17: Issue #594 - we delegate the replacement to a static method on Element 
+	//private final static java.util.regex.Pattern INC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern INC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern DEC_PATTERN1 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern DEC_PATTERN2 = java.util.regex.Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
+	//private final static java.util.regex.Pattern INDEX_PATTERN = java.util.regex.Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
+	private final static Pattern INDEX_PATTERN = Pattern.compile("(.*?)[\\[](.*?)[\\]](.*?)");
+	private final static Pattern INDEX_PATTERN_GREEDY = java.util.regex.Pattern.compile("(.*?)[\\[](.*)[\\]](.*?)");
+	// END KGU#575 2018-09-17
+	// START KGU#580 2018-09-24: Bugfix #605
+	private final static Pattern VAR_PATTERN = Pattern.compile("(^|.*?\\W)var\\s(.*?)");
+	// END KGU#580 2018-09-24
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
@@ -301,6 +311,7 @@ public class Root extends Element {
 	 * @param aRoot - a diagram to be added to the include list of this
 	 * @return true if {@code aRoot} is includable and new to the include list
 	 * @see #addToIncludeList(String)
+	 * @see #removeFromIncludeList(Root)
 	 */
 	public boolean addToIncludeList(Root aRoot)
 	{
@@ -317,6 +328,7 @@ public class Root extends Element {
 	 * @param rootName - assumed name of an includable Root
 	 * @return true if {@code rootName} was new
 	 * @see #addToIncludeList(Root)
+	 * @see #removeFromIncludeList(String)
 	 */
 	public boolean addToIncludeList(String rootName)
 	{
@@ -326,6 +338,35 @@ public class Root extends Element {
 		return this.includeList.addIfNew(rootName);
 	}
 	// END KGU#376 2017-06-30
+	// START KGU#586 2018-09-28: Introduced on occasion of #613
+	/**
+	 * Ensures that {@link Root} {@code aRoot} is not member of the {@link #includeList}
+	 * @param aRoot - an includable {@link Root}
+	 * @return true if {@code aRoot} had been included before
+	 * @see #removeFromIncludeList(String)
+	 * @see #addToIncludeList(Root)
+	 */
+	public boolean removeFromIncludeList(Root aRoot)
+	{
+		return aRoot.isInclude() && this.removeFromIncludeList(aRoot.getMethodName());
+	}
+	/**
+	 * Ensures that the given {@code rootName} (which is assumed to be the name of an
+	 * includable diagram, but not verified) is NOT member of this' include list.
+	 * @param rootName - assumed name of an includable {@link Root}
+	 * @return true if the assumed includable had been member of the include list
+	 * @see #removeFromIncludeList(Root)
+	 * @see #addToIncludeList(String)
+	 */
+	public boolean removeFromIncludeList(String rootName)
+	{
+		boolean done = false;
+		if (this.includeList != null) {
+			done = this.includeList.removeAll(rootName) > 0;
+		}
+		return done;
+	}
+	// END KGU#586 2018-09-28
 	
 	/**
 	 * @return true if and only if the diagram type is "main program"
@@ -2157,11 +2198,14 @@ public class Root extends Element {
     	{
     		_s = _s.substring(1,  _s.length()-1).trim();
     	}
+    	// START KGU#575 2018-09-17: Issue #594 - Get rid of an obsolete 3rd-party Regex library
     	// START KGU 2016-03-29: Bugfix - nested index expressions were defectively split (a bracket remained)
     	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-    	Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
+    	//Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
     	// END KGU 2016-03-29
-    	_s = r.replaceAll(_s);
+    	//_s = r.replaceAll(_s);
+    	_s = INDEX_PATTERN_GREEDY.matcher(_s).replaceAll("$1 $3");
+    	// END KGU#575 2018-09-17
     	// START KGU#141 2016-01-16: Bugfix #112 Cut off component and method names
     	if (_s.indexOf(".") >= 0)
     	{
@@ -2295,10 +2339,13 @@ public class Root extends Element {
 //		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
-		_line = INC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 + $2");
-		_line = INC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 + 1");
-		_line = DEC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 - $2");
-		_line = DEC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 - 1");
+    	// START KGU#575 2018-09-17: Issue #594 - we may simply use the equivalent matchers inherited from Element
+		//_line = INC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 + $2");
+		//_line = INC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 + 1");
+		//_line = DEC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 - $2");
+		//_line = DEC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 - 1");
+    	_line = transform_inc_dec(_line);
+		// END KGU#575 2018-09-17
 
 		StringList tokens = Element.splitLexically(_line.trim(), true);
 
@@ -2403,9 +2450,13 @@ public class Root extends Element {
 		while(i < tokens.count())
 		{
 			String token = tokens.get(i);
-			if((Function.testIdentifier(token, null)
-					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
-					|| this.variables.contains(token)))
+			// START KGU#588 2018-10-04: Bugfix #618 Function names shouldn't be gathered here
+			//if((Function.testIdentifier(token, null)
+			//		&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
+			//		|| this.variables.contains(token)))
+			if((Function.testIdentifier(token, null) || this.variables.contains(token))
+					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("(")))
+			// END KGU#588 2018-10-04
 			{
 				// keep the id
 				//System.out.println("Adding to used var names: " + token);
@@ -2491,14 +2542,15 @@ public class Root extends Element {
     	for(int i=0; i<lines.count(); i++)
     	{
     		String allText = lines.get(i);
-    		Regex r;
-
     		// modify "inc" and "dec" function (Pascal)
-    		r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
-    		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
-    		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
-    		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
-
+            // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
+            //Regex r;
+    		//r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
+    		//r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
+    		//r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
+    		//r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
+    		allText = transform_inc_dec(allText);
+            // END KGU#575 2018-09-17
 
     		StringList tokens = Element.splitLexically(allText, true);
 
@@ -2761,7 +2813,14 @@ public class Root extends Element {
 		if (this.isSubroutine()) {
 			typeSpec = this.getResultType();
 			if (typeSpec != null) {
-				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, true, false);
+				// START KGU#593 2018-10-05: Issue #619 - missing declarations on C++ export
+				// This is somewhat tricky here: The result type is an explicit return variable declaration for
+				// Pascal, but it's not for C++, Java etc. So, for code export consistency we must take into
+				// consideration where we check whether an explicit variable declaration will come (mostly C++,
+				// C#, Java) we drive better if we don't set the "explicitly" flag here.
+				//this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, true, false);
+				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false, false);
+				// END KGU#593 2018-10-05
 			}
 		}
 	}
@@ -4807,7 +4866,13 @@ public class Root extends Element {
         	try
         	{
         		String rootText = this.getText().getText();
-        		rootText = rootText.replace("var ", "");
+        		// START KGU#580 2018-09-24: Bugfix #605 we must not mutilate identifiers ending with "var".
+        		//rootText = rootText.replace("var ", "");
+        		Matcher varMatcher = VAR_PATTERN.matcher(rootText);
+        		if (varMatcher.matches()) {
+        			rootText = varMatcher.replaceAll("$1$2");
+        		}
+        		// END KGU#580
         		if(rootText.indexOf("(")>=0)
         		{
         			rootText=rootText.substring(rootText.indexOf("(")+1).trim();

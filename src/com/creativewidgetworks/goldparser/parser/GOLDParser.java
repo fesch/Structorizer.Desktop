@@ -1,6 +1,18 @@
+/*
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------			----			-----------
+ *      Kay Gürtzig     2018-09-18      Raw types (Class etc.) replaced by type inference, unused
+ *                                      import diabled
+ *      
+ ******************************************************************************************************
+ */
 package com.creativewidgetworks.goldparser.parser;
 
-import static com.creativewidgetworks.goldparser.util.FileHelper.toInputStream;
+//import static com.creativewidgetworks.goldparser.util.FileHelper.toInputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +60,7 @@ public class GOLDParser extends Parser {
     public static final String VT_INDENT_DECREASE = "IndentDecrease";
     public static final String VT_INDENT_INCREASE = "IndentIncrease";
     
-    private Map<String, Class> ruleHandlers = new TreeMap<String, Class>();
+    private Map<String, Class<?>> ruleHandlers = new TreeMap<String, Class<?>>();
 
     private boolean ignoreCase;
     private boolean generateTree;
@@ -496,29 +508,29 @@ public class GOLDParser extends Parser {
         loadRuleHandlers(listClassesInPackage(packageName));
     }
 
-    public void loadRuleHandlers(List<Class> ruleClasses) {
-        @SuppressWarnings("rawtypes")
-        Map<String, Class> mapRuleHandlers = mapRuleClasses(ruleClasses);
+    public void loadRuleHandlers(List<Class<?>> ruleClasses) {
+        //@SuppressWarnings("rawtypes")
+        Map<String, Class<?>> mapRuleHandlers = mapRuleClasses(ruleClasses);
         if (!mapRuleHandlers.isEmpty()) {
             ruleHandlers.clear();
             ruleHandlers.putAll(mapRuleHandlers);
         }
     }
 
-    protected List<Class> listClassesInPackage(String packageName) {
+    protected List<Class<?>> listClassesInPackage(String packageName) {
         try {
             return ResourceHelper.findClassesInPackage(packageName);
         } catch (Exception e) {
             addErrorMessage("loadRuleMappings: " + e.getMessage());
-            return Collections.<Class> emptyList();
+            return Collections.<Class<?>> emptyList();
         }
     }
 
-    protected Map<String, Class> mapRuleClasses(Iterable<Class> classes) {
+    protected Map<String, Class<?>> mapRuleClasses(Iterable<Class<?>> classes) {
         try {
-            Map<String, Class> mapRuleHandlers = new HashMap<String, Class>();
-            for (Class clazz : classes) {
-                ProcessRule a = (ProcessRule) clazz.getAnnotation(ProcessRule.class);
+            Map<String, Class<?>> mapRuleHandlers = new HashMap<String, Class<?>>();
+            for (Class<?> clazz : classes) {
+                ProcessRule a = clazz.getAnnotation(ProcessRule.class);
                 if (a != null) {
                     for (String rule : a.rule()) {
                         mapRuleHandlers.put(rule, clazz);
@@ -559,12 +571,12 @@ public class GOLDParser extends Parser {
         Reduction reduction = null;
 
         // Look up the handler for the rule and construct an instance of the class
-        Class clazz = ruleHandlers.get(ruleName);
+        Class<?> clazz = ruleHandlers.get(ruleName);
         if (clazz == null) {
             clazz = ruleHandlers.get(ruleName.replace("'", "")); // Try removing single quotes
         }
         if (clazz != null) {
-            Constructor con = null;
+            Constructor<?> con = null;
             try {
                 con = clazz.getConstructor(GOLDParser.class);
             } catch (SecurityException e) {

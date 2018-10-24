@@ -56,6 +56,7 @@ import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.Locales;
 
 /**

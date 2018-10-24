@@ -80,7 +80,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
  *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
  *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations
- *      Kay Gürtzig     2018.06.27      Enh. #552: Serial decisions on saveAll allowed, remoeAllDiagrams() added
+ *      Kay Gürtzig     2018.06.27      Enh. #552: Serial decisions on saveAll allowed, removeAllDiagrams() added
  *      Kay Gürtzig     2018.09.10      Bugfix #508/#512: A diagram loaded into a zoomed Surface first could have too small a shape
  *                                      for the text drawing in Structorizer due to font height/width rounding effects
  *      Kay Gürtzig     2018.09.12      Issue #372: Attribute handling, particularly for arrz file members, improved
@@ -201,7 +201,6 @@ import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
@@ -209,6 +208,7 @@ import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.locales.LangPanel;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.NSDParser;
 import lu.fisch.utils.StringList;
 import net.iharder.dnd.FileDrop;
