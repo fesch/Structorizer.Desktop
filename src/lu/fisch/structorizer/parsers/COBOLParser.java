@@ -4600,7 +4600,7 @@ public class COBOLParser extends CodeParser
 
 	/** Holds the base name for includable diagrams derived from the file name where all non-id characters are replaced with underscores */
 	private String sourceName;
-
+	
 	/** A pair of cached line position and code length for internal text transformation */
 	private class CodePosAndLength {
 		public int pos, length;
@@ -4676,7 +4676,6 @@ public class COBOLParser extends CodeParser
 						this.adjustSourceFormat("FREE");
 					}
 				}
-				br.reset();
 				if (settingFixedForm) {
 					setColumns(settingFixedColumnIndicator, settingFixedColumnText);
 				}
@@ -4710,15 +4709,6 @@ public class COBOLParser extends CodeParser
 			getLogger().log(Level.SEVERE, " -> ", e);
 		}
 		return interm;
-	}
-
-	private void storeFileName(File file) {
-		String fileName = file.getName();
-		int posDot = fileName.lastIndexOf(".");
-		if (posDot > 0) {
-			fileName = fileName.substring(0, posDot);
-		}
-		this.sourceName = fileName.replaceAll("[^A-Za-z0-9_]", "_");
 	}
 
 	/**
@@ -4861,8 +4851,17 @@ public class COBOLParser extends CodeParser
 		srcCode.append (strLine + "\n");
 	}
 
+	private void storeFileName(File file) {
+		String fileName = file.getName();
+		int posDot = fileName.lastIndexOf(".");
+		if (posDot > 0) {
+			fileName = fileName.substring(0, posDot);
+		}
+		this.sourceName = fileName.replaceAll("[^A-Za-z0-9_]", "_");
+	}
+
 	/**
-	 * Function for checking the line for compiler directives and handle them appropriate
+	 * function for checking the line for compiler directives and handle them appropriate
 	 * @param codeLine   String to check
 	 * @return true = directive found, line has not to be pre-parsed anymore
 	 */
