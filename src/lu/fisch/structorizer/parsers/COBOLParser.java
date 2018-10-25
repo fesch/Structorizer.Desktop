@@ -4687,9 +4687,6 @@ public class COBOLParser extends CodeParser
 				}
 			}
 
-			int srcCodeLastPos = 0;
-			int srcLastCodeLength = settingCodeLength;
-
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the [COPY] REPLACE replacements (at least roughly...)
