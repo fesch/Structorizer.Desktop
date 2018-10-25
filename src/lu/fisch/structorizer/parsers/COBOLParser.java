@@ -4,7 +4,7 @@
 
     Copyright (C) 2009  Bob Fisch
     Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
-    Copyright (C) 2017  COBOLParser: Simon Sobisch
+    Copyright (C) 2017-2018  COBOLParser: Simon Sobisch, Kay Gürtzig
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
  *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
  *      Kay Gürtzig     2018.07.01      Enh. #553 - thread cancellation hooks added
- *      Simon Sobisch   2018.10.24      Fix #626 IndexOutOfBoundsException on parsing empty single-quoted strings.
+ *      Simon Sobisch   2018.10.24      Fix #626 Issues with parsing of string literals.
  *                                      Skip lines that look like preprocessor directives (starting with #).
  *      Simon Sobisch   2018.10.25      Auto-switch to free-format before preparsing if source looks preprocessed by cobc.
  *
@@ -8138,10 +8138,16 @@ public class COBOLParser extends CodeParser
 	private static final Pattern pHexLiteral = Pattern.compile("^[Nn]?[Xx][\"']([0-9A-Fa-f]+)[\"']");
 	private static final Pattern pIntLiteral = Pattern.compile("^0+([0-9]+)");
 	private static final Pattern pAcuNumLiteral = Pattern.compile("^[BbOoXxHh]#([0-9A-Fa-f]+)");
+	private static final Pattern pEscapedApostrophe = Pattern.compile("''");
+	private static final Pattern pEscapedQuote = Pattern.compile("\"\"");
+	private static final Pattern pQuote = Pattern.compile("\"");
 
 	private static Matcher mHexLiteral = pHexLiteral.matcher("");
 	private static Matcher mIntLiteral = pIntLiteral.matcher("");
 	private static Matcher mAcuNumLiteral = pAcuNumLiteral.matcher("");
+	private static Matcher mEscapedApostrophe = pEscapedApostrophe.matcher("");
+	private static Matcher mEscapedQuote = pEscapedQuote.matcher("");
+	private static Matcher mQuote = pQuote.matcher("");
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#getContent_R(com.creativewidgetworks.goldparser.engine.Reduction, java.lang.String)
@@ -8454,21 +8460,24 @@ public class COBOLParser extends CodeParser
 				// END KGU#388 2017-10-04
 			}
 			else if (name.equals("StringLiteral")) {
-				// convert from 'COBOL " Literal' --> "COBOL "" Literal"
-				if (toAdd.startsWith("'")) {
-					if (toAdd.equals("''")) {
-						toAdd = "";
+				// convert from 'COBOL " Literal' --> "COBOL "" Literal";
+				// changing COBOL escape to java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
+				String strCont = toAdd.substring(1, toAdd.length() - 1);
+				if (strCont.length() != 0) {
+					if (toAdd.charAt(0) == '\'') {
+						mEscapedApostrophe.reset(strCont);
+						strCont = mEscapedApostrophe.replaceAll("'");
+						mQuote.reset(strCont);
+						strCont = mQuote.replaceAll("\\\\\"");
 					} else {
-						toAdd = toAdd.replace("\"", "\"\"")
-									.replace("''", "'");
-						toAdd = "\"" + toAdd.substring(1, toAdd.length() - 1) + "\"";
+						mEscapedQuote.reset(strCont);
+						strCont = mEscapedQuote.replaceAll("\\\\\"");
 					}
 				}
-				// change COBOL escape by java escape "COBOL "" Literal" -> "COBOL \"\" Literal"
-				toAdd = toAdd.replaceAll("\"\"", "\\\\\"");
-				if (trueName.equals("ZLiteral")) { // handle zero terminated strings
-					//toAdd = toAdd.replaceAll("(.*)\"", "$1\\\\u0000\"");
-					toAdd = toAdd.substring(0, toAdd.length() - 1) + "\\\\000\"";
+				if (!trueName.equals("ZLiteral")) { // handle zero terminated strings
+					toAdd = "\"" + strCont + "\"";
+				} else { // handle zero terminated strings
+					toAdd = "\"" + strCont + "\\\\\\\\000\"";
 				}
 				//toAdd += " ";
 			}
