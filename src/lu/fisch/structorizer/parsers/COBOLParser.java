@@ -87,7 +87,9 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
  *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
  *      Kay Gürtzig     2018.07.01      Enh. #553 - thread cancellation hooks added
- *      Simon Sobisch   2018.10.24      Fix #626 Issues with parsing of string literals
+ *      Simon Sobisch   2018.10.24      Fix #626 Issues with parsing of string literals.
+ *                                      Skip lines that look like preprocessor directives (starting with #).
+ *      Simon Sobisch   2018.10.25      Auto-switch to free-format before preparsing if source looks preprocessed by cobc.
  *
  ******************************************************************************************************
  *
@@ -4598,6 +4600,15 @@ public class COBOLParser extends CodeParser
 
 	/** Holds the base name for includable diagrams derived from the file name where all non-id characters are replaced with underscores */
 	private String sourceName;
+	
+	/** A pair of cached line position and code length for internal text transformation */
+	private class CodePosAndLength {
+		public int pos, length;
+		public CodePosAndLength(int _pos, int _length) {
+			pos = _pos;
+			length = _length;
+		}
+	};
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
@@ -4655,141 +4666,32 @@ public class COBOLParser extends CodeParser
 			ignoreUnstringAllClauses = (boolean)this.getPluginOption("ignoreUnstringAll", true);
 			is32bit = (boolean)this.getPluginOption("is32bit", true);
 
-			if (settingFixedForm) {
-				setColumns(settingFixedColumnIndicator, settingFixedColumnText);
-			}
+			CodePosAndLength lastPosAndLength = new CodePosAndLength(0, settingCodeLength);
 
-			int srcCodeLastPos = 0;
-			int srcLastCodeLength = settingCodeLength;
+			if (settingFixedForm) {
+				// check for pre-processed by OpenCOBOL/GnuCOBOL --> set to free-form
+				if ((strLine = br.readLine()) != null) {
+					if (strLine.startsWith("# 1") || strLine.toUpperCase().startsWith("#LINE")) {
+						// assume pre-processed by OpenCOBOL/GnuCOBOL --> set to free-form
+						this.adjustSourceFormat("FREE");
+					}
+				}
+				if (settingFixedForm) {
+					setColumns(settingFixedColumnIndicator, settingFixedColumnText);
+				}
+				lastPosAndLength.length = settingCodeLength;	// setting may have changed by the previous actions
+				// Now process the already read line before we enter the loop
+				if (strLine != null) {
+					prepareTextLine(repAuto, strLine, srcCode, lastPosAndLength);
+				}
+			}
 
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the [COPY] REPLACE replacements (at least roughly...)
 			while ((strLine = br.readLine()) != null)
 			{
-				if (settingFixedForm) { // fixed-form reference-format
-
-					if (strLine.length() < settingColumnIndicator) {
-						srcCode.append (strLine + "\n");
-						srcCodeLastPos += strLine.length() + 1;
-						continue; // read next line
-					}
-
-					String srcLineCode = strLine.substring(settingColumnIndicator);
-					if (srcLineCode.length() > settingCodeLength) {
-						// FIXME: Better check if the string contains *> already and is not part of a literal,
-						//        if yes don't cut the string; if not: insert "*> TEXT AREA" in
-						srcLineCode = srcLineCode.substring(0, settingCodeLength);
-					}
-
-					char srcLineIndicator = strLine.charAt(settingColumnIndicator - 1);
-					if (srcLineIndicator == '*') {
-						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
-							strLine = "*>";
-						} else if (srcLineCode.charAt(0) == '>') {
-							strLine = "*>" + srcLineCode.substring(1);
-						} else {
-							strLine = "*>" + srcLineCode;
-						}
-					} else if (srcLineIndicator == '/') {
-						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
-							strLine = "*> page eject requested" + "\n" + "*>";
-						} else {
-							strLine = "*> page eject requested" + "\n" + "*>" + srcLineCode;
-						}
-					} else if (srcLineIndicator == 'D' && !srcCodeDebugLines) {
-						if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
-							strLine = "*> DEBUG: ";
-						} else {
-							strLine = "*> DEBUG: " + srcLineCode;
-						}
-					} else if (srcLineIndicator == '-') {
-						char firstNonSpaceInLine = srcLineCode.trim().charAt(0);
-						// word continuation
-						if (firstNonSpaceInLine != '\'' && firstNonSpaceInLine != '"') {
-							srcCode.insert(srcCodeLastPos - 1, srcLineCode);
-							srcCodeLastPos += srcLineCode.length();
-							continue; // read next line
-						}
-						// literal continuation
-						// FIXME hack: string concatenation backwards (will only
-						// work on "clean" sources)
-						// and if the same literal symbol was used
-						if (srcCodeLastPos != 0) {
-							while (srcLastCodeLength < settingCodeLength) {
-								srcCode.insert(srcCodeLastPos - 1, " ");
-								srcCodeLastPos++;
-								srcLastCodeLength++;
-							}
-							srcCode.insert(srcCodeLastPos - 1, firstNonSpaceInLine + " &");
-							srcCodeLastPos += 4;
-						}
-						strLine = srcLineCode;
-						srcLastCodeLength = strLine.length();
-						srcCodeLastPos += srcLastCodeLength;
-					} else {
-						String resultLine = checkForDirectives(srcLineCode);
-						if (resultLine != null) {
-							strLine = resultLine;
-						} else {
-//							int i = 0;
-//							int im = srcLineCode.length();
-//							char lastLit = ' ';
-//							char lastChar = ' ';
-//							while (i <= im) {
-//								char currChar = srcLineCode.charAt(i);
-//								// not within a literal
-//								if (lastLit == ' ') {
-//									// check if new literal starts
-//									if (currChar == '"' || currChar == '\'') {
-//										lastLit = currChar;
-//									}
-//									// check if we want to replace last separator comma/semicolon
-//									if (lastChar == ';' || (lastChar == ',' && !decimalComma)) {
-//										srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
-//									} else if (lastChar == ',') { // decimal comma is not active
-//										if (!decimalComma) {
-//											srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
-//										}
-//									}
-//								// within a literal --> only check if literal ends
-//								} else if (lastLit == currChar && currChar != lastChar) {
-//									lastLit = ' ';
-//								}
-//								lastChar = currChar;
-							// }
-							if (srcLineCode.trim().length() != 0) {
-								strLine = srcLineCode;
-								srcLastCodeLength = strLine.length();
-							} else {
-								strLine = "";
-								srcLastCodeLength = 0;
-							}
-							srcCodeLastPos = srcCode.length() + srcLastCodeLength;
-							srcCodeLastPos += 1; // counting newline
-						}
-					}
-
-				} else { // free-form reference-format
-
-					// skip empty lines
-					if (strLine.trim().length() == 0) {
-						srcCode.append ("\n");
-						//srcCodeLastPos += 1;   // really needed for free-form reference-format?
-						continue; // read next line
-					}
-
-					String resultLine = checkForDirectives(strLine);
-					if (resultLine != null) {
-						strLine = resultLine;
-					}
-
-				}
-				//srcCodeLastPos += 1;   // really needed for free-form reference-format?
-				// START KGU#473 2017-12-04: Bugfix #485
-				strLine = repAuto.process(strLine);
-				// END KGU#473 2017-12-04
-				srcCode.append (strLine + "\n");
+				prepareTextLine(repAuto, strLine, srcCode, lastPosAndLength);
 			}
 			//Close the input stream
 			in.close();
@@ -4807,6 +4709,146 @@ public class COBOLParser extends CodeParser
 			getLogger().log(Level.SEVERE, " -> ", e);
 		}
 		return interm;
+	}
+
+	/**
+	 * For the COBOL Parser e.g. the compiler directives must be removed and possibly
+	 * be executed (at least the [COPY] REPLACE, with >> IF it should be possible as
+	 * this is rarely used in COBOL).<br/>
+	 * This is a helper routine for {@link #prepareTextfile(String, String)}
+	 * and does it for just the given line {@code strLine}, appending the result
+	 * to {@code srcCode}.
+	 * @param repAuto - the current {@link RepositoryAutomaton}
+	 * @param strLine - the line just read
+	 * @param srcCode - the prepared code being constructed
+	 * @param srcCodeLastPosAndLength - pair of last position in source line and last code length
+	 * @see #prepareTextfile(String, String)
+	 */
+	private void prepareTextLine(RepositoryAutomaton repAuto, String strLine, StringBuilder srcCode,
+			CodePosAndLength posAndLength)
+	{
+		/* TODO for preparsing: see TODO comment in prepareTextfile(String, String) */
+		if (settingFixedForm) { // fixed-form reference-format
+
+			if (strLine.length() < settingColumnIndicator) {
+				srcCode.append (strLine + "\n");
+				posAndLength.pos += strLine.length() + 1;
+				return;
+			}
+
+			String srcLineCode = strLine.substring(settingColumnIndicator);
+			if (srcLineCode.length() > settingCodeLength) {
+				// FIXME: Better check if the string contains *> already and is not part of a literal,
+				//        if yes don't cut the string; if not: insert "*> TEXT AREA" in
+				srcLineCode = srcLineCode.substring(0, settingCodeLength);
+			}
+
+			char srcLineIndicator = strLine.charAt(settingColumnIndicator - 1);
+			if (srcLineIndicator == '*') {
+				if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+					strLine = "*>";
+				} else if (srcLineCode.charAt(0) == '>') {
+					strLine = "*>" + srcLineCode.substring(1);
+				} else {
+					strLine = "*>" + srcLineCode;
+				}
+			} else if (srcLineIndicator == '/') {
+				if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+					strLine = "*> page eject requested" + "\n" + "*>";
+				} else {
+					strLine = "*> page eject requested" + "\n" + "*>" + srcLineCode;
+				}
+			} else if (srcLineIndicator == 'D' && !srcCodeDebugLines) {
+				if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+					strLine = "*> DEBUG: ";
+				} else {
+					strLine = "*> DEBUG: " + srcLineCode;
+				}
+			} else if (srcLineIndicator == '-') {
+				char firstNonSpaceInLine = srcLineCode.trim().charAt(0);
+				// word continuation
+				if (firstNonSpaceInLine != '\'' && firstNonSpaceInLine != '"') {
+					srcCode.insert(posAndLength.pos - 1, srcLineCode);
+					posAndLength.pos += srcLineCode.length();
+					return;
+				}
+				// literal continuation
+				// FIXME hack: string concatenation backwards (will only
+				// work on "clean" sources)
+				// and if the same literal symbol was used
+				if (posAndLength.pos != 0) {
+					while (posAndLength.length < settingCodeLength) {
+						srcCode.insert(posAndLength.pos - 1, " ");
+						posAndLength.pos++;	// last pos
+						posAndLength.length++;	// last length
+					}
+					srcCode.insert(posAndLength.pos - 1, firstNonSpaceInLine + " &");
+					posAndLength.pos += 4;
+				}
+				strLine = srcLineCode;
+				posAndLength.length = strLine.length();
+				posAndLength.pos += posAndLength.length;
+			} else {
+				String resultLine = checkForDirectives(srcLineCode);
+				if (resultLine != null) {
+					strLine = resultLine;
+				} else {
+//					int i = 0;
+//					int im = srcLineCode.length();
+//					char lastLit = ' ';
+//					char lastChar = ' ';
+//					while (i <= im) {
+//						char currChar = srcLineCode.charAt(i);
+//						// not within a literal
+//						if (lastLit == ' ') {
+//							// check if new literal starts
+//							if (currChar == '"' || currChar == '\'') {
+//								lastLit = currChar;
+//							}
+//								// check if we want to replace last separator comma/semicolon
+//								if (lastChar == ';' || (lastChar == ',' && !decimalComma)) {
+//									srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
+//								} else if (lastChar == ',') { // decimal comma is not active
+//									if (!decimalComma) {
+//										srcLineCode = replaceCharPosInString (srcLineCode, ' ', i - 1);
+//									}
+//								}
+//							// within a literal --> only check if literal ends
+//							} else if (lastLit == currChar && currChar != lastChar) {
+//								lastLit = ' ';
+//							}
+//							lastChar = currChar;
+					// }
+					if (srcLineCode.trim().length() != 0) {
+						strLine = srcLineCode;
+						posAndLength.length = strLine.length();
+					} else {
+						strLine = "";
+						posAndLength.length = 0;
+					}
+					posAndLength.pos = srcCode.length() + posAndLength.length + 1;
+				}
+			}
+
+		} else { // free-form reference-format
+
+			// skip empty lines
+			if (strLine.trim().length() == 0) {
+				srcCode.append ("\n");
+				return;
+			}
+
+			String resultLine = checkForDirectives(strLine);
+			if (resultLine != null) {
+				strLine = resultLine;
+			}
+
+		}
+		//srcCodeLastPos += 1;   // really needed for free-form reference-format?
+		// START KGU#473 2017-12-04: Bugfix #485
+		strLine = repAuto.process(strLine);
+		// END KGU#473 2017-12-04
+		srcCode.append (strLine + "\n");
 	}
 
 	private void storeFileName(File file) {
@@ -4845,6 +4887,11 @@ public class COBOLParser extends CodeParser
 			handleDirective(codeLine);
 			// Directive --> added as comment
 			resultLine = "*> DIRECTIVE: " + codeLine;
+
+		// check for preprocessor directive
+		} else if (firstToken.startsWith("#")) {
+			// Directive --> added as comment
+			resultLine = "*> PREPROCESSOR DIRECTIVE: " + codeLine;
 
 		// check for COPY or REPLACE statements (rough check, only first token)
 		} else if (firstToken.equals("COPY")) {
