@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-11 (2018-10-24)
+Current development version: 3.28-11 (2018-10-26)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -113,7 +113,9 @@ Current development version: 3.28-11 (2018-10-24)
 - 10: Bugfix #622: Turtle drawing could fall behind on some Macbooks <2>
 - 10: Bugfix #623: Turtleizer instruction export to Python was defective <2>
 - 10: Bugfix #624: Translation of FOR loops into Python range() was wrong <2>
-- 11: Bugfix #626: IndexOutOfBoundsException on COBOL import <Simon Sobisch>
+- 11: Bugfix #626: Issues with string literals on COBOL import <Simon Sobisch>
+- 11: Heuristic detection of preprocessed COBOL files on import <Simon Sobisch>
+- 11: Enh. #416: Option for automatic line breaking on code import [S. Sobisch]2
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

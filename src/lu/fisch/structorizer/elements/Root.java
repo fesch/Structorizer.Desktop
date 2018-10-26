@@ -133,6 +133,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
  *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
  *      Kay Gürtzig     2018.10.04      Bugfix #618: Function names shouldn't be reported as used variables
+ *      Kay Gürtzig     2018.10.25      Enh. #416: New method breakElementTextLines(...)
  *      
  ******************************************************************************************************
  *
@@ -5711,5 +5712,34 @@ public class Root extends Element {
 		return this.children.iterator(true);
 	}
 	// END KGU#363 2017-05-30
+
+	// START KGU#602 2018-10-25: Issue #416 - Tool to break very long lines is requested
+	/**
+	 * Breaks down all text lines longer than {@code maxLineLength} of all elements
+	 * along the tokens into continuated lines (i.e. broken lines end with backslash).
+	 * Already placed line breaks are preserved unless {@code rebreak} is true, in which
+	 * case broken lines are first concatenated in order to be broken according to
+	 * {@code maxLineLength}.<br/>
+	 * If a token is longer than {@code maxLineLength} (might be a string literal) then
+	 * it will not be broken or decomposed in any way such that the line length limit
+	 * may not always hold.<br/>
+	 * If this method led to a different text layout then the drawing info is invalidated
+	 * up-tree.
+	 * @param maxLineLength - the number of characters a line should not exceed
+	 * @param rebreak - if true then existing line breaks (end-standing backslashes) or not preserved
+	 * @return true if any text was effectively modified, false otherwise
+	 * @see Element#breakTextLines(int, boolean)
+	 */
+	public boolean breakElementTextLines(short maxLineLength, boolean rebreak)
+	{
+		boolean changed = false;
+		IElementSequence.Iterator iter = this.iterator();
+		while (iter.hasNext()) {
+			if (iter.next().breakTextLines(maxLineLength, rebreak)) {
+				changed = true;
+			}
+		}
+		return changed;
+	};
 	
 }

@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls 
  *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
  *      Kay Gürtzig     2018.07.13  Issue #557: New limitation option for the number of imported roots to be displayed
+ *      Kay Gürtzig     2018.10.26  Enh. #416: New line length limitation option
  *
  ******************************************************************************************************
  *
@@ -70,6 +71,7 @@ import java.util.Vector;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
@@ -123,10 +125,14 @@ public class ImportOptionDialog extends LangDialog {
         pnlNSD = new javax.swing.JPanel();
         pnlPreference = new javax.swing.JPanel();
         // START KGU#553 2018-07-13: Issue #557 - new option to limit the number of displayed Roots
-        pnlLimit = new javax.swing.JPanel();
+        javax.swing.JPanel pnlLimit = new javax.swing.JPanel();
         lblLimit = new javax.swing.JLabel();
         spnLimit = new javax.swing.JSpinner();
         // END KGU#553 2018-07-13
+        // START KGU#602 2018-10-25: Issue #416 - new option to limit the line length
+        lblMaxLen = new javax.swing.JLabel();
+        spnMaxLen = new javax.swing.JSpinner();
+        // END KGU#602 2018-10-25
         chkRefactorOnLoading = new javax.swing.JCheckBox();
         //chkOfferRefactoringIni = new javax.swing.JCheckBox();
         lbIntro = new javax.swing.JLabel();
@@ -203,11 +209,41 @@ public class ImportOptionDialog extends LangDialog {
         lblLimit.setBorder(new EmptyBorder(0, 0, 0, 5));
 		SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
         spnLimit.setModel(spnModel);
-        pnlLimit.setBorder(new EmptyBorder(3, 3, 5, 3));
-        pnlLimit.setLayout(new javax.swing.BoxLayout(pnlLimit, javax.swing.BoxLayout.X_AXIS));
-        pnlLimit.add(lblLimit);
-        pnlLimit.add(spnLimit);
+//        pnlLimit.setBorder(new EmptyBorder(3, 3, 5, 3));
+//        pnlLimit.setLayout(new javax.swing.BoxLayout(pnlLimit, javax.swing.BoxLayout.X_AXIS));
+//        pnlLimit.add(lblLimit);
+//        pnlLimit.add(spnLimit);
+        
         // END KGU#553 2018-07-13
+
+        // START KGU#602 2018-10-25: Issue #416 - new option to limit the line length
+        lblMaxLen.setText("Maximum line length (for line breaks):");
+        lblMaxLen.setBorder(new EmptyBorder(0, 0, 0, 5));
+		SpinnerModel spnModelLen = new SpinnerNumberModel(0, 0, 255, 5);
+        spnMaxLen.setModel(spnModelLen);
+
+        GridBagConstraints gbcLimits = new GridBagConstraints();
+        gbcLimits.insets = new Insets(0, 5, 5, 5);
+		gbcLimits.weightx = 1.0;
+		gbcLimits.anchor = GridBagConstraints.LINE_START;
+        
+        pnlLimit.setLayout(new GridBagLayout());
+        gbcLimits.gridx = 0; gbcLimits.gridy = 0;
+        pnlLimit.add(lblMaxLen, gbcLimits);
+        gbcLimits.gridx++;
+        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+        pnlLimit.add(spnMaxLen, gbcLimits);
+
+        gbcLimits.gridwidth = 1;
+        gbcLimits.gridx = 0; gbcLimits.gridy++;        
+        gbcLimits.fill = GridBagConstraints.NONE;
+        pnlLimit.add(lblLimit, gbcLimits);
+        gbcLimits.gridx++;
+        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+        pnlLimit.add(spnLimit, gbcLimits);
+// END KGU#602 2018-10-25
 
         // START KGU#416 2017-06-20: Enh. #354,#357
         btnPluginOptions.setText("Language-specific Options");
@@ -422,6 +458,10 @@ public class ImportOptionDialog extends LangDialog {
 		btnPluginOptions.addKeyListener(keyListener);
 		cbOptionPlugins.addKeyListener(keyListener);
 	    // END KGU#416 2017-06-20
+		// START KGU#602 2018-10-26: Issue #416
+		((JSpinner.DefaultEditor)spnLimit.getEditor()).getTextField().addKeyListener(keyListener);
+		((JSpinner.DefaultEditor)spnMaxLen.getEditor()).getTextField().addKeyListener(keyListener);
+		// END KGU#602 2018-10-26
 
 		// START KGU#354 2017-04-27
         doLogButtons();
@@ -621,9 +661,6 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JPanel pnlNSD;
     public javax.swing.JPanel pnlPreference;
     public javax.swing.JPanel pnlCode;
-    // START KGU#553 2018-07-12: Issue #557
-    public javax.swing.JPanel pnlLimit;
-    // END KGU#553 2018-07-12
     public javax.swing.JButton btnOk;
     public javax.swing.JLabel lbIntro;
     public javax.swing.JCheckBox chkRefactorOnLoading;
@@ -671,4 +708,8 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JLabel lblLimit;
     public javax.swing.JSpinner spnLimit;
     // END KGU#553 2018-07-12
+    // START KGU#602 2018-10-25: Enh. #416
+    public javax.swing.JLabel lblMaxLen;
+    public javax.swing.JSpinner spnMaxLen;    
+    // END KGU#602 2018-10-25
 }

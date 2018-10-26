@@ -161,6 +161,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD()
  *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
  *      Kay Gürtzig     2018.10.01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
+ *      Kay Gürtzig     2018.10.26      Enh. #416: New import option impMaxLineLength
  *
  ******************************************************************************************************
  *
@@ -6605,6 +6606,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#553 2018-07-13: Issue #557
             iod.spnLimit.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxRootsForDisplay", "20")));
             // END KGU#354 2018-07-13
+            // START KGU#602 2018-10-25: Issue #416
+            iod.spnMaxLen.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxLineLength", "0")));
+            // END KGU#602 2018-10-25
             // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
             iod.chkLogDir.setSelected(ini.getProperty("impLogToDir", "false").equals("true"));
             iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));            
@@ -6650,6 +6654,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#553 2018-07-13: Issue #557
                 ini.setProperty("impMaxRootsForDisplay", String.valueOf(iod.spnLimit.getValue()));
                 // END KGU#553 2018-07-13
+                // START KGU#602 2018-10-25: Issue #416
+                ini.setProperty("impMaxLineLength", String.valueOf(iod.spnMaxLen.getValue()));
+                // END KGU#602 2018-10-25
                 // START KGU#416 2017-02-26: Enh. #354, #357
                 for (int i = 0; i < parserPlugins.size(); i++) {
                 	GENPlugin plugin = parserPlugins.get(i);

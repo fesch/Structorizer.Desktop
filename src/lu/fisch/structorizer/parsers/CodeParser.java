@@ -44,6 +44,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.09.30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
  *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved.
  *      Kay Gürtzig     2018.06.29      Enh. #553: Listener management added
+ *      Kay Gürtzig     2018.10.25      Enh. #416: Support for automatic breaking of long lines (postprocess)
  *
  ******************************************************************************************************
  *
@@ -149,6 +150,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * The option is supported by method {@link #retrieveComment(Reduction)}
 	 * @see #optionSaveParseTree()
 	 * @see #optionImportVarDecl
+	 * @see #optionMaxLineLength
 	 * @see #retrieveComment(Reduction)
 	 */
 	protected boolean optionImportComments = false;
@@ -157,6 +159,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	/**
 	 * Value of the import option to import mere variable declarations
 	 * @see #optionImportComments
+	 * @see #optionMaxLineLength
 	 * @see #optionSaveParseTree()
 	 */
 	protected boolean optionImportVarDecl = false;
@@ -165,12 +168,23 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @return true iff the parse tree is to be saved as text file
 	 * @see #optionImportComments
 	 * @see #optionImportVarDecl
+	 * @see #optionMaxLineLength
 	 */
 	protected boolean optionSaveParseTree()
 	{
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
+	// START KGU#602 2018-10-25: Enh. #416 Optional line length limitation
+	/**
+	 * Value of the import option to limit the length of the text lines
+	 * in diagram elements.
+	 * @see #optionSaveParseTree()
+	 * @see #optionImportVarDecl
+	 * @see #optionImportComments
+	 */
+	public short optionMaxLineLength = Short.parseShort(Ini.getInstance().getProperty("impMaxLineLength", "0"));
+	// END KGU#602 2018-10-25
 
 	// START KGU#537 2018-07-01: Enh. #533 - for progress notification we need control
 	/**
@@ -416,7 +430,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @return the array of associated file name extensions
 	 */
 	public abstract String[] getFileExtensions();
-
+	
 	/**
 	 * Parses the source code from file _textToParse, which is supposed to be encoded
 	 * with the charset _encoding, and returns a list of structograms - one for each function
@@ -737,6 +751,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				this.firePropertyChange("root_count", subRoots.size()-1, this.subRoots.size());
 				// END KGU#537 2017-07-01
 			}
+			
 			// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
 			for (Root aRoot : subRoots)
 			{
@@ -744,6 +759,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				// START KGU#363 2017-05-22: Enh. #372
 				aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\"";
 				// END KGU#363 2017-05-22
+				// START KGU#602 2018-10-25: Enh. #416
+				if (this.optionMaxLineLength > 0) {
+					aRoot.breakElementTextLines(this.optionMaxLineLength, false);
+				}
+				// END KGU#602 2018-10-25
 			}
 			// END KGU#194 2016-07-07
 
@@ -1458,5 +1478,5 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 	}
 	// END KGU#288 2016-11-06
-
+	
 }

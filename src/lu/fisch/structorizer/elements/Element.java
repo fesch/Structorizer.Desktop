@@ -98,6 +98,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const modifiers in declaration lists fixed
  *      Kay Gürtzig     2018.10.05      Bugfix #619: Declaration status of function result variable fixed
+ *      Kay Gürtzig     2018.10.25      Enh. #416: New method breakTextLines(...)
  *
  ******************************************************************************************************
  *
@@ -909,7 +910,7 @@ public abstract class Element {
         }
 	}
 
-	// START KGU#453 2017-11-01: Bugfix #447 - we need a cute representationon broken lines in some cases
+	// START KGU#453 2017-11-01: Bugfix #447 - we need a cute representation of broken lines in some cases
 	/**
 	 * Returns the content of the text field no matter if mode {@code isSwitchedTextAndComment}
 	 * is active.<br/>
@@ -1028,6 +1029,71 @@ public abstract class Element {
 		return sl;
 	}
 	// END KGU#413 2017-06-09
+	
+	// START KGU#602 2018-10-25: Issue #416 - Tool to break very long lines is requested
+	/**
+	 * Breaks down all text lines longer than {@code maxLineLength} along the tokens
+	 * into continuated lines (i.e. broken lines end with backslash). Already placed
+	 * line breaks are preserved unless {@code rebreak} is true, in which case broken
+	 * lines are first concatenated in order to be broken according to {@code maxLineLength}.
+	 * If a token is longer than {@code maxLineLength} (might be a string literal) then
+	 * it will not be broken or decomposed in any way such that the line length limit
+	 * may not always hold.<br/>
+	 * If this method led to a different text layout then the drawing info is invalidated
+	 * up-tree.
+	 * @param maxLineLength - the number of characters a line should not exceed
+	 * @param rebreak - if true then existing line breaks (end-standing backslashes) or not preserved
+	 * @return true if the text was effectively modified, false otherwise
+	 * @see Root#breakElementTextLines(int, boolean)
+	 */
+	public boolean breakTextLines(short maxLineLength, boolean rebreak)
+	{
+		boolean modified = false;
+		if (rebreak) {
+			StringList unbroken = this.getUnbrokenText();
+			modified = unbroken.count() < this.text.count();
+			this.text = unbroken;
+		}
+		for (int i = this.text.count()-1; i >= 0; i--) {
+			int offset = 0;
+			String line = this.text.get(i);
+			if (line.isEmpty()) {
+				continue;
+			}
+			if (line.length() > maxLineLength) {
+				String lineEnd = ""; 
+				if (line.endsWith("\\")) {
+					lineEnd = "\\";
+					line = line.substring(0, line.length()-1);
+				}
+				this.text.remove(i);
+				StringList tokens = Element.splitLexically(line, true);
+				StringBuilder sb = new StringBuilder();
+				for (int j = 0; j < tokens.count(); j++) {
+					String token = tokens.get(j);
+					if (sb.length() == 0 || sb.length() + token.length() < maxLineLength) {
+						sb.append(token);
+					}
+					else {
+						this.text.insert(sb.toString() + "\\", i + offset++);
+						sb.setLength(0);
+						sb.append(token);
+					}
+				}
+				if (sb.length() > 0) {
+					this.text.insert(sb.toString() + lineEnd, i + offset);					
+				}
+			}
+			if (offset > 0) {
+				modified = true;
+			}
+		}
+		if (modified) {
+			this.resetDrawingInfoUp();
+		}
+		return modified;
+	}	
+	// END KGU#602 2018-1025
 	
 	// START KGU#480 2018-01-21: Enh. #490
 	/**
