@@ -211,7 +211,7 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuEditDowngradeTurtle = new JMenuItem("To integer graphics",IconLoader.getIcon(28));
 	// END KGU#282 2016-10-16
 	// START KGU#602 2018-10-26: enh. #619
-	protected final JMenuItem menuEditBreakLines = new JMenuItem("(Re-)break text lines", IconLoader.getIcon(56));
+	protected final JMenuItem menuEditBreakLines = new JMenuItem("(Re-)break text lines ...", IconLoader.getIcon(56));
 	// END KGU#602 2018-10-26
 
 	protected final JMenu menuView = new JMenu("View");

@@ -44,7 +44,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.09.30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
  *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved.
  *      Kay Gürtzig     2018.06.29      Enh. #553: Listener management added
- *      Kay Gürtzig     2018.10.25      Enh. #416: Support for automatic breaking of long lines (postprocess)
+ *      Kay Gürtzig     2018.10.25      Enh. #419: Support for automatic breaking of long lines (postprocess)
  *
  ******************************************************************************************************
  *
@@ -175,7 +175,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
-	// START KGU#602 2018-10-25: Enh. #416 Optional line length limitation
+	// START KGU#602 2018-10-25: Enh. #419 Optional line length limitation
 	/**
 	 * Value of the import option to limit the length of the text lines
 	 * in diagram elements.
@@ -759,7 +759,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				// START KGU#363 2017-05-22: Enh. #372
 				aRoot.origin += " / " + this.getClass().getSimpleName() + ": \"" + _textToParse + "\"";
 				// END KGU#363 2017-05-22
-				// START KGU#602 2018-10-25: Enh. #416
+				// START KGU#602 2018-10-25: Enh. #419
 				if (this.optionMaxLineLength > 0) {
 					aRoot.breakElementTextLines(this.optionMaxLineLength, false);
 				}
