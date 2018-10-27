@@ -57,6 +57,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.07.01      Enh. #389: Additional field for caching the includeList on undoing/redoing 
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *
  ******************************************************************************************************
  *
@@ -731,4 +732,25 @@ public class Subqueue extends Element implements IElementSequence {
 		return size == 0 || this.children.get(size-1).mayPassControl() && this.isReachable(size-1, true);
 	}
 	// END KGU 2017-10-21
+
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = 0;
+		/* If this gets called with _includeSubstructure = false then it must have
+		 * been selected on the top level. So the immediate children will have been
+		 * meant
+		 */ 
+		for (Element el: this.children) {
+			maxLen = Math.max(maxLen, el.getMaxLineLength(_includeSubstructure));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

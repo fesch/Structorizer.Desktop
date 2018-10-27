@@ -98,7 +98,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const modifiers in declaration lists fixed
  *      Kay Gürtzig     2018.10.05      Bugfix #619: Declaration status of function result variable fixed
- *      Kay Gürtzig     2018.10.25      Enh. #416: New method breakTextLines(...)
+ *      Kay Gürtzig     2018.10.25      Enh. #419: New method breakTextLines(...)
  *
  ******************************************************************************************************
  *
@@ -1030,7 +1030,7 @@ public abstract class Element {
 	}
 	// END KGU#413 2017-06-09
 	
-	// START KGU#602 2018-10-25: Issue #416 - Tool to break very long lines is requested
+	// START KGU#602 2018-10-25: Issue #419 - Tool to break very long lines is requested
 	/**
 	 * Breaks down all text lines longer than {@code maxLineLength} along the tokens
 	 * into continuated lines (i.e. broken lines end with backslash). Already placed
@@ -1092,8 +1092,24 @@ public abstract class Element {
 			this.resetDrawingInfoUp();
 		}
 		return modified;
-	}	
-	// END KGU#602 2018-1025
+	}
+	
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = 0;
+		for (int i = 0; i < this.text.count(); i++) {
+			maxLen = Math.max(maxLen, this.text.get(i).length());
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 	
 	// START KGU#480 2018-01-21: Enh. #490
 	/**

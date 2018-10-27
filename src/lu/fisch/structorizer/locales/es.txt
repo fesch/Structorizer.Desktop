@@ -117,6 +117,7 @@
  *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
  *      Kay Gürtzig     2018.08.03  Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig     2018.10.27  Enh. #619: New messages for word wrapping tool 
  *
  ******************************************************************************************************
  *
@@ -203,6 +204,7 @@ Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
 Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales.
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
 Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros integrales.
+Menu.menuEditBreakLines.text=(Re-)ajustar renglones
 Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
 // Menu "Diagram"
@@ -409,6 +411,12 @@ Menu.msgGuidedTourNext.text=%1\nCurso «%2» va a empezar ahora.\nTal vez quiere
 Menu.ttlGuidedTours.text=Cursos guiados
 Menu.msgTooManyDiagrams.text=El número de diagramas creados excede el limite configurado para presentación directa (%).\n¿Guardar los obtenidos diagramas en archivos ahora misma?
 Menu.lblAcceptProposedNames.text=Aceptar nombres propuestos para los restantes diagramas.
+Menu.ttlBreakTextLines.text=Limitar longitud de renglones para ajustar lexemas
+Menu.msgMaxLineLengthSelected.text=Longitud máxima de líneas en elemento(s) seleccionados: %
+Menu.msgMaxLineLengthSubstructure.text=Longitudes máximas de líneas con subestructuras incluidas: %
+Menu.lblNewMaxLineLength.text=Nuevo limite de lineas:
+Menu.lblInvolveSubtree.text=Applicar a las subestructuras también
+Menu.lblPreserveContinuators.text=Mantener saltos de línea existentes
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -974,7 +982,7 @@ ImportOptionDialog.chkLogDir.text=Protocolar (a directorio)
 ImportOptionDialog.chkLogDir.tooltip=Permitir a guardar un protocolo durante importación
 ImportOptionDialog.txtLogDir.tooltip=El camino vacío significa el mismo directorio donde reside el archivo código, "." significa el directorio activo.
 ImportOptionDialog.btnLogDir.tooltip=Selecciona un camino de protocolo vía diálogo.
-ImportOptionDialog.lblMaxLen.text=Longitud máxima de rengión (para ajuste automático de líneas):
+ImportOptionDialog.lblMaxLen.text=Longitud máxima de renglón (para ajuste automático de líneas):
 ImportOptionDialog.spnMaxLen.tooltip=El valor 0 suprime el ajuste automático de líneas
 ImportOptionDialog.lblLimit.text=Número máximo de diagramas a ser importados para presentación inmediata:
 ImportOptionDialog.btnPluginOptions.text=Preferencias específicas

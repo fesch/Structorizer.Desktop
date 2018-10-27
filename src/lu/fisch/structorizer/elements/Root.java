@@ -133,7 +133,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
  *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
  *      Kay Gürtzig     2018.10.04      Bugfix #618: Function names shouldn't be reported as used variables
- *      Kay Gürtzig     2018.10.25      Enh. #416: New method breakElementTextLines(...)
+ *      Kay Gürtzig     2018.10.25      Enh. #419: New methods breakElementTextLines(...), getMaxLineLength(...)
  *      
  ******************************************************************************************************
  *
@@ -1821,11 +1821,11 @@ public class Root extends Element {
     }
     
     /**
-     * Takes the top entry form the undo stack and reverts the associated changes. If argument {@code redoable}
+     * Takes the top entry from the undo stack and reverts the associated changes. If argument {@code redoable}
      * is true then adds a corresponding entry to the redo stack otherwise the undone action won't be redoable
      * (This should only be set false in order to clean the undo stack of entries that are part of a larger
-     * transaction also involving other diagrams and cannot consistently be redone therefore e.g. on outsourcing
-     * subroutines, normally {@link #undo()} is to be used instead.)
+     * transaction also involving other diagrams and cannot consistently be redone therefore, e.g. on outsourcing
+     * subroutines; normally {@link #undo()} is to be used instead.)
      * @see #undo()
      * @see #canUndo()
      * @see #addUndo()
@@ -5713,7 +5713,7 @@ public class Root extends Element {
 	}
 	// END KGU#363 2017-05-30
 
-	// START KGU#602 2018-10-25: Issue #416 - Tool to break very long lines is requested
+	// START KGU#602 2018-10-25: Issue #419 - Tools to break very long lines is requested
 	/**
 	 * Breaks down all text lines longer than {@code maxLineLength} of all elements
 	 * along the tokens into continuated lines (i.e. broken lines end with backslash).
@@ -5742,4 +5742,19 @@ public class Root extends Element {
 		return changed;
 	};
 	
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = super.getMaxLineLength(false);
+		if (_includeSubstructure) {
+			maxLen = Math.max(maxLen, this.children.getMaxLineLength(true));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

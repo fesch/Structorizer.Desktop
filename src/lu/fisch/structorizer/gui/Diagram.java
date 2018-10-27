@@ -206,6 +206,8 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.imageio.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
@@ -4094,6 +4096,125 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		
 	}
 	// END KGU#282 2016-10-16
+	
+	// START KGU#602 2018-10-26: Enh. #619
+	/**
+	 * Adjusts line breaking for the selected element(s). Requests the details
+	 * ineractively from the user
+	 */
+	public void rebreakLines()
+	{
+		if (this.selected != null) {
+			// The current maximum line lengths of the selected element(s)
+			Element selectedEls = this.selected;
+			int flatMax = selectedEls.getMaxLineLength(false);
+			int deepMax = selectedEls.getMaxLineLength(true);
+			int lastLineLimit = Integer.parseInt(Ini.getInstance().getProperty("wordWrapLimit", Integer.toString(deepMax)));
+			JPanel pnl = new JPanel();
+			JLabel lblMaxLenSel = new JLabel(Menu.msgMaxLineLengthSelected.getText().
+					replace("%", Integer.toString(flatMax)));
+			JLabel lblMaxLenSub = new JLabel(Menu.msgMaxLineLengthSubstructure.getText().
+					replace("%", Integer.toString(deepMax)));
+			JLabel lblNewLen = new JLabel(Menu.lblNewMaxLineLength.getText());
+			JSpinner spnNewLen = new JSpinner();
+			SpinnerModel spnModelLen = new SpinnerNumberModel(0, 0, 255, 5);
+	        spnNewLen.setModel(spnModelLen);
+	        spnNewLen.setValue(lastLineLimit);
+			JCheckBox cbRecursive = new JCheckBox(Menu.lblInvolveSubtree.getText());
+			JCheckBox cbPreserve = new JCheckBox(Menu.lblPreserveContinuators.getText());
+			cbRecursive.setSelected(!(selectedEls instanceof Instruction));
+			cbPreserve.setSelected(lastLineLimit < (cbRecursive.isSelected() ? deepMax : flatMax));
+			
+	        GridBagConstraints gbcLimits = new GridBagConstraints();
+	        gbcLimits.insets = new Insets(0, 5, 5, 5);
+			gbcLimits.weightx = 1.0;
+			gbcLimits.anchor = GridBagConstraints.LINE_START;
+	        
+	        pnl.setLayout(new GridBagLayout());
+
+	        gbcLimits.gridx = 0; gbcLimits.gridy = 0;
+	        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+	        pnl.add(lblMaxLenSel, gbcLimits);
+	        
+	        gbcLimits.gridy++;
+	        pnl.add(lblMaxLenSub, gbcLimits);	        
+	        
+	        gbcLimits.gridy++;
+	        gbcLimits.gridwidth = 1;
+	        pnl.add(lblNewLen, gbcLimits);
+	        
+	        gbcLimits.gridx++;
+	        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+	        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+	        pnl.add(spnNewLen, gbcLimits);
+
+	        gbcLimits.gridx = 0; gbcLimits.gridy++;
+	        gbcLimits.fill = GridBagConstraints.NONE;
+	        pnl.add(cbRecursive, gbcLimits);
+	        gbcLimits.gridy++;
+	        pnl.add(cbPreserve, gbcLimits);
+	        
+	        ChangeListener changeListener = new ChangeListener() {
+	        	
+	        	private final JSpinner spnLen = spnNewLen;
+	        	private final JCheckBox chkRec = cbRecursive, chkPres = cbPreserve;
+	        	private final int flatLen = flatMax, deepLen = deepMax;
+	        	
+				@Override
+				public void stateChanged(ChangeEvent e) {
+					int limit = (int)spnLen.getValue();
+					if (chkRec.isSelected() && limit > deepLen || !chkRec.isSelected() && limit > flatLen) {
+						chkPres.setSelected(false);
+					}
+				}
+	        	
+	        };
+	        
+	        spnNewLen.addChangeListener(changeListener);
+	        cbRecursive.addChangeListener(changeListener);
+			
+	        int answer = JOptionPane.showConfirmDialog(
+	        		this.NSDControl.getFrame(), pnl,
+	        		Menu.ttlBreakTextLines.getText(),
+	        		JOptionPane.OK_CANCEL_OPTION);
+	        
+	        if (answer == JOptionPane.OK_OPTION) {
+	        	root.addUndo();
+	        	boolean recursive = cbRecursive.isSelected();
+	        	boolean preserve = cbPreserve.isSelected();
+	        	int limit = (int)spnNewLen.getValue();
+	        	Ini.getInstance().setProperty("wordWrapLimit", Integer.toString(limit));
+	        	boolean changed = false;
+	        	if (selectedEls instanceof Root) {
+	        		changed = selectedEls.breakTextLines((short)limit, !preserve);
+	        		if (recursive && ((Root)selectedEls).breakElementTextLines((short)limit, !preserve)) {
+	        			changed = true;
+	        		}
+	        	}
+	        	else if (!recursive && !(selectedEls instanceof IElementSequence)) {
+	        		changed = selectedEls.breakTextLines((short)limit, !preserve);
+	        	}
+	        	else {
+	        		if (!(selectedEls instanceof IElementSequence)) {
+	        			selectedEls = new SelectedSequence(selectedEls, selectedEls);
+	        		}
+	        		IElementSequence.Iterator iter = ((IElementSequence)selectedEls).iterator(recursive);
+	        		while (iter.hasNext()) {
+	        			if (iter.next().breakTextLines((short)limit, !preserve)) {
+	        				changed = true;
+	        			}
+	        		}
+	        	}
+	        	if (!changed) {
+	        		root.undo(false);
+	        	}
+//	        	else {
+//	        		this.redraw();
+//	        	}
+	        }
+		}
+	}
+	// END KGU#602 2016-10-26
 
 	// START KGU#43 2015-10-12
 	/*****************************************
@@ -6735,6 +6856,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#258 2016-09-26
 
+	/*****************************************
+	 * font control
+	 *****************************************/
+    
 	public void fontNSD()
 	{
 		// START KGU#494 2018-09-10: Issue #508 - support option among fix / proportional padding
@@ -6812,7 +6937,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	/*****************************************
-	 * setter method
+	 * DIN conformity
 	 *****************************************/
 	public void toggleDIN()
 	{
@@ -6838,6 +6963,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		return Element.E_DIN;
 	}
+
+	/*****************************************
+	 * diagram type and shape
+	 *****************************************/
 
 	public void setUnboxed(boolean _unboxed)
 	{
@@ -6925,6 +7054,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return root.isInclude();
 	}
 
+	/*****************************************
+	 * comment modes
+	 *****************************************/
+
 	public void setComments(boolean _comments)
 	{
 		Element.E_SHOWCOMMENTS=_comments;
@@ -6952,6 +7085,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+    void toggleTextComments() {
+    	Element.E_TOGGLETC=!Element.E_TOGGLETC;
+    	// START KGU#136 2016-03-01: Bugfix #97
+    	this.resetDrawingInfo();
+    	// END KGU#136 2016-03-01
+    	// START KGU#220 2016-07-27: Enh. #207
+    	analyse();
+    	// END KGU#220 2016-07-27
+    	repaint();
+    }
+    
+	/*****************************************
+	 * further settings
+	 *****************************************/	
+	
 	public void setHightlightVars(boolean _highlight)
 	{
 		Element.E_VARHIGHLIGHT = _highlight;	// this is now directly used for drawing
@@ -7446,17 +7594,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
 
 
-    void toggleTextComments() {
-    	Element.E_TOGGLETC=!Element.E_TOGGLETC;
-    	// START KGU#136 2016-03-01: Bugfix #97
-    	this.resetDrawingInfo();
-    	// END KGU#136 2016-03-01
-    	// START KGU#220 2016-07-27: Enh. #207
-    	analyse();
-    	// END KGU#220 2016-07-27
-    	repaint();
-    }
-    
 	// Inner class is used to hold an image while on the clipboard.
 	public static class EMFSelection implements Transferable, ClipboardOwner
 		{

@@ -59,6 +59,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Bob Fisch       2018.09.08      Issue #508: Font height reduction for better vertical centering
  *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *
  ******************************************************************************************************
  *
@@ -815,4 +816,23 @@ public class Alternative extends Element implements IFork {
 		return disabled || this.qTrue.mayPassControl() || this.qFalse.mayPassControl();
 	}
 	// END KGU 2017-10-21
+	
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = super.getMaxLineLength(false);
+		if (_includeSubstructure) {
+			maxLen = Math.max(maxLen, this.qTrue.getMaxLineLength(true));
+			maxLen = Math.max(maxLen, this.qFalse.getMaxLineLength(true));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
+
 }

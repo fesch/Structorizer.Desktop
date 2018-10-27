@@ -217,7 +217,7 @@ public class ImportOptionDialog extends LangDialog {
         // END KGU#553 2018-07-13
 
         // START KGU#602 2018-10-25: Issue #416 - new option to limit the line length
-        lblMaxLen.setText("Maximum line length (for line breaks):");
+        lblMaxLen.setText("Maximum line length (for word wrapping):");
         lblMaxLen.setBorder(new EmptyBorder(0, 0, 0, 5));
 		SpinnerModel spnModelLen = new SpinnerNumberModel(0, 0, 255, 5);
         spnMaxLen.setModel(spnModelLen);
@@ -243,7 +243,7 @@ public class ImportOptionDialog extends LangDialog {
         gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
         gbcLimits.fill = GridBagConstraints.HORIZONTAL;
         pnlLimit.add(spnLimit, gbcLimits);
-// END KGU#602 2018-10-25
+        // END KGU#602 2018-10-25
 
         // START KGU#416 2017-06-20: Enh. #354,#357
         btnPluginOptions.setText("Language-specific Options");
