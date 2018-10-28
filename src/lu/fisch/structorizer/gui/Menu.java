@@ -703,7 +703,7 @@ public class Menu extends LangMenuBar implements NSDController
 		//  END KGU#373 2017-03-28
 
 		menuFile.add(menuFileOpen);
-		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 		menuFileOpen.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(); doButtons(); } } );
 
 		menuFile.add(menuFileOpenRecent);
@@ -1536,7 +1536,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramUnboxed.setSelected(!diagram.getRoot().isBoxed);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 			// START KGU#305 2016-12-14: Enh. #305
-			menuDiagramIndex.setSelected(diagram.showArrangerIndex());
+			menuDiagramIndex.setSelected(diagram.showingArrangerIndex());
 			// END KGU#305 2016-12-14
 
 			// elements

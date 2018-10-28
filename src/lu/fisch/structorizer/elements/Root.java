@@ -5730,7 +5730,7 @@ public class Root extends Element {
 	 * @return true if any text was effectively modified, false otherwise
 	 * @see Element#breakTextLines(int, boolean)
 	 */
-	public boolean breakElementTextLines(short maxLineLength, boolean rebreak)
+	public boolean breakElementTextLines(int maxLineLength, boolean rebreak)
 	{
 		boolean changed = false;
 		IElementSequence.Iterator iter = this.iterator();

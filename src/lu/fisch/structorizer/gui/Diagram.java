@@ -161,7 +161,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD()
  *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
  *      Kay Gürtzig     2018.10.01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
- *      Kay Gürtzig     2018.10.26      Enh. #416: New import option impMaxLineLength
+ *      Kay Gürtzig     2018.10.26/28   Enh. #419: New import option impMaxLineLength, new method rebreakLines()
  *
  ******************************************************************************************************
  *
@@ -213,6 +213,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.text.DefaultFormatter;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -397,6 +398,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public File lastCodeImportDir = null;
     public String lastImportFilter = "";
     // END KGU#354 2017-04-26
+	// START KGU#602 2018-10-28: Enh. #619 - last used line length limitation (0 = never used)
+	/** Last used value for interactive line length limitation (word wrapping) */
+	public int lastWordWrapLimit = 0;
+	// END KGU#602 2018-10-28
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
@@ -532,6 +537,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#2 2015-11-24
     */    
 	
+	/**
+	 * @return true if the Analyser is currently enabled, false otherwise
+	 */
     public boolean getAnalyser()
     {
         return Element.E_ANALYSER;
@@ -4109,7 +4117,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element selectedEls = this.selected;
 			int flatMax = selectedEls.getMaxLineLength(false);
 			int deepMax = selectedEls.getMaxLineLength(true);
-			int lastLineLimit = Integer.parseInt(Ini.getInstance().getProperty("wordWrapLimit", Integer.toString(deepMax)));
+			int lastLineLimit = this.lastWordWrapLimit <= 0 ? deepMax : this.lastWordWrapLimit;
 			JPanel pnl = new JPanel();
 			JLabel lblMaxLenSel = new JLabel(Menu.msgMaxLineLengthSelected.getText().
 					replace("%", Integer.toString(flatMax)));
@@ -4170,6 +4178,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	        	
 	        };
 	        
+	        // Without this hack, directly entering a number in the spinner's text field wouldn't fire the ChangeEvent
+	        DefaultFormatter formatter = (DefaultFormatter)((JSpinner.DefaultEditor)spnNewLen.getEditor()).getTextField().getFormatter();
+	        formatter.setCommitsOnValidEdit(true);
+	        
 	        spnNewLen.addChangeListener(changeListener);
 	        cbRecursive.addChangeListener(changeListener);
 			
@@ -4182,17 +4194,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	        	root.addUndo();
 	        	boolean recursive = cbRecursive.isSelected();
 	        	boolean preserve = cbPreserve.isSelected();
-	        	int limit = (int)spnNewLen.getValue();
-	        	Ini.getInstance().setProperty("wordWrapLimit", Integer.toString(limit));
+	        	this.lastWordWrapLimit = (short)(int)spnNewLen.getValue();
 	        	boolean changed = false;
 	        	if (selectedEls instanceof Root) {
-	        		changed = selectedEls.breakTextLines((short)limit, !preserve);
-	        		if (recursive && ((Root)selectedEls).breakElementTextLines((short)limit, !preserve)) {
+	        		changed = selectedEls.breakTextLines(this.lastWordWrapLimit, !preserve);
+	        		if (recursive && ((Root)selectedEls).breakElementTextLines(this.lastWordWrapLimit, !preserve)) {
 	        			changed = true;
 	        		}
 	        	}
 	        	else if (!recursive && !(selectedEls instanceof IElementSequence)) {
-	        		changed = selectedEls.breakTextLines((short)limit, !preserve);
+	        		changed = selectedEls.breakTextLines(this.lastWordWrapLimit, !preserve);
 	        	}
 	        	else {
 	        		if (!(selectedEls instanceof IElementSequence)) {
@@ -4200,7 +4211,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	        		}
 	        		IElementSequence.Iterator iter = ((IElementSequence)selectedEls).iterator(recursive);
 	        		while (iter.hasNext()) {
-	        			if (iter.next().breakTextLines((short)limit, !preserve)) {
+	        			if (iter.next().breakTextLines(this.lastWordWrapLimit, !preserve)) {
 	        				changed = true;
 	        			}
 	        		}
@@ -6727,7 +6738,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#553 2018-07-13: Issue #557
             iod.spnLimit.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxRootsForDisplay", "20")));
             // END KGU#354 2018-07-13
-            // START KGU#602 2018-10-25: Issue #416
+            // START KGU#602 2018-10-25: Issue #419
             iod.spnMaxLen.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxLineLength", "0")));
             // END KGU#602 2018-10-25
             // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
@@ -6775,7 +6786,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#553 2018-07-13: Issue #557
                 ini.setProperty("impMaxRootsForDisplay", String.valueOf(iod.spnLimit.getValue()));
                 // END KGU#553 2018-07-13
-                // START KGU#602 2018-10-25: Issue #416
+                // START KGU#602 2018-10-25: Issue #419
                 ini.setProperty("impMaxLineLength", String.valueOf(iod.spnMaxLen.getValue()));
                 // END KGU#602 2018-10-25
                 // START KGU#416 2017-02-26: Enh. #354, #357
@@ -7120,6 +7131,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	/**
+	 * Enables or disables the Analyser, according to the value of {@code _analyse}.
+	 * @param _analyse - the new status of Analyser (true to enable, obviously)
+	 */
 	public void setAnalyser(boolean _analyse)
 	{
 		Element.E_ANALYSER = _analyse;
@@ -7127,48 +7142,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#305 2016-12-14: Enh. #305
+	/**
+	 * Enables or disables the Arranger Index, according to the value of {@code _showIndex}.
+	 * @param _showIndex - whether to enable (true) or disable (false) the index
+	 * @see #showingArrangerIndex()
+	 */
 	public void setArrangerIndex(boolean _showIndex)
 	{
 		this.show_ARRANGER_INDEX = _showIndex;
 		NSDControl.doButtons();
 	}
-	public boolean showArrangerIndex()
+	/**
+	 * @return true if the Arranger index is crrently enabled (shown), false otherwise
+	 * @see #setArrangerIndex(boolean)
+	 */
+	public boolean showingArrangerIndex()
 	{
 		return this.show_ARRANGER_INDEX;
 	}
 	// END KGU#305 216-12-14
 	
 	// START KGU#123 2016-01-04: Enh. #87
+	/**
+	 * Toggles the use of the mouse wheel for collapsing/expanding elements
+	 */
 	public void toggleWheelMode()
 	{
 		Element.E_WHEELCOLLAPSE = !Element.E_WHEELCOLLAPSE;
 	}
-	
-	@Deprecated
-	public void setWheelCollapses(boolean _collapse)
-	{
-		Element.E_WHEELCOLLAPSE = _collapse;
-		// START KGU#503 2018-03-13: Enh. #519 - To add the mouse wheel listener is to be left to scrollarea
-		//if (_collapse)
-		//{
-		//	this.addMouseWheelListener(this);
-		//}
-		//else
-		//{
-		//	this.removeMouseWheelListener(this);
-		//}
-		// END KGU#503 2018-03-13
-		this.NSDControl.doButtons();
-	}
-	
-	@Deprecated
-	public boolean getWheelCollapses()
-	{
-		return Element.E_WHEELCOLLAPSE;
-	}
 	// END KGU#123 2016-01-04
 	
 	// START KGU#503 2018-03-14: Enh. #519
+	/**
+	 * Toggles the effect of the mouse wheel (with Ctrl key pressed) for Zooming: in or out
+	 */
 	public void toggleCtrlWheelMode()
 	{
 		Element.E_WHEEL_REVERSE_ZOOM = !Element.E_WHEEL_REVERSE_ZOOM;
@@ -7524,7 +7531,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
     	// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
         //if (selected != null)
-    	if ((e.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+    	if ((e.getModifiersEx() & MouseWheelEvent.CTRL_DOWN_MASK) != 0) {
     		// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
         	int rotation = e.getWheelRotation();
         	int fontSize = Element.getFont().getSize();
@@ -7736,19 +7743,33 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		addRecentFile(_filename,true);
 	}
 
+	/**
+	 * Adds the given {@code _filename} to the list of recently used files.
+	 * If this would exceed {@link #MAX_RECENT_FILES} then the oldest file name
+	 * gets dropped from the list.
+	 * @param _filename - path of a file most recently used
+	 * @param saveINI - if true then we will immediately save the list to the ini
+	 * file and have all button visibility checked immediately.
+	 */
 	public void addRecentFile(String _filename, boolean saveINI)
 	{
 		if(recentFiles.contains(_filename))
 		{
 			recentFiles.remove(_filename);
 		}
-		recentFiles.insertElementAt(_filename,0);
+		recentFiles.insertElementAt(_filename, 0);
 		while (recentFiles.size() > MAX_RECENT_FILES)
 		{
 			recentFiles.removeElementAt(recentFiles.size()-1);
 		}
-		NSDControl.doButtons();
-		if(saveINI==true) {NSDControl.savePreferences();}
+		// START KGU#602 2018-10-28 - saveINI = false is typically called on startup, so postpone the button stuff too 
+		//NSDControl.doButtons();
+		//if (saveINI==true) {NSDControl.savePreferences();}
+		if (saveINI) {
+			NSDControl.doButtons();
+			NSDControl.savePreferences();
+		}
+		// END KGU#602 2018-10-28
 	}
 
     /*****************************************
@@ -8219,9 +8240,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#324 2017-05-30
 
-
+	// START KGU#324 2017-06-16: Enh. #415 Extracted from Mainform
+	/**
+	 * Caches several settings held in fields to the given {@link Ini} instance
+	 * @param ini - the {@link Ini} instance (a singleton)
+	 * @see #fetchIniProperties(Ini)
+	 */
 	public void cacheIniProperties(Ini ini) {
-		if(this.currentDirectory!=null)
+		if (this.currentDirectory != null)
 		{
 			ini.setProperty("currentDirectory", this.currentDirectory.getAbsolutePath());
 			// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
@@ -8231,7 +8257,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#354 2017-04-26
 		}
 		// START KGU#305 2016-12-15: Enh. #305
-		ini.setProperty("index", (this.showArrangerIndex() ? "1" : "0"));
+		ini.setProperty("index", (this.showingArrangerIndex() ? "1" : "0"));
 		// END KGU#305 2016-12-15
 		if (this.recentFiles.size()!=0)
 		{
@@ -8241,11 +8267,62 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				ini.setProperty("recent"+String.valueOf(i),(String)this.recentFiles.get(i));
 			} 
 		}
+	    // START KGU#602 2018-10-28: Enh. #419
+	    ini.setProperty("wordWrapLimit", Integer.toString(this.lastWordWrapLimit));
+	    // END KGU#602 2018-10-28
+
 		if (this.findDialog != null) {
 			this.findDialog.cacheToIni(ini);
 		}
 	}
-	
+	// END KGU#324 2017-06-16
+
+	// START KGU#602 2018-10-28: Extracted from Mainform.loadFromIni()
+	/**
+	 * Adopts several settings held in fields from the given {@link Ini} instance
+	 * @param ini - the {@link Ini} instance (a singleton)
+	 * @see #cacheIniProperties(Ini)
+	 */
+	public void fetchIniProperties(Ini ini) {
+		// current directory
+		// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
+		//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
+		this.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
+		// END KGU#95 2015-12-04
+		// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+		this.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
+		this.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
+		this.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+		// END KGU#354 2017-04-26
+		// START KGU#602 2018-10-28: Enh. #419
+		try {
+			this.lastWordWrapLimit = Integer.parseInt(ini.getProperty("wordWrapLimit", "0"));
+		}
+		catch (NumberFormatException ex) {}
+		// END KGU#602 2018-10-28
+
+		// recent files
+		try
+		{	
+			for (int i = MAX_RECENT_FILES-1; i >= 0; i--)
+			{
+				if (ini.keySet().contains("recent"+i))
+				{
+					if (!ini.getProperty("recent"+i, "").trim().isEmpty())
+					{
+						this.addRecentFile(ini.getProperty("recent"+i, ""), false);
+					}
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.WARNING, "Ini", e);
+		}
+		NSDControl.doButtons();
+	}
+	// END KGU#602 2018-10-28
+
 	public void setSimplifiedGUI(boolean _simplified)
 	{
 		if (Element.E_REDUCED_TOOLBARS != _simplified) {

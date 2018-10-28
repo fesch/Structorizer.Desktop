@@ -1046,7 +1046,7 @@ public abstract class Element {
 	 * @return true if the text was effectively modified, false otherwise
 	 * @see Root#breakElementTextLines(int, boolean)
 	 */
-	public boolean breakTextLines(short maxLineLength, boolean rebreak)
+	public boolean breakTextLines(int maxLineLength, boolean rebreak)
 	{
 		boolean modified = false;
 		if (rebreak) {

@@ -116,7 +116,7 @@ Current development version: 3.28-11 (2018-10-28)
 - 11: Bugfix #626: Issues with string literals on COBOL import <Simon Sobisch>
 - 11: Heuristic detection of preprocessed COBOL files on import <Simon Sobisch>
 - 11: Enh. #419: Option for automatic line breaking on code import [S. Sobisch]2
-- 11: Enh. #419: New edit menu item for new line breaking [Simon Sobisch]2
+- 11: Enh. #419: New "Edit" menu item for text line breaking [Simon Sobisch]2
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

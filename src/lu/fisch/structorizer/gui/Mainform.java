@@ -74,6 +74,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.09.10      Issue #508: New option Element.E_PADDING_FIX in load/save INI
  *      Kay Gürtzig     2018.10.06      Issue #552: No need for serial action on closing if Arranger
  *                                      doesn't hold dirty diagrams
+ *      Kay Gürtzig     2018.10.28      Enh. #419: loadFromIni() decomposed (diagram-related parts delegated)
  *
  ******************************************************************************************************
  *
@@ -533,7 +534,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.load();
 			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI
 
-			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+			double scaleFactor = Double.parseDouble(ini.getProperty("scaleFactor","1"));
 			// START KGU#287 2017-01-09 
 			if (scaleFactor <= 0.5) scaleFactor = 1.0;	// Pathologic value...
 			//IconLoader.setScaleFactor(scaleFactor.intValue());
@@ -542,17 +543,17 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#287 2017-01-09
 			
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
-			int defaultWidth = new Double(750 * scaleFactor).intValue();
-			int defaultHeight = new Double (550 * scaleFactor).intValue();
+			int defaultWidth = Double.valueOf(750 * scaleFactor).intValue();
+			int defaultHeight = Double.valueOf(550 * scaleFactor).intValue();
 			// END KGU#287 2016-11-01
 			// position
-			int top = Integer.valueOf(ini.getProperty("Top","0"));
+			int top = Integer.parseInt(ini.getProperty("Top","0"));
 			int left = Integer.parseInt(ini.getProperty("Left","0"));
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 			//int width = Integer.parseInt(ini.getProperty("Width","750"));
 			//int height = Integer.valueOf(ini.getProperty("Height","550"));
 			int width = Integer.parseInt(ini.getProperty("Width", ""+defaultWidth));
-			int height = Integer.valueOf(ini.getProperty("Height",""+defaultHeight));
+			int height = Integer.parseInt(ini.getProperty("Height", ""+defaultHeight));
 			// END KGU#287 2016-11-01
 
 			// reset to defaults if wrong values
@@ -622,16 +623,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#300 2016-12-02
 			if (diagram != null) 
 			{
-				// current directory
-				// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
-				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
-				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
-				// END KGU#95 2015-12-04
-				// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
-				diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
-				diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
-				diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
-				// END KGU#354 2017-04-26
+				// START KGU#602 2018-10-28: Let diagram fetch its properties itself
+				diagram.fetchIniProperties(ini);
+				// END KGU#602 2018-10-28
 				
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -762,28 +756,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
 			
-			// recent files
-			try
-			{	
-				if (diagram != null)
-				{
-					for (int i = 9; i >= 0; i--)
-					{
-						if(ini.keySet().contains("recent"+i))
-						{
-							if(!ini.getProperty("recent"+i, "").trim().equals(""))
-							{
-								diagram.addRecentFile(ini.getProperty("recent"+i, ""), false);
-							}
-						}
-					}
-				}
-			}
-			catch(Exception e)
-			{
-				logger.log(Level.WARNING, "Ini", e);
-			}
-			
+			// KGU#602 2018-10-28: Fetching of recent file paths outsourced to Diagram.fetchIniProperties()
+						
 			// Analyser (see also Root.saveToIni())
 			// START KGU#239 2016-08-12: Code redesign
 			for (int i = 1; i <= Root.numberOfChecks(); i++)
@@ -807,6 +781,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			validate();
 		}
 	}
+
 
 	public void saveToINI()
 	{
@@ -886,7 +861,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 		    ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
 			// END KGU#331 2017-01-15
-
+		    
 			// look and feel
 			if (laf != null)
 			{

@@ -40,7 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls 
  *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
  *      Kay Gürtzig     2018.07.13  Issue #557: New limitation option for the number of imported roots to be displayed
- *      Kay Gürtzig     2018.10.26  Enh. #416: New line length limitation option
+ *      Kay Gürtzig     2018.10.26  Enh. #419: New line length limitation option
  *
  ******************************************************************************************************
  *
@@ -458,7 +458,7 @@ public class ImportOptionDialog extends LangDialog {
 		btnPluginOptions.addKeyListener(keyListener);
 		cbOptionPlugins.addKeyListener(keyListener);
 	    // END KGU#416 2017-06-20
-		// START KGU#602 2018-10-26: Issue #416
+		// START KGU#602 2018-10-26: Issue #419
 		((JSpinner.DefaultEditor)spnLimit.getEditor()).getTextField().addKeyListener(keyListener);
 		((JSpinner.DefaultEditor)spnMaxLen.getEditor()).getTextField().addKeyListener(keyListener);
 		// END KGU#602 2018-10-26
@@ -708,7 +708,7 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JLabel lblLimit;
     public javax.swing.JSpinner spnLimit;
     // END KGU#553 2018-07-12
-    // START KGU#602 2018-10-25: Enh. #416
+    // START KGU#602 2018-10-25: Enh. #419
     public javax.swing.JLabel lblMaxLen;
     public javax.swing.JSpinner spnMaxLen;    
     // END KGU#602 2018-10-25
