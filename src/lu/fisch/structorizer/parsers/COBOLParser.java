@@ -90,6 +90,7 @@ package lu.fisch.structorizer.parsers;
  *      Simon Sobisch   2018.10.24      Fix #626 Issues with parsing of string literals.
  *                                      Skip lines that look like preprocessor directives (starting with #).
  *      Simon Sobisch   2018.10.25      Auto-switch to free-format before preparsing if source looks preprocessed by cobc.
+ *      Kay Gürtzig     2018.10.29      Issue #630 (exit attempt on REPLACE/COPY), bugfix #635: commas in expression lists 
  *
  ******************************************************************************************************
  *
@@ -160,6 +161,7 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
+import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -4595,8 +4597,13 @@ public class COBOLParser extends CodeParser
 	// 32 or 64 bit, used for different size calculations and possibly in preparser
 	private boolean is32bit;
 
-	// FIXME If the refrenced fields are options then this wil have to be recalculated
+	// FIXME If the referenced fields are options then this will have to be recalculated
 	private int settingCodeLength = settingColumnText - settingColumnIndicator - 1;
+	
+	// START KGU#605 2018-10-29: Issue #630 - first approach to warn on preprocessor directives
+	/** Indicates the number of REPLACE or a COPY directives found in the code on preprocessing */
+	private int countREPLACEorCOPY = 0;
+	// END KGU#605 2018-10-29
 
 	/** Holds the base name for includable diagrams derived from the file name where all non-id characters are replaced with underscores */
 	private String sourceName;
@@ -4623,7 +4630,7 @@ public class COBOLParser extends CodeParser
 	 * @return The File object associated with the preprocessed source file.
 	 */
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled, FilePreparationException
 	{
 		/* TODO for preparsing:
 		 * minimal handling compiler directives, at least SOURCE FORMAT [IS] FREE|FIXED
@@ -4708,6 +4715,11 @@ public class COBOLParser extends CodeParser
 		{
 			getLogger().log(Level.SEVERE, " -> ", e);
 		}
+		// START KGU#605 2018-10-29: Issue #630 - this is a temporary ugly mechanism also lacking translation support...
+		if (this.countREPLACEorCOPY > 0)  {
+			throw new FilePreparationException("Found " + this.countREPLACEorCOPY + " REPLACE or COPY directive(s) the parser can't handle.\nPlease preprocess the file with a COBOL preparser or manually adjust before restarting the import.");
+		}
+		// END KGU#605 2018-10-29
 		return interm;
 	}
 
@@ -4907,12 +4919,20 @@ public class COBOLParser extends CodeParser
 			// we may revert this part later if we have not processed a COBOL statement
 			// and convert it to a NSD CALL instruction of an IMPORT diagram
 			// which could be created by a seperate run on the original copybook.
+			// START KGU#605 2018-10-29: Issue #630
+			else {
+				this.countREPLACEorCOPY++;
+			}
+			// END KGU#605 2018-10-29
 		} else if (firstToken.equals("REPLACE")) {
 			// TODO store the replacements and do them
 			// removed because must be set as comment until next period (multiple lines):
 			// resultLine = "*> REPLACE: " + codeLine;
 			// TODO log error - no support for REPLACE statement and present it to the user
 			// as a warning after the parsing is finished
+			// START KGU#605 2018-10-29: Issue #630
+			this.countREPLACEorCOPY++;
+			// END KGU#605 2018-10-29
 		}
 
 		return resultLine;
@@ -7894,7 +7914,14 @@ public class COBOLParser extends CodeParser
 			}
 			int exprRuleId = exprRed.getParent().getTableIndex();
 			if (exprRuleId != _exclRuleId) {
-				exprs.add(this.getContent_R(exprRed, ""));
+				// START KGU#606 2018-10-29: Bugfix #635
+				//exprs.add(this.getContent_R(exprRed, ""));
+				String expr = this.getContent_R(exprRed, "").trim();
+				if (_exclRuleId != RuleConstants.PROD_TARGET_X_COMMA_DELIM && _exclRuleId != RuleConstants.PROD_X_COMMA_DELIM
+						|| !expr.matches("[,;]+")) {
+					exprs.add(expr);
+				}
+				// END KGU#606 2018-10-29
 			}
 		} while (_exprlRed != null);
 		return exprs.reverse();

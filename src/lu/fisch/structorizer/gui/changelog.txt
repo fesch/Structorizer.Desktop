@@ -117,7 +117,9 @@ Current development version: 3.28-11 (2018-10-29)
 - 11: Heuristic detection of preprocessed COBOL files on import <Simon Sobisch>
 - 11: Enh. #419: Option for automatic line breaking on code import [S. Sobisch]2
 - 11: Enh. #419: New "Edit" menu item for text line breaking [Simon Sobisch]2
-- 11: Enh. #627: Clipboard copy of import errors with stack trace [S. Sobisch]2 
+- 11: Enh. #627: Clipboard copy of import errors with stack trace [S. Sobisch]2
+- 11: Issue #630: COBOL import now aborts on REPLACE/COPY with hint [S. Sobisch]2
+- 11: Bugfix #635: COBOL import interpreted comma as variables on ADD etc. <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

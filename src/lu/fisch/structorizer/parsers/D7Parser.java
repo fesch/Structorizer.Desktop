@@ -93,6 +93,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -898,7 +899,7 @@ public class D7Parser extends CodeParser
 
 	// START KGU#354 2017-03-03: Enh. #354 - generalized import mechanism
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled, FilePreparationException
 	{
 		File interm = null;
 		try

@@ -46,6 +46,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.06.29      Enh. #553: Listener management added
  *      Kay Gürtzig     2018.10.25      Enh. #419: Support for automatic breaking of long lines (postprocess)
  *      Kay Gürtzig     2018.10.29      Enh. #627: New field exception in order to provide stacktrace info if available
+ *                                      Issue #630: New member class FilePreparationException
  *
  ******************************************************************************************************
  *
@@ -88,6 +89,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.StringList;
 
 
@@ -329,6 +331,19 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	private Set<Integer> statementRuleIds = new HashSet<Integer>();
 	// END KGU#407 2017-06-22
 
+	// START KGU#605 2018-10-29: Issue #630
+	/**
+	 * Internal exception to force termination in case of a cancelled thread
+	 */
+	@SuppressWarnings("serial")
+	public class FilePreparationException extends Exception
+	{
+		public FilePreparationException(String message)
+		{
+			super(message);
+		}
+	}
+	// END KGU#605 2018-10-29
 	// START KGU#537 2018-06-29: Enh. #553
 	/**
 	 * Internal exception to force termination in case of a cancelled thread
@@ -540,7 +555,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				if (errText == null) {
 					errText = ex.toString();
 				}
-				error = ":\n" + errText + (error.isEmpty() ? "" : (":\n" + error));
+				// START KGU#605 2018 -10-29: Issue #630 colon doubled
+				//error = ":\n" + errText + (error.isEmpty() ? "" : (":\n" + error));
+				error = "\n" + errText + (error.isEmpty() ? "" : (":\n" + error));
+				// END KGU#605 2018-10-29
 				// START KGU#604 2018-10-29: Enh. #627
 				exception = ex;
 				// ND KGU#604 2018-10-29
@@ -1134,17 +1152,18 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * @param _encoding - the expected encoding of the source file.
 	 * @return A temporary {@link java.io.File} object for the created intermediate file, null
 	 * if something went wrong.
-	 * @throws ParserCancelled TODO
+	 * @throws ParserCancelled if the user cancelled the import at any occasion
+	 * @throws FilePreparationException on severe plugin-specific file preparation trouble
 	 * @see #replacedIds
 	 */
-	protected abstract File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled;
+	protected abstract File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled, FilePreparationException;
 
 	/**
 	 * Called after the build for every created Root and allows thus to do some
 	 * postprocessing for individual created Roots.
 	 * @param root - one of the build diagrams
 	 * @param sourceFileName - the name of the originating source file
-	 * @throws ParserCancelled TODO
+	 * @throws ParserCancelled when cancelled by the user
 	 */
 	protected abstract void subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled;
 
@@ -1152,7 +1171,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * Allows subclasses to do some finishing work after all general stuff after parsing and
 	 * NSD synthesis is practically done.
 	 * @param textToParse - path of the parsed source file
-	 * @throws ParserCancelled TODO
+	 * @throws ParserCancelled when cancelled by the user
 	 */
 	protected void subclassPostProcess(String textToParse) throws ParserCancelled
 	{

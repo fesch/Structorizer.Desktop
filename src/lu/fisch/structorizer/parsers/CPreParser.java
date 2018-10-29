@@ -71,6 +71,7 @@ import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.StringList;
 
 /**
@@ -199,7 +200,7 @@ public abstract class CPreParser extends CodeParser
 	 * @return The File object associated with the preprocessed source file.
 	 */
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled, FilePreparationException
 	{	
 		this.ParserPath = null; // set after file object creation
 		this.ParserEncoding	= _encoding;
