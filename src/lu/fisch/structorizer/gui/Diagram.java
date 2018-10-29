@@ -162,6 +162,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
  *      Kay Gürtzig     2018.10.01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
  *      Kay Gürtzig     2018.10.26/28   Enh. #419: New import option impMaxLineLength, new method rebreakLines()
+ *      Kay Gürtzig     2018.10.29      Enh. #627: Clipboard copy of a code import error will now contain stack trace if available
  *
  ******************************************************************************************************
  *
@@ -5506,7 +5507,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							options, 0);
 					if (chosen == 1) {
 						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-						StringSelection toClip = new StringSelection(parser.error);
+						// START KGU#604 2018-10-29: Enh. #627 - Append a stacktrace if available 
+						//StringSelection toClip = new StringSelection(parser.error);
+						String errorString = parser.error;
+						if (parser.exception != null) {
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							parser.exception.printStackTrace(new PrintStream(baos));
+							errorString += "\n\nSTACK TRACE\n(A more detailed trace will be in the structorizer log file):\n\n" + baos.toString();
+						}
+						StringSelection toClip = new StringSelection(errorString);
+						// END KGU#604 2018-10-29
 						clipboard.setContents(toClip, null);									
 					}
 					// END KGU#364 2017-12-12

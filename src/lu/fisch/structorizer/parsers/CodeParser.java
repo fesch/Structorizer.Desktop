@@ -45,6 +45,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved.
  *      Kay Gürtzig     2018.06.29      Enh. #553: Listener management added
  *      Kay Gürtzig     2018.10.25      Enh. #419: Support for automatic breaking of long lines (postprocess)
+ *      Kay Gürtzig     2018.10.29      Enh. #627: New field exception in order to provide stacktrace info if available
  *
  ******************************************************************************************************
  *
@@ -123,8 +124,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	/**
 	 * String field holding the message of error occurred during parsing or build phase
 	 * for later evaluation (empty if there was no error)
+	 * @see #exception
 	 */
 	public String error;
+	// START KGU#604 2018-10-29: Enh. #627
+	/**
+	 * An exception object having caused the failing of the parsing process and may be
+	 * extracted to the clipboard for certain errors. 
+	 * @see #error
+	 */
+	public Exception exception;
+	// END KGU#604 2018-10-29
 	/**
 	 * Maximum width for displaying parsing errors in a dialog (used for
 	 * line wrapping)
@@ -493,6 +503,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			// create new root
 			root = new Root();
 			error = "";
+			// START KGU#604 2018-10-29: Enh. #627
+			exception = null;
+			// END KGU#604 2018-10-29
 
 			// START KGU#537 2018-06-30: Enh. #553
 			this.checkCancelled();
@@ -528,6 +541,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 					errText = ex.toString();
 				}
 				error = ":\n" + errText + (error.isEmpty() ? "" : (":\n" + error));
+				// START KGU#604 2018-10-29: Enh. #627
+				exception = ex;
+				// ND KGU#604 2018-10-29
 			}
 
 			// START KGU#537 2018-06-30: Enh. #553
@@ -635,6 +651,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				//e.printStackTrace();
 				getLogger().log(Level.WARNING, error, e);
 				// END KGU#484 2018-04-05
+				// START KGU#604 2018-10-29: Enh. #627
+				exception = e;
+				// END KGU#604 201-10-29
 			}
 			catch (IOException e1) {
 				error = "**IO ERROR** on importing file \"" + _textToParse + "\":\n" + e1.getMessage();
@@ -642,6 +661,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				//e1.printStackTrace();
 				getLogger().log(Level.WARNING, error, e1);
 				// END KGU#484 2018-04-05
+				// START KGU#604 2018-10-29: Enh. #627
+				exception = e1;
+				// END KGU#604 2018-10-29
 			}
 			catch (Exception e2) {
 				error = "**Severe error on importing file \"" + _textToParse + "\":\n" + e2.toString();
@@ -649,6 +671,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				//e2.printStackTrace();
 				getLogger().log(Level.WARNING, error, e2);
 				// END KGU#484 2018-04-05
+				// START KGU#604 2018-10-29: Enh. #627
+				exception = e2;
+				// END KGU#604 2018-10-29
 			}
 
 			// START KGU#191 2016-04-30: Issue #182 - In error case append the context
@@ -788,6 +813,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 					error = ex.toString();
 				}
 				error = "Problems in postprocess:\n" + error;
+				// START KGU#604 2018-10-29: Enh. #627
+				exception = ex;
+				// END KGU#604 2018-10-29
 			}
 
 			log("\nBUILD PHASE COMPLETE.\n", true);

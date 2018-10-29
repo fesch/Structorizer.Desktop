@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-11 (2018-10-28)
+Current development version: 3.28-11 (2018-10-29)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -117,6 +117,7 @@ Current development version: 3.28-11 (2018-10-28)
 - 11: Heuristic detection of preprocessed COBOL files on import <Simon Sobisch>
 - 11: Enh. #419: Option for automatic line breaking on code import [S. Sobisch]2
 - 11: Enh. #419: New "Edit" menu item for text line breaking [Simon Sobisch]2
+- 11: Enh. #627: Clipboard copy of import errors with stack trace [S. Sobisch]2 
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
