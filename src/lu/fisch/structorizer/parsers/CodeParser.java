@@ -89,7 +89,6 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.StringList;
 
 
@@ -333,7 +332,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU#605 2018-10-29: Issue #630
 	/**
-	 * Internal exception to force termination in case of a cancelled thread
+	 * Internal exception to allow the parser to abort in preparation phase
 	 */
 	@SuppressWarnings("serial")
 	public class FilePreparationException extends Exception

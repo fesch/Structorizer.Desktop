@@ -4600,10 +4600,11 @@ public class COBOLParser extends CodeParser
 	// FIXME If the referenced fields are options then this will have to be recalculated
 	private int settingCodeLength = settingColumnText - settingColumnIndicator - 1;
 	
-	// START KGU#605 2018-10-29: Issue #630 - first approach to warn on preprocessor directives
+	// START KGU#605 2018-10-30: Issue #630 - first approach to warn on preprocessor directives
 	/** Indicates the number of REPLACE or a COPY directives found in the code on preprocessing */
-	private int countREPLACEorCOPY = 0;
-	// END KGU#605 2018-10-29
+	private int lineNo = 0;
+	private StringList codeLinesREPLACEorCOPY = null;
+	// END KGU#605 2018-10-30
 
 	/** Holds the base name for includable diagrams derived from the file name where all non-id characters are replaced with underscores */
 	private String sourceName;
@@ -4696,8 +4697,14 @@ public class COBOLParser extends CodeParser
 			//Read File Line By Line
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the [COPY] REPLACE replacements (at least roughly...)
+			// START KGU#605 2018-10-30: Issue #630
+			this.codeLinesREPLACEorCOPY = new StringList();
+			// END KGU#605 2018-10-30
 			while ((strLine = br.readLine()) != null)
 			{
+				// START KGU#605 2018-10-30: Issue #630
+				this.lineNo++;
+				// END KGU#605 2018-10-30
 				prepareTextLine(repAuto, strLine, srcCode, lastPosAndLength);
 			}
 			//Close the input stream
@@ -4715,11 +4722,14 @@ public class COBOLParser extends CodeParser
 		{
 			getLogger().log(Level.SEVERE, " -> ", e);
 		}
-		// START KGU#605 2018-10-29: Issue #630 - this is a temporary ugly mechanism also lacking translation support...
-		if (this.countREPLACEorCOPY > 0)  {
-			throw new FilePreparationException("Found " + this.countREPLACEorCOPY + " REPLACE or COPY directive(s) the parser can't handle.\nPlease preprocess the file with a COBOL preparser or manually adjust before restarting the import.");
+		// START KGU#605 2018-10-30: Issue #630 - this is a temporary ugly mechanism also lacking translation support...
+		if (this.codeLinesREPLACEorCOPY != null && this.codeLinesREPLACEorCOPY.count() > 0)  {
+			throw new FilePreparationException("Found " + this.codeLinesREPLACEorCOPY.count()
+					+ " REPLACE or COPY directive(s) the parser can't handle:\n"
+					+ this.codeLinesREPLACEorCOPY.concatenate("\n----------\n")
+					+ "\n\nPlease preprocess the file with a COBOL preparser or manually adjust before restarting the import.");
 		}
-		// END KGU#605 2018-10-29
+		// END KGU#605 2018-10-30
 		return interm;
 	}
 
@@ -4919,20 +4929,20 @@ public class COBOLParser extends CodeParser
 			// we may revert this part later if we have not processed a COBOL statement
 			// and convert it to a NSD CALL instruction of an IMPORT diagram
 			// which could be created by a seperate run on the original copybook.
-			// START KGU#605 2018-10-29: Issue #630
+			// START KGU#605 2018-10-30: Issue #630
 			else {
-				this.countREPLACEorCOPY++;
+				this.codeLinesREPLACEorCOPY.add(String.format("%5d: %s", this.lineNo, codeLine));
 			}
-			// END KGU#605 2018-10-29
+			// END KGU#605 2018-10-30
 		} else if (firstToken.equals("REPLACE")) {
 			// TODO store the replacements and do them
 			// removed because must be set as comment until next period (multiple lines):
 			// resultLine = "*> REPLACE: " + codeLine;
 			// TODO log error - no support for REPLACE statement and present it to the user
 			// as a warning after the parsing is finished
-			// START KGU#605 2018-10-29: Issue #630
-			this.countREPLACEorCOPY++;
-			// END KGU#605 2018-10-29
+			// START KGU#605 2018-10-30: Issue #630
+			this.codeLinesREPLACEorCOPY.add(String.format("%5d: %s", this.lineNo, codeLine));
+			// END KGU#605 2018-10-30
 		}
 
 		return resultLine;
