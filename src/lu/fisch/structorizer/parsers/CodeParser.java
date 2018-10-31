@@ -95,10 +95,10 @@ import lu.fisch.utils.StringList;
 /**
  * Abstract base class for all code importing classes using the GOLDParser to
  * parse the source code based on a compiled grammar.
- * A compiled grammar file (version 1.0, with extension cgt) given, the respectie
- * subclass can be generated with the GOLDprog.exe tool using ParserTemplate.pgt
+ * A compiled grammar file (version 1.0, with extension cgt) given, the respective
+ * subclass can be generated with the GOLDprog.exe tool using StructorizerParserTemplate.pgt
  * as template file, e.g.:
- * {@code GOLDprog.exe Ada.cgt ParserTemplate.pgt AdaParser.java}
+ * {@code GOLDprog.exe Ada.cgt StructorizerParserTemplate.pgt AdaParser.java}
  * The generated subclass woud be able to parse code but must manually be accomplished
  * in order to build a structogram from the obtained parse tree. Override the methods
  * {@link #buildNSD_R(Reduction, Subqueue)} and {@link #getContent_R(Reduction, String)}

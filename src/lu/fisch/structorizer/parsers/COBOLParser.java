@@ -161,7 +161,7 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
-import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
+//import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -7900,6 +7900,10 @@ public class COBOLParser extends CodeParser
 		return args.reverse();
 	}
 
+	// START KGU#606 2018-10-30: Bugfix #635
+	private final Matcher COMMA_SEMI_MATCHER = Pattern.compile("[,;]+").matcher("");
+	// END KGU#606 2018-10-30
+
 	/**
 	 * Traverses the recursive rule to obtain a left-to-right list of expressions (e.g.
 	 * as argument list for a function call)
@@ -7928,7 +7932,7 @@ public class COBOLParser extends CodeParser
 				//exprs.add(this.getContent_R(exprRed, ""));
 				String expr = this.getContent_R(exprRed, "").trim();
 				if (_exclRuleId != RuleConstants.PROD_TARGET_X_COMMA_DELIM && _exclRuleId != RuleConstants.PROD_X_COMMA_DELIM
-						|| !expr.matches("[,;]+")) {
+						|| !COMMA_SEMI_MATCHER.reset(expr).matches()) {
 					exprs.add(expr);
 				}
 				// END KGU#606 2018-10-29

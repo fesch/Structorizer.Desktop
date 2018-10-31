@@ -78,6 +78,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.09.26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
  *      Kay Gürtzig     2018.02.22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables
  *      Kay Gürtzig     2018.03.13      Modifications for bugfix #521, transformOutput() revised
+ *      Kay Gürtzig     2018.10.30      New field generatorIncludes and method insertGeneratorIncludes() to
+ *                                      avoid duplicate include/import/using entries system <-> user 
  *
  ******************************************************************************************************
  *
@@ -285,6 +287,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return this.includeInitialisation;
 	}
 	// END KGU#501 2018-02-22
+	// START KGU#607 2018-10-30: Enh. 346
+	/** A list of generator-induced includes to be intersected or united with the configured user includes */
+	protected StringList generatorIncludes = new StringList();
+	// END KGU#607 2018-10-30
 	
 	/************ Abstract Methods *************/
 	// START KGU#484 2018-03-22: Issue #463
@@ -791,44 +797,107 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	// END KGU 2015-10-18
-	
+
+	// START KGU#607 2018-10-30: (Issue #346)
+	/**
+	 * This is a service method inheriting generators may call at the appropriate
+	 * position in order to insert include (or import or uses etc.) directives
+	 * the generator regards as necessary and had enqueued in {@link #generatorIncludes}.<br/>
+	 * User-configured include items may be skipped here if {@code skipUserIncludes}
+	 * if these happen to have already been inserted in the code. Otherwise the
+	 * argument should be set false lest they should be skipped by both this method
+	 * and {@link #insertUserIncludes(String)}.<br/>
+	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
+	 * (empty at {@link CodeGnerator} level) for every item configured before the
+	 * insertion takes place - if some pre-processing of the items is necessary
+	 * then the generator subclass may override this method.<br/>
+	 * @param _indent - current indentation string
+	 * @param skipUserIncludes - if user includes have alrady been added to the code
+	 * and are not to be repeated inadvertently here.
+	 * @return number of inserted lines
+	 * @see #getIncludePattern()
+	 * @see #prepareIncludeItem(String)
+	 * @see #optionIncludeFiles()
+	 * @see #insertUserIncludes(String, boolean)
+	 * @see #generatorIncludes
+	 */
+	protected int insertGeneratorIncludes(String _indent, boolean skipUserIncludes)
+	{
+		int nInserted = 0;
+		String pattern = this.getIncludePattern();
+		HashSet<String> userIncludes = new HashSet<String>();
+		if (skipUserIncludes) {
+			for (String item: this.optionIncludeFiles().split(",")) {
+				userIncludes.add(item.trim());
+			}
+		}
+		for (int i = 0; i < this.generatorIncludes.count(); i++) {
+			String incl = this.generatorIncludes.get(i);
+			if (!userIncludes.contains(incl)) {
+				code.add(_indent + pattern.replace("%", prepareIncludeItem(incl)));
+				nInserted++;
+			}
+		}
+		return nInserted;
+	}
+	// END KGU#607 2018-10-30
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
 	 * This is a service method inheriting generators may call at the appropriate
 	 * position in order to insert include (or import or uses etc.) directives
 	 * for the include items configured in the export options for the respective
 	 * language.<br/>
-	 * The method calls a subclassable empty method {@link #prepareIncludeItem(String)}
-	 * for every item configured before the insertion takes place - if some
-	 * pre-processing of the items is necessary then the generator subclass may
-	 * override this method.<br/>
+	 * Include items that have already been enqueued for code insertion by the
+	 * generator itself in {@link #generatorIncludes} will be spared here.<br/>
+	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
+	 * (empty at {@link CodeGnerator} level) for every item configured before the
+	 * insertion takes place - if some pre-processing of the items is necessary
+	 * then the generator subclass may override this method.<br/>
 	 * The configured list of include items may also be retrieved directly via
 	 * method {@link #optionIncludeFiles()} and then be processed individually.
+	 * @param _indent - indentation for the directives
+	 * @return number of inserted lines
 	 * @see #getIncludePattern()
 	 * @see #prepareIncludeItem(String)
 	 * @see #optionIncludeFiles()
-	 * @param _indent - indentation for the directives
+	 * @see #insertGeneratorIncludes(String, boolean)
+	 * @see #generatorIncludes
 	 */
-	protected void insertUserIncludes(String _indent)
+	protected int insertUserIncludes(String _indent)
 	{
+		int nInserted = 0;
 		String pattern = this.getIncludePattern();
 		String includes = this.optionIncludeFiles().trim();
 		if (pattern != null && includes != null && !includes.isEmpty()) {
+			// START KGU#607 2018-10-30: Issue #346 - Avoid duplicate includes
+			StringList items = new StringList(includes.split(","));
+			for (int i = items.count()-1; i >= 0; i--) {
+				String item = items.get(i).trim();
+				if (this.generatorIncludes.contains(item)) {
+					items.remove(i);
+				}
+			}
+			// END KGU#607 2018-10-30
 			// Collective (enumerative) include phrase available?
 			if (pattern.contains("%%")) {
-				code.add(_indent + pattern.replace("%%", includes));
+				// START KGU#607 2018-10-30: Issue #346
+				//code.add(_indent + pattern.replace("%%", includes));
+				code.add(_indent + pattern.replace("%%", items.concatenate(",")));
+				nInserted++;
+				// END KGU#607 2018-10-30
 			}
 			// .. otherwise produce a single line for every item
 			else if (pattern.contains("%")) {
-				String[] items = includes.split(",");
-				for (int i = 0; i < items.length; i++) {
-					String item = items[i].trim();
+				for (int i = 0; i < items.count(); i++) {
+					String item = items.get(i).trim();
 					if (!item.isEmpty()) {
-						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));						
+						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));
+						nInserted++;
 					}
 				}
 			}
 		}
+		return nInserted;
 	}
 	/**
 	 * Method may pre-process an include file or module name for the import / use
