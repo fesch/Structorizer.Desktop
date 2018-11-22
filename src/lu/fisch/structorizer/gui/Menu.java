@@ -703,7 +703,8 @@ public class Menu extends LangMenuBar implements NSDController
 		//  END KGU#373 2017-03-28
 
 		menuFile.add(menuFileOpen);
-		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFileOpen.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(); doButtons(); } } );
 
 		menuFile.add(menuFileOpenRecent);
