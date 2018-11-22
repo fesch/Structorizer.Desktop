@@ -4695,8 +4695,9 @@ public class COBOLParser extends CodeParser
 			}
 
 			//Read File Line By Line
-			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-			// do the [COPY] REPLACE replacements (at least roughly...)
+			/* FIXME Preprocessor directives are not tolerated by the grammar, so drop them
+			 * or try to do the [COPY] REPLACE replacements (at least roughly..., issue #636)
+			 */
 			// START KGU#605 2018-10-30: Issue #630
 			this.codeLinesREPLACEorCOPY = new StringList();
 			// END KGU#605 2018-10-30
@@ -4743,7 +4744,7 @@ public class COBOLParser extends CodeParser
 	 * @param repAuto - the current {@link RepositoryAutomaton}
 	 * @param strLine - the line just read
 	 * @param srcCode - the prepared code being constructed
-	 * @param srcCodeLastPosAndLength - pair of last position in source line and last code length
+	 * @param posAndLength - pair of last position in source line and last code length
 	 * @see #prepareTextfile(String, String)
 	 */
 	private void prepareTextLine(RepositoryAutomaton repAuto, String strLine, StringBuilder srcCode,

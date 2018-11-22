@@ -43,6 +43,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.22      Enh. #490: The dialog now works on the controller alias texts if enabled
  *      Kay Gürtzig     2018.04.05      Issue #463: Plain console messages replaced by logging mechanism
  *      Kay Gürtzig     2018.07.02      Bugfix KGU#540 - An element filter change didn't reset the result
+ *      Kay Gürtzig     2018.11.21      Bugfix #448: Apparently forgotten part of the fix accomplished
+ *      Kay Gürtzig     2018.11.22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
  *
  ******************************************************************************************************
  *
@@ -1056,7 +1058,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	/**
 	 * Fills the document {@code doc} associated to {@link JTextPane} {@code txtPane} with the match preview
 	 * for the original {@link StringList} {@code txtLines}. 
-	 * @param txtParts - source text split to matchs and sourrounding parts
+	 * @param txtParts - source text split to matches and surrounding parts
 	 * @param doc - the target {@link StyledDocument} 
 	 * @param txtPane - the presenting {@link JTextPane}, to be enabled or disabled (according to {@code enable}) 
 	 * @param posOffset - the index of the current match
@@ -1423,7 +1425,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					}
 					// END KGU#431 2017-10-09
 					currentElement.resetDrawingInfoUp();
-					this.fillPreview(text, docText, txtText, 0, true);
+					// START KGU#609 2018-11-21: Bugfix #448 accomplished
+					//this.fillPreview(text, docText, txtText, 0, true);
+					this.fillPreview(partsText, docText, txtText, 0, true);
+					// END KGU#609 2018-11-21
 					done = true;
 				}
 				// Now cater for the comment if included
@@ -1435,7 +1440,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					// END KGU#454 2017-11-03 
 					currentElement.setComment(comment);
 					currentElement.resetDrawingInfoUp();
-					this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
+					// START KGU#609 2018-11-21: Bugfix #448 accomplished
+					//this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
+					this.fillPreview(partsComment, docComm, txtComm, nMatchesText, true);
+					// END KGU#609 2018-11-21
 					done = true;
 				}
 				if (currentNode != null) {
@@ -1727,7 +1735,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 			splitText.remove(1, splitText.count());
 		}
-		else {
+		// START KGU#610 2018-11-22: Bugfix #637 - for comments without matches, negative pos causes harm here
+		//else {
+		else if (pos >= 0) {
+		// END KGU#610 2018-11-22
 			// In case of an individual replacement first split the text and count the matches
 			// The splitting function will collect the matches and return the parts around the matches
 			pos = pos * 2 + 1;
