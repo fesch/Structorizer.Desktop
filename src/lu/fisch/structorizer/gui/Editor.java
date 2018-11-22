@@ -1401,7 +1401,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#305 2016-12-12: Enh. 305
 		// arranger
 		
-		if (diagram.showArrangerIndex() && !diagrams.isEmpty())
+		if (diagram.showingArrangerIndex() && !diagrams.isEmpty())
 		{
 			if (sp305.getDividerSize()==0)
 			{

@@ -50,6 +50,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.12      Bugfix #308 in haveOuterRectDrawn() - must be drawn in collapsed mode
  *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *
  ******************************************************************************************************
  *
@@ -428,4 +429,20 @@ public class Repeat extends Element implements ILoop {
 	}
 	// END KGU#258 2016-09-26
 
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = super.getMaxLineLength(false);
+		if (_includeSubstructure) {
+			maxLen = Math.max(maxLen, this.q.getMaxLineLength(true));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

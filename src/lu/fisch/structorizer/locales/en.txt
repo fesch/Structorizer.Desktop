@@ -112,6 +112,7 @@
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2018.07.17      Issue #561: Some AttributeInspector texts converted to tooltips
  *      Kay Gürtzig     2018.08.03      Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig     2018.10.27      Enh. #619: New messages for word wrapping tool 
  *
  ******************************************************************************************************
  *
@@ -196,9 +197,11 @@ Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
 Menu.menuEditFindReplace.text=Find/Replace ...
 Menu.menuEditUpgradeTurtle.text=To fine graphics
-Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
+Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones.
 Menu.menuEditDowngradeTurtle.text=To integer graphics
-Menu.menuEditDowngradeTurtle.tooltip=Replaces all precise Turtle commands in the selected elements by the poorer ones. 
+Menu.menuEditDowngradeTurtle.tooltip=Replaces all precise Turtle commands in the selected elements by the poorer ones.
+Menu.menuEditBreakLines.text=(Re-)break text lines ...
+Menu.menuEditBreakLines.tooltip=Allows to word-wrap the text lines of the selected elements (and optionally their substructure) to a new line length limit.  
 Menu.menuEditCopyDiagramPNG.text=Copy PNG image
 Menu.menuEditCopyDiagramEMF.text=Copy EMF image
 // Menu "Diagram"
@@ -405,11 +408,16 @@ Menu.msgGuidedTourNext.text=%1\nTutorial «%2» is going to start now.\nYou may 
 Menu.ttlGuidedTours.text=Guided Tours
 Menu.msgTooManyDiagrams.text=The number of created diagrams exceeds the configured threshold (%) for direct rendering.\nSave all obtained diagrams as files just now?
 Menu.lblAcceptProposedNames.text=Accept proposed names for all files
+Menu.ttlBreakTextLines.text=Limit the line length by word wrapping
+Menu.msgMaxLineLengthSelected.text=Max. line length in selected element(s): %
+Menu.msgMaxLineLengthSubstructure.text=Max. line length, including substructure: %
+Menu.lblNewMaxLineLength.text=New maximum line length:
+Menu.lblInvolveSubtree.text=Apply also to substructure
+Menu.lblPreserveContinuators.text=Preserve existing soft line breaks
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
 
-	
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".
 Menu.warning_2.text=NOTE: «%4» is active. To switch it off: → Menu "%1 ► %2 ► %3".
@@ -969,6 +977,8 @@ ImportOptionDialog.chkLogDir.text=Log to folder
 ImportOptionDialog.chkLogDir.tooltip=Enable saving a log file during import
 ImportOptionDialog.txtLogDir.tooltip=The empty path stands for the home directory of the source code file, "." for the current directory.
 ImportOptionDialog.btnLogDir.tooltip=Select a path via dialog.
+ImportOptionDialog.lblMaxLen.text=Maximum line length (for word wrapping):
+ImportOptionDialog.spnMaxLen.tooltip=Length 0 means no automatic line breaking on import
 ImportOptionDialog.lblLimit.text=Maximum number of imported diagrams for direct display:
 ImportOptionDialog.btnPluginOptions.text=Language-specific Options
 ImportOptionDialog.msgOptionsForPlugin.text=Options for % Parser

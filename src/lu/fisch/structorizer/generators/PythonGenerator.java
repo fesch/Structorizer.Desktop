@@ -1064,6 +1064,9 @@ public class PythonGenerator extends Generator
 				code.add(_indent + "from threading import Thread");
 			}
 			// END KGU#348 2017-02-19
+			// START KGU#607 2018-10-30:Issue #346
+			this.generatorIncludes.add("math");		// Will be inserted later
+			// END KGU#607 2018-10-30
 			// START KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes(indent);
 			// END KGU#351 2017-02-26

@@ -40,6 +40,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2017.03.13      Method getIniDirectory() added to support issue #372
  *      Kay Gürtzig         2017.11.05      Issue #452: Method wasFirstStart() added.
  *      Kay Gürtzig         2018.03.21      Issue #463 Logger introduced, two file reading sequences extracted to method readTextFile()
+ *      Kay Gürtzig         2018.10.28      Flag to detect unsaved changes introduced (+ public method)
  *
  ******************************************************************************************************
  *
@@ -188,6 +189,14 @@ public class Ini
 	private Properties p = new Properties();
 
 	private boolean regularExists = false;
+
+	// START KGU#603 2018-10-28: We should be able to tell whether there are unsaved changes
+	private boolean wasChanged = false;
+	public boolean hasUnsavedChanges()
+	{
+		return wasChanged;
+	}
+	// END KGU#603 2018-10-28
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
@@ -404,6 +413,7 @@ public class Ini
 			p.load(fis);
 			fis.close();
 			// END KGU#210 2016-07-22
+			this.wasChanged = false;
 		}
 	}
 
@@ -464,6 +474,7 @@ public class Ini
 		// END KGU#264 2016-09-28
 		fos.close();
 		// END KGU#210 2016-07-22
+		this.wasChanged = false;
 	}
 
 	private void saveAlternate() throws FileNotFoundException, IOException
@@ -489,6 +500,7 @@ public class Ini
 	public void setProperty(String _name, String _value)
 	{
 		p.setProperty(_name, _value);
+		this.wasChanged = true;
 	}
 	
 	// START KGU#456 2017-11-05: Issue #452

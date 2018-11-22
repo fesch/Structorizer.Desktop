@@ -117,6 +117,7 @@
  *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig         2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
  *      Kay Gürtzig         2018.08.03  Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig         2018.10.27  Enh. #619: New messages for word wrapping tool 
  *
  ******************************************************************************************************
  *
@@ -202,6 +203,8 @@ Menu.menuEditUpgradeTurtle.text=Reelle Turtle-Befehle
 Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
 Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtle-Befehle
 Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
+Menu.menuEditBreakLines.text=Textzeilen neu umbrechen ...
+Menu.menuEditBreakLines.tooltip=Erlaubt einen neuen Umbruch der Textzeilen der ausgewählten Elemente (und wahlweise ihrer Unterstruktur) auf eine vorgebbare Höchstlänge.  
 Menu.menuEditCopyDiagramPNG.text=Als PNG-Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF-Grafik kopieren
 // Menu "Diagram"
@@ -408,6 +411,12 @@ Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten 
 Menu.ttlGuidedTours.text=Geführte Kurse
 Menu.msgTooManyDiagrams.text=Die Zahl der erzeugten Diagramme übersteigt die konfigurierte Grenze (%) für direktes Darstellen.\nAlle erhaltenen Diagramme sofort speichern?
 Menu.lblAcceptProposedNames.text=Alle vorschlagenen Dateinamen akzeptieren. 
+Menu.ttlBreakTextLines.text=Begrenzung der Zeilenlänge mittels Wortumbruch
+Menu.msgMaxLineLengthSelected.text=Maximale Zeilenlänge in ausgewähltem Element: %
+Menu.msgMaxLineLengthSubstructure.text=Maximale Zeilenlänge einschl. Unterstrukturen: %
+Menu.lblNewMaxLineLength.text=Neue Höchstzeilenlänge:
+Menu.lblInvolveSubtree.text=Rekursiv auf Unterstrukturen anwenden
+Menu.lblPreserveContinuators.text=Bestehende Zeilensprünge beibehalten
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
@@ -973,6 +982,8 @@ ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
 ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Protokolldatei je Import erlauben
 ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
 ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
+ImportOptionDialog.lblMaxLen.text=Maximale Zeilenlänge (für automatischen Zeilenumbruch):
+ImportOptionDialog.spnMaxLen.tooltip=Länge 0 bedeutet: kein automatischer Zeilenumbruch
 ImportOptionDialog.lblLimit.text=Größte Anzahl importierter Diagramme für unmittelbare Anzeige:
 ImportOptionDialog.btnPluginOptions.text=Sprachspezifische Optionen
 ImportOptionDialog.msgOptionsForPlugin.text=Parser-Optionen für %

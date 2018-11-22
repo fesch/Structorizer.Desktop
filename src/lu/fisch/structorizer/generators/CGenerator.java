@@ -81,6 +81,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.11.06      Issue #453: Modifications for string type and input and output instructions
  *      Kay Gürtzig             2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
  *      Kay Gürtzig             2018.07.21      Enh. #563, Bugfix #564: Smarter record initializers / array initializer defects
+ *      Kay Gürtzig             2018.10.30      bool type no longer converted to int, instead #include <stdbool.h> generated 
  *
  ******************************************************************************************************
  *
@@ -491,9 +492,13 @@ public class CGenerator extends Generator {
 		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
 		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
 		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boolean") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boole") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + ")($|\\W.*)", "$1int$3");
+		// START KGU#607 2018-10-30: We may insert "#include <stdbool.h>", so bool can be used
+		//_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boolean") + ")($|\\W.*)", "$1int$3");
+		//_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boole") + ")($|\\W.*)", "$1int$3");
+		//_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boolean") + ")($|\\W.*)", "$1bool$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boole") + ")($|\\W.*)", "$1bool$3");
+		// END KGU#607 2018-10-30
 		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
 		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
 		// END KGU 2017-04-12
@@ -1582,14 +1587,18 @@ public class CGenerator extends Generator {
 			if (this.hasInput() || this.hasOutput() || this.usesFileAPI)
 			{
 				code.add("#define _CRT_SECURE_NO_WARNINGS");	// VisualStudio precaution 
-				code.add("#include <stdio.h>");
+				this.generatorIncludes.add("<stdio.h>");
 				if (this.usesFileAPI) {
-					code.add("#include <stdlib.h>");
-					code.add("#include <string.h>");
-					code.add("#include <errno.h>");
+					this.generatorIncludes.add("<stlib.h>");
+					this.generatorIncludes.add("<string.h>");
+					this.generatorIncludes.add("<errno.h>");
 				}
-				code.add("");
 			}
+			// START KGU#607 2018-10-30: Issue 346
+			this.generatorIncludes.add("<stdbool.h>");
+			// END KGU#607 2018-10-30
+			this.insertGeneratorIncludes("", true);
+			code.add("");
 			// START KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
 			this.insertUserIncludes("");
 			// START KGU#446 2017-10-27: Enh. #441

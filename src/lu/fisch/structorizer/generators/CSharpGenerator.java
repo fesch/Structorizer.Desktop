@@ -820,16 +820,18 @@ public class CSharpGenerator extends CGenerator
 		// END KGU#178 2016-07-20
 		
 		if (_root.isProgram()) {
-			code.add(_indent + "using System;");
+			this.generatorIncludes.add("System");
 			// START KGU#348 2017-02-24: Enh. #348
 			if (this.hasParallels) {
-				code.add(_indent + "using System.Threading;");
+				this.generatorIncludes.add("System.Threading");
 			}
 			// END KGU#348 2017-02-24
+			this.insertGeneratorIncludes(_indent, true);
+			code.add(_indent);
 			// STARTB KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes(_indent);
 			// END KGU#351 2017-02-26
-			code.add(_indent + "");
+			code.add(_indent);
 			// START KGU 2015-10-18
 			insertBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
 			// END KGU 2015-10-18

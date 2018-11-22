@@ -479,15 +479,16 @@ public class CPlusPlusGenerator extends CGenerator {
 			if (this.hasInput() || this.hasOutput())
 			// END KGU#236 2016-12-22
 			{
-				code.add("#include <iostream>");
+				this.generatorIncludes.add("<iostream>");
 			}
 	        // END KGU#236 2016-08-10
 			// START KGU#348 2017-02-21: Enh. #348 Parallel support
 			if (this.hasParallels) {
-				code.add("#include <thread>");
+				this.generatorIncludes.add("<thread>");
 			}
+			this.insertGeneratorIncludes("", true);
 			// END KGU#348 2017-02-21
-			// STARTB KGU#351 2017-02-26: Enh. #346
+			// START KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes("");
 			// END KGU#351 2017-02-26
 			// START KGU#376 2017-09-27: Enh. #389 - definitions from all included diagrams will follow

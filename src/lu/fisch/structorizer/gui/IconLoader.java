@@ -69,6 +69,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.06.28      Smaller element symbols for Search + Replace (###_mini_???.png)
  *      Kay Gürtzig     2018.07.17      Issue #561: New icon 055_sigma (sum symbol) added
  *      Kay Gürtzig     2018.09.18      Issue #601: More safety on icon request (dummy icon, log).
+ *      Kay Gürtzig     2018.10.27      Enh. #619: New icon 056_wordwrap for line breaking menu item
  *
  ******************************************************************************************************
  *
@@ -151,7 +152,7 @@ public class IconLoader {
 			"053_elem_for.png",	// new
 			"054_tortoise.png",
 			"055_sigma.png",	//"055_jumpafter.png",	// obsolete (#510)
-			null,	//"056_jumpbefore.png",	// obsolete (#510)
+			"056_wordwrap.png",	//"056_jumpbefore.png",	// obsolete (#510)
 			"057_elem_inst.png",
 			"058_elem_call.png",
 			"059_elem_jump.png",
