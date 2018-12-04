@@ -64,6 +64,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.10.14      Enh. #438: Execution can no longer be resumed with pending variable editing
  *      Kay Gürtzig     2017.10.16      Enh. #439: Opportunity to inspect/edit structured values via tabular editor.
  *      Kay Gürtzig     2017.10.31      Enh. #439: Internal class ValueEditor outsourced as ValuePresenter
+ *      Kay Gürtzig     2018.12.03      Bugfix #641: Display of updated variable values forced
  *
  ******************************************************************************************************
  *
@@ -887,6 +888,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             ValuePresenter.optimizeColumnWidth(tblVar, 0);
         }
         // END KGU#443 2017-10-16
+        // START KGU#608 2018-12-03: Bugfix #641 - Sometimes the table didn't show the updated content 
+        tblVar.repaint();
+        // ENDKGU#608 2018-12-03
     }
 
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display

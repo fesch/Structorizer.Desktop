@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-11 (2018-11-22)
+Current development version: 3.28-12 (2018-12-03)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -122,7 +122,8 @@ Current development version: 3.28-11 (2018-11-22)
 - 11: Bugfix #635: COBOL import interpreted comma as variables on ADD etc. <2>
 - 11: C code export: Boolean types no longer replaced by int but bool <2>
 - 11: Bugfix #448: text/comment view in Find&Replace dialog compromised <2>
-- 11: Bugfix #637: Array index errors on element-wise Replace/Find action <2> 
+- 11: Bugfix #637: Array index errors on element-wise Replace/Find action <2>
+- 12: Bugfix #641: Variable display updates forced on the Executor Control <2> 
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
