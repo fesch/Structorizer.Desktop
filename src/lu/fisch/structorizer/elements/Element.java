@@ -3171,6 +3171,14 @@ public abstract class Element {
 					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
 					specialSigns.add("as");
 					// END KGU#109 2016-01-15
+					// START KGU#611 2018-12-12 - Issue #643 - Since unifyOperators() tolerates case, we should do so here as well
+					specialSigns.add("AND");
+					specialSigns.add("OR");
+					specialSigns.add("XOR");
+					specialSigns.add("NOT");
+					specialSigns.add("SHL");
+					specialSigns.add("SHR");
+					// END KGU#611 2018-12-12
 					
 					// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
 					specialSigns.add("{");
