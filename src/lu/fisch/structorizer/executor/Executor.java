@@ -33,137 +33,138 @@ package lu.fisch.structorizer.executor;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch                       First Issue
- *      Kay Gürtzig     2015.10.11      Method execute() now ensures that all elements get unselected
- *      Kay Gürtzig     2015.10.13      Method step decomposed into separate subroutines, missing
+ *      Kay Gürtzig     2015-10-11      Method execute() now ensures that all elements get unselected
+ *      Kay Gürtzig     2015-10-13      Method step decomposed into separate subroutines, missing
  *                                      support for Forever loops and Parallel sections added;
  *                                      delay mechanism reorganised in order to integrate breakpoint
  *                                      handling in a sound way
- *      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment)
- *      Kay Gürtzig     2015.10.17/18   First preparations for a subroutine retrieval via Arranger
- *      Kay Gürtzig     2015.10.21      Support for multiple constants per CASE branch added
- *      Kay Gürtzig     2015.10.26/27   Language conversion and FOR loop parameter analysis delegated to the elements
- *      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
- *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
- *      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
- *      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
+ *      Kay Gürtzig     2015-10-15      stepParallel() revised (see comment)
+ *      Kay Gürtzig     2015-10-17/18   First preparations for a subroutine retrieval via Arranger
+ *      Kay Gürtzig     2015-10-21      Support for multiple constants per CASE branch added
+ *      Kay Gürtzig     2015-10-26/27   Language conversion and FOR loop parameter analysis delegated to the elements
+ *      Kay Gürtzig     2015-11-04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
+ *      Kay Gürtzig     2015-11-05      Enhancement allowing to adopt edited values from Control (KGU#68)
+ *      Kay Gürtzig     2015-11-08      Array assignments and variable setting deeply revised (KGU#69)
+ *      Kay Gürtzig     2015-11-09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
  *                                      wrong equality operator in stepCase().
- *      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
- *      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
- *      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
- *      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
+ *      Kay Gürtzig     2015-11-11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
+ *      Kay Gürtzig     2015-11-12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
+ *      Kay Gürtzig     2015-11-13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
+ *      Kay Gürtzig     2015-11-20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
  *                                      Message types for output and return value information corrected
- *      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
- *      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
- *      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
- *      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
+ *      Kay Gürtzig     2015-11-23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
+ *      Kay Gürtzig     2015-11-24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
+ *      Kay Gürtzig     2015-11-25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
+ *      Kay Gürtzig     2015-12-10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
  *                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
- *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): List of output expressions
- *      Kay Gürtzig     2015.12.13      Enhancement #51 (KGU#107): Handling of empty input and output
- *      Kay Gürtzig     2015.12.15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
- *      Kay Gürtzig     2016.01.05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
- *      Kay Gürtzig     2016.01.07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
+ *      Kay Gürtzig     2015-12-11      Enhancement #54 (KGU#101): List of output expressions
+ *      Kay Gürtzig     2015-12-13      Enhancement #51 (KGU#107): Handling of empty input and output
+ *      Kay Gürtzig     2015-12-15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
+ *      Kay Gürtzig     2016-01-05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
+ *      Kay Gürtzig     2016-01-07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
  *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
- *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
- *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
- *      Kay Gürtzig     2016.01.14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
- *      Kay Gürtzig     2016.01.15      KGU#109: More precaution against typed variables (issues #61, #107)
- *      Kay Gürtzig     2016.01.16      Bugfix #112: Several flaws in index evaluation mended (KGU#141)
+ *      Kay Gürtzig     2016-01-08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
+ *      Kay Gürtzig     2016-01-09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
+ *      Kay Gürtzig     2016-01-14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
+ *      Kay Gürtzig     2016-01-15      KGU#109: More precaution against typed variables (issues #61, #107)
+ *      Kay Gürtzig     2016-01-16      Bugfix #112: Several flaws in index evaluation mended (KGU#141)
  *      Kay Gürtzig     2016-01-29      Bugfix #115, enh. #84: Result arrays now always presented as list
  *                                      (with "Pause" button if not already in step mode; KGU#133, KGU#147).
- *      Kay Gürtzig     2016.03.13      Enh. #77, #124: runtime data collection implemented (KGU#117, KGU#156)
- *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against reopening, take-over, and loss of control (KGU#157)
- *      Kay Gürtzig     2016.03.17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
- *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
- *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
- *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
- *      Kay Gürtzig     2016.04.03      KGU#150: Support for Pascal functions chr and ord
+ *      Kay Gürtzig     2016-03-13      Enh. #77, #124: runtime data collection implemented (KGU#117, KGU#156)
+ *      Kay Gürtzig     2016-03-16      Bugfix #131: Precautions against reopening, take-over, and loss of control (KGU#157)
+ *      Kay Gürtzig     2016-03-17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
+ *      Kay Gürtzig     2016-03-18      KGU#89: Language localization support slightly improved
+ *      Kay Gürtzig     2016-03-21      Enh. #84 (KGU#61): Support for FOR-IN loops
+ *      Kay Gürtzig     2016-03-29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
+ *      Kay Gürtzig     2016-04-03      KGU#150: Support for Pascal functions chr and ord
  *                                      KGU#165: Case awareness consistency for keywords improved.
  *      Kay Gürtzig     2016-04-12      Enh. #137 (KGU#160): Additional or exclusive output to text window
  *      Kay Gürtzig     2016-04-25      Issue #30 (KGU#76): String comparison substantially improved,
  *                                      Enh. #174 (KGU#184): Input now accepts array initialisation expressions
  *      Kay Gürtzig     2016-04-26      KGU#150: ord implementation revised,
  *                                      Enh. #137 (KGU#160): Arguments and results added to text window output
- *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) texts put under language support
- *      Kay Gürtzig     2016.05.25      KGU#198: top-level function results weren't logged in the window output
- *      Kay Gürtzig     2016.06.07      KGU#200: While loops showed wrong colour if their body raised an error
- *      Kay Gürtzig     2016.07.25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
+ *      Kay Gürtzig     2016-05-05      KGU#197: Further (forgotten) texts put under language support
+ *      Kay Gürtzig     2016-05-25      KGU#198: top-level function results weren't logged in the window output
+ *      Kay Gürtzig     2016-06-07      KGU#200: While loops showed wrong colour if their body raised an error
+ *      Kay Gürtzig     2016-07-25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
  *      Kay Gürtzig     2016-07-27      KGU#197: Further (chiefly error) messages put under language support
  *                                      Enh. #137: Error messages now also written to text window output
  *      Kay Gürtzig     2016-09-17      Bugfix #246 (Boolean expressions) and issue #243 (more translations)
- *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
- *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
- *      Kay Gürtzig     2016.09.25      Bugfix #254: parser keywords for CASE elements had been ignored
+ *      Kay Gürtzig     2016-09-22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
+ *      Kay Gürtzig     2016-09-25      Bugfix #251: Console window wasn't involved in look and feel update
+ *      Kay Gürtzig     2016-09-25      Bugfix #254: parser keywords for CASE elements had been ignored
  *                                      Enh. #253: CodeParser.keywordMap refactoring done
- *      Kay Gürtzig     2016.10.06      Bugfix #261: Stop didn't work immediately within multi-line instructions
- *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
- *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
+ *      Kay Gürtzig     2016-10-06      Bugfix #261: Stop didn't work immediately within multi-line instructions
+ *      Kay Gürtzig     2016-10-07      Some synchronized sections added to reduce inconsistency exception likelihood
+ *      Kay Gürtzig     2016-10-09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
  *                                      Issue #269: Attempts to scroll the diagram to currently executed elements (ineffective)
- *      Kay Gürtzig     2016.10.12      Issue #271: Systematic support for user-defined input prompts
- *      Kay Gürtzig     2016.10.13      Enh. #270: Elements may be disabled for execution ("outcommented")
- *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
+ *      Kay Gürtzig     2016-10-12      Issue #271: Systematic support for user-defined input prompts
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Elements may be disabled for execution ("outcommented")
+ *      Kay Gürtzig     2016-10-16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
  *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
  *                                      of ' into " in method convert() eliminated
- *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved. 
- *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
- *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
- *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
- *      Kay Gürtzig     2016.12.22      Enh. #314: Support for File API
- *      Kay Gürtzig     2016.12.29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
- *      Kay Gürtzig     2017.01.06      Bugfix #324: Trouble with replacing an array by a scalar value on input
+ *      Kay Gürtzig     2016-11-19      Issue #269: Scrolling problem eventually solved. 
+ *      Kay Gürtzig     2016-11-22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
+ *      Kay Gürtzig     2016-11-22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
+ *      Kay Gürtzig     2016-12-12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
+ *      Kay Gürtzig     2016-12-22      Enh. #314: Support for File API
+ *      Kay Gürtzig     2016-12-29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
+ *      Kay Gürtzig     2017-01-06      Bugfix #324: Trouble with replacing an array by a scalar value on input
  *                                      Enh. #325: built-in type test functions added.
- *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in stepInstruction()
- *      Kay Gürtzig     2017.01.27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
- *      Kay Gürtzig     2017.02.08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
- *      Kay Gürtzig     2017.02.17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
- *      Kay Gürtzig     2017.03.06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
- *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
- *      Kay Gürtzig     2017.03.30      Enh. #388: Concept of constants implemented
- *      Kay Gürtzig     2017.04.11      Enh. #389: Implementation of import calls (without context change)
- *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
- *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
- *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
- *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float result)
- *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
- *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
- *      Kay Gürtzig     2017.05.24      Enh. #413: New function split(string, string) built in
- *      Kay Gürtzig     2017.06.09      Enh. #416: Support for execution line continuation by trailing backslash
- *      Kay Gürtzig     2017.06.30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
- *      Kay Gürtzig     2017.07.01      Enh. #413: Special check for built-in split function in stepForIn()
- *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
- *      Kay Gürtzig     2017.09.09      Bugfix #411 revised (issue #426)
- *      Kay Gürtzig     2017.09.17      Enh. #423: First draft implementation of records.
- *      Kay Gürtzig     2017.09.18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
- *      Kay Gürtzig     2017.09.30      Bugfix #429: Initializer evaluation made available in return statements
- *      Kay Gürtzig     2017.10.02      Some regex stuff revised to gain performance
- *      Kay Gürtzig     2017.10.08      Enh. #423: Recursive array and record initializer evaluation,
+ *      Kay Gürtzig     2017-01-17      Enh. #335: Toleration of Pascal variable declarations in stepInstruction()
+ *      Kay Gürtzig     2017-01-27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
+ *      Kay Gürtzig     2017-02-08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
+ *      Kay Gürtzig     2017-02-17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
+ *      Kay Gürtzig     2017-03-06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
+ *      Kay Gürtzig     2017-03-27      Issue #356: Sensible reaction to the close button ('X') implemented
+ *      Kay Gürtzig     2017-03-30      Enh. #388: Concept of constants implemented
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Implementation of import calls (without context change)
+ *      Kay Gürtzig     2017-04-12      Bugfix #391: Control button activation fixed for step mode
+ *      Kay Gürtzig     2017-04-14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
+ *      Kay Gürtzig     2017-04-22      Code revision KGU#384: execution context bundled into Executor.context
+ *      Kay Gürtzig     2017-05-07      Enh. #398: New built-in functions sgn (int result) and signum (float result)
+ *      Kay Gürtzig     2017-05-22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
+ *      Kay Gürtzig     2017-05-23      Bugfix #411: converts certain unicode escape sequences to octal ones
+ *      Kay Gürtzig     2017-05-24      Enh. #413: New function split(string, string) built in
+ *      Kay Gürtzig     2017-06-09      Enh. #416: Support for execution line continuation by trailing backslash
+ *      Kay Gürtzig     2017-06-30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
+ *      Kay Gürtzig     2017-07-01      Enh. #413: Special check for built-in split function in stepForIn()
+ *      Kay Gürtzig     2017-07-02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
+ *      Kay Gürtzig     2017-09-09      Bugfix #411 revised (issue #426)
+ *      Kay Gürtzig     2017-09-17      Enh. #423: First draft implementation of records.
+ *      Kay Gürtzig     2017-09-18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
+ *      Kay Gürtzig     2017-09-30      Bugfix #429: Initializer evaluation made available in return statements
+ *      Kay Gürtzig     2017-10-02      Some regex stuff revised to gain performance
+ *      Kay Gürtzig     2017-10-08      Enh. #423: Recursive array and record initializer evaluation,
  *                                      Array element assignment in record components fixed.
- *      Kay Gürtzig     2017.10.10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
- *      Kay Gürtzig     2017.10.11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
- *      Kay Gürtzig     2017.10.12      Issue #432: Attempt to improve performance by reducing redraw() calls on delay 0
- *      Kay Gürtzig     2017.10.14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
- *      Kay Gürtzig     2017.10.16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
- *      Kay Gürtzig     2017.10.28      Enh. #443: First adaptations for multiple DiagramControllers
- *      Kay Gürtzig     2017.10.29      Enh. #423: Workaround for evaluation error on converted actual object field access
- *      Kay Gürtzig     2017.10.31      Enh. #439: showCompoundValue() now more comfortable with ValuePresenter
- *      Kay Gürtzig     2017.11.01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
- *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
- *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
- *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
- *      Kay Gürtzig     2018.02.11      Bugfix #509: Built-in function copyArray had a defective definition
- *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
+ *      Kay Gürtzig     2017-10-10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
+ *      Kay Gürtzig     2017-10-11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
+ *      Kay Gürtzig     2017-10-12      Issue #432: Attempt to improve performance by reducing redraw() calls on delay 0
+ *      Kay Gürtzig     2017-10-14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
+ *      Kay Gürtzig     2017-10-16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
+ *      Kay Gürtzig     2017-10-28      Enh. #443: First adaptations for multiple DiagramControllers
+ *      Kay Gürtzig     2017-10-29      Enh. #423: Workaround for evaluation error on converted actual object field access
+ *      Kay Gürtzig     2017-10-31      Enh. #439: showCompoundValue() now more comfortable with ValuePresenter
+ *      Kay Gürtzig     2017-11-01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
+ *      Kay Gürtzig     2017-12-10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
+ *      Kay Gürtzig     2018-01-23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
+ *      Kay Gürtzig     2018-02-07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
+ *      Kay Gürtzig     2018-02-11      Bugfix #509: Built-in function copyArray had a defective definition
+ *      Kay Gürtzig     2018-03-19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
  *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext
- *      Kay Gürtzig     2018.04.03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
- *      Kay Gürtzig     2018.07.02      KGU#539: Fixed the operation step counting for CALL elements 
- *      Kay Gürtzig     2018.07.20      Enh. #563 - support for simplified record initializers
- *      Kay Gürtzig     2018.07.27      Issue #432: Deficient redrawing in step mode with delay 0 fixed
- *      Kay Gürtzig     2018.08.01      Enh. #423/#563: Effort to preserve component order for record display
- *      Kay Gürtzig     2018.08.03      Enh. #577: Meta information to output console now conditioned
- *      Kay Gürtzig     2018.08.06      Some prevention against running status lock on occasion of Issue #577
- *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
- *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const arguments on top level fixed
- *      Kay Gürtzig     2018.10.02/04   Bugfix #617: evaluateDiagramControllerFunctions used to fail when
+ *      Kay Gürtzig     2018-04-03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
+ *      Kay Gürtzig     2018-07-02      KGU#539: Fixed the operation step counting for CALL elements 
+ *      Kay Gürtzig     2018-07-20      Enh. #563 - support for simplified record initializers
+ *      Kay Gürtzig     2018-07-27      Issue #432: Deficient redrawing in step mode with delay 0 fixed
+ *      Kay Gürtzig     2018-08-01      Enh. #423/#563: Effort to preserve component order for record display
+ *      Kay Gürtzig     2018-08-03      Enh. #577: Meta information to output console now conditioned
+ *      Kay Gürtzig     2018-08-06      Some prevention against running status lock on occasion of Issue #577
+ *      Kay Gürtzig     2018-09-17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018-09-24      Bugfix #605: Handling of const arguments on top level fixed
+ *      Kay Gürtzig     2018-10-02/04   Bugfix #617: evaluateDiagramControllerFunctions used to fail when
  *                                      several controller functions occurred in an expression or raised an
- *                                      NullPointerException if a controller function was called with wrong arg number 
+ *                                      NullPointerException if a controller function was called with wrong arg number
+ *      Kay Gürtzig     2018-12-12      Bugfix #642: Unreliable splitting of comparison expressions
  *
  ******************************************************************************************************
  *
@@ -1195,8 +1196,6 @@ public class Executor implements Runnable
 	// START KGU#57 2015-11-07
 	private String convertStringComparison(String str)
 	{
-		// FIXME (#503): Instruction keywords like "OUTPUT" or "INPUT" should not actually occur here (but do)!
-		// FIXME (#503): Shouldn't we FIRST tokenize the expression and THEN look for operators!?
 //		Character chA = 'a';
 //		Character chB = 'a';
 //		System.out.println("Zeichen sind " + ((chA == chB) ? "" : "NICHT ") + "identisch!");
@@ -1213,14 +1212,28 @@ public class Executor implements Runnable
 		if (containsComparison)
 		// END KGU#76 2016-04-25
 		{
-			// We are looking for || operators and split the expression by them (if present)
-			// START KGU#490 2018-02-07: Bugfix #503 - the regex precaution was wrong here
-			//StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
-			StringList exprs = StringList.explodeWithDelimiter(str, " || ");	// The delimiter is no regex here!!
-			// END KGU#490 2018-02-07
-			// Now we do the same with && operators
-			exprs = StringList.explodeWithDelimiter(exprs, " && ");
-			// Now we should have some atomic assertions, among them comparisons
+			// START KGU#612 2018-12-12: Bugfix #642 - operator symbols weren't reliably detected
+			//// We are looking for || operators and split the expression by them (if present)
+			//// START KGU#490 2018-02-07: Bugfix #503 - the regex precaution was wrong here
+			////StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			//StringList exprs = StringList.explodeWithDelimiter(str, " || ");	// The delimiter is no regex here!!
+			//// END KGU#490 2018-02-07
+			//// Now we do the same with && operators
+			//exprs = StringList.explodeWithDelimiter(exprs, " && ");
+			StringList allTokens = Element.splitLexically(str, true);
+			StringList exprs = new StringList();
+			int lastI = 0;
+			for (int i = 0; i < allTokens.count(); i++) {
+				String token = allTokens.get(i);
+				if (token.equals("||") || token.equals("&&")) {
+					exprs.add(allTokens.subSequence(lastI, i).concatenate());
+					exprs.add(token);
+					lastI = i+1;
+				}
+			}
+			exprs.add(allTokens.subSequence(lastI, allTokens.count()).concatenate());
+			// END KGU#612 2018-12-12
+			// Now we should have some "atomic" assertions, among them comparisons
 			boolean replaced = false;
 			for (int i = 0; i < exprs.count(); i++)
 			{
