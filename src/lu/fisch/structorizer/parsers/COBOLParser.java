@@ -34,27 +34,27 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.10      First Issue (automatically generated with GOLDprog.exe,
+ *      Kay Gürtzig     2017-03-10      First Issue (automatically generated with GOLDprog.exe,
  *                                      constants for COBOL-85.grm downloaded from URL
  *                                      http://www.goldparser.org/grammars/files/COBOL-85.zip)
- *      Simon Sobisch   2017.03.22      COBOL preparser for **valid** COBOL sources: reference-format
+ *      Simon Sobisch   2017-03-22      COBOL preparser for **valid** COBOL sources: reference-format
  *                                      free-form and fixed-form (with continuation + debugging lines),
  *                                      minimal subset of compiler directives, passes NIST EXEC85.cob
  *                                      and DB201A.CBL (with manual source changes because of
  *                                      insufficient COBOL-85.grm)
- *      Kay Gürtzig     2017.03.26      Fix #384: New temp file mechanism for the prepared text file
- *      Simon Sobisch   2017.04.24      Moved from COBOL-85.grm (NOT being COBOL 85!!!) to GnuCOBOL.grm
- *      Kay Gürtzig     2017.05.07      ADD/SUBTRACT/MULTIPLY/DIVIDE with ROUNDED mode implemented, SET
+ *      Kay Gürtzig     2017-03-26      Fix #384: New temp file mechanism for the prepared text file
+ *      Simon Sobisch   2017-04-24      Moved from COBOL-85.grm (NOT being COBOL 85!!!) to GnuCOBOL.grm
+ *      Kay Gürtzig     2017-05-07      ADD/SUBTRACT/MULTIPLY/DIVIDE with ROUNDED mode implemented, SET
  *                                      statement and string manipulations (ref mod) realized.
- *      Kay Gürtzig     2017.05.10      Further accomplishments for EVALUATE (ALSO included)
- *      Kay Gürtzig     2017.05.13      EVALUATE import as Case element fixed. FileAPI support begun
- *      Kay Gürtzig     2017.05.14      PERFORM VARYING with composed condition or defective step fixed
- *      Kay Gürtzig     2017.05.16      SET TO TRUE/FALSE import implemented
- *      Kay Gürtzig     2017.05.24      READ statement implemented, file var declarations added, ACCEPT enhanced
+ *      Kay Gürtzig     2017-05-10      Further accomplishments for EVALUATE (ALSO included)
+ *      Kay Gürtzig     2017-05-13      EVALUATE import as Case element fixed. FileAPI support begun
+ *      Kay Gürtzig     2017-05-14      PERFORM VARYING with composed condition or defective step fixed
+ *      Kay Gürtzig     2017-05-16      SET TO TRUE/FALSE import implemented
+ *      Kay Gürtzig     2017-05-24      READ statement implemented, file var declarations added, ACCEPT enhanced
  *                                      STRING statement implemented (refined with help of enh. #413)
- *      Kay Gürtzig     2017.05.28      First rough approach to implement UNSTRING import and PERFOM &lt;procedure&gt;
- *      Kay Gürtzig     2017.06.06      Correction in importUnstring(...) w.r.t. ALL clause
- *      Simon Sobisch   2017.06.23      Added Classes CobTools (CobProg, CobVar) for COBOL-view of these
+ *      Kay Gürtzig     2017-05-28      First rough approach to implement UNSTRING import and PERFOM &lt;procedure&gt;
+ *      Kay Gürtzig     2017-06-06      Correction in importUnstring(...) w.r.t. ALL clause
+ *      Simon Sobisch   2017-06-23      Added Classes CobTools (CobProg, CobVar) for COBOL-view of these
  *                                      structures. Will be extended when needed.
  *                                      Translation COBOL -> Java Types completely rewritten and validated
  *                                      SET var [var2] TO (TRUE | FALSE) with lookup of condition names implemented
@@ -62,35 +62,36 @@ package lu.fisch.structorizer.parsers;
  *                                      new option "is32bit" for var types and for later care in preparser
  *                                      Optimization of getContent_R: use static Patterns and Matchers as
  *                                      this function is called very often
- *      Kay Gürtzig     2017.10.01      Enh. #420: Comment import mechanism built in and roughly configured
- *      Kay Gürtzig     2017.10.05      Enh. #423: Record type detection and declaration implemented
- *      Kay Gürtzig     2017.10.06      SEARCH statement implemented, approach to OCCURS ... INDEXED clause
- *      Kay Gürtzig     2017.10.08      Enh. #423: index placement in qualified names and conditions fixed
+ *      Kay Gürtzig     2017-10-01      Enh. #420: Comment import mechanism built in and roughly configured
+ *      Kay Gürtzig     2017-10-05      Enh. #423: Record type detection and declaration implemented
+ *      Kay Gürtzig     2017-10-06      SEARCH statement implemented, approach to OCCURS ... INDEXED clause
+ *      Kay Gürtzig     2017-10-08      Enh. #423: index placement in qualified names and conditions fixed
  *                                      Decisive improvements for SEARCH and SET statements
- *      Simon Sobisch   2017.10.10      Fixed numeric case items for alphanumeric variables in EVALUATE (TODO: needed for every expression)
+ *      Simon Sobisch   2017-10-10      Fixed numeric case items for alphanumeric variables in EVALUATE (TODO: needed for every expression)
  *                                      Fixed getContentToken_R to correctly replace SPACE/ZERO/NULL
- *      Kay Gürtzig     2017.10.19      Mechanism to use Sections and Paragraphs as data-sharing subroutines
+ *      Kay Gürtzig     2017-10-19      Mechanism to use Sections and Paragraphs as data-sharing subroutines
  *                                      TODO: More sensible import for EXIT statements in sections, paragraphs
- *      Kay Gürtzig     2017.10.20      Function register introduced to tell array access from function calls,
+ *      Kay Gürtzig     2017-10-20      Function register introduced to tell array access from function calls,
  *                                      loop condition transformation
- *      Kay Gürtzig     2017.10.22      File status assignments added according to the proposal of Simon Sobisch
- *      Kay Gürtzig     2017.10.26      File maps moved to CobProg to avoid name clashes
- *      Kay Gürtzig     2017.10.31      Bugfix #445: Face empty sections / paragraphs on refactoring
- *      Simon Sobisch   2017.11.27      Some fixes for USAGE, SEARCH and EXIT
- *      Kay Gürtzig     2017.11.27      Bugfix #475: A paragraph starting just after the section header closed the section
- *      Kay Gürtzig     2017.12.01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
- *      Kay Gürtzig     2017.12.04      Bugfix #475: Paragraph handling revised, bugfix #473 approach,
+ *      Kay Gürtzig     2017-10-22      File status assignments added according to the proposal of Simon Sobisch
+ *      Kay Gürtzig     2017-10-26      File maps moved to CobProg to avoid name clashes
+ *      Kay Gürtzig     2017-10-31      Bugfix #445: Face empty sections / paragraphs on refactoring
+ *      Simon Sobisch   2017-11-27      Some fixes for USAGE, SEARCH and EXIT
+ *      Kay Gürtzig     2017-11-27      Bugfix #475: A paragraph starting just after the section header closed the section
+ *      Kay Gürtzig     2017-12-01      Bugfix #480: Correct handling of level-77 data, initialization of arrays of records
+ *      Kay Gürtzig     2017-12-04      Bugfix #475: Paragraph handling revised, bugfix #473 approach,
  *                                      issue #485 workaround (prefixing intrinsic functions with FUNCTION)
- *      Kay Gürtzig     2017.12.05      Bugfix #483: mild version of disabled optionImportVarDecl,
+ *      Kay Gürtzig     2017-12-05      Bugfix #483: mild version of disabled optionImportVarDecl,
  *                                      Bugfix #486: Return mechanism in imported functions enforced
- *      Kay Gürtzig     2017.12.10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled
- *      Simon Sobisch   2017.12.15      Issues #493, #494 (related to SEARCH statement variants) fixed.
- *      Kay Gürtzig     2018.04.04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
- *      Kay Gürtzig     2018.07.01      Enh. #553 - thread cancellation hooks added
- *      Simon Sobisch   2018.10.24      Fix #626 Issues with parsing of string literals.
+ *      Kay Gürtzig     2017-12-10      Issue #475: Calls to empty or corrupt COBOL procedures now disabled
+ *      Simon Sobisch   2017-12-15      Issues #493, #494 (related to SEARCH statement variants) fixed.
+ *      Kay Gürtzig     2018-04-04      Fixed an inconvenience on importing DISPLAY statements (display clauses, KGU#513)
+ *      Kay Gürtzig     2018-07-01      Enh. #553 - thread cancellation hooks added
+ *      Simon Sobisch   2018-10-24      Fix #626 Issues with parsing of string literals.
  *                                      Skip lines that look like preprocessor directives (starting with #).
- *      Simon Sobisch   2018.10.25      Auto-switch to free-format before preparsing if source looks preprocessed by cobc.
- *      Kay Gürtzig     2018.10.29      Issue #630 (exit attempt on REPLACE/COPY), bugfix #635: commas in expression lists 
+ *      Simon Sobisch   2018-10-25      Auto-switch to free-format before preparsing if source looks preprocessed by cobc.
+ *      Kay Gürtzig     2018-10-29      Issue #630 (exit attempt on REPLACE/COPY), bugfix #635: commas in expression lists
+ *      Kay Gürtzig     2018-12-14      Issue #631 - removal of ';' and ',', first preparations for INSPECT import
  *
  ******************************************************************************************************
  *
@@ -3089,18 +3090,18 @@ public class COBOLParser extends CodeParser
 //		final int PROD_INITIATE_STATEMENT_INITIATE                                           = 1287;  // <initiate_statement> ::= INITIATE <initiate_body>
 //		final int PROD_INITIATE_BODY                                                         = 1288;  // <initiate_body> ::= <report_name>
 //		final int PROD_INITIATE_BODY2                                                        = 1289;  // <initiate_body> ::= <initiate_body> <report_name>
-//		final int PROD_INSPECT_STATEMENT_INSPECT                                             = 1290;  // <inspect_statement> ::= INSPECT <inspect_body>
+		final int PROD_INSPECT_STATEMENT_INSPECT                                             = 1290;  // <inspect_statement> ::= INSPECT <inspect_body>
 //		final int PROD_INSPECT_BODY                                                          = 1291;  // <inspect_body> ::= <send_identifier> <inspect_list>
 //		final int PROD_SEND_IDENTIFIER                                                       = 1292;  // <send_identifier> ::= <identifier>
 //		final int PROD_SEND_IDENTIFIER2                                                      = 1293;  // <send_identifier> ::= <literal>
 //		final int PROD_SEND_IDENTIFIER3                                                      = 1294;  // <send_identifier> ::= <function>
-//		final int PROD_INSPECT_LIST                                                          = 1295;  // <inspect_list> ::= <inspect_tallying> <inspect_replacing>
+		final int PROD_INSPECT_LIST                                                          = 1295;  // <inspect_list> ::= <inspect_tallying> <inspect_replacing>
 //		final int PROD_INSPECT_LIST2                                                         = 1296;  // <inspect_list> ::= <inspect_tallying>
 //		final int PROD_INSPECT_LIST3                                                         = 1297;  // <inspect_list> ::= <inspect_replacing>
 //		final int PROD_INSPECT_LIST4                                                         = 1298;  // <inspect_list> ::= <inspect_converting>
-//		final int PROD_INSPECT_TALLYING_TALLYING                                             = 1299;  // <inspect_tallying> ::= TALLYING <tallying_list>
-//		final int PROD_INSPECT_REPLACING_REPLACING                                           = 1300;  // <inspect_replacing> ::= REPLACING <replacing_list>
-//		final int PROD_INSPECT_CONVERTING_CONVERTING_TO                                      = 1301;  // <inspect_converting> ::= CONVERTING <simple_display_value> TO <simple_display_all_value> <inspect_region>
+		final int PROD_INSPECT_TALLYING_TALLYING                                             = 1299;  // <inspect_tallying> ::= TALLYING <tallying_list>
+		final int PROD_INSPECT_REPLACING_REPLACING                                           = 1300;  // <inspect_replacing> ::= REPLACING <replacing_list>
+		final int PROD_INSPECT_CONVERTING_CONVERTING_TO                                      = 1301;  // <inspect_converting> ::= CONVERTING <simple_display_value> TO <simple_display_all_value> <inspect_region>
 //		final int PROD_TALLYING_LIST                                                         = 1302;  // <tallying_list> ::= <tallying_item>
 //		final int PROD_TALLYING_LIST2                                                        = 1303;  // <tallying_list> ::= <tallying_list> <tallying_item>
 //		final int PROD_TALLYING_ITEM_FOR                                                     = 1304;  // <tallying_item> ::= <numeric_identifier> FOR
@@ -4279,9 +4280,59 @@ public class COBOLParser extends CodeParser
 //			tokenizer.wordChars('_', '_');
 //			tokenizer.wordChars('-', '-');
 
-			StringList tokens = StringList.explodeWithDelimiter(line.trim(), ".");
+			// START KGU#613 2018-12-13: Issue #631 - cope with string literals and eliminate obsolete separators
+			//StringList tokens = StringList.explodeWithDelimiter(line.trim(), ".");
+			StringList tokens0 = StringList.explodeWithDelimiter(line.trim(), "\"");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, "'");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, "(");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, ")");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, ";");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, ",");
+			StringList tokens = new StringList();
+			StringList literals = new StringList();
+			boolean separatorsRemoved = false;
+			int parenthLevel = 0;
+			int posDelim = -1;
+			for (int i = 0; i < tokens0.count(); i++) {
+				String token = tokens0.get(i);
+				if (posDelim < 0) {
+					if (token.equals("\"") || token.equals("'")) {
+						posDelim = i;
+						token = null;
+					}
+					else if (token.equals("(")) {
+						parenthLevel++;
+					}
+					else if (token.equals(")") && parenthLevel > 0) {
+						parenthLevel--;
+					}
+					else if (token.equals(";") || parenthLevel == 0 && token.equals(",")) {
+						token = " ";	// Multiple spaces will be removed later
+						separatorsRemoved = true;
+					}
+					if (token != null) {
+						tokens.add(token);
+					}
+				}
+				else if (token.equals(tokens0.get(posDelim)) || i == tokens0.count()-1) {
+					// On duplicate delimiters don't close the literal!
+					if (!(i+1 < tokens0.count() && tokens.get(i+1).equals(tokens0.get(posDelim)))) {
+						// Replace the string literal by a dummy token
+						tokens.add("'§STRINGLITERAL§'");
+						// Cache the original String literal including delimiters
+						literals.add(tokens0.subSequence(posDelim, i+1).concatenate());
+						posDelim = -1;
+					}
+				}
+			}
+			tokens = StringList.explodeWithDelimiter(tokens, ".");
+			// END KGU#613 2018-12-13
 			tokens = StringList.explode(tokens, "\\s+");
-			if (tokens.count() == 0 || tokens.get(0).startsWith("*") || state == State.RA_END) {
+			// START KGU#613 2018-12-16: Issue #631 - Previous splittings may have left empty strings
+			//if (tokens.count() == 0 || tokens.get(0).startsWith("*") || state == State.RA_END) {
+			tokens.removeAll("");
+			if (tokens.count() == 0 || tokens.get(0).startsWith("*")) {
+			// END KGU#613 2018-12-16
 				// Nothing to do here
 				return line;
 			}
@@ -4570,10 +4621,30 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			// Build a new line if replacements have been done
-			if (replacementsDone) {
+			// START KGU#613 2018-12-16: Bugfix #631 (1st attempt)
+			//if (replacementsDone) {
+			//	int leftOffs = line.indexOf(line.trim());
+			//	line = line.substring(0, leftOffs) + tokens.concatenate(" ");
+			//}
+			if (replacementsDone || separatorsRemoved || literals.count() > 0) {
 				int leftOffs = line.indexOf(line.trim());
+				// Restore temporarily substituted string literals
+				for (int i = 0; i < literals.count(); i++) {
+					int nextPos = tokens.indexOf("'§STRINGLITERAL§'");
+					if (nextPos >= 0) {
+						tokens.set(nextPos, literals.get(i));
+					}
+					else {
+						// Some error occurred
+						// FIXME: Find a way properly to report it!
+						System.err.println("*** RepositoryAutomaton - Lost string literal in line:");
+						System.err.println("\t" + line);
+						System.err.println("\t" + tokens.concatenate());
+					}
+				}
 				line = line.substring(0, leftOffs) + tokens.concatenate(" ");
 			}
+			// END KGU#613 2018-12-13
 			return line;
 		}
 	};
@@ -5704,6 +5775,12 @@ public class COBOLParser extends CodeParser
 			}
 		}
 		break;
+		// START KGU#614 2018-12-14: Enh. #631 - INSPECT implementation
+		case RuleConstants.PROD_INSPECT_STATEMENT_INSPECT:
+			//System.out.println("PROD_INSPECT_STATEMENT_INSPECT");
+			importInspect(_reduction, _parentNode);
+			break;
+		// END KGU#614 2018-12-14
 		case RuleConstants.PROD_SEARCH_STATEMENT_SEARCH:
 			//System.out.println("PROD_SEARCH_STATEMENT_SEARCH");
 			importSearch(_reduction, _parentNode);
@@ -5796,6 +5873,62 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
+	// START KGU#614 2018-12-14: Issue #631
+	/**
+	 * Imports an INSPECT statement into some kind of augmented {@link Call} element
+	 * @param _reduction - The associated {@link Reduction}
+	 * @param _parentNode - The {@link Subqueue} to which the element(s) are to be appended
+	 * @throws ParserCancelled on user abort
+	 */
+	private void importInspect(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
+		Reduction redBody = _reduction.get(1).asReduction();
+		String target = getContent_R(redBody.get(0).asReduction(), "");
+		redBody = redBody.get(1).asReduction();
+		boolean built = false;
+		int idBody = redBody.getParent().getTableIndex();
+		switch (idBody) {
+		case RuleConstants.PROD_INSPECT_LIST:
+			// We must construct two builds in series (tallying + replacing)
+			built = importInspectTallying(target, redBody.get(0).asReduction().get(1).asReduction(), _parentNode);
+			built = built && importInspectReplacing(target, redBody.get(1).asReduction().get(1).asReduction(), _parentNode);
+			break;
+		case RuleConstants.PROD_INSPECT_TALLYING_TALLYING:
+			built = importInspectTallying(target, redBody.get(1).asReduction(), _parentNode);
+			break;
+		case RuleConstants.PROD_INSPECT_REPLACING_REPLACING:
+			built = importInspectReplacing(target, redBody.get(1).asReduction(), _parentNode);
+			break;
+		case RuleConstants.PROD_INSPECT_CONVERTING_CONVERTING_TO:
+			built = importInspectConverting(target, redBody, _parentNode);
+			break;
+		}
+		// Fallback for the case the specific routine failed to create an equivalent
+		if (!built) {
+			String content = this.getContent_R(_reduction, "");
+			Instruction instr = new Instruction(content);
+			instr.disabled = true;
+			instr.setColor(Color.RED);
+			_parentNode.addElement(equipWithSourceComment(instr, _reduction));
+			instr.getComment().add("Import of INSPECT statements hasn't been implemented yet!");
+		}
+	}
+	// ENDKGU#614 2018-12-14
+
+	private boolean importInspectTallying(String target, Reduction asReduction, Subqueue _parentNode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	private boolean importInspectReplacing(String target, Reduction asReduction, Subqueue _parentNode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	private boolean importInspectConverting(String target, Reduction redBody, Subqueue _parentNode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	/**
 	 * Inserts a new {@link SectionOrParagraph} object at the front of {@link #procedureList}.
 	 * The new procedure reference object will start at the current end of @{@link Subqueue} {@code _parentNode}.
@@ -5854,8 +5987,8 @@ public class COBOLParser extends CodeParser
 	 * Builds an equivalent loop structure for a SEARCH statement
 	 *
 	 * @param _reduction - the statement reduction
-	 * @param _parentNode - the
-	 * @throws ParserCancelled
+	 * @param _parentNode - the {@link Subqueue} to which the element(s) are to be appended
+	 * @throws ParserCancelled on user abort
 	 */
 	private void importSearch(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		/*
@@ -6655,6 +6788,13 @@ public class COBOLParser extends CodeParser
 		return done;
 	}
 
+	/**
+	 * Tries to build an equivalent for the OPEN statement
+	 * @param _reduction - the corresponding {@link Reduction}
+	 * @param _parentNode - the {@link Subqueue} to which the element(s) are to be appended
+	 * @return true if done, false otherwise
+	 * @throws ParserCancelled
+	 */
 	private boolean importOpen(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		boolean done = false;
 		Reduction bodyRed = _reduction.get(1).asReduction();
@@ -6715,7 +6855,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Builds an approptiate Instruction element from the ADD statement represented by {@code _reduction}.
+	 * Builds an appropriate Instruction element from the ADD statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed ADD statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
@@ -6767,7 +6907,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Builds an approptiate Instruction element from the SUBTRACT statement represented by {@code _reduction}.
+	 * Builds an appropriate Instruction element from the SUBTRACT statement represented by {@code _reduction}.
 	 * @param _reduction - the top Reduction of the parsed SUBTRACT statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled

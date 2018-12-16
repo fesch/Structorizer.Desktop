@@ -165,6 +165,7 @@ package lu.fisch.structorizer.executor;
  *                                      several controller functions occurred in an expression or raised an
  *                                      NullPointerException if a controller function was called with wrong arg number
  *      Kay Gürtzig     2018-12-12      Bugfix #642: Unreliable splitting of comparison expressions
+ *      Kay Gürtzig     2018-12-26      Bugfix #644 in tryAssignment()
  *
  ******************************************************************************************************
  *
@@ -4662,7 +4663,7 @@ public class Executor implements Runnable
 						}
 						Object argVals[] = new Object[nArgs];
 						for (int i = 0; i < nArgs; i++) {
-							// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
+							// While the known controller functions haven't got (complex) arguments we may neglect initializers
 							argVals[i] = this.evaluateExpression(args.get(i), false, false);
 						}
 						// Passed till here, we try to execute the function - this may throw a FunctionException
@@ -4767,7 +4768,10 @@ public class Executor implements Runnable
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
-						args[p] = this.evaluateExpression(f.getParam(p), false, false);
+						// START KGU#615 2018-12-16: Bugfix #644 - initializers as arguments caused errors
+						//args[p] = this.evaluateExpression(f.getParam(p), false, false);
+						args[p] = this.evaluateExpression(f.getParam(p), true, false);
+						// END KGU#615 2018-12-16
 					}
 					value = executeCall(sub, args, (Call)instr);
 					// START KGU#117 2016-03-10: Enh. #77
@@ -5266,7 +5270,10 @@ public class Executor implements Runnable
 			{
 				try
 				{
-					args[p] = this.evaluateExpression(f.getParam(p), false, false);
+					// START KGU#615 2018-12-16: Bugfix #644 - Allow initializers as subroutine arguments
+					//args[p] = this.evaluateExpression(f.getParam(p), false, false);
+					args[p] = this.evaluateExpression(f.getParam(p), true, false);
+					// END KGU#615 2018-12-16
 					if (args[p] == null)
 					{
 						if (!trouble.isEmpty())
@@ -6078,7 +6085,6 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
 			s = this.evaluateDiagramControllerFunctions(s);
 			// END KGU#417 2017-06-30
-			
 			n = this.evaluateExpression(s, false, false);
 			if (n == null)
 			{
@@ -6521,7 +6527,6 @@ public class Executor implements Runnable
 	}
 	
 	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
-	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
 	/**
 	 * Resolves qualified names (record access) where contained and - if allowed by setting
 	 * {@code _withInitializers} - array or record initializers and has the interpreter evaluate
@@ -6625,6 +6630,11 @@ public class Executor implements Runnable
 						}
 					}
 					// END KGU#509 2018-03-20
+					// START KGU#615 2018-12-16: Just a simple workaround for #644 (single level initializer arguments)
+					else if (error423message.contains("Encountered \"( {\"")) {
+						throw new EvalError(error423message + "\n" + control.msgInitializerAsArgument.getText(), null, null);
+					}
+					// END KGU#615 2018-12-16
 					if (!error423) {
 						throw err;
 					}
@@ -6767,7 +6777,7 @@ public class Executor implements Runnable
 
 		try
 		{
-			//index = Integer.parseInt(ind);		// KGU: This was nonsense - usually no literal here
+			//index = Integer.parseInt(ind);	// KGU: This was nonsense - usually no literal here
 			index = (Integer) this.evaluateExpression(ind, false, false);
 		}
 		catch (Exception e)

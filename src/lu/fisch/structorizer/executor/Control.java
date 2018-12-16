@@ -33,38 +33,39 @@ package lu.fisch.structorizer.executor;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2009.05.18      First Issue
- *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
- *      Kay Gürtzig     2015.11.14      New controls to display the call level for enhancement #9 (KGU#2)
- *      Kay Gürtzig     2016.03.06      Enh. #77: New checkboxes for test coverage tracking mode (KGU#117)
- *      Kay Gürtzig     2016.03.13      Enh. #124 (KGU#156): Runtime data collection generalised
- *      Kay Gürtzig     2016.03.17      Enh. #133 (KGU#159): Stack trace may now be shown in paused mode
- *      Kay Gürtzig     2016.03.18      KGU#89: Extended Language translation support
- *      Kay Gürtzig     2016.03.25      Message translations now held in LangTextHolder instead of JLabel
- *      Kay Gürtzig     2016.04.12      Enh. #137: additional toggle to direct input and output to a text window
- *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) LangTextHolders added
- *      Kay Gürtzig     2016.07.25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
- *      Kay Gürtzig     2016.07.27      KGU#197: More LangTextHolders for Executor error messages
- *      Kay Gürtzig     2016.08.03      KGU#89: Inheritance enhanced to improve language support (var table)
- *      Kay Gürtzig     2016.10.05      Bugfix #260: Editing of 1st column in variable table disabled.
- *      Kay Gürtzig     2016.10.07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
- *      Kay Gürtzig     2016.10.08      Issue #264 variable display updates caused frequent silent exceptions on rendering
- *      Kay Gürtzig     2016.11.01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
- *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
- *      Kay Gürtzig     2016.12.12      Issue #307: New error message msgForLoopManipulation
- *      Kay Gürtzig     2016.12.29      KGU#317 (issues #267, #315) New message for multiple subroutines
- *      Kay Gürtzig     2016.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
- *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
- *      Kay Gürtzig     2017.03.30      Enh. #388: Support for the display of constants
- *      Kay Gürtzig     2017.04.12      Bugfix #391: Defective button control in step mode fixed.
- *      Kay Gürtzig     2017.09.14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
- *      Kay Gürtzig     2017.10.08      Title String and further error message for enh. #423 introduced
- *      Kay Gürtzig     2017.10.11      Bugfix #435: Checkboxes didn't show selected state in rescaled GUI mode
- *      Kay Gürtzig     2017.10.13      Enh. #437: Message box on failed interactive variable setting
- *      Kay Gürtzig     2017.10.14      Enh. #438: Execution can no longer be resumed with pending variable editing
- *      Kay Gürtzig     2017.10.16      Enh. #439: Opportunity to inspect/edit structured values via tabular editor.
- *      Kay Gürtzig     2017.10.31      Enh. #439: Internal class ValueEditor outsourced as ValuePresenter
- *      Kay Gürtzig     2018.12.03      Bugfix #641: Display of updated variable values forced
+ *      Bob Fisch       2009-05-18      First Issue
+ *      Kay Gürtzig     2015-11-05      Enhancement allowing to adopt edited values from Control (KGU#68)
+ *      Kay Gürtzig     2015-11-14      New controls to display the call level for enhancement #9 (KGU#2)
+ *      Kay Gürtzig     2016-03-06      Enh. #77: New checkboxes for test coverage tracking mode (KGU#117)
+ *      Kay Gürtzig     2016-03-13      Enh. #124 (KGU#156): Runtime data collection generalised
+ *      Kay Gürtzig     2016-03-17      Enh. #133 (KGU#159): Stack trace may now be shown in paused mode
+ *      Kay Gürtzig     2016-03-18      KGU#89: Extended Language translation support
+ *      Kay Gürtzig     2016-03-25      Message translations now held in LangTextHolder instead of JLabel
+ *      Kay Gürtzig     2016-04-12      Enh. #137: additional toggle to direct input and output to a text window
+ *      Kay Gürtzig     2016-05-05      KGU#197: Further (forgotten) LangTextHolders added
+ *      Kay Gürtzig     2016-07-25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
+ *      Kay Gürtzig     2016-07-27      KGU#197: More LangTextHolders for Executor error messages
+ *      Kay Gürtzig     2016-08-03      KGU#89: Inheritance enhanced to improve language support (var table)
+ *      Kay Gürtzig     2016-10-05      Bugfix #260: Editing of 1st column in variable table disabled.
+ *      Kay Gürtzig     2016-10-07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
+ *      Kay Gürtzig     2016-10-08      Issue #264 variable display updates caused frequent silent exceptions on rendering
+ *      Kay Gürtzig     2016-11-01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
+ *      Kay Gürtzig     2016-11-09      Issue #81: Scale factor no longer rounded.
+ *      Kay Gürtzig     2016-12-12      Issue #307: New error message msgForLoopManipulation
+ *      Kay Gürtzig     2016-12-29      KGU#317 (issues #267, #315) New message for multiple subroutines
+ *      Kay Gürtzig     2016-01-09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
+ *      Kay Gürtzig     2017-03-27      Issue #356: Sensible reaction to the close button ('X') implemented
+ *      Kay Gürtzig     2017-03-30      Enh. #388: Support for the display of constants
+ *      Kay Gürtzig     2017-04-12      Bugfix #391: Defective button control in step mode fixed.
+ *      Kay Gürtzig     2017-09-14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
+ *      Kay Gürtzig     2017-10-08      Title String and further error message for enh. #423 introduced
+ *      Kay Gürtzig     2017-10-11      Bugfix #435: Checkboxes didn't show selected state in rescaled GUI mode
+ *      Kay Gürtzig     2017-10-13      Enh. #437: Message box on failed interactive variable setting
+ *      Kay Gürtzig     2017-10-14      Enh. #438: Execution can no longer be resumed with pending variable editing
+ *      Kay Gürtzig     2017-10-16      Enh. #439: Opportunity to inspect/edit structured values via tabular editor.
+ *      Kay Gürtzig     2017-10-31      Enh. #439: Internal class ValueEditor outsourced as ValuePresenter
+ *      Kay Gürtzig     2018-12-03      Bugfix #641: Display of updated variable values forced
+ *      Kay Gürtzig     2018-12-16      Issue #644: New message msgInitializerAsArgument
  *
  ******************************************************************************************************
  *
@@ -959,8 +960,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
     		new LangTextHolder("A subroutine diagram \"%1\" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
- // START KGU#376 2017-04-11: Enh. #389
-    // END KGU#376 2017-04-11
     public final LangTextHolder msgNoInclDiagram = 
     		new LangTextHolder("An includable diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.");
  // // START KGU#317 2016-12-29
@@ -1030,6 +1029,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgIndexOutOfBounds =
     		new LangTextHolder("Index «%1» (%2) is out of bounds for array «%3»!");
     // END KGU#510 2018-03-10
+    // START KGU#615 2018-12-16: Bugfix #644 - More instructive error explanation for inappropriate initializer use
+    public final LangTextHolder msgInitializerAsArgument =
+    		new LangTextHolder("You may not pass an array initializer directly as argument to a built-in function.\nAssign the array to a variable first.");
+    // END KGU#615 2018-12-16
     // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =
     		new LangTextHolder("Invalid file number or file not open for reading.");
@@ -1070,8 +1073,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU#448 2017-10-28
     // START KGU#569 2018-08-09: New messages for issue #577
     public static final LangTextHolder msgGUISyncFault = new LangTextHolder("Possible GUI synchronisation fault on executing «%».\nTry to resume execution?");
-    
-    // END KGU#5689 2018-08-09
+    // END KGU#569 2018-08-09
+
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 
