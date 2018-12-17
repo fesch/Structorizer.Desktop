@@ -165,7 +165,8 @@ package lu.fisch.structorizer.executor;
  *                                      several controller functions occurred in an expression or raised an
  *                                      NullPointerException if a controller function was called with wrong arg number
  *      Kay Gürtzig     2018-12-12      Bugfix #642: Unreliable splitting of comparison expressions
- *      Kay Gürtzig     2018-12-26      Bugfix #644 in tryAssignment()
+ *      Kay Gürtzig     2018-12-16      Bugfix #644 in tryAssignment()
+ *      Kay Gürtzig     2018-12-17      Bugfix #646 in tryOutput()
  *
  ******************************************************************************************************
  *
@@ -5105,7 +5106,10 @@ public class Executor implements Runnable
 		// END KGU#107 2015-12-13
 		if (trouble.isEmpty())
 		{
-			String s = unconvert(str.trim());	// FIXME (KGU): What the heck is this good for?
+			// START KGU#616 2018-12-17: Bugfix #646 Undue trimming and obsolete "unconverting"
+			//String s = unconvert(str.trim());	// FIXME (KGU): What the heck is this good for?
+			String s = str;
+			// END KGU#616 2018-12-17
 		// END KGU#101 2015-12-11
 			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
 			//JOptionPane.showMessageDialog(diagram, s, "Output",

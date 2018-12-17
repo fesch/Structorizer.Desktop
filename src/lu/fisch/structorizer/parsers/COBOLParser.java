@@ -4329,12 +4329,13 @@ public class COBOLParser extends CodeParser
 					}
 				}
 			}
+			// First reconcatenate the parts lest too many separating blanks should be inserted in the end
 			tokens = StringList.explodeWithDelimiter(tokens.concatenate(), ".");
 			// END KGU#613 2018-12-13
 			tokens = StringList.explode(tokens, "\\s+");
 			// START KGU#613 2018-12-16: Issue #631 - Previous splittings may have left empty strings
 			//if (tokens.count() == 0 || tokens.get(0).startsWith("*") || state == State.RA_END) {
-			tokens.removeAll("");
+			tokens.removeAll("");	// Wipe off splitting artifacts lest they should get padded afterwards
 			if (tokens.count() == 0 || tokens.get(0).startsWith("*")) {
 			// END KGU#613 2018-12-16
 				// Nothing to do here
@@ -4636,7 +4637,6 @@ public class COBOLParser extends CodeParser
 				// Restore temporarily substituted string literals
 				if (literals.count() > 0) {
 					tokens = StringList.explodeWithDelimiter(line, "'§STRINGLITERAL§'");
-					tokens.removeAll("");
 					for (int i = 0; i < literals.count(); i++) {
 						int nextPos = tokens.indexOf("'§STRINGLITERAL§'");
 						if (nextPos >= 0) {
@@ -5294,12 +5294,12 @@ public class COBOLParser extends CodeParser
 	private HashMap<Root, String> dataSectionIncludes = new HashMap<Root, String>();
 	/** List of declared function names and aliases to distinguish them from e.g. array variables */
 	private StringList functionNames = new StringList();
-	// START KGU#614 2018-12-17: Enh. #631 - import of INSPECT statements
-	/** Flag for loaded diagram INSPECT_TALLYING-6 */
+	// START KGU#614 2018-12-17: Enh. #631 - Flags for import of INSPECT statements
+	/** Flag for loaded diagram INSPECT_TALLYING-6.nsd */
 	private boolean isLoadedInspectTallying = false;
-	/** Flag for loaded diagram INSPECT_REPORTING-6 */
+	/** Flag for loaded diagram INSPECT_REPORTING-6.nsd */
 	private boolean isLoadedInspectReplacing = false;
-	/** Flag for loaded diagram INSPECT_CONVERTING-5 */
+	/** Flag for loaded diagram INSPECT_CONVERTING-5.nsd */
 	private boolean isLoadedInspectConverting = false;
 	// END KGU#614 2018-12-17
 
@@ -5976,7 +5976,15 @@ public class COBOLParser extends CodeParser
 				modes.add(redItem.toString().replace('[', '"').replace(']', '"'));
 				break;
 			case RuleConstants.PROD_TALLYING_ITEM_FOR:
-				counters.add(getContent_R(redItem.get(0).asReduction(), ""));
+			{
+				/* Several imtems might be associated to a single counter like in
+				 * COUNT-0 FOR ALL "AB", ALL "D"
+				 */
+				String cnt = getContent_R(redItem.get(0).asReduction(), "");
+				while (counters.count() < subjects.count()) {
+					counters.insert(cnt, 0);
+				}
+			}
 				break;
 			case RuleConstants.PROD_TALLYING_ITEM:
 				subjects.add(getContent_R(redItem.get(0).asReduction(), ""));
@@ -5991,10 +5999,10 @@ public class COBOLParser extends CodeParser
 			StringList content = new StringList();
 			content.add("INSPECT_TALLYING(" + _target + ",\\");
 			content.add(counter + ",\\");
-			content.add("{" + modes.concatenate(", ") + "},\\");
-			content.add("{" + subjects.concatenate(", ") + "},\\");
-			content.add("{" + afters.concatenate(", ") + "},\\");
-			content.add("{" + befores.concatenate(", ") + "})");
+			content.add("{" + modes.reverse().concatenate(", ") + "},\\");
+			content.add("{" + subjects.reverse().concatenate(", ") + "},\\");
+			content.add("{" + afters.reverse().concatenate(", ") + "},\\");
+			content.add("{" + befores.reverse().concatenate(", ") + "})");
 			call.setText(content);
 			call.setColor(colorMisc);
 			Element el = new Instruction(counter + "[" + (counters.count() - 1) + "] <- 0");
@@ -6073,10 +6081,21 @@ public class COBOLParser extends CodeParser
 				case RuleConstants.PROD_REP_KEYWORD_FIRST:
 				case RuleConstants.PROD_REP_KEYWORD_LEADING:
 				case RuleConstants.PROD_REP_KEYWORD_TRAILING:
+				{
+					/* Several imtems might be associated to a single mode like in
+					 * ALL "AB" BY "XY", "D" BY "X"
+					 */
+					String mode = redItem.get(0).asString().replace('[', '"').replace(']', '"');
+					while (modes.count() < subjects.count()) {
+						modes.add(mode);
+					}
+				}
 					modes.add(redItem.get(0).asString().replace('[', '"').replace(']', '"'));
 					break;
 				default:
-					modes.add("\"ALL\"");
+					while (modes.count() < subjects.count()) {
+						modes.add("\"ALL\"");
+					}
 				}
 				redItem = redItem.get(1).asReduction();
 				subjects.add(getContent_R(redItem.get(0).asReduction(), ""));
@@ -6089,11 +6108,11 @@ public class COBOLParser extends CodeParser
 		if (nClauses == replacers.count() && nClauses == subjects.count() && nClauses == afters.count() && nClauses == befores.count()) {
 			StringList content = new StringList();
 			content.add(_target + " <- INSPECT_REPLACING(" + _target + ",\\");
-			content.add("{" + modes.concatenate(", ") + "},\\");
-			content.add("{" + subjects.concatenate(", ") + "},\\");
-			content.add("{" + replacers.concatenate(", ") + "},\\");
-			content.add("{" + afters.concatenate(", ") + "},\\");
-			content.add("{" + befores.concatenate(", ") + "})");
+			content.add("{" + modes.reverse().concatenate(", ") + "},\\");
+			content.add("{" + subjects.reverse().concatenate(", ") + "},\\");
+			content.add("{" + replacers.reverse().concatenate(", ") + "},\\");
+			content.add("{" + afters.reverse().concatenate(", ") + "},\\");
+			content.add("{" + befores.reverse().concatenate(", ") + "})");
 			Call call = new Call(content);
 			call.setColor(colorMisc);
 			_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
