@@ -1038,14 +1038,13 @@ public class Executor implements Runnable
 	 * converts string comparisons.<br/>
 	 * NOTE: This method should NOT be called if {@code s} contains an entire instruction line
 	 * rather than just an expression - use {@code convert(s, false)} in such cases instead
-	 * nad make sure the {@link #convertStringComparison(String)} is called for the mere
+	 * and make sure the {@link #convertStringComparison(String)} is called for the mere
 	 * expression part later on. 
 	 * @param s - the expression or instruction line to be pre-processed
 	 * @param convertComparisons - whether string comparisons are to be detected and rewritten
 	 * @return the converted string
 	 * @see #convert(String, boolean)
 	 * @see #convertStringComparison(String)
-	 * @see #unconvert(String)
 	 */
 	private String convert(String s)
 	{
@@ -6715,20 +6714,6 @@ public class Executor implements Runnable
 	}
 	// END KGU#388 2017-09-13
 	
-	/**
-	 * Against the suggestion of its name, just replaces "==" with "=" rather doing a
-	 * reverse {@link #convert(String)}.
-	 * @param s - the expression where Java equality operators are to be replaced by simple
-	 * equality signs for display. 
-	 * @return the "un-converted" string
-	 * @see #convert(String)
-	 */
-	private String unconvert(String s)
-	{
-		s = s.replace("==", "=");
-		return s;
-	}
-
 	private void waitForNext()
 	{
 		// START KGU#379 2017-04-12: Bugfix #391: This is the proper place to prepare the buttons for pause mode
