@@ -1302,7 +1302,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         	// START KGU#430 2017-10-10: Issue #432
     		//root.getVarNames();
     		try {
-    			root.getVarNames();
+    			// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+    			//root.getVarNames();
+    			root.getCachedVarNames();
+    			// END KGU#444/KGU#618 2018-12-18
     		}
     		catch (Exception ex) {
     			logger.log(Level.WARNING, "*** Possible sync problem:", ex);
@@ -1339,7 +1342,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
-        
 		// draw dragged element
 		if (selX != -1 && selY != -1 && selectedDown!=null && mX!=mouseX && mY!=mouseY)
 		{
@@ -1396,11 +1398,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//int widthFactor = root.getRect().right / scroll.getWidth() + 1;
 			int heightFactor = 1;
 			int widthFactor = 1;
+			Rect drawRect = root.getRect();
+			//System.out.println("rect : " + drawRect);
+			// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 - scrolling too slow
+			// For new Roots, the drawing may not have had time to compute the size, so try an
+			// estimate from the total number of elements
+			if (drawRect.bottom < 10) {
+				int nElements = root.getElementCount();
+				drawRect = new Rect(0, 0,
+						(int)(Math.sqrt(nElements) * Element.getPadding()),
+						nElements * 3 * Element.getPadding()
+						);
+			}
+			// END KGU#444/KGU#618 2018-12-18
 			if (scroll.getHeight() > 0) {
-				heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
+				heightFactor = drawRect.bottom / scroll.getHeight() + 1;
 			}
 			if (scroll.getWidth() > 0) {
-				widthFactor = root.getRect().right / scroll.getWidth() + 1;
+				widthFactor = drawRect.right / scroll.getWidth() + 1;
 			}
 			// END KGU#444 2017-11-03
 			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
@@ -1744,6 +1759,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					JOptionPane.ERROR_MESSAGE);
 		}
 		// END KGU#111 2015-12-16
+		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+		this.adaptScrollUnits();
+		// END KGU#444/KGU#618 2018-12-18
 	}
 
 	// START KGU#362 2017-03-28: Issue #370
@@ -5072,15 +5090,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 
 	/*****************************************
-	 * Import method
-	 * @param _specificOptions 
+	 * Import method for foreign diagrams
 	 *****************************************/
+	
+	// START KGU#386 2017-04-25: version 3.26-06 - new import sources
+	/**
+	 * Imports diagrams from alien file formats (e.g. from Struktogrammeditor)
+	 * @param _className - Name of the appropriate importer class (to be configured via plugins)
+	 * @param _specificOptions - importer-specific key-value pairs 
+	 */
 	public void importNSD(String _className, Vector<HashMap<String, String>> _specificOptions)
 	{
-		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
 		// only save if something has been changed
-		//saveNSD(true);
-		// END KGU 2015-10-17
+		saveNSD(true);
 
 		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
 
@@ -5091,6 +5113,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		GUIScaler.rescaleComponents(dlgOpen);
 		INSDImporter parser = null;
 		try {
+			// FIXME: For future Java versions we may need a factory here
 			Class<?> impClass = Class.forName(_className);
 			parser = (INSDImporter) impClass.newInstance();
 
@@ -5124,10 +5147,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			logger.log(Level.WARNING, "Using parser " + _className + " failed.", ex);
 			// END KGU#484 2018-04-05
 		}
+		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+		this.adaptScrollUnits();
+		// END KGU#444/KGU#618 2018-12-18
 	}
+	// END KGU#386 2017-04-25
 	
 	/*****************************************
-	 * import code methods
+	 * import methods for code
 	 *****************************************/
 
 	// START KGU#354 2017-03-04: Enh. #354
@@ -5547,6 +5574,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				doButtons();
 				redraw();
 				analyse();
+				// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 - We may have obtained huge diagrams...
+				this.adaptScrollUnits();
+				// END KGU#444/KGU#618 2018-12-18
 			}
 		}
 	} 
@@ -5795,6 +5825,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			JOptionPane.ERROR_MESSAGE);
 		}
 		// END KGU#250 2016-09-17
+
+		// The isLaunched mechanism above does not signal an unavailable help page.
+		// With the following code we can find out whether the help page was available...
+		// TODO In this case we might offer to download the PDF for offline use,
+		// otherwise we could try to open a possibly previously downloaded PDF ...
+//		URL url;
+//		try {
+//			isLaunched = false;
+//			url = new URL(help);
+//			URLConnection con = url.openConnection();
+//			if (con != null) {
+//				con.connect();
+//			}
+//			isLaunched = true;
+//		} catch (SocketTimeoutException ex) {
+//			ex.printStackTrace();
+//		} catch (MalformedURLException e1) {
+//			this.logger.log(Level.SEVERE, "Malformed URL " + help, e1);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 	// END KGU#208 2016-07-22
 	

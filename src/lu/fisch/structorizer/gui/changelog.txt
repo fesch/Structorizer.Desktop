@@ -131,6 +131,8 @@ Current development version: 3.28-12 (2018-12-18)
 - 12: Bugfix #644: Initializer evaluation in subroutine arguments fixed <2>
 - 12: COBOL import: INSPECT statements (all three flavours) now supported <2>
 - 12: Bugfix #646: Output string values must not be trimmed [slytab]2
+- 13: Bugfix #648: Struktogrammeditor file import wiped off unsaved changes <2>
+- 13: Issue #649: Loading of diagrams failed to tune the scrolling units. <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

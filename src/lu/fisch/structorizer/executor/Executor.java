@@ -1930,7 +1930,7 @@ public class Executor implements Runnable
 					if (this.importMap.containsKey(imp)) {
 						ImportInfo impInfo = this.importMap.get(imp);
 						this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
-								imp.variables, imp.constants.keySet(), false);
+								imp.getVariables(), imp.constants.keySet(), false);
 						// START KGU#388 2017-09-18: Enh. #423
 						// Adopt the imported typedefs if any
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {

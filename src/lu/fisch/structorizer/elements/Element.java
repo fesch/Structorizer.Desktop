@@ -223,7 +223,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.28-12";
+	public static final String E_VERSION = "3.28-13";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -310,6 +310,12 @@ public abstract class Element {
 	// END KGU#494 2018-09-10
 	/** Padding between e.g. the content of elements and their borders */
 	protected static int E_PADDING = 20;
+	// START KGU#444 2018-12-18: Issue #417 - we may need to have an external access to the padding
+	/** @return Current padding between e.g. the content of elements and their borders */
+	public static int getPadding() {
+		return E_PADDING;
+	}
+	// END KGU#444 2018-12-18
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
 	//public static int E_INDENT = 2;
 	/** Used as minimum text indentation for continuation lines (after lines ending with backslash) */
@@ -3233,7 +3239,7 @@ public abstract class Element {
 					if (!display.equals(""))
 					{
 						// if this part has to be colored
-						if(root.variables.contains(display))
+						if(root.getVariables().contains(display))
 						{
 							// dark blue, bold
 							_canvas.setColor(Color.decode("0x000099"));

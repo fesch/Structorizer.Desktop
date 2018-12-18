@@ -32,108 +32,109 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Bob Fisch       2008.04.18      Added analyser
- *      Kay Gürtzig     2014.10.18      Var name search unified and false detection of "as" within var names mended
- *      Kay Gürtzig     2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
- *      Kay Gürtzig     2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
- *      Kay Gürtzig     2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
- *      Kay Gürtzig     2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *      Kay Gürtzig     2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
- *      Kay Gürtzig     2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Bob Fisch       2008-04-18      Added analyser
+ *      Kay Gürtzig     2014-10-18      Var name search unified and false detection of "as" within var names mended
+ *      Kay Gürtzig     2015-10-12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *      Kay Gürtzig     2015-10-16      getFullText methods redesigned/replaced, changes in getVarNames()
+ *      Kay Gürtzig     2015-10-17      improved Arranger support by method notifyReplaced (KGU#48)
+ *      Kay Gürtzig     2015-11-03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *      Kay Gürtzig     2015-11-13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
+ *      Kay Gürtzig     2015-11-22/23   Modifications to support selection of Element sequences (KGU#87),
  *                                      Code revision in Analyser (field Subqueue.children now private).
- *      Kay Gürtzig     2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
+ *      Kay Gürtzig     2015-11-28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
  *                                      saveToIni()
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
- *      Bob Fisch       2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
- *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
- *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
- *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
- *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Bob Fisch       2015-12-10      Bugfix #50 -> grep parameter types (Method getParams(...))
+ *      Kay Gürtzig     2015-12-11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
+ *      Kay Gürtzig     2015-12-20      Bugfix #50 (KGU#112) getResultType() slightly revised
+ *      Kay Gürtzig     2016-01-02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
+ *      Kay Gürtzig     2016-01-06      Bugfix #89: References to obsolete operator padding (KGU#126) and
  *                                      faulty index condition for variable detection (KGU#98) fixed 
- *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
- *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
+ *      Kay Gürtzig     2016-01-08      Bugfix #50 (KGU#135) postfix result type was split into lines  
+ *      Kay Gürtzig     2016-01-11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
  *                                      stack, see comments below for details
- *      Kay Gürtzig     2016.01.14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
- *      Kay Gürtzig     2016.01.16      Bugfix #112: Processing of indexed variables mended (KGU#141)
- *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
- *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
- *      Kay Gürtzig     2016.02.25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
+ *      Kay Gürtzig     2016-01-14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
+ *      Kay Gürtzig     2016-01-16      Bugfix #112: Processing of indexed variables mended (KGU#141)
+ *      Kay Gürtzig     2016-01-21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016-01-22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
+ *      Kay Gürtzig     2016-02-25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-03-21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
  *      Kay Gürtzig     2016-03-25      Bugfix #135 (KGU#163) Method analyse(.,.,.,.,.) decomposed and corrected
  *      Kay Gürtzig     2016-03-29      Methods getUsedVarNames() completely rewritten.
  *      Kay Gürtzig     2016-04-05      Bugfix #154 (KGU#176) analyse_17() peeked in a wrong collection (Parallel)
  *      Kay Gürtzig     2016-04-12      Enh. #161 (KGU#179) analyse_13_16() extended (new error16_7)
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
- *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
- *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
- *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
- *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
- *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
+ *      Kay Gürtzig     2016-07-19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
+ *      Kay Gürtzig     2016-07-22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
+ *      Kay Gürtzig     2016-07-25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
+ *      Kay Gürtzig     2016-07-27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
+ *      Kay Gürtzig     2016-07-28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
  *                                      Bugfix KGU#222 in collectParameters()
- *      Kay Gürtzig     2016.08.12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
+ *      Kay Gürtzig     2016-08-12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
  *                                      for easier maintenance
- *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented
- *      Kay Gürtzig     2016.09.25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
+ *      Kay Gürtzig     2016-09-21      Enh. #249: New analyser check 20 (function header syntax) implemented
+ *      Kay Gürtzig     2016-09-25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
  *                                      Enh. #253: CodeParser.keywordMap refactored
- *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
- *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
- *      Kay Gürtzig     2016.10.13      Enh. #270: Analyser checks for disabled elements averted.
- *      Kay Gürtzig     2016.11.22      Bugfix #295: Spurious error11 in return statements with equality comparison
- *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
+ *      Kay Gürtzig     2016-10-11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
+ *      Kay Gürtzig     2016-10-12      Issue #271: user-defined prompt strings in input instructions
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Analyser checks for disabled elements averted.
+ *      Kay Gürtzig     2016-11-22      Bugfix #295: Spurious error11 in return statements with equality comparison
+ *      Kay Gürtzig     2016-12-12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
  *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
- *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
- *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
- *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
- *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
- *      Kay Gürtzig     2017.01.13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
- *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
- *      Kay Gürtzig     2017.01.30      Enh. #335: Type info mechanism established
- *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
- *      Kay Gürtzig     2017.02.01      Enh. #259/#335: Parameters added to typeMap
- *      Kay Gürtzig     2017.02.07      KGU#343: Result analysis mechanism revised
- *      Kay Gürtzig     2017.03.06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
- *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
- *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
- *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine() supports automatic derival of subroutines
- *      Kay Gürtzig     2017.03.30      Enh. #388: const retrieval (method collectParameters() modified)
- *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser check for constant definitions (no. 22),
+ *      Kay Gürtzig     2016-12-16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
+ *      Kay Gürtzig     2016-12-28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
+ *      Kay Gürtzig     2016-12-29      Enh. #315: New comparison method distinguishing different equality levels
+ *      Kay Gürtzig     2017-01-07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
+ *      Kay Gürtzig     2017-01-13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
+ *      Kay Gürtzig     2017-01-17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
+ *      Kay Gürtzig     2017-01-30      Enh. #335: Type info mechanism established
+ *      Kay Gürtzig     2017-01-31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
+ *      Kay Gürtzig     2017-02-01      Enh. #259/#335: Parameters added to typeMap
+ *      Kay Gürtzig     2017-02-07      KGU#343: Result analysis mechanism revised
+ *      Kay Gürtzig     2017-03-06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
+ *      Kay Gürtzig     2017-03-10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
+ *      Kay Gürtzig     2017-03-10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
+ *      Kay Gürtzig     2017-03-14/26   Enh. #380: Method outsourceToSubroutine() supports automatic derival of subroutines
+ *      Kay Gürtzig     2017-03-30      Enh. #388: const retrieval (method collectParameters() modified)
+ *      Kay Gürtzig     2017-04-04      Enh. #388: New Analyser check for constant definitions (no. 22),
  *                                      method getUsedVarNames decomposed, check no. 10 enhanced.
- *      Kay Gürtzig     2017.04.05      Issue #390: Improved initialization check for multi-line instructions
- *      Kay Gürtzig     2017.04.11      Enh. #389: Analyser additions for import calls implemented
- *      Kay Gürtzig     2017.04.13      Enh. #380: Method outsourceToSubroutine() improved
- *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
- *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
- *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
- *      Kay Gürtzig     2017.05.09      Enh. #372: Statistics method supporting the AttributeInspector
- *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
- *      Kay Gürtzig     2017.05.21      Enh. #372: additional attributes included in undo/redo mechanism
- *      Kay Gürtzig     2017.05.22      Enh. #272: New attribute "origin"
- *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList"
- *      Kay Gürtzig     2017.07.02      Enh. #389: Analyser and execution mechanisms adapted to new include design
- *      Kay Gürtzig     2017.09.18      Enh. #423: Type retrieval and Analyser enhancement for record types
- *      Kay Gürtzig     2017.10.09      Enh. #423: Adjustments for Analyser check 24.
- *      Kay Gürtzig     2017.10.26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
- *      Kay Gürtzig     2017.11.04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
- *      Kay Gürtzig     2017.11.05      Issue #454: logic of getMethodName() modified
- *      Kay Gürtzig     2018.03.12      Bugfix #518: Distinction between uninitialized and empty typeMap
- *      Kay Gürtzig     2018.03.15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
+ *      Kay Gürtzig     2017-04-05      Issue #390: Improved initialization check for multi-line instructions
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Analyser additions for import calls implemented
+ *      Kay Gürtzig     2017-04-13      Enh. #380: Method outsourceToSubroutine() improved
+ *      Kay Gürtzig     2017-04-14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
+ *      Kay Gürtzig     2017-04-21      Enh. #389: import checks re-organized to a new check group 23
+ *      Kay Gürtzig     2017-05-06      Bugfix #397: Wrong insertion position with SelectedSequence as target
+ *      Kay Gürtzig     2017-05-09      Enh. #372: Statistics method supporting the AttributeInspector
+ *      Kay Gürtzig     2017-05-16      Enh. #389: Third diagram type introduced.
+ *      Kay Gürtzig     2017-05-21      Enh. #372: additional attributes included in undo/redo mechanism
+ *      Kay Gürtzig     2017-05-22      Enh. #272: New attribute "origin"
+ *      Kay Gürtzig     2017-06-30      Enh. #389: New attribute "includeList"
+ *      Kay Gürtzig     2017-07-02      Enh. #389: Analyser and execution mechanisms adapted to new include design
+ *      Kay Gürtzig     2017-09-18      Enh. #423: Type retrieval and Analyser enhancement for record types
+ *      Kay Gürtzig     2017-10-09      Enh. #423: Adjustments for Analyser check 24.
+ *      Kay Gürtzig     2017-10-26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
+ *      Kay Gürtzig     2017-11-04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
+ *      Kay Gürtzig     2017-11-05      Issue #454: logic of getMethodName() modified
+ *      Kay Gürtzig     2018-03-12      Bugfix #518: Distinction between uninitialized and empty typeMap
+ *      Kay Gürtzig     2018-03-15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
  *                                      Bugfix #523: Defective undo and redo of include_list changes mended
  *                                      KGU#505: Analyser now copes better with lists of record access expressions
- *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
- *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
- *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
- *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
- *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
- *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
- *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
- *      Kay Gürtzig     2018.10.04      Bugfix #618: Function names shouldn't be reported as used variables
- *      Kay Gürtzig     2018.10.25      Enh. #419: New methods breakElementTextLines(...), getMaxLineLength(...)
+ *      Kay Gürtzig     2018-04-03      Bugfix #528: Record component access analysis mended and applied to all elements
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-07-17      Issue #561: getElementCounts() modified for AttributeInspector update
+ *      Kay Gürtzig     2018-07-20      Enh. #563: Analyser accepts simplified record initializers
+ *      Kay Gürtzig     2018-07-25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
+ *      Kay Gürtzig     2018-09-12      Refinement to #372: More file meta data used as workaround for missing author attributes 
+ *      Kay Gürtzig     2018-09-17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018-09-24      Bugfix #605: Defective argument list parsing mended
+ *      Kay Gürtzig     2018-09-28      Issue #613: New methods removeFromIncludeList(...)
+ *      Kay Gürtzig     2018-10-04      Bugfix #618: Function names shouldn't be reported as used variables
+ *      Kay Gürtzig     2018-10-25      Enh. #419: New methods breakElementTextLines(...), getMaxLineLength(...)
+ *      Kay Gürtzig     2018-12-18      Bugfix #649: New method getElementCount(), use of cached variable names on redrawing
  *      
  ******************************************************************************************************
  *
@@ -538,9 +539,26 @@ public class Root extends Element {
 	// END KGU#363 2017-05-21
 
 	/**
-	 * Names of variables defined within this diagram
+	 * Names of variables defined within this diagram (may be null after changes!)
+	 * @see #getVariables()
 	 */
-	public StringList variables = new StringList();
+	// START KGU#444/KGU#618 2018-12-18 - Issues #417, #649 We want to distinguish empty from invalid
+	//public StringList variables = new StringList();
+	public StringList variables = null;
+	
+	/**
+	 * @return Cached names of the variables defined within this diagram (may be empty after changes).
+	 * @see #variables
+	 * @see #getVarNames()
+	 */
+	public StringList getVariables()
+	{
+		if (variables != null) {
+			return variables;
+		}
+		return new StringList();
+	}
+	// END KGU#444/KGU#618 2018-12-18
 	// START KGU#375 2017-03-31: Enh. #388
 	/**
 	 * Names and cached value expressions of detected constants among the {@link #variables} 
@@ -1733,6 +1751,9 @@ public class Root extends Element {
 			this.undoLevelOfLastSave = -1;
 		}
 		// END KGU#137 2016-01-11
+        // START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+        this.variables = null;
+        // ENDKGU#444/KGU#618 2018-12-18
 		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
 		this.clearRuntimeData();
 		// END KGU#117 2016-03-07
@@ -1896,6 +1917,9 @@ public class Root extends Element {
                 this.includeList = null;
             }
             // END KGU507 2018-03-15
+            // START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+            this.variables = null;
+            // ENDKGU#444/KGU#618 2018-12-18
             // START KGU#136 2016-03-01: Bugfix #97
             this.resetDrawingInfoDown();
             // END KGU#136 2016-03-01
@@ -2455,7 +2479,7 @@ public class Root extends Element {
 			//if((Function.testIdentifier(token, null)
 			//		&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
 			//		|| this.variables.contains(token)))
-			if((Function.testIdentifier(token, null) || this.variables.contains(token))
+			if((Function.testIdentifier(token, null) || this.getVariables().contains(token))
 					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("(")))
 			// END KGU#588 2018-10-04
 			{
@@ -2637,12 +2661,26 @@ public class Root extends Element {
      * Extract all variable names of the entire program and store them in
      * this.variables.
      * @return list of variable names
+     * @see #getCachedVarNames()
      */
     public StringList getVarNames()
     {
             return getVarNames(this, false, false, true);
     }
 
+    /**
+     * Provides all variable names of the entire program if cached, otherwise extracts and
+     * stores them in this.variables.
+     * @return list of variable names
+     * @see #getVarNames()
+     */
+    public StringList getCachedVarNames() {
+    	if (this.variables != null) {
+    		return this.variables;
+    	}
+    	return getVarNames(this, false, false, true);
+    }
+    
     /**
      * Extract the names of all variables assigned or introduced within passed-in element _ele.
      * @return list of variable names
@@ -5134,7 +5172,7 @@ public class Root extends Element {
         // END KGU#78 2015-11-25
 
         // CHECK: var = programname (#9)
-        if (!haveFunction && variables.contains(programName))
+        if (!haveFunction && getVariables().contains(programName))
         {
             //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
             error  = new DetectedError(errorMsg(Menu.error09,programName),this);
@@ -5646,6 +5684,7 @@ public class Root extends Element {
 	 * 8. Jumps<br/>
 	 * 9. Parallel sections<br/>
 	 * @return an integer array with element counts according to the index map above 
+	 * @see #getElementCount()
 	 */
 	public Integer[] getElementCounts()
 	{
@@ -5700,6 +5739,23 @@ public class Root extends Element {
 		return counts;
 	}
 	// END KGU#363 2017-05-08
+	
+	// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 Auxiliary method to get the total element count
+	/**
+	 * @return the total number of elements comprised by this Root including itself
+	 * (and except Subqueues). Uses {@link #getElementCounts()}.
+	 * @see #getElementCounts()
+	 */
+	public int getElementCount()
+	{
+		Integer[] counts = getElementCounts();
+		int nElements = 0;
+		for (Integer count: counts) {
+			nElements += count;
+		}
+		return nElements + 1;
+	}
+	// END KGU#444/KGU#618 2018-12-18
 	
 	// START KGU#324 2017-05-30: Enh. #373, #415
 	/**
