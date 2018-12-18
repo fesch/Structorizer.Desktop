@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:nsd="https://structorizer.fisch.lu" version="3.28-12" preRepeat="until " postFor="to" preReturn="return" postForIn="in" preWhile="while" output="OUTPUT" input="INPUT" preFor="for" preExit="exit" preLeave="leave" ignoreCase="true" preForIn="foreach" stepFor="step " author="Kay Gürtzig" created="2018-12-14" changedby="Kay Gürtzig" changed="2018-12-17" origin="Structorizer 3.28-12" licenseName="GPLv3-link" license="GNU General Public License (V 3)&#10;https://www.gnu.org/licenses/gpl.html&#10;http://www.gnu.de/documents/gpl.de.html&#10;" text="&#34;string INSPECT_REPLACING(target, modes, subjects, replacements, after, before)&#34;" comment="&#34;This routine simulates an INSPECT REPLACING command of COBOL.&#34;,&#34;Argument target is the string to be manipulated (must be a variable).&#34;,&#34;The argument arrays modes, subjects, replacements, after, before must each contain one string per replacing clause:&#34;,&#34;For the k-th replacing clause the elements are to represent:&#34;,&#34;modes[k] - one of &#34;&#34;CHARACTERS&#34;&#34;, &#34;&#34;ALL&#34;&#34;, &#34;&#34;FIRST&#34;&#34;, &#34;&#34;LEADING&#34;&#34;, &#34;&#34;TRAILING&#34;&#34;;&#34;,&#34;subjects[k] - the substring to be replaced (ignored with modes[k] = &#34;&#34;CHARACTERS&#34;&#34;);&#34;,&#34;replacements[k] - the string substituting the subject (must be of same length as subjects[k]!)&#34;,&#34;after[k] - the trigger substring starting the region (or &#34;&#34;&#34;&#34; if none);&#34;,&#34;before[k] - the trigger substrng terminating the region (or &#34;&#34;&#34;&#34; if none).&#34;,&#34;Thus, an argument tuple represents a REPLACING clause like:&#34;,&#34;modes[k] subjects[k] BY replacements[k] AFTER INITIAL after[k] BEFORE INITIAL before[k]&#34;" color="ffffff" type="sub" style="nice">
+	<children>
+		<instruction text="&#34;n &#60;- length(modes)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+		<instruction text="&#34;len &#60;- length(target)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+		<for text="&#34;for k &#60;- 0 to n-1&#34;" comment="" counterVar="k" startValue="0" endValue="n-1" stepConst="1" style="COUNTER" color="ffffff" disabled="0">
+			<qFor>
+				<instruction text="&#34;start[k] &#60;- pos(after[k], target)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+				<alternative text="&#34;start[k] &#60; 1&#34;" comment="" color="ffffff" disabled="0">
+					<qTrue>
+						<instruction text="&#34;start[k] &#60;- len + 1&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+					</qTrue>
+					<qFalse>
+						<instruction text="&#34;inc(start[k], length(after[k]))&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+					</qFalse>
+				</alternative>
+				<instruction text="&#34;end[k] &#60;- pos(before[k], target)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+				<alternative text="&#34;(before[k] = &#34;&#34;&#34;&#34;) or (end[k] &#60; 1)&#34;" comment="" color="ffffff" disabled="0">
+					<qTrue>
+						<instruction text="&#34;end[k] &#60;- len + 1&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+					</qTrue>
+					<qFalse color="ffffff">
+					</qFalse>
+				</alternative>
+			</qFor>
+		</for>
+		<instruction text="&#34;i &#60;- 1&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+		<while text="&#34;i &#60;= len&#34;" comment="" color="ffffff" disabled="0">
+			<qWhile>
+				<instruction text="&#34;replaced &#60;- false&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+				<instruction text="&#34;k &#60;- 0&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+				<while text="&#34;(k &#60;= n-1) and not replaced&#34;" comment="" color="ffffff" disabled="0">
+					<qWhile>
+						<instruction text="&#34;subject &#60;- subjects[k]&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+						<instruction text="&#34;lenSub &#60;- length(subject)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+						<alternative text="&#34;modes[k] = &#34;&#34;CHARACTERS&#34;&#34;&#34;" comment="" color="ffffff" disabled="0">
+							<qTrue>
+								<instruction text="&#34;lenSub &#60;- length(replacements[k])&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+							</qTrue>
+							<qFalse color="ffffff">
+							</qFalse>
+						</alternative>
+						<alternative text="&#34;(i &#62;= start[k]) and (i &#60;= end[k] - lenSub)&#34;" comment="" color="ffffff" disabled="0">
+							<qTrue>
+								<instruction text="&#34;substring &#60;- copy(target, i, lenSub)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+								<alternative text="&#34;(modes[k] = &#34;&#34;CHARACTERS&#34;&#34;) or (substring = subject)&#34;" comment="" color="ffffff" disabled="0">
+									<qTrue>
+										<alternative text="&#34;modes[k] = &#34;&#34;TRAILING&#34;&#34;&#34;" comment="" color="ffffff" disabled="0">
+											<qTrue>
+												<instruction text="&#34;mayReplace &#60;- (end[k] - i) mod lenSub = 0&#34;" comment="&#34;The remaining region must be a multiple of subject&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+												<instruction text="&#34;j &#60;- i + lenSub&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+												<while text="&#34;mayReplace and (j &#60;= end[k] - lenSub)&#34;" comment="" color="ffffff" disabled="0">
+													<qWhile>
+														<instruction text="&#34;mayReplace &#60;- subject = copy(target, j, lenSub)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+														<instruction text="&#34;inc(j, lenSub)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+													</qWhile>
+												</while>
+												<alternative text="&#34;mayReplace&#34;" comment="" color="ffffff" disabled="0">
+													<qTrue>
+														<instruction text="&#34;target &#60;- copy(target, 1, i-1)\&#34;,&#34;+ replacements[k]\&#34;,&#34;+ copy(target, i + lenSub, len)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+														<instruction text="&#34;replaced &#60;- true&#34;,&#34;inc(i, lenSub - 1)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+													</qTrue>
+													<qFalse color="ffffff">
+													</qFalse>
+												</alternative>
+											</qTrue>
+											<qFalse>
+												<instruction text="&#34;target &#60;- copy(target, 1, i-1) + replacements[k] + copy(target, i + lenSub, len)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+												<case text="&#34;modes[k]&#34;,&#34;&#34;&#34;FIRST&#34;&#34;&#34;,&#34;&#34;&#34;LEADING&#34;&#34;&#34;,&#34;default&#34;" comment="" color="ffffff" disabled="0">
+													<qCase>
+														<instruction text="&#34;end[k] &#60;- i&#34;" comment="&#34;done.&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+													</qCase>
+													<qCase>
+														<alternative text="&#34;copy(target, i+lenSub, lenSub) &#60;&#62; subject&#34;" comment="" color="ffffff" disabled="0">
+															<qTrue>
+																<instruction text="&#34;end[k] &#60;- i&#34;" comment="&#34;If the subject doesn't repeat immediately, disable this item&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+															</qTrue>
+															<qFalse color="ffffff">
+															</qFalse>
+														</alternative>
+													</qCase>
+													<qCase color="ffffff">
+													</qCase>
+												</case>
+												<instruction text="&#34;replaced &#60;- true&#34;,&#34;inc(i, lenSub - 1)&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+											</qFalse>
+										</alternative>
+									</qTrue>
+									<qFalse color="ffffff">
+									</qFalse>
+								</alternative>
+							</qTrue>
+							<qFalse color="ffffff">
+							</qFalse>
+						</alternative>
+						<instruction text="&#34;k &#60;- k + 1&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+					</qWhile>
+				</while>
+				<instruction text="&#34;i &#60;- i+1&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+			</qWhile>
+		</while>
+		<instruction text="&#34;return target&#34;" comment="" color="ffffff" rotated="0" disabled="0"></instruction>
+	</children>
+</root>

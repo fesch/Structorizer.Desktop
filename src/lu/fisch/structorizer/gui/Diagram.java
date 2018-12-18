@@ -3891,7 +3891,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// This is a transmutation helper function
 	private void decomposeCase(Subqueue parent)
 	{
-		// Comment will be tranferred to the first replacing element
+		// Comment will be transferred to the first replacing element
 		// (discriminator variable assignment or outermost Alternative).
 		Case caseElem = (Case)selected;
 		// List of replacing nested alternatives

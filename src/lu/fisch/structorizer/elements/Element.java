@@ -223,7 +223,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.28-11";
+	public static final String E_VERSION = "3.28-12";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -3171,6 +3171,14 @@ public abstract class Element {
 					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
 					specialSigns.add("as");
 					// END KGU#109 2016-01-15
+					// START KGU#611 2018-12-12 - Issue #643 - Since unifyOperators() tolerates case, we should do so here as well
+					specialSigns.add("AND");
+					specialSigns.add("OR");
+					specialSigns.add("XOR");
+					specialSigns.add("NOT");
+					specialSigns.add("SHL");
+					specialSigns.add("SHR");
+					// END KGU#611 2018-12-12
 					
 					// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
 					specialSigns.add("{");
