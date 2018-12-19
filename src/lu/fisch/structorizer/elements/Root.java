@@ -2665,6 +2665,7 @@ public class Root extends Element {
      */
     public StringList getVarNames()
     {
+            //System.out.println("getVarNames() called...");
             return getVarNames(this, false, false, true);
     }
 
@@ -2675,6 +2676,7 @@ public class Root extends Element {
      * @see #getVarNames()
      */
     public StringList getCachedVarNames() {
+    	//System.out.println("getCachedVarNames() called...");
     	if (this.variables != null) {
     		return this.variables;
     	}
@@ -2714,7 +2716,7 @@ public class Root extends Element {
             // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
             // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
             // !!
-        	// KGU 2015-11-29: Decomposed -> new method collectParameters
+            // KGU 2015-11-29: Decomposed -> new method collectParameters
             if (this.isSubroutine() && _ele==this && !_onlyBody)
             {
             	collectParameters(varNames, argTypes);
@@ -2807,18 +2809,18 @@ public class Root extends Element {
     		// END KGU#388 2017-09-18
     		IElementVisitor collector = new IElementVisitor() {
 
-				@Override
-				public boolean visitPreOrder(Element _ele) {
-					if (!_ele.disabled) {
-						_ele.updateTypeMap(typeMap);
-					}
-					return true;
-				}
+    			@Override
+    			public boolean visitPreOrder(Element _ele) {
+    				if (!_ele.disabled) {
+    					_ele.updateTypeMap(typeMap);
+    				}
+    				return true;
+    			}
 
-				@Override
-				public boolean visitPostOrder(Element _ele) {
-					return true;
-				}
+    			@Override
+    			public boolean visitPostOrder(Element _ele) {
+    				return true;
+    			}
     			
     		};
     		this.traverse(collector);
@@ -2835,7 +2837,7 @@ public class Root extends Element {
     }
     // END KGU#261 2017-01-20
     
-    // START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
+	// START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
 	/**
 	 * Adds all parameter declarations to the given map (varname -> typeinfo).
 	 * @param typeMap
@@ -2867,13 +2869,13 @@ public class Root extends Element {
 
     
     // START BFI 2015-12-10
-	/**
-	 * Obsolete method to get a type description of the result type of this (if being a
-	 * function), or null, if not available.
-	 * Use getResultType() instead!
-	 * @return informal type description or null
-	 */
-	@Deprecated
+    /**
+     * Obsolete method to get a type description of the result type of this (if being a
+     * function), or null, if not available.
+     * Use getResultType() instead!
+     * @return informal type description or null
+     */
+    @Deprecated
     public String getReturnType()
     {
         try 
@@ -2993,8 +2995,6 @@ public class Root extends Element {
      */
     private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, boolean[] _resultFlags, HashMap<String, TypeMapEntry> _types)
     {
-    	//this.getVarNames();
-    	
     	for (int i=0; i<_node.getSize(); i++)
     	{
     		Element ele = _node.getElement(i);
@@ -3033,12 +3033,12 @@ public class Root extends Element {
     		if (eleClassName.equals("Instruction"))
     		{
     			analyse_10_11(ele, _errors);
-				// START KGU#375 2017-04-04: Enh. #388
+    			// START KGU#375 2017-04-04: Enh. #388
     			// START KGU#388 2017-09-16: Enh. #423 record analysis
-				//analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
-				analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
-				// END KGU#388 2017-09-16
-				// END KGU#375 2017-04-04
+    			//analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
+    			analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
+    			// END KGU#388 2017-09-16
+    			// END KGU#375 2017-04-04
     		}
 
     		// CHECK: non-initialised var (except REPEAT)  (#3)
@@ -3053,7 +3053,7 @@ public class Root extends Element {
     		if (eleClassName.equals("Instruction"))
     		{
     			@SuppressWarnings("unchecked")
-				HashMap<String, String> constantDefs = (HashMap<String, String>)_constants.clone();
+    			HashMap<String, String> constantDefs = (HashMap<String, String>)_constants.clone();
     			String[] keywords = CodeParser.getAllProperties();
     			StringList initVars = _vars.copy();
     			// START KGU#423 2017-09-13: Enh. #416 - cope with user-defined line breaks
@@ -3068,17 +3068,17 @@ public class Root extends Element {
     					myUsed = getUsedVarNames(line, keywords);
     					analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, -1);
     					initVars.add(this.getVarNames(StringList.getNew(line), constantDefs));
-       				// START KGU#388 2017-09-13: Enh. #423
+    				// START KGU#388 2017-09-13: Enh. #423
     				}
     				// END KGU#388 2017-09-13
     			}
     		}
     		else {
     			myUsed = getUsedVarNames(ele, true, true);
-        		if (!eleClassName.equals("Repeat"))
-        		{
-        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
-        		}
+    			if (!eleClassName.equals("Repeat"))
+    			{
+    				analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
+    			}
     		}
     		// END KGU#375 2017-04-05
 
@@ -3110,11 +3110,11 @@ public class Root extends Element {
     		}
     		// CHECK: Correct usage of Jump, including return (#16) New!
     		// + CHECK #13: Competetive return mechanisms
-			else if (ele instanceof Jump)
-			{
-				analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
-			}
-			else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
+    		else if (ele instanceof Jump)
+    		{
+    			analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
+    		}
+    		else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
     		{
     		// END KGU#78 2015-11-25
 				analyse_13_16_instr((Instruction)ele, _errors, i == _node.getSize()-1, myVars, _resultFlags);
@@ -3124,7 +3124,7 @@ public class Root extends Element {
 
     		// add detected vars to initialised vars
 //    		// START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-04-20
-			_vars.addIfNew(myVars);
+    		_vars.addIfNew(myVars);
 //    		if (!(ele instanceof Call && ((Call)ele).isImportCall())) {
 //    			_vars.addIfNew(myVars);
 //    		}
@@ -3158,11 +3158,11 @@ public class Root extends Element {
     		{
     			analyse_17((Parallel) ele, _errors);
     		}
-			// START KGU#514 2018-04-03: Bugfix #528 (for Instructions, it has already been done above)
+    		// START KGU#514 2018-04-03: Bugfix #528 (for Instructions, it has already been done above)
     		else if (check(24) && !eleClassName.equals("Instruction")) {
     			analyse_24(ele, _errors, _types);
     		}
-			// END KGU#514 2018-04-03
+    		// END KGU#514 2018-04-03
 
 
     		// continue analysis for subelements
