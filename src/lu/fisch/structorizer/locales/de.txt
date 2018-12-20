@@ -886,7 +886,8 @@ Colors.lblColors.*.tooltip=Die gewählte Farbe Nr. [#].
 Colors.colors.*.tooltip=Zum Bearbeiten: Anklicken ...
 Colors.btnOK.text=Speichern
 Colors.btnOK.tooltip=Speichern der gewählten Einstellungen.
-
+Colors.btnReset.text=Standard
+Colors.btnReset.tooltip=Alle Farben auf Standardauswahl zurücksetzen.
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Farb-Einstellungen

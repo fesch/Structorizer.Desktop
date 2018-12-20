@@ -887,7 +887,8 @@ Colors.lblColors.*.tooltip=¿Su elección de color [#]?
 Colors.colors.*.tooltip=Click para editar ...
 Colors.btnOK.text=Aceptar
 Colors.btnOK.tooltip=Aceptar los cambios.
-
+Colors.btnReset.text=Estándar
+Colors.btnReset.tooltip=Restaurar los colores de estándar.
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Colores
