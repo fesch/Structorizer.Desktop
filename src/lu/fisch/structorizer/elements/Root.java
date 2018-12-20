@@ -135,6 +135,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-10-04      Bugfix #618: Function names shouldn't be reported as used variables
  *      Kay Gürtzig     2018-10-25      Enh. #419: New methods breakElementTextLines(...), getMaxLineLength(...)
  *      Kay Gürtzig     2018-12-18      Bugfix #649: New method getElementCount(), use of cached variable names on redrawing
+ *      Kay Gürtzig     2018-12-19      Bugfix #652: Drawing preparation and actual drawing were inconsistent
+ *                                      w.r.t. the "Included Diagrams" box, such that ugly discrepancies appeared.
  *      
  ******************************************************************************************************
  *
@@ -944,21 +946,12 @@ public class Root extends Element {
 		}
 		// END KGU#227 2016-07-31
 		
-		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
-		if (this.includeList != null) {
-			Rect includesBox = this.writeOutImports(_canvas, 0, 0, rect0.right - 2 * padding, false);
-			rect0.bottom += includesBox.bottom - includesBox.top + E_PADDING/2;
-			rect0.right = Math.max(rect0.right, includesBox.right - includesBox.left + 2 * padding);
-		}
-		// END KGU#376 2017-07-01
-		
 		pt0Sub.y = rect0.bottom;
 		if (isBoxed)	pt0Sub.y -= E_PADDING;
 
 		_canvas.setFont(Element.font);
 
 		subrect0 = children.prepareDraw(_canvas);
-
 		if (isBoxed)
 		{
 			rect0.right = Math.max(rect0.right, subrect0.right + 2*Element.E_PADDING);
@@ -969,9 +962,22 @@ public class Root extends Element {
 		}
 
 		rect0.bottom += subrect0.bottom;
-		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
+		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine or includable
 		if (!isBoxed && !isProgram()) rect0.bottom += E_PADDING/2;
 		// END KGU#221 2016-07-28
+
+		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
+		// KGU#621 2018-12-19: Bugfix #652 - children size exploration has to be done before!
+		if (this.includeList != null) {
+			// KGU#621 2018-12-19: Bugfix #652 - Padding assumptions corrected
+			Rect includesBox = this.writeOutImports(_canvas, 0, 0, rect0.right - padding, false);
+			int inclHeight = includesBox.bottom - includesBox.top + E_PADDING/2;
+			rect0.bottom += inclHeight;
+			rect0.right = Math.max(rect0.right, includesBox.right - includesBox.left + padding);
+			pt0Sub.y += inclHeight;
+		}
+		// END KGU#376 2017-07-01
+		
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
 		
@@ -1200,7 +1206,7 @@ public class Root extends Element {
 	 * Draws (or calculates) a box with the names of the diagrams to be included.<br/>
 	 * NOTE: Should only be called if includeList isn't empty.
 	 * @param _canvas - the current drawing surface
-	 * @param _x - left margin cordinate
+	 * @param _x - left margin coordinate
 	 * @param _y - upper margin coordinate
 	 * @param maxWidth - maximum width of the box
 	 * @param _actuallyDraw - draw (true) or only calculate size (false)
@@ -1208,19 +1214,19 @@ public class Root extends Element {
 	 */
 	protected Rect writeOutImports(Canvas _canvas, int _x, int _y, int _maxWidth, boolean _actuallyDraw)
 	{
-		int height = 0;
-		int width = 0;
-		int padding = E_PADDING/2;
+		int height = 0;				// Pure total text height (without padding)
+		int width = 0;				// Pure maximum text width (without padding)
+		int padding = E_PADDING/2;	// Box-internal padding
 		// smaller font
 		int smallFontSize = Element.font.getSize() * 2 / 3;
 		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, smallFontSize);
 		Font smallBoldFont = new Font(Element.font.getName(), Font.BOLD, smallFontSize);
-		FontMetrics fm = _canvas.getFontMetrics(smallFont);
-		int fontHeight = fm.getHeight();
 		// backup the original font
 		Font backupFont = _canvas.getFont();
 		_canvas.setFont(smallFont);
 		_canvas.setColor(Color.BLACK);
+		FontMetrics fm = _canvas.getFontMetrics(smallFont);
+		int fontHeight = fm.getHeight();
 		String caption = Element.preImport.trim();
 		int captionX = _x + padding;
 		int captionY = _y;
@@ -1231,6 +1237,11 @@ public class Root extends Element {
 			if (this.includeList.count() > 0) {
 				height += fontHeight/4 + fontHeight;	// upper padding + string height
 				width = _canvas.stringWidth(caption);
+				// START KGU#621 2018-12-19: Bugfix #652 For the further comparison we may have to enlarge _maxWidth
+				if (!_actuallyDraw) {
+					_maxWidth = Math.max(width + 2 * padding, _maxWidth);
+				}
+				// END KGU#621 2018-12-19
 				captionY = _y + height;
 			}
 		}
@@ -1239,25 +1250,42 @@ public class Root extends Element {
 		_canvas.setFont(smallBoldFont);
 		String line = "";
 		StringList includeLines = new StringList();
+		// START KGU#621 2018-12-19: Bugfix #652
+		// In preparation phase we must ensure a width that corresponds at least to the longest name
+		if (!_actuallyDraw) {
+			for (int i = 0; i < this.includeList.count(); i++) {
+				_maxWidth = Math.max(_maxWidth, _canvas.stringWidth(this.includeList.get(i)) + 2 * padding);
+			}
+		}
+		// END KGU#621 2018-12-19
 		for (int i = 0; i < this.includeList.count(); i++) {
 			String name = this.includeList.get(i);
-			if (line.isEmpty() || padding + _canvas.stringWidth(line + ", " + name) < _maxWidth)
+			// Since the leading ", " will be cut off we don't have to add ", " for the test
+			// In theory 2 * padding would have to be added for comparison but this turned out too large
+			if (line.isEmpty() || 2 * padding + _canvas.stringWidth(line + name) < _maxWidth)
 			{
+				// The space is wide enough to append name, or we have no choice
 				line += ", " + name;
 			}
 			else {
+				// Stash the current line (cannot be extended)
 				height += fontHeight;
+				line = line.substring(2);	// Cut off the leading ", " from the old line
 				width = Math.max(width, _canvas.stringWidth(line));
-				includeLines.add(line.substring(2));
-				line = ", " + name;
+				includeLines.add(line);
+				// Start a new line
+				line = ", " + name;			// Place the name to the new line
 			}
 		}
+		// Is there a begun line? Then stash it
 		if (!line.isEmpty())
 		{
 			height += fontHeight;
+			line = line.substring(2);	// Cut off the leading ", " from the last line
 			width = Math.max(width, _canvas.stringWidth(line));
-			includeLines.add(line.substring(2));
+			includeLines.add(line);
 		}
+		
 		Rect inclBox = new Rect(_x, _y, _x + Math.max(_maxWidth, width + 2 * padding), _y + height);
 		if (height > 0)
 		{

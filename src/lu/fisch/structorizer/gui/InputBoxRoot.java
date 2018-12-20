@@ -19,6 +19,8 @@
  */
 package lu.fisch.structorizer.gui;
 
+import java.awt.Dimension;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -31,35 +33,34 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.13      First Issue (for Enh. requ. #372)
- *      Kay Gürtzig     2017.05.21      Attribute editing now delegated to new class AttributeInspector
- *      Kay Gürtzig     2017.06.30      Enh. #389: Text area for Include list added.
+ *      Kay Gürtzig     2017-03-13      First Issue (for Enh. requ. #372)
+ *      Kay Gürtzig     2017-05-21      Attribute editing now delegated to new class AttributeInspector
+ *      Kay Gürtzig     2017-06-30      Enh. #389: Text area for Include list added.
+ *      Kay Gürtzig     2018-12-19      Issue #651: Include list editing now delegated to a JOptionPane
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      In addition to the usual fields (text and comment) this editor also handles author name and
- *      license aspects, in future varaibel and type management are likely to be added. 
+ *      In addition to the usual fields (text and comment) this editor also allows access to attributes
+ *      and the include list, in future variable and type management are likely to be added. 
  *
  ******************************************************************************************************///
 
-import java.awt.Color;
-
-import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 
 import javax.swing.JButton;
-import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import lu.fisch.structorizer.elements.RootAttributes;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.utils.StringList;
 
 /**
@@ -67,7 +68,7 @@ import lu.fisch.utils.StringList;
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
-public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
+public class InputBoxRoot extends InputBox implements LangEventListener {
 	
 //	/**
 //	 * Helper structure for the communication with classes {@code Diagram}
@@ -91,10 +92,17 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 	protected JButton btnAttributes;
 	// END KGU#363 2017-05-20
 	// START KGU#376 2017-06-30: Enh. #389 - Diagram import now directly from Root 
-	private JLabel lblIncludeList;
-	private JTextArea txtIncludeList;
-    protected JScrollPane scrIncludeList;
+	// START KGU#620 2018-12-19: Issue #651 - Redesign of the include list editing
+	//private JLabel lblIncludeList;
+	//private JTextArea txtIncludeList;
+    //protected JScrollPane scrIncludeList;
+	protected JButton btnIncludeList;
+	private static final LangTextHolder lblIncludeList = new LangTextHolder("Diagrams to be included");
+	public JTextArea txtIncludeList;		// To be realised in a popup now
+    public JScrollPane scrIncludeList;		// To be realised in a popup now
+	// END KGU#620 2018-12-19
 	// END KGU#376 2017-06-30
+	
 	public RootAttributes licenseInfo = new RootAttributes();
 	private Frame frame;
 
@@ -121,45 +129,48 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 		
 		int lineNo = 1;
 
+		// START KGU#620 2018-12-19: Issue #651 - put the include list editing to an additional popup window
 //		int border = (int)(5 * scaleFactor);
 //		_gbc.insets = new Insets(2*border, border, 0, border);
-		
-		lblIncludeList = new JLabel("Diagrams to be included");
+//		
+//		lblIncludeList = new JLabel("Diagrams to be included");
+//		txtIncludeList = new JTextArea();
+//	    scrIncludeList = new JScrollPane(txtIncludeList);
+//
+//	    txtIncludeList.addKeyListener(this);
+//	    // START KGU 2018-02-16: Make sure the includes area isn't mistaken for comments or signature text
+//	    txtIncludeList.setBackground(new Color(255,255,210));
+//	    // END KGU 2018-02-16
+//		// Issue #163 - tab isn't really needed within the text
+//		txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+//		txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+//
+//		scalableComponents.addElement(txtIncludeList);
+//        
+//		_gbc.gridx = 1;
+//		_gbc.gridy = lineNo;
+//		_gbc.gridheight = 1;
+//		_gbc.gridwidth = 18;
+//		_gbc.fill = GridBagConstraints.BOTH;
+//		_gbc.weightx = 1;
+//		_gbc.weighty = 0;
+//		_gbc.anchor = GridBagConstraints.NORTH;
+//		_panel.add(lblIncludeList, _gbc);
+//
+//		_gbc.gridx = 1;
+//		_gbc.gridy = ++lineNo;
+//		_gbc.gridheight = 4;
+//		_gbc.gridwidth = 18;
+//		_gbc.fill = GridBagConstraints.BOTH;
+//		_gbc.weightx = 1;
+//		_gbc.weighty = 1;
+//		_gbc.anchor = GridBagConstraints.NORTH;
+//		_panel.add(scrIncludeList, _gbc);
+//		int fontHeight = txtIncludeList.getFontMetrics(txtIncludeList.getFont().deriveFont(FONT_SIZE)).getHeight();
+//		scrIncludeList.setPreferredSize(new Dimension(getPreferredSize().width, (int)Math.ceil(2 * fontHeight)));
 		txtIncludeList = new JTextArea();
 	    scrIncludeList = new JScrollPane(txtIncludeList);
-
-	    txtIncludeList.addKeyListener(this);
-	    // START KGU 2018-02-16: Make sure the includes area isn't mistaken for comments or signature text
-	    txtIncludeList.setBackground(new Color(255,255,210));
-	    // END KGU 2018-02-16
-        // Issue #163 - tab isn't really needed within the text
-        txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
-        txtIncludeList.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
-
-        scalableComponents.addElement(txtIncludeList);
-        
-        _gbc.gridx = 1;
-		_gbc.gridy = lineNo;
-		_gbc.gridheight = 1;
-		_gbc.gridwidth = 18;
-        _gbc.fill = GridBagConstraints.BOTH;
-        _gbc.weightx = 1;
-        _gbc.weighty = 0;
-        _gbc.anchor = GridBagConstraints.NORTH;
-		_panel.add(lblIncludeList, _gbc);
-
-		_gbc.gridx = 1;
-		_gbc.gridy = ++lineNo;
-		_gbc.gridheight = 4;
-		_gbc.gridwidth = 18;
-		_gbc.fill = GridBagConstraints.BOTH;
-		_gbc.weightx = 1;
-		_gbc.weighty = 1;
-		_gbc.anchor = GridBagConstraints.NORTH;
-		_panel.add(scrIncludeList, _gbc);
-
-		int fontHeight = txtIncludeList.getFontMetrics(txtIncludeList.getFont().deriveFont(FONT_SIZE)).getHeight();
-		scrIncludeList.setPreferredSize(new Dimension(getPreferredSize().width, (int)Math.ceil(2 * fontHeight)));
+		// END KGU#620 2018-12-19
 
 		_gbc.gridx = 1;
 		_gbc.gridy = (lineNo += _gbc.gridheight);
@@ -188,12 +199,6 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
 	@Override
     protected int createExtrasBottom(JPanel _panel, GridBagConstraints _gbc, int _maxGridX) {
 		
-//		lblAuthorName = new JLabel("Author");
-//		txtAuthorName = new JTextField(40);
-//		btnLicenseText = new JButton("License text");
-//		btnLicenseText.addActionListener(this);
-//		cbLicenseName = new JComboBox<String>();
-//		cbLicenseName.setToolTipText("Select an available license from the personal license pool or the current one to edit it.");
 		btnAttributes = new JButton("Attributes");
 		btnAttributes.addActionListener(this);
 		
@@ -206,46 +211,29 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
         _gbc.weightx = 0;
         _gbc.weighty = 0;
         _gbc.anchor = GridBagConstraints.NORTH;
-//        ((GridBagLayout)_panel.getLayout()).setConstraints(lblAuthorName, _gbc);
-//        _panel.add(lblAuthorName);
-//
-//        _gbc.insets.left = 0;
-//        
-//        _gbc.gridx = 2;
-//        _gbc.gridwidth = 3;
-//        _gbc.gridheight = 1;
-//        _gbc.fill = GridBagConstraints.BOTH;
-//        _gbc.weightx = 5;
-//        _gbc.weighty = 0;
-//        _gbc.anchor = GridBagConstraints.NORTH;
-//        ((GridBagLayout)_panel.getLayout()).setConstraints(txtAuthorName, _gbc);
-//        _panel.add(txtAuthorName);
-//        
-//        _gbc.insets.left = border;
-//
-//        _gbc.gridx = 7;
-//        _gbc.gridwidth = 1;
-//        _gbc.gridheight = 1;
-//        _gbc.fill = GridBagConstraints.BOTH;
-//        _gbc.weightx = 0;
-//        _gbc.weighty = 0;
-//        _gbc.anchor = GridBagConstraints.NORTH;
-//        ((GridBagLayout)_panel.getLayout()).setConstraints(btnLicenseText, _gbc);
-//        _panel.add(btnLicenseText);
-//        
-//        _gbc.insets.left = 0;
-//        
-//        _gbc.gridx = 11;
-//        _gbc.gridwidth = 1;
-//        _gbc.gridheight = 1;
-//        _gbc.fill = GridBagConstraints.BOTH;
-//        _gbc.weightx = 0;
-//        _gbc.weighty = 0;
-//        _gbc.anchor = GridBagConstraints.NORTH;
-//        ((GridBagLayout)_panel.getLayout()).setConstraints(cbLicenseName, _gbc);
-//        _panel.add(cbLicenseName);
+        
         ((GridBagLayout)_panel.getLayout()).setConstraints(btnAttributes, _gbc);
         _panel.add(btnAttributes);
+      
+        // START KGU#620 2018-12-19: Issue #651 - Include list now editable via a button
+        btnIncludeList = new JButton(lblIncludeList.getText());
+		btnIncludeList.addActionListener(this);
+		
+		lblIncludeList.addLangEventListener(this);
+
+        _gbc.insets.left = 0;
+
+        _gbc.gridx = 2;
+        _gbc.gridwidth = 1;
+        _gbc.gridheight = 1;
+        _gbc.fill = GridBagConstraints.BOTH;
+        _gbc.weightx = 1;
+        _gbc.weighty = 0;
+        _gbc.anchor = GridBagConstraints.NORTH;
+        ((GridBagLayout)_panel.getLayout()).setConstraints(btnIncludeList, _gbc);
+        _panel.add(btnIncludeList);
+        // END KGU#620 2018-12-19
+
         _gbc.gridx = 11;
         
         _gbc.insets.left = border;
@@ -297,6 +285,35 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
     			licenseInfo = oldLicInfo;
     		}
     	}
+        // START KGU#620 2018-12-19: Issue #651 - Include list now editable via a button
+    	else if (source == btnIncludeList) {
+    		String oldList = txtIncludeList.getText();
+        	txtIncludeList.setFont(txtText.getFont());
+    		int fontHeight = txtIncludeList.getFontMetrics(txtIncludeList.getFont().deriveFont(FONT_SIZE)).getHeight();
+    		scrIncludeList.setPreferredSize(new Dimension(scrIncludeList.getPreferredSize().width, (int)Math.ceil(10 * fontHeight)));
+    		int answer = JOptionPane.showConfirmDialog(frame,
+    				scrIncludeList, lblIncludeList.getText(),
+    				JOptionPane.OK_CANCEL_OPTION,
+    				JOptionPane.PLAIN_MESSAGE,
+    				IconLoader.getIcon(71)	// Symbol for includables
+    				);
+    		if (answer != JOptionPane.OK_OPTION) {
+    			txtIncludeList.setText(oldList);
+    		}
+    		else {
+        		StringList includes = this.getIncludeList();
+        		int nIncludes = 0;
+        		if (includes != null) {
+        			nIncludes = includes.count();
+        			btnIncludeList.setToolTipText(includes.concatenate(", "));
+        		}
+        		else {
+        			btnIncludeList.setToolTipText(null);
+        		}
+        		btnIncludeList.setText(lblIncludeList.getText() + " (" + nIncludes + ")");
+    		}
+    	}
+    	// END KGU#620 2018-12-19
     	else {
     		super.actionPerformed(event);
     	}
@@ -310,27 +327,37 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
      */
     public void setIncludeList(StringList includeNames)
     {
+    	// START KGU#620 2018-12-19: Issue #651 - This gets way easier now
+//    	if (includeNames == null) {
+//    		return;
+//    	}
+//    	FontMetrics fm = txtIncludeList.getFontMetrics(txtIncludeList.getFont());
+//    	int width = txtIncludeList.getWidth();	// Either this width is wrong or the font metrics result is
+//    	StringList lines = new StringList();
+//    	String line = "";
+//    	for (int i = 0; i < includeNames.count(); i++) {
+//    		String name = includeNames.get(i);
+//    		if (line.isEmpty() || fm.stringWidth(line + name) < width) {
+//    			line += ", " + name;
+//    		}
+//    		else {
+//    			lines.add(line.substring(2).trim() + (i + 1 < includeNames.count() ? "," : ""));
+//    			line = ", " + name;
+//    		}
+//    	}
+//    	if (!line.isEmpty()) {
+//    		lines.add(line.substring(2));
+//    	}
+//    	txtIncludeList.setText(lines.getText());
     	if (includeNames == null) {
-    		return;
+    		includeNames = new StringList();
+    		btnIncludeList.setToolTipText(null);
     	}
-    	FontMetrics fm = txtIncludeList.getFontMetrics(txtIncludeList.getFont());
-    	int width = txtIncludeList.getWidth();	// FIXME: Either this width is wrong or the font metrics result is
-    	StringList lines = new StringList();
-    	String line = "";
-    	for (int i = 0; i < includeNames.count(); i++) {
-    		String name = includeNames.get(i);
-    		if (line.isEmpty() || fm.stringWidth(line + name) < width) {
-    			line += ", " + name;
-    		}
-    		else {
-    			lines.add(line.substring(2).trim() + (i + 1 < includeNames.count() ? "," : ""));
-    			line = ", " + name;
-    		}
+    	else {
+    		btnIncludeList.setToolTipText(includeNames.concatenate(", "));
     	}
-    	if (!line.isEmpty()) {
-    		lines.add(line.substring(2));
-    	}
-    	txtIncludeList.setText(lines.getText());
+    	txtIncludeList.setText(includeNames.getText());
+    	btnIncludeList.setText(lblIncludeList.getText() + " (" + includeNames.count() + ")");
     }
     
     /**
@@ -353,4 +380,18 @@ public class InputBoxRoot extends InputBox /*implements WindowListener*/ {
     	return names;
     }
     // END KGU#376 2017-07-01
+
+    // START KGU#620 2018-12-20: Issue #651 - Ensure the Include List button has proper caption on start
+	@Override
+	public void LangChanged(LangEvent evt) {
+		StringList includeNames = this.getIncludeList();
+		int nIncludes = 0;
+		if (includeNames != null) { nIncludes = includeNames.count(); }
+    	btnIncludeList.setText(lblIncludeList.getText() + " (" + nIncludes + ")");
+    	/* It should only once be triggered - on start. Remove listener now lest all instances of this
+    	 * class should stay in the listener list of the static variable forever 
+    	 */
+    	lblIncludeList.removeLangEventListener(this);
+	}
+	// END KGU#620 2018-12-20
 }

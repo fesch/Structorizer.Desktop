@@ -1419,7 +1419,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				widthFactor = drawRect.right / scroll.getWidth() + 1;
 			}
 			// END KGU#444 2017-11-03
-			System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
+			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
 			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
 			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
 		}
