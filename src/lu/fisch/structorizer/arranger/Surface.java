@@ -31,105 +31,106 @@ package lu.fisch.structorizer.arranger;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------          ----			-----------
- *      Bob Fisch       2009.08.18		First Issue
- *      Kay Gürtzig     2015.10.18		Several enhancements to improve Arranger usability (see comments)
- *      Kay Gürtzig     2015.11.14      Parameterized creation of dependent Mainforms (to solve issues #6, #16)
- *      Kay Gürtzig     2015.11.18      Several changes to get scrollbars working (issue #35 = KGU#85)
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2009-08-18      First Issue
+ *      Kay Gürtzig     2015-10-18      Several enhancements to improve Arranger usability (see comments)
+ *      Kay Gürtzig     2015-11-14      Parameterized creation of dependent Mainforms (to solve issues #6, #16)
+ *      Kay Gürtzig     2015-11-18      Several changes to get scrollbars working (issue #35 = KGU#85)
  *                                      removal mechanism added, selection mechanisms revised
- *      Kay Gürtzig     2015.12.17      Bugfix KGU#111 for Enh. #63, preparations for Enh. #62 (KGU#110)
- *      Kay Gürtzig     2015.12.20      Enh. #62 (KGU#110) 1st approach: Load / save as mere file list.
+ *      Kay Gürtzig     2015-12-17      Bugfix KGU#111 for Enh. #63, preparations for Enh. #62 (KGU#110)
+ *      Kay Gürtzig     2015-12-20      Enh. #62 (KGU#110) 1st approach: Load / save as mere file list.
  *                                      Enh. #35 (KGU#88) Usability improvement (automatic pinning)
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): Avoid reloading of structurally equivalent diagrams 
- *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
- *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Modifications for stable selection
- *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): Avoid reloading of structurally equivalent diagrams 
+ *      Kay Gürtzig     2016-01-15      Enh. #110: File open dialog now selects the NSD filter
+ *      Kay Gürtzig     2016-03-02      Bugfix #97 (KGU#136): Modifications for stable selection
+ *      Kay Gürtzig     2016-03-03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
  *      Kay Gürtzig     2016-03-08		Bugfix #97: Method for drawing info invalidation added (KGU#155) 
- *      Kay Gürtzig     2016.03.09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation (refactoring)
- *      Kay Gürtzig     2016.03.14      Enh. #62 update: currentDirectory adopted from first added diagram.
- *      Kay Gürtzig     2016.03.16      Bugfix #132: Precautions against stale Mainform references (KGU#158)
- *      Kay Gürtzig     2016.04.14      Enh. #158: Methods for copy and paste of diagrams as XML strings (KGU#177)
+ *      Kay Gürtzig     2016-03-09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation (refactoring)
+ *      Kay Gürtzig     2016-03-14      Enh. #62 update: currentDirectory adopted from first added diagram.
+ *      Kay Gürtzig     2016-03-16      Bugfix #132: Precautions against stale Mainform references (KGU#158)
+ *      Kay Gürtzig     2016-04-14      Enh. #158: Methods for copy and paste of diagrams as XML strings (KGU#177)
  *                                      Selection mechanisms mended
  *      Kay Gürtzig     2016-05-09      Issue #185: Chance to store unsaved changes before removal (KGU#194)
  *      Kay Gürtzig     2016-07-01      Enh. #62: Opportunity to save/load zipped arrangement (KGU#110)
  *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
- *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
- *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
- *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diagrams now trigger analyser updates
- *      Kay Gürtzig     2016.11.14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
- *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements
- *      Kay Gürtzig     2016.12.12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms
- *      Kay Gürtzig     2016.12.17      Enh. #305: New method removeDiagram(Root)
- *      Kay Gürtzig     2016.12.28      Enh. #318: Shadow path for Roots unzipped (from an arrz) into a temp dir
- *      Kay Gürtzig     2016.12.29      Enh. #315: More meticulous detection of diagram conflicts
- *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots
- *      Kay Gürtzig     2017.01.05      Enh. #319: Additional notification on test coverage status change
- *      Kay Gürtzig     2017.01.11      Fix KGU#328 in method replaced()
- *      Kay Gürtzig     2017.01.13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
- *      Kay Gürtzig     2017.04.22      Enh. #62, #318: Confirmation before overwriting a file, shadow paths considered
- *      Kay Gürtzig     2017.05.26      Bugfix #414: Too large bounding boxes caused errors and made the GUI irresponsive
- *      Kay Gürtzig     2017.10.23      Issue #417: Linear scrolling unit adaptation to reduce drawing time complexity
+ *      Kay Gürtzig     2016-07-19      Enh. #192: File name proposals slightly modified (KGU#205)
+ *      Kay Gürtzig     2016-09-26      Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016-10-11      Enh. #267: New notification changes to the set of diagrams now trigger analyser updates
+ *      Kay Gürtzig     2016-11-14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
+ *      Kay Gürtzig     2016-11-15      Enh. #290: Further modifications to let a Mainform insert arrangements
+ *      Kay Gürtzig     2016-12-12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms
+ *      Kay Gürtzig     2016-12-17      Enh. #305: New method removeDiagram(Root)
+ *      Kay Gürtzig     2016-12-28      Enh. #318: Shadow path for Roots unzipped (from an arrz) into a temp dir
+ *      Kay Gürtzig     2016-12-29      Enh. #315: More meticulous detection of diagram conflicts
+ *      Kay Gürtzig     2017-01-04      Bugfix #321: Make sure Mainforms save the actually iterated Roots
+ *      Kay Gürtzig     2017-01-05      Enh. #319: Additional notification on test coverage status change
+ *      Kay Gürtzig     2017-01-11      Fix KGU#328 in method replaced()
+ *      Kay Gürtzig     2017-01-13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
+ *      Kay Gürtzig     2017-04-22      Enh. #62, #318: Confirmation before overwriting a file, shadow paths considered
+ *      Kay Gürtzig     2017-05-26      Bugfix #414: Too large bounding boxes caused errors and made the GUI irresponsive
+ *      Kay Gürtzig     2017-10-23      Issue #417: Linear scrolling unit adaptation to reduce drawing time complexity
  *                                      Enh. #35: Scrolling dimensioning mechanism revised (group layout dropped) 
- *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
- *      Kay Gürtzig     2018.02.17      Enh. #512: Zoom mechanism implemented
- *      Kay Gürtzig     2018.02.20      Magic numbers replaced, Enh. #515 first steps toward a silhouette allocation
- *      Kay Gürtzig     2018.02.21      Enh. #515: Working first prototype for space-saving area management
- *      Kay Gürtzig     2018.03.13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
- *      Kay Gürtzig     2018.03.19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
- *      Kay Gürtzig     2018.06.10      Overriding of paint() replaced by paintComponent()
- *      Kay Gürtzig     2018.06.18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations
- *      Kay Gürtzig     2018.06.27      Enh. #552: Serial decisions on saveAll allowed, removeAllDiagrams() added
- *      Kay Gürtzig     2018.09.10      Bugfix #508/#512: A diagram loaded into a zoomed Surface first could have too small a shape
+ *      Kay Gürtzig     2017-11-03      Bugfix #417: division by zero exception in scroll unit adaptation averted
+ *      Kay Gürtzig     2018-02-17      Enh. #512: Zoom mechanism implemented
+ *      Kay Gürtzig     2018-02-20      Magic numbers replaced, Enh. #515 first steps toward a silhouette allocation
+ *      Kay Gürtzig     2018-02-21      Enh. #515: Working first prototype for space-saving area management
+ *      Kay Gürtzig     2018-03-13      Enh. #519: enabled to handle Ctrl + mouse wheel as zooming trigger (see comment)
+ *      Kay Gürtzig     2018-03-19      Enh. #512: Zoom compensation for PNG export mended (part of background was transparent)
+ *      Kay Gürtzig     2018-06-10      Overriding of paint() replaced by paintComponent()
+ *      Kay Gürtzig     2018-06-18      Bugfix #544 (KGU#524): zoom adaptation forgotten in adaptLayout() -> unnecessary revalidations
+ *      Kay Gürtzig     2018-06-27      Enh. #552: Serial decisions on saveAll allowed, removeAllDiagrams() added
+ *      Kay Gürtzig     2018-09-10      Bugfix #508/#512: A diagram loaded into a zoomed Surface first could have too small a shape
  *                                      for the text drawing in Structorizer due to font height/width rounding effects
- *      Kay Gürtzig     2018.09.12      Issue #372: Attribute handling, particularly for arrz file members, improved
+ *      Kay Gürtzig     2018-09-12      Issue #372: Attribute handling, particularly for arrz file members, improved
+ *      Kay Gürtzig     2018-12-20      Issue #654: Current directory is now restored from ini file on first launch
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      2018.06.10 (Kay Gürtzig)
+ *      2018-06-10 (Kay Gürtzig)
  *      - The change was made to comply with the Oracle Swing debugging guidelines
  *        (https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/swing002.html#BABHEADA),
  *        in particular section 13.2.8 Custom Painting and Double Buffering:
  *        "Although you can override paint and do custom painting in the override, you should instead
  *         override paintComponent. The JComponent.paint method ensures that painting happens to the
  *         double buffer. If you override paint directly, you may lose double buffering."
- *      2018.03.13 (Kay Gürtzig)
+ *      2018-03-13 (Kay Gürtzig)
  *      - According to a GUI suggestion by newboerg, surface now also implements MouseWheelListener in
  *        order to let ctrl + mouse wheel forward to zoom out and ctrl + mouse wheel backward to zoom in
  *      - is added as listener to Arranger.scrollarea  
- *      2018.02.21 (Kay Gürtzig)
+ *      2018-02-21 (Kay Gürtzig)
  *      - Rather than to place added diagrams along the top and left window border, now there is a more
  *        intelligent strategy implemented, which still aligns from top to bottom, left to right but tries
  *        to fill the gaps at a given level before diagrams are put beneath in new "rows". This is done
  *        via constructing the "lower silhouette" from the diagrams placed so far and then to look for the
  *        uppermost breach of sufficient width to accommodate the diagram to be added. See #515 on GitHub
  *        for illustrations. 
- *      2016.03.16 (Kay Gürtzig)
+ *      2016-03-16 (Kay Gürtzig)
  *      - It still happened that double-clicking on a diagram seemed to have no effect. In these cases
  *        actually there was a stale Mainform reference. The reason was that the windowClosing() trigger
  *        used to compare the Roots instead of the Mainform itself. So wrong reference may have been
  *        removed, e.g. if the Mainform contained some called subroutine it wasn't associated with.
  *        On the other hand, a handling for such a case was missing in the mouseClicked() trigger. 
- *      2016.03.08 (Kay Gürtzig)
+ *      2016-03-08 (Kay Gürtzig)
  *      - Enh. #77: For Test Coverage Tracking, Arranger in its function of a subroutine pool had to
  *        be enabled to set oder clear coverage flags 
- *      2016.01.02 (Kay Gürtzig)
+ *      2016-01-02 (Kay Gürtzig)
  *      - Bug #78: On (re)placing diagrams from a Structorizer Mainframe, an identity check had already
  *        duplicate diagram presence, but on file dropping and reloading a saved arrangement (Enhancement #62),
  *        an identity check didn't help, of course. So for these cases, a structural equivalence check had
  *        to be used instead - the bugfix realises this by new method Root.equals(). 
- *      2015.11.18 (Kay Gürtzig)
+ *      2015-11-18 (Kay Gürtzig)
  *      - In order to achieve scrollability, autoscroll mode (on dragging) had to be enabled, used area has
  *        to be communicated (nothing better than resetting the layout found - see adaptLayout())
  *      - Method removeDiagram() added,
  *      - selection consistency improved (never select or unselect a diagram element other than root, don't
  *        select eclipsed diagrams, don't leave selection flag on diagrams no longer selected).
- *      2015.11.14 (Kay Gürtzig)
+ *      2015-11-14 (Kay Gürtzig)
  *      - The creation of dependant Mainforms is now done via a parameterized constructor in order to
  *        inform the Mainform that it must not exit on closing but may only dispose.
- *      2015.10.18 (KGU)
+ *      2015-10-18 (KGU)
  *      - New interface method replaced() implemented that allows to keep track of NSD replacement in a
  *        related Mainform (KGU#48)
  *      - New interface method findSourcesByName() to prepare subroutine execution in a future effort (KGU#2)
@@ -402,6 +403,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				loadFiles(files);
 			}
 		});
+		// START KGU#623 2018-12-20: Enh. #654
+		File cd = new File(Ini.getInstance().getProperty("arrangerDirectory", this.currentDirectory.getAbsolutePath()));
+		if (cd.exists()) {
+			currentDirectory = cd;
+		}
+		// END KGU#623 2018-12-20
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);

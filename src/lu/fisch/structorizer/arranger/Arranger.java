@@ -34,33 +34,34 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Bob Fisch       2009.08.18  First Issue
- *      Kay Gürtzig     2015.10.18  Transient WindowsListener added enabling Surface to have dirty
+ *      Bob Fisch       2009-08-18  First Issue
+ *      Kay Gürtzig     2015-10-18  Transient WindowsListener added enabling Surface to have dirty
  *                                  diagrams saved before exit (KGU#49)
- *      Kay Gürtzig     2015.11.17  Remove button added (issue #35 = KGU#85)
- *      Kay Gürtzig     2015.11.19  Converted into a singleton (enhancement request #9 = KGU#2)
+ *      Kay Gürtzig     2015-11-17  Remove button added (issue #35 = KGU#85)
+ *      Kay Gürtzig     2015-11-19  Converted into a singleton (enhancement request #9 = KGU#2)
  *      Kay Gürtzig     2015-11-24  Pin button added (issue #35, KGU#88)
  *      Kay Gürtzig     2015-11-30  Remove action now also achievable by pressing del button (issue #35, KGU#88)
  *      Kay Gürtzig     2015-12-21  Two new buttons for saving and loading arrangements (issue #62, KGU#110)
  *      Kay Gürtzig     2016-01-05  Icons for saving and loading arrangements replaced by fitting ones
  *      Kay Gürtzig     2016-03-08  Bugfix #97: Methods for drawing info invalidation added (KGU#155)
- *      Kay Gürtzig     2016.03.08  Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
- *      Kay Gürtzig     2016.03.12  Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
- *      Kay Gürtzig     2016.04.14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
+ *      Kay Gürtzig     2016-03-08  Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
+ *      Kay Gürtzig     2016-03-12  Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
+ *      Kay Gürtzig     2016-04-14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
  *                                  mechanism modified
- *      Kay Gürtzig     2016.07.03  Dialog message translation mechanism added (KGU#203).
- *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
- *      Kay Gürtzig     2016.11.01  Enh. #81: Scalability of the Icons ensured
- *      Kay Gürtzig     2016.11.15  Enh. #290: New opportunity to load arrangements from Structorizer
- *      Kay Gürtzig     2016.12.12  Enh. #305: Support for diagram list in Structorizer
- *      Kay Gürtzig     2016.12.16  Issue #305: Notification redesign, visibility fix in scrollToDiagram,
+ *      Kay Gürtzig     2016-07-03  Dialog message translation mechanism added (KGU#203).
+ *      Kay Gürtzig     2016-09-26  Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016-11-01  Enh. #81: Scalability of the Icons ensured
+ *      Kay Gürtzig     2016-11-15  Enh. #290: New opportunity to load arrangements from Structorizer
+ *      Kay Gürtzig     2016-12-12  Enh. #305: Support for diagram list in Structorizer
+ *      Kay Gürtzig     2016-12-16  Issue #305: Notification redesign, visibility fix in scrollToDiagram,
  *                                  new method removeDiagram(Root)
- *      Kay Gürtzig     2017.01.04  KGU#49: Arranger now handles windowClosing events itself (instead
+ *      Kay Gürtzig     2017-01-04  KGU#49: Arranger now handles windowClosing events itself (instead
  *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
- *      Kay Gürtzig     2017.03.28  Enh. #386: New method saveAll()
- *      Kay Gürtzig     2018.02.17  Enh. #512: Zoom mechanism implemented (zoom button + key actions)
- *      Kay Gürtzig     2018.06.12  Issue #536: Experimental workaround for Direct3D trouble
- *      Kay Gürtzig     2018.10.06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
+ *      Kay Gürtzig     2017-03-28  Enh. #386: New method saveAll()
+ *      Kay Gürtzig     2018-02-17  Enh. #512: Zoom mechanism implemented (zoom button + key actions)
+ *      Kay Gürtzig     2018-06-12  Issue #536: Experimental workaround for Direct3D trouble
+ *      Kay Gürtzig     2018-10-06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
+ *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *
  ******************************************************************************************************
  *
@@ -925,6 +926,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public void updateProperties(Ini ini)
 	{
     	ini.setProperty("arrangerZoom", Float.toString(surface.getZoom()));
+    	// START KGU#623 2018-12-20: Enh. #654
+    	ini.setProperty("arrangerDirectory", surface.currentDirectory.getAbsolutePath());
+    	// END KGU#623 2018-12-20
 	}
 	// END KGU#497 2018-02-17
 
