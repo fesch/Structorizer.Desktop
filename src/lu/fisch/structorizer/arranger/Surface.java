@@ -85,6 +85,7 @@ package lu.fisch.structorizer.arranger;
  *                                      for the text drawing in Structorizer due to font height/width rounding effects
  *      Kay Gürtzig     2018-09-12      Issue #372: Attribute handling, particularly for arrz file members, improved
  *      Kay Gürtzig     2018-12-20      Issue #654: Current directory is now restored from ini file on first launch
+ *      Kay Gürtzig     2018-12-21      Enh. #655: Zoom and selection notifications to support status bar
  *
  ******************************************************************************************************
  *
@@ -153,6 +154,7 @@ import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -458,7 +460,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// START KGU#278 2016-10-11: Enh. #267
 		if (nLoaded > 0) {
-			notifyChangeListeners();
+			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		}
 		// END KGU#278 2016-10-11
 		return nLoaded;
@@ -1015,7 +1017,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#278 2016-10-11: Enh. #267
 		if (nLoaded > 0)
 		{
-			notifyChangeListeners();
+			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		}
 		// END KGU#278 2016-10-11
 		return done;
@@ -1585,16 +1587,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#88 2015-12-20
 			// START KGU#278 2016-10-11: Enh. #267
-			notifyChangeListeners();
+			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 			// END KGU#278 2016-10-11
 			// END KGU 2015-11-30
 			// START KGU 2016-12-12: First unselect the selected diagram (if any)
 			if (mouseSelected != null && mouseSelected.root != null)
 			{
 				mouseSelected.root.setSelected(false);
-				mouseSelected = diagram;
-				diagram.root.setSelected(true);
 			}
+			mouseSelected = diagram;
+			diagram.root.setSelected(true);
+			// START KGU#624 2018-12-21: Enh. #655
+			notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			// END KGU#624 2018-12-21
 			// END KGU 2016-12-12
 			repaint();
 			//getDrawingRect();	// Desperate but ineffective approach to force scroll area update
@@ -1608,9 +1613,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (mouseSelected != null && mouseSelected.root != null)
 			{
 				mouseSelected.root.setSelected(false);
-				mouseSelected = diagram;
-				diagram.root.setSelected(true);
 			}
+			mouseSelected = diagram;
+			diagram.root.setSelected(true);
+			// START KGU#624 2018-12-21: Enh. #655
+			notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			// END KGU#624 2018-12-21
 			// END KGU 2016-12-12
 			repaint();
 			//getDrawingRect();	// Desperate but ineffective approach to force scroll area update
@@ -1748,7 +1756,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		adaptLayout();
 		repaint();
 		// START KGU#278 2016-10-11: Enh. #267
-		notifyChangeListeners();
+		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		Vector<Mainform> mainforms = activeMainforms();
 		if (form != null) {
 			if (!mainforms.contains(form) && !form.isStandalone() && (!ask || form.diagram.saveNSD(true))) {
@@ -1838,7 +1846,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			repaint();
 			// START KGU#318 2017-01-05: Enh. #319 Arranger index now reflects test coverage
-			this.notifyChangeListeners();
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 			// END KGU#318 2017-01-05
 		}
 		else
@@ -2038,7 +2046,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			finally {
 				adaptLayout();
 				repaint();
-				notifyChangeListeners();
+				notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 			}
 			allDone = true;
 		}
@@ -2147,6 +2155,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU 2015-11-18
 			if (ele != null)
 			{
+				// TODO We want to allow multiple selection
 				// START KGU 2015-11-18: Avoid the impression of multiple selections
 				if (mouseSelected != null && mouseSelected.root != null)
 				{
@@ -2163,6 +2172,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 
 		}
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		repaint();
 	}
 
@@ -2233,7 +2243,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#330 2017-01-13: We keep redundant information to be able to trigger change notifications
 		Diagram diagr = this.findDiagram(source, 1);
 		if (diagr != null && diagr.checkSignatureChange()) {
-			this.notifyChangeListeners();
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		}
 		// END KGU#330 2017-01-13
 	}
@@ -2351,7 +2361,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#278 2016-10-11
 		}
 		// START KGU#305 2016-10-16: Enh. #305
-		notifyChangeListeners();
+		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		// END KGU#305 2016-10-16
 	}
 	// END KGU#48 2015-10-17
@@ -2567,6 +2577,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				mouseSelected = diagr;
 				diagr.root.setSelected(true);
 				this.repaint();
+				// START KGU#624 2018-12-21: Enh. #655
+				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+				// END KGU#624 2018-12-21
 			}
 			Rect rect = aRoot.getRect(diagr.point);
 			// START KGU#497 2018-02-17: Enh. #512
@@ -2611,9 +2624,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
-	private void notifyChangeListeners() {
+	// START KGU#624 2018-12-21: Enh. #655
+	//private void notifyChangeListeners()
+	private void notifyChangeListeners(int _flags)
+	// END KGU#624 2018-12-21
+	{
 		for (IRoutinePoolListener listener: listeners) {
-			listener.routinePoolChanged(this);
+			// START KGU#624 2018-12-21: Enh. #655
+			//listener.routinePoolChanged(this);
+			listener.routinePoolChanged(this, _flags);
+			// END KGU#624 2018-12-21
 		}
 	}
 	// END KGU#305 2016-12-16
@@ -2630,7 +2650,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		else {
 			this.zoomFactor /= 0.9f;
 		}
-		repaint();		
+		repaint();
+		// START KGU#624 2018-12-21: Enh. #655
+		this.dispatchEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
+		// END KGU#624 2018-12-21
 	}
 
 	/**

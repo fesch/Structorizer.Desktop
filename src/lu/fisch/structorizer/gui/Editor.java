@@ -364,7 +364,6 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		@Override
 		public void actionPerformed(ActionEvent ev) {
-			// TODO Auto-generated method stub
 			int value = vScrollBar.getValue();
 			int incr = vScrollBar.getBlockIncrement(up ? -1 : 1);
 			vScrollBar.setValue(value + (up ? -incr : incr));

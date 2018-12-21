@@ -119,6 +119,7 @@
  *      Kay Gürtzig         2018-08-03  Enh. #577: OutputConsole keys renamed and new messages added
  *      Kay Gürtzig         2018-10-27  Enh. #619: New messages for word wrapping tool 
  *      Kay Gürtzig         2018-12-16  Issue #644: New Control message msgInitializerAsArgument
+ *      Kay Gürtzig         2018-12-21  Enh. #655: New Arranger messages
  *
  ******************************************************************************************************
  *
@@ -1119,6 +1120,10 @@ Arranger.btnRemoveDiagram.tooltip=Entfernt das ausgewählte Diagramm - Umschaltt
 Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
 Arranger.msgConfirmRemoveAll.text=Wollen Sie wirklich alle Diagramme aus Arranger entfernen?
 Arranger.msgTitleWarning.text=Warnung
+Arranger.msgActionDelete.text=entfernen
+Arranger.msgActionCut.text=ausschneiden
+Arranger.msgConfirmRemove.text=Wollen Sie wirklich die folgenden %2 Diagramme aus Arranger %1?\n\n%3?
+Arranger.msgDiagramsSelected.text=% Diagramme ausgewählt
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
 Surface.msgSavePortable.text=Als portables komprimiertes Archiv sichern?
