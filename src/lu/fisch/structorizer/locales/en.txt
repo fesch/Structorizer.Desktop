@@ -1117,11 +1117,13 @@ Arranger.msgConfirmRemoveAll.text=Do you really want to remove all diagrams from
 Arranger.msgTitleWarning.text=Warning
 Arranger.msgActionDelete.text=remove
 Arranger.msgActionCut.text=cut
-Arranger.msgConfirmRemove.text=Do you really want to %1 the following %2 diagram(s) from Arranger?\n\n%3?
+Arranger.msgActionCopy.text=copy
+Arranger.msgConfirmRemove.text=Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3
+Arranger.msgCantDoWithMultipleRoots.text=It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3
 Arranger.msgDiagramsSelected.text=% diagrams selected
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:
-Surface.msgSavePortable.text=Save as portable compressed archive?
+Surface.msgSavePortable.text=You have selected the following %1 diagrams (from %2):\n\n%3\n\nSave as portable compressed archive (otherwise only the arrangement list)?
 Surface.msgSaveDialogTitle.text=Save arranged set of diagrams ...
 Surface.msgSaveError.text=Error on saving the arrangement:
 Surface.msgLoadDialogTitle.text=Reload a stored arrangement of diagrams ...

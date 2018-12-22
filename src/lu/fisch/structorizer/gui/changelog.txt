@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-13 (2018-12-21)
+Current development version: 3.28-13 (2018-12-22)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -138,7 +138,8 @@ Current development version: 3.28-13 (2018-12-21)
 - 13: Bugfix #652: Inconsistent drawing behaviour of include lists mended <2>
 - 13: Enh. #653: Reset button on Colors preferences dialog <2>
 - 13: Enh. #654: Current Arranger directory is now saved between sessions <2>
-- 13: Enh. #655: Arranger now with status bar and revised key bindings <2>
+- 13: Enh. #655: Arranger now with status bar and revised key bindings
+      as well as support for multiple selection (as new base for operations) <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>

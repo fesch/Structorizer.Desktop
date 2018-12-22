@@ -85,7 +85,8 @@ package lu.fisch.structorizer.arranger;
  *                                      for the text drawing in Structorizer due to font height/width rounding effects
  *      Kay Gürtzig     2018-09-12      Issue #372: Attribute handling, particularly for arrz file members, improved
  *      Kay Gürtzig     2018-12-20      Issue #654: Current directory is now restored from ini file on first launch
- *      Kay Gürtzig     2018-12-21      Enh. #655: Zoom and selection notifications to support status bar
+ *      Kay Gürtzig     2018-12-21/22   Enh. #655: Zoom and selection notifications to support status bar,
+ *                                      multiple selection enabled and established as base for collective operations 
  *
  ******************************************************************************************************
  *
@@ -178,6 +179,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -249,8 +251,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/** Last mouse position in diagram coordinates (i.e. regarding zoom factor) */
 	private Point mouseRelativePoint = null;
 	private boolean mousePressed = false;
-	/** The {@link Diagram} recently selected via mouse click (may be null!) */
-	private Diagram mouseSelected = null;
+	// START KGU#624 2018-12-21: Enh. #655 Diagram -> Set<Diagram>
+	//private Diagram mouseSelected = null;
+	/** The {@link Diagram} most recently hit by a mouseclick */
+	private Diagram mouseHit = null;
+	/** The {@link Diagram}s currently selected via mouse click */
+	private final Set<Diagram> diagramsSelected = new HashSet<Diagram>();
+	// END KGU#624 2018-12-21
 	// START KGU#88 2015-11-24: We may often need the pin icon
 	/** Caches the icon used to indicate pinned state in the requested size */
 	public static Image pinIcon = null;
@@ -264,7 +271,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#110 2015-12-21
 	// START KGU#202 2016-07-03
 	public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
-	public final LangTextHolder msgSavePortable = new LangTextHolder("Save as portable compressed archive?");
+	public final LangTextHolder msgSavePortable = new LangTextHolder("You have selected the following %1 diagrams (from %2):\n\n%3\n\nSave as portable compressed archive (otherwise only the arrangement list)?");
 	public final LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
 	public final LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
 	public final LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
@@ -430,6 +437,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public int loadFiles(java.io.File[] files)
 	{
+		// START KGU#624 2018-12-22: Enh. #655 - Clear the selection before
+		this.unselectAll();
+		// END KGU#624 2018-12-22
 		// We try to load as many files of the list as possible and collect the error messages
 		int nLoaded = 0;
 		String troubles = "";
@@ -542,12 +552,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Stores the current diagram arrangement to a file.
-	 * Depending on the choice of the user, this file will
-	 * either be only a list of reference points and filenames (this way not being portable)
-	 * or be a compressed archive containing the list file as well as the referenced
-	 * NSD files will be produced such that it can be ported to a different location and
-	 * extracted there.
+	 * Stores the current diagram arrangement (new with version3.28-13: only selected diagrams)
+	 * to a file.<br/>
+	 * Depending on the choice of the user, this file will either be only a list of reference
+	 * points and filenames (this way not being portable) or be a compressed archive containing
+	 * the list file as well as the referenced NSD files will be produced such that it can be
+	 * ported to a different location and extracted there.
 	 *  
 	 * @param frame - the commanding GUI component
 	 * @return status flag (true iff the saving succeeded without error) 
@@ -561,8 +571,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#110 2016-06-29
 		// Ensure the diagrams themselves have been saved
 		int answer = JOptionPane.CANCEL_OPTION;
+		// START KGU#624 2018-12-22: Enh. #655
+		// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)
+		StringList rootNames = listSelectedRoots(true, false);
+		String saveMessage = msgSavePortable.getText().
+				replace("%1", Integer.toString(rootNames.count())).
+				replace("%2", Integer.toString(this.diagrams.size())).
+				replace("%3", rootNames.getText());
+		// END KGU#624 2018-12-22
 		if (this.saveDiagrams() && 
-				(answer = JOptionPane.showConfirmDialog(frame, msgSavePortable.getText())) != JOptionPane.CANCEL_OPTION)
+				(answer = JOptionPane.showConfirmDialog(frame, saveMessage)) != JOptionPane.CANCEL_OPTION)
 		{
 			// Let's select path and name for the list / archive file
 			JFileChooser dlgSave = new JFileChooser(currentDirectory);
@@ -736,6 +754,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		for (int d = 0; d < this.diagrams.size(); d++)
 		{
 			Diagram diagr = this.diagrams.get(d);
+			// START KGU#624 2018-12-22: Enh. #655 - no only selected diagrams!
+			if (!this.diagramsSelected.isEmpty() && !this.diagramsSelected.contains(diagr)) {
+				continue;
+			}
+			// END KGU#624 2018-12-22
 			String path = diagr.root.getPath();
 			// KGU#110 2016-07-01: Bugfix #62 - don't include diagrams without file
 			if (!path.isEmpty())
@@ -757,7 +780,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
     
 	/**
-	 * Compresses the arranged diagram files and the describing arr file (`arrFilename´)
+	 * Compresses the arranged diagrams and the describing arr file (`arrFilename´)
 	 * into file `zipFilename´ (which is essentially an ordinary zip file but named as given).
 	 * @param zipFilename - path of the arrz file (zip file) to be created
 	 * @param arrFilename - path of the existing arr file holding the positions
@@ -789,6 +812,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		for (int d = 0; d < this.diagrams.size(); d++)
 		{
 			Diagram diagr = this.diagrams.get(d);
+			// START KGU#624 2018-12-22: Enh. #655 - no only selected diagrams!
+			if (!this.diagramsSelected.isEmpty() && !this.diagramsSelected.contains(diagr)) {
+				continue;
+			}
+			// END KGU#624 2018-12-22
 			// START KGU#316 2017-04-22: Enh. #318: Files might be zipped
 			//String path = diagr.root.getPath();
 			String path = diagr.root.shadowFilepath;
@@ -935,6 +963,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#278 2016-10-11: Enh. #267
 		int nLoaded = 0;
 		// END KGU#278 2016-10-11
+		
+		// START KGU#624 2018-12-22: Enh. #655 clear the selection such that only the loaded files wil be selected
+		this.unselectAll();
+		// END KGU#624 2018-12-22
 
 		String errorMessage = null;
 		try
@@ -1590,17 +1622,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 			// END KGU#278 2016-10-11
 			// END KGU 2015-11-30
-			// START KGU 2016-12-12: First unselect the selected diagram (if any)
-			if (mouseSelected != null && mouseSelected.root != null)
-			{
-				mouseSelected.root.setSelected(false);
-			}
-			mouseSelected = diagram;
+			// START KGU#624 2018-12-21: Enh. #655 Simply add the new diagram to the selection
+			//// START KGU 2016-12-12: First unselect the selected diagram (if any)
+			//if (mouseSelected != null && mouseSelected.root != null)
+			//{
+			//	mouseSelected.root.setSelected(false);
+			//}
+			//mouseSelected = diagram;
+			diagramsSelected.add(diagram);
 			diagram.root.setSelected(true);
+			// END KGU 2016-12-12
 			// START KGU#624 2018-12-21: Enh. #655
 			notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 			// END KGU#624 2018-12-21
-			// END KGU 2016-12-12
 			repaint();
 			//getDrawingRect();	// Desperate but ineffective approach to force scroll area update
 			// START KGU#2 2015-11-19
@@ -1610,11 +1644,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		{
 			diagram.point = point;
 			// START KGU 2016-12-12: First unselect the selected diagram (if any)
-			if (mouseSelected != null && mouseSelected.root != null)
-			{
-				mouseSelected.root.setSelected(false);
-			}
-			mouseSelected = diagram;
+			// START KGU#624 2018-12-21: Enh. #655 Multiple selection - just add the diagram
+			//if (mouseSelected != null && mouseSelected.root != null)
+			//{
+			//	mouseSelected.root.setSelected(false);
+			//}
+			//mouseSelected = diagram;
+			diagramsSelected.add(diagram);
 			diagram.root.setSelected(true);
 			// START KGU#624 2018-12-21: Enh. #655
 			notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
@@ -1702,12 +1738,23 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#499 2018-02-21
 
 	// START KGU#85 2015-11-17
+	/**
+	 * Removes all currently selected diagrams
+	 */
 	public void removeDiagram()
 	{
-		if (this.mouseSelected != null)
-		{
-			removeDiagram(this.mouseSelected);
+		// START KGU#624 2018-12-21: Enh. #655 Allow multiple selection
+		//if (this.mouseSelected != null)
+		//{
+		//	removeDiagram(this.mouseSelected);
+		//}
+		// We must produce a copy of all selected element because removeDiagram(Diagram) will update the selection
+		Diagram[] selectedDiagrams = new Diagram[this.diagramsSelected.size()];
+		this.diagramsSelected.toArray(selectedDiagrams);
+		for (Diagram diagr: selectedDiagrams) {
+			removeDiagram(diagr);
 		}
+		// END KGU#624 2018-12-21
 	}
 	// END KGU#85 2015-11-17
 
@@ -1749,9 +1796,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#194 2016-05-09
 		diagr.root.removeUpdater(this);
-		if (diagr == this.mouseSelected) {
-			this.mouseSelected = null;
-		}
+		// START KGU#624 2018-12-21: Enh. #655 support multiple selection
+		//if (diagr == this.mouseSelected) {
+		//	this.mouseSelected = null;
+		//}
+		this.diagramsSelected.remove(diagr);
+		// END KGU#624 2018-12-21
 		diagrams.remove(diagr);
 		adaptLayout();
 		repaint();
@@ -1770,15 +1820,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#385 2016-12-17
 
 	// END KGU#177 2016-04-14: Enh. #158: Allow to copy diagrams via clipboard (as XML)
-	public void copyDiagram()
+	public boolean copyDiagram()
 	{
-		if (this.mouseSelected !=null)
+		// START KGU#624 2018-12-21: Enh. #655 - Only a single diagram may be copied at once
+		//if (this.mouseSelected !=null)
+		boolean okay = this.diagramsSelected.size() == 1;
+		if (okay)
+		// END KGU#624 2018-12-21
 		{
 			XmlGenerator xmlgen = new XmlGenerator();
-			StringSelection toClip = new StringSelection(xmlgen.generateCode(this.mouseSelected.root,"\t"));
+			// START KGU#642 2018-12-21: Enh. #655
+			//StringSelection toClip = new StringSelection(xmlgen.generateCode(this.mouseSelected.root,"\t"));
+			StringSelection toClip = new StringSelection(
+					xmlgen.generateCode(this.diagramsSelected.iterator().next().root,"\t")
+					);
+			// END KGU#624 2018-12-21
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clipboard.setContents(toClip, this);					
 		}
+		return okay;
 	}
 
 	public void pasteDiagram()
@@ -1818,11 +1878,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#88 2015-11-24: Provide a possibility to protect diagrams against replacement
 	public void togglePinned()
 	{
-		if (this.mouseSelected != null)
-		{
-			this.mouseSelected.isPinned = !this.mouseSelected.isPinned;
-			repaint();
+		// START KGU#624 2018-12-21: Enh. #655 - converted t multiple selection 
+		//if (this.mouseSelected != null)
+		//{
+		//	this.mouseSelected.isPinned = !this.mouseSelected.isPinned;
+		//	repaint();
+		//}
+		boolean toPin = false;
+		// To flip all diagrams individually may not be what the user expects
+		Iterator<Diagram> iter = this.diagramsSelected.iterator();
+		// Pin all if at least one unpinned diagram is among the selection 
+		while (!toPin && iter.hasNext()) {
+			toPin = !iter.next().isPinned;
 		}
+		for (Diagram diagr: this.diagramsSelected) {
+			// This may not be what the user expected
+			diagr.isPinned = toPin;
+		}
+		repaint();
+		// END KGU#624 2018-12-21
 	}
 	// END KGU#88 2015-11-24
 
@@ -1831,19 +1905,45 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		if (this.maySetCovered())
 		{
-			if (this.mouseSelected.root.deeplyCovered)
-			{
-				if (JOptionPane.showConfirmDialog(frame, msgResetCovered.getText()) == JOptionPane.OK_OPTION)
-				{
-					this.mouseSelected.root.deeplyCovered = false;
+			// START KGU#624 2018-12-21: Enh. #655 - converted to multiple selection
+			//if (this.mouseSelected.root.deeplyCovered)
+			//{
+			//	if (JOptionPane.showConfirmDialog(frame, msgResetCovered.getText()) == JOptionPane.OK_OPTION)
+			//	{
+			//		this.mouseSelected.root.deeplyCovered = false;
+			//	}
+			//}
+			//else
+			//{
+			//	this.mouseSelected.root.deeplyCovered = true;
+			//	this.mouseSelected.root.setSelected(false);
+			//	this.mouseSelected = null;
+			//}
+			boolean someUncovered = false;
+			for (Diagram diagr: this.diagramsSelected) {
+				if (diagr.root != null && !diagr.root.isProgram()) {
+					if (!diagr.root.deeplyCovered) {
+						someUncovered = true;
+						break;
+					}
 				}
 			}
-			else
+			if (someUncovered || JOptionPane.showConfirmDialog(frame, msgResetCovered.getText()) == JOptionPane.OK_OPTION)
 			{
-				this.mouseSelected.root.deeplyCovered = true;
-				this.mouseSelected.root.setSelected(false);
-				this.mouseSelected = null;
+				for (Diagram diagr: this.diagramsSelected) {
+					if (diagr.root != null && !diagr.root.isProgram()) {
+						diagr.root.deeplyCovered = someUncovered;
+					}
+				}
+				// FIXME This is of no good anymore with a multiple selection because selection cannot easily be restored
+				if (someUncovered)
+				{
+					// While the diagram is selected the green color isn't visible - so it might seem to have failed
+					// We must clear the selection for consistency reasons therefore.
+					this.unselectAll();
+				}
 			}
+			// END KGU#624 2018-12-21
 			repaint();
 			// START KGU#318 2017-01-05: Enh. #319 Arranger index now reflects test coverage
 			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
@@ -1858,10 +1958,22 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public boolean maySetCovered()
 	{
-		return Element.E_COLLECTRUNTIMEDATA &&
-				this.mouseSelected != null &&
-				this.mouseSelected.root != null &&
-				!this.mouseSelected.root.isProgram();
+		// START KGU#624 2018-12-21: Enh. #655 - For multiple selection, this gets more complicated
+		//return Element.E_COLLECTRUNTIMEDATA &&
+		//		this.mouseSelected != null &&
+		//		this.mouseSelected.root != null &&
+		//		!this.mouseSelected.root.isProgram();
+		boolean canDo = Element.E_COLLECTRUNTIMEDATA && !this.diagramsSelected.isEmpty();
+		if (canDo) {
+			canDo = false;
+			for (Diagram diagr: this.diagramsSelected) {
+				if (diagr.root != null && !diagr.root.isProgram()) {
+					canDo = true;
+				}
+			}
+		}
+		return canDo;
+		// END KGU#642 2018-12-21
 	}
 	// END KGU#117 2016-03-09
 
@@ -2037,9 +2149,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				while (!diagrams.isEmpty()) {
 					Diagram diagr = diagrams.firstElement();
 					diagr.root.removeUpdater(this);
-					if (diagr == this.mouseSelected) {
-						this.mouseSelected = null;
-					}
+					// START KGU#624 2018-12-21: Enh. #655 no we allow multiple selection
+					//if (diagr == this.mouseSelected) {
+					//	this.mouseSelected = null;
+					//}
+					this.diagramsSelected.remove(diagr);
+					// END KGU#624 2018-12-21
 					diagrams.remove(diagr);
 				}
 			}
@@ -2056,55 +2171,40 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mouseClicked(MouseEvent e)
 	{
-		mousePressed(e);
-		// Double click?
-		if (e.getClickCount()==2 && mouseSelected!=null)
+		System.out.println("mouseClicked(" + e.getID() + ") ");
+		Diagram diagr1 = null;
+		if (this.diagramsSelected.size() == 1) {
+			diagr1 = this.diagramsSelected.iterator().next();
+		}
+		if (e.getClickCount()==2)
 		{
+			if (diagr1 == null) {
+				return;
+			}
 			// create editor
-			Mainform form = mouseSelected.mainform;
-			// START KGU#158 2016-03-16: Bugfix #132 - Precaution against stale Mainform
+			Mainform form = diagr1.mainform;
+			// This loop is a precaution against stale Mainform (bugfix #132)
 			int nAttempts = 0;
 			do {
 				try
 				{
-					// END KGU#158 2016-03-16 (part 1)
-					// START KGU#88 2015-11-24: An attached Mainform might refuse to re-adopt the root
-					//if(form==null)
-					if (form==null || !form.setRoot(mouseSelected.root))
-						// END KGU#88 2015-11-24
+					// An attached Mainform might refuse to re-adopt the root
+					if (form==null || !form.setRoot(diagr1.root))
 					{
-						// START KGU#49/KGU#66 2015-11-14: Start a dependent Mainform not willing to kill us
-						//form=new Mainform();
+						// Start a dependent Mainform not willing to kill us
 						form = new Mainform(false);
-						// END KGU#49/KGU#66 2015-11-14
 						form.addWindowListener(this);
-						// With a new Mainform, refusal is not possible 
-						form.setRoot(mouseSelected.root);
-						// START KGU#305 2016-12-12: Enh. #305 / 2016-12-16: no longer needed
-						//form.updateArrangerIndex();
-						// END KGU#305 2016-12-12
+						form.setRoot(diagr1.root);
 					}
 
-					// change the default closing behaviour
-					// START KGU#49/KGU#66 2015-11-14 Now already achieved by constructor argument false  
-					//form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-					// END KGU#49/#66 2015-11-14
-
-					// store mainform in diagram
-					mouseSelected.mainform = form;
+					// store Mainform reference in diagram
+					diagr1.mainform = form;
 
 					// register this as "updater"
-					mouseSelected.root.addUpdater(this);
+					diagr1.root.addUpdater(this);
 
-					// attach the new diagram to the editor
-					// START KGU#88 2015-11-24: Now already done above
-					//form.setRoot(mouseSelected.root);
-					// END KGU#88 2015-11-24
 					form.setVisible(true);
-					// STAR KGU#305 2016-12-16: #305 code revision
 					this.addChangeListener(form);
-					// END KGU#305 2016-12-16
-					// START KGU#158 2016-03-16: Bugfix #132 (part 2)
 				}
 				catch (Exception ex)
 				{
@@ -2112,82 +2212,47 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					form = null;
 				}
 			} while (form == null && nAttempts++ < 2);
-			// END KGU#158 2016-03-16 (part 2)
 
-			// START KGU 2016-04-14: Selection must not be changed here
-			//mouseSelected=null;
-			// END KGU 2016-04-14
-			mousePressed = false;
-			// START KGU#85 2015-11-18
 			adaptLayout();
-			// END KGU#85 2015-11-18
 			this.repaint();
+		}
+		else {
+			boolean ctrlDown = e.isControlDown();
+			if (!ctrlDown) {
+				// Without Control button all previous selection is to be cleared 
+				this.unselectAll();
+			}
+			// With zooming we need the virtual mouse coordinates (Enh. #512)
+			int mouseX = Math.round(e.getX() * this.zoomFactor);
+			int mouseY = Math.round(e.getY() * this.zoomFactor);
+			Diagram diagram = mouseHit(mouseX, mouseY);
+			if (diagram != null)
+			{
+				Root root = diagram.root;
+				if (ctrlDown && diagramsSelected.contains(diagram)) {
+					root.setSelected(false);
+					diagramsSelected.remove(diagram);
+				}
+				else {
+					root.setSelected(true);
+					diagramsSelected.add(diagram);
+				}
+			}
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			repaint();			
 		}
 	}
 
 	public void mousePressed(MouseEvent e)
 	{
-		mousePoint = e.getPoint();
-		mousePressed = true;
-		// START KGU 2015-11-18: First unselect the selected diagram (if any)
-		if (mouseSelected != null && mouseSelected.root != null)
-		{
-			mouseSelected.root.setSelected(false);
-			mouseSelected = null;
-		}
-		// END KGU 2015-11-18
-		// START KGU#497 2018-02-17: Enh. #512 - Zooming introduce - we need the virtual mouse coordinates
-		//int mouseX = mousePoint.x;
-		//int mouseY = mousePoint.y;
-		int mouseX = Math.round(mousePoint.x * this.zoomFactor);
-		int mouseY = Math.round(mousePoint.y * this.zoomFactor);
-		// END KGU#497 2018-02-17
-		for (int d=0; d<diagrams.size(); d++)
-		{
-			Diagram diagram = diagrams.get(d);
-			Root root = diagram.root;
-
-			// START KGU 2015-11-18 No need to select something (may have side-effects!) 
-			//Element ele = root.selectElementByCoord(mousePoint.x-diagram.point.x,
-			//                                        mousePoint.y-diagram.point.y);
-			Element ele = root.getElementByCoord(mouseX - diagram.point.x,
-					mouseY - diagram.point.y);
-			// END KGU 2015-11-18
-			if (ele != null)
-			{
-				// TODO We want to allow multiple selection
-				// START KGU 2015-11-18: Avoid the impression of multiple selections
-				if (mouseSelected != null && mouseSelected.root != null)
-				{
-					mouseSelected.root.setSelected(false);
-				}
-				// END KGU 2015-11-18
-				mouseSelected = diagram;
-				mouseRelativePoint = new Point(mouseX - mouseSelected.point.x,
-						mouseY - mouseSelected.point.y);
-				// START KGU 2015-11-18: We didn't select anything, so there is nothing to unselect 
-				//root.selectElementByCoord(-1, -1);
-				// END KGU 2015-11-18
-				root.setSelected(true);
-			}
-
-		}
-		this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
-		repaint();
+		// Nothing to do here, the interesting things happen in mouseClicked() and
+		// mouseDragged()
 	}
 
 	public void mouseReleased(MouseEvent e)
 	{
-		mousePressed = false;
-		// START KGU 2016-04-14 The following turned out to be wrong - selection must not be changed at all
-//		// START KGU 2015-11-18: For consistency reasons, the selected diagram has to be unselected, too
-//		if (mouseSelected != null && mouseSelected.root != null)
-//		{
-//			mouseSelected.root.setSelected(false);
-//		}
-//		// END KGU 2015-11-18
-//		//mouseSelected = null;
-		// END KGU 2016-04-14
+		// We must reset the last mousePoint lest mouseDragged() runs havoc
+		mousePoint = null;
 	}
 
 	public void mouseEntered(MouseEvent e)
@@ -2200,40 +2265,106 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mouseDragged(MouseEvent e)
 	{
-		// START KGU#497 2018-02-17: Enh. #512 - Zooming introduced
 		int mouseX = e.getX();
 		int mouseY = e.getY();
-		// END KGU#497 2018-02-17
-		// START KGU#85 2015-11-18
-		Rectangle rect = new Rectangle(mouseX, mouseY, 1, 1);
 		if (mouseX > 0 && mouseY > 0)	// Don't let drag beyond the scrollable area
 		{
+			// Make sure the viewport moves with the mouse
+			Rectangle rect = new Rectangle(mouseX, mouseY, 1, 1);
 			scrollRectToVisible(rect);
-		// END KGU#85 2015-11-18
 
-			if (mousePressed == true)
-			{
-				if (mouseSelected != null)
-				{
-					mouseX *= this.zoomFactor;
-					mouseY *= this.zoomFactor;
-					mouseSelected.point.setLocation(mouseX - mouseRelativePoint.x,
-							mouseY - mouseRelativePoint.y);
-					// START KGU#85 2015-11-18
+			// Now we need the virtual coordinates
+			mouseX = Math.round(mouseX * zoomFactor);
+			mouseY = Math.round(mouseY * zoomFactor);
+			
+			Diagram diagram = mouseHit(mouseX, mouseY);
+			
+			// Don't drag if the mouse isn't above one of the selected diagrams
+			if (diagram != null && this.diagramsSelected.contains(diagram)) {
+				Point oldMousePoint = this.mousePoint;
+				this.mousePoint = new Point(mouseX, mouseY);
+				// Don't do anything if there is no former dragging position (cleared by mouseReleased())
+				if (oldMousePoint != null) {
+					int deltaX = mouseX - oldMousePoint.x;
+					int deltaY = mouseY - oldMousePoint.y;
+					// No move all selected diagrams synchronously
+					for (Diagram diagr: this.diagramsSelected) {
+						// No diagram is allowed to be shifted outside the reachable area
+						int newX = Math.max(0, diagr.point.x + deltaX);
+						int newY = Math.max(0, diagr.point.y + deltaY);
+						diagr.point.setLocation(newX, newY);
+					}
 					adaptLayout();
-					// END KGU#85 2015-11-18
 					repaint();
 				}
 			}
-		// START KGU#85 2015-11-18
+
 		}
-		// END KGU#85 2015-11-18
 	}
 
 	public void mouseMoved(MouseEvent e)
 	{
 	}
+	
+	/**
+	 * Identifies the top diagram under the mouse cursor (if any). An eclipsed diagram
+	 * will never be returned here
+	 * @param zoomedX - the virtual X coordinate of the mouse (zooming considered)
+	 * @param zoomedY - the virtual Y coordinate of the mouse (zooming considered)
+	 * @return the only diagram not eclipsed at mouse position (if any, otherwise null)
+	 */
+	private Diagram mouseHit(int zoomedX, int zoomedY)
+	{
+		Diagram hitDiagram = null;
+		for (int d = diagrams.size()-1; d >= 0 && hitDiagram == null; d--)
+		{
+			Diagram diagram = diagrams.get(d);
+			Root root = diagram.root;
 
+			Element ele = root.getElementByCoord(
+					zoomedX - diagram.point.x,
+					zoomedY - diagram.point.y);
+			if (ele != null)
+			{
+				hitDiagram = diagram;
+			}
+		}
+		return hitDiagram;
+	}
+
+	// START KGU#624 2018-12-21: Enh. #655 - multiple selection opportunity
+	/**
+	 * Unselects all available diagrams
+	 */
+	public void unselectAll() {
+		this.diagramsSelected.clear();
+		for (Diagram diagr: this.diagrams) {
+			if (diagr.root != null) {
+				diagr.root.setSelected(false);
+			}
+		}
+		repaint();
+	}
+	
+	/**
+	 * Selects all available diagrams
+	 */
+	public void selectAll() {
+		this.diagramsSelected.addAll(this.diagrams);
+		for (Diagram diagr: this.diagrams) {
+			if (diagr.root != null) {
+				diagr.root.setSelected(true);
+			}
+		}
+		repaint();
+	}
+	// END KGU#624 2018-12-21
+
+	/**
+	 * Repaints the given {@link Root} (which reported to have been subject to changes).
+	 * Also notifies all registered {@link IRoutinePoolListener}s.
+	 * @param source - the structogram that reported to have been modified
+	 */
 	public void update(Root source)
 	{
 		// START KGU#85 2015-11-18
@@ -2444,6 +2575,33 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return roots;
 	}
 	// END KGU#258 2016-09-26
+	
+	// START KGU#624 2018-12-22: Enh. #655
+	/**
+	 * Returns a {@link StringList} with the signatures of all selected diagrams, sorted
+	 * first by type and second lexicographically.
+	 * @param allIfEmpty - Shall all Roots be reported if none is selected?
+	 * @param withPath - Shall the file paths be added to the signature?
+	 * @return the StringList.
+	 */
+	private StringList listSelectedRoots(boolean allIfEmpty, boolean withPath) {
+		Vector<Root> selectedRoots = new Vector<Root>(this.diagramsSelected.size());
+		for (Diagram diagr: this.diagramsSelected) {
+			if (diagr.root != null) {
+				selectedRoots.add(diagr.root);
+			}
+		}
+		if (selectedRoots.isEmpty() && allIfEmpty) {
+			selectedRoots.addAll(this.getAllRoots());
+		}
+		Collections.sort(selectedRoots, Root.SIGNATURE_ORDER);
+		StringList signatures = new StringList();
+		for (Root root: selectedRoots) {
+			signatures.add(root.getSignatureString(withPath));
+		}
+		return signatures;
+	}
+	// END KGU#624 2018-12-22
 
 	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
 	/**
@@ -2570,12 +2728,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (setAtTop) {
 				this.diagrams.remove(diagr);
 				this.diagrams.add(diagr);
-				if (mouseSelected != null && mouseSelected != diagr && mouseSelected.root != null)
-				{
-					mouseSelected.root.setSelected(false);
-				}
-				mouseSelected = diagr;
+				// START KGU#624 2018-12-21: Enh. #655 - replace the previous selection (really?)
+				//if (mouseSelected != null && mouseSelected != diagr && mouseSelected.root != null)
+				//{
+				//	mouseSelected.root.setSelected(false);
+				//}
+				//mouseSelected = diagr;
+				//diagr.root.setSelected(true);
+				unselectAll();
+				this.diagramsSelected.add(diagr);
 				diagr.root.setSelected(true);
+				// END KGU#624 2018-12-21
 				this.repaint();
 				// START KGU#624 2018-12-21: Enh. #655
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
@@ -2590,18 +2753,44 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Returns the Root diagram currently selected in Arranger
-	 * @return Either a Root object or null (if none was selected)
+	 * @return the set of {@link Root} objects currently selected in Arranger.
 	 */
-	public Root getSelected() 
+	// START KGU#624 2018-12-21: Enh. #655
+	//public Root getSelected()
+	//{
+	//	if (mouseSelected != null)
+	//	{
+	//		return mouseSelected.root;
+	//	}
+	//	return null;
+	//}
+	Set<Root> getSelected() {
+		Set<Root> selectedRoots = new HashSet<Root>();
+		for (Diagram diagr: this.diagramsSelected) {
+			if (diagr.root != null) {
+				selectedRoots.add(diagr.root);
+			}
+		}
+		return selectedRoots;
+	}
+	// END KGU#624 2018-12-21
+	// END KGU#305 2016-12-12
+	
+	// START KGU#624 2018-12-21: Enh. #655
+	/**
+	 * In case of a single diagram being selected returns the {@link Root} currently
+	 * selected in Arranger
+	 * @return Either a {@link Root} object or null (if selection was empty or ambiguous)
+	 */
+	public Root getSelected1() 
 	{
-		if (mouseSelected != null)
+		if (diagramsSelected.size() == 1)
 		{
-			return mouseSelected.root;
+			return diagramsSelected.iterator().next().root;
 		}
 		return null;
 	}
-	// END KGU#305 2016-12-12
+	// END KGU#624 2018-12-21
 
 	// START KGU#305 2016-12-16: Code revision
 	@Override

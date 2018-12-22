@@ -120,9 +120,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
 	// END KGU#534 2018-06-27
 	// START KGU#624 2018-12-21: Enh. #655
+	public static final LangTextHolder msgTitleIllegal = new LangTextHolder("Illegal Operation");
 	public static final LangTextHolder msgActionDelete = new LangTextHolder("remove");
 	public static final LangTextHolder msgActionCut = new LangTextHolder("cut");
-	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the following %2 diagram(s) from Arranger?\n\n%3?");
+	public static final LangTextHolder msgActionCopy = new LangTextHolder("copy");
+	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3");
+	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3");
 	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("% diagrams selected");
 	// END KGU#624 2018-12-21
 
@@ -558,6 +561,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     }// </editor-fold>//GEN-END:initComponents
 
+    // START KGU#624 2018-12-21: Enh. #655 - new status bar
 	protected void updateStatusSize() {
 		scrollarea.getLocation(scrollareaOrigin);
 		java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
@@ -566,15 +570,18 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 				vRect.y + ":" + (vRect.y + vRect.height));
 		statusZoom.setText(String.format("%.1f %%", 100 / surface.getZoom()));
 	}
+	
 	protected void updateStatusSelection() {
-		Root sel = surface.getSelected();
-		if (sel == null) {
-			statusSelection.setText(msgDiagramsSelected.getText().replace("%", Integer.toString(0)));
+		Set<Root> sel = surface.getSelected();
+		Root sel1 = surface.getSelected1();
+		if (sel1 != null) {
+			statusSelection.setText(sel1.getSignatureString(false));
 		}
 		else {
-			statusSelection.setText(sel.getSignatureString(false));
+			statusSelection.setText(msgDiagramsSelected.getText().replace("%", Integer.toString(sel.size())));
 		}
 	}
+	// END KGU#624 2018-12-21
 
     private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
     {//GEN-HEADEREND:event_btnExportPNGActionPerformed
@@ -746,7 +753,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     //    surface.removeAllDiagrams();
                     //}
                 {
-                    Root sel = surface.getSelected();	// TODO multiple selection!
+                	// START KGU624 2018-12-21: Enh. #655 - Face multiple selection
+                	//Root sel = surface.getSelected1();
+                    Set<Root> sel = surface.getSelected();
                     boolean shift = ev.isShiftDown();
                     String verb = "";
                     if (shift) {
@@ -755,12 +764,28 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     else {
                         verb = msgActionDelete.getText();
                     }
+                    StringBuilder strbld = new StringBuilder();
+                    for (Root root: sel) {
+                    	strbld.append("\n" + root.getSignatureString(false));
+                    }
+                    if (sel.isEmpty()) {
+                    	break;
+                    }
+                    else if (shift && sel.size() > 1) { 
+                    	JOptionPane.showMessageDialog(this,
+                    			msgCantDoWithMultipleRoots.getText().
+                    			replace("%1", msgActionCut.getText()).
+                    			replace("%2", Integer.toString(sel.size()).replace("%3", strbld.toString())),
+                    			msgTitleIllegal.getText(),
+                    			JOptionPane.ERROR_MESSAGE);
+                    	break;
+                    }
                     String message = msgConfirmRemove.getText().
                             replace("%1", verb).
-                            replace("%2", Integer.toString(1)).
-                            replace("%3", sel.getSignatureString(false));
-                    if (sel != null && (ev.isControlDown() || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
-                            JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION)) {
+                            replace("%2", Integer.toString(sel.size())).
+                            replace("%3", strbld.toString());
+                    if (ev.isControlDown() || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
+                            JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
                         if (shift) {
                             surface.copyDiagram();
                         }
@@ -773,10 +798,28 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
                 case KeyEvent.VK_X:
                     if (ev.isControlDown()) {
-                        // START KGU#624 2018-12-21: Enh. #655
-                        surface.copyDiagram();	// cut means copy first
+                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                        //surface.removeDiagram();
+                    	Set<Root> sel = surface.getSelected();
+                    	if (sel.size() > 1) {
+                    		StringBuilder strbld = new StringBuilder();
+                    		for (Root root: sel) {
+                    			strbld.append("\n" + root.getSignatureString(false));
+                    		}
+                        	JOptionPane.showMessageDialog(this,
+                        			msgCantDoWithMultipleRoots.getText().
+                        			replace("%1", msgActionCut.getText()).
+                        			replace("%2", Integer.toString(sel.size())).
+                        			replace("%3", strbld.toString()),
+                        			msgTitleIllegal.getText(),
+                        			JOptionPane.ERROR_MESSAGE);
+                        	break;
+                        }
+                        if (surface.copyDiagram())	// cut means copy first
+                        {
+                        	surface.removeDiagram();
+                        }
                         // END KGU#624 2018-12-21
-                        surface.removeDiagram();
                     }
                     break;
                 case KeyEvent.VK_V:
@@ -793,6 +836,23 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     break;
                 case KeyEvent.VK_C:
                     if (ev.isControlDown()) {
+                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                    	Set<Root> sel = surface.getSelected();
+                    	if (sel.size() > 1) {
+                    		StringBuilder strbld = new StringBuilder();
+                    		for (Root root: sel) {
+                    			strbld.append("\n" + root.getSignatureString(false));
+                    		}
+                        	JOptionPane.showMessageDialog(this,
+                        			msgCantDoWithMultipleRoots.getText().
+                        			replace("%1", msgActionCopy.getText()).
+                        			replace("%2", Integer.toString(sel.size())).
+                        			replace("%3", strbld.toString()),
+                        			msgTitleIllegal.getText(),
+                        			JOptionPane.ERROR_MESSAGE);
+                        	break;
+                        }
+                    	// END KGU#624 2018-12-21
                         surface.copyDiagram();
                     }
                     break;
@@ -835,6 +895,20 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                                 scrollarea.getVerticalScrollBar().getBlockIncrement(1));
                     }
         		    break;
+                case KeyEvent.VK_A:
+                	if (ev.isControlDown()) {
+                		surface.selectAll();
+                	}
+                	break;
+                case KeyEvent.VK_S:
+                	if (ev.isControlDown()) {
+                		surface.saveArrangement(this);
+                	}
+                	break;
+                case KeyEvent.VK_O:
+                	if (ev.isControlDown()) {
+                		surface.loadArrangement(this);
+                	}
                 // END KGU#624 2018-12-21
             }
         }
@@ -953,12 +1027,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
 	// START KGU#305 2016-12-12: Enh. #305
 	/**
-	 * Returns the Root diagram currently selected in Arranger
-	 * @return Either a Root object or null (if none was selected)
+	 * Returns the {@link Root} currently selected in Arranger, if it is a single one.
+	 * @return Either a {@link Root} object or null (if none or more than 1 was selected)
 	 */
 	public Root getSelected() 
 	{
-		return surface.getSelected();
+		return surface.getSelected1();
 	}
 	// END KGU#305 2016-12-12
 

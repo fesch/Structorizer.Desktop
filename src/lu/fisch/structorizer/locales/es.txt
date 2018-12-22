@@ -1121,12 +1121,14 @@ Arranger.msgConfirmRemoveAll.text=¿Quieres reálmente quitar todos los diagrama
 Arranger.msgTitleWarning.text=Advertencia
 Arranger.msgActionDelete.text=quitar
 Arranger.msgActionCut.text=cortar
-Arranger.msgConfirmRemove.text=¿Quieres reálmente %1 el/los siguiente(s) %2 diagrama(s) de Arranger?\n\n%3?
+Arranger.msgActionCopy.text=copiar
+Arranger.msgConfirmRemove.text=¿Quieres reálmente %1 el/los siguiente(s) %2 diagrama(s) de Arranger?\n%3
+Arranger.msgCantDoWithMultipleRoots.text=No es posible %1 más de un diagrama a la vez. Has seleccionado %2 diagramas:\n%3
 Arranger.msgDiagramsSelected.text=% diagramas seleccionados
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Error abriendo archivo:
-Surface.msgSavePortable.text=¿Guardar como archivo portable y comprimido?
+Surface.msgSavePortable.text=Has seleccionado los siguienetes %1 diagramas para guardar (desde %2):\n\n%3\n\n¿Guardar como archivo portable y comprimido (de otro modo solo la lista con positiones)?
 Surface.msgSaveDialogTitle.text=Guarda colocado conjunto de diagramas ...
 Surface.msgSaveError.text=Error guardando la colocación:
 Surface.msgLoadDialogTitle.text=Restablece guardado conjunto de diagramas ...
