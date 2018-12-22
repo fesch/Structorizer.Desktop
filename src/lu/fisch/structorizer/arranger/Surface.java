@@ -86,7 +86,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-09-12      Issue #372: Attribute handling, particularly for arrz file members, improved
  *      Kay Gürtzig     2018-12-20      Issue #654: Current directory is now restored from ini file on first launch
  *      Kay Gürtzig     2018-12-21/22   Enh. #655: Zoom and selection notifications to support status bar,
- *                                      multiple selection enabled and established as base for collective operations 
+ *                                      multiple selection enabled and established as base for collective operations
+ *      Kay Gürtzig     2018-12-22      Bugfix #656: Loading of referred files residing in an arrz file fixed. 
  *
  ******************************************************************************************************
  *
@@ -1004,6 +1005,34 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					//String trouble = loadFile(nsdFileName, point);
 					String trouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null, nsdFileName, point, unzippedFrom);
 					// END KGU#289 2016-11-15
+					// START KGU#625 2018-12-22: Bugfix #656 - It might be that the arr file refers to virtual arrz paths
+					if (!trouble.isEmpty() && !nsd.exists() && unzippedFrom == null && nsdFileName.contains(".arrz")) {
+						try {
+							// Might be a path into an arrz file from which the referred diagram had originally been loaded
+							File arrzFile = nsd.getParentFile();
+							String pureName = nsd.getName();
+							if (arrzFile.exists()) {
+								String extractedArrPath = unzipArrangement(arrzFile.getAbsolutePath(), null);
+								if (extractedArrPath != null) {
+									File targetDir = (new File(extractedArrPath)).getParentFile(); 
+									if (targetDir.exists() && (nsd = new File(targetDir.getAbsolutePath() + File.separator + pureName)).exists()) {
+										// Now let's try again
+										String newTrouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null, nsd.getAbsolutePath(), point, arrzFile.getAbsolutePath());
+										if (newTrouble.isEmpty()) {
+											trouble = "";
+										}
+										else {
+											trouble += "\n   " + newTrouble;
+										}
+									}
+								}
+							}
+						}
+						catch (Exception ex) {
+							trouble += "\n    " + ex.toString();
+						}
+					}
+					// END KGU#625 2018-12-22
 					if (!trouble.isEmpty())
 					{
 						if (errorMessage != null)

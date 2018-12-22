@@ -140,6 +140,7 @@ Current development version: 3.28-13 (2018-12-22)
 - 13: Enh. #654: Current Arranger directory is now saved between sessions <2>
 - 13: Enh. #655: Arranger now with status bar and revised key bindings
       as well as support for multiple selection (as new base for operations) <2>
+- 13: Bugfix #656: Loading of arrangements with elsewhere zipped files fixed <2> 
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
