@@ -206,6 +206,7 @@ import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.elements.Element.DrawingContext;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
@@ -273,6 +274,11 @@ public class Root extends Element {
 	// START KGU#376 2017-07-02: Enh. #389 - we want to show execution in inlcudeList
 	public boolean isIncluding = false;
 	// END KGU#376 2017-07-02
+	
+	// START KGU#624 2018-12-22: Enh. #655
+	/** selection flags for different drawing contexts. Index 0 is unused (instead field {@link #selected} is used) */ 
+	private boolean[] contextSelections = new boolean[DrawingContext.values().length];
+	// END KGU#624 2018-12-22
 	
 	public Subqueue children = new Subqueue();
 
@@ -766,6 +772,11 @@ public class Root extends Element {
 		// START KGU#363 2017-03-14: Enh. #372 - License fields
 		licenseName = Ini.getInstance().getProperty("licenseName", "");
 		// END KGU#363 2017-03-14
+		// START KGU#624 2018-12-22: Enh. #655 - Independent selection markers for certain contexts
+		for (int i = 0; i < this.contextSelections.length; i++) {
+			this.contextSelections[i] = false;
+		}
+		// END KGU#624 2018-12-22
 		//this(StringList.getNew("???"));
 	}
 
@@ -1013,9 +1024,14 @@ public class Root extends Element {
 
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
+		draw(_canvas, _top_left, DrawingContext.DC_STRUCTORIZER);
+	}
+	
+	public void draw(Canvas _canvas, Rect _top_left, DrawingContext _context)
+	{
 		// START KGU 2015-10-13: Encapsulates all fundamental colouring and highlighting strategy
 		//Color drawColor = getColor();
-		Color drawColor = getFillColor();
+		Color drawColor = getFillColor(_context);
 		// END KGU 2015-10-13
 
 		// FIXME: Drawing shouldn't modify the element
@@ -1549,9 +1565,10 @@ public class Root extends Element {
      * @param _g - the target graphics environment
      * @param _point - the target position
      * @param _prohibitedUpdater - if given an updater not to be informed
+     * @param _drawingContext - the context e.g. for selection highlighting 
      * @return the area occupied by this diagram as {@link Rect}
      */
-    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater)
+    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater, DrawingContext _drawingContext)
     {
         setDrawPoint(_point);
 
@@ -1590,19 +1607,19 @@ public class Root extends Element {
         myrect.top += _point.y;
         myrect.right += _point.x;
         myrect.bottom += _point.y;
-        this.draw(canvas, myrect);
+        this.draw(canvas, myrect, _drawingContext);
 
         return myrect;
     }
 
     public Rect draw(Graphics _g, Point _point)
     {
-        return draw(_g, _point, null);
+        return draw(_g, _point, null, DrawingContext.DC_STRUCTORIZER);
     }
 
     public Rect draw(Graphics _g)
     {
-        return draw(_g, new Point(0,0), null);
+        return draw(_g, new Point(0,0), null, DrawingContext.DC_STRUCTORIZER);
 
         /*
         // inform updaters
@@ -1619,6 +1636,24 @@ public class Root extends Element {
 
         return myrect;/**/
     }
+    
+    public boolean getSelected(DrawingContext _drawingContext)
+    {
+    	if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
+    		return getSelected();
+    	}
+    	return this.contextSelections[_drawingContext.ordinal()];
+    }
+    
+	public Element setSelected(boolean _sel, DrawingContext _drawingContext)
+	{
+		if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
+			return setSelected(_sel);
+		}
+		this.contextSelections[_drawingContext.ordinal()] = _sel;
+		return _sel ? this : null;
+	}
+
 
     public Element copy()
     {

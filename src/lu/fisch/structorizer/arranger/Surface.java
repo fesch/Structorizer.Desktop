@@ -361,7 +361,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 				// START KGU#88 2015-11-24
 				//root.draw(g, point, this);
-				Rect rect = root.draw(g2d, point, this);
+				Rect rect = root.draw(g2d, point, this, Element.DrawingContext.DC_ARRANGER);
 				if (diagram.isPinned)
 				{
 					if (pinIcon == null)
@@ -1250,7 +1250,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				for (int d=0; d<diagrams.size(); d++)
 				{
-					diagrams.get(d).root.setSelected(false);
+					diagrams.get(d).root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
 				}
 				repaint();
 			}
@@ -1659,7 +1659,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//}
 			//mouseSelected = diagram;
 			diagramsSelected.add(diagram);
-			diagram.root.setSelected(true);
+			diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			// END KGU 2016-12-12
 			// START KGU#624 2018-12-21: Enh. #655
 			notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
@@ -1680,7 +1680,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//}
 			//mouseSelected = diagram;
 			diagramsSelected.add(diagram);
-			diagram.root.setSelected(true);
+			diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			// START KGU#624 2018-12-21: Enh. #655
 			notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 			// END KGU#624 2018-12-21
@@ -2259,11 +2259,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				Root root = diagram.root;
 				if (ctrlDown && diagramsSelected.contains(diagram)) {
-					root.setSelected(false);
+					root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
 					diagramsSelected.remove(diagram);
 				}
 				else {
-					root.setSelected(true);
+					root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 					diagramsSelected.add(diagram);
 				}
 			}
@@ -2369,7 +2369,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		this.diagramsSelected.clear();
 		for (Diagram diagr: this.diagrams) {
 			if (diagr.root != null) {
-				diagr.root.setSelected(false);
+				diagr.root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
 		repaint();
@@ -2382,7 +2382,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		this.diagramsSelected.addAll(this.diagrams);
 		for (Diagram diagr: this.diagrams) {
 			if (diagr.root != null) {
-				diagr.root.setSelected(true);
+				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
 		repaint();
@@ -2766,7 +2766,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//diagr.root.setSelected(true);
 				unselectAll();
 				this.diagramsSelected.add(diagr);
-				diagr.root.setSelected(true);
+				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 				// END KGU#624 2018-12-21
 				this.repaint();
 				// START KGU#624 2018-12-21: Enh. #655

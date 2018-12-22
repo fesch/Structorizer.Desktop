@@ -213,6 +213,9 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 
 public abstract class Element {
+	
+	/** This enumeration type distinguishes drawing contexts for selection display */
+	public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};
 
 	// START KGU#484 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(Element.class.getName());
@@ -1281,7 +1284,24 @@ public abstract class Element {
 	}
 	// END KGU#172 2916-04-01
 
+	/**
+	 * Returns whether this element appears as selected in the standard {@link DrawingContext}.
+	 * @return true if the element is marked selected.
+	 * @see #getSelected(DrawingContext)
+	 */
 	public boolean getSelected()
+	{
+		return selected;
+	}
+	
+	/**
+	 * Returns whether this element appears as selected w.r.t. the given {@link DrawingContext}.
+	 * For most kinds of Element the {@code drawingContext} doesn't make a difference.
+	 * @param drawingContext
+	 * @return true if this element is selected (in @code drawingContext}.
+	 * @see #getSelected()
+	 */
+	public boolean getSelected(DrawingContext drawingContext)
 	{
 		return selected;
 	}
@@ -1296,6 +1316,20 @@ public abstract class Element {
 		selected = _sel;
 		return _sel ? this : null;
 	}
+
+	/**
+	 * Sets the selection flag on this element for the given {@code _drawingContext}
+	 * @param _sel - if the element is to be selected or not
+	 * @param _drawingContext - the drawing context for which this is intended.
+	 * @return the element(s) actually being selected (null if _sel = false).
+	 * @see #setSelected(boolean)
+	 */
+	public Element setSelected(boolean _sel, DrawingContext _drawingContext)
+	{
+		// Default is the same as setSelected()
+		return setSelected(_sel);
+	}
+
 
 	// START KGU#183 2016-04-24: Issue #169 
 	/**
@@ -1603,9 +1637,18 @@ public abstract class Element {
 		color = _color;
 	}
 	
-	// START KGU#41 2015-10-13: The highlighting rules are getting complex
-	// but are more ore less the same for all kinds of elements
+	/**
+	 * Returns the status-dependent background color or just the user-defined background color
+	 * for this element.
+	 * @see #getFillColor(DrawingContext)
+	 */
 	protected Color getFillColor()
+	{
+		return getFillColor(DrawingContext.DC_STRUCTORIZER);
+	}
+	// START KGU#41 2015-10-13: The highlighting rules are getting complex
+	// but are more or less the same for all kinds of elements
+	protected Color getFillColor(DrawingContext drawingContext)
 	{
 		// This priority might be arguable but represents more or less what was found in the draw methods before
 		if (this.waited) {
@@ -1620,7 +1663,7 @@ public abstract class Element {
 			return Element.E_TROUBLECOLOR;
 		}
 		// END KGU#365 2017-04-14
-		else if (this.selected) {
+		else if (this.getSelected(drawingContext)) {
 			return Element.E_DRAWCOLOR;
 		}
 		// START KGU#117/KGU#156 2016-03-06: Enh. #77 + #124 Specific colouring for test coverage tracking
