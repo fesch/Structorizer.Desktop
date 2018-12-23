@@ -116,7 +116,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
 	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
-	public static final LangTextHolder btnRemove1Diagram = new LangTextHolder("Drop Diagram");
+	public static final LangTextHolder btnRemoveDiagrams = new LangTextHolder("Drop Diagrams");
 	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
 	// END KGU#534 2018-06-27
 	// START KGU#624 2018-12-21: Enh. #655
@@ -327,7 +327,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
         btnSaveArr.setIcon(IconLoader.getIconImage("003_Save.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnSaveArr.setText("Save List");
+        btnSaveArr.setText("Save Arr.");
         btnSaveArr.setFocusable(false);
         btnSaveArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSaveArr.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -343,7 +343,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
         btnLoadArr.setIcon(IconLoader.getIconImage("002_Open.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnLoadArr.setText("Load List");
+        btnLoadArr.setText("Load Arr.");
         btnLoadArr.setFocusable(false);
         btnLoadArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnLoadArr.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -377,8 +377,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
         btnPinDiagram.setIcon(IconLoader.getIconImage("099_pin_blue.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnPinDiagram.setText("Pin Diagram");
-        btnPinDiagram.setToolTipText("Pin a diagram to make it immune against replacement.");
+        btnPinDiagram.setText("Pin Diagrams");
+        btnPinDiagram.setToolTipText("Pin the selected diagrams to make them immune against replacement.");
         btnPinDiagram.setFocusable(false);
         btnPinDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnPinDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -397,7 +397,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         btnSetCovered.setIcon(IconLoader.getIconImage("046_covered.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnSetCovered.setText("Set Covered");
-        btnSetCovered.setToolTipText("Mark the routine diagram as test-covered for subroutine calls to it.");
+        btnSetCovered.setToolTipText("Mark the selected routine diagrams as test-covered for subroutine calls to them.");
         btnSetCovered.setFocusable(false);
         btnSetCovered.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSetCovered.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -415,7 +415,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
         btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnRemoveDiagram.setText("Drop Diagram");
+        btnRemoveDiagram.setText("Drop Diagrams");
         btnRemoveDiagram.setFocusable(false);
         btnRemoveDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnRemoveDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -604,6 +604,24 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             this.setShiftPressed(false);
         }
         else {
+        	// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
+        	Set<Root> sel = surface.getSelected();
+        	if (sel.size() > 1) {
+        		StringBuilder sb = new StringBuilder();
+        		for (Root root: sel) {
+        			sb.append("\n- " + root.getSignatureString(false));
+        		}
+    			if (JOptionPane.showConfirmDialog(this, 
+    					msgConfirmRemove.getText()
+    					.replace("%1",msgActionDelete.getText())
+    					.replace("%2", Integer.toString(sel.size()))
+    					.replace("%3", sb.toString()), 
+    					msgTitleWarning.getText(),
+    					JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
+    				return;
+    			}
+        	}
+        	// END KGU#624 2018-12-23
             surface.removeDiagram();
         }
         // END KGU#534 2018-06-27
@@ -935,7 +953,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
             // START KGU#534 2018-06-27: Enh. #552
             this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR));
-            this.btnRemoveDiagram.setText(btnRemove1Diagram.getText());
+            this.btnRemoveDiagram.setText(btnRemoveDiagrams.getText());
             // END KGU#534 2018-06-27			
         }
     }

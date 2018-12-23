@@ -1100,22 +1100,22 @@ FindAndReplace.btnClose.text=Cerrar
 -----> Arranger
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Nuevo diagrama
-Arranger.btnRemoveDiagram.text=Quita diagrama
-Arranger.btnRemove1Diagram.text=Quita diagrama
+Arranger.btnRemoveDiagram.text=Quita diagramas
+Arranger.btnRemoveDiagrams.text=Quita diagramas
 Arranger.btnRemoveAllDiagrams.text=Quita todos
 Arranger.btnExportPNG.text=Exporte a PNG
-Arranger.btnSaveArr.text=Graba lista
-Arranger.btnLoadArr.text=Carga lista
+Arranger.btnSaveArr.text=Graba coloc.
+Arranger.btnLoadArr.text=Carga coloc.
 Arranger.btnPinDiagram.text=Grapa diagrama
 Arranger.btnSetCovered.text=Pon cubierto
 Arranger.btnZoom.text=Zoom 
-Arranger.btnSaveArr.tooltip=Graba esta constelación como lista (*.arr) o archivo comprimido (*.arrz).
-Arranger.btnLoadArr.tooltip=Carga una constelación desde lista (*.arr) o archivo comprimido (*.arrz).
+Arranger.btnSaveArr.tooltip=Graba la colocación de los diagramas seleccionados como lista (*.arr) o archivo comprimido (*.arrz).
+Arranger.btnLoadArr.tooltip=Carga una colocación desde lista (*.arr) o archivo comprimido (*.arrz).
 Arranger.btnAddDiagram.tooltip=Inserta un nuevo, vacío diagrama.
-Arranger.btnExportPNG.tooltip=Dibuja esta constelación en un fichero de imagen del formato PNG.
-Arranger.btnPinDiagram.tooltip=Grapa un diagrama para protejerlo de reemplazamiento por Structorizer.
-Arranger.btnSetCovered.tooltip=Marca el diagrama de rutina como completamente probado para llamadas.
-Arranger.btnRemoveDiagram.tooltip=Quitar el diagrama seleccionado - deja presionada la tecla Shift para quitar todos diagramas.
+Arranger.btnExportPNG.tooltip=Dibuja esta colocación en un fichero de imagen del formato PNG.
+Arranger.btnPinDiagram.tooltip=Grapa los diagramas seleccionados para protejerlos de reemplazamiento por Structorizer.
+Arranger.btnSetCovered.tooltip=Marca los diagrama seleccionados de rutina como completamente probado para llamadas.
+Arranger.btnRemoveDiagram.tooltip=Quitar los diagramas seleccionados - deja presionada la tecla Shift para quitar todos diagramas.
 Arranger.btnZoom.tooltip=Deja presionada la tecla Shift para acercarse con el zoom.
 Arranger.msgConfirmRemoveAll.text=¿Quieres reálmente quitar todos los diagramas de Arranger?
 Arranger.msgTitleWarning.text=Advertencia
@@ -1128,7 +1128,7 @@ Arranger.msgDiagramsSelected.text=% diagramas seleccionados
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Error abriendo archivo:
-Surface.msgSavePortable.text=Has seleccionado los siguienetes %1 diagramas para guardar (desde %2):\n\n%3\n\n¿Guardar como archivo portable y comprimido (de otro modo solo la lista con positiones)?
+Surface.msgSavePortable.text=Has seleccionado los siguientes %1 diagramas para guardar (desde %2):\n\n%3\n\n¿Guardar como archivo portable y comprimido (de otro modo solo la lista con posiciones)?
 Surface.msgSaveDialogTitle.text=Guarda colocado conjunto de diagramas ...
 Surface.msgSaveError.text=Error guardando la colocación:
 Surface.msgLoadDialogTitle.text=Restablece guardado conjunto de diagramas ...

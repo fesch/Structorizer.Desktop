@@ -1035,7 +1035,7 @@ FindAndReplace.ttlSearchError.text=
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=
 Arranger.btnRemoveDiagram.text=
-Arranger.btnRemove1Diagram.text=
+Arranger.btnRemoveDiagrams.text=
 Arranger.btnRemoveAllDiagrams.text=
 Arranger.btnExportPNG.text=
 Arranger.btnSaveArr.text=
