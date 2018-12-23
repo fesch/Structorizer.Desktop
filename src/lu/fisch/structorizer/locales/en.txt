@@ -1096,14 +1096,14 @@ FindAndReplace.ttlSearchError.text=Search Error
 -----> Arranger
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=New Diagram
-Arranger.btnRemoveDiagram.text=Drop Diagrams
-Arranger.btnRemoveDiagrams.text=Drop Diagrams
+Arranger.btnRemoveDiagram.text=Drop Diagram
+Arranger.btnRemoveDiagrams.text=Drop Diagram
 Arranger.btnRemoveAllDiagrams.text=Remove All
 Arranger.btnExportPNG.text=PNG Export
 Arranger.btnSaveArr.text=Save Arr.
 Arranger.btnLoadArr.text=Load Arr.
 Arranger.btnAddDiagram.tooltip=Insert a new, empty diagram.
-Arranger.btnPinDiagram.text=Pin Diagrams
+Arranger.btnPinDiagram.text=Pin Diagram
 Arranger.btnSetCovered.text=Set Covered
 Arranger.btnZoom.text=Zoom out/in
 Arranger.btnSaveArr.tooltip=Save the arrangement of the selected diagrams as list (*.arr) or archive (*.arrz).

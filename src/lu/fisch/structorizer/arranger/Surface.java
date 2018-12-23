@@ -87,7 +87,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-20      Issue #654: Current directory is now restored from ini file on first launch
  *      Kay Gürtzig     2018-12-21/22   Enh. #655: Zoom and selection notifications to support status bar,
  *                                      multiple selection enabled and established as base for collective operations
- *      Kay Gürtzig     2018-12-22      Bugfix #656: Loading of referred files residing in an arrz file fixed. 
+ *      Kay Gürtzig     2018-12-22      Bugfix #656: Loading of referred files residing in an arrz file fixed.
+ *      Kay Gürtzig     2018-12-23      Bugfix #512: On dropping/pushing diagrams the scrolling used unzoomed coordinates
  *
  ******************************************************************************************************
  *
@@ -1529,6 +1530,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void addDiagram(Root root)
 	// START KGU#2 2015-11-19: Needed a possibility to register a related Mainform
 	{
+		// START KGU#624 2018-12-23: Enh. #655
+		// Only the new diagram shall be selected afterwards
+		unselectAll();
+		// END KGU#624 2018-12-23
 		addDiagram(root, null, null);
 	}
 	/**
@@ -1542,6 +1547,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void addDiagram(Root root, Mainform form)
 	// START KGU#110 2015-12-20: Enhancement #62 -we want to be able to use predefined positions
 	{
+		// START KGU#624 2018-12-23: Enh. #655
+		// Only the new diagram shall be selected afterwards
+		unselectAll();
+		// END KGU#624 2018-12-23
 		this.addDiagram(root, form, null);
 	}
 
@@ -1629,22 +1638,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#136 2016-03-01: Bugfix #97 - here we need the actual position
 			//Rectangle rec = root.getRect().getRectangle();
 			//rec.setLocation(left, top);
-			Rectangle rec = root.getRect(point).getRectangle();
+			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
-			if (rec.width == 0)	rec.width = DEFAULT_WIDTH;
-			if (rec.height == 0) rec.height = DEFAULT_HEIGHT;
+			if (rec.right == rec.left)	rec.right += DEFAULT_WIDTH;
+			if (rec.bottom == rec.top) rec.bottom += DEFAULT_HEIGHT;
 			// START KGU#499 2018-02-21: Enh. #515 - better area management
 			// Improve the placement if possible (for more compact arrangement)
 			if (!pointGiven) {
-				point = findPreferredLocation(silhouette, rec);
+				point = findPreferredLocation(silhouette, rec.getRectangle());
 				diagram.point = point;
-				rec = root.getRect(point).getRectangle();
+				rec = root.getRect(point);
 			}
 			// END KGU#499 2018-02-21
 			// START KGU#85 2015-11-18
 			adaptLayout();
 			// END KGU#85 2015-11-18
-			this.scrollRectToVisible(rec);
+			// START KGU#497 2018-12-23: Bugfix #512
+			rec = rec.scale(1/this.zoomFactor);
+			// END KGU#497 2018-12-23
+			this.scrollRectToVisible(rec.getRectangle());
 			// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null
 			if (form != null)
 			{
@@ -2277,8 +2289,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mousePressed(MouseEvent e)
 	{
-		/* Nothing to do here, the interesting things happen in mouseClicked() and
-		mouseDragged() */
+		/* The interesting things happen in mouseClicked() and mouseDragged() */
+		// START KGU#626 2018-12-23: Enh. #657
+		showPopupMenu(e);
+		// END KGU#626 2018-12-23
 	}
 
 	public void mouseReleased(MouseEvent e)
@@ -2294,6 +2308,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			this.selectSet(foundDiagrams);
 		}
 		dragArea = null;
+		// START KGU#626 2018-12-23: Enh. #657
+		showPopupMenu(e);
+		// END KGU#626 2018-12-23
 	}
 
 	public void mouseEntered(MouseEvent e)
@@ -2312,6 +2329,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		{
 			// Make sure the viewport moves with the mouse
 			Rectangle rect = new Rectangle(mouseX, mouseY, 1, 1);
+			System.out.println("scrollRectToVisible(" + rect + ") in mouseDragged(...)");
 			scrollRectToVisible(rect);
 
 			// Now we need the virtual coordinates
@@ -2359,6 +2377,22 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void mouseMoved(MouseEvent e)
 	{
 	}
+	
+	// START KGU#626 2018-12-23: Prepared for enh. #657
+	private void showPopupMenu(MouseEvent e) 
+	{
+		if (e.isPopupTrigger()) 
+		{
+			Diagram diagr = this.getHitDiagram(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+			// START KGU#318 2017-01-05: Enh. #319
+			//popup.show(e.getComponent(), e.getX(), e.getY());
+			if (diagr != null) {
+				// TODO
+				//popupMenu.show(e.getComponent(), e.getX(), e.getY());					
+			}
+		}
+	}
+	// END KGU#626 2018-12-23
 	
 	// START KGU#624 2018-12-22: Enh. #655
 	/**
@@ -2863,6 +2897,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-02-17: Enh. #512
 			rect = rect.scale(1/this.zoomFactor);
 			// END KGU#497 2018-02-17
+			System.out.println("scrollRectToVisible(" + rect + ") in scrollToDiagram(...)");
 			this.scrollRectToVisible(rect.getRectangle());
 		}
 	}

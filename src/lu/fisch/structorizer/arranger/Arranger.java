@@ -116,7 +116,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
 	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
-	public static final LangTextHolder btnRemoveDiagrams = new LangTextHolder("Drop Diagrams");
+	public static final LangTextHolder btnRemoveDiagrams = new LangTextHolder("Drop Diagram");
 	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
 	// END KGU#534 2018-06-27
 	// START KGU#624 2018-12-21: Enh. #655
@@ -377,7 +377,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
         btnPinDiagram.setIcon(IconLoader.getIconImage("099_pin_blue.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnPinDiagram.setText("Pin Diagrams");
+        btnPinDiagram.setText("Pin Diagram");
         btnPinDiagram.setToolTipText("Pin the selected diagrams to make them immune against replacement.");
         btnPinDiagram.setFocusable(false);
         btnPinDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -415,7 +415,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
         btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnRemoveDiagram.setText("Drop Diagrams");
+        btnRemoveDiagram.setText("Drop Diagram");
         btnRemoveDiagram.setFocusable(false);
         btnRemoveDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnRemoveDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);

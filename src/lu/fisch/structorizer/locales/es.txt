@@ -1100,8 +1100,8 @@ FindAndReplace.btnClose.text=Cerrar
 -----> Arranger
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Nuevo diagrama
-Arranger.btnRemoveDiagram.text=Quita diagramas
-Arranger.btnRemoveDiagrams.text=Quita diagramas
+Arranger.btnRemoveDiagram.text=Quita diagrama
+Arranger.btnRemoveDiagrams.text=Quita diagrama
 Arranger.btnRemoveAllDiagrams.text=Quita todos
 Arranger.btnExportPNG.text=Exporte a PNG
 Arranger.btnSaveArr.text=Graba coloc.
