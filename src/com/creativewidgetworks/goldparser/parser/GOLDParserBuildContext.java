@@ -1,3 +1,14 @@
+/*
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2018-09-18      Raw types (Class etc.) replaced by type inference 
+ *      
+ ******************************************************************************************************
+ */
 package com.creativewidgetworks.goldparser.parser;
 
 import static com.creativewidgetworks.goldparser.util.FileHelper.toInputStream;
@@ -11,8 +22,8 @@ import java.util.List;
 
 public final class GOLDParserBuildContext {
     private InputStream grammar;
-    @SuppressWarnings("rawtypes")
-    private List<Class> ruleClasses;
+    //@SuppressWarnings("rawtypes")
+    private List<Class<?>> ruleClasses;
     private boolean trimReductions = true;
 
     public GOLDParserBuildContext() {
@@ -31,8 +42,8 @@ public final class GOLDParserBuildContext {
         return grammar(toInputStream(file));
     }
 
-    @SuppressWarnings("rawtypes")
-    public GOLDParserBuildContext ruleClasses(List<Class> ruleClasses) {
+    //@SuppressWarnings("rawtypes")
+    public GOLDParserBuildContext ruleClasses(List<Class<?>> ruleClasses) {
         if (ruleClasses.size() == 0) {
             throw new IllegalStateException(formatMessage("messages", "error.handlers_none"));
         }
@@ -60,7 +71,7 @@ public final class GOLDParserBuildContext {
      * @return the list of {@link com.creativewidgetworks.goldparser.engine.Reduction} that are annotated with
      *         {@link ProcessRule}
      */
-    public List<Class> ruleClasses() {
+    public List<Class<?>> ruleClasses() {
         return ruleClasses;
     }
 

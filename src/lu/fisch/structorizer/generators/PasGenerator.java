@@ -77,6 +77,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
  *      Kay Gürtzig         2018.07.20      Enh. #563: support for simplified record initializers
  *      Kay Gürtzig         2018.07.22      Bugfix #564: defects with nested record/array initializers mended
+ *      Kay Gürtzig         2018.10.05      Bugfix #619: Undue declaration of function result variable dropped
  *
  ******************************************************************************************************
  *
@@ -1709,10 +1710,21 @@ public class PasGenerator extends Generator
 		// START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
 		//HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();	// KGU 2018-07-22: became obsolete by new field typeMap
 		// END KGU#261 2017-01-16
+		// START KGU#593 2018-10-05: Bugfix #619 - the function result variable must not be declared (again) here!
+		String functionName = null;
+		if (_root.getResultType() != null) {
+			functionName = _root.getMethodName();
+		}
+		// END KGU#593 2018-10-05
 		for (int v = 0; v < _varNames.count(); v++) {
 			// START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
 			//insertComment(_varNames.get(v), _indent + this.getIndent());
 			String varName = _varNames.get(v);
+			// START KGU#593 2018-10-05: Bugfix #619 - the function result variable must not be declared (again) here!
+			if (functionName != null && varName.equals(functionName)) {
+				continue;
+			}
+			// END KGU#593 2018-10-05
 			// START KGU#375 2017-04-12: Enh. #388 constants have already been defined
 			boolean isComplexConst = _complexConsts.contains(varName);
 			if (_root.constants.containsKey(varName) && !isComplexConst) {

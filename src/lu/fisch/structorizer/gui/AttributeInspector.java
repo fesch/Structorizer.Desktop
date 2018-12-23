@@ -80,6 +80,7 @@ import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 

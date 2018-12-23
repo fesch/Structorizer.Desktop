@@ -64,6 +64,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.07.12      Separator bug in For(String,String,String,int) fixed.
+ *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *
  ******************************************************************************************************
  *
@@ -568,7 +569,7 @@ public class For extends Element implements ILoop {
 		}
 		else
 		{
-			return this.splitForClause()[3]; // Or should we provide this.splitClause()[4]?
+			return this.splitForClause()[3]; // Or should we provide this.splitForClause()[4]?
 		}
 	}
 	
@@ -1252,5 +1253,22 @@ public class For extends Element implements ILoop {
 		// END KGU#261 2017-04-14
 	}
 	// END KGU#261 2017-01-26
+
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = super.getMaxLineLength(false);
+		if (_includeSubstructure) {
+			maxLen = Math.max(maxLen, this.q.getMaxLineLength(true));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 
 }

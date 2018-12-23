@@ -30,65 +30,69 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
- *      Bob Fisch       2007.12.11      First Issue
- *      Kay Gürtzig     2015.10.18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
- *      Kay Gürtzig     2015.10.30      Issue #6 fixed properly (see comment)
- *      Kay Gürtzig     2015.11.03      check_14 property added (For loop enhancement, #10 = KGU#3)
- *      Kay Gürtzig     2015.11.10      Issues #6 and #16 fixed by appropriate default window behaviour
- *      Kay Gürtzig     2015.11.14      Yet another improved approach to #6 / #16: see comment
- *      Kay Gürtzig     2015.11.24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
- *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
- *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended
- *      Kay Gürtzig     2016.01.04      KGU#123: Bugfix #65 / Enh. #87 - New Ini property: mouse wheel mode
- *      Kay Gürtzig     2016.03.16      KGU#157: Bugfix #132 - Don't allow to close without having stopped Executor
- *      Kay Gürtzig     2016.03.18      KGU#89: Localization of Executor Control supported 
- *      Kay Gürtzig     2016.07.03      KGU#202: Localization of Arranger Surface supported
- *      Kay Gürtzig     2016.07.25      Issues #201, #202: Look-and-Feel propagation to Arranger and Executor
- *      Kay Gürtzig     2016.08.01      Enh. #128: new mode "Comments plus text" associated to Ini file
- *      Kay Gürtzig     2016.08.08      Issues #220, #224: Look-and Feel updates for Executor and Translator
- *      Kay Gürtzig     2016.09.09      Locales backwards compatibility precaution for release 3.25 in loadFromIni()
- *      Kay Gürtzig     2016.10.11      Enh. #267: New method updateAnalysis() introduced
- *      Kay Gürtzig     2016.11.01      Issue #81: Scale factor from Ini also applied to fonts
- *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded except for icons, ensured to be >= 1
- *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions
- *      Kay Gürtzig     2016.12.12      Enh. #305: API enhanced to support the Arranger Root index view
- *      Kay Gürtzig     2016.12.15      Enh. #310: New options for saving diagrams added
- *      Kay Gürtzig     2017.01.04      KGU#49: Closing a stand-alone instance now effectively warns Arranger
- *      Kay Gürtzig     2017.01.06      Issue #312: Measure against lost focus on start.
- *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
- *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
- *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
- *      Kay Gürtzig     2017.03.15      Enh. #300: turned retrieveVersion to static
- *      Kay Gürtzig     2017.10.06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
- *      Kay Gürtzig     2017.11.05      Issue #452: Differentiated initial setting for Analyser preferences
- *      Kay Gürtzig     2017.11.06      Issue #455: Drastic measures against races on startup.
- *      Kay Gürtzig     2017.11.14      Bugfix #465: invokeAndWait must be suppressed if not standalone
- *      Kay Gürtzig     2018.01.21      Enh. #490: DiagramController aliases saved and loaded to/from Ini
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007-12-11      First Issue
+ *      Kay Gürtzig     2015-10-18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
+ *      Kay Gürtzig     2015-10-30      Issue #6 fixed properly (see comment)
+ *      Kay Gürtzig     2015-11-03      check_14 property added (For loop enhancement, #10 = KGU#3)
+ *      Kay Gürtzig     2015-11-10      Issues #6 and #16 fixed by appropriate default window behaviour
+ *      Kay Gürtzig     2015-11-14      Yet another improved approach to #6 / #16: see comment
+ *      Kay Gürtzig     2015-11-24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
+ *      Kay Gürtzig     2015-11-28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
+ *      Kay Gürtzig     2015-12-04      KGU#95: Bugfix #42 - wrong default current directory mended
+ *      Kay Gürtzig     2016-01-04      KGU#123: Bugfix #65 / Enh. #87 - New Ini property: mouse wheel mode
+ *      Kay Gürtzig     2016-03-16      KGU#157: Bugfix #132 - Don't allow to close without having stopped Executor
+ *      Kay Gürtzig     2016-03-18      KGU#89: Localization of Executor Control supported 
+ *      Kay Gürtzig     2016-07-03      KGU#202: Localization of Arranger Surface supported
+ *      Kay Gürtzig     2016-07-25      Issues #201, #202: Look-and-Feel propagation to Arranger and Executor
+ *      Kay Gürtzig     2016-08-01      Enh. #128: new mode "Comments plus text" associated to Ini file
+ *      Kay Gürtzig     2016-08-08      Issues #220, #224: Look-and Feel updates for Executor and Translator
+ *      Kay Gürtzig     2016-09-09      Locales backwards compatibility precaution for release 3.25 in loadFromIni()
+ *      Kay Gürtzig     2016-10-11      Enh. #267: New method updateAnalysis() introduced
+ *      Kay Gürtzig     2016-11-01      Issue #81: Scale factor from Ini also applied to fonts
+ *      Kay Gürtzig     2016-11-09      Issue #81: Scale factor no longer rounded except for icons, ensured to be >= 1
+ *      Kay Gürtzig     2016-12-02      Enh. #300: Notification of disabled version retrieval or new versions
+ *      Kay Gürtzig     2016-12-12      Enh. #305: API enhanced to support the Arranger Root index view
+ *      Kay Gürtzig     2016-12-15      Enh. #310: New options for saving diagrams added
+ *      Kay Gürtzig     2017-01-04      KGU#49: Closing a stand-alone instance now effectively warns Arranger
+ *      Kay Gürtzig     2017-01-06      Issue #312: Measure against lost focus on start.
+ *      Kay Gürtzig     2017-01-07      Enh. #101: Modified title string for dependent instances
+ *      Kay Gürtzig     2017-01-15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
+ *      Kay Gürtzig     2017-02-03      Issue #340: Redundant calls of setLocale dropped
+ *      Kay Gürtzig     2017-03-15      Enh. #300: turned retrieveVersion to static
+ *      Kay Gürtzig     2017-10-06      Enh. #430: InputBox.FONT_SIZE now addressed in loadFromIni(), saveToIni()
+ *      Kay Gürtzig     2017-11-05      Issue #452: Differentiated initial setting for Analyser preferences
+ *      Kay Gürtzig     2017-11-06      Issue #455: Drastic measures against races on startup.
+ *      Kay Gürtzig     2017-11-14      Bugfix #465: invokeAndWait must be suppressed if not standalone
+ *      Kay Gürtzig     2018-01-21      Enh. #490: DiagramController aliases saved and loaded to/from Ini
  *                                      Issue #455: Multiple redrawing of diagram avoided in loadFromIni().
- *      Kay Gürtzig     2018.02.09      Bugfix #507 had revealed an event queue issue in loadFromIni() on
+ *      Kay Gürtzig     2018-02-09      Bugfix #507 had revealed an event queue issue in loadFromIni() on
  *                                      loading  preferences from explicitly chosen ini file. This is fixed now
- *      Kay Gürtzig     2018.06.25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart
- *      Kay Gürtzig     2018.07.09      Bugfix #555: Failing restoration of the previous comment popup status
- *      Kay Gürtzig     2018.09.10      Issue #508: New option Element.E_PADDING_FIX in load/save INI 
+ *      Kay Gürtzig     2018-06-25      Issue #551.1: The msgUpdateInfoHint shouldn't be given on webstart
+ *      Kay Gürtzig     2018-07-09      Bugfix #555: Failing restoration of the previous comment popup status
+ *      Kay Gürtzig     2018-09-10      Issue #508: New option Element.E_PADDING_FIX in load/save INI
+ *      Kay Gürtzig     2018-10-06      Issue #552: No need for serial action on closing if Arranger
+ *                                      doesn't hold dirty diagrams
+ *      Kay Gürtzig     2018-10-28      Enh. #419: loadFromIni() decomposed (diagram-related parts delegated)
+ *      Kay Gürtzig     2018-12-21      Enh. #655 signature and semantics of method routinePoolChanged adapted 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
- *      2017.11.06 Drastic measures against races on start
+ *      2017-11-06 Drastic measures against races on start
  *      - If opened stand-alone (i.e. unless being opened from Arranger), races on startup of caused lots
  *        of NullPointerExceptions in the background and a diagram initially to be loaded looking contorted
  *        and bizarrely prolonged. So the steps on creation where put in invokeAndWait blocks.
- *      2015.11.14 New approach to solve the Window Closing problem (Kay Gürtzig, #6 = KGU#49 / #16 = KGU#66)
+ *      2015-11-14 New approach to solve the Window Closing problem (Kay Gürtzig, #6 = KGU#49 / #16 = KGU#66)
  *      - A new boolean field isStandalone (addressed by a new parameterized constructor) is introduced in
  *        order to decide whether to exit or only to dispose on Window Closing event. So if the Mainform is
  *        opened as a dependent frame, it should be opened as new Mainform(false) from now on. In this case
  *        it will only dispose when closing, otherwise it will exit. 
- *      2015.11.10 Window Closing problem (Kay Gürtzig, KGU#49/KGU#66)
+ *      2015-11-10 Window Closing problem (Kay Gürtzig, KGU#49/KGU#66)
  *      - Issues #6/#16 hadn't been solved in the intended way since the default action had still been
  *        EXIT_ON_CLOSE instead of just disposing.
- *      2015.10.30 (Kay Gürtzig)
+ *      2015-10-30 (Kay Gürtzig)
  *      - if on closing the window the user cancels an option dialog asking him or her whether or not to save
  *        the diagram changes then the Mainform is to be prevented from closing. If the Mainform runs as
  *        a thread of the Arranger, however, this might not help a lot because it is going to be killed
@@ -336,7 +340,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             // END KGU#157 2016-03-16
                             // START KGU#534 2018-07-16: Enh. #552
                             {
-                            	Diagram.startSerialMode();
+                            	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
+                        		//Diagram.startSerialMode();
+                            	boolean serialModeEntered = false;
+                            	if (Arranger.hasInstance() && Arranger.getInstance().hasUnsavedChanges(diagram.getRoot())) {
+                            		Diagram.startSerialMode();
+                            		serialModeEntered = true;
+                            	}
+                            	// END KGU#594 2018-10-06
                             	try {
                             // END KGU#534 2018-07-16
                             		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
@@ -373,7 +384,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             // START KGU#534 2018-07-16: Enh. #552
                             	}
                             	finally {
-                            		Diagram.endSerialMode();
+                                	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
+                            		//Diagram.endSerialMode();
+                                	if (serialModeEntered) {
+                                		Diagram.endSerialMode();
+                                	}
+                                	// END KGU#594 2018-10-06
                             	}
                             }
                             // END KGU#534 2018-07-16
@@ -519,7 +535,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.load();
 			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI
 
-			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+			double scaleFactor = Double.parseDouble(ini.getProperty("scaleFactor","1"));
 			// START KGU#287 2017-01-09 
 			if (scaleFactor <= 0.5) scaleFactor = 1.0;	// Pathologic value...
 			//IconLoader.setScaleFactor(scaleFactor.intValue());
@@ -528,17 +544,17 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#287 2017-01-09
 			
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
-			int defaultWidth = new Double(750 * scaleFactor).intValue();
-			int defaultHeight = new Double (550 * scaleFactor).intValue();
+			int defaultWidth = Double.valueOf(750 * scaleFactor).intValue();
+			int defaultHeight = Double.valueOf(550 * scaleFactor).intValue();
 			// END KGU#287 2016-11-01
 			// position
-			int top = Integer.valueOf(ini.getProperty("Top","0"));
+			int top = Integer.parseInt(ini.getProperty("Top","0"));
 			int left = Integer.parseInt(ini.getProperty("Left","0"));
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 			//int width = Integer.parseInt(ini.getProperty("Width","750"));
 			//int height = Integer.valueOf(ini.getProperty("Height","550"));
 			int width = Integer.parseInt(ini.getProperty("Width", ""+defaultWidth));
-			int height = Integer.valueOf(ini.getProperty("Height",""+defaultHeight));
+			int height = Integer.parseInt(ini.getProperty("Height", ""+defaultHeight));
 			// END KGU#287 2016-11-01
 
 			// reset to defaults if wrong values
@@ -608,16 +624,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#300 2016-12-02
 			if (diagram != null) 
 			{
-				// current directory
-				// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
-				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
-				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
-				// END KGU#95 2015-12-04
-				// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
-				diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
-				diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
-				diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
-				// END KGU#354 2017-04-26
+				// START KGU#602 2018-10-28: Let diagram fetch its properties itself
+				diagram.fetchIniProperties(ini);
+				// END KGU#602 2018-10-28
 				
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -748,28 +757,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
 			
-			// recent files
-			try
-			{	
-				if (diagram != null)
-				{
-					for (int i = 9; i >= 0; i--)
-					{
-						if(ini.keySet().contains("recent"+i))
-						{
-							if(!ini.getProperty("recent"+i, "").trim().equals(""))
-							{
-								diagram.addRecentFile(ini.getProperty("recent"+i, ""), false);
-							}
-						}
-					}
-				}
-			}
-			catch(Exception e)
-			{
-				logger.log(Level.WARNING, "Ini", e);
-			}
-			
+			// KGU#602 2018-10-28: Fetching of recent file paths outsourced to Diagram.fetchIniProperties()
+						
 			// Analyser (see also Root.saveToIni())
 			// START KGU#239 2016-08-12: Code redesign
 			for (int i = 1; i <= Root.numberOfChecks(); i++)
@@ -793,6 +782,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			validate();
 		}
 	}
+
 
 	public void saveToINI()
 	{
@@ -872,7 +862,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 		    ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
 			// END KGU#331 2017-01-15
-
+		    
 			// look and feel
 			if (laf != null)
 			{
@@ -1186,13 +1176,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
     // START KGU#305 2016-12-16: Code revision
 	@Override
-	public void routinePoolChanged(IRoutinePool _source) {
-		if (_source instanceof Arranger && this.editor != null) {
+	public void routinePoolChanged(IRoutinePool _source, int _flags) {
+		if (_source instanceof Arranger && this.editor != null && (_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0) {
 			this.editor.updateArrangerIndex(Arranger.getSortedRoots());
 		}
 		updateAnalysis();
 	}
 	// END KGU#305 2016-12-16
-	
 
 }

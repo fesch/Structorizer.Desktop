@@ -26,7 +26,7 @@ package lu.fisch.structorizer.gui;
  *      Author:         Kay Guertzig
  *
  *      Description:    This class is a kind of proxy for a selected subsequence of a Subqueue.
- *						It meets some editing purposes and contains mere references.
+ *                      It meets some editing purposes and contains mere references.
  *
  ******************************************************************************************************
  *
@@ -44,6 +44,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.13      Enh. #277: Method setDisabled(boolean) implemented
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signatures too)
  *      Kay Gürtzig     2017.03.26      Enh. #380: Methods addElement() and insertElementAt() now substantially implemented
+ *      Kay Gürtzig     2018.10.26      Enh. #619: New method getMaxLineLength(boolean) implemented
  *
  ******************************************************************************************************
  *
@@ -655,4 +656,26 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 		return null;
 	}
+
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = 0;
+		/* If this gets called with _includeSubstructure = false then it must have
+		 * been selected on the top level. So the immediate children will have been
+		 * meant
+		 */ 
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			maxLen = Math.max(maxLen, this.getElement(i).getMaxLineLength(_includeSubstructure));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

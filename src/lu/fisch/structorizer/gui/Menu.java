@@ -93,6 +93,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by conv. element icons
  *      Kay Gürtzig     2018.03.14      Enh. #519: New ctrl+wheel preference together with old menuDiagramWheel in Preferences menu
  *      Kay Gürtzig     2018.03.15      Bugfix #522: New messages for subroutine outsourcing 
+ *      Kay Gürtzig     2018.10.26      Enh. #619: New menu entries and messages for line breaking
  *
  ******************************************************************************************************
  *
@@ -117,6 +118,7 @@ import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangMenuBar;
+import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.locales.Translator;
@@ -208,6 +210,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuEditUpgradeTurtle = new JMenuItem("To fine graphics",IconLoader.getIcon(27));
 	protected final JMenuItem menuEditDowngradeTurtle = new JMenuItem("To integer graphics",IconLoader.getIcon(28));
 	// END KGU#282 2016-10-16
+	// START KGU#602 2018-10-26: enh. #619
+	protected final JMenuItem menuEditBreakLines = new JMenuItem("(Re-)break text lines ...", IconLoader.getIcon(56));
+	// END KGU#602 2018-10-26
 
 	protected final JMenu menuView = new JMenu("View");
 
@@ -657,6 +662,15 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgTabHdrSignature = new LangTextHolder("Signature");
 	public static final LangTextHolder msgTabHdrAlias = new LangTextHolder("Alias");
 	// END KGU#480 2018-01-19
+	// START KGU#602 2018-10-26: Enh. #619 - Opportunity to re-break the text lines in elements
+	public static final LangTextHolder ttlBreakTextLines = new LangTextHolder("Limit the line length by word wrapping");
+	public static final LangTextHolder msgMaxLineLengthSelected = new LangTextHolder(    "Max. line length in selected element(s): %");
+	public static final LangTextHolder msgMaxLineLengthSubstructure = new LangTextHolder("Max. line lengths including substructure: %");
+	public static final LangTextHolder lblNewMaxLineLength = new LangTextHolder("New maximum line length:");
+	public static final LangTextHolder lblInvolveSubtree = new LangTextHolder("Apply also to substructure");
+	public static final LangTextHolder lblPreserveContinuators = new LangTextHolder("Preserve existing soft line breaks");
+	// END KGU#602 2018-10-26
+	
 
 	public void create()
 	{
@@ -689,7 +703,8 @@ public class Menu extends LangMenuBar implements NSDController
 		//  END KGU#373 2017-03-28
 
 		menuFile.add(menuFileOpen);
-		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFileOpen.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(); doButtons(); } } );
 
 		menuFile.add(menuFileOpenRecent);
@@ -907,6 +922,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuEdit.addSeparator();
 		// END KGU#282 2016-10-16
 
+		menuEdit.add(menuEditBreakLines);
+		menuEditBreakLines.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.rebreakLines(); doButtons(); } } );
+		// TODO
+		menuEdit.addSeparator();
+		
 		menuEdit.add(menuEditCopyDiagramPNG);
 		menuEditCopyDiagramPNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuEditCopyDiagramPNG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardPNG();; doButtons(); } } );
@@ -1505,6 +1525,10 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditUpgradeTurtle.setEnabled(conditionAny);
 			menuEditDowngradeTurtle.setEnabled(conditionAny);
 			// END KGU#282 2016-10-16
+			
+			// START KGU#602 2018-10-26: Enh. #619
+			menuEditBreakLines.setEnabled(conditionAny);
+			// END KGU#602 2018-10-16
 
 			// style / type
 			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
@@ -1513,7 +1537,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramUnboxed.setSelected(!diagram.getRoot().isBoxed);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 			// START KGU#305 2016-12-14: Enh. #305
-			menuDiagramIndex.setSelected(diagram.showArrangerIndex());
+			menuDiagramIndex.setSelected(diagram.showingArrangerIndex());
 			// END KGU#305 2016-12-14
 
 			// elements

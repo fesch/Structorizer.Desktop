@@ -33,132 +33,140 @@ package lu.fisch.structorizer.executor;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch                       First Issue
- *      Kay Gürtzig     2015.10.11      Method execute() now ensures that all elements get unselected
- *      Kay Gürtzig     2015.10.13      Method step decomposed into separate subroutines, missing
+ *      Kay Gürtzig     2015-10-11      Method execute() now ensures that all elements get unselected
+ *      Kay Gürtzig     2015-10-13      Method step decomposed into separate subroutines, missing
  *                                      support for Forever loops and Parallel sections added;
  *                                      delay mechanism reorganised in order to integrate breakpoint
  *                                      handling in a sound way
- *      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment)
- *      Kay Gürtzig     2015.10.17/18   First preparations for a subroutine retrieval via Arranger
- *      Kay Gürtzig     2015.10.21      Support for multiple constants per CASE branch added
- *      Kay Gürtzig     2015.10.26/27   Language conversion and FOR loop parameter analysis delegated to the elements
- *      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
- *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
- *      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
- *      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
+ *      Kay Gürtzig     2015-10-15      stepParallel() revised (see comment)
+ *      Kay Gürtzig     2015-10-17/18   First preparations for a subroutine retrieval via Arranger
+ *      Kay Gürtzig     2015-10-21      Support for multiple constants per CASE branch added
+ *      Kay Gürtzig     2015-10-26/27   Language conversion and FOR loop parameter analysis delegated to the elements
+ *      Kay Gürtzig     2015-11-04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
+ *      Kay Gürtzig     2015-11-05      Enhancement allowing to adopt edited values from Control (KGU#68)
+ *      Kay Gürtzig     2015-11-08      Array assignments and variable setting deeply revised (KGU#69)
+ *      Kay Gürtzig     2015-11-09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
  *                                      wrong equality operator in stepCase().
- *      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
- *      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
- *      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
- *      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
+ *      Kay Gürtzig     2015-11-11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
+ *      Kay Gürtzig     2015-11-12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
+ *      Kay Gürtzig     2015-11-13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
+ *      Kay Gürtzig     2015-11-20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
  *                                      Message types for output and return value information corrected
- *      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
- *      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
- *      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
- *      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
+ *      Kay Gürtzig     2015-11-23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
+ *      Kay Gürtzig     2015-11-24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
+ *      Kay Gürtzig     2015-11-25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
+ *      Kay Gürtzig     2015-12-10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
  *                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
- *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): List of output expressions
- *      Kay Gürtzig     2015.12.13      Enhancement #51 (KGU#107): Handling of empty input and output
- *      Kay Gürtzig     2015.12.15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
- *      Kay Gürtzig     2016.01.05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
- *      Kay Gürtzig     2016.01.07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
+ *      Kay Gürtzig     2015-12-11      Enhancement #54 (KGU#101): List of output expressions
+ *      Kay Gürtzig     2015-12-13      Enhancement #51 (KGU#107): Handling of empty input and output
+ *      Kay Gürtzig     2015-12-15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
+ *      Kay Gürtzig     2016-01-05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
+ *      Kay Gürtzig     2016-01-07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
  *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
- *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
- *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
- *      Kay Gürtzig     2016.01.14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
- *      Kay Gürtzig     2016.01.15      KGU#109: More precaution against typed variables (issues #61, #107)
- *      Kay Gürtzig     2016.01.16      Bugfix #112: Several flaws in index evaluation mended (KGU#141)
+ *      Kay Gürtzig     2016-01-08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
+ *      Kay Gürtzig     2016-01-09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
+ *      Kay Gürtzig     2016-01-14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
+ *      Kay Gürtzig     2016-01-15      KGU#109: More precaution against typed variables (issues #61, #107)
+ *      Kay Gürtzig     2016-01-16      Bugfix #112: Several flaws in index evaluation mended (KGU#141)
  *      Kay Gürtzig     2016-01-29      Bugfix #115, enh. #84: Result arrays now always presented as list
  *                                      (with "Pause" button if not already in step mode; KGU#133, KGU#147).
- *      Kay Gürtzig     2016.03.13      Enh. #77, #124: runtime data collection implemented (KGU#117, KGU#156)
- *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against reopening, take-over, and loss of control (KGU#157)
- *      Kay Gürtzig     2016.03.17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
- *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
- *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
- *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
- *      Kay Gürtzig     2016.04.03      KGU#150: Support for Pascal functions chr and ord
+ *      Kay Gürtzig     2016-03-13      Enh. #77, #124: runtime data collection implemented (KGU#117, KGU#156)
+ *      Kay Gürtzig     2016-03-16      Bugfix #131: Precautions against reopening, take-over, and loss of control (KGU#157)
+ *      Kay Gürtzig     2016-03-17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
+ *      Kay Gürtzig     2016-03-18      KGU#89: Language localization support slightly improved
+ *      Kay Gürtzig     2016-03-21      Enh. #84 (KGU#61): Support for FOR-IN loops
+ *      Kay Gürtzig     2016-03-29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
+ *      Kay Gürtzig     2016-04-03      KGU#150: Support for Pascal functions chr and ord
  *                                      KGU#165: Case awareness consistency for keywords improved.
  *      Kay Gürtzig     2016-04-12      Enh. #137 (KGU#160): Additional or exclusive output to text window
  *      Kay Gürtzig     2016-04-25      Issue #30 (KGU#76): String comparison substantially improved,
  *                                      Enh. #174 (KGU#184): Input now accepts array initialisation expressions
  *      Kay Gürtzig     2016-04-26      KGU#150: ord implementation revised,
  *                                      Enh. #137 (KGU#160): Arguments and results added to text window output
- *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) texts put under language support
- *      Kay Gürtzig     2016.05.25      KGU#198: top-level function results weren't logged in the window output
- *      Kay Gürtzig     2016.06.07      KGU#200: While loops showed wrong colour if their body raised an error
- *      Kay Gürtzig     2016.07.25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
+ *      Kay Gürtzig     2016-05-05      KGU#197: Further (forgotten) texts put under language support
+ *      Kay Gürtzig     2016-05-25      KGU#198: top-level function results weren't logged in the window output
+ *      Kay Gürtzig     2016-06-07      KGU#200: While loops showed wrong colour if their body raised an error
+ *      Kay Gürtzig     2016-07-25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
  *      Kay Gürtzig     2016-07-27      KGU#197: Further (chiefly error) messages put under language support
  *                                      Enh. #137: Error messages now also written to text window output
  *      Kay Gürtzig     2016-09-17      Bugfix #246 (Boolean expressions) and issue #243 (more translations)
- *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
- *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
- *      Kay Gürtzig     2016.09.25      Bugfix #254: parser keywords for CASE elements had been ignored
+ *      Kay Gürtzig     2016-09-22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
+ *      Kay Gürtzig     2016-09-25      Bugfix #251: Console window wasn't involved in look and feel update
+ *      Kay Gürtzig     2016-09-25      Bugfix #254: parser keywords for CASE elements had been ignored
  *                                      Enh. #253: CodeParser.keywordMap refactoring done
- *      Kay Gürtzig     2016.10.06      Bugfix #261: Stop didn't work immediately within multi-line instructions
- *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
- *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
+ *      Kay Gürtzig     2016-10-06      Bugfix #261: Stop didn't work immediately within multi-line instructions
+ *      Kay Gürtzig     2016-10-07      Some synchronized sections added to reduce inconsistency exception likelihood
+ *      Kay Gürtzig     2016-10-09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
  *                                      Issue #269: Attempts to scroll the diagram to currently executed elements (ineffective)
- *      Kay Gürtzig     2016.10.12      Issue #271: Systematic support for user-defined input prompts
- *      Kay Gürtzig     2016.10.13      Enh. #270: Elements may be disabled for execution ("outcommented")
- *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
+ *      Kay Gürtzig     2016-10-12      Issue #271: Systematic support for user-defined input prompts
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Elements may be disabled for execution ("outcommented")
+ *      Kay Gürtzig     2016-10-16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
  *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
  *                                      of ' into " in method convert() eliminated
- *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved. 
- *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
- *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
- *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
- *      Kay Gürtzig     2016.12.22      Enh. #314: Support for File API
- *      Kay Gürtzig     2016.12.29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
- *      Kay Gürtzig     2017.01.06      Bugfix #324: Trouble with replacing an array by a scalar value on input
+ *      Kay Gürtzig     2016-11-19      Issue #269: Scrolling problem eventually solved. 
+ *      Kay Gürtzig     2016-11-22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
+ *      Kay Gürtzig     2016-11-22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
+ *      Kay Gürtzig     2016-12-12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
+ *      Kay Gürtzig     2016-12-22      Enh. #314: Support for File API
+ *      Kay Gürtzig     2016-12-29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
+ *      Kay Gürtzig     2017-01-06      Bugfix #324: Trouble with replacing an array by a scalar value on input
  *                                      Enh. #325: built-in type test functions added.
- *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in stepInstruction()
- *      Kay Gürtzig     2017.01.27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
- *      Kay Gürtzig     2017.02.08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
- *      Kay Gürtzig     2017.02.17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
- *      Kay Gürtzig     2017.03.06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
- *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
- *      Kay Gürtzig     2017.03.30      Enh. #388: Concept of constants implemented
- *      Kay Gürtzig     2017.04.11      Enh. #389: Implementation of import calls (without context change)
- *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
- *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
- *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
- *      Kay Gürtzig     2017.05.07      Enh. #398: New built-in functions sgn (int result) and signum (float result)
- *      Kay Gürtzig     2017.05.22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
- *      Kay Gürtzig     2017.05.23      Bugfix #411: converts certain unicode escape sequences to octal ones
- *      Kay Gürtzig     2017.05.24      Enh. #413: New function split(string, string) built in
- *      Kay Gürtzig     2017.06.09      Enh. #416: Support for execution line continuation by trailing backslash
- *      Kay Gürtzig     2017.06.30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
- *      Kay Gürtzig     2017.07.01      Enh. #413: Special check for built-in split function in stepForIn()
- *      Kay Gürtzig     2017.07.02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
- *      Kay Gürtzig     2017.09.09      Bugfix #411 revised (issue #426)
- *      Kay Gürtzig     2017.09.17      Enh. #423: First draft implementation of records.
- *      Kay Gürtzig     2017.09.18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
- *      Kay Gürtzig     2017.09.30      Bugfix #429: Initializer evaluation made available in return statements
- *      Kay Gürtzig     2017.10.02      Some regex stuff revised to gain performance
- *      Kay Gürtzig     2017.10.08      Enh. #423: Recursive array and record initializer evaluation,
+ *      Kay Gürtzig     2017-01-17      Enh. #335: Toleration of Pascal variable declarations in stepInstruction()
+ *      Kay Gürtzig     2017-01-27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
+ *      Kay Gürtzig     2017-02-08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
+ *      Kay Gürtzig     2017-02-17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
+ *      Kay Gürtzig     2017-03-06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
+ *      Kay Gürtzig     2017-03-27      Issue #356: Sensible reaction to the close button ('X') implemented
+ *      Kay Gürtzig     2017-03-30      Enh. #388: Concept of constants implemented
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Implementation of import calls (without context change)
+ *      Kay Gürtzig     2017-04-12      Bugfix #391: Control button activation fixed for step mode
+ *      Kay Gürtzig     2017-04-14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
+ *      Kay Gürtzig     2017-04-22      Code revision KGU#384: execution context bundled into Executor.context
+ *      Kay Gürtzig     2017-05-07      Enh. #398: New built-in functions sgn (int result) and signum (float result)
+ *      Kay Gürtzig     2017-05-22      Issue #354: converts binary literals ("0b[01]+") into decimal literals 
+ *      Kay Gürtzig     2017-05-23      Bugfix #411: converts certain unicode escape sequences to octal ones
+ *      Kay Gürtzig     2017-05-24      Enh. #413: New function split(string, string) built in
+ *      Kay Gürtzig     2017-06-09      Enh. #416: Support for execution line continuation by trailing backslash
+ *      Kay Gürtzig     2017-06-30      Enh. #424: Turtleizer functions enabled (evaluateDiagramControllerFunctions())
+ *      Kay Gürtzig     2017-07-01      Enh. #413: Special check for built-in split function in stepForIn()
+ *      Kay Gürtzig     2017-07-02      Enh. #389: Include (import) mechanism redesigned (no longer CALL-based)
+ *      Kay Gürtzig     2017-09-09      Bugfix #411 revised (issue #426)
+ *      Kay Gürtzig     2017-09-17      Enh. #423: First draft implementation of records.
+ *      Kay Gürtzig     2017-09-18/27   Enh. #423: Corrections on handling typed constants and for-in loops with records
+ *      Kay Gürtzig     2017-09-30      Bugfix #429: Initializer evaluation made available in return statements
+ *      Kay Gürtzig     2017-10-02      Some regex stuff revised to gain performance
+ *      Kay Gürtzig     2017-10-08      Enh. #423: Recursive array and record initializer evaluation,
  *                                      Array element assignment in record components fixed.
- *      Kay Gürtzig     2017.10.10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
- *      Kay Gürtzig     2017.10.11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
- *      Kay Gürtzig     2017.10.12      Issue #432: Attempt to improve performance by reducing redraw() calls on delay 0
- *      Kay Gürtzig     2017.10.14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
- *      Kay Gürtzig     2017.10.16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
- *      Kay Gürtzig     2017.10.28      Enh. #443: First adaptations for multiple DiagramControllers
- *      Kay Gürtzig     2017.10.29      Enh. #423: Workaround for evaluation error on converted actual object field access
- *      Kay Gürtzig     2017.10.31      Enh. #439: showCompoundValue() now more comfortable with ValuePresenter
- *      Kay Gürtzig     2017.11.01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
- *      Kay Gürtzig     2017.12.10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
- *      Kay Gürtzig     2018.01.23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
- *      Kay Gürtzig     2018.02.07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
- *      Kay Gürtzig     2018.02.11      Bugfix #509: Built-in function copyArray had a defective definition
- *      Kay Gürtzig     2018.03.19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
+ *      Kay Gürtzig     2017-10-10      Bugfix #433: Ghost results for procedure diagrams named like Java classes
+ *      Kay Gürtzig     2017-10-11      Bugfix #434: The condition pre-compilation in loops must not include string comparison
+ *      Kay Gürtzig     2017-10-12      Issue #432: Attempt to improve performance by reducing redraw() calls on delay 0
+ *      Kay Gürtzig     2017-10-14      Issues #436, #437: Arrays now represented as ArrayList; adoptVarChanges() returns error messages
+ *      Kay Gürtzig     2017-10-16      Enh. #439: prepareForDisplay() made static, showArray() generalized to showCompoundValue()
+ *      Kay Gürtzig     2017-10-28      Enh. #443: First adaptations for multiple DiagramControllers
+ *      Kay Gürtzig     2017-10-29      Enh. #423: Workaround for evaluation error on converted actual object field access
+ *      Kay Gürtzig     2017-10-31      Enh. #439: showCompoundValue() now more comfortable with ValuePresenter
+ *      Kay Gürtzig     2017-11-01      Bugfix #447: Issue with line continuation backslashes in stepAlternative() fixed
+ *      Kay Gürtzig     2017-12-10/11   Enh. #487: New display mode "Hide declarations" supported in execution counting
+ *      Kay Gürtzig     2018-01-23      Bugfix #498: stepRepeat no longer checks the loop condition in advance
+ *      Kay Gürtzig     2018-02-07/08   Bugfix #503: Defective preprocessing of string comparisons led to wrong results
+ *      Kay Gürtzig     2018-02-11      Bugfix #509: Built-in function copyArray had a defective definition
+ *      Kay Gürtzig     2018-03-19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
  *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext
- *      Kay Gürtzig     2018.04.03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
- *      Kay Gürtzig     2018.07.02      KGU#539: Fixed the operation step counting for CALL elements 
- *      Kay Gürtzig     2018.07.20      Enh. #563 - support for simplified record initializers
- *      Kay Gürtzig     2018.07.27      Issue #432: Deficient redrawing in step mode with delay 0 fixed
- *      Kay Gürtzig     2018.08.01      Enh. #423/#563: Effort to preserve component order for record display
- *      Kay Gürtzig     2018.08.03      Enh. #577: Meta information to output console now conditioned
- *      Kay Gürtzig     2018.08.06      Some prevention against running status lock on occasion of Issue #577
+ *      Kay Gürtzig     2018-04-03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
+ *      Kay Gürtzig     2018-07-02      KGU#539: Fixed the operation step counting for CALL elements 
+ *      Kay Gürtzig     2018-07-20      Enh. #563 - support for simplified record initializers
+ *      Kay Gürtzig     2018-07-27      Issue #432: Deficient redrawing in step mode with delay 0 fixed
+ *      Kay Gürtzig     2018-08-01      Enh. #423/#563: Effort to preserve component order for record display
+ *      Kay Gürtzig     2018-08-03      Enh. #577: Meta information to output console now conditioned
+ *      Kay Gürtzig     2018-08-06      Some prevention against running status lock on occasion of Issue #577
+ *      Kay Gürtzig     2018-09-17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018-09-24      Bugfix #605: Handling of const arguments on top level fixed
+ *      Kay Gürtzig     2018-10-02/04   Bugfix #617: evaluateDiagramControllerFunctions used to fail when
+ *                                      several controller functions occurred in an expression or raised an
+ *                                      NullPointerException if a controller function was called with wrong arg number
+ *      Kay Gürtzig     2018-12-12      Bugfix #642: Unreliable splitting of comparison expressions
+ *      Kay Gürtzig     2018-12-16      Bugfix #644 in tryAssignment()
+ *      Kay Gürtzig     2018-12-17      Bugfix #646 in tryOutput()
  *
  ******************************************************************************************************
  *
@@ -323,8 +331,6 @@ import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 import bsh.EvalError;
 import bsh.Interpreter;
-
-import com.stevesoft.pat.Regex;
 
 /**
  * Singleton class controlling the execution of a Nassi-Shneiderman diagram.
@@ -917,6 +923,7 @@ public class Executor implements Runnable
 	// END KGU#477 2017-12-10
 	
 	// Constant set of matchers for unicode literals that cause harm in interpreter
+	// (Concurrent execution of the using method is rather unlikely, so we dare to reuse the Matchers) 
 	private static final Matcher[] MTCHs_BAD_UNICODE = new Matcher[]{
 			Pattern.compile("(.*)\\\\u000[aA](.*)").matcher(""),
 			Pattern.compile("(.*?)\\\\u000[dD](.*?)").matcher(""),
@@ -938,12 +945,18 @@ public class Executor implements Runnable
 	/** Matcher for split function */
 	//private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
 	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
-	private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
-	private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
-	private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
-	private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
-	private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
-	private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+	// START KGU#575 2018-09-17: Issue #594 - we replace it anyway now
+	//private static final Regex RPLC_DELETE_PROC = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
+	//private static final Regex RPLC_INSERT_PROC = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
+	//private static final Regex RPLC_INC2_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 + $2");
+	//private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
+	//private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
+	//private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
+	private static final Matcher DELETE_PROC_MATCHER = java.util.regex.Pattern.compile("delete\\((.*),(.*),(.*)\\)").matcher("");
+	private static final Matcher INSERT_PROC_MATCHER = java.util.regex.Pattern.compile("insert\\((.*),(.*),(.*)\\)").matcher("");
+	private static final String DELETE_PROC_SUBST = "$1 <- delete($1,$2,$3)";
+	private static final String INSERT_PROC_SUBST = "$2 <- insert($1,$2,$3)";
+	// END KGU#575 2018-09-17
 	
 	private static final StringList OBJECT_ARRAY = StringList.explode("Object,[,]", ",");
 	
@@ -1025,14 +1038,13 @@ public class Executor implements Runnable
 	 * converts string comparisons.<br/>
 	 * NOTE: This method should NOT be called if {@code s} contains an entire instruction line
 	 * rather than just an expression - use {@code convert(s, false)} in such cases instead
-	 * nad make sure the {@link #convertStringComparison(String)} is called for the mere
+	 * and make sure the {@link #convertStringComparison(String)} is called for the mere
 	 * expression part later on. 
 	 * @param s - the expression or instruction line to be pre-processed
 	 * @param convertComparisons - whether string comparisons are to be detected and rewritten
 	 * @return the converted string
 	 * @see #convert(String, boolean)
 	 * @see #convertStringComparison(String)
-	 * @see #unconvert(String)
 	 */
 	private String convert(String s)
 	{
@@ -1138,10 +1150,14 @@ public class Executor implements Runnable
 		// MODIFIED BY GENNARO DONNARUMMA, NEXT LINE COMMENTED -->
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
+		// START KGU#575 2018-09-17: Issue #594 - replacing obsolete 3rd-party Regex library
+		//s = RPLC_DELETE_PROC.replaceAll(s);
+		//s = RPLC_INSERT_PROC.replaceAll(s);
 		// pascal: delete
-		s = RPLC_DELETE_PROC.replaceAll(s);
+		s = DELETE_PROC_MATCHER.reset(s).replaceAll(DELETE_PROC_SUBST);
 		// pascal: insert
-		s = RPLC_INSERT_PROC.replaceAll(s);
+		s = INSERT_PROC_MATCHER.reset(s).replaceAll(INSERT_PROC_SUBST);
+		// END KGU#575 2018-09-17
 		// START KGU#285 2016-10-16: Bugfix #276 - this spoiled apostrophes because misplaced here
 //		// pascal: quotes
 //		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
@@ -1150,10 +1166,11 @@ public class Executor implements Runnable
 		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
         // pascal: convert "inc" and "dec" procedures
-		s = RPLC_INC2_PROC.replaceAll(s);
-		s = RPLC_INC1_PROC.replaceAll(s);
-		s = RPLC_DEC2_PROC.replaceAll(s);
-		s = RPLC_DEC1_PROC.replaceAll(s);
+		//s = RPLC_INC2_PROC.replaceAll(s);
+		//s = RPLC_INC1_PROC.replaceAll(s);
+		//s = RPLC_DEC2_PROC.replaceAll(s);
+		//s = RPLC_DEC1_PROC.replaceAll(s);
+		s = Element.transform_inc_dec(s);
         // END KGU 2015-11-29
 		
         // START KGU 2017-04-22: now done above in the string token conversion
@@ -1180,8 +1197,6 @@ public class Executor implements Runnable
 	// START KGU#57 2015-11-07
 	private String convertStringComparison(String str)
 	{
-		// FIXME (#503): Instruction keywords like "OUTPUT" or "INPUT" should not actually occur here (but do)!
-		// FIXME (#503): Shouldn't we FIRST tokenize the expression and THEN look for operators!?
 //		Character chA = 'a';
 //		Character chB = 'a';
 //		System.out.println("Zeichen sind " + ((chA == chB) ? "" : "NICHT ") + "identisch!");
@@ -1198,14 +1213,28 @@ public class Executor implements Runnable
 		if (containsComparison)
 		// END KGU#76 2016-04-25
 		{
-			// We are looking for || operators and split the expression by them (if present)
-			// START KGU#490 2018-02-07: Bugfix #503 - the regex precaution was wrong here
-			//StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
-			StringList exprs = StringList.explodeWithDelimiter(str, " || ");	// The delimiter is no regex here!!
-			// END KGU#490 2018-02-07
-			// Now we do the same with && operators
-			exprs = StringList.explodeWithDelimiter(exprs, " && ");
-			// Now we should have some atomic assertions, among them comparisons
+			// START KGU#612 2018-12-12: Bugfix #642 - operator symbols weren't reliably detected
+			//// We are looking for || operators and split the expression by them (if present)
+			//// START KGU#490 2018-02-07: Bugfix #503 - the regex precaution was wrong here
+			////StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			//StringList exprs = StringList.explodeWithDelimiter(str, " || ");	// The delimiter is no regex here!!
+			//// END KGU#490 2018-02-07
+			//// Now we do the same with && operators
+			//exprs = StringList.explodeWithDelimiter(exprs, " && ");
+			StringList allTokens = Element.splitLexically(str, true);
+			StringList exprs = new StringList();
+			int lastI = 0;
+			for (int i = 0; i < allTokens.count(); i++) {
+				String token = allTokens.get(i);
+				if (token.equals("||") || token.equals("&&")) {
+					exprs.add(allTokens.subSequence(lastI, i).concatenate());
+					exprs.add(token);
+					lastI = i+1;
+				}
+			}
+			exprs.add(allTokens.subSequence(lastI, allTokens.count()).concatenate());
+			// END KGU#612 2018-12-12
+			// Now we should have some "atomic" assertions, among them comparisons
 			boolean replaced = false;
 			for (int i = 0; i < exprs.count(); i++)
 			{
@@ -1610,13 +1639,11 @@ public class Executor implements Runnable
 					try
 					{
 						// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
-						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
-						//setVarRaw(in, str);
+						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept (KGU#580 2018-09-24 corrected)
+						String varName = setVarRaw(in, str);
 						if (isConstant) {
-							setVarRaw("const " + in, str);
-						}
-						else {
-							setVarRaw(in, str);
+							this.context.constants.put(varName, this.context.interpreter.get(varName));
+							this.updateVariableDisplay();
 						}
 						// END KGU#375 2017-03-30
 						// END KGU#69 2015-11-08
@@ -1903,7 +1930,7 @@ public class Executor implements Runnable
 					if (this.importMap.containsKey(imp)) {
 						ImportInfo impInfo = this.importMap.get(imp);
 						this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
-								imp.variables, imp.constants.keySet(), false);
+								imp.getVariables(), imp.constants.keySet(), false);
 						// START KGU#388 2017-09-18: Enh. #423
 						// Adopt the imported typedefs if any
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
@@ -3007,18 +3034,22 @@ public class Executor implements Runnable
 	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object)}.
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param rawInput - the raw input string to be interpreted
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the resulting
 	 * value is inappropriate, if both don't match or if a loop variable violation is detected.
 	 * @see #setVar(String, Object) 
 	 */
-	private void setVarRaw(String target, String rawInput) throws EvalError
+	private String setVarRaw(String target, String rawInput) throws EvalError
 	{
+		// START KGU#580 2018-09-24: Issue #605
+		String varName = target;
+		// END KGU#580 2018-09-24
 		// first add as string (lest we should end with nothing at all...)
 		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
 		//setVar(name, rawInput);
 		EvalError finalError = null;
 		try {
-			setVar(target, rawInput);
+			varName = setVar(target, rawInput);
 		}
 		catch (EvalError ex)
 		{
@@ -3036,21 +3067,21 @@ public class Executor implements Runnable
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
 					this.evaluateExpression(target + " = " + rawInput, false, false);
-					setVar(target, context.interpreter.get(target));
+					varName = setVar(target, context.interpreter.get(target));
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
 					this.evaluateExpression(target + " = \"" + rawInput + "\"", false, false);
-					setVar(target, context.interpreter.get(target));					
+					varName = setVar(target, context.interpreter.get(target));					
 				}
 				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
 					Character charInput = rawInput.charAt(0);
-					setVar(target, charInput);
+					varName = setVar(target, charInput);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
 //				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
@@ -3080,12 +3111,12 @@ public class Executor implements Runnable
 				// END KGU#388 2017-09-18
 				else if (strInput.endsWith("}") && (strInput.startsWith("{") ||
 						strInput.indexOf("{") > 0 && Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null))) {
-					setVar(target, this.evaluateExpression(strInput, true, false));
+					varName = setVar(target, this.evaluateExpression(strInput, true, false));
 				}
 				// START KGU#283 2016-10-16: Enh. #273
 				else if (strInput.equals("true") || strInput.equals("false"))
 				{
-					setVar(target, Boolean.valueOf(strInput));
+					varName = setVar(target, Boolean.valueOf(strInput));
 				}
 				// END KGU#283 2016-10-16
 			}
@@ -3103,7 +3134,7 @@ public class Executor implements Runnable
 		try
 		{
 			double dblInput = Double.parseDouble(rawInput);
-			setVar(target, dblInput);
+			varName = setVar(target, dblInput);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3116,7 +3147,7 @@ public class Executor implements Runnable
 		try
 		{
 			int intInput = Integer.parseInt(rawInput);
-			setVar(target, intInput);
+			varName = setVar(target, intInput);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3128,6 +3159,7 @@ public class Executor implements Runnable
 		if (finalError != null) {
 			throw finalError;
 		}
+		return varName;
 	}
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
@@ -3160,15 +3192,16 @@ public class Executor implements Runnable
 	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both aren't compatible
 	 * or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object, int) 
 	 */
-	private void setVar(String target, Object content) throws EvalError
+	private String setVar(String target, Object content) throws EvalError
 	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
-		setVar(target, content, context.forLoopVars.count()-1);
+		return setVar(target, content, context.forLoopVars.count()-1);
 	}
 
 	/**
@@ -3179,12 +3212,13 @@ public class Executor implements Runnable
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
 	 * @param ignoreLoopStackLevel - the loop nesting level beyond which loop variables aren't critical.
+	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
 	 * match or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object)
 	 */
-	private void setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
+	private String setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
 	// END KGU#307 2016-12-12
 	{
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
@@ -3345,13 +3379,13 @@ public class Executor implements Runnable
 		// START KGU#439 2017-10-13: Enh. #436
 		else if (isConstant && content instanceof ArrayList<?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			content = new ArrayList<Object>((ArrayList<Object>)content);
+			content = new ArrayList<Object>((ArrayList<?>)content);
 		}
 		// END KGU#439 2017-10-13
 		// START KGU#388 2017-09-14: Enh. #423
 		else if (isConstant && content instanceof HashMap<?,?>) {
 			// FIXME: This is only a shallow copy, we might have to clone all values as well
-			// START KGU#526 2018-08-01: Preserve component order
+			// START KGU#526 2018-08-01: Preserve component order (if it had actually been a LinkedHashMap all the better)
 			content = new LinkedHashMap<String, Object>((HashMap<String, Object>)content);
 			// END KGU#526 2018-08-01
 		}
@@ -3533,6 +3567,9 @@ public class Executor implements Runnable
 				}
 				((HashMap<String, Object>)comp).put(path.get(path.count()-1), content);
 				context.interpreter.set(recordName, record);
+				// START KGU#580 2018-09-24
+				target = recordName;	// this is the variable name to be returned
+				// END KGU#580 2018-09-24
 			}
 			catch (EvalError ex) {
 				throw ex;
@@ -3659,6 +3696,9 @@ public class Executor implements Runnable
 			updateVariableDisplay();
 		}
 		// END KGU#20 2015-10-13
+		// START KGU#580 2018-09-24: Bugfix #605
+		return target;	// Base name of the assigned variable or constant
+		// END KGU#580 2018-09-24
 	}
 
 	/**
@@ -4595,7 +4635,10 @@ public class Executor implements Runnable
 				String token = null;
 				while (pos > 0 && (token = tokens.get(--pos).trim()).isEmpty());
 				if (pos >= 0 && token != null && this.controllerFunctionNames.contains(token.toLowerCase())) {
-					positions.addFirst(pos);
+					// START KGU#592 2018-10-02: Bugfix #617 The evaluation is to be done in reverse order as well
+					//positions.addFirst(pos);
+					positions.addLast(pos);
+					// END KGU#591 2018-10-02
 				}
 			}
 			Iterator<Integer> iter = positions.iterator();
@@ -4608,26 +4651,32 @@ public class Executor implements Runnable
 					int nArgs = args.count();
 					String fSign = fName + "#" + nArgs;
 					DiagramController controller = this.controllerFunctions.get(fSign);
-					//Method function = controller.getFunctionMap().get(fSign);
-					// Now we must know what is beyond the function call (the tail)
-					String tail = "";
-					StringList parts = Element.splitExpressionList(exprTail, ",", true);
-					if (parts.count() > nArgs) {
-						tail = parts.get(parts.count()-1).trim();
+					// START KGU#592 2018-10-04 - Bugfix #617 If the signature doesn't match exactly then skip
+					if (controller != null) {
+					// END KGU#592 2018-10-04
+						//Method function = controller.getFunctionMap().get(fSign);
+						// Now we must know what is beyond the function call (the tail)
+						String tail = "";
+						StringList parts = Element.splitExpressionList(exprTail, ",", true);
+						if (parts.count() > nArgs) {
+							tail = parts.get(parts.count()-1).trim();
+						}
+						Object argVals[] = new Object[nArgs];
+						for (int i = 0; i < nArgs; i++) {
+							// While the known controller functions haven't got (complex) arguments we may neglect initializers
+							argVals[i] = this.evaluateExpression(args.get(i), false, false);
+						}
+						// Passed till here, we try to execute the function - this may throw a FunctionException
+						Object result = controller.execute(fName, argVals);
+						tokens.remove(pos, tokens.count());
+						//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
+						tokens.add(result.toString());
+						if (!tail.isEmpty()) {
+							tokens.add(Element.splitLexically(tail.substring(1), true));
+						}
+					// START KGU#592 2018-10-04 - Bugfix #617 (continued)
 					}
-					Object argVals[] = new Object[nArgs];
-					for (int i = 0; i < nArgs; i++) {
-						// TODO While the known controller functions haven't got (complex) arguments we may neglect initializers
-						argVals[i] = this.evaluateExpression(args.get(i), false, false);
-					}
-					// Passed till here, we try to execute the function - this may throw a FunctionException
-					Object result = controller.execute(fName, argVals);
-					tokens.remove(pos, tokens.count());
-					//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
-					tokens.add(result.toString());
-					if (!tail.isEmpty()) {
-						tokens.add(Element.splitLexically(tail.substring(1), true));
-					}
+					// END KGU#592 2018-10-04
 				}
 			}
 			catch (EvalError ex) {
@@ -4719,7 +4768,10 @@ public class Executor implements Runnable
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
-						args[p] = this.evaluateExpression(f.getParam(p), false, false);
+						// START KGU#615 2018-12-16: Bugfix #644 - initializers as arguments caused errors
+						//args[p] = this.evaluateExpression(f.getParam(p), false, false);
+						args[p] = this.evaluateExpression(f.getParam(p), true, false);
+						// END KGU#615 2018-12-16
 					}
 					value = executeCall(sub, args, (Call)instr);
 					// START KGU#117 2016-03-10: Enh. #77
@@ -5053,7 +5105,10 @@ public class Executor implements Runnable
 		// END KGU#107 2015-12-13
 		if (trouble.isEmpty())
 		{
-			String s = unconvert(str.trim());	// FIXME (KGU): What the heck is this good for?
+			// START KGU#616 2018-12-17: Bugfix #646 Undue trimming and obsolete "unconverting"
+			//String s = unconvert(str.trim());	// FIXME (KGU): What the heck is this good for?
+			String s = str;
+			// END KGU#616 2018-12-17
 		// END KGU#101 2015-12-11
 			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
 			//JOptionPane.showMessageDialog(diagram, s, "Output",
@@ -5218,7 +5273,10 @@ public class Executor implements Runnable
 			{
 				try
 				{
-					args[p] = this.evaluateExpression(f.getParam(p), false, false);
+					// START KGU#615 2018-12-16: Bugfix #644 - Allow initializers as subroutine arguments
+					//args[p] = this.evaluateExpression(f.getParam(p), false, false);
+					args[p] = this.evaluateExpression(f.getParam(p), true, false);
+					// END KGU#615 2018-12-16
 					if (args[p] == null)
 					{
 						if (!trouble.isEmpty())
@@ -6030,7 +6088,6 @@ public class Executor implements Runnable
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
 			s = this.evaluateDiagramControllerFunctions(s);
 			// END KGU#417 2017-06-30
-			
 			n = this.evaluateExpression(s, false, false);
 			if (n == null)
 			{
@@ -6473,7 +6530,6 @@ public class Executor implements Runnable
 	}
 	
 	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
-	// START KGU#388 2017-09-16: Enh. #423 We must prepare expressions with record component access
 	/**
 	 * Resolves qualified names (record access) where contained and - if allowed by setting
 	 * {@code _withInitializers} - array or record initializers and has the interpreter evaluate
@@ -6505,7 +6561,7 @@ public class Executor implements Runnable
 			tokens.replaceAll("]", ")");
 		}
 		// END KGU#439 2017-10-13
-		// Special treatment for inc() and dec functions? - no need if convert was applied before
+		// Special treatment for inc() and dec() functions? - no need if convert was applied before
 		int i = 0;
 		while ((i = tokens.indexOf(".", i+1)) > 0) {
 			// FIXME: We should check for either declared type or actual object type of what's on the left of the dot.
@@ -6577,6 +6633,11 @@ public class Executor implements Runnable
 						}
 					}
 					// END KGU#509 2018-03-20
+					// START KGU#615 2018-12-16: Just a simple workaround for #644 (single level initializer arguments)
+					else if (error423message.contains("Encountered \"( {\"")) {
+						throw new EvalError(error423message + "\n" + control.msgInitializerAsArgument.getText(), null, null);
+					}
+					// END KGU#615 2018-12-16
 					if (!error423) {
 						throw err;
 					}
@@ -6653,20 +6714,6 @@ public class Executor implements Runnable
 	}
 	// END KGU#388 2017-09-13
 	
-	/**
-	 * Against the suggestion of its name, just replaces "==" with "=" rather doing a
-	 * reverse {@link #convert(String)}.
-	 * @param s - the expression where Java equality operators are to be replaced by simple
-	 * equality signs for display. 
-	 * @return the "un-converted" string
-	 * @see #convert(String)
-	 */
-	private String unconvert(String s)
-	{
-		s = s.replace("==", "=");
-		return s;
-	}
-
 	private void waitForNext()
 	{
 		// START KGU#379 2017-04-12: Bugfix #391: This is the proper place to prepare the buttons for pause mode
@@ -6719,7 +6766,7 @@ public class Executor implements Runnable
 
 		try
 		{
-			//index = Integer.parseInt(ind);		// KGU: This was nonsense - usually no literal here
+			//index = Integer.parseInt(ind);	// KGU: This was nonsense - usually no literal here
 			index = (Integer) this.evaluateExpression(ind, false, false);
 		}
 		catch (Exception e)

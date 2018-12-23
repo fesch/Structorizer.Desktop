@@ -28,9 +28,9 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------          ----			-----------
- *      Bob Fisch       2007.12.27		First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.27      First Issue
  *      Kay Gürtzig     2015.12.16      Bugfix #63 - no open attempt without need
  *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
  *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
@@ -53,21 +53,30 @@
  *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
  *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
  *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
+ *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
+ *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
+ *      Kay Gürtzig     2018.09.27      Slight modification to verbose option (-v may also be used without argument)
+ *      Kay Gürtzig     2018.10.08      Bugfix #620: Logging path setup revised
+ *      Kay Gürtzig     2018.10.25      Enh. #416: New option -l maxlen for command line parsing, signatures of
+ *                                      export(...) and parse(...) modified.
  *
  ******************************************************************************************************
  *
- *      Comment:		
- *      
+ *      Comment:
+ *
  ******************************************************************************************************///
-
 
 import java.awt.EventQueue;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -87,6 +96,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -104,54 +114,23 @@ public class Structorizer
 	// entry point
 	public static void main(String args[])
 	{
-		// START KGU#484 2018-03-21: Issue #463 Configurability of the logging system ensured
-		// The logging configuration (for java.util.logging) is expected next to the jar file
-		// (or in the project directory while debugged from the IDE).
-		File iniDir = Ini.getIniDirectory();
-		File configFile = new File(iniDir.getAbsolutePath() + System.getProperty("file.separator") + "logging.properties");
-		// If the file doesn't exist then we'll copy it from the resource
-		if (!configFile.exists()) {
-			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
-			if (configStr != null) {
-				copyStream(configStr, configFile);
-			}
-		}
-		if (configFile.exists()) {
-			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
-			try {
-				LogManager.getLogManager().readConfiguration();
-			} catch (SecurityException | IOException e) {
-				// Just write the trace to System.err
-				e.printStackTrace();
-			}
-		}
+		// START KGU#484 2018-03-21: Issue #463 - Configurability of the logging system ensured
+		setupLogging();
 		// END KGU#484 2018-03-21
-		// START KGU#484 2018-04-05: Issue #463 - If the copy attempt failed too, try to leave a note..,
-		else {
-			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
-			try {
-				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
-				logLog.write("No logging config file in dir " + iniDir + " - using Java logging standard.");
-				logLog.close();
-			} catch (IOException e) {
-				// Just write the trace to System.err
-				e.printStackTrace();
-			}
-		}
-		// END KGU#484 2018-04-05
 		// START KGU#187 2016-04-28: Enh. #179
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
 		String parser = null;
-		String options = "";
-		String outFileName = null;
-		String charSet = "UTF-8";
+		String switches = "";
+		//String outFileName = null;
+		//String charSet = "UTF-8";
 		// START KGU#354 2017-04-27: Enh. #354
-		String logDir = null;
+		//String logDir = null;
 		// END KGU#354 2017-04-27
 		// START KGU#538 2018-07-01: issue #554
-		String settingsFile = null;
+		//String settingsFile = null;
 		// END KGU#538 2018-07-01
+		HashMap<String, String> options = new HashMap<String, String>();
 		//System.out.println("arg 0: " + args[0]);
 		if (args.length == 1 && args[0].equals("-h"))
 		{
@@ -193,32 +172,58 @@ public class Structorizer
 			else if (args[i].equals("-o") && i+1 < args.length)
 			{
 				// Output file name
-				outFileName = args[++i];
+				//outFileName = args[++i];
+				options.put("outFileName", args[++i]);
 			}
 			else if (args[i].equals("-e") && i+1 < args.length)
 			{
 				// Encoding
-				charSet = args[++i];
+				//charSet = args[++i];
+				options.put("charSet", args[++i]);
 			}
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode?
 			else if (args[i].equals("-v") && i+1 < args.length)
 			{
-				logDir = args[++i];
+				// START KGU#354 2018-09-27: More tolerance spent
+				//logDir = args[++i];
+				String dirName = args[i+1]; 
+				if (dirName.startsWith("-") || !(new File(dirName)).isDirectory()) {
+					// No valid path given, so use "."
+					//logDir = ".";
+					options.put("logDir", ".");
+				}
+				else {
+					//logDir = args[++i];
+					options.put("logDir", "args[++i]");
+				}
+				// END KGU#354 2018-09-27
 			}
 			// END KGU#354 2017-04-27
 			// START KGU#538 2018-07-01: Issue #554 - new option for a settings file
 			else if (args[i].equals("-s") && i+1 < args.length)
 			{
-				settingsFile = args[++i];
+				//settingsFile = args[++i];
+				options.put("settingsFile", args[++i]);
 			}
 			// END KGU#538 2018-07-01
+			// START KGU#602 2018-10-25: Enh. #416
+			else if (args[i].equals("-l") && parser != null && i+1 < args.length) {
+				try {
+					short maxLen = Short.parseShort(args[i+1]);
+					if (maxLen == 0 || maxLen >= 20) {
+						options.put("maxLineLength", args[++i]);
+					}
+				}
+				catch (NumberFormatException ex) {}
+			}
+			// END KGU#602 2018-10-25
 			// Target standard output?
 			else if (args[i].equals("-")) {
-				options += "-";
+				switches += "-";
 			}
 			// Other options
 			else if (args[i].startsWith("-")) {
-				options += args[i].substring(1);
+				switches += args[i].substring(1);
 			}
 			else
 			{
@@ -227,14 +232,16 @@ public class Structorizer
 		}
 		if (generator != null)
 		{
-			Structorizer.export(generator, fileNames, outFileName, options, charSet, null);
+			//Structorizer.export(generator, fileNames, outFileName, switches, charSet, null);
+			Structorizer.export(generator, fileNames, options, switches);
 			return;
 		}
 		else if (parser != null)
 		{
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode
 			//Structorizer.parse(parser, fileNames, outFileName, options, charSet);
-			Structorizer.parse(parser, fileNames, outFileName, options, charSet, settingsFile, logDir);
+			//Structorizer.parse(parser, fileNames, outFileName, switches, charSet, settingsFile, logDir);
+			Structorizer.parse(parser, fileNames, options, switches);
 			// END KGU#354 2017-04-27
 			return;
 		}
@@ -319,50 +326,11 @@ public class Structorizer
         // END KGU#440 2017-11-06
         mainform.diagram.redraw();
 
-                // /!\ Don't remove the next line, it will be autodisabled by the makeStructorizer script
-                // DISABLE-BY-SCRIPT
-                if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
-		{
-
-			System.setProperty("apple.laf.useScreenMenuBar", "true");
-			System.setProperty("apple.awt.graphics.UseQuartz", "true");
-
-			com.apple.eawt.Application application = com.apple.eawt.Application.getApplication();
-
-			try
-			{
-				application.setEnabledPreferencesMenu(true);
-				application.addApplicationListener(new com.apple.eawt.ApplicationAdapter() {
-					public void handleAbout(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.aboutNSD();
-						e.setHandled(true);
-					}
-					public void handleOpenApplication(com.apple.eawt.ApplicationEvent e) {
-					}
-					public void handleOpenFile(com.apple.eawt.ApplicationEvent e) {
-						if(e.getFilename()!=null)
-						{
-							mainform.diagram.openNSD(e.getFilename());
-						}
-					}
-					public void handlePreferences(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.preferencesNSD();
-					}
-					public void handlePrintFile(com.apple.eawt.ApplicationEvent e) {
-						mainform.diagram.printNSD();
-					}
-					public void handleQuit(com.apple.eawt.ApplicationEvent e) {
-						mainform.saveToINI();
-						mainform.dispose();
-					}
-				});
-			}
-			catch (Exception e)
-			{
-			}
-		}
-                // /!\ Don't remove the next line either, because otherwise the makeStructorizer won't work anymore!
-                /**/
+        if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+        {
+        	// KGU 2018-09-14: Issue #537
+        	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
+        }
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();
@@ -370,24 +338,103 @@ public class Structorizer
 		mainform.popupWelcomePane();
 		// END KGU#300 2016-12-02
 	}
+
+	// START KGU#579 2018-09-19: Logging setup extracted on occasion of a #463 fix
+	/**
+	 * Initializes the logging system and tries to ensure a product-specific
+	 * default logging configuration in the anticipated Structorizer ini directory
+	 */
+	private static void setupLogging() {
+		// The logging configuration (for java.util.logging) is expected next to the jar file
+		// (or in the project directory while debugged from the IDE).
+		File iniDir = Ini.getIniDirectory();
+		File configFile = new File(iniDir.getAbsolutePath(), "logging.properties");
+		// If the file doesn't exist then we'll copy it from the resource
+		if (!configFile.exists()) {
+			InputStream configStr = Structorizer.class.getResourceAsStream("/lu/fisch/structorizer/logging.properties");
+			if (configStr != null) {
+				// START KGU#579 2018-09-19: Bugfix #603 On the very first use of Structorizer, iniDir won't exist (Ini() hasn't run yet)
+				//copyStream(configStr, configFile);
+				try {
+					// START KGU#595 2018-10-07: Bugfix #620 - We ought to check the success 
+					//if (!iniDir.exists())
+					//{
+					//	iniDir.mkdir();
+					//}
+					//copyStream(configStr, configFile);
+					if (!iniDir.exists() &&	!iniDir.mkdirs()) {
+						System.err.println("*** Creation of folder \"" + iniDir + "\" failed!");
+						iniDir = new File(System.getProperty("user.home"));
+						configFile = new File(iniDir.getAbsolutePath(), "logging.properties");
+					}
+					copyLogProperties(configStr, configFile);
+					// END KGU#595 2018-10-07
+				}
+				catch (Exception ex) {
+					ex.printStackTrace();
+					try {
+						configStr.close();
+					} catch (IOException e) {}
+				}
+				// END KGU#579 2018-09-19
+			}
+		}
+		if (configFile.exists()) {
+			System.setProperty("java.util.logging.config.file", configFile.getAbsolutePath());
+			try {
+				LogManager.getLogManager().readConfiguration();
+			} catch (SecurityException | IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// START KGU#484 2018-04-05: Issue #463 - If the copy attempt failed too, try to leave a note..,
+		else {
+			File logLogFile = new File(iniDir.getAbsolutePath(), "Structorizer.log");
+			try {
+				// Better check twice, we may not know at what point the first try block failed...
+				if (!iniDir.exists())
+				{
+					iniDir.mkdir();
+				}
+				OutputStreamWriter logLog =	new OutputStreamWriter(new FileOutputStream(logLogFile), "UTF-8");
+				logLog.write("No logging config file in dir " + iniDir + " - using Java logging standard.");
+				logLog.close();
+			} catch (IOException e) {
+				// Just write the trace to System.err
+				e.printStackTrace();
+			}
+		}
+		// END KGU#484 2018-04-05
+		//System.out.println(System.getProperty("java.util.logging.config.file"));
+	}
+	// END KGU#579 2018-09-19
 	
 	// START KGU#187 2016-05-02: Enh. #179
-	private static String[] synopsis = {
+	private static final String[] synopsis = {
 		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]",
 		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
-		"Structorizer -p [PARSER] [-f] [-v LOGPATH] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -p [PARSER] [-f] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h"
 	};
 	// END KGU#187 2016-05-02
 	
 	// START KGU#187 2016-04-28: Enh. #179
 	/*****************************************
-	 * batch code export methods
-	 * @param _settingsFileName TODO
+	 * batch code export method
+	 * @param _generatorName - name of the target language or generator class
+	 * @param _nsdFileNames - vector of the diagram file names
+	 * @param _options - map of non-binary command line options
+	 * @param _switches - set of switches (on / off)
 	 *****************************************/
-	public static void export(String _generatorName, Vector<String> _nsdFileNames, String _codeFileName, String _options, String _charSet, String _settingsFileName)
+	public static void export(String _generatorName, Vector<String> _nsdFileNames, HashMap<String, String> _options, String _switches)
 	{
 		Vector<Root> roots = new Vector<Root>();
+		String codeFileName = _options.get("outFileName");
+		// the encoding to be used. 
+		String charSet = _options.getOrDefault("charSet", "UTF-8");
+		// path of a property file to be preferred over structorizer.ini
+		//String _settingsFileName = _options.get("settingsFile");
 		for (String fName : _nsdFileNames)
 		{
 			Root root = null;
@@ -406,9 +453,9 @@ public class Structorizer
 					root.filename = fName;
 					roots.add(root);
 					// If no output file name is given then derive one from the first NSD file
-					if (_codeFileName == null && _options.indexOf('-') < 0)
+					if (codeFileName == null && _switches.indexOf('-') < 0)
 					{
-						_codeFileName = f.getCanonicalPath();
+						codeFileName = f.getCanonicalPath();
 					}
 				}
 				else
@@ -463,7 +510,7 @@ public class Structorizer
 			{
 				Class<?> genClass = Class.forName(genClassName);
 				Generator gen = (Generator) genClass.newInstance();
-				gen.exportCode(roots, _codeFileName, _options, _charSet);
+				gen.exportCode(roots, codeFileName, _switches, charSet);
 			}
 			catch(java.lang.ClassNotFoundException ex)
 			{
@@ -490,16 +537,21 @@ public class Structorizer
 	 * batch code import method
 	 * @param _parserName - name of a preferred default parser (just for the case of ambiguity)
 	 * @param _filenames - names of the files to be imported
-	 * @param _outFile - base name of the nsd file(s) to be created
-	 * @param _options - set of switches (either on or off)
-	 * @param _charSet - the encoding to be assumed or used 
-	 * @param _settingsFileName - path of a property file to be preferred against structorizer.ini 
-	 * @param _logDir - Path of the target folder for the parser log
+	 * @param _options - map of non-binary command line parameters
+	 * @param _switches - set of switches (either on or off)
 	 *****************************************/
-	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet, String _settingsFileName, String _logDir)
+	private static void parse(String _parserName, Vector<String> _filenames, HashMap<String, String> _options, String _switches)
 	{
 		
 		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
+		// base name of the nsd file(s) to be created
+		String outFile = _options.get("outFileName"); 
+		// the encoding to be assumed or used 
+		String charSet = _options.getOrDefault("charSet", "UTF-8");
+		// path of a property file to be preferred against structorizer.ini
+		String settingsFileName = _options.get("settingsFile");
+		// Path of the target folder for the parser log
+		String _logDir = _options.get("logDir");
 
 		Vector<GENPlugin> plugins = null;
 		String fileExt = null;
@@ -563,8 +615,8 @@ public class Structorizer
 		// END KGU#538 2018-07-03
 		
 		// START KGU#193 2016-05-09: Output file name specification was ignored, option f had to be tuned.
-		boolean overwrite = _options.indexOf("f") >= 0 && 
-				!(_outFile != null && !_outFile.isEmpty() && _filenames.size() > 1);
+		boolean overwrite = _switches.indexOf("f") >= 0 && 
+				!(outFile != null && !outFile.isEmpty() && _filenames.size() > 1);
 		// END KGU#193 2016-05-09
 		
 		// START KGU#354 2017-03-03: Enh. #354 - support several parser plugins
@@ -625,12 +677,23 @@ public class Structorizer
 			// START KGU#538 2018-07-01: Bugfix #554
 			System.out.println("--- Processing file \"" + filename + "\" with " + parser.getClass().getSimpleName() + " ...");
 			// Unfortunately, CodeParsers aren't reusable, so we better create a new instance in any case.
-			parser = cloneWithPluginOptions(parsers.get(parser), _settingsFileName);
+			parser = cloneWithPluginOptions(parsers.get(parser), settingsFileName);
 			// END KGU#538 2018-07-01
+			// START KGU#602 2018-10-25: Issue #416
+			if (_options.containsKey("maxLineLength")) {
+				try {
+					short maxLineLength = Short.parseShort(_options.get("maxLineLength"));
+					if (maxLineLength >= 0) {
+						parser.optionMaxLineLength = maxLineLength;
+					}
+				}
+				catch (NumberFormatException ex) {}		
+			}
+			// END KGU#602 2018-10-25
 			// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
 			// START KGU#354 2017-04-27: Enh. #354 pass in the log directory path
 			//newRoots = parser.parse(filename, _charSet);
-			newRoots = parser.parse(filename, _charSet, _logDir);
+			newRoots = parser.parse(filename, charSet, _logDir);
 			// END KGU#354 2017-04-27
 			// END KGU#194 2016-05-04
 			if (!parser.error.isEmpty())
@@ -642,9 +705,9 @@ public class Structorizer
 			// Now save the roots as NSD files. Derive the target file names from the source file name
 			// if _outFile isn't given.
 			// START KGU#193 2016-05-09: Output file name specification was ignred, optio f had to be tuned.
-			if (_outFile != null && !_outFile.isEmpty())
+			if (outFile != null && !outFile.isEmpty())
 			{
-				filename = _outFile;
+				filename = outFile;
 			}
 			// END KGU#193 2016-05-09
 			overwrite = writeRootsToFiles(newRoots, filename, fileExt, overwrite);
@@ -736,8 +799,7 @@ public class Structorizer
 	 * (Later there might be a change to get it from a configuration file.)
 	 * @param suitedParsers - a vector of parsers accepting the file extension
 	 * @param filename - name of the file to be parsed (for dialog purposes)
-	 * @param parser - 
-	 * @return
+	 * @return a {@link CodeParser} instance if there was a valid choice or null 
 	 */
 	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename)
 	{
@@ -922,45 +984,110 @@ public class Structorizer
         return rootPath.getParentFile().getPath();
     }
 		
+// START KGU#595 2018-10-07: Bugfix #620 - we must adapt the log pattern
+//	/**
+//	 * Performs a bytewise copy of {@code sourceStrm} to {@code targetFile}. Closes
+//	 * {@code sourceStrm} afterwards.
+//	 * @param sourceStrm - opened source {@link InputStream}
+//	 * @param targetFile - {@link File} object for the copy target
+//	 * @return a string describing occurred errors or an empty string.
+//	 */
+//	private static String copyStream(InputStream sourceStrm, File targetFile) {
+//		String problems = "";
+//		final int BLOCKSIZE = 512;
+//		byte[] buffer = new byte[BLOCKSIZE];
+//		FileOutputStream fos = null;
+//		try {
+//			fos = new FileOutputStream(targetFile.getAbsolutePath());
+//			int readBytes = 0;
+//			do {
+//				readBytes = sourceStrm.read(buffer);
+//				if (readBytes > 0) {
+//					fos.write(buffer, 0, readBytes);
+//				}
+//			} while (readBytes > 0);
+//		} catch (FileNotFoundException e) {
+//			problems += e + "\n";
+//		} catch (IOException e) {
+//			problems += e + "\n";
+//		}
+//		finally {
+//			if (fos != null) {
+//				try {
+//					fos.close();
+//				} catch (IOException e) {}
+//			}
+//			try {
+//				sourceStrm.close();
+//			} catch (IOException e) {}
+//		}
+//		return problems;
+//	}
+	
 	/**
-	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
-	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
-	 * target file exists after the copy the source file will be removed
-	 * @param sourceFile
-	 * @param targetFile
-	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
-	 * copy
-	 * @return in case of errors, a string describing them.
+	 * Performs a linewise filtered copy of {@code sourceStrm} to {@code targetFile}. Closes
+	 * {@code sourceStrm} afterwards.
+	 * @param sourceStrm - opened source {@link InputStream}
+	 * @param targetFile - {@link File} object for the copy target
+	 * @return a string describing occurred errors or an empty string.
 	 */
-	private static String copyStream(InputStream sourceStrm, File targetFile) {
+	private static String copyLogProperties(InputStream configStr, File configFile) {
+		
+		final String pattern = "java.util.logging.FileHandler.pattern = ";
 		String problems = "";
-		final int BLOCKSIZE = 512;
-		byte[] buffer = new byte[BLOCKSIZE];
+		File configDir = configFile.getParentFile();
+		File homeDir = new File(System.getProperty("user.home"));
+		StringList pathParts = new StringList();
+		while (configDir != null && homeDir != null) {
+			if (homeDir.equals(configDir)) {
+				pathParts.add("%h");
+				homeDir = null;
+			}
+			else if (configDir.getName().isEmpty()) {
+				pathParts.add(configDir.toString().replace(":\\", ":"));
+			}
+			else {
+				pathParts.add(configDir.getName());
+			}
+			configDir = configDir.getParentFile();
+		}
+		String logPath = pathParts.reverse().concatenate("/") + "/structorizer%u.log";
+		DataInputStream in = new DataInputStream(configStr);
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
 		FileOutputStream fos = null;
 		try {
-			fos = new FileOutputStream(targetFile.getAbsolutePath());
-			int readBytes = 0;
-			do {
-				readBytes = sourceStrm.read(buffer);
-				if (readBytes > 0) {
-					fos.write(buffer, 0, readBytes);
+			fos = new FileOutputStream(configFile);
+			DataOutputStream out = new DataOutputStream(fos);
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
+			String line = null;
+			try {
+				while ((line = br.readLine()) != null) {
+					if (line.startsWith(pattern)) {
+						line = pattern + logPath;
+					}
+					bw.write(line + "\n");
 				}
-			} while (readBytes > 0);
-		} catch (FileNotFoundException e) {
-			problems += e + "\n";
-		} catch (IOException e) {
-			problems += e + "\n";
+			} catch (IOException e) {
+				problems += e + "\n";
+				e.printStackTrace();
+			}
+			finally {
+				if (fos != null) {
+					bw.close();
+				}
+			}
+		} catch (IOException e1) {
+			problems += e1 + "\n";
+			e1.printStackTrace();
 		}
 		finally {
-			if (fos != null) {
-				try {
-					fos.close();
-				} catch (IOException e) {}
-			}
 			try {
-				sourceStrm.close();
+				br.close();
 			} catch (IOException e) {}
 		}
 		return problems;
 	}
+// END KGU#595 2018-10-07
+
+
 }

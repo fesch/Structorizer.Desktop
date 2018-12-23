@@ -995,18 +995,19 @@ public class JavaGenerator extends CGenerator
 		if (_root.isProgram()) {
 			if (topLevel) {
 				if (this.hasInput()) {
-					code.add(_indent + "import java.util.Scanner;");
-					code.add("");
+					this.generatorIncludes.add("java.util.Scanner");
 				}
 				// START KGU#348 2017-02-24: Enh. #348 - support translation of Parallel elements
 				if (this.hasParallels) {
-					code.add(_indent + "import java.util.concurrent.Callable;");
-					code.add(_indent + "import java.util.concurrent.ExecutorService;");
-					code.add(_indent + "import java.util.concurrent.Executors;");
-					code.add(_indent + "import java.util.concurrent.Future;");
+					this.generatorIncludes.add("java.util.concurrent.Callable");
+					this.generatorIncludes.add("java.util.concurrent.ExecutorService");
+					this.generatorIncludes.add("java.util.concurrent.Executors");
+					this.generatorIncludes.add("java.util.concurrent.Future");
+				}
+				if (this.insertGeneratorIncludes(_indent, true) > 0) {
 					code.add("");
 				}
-				// END KGU#348 2017-02-24
+				// END KGU#348 2017-02-24#
 				// STARTB KGU#351 2017-02-26: Enh. #346
 				this.insertUserIncludes(_indent);
 				// END KGU#351 2017-02-26

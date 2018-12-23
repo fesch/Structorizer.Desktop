@@ -34,32 +34,35 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Bob Fisch       2009.08.18  First Issue
- *      Kay Gürtzig     2015.10.18  Transient WindowsListener added enabling Surface to have dirty
+ *      Bob Fisch       2009-08-18  First Issue
+ *      Kay Gürtzig     2015-10-18  Transient WindowsListener added enabling Surface to have dirty
  *                                  diagrams saved before exit (KGU#49)
- *      Kay Gürtzig     2015.11.17  Remove button added (issue #35 = KGU#85)
- *      Kay Gürtzig     2015.11.19  Converted into a singleton (enhancement request #9 = KGU#2)
+ *      Kay Gürtzig     2015-11-17  Remove button added (issue #35 = KGU#85)
+ *      Kay Gürtzig     2015-11-19  Converted into a singleton (enhancement request #9 = KGU#2)
  *      Kay Gürtzig     2015-11-24  Pin button added (issue #35, KGU#88)
  *      Kay Gürtzig     2015-11-30  Remove action now also achievable by pressing del button (issue #35, KGU#88)
  *      Kay Gürtzig     2015-12-21  Two new buttons for saving and loading arrangements (issue #62, KGU#110)
  *      Kay Gürtzig     2016-01-05  Icons for saving and loading arrangements replaced by fitting ones
  *      Kay Gürtzig     2016-03-08  Bugfix #97: Methods for drawing info invalidation added (KGU#155)
- *      Kay Gürtzig     2016.03.08  Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
- *      Kay Gürtzig     2016.03.12  Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
- *      Kay Gürtzig     2016.04.14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
+ *      Kay Gürtzig     2016-03-08  Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
+ *      Kay Gürtzig     2016-03-12  Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
+ *      Kay Gürtzig     2016-04-14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
  *                                  mechanism modified
- *      Kay Gürtzig     2016.07.03  Dialog message translation mechanism added (KGU#203).
- *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
- *      Kay Gürtzig     2016.11.01  Enh. #81: Scalability of the Icons ensured
- *      Kay Gürtzig     2016.11.15  Enh. #290: New opportunity to load arrangements from Structorizer
- *      Kay Gürtzig     2016.12.12  Enh. #305: Support for diagram list in Structorizer
- *      Kay Gürtzig     2016.12.16  Issue #305: Notification redesign, visibility fix in scrollToDiagram,
+ *      Kay Gürtzig     2016-07-03  Dialog message translation mechanism added (KGU#203).
+ *      Kay Gürtzig     2016-09-26  Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016-11-01  Enh. #81: Scalability of the Icons ensured
+ *      Kay Gürtzig     2016-11-15  Enh. #290: New opportunity to load arrangements from Structorizer
+ *      Kay Gürtzig     2016-12-12  Enh. #305: Support for diagram list in Structorizer
+ *      Kay Gürtzig     2016-12-16  Issue #305: Notification redesign, visibility fix in scrollToDiagram,
  *                                  new method removeDiagram(Root)
- *      Kay Gürtzig     2017.01.04  KGU#49: Arranger now handles windowClosing events itself (instead
+ *      Kay Gürtzig     2017-01-04  KGU#49: Arranger now handles windowClosing events itself (instead
  *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
- *      Kay Gürtzig     2017.03.28  Enh. #386: New method saveAll()
- *      Kay Gürtzig     2018.02.17  Enh. #512: Zoom mechanism implemented (zoom button + key actions)
- *      Kay Gürtzig     2018.06.12  Issue #536: Experimental workaround for Direct3D trouble
+ *      Kay Gürtzig     2017-03-28  Enh. #386: New method saveAll()
+ *      Kay Gürtzig     2018-02-17  Enh. #512: Zoom mechanism implemented (zoom button + key actions)
+ *      Kay Gürtzig     2018-06-12  Issue #536: Experimental workaround for Direct3D trouble
+ *      Kay Gürtzig     2018-10-06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
+ *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
+ *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
  *
  ******************************************************************************************************
  *
@@ -83,16 +86,17 @@ import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.event.ChangeEvent;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangFrame;
+import lu.fisch.structorizer.locales.LangTextHolder;
 
 /**
  *
@@ -105,8 +109,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final Logger logger = Logger.getLogger(Arranger.class.getName());
 	// END KGU 2018-03-21
 	
-    // START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
-    private boolean isStandalone = false;
+	// START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
+	private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
 
 	// START KGU#534 2018-06-27: Enh. #552
@@ -115,8 +119,17 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder btnRemove1Diagram = new LangTextHolder("Drop Diagram");
 	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
 	// END KGU#534 2018-06-27
+	// START KGU#624 2018-12-21: Enh. #655
+	public static final LangTextHolder msgTitleIllegal = new LangTextHolder("Illegal Operation");
+	public static final LangTextHolder msgActionDelete = new LangTextHolder("remove");
+	public static final LangTextHolder msgActionCut = new LangTextHolder("cut");
+	public static final LangTextHolder msgActionCopy = new LangTextHolder("copy");
+	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3");
+	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3");
+	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("% diagrams selected");
+	// END KGU#624 2018-12-21
 
-	// START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
+    // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
     //public Arranger() {
     //    initComponents();
@@ -154,15 +167,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public static boolean hasInstance() {
         return mySelf != null;
     }
-	// END KGU#155 2016-03-08
+    // END KGU#155 2016-03-08
     
     // START KGU#305 2016-12-12: Enh. #305
-	/**
-	 * Scrolls to the given Root if found and selects it. If setAtTop is true then the diagram
-	 * will be raised to the top drawing level.
-	 * @param aRoot - the diagram to be focused
-	 * @param setAtTop - whether the diagram is to be drawn on top of all
-	 */
+    /**
+     * Scrolls to the given Root if found and selects it. If setAtTop is true then the diagram
+     * will be raised to the top drawing level.
+     * @param aRoot - the diagram to be focused
+     * @param setAtTop - whether the diagram is to be drawn on top of all
+     */
     public static void scrollToDiagram(Root selectedRoot, boolean raiseToTop)
     {
     	if (mySelf != null && selectedRoot != null) {
@@ -173,7 +186,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     		// END KGU#305 2016-12-16
     		mySelf.surface.scrollToDiagram(selectedRoot, raiseToTop);
     	}
-	}
+    }
     // END KGU#305 2016-12-12
 
     /**
@@ -462,6 +475,36 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         scrollarea.addMouseWheelListener(surface);
         // END KGU#503 2018-03-13
         
+        // START KGU#624 2018-12-21: Enh. #655 - add a statusbar for the multiple selection
+        statusbar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        //statusbar.setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.LineBorder(java.awt.Color.DARK_GRAY),
+        //        new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+        statusSize = new javax.swing.JLabel();
+        statusViewport = new javax.swing.JLabel();
+        statusZoom = new javax.swing.JLabel();
+        statusSelection = new javax.swing.JLabel(msgDiagramsSelected.getText().replace("%", "0"));
+        statusSize.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+        		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+        statusViewport.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+        		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+        statusZoom.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+        		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+        statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+                new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+        statusbar.add(statusSize);
+        statusbar.add(statusViewport);
+        statusbar.add(statusZoom);
+        statusbar.add(statusSelection);
+
+        getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
+        scrollarea.getViewport().addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent evt) {
+                updateStatusSize();
+            }
+        });
+        // END KGU#624 2018-12-21
+        
         this.addKeyListener(this);
 
         // START KGU#49 2015-10-18: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
@@ -518,7 +561,29 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     }// </editor-fold>//GEN-END:initComponents
 
-	private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
+    // START KGU#624 2018-12-21: Enh. #655 - new status bar
+	protected void updateStatusSize() {
+		scrollarea.getLocation(scrollareaOrigin);
+		java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
+		statusSize.setText(surface.getWidth() + " x " + surface.getHeight());
+		statusViewport.setText(vRect.x + ":" + (vRect.x + vRect.width) + ", " +
+				vRect.y + ":" + (vRect.y + vRect.height));
+		statusZoom.setText(String.format("%.1f %%", 100 / surface.getZoom()));
+	}
+	
+	protected void updateStatusSelection() {
+		Set<Root> sel = surface.getSelected();
+		Root sel1 = surface.getSelected1();
+		if (sel1 != null) {
+			statusSelection.setText(sel1.getSignatureString(false));
+		}
+		else {
+			statusSelection.setText(msgDiagramsSelected.getText().replace("%", Integer.toString(sel.size())));
+		}
+	}
+	// END KGU#624 2018-12-21
+
+    private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
     {//GEN-HEADEREND:event_btnExportPNGActionPerformed
         surface.exportPNG(this);
     }//GEN-LAST:event_btnExportPNGActionPerformed
@@ -530,17 +595,17 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#85 2015-11-17
     private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt) {
-    	// START KGU#534 2018-06-27: Enh.#552    	
+        // START KGU#534 2018-06-27: Enh.#552    	
         //surface.removeDiagram();
-		if (this.isShiftPressed) {
-			removeAllDiagrams();
-			// We must make sure that the shift key status is reset - this doesn't work automatically!
-			// Seems that the keyReleased event gets lost...
-			this.setShiftPressed(false);
-		}
-		else {
-	        surface.removeDiagram();
-		}
+        if (this.isShiftPressed) {
+            removeAllDiagrams();
+            // We must make sure that the shift key status is reset - this doesn't work automatically!
+            // Seems that the keyReleased event gets lost...
+            this.setShiftPressed(false);
+        }
+        else {
+            surface.removeDiagram();
+        }
         // END KGU#534 2018-06-27
     }
     // END KGU#85 2015-11-17
@@ -569,11 +634,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#497 2018-02-17: Enh. #513
     protected void btnZoomActionPerformed(ActionEvent evt) {
-		surface.zoom((evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0);
-		if (surface.getZoom() <= 1 && this.isShiftPressed) {
-			btnZoom.setEnabled(false);
-		}
-	}
+        surface.zoom((evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0);
+        if (surface.getZoom() <= 1 && this.isShiftPressed) {
+            btnZoom.setEnabled(false);
+        }
+    }
     // END KGU#497 2018-02-17
 
     /**
@@ -582,9 +647,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
-		System.setProperty("sun.java2d.noddraw", "true");
-		// END KGU#521 2018-06-12
+        // START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
+        System.setProperty("sun.java2d.noddraw", "true");
+        // END KGU#521 2018-06-12
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 // START KGU#2 2015-11-19: Converted into a singleton
@@ -622,6 +687,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private lu.fisch.structorizer.arranger.Surface surface;
     private javax.swing.JToolBar toolbar;
     // End of variables declaration//GEN-END:variables
+    // START KGU#624 2018-12-21: Enh. #655
+    private javax.swing.JPanel statusbar;
+    protected javax.swing.JLabel statusSize;
+    protected javax.swing.JLabel statusViewport;
+    protected javax.swing.JLabel statusZoom;
+    protected javax.swing.JLabel statusSelection;
+    protected java.awt.Point scrollareaOrigin = new java.awt.Point();
+    // END KGU#624 2018-12-21
     // START KGU#85 2015-11-18
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18
@@ -635,19 +708,19 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     public void windowClosing(WindowEvent e) {
         // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
-		if (surface.saveDiagrams(true, false))
-		{
-			if (isStandalone)
-			{
-				System.exit(0);
-			}
-			else
-			{
-				dispose();
-			}
-		}
+        if (surface.saveDiagrams(true, false))
+        {
+            if (isStandalone)
+            {
+                System.exit(0);
+            }
+            else
+            {
+                dispose();
+            }
+        }
         // END KGU#49 2017-01-04
-	}
+    }
 
     public void windowClosed(WindowEvent e) {
     }
@@ -671,19 +744,82 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         if (ev.getSource() == this) {
             switch (ev.getKeyCode()) {
                 case KeyEvent.VK_DELETE:
-                	// START KGU#534 2018-06-27: Enh. #552
+                    // START KGU#534 2018-06-27: Enh. #552
+                    // START KGU#624 2018-12-21: Enh. #655 recent ky binding wasn't intuitive
                     //surface.removeDiagram();
-                    if (ev.isShiftDown()) {
-                        surface.removeDiagram();
-                    } else if (ev.isControlDown()) {
-                        surface.removeAllDiagrams();
+                    //if (ev.isShiftDown()) {
+                    //    surface.removeDiagram();
+                    //} else if (ev.isControlDown()) {
+                    //    surface.removeAllDiagrams();
+                    //}
+                {
+                	// START KGU624 2018-12-21: Enh. #655 - Face multiple selection
+                	//Root sel = surface.getSelected1();
+                    Set<Root> sel = surface.getSelected();
+                    boolean shift = ev.isShiftDown();
+                    String verb = "";
+                    if (shift) {
+                        verb = msgActionCut.getText();
                     }
+                    else {
+                        verb = msgActionDelete.getText();
+                    }
+                    StringBuilder strbld = new StringBuilder();
+                    for (Root root: sel) {
+                    	strbld.append("\n" + root.getSignatureString(false));
+                    }
+                    if (sel.isEmpty()) {
+                    	break;
+                    }
+                    else if (shift && sel.size() > 1) { 
+                    	JOptionPane.showMessageDialog(this,
+                    			msgCantDoWithMultipleRoots.getText().
+                    			replace("%1", msgActionCut.getText()).
+                    			replace("%2", Integer.toString(sel.size()).replace("%3", strbld.toString())),
+                    			msgTitleIllegal.getText(),
+                    			JOptionPane.ERROR_MESSAGE);
+                    	break;
+                    }
+                    String message = msgConfirmRemove.getText().
+                            replace("%1", verb).
+                            replace("%2", Integer.toString(sel.size())).
+                            replace("%3", strbld.toString());
+                    if (ev.isControlDown() || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
+                            JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
+                        if (shift) {
+                            surface.copyDiagram();
+                        }
+                        surface.removeDiagram();
+                    }
+                }
+                    // END KGU#624 2018-12-21
                     // END KGU#534 2018-06-27
                     break;
                 // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
                 case KeyEvent.VK_X:
                     if (ev.isControlDown()) {
-                        surface.removeDiagram();
+                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                        //surface.removeDiagram();
+                    	Set<Root> sel = surface.getSelected();
+                    	if (sel.size() > 1) {
+                    		StringBuilder strbld = new StringBuilder();
+                    		for (Root root: sel) {
+                    			strbld.append("\n" + root.getSignatureString(false));
+                    		}
+                        	JOptionPane.showMessageDialog(this,
+                        			msgCantDoWithMultipleRoots.getText().
+                        			replace("%1", msgActionCut.getText()).
+                        			replace("%2", Integer.toString(sel.size())).
+                        			replace("%3", strbld.toString()),
+                        			msgTitleIllegal.getText(),
+                        			JOptionPane.ERROR_MESSAGE);
+                        	break;
+                        }
+                        if (surface.copyDiagram())	// cut means copy first
+                        {
+                        	surface.removeDiagram();
+                        }
+                        // END KGU#624 2018-12-21
                     }
                     break;
                 case KeyEvent.VK_V:
@@ -700,6 +836,23 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     break;
                 case KeyEvent.VK_C:
                     if (ev.isControlDown()) {
+                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                    	Set<Root> sel = surface.getSelected();
+                    	if (sel.size() > 1) {
+                    		StringBuilder strbld = new StringBuilder();
+                    		for (Root root: sel) {
+                    			strbld.append("\n" + root.getSignatureString(false));
+                    		}
+                        	JOptionPane.showMessageDialog(this,
+                        			msgCantDoWithMultipleRoots.getText().
+                        			replace("%1", msgActionCopy.getText()).
+                        			replace("%2", Integer.toString(sel.size())).
+                        			replace("%3", strbld.toString()),
+                        			msgTitleIllegal.getText(),
+                        			JOptionPane.ERROR_MESSAGE);
+                        	break;
+                        }
+                    	// END KGU#624 2018-12-21
                         surface.copyDiagram();
                     }
                     break;
@@ -707,9 +860,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 // START KGU#497 2018-02-17: Enh. #512 - zooming introduced
                 case KeyEvent.VK_SHIFT:
                     if (!this.isShiftPressed) {
-                    	setShiftPressed(true);
+                        setShiftPressed(true);
                     }
-                	break;
+                    break;
                 case KeyEvent.VK_ADD:
                     surface.zoom(true);
                     break;
@@ -717,35 +870,75 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     surface.zoom(false);
                     break;
                 // END KGU#497 2018-02-17
+                // START KGU#624 2018-12-21: Enh. #655
+                case KeyEvent.VK_PAGE_UP:
+                    if (ev.isShiftDown()) {
+                        scrollarea.getHorizontalScrollBar().setValue(
+                                scrollarea.getHorizontalScrollBar().getValue() - 
+                                scrollarea.getHorizontalScrollBar().getBlockIncrement(-1));
+                    }
+                    else {
+                        scrollarea.getVerticalScrollBar().setValue(
+                                scrollarea.getVerticalScrollBar().getValue() - 
+                                scrollarea.getVerticalScrollBar().getBlockIncrement(-1));
+                    }
+        		    break;
+                case KeyEvent.VK_PAGE_DOWN:
+                    if (ev.isShiftDown()) {
+                        scrollarea.getHorizontalScrollBar().setValue(
+                                scrollarea.getHorizontalScrollBar().getValue() + 
+                                scrollarea.getHorizontalScrollBar().getBlockIncrement(1));
+                    }
+                    else {
+                        scrollarea.getVerticalScrollBar().setValue(
+                                scrollarea.getVerticalScrollBar().getValue() + 
+                                scrollarea.getVerticalScrollBar().getBlockIncrement(1));
+                    }
+        		    break;
+                case KeyEvent.VK_A:
+                	if (ev.isControlDown()) {
+                		surface.selectAll();
+                	}
+                	break;
+                case KeyEvent.VK_S:
+                	if (ev.isControlDown()) {
+                		surface.saveArrangement(this);
+                	}
+                	break;
+                case KeyEvent.VK_O:
+                	if (ev.isControlDown()) {
+                		surface.loadArrangement(this);
+                	}
+                // END KGU#624 2018-12-21
             }
         }
     }
 
-	/**
-	 * Sets or unsets the shift flag and changes the appearance of dependent buttons accordingly
-	 */
-	private void setShiftPressed(boolean isPressed) {
-		if (isPressed) {
-			this.btnZoom.setIcon(IconLoader.getIconImage("008_zoom_in.png", ICON_FACTOR));
-			// START KGU#534 2018-06-27: Enh. #552
-			this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("045_remove.png", ICON_FACTOR));
-			this.btnRemoveDiagram.setText(btnRemoveAllDiagrams.getText());
-			// END KGU#534 2018-06-27
-			this.isShiftPressed = true;
-			if (surface.getZoom() <= 1) {
-				btnZoom.setEnabled(false);
-			}
-		}
-		else {
-        	this.isShiftPressed = false;
-        	this.btnZoom.setEnabled(true);
-    		this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
+    /**
+     * Sets or unsets the shift flag and changes the appearance of dependent buttons accordingly
+     */
+    private void setShiftPressed(boolean isPressed) {
+        if (isPressed) {
+            this.btnZoom.setIcon(IconLoader.getIconImage("008_zoom_in.png", ICON_FACTOR));
+            // START KGU#534 2018-06-27: Enh. #552
+            this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("045_remove.png", ICON_FACTOR));
+            this.btnRemoveDiagram.setText(btnRemoveAllDiagrams.getText());
+            // END KGU#534 2018-06-27
+            this.isShiftPressed = true;
+            if (surface.getZoom() <= 1) {
+                btnZoom.setEnabled(false);
+            }
+        }
+        else {
+            this.isShiftPressed = false;
+            this.btnZoom.setEnabled(true);
+            this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
             // START KGU#534 2018-06-27: Enh. #552
             this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR));
-			this.btnRemoveDiagram.setText(btnRemove1Diagram.getText());
+            this.btnRemoveDiagram.setText(btnRemove1Diagram.getText());
             // END KGU#534 2018-06-27			
-		}
-	}
+        }
+    }
     // END KGU#85 2015-11-30
 
     @Override
@@ -765,7 +958,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public void keyTyped(KeyEvent ev) {
         // Nothing to do here
     }
-	// END KGU#2 2015-11-30
+    // END KGU#2 2015-11-30
 
     // START KGU#2 2015-11-24
     /* (non-Javadoc)
@@ -793,7 +986,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
         return surface.findRoutinesBySignature(rootName, argCount);
     }
-	// END KGU#2 2015-11-24
+    // END KGU#2 2015-11-24
     
     // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
     /* (non-Javadoc)
@@ -824,22 +1017,22 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public void doButtons() {
         btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
     }
-	// END KGU#117 2016-03-08
+    // END KGU#117 2016-03-08
 
     // START KGU#156 2016-03-10: An interface for an external update trigger was needed
     public void redraw() {
         surface.repaint();
     }
-	// END KGU#156 2016-03-10
+    // END KGU#156 2016-03-10
 
-    // START KGU#305 2016-12-12: Enh. #305
+	// START KGU#305 2016-12-12: Enh. #305
 	/**
-	 * Returns the Root diagram currently selected in Arranger
-	 * @return Either a Root object or null (if none was selected)
+	 * Returns the {@link Root} currently selected in Arranger, if it is a single one.
+	 * @return Either a {@link Root} object or null (if none or more than 1 was selected)
 	 */
 	public Root getSelected() 
 	{
-		return surface.getSelected();
+		return surface.getSelected1();
 	}
 	// END KGU#305 2016-12-12
 
@@ -865,13 +1058,22 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	}
 
 	@Override
-	public void routinePoolChanged(IRoutinePool _source) {
-		routines.clear();
-		routines.addAll(_source.getAllRoots());
-		Collections.sort(routines, Root.SIGNATURE_ORDER);
-		for (IRoutinePoolListener listener: listeners) {
-			listener.routinePoolChanged(this);
+	public void routinePoolChanged(IRoutinePool _source, int _flags) {
+		// START KGU#624 2018-12-21: Enh. #655
+		if ((_flags & RPC_POOL_CHANGED) != 0) {
+		// END KGU#624 2018-12-21
+			routines.clear();
+			routines.addAll(_source.getAllRoots());
+			Collections.sort(routines, Root.SIGNATURE_ORDER);
+		// START KGU#624 2018-12-21: Enh. #655
 		}
+		if ((_flags & RPC_SELECTION_CHANGED) != 0) {
+			updateStatusSelection();
+		}
+		// END KGU#624 2018-12-21
+			for (IRoutinePoolListener listener: listeners) {
+				listener.routinePoolChanged(this, _flags);
+			}
 	}
 	// END KGU#305 2016-12-16
 
@@ -923,8 +1125,28 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 */
 	public void updateProperties(Ini ini)
 	{
-    	ini.setProperty("arrangerZoom", Float.toString(surface.getZoom()));
+		ini.setProperty("arrangerZoom", Float.toString(surface.getZoom()));
+		// START KGU#623 2018-12-20: Enh. #654
+		ini.setProperty("arrangerDirectory", surface.currentDirectory.getAbsolutePath());
+		// END KGU#623 2018-12-20
 	}
 	// END KGU#497 2018-02-17
+
+	// START KGU#594 2018-10-06: Issue #552 - help to reduce unnecessary serial approval questions
+	/**
+	 * Checks if there are {@link Root}s with unsaved changes held by the {@link Surface}. 
+	 * The given {@link Root} {@code toBeIgnored} is not checked. 
+	 * @param toBeIgnored - null or a {@link Root} the status of which is irrelevant
+	 * @return true in case there is a dirty {@link Root} other than {@code toBeIgnored}
+	 */
+	public boolean hasUnsavedChanges(Root toBeIgnored) {
+		for (Root root: surface.getAllRoots()) {
+			if (root.hasChanged() && root != toBeIgnored) {
+				return true;
+			}
+		}
+		return false;
+	}
+	// END KGU#594 2018-10-06
 
 }

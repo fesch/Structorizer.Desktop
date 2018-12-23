@@ -59,7 +59,11 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.09.22      Enh. #388 + #423: Import of types and structured initializers (var/const) fixed
  *                                      Enh. #389 Import of Units and program declarations to includables
  *      Kay Gürtzig     2018.07.11      Enh. #558: Provisional enumeration type import (as constant defs.), un-used
- *                                      rule constants disabled,
+ *                                      rule constants disabled
+ *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.28      Bugfix #613: Include relations with empty includables should be eliminated;
+ *                                      Bugfix #614: Redundant result assignments in function diagrams removed
+ *                                      Workaround #615: Replace comment delimiters (* *) with { } in preparation phase
  *
  ******************************************************************************************************
  *
@@ -89,6 +93,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -101,9 +106,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.util.LinkedList;
 import java.util.logging.Level;
-
-import com.stevesoft.pat.Regex;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the ObjectPascal, Pascal
@@ -845,6 +849,11 @@ public class D7Parser extends CodeParser
     };
     // END KGU#407 2017-06-22
 
+    // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party regex library
+    /** Matcher for temporary newline surrogates */
+	private static final java.util.regex.Matcher NEWLINE_MATCHER = java.util.regex.Pattern.compile("(.*?)[\u2190](.*?)").matcher("");
+	// END KGU#575 2018-09-17
+
 	// START KGU#354 2017-03-04: Now inherited from CodeParser
 	//Root root = null;
 	// START KGU#194 2016-05-08: Bugfix #185
@@ -890,7 +899,7 @@ public class D7Parser extends CodeParser
 
 	// START KGU#354 2017-03-03: Enh. #354 - generalized import mechanism
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled
+	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled, FilePreparationException
 	{
 		File interm = null;
 		try
@@ -902,12 +911,19 @@ public class D7Parser extends CodeParser
 			// END KGU#193 2016-05-04
 			try {
 				String strLine;
+				// START KGU#589 2018-09-28: Workaround #615
+				// First item means within "(* *)", second item means within "{ }"
+				boolean[] inComments = {false, false};
+				// END KGU#589 2018-09-28
 				//Read File Line By Line
 				while ((strLine = br.readLine()) != null)   
 				{
-					// START KGU#537 2018-07-01: Enh. #553
+					// START KGU#537 2018-07-01: Enh. #553 Make parser interruptable
 					checkCancelled();
 					// END KGU#537 2018-07-01
+					// START KGU#589 2018-09-28: Workaround #615
+					strLine = unifyComments(strLine, inComments);
+					// END KGU#589 2018-09-28
 					// add no ending because of comment filter
 					pasCode += strLine+"\u2190";
 					//pasCode+=strLine+"\n";
@@ -929,9 +945,12 @@ public class D7Parser extends CodeParser
 			// END KGU#195 2016-05-04
 
 			// reset correct endings
-			Regex r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
-			pasCode = r.replaceAll(pasCode);
-			// START KGU#354 2017-03-07: Workaround for missing second commet delimiter pair in GOLDParser 5.0
+			// START KGU#575 2018-09-17: Issue #594 - replacing obsolete 3rd-party regex library
+			//Regex r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
+			//pasCode = r.replaceAll(pasCode);
+			pasCode = NEWLINE_MATCHER.reset(pasCode).replaceAll("$1\n$2");
+			// END KGU#575 2018-09-17
+			// START KGU#354 2017-03-07: Workaround for missing second comment delimiter pair in GOLDParser 5.0
 //			pasCode = pasCode.replaceAll("(.*?)(\\(\\*)(.*?)(\\*\\))(.*?)", "$1\\{$3\\}$5");
 			// END KGU#354 2017-03-07
 
@@ -957,6 +976,66 @@ public class D7Parser extends CodeParser
 	}
 	// END KGU#354 2017-03-03
 	
+	// START KGU589 2018-09-28: Issue #615
+	/**
+	 * Replaces all comment delimiters of kind (* *) by pairs of curly braces (and therefore closing
+	 * braces within (* *) former comments with "[brace-close]" to avoid comment corruption as comments
+	 * of same kind cannot be nested.
+	 * FIXME: This method is only a workaround while the grammar doesn't cope with (* *) comments.  
+	 * @param pasLine - the original Pascal line
+	 * @param withinComments - a pair of flags: [0] for inside (* *), [1] for inside { }.
+	 * @return the Pascal line with unified comments (length may have changed) 
+	 */
+	private String unifyComments(String pasLine, boolean[] withinComments) {
+		// Let's do a quick test first
+		if (withinComments[0] && (pasLine.contains("*)") || (pasLine.contains("}")))
+				|| !withinComments[0] && pasLine.contains("(*")) {
+			// Now we must have a closer look to exclude false positives in string constants
+			StringBuilder sb = new StringBuilder();
+			boolean inString = false;
+			int len = pasLine.length();
+			int i = 0;
+			while (i < len) {
+				char c = pasLine.charAt(i);
+				if (!withinComments[0] && !withinComments[1]) {
+					if (c == '\'') {
+						inString = !inString;
+					}
+					else if (c == '{') {
+						withinComments[1] = true;
+					}
+					else if (!inString && c == '(' && i+1 < len && pasLine.charAt(i+1) == '*') {
+						withinComments[0] = true;
+						c = '{';
+						i++;
+					}
+				}
+				else if (withinComments[1]) {
+					if (c == '}') {
+						withinComments[1] = false;
+					}
+				}
+				// So we must be within a comment of type (* *)
+				else if (c == '*' && i+1 < len && pasLine.charAt(i+1) == ')') {
+					withinComments[0] = false;
+					c = '}';
+					i++;
+				}
+				else if (c == '}') {
+					// This might cause trouble as it would shorten the comment!
+					// so replace it by something irrelevant within a comment
+					sb.append("[brace-close");
+					c = ']';
+				}
+				sb.append(c);
+				i++;
+			}
+			pasLine = sb.toString();
+		}
+		return pasLine;
+	}
+	// END KGU#589 2018-09-28
+
 	// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
 	private String embedSubroutineDeclaration(String _pasCode) throws ParserCancelled
 	{
@@ -992,6 +1071,12 @@ public class D7Parser extends CodeParser
 		return _pasCode;
 	}
 	// END KGU#195 2016-05-04
+
+	// START KGU#586 2018-09-28: Bugfix #613 - modified include mechanism
+	// Include lists should be filled immediately - the includables might remain empty
+	/** Holds the {@link Root}s including the unit globals (if there are any) */
+	protected LinkedList<Root> includerList = new LinkedList<Root>();
+	// END KGU#586 2018-09-28
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#initializeBuildNSD()
@@ -1220,6 +1305,12 @@ public class D7Parser extends CodeParser
 					 )
 			{
 				unitName = getContent_R((Reduction) _reduction.get(1).getData(), "");
+				// START KGU#407 2018-09-28: Enh. #420 - comments already here
+				String comment = this.retrieveComment(_reduction);
+				if (comment != null) {
+					root.getComment().add(StringList.explode(comment, "\n"));
+				}
+				// END KGU#407 2018-09-28
 			}
 			else if (
 					ruleHead.equals("<ProcedureDecl>")
@@ -1246,7 +1337,10 @@ public class D7Parser extends CodeParser
 					}
 					includable.setInclude();
 					prevRoot.children.removeElements();
-					prevRoot.includeList = StringList.getNew(unitName + DEFAULT_GLOBAL_SUFFIX);
+					prevRoot.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
+					// START KGU#586 2018-09-28: Bugfix #613 - Register the inclusion, allowing the postprocess to check it
+					this.includerList.add(prevRoot);
+					// END KGU#586 2018-09-28
 					this.addRoot(includable);
 				}
 				root = new Root();	// Prepare a new root for the subroutine
@@ -1317,10 +1411,10 @@ public class D7Parser extends CodeParser
 				{
 					// START KGU#376 2017-09-22: Enh. #389 - the unit will be an includable now
 					//root.setComment("(UNIT " + unitName + ")");
-					if (root.includeList == null) {
-						root.includeList = new StringList();
-					}
-					root.includeList.addIfNew(unitName + DEFAULT_GLOBAL_SUFFIX);
+					root.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
+					// START KGU#586 2018-09-28: Bugfix #613 - register the established include relation
+					this.includerList.add(root);
+					// END KGU#586 2018-09-28
 					// END KGU#376 2017-09-22
 				}
 				// END KGU#194 2016-05-08
@@ -1690,6 +1784,30 @@ public class D7Parser extends CodeParser
 			root.setInclude();
 			root.getComment().insert("(UNIT " + unitName + ")", 0);
 		}
+		// START KGU#586 2018-09-28: Bugfix #613 check the established inclusions for necessity
+		if (root.isInclude() && root.children.getSize() == 0) {
+			StringList comment = root.getComment();
+			for (Root includer: this.includerList) {
+				// Give the unit comment a chance to survive if there is only a single dependent
+				if (includer.removeFromIncludeList(root)
+						&& comment.count() > 0 && this.includerList.size() == 1) {
+					includer.comment.add(comment);
+				}
+			}
+		}
+		// END KGU#586 2018-09-28
+		// START KGU#587 2018-09-28: Issue #614 - remove redundant result instruction
+		else if (root.isSubroutine() && root.children.getSize() > 1) {
+			int ixLast = root.children.getSize() - 1;
+			Element lastEl = root.children.getElement(ixLast);
+			if (lastEl.getClass().getSimpleName().equals("Instruction") &&
+					lastEl.getText().getText().matches("\\s*" + root.getMethodName() + "\\s*<-\\s*" + BString.breakup("result") + "\\s*")) {
+				// An end-standing instruction "<function-name> <- result" is redundant, so remove it.
+				root.children.removeElement(ixLast);
+			}
+		}
+		// END KGU#587 2018-09-28
 	}
 
+	
 }

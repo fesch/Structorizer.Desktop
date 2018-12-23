@@ -30,8 +30,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2014.11.11      Operator highlighting modified (sse comment)
  *      Kay Gürtzig     2015.10.09      Methods selectElementByCoord(x,y) and getElementByCoord() merged
@@ -94,6 +94,11 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
  *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
  *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
+ *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
+ *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const modifiers in declaration lists fixed
+ *      Kay Gürtzig     2018.10.05      Bugfix #619: Declaration status of function result variable fixed
+ *      Kay Gürtzig     2018.10.25      Enh. #419: New method breakTextLines(...)
  *
  ******************************************************************************************************
  *
@@ -190,8 +195,6 @@ import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
-import com.stevesoft.pat.*;  //http://www.javaregex.com/
-
 import java.awt.Point;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
@@ -205,10 +208,14 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 
 public abstract class Element {
+	
+	/** This enumeration type distinguishes drawing contexts for selection display */
+	public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};
 
 	// START KGU#484 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(Element.class.getName());
@@ -219,7 +226,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.28-08";
+	public static final String E_VERSION = "3.28-13";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -291,9 +298,6 @@ public abstract class Element {
 	"Delphi grammar by\n"+
 	" - Rob F.M. van den Brink <R.F.M.vandenBrink@hccnet.nl>\n"+
 	"\n"+
-	"Regular expression engine by\n"+
-	" - Steven R. Brandt, <sbrandt@javaregex.com>\n"+
-	"\n"+
 	"Vector graphics export by\n"+
 	" - FreeHEP Team <http://java.freehep.org/vectorgraphics>\n"+
 	"\n"+
@@ -309,6 +313,12 @@ public abstract class Element {
 	// END KGU#494 2018-09-10
 	/** Padding between e.g. the content of elements and their borders */
 	protected static int E_PADDING = 20;
+	// START KGU#444 2018-12-18: Issue #417 - we may need to have an external access to the padding
+	/** @return Current padding between e.g. the content of elements and their borders */
+	public static int getPadding() {
+		return E_PADDING;
+	}
+	// END KGU#444 2018-12-18
 	// START KGU#412 2017-06-09: Enh. #416 re-dedicated this apparently unused constant for drawing continuation lines
 	//public static int E_INDENT = 2;
 	/** Used as minimum text indentation for continuation lines (after lines ending with backslash) */
@@ -426,7 +436,7 @@ public abstract class Element {
 	public static String preAlt = "(?)";
 	public static String preAltT = "T";
 	public static String preAltF = "F";
-	public static String preCase = "(?)\n?\n?\nelse";
+	public static String preCase = "(?)\n!\n!\ndefault";
 	public static String preFor = "for ? <- ? to ?";
 	public static String preWhile = "while (?)";
 	public static String preRepeat = "until (?)";
@@ -448,7 +458,7 @@ public abstract class Element {
 	// END KGU#480 2018-01-19
 	
 	/** Used font for drawing element text */
-	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
+	protected static Font font = new Font("Dialog", Font.PLAIN, 12);
 	/** A string indicating that the shortened text in collapsed elements may continue (an ellipse) */
 	public static final String COLLAPSED =  "...";
 	/** Whether the right branch of an alternative is to be padded (width enlarged) */
@@ -459,17 +469,27 @@ public abstract class Element {
 	// END KGU#401 2017-05-17
 	
 	// START KGU 2017-09-19: Performance tuning for syntax analysis
-	private static final java.util.regex.Pattern FLOAT_PATTERN1 = java.util.regex.Pattern.compile("[0-9]+([eE][0-9]+)?");
-	private static final java.util.regex.Pattern FLOAT_PATTERN2 = java.util.regex.Pattern.compile("[0-9]+[eE]");
-	private static final java.util.regex.Pattern INT_PATTERN = java.util.regex.Pattern.compile("[0-9]+");
-	private static final java.util.regex.Pattern BIN_PATTERN = java.util.regex.Pattern.compile("0b[01]+");
-	private static final java.util.regex.Pattern OCT_PATTERN = java.util.regex.Pattern.compile("0[0-7]+");
-	private static final java.util.regex.Pattern HEX_PATTERN = java.util.regex.Pattern.compile("0x[0-9A-Fa-f]+");
-	private static final java.util.regex.Pattern SIGN_PATTERN = java.util.regex.Pattern.compile("[+-]");
+	private static final Pattern FLOAT_PATTERN1 = Pattern.compile("[0-9]+([eE][0-9]+)?");
+	private static final Pattern FLOAT_PATTERN2 = Pattern.compile("[0-9]+[eE]");
+	private static final Pattern INT_PATTERN = Pattern.compile("[0-9]+");
+	private static final Pattern BIN_PATTERN = Pattern.compile("0b[01]+");
+	private static final Pattern OCT_PATTERN = Pattern.compile("0[0-7]+");
+	private static final Pattern HEX_PATTERN = Pattern.compile("0x[0-9A-Fa-f]+");
+	private static final Pattern SIGN_PATTERN = Pattern.compile("[+-]");
 	//private static final java.util.regex.Pattern ARRAY_PATTERN = java.util.regex.Pattern.compile("(\\w.*)(\\[.*\\])$"); // seems to have been wrong
 	private static final Matcher RECORD_MATCHER = java.util.regex.Pattern.compile("([A-Za-z]\\w*)\\s*\\{.*\\}").matcher("");
 	// END KGU 2017-09-19
-	// START KGU#425 2017-09-29: Lexical core mechanisms revised
+	// START KGU#575 2018-09-17: Issue #594 - replace an obsolete 3rd-party Regex library
+	// Remark: It would not be a good idea to define the Matchers here because these aren't really constant but must be
+	// reset for any new string which is likely to cause severe concurrency trouble as the patterns are used on drawing etc.
+	private static final Pattern STRING_PATTERN = Pattern.compile("(^\\\".*\\\"$)|(^\\\'.*\\\'$)");
+	private static final Pattern INC_PATTERN1 = Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
+    private static final Pattern INC_PATTERN2 = Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
+    private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
+    private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
+	// END KGU#575 2018-09-17
+
+    // START KGU#425 2017-09-29: Lexical core mechanisms revised
 	private static final String[] LEXICAL_DELIMITERS = new String[] {
 			" ",
 			"\t",
@@ -899,7 +919,7 @@ public abstract class Element {
         }
 	}
 
-	// START KGU#453 2017-11-01: Bugfix #447 - we need a cute representationon broken lines in some cases
+	// START KGU#453 2017-11-01: Bugfix #447 - we need a cute representation of broken lines in some cases
 	/**
 	 * Returns the content of the text field no matter if mode {@code isSwitchedTextAndComment}
 	 * is active.<br/>
@@ -1018,6 +1038,87 @@ public abstract class Element {
 		return sl;
 	}
 	// END KGU#413 2017-06-09
+	
+	// START KGU#602 2018-10-25: Issue #419 - Tool to break very long lines is requested
+	/**
+	 * Breaks down all text lines longer than {@code maxLineLength} along the tokens
+	 * into continuated lines (i.e. broken lines end with backslash). Already placed
+	 * line breaks are preserved unless {@code rebreak} is true, in which case broken
+	 * lines are first concatenated in order to be broken according to {@code maxLineLength}.
+	 * If a token is longer than {@code maxLineLength} (might be a string literal) then
+	 * it will not be broken or decomposed in any way such that the line length limit
+	 * may not always hold.<br/>
+	 * If this method led to a different text layout then the drawing info is invalidated
+	 * up-tree.
+	 * @param maxLineLength - the number of characters a line should not exceed
+	 * @param rebreak - if true then existing line breaks (end-standing backslashes) or not preserved
+	 * @return true if the text was effectively modified, false otherwise
+	 * @see Root#breakElementTextLines(int, boolean)
+	 */
+	public boolean breakTextLines(int maxLineLength, boolean rebreak)
+	{
+		boolean modified = false;
+		if (rebreak) {
+			StringList unbroken = this.getUnbrokenText();
+			modified = unbroken.count() < this.text.count();
+			this.text = unbroken;
+		}
+		for (int i = this.text.count()-1; i >= 0; i--) {
+			int offset = 0;
+			String line = this.text.get(i);
+			if (line.isEmpty()) {
+				continue;
+			}
+			if (line.length() > maxLineLength) {
+				String lineEnd = ""; 
+				if (line.endsWith("\\")) {
+					lineEnd = "\\";
+					line = line.substring(0, line.length()-1);
+				}
+				this.text.remove(i);
+				StringList tokens = Element.splitLexically(line, true);
+				StringBuilder sb = new StringBuilder();
+				for (int j = 0; j < tokens.count(); j++) {
+					String token = tokens.get(j);
+					if (sb.length() == 0 || sb.length() + token.length() < maxLineLength) {
+						sb.append(token);
+					}
+					else {
+						this.text.insert(sb.toString() + "\\", i + offset++);
+						sb.setLength(0);
+						sb.append(token);
+					}
+				}
+				if (sb.length() > 0) {
+					this.text.insert(sb.toString() + lineEnd, i + offset);					
+				}
+			}
+			if (offset > 0) {
+				modified = true;
+			}
+		}
+		if (modified) {
+			this.resetDrawingInfoUp();
+		}
+		return modified;
+	}
+	
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = 0;
+		for (int i = 0; i < this.text.count(); i++) {
+			maxLen = Math.max(maxLen, this.text.get(i).length());
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 	
 	// START KGU#480 2018-01-21: Enh. #490
 	/**
@@ -1183,7 +1284,24 @@ public abstract class Element {
 	}
 	// END KGU#172 2916-04-01
 
+	/**
+	 * Returns whether this element appears as selected in the standard {@link DrawingContext}.
+	 * @return true if the element is marked selected.
+	 * @see #getSelected(DrawingContext)
+	 */
 	public boolean getSelected()
+	{
+		return selected;
+	}
+	
+	/**
+	 * Returns whether this element appears as selected w.r.t. the given {@link DrawingContext}.
+	 * For most kinds of Element the {@code drawingContext} doesn't make a difference.
+	 * @param drawingContext
+	 * @return true if this element is selected (in @code drawingContext}.
+	 * @see #getSelected()
+	 */
+	public boolean getSelected(DrawingContext drawingContext)
 	{
 		return selected;
 	}
@@ -1198,6 +1316,20 @@ public abstract class Element {
 		selected = _sel;
 		return _sel ? this : null;
 	}
+
+	/**
+	 * Sets the selection flag on this element for the given {@code _drawingContext}
+	 * @param _sel - if the element is to be selected or not
+	 * @param _drawingContext - the drawing context for which this is intended.
+	 * @return the element(s) actually being selected (null if _sel = false).
+	 * @see #setSelected(boolean)
+	 */
+	public Element setSelected(boolean _sel, DrawingContext _drawingContext)
+	{
+		// Default is the same as setSelected()
+		return setSelected(_sel);
+	}
+
 
 	// START KGU#183 2016-04-24: Issue #169 
 	/**
@@ -1505,9 +1637,18 @@ public abstract class Element {
 		color = _color;
 	}
 	
-	// START KGU#41 2015-10-13: The highlighting rules are getting complex
-	// but are more ore less the same for all kinds of elements
+	/**
+	 * Returns the status-dependent background color or just the user-defined background color
+	 * for this element.
+	 * @see #getFillColor(DrawingContext)
+	 */
 	protected Color getFillColor()
+	{
+		return getFillColor(DrawingContext.DC_STRUCTORIZER);
+	}
+	// START KGU#41 2015-10-13: The highlighting rules are getting complex
+	// but are more or less the same for all kinds of elements
+	protected Color getFillColor(DrawingContext drawingContext)
 	{
 		// This priority might be arguable but represents more or less what was found in the draw methods before
 		if (this.waited) {
@@ -1522,7 +1663,7 @@ public abstract class Element {
 			return Element.E_TROUBLECOLOR;
 		}
 		// END KGU#365 2017-04-14
-		else if (this.selected) {
+		else if (this.getSelected(drawingContext)) {
 			return Element.E_DRAWCOLOR;
 		}
 		// START KGU#117/KGU#156 2016-03-06: Enh. #77 + #124 Specific colouring for test coverage tracking
@@ -2107,20 +2248,20 @@ public abstract class Element {
 			// START KGU 2017-01-06: Issue #327: Default changed to English
 			preAltT=ini.getProperty("IfTrue","T");
 			preAltF=ini.getProperty("IfFalse","F");
-			preAlt=ini.getProperty("If","()");
+			preAlt=ini.getProperty("If","(?)");
 			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
 			//altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
 			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
 			// END KGU#228 2016-07-31
 			StringList sl = new StringList();
-			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"default\""));
+			sl.setCommaText(ini.getProperty("Case","\"(?)\",\"!\",\"!\",\"default\""));
 			preCase=sl.getText();
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
-			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "0"));
+			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "8"));
 			// END KGU#401 2017-05-18
 			preFor=ini.getProperty("For","for ? <- ? to ?");
-			preWhile=ini.getProperty("While","while ()");
-			preRepeat=ini.getProperty("Repeat","until ()");
+			preWhile=ini.getProperty("While","while (?)");
+			preRepeat=ini.getProperty("Repeat","until (?)");
 			// END KGU 2017-01-06 #327
 			// START KGU#376 2017-07-02: Enh. #389
 			preImport = ini.getProperty("Import", "Included diagrams:");
@@ -2789,19 +2930,28 @@ public abstract class Element {
 								}
 							}
 							else {
+								// START KGU#580 2018-09-24: Bugfix #605
+								if (tokens.get(0).equals("const")) {
+									prefix = "const ";
+									tokens.remove(0);
+								}
+								// END KGU#580 2018-09-24
 								type = tokens.concatenate(null, 0, tokens.count()-1);
 								decl = tokens.get(tokens.count()-1);
 							}
 						}
 						// START KGU#375 2017-03-30: New for enh. #388 (constants)
 						else if (tokens.get(0).equals("const")) {
+							// START KGU#580 2018-09-24: Bugfix #605							
+							decl = decl.substring(6).trim();
+							// END KGU#580 2018-09-24
 							prefix = "const ";
 						}
 						// END KGU#375 2017-03-30
 					}
 					//System.out.println("Adding parameter: " + vars.get(j).trim());
 					if (declNames != null) declNames.add(decl);
-					// START KGU#375 2017-03-30: New for enh. #388 (constants)
+					// START KGU#375 2017-03-30: New for enh. #388 (constants) 
 					//if (declTypes != null)	declTypes.add(type);
 					if (declTypes != null){
 						if (!prefix.isEmpty() || type != null) {
@@ -2923,7 +3073,7 @@ public abstract class Element {
 		else if (Function.isFunction(expr)) {
 			typeSpec = (new Function(expr).getResultType(""));
 		}
-		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
+		else if (STRING_PATTERN.matcher(expr).matches()) {
 			typeSpec = "String";
 		}
 		// START KGU#388 2017-09-12: Enh. #423: Record initializer support (name-prefixed!)
@@ -3070,6 +3220,14 @@ public abstract class Element {
 					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
 					specialSigns.add("as");
 					// END KGU#109 2016-01-15
+					// START KGU#611 2018-12-12 - Issue #643 - Since unifyOperators() tolerates case, we should do so here as well
+					specialSigns.add("AND");
+					specialSigns.add("OR");
+					specialSigns.add("XOR");
+					specialSigns.add("NOT");
+					specialSigns.add("SHL");
+					specialSigns.add("SHR");
+					// END KGU#611 2018-12-12
 					
 					// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
 					specialSigns.add("{");
@@ -3124,7 +3282,7 @@ public abstract class Element {
 					if (!display.equals(""))
 					{
 						// if this part has to be colored
-						if(root.variables.contains(display))
+						if(root.getVariables().contains(display))
 						{
 							// dark blue, bold
 							_canvas.setColor(Color.decode("0x000099"));
@@ -3481,6 +3639,21 @@ public abstract class Element {
     }
     
     /**
+     * Translates the Pascal procedure calls {@code inc(var), inc(var, offs), dec(var)},
+     * and {@code dec(var, offs)} into simple assignments in Structorizer syntax. 
+     * @param code - the piece of text possibly containing {@code inc} or {@code dec} references
+     * @return the transformed string.
+     */
+    public static String transform_inc_dec(String code)
+    {
+        code = INC_PATTERN1.matcher(code).replaceAll("$1 <- $1 + $2");
+        code = INC_PATTERN2.matcher(code).replaceAll("$1 <- $1 + 1");
+        code = DEC_PATTERN1.matcher(code).replaceAll("$1 <- $1 - $2");
+        code = DEC_PATTERN2.matcher(code).replaceAll("$1 <- $1 - 1");
+        return code;
+    }
+    
+    /**
      * Creates a (hopefully) lossless representation of the _text String as a
      * tokens list of a common intermediate language (code generation phase 1).
      * This allows the language-specific Generator subclasses to concentrate
@@ -3519,12 +3692,15 @@ public abstract class Element {
 		// START KGU 2015-11-30: Adopted from Root.getVarNames(): 
         // pascal: convert "inc" and "dec" procedures
         // (Of course we could omit it for Pascal, and for C offsprings there are more efficient translations, but this
-        // works for all, and so we avoid trouble. 
-        Regex r;
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); interm = r.replaceAll(interm);
-        r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); interm = r.replaceAll(interm);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); interm = r.replaceAll(interm);
-        r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); interm = r.replaceAll(interm);
+        // works for all, and so we avoid trouble.
+        // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
+        //Regex r;
+        //r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); interm = r.replaceAll(interm);
+        //r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); interm = r.replaceAll(interm);
+        //r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); interm = r.replaceAll(interm);
+        //r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); interm = r.replaceAll(interm);
+        interm = transform_inc_dec(interm);
+        // END KGU#575 2018-09-17
         // END KGU 2015-11-30
 
         // START KGU#93 2015-12-21 Bugfix #41/#68/#69 Get rid of padding defects and string damages
@@ -3834,6 +4010,11 @@ public abstract class Element {
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {
+				// START KGU#593 2018-10-05: Bugfix #619
+				if (explicitly && !entry.isDeclaredWithin(null)) {
+					entry.isDeclared = true;
+				}
+				// END KGU#593 2018-10-05
 				// add an alternative declaration to the type map entry
 				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
 			}

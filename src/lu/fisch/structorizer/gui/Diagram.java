@@ -32,33 +32,33 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Kay Gürtzig     2015.10.09      Colour setting will now duly be registered as diagram modification
- *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Kay Gürtzig     2015-10-09      Colour setting will now duly be registered as diagram modification
+ *                      2015-10-11      Comment popping repaired by proper subclassing of getElementByCoord
  *                                      Listener method MouseExited now enabled to drop the sticky comment popup
- *      Kay Gürtzig     2015.11.08      Parser preferences for FOR loops enhanced (KGU#3)
- *      Kay Gürtzig     2015.11.22      Selection of Subqueue subsequences or entire Subqueues enabled
+ *      Kay Gürtzig     2015-11-08      Parser preferences for FOR loops enhanced (KGU#3)
+ *      Kay Gürtzig     2015-11-22      Selection of Subqueue subsequences or entire Subqueues enabled
  *                                      thus allowing collective operations like delete/cut/copy/paste (KGU#87).
- *      Kay Gürtzig     2015.11.24      Method setRoot() may now refuse the replacement (e.g. on cancelling
+ *      Kay Gürtzig     2015-11-24      Method setRoot() may now refuse the replacement (e.g. on cancelling
  *                                      the request to save recent changes)
- *      Kay Gürtzig     2015.11.29      New check options added to analyserNSD()
- *      Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91)
- *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
- *      Kay Gürtzig     2015.12.16      Bugfix #63 (KGU#111): Error message on loading failure
- *      Kay Gürtzig     2016.01.02      Bugfix #85 (KGU#120): Root changes are also subject to undoing/redoing
- *      Kay Gürtzig     2016.01.03      Issue #65 (KGU#123): Collapsing/expanding from menu, autoscroll enabled 
- *      Kay Gürtzig     2016.01.11      Bugfix #102 (KGU#138): clear selection on delete, undo, redo 
- *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
- *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
- *      Kay Gürtzig     2016.02.03      Bugfix #117: Title and button update on root replacement (KGU#149)
- *      Kay Gürtzig     2016.03.02      Bugfix #97: Reliable selection mechanism on dragging (KGU#136)
- *      Kay Gürtzig     2016.03.08      Bugfix #97: Drawing info invalidation now involves Arranger (KGU#155)
- *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against replacement of Root under execution (KGU#158)
- *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loops considered in editing and parser preferences (KGU#61)
- *      Kay Gürtzig     2016.04.01      Issue #143 (comment popup off on editing etc.), Issue #144 (preferred code generator)
- *      Kay Gürtzig     2016.04.04      Enh. #149: Characterset configuration for export supported
- *      Kay Gürtzig     2016.04.05      Bugfix #155: Selection must be cleared in newNSD()
- *      Kay Gürtzig     2016.04.07      Enh. #158: Moving selection as cursor key actions (KGU#177)
+ *      Kay Gürtzig     2015-11-29      New check options added to analyserNSD()
+ *      Kay Gürtzig     2015-12-02      Bugfix #39 (KGU#91)
+ *      Kay Gürtzig     2015-12-04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
+ *      Kay Gürtzig     2015-12-16      Bugfix #63 (KGU#111): Error message on loading failure
+ *      Kay Gürtzig     2016-01-02      Bugfix #85 (KGU#120): Root changes are also subject to undoing/redoing
+ *      Kay Gürtzig     2016-01-03      Issue #65 (KGU#123): Collapsing/expanding from menu, autoscroll enabled 
+ *      Kay Gürtzig     2016-01-11      Bugfix #102 (KGU#138): clear selection on delete, undo, redo 
+ *      Kay Gürtzig     2016-01-15      Enh. #110: File open dialog now selects the NSD filter
+ *      Kay Gürtzig     2016-01-21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016-02-03      Bugfix #117: Title and button update on root replacement (KGU#149)
+ *      Kay Gürtzig     2016-03-02      Bugfix #97: Reliable selection mechanism on dragging (KGU#136)
+ *      Kay Gürtzig     2016-03-08      Bugfix #97: Drawing info invalidation now involves Arranger (KGU#155)
+ *      Kay Gürtzig     2016-03-16      Bugfix #131: Precautions against replacement of Root under execution (KGU#158)
+ *      Kay Gürtzig     2016-03-21      Enh. #84: FOR-IN loops considered in editing and parser preferences (KGU#61)
+ *      Kay Gürtzig     2016-04-01      Issue #143 (comment popup off on editing etc.), Issue #144 (preferred code generator)
+ *      Kay Gürtzig     2016-04-04      Enh. #149: Characterset configuration for export supported
+ *      Kay Gürtzig     2016-04-05      Bugfix #155: Selection must be cleared in newNSD()
+ *      Kay Gürtzig     2016-04-07      Enh. #158: Moving selection as cursor key actions (KGU#177)
  *      Kay Gürtzig     2016-04-14      Enh. #158: moveSelection() now updates the scroll view (KGU#177)
  *      Kay Gürtzig     2016-04-19      Issue #164 (no selection heir on deletion) and #165 (inconsistent unselection)
  *      Kay Gürtzig     2016-04-23      Issue #168 (no selection heir on cut) and #169 (no selection on start/undo/redo)
@@ -67,99 +67,103 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-04-24      Issue #169 accomplished: selection on start / after export
  *      Kay Gürtzig     2016-05-02      Bugfix #184: Imported root must be set changed.
  *      Kay Gürtzig     2016-05-08      Issue #185: Import of multiple roots per file (collected in Arranger, KGU#194)
- *      Kay Gürtzig     2016.07.06      Enh. #188: New method transmuteNSD() for element conversion (KGU#199)
- *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
- *      Kay Gürtzig     2016.07.20      Enh. #160: New export option genExportSubroutines integrated (KGU#178)
- *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
- *      Kay Gürtzig     2016.07.25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
+ *      Kay Gürtzig     2016-07-06      Enh. #188: New method transmuteNSD() for element conversion (KGU#199)
+ *      Kay Gürtzig     2016-07-19      Enh. #192: File name proposals slightly modified (KGU#205)
+ *      Kay Gürtzig     2016-07-20      Enh. #160: New export option genExportSubroutines integrated (KGU#178)
+ *      Kay Gürtzig     2016-07-21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
+ *      Kay Gürtzig     2016-07-25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
  *                                      and FOREVER / non-DIN FOR loops
- *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
- *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
+ *      Kay Gürtzig     2016-07-26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
+ *      Kay Gürtzig     2016-07-28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
- *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
- *      Kay Gürtzig     2016.08.01      Issue #213: FOR loop transmutation implemented
+ *      Kay Gürtzig     2016-07-31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
+ *      Kay Gürtzig     2016-08-01      Issue #213: FOR loop transmutation implemented
  *                                      Enh. #215: Breakpoint trigger counters added (KGU#213)
- *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
- *      Kay Gürtzig     2016.09.09      Issue #213: preWhile and postWhile keywords involved in FOR loop transmutation
- *      Kay Gürtzig     2016.09.11      Issue #213: Resulting selection wasn't highlighted
- *      Kay Gürtzig     2016.09.13      Bugfix #241: Modification in showInputBox()
- *      Kay Gürtzig     2016.09.15      Issue #243: Forgotten message box texts included in localization,
+ *      Kay Gürtzig     2016-08-12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *      Kay Gürtzig     2016-09-09      Issue #213: preWhile and postWhile keywords involved in FOR loop transmutation
+ *      Kay Gürtzig     2016-09-11      Issue #213: Resulting selection wasn't highlighted
+ *      Kay Gürtzig     2016-09-13      Bugfix #241: Modification in showInputBox()
+ *      Kay Gürtzig     2016-09-15      Issue #243: Forgotten message box texts included in localization,
  *                                      Bugfix #244: Flaws in the save logic mended
- *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
- *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
- *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
- *      Kay Gürtzig     2016.09.26      Enh. #253: Full support for diagram refactoring implemented.
- *      Kay Gürtzig     2016.10.03      Enh. #257: CASE element transmutation (KGU#267), enh. #253 revised
- *      Kay Gürtzig     2016.10.06      Minor improvements in FOR and CALL transmutations (enh. #213/#257)
- *      Kay Gürtzig     2016.10.06      Bugfix #262: Selection and dragging problems after insertion, undo, and redo
- *      Kay Gürtzig     2016.10.07      Bugfix #263: "Save as" now updates the current directory
- *      Kay Gürtzig     2016.10.11      KGU#280: field isArrangerOpen replaced by a method (due to volatility)
- *      Kay Gürtzig     2016.10.13      Enh. #270: Functionality for the disabling of elements
- *      Kay Gürtzig     2016.11.06      Issue #279: All references to method HashMap.getOrDefault() replaced
- *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded, Update font only scaled if factor > 1
- *      Kay Gürtzig     2016.11.15      Enh. #290: Opportunities to load arrangements via openNSD() and FilesDrop
- *      Kay Gürtzig     2016.11.16      Bugfix #291: upward cursor traversal ended in REPEAT loops
- *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
- *      Kay Gürtzig     2016.11.18/19   Issue #269: Scroll to the element associated to a selected Analyser error
- *      Kay Gürtzig     2016.11.21      Issue #269: Focus alignment improved for large elements
- *      Kay Gürtzig     2016.12.02      Enh. #300: Update notification mechanism
- *      Kay Gürtzig     2016.12.12      Enh, #305: Infrastructure for Arranger root list
- *      Kay Gürtzig     2016.12.28      Enh. #318: Backsaving of unzipped diagrams to arrz file
- *      Kay Gürtzig     2017.01.04      Bugfix #321: Signatures of saveNSD(), doSaveNSD(), saveAsNSD() and zipToArrz() enhanced
- *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling of FileChooser for Nimbus L&F solved
- *      Kay Gürtzig     2017.01.27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
- *      Kay Gürtzig     2017.02.08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
- *      Kay Gürtzig     2017.02.27      Enh. #346: Export option dialog changes for user-specific include directives
- *      Kay Gürtzig     2017.03.04      Enh. #354: Code import generalized
- *      Kay Gürtzig     2017.03.06      Enh. #368: New import option: code import of variable declarations
- *      Kay Gürtzig     2017.03.08      Enh. #354: file dropping generalized, new import option to save parseTree
- *      Kay Gürtzig     2017.03.10      Enh. #367: IF transmutation added: Swapping of the branches
- *      Kay Gürtzig     2017.03.12      Enh. #372: Author name configurable in save options
- *      Kay Gürtzig     2017.03.14      Enh. #372: Author name and license info editable now
- *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FileChooser
- *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
- *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
- *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
- *      Kay Gürtzig     2017.05.07      Enh. #399: Message on dropping files of unsupported type.
- *      Kay Gürtzig     2017.05.09      Issue #400: Proper check whether preference changes were committed
- *      Kay Gürtzig     2017.05.11      Enh. #357: Mechanism to retrieve plugin-specified generator options
- *      Kay Gürtzig     2017.05.16      Enh. #389: Support for third diagram type (include/import)
- *      Kay Gürtzig     2017.05.18      Issue #405: New preference for width shrinking of CASE elements 
- *      Kay Gürtzig     2017.05.21      Enh. #372: AttributeInspector integrated, undo mechanism adapted
- *      Kay Gürtzig     2017.05.23      Enh. #354: On multiple-root code import now all roots go to Arranger
- *      Kay Gürtzig     2017.06.20      Enh. #354,#357: GUI Support for configuration of plugin-specific options
- *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism transferred from CALL to ROOT
- *      Kay Gürtzig     2017.07.02      Enh. #357: plugin-specific option retrieval for code import
- *      Kay Gürtzig     2017.09.12      Enh. #415: Find&Replace dialog properly re-packed after L&F change
- *      Kay Gürtzig     2017.10.10      Issue #432: Workaround for nasty synch problem in redraw()
- *      Kay Gürtzig     2017.10.12      Issue #432: redrawing made optional in two methods 
- *      Kay Gürtzig     2017.10.23      Positioning of sub-dialogs no longer depends on diagram size
+ *      Kay Gürtzig     2016-09-17      Issue #245: Message box for failing browser call in updateNSD() added.
+ *      Kay Gürtzig     2016-09-21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
+ *      Kay Gürtzig     2016-09-24      Enh. #250: Several modifications around showInputBox()
+ *      Kay Gürtzig     2016-09-25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
+ *      Kay Gürtzig     2016-09-26      Enh. #253: Full support for diagram refactoring implemented.
+ *      Kay Gürtzig     2016-10-03      Enh. #257: CASE element transmutation (KGU#267), enh. #253 revised
+ *      Kay Gürtzig     2016-10-06      Minor improvements in FOR and CALL transmutations (enh. #213/#257)
+ *      Kay Gürtzig     2016-10-06      Bugfix #262: Selection and dragging problems after insertion, undo, and redo
+ *      Kay Gürtzig     2016-10-07      Bugfix #263: "Save as" now updates the current directory
+ *      Kay Gürtzig     2016-10-11      KGU#280: field isArrangerOpen replaced by a method (due to volatility)
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Functionality for the disabling of elements
+ *      Kay Gürtzig     2016-11-06      Issue #279: All references to method HashMap.getOrDefault() replaced
+ *      Kay Gürtzig     2016-11-09      Issue #81: Scale factor no longer rounded, Update font only scaled if factor > 1
+ *      Kay Gürtzig     2016-11-15      Enh. #290: Opportunities to load arrangements via openNSD() and FilesDrop
+ *      Kay Gürtzig     2016-11-16      Bugfix #291: upward cursor traversal ended in REPEAT loops
+ *      Kay Gürtzig     2016-11-17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
+ *      Kay Gürtzig     2016-11-18/19   Issue #269: Scroll to the element associated to a selected Analyser error
+ *      Kay Gürtzig     2016-11-21      Issue #269: Focus alignment improved for large elements
+ *      Kay Gürtzig     2016-12-02      Enh. #300: Update notification mechanism
+ *      Kay Gürtzig     2016-12-12      Enh, #305: Infrastructure for Arranger root list
+ *      Kay Gürtzig     2016-12-28      Enh. #318: Backsaving of unzipped diagrams to arrz file
+ *      Kay Gürtzig     2017-01-04      Bugfix #321: Signatures of saveNSD(), doSaveNSD(), saveAsNSD() and zipToArrz() enhanced
+ *      Kay Gürtzig     2017-01-09      Bugfix #330: Scaling of FileChooser for Nimbus L&F solved
+ *      Kay Gürtzig     2017-01-27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
+ *      Kay Gürtzig     2017-02-08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
+ *      Kay Gürtzig     2017-02-27      Enh. #346: Export option dialog changes for user-specific include directives
+ *      Kay Gürtzig     2017-03-04      Enh. #354: Code import generalized
+ *      Kay Gürtzig     2017-03-06      Enh. #368: New import option: code import of variable declarations
+ *      Kay Gürtzig     2017-03-08      Enh. #354: file dropping generalized, new import option to save parseTree
+ *      Kay Gürtzig     2017-03-10      Enh. #367: IF transmutation added: Swapping of the branches
+ *      Kay Gürtzig     2017-03-12      Enh. #372: Author name configurable in save options
+ *      Kay Gürtzig     2017-03-14      Enh. #372: Author name and license info editable now
+ *      Kay Gürtzig     2017-03-15      Enh. #354: New menu strategy for code import - selection by FileChooser
+ *      Kay Gürtzig     2017-03-19/27   Enh. #380: New function to outsource subsequences to routines
+ *      Kay Gürtzig     2017-03-28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
+ *      Kay Gürtzig     2017-04-27      Enh. #354: New Import option log directory
+ *      Kay Gürtzig     2017-05-07      Enh. #399: Message on dropping files of unsupported type.
+ *      Kay Gürtzig     2017-05-09      Issue #400: Proper check whether preference changes were committed
+ *      Kay Gürtzig     2017-05-11      Enh. #357: Mechanism to retrieve plugin-specified generator options
+ *      Kay Gürtzig     2017-05-16      Enh. #389: Support for third diagram type (include/import)
+ *      Kay Gürtzig     2017-05-18      Issue #405: New preference for width shrinking of CASE elements 
+ *      Kay Gürtzig     2017-05-21      Enh. #372: AttributeInspector integrated, undo mechanism adapted
+ *      Kay Gürtzig     2017-05-23      Enh. #354: On multiple-root code import now all roots go to Arranger
+ *      Kay Gürtzig     2017-06-20      Enh. #354,#357: GUI Support for configuration of plugin-specific options
+ *      Kay Gürtzig     2017-07-01      Enh. #389: Include mechanism transferred from CALL to ROOT
+ *      Kay Gürtzig     2017-07-02      Enh. #357: plugin-specific option retrieval for code import
+ *      Kay Gürtzig     2017-09-12      Enh. #415: Find&Replace dialog properly re-packed after L&F change
+ *      Kay Gürtzig     2017-10-10      Issue #432: Workaround for nasty synch problem in redraw()
+ *      Kay Gürtzig     2017-10-12      Issue #432: redrawing made optional in two methods 
+ *      Kay Gürtzig     2017-10-23      Positioning of sub-dialogs no longer depends on diagram size
  *                                      Issue #417: scroll units adapted to Root size to reduce time complexity
- *      Kay Gürtzig     2017.10.28      Enh. #443: Slight adaption for multiple DiagramControllers
- *      Kay Gürtzig     2017.11.03      Bugfix #417: division by zero exception in scroll unit adaptation averted
- *      Kay Gürtzig     2017.12.06      Enh. #487: Support for hiding declaration sequences (still defective)
- *      Kay Gürtzig     2017.12.12      Issue #471: Option to copy error message to clipboard in importCode()
- *      Kay Gürtzig     2017.12.15      Issue #492: Element type name configuration
- *      Kay Gürtzig     2018.01.03      Enh. #415: Ensured that the Find&Replace dialog regains focus when selected
- *      Kay Gürtzig     2018.01.21      Enh. #490: New DiagramController alias preferences integrated
- *      Kay Gürtzig     2018.01.22      Post-processing of For elements after insertion and modification unified
- *      Kay Gürtzig     2018.02.09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
- *      Kay Gürtzig     2018.02.15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
- *      Kay Gürtzig     2018.02.18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
- *      Kay Gürtzig     2018.03.13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
- *      Kay Gürtzig     2018.03.15      Bugfix #522: Outsourcing now considers record types and includes
- *      Kay Gürtzig     2018.03.20      Bugfix #526: Workaround for failed renaming of temporarily saved file
- *      Kay Gürtzig     2018.04.03      KGU#514: analyse() call on mere mouse clicking avoided
- *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble in openNsdOrArr()
- *      Kay Gürtzig     2018.06.11      Issue #143: Comment popup off on opening print preview
- *      Kay Gürtzig     2018.06.27      Enh. #552: Mechanism for global decisions on serial actions (save, overwrite)
+ *      Kay Gürtzig     2017-10-28      Enh. #443: Slight adaption for multiple DiagramControllers
+ *      Kay Gürtzig     2017-11-03      Bugfix #417: division by zero exception in scroll unit adaptation averted
+ *      Kay Gürtzig     2017-12-06      Enh. #487: Support for hiding declaration sequences (still defective)
+ *      Kay Gürtzig     2017-12-12      Issue #471: Option to copy error message to clipboard in importCode()
+ *      Kay Gürtzig     2017-12-15      Issue #492: Element type name configuration
+ *      Kay Gürtzig     2018-01-03      Enh. #415: Ensured that the Find&Replace dialog regains focus when selected
+ *      Kay Gürtzig     2018-01-21      Enh. #490: New DiagramController alias preferences integrated
+ *      Kay Gürtzig     2018-01-22      Post-processing of For elements after insertion and modification unified
+ *      Kay Gürtzig     2018-02-09      Bugfix #507: Must force a complete redrawing on changing IF branch labels
+ *      Kay Gürtzig     2018-02-15      Bugfix #511: Cursor key navigation was caught in collapsed loops. 
+ *      Kay Gürtzig     2018-02-18      Bugfix #511: Collapsed CASE and PARALLEL elements also caught down key.
+ *      Kay Gürtzig     2018-03-13      Enh. #519: "Zooming" via controlling font size with Ctrl + mouse wheel 
+ *      Kay Gürtzig     2018-03-15      Bugfix #522: Outsourcing now considers record types and includes
+ *      Kay Gürtzig     2018-03-20      Bugfix #526: Workaround for failed renaming of temporarily saved file
+ *      Kay Gürtzig     2018-04-03      KGU#514: analyse() call on mere mouse clicking avoided
+ *      Kay Gürtzig     2018-06-08      Issue #536: Precaution against command line argument trouble in openNsdOrArr()
+ *      Kay Gürtzig     2018-06-11      Issue #143: Comment popup off on opening print preview
+ *      Kay Gürtzig     2018-06-27      Enh. #552: Mechanism for global decisions on serial actions (save, overwrite)
  *                                      Usability of the parser choice dialog for code import improved.
- *      Kay Gürtzig     2018.07.02      KGU#245: color preferences modified to work with arrays
- *      Kay Gürtzig     2018.07.09      KGU#548: The import option dialog now retains the selected plugin for specific options
- *      Kay Gürtzig     2018.07.27      Bugfix #569: Report list didn't react to mouse clicks on a selected line
- *      Kay Gürtzig     2018.09.10      Issue #508: New option to continue with fix paddings in fontNSD()
- *      Kay Gürtzig     2018.09.13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
+ *      Kay Gürtzig     2018-07-02      KGU#245: color preferences modified to work with arrays
+ *      Kay Gürtzig     2018-07-09      KGU#548: The import option dialog now retains the selected plugin for specific options
+ *      Kay Gürtzig     2018-07-27      Bugfix #569: Report list didn't react to mouse clicks on a selected line
+ *      Kay Gürtzig     2018-09-10      Issue #508: New option to continue with fix paddings in fontNSD()
+ *      Kay Gürtzig     2018-09-13      Enh. #590: method attributesNSD() parameterized for Arranger Index use.
+ *      Kay Gürtzig     2018-10-01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
+ *      Kay Gürtzig     2018-10-26/28   Enh. #419: New import option impMaxLineLength, new method rebreakLines()
+ *      Kay Gürtzig     2018-10-29      Enh. #627: Clipboard copy of a code import error will now contain stack trace if available
+ *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance 
  *
  ******************************************************************************************************
  *
@@ -204,11 +208,14 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.imageio.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.text.DefaultFormatter;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -393,6 +400,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public File lastCodeImportDir = null;
     public String lastImportFilter = "";
     // END KGU#354 2017-04-26
+	// START KGU#602 2018-10-28: Enh. #619 - last used line length limitation (0 = never used)
+	/** Last used value for interactive line length limitation (word wrapping) */
+	public int lastWordWrapLimit = 0;
+	// END KGU#602 2018-10-28
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
@@ -528,6 +539,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#2 2015-11-24
     */    
 	
+	/**
+	 * @return true if the Analyser is currently enabled, false otherwise
+	 */
     public boolean getAnalyser()
     {
         return Element.E_ANALYSER;
@@ -903,7 +917,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void mousePressed(MouseEvent e)
 	{
 		//System.out.println("MousePressed at (" + e.getX() + ", " + e.getY() + ")");
-		if(e.getSource()==this)
+		if (e.getSource() == this)
 		{
 			//System.out.println("Pressed");
 			mouseX = e.getX();
@@ -1022,7 +1036,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public void mouseReleased(MouseEvent e)
 	{
     	// FIXME: What about hidden declarations?
-    	if (e.getSource()==this)
+    	if (e.getSource() == this)
     	{
     		//System.out.println("Released");
     		boolean doDraw = false;
@@ -1030,18 +1044,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		boolean doReanalyse = false;
     		// END KGU#514 2018-04-03
 
-    		if(selX!=-1 && selY!=-1 && selectedDown!=null)
+    		if((selX != -1) && (selY != -1) && (selectedDown != null))
     		{
     			selX = -1;
     			selY = -1;
     			doDraw=true;
     		}
 
-    		if ((mouseMove==true) && (selectedDown!=null))
+    		if ((mouseMove == true) && (selectedDown != null))
 			{
 				Element.E_DRAWCOLOR=Color.YELLOW;
 				if ( !selectedDown.getClass().getSimpleName().equals("Subqueue") &&
-						!selectedDown.getClass().getSimpleName().equals("Root"))
+						!selectedDown.getClass().getSimpleName().equals("Root") )
 				{
 					//System.out.println("=================== MOUSE RELEASED 1 (" + e.getX()+ ", " +e.getY()+ ")======================");
 					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
@@ -1094,13 +1108,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								selectedDown.setSelected(false);
 							}
 							// END KGU#87 2015-11-22
-							doDraw=true;
+							doDraw = true;
 						}
 						else
 						{
 							selectedUp.setSelected(false);
 							selectedDown.setSelected(true);
-							doDraw=true;
+							doDraw = true;
 						}
 					}
 				}
@@ -1113,13 +1127,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp!=null) selectedUp.setSelected(false);
-					doDraw=true;
+					doDraw = true;
 				}
 			}
 
-			mouseMove=false;
+			mouseMove = false;
 
-			if(doDraw==true)
+			if (doDraw)
 			{
 				redraw();
 	    		// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528
@@ -1215,7 +1229,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// edit it
 					editNSD();
 					// do the button things
-					if(NSDControl!=null) NSDControl.doButtons();
+					if (NSDControl != null) NSDControl.doButtons();
 				}
 			}
 			// START KGU#305 2016-12-12: Enh. #305
@@ -1234,7 +1248,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
     public void doButtons()
     {
-    	if(NSDControl!=null) NSDControl.doButtons();
+    	if (NSDControl != null) NSDControl.doButtons();
     }
     // END KGU#143 2016-01-21
 
@@ -1289,7 +1303,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         	// START KGU#430 2017-10-10: Issue #432
     		//root.getVarNames();
     		try {
-    			root.getVarNames();
+    			// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+    			//root.getVarNames();
+    			root.getCachedVarNames();
+    			// END KGU#444/KGU#618 2018-12-18
     		}
     		catch (Exception ex) {
     			logger.log(Level.WARNING, "*** Possible sync problem:", ex);
@@ -1300,7 +1317,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	}
 
     	Rect rect = root.prepareDraw(this.getGraphics());
-    	Dimension d = new Dimension(rect.right-rect.left,rect.bottom-rect.top);
+    	Dimension d = new Dimension(rect.right-rect.left, rect.bottom-rect.top);
     	this.setPreferredSize(d);
     	//this.setSize(d);
     	this.setMaximumSize(d);
@@ -1326,9 +1343,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
-        
 		// draw dragged element
-		if (selX != -1 && selY != -1 && selectedDown!=null && mX!=mouseX && mY!=mouseY)
+		if ((selX != -1) && (selY != -1) && (selectedDown != null) && (mX!= mouseX) && (mY != mouseY))
 		{
 			_g.setColor(Color.BLACK);
 			// START KGU#136 2016-03-02: Bugfix #97 - It must not play any role where the diagram was drawn before
@@ -1361,7 +1377,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
-		if(root!=null)
+		if (root != null)
 		{
 			//logger.debug("Diagram: " + System.currentTimeMillis());
 			redraw(g);
@@ -1383,11 +1399,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//int widthFactor = root.getRect().right / scroll.getWidth() + 1;
 			int heightFactor = 1;
 			int widthFactor = 1;
+			Rect drawRect = root.getRect();
+			//System.out.println("rect : " + drawRect);
+			// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 - scrolling too slow
+			// For new Roots, the drawing may not have had time to compute the size, so try an
+			// estimate from the total number of elements
+			if (drawRect.bottom < 10) {
+				int nElements = root.getElementCount();
+				drawRect = new Rect(0, 0,
+						(int)(Math.sqrt(nElements) * Element.getPadding()),
+						nElements * 3 * Element.getPadding()
+						);
+			}
+			// END KGU#444/KGU#618 2018-12-18
 			if (scroll.getHeight() > 0) {
-				heightFactor = root.getRect().bottom / scroll.getHeight() + 1;
+				heightFactor = drawRect.bottom / scroll.getHeight() + 1;
 			}
 			if (scroll.getWidth() > 0) {
-				widthFactor = root.getRect().right / scroll.getWidth() + 1;
+				widthFactor = drawRect.right / scroll.getWidth() + 1;
 			}
 			// END KGU#444 2017-11-03
 			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
@@ -1499,7 +1528,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				double sX = (pageFormat.getImageableWidth()-1)/root.width;
 				double sY = (pageFormat.getImageableHeight()-1)/root.height;
 				double sca = Math.min(sX,sY);
-				if (sca>1) {sca=1;}
+				if (sca > 1) {sca = 1;}
 				g2d.scale(sca,sca);
 			/*}
 			else
@@ -1731,6 +1760,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					JOptionPane.ERROR_MESSAGE);
 		}
 		// END KGU#111 2015-12-16
+		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+		this.adaptScrollUnits();
+		// END KGU#444/KGU#618 2018-12-18
 	}
 
 	// START KGU#362 2017-03-28: Issue #370
@@ -2175,7 +2207,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					filename = root.proposeFileName();
 				}
 				String[] options = null;
-				Object initialValue = null;
 				if (isInSerialMode()) {
 					options = new String[]{
 							Menu.lblContinue.getText(),
@@ -2183,8 +2214,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							Menu.lblYesToAll.getText(),
 							Menu.lblNoToAll.getText()	// Well, this is less sensible...
 					};
-					initialValue = options[0];
 				}
+				else {
+					options = new String[] {
+							Menu.lblYes.getText(),
+							Menu.lblNo.getText()
+					};
+				}
+				Object initialValue = options[0];
 				res = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
 												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
 				// END KGU#49 2015-10-18
@@ -3075,7 +3112,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#480 2018-01-22
 			_data.forParts.add(valueList);
 		}
-		
 	}
 	
 	private void postEditFor(EditData _data, For _for)
@@ -3663,7 +3699,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Subqueue temp = _alt.qFalse;
 		_alt.qFalse = _alt.qTrue;
 		_alt.qTrue = temp;
-		_alt.resetDrawingInfoDown();
+		// The width of the condition is likely to have changed
+		_alt.resetDrawingInfoUp();	// KGU#590 2018-10-01: Corrected Down -> Up
 		redraw();
 		analyse();
 	}
@@ -3873,7 +3910,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// This is a transmutation helper function
 	private void decomposeCase(Subqueue parent)
 	{
-		// Comment will be tranferred to the first replacing element
+		// Comment will be transferred to the first replacing element
 		// (discriminator variable assignment or outermost Alternative).
 		Case caseElem = (Case)selected;
 		// List of replacing nested alternatives
@@ -4087,6 +4124,128 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		
 	}
 	// END KGU#282 2016-10-16
+	
+	// START KGU#602 2018-10-26: Enh. #619
+	/**
+	 * Adjusts line breaking for the selected element(s). Requests the details
+	 * ineractively from the user
+	 */
+	public void rebreakLines()
+	{
+		if (this.selected != null) {
+			// The current maximum line lengths of the selected element(s)
+			Element selectedEls = this.selected;
+			int flatMax = selectedEls.getMaxLineLength(false);
+			int deepMax = selectedEls.getMaxLineLength(true);
+			int lastLineLimit = this.lastWordWrapLimit <= 0 ? deepMax : this.lastWordWrapLimit;
+			JPanel pnl = new JPanel();
+			JLabel lblMaxLenSel = new JLabel(Menu.msgMaxLineLengthSelected.getText().
+					replace("%", Integer.toString(flatMax)));
+			JLabel lblMaxLenSub = new JLabel(Menu.msgMaxLineLengthSubstructure.getText().
+					replace("%", Integer.toString(deepMax)));
+			JLabel lblNewLen = new JLabel(Menu.lblNewMaxLineLength.getText());
+			JSpinner spnNewLen = new JSpinner();
+			SpinnerModel spnModelLen = new SpinnerNumberModel(0, 0, 255, 5);
+	        spnNewLen.setModel(spnModelLen);
+	        spnNewLen.setValue(lastLineLimit);
+			JCheckBox cbRecursive = new JCheckBox(Menu.lblInvolveSubtree.getText());
+			JCheckBox cbPreserve = new JCheckBox(Menu.lblPreserveContinuators.getText());
+			cbRecursive.setSelected(!(selectedEls instanceof Instruction));
+			cbPreserve.setSelected(lastLineLimit < (cbRecursive.isSelected() ? deepMax : flatMax));
+			
+	        GridBagConstraints gbcLimits = new GridBagConstraints();
+	        gbcLimits.insets = new Insets(0, 5, 5, 5);
+			gbcLimits.weightx = 1.0;
+			gbcLimits.anchor = GridBagConstraints.LINE_START;
+	        
+	        pnl.setLayout(new GridBagLayout());
+
+	        gbcLimits.gridx = 0; gbcLimits.gridy = 0;
+	        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+	        pnl.add(lblMaxLenSel, gbcLimits);
+	        
+	        gbcLimits.gridy++;
+	        pnl.add(lblMaxLenSub, gbcLimits);	        
+	        
+	        gbcLimits.gridy++;
+	        gbcLimits.gridwidth = 1;
+	        pnl.add(lblNewLen, gbcLimits);
+	        
+	        gbcLimits.gridx++;
+	        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+	        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+	        pnl.add(spnNewLen, gbcLimits);
+
+	        gbcLimits.gridx = 0; gbcLimits.gridy++;
+	        gbcLimits.fill = GridBagConstraints.NONE;
+	        pnl.add(cbRecursive, gbcLimits);
+	        gbcLimits.gridy++;
+	        pnl.add(cbPreserve, gbcLimits);
+	        
+	        ChangeListener changeListener = new ChangeListener() {
+	        	
+	        	private final JSpinner spnLen = spnNewLen;
+	        	private final JCheckBox chkRec = cbRecursive, chkPres = cbPreserve;
+	        	private final int flatLen = flatMax, deepLen = deepMax;
+	        	
+				@Override
+				public void stateChanged(ChangeEvent e) {
+					int limit = (int)spnLen.getValue();
+					if (chkRec.isSelected() && limit > deepLen || !chkRec.isSelected() && limit > flatLen) {
+						chkPres.setSelected(false);
+					}
+				}
+	        	
+	        };
+	        
+	        // Without this hack, directly entering a number in the spinner's text field wouldn't fire the ChangeEvent
+	        DefaultFormatter formatter = (DefaultFormatter)((JSpinner.DefaultEditor)spnNewLen.getEditor()).getTextField().getFormatter();
+	        formatter.setCommitsOnValidEdit(true);
+	        
+	        spnNewLen.addChangeListener(changeListener);
+	        cbRecursive.addChangeListener(changeListener);
+			
+	        int answer = JOptionPane.showConfirmDialog(
+	        		this.NSDControl.getFrame(), pnl,
+	        		Menu.ttlBreakTextLines.getText(),
+	        		JOptionPane.OK_CANCEL_OPTION);
+	        
+	        if (answer == JOptionPane.OK_OPTION) {
+	        	root.addUndo();
+	        	boolean recursive = cbRecursive.isSelected();
+	        	boolean preserve = cbPreserve.isSelected();
+	        	this.lastWordWrapLimit = (short)(int)spnNewLen.getValue();
+	        	boolean changed = false;
+	        	if (selectedEls instanceof Root) {
+	        		changed = selectedEls.breakTextLines(this.lastWordWrapLimit, !preserve);
+	        		if (recursive && ((Root)selectedEls).breakElementTextLines(this.lastWordWrapLimit, !preserve)) {
+	        			changed = true;
+	        		}
+	        	}
+	        	else if (!recursive && !(selectedEls instanceof IElementSequence)) {
+	        		changed = selectedEls.breakTextLines(this.lastWordWrapLimit, !preserve);
+	        	}
+	        	else {
+	        		if (!(selectedEls instanceof IElementSequence)) {
+	        			selectedEls = new SelectedSequence(selectedEls, selectedEls);
+	        		}
+	        		IElementSequence.Iterator iter = ((IElementSequence)selectedEls).iterator(recursive);
+	        		while (iter.hasNext()) {
+	        			if (iter.next().breakTextLines(this.lastWordWrapLimit, !preserve)) {
+	        				changed = true;
+	        			}
+	        		}
+	        	}
+	        	if (!changed) {
+	        		root.undo(false);
+	        	}
+//	        	else {
+//	        		this.redraw();
+//	        	}
+	        }
+		}
+	}
+	// END KGU#602 2016-10-26
 
 	// START KGU#43 2015-10-12
 	/*****************************************
@@ -4932,15 +5091,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 
 	/*****************************************
-	 * Import method
-	 * @param _specificOptions 
+	 * Import method for foreign diagrams
 	 *****************************************/
+	
+	// START KGU#386 2017-04-25: version 3.26-06 - new import sources
+	/**
+	 * Imports diagrams from alien file formats (e.g. from Struktogrammeditor)
+	 * @param _className - Name of the appropriate importer class (to be configured via plugins)
+	 * @param _specificOptions - importer-specific key-value pairs 
+	 */
 	public void importNSD(String _className, Vector<HashMap<String, String>> _specificOptions)
 	{
-		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
 		// only save if something has been changed
-		//saveNSD(true);
-		// END KGU 2015-10-17
+		saveNSD(true);
 
 		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
 
@@ -4951,6 +5114,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		GUIScaler.rescaleComponents(dlgOpen);
 		INSDImporter parser = null;
 		try {
+			// FIXME: For future Java versions we may need a factory here
 			Class<?> impClass = Class.forName(_className);
 			parser = (INSDImporter) impClass.newInstance();
 
@@ -4984,10 +5148,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			logger.log(Level.WARNING, "Using parser " + _className + " failed.", ex);
 			// END KGU#484 2018-04-05
 		}
+		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+		this.adaptScrollUnits();
+		// END KGU#444/KGU#618 2018-12-18
 	}
+	// END KGU#386 2017-04-25
 	
 	/*****************************************
-	 * import code methods
+	 * import methods for code
 	 *****************************************/
 
 	// START KGU#354 2017-03-04: Enh. #354
@@ -5367,7 +5535,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							options, 0);
 					if (chosen == 1) {
 						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-						StringSelection toClip = new StringSelection(parser.error);
+						// START KGU#604 2018-10-29: Enh. #627 - Append a stacktrace if available 
+						//StringSelection toClip = new StringSelection(parser.error);
+						String errorString = parser.error;
+						if (parser.exception != null) {
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							parser.exception.printStackTrace(new PrintStream(baos));
+							errorString += "\n\nSTACK TRACE\n(A more detailed trace will be in the structorizer log file):\n\n" + baos.toString();
+						}
+						StringSelection toClip = new StringSelection(errorString);
+						// END KGU#604 2018-10-29
 						clipboard.setContents(toClip, null);									
 					}
 					// END KGU#364 2017-12-12
@@ -5398,6 +5575,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				doButtons();
 				redraw();
 				analyse();
+				// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 - We may have obtained huge diagrams...
+				this.adaptScrollUnits();
+				// END KGU#444/KGU#618 2018-12-18
 			}
 		}
 	} 
@@ -5646,6 +5826,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			JOptionPane.ERROR_MESSAGE);
 		}
 		// END KGU#250 2016-09-17
+
+		// The isLaunched mechanism above does not signal an unavailable help page.
+		// With the following code we can find out whether the help page was available...
+		// TODO In this case we might offer to download the PDF for offline use,
+		// otherwise we could try to open a possibly previously downloaded PDF ...
+//		URL url;
+//		try {
+//			isLaunched = false;
+//			url = new URL(help);
+//			URLConnection con = url.openConnection();
+//			if (con != null) {
+//				con.connect();
+//			}
+//			isLaunched = true;
+//		} catch (SocketTimeoutException ex) {
+//			ex.printStackTrace();
+//		} catch (MalformedURLException e1) {
+//			this.logger.log(Level.SEVERE, "Malformed URL " + help, e1);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 	// END KGU#208 2016-07-22
 	
@@ -6599,6 +6800,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#553 2018-07-13: Issue #557
             iod.spnLimit.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxRootsForDisplay", "20")));
             // END KGU#354 2018-07-13
+            // START KGU#602 2018-10-25: Issue #419
+            iod.spnMaxLen.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxLineLength", "0")));
+            // END KGU#602 2018-10-25
             // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
             iod.chkLogDir.setSelected(ini.getProperty("impLogToDir", "false").equals("true"));
             iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));            
@@ -6644,6 +6848,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#553 2018-07-13: Issue #557
                 ini.setProperty("impMaxRootsForDisplay", String.valueOf(iod.spnLimit.getValue()));
                 // END KGU#553 2018-07-13
+                // START KGU#602 2018-10-25: Issue #419
+                ini.setProperty("impMaxLineLength", String.valueOf(iod.spnMaxLen.getValue()));
+                // END KGU#602 2018-10-25
                 // START KGU#416 2017-02-26: Enh. #354, #357
                 for (int i = 0; i < parserPlugins.size(); i++) {
                 	GENPlugin plugin = parserPlugins.get(i);
@@ -6722,6 +6929,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#258 2016-09-26
 
+	/*****************************************
+	 * font control
+	 *****************************************/
+    
 	public void fontNSD()
 	{
 		// START KGU#494 2018-09-10: Issue #508 - support option among fix / proportional padding
@@ -6757,6 +6968,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			// redraw diagram
 			redraw();
+			// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+			this.adaptScrollUnits();	// May be too early to get new draw rectangle but try at least
+			// END KGU#444/KGU#618 2018-12-18
 		// START KGU#393 2017-05-09: Issue #400
 		}
 		// END KGU#393 2017-05-09		
@@ -6777,6 +6991,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		// redraw diagram
 		redraw();
+		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+		this.adaptScrollUnits();	// May be too early to get new draw rectangle but try at least
+		// END KGU#444/KGU#618 2018-12-18
 	}
 
 	public void fontDownNSD()
@@ -6784,7 +7001,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (Element.getFont().getSize()-2 >= 4)
 		{
 			// change font size
-			Element.setFont(new Font(Element.getFont().getFamily(),Font.PLAIN,Element.getFont().getSize()-2));
+			Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN,Element.getFont().getSize()-2));
 
 			// save size
 			Element.saveToINI();
@@ -6796,10 +7013,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// redraw diagram
 			redraw();
 		}
+		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+		this.adaptScrollUnits();	// May be too early to get new draw rectangle but try at least
+		// END KGU#444/KGU#618 2018-12-18
 	}
 
 	/*****************************************
-	 * setter method
+	 * DIN conformity
 	 *****************************************/
 	public void toggleDIN()
 	{
@@ -6825,6 +7045,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		return Element.E_DIN;
 	}
+
+	/*****************************************
+	 * diagram type and shape
+	 *****************************************/
 
 	public void setUnboxed(boolean _unboxed)
 	{
@@ -6912,6 +7136,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return root.isInclude();
 	}
 
+	/*****************************************
+	 * comment modes
+	 *****************************************/
+
 	public void setComments(boolean _comments)
 	{
 		Element.E_SHOWCOMMENTS=_comments;
@@ -6939,6 +7167,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+    void toggleTextComments() {
+    	Element.E_TOGGLETC=!Element.E_TOGGLETC;
+    	// START KGU#136 2016-03-01: Bugfix #97
+    	this.resetDrawingInfo();
+    	// END KGU#136 2016-03-01
+    	// START KGU#220 2016-07-27: Enh. #207
+    	analyse();
+    	// END KGU#220 2016-07-27
+    	repaint();
+    }
+    
+	/*****************************************
+	 * further settings
+	 *****************************************/	
+	
 	public void setHightlightVars(boolean _highlight)
 	{
 		Element.E_VARHIGHLIGHT = _highlight;	// this is now directly used for drawing
@@ -6959,6 +7202,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	/**
+	 * Enables or disables the Analyser, according to the value of {@code _analyse}.
+	 * @param _analyse - the new status of Analyser (true to enable, obviously)
+	 */
 	public void setAnalyser(boolean _analyse)
 	{
 		Element.E_ANALYSER = _analyse;
@@ -6966,48 +7213,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#305 2016-12-14: Enh. #305
+	/**
+	 * Enables or disables the Arranger Index, according to the value of {@code _showIndex}.
+	 * @param _showIndex - whether to enable (true) or disable (false) the index
+	 * @see #showingArrangerIndex()
+	 */
 	public void setArrangerIndex(boolean _showIndex)
 	{
 		this.show_ARRANGER_INDEX = _showIndex;
 		NSDControl.doButtons();
 	}
-	public boolean showArrangerIndex()
+	/**
+	 * @return true if the Arranger index is crrently enabled (shown), false otherwise
+	 * @see #setArrangerIndex(boolean)
+	 */
+	public boolean showingArrangerIndex()
 	{
 		return this.show_ARRANGER_INDEX;
 	}
 	// END KGU#305 216-12-14
 	
 	// START KGU#123 2016-01-04: Enh. #87
+	/**
+	 * Toggles the use of the mouse wheel for collapsing/expanding elements
+	 */
 	public void toggleWheelMode()
 	{
 		Element.E_WHEELCOLLAPSE = !Element.E_WHEELCOLLAPSE;
 	}
-	
-	@Deprecated
-	public void setWheelCollapses(boolean _collapse)
-	{
-		Element.E_WHEELCOLLAPSE = _collapse;
-		// START KGU#503 2018-03-13: Enh. #519 - To add the mouse wheel listener is to be left to scrollarea
-		//if (_collapse)
-		//{
-		//	this.addMouseWheelListener(this);
-		//}
-		//else
-		//{
-		//	this.removeMouseWheelListener(this);
-		//}
-		// END KGU#503 2018-03-13
-		this.NSDControl.doButtons();
-	}
-	
-	@Deprecated
-	public boolean getWheelCollapses()
-	{
-		return Element.E_WHEELCOLLAPSE;
-	}
 	// END KGU#123 2016-01-04
 	
 	// START KGU#503 2018-03-14: Enh. #519
+	/**
+	 * Toggles the effect of the mouse wheel (with Ctrl key pressed) for Zooming: in or out
+	 */
 	public void toggleCtrlWheelMode()
 	{
 		Element.E_WHEEL_REVERSE_ZOOM = !Element.E_WHEEL_REVERSE_ZOOM;
@@ -7363,7 +7602,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
     	// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
         //if (selected != null)
-    	if ((e.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+    	if ((e.getModifiersEx() & MouseWheelEvent.CTRL_DOWN_MASK) != 0) {
     		// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
         	int rotation = e.getWheelRotation();
         	int fontSize = Element.getFont().getSize();
@@ -7433,17 +7672,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
 
 
-    void toggleTextComments() {
-    	Element.E_TOGGLETC=!Element.E_TOGGLETC;
-    	// START KGU#136 2016-03-01: Bugfix #97
-    	this.resetDrawingInfo();
-    	// END KGU#136 2016-03-01
-    	// START KGU#220 2016-07-27: Enh. #207
-    	analyse();
-    	// END KGU#220 2016-07-27
-    	repaint();
-    }
-    
 	// Inner class is used to hold an image while on the clipboard.
 	public static class EMFSelection implements Transferable, ClipboardOwner
 		{
@@ -7586,19 +7814,33 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		addRecentFile(_filename,true);
 	}
 
+	/**
+	 * Adds the given {@code _filename} to the list of recently used files.
+	 * If this would exceed {@link #MAX_RECENT_FILES} then the oldest file name
+	 * gets dropped from the list.
+	 * @param _filename - path of a file most recently used
+	 * @param saveINI - if true then we will immediately save the list to the ini
+	 * file and have all button visibility checked immediately.
+	 */
 	public void addRecentFile(String _filename, boolean saveINI)
 	{
 		if(recentFiles.contains(_filename))
 		{
 			recentFiles.remove(_filename);
 		}
-		recentFiles.insertElementAt(_filename,0);
+		recentFiles.insertElementAt(_filename, 0);
 		while (recentFiles.size() > MAX_RECENT_FILES)
 		{
 			recentFiles.removeElementAt(recentFiles.size()-1);
 		}
-		NSDControl.doButtons();
-		if(saveINI==true) {NSDControl.savePreferences();}
+		// START KGU#602 2018-10-28 - saveINI = false is typically called on startup, so postpone the button stuff too 
+		//NSDControl.doButtons();
+		//if (saveINI==true) {NSDControl.savePreferences();}
+		if (saveINI) {
+			NSDControl.doButtons();
+			NSDControl.savePreferences();
+		}
+		// END KGU#602 2018-10-28
 	}
 
     /*****************************************
@@ -8069,9 +8311,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#324 2017-05-30
 
-
+	// START KGU#324 2017-06-16: Enh. #415 Extracted from Mainform
+	/**
+	 * Caches several settings held in fields to the given {@link Ini} instance
+	 * @param ini - the {@link Ini} instance (a singleton)
+	 * @see #fetchIniProperties(Ini)
+	 */
 	public void cacheIniProperties(Ini ini) {
-		if(this.currentDirectory!=null)
+		if (this.currentDirectory != null)
 		{
 			ini.setProperty("currentDirectory", this.currentDirectory.getAbsolutePath());
 			// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
@@ -8081,7 +8328,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#354 2017-04-26
 		}
 		// START KGU#305 2016-12-15: Enh. #305
-		ini.setProperty("index", (this.showArrangerIndex() ? "1" : "0"));
+		ini.setProperty("index", (this.showingArrangerIndex() ? "1" : "0"));
 		// END KGU#305 2016-12-15
 		if (this.recentFiles.size()!=0)
 		{
@@ -8091,11 +8338,62 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				ini.setProperty("recent"+String.valueOf(i),(String)this.recentFiles.get(i));
 			} 
 		}
+	    // START KGU#602 2018-10-28: Enh. #419
+	    ini.setProperty("wordWrapLimit", Integer.toString(this.lastWordWrapLimit));
+	    // END KGU#602 2018-10-28
+
 		if (this.findDialog != null) {
 			this.findDialog.cacheToIni(ini);
 		}
 	}
-	
+	// END KGU#324 2017-06-16
+
+	// START KGU#602 2018-10-28: Extracted from Mainform.loadFromIni()
+	/**
+	 * Adopts several settings held in fields from the given {@link Ini} instance
+	 * @param ini - the {@link Ini} instance (a singleton)
+	 * @see #cacheIniProperties(Ini)
+	 */
+	public void fetchIniProperties(Ini ini) {
+		// current directory
+		// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
+		//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
+		this.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
+		// END KGU#95 2015-12-04
+		// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+		this.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
+		this.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
+		this.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+		// END KGU#354 2017-04-26
+		// START KGU#602 2018-10-28: Enh. #419
+		try {
+			this.lastWordWrapLimit = Integer.parseInt(ini.getProperty("wordWrapLimit", "0"));
+		}
+		catch (NumberFormatException ex) {}
+		// END KGU#602 2018-10-28
+
+		// recent files
+		try
+		{	
+			for (int i = MAX_RECENT_FILES-1; i >= 0; i--)
+			{
+				if (ini.keySet().contains("recent"+i))
+				{
+					if (!ini.getProperty("recent"+i, "").trim().isEmpty())
+					{
+						this.addRecentFile(ini.getProperty("recent"+i, ""), false);
+					}
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.WARNING, "Ini", e);
+		}
+		NSDControl.doButtons();
+	}
+	// END KGU#602 2018-10-28
+
 	public void setSimplifiedGUI(boolean _simplified)
 	{
 		if (Element.E_REDUCED_TOOLBARS != _simplified) {

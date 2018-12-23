@@ -88,8 +88,8 @@ public class Canvas  {
 	
 	public int stringWidth(String _string)
 	{
-		Rectangle2D bounds = canvas.getFont().getStringBounds(_string,canvas.getFontRenderContext());
-		return new Double(bounds.getWidth()).intValue();
+		Rectangle2D bounds = canvas.getFont().getStringBounds(_string, canvas.getFontRenderContext());
+		return Double.valueOf(bounds.getWidth()).intValue();
 	}
 
 
@@ -97,7 +97,7 @@ public class Canvas  {
 	public int stringHeight(String _string)
 	{
 		Rectangle2D bounds = canvas.getFont().getStringBounds(_string,canvas.getFontRenderContext());
-		return new Double(bounds.getHeight()).intValue();
+		return Double.valueOf(bounds.getHeight()).intValue();
 	}
 	
 	public Font getFont()

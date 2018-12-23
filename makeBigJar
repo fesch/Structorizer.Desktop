@@ -1,4 +1,4 @@
-#!/bin/sh
+﻿#!/bin/sh
 set -e
 ################################################################################
 #
@@ -10,23 +10,32 @@ set -e
 #
 #      Revision List
 #
-#      Author                        Date          Description
-#      ------                        ----          -----------
-#      Bob Fisch                     2008.10.15    First Issue
-#      Bob Fisch & Philipp Hübner    2009.07.08    Scripting ameliorations
-#      Bob Fisch                     2010.01.25    Update for new libraries and signature removing
-#      Simon Sobisch                 2017.03.06    Check for jar, use comments instead of `echo`,
+#      Author                         Date         Description
+#      ------                         ----         -----------
+#      Bob Fisch                      2008.10.15   First Issue
+#      Bob Fisch & Philipp Hübner     2009.07.08   Scripting ameliorations
+#      Bob Fisch                      2010.01.25   Update for new libraries and
+#                                                  signature removing
+#      Simon Sobisch                  2017.03.06   Check for jar;
+#                                                  adjusted script output;
 #                                                  using recursive cp for libs
+#      Simon Sobisch                  2018.09.17   Include Apple extensions if
+#                                                  available;
+#                                                  changed script output
+#      Kay Gürtzig                    2018.09.18   bsh-2.0b4.jar replaced with bsh-2.0b6.jar
 #
 ################################################################################
 
 # check for jar in PATH
-jar 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
+jar 2>/dev/null 1>&2 || \
+  (rc=$? && if test $rc -gt 1; then
+    (echo 'jar not found in $PATH' && exit $rc)
+   fi)
 
 # delete the old archive (if present)
 [ -f structorizer.jar ] && rm structorizer.jar
 
-# make directory
+# create clean directory
 [ -d jar ] && rm -R jar
 mkdir jar
 
@@ -34,20 +43,34 @@ mkdir jar
 cp -R lib/* jar
 
 # change into jar directory
-pushd jar
+pushd jar >/dev/null
+
+jars="bsh-2.0b6                     \
+      swing-layout-1.0.3            \
+      freehep-graphics2d-2.1.1      \
+      freehep-graphicsio-2.1.1      \
+      freehep-graphicsio-svg-2.1.1  \
+      freehep-io-2.0.2              \
+      freehep-swing-2.0.3           \
+      freehep-util-2.0.2            \
+      freehep-xml-2.1.1             \
+      freehep"
+
+# Apple specific stuff is only used if it exists and the compiled class is available
+if test -f ../bin/lu/fisch/structorizer/application/AppleStructorizerApplication.class -a \
+        -f AppleJavaExtensions.jar; then
+  jars="$jars AppleJavaExtensions"
+fi
 
 # decompress jars
 echo "Decompressing jars ..."
-jar xf bsh-2.0b4.jar
-jar xf swing-layout-1.0.3.jar
-jar xf freehep-graphics2d-2.1.1.jar
-jar xf freehep-graphicsio-2.1.1.jar
-jar xf freehep-io-2.0.2.jar
-jar xf freehep-swing-2.0.3.jar
-jar xf freehep-util-2.0.2.jar
-jar xf freehep-xml-2.1.1.jar
-jar xf freehep-graphicsio-svg-2.1.1.jar
-jar xf freehep.jar
+for jar in $jars
+do
+  echo "   $jar"
+  jar xf "$jar.jar"
+done
+echo "Done"
+
 
 # deleting signatures
 rm -f META-INF/*.SF
@@ -57,19 +80,21 @@ rm -f META-INF/*.DSA
 rm *.jar
 
 # go back
-popd
+popd >/dev/null
 
 # copy other files
-echo "Copying resources"
+echo; echo "Copying resources..."
 cp -R bin/* jar/
+echo "Done"
 
 # create a new archive
-echo "Create a new archive"
+echo; echo "Create all-on-one archive.."
 jar cmf structorizer.big.manifest structorizer.jar -C jar/ .
+echo "Done"
 
 # remove the jar-directory
 rm -R jar/
 
 # execute the archive
-echo "Running Structorizer from all-in-one jar"
+echo; echo "Running Structorizer from all-in-one jar"
 java -jar structorizer.jar

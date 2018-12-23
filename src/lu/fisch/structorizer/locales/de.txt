@@ -48,75 +48,78 @@
  *
  *      Author              Date        Description
  *      ------              ----        -----------
- *      Klaus-Peter Reimers 2008.01.14  First Issue
- *      Kay Gürtzig         2014.10.18  Linguistic flaws corrected
- *      Kay Gürtzig         2014.12.02  ExportOptionDialoge and further messages added
- *      Kay Gürtzig         2015.10.06  altPadRight added to Preferences dialog
- *      Kay Gürtzig         2015.10.14  InputBox.class_specific stuff added
- *      Kay Gürtzig         2015.11.01  InputBoxFor captions and Analyzer messages for FOR loops added
- *      Kay Gürtzig         2015.11.09  Additions for ParserPreferences (KGU#3 FOR loop enhancement)
- *      Kay Gürtzig         2015.11.15  Messages for Jump element modified or corrected
- *      Kay Gürtzig         2015.12.18  New messages for ExportOptionDialoge
- *      Kay Gürtzig         2016.01.04  Enh. #87: New messages for collapsing / expanding elements
- *      Kay Gürtzig         2016.03.21  Enh. #84: Messages related to FOR-IN loops added
- *      Kay Gürtzig         2016.03.31  Enh. #23: ParserPreferences for JUMP statements,
- *      Kay Gürtzig         2016.04.01  Enh. #144: New ExportOptionDialog and Menu messages
- *      Kay Gürtzig         2016.04.04  Issue #149: New ExportOptionDialog messages for charset setting
- *      Kay Gürtzig         2016.04.12  Issue #161: New Analyser error message for Jump
- *      Kay Gürtzig         2016.04.24  Issue #173: New mnemonic configurations added
- *      Kay Gürtzig         2016.07.07  Enh. #188: Messages for transmute button and menu items
- *      Kay Gürtzig         2016.07.20  Enh. #160: New message for ExportOptionDialoge
- *      Kay Gürtzig         2016.07.26  Bugfix #149: Tags for ExportOptionDialoge corrected
- *      Kay Gürtzig         2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
- *      Kay Gürtzig         2016.07.28  Issue #208: New dialog messages for PNG export 
- *      Kay Gürtzig         2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
- *      Kay Gürtzig         2016.08.02  Enh. #215: Menu messages for break trigger (and other dialog messages)
- *      Kay Gürtzig         2016.08.04  Enh. #222: Menu option to load translation from file
- *      Kay Gürtzig         2016.09.04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig         2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig         2016.09.15  Issue #243: New message translations for Menu 
- *      Kay Gürtzig         2016.09.17  Issue #243: New message translations for Control 
- *      Kay Gürtzig         2016.09.22  Bugfix #241, issue #249: New messages for InputBox and Analyser
+ *      Klaus-Peter Reimers 2008-01-14  First Issue
+ *      Kay Gürtzig         2014-10-18  Linguistic flaws corrected
+ *      Kay Gürtzig         2014-12-02  ExportOptionDialoge and further messages added
+ *      Kay Gürtzig         2015-10-06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig         2015-10-14  InputBox.class_specific stuff added
+ *      Kay Gürtzig         2015-11-01  InputBoxFor captions and Analyzer messages for FOR loops added
+ *      Kay Gürtzig         2015-11-09  Additions for ParserPreferences (KGU#3 FOR loop enhancement)
+ *      Kay Gürtzig         2015-11-15  Messages for Jump element modified or corrected
+ *      Kay Gürtzig         2015-12-18  New messages for ExportOptionDialoge
+ *      Kay Gürtzig         2016-01-04  Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig         2016-03-21  Enh. #84: Messages related to FOR-IN loops added
+ *      Kay Gürtzig         2016-03-31  Enh. #23: ParserPreferences for JUMP statements,
+ *      Kay Gürtzig         2016-04-01  Enh. #144: New ExportOptionDialog and Menu messages
+ *      Kay Gürtzig         2016-04-04  Issue #149: New ExportOptionDialog messages for charset setting
+ *      Kay Gürtzig         2016-04-12  Issue #161: New Analyser error message for Jump
+ *      Kay Gürtzig         2016-04-24  Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig         2016-07-07  Enh. #188: Messages for transmute button and menu items
+ *      Kay Gürtzig         2016-07-20  Enh. #160: New message for ExportOptionDialoge
+ *      Kay Gürtzig         2016-07-26  Bugfix #149: Tags for ExportOptionDialoge corrected
+ *      Kay Gürtzig         2016-07-27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Kay Gürtzig         2016-07-28  Issue #208: New dialog messages for PNG export 
+ *      Kay Gürtzig         2016-07-31  Enh. #128: New menu item captions for "Comments plus Text" mode
+ *      Kay Gürtzig         2016-08-02  Enh. #215: Menu messages for break trigger (and other dialog messages)
+ *      Kay Gürtzig         2016-08-04  Enh. #222: Menu option to load translation from file
+ *      Kay Gürtzig         2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig         2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig         2016-09-15  Issue #243: New message translations for Menu 
+ *      Kay Gürtzig         2016-09-17  Issue #243: New message translations for Control 
+ *      Kay Gürtzig         2016-09-22  Bugfix #241, issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
- *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
- *      Kay Gürtzig         2016.10.11  Enh. #267: Menu.error15 divided into error15_1 and error15_2
- *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.popupDisable, InputBox.chkDisabled added.
- *      Kay Gürtzig         2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
- *      Kay Gürtzig         2016.10.18  Enh. #267: Analyser check 15 reformulated.
- *      Kay Gürtzig         2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
- *      Kay Gürtzig         2016.11.10  Enh. #286: AnalyserPreferences tabs
- *      Kay Gürtzig         2016.12.02  Enh. #300: New messages for update retrieval
- *      Kay Gürtzig         2016.12.02  Issue #307: New executor error message
- *      Kay Gürtzig         2016.12.14  Issue #311: Menu re-organization
- *      Kay Gürtzig         2016.12.15  Enh. #310: New Saving option dialog
- *      Kay Gürtzig         2016.12.27  Enh. #314: Control messages for the file API
- *      Kay Gürtzig         2016.12.29  Enh. #315: New Surface messages for diagram conflicts
- *      Kay Gürtzig         2017.01.05  Enh. #319: Captions for the Arranger index popup menu
- *      Kay Gürtzig         2017.01.07  Enh. #329: Messages for Analyser check 21
- *      Kay Gürtzig         2017.01.11  Issue #81/#330: Messages for scaling Preview
- *      Kay Gürtzig         2017.02.26  Enh. #346: Additions for ExportOptionDialoge
- *      Kay Gürtzig         2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
- *      Kay Gürtzig         2017.03.12  Enh. #372: New saving options
- *      Kay Gürtzig         2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
- *      Kay Gürtzig         2017.03.27  Enh. #380: Messages for outsourcing of element sequences
- *      Kay Gürtzig         2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
- *      Kay Gürtzig         2017.03.30  Enh. #388: Constancy violation messages for Control added
- *      Kay Gürtzig         2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig         2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
- *      Kay Gürtzig         2017.06.19  Enh. #199, #415: Messages for toolbar and FindAndReplace
- *      Kay Gürtzig         2017.09.18  Enh. #423: New messages for record type handling introduced
- *      Kay Gürtzig         2017.10.16  Issues #437-#438: New Control messages
- *      Kay Gürtzig         2017.11.05  New texts for issues #448, #452, #454 added.
- *      Andreas Brusinsky   2017.12.10  Element names translated into German
- *      Kay Gürtzig         2017.12.14  German element name translation adapted
- *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
- *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
- *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
- *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
- *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
- *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys
- *      Kay Gürtzig         2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
- *      Kay Gürtzig         2018.08.03  Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig         2016-09-25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
+ *      Kay Gürtzig         2016-10-11  Enh. #267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig         2016-10-13  Enh. #270: Editor.popupDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig         2016-10-16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
+ *      Kay Gürtzig         2016-10-18  Enh. #267: Analyser check 15 reformulated.
+ *      Kay Gürtzig         2016-11-08  Enh. #270: Editor.btnDisable.tooltip added
+ *      Kay Gürtzig         2016-11-10  Enh. #286: AnalyserPreferences tabs
+ *      Kay Gürtzig         2016-12-02  Enh. #300: New messages for update retrieval
+ *      Kay Gürtzig         2016-12-02  Issue #307: New executor error message
+ *      Kay Gürtzig         2016-12-14  Issue #311: Menu re-organization
+ *      Kay Gürtzig         2016-12-15  Enh. #310: New Saving option dialog
+ *      Kay Gürtzig         2016-12-27  Enh. #314: Control messages for the file API
+ *      Kay Gürtzig         2016-12-29  Enh. #315: New Surface messages for diagram conflicts
+ *      Kay Gürtzig         2017-01-05  Enh. #319: Captions for the Arranger index popup menu
+ *      Kay Gürtzig         2017-01-07  Enh. #329: Messages for Analyser check 21
+ *      Kay Gürtzig         2017-01-11  Issue #81/#330: Messages for scaling Preview
+ *      Kay Gürtzig         2017-02-26  Enh. #346: Additions for ExportOptionDialoge
+ *      Kay Gürtzig         2017-03-08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
+ *      Kay Gürtzig         2017-03-12  Enh. #372: New saving options
+ *      Kay Gürtzig         2017-03-14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig         2017-03-27  Enh. #380: Messages for outsourcing of element sequences
+ *      Kay Gürtzig         2017-03-28  Issue #370: New Menu messages for enhanced refactoring options
+ *      Kay Gürtzig         2017-03-30  Enh. #388: Constancy violation messages for Control added
+ *      Kay Gürtzig         2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig         2017-05-21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig         2017-06-19  Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig         2017-09-18  Enh. #423: New messages for record type handling introduced
+ *      Kay Gürtzig         2017-10-16  Issues #437-#438: New Control messages
+ *      Kay Gürtzig         2017-11-05  New texts for issues #448, #452, #454 added.
+ *      Andreas Brusinsky   2017-12-10  Element names translated into German
+ *      Kay Gürtzig         2017-12-14  German element name translation adapted
+ *      Kay Gürtzig         2017-12-15  Element name placeholders introduced
+ *      Kay Gürtzig         2018-01-18  DiagramControllerAliases added
+ *      Kay Gürtzig         2018-02-17  Arranger captions added (on occasion of enh. #512)
+ *      Kay Gürtzig         2018-06-27  Enh. #552: New messages in Menu, Editor, Arranger
+ *      Kay Gürtzig         2018-07-01  Enh. #553: New messages for CodeImportMonitor
+ *      Kay Gürtzig         2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig         2018-07-17  Issue #561: Some AttributeInspector texts converted to tooltips
+ *      Kay Gürtzig         2018-08-03  Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig         2018-10-27  Enh. #619: New messages for word wrapping tool 
+ *      Kay Gürtzig         2018-12-16  Issue #644: New Control message msgInitializerAsArgument
+ *      Kay Gürtzig         2018-12-21  Enh. #655: New Arranger messages
  *
  ******************************************************************************************************
  *
@@ -202,6 +205,8 @@ Menu.menuEditUpgradeTurtle.text=Reelle Turtle-Befehle
 Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
 Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtle-Befehle
 Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
+Menu.menuEditBreakLines.text=Textzeilen neu umbrechen ...
+Menu.menuEditBreakLines.tooltip=Erlaubt einen neuen Umbruch der Textzeilen der ausgewählten Elemente (und wahlweise ihrer Unterstruktur) auf eine vorgebbare Höchstlänge.  
 Menu.menuEditCopyDiagramPNG.text=Als PNG-Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF-Grafik kopieren
 // Menu "Diagram"
@@ -408,6 +413,12 @@ Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten 
 Menu.ttlGuidedTours.text=Geführte Kurse
 Menu.msgTooManyDiagrams.text=Die Zahl der erzeugten Diagramme übersteigt die konfigurierte Grenze (%) für direktes Darstellen.\nAlle erhaltenen Diagramme sofort speichern?
 Menu.lblAcceptProposedNames.text=Alle vorschlagenen Dateinamen akzeptieren. 
+Menu.ttlBreakTextLines.text=Begrenzung der Zeilenlänge mittels Wortumbruch
+Menu.msgMaxLineLengthSelected.text=Maximale Zeilenlänge in ausgewähltem Element: %
+Menu.msgMaxLineLengthSubstructure.text=Maximale Zeilenlänge einschl. Unterstrukturen: %
+Menu.lblNewMaxLineLength.text=Neue Höchstzeilenlänge:
+Menu.lblInvolveSubtree.text=Rekursiv auf Unterstrukturen anwenden
+Menu.lblPreserveContinuators.text=Bestehende Zeilensprünge beibehalten
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
@@ -549,7 +560,7 @@ Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach (+Umschalt:
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
 // find & replace
-Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Erseiten.
+Editor.btnFindReplace.tooltip=Öffnen des Dialogs zum Suchen/Ersetzen.
 // copy & paste
 Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
@@ -851,6 +862,8 @@ About.title=Über Structorizer
 About.pnlTabbed.tab.0=Beteiligte Personen
 About.pnlTabbed.tab.1=Änderungs-Protokoll
 About.pnlTabbed.tab.2=Lizenzen
+About.pnlTabbed.tab.3=Dateipfade
+About.msgPaths.text=Konfigurationsordner:\n%1\n\nLog-Verzeichnis:\n%2\n\nInstallationspfad:\n%3\n
 About.btnOK.text=Schließen
 About.btnOK.tooltip=Schließen des Fensters.
 
@@ -874,7 +887,8 @@ Colors.lblColors.*.tooltip=Die gewählte Farbe Nr. [#].
 Colors.colors.*.tooltip=Zum Bearbeiten: Anklicken ...
 Colors.btnOK.text=Speichern
 Colors.btnOK.tooltip=Speichern der gewählten Einstellungen.
-
+Colors.btnReset.text=Standard
+Colors.btnReset.tooltip=Alle Farben auf Standardauswahl zurücksetzen.
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Farb-Einstellungen
@@ -971,6 +985,9 @@ ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
 ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Protokolldatei je Import erlauben
 ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
 ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
+ImportOptionDialog.lblMaxLen.text=Maximale Zeilenlänge (für automatischen Zeilenumbruch):
+ImportOptionDialog.spnMaxLen.tooltip=Länge 0 bedeutet: kein automatischer Zeilenumbruch
+ImportOptionDialog.lblLimit.text=Größte Anzahl importierter Diagramme für unmittelbare Anzeige:
 ImportOptionDialog.btnPluginOptions.text=Sprachspezifische Optionen
 ImportOptionDialog.msgOptionsForPlugin.text=Parser-Optionen für %
 ImportOptionDialog.btnOk.text=OK
@@ -1090,6 +1107,7 @@ Arranger.btnRemoveAllDiagrams.text=- Leeren -
 Arranger.btnExportPNG.text=PNG-Export
 Arranger.btnSaveArr.text=Liste sichern
 Arranger.btnLoadArr.text=Liste laden
+Arranger.btnAddDiagram.tooltip=Ein neues, leeres Diagramm hinzufügen.
 Arranger.btnPinDiagram.text=Anheften
 Arranger.btnSetCovered.text=Getestet
 Arranger.btnZoom.text=Ferner/Näher
@@ -1098,12 +1116,19 @@ Arranger.btnLoadArr.tooltip=Eine Anordnung von Liste (*.arr) oder Archiv (*.arrz
 Arranger.btnExportPNG.tooltip=Diese Anordnung als Bilddatei im PNG-Format ausgeben.
 Arranger.btnPinDiagram.tooltip=Diagramm anheften, um es gegen Ersetzung seitens Structorizer zu schützen.
 Arranger.btnSetCovered.tooltip=Unterprogrammdiagram für Routinenaufrufe als testabgedeckt markieren.
+Arranger.btnRemoveDiagram.tooltip=Entfernt das ausgewählte Diagramm - Umschalttaste gedrückt halten, um alle Diagramme zu entfernen.
 Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
 Arranger.msgConfirmRemoveAll.text=Wollen Sie wirklich alle Diagramme aus Arranger entfernen?
 Arranger.msgTitleWarning.text=Warnung
+Arranger.msgActionDelete.text=entfernen
+Arranger.msgActionCut.text=ausschneiden
+Arranger.msgActionCopy.text=kopieren
+Arranger.msgConfirmRemove.text=Wollen Sie wirklich die folgenden %2 Diagramme aus Arranger %1?\n%3
+Arranger.msgCantDoWithMultipleRoots.text=Es ist nicht möglich, mehr als ein Diaramm gleichzeitig zu %1. Sie haben %2 Diagramme ausgewählt:\n%3
+Arranger.msgDiagramsSelected.text=% Diagramme ausgewählt
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
-Surface.msgSavePortable.text=Als portables komprimiertes Archiv sichern?
+Surface.msgSavePortable.text=Sie haben die folgenden %1 Diagramme zum Speichern ausgewählt (von %2):\n\n%3\n\nAls portables komprimiertes Archiv sichern (anderenfalls nur die Anordnungsliste)?
 Surface.msgSaveDialogTitle.text=Speichere die Diagrammanordnung ...
 Surface.msgSaveError.text=Fehler beim Sichern der Anordnung:
 Surface.msgLoadDialogTitle.text=Gespeicherte Diagrammanordnung laden ...
@@ -1191,6 +1216,7 @@ Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%
 Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
 Control.msgBadValueListDetails.text=Details: %
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) überschreitet Indexbereich für Array «%3»!
+Control.msgInitializerAsArgument.text=Ein Array-Initialisierer kann nicht direkt als Argument an eine eingebaute Funktion übergeben werden.\nWeisen Sie das Array vorher einer Variablen zu und übergeben Sie diese.
 Control.msgVarUpdateErrors.text=Problem beim Variablen-Update
 Control.msgVarUpdatesFailed.text=Diese Variablen-Änderungen scheiterten an syntaktischen Fehlern:\n\n%
 Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Enter oder Esc).

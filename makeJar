@@ -10,23 +10,27 @@ set -e
 #
 #      Revision List
 #
-#      Author                        Date          Description
-#      ------                        ----          -----------
-#      Bob Fisch                     2008.10.04    First Issue
-#      Bob Fisch & Philipp Hübner    2009.07.08    Scripting ameliorations
-#      Simon Sobisch                 2017.03.06    Check for jar
+#      Author                         Date         Description
+#      ------                         ----         -----------
+#      Bob Fisch                      2008.10.04   First Issue
+#      Bob Fisch & Philipp Hübner     2009.07.08   Scripting ameliorations
+#      Simon Sobisch                  2017.03.06   Check for jar
 #
 ################################################################################
 
 # check for jar in PATH
-jar 2>/dev/null 1>&2 || (rc=$? && if test $rc -gt 1; then (echo 'jar not found in $PATH' && exit $rc); fi)
+jar 2>/dev/null 1>&2 || \
+  (rc=$? && if test $rc -gt 1; then
+     (echo 'jar not found in $PATH' && exit $rc)
+   fi)
 
 # delete the old archive (if present)
 [ -f structorizer.jar ] && rm structorizer.jar
 
 # create a new archive
-echo "Create archive"
+echo "Create archive..."
 jar cmf structorizer.manifest structorizer.jar -C bin/ .
+echo "Done"
 
 # execute the archive
 echo "Running Structorizer from jar"

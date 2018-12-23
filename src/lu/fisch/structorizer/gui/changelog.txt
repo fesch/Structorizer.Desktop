@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.28-08 (2018-09-13)
+Current development version: 3.28-13 (2018-12-22)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -88,6 +88,59 @@ Current development version: 3.28-08 (2018-09-13)
 - 08: Bugfix #512: Arranger zoom compromised the diagram size (rounding impact) <2>
 - 08: Issue #372: Attribute setting for diagrams from an arrz file improved <2>
 - 08: Enh. #590: Arranger index popup menu now allows to inspect attributes <2>
+- 09: Enh. #552: A tooltip was missing on the Arranger button "Drop Diagram" <2>
+- 09: Issue #594: Obsolete and slow 3rd-party regex package removed,
+      raw type references in GOLDengine resolved [S. Sobisch]2
+- 09: Issue #601: More robustness on loading icons from file [S. Sobisch]2
+- 09: Newer and safer version (V0.2b6) of bean shell interpreter integrated <2>
+- 09: Bugfix #603: Logging setup failed on a virgin start (for a new user) <2>
+- 09: Bugfix #604: Syntax error in structorizer.sh / Arranger.sh <2>
+- 09: Bugfix #605: Defects with var and const keywords in argument lists <2>
+- 09: Bugfix #608: C code import hardening against preproc./comment trouble <2>
+- 09: Made the argument of the batch import option -v optional (default ".") <2>
+- 09: Bugfix #611: Pascal code import had failed due to missing rule table <2>
+- 10: Bugfix #613: Invalid include lists after import of Pascal/Delphi units <2>
+- 10: Bugfix #614: Redundant result assignments removed on Pascal import <2>
+- 10: Workaround #615: Comment delimiters (* *) didn't pass Pascal import <2>
+- 10: Issue #367: Diagram reshaping after IF branch swapping hadn't worked <2>
+- 10: Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins <2>
+- 10: Bugfix #617: Expressions with more than one turtle function failed <2>
+- 10: Bugfix #618: Analyser reported function names as not initialized <2>
+- 10: Bugfix #619: Code export defects with respect to result variables <2>
+- 10: Issue #552: Unnecessary serial action buttons on closing Structorizer <2>
+- 10: Issue #400: Spinner in Preferences=>GUI Scaling with initial focus <2>
+- 10: Bugfix #620: Adaptive logging setup, path display in About window <2>
+- 10: Bugfix #622: Turtle drawing could fall behind on some Macbooks <2>
+- 10: Bugfix #623: Turtleizer instruction export to Python was defective <2>
+- 10: Bugfix #624: Translation of FOR loops into Python range() was wrong <2>
+- 11: Bugfix #626: Issues with string literals on COBOL import <Simon Sobisch>
+- 11: Heuristic detection of preprocessed COBOL files on import <Simon Sobisch>
+- 11: Enh. #419: Option for automatic line breaking on code import [S. Sobisch]2
+- 11: Enh. #419: New "Edit" menu item for text line breaking [Simon Sobisch]2
+- 11: Enh. #627: Clipboard copy of import errors with stack trace [S. Sobisch]2
+- 11: Issue #630: COBOL import now aborts on REPLACE/COPY with hint [S. Sobisch]2
+- 11: Bugfix #635: COBOL import interpreted comma as variables on ADD etc. <2>
+- 11: C code export: Boolean types no longer replaced by int but bool <2>
+- 11: Bugfix #448: text/comment view in Find&Replace dialog compromised <2>
+- 11: Bugfix #637: Array index errors on element-wise Replace/Find action <2>
+- 12: structorizer.sh now copes with blanks in installation path <ketograph>
+- 12: Bugfix #631: Obsolete COBOL separators now removed on import [S. Sobisch]2
+- 12: Bugfix #641: Variable display updates forced on the Executor Control <2>
+- 12: Bugfix #642: Wrong string comparisons with unpadded Boolean operators <2>
+- 12: Enh. #643: Operator names in upper case (like OR) weren't highlighted <2>
+- 12: Bugfix #644: Initializer evaluation in subroutine arguments fixed <2>
+- 12: COBOL import: INSPECT statements (all three flavours) now supported <2>
+- 12: Bugfix #646: Output string values must not be trimmed [slytab]2
+- 13: Bugfix #648: Struktogrammeditor file import wiped off unsaved changes <2>
+- 13: Issue #649: Loading of diagrams failed to tune the scrolling units. <2>
+- 13: Bugfix #650: Better workaround for non-listed sizes in Font Chooser <2>
+- 13: Issue #651: Improved editing for include lists in diagram editor <2>
+- 13: Bugfix #652: Inconsistent drawing behaviour of include lists mended <2>
+- 13: Enh. #653: Reset button on Colors preferences dialog <2>
+- 13: Enh. #654: Current Arranger directory is now saved between sessions <2>
+- 13: Enh. #655: Arranger now with status bar and revised key bindings
+      as well as support for multiple selection (as new base for operations) <2>
+- 13: Bugfix #656: Loading of arrangements with elsewhere zipped files fixed <2> 
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
