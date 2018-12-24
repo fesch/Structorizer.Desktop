@@ -191,9 +191,11 @@ import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -208,6 +210,7 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.imageio.*;
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
@@ -5817,6 +5820,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			logger.log(Level.WARNING, "Can't browse help URL.", ex);
 			// END KGU#484 2018-04-05
 		}
+		// START KGU 2018-12-24
+		// The isLaunched mechanism above does not signal an unavailable help page.
+		// With the following code we can find out whether the help page was available...
+		// TODO In this case we might offer to download the PDF for offline use,
+		// otherwise we could try to open a possibly previously downloaded PDF ...
+		URL url;
+		HttpsURLConnection con = null;
+		try {
+			isLaunched = false;
+			url = new URL(help);
+			con = (HttpsURLConnection)url.openConnection();
+			if (con != null) {
+				con.connect();
+			}
+			isLaunched = true;
+		} catch (SocketTimeoutException ex) {
+			logger.log(Level.WARNING, "Timeout connecting to " + help, ex);
+		} catch (MalformedURLException e1) {
+			logger.log(Level.SEVERE, "Malformed URL " + help, e1);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Failed Access to " + help, e);
+		}
+		finally {
+			con.disconnect();
+		}
+		// END KGU 2018-12-24
 		if (!isLaunched)
 		{
 			String message = Menu.msgBrowseFailed.getText().replace("%", help);
@@ -5824,29 +5853,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			message,
 			Menu.msgTitleURLError.getText(),
 			JOptionPane.ERROR_MESSAGE);
+			// TODO We might look for a downloaded PDF version and offer to open this instead...
 		}
 		// END KGU#250 2016-09-17
 
-		// The isLaunched mechanism above does not signal an unavailable help page.
-		// With the following code we can find out whether the help page was available...
-		// TODO In this case we might offer to download the PDF for offline use,
-		// otherwise we could try to open a possibly previously downloaded PDF ...
-//		URL url;
-//		try {
-//			isLaunched = false;
-//			url = new URL(help);
-//			URLConnection con = url.openConnection();
-//			if (con != null) {
-//				con.connect();
-//			}
-//			isLaunched = true;
-//		} catch (SocketTimeoutException ex) {
-//			ex.printStackTrace();
-//		} catch (MalformedURLException e1) {
-//			this.logger.log(Level.SEVERE, "Malformed URL " + help, e1);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
 	}
 	// END KGU#208 2016-07-22
 	

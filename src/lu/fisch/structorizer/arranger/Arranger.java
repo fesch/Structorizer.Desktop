@@ -63,6 +63,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-10-06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
+ *      Kay Gürtzig     2018-12-24  Enh. #655: Set of key bindings accomplished
  *
  ******************************************************************************************************
  *
@@ -75,6 +76,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -82,6 +89,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -119,7 +127,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder btnRemoveDiagrams = new LangTextHolder("Drop Diagram");
 	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
 	// END KGU#534 2018-06-27
-	// START KGU#624 2018-12-21: Enh. #655
+	// START KGU#624 2018-12-21/24: Enh. #655
 	public static final LangTextHolder msgTitleIllegal = new LangTextHolder("Illegal Operation");
 	public static final LangTextHolder msgActionDelete = new LangTextHolder("remove");
 	public static final LangTextHolder msgActionCut = new LangTextHolder("cut");
@@ -127,7 +135,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3");
 	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3");
 	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("% diagrams selected");
-	// END KGU#624 2018-12-21
+	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
+	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
+	// END KGU#624 2018-12-21/24
 
     // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
@@ -565,9 +575,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	protected void updateStatusSize() {
 		scrollarea.getLocation(scrollareaOrigin);
 		java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
+		/* To compute the unzoomed sizes from the vRect looks bad due to rounding jitter.
+		 * Alternatively we would have to ask for the diagram bounds but these don't
+		 * reflect a larger window.
+		 */
 		statusSize.setText(surface.getWidth() + " x " + surface.getHeight());
-		statusViewport.setText(vRect.x + ":" + (vRect.x + vRect.width) + ", " +
-				vRect.y + ":" + (vRect.y + vRect.height));
+		statusViewport.setText(vRect.x + ".." + (vRect.x + vRect.width) + " : " +
+				vRect.y + ".." + (vRect.y + vRect.height));
 		statusZoom.setText(String.format("%.1f %%", 100 / surface.getZoom()));
 	}
 	
@@ -928,6 +942,47 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 		surface.loadArrangement(this);
                 	}
                 // END KGU#624 2018-12-21
+                	// START KGU#624 2018-12-24: Enh. #655
+                case KeyEvent.VK_UP:
+                case KeyEvent.VK_DOWN:
+                {
+                	int direction = ev.getKeyCode() == KeyEvent.VK_UP ? -1 : 1;
+                	int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
+                	if (ev.isShiftDown()) {
+                		vUnits *= 10;
+                	}
+                	int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
+                	if (ev.isControlDown()) {
+                		surface.moveSelection(0, vUnits);
+                		surface.scrollToSelection();
+                	}
+                	else {
+                    	scrollarea.getVerticalScrollBar().setValue(newValue);                		
+                	}
+                }
+                break;
+                case KeyEvent.VK_LEFT:
+                case KeyEvent.VK_RIGHT:
+                {
+                	int direction = ev.getKeyCode() == KeyEvent.VK_LEFT ? -1 : 1;
+                	int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
+                	if (ev.isShiftDown()) {
+                		hUnits *= 10;
+                	}
+                	int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
+                	if (ev.isControlDown()) {
+                		surface.moveSelection(hUnits, 0);
+                		surface.scrollToSelection();
+                	}
+                	else {
+                    	scrollarea.getHorizontalScrollBar().setValue(newValue);
+                	}
+                }
+                break;
+                case KeyEvent.VK_F1:
+                	this.helpArranger();
+                	break;
+                	// END KGU#624 2018-12-24
             }
         }
     }
@@ -978,7 +1033,58 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#2 2015-11-30
 
-    // START KGU#2 2015-11-24
+	// START KGU#624 2018-12-24: Enh. #655
+	/**
+	 * Tries to open the online User Guide with the Arranger page in the browser
+	 */
+	public void helpArranger()
+	{
+		String help = Element.E_HELP_PAGE + "?menu=103";
+		boolean isLaunched = false;
+		try {
+			isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
+		} catch (URISyntaxException ex) {
+			logger.log(Level.WARNING, "Can't browse Arranger help URL.", ex);
+		}
+		// The isLaunched mechanism above does not signal an unavailable help page.
+		// With the following code we can find out whether the help page was available...
+		// TODO In this case we might offer to download the PDF for offline use,
+		// otherwise we could try to open a possibly previously downloaded PDF ...
+		URL url;
+		HttpsURLConnection con = null;
+		try {
+			isLaunched = false;
+			url = new URL(help);
+			con = (HttpsURLConnection)url.openConnection();
+			if (con != null) {
+				con.connect();
+			}
+			isLaunched = true;
+		} catch (SocketTimeoutException ex) {
+			logger.log(Level.WARNING, "Timeout connecting to " + help, ex);
+		} catch (MalformedURLException e1) {
+			logger.log(Level.SEVERE, "Malformed URL " + help, e1);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Failed Access to " + help, e);
+		}
+		finally {
+			if (con != null) {
+				con.disconnect();
+			}
+		}
+		if (!isLaunched)
+		{
+			String message = msgBrowseFailed.getText().replace("%", help);
+			JOptionPane.showMessageDialog(this,
+			message,
+			msgTitleURLError.getText(),
+			JOptionPane.ERROR_MESSAGE);
+			// TODO We might look for a downloaded PDF version and offer to open this instead...
+		}
+	}
+	// END KGU#624 2018-12-24
+
+	// START KGU#2 2015-11-24
     /* (non-Javadoc)
      * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesByName(java.lang.String)
      */

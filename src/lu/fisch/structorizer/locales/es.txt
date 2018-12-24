@@ -1125,6 +1125,8 @@ Arranger.msgActionCopy.text=copiar
 Arranger.msgConfirmRemove.text=¿Quieres reálmente %1 el/los siguiente(s) %2 diagrama(s) de Arranger?\n%3
 Arranger.msgCantDoWithMultipleRoots.text=No es posible %1 más de un diagrama a la vez. Has seleccionado %2 diagramas:\n%3
 Arranger.msgDiagramsSelected.text=% diagramas seleccionados
+Arranger.msgBrowseFailed.text=Mostrar % en el browser no logró.
+Arranger.msgTitleURLError.text=Error in URL
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Error abriendo archivo:

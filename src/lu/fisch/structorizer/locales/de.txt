@@ -1126,6 +1126,9 @@ Arranger.msgActionCopy.text=kopieren
 Arranger.msgConfirmRemove.text=Wollen Sie wirklich die folgenden %2 Diagramme aus Arranger %1?\n%3
 Arranger.msgCantDoWithMultipleRoots.text=Es ist nicht möglich, mehr als ein Diagramm gleichzeitig zu %1. Sie haben %2 Diagramme ausgewählt:\n%3
 Arranger.msgDiagramsSelected.text=% Diagramme ausgewählt
+Arranger.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
+Arranger.msgTitleURLError.text=URL-Fehler
+
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
 Surface.msgSavePortable.text=Sie haben die folgenden %1 Diagramme zum Speichern ausgewählt (von %2):\n\n%3\n\nAls portables komprimiertes Archiv sichern (anderenfalls nur die Anordnungsliste)?

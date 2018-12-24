@@ -1121,6 +1121,9 @@ Arranger.msgActionCopy.text=copy
 Arranger.msgConfirmRemove.text=Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3
 Arranger.msgCantDoWithMultipleRoots.text=It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3
 Arranger.msgDiagramsSelected.text=% diagrams selected
+Arranger.msgBrowseFailed.text=Failed to show % in browser
+Arranger.msgTitleURLError.text=URL Error
+
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:
 Surface.msgSavePortable.text=You have selected the following %1 diagrams (from %2):\n\n%3\n\nSave as portable compressed archive (otherwise only the arrangement list)?

@@ -181,6 +181,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -1291,56 +1292,67 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Determines the union of bounds of all diagrams on this Surface and updates
+	 * Determines the union of bounds of all diagrams on this {@link Surface} and updates
 	 * the lower silhouette line if {@code _silhouette} is given.
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
-	 * @return the bounding box als {@link Rect}
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
 	 */
 	public Rect getDrawingRect(LinkedList<Point> _silhouette)
 	{
-		Rect r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+		return getDrawingRect(diagrams, _silhouette);
+	}
 
-		if (diagrams != null)
+	/**
+	 * Determines the union of bounds of the given {@code _diagrams} in true diagram coordinates
+	 * and updates the lower silhouette line if {@code _silhouette} is given.
+	 * @param _diagrams - a collection of {@link Diagram} objects.
+	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
+	 * (where the x coordinate represents a leap position and the y coordinate is the new
+	 * level from x to the next leap eastwards) or null
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
+	 */
+	private Rect getDrawingRect(Collection<? extends Diagram> _diagrams, LinkedList<Point> _silhouette)
+	{
+		Rect r = new Rect(0,0,0,0);
+
+		if (diagrams != null && !diagrams.isEmpty())
 		{
+			r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 			//System.out.println("--------getDrawingRect()---------");
-			if (diagrams.size() > 0)
-				for (int d=0; d<diagrams.size(); d++)
-				{
-					Diagram diagram = diagrams.get(d);
-					Root root = diagram.root;
-					// FIXME (KGU 2015-11-18) This does not necessarily return a Rect within this surface!
-					Rect rect = root.getRect();	// 0-bound extension rectangle
-					// START KGU#85 2015-11-18: Didn't work properly, hence
-					//r.left=Math.min(rect.left,r.left);
-					//r.top=Math.min(rect.top,r.top);
-					//r.right=Math.max(rect.right,r.right);
-					//r.bottom=Math.max(rect.bottom,r.bottom);
-					// START KGU#136 2016-03-01: Bugfix #97
-					// empirical minimum width of an empty diagram
-					//int width = Math.max(rect.right - rect.left, 80);
-					int width = Math.max(rect.right, MIN_WIDTH);
-					// empirical minimum height of an empty diagram 
-					//int height = Math.max(rect.bottom - rect.top, 118);
-					int height = Math.max(rect.bottom, MIN_HEIGHT);
-					// END KGU#136 2016-03-01
-					//System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
-					r.left = Math.min(diagram.point.x, r.left);
-					r.top = Math.min(diagram.point.y, r.top);
-					r.right = Math.max(diagram.point.x + width, r.right);
-					r.bottom = Math.max(diagram.point.y + height, r.bottom);
-					//END KGU#85 2015-11-18
-					// START KGU#499 2018-02-20
-					if (_silhouette != null) {
-						this.updateSilhouette(_silhouette, diagram.point.x, width, diagram.point.y + height);
-					}
-					// END KGU#499 2018-02-20
+			for (int d=0; d<diagrams.size(); d++)
+			{
+				Diagram diagram = diagrams.get(d);
+				Root root = diagram.root;
+				// FIXME (KGU 2015-11-18) This does not necessarily return a Rect within this surface!
+				Rect rect = root.getRect();	// 0-bound extension rectangle
+				// START KGU#85 2015-11-18: Didn't work properly, hence
+				//r.left=Math.min(rect.left,r.left);
+				//r.top=Math.min(rect.top,r.top);
+				//r.right=Math.max(rect.right,r.right);
+				//r.bottom=Math.max(rect.bottom,r.bottom);
+				// START KGU#136 2016-03-01: Bugfix #97
+				// empirical minimum width of an empty diagram
+				//int width = Math.max(rect.right - rect.left, 80);
+				int width = Math.max(rect.right, MIN_WIDTH);
+				// empirical minimum height of an empty diagram 
+				//int height = Math.max(rect.bottom - rect.top, 118);
+				int height = Math.max(rect.bottom, MIN_HEIGHT);
+				// END KGU#136 2016-03-01
+				//System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
+				r.left = Math.min(diagram.point.x, r.left);
+				r.top = Math.min(diagram.point.y, r.top);
+				r.right = Math.max(diagram.point.x + width, r.right);
+				r.bottom = Math.max(diagram.point.y + height, r.bottom);
+				//END KGU#85 2015-11-18
+				// START KGU#499 2018-02-20
+				if (_silhouette != null) {
+					this.updateSilhouette(_silhouette, diagram.point.x, width, diagram.point.y + height);
 				}
-			else  r = new Rect(0,0,0,0);
+				// END KGU#499 2018-02-20
+			}
 		}
-		else r = new Rect(0,0,0,0);
-
 		//System.out.println("drawingRect: (" + r.left + ", " + r.top + ", " + r.right + ", " + r.bottom +")");
 
 		return r;
@@ -1640,7 +1652,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//rec.setLocation(left, top);
 			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
-			if (rec.right == rec.left)	rec.right += DEFAULT_WIDTH;
+			if (rec.right == rec.left) rec.right += DEFAULT_WIDTH;
 			if (rec.bottom == rec.top) rec.bottom += DEFAULT_HEIGHT;
 			// START KGU#499 2018-02-21: Enh. #515 - better area management
 			// Improve the placement if possible (for more compact arrangement)
@@ -1653,7 +1665,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#85 2015-11-18
 			adaptLayout();
 			// END KGU#85 2015-11-18
-			// START KGU#497 2018-12-23: Bugfix #512
+			// START KGU#497 2018-12-23: Bugfix for enh. #512
 			rec = rec.scale(1/this.zoomFactor);
 			// END KGU#497 2018-12-23
 			this.scrollRectToVisible(rec.getRectangle());
@@ -2329,7 +2341,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		{
 			// Make sure the viewport moves with the mouse
 			Rectangle rect = new Rectangle(mouseX, mouseY, 1, 1);
-			System.out.println("scrollRectToVisible(" + rect + ") in mouseDragged(...)");
 			scrollRectToVisible(rect);
 
 			// Now we need the virtual coordinates
@@ -2350,15 +2361,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				if (oldMousePoint != null) {
 					int deltaX = mouseX - oldMousePoint.x;
 					int deltaY = mouseY - oldMousePoint.y;
-					// No move all selected diagrams synchronously
-					for (Diagram diagr: this.diagramsSelected) {
-						// No diagram is allowed to be shifted outside the reachable area
-						int newX = Math.max(0, diagr.point.x + deltaX);
-						int newY = Math.max(0, diagr.point.y + deltaY);
-						diagr.point.setLocation(newX, newY);
-					}
-					adaptLayout();
-					repaint();
+					// Now move all selected diagrams synchronously
+					moveSelection(deltaX, deltaY);
 				}
 			}
 			else if (this.mousePoint == null) {
@@ -2372,6 +2376,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				repaint();
 			}
 		}
+	}
+	
+	
+	/**
+	 * Moves the selected diagrams by the specified amounts of pixels. Ensures that the
+	 * resulting coordinates of the diagrams won't be negative.
+	 * @param deltaX - pixels to the right (or left if negative)
+	 * @param deltaY - pixels down (or up if negative)
+	 */
+	protected void moveSelection(int deltaX, int deltaY) {
+		for (Diagram diagr: this.diagramsSelected) {
+			// No diagram is allowed to be shifted outside the reachable area
+			int newX = Math.max(0, diagr.point.x + deltaX);
+			int newY = Math.max(0, diagr.point.y + deltaY);
+			diagr.point.setLocation(newX, newY);
+		}
+		adaptLayout();
+		repaint();
 	}
 
 	public void mouseMoved(MouseEvent e)
@@ -2398,11 +2420,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Identifies the top diagram under the mouse cursor (if any). An eclipsed diagram
 	 * will never be returned here
-	 * @param zoomedX - the virtual X coordinate of the mouse (zooming considered)
-	 * @param zoomedY - the virtual Y coordinate of the mouse (zooming considered)
+	 * @param trueX - the true X coordinate of the diagrams (zooming compensated)
+	 * @param trueY - the true Y coordinate of the diagrams (zooming compensated)
 	 * @return the only diagram not eclipsed at mouse position (if any, otherwise null)
 	 */
-	private Diagram getHitDiagram(int zoomedX, int zoomedY)
+	private Diagram getHitDiagram(int trueX, int trueY)
 	{
 		Diagram hitDiagram = null;
 		for (int d = diagrams.size()-1; d >= 0 && hitDiagram == null; d--)
@@ -2411,8 +2433,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			Root root = diagram.root;
 
 			Element ele = root.getElementByCoord(
-					zoomedX - diagram.point.x,
-					zoomedY - diagram.point.y);
+					trueX - diagram.point.x,
+					trueY - diagram.point.y);
 			if (ele != null)
 			{
 				hitDiagram = diagram;
@@ -2424,12 +2446,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Returns the list of all diagrams under the mouse cursor (also the eclipsed ones)
 	 * from top to bottom.
-	 * @param zoomedX - the virtual X coordinate of the mouse (zooming considered)
-	 * @param zoomedY - the virtual Y coordinate of the mouse (zooming considered)
+	 * @param trueX - the true X coordinate of the diagrams (zoom compensated)
+	 * @param trueY - the true Y coordinate of the diagrams (zoom compensated)
 	 * @return The list of the diagrams enclosing the mouse position.
 	 * @see #getHitDiagram(int, int)
 	 */
-	private List<Diagram> getHitDiagrams(int zoomedX, int zoomedY)
+	private List<Diagram> getHitDiagrams(int trueX, int trueY)
 	{
 		List<Diagram> hitDiagrams = new LinkedList<Diagram>();
 		for (int d = diagrams.size()-1; d >= 0; d--)
@@ -2438,8 +2460,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			Root root = diagram.root;
 
 			Element ele = root.getElementByCoord(
-					zoomedX - diagram.point.x,
-					zoomedY - diagram.point.y);
+					trueX - diagram.point.x,
+					trueY - diagram.point.y);
 			if (ele != null)
 			{
 				hitDiagrams.add(diagram);
@@ -2448,6 +2470,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return hitDiagrams;
 	}
 	
+	/**
+	 * Identifies all diagrams that are contained in the given {@code bounds} 
+	 * @param bounds - a {@link Rectangle} in true coordinates (zoom compensated!)
+	 * @return the set of diagrams contained in {@code bounds} 
+	 */
 	private Set<Diagram> getContainedDiagrams(Rectangle bounds)
 	{
 		Set<Diagram> containedDiagrams = new HashSet<Diagram>();
@@ -2902,6 +2929,37 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	// START KGU#624 2018-12-24: Enh. #655
+	/**
+	 * Scrolls to the current selection.
+	 */
+	public void scrollToSelection()
+	{
+		Rectangle bounds = getSelectionBounds(false);
+		if (bounds != null) {
+			this.scrollRectToVisible(bounds);
+		}
+	}
+
+	/**
+	 * Returns the bounding rectangle for the current selection
+	 * @param unzoomed - if the true coordinates are wanted, otherwise the zoom factor will be applied
+	 * @return the bounding box of the selected diagrams or null if the selection is empty
+	 */
+	private Rectangle getSelectionBounds(boolean unzoomed)
+	{
+		Rectangle bounds = null;
+		Rect rect = this.getDrawingRect(this.diagramsSelected, null);
+		if (!unzoomed) {
+			rect = rect.scale(1/zoomFactor);
+		}
+		if (rect.right > rect.left && rect.bottom > rect.top) {
+			bounds = rect.getRectangle();
+		}
+		return bounds;
+	}
+	// END KGU#624 2018-12-24
+	
 	/**
 	 * @return the set of {@link Root} objects currently selected in Arranger.
 	 */
@@ -3010,7 +3068,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
-		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+		if (mwEvt.isControlDown()) {
 			int rotation = mwEvt.getWheelRotation();
 			if (Element.E_WHEEL_REVERSE_ZOOM) {
 				rotation *= -1;
