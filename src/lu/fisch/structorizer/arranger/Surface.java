@@ -88,7 +88,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-21/22   Enh. #655: Zoom and selection notifications to support status bar,
  *                                      multiple selection enabled and established as base for collective operations
  *      Kay Gürtzig     2018-12-22      Bugfix #656: Loading of referred files residing in an arrz file fixed.
- *      Kay Gürtzig     2018-12-23      Bugfix #512: On dropping/pushing diagrams the scrolling used unzoomed coordinates
+ *      Kay Gürtzig     2018-12-23      Bugfix #512: On dropping/pushing diagrams the scrolling had used wrong coordinates
+ *      Kay Gürtzig     2018-12-25      Enh. #655: Dialog revisions
  *
  ******************************************************************************************************
  *
@@ -201,6 +202,7 @@ import java.util.zip.ZipOutputStream;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
@@ -273,11 +275,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#110 2015-12-21
 	// START KGU#202 2016-07-03
 	public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
-	public final LangTextHolder msgSavePortable = new LangTextHolder("You have selected the following %1 diagrams (from %2):\n\n%3\n\nSave as portable compressed archive (otherwise only the arrangement list)?");
+	public final LangTextHolder msgSavePortable = new LangTextHolder("You may save this arrangement\n- either as portable compressed archive (*.arrz)\n- or as mere arrangement list with file paths (*.arr).");
+	public final LangTextHolder lblSaveAsArrz = new LangTextHolder("As archive (*.arrz)");
+	public final LangTextHolder lblSaveAsArr = new LangTextHolder("As list (*.arr)");
 	public final LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
 	public final LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
 	public final LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
-	public final LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory?");
+	public final LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory (optional)?");
 	public final LangTextHolder msgArrLoadError = new LangTextHolder("Error on loading the arrangement:");
 	public final LangTextHolder msgExportDialogTitle = new LangTextHolder("Export diagram as PNG ...");
 	public final LangTextHolder msgExportError = new LangTextHolder("Error while saving the image!");
@@ -310,16 +314,34 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void paintComponent(Graphics g)
 	// START KGU#497 2018-03-19: Enh. #512 - The PNG export must compensate the zoom factor
 	{
-		this.paintComponent(g, false);
+		this.paintComponent(g, false, false, 0, 0);
 	}
+	
 	/**
-	 * Specific variant of {@link #paint(Graphics)} with the opportunity to compensate
+	 * Specific variant of {@link #paintComponent(Graphics)} with the opportunity to compensate
 	 * the imposed {@link #zoomFactor} by filling the enlarged canvas with white colour
 	 * and drawing the diagrams in original size.
 	 * @param g - a {@link Graphics2D} object as transformable drawing canvas
 	 * @param compensateZoom - whether the imposed {@link #zoomFactor} is to be compensated
 	 */
 	public void paintComponent(Graphics g, boolean compensateZoom)
+	// START KGU#624 2018-12-24: Enh. #655
+	{
+		this.paintComponent(g, compensateZoom, false, 0, 0);		
+	}
+	
+	/**
+	 * Specific variant of {@link #paintComponent(Graphics)} with the opportunity to compensate
+	 * the imposed {@link #zoomFactor} by filling the enlarged canvas with white colour
+	 * and drawing the diagrams in original size.
+	 * @param g - a {@link Graphics2D} object as transformable drawing canvas
+	 * @param compensateZoom - whether the imposed {@link #zoomFactor} is to be compensated
+	 * @param onlySelected - if true then the drawing will be restricted to selected diagrams
+	 * @param offsetX - a horizontal offset that is to be compensated (subtracted)
+	 * @param offsetY - a vertical offset that is to be compensated (subtracted)
+	 */
+	public void paintComponent(Graphics g, boolean compensateZoom, boolean onlySelected, int offsetX, int offsetY)
+	// END KGU#624 2018-12-24
 	// END KGU#497 2018-03-19
 	{
 		//System.out.println("Surface: " + System.currentTimeMillis());
@@ -333,8 +355,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#572 2018-09-09: Bugfix #508/#512 - ensure all diagrams have shape without rounding defects
 			for(int d=0; d<diagrams.size(); d++)
 			{
-				// If the diagram had already been drawn or prepared this will return immediately
-				diagrams.get(d).root.prepareDraw(g2d);
+				// START KGU#624 2018-12.24: Enh. #655
+				//diagrams.get(d).root.prepareDraw(g2d);
+				Diagram diagr = diagrams.get(d);
+				if ((!onlySelected || this.diagramsSelected.contains(diagr)) && diagr.root != null) {
+					// If the diagram had already been drawn or prepared this will return immediately
+					diagr.root.prepareDraw(g2d);
+				}
+				// END KGU#624 2018-12-24
 			}
 			// END KGU#572 2018-09-09
 			// START KGU#497 2018-03-19: Enh. #512
@@ -345,9 +373,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// is too small (virtually scaled don), therefore we must draw a
 				// white rectangle covering the enlarged image area
 				g2d.setColor(Color.WHITE);
-				g2d.fillRect(0, 0, 
-						Math.round(this.getWidth() * zoomFactor),
-						Math.round(this.getHeight() * zoomFactor));
+				g2d.fillRect(0, 0,
+						// START KGU#624 2018-12-24: Enh. #655
+						//Math.round(this.getWidth() * zoomFactor),
+						//Math.round(this.getHeight() * zoomFactor)
+						Math.round(this.getWidth() * zoomFactor - offsetX),
+						Math.round(this.getHeight() * zoomFactor - offsetY)
+						// END KGU#624 2018-12-24
+						);
 			}
 			else {
 				g2d.scale(1/zoomFactor, 1/zoomFactor);
@@ -357,9 +390,20 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for(int d=0; d<diagrams.size(); d++)
 			{
 				Diagram diagram = diagrams.get(d);
+				// START KGU#624 2018-12-24: Enh. #655
+				if (onlySelected && !this.diagramsSelected.contains(diagram)) {
+					continue;
+				}
+				// END KGU#624 2018-12-24
+				
 				Root root = diagram.root;
 				Point point = diagram.point;
 
+				// START KGU#624 2018-12-24: Enh. #655
+				if (offsetX != 0 || offsetY != 0) {
+					point = new Point(point.x - offsetX, point.y - offsetY);
+				}
+				// END KGU#624 2018-12-24
 				// START KGU#88 2015-11-24
 				//root.draw(g, point, this);
 				Rect rect = root.draw(g2d, point, this, Element.DrawingContext.DC_ARRANGER);
@@ -581,13 +625,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#624 2018-12-22: Enh. #655
 		// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)
 		StringList rootNames = listSelectedRoots(true, false);
-		String saveMessage = msgSavePortable.getText().
+		String saveMessage = Arranger.msgConfirmMultiple.getText().
 				replace("%1", Integer.toString(rootNames.count())).
 				replace("%2", Integer.toString(this.diagrams.size())).
-				replace("%3", rootNames.getText());
+				replace("%3", rootNames.concatenate("\n- ")).
+				replace("%4", msgSavePortable.getText());
+		Object[] options = {lblSaveAsArrz.getText(), lblSaveAsArr.getText(), Menu.lblCancel.getText()};
 		// END KGU#624 2018-12-22
 		if (this.saveDiagrams() && 
-				(answer = JOptionPane.showConfirmDialog(frame, saveMessage)) != JOptionPane.CANCEL_OPTION)
+				(answer = JOptionPane.showOptionDialog(frame,
+						saveMessage, this.msgSaveDialogTitle.getText(),
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE, null,
+						options, options[0])) != JOptionPane.CANCEL_OPTION)
 		{
 			// Let's select path and name for the list / archive file
 			JFileChooser dlgSave = new JFileChooser(currentDirectory);
@@ -596,13 +646,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//dlgSave.addChoosableFileFilter(new ArrFilter());
 			if (answer == JOptionPane.OK_OPTION)
 			{
-				dlgSave.addChoosableFileFilter(new ArrZipFilter());
+				FileFilter filter = new ArrZipFilter();
+				dlgSave.addChoosableFileFilter(filter);
+				dlgSave.setFileFilter(filter);				
 				portable = true;
 				extension += "z";
 			}
 			else
 			{
-				dlgSave.addChoosableFileFilter(new ArrFilter());
+				FileFilter filter = new ArrFilter();
+				dlgSave.addChoosableFileFilter(filter);
+				dlgSave.setFileFilter(filter);
 			}
 			// END KGU#110 2016-06-29
 			dlgSave.setCurrentDirectory(currentDirectory);
@@ -785,7 +839,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 		out.close();
 	}
-    
+
 	/**
 	 * Compresses the arranged diagrams and the describing arr file (`arrFilename´)
 	 * into file `zipFilename´ (which is essentially an ordinary zip file but named as given).
@@ -1251,7 +1305,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				filename+=".png";
 			}
 
-			// deselect any diagram
+			// temporarily deselect any diagram
 			if (diagrams != null)
 			{
 				for (int d=0; d<diagrams.size(); d++)
@@ -1267,18 +1321,43 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-03-19: Enh. #512 - consider the (new) zoom factor
 			//BufferedImage bi = new BufferedImage(this.getWidth(), this.getHeight(),BufferedImage.TYPE_4BYTE_ABGR);
 			//paint(bi.getGraphics());
-			Rect rect = this.getDrawingRect(null);
+			// START KGU#624 2018-12-24: Enh. #655
+			//Rect rect = this.getDrawingRect(null);
+			int offsetX = 0, offsetY = 0;
+			Rect rect = null;
+			if (this.diagramsSelected.isEmpty()) {
+				rect = this.getDrawingRect(null);
+			}
+			else {
+				rect = new Rect(getSelectionBounds(true));
+				offsetX = rect.left - 10;
+				offsetY = rect.top - 10;
+				rect.left = 10;
+				rect.top = 10;
+				rect.right -= offsetX;
+				rect.bottom -= offsetY;
+			}
+			int width = this.getWidth() - Math.round(offsetX / zoomFactor);
+			int height = this.getHeight() - Math.round(offsetY / zoomFactor);
+			// END KGU#624 2018-12-24
 			if (logger.isLoggable(Level.CONFIG)) {
-				logger.log(Level.CONFIG, "{0} x {1}", new Object[]{this.getWidth(), this.getHeight()});
+				logger.log(Level.CONFIG, "{0} x {1}", new Object[]{width, height});
 				logger.log(Level.CONFIG, "Drawing Rect: {0}", rect);
-				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{this.getWidth()*this.zoomFactor, this.getHeight()*this.zoomFactor});
+				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{width*this.zoomFactor, height*this.zoomFactor});
 			}
 			BufferedImage bi = new BufferedImage(
-					Math.round(this.getWidth() * this.zoomFactor),
-					Math.round(this.getHeight() * this.zoomFactor),
+					Math.round(width * this.zoomFactor),
+					Math.round(height * this.zoomFactor),
 					BufferedImage.TYPE_4BYTE_ABGR);
-			paintComponent(bi.getGraphics(), true);
+			paintComponent(bi.getGraphics(), true, !this.diagramsSelected.isEmpty(), offsetX, offsetY);
 			// END KGU#497 2018-03-19
+			// START KGU#624 2018-12-24: Enh. #655 - support multiole selection / restore selection
+			for (Diagram diagr: this.diagramsSelected) {
+				if (diagr.root != null) {
+					diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+				}
+			}
+			// END KGU624 2018-12-24
 			// save the file
 			try
 			{
@@ -1317,13 +1396,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		Rect r = new Rect(0,0,0,0);
 
-		if (diagrams != null && !diagrams.isEmpty())
+		if (_diagrams != null && !_diagrams.isEmpty())
 		{
 			r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 			//System.out.println("--------getDrawingRect()---------");
-			for (int d=0; d<diagrams.size(); d++)
+			for (Diagram diagram: _diagrams)
 			{
-				Diagram diagram = diagrams.get(d);
 				Root root = diagram.root;
 				// FIXME (KGU 2015-11-18) This does not necessarily return a Rect within this surface!
 				Rect rect = root.getRect();	// 0-bound extension rectangle
@@ -2073,20 +2151,32 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}// </editor-fold>//GEN-END:initComponents
 
 	/**
-	 * @return the diagrams
+	 * @return the vector of {@link Diagram}s
 	 */
-	public Vector<Diagram> getDiagrams()
+	@Deprecated
+	protected Vector<Diagram> getDiagrams()
 	{
 		return diagrams;
 	}
 
 	/**
-	 * @param diagrams the diagrams to set
+	 * @param diagrams - the vector of {@link Diagram}s to set
 	 */
-	public void setDiagrams(Vector<Diagram> diagrams)
+	@Deprecated
+	protected void setDiagrams(Vector<Diagram> diagrams)
 	{
 		this.diagrams = diagrams;
 	}
+	
+	// START KGU#624 2018-12-25: Enh. #655
+	/**
+	 * @return the number of currently held {@link Diagram}s
+	 */
+	public int getDiagramCount()
+	{
+		return this.diagrams.size();
+	}
+	// END KGU#624 2018-12-25
 
 	// START KGU#49 2015-10-18: When the window is going to be closed we have to give the diagrams a chance to store their stuff
 	// FIXME (KGU): Quick-and-dirty version. More convenient should be a list view with all unsaved diagrams for checkbox selection
@@ -2760,7 +2850,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param withPath - Shall the file paths be added to the signature?
 	 * @return the StringList.
 	 */
-	private StringList listSelectedRoots(boolean allIfEmpty, boolean withPath) {
+	protected StringList listSelectedRoots(boolean allIfEmpty, boolean withPath) {
 		Vector<Root> selectedRoots = new Vector<Root>(this.diagramsSelected.size());
 		for (Diagram diagr: this.diagramsSelected) {
 			if (diagr.root != null) {

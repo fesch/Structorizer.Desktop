@@ -63,7 +63,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-10-06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
- *      Kay Gürtzig     2018-12-24  Enh. #655: Set of key bindings accomplished
+ *      Kay Gürtzig     2018-12-25  Enh. #655: Set of key bindings accomplished, dialog revision
  *
  ******************************************************************************************************
  *
@@ -103,15 +103,19 @@ import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.utils.StringList;
 
 /**
- *
+ * This class graphically arranges several Nassi-Shneiderman diagrams within
+ * one and the same drawing area.
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener {
+public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener {
 
 	// START KGU 2018-03-21
 	public static final Logger logger = Logger.getLogger(Arranger.class.getName());
@@ -128,13 +132,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
 	// END KGU#534 2018-06-27
 	// START KGU#624 2018-12-21/24: Enh. #655
-	public static final LangTextHolder msgTitleIllegal = new LangTextHolder("Illegal Operation");
+	public static final LangTextHolder msgTitleIllegal = new LangTextHolder("Illegal Operation!");
 	public static final LangTextHolder msgActionDelete = new LangTextHolder("remove");
 	public static final LangTextHolder msgActionCut = new LangTextHolder("cut");
 	public static final LangTextHolder msgActionCopy = new LangTextHolder("copy");
-	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3");
-	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3");
-	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("% diagrams selected");
+	public static final LangTextHolder msgConfirmMultiple = new LangTextHolder("You have selected the following %1 diagram(s) (out of %2):\n- %3\n\n%4");
+	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the above diagram(s) from Arranger?");
+	public static final LangTextHolder msgReadyToExport = new LangTextHolder("Are you ready to export this sub-arrangement to PNG?");
+	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n- %3");
+	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("diagrams: %1, selected: %2");
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
 	// END KGU#624 2018-12-21/24
@@ -170,8 +176,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#155 2016-03-08: added for bugfix #97
     /**
      * Allows to find out whether an Arranger instance is created without
-     * creating it
-     *
+     * creating it.
      * @return true iff there is already an Arranger instance
      */
     public static boolean hasInstance() {
@@ -492,7 +497,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         statusSize = new javax.swing.JLabel();
         statusViewport = new javax.swing.JLabel();
         statusZoom = new javax.swing.JLabel();
-        statusSelection = new javax.swing.JLabel(msgDiagramsSelected.getText().replace("%", "0"));
+        statusSelection = new javax.swing.JLabel(msgDiagramsSelected.getText().replace("%1", "0").replace("%2", "0"));
         statusSize.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
         		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         statusViewport.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
@@ -563,6 +568,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //        });
         addWindowListener(this); 
         // END KGU#49 2015-10-18
+        
+        // START KGU#624 2018-12-25: Enh. #655
+        msgDiagramsSelected.addLangEventListener(this);
+        // END KGU#624 2018-12-28
 
         // START KGU#117 2016-03-09: New for Enh. #77
         this.doButtons();
@@ -588,59 +597,72 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	protected void updateStatusSelection() {
 		Set<Root> sel = surface.getSelected();
 		Root sel1 = surface.getSelected1();
+		String selText = Integer.toString(sel.size());
 		if (sel1 != null) {
-			statusSelection.setText(sel1.getSignatureString(false));
+			selText = sel1.getSignatureString(false);
 		}
-		else {
-			statusSelection.setText(msgDiagramsSelected.getText().replace("%", Integer.toString(sel.size())));
-		}
+		statusSelection.setText(msgDiagramsSelected.getText()
+				.replace("%1", Integer.toString(surface.getDiagramCount()))
+				.replace("%2", selText));
 	}
 	// END KGU#624 2018-12-21
 
-    private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
-    {//GEN-HEADEREND:event_btnExportPNGActionPerformed
-        surface.exportPNG(this);
-    }//GEN-LAST:event_btnExportPNGActionPerformed
+	private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
+	{//GEN-HEADEREND:event_btnExportPNGActionPerformed
+		// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
+		StringList rootList = surface.listSelectedRoots(false, false);
+		if (rootList.count() > 1 && rootList.count() < surface.getDiagramCount()) {
+			if (JOptionPane.showConfirmDialog(this, 
+					msgConfirmMultiple.getText()
+					.replace("%1", Integer.toString(rootList.count()))
+					.replace("%2", Integer.toString(surface.getDiagramCount()))
+					.replace("%3", rootList.concatenate("\n- "))
+					.replace("%4", msgReadyToExport.getText()),
+					msgTitleWarning.getText(),
+					JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
+				return;
+			}
+		}
+		// END KGU#624 2018-12-23
+		surface.exportPNG(this);
+	}//GEN-LAST:event_btnExportPNGActionPerformed
 
     private void btnAddDiagramActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnAddDiagramActionPerformed
     {//GEN-HEADEREND:event_btnAddDiagramActionPerformed
         surface.addDiagram(new Root());
     }//GEN-LAST:event_btnAddDiagramActionPerformed
 
-    // START KGU#85 2015-11-17
-    private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt) {
-        // START KGU#534 2018-06-27: Enh.#552    	
-        //surface.removeDiagram();
-        if (this.isShiftPressed) {
-            removeAllDiagrams();
-            // We must make sure that the shift key status is reset - this doesn't work automatically!
-            // Seems that the keyReleased event gets lost...
-            this.setShiftPressed(false);
-        }
-        else {
-        	// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
-        	Set<Root> sel = surface.getSelected();
-        	if (sel.size() > 1) {
-        		StringBuilder sb = new StringBuilder();
-        		for (Root root: sel) {
-        			sb.append("\n- " + root.getSignatureString(false));
-        		}
-    			if (JOptionPane.showConfirmDialog(this, 
-    					msgConfirmRemove.getText()
-    					.replace("%1",msgActionDelete.getText())
-    					.replace("%2", Integer.toString(sel.size()))
-    					.replace("%3", sb.toString()), 
-    					msgTitleWarning.getText(),
-    					JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
-    				return;
-    			}
-        	}
-        	// END KGU#624 2018-12-23
-            surface.removeDiagram();
-        }
-        // END KGU#534 2018-06-27
-    }
-    // END KGU#85 2015-11-17
+	// START KGU#85 2015-11-17
+	private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt) {
+		// START KGU#534 2018-06-27: Enh.#552    	
+		//surface.removeDiagram();
+		if (this.isShiftPressed) {
+			removeAllDiagrams();
+			// We must make sure that the shift key status is reset - this doesn't work automatically!
+			// Seems that the keyReleased event gets lost...
+			this.setShiftPressed(false);
+		}
+		else {
+			// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
+			StringList rootList = surface.listSelectedRoots(false, false);
+			if (rootList.count() > 1) {
+				if (JOptionPane.showConfirmDialog(this, 
+						msgConfirmMultiple.getText()
+						.replace("%1", Integer.toString(rootList.count()))
+						.replace("%2", Integer.toString(surface.getDiagramCount()))
+						.replace("%3", rootList.concatenate("\n- "))
+						.replace("%4", msgConfirmRemove.getText().replace("%1",msgActionDelete.getText())), 
+						msgTitleWarning.getText(),
+						JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
+					return;
+				}
+			}
+			// END KGU#624 2018-12-23
+			surface.removeDiagram();
+		}
+		// END KGU#534 2018-06-27
+	}
+	// END KGU#85 2015-11-17
 
     // START KGU#88 2015-11-24
     private void btnPinDiagramActionPerformed(java.awt.event.ActionEvent evt) {
@@ -785,9 +807,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     //    surface.removeAllDiagrams();
                     //}
                 {
-                	// START KGU624 2018-12-21: Enh. #655 - Face multiple selection
-                	//Root sel = surface.getSelected1();
-                    Set<Root> sel = surface.getSelected();
+                    // START KGU624 2018-12-21: Enh. #655 - Face multiple selection
+                    //Root sel = surface.getSelected1();
+                    StringList rootList = surface.listSelectedRoots(false, false);
+                    int nSelected = rootList.count();
+                    if (nSelected == 0) {
+                        break;
+                    }
                     boolean shift = ev.isShiftDown();
                     String verb = "";
                     if (shift) {
@@ -796,26 +822,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     else {
                         verb = msgActionDelete.getText();
                     }
-                    StringBuilder strbld = new StringBuilder();
-                    for (Root root: sel) {
-                    	strbld.append("\n" + root.getSignatureString(false));
+                    if (shift && checkIllegalMultipleAction(rootList, verb)) {
+                        break;
                     }
-                    if (sel.isEmpty()) {
-                    	break;
-                    }
-                    else if (shift && sel.size() > 1) { 
-                    	JOptionPane.showMessageDialog(this,
-                    			msgCantDoWithMultipleRoots.getText().
-                    			replace("%1", msgActionCut.getText()).
-                    			replace("%2", Integer.toString(sel.size()).replace("%3", strbld.toString())),
-                    			msgTitleIllegal.getText(),
-                    			JOptionPane.ERROR_MESSAGE);
-                    	break;
-                    }
-                    String message = msgConfirmRemove.getText().
-                            replace("%1", verb).
-                            replace("%2", Integer.toString(sel.size())).
-                            replace("%3", strbld.toString());
+                    String message = msgConfirmMultiple.getText().
+                            replace("%1", Integer.toString(nSelected)).
+                            replace("%2", Integer.toString(surface.getDiagramCount())).
+                            replace("%3", rootList.concatenate("\n- ")).
+                            replace("%4", msgConfirmRemove.getText().replace("%1", verb));
                     if (ev.isControlDown() || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
                             JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
                         if (shift) {
@@ -830,26 +844,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
                 case KeyEvent.VK_X:
                     if (ev.isControlDown()) {
-                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
                         //surface.removeDiagram();
-                    	Set<Root> sel = surface.getSelected();
-                    	if (sel.size() > 1) {
-                    		StringBuilder strbld = new StringBuilder();
-                    		for (Root root: sel) {
-                    			strbld.append("\n" + root.getSignatureString(false));
-                    		}
-                        	JOptionPane.showMessageDialog(this,
-                        			msgCantDoWithMultipleRoots.getText().
-                        			replace("%1", msgActionCut.getText()).
-                        			replace("%2", Integer.toString(sel.size())).
-                        			replace("%3", strbld.toString()),
-                        			msgTitleIllegal.getText(),
-                        			JOptionPane.ERROR_MESSAGE);
-                        	break;
+                        StringList rootList = surface.listSelectedRoots(false, false);
+                        if (checkIllegalMultipleAction(rootList, msgActionCut.getText())) {
+                            break;
                         }
                         if (surface.copyDiagram())	// cut means copy first
                         {
-                        	surface.removeDiagram();
+                            surface.removeDiagram();
                         }
                         // END KGU#624 2018-12-21
                     }
@@ -868,23 +871,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     break;
                 case KeyEvent.VK_C:
                     if (ev.isControlDown()) {
-                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
-                    	Set<Root> sel = surface.getSelected();
-                    	if (sel.size() > 1) {
-                    		StringBuilder strbld = new StringBuilder();
-                    		for (Root root: sel) {
-                    			strbld.append("\n" + root.getSignatureString(false));
-                    		}
-                        	JOptionPane.showMessageDialog(this,
-                        			msgCantDoWithMultipleRoots.getText().
-                        			replace("%1", msgActionCopy.getText()).
-                        			replace("%2", Integer.toString(sel.size())).
-                        			replace("%3", strbld.toString()),
-                        			msgTitleIllegal.getText(),
-                        			JOptionPane.ERROR_MESSAGE);
-                        	break;
+                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                        StringList rootList = surface.listSelectedRoots(false, false);
+                        if (checkIllegalMultipleAction(rootList, msgActionCopy.getText())) {
+                            break;
                         }
-                    	// END KGU#624 2018-12-21
+                        // END KGU#624 2018-12-21
                         surface.copyDiagram();
                     }
                     break;
@@ -914,7 +906,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                                 scrollarea.getVerticalScrollBar().getValue() - 
                                 scrollarea.getVerticalScrollBar().getBlockIncrement(-1));
                     }
-        		    break;
+                    break;
                 case KeyEvent.VK_PAGE_DOWN:
                     if (ev.isShiftDown()) {
                         scrollarea.getHorizontalScrollBar().setValue(
@@ -926,65 +918,89 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                                 scrollarea.getVerticalScrollBar().getValue() + 
                                 scrollarea.getVerticalScrollBar().getBlockIncrement(1));
                     }
-        		    break;
+                    break;
                 case KeyEvent.VK_A:
-                	if (ev.isControlDown()) {
-                		surface.selectAll();
-                	}
-                	break;
+                    if (ev.isControlDown()) {
+                        surface.selectAll();
+                    }
+                    break;
                 case KeyEvent.VK_S:
-                	if (ev.isControlDown()) {
-                		surface.saveArrangement(this);
-                	}
-                	break;
+                    if (ev.isControlDown()) {
+                        surface.saveArrangement(this);
+                    }
+                    break;
                 case KeyEvent.VK_O:
-                	if (ev.isControlDown()) {
-                		surface.loadArrangement(this);
-                	}
+                    if (ev.isControlDown()) {
+                        surface.loadArrangement(this);
+                    }
                 // END KGU#624 2018-12-21
-                	// START KGU#624 2018-12-24: Enh. #655
+                    // START KGU#624 2018-12-24: Enh. #655
                 case KeyEvent.VK_UP:
                 case KeyEvent.VK_DOWN:
                 {
-                	int direction = ev.getKeyCode() == KeyEvent.VK_UP ? -1 : 1;
-                	int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
-                	if (ev.isShiftDown()) {
-                		vUnits *= 10;
-                	}
-                	int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
-                	if (ev.isControlDown()) {
-                		surface.moveSelection(0, vUnits);
-                		surface.scrollToSelection();
-                	}
-                	else {
-                    	scrollarea.getVerticalScrollBar().setValue(newValue);                		
-                	}
+                    int direction = ev.getKeyCode() == KeyEvent.VK_UP ? -1 : 1;
+                    int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
+                    if (ev.isShiftDown()) {
+                        vUnits *= 10;
+                    }
+                    int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
+                    if (ev.isControlDown()) {
+                        surface.moveSelection(0, vUnits);
+                        surface.scrollToSelection();
+                    }
+                    else {
+                        scrollarea.getVerticalScrollBar().setValue(newValue);                		
+                    }
                 }
                 break;
                 case KeyEvent.VK_LEFT:
                 case KeyEvent.VK_RIGHT:
                 {
-                	int direction = ev.getKeyCode() == KeyEvent.VK_LEFT ? -1 : 1;
-                	int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
-                	if (ev.isShiftDown()) {
-                		hUnits *= 10;
-                	}
-                	int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
-                	if (ev.isControlDown()) {
-                		surface.moveSelection(hUnits, 0);
-                		surface.scrollToSelection();
-                	}
-                	else {
-                    	scrollarea.getHorizontalScrollBar().setValue(newValue);
-                	}
+                    int direction = ev.getKeyCode() == KeyEvent.VK_LEFT ? -1 : 1;
+                    int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
+                    if (ev.isShiftDown()) {
+                        hUnits *= 10;
+                    }
+                    int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
+                    if (ev.isControlDown()) {
+                        surface.moveSelection(hUnits, 0);
+                        surface.scrollToSelection();
+                    }
+                    else {
+                        scrollarea.getHorizontalScrollBar().setValue(newValue);
+                    }
                 }
                 break;
                 case KeyEvent.VK_F1:
-                	this.helpArranger();
-                	break;
-                	// END KGU#624 2018-12-24
+                    this.helpArranger();
+                    break;
+                    // END KGU#624 2018-12-24
             }
         }
+    }
+    
+    /**
+     * In case {@code rootList} contains more than one element, raises an error message
+     * that {@code actionName} is not allowed for multiple selection and returns true,
+     * otherwise returns false.
+     * @param rootList - {@link StringList} of selected {@link Root} signatures
+     * @param actionName - designation of the intended action
+     * @return true if illegal multiple selection was detected, false otherwise
+     */
+    private boolean checkIllegalMultipleAction(StringList rootList, String actionName)
+    {
+        int nSelected = rootList.count();
+        if (nSelected > 1) {
+        	JOptionPane.showMessageDialog(this,
+        			msgCantDoWithMultipleRoots.getText().
+        			replace("%1", actionName).
+        			replace("%2", Integer.toString(nSelected)).
+        			replace("%3", rootList.concatenate("\n- ")),
+        			msgTitleIllegal.getText(),
+        			JOptionPane.ERROR_MESSAGE);
+        	return true;
+        }
+        return false;
     }
 
     /**
@@ -1016,12 +1032,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     @Override
     public void keyReleased(KeyEvent ev) {
-    	// START KGU#497 2018-02-17: Change the zoom icon when shift is released
+        // START KGU#497 2018-02-17: Change the zoom icon when shift is released
         if (ev.getSource() == this) {
             switch (ev.getKeyCode()) {
                 case KeyEvent.VK_SHIFT:
-                	setShiftPressed(false);
-                	break;
+                    setShiftPressed(false);
+                    break;
             }
         }
         // END KGU#497 2018-02-17
@@ -1084,7 +1100,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	}
 	// END KGU#624 2018-12-24
 
-	// START KGU#2 2015-11-24
+    // START KGU#2 2015-11-24
     /* (non-Javadoc)
      * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesByName(java.lang.String)
      */
@@ -1119,7 +1135,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     @Override
     public Set<Root> getAllRoots()
     {
-    	return surface.getAllRoots();
+        return surface.getAllRoots();
     }
     // END KGU#258 2016-09-26
 
@@ -1127,7 +1143,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // Shares the sorted list of Root elements held by the Surface object 
     public static Vector<Root> getSortedRoots()
     {
-    	return routines;
+        return routines;
     }
     // END KGU#305 2016-12-16
 
@@ -1272,5 +1288,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		return false;
 	}
 	// END KGU#594 2018-10-06
+
+	// START KGU#624 2018-12-25: Enh. #655
+	@Override
+	public void LangChanged(LangEvent evt) {
+		if (evt.getSource() == msgDiagramsSelected && this.statusbar != null)
+		{
+			this.updateStatusSelection();
+		}
+	}
+	// END KGU#624 2018-12-25
 
 }

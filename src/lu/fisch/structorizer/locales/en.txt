@@ -1115,18 +1115,23 @@ Arranger.btnRemoveDiagram.tooltip=Removes the selected diagrams - hold Shift key
 Arranger.btnZoom.tooltip=Hold Shift key pressed to zoom in.
 Arranger.msgConfirmRemoveAll.text=Do you really want to remove all diagrams from Arranger?
 Arranger.msgTitleWarning.text=Warning
+Arranger.msgTitleIllegal.text=Illegal Operation!
 Arranger.msgActionDelete.text=remove
 Arranger.msgActionCut.text=cut
 Arranger.msgActionCopy.text=copy
-Arranger.msgConfirmRemove.text=Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3
-Arranger.msgCantDoWithMultipleRoots.text=It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3
-Arranger.msgDiagramsSelected.text=% diagrams selected
+Arranger.msgConfirmRemove.text=Do you really want to %1 the above diagram(s) from Arranger?
+Arranger.msgConfirmMultiple.text=You have selected the following %1 diagram(s) out of %2:\n- %3\n\n%4
+Arranger.msgReadyToExport.text=Are you ready to export this sub-arrangement to PNG?
+Arranger.msgCantDoWithMultipleRoots.text=It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n- %3
+Arranger.msgDiagramsSelected.text=diagrams: %1, selected: %2
 Arranger.msgBrowseFailed.text=Failed to show % in browser
 Arranger.msgTitleURLError.text=URL Error
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:
-Surface.msgSavePortable.text=You have selected the following %1 diagrams (from %2):\n\n%3\n\nSave as portable compressed archive (otherwise only the arrangement list)?
+Surface.msgSavePortable.text=You may save this arrangement\n- either as portable compressed archive (*.arrz)\n- or as mere arrangement list with file paths (*.arr).
+Surface.lblSaveAsArrz.text=As archive (*.arrz)
+Surface.lblSaveAsArr.text=As list (*.arr)
 Surface.msgSaveDialogTitle.text=Save arranged set of diagrams ...
 Surface.msgSaveError.text=Error on saving the arrangement:
 Surface.msgLoadDialogTitle.text=Reload a stored arrangement of diagrams ...
