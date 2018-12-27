@@ -90,6 +90,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-22      Bugfix #656: Loading of referred files residing in an arrz file fixed.
  *      Kay Gürtzig     2018-12-23      Bugfix #512: On dropping/pushing diagrams the scrolling had used wrong coordinates
  *      Kay Gürtzig     2018-12-25      Enh. #655: Dialog revisions
+ *      Kay Gürtzig     2018-12-26      Two cross reference maps introduced (rootMap, nameMap), expandSelectionRecursively() impemented
  *
  ******************************************************************************************************
  *
@@ -185,6 +186,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -205,9 +207,11 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -241,6 +245,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#305 2016-12-16: Code revision
 	private final Vector<IRoutinePoolListener> listeners = new Vector<IRoutinePoolListener>();
 	// END KGU#305 2016-12-16
+	// START KGU#624 2018-12-26: Enh. #655 We need more efficient searching
+	private final HashMap<String, Vector<Diagram>> nameMap = new HashMap<String, Vector<Diagram>>();
+	private final HashMap<Root, Diagram> rootMap = new HashMap<Root, Diagram>();
+	// END KGU#624 2018-12-26
 	/** Default minimum distance between diagrams when allocated */ 
 	private static final int DEFAULT_GAP = 10;
 	/** Default width for a diagram never drawn before */ 
@@ -524,6 +532,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		}
 		// END KGU#278 2016-10-11
+		// START KGU#624 2018-12-27: Enh. #655 - Notify about the selection change
+		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+		// END KGU#624 2018-12-27
 		return nLoaded;
 	}
 	
@@ -625,8 +636,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#624 2018-12-22: Enh. #655
 		// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)
 		StringList rootNames = listSelectedRoots(true, false);
+		int nSelected = rootNames.count();
+		if (nSelected > Arranger.ROOT_LIST_LIMIT) {
+			rootNames.remove(Arranger.ROOT_LIST_LIMIT, nSelected);
+			rootNames.add("...");
+		}
 		String saveMessage = Arranger.msgConfirmMultiple.getText().
-				replace("%1", Integer.toString(rootNames.count())).
+				replace("%1", Integer.toString(nSelected)).
 				replace("%2", Integer.toString(this.diagrams.size())).
 				replace("%3", rootNames.concatenate("\n- ")).
 				replace("%4", msgSavePortable.getText());
@@ -1724,6 +1740,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU 2016-03-14
 			/*Diagram*/ diagram = new Diagram(root,point);
 			diagrams.add(diagram);
+			// START KGU#624 2018-12-26: Enh. #655 Attempt to make search faster
+			rootMap.put(root, diagram);
+			String rootName = root.getMethodName();
+			addToNameMap(rootName, diagram);
+			// END KGU#624 2018-12-26
 			// START KGU 2015-11-30
 			// START KGU#136 2016-03-01: Bugfix #97 - here we need the actual position
 			//Rectangle rec = root.getRect().getRectangle();
@@ -1937,6 +1958,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		//}
 		this.diagramsSelected.remove(diagr);
 		// END KGU#624 2018-12-21
+		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
+		rootMap.remove(diagr.root, diagr);
+		removeFromNameMap(diagr.getName(), diagr);
+		// END KGU#624 2018-12-26
 		diagrams.remove(diagr);
 		adaptLayout();
 		repaint();
@@ -2302,6 +2327,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					//}
 					this.diagramsSelected.remove(diagr);
 					// END KGU#624 2018-12-21
+					// START KGU#624 2018-12-26: Enh. #655
+					this.rootMap.remove(diagr.root);
+					this.removeFromNameMap(diagr.root.getMethodName(), diagr);
+					// END KGU#624 2018-12-26
 					diagrams.remove(diagr);
 				}
 			}
@@ -2608,6 +2637,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
+		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		repaint();
 	}
 
@@ -2638,10 +2668,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#85 2015-11-18
 		this.repaint();
 		// START KGU#330 2017-01-13: We keep redundant information to be able to trigger change notifications
-		Diagram diagr = this.findDiagram(source, 1);
-		if (diagr != null && diagr.checkSignatureChange()) {
-			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
+		//Diagram diagr = this.findDiagram(source, 1);
+		Diagram diagr = rootMap.get(source);
+		// END KGU#624 2018-12-26
+		// START KGU#624 2018-12-26: Enh. #655
+		//if (diagr != null && diagr.checkSignatureChange()) {
+		//	this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		//}
+		if (diagr != null) {
+			String oldRootName = diagr.getName();
+			if (diagr.checkSignatureChange()) {
+				String newRootName = source.getMethodName();
+				if (!oldRootName.equals(newRootName)) {
+					removeFromNameMap(oldRootName, diagr);
+					addToNameMap(newRootName, diagr);
+				}
+				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+			}
 		}
+		// END KGU#624 2018-12-26
 		// END KGU#330 2017-01-13
 	}
 
@@ -2670,19 +2716,50 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	//private Diagram findDiagram(Root root)
 	// START KGU#312 2016-12-29: Enh. #315 - more differentiated equivalence check
 	//private Diagram findDiagram(Root root, boolean identityCheck)
+	/**
+	 * Search among the held {@link Diagram} objects for one the associated {@link Root} of which
+	 * closely enough resembles the given {@link Root} {@code root}.
+	 * @param root - the Nassi-Shneiderman diagram we look for
+	 * @param equalityLevel - the level of resemblance - see {@link Root#compareTo(Root)}
+	 * @return the first {@link Diagram} that holds a matching {@link Root}.
+	 * @see #findDiagram(Root, int, boolean)
+	 * @see #findDiagramsByName(String)
+	 * @see #findIncludesByName(String)
+	 */
 	private Diagram findDiagram(Root root, int equalityLevel)
 	{
 		return findDiagram(root, equalityLevel, false);
 	}
+	/**
+	 * Search among the held {@link Diagram} objects for one the associated {@link Root} of which
+	 * closely enough resembles the given {@link Root} {@code root}.
+	 * @param root - the Nassi-Shneiderman diagram we look for
+	 * @param equalityLevel - the level of resemblance - see {@link Root#compareTo(Root)}
+	 * @param warnLevel2AndAbove - if true then a warning will be raised if the obtained equality level is not 1 
+	 * @return the first {@link Diagram} that holds a matching {@link Root}.
+	 * @see #findDiagram(Root, int)
+	 * @see #findDiagramsByName(String)
+	 * @see #findIncludesByName(String)
+	 */
 	private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
 	// END KGU#312 2016-12-29
 	// END KGU#119 2016-01-02
 	{
 		Diagram owner = null;
-		if (this.diagrams != null) {
-			for(int d = 0; owner == null && d < this.diagrams.size(); d++)
+		Vector<Diagram> diagramList = this.diagrams;
+		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
+		if (equalityLevel == 1) {
+			return this.rootMap.get(root);
+		}
+		else if (equalityLevel == 2 || equalityLevel == 5) {
+			// We try to reduce the number of diagrams to be searched  
+			diagramList = this.nameMap.get(root.getMethodName());
+		}
+		// END KGU#624 2018-12-26
+		if (diagramList != null) {
+			for(int d = 0; owner == null && d < diagramList.size(); d++)
 			{
-				Diagram diagram = this.diagrams.get(d);
+				Diagram diagram = diagramList.get(d);
 				// START KGU#312 2016-12-29: Enh. #315
 				// START KGU#119 2016-01-02: Bugfix #78 When loading diagrams we ought to check for equality only
 				//if (diagram.root == root)
@@ -2771,16 +2848,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public Vector<Root> findDiagramsByName(String rootName)
 	{
 		Vector<Root> functions = new Vector<Root>();
-		if (this.diagrams != null) {
-			for (int d = 0; d < this.diagrams.size(); d++)
-			{
-				Diagram diagram = this.diagrams.get(d);
-				if (rootName.equals(diagram.root.getMethodName()))
-				{
-					functions.add(diagram.root);
-				}
+		// START KGU#624 2018-12-26: Enh. #655 Try to improve search performance
+		//if (this.diagrams != null) {
+		//	for (int d = 0; d < this.diagrams.size(); d++)
+		//	{
+		//		Diagram diagram = this.diagrams.get(d);
+		//		if (rootName.equals(diagram.root.getMethodName()))
+		//		{
+		//			functions.add(diagram.root);
+		//		}
+		//	}
+		//}
+		Vector<Diagram> diagramList = this.nameMap.get(rootName);
+		if (diagramList != null) {
+			for (int d = 0; d < diagramList.size(); d++) {
+				functions.add(diagramList.get(d).root);
 			}
 		}
+		// END KGU#624 2018-12-26
 		return functions;
 	}
 	// END KGU#2 2015-10-17
@@ -3014,7 +3099,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-02-17: Enh. #512
 			rect = rect.scale(1/this.zoomFactor);
 			// END KGU#497 2018-02-17
-			System.out.println("scrollRectToVisible(" + rect + ") in scrollToDiagram(...)");
 			this.scrollRectToVisible(rect.getRectangle());
 		}
 	}
@@ -3089,6 +3173,69 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return null;
 	}
 	// END KGU#624 2018-12-21
+	
+	// START KGU#624 2018-12-26: Enh. #655
+    protected int expandSelectionRecursively(StringList missingSignatures, StringList duplicateSignatures) {
+    	Set<Root> selectedRoots = getSelected();
+		LinkedList<Root> rootQueue = new LinkedList<Root>(selectedRoots);
+		Set<Diagram> addedDiagrams = new HashSet<Diagram>();
+		while (!rootQueue.isEmpty()) {
+			Root root = rootQueue.removeFirst();
+			// First look for called routines
+			Vector<Call> calls = root.collectCalls();
+			for (Call call: calls) {
+				if (call.isDisabled()) {
+					continue;
+				}
+				Function fct = call.getCalledRoutine();
+				if (fct != null) {
+					// TODO in future: compare group membership
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					// For now we will add all of them to be on the safe side
+					for (Root sub: candidates) {
+						if (selectedRoots.add(sub)) {
+							rootQueue.addLast(sub);
+							addedDiagrams.add(rootMap.get(sub));	// Should of course be in the map
+							sub.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+						}
+					}
+					if (candidates.isEmpty()) {
+						missingSignatures.add(fct.getSignatureString());
+					}
+					else if (candidates.size() > 1) {
+						duplicateSignatures.add(fct.getSignatureString());
+					}
+				}
+			}
+			// Then look for referenced includables
+			if (root.includeList != null) {
+				for (int i = 0; i < root.includeList.count(); i++) {
+					String inclName = root.includeList.get(i);
+					Vector<Root> candidates = this.findIncludesByName(inclName);
+					// For now we will add all of them to be on the safe side
+					for (Root incl: candidates) {
+						if (selectedRoots.add(incl)) {
+							rootQueue.addLast(incl);
+							addedDiagrams.add(rootMap.get(incl));	// Should of course be in the map
+							incl.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+						}
+					}
+					if (candidates.isEmpty()) {
+						missingSignatures.add(inclName);
+					}
+					else if (candidates.size() > 1) {
+						duplicateSignatures.add(inclName);
+					}
+				}
+			}
+		}
+		diagramsSelected.addAll(addedDiagrams);
+		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+		repaint();
+		return addedDiagrams.size();
+	}
+
+	// END KGU#624 2018-12-26
 
 	// START KGU#305 2016-12-16: Code revision
 	@Override
@@ -3174,5 +3321,36 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 	// END KGU#503 2018-03-13
+	
+	// START KGU#624 2018-12-26: Enh. #655
+	private boolean addToNameMap(String name, Diagram diagr)
+	{
+		boolean added = false;
+		Vector<Diagram> diagrs = this.nameMap.get(name);
+		if (diagrs == null) {
+			diagrs = new Vector<Diagram>();
+			diagrs.add(diagr);		
+			this.nameMap.put(name, diagrs);
+			added = true;
+		}
+		else if (!diagrs.contains(diagr)) {
+			added = diagrs.add(diagr);
+		}
+		return added;
+	}
+	
+	private boolean removeFromNameMap(String name, Diagram diagr)
+	{
+		boolean removed = false;
+		Vector<Diagram> diagrs = this.nameMap.get(name);
+		if (diagrs != null) {
+			removed = diagrs.removeElement(diagr);
+			if (diagrs.isEmpty()) {
+				this.nameMap.remove(name);
+			}
+		}
+		return removed;
+	}
+	// END KGU#624 2018-12-26
 
 }

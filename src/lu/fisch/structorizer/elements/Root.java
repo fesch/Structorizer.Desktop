@@ -137,6 +137,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-12-18      Bugfix #649: New method getElementCount(), use of cached variable names on redrawing
  *      Kay Gürtzig     2018-12-19      Bugfix #652: Drawing preparation and actual drawing were inconsistent
  *                                      w.r.t. the "Included Diagrams" box, such that ugly discrepancies appeared.
+ *      Kay Gürtzig     2018-12-26      Method collectCalls(Element) moved hitherto from class Generator
  *      
  ******************************************************************************************************
  *
@@ -5876,4 +5877,44 @@ public class Root extends Element {
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+	
+	// START KGU#178/KGU#624 2018-12-26: Issues #160, #655; moved hitherto from class Generator
+	/**
+	 * Gathers all {@code Call} elements contained in this Root
+	 * @return the vector of all contained {@code Call} elements
+	 */
+	public Vector<Call> collectCalls()
+	{
+		return collectCalls(this);
+	}
+	
+	/**
+	 * Recursively gathers all {@code Call} elements in {@code _ele} and it's substructure
+	 * @param _ele - an {@link Element}
+	 * @return a vector of found {@code Call} elements
+	 */
+	private Vector<Call> collectCalls(Element _ele)
+	{
+		final class CallCollector implements IElementVisitor
+		{
+			public Vector<Call> calls = new Vector<Call>();
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Call) {
+					calls.add((Call)_ele);
+				}
+				return true;
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+		};
+		CallCollector visitor = new CallCollector();
+		_ele.traverse(visitor);
+		return visitor.calls;
+	}
+	// END KGU#178/KGU#624 2018-12-26
+
 }

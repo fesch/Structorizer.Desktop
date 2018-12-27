@@ -33,10 +33,11 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Bob Fisch       2009.08.18  First Issue
- *      Kay Gürtzig     2015.11.24  Pinning flag added (issue #35, KGU#88)
- *      Kay Gürtzig     2016.03.08  Bugfix #97: Method resetDrawingInfo added (KGU#155)
- *      Kay Gürtzig     2017.01.13  Issue #305 (KGU#330) additional information added to trigger notification 
+ *      Bob Fisch       2009-08-18  First Issue
+ *      Kay Gürtzig     2015-11-24  Pinning flag added (issue #35, KGU#88)
+ *      Kay Gürtzig     2016-03-08  Bugfix #97: Method resetDrawingInfo added (KGU#155)
+ *      Kay Gürtzig     2017-01-13  Issue #305 (KGU#330) additional information added to trigger notification
+ *      Kay Gürtzig     2018-12-26  Enh. #655 method getName() introduced
  *
  ******************************************************************************************************
  *
@@ -62,7 +63,7 @@ public class Diagram
     boolean isPinned = false;
     // END KGU#88 2015-11-24
     // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
-    String signature;
+    private String signature;
     // END KGU#330 2017-01-13
 
     public Diagram(Root root, Point point)
@@ -109,5 +110,23 @@ public class Diagram
 		return !this.signature.equals(oldSignature);
 	}
     // END KGU#330 2017-01-13
+	
+	// START KGU#624 2018-12-26: Enh. #655
+	/** @return the pure diagram name (extracted from the cached signature) */
+	public String getName()
+	{
+		String name = this.signature;
+		if (name != null) {
+			int pos1 = name.indexOf(':');
+			if (pos1 > 0) {
+				name = name.substring(0, pos1);
+			}
+			if ((pos1 = name.indexOf('(')) > 0) {
+				name = name.substring(0, pos1);
+			}
+		}
+		return name;
+	}
+	// END KGU#624 2018-12-26
 	
 }

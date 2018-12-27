@@ -1126,6 +1126,9 @@ Arranger.msgCantDoWithMultipleRoots.text=It is not possible to %1 more than one 
 Arranger.msgDiagramsSelected.text=diagrams: %1, selected: %2
 Arranger.msgBrowseFailed.text=Failed to show % in browser
 Arranger.msgTitleURLError.text=URL Error
+Arranger.msgSelectionExpanded.text=% referenced diagram(s) added to selection.
+Arranger.msgMissingDiagrams.text=\n\n%1 referenced diagram(s) not found:\n- %2
+Arranger.msgAmbiguousSignatures.text=\nThere are %1 signature(s) with more than one matching diagrams among the selection:\n- %2
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:

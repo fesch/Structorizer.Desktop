@@ -63,7 +63,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-10-06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
- *      Kay Gürtzig     2018-12-25  Enh. #655: Set of key bindings accomplished, dialog revision
+ *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision
  *
  ******************************************************************************************************
  *
@@ -84,6 +84,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -143,7 +144,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("diagrams: %1, selected: %2");
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
-	// END KGU#624 2018-12-21/24
+	public static final LangTextHolder msgSelectionExpanded = new LangTextHolder("% referenced diagram(s) added to selection.");
+	public static final LangTextHolder msgMissingDiagrams = new LangTextHolder("\n\n%1 referenced diagram(s) not found:\n- %2");
+	public static final LangTextHolder msgAmbiguousSignatures = new LangTextHolder("\nAmong the selection, several matching diagrams occur for %1 signature(s):\n- %2");
+	// END KGU#624 2018-12-21/26
+	
+	// START KGU#624 2018-12-26: Enh. #655 - temporary limit for he listing of selected diagrams
+	protected static final int ROOT_LIST_LIMIT = 20;
+	// END KGU#624 2018-12-26
 
     // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
@@ -611,10 +619,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	{//GEN-HEADEREND:event_btnExportPNGActionPerformed
 		// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
 		StringList rootList = surface.listSelectedRoots(false, false);
-		if (rootList.count() > 1 && rootList.count() < surface.getDiagramCount()) {
+		int nSelected = rootList.count();
+		if (nSelected > 1 && nSelected < surface.getDiagramCount()) {
+			if (nSelected > ROOT_LIST_LIMIT) {
+				rootList.remove(ROOT_LIST_LIMIT, nSelected);
+				rootList.add("...");
+			}
 			if (JOptionPane.showConfirmDialog(this, 
 					msgConfirmMultiple.getText()
-					.replace("%1", Integer.toString(rootList.count()))
+					.replace("%1", Integer.toString(nSelected))
 					.replace("%2", Integer.toString(surface.getDiagramCount()))
 					.replace("%3", rootList.concatenate("\n- "))
 					.replace("%4", msgReadyToExport.getText()),
@@ -645,10 +658,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		else {
 			// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
 			StringList rootList = surface.listSelectedRoots(false, false);
+			int nSelected = rootList.count();
 			if (rootList.count() > 1) {
+				if (nSelected > ROOT_LIST_LIMIT) {
+					rootList.remove(ROOT_LIST_LIMIT, nSelected);
+					rootList.add("...");
+				}
 				if (JOptionPane.showConfirmDialog(this, 
 						msgConfirmMultiple.getText()
-						.replace("%1", Integer.toString(rootList.count()))
+						.replace("%1", Integer.toString(nSelected))
 						.replace("%2", Integer.toString(surface.getDiagramCount()))
 						.replace("%3", rootList.concatenate("\n- "))
 						.replace("%4", msgConfirmRemove.getText().replace("%1",msgActionDelete.getText())), 
@@ -822,6 +840,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     else {
                         verb = msgActionDelete.getText();
                     }
+                	if (nSelected > ROOT_LIST_LIMIT) {
+                		// Avoid to make the option pane so large that the buttons can't be reached
+                		rootList.remove(ROOT_LIST_LIMIT, nSelected);
+                		rootList.add("...");
+                	}
                     if (shift && checkIllegalMultipleAction(rootList, verb)) {
                         break;
                     }
@@ -975,11 +998,44 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     this.helpArranger();
                     break;
                     // END KGU#624 2018-12-24
+                    // START KGU#624 2018-12-26: Enh. #655
+                case KeyEvent.VK_HOME:
+                case KeyEvent.VK_END:
+                {
+                    javax.swing.JScrollBar scrollbar = scrollarea.getHorizontalScrollBar();
+                    int maxValue = surface.getWidth();
+                    if (ev.isControlDown()) {
+                        scrollbar = scrollarea.getVerticalScrollBar();
+                        maxValue = surface.getHeight();
+                    }
+                    scrollbar.setValue(ev.getKeyCode() == KeyEvent.VK_HOME ? 0 : maxValue);
+                }
+                break;
+                case KeyEvent.VK_F11:
+                {
+                    StringList missingRoots = new StringList();
+                    StringList duplicateRoots = new StringList();
+                    int nAdded = surface.expandSelectionRecursively(missingRoots, duplicateRoots);
+                    String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
+                    if (duplicateRoots.count() > 0) {
+                        message += msgAmbiguousSignatures.getText()
+                                .replace("%1", Integer.toString(duplicateRoots.count()))
+                                .replace("%2", duplicateRoots.concatenate("\n- "));
+                    }
+                    if (missingRoots.count() > 0) {
+                        message += msgMissingDiagrams.getText()
+                                .replace("%1", Integer.toString(missingRoots.count()))
+                                .replace("%2", missingRoots.concatenate("\n- "));
+                    }
+                    JOptionPane.showMessageDialog(this, message);
+                }
+                    break;
+                    // END KGU#624 2018-12-26
             }
         }
     }
     
-    /**
+	/**
      * In case {@code rootList} contains more than one element, raises an error message
      * that {@code actionName} is not allowed for multiple selection and returns true,
      * otherwise returns false.
@@ -991,6 +1047,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     {
         int nSelected = rootList.count();
         if (nSelected > 1) {
+        	if (nSelected > ROOT_LIST_LIMIT) {
+        		// Avoid to make the option pane so large that the buttons can't be reached
+        		rootList.remove(ROOT_LIST_LIMIT, nSelected);
+        		rootList.add("...");
+        	}
         	JOptionPane.showMessageDialog(this,
         			msgCantDoWithMultipleRoots.getText().
         			replace("%1", actionName).

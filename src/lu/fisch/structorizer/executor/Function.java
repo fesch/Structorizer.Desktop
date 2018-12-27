@@ -231,6 +231,11 @@ public class Function
     // END KGU#332 2017-01-29
     
     // START KGU 2017-02-21: signature string uniform with Root.getSignatureString(false)
+    /**
+     * Returns a string composed of the function name and the number of arguments in parentheses,
+     * e.g. {@code "sub0815(4)"}.
+     * @return the signature string
+     */
     public String getSignatureString()
     {
     	String sigStr = null;

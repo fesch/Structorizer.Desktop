@@ -660,7 +660,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Registers the declaration of entity {@code _id} as handled in the code for the {@link Root}
 	 * with signature {@code _signature}. Returns whether the 
-	 * @param signature
+	 * @param _signature
 	 * @param _id
 	 */
 	protected void setDefHandled(String _signature, String _id) {
@@ -1752,7 +1752,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// START KGU#238 2016-08-11: Code revision
 		//Vector<Call> calls = new Vector<Call>();
 		//collectCalls(_root.children, calls);
-		Vector<Call> calls = collectCalls(_root);
+		// START KGU#624 2018-12-26: Enh. #655 - method moved to Root
+		//Vector<Call> calls = collectCalls(_root);
+		Vector<Call> calls = _root.collectCalls();
+		// END KGU#624 2018-12-26
 		// END KGU#238 2016-08-11
 		for (Call call: calls)
 		{
@@ -1765,31 +1768,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 		}
 	}
-	
-	// START KGU#238 2016-08-12: Code revision
-	private Vector<Call> collectCalls(Element _ele)
-	{
-		final class CallCollector implements IElementVisitor
-		{
-			public Vector<Call> calls = new Vector<Call>();
-			
-			@Override
-			public boolean visitPreOrder(Element _ele) {
-				if (_ele instanceof Call) {
-					calls.add((Call)_ele);
-				}
-				return true;
-			}
-			@Override
-			public boolean visitPostOrder(Element _ele) {
-				return true;
-			}
-		};
-		CallCollector visitor = new CallCollector();
-		_ele.traverse(visitor);
-		return visitor.calls;
-	}
-	// END KGU#178 2016-07-19
 	
 	// START KGU#237 2016-08-10: Bugfix #228
 	/**

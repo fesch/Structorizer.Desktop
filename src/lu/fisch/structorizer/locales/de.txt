@@ -1131,6 +1131,9 @@ Arranger.msgCantDoWithMultipleRoots.text=Es ist nicht möglich, mehr als ein Dia
 Arranger.msgDiagramsSelected.text=Diagramme: %1, ausgewählt: %2
 Arranger.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
 Arranger.msgTitleURLError.text=URL-Fehler
+Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagrame zurAuswahl hinzugefügt.
+Arranger.msgMissingDiagrams.text=\n\nVerweise auf %1 Diagramme nicht aufgelöst (Diagramme nicht gefunden):\n- %2
+Arranger.msgAmbiguousSignatures.text=\nEs gibt %1 Signaturen, zu denen jeweils mehr als ein Diagramm innerhalb der Auswahl passt:\n- %2
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
