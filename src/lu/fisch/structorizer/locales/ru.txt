@@ -152,6 +152,8 @@ Menu.menuEditUpgradeTurtle.text=Изощрить графику черепахи
 Menu.menuEditUpgradeTurtle.tooltip=
 Menu.menuEditDowngradeTurtle.text=Огрубить графику черепахи
 Menu.menuEditDowngradeTurtle.tooltip=
+Menu.menuEditBreakLines.text=
+Menu.menuEditBreakLines.tooltip=
 Menu.menuEditCopyDiagramPNG.text=Копировать изображение PNG
 Menu.menuEditCopyDiagramEMF.text=Копировать изображение EMF
 // Menu "Diagram"
@@ -358,10 +360,15 @@ Menu.msgGuidedTourNext.text=
 Menu.ttlGuidedTours.text=
 Menu.msgTooManyDiagrams.text=
 Menu.lblAcceptProposedNames.text=
+Menu.ttlBreakTextLines.text=
+Menu.msgMaxLineLengthSelected.text=
+Menu.msgMaxLineLengthSubstructure.text=
+Menu.lblNewMaxLineLength.text=
+Menu.lblInvolveSubtree.text=
+Menu.lblPreserveContinuators.text=
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=
 Menu.msgTabHdrAlias.text=
-
 
 // Error messages for analyser
 Menu.warning_1.text=ВНИМАНИЕ: ТЕКСТЫ ОБМЕНЕНЫ С КОММЕНТАРИЯМИ! → меню "%1 ► %2"
@@ -801,6 +808,8 @@ About.title=About
 About.pnlTabbed.tab.0=Участники проекта
 About.pnlTabbed.tab.1=Изменения
 About.pnlTabbed.tab.2=
+About.pnlTabbed.tab.3=
+About.msgPaths.text=
 About.btnOK.text=ОК
 About.btnOK.tooltip=Подтвердите свой выбор.
 
@@ -816,7 +825,6 @@ FontChooser.btnOK.text=ОК
 FontChooser.btnOK.tooltip=Подтвердите свой выбор.
 FontChooser.cbFixPadding.text=Неизменные кромки (независ. от размера)
 
-
 -----[ Colors ]-----
 Colors.title=Настройки цвета
 Colors.lblColors.*.text=Цвет [#]
@@ -824,7 +832,8 @@ Colors.lblColors.*.tooltip=Ваш выбор для цвета nˇ [#].
 Colors.colors.*.tooltip=Нажмите чтобы изменить ...
 Colors.btnOK.text=ОК
 Colors.btnOK.tooltip=Подтвердите свой выбор.
-
+Colors.btnReset.text=
+Colors.btnReset.tooltip=
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Изменение цвета
@@ -921,6 +930,9 @@ ImportOptionDialog.chkLogDir.text=
 ImportOptionDialog.chkLogDir.tooltip=
 ImportOptionDialog.txtLogDir.tooltip=
 ImportOptionDialog.btnLogDir.tooltip=
+ImportOptionDialog.lblMaxLen.text=
+ImportOptionDialog.spnMaxLen.tooltip=
+ImportOptionDialog.lblLimit.text=
 ImportOptionDialog.btnPluginOptions.text=
 ImportOptionDialog.msgOptionsForPlugin.text=
 ImportOptionDialog.btnOk.text=ОК
@@ -1035,11 +1047,12 @@ FindAndReplace.ttlSearchError.text=
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=
 Arranger.btnRemoveDiagram.text=
-Arranger.btnRemove1Diagram.text=
+Arranger.btnRemoveDiagrams.text=
 Arranger.btnRemoveAllDiagrams.text=
 Arranger.btnExportPNG.text=
 Arranger.btnSaveArr.text=
 Arranger.btnLoadArr.text=
+Arranger.btnAddDiagram.tooltip=
 Arranger.btnPinDiagram.text=
 Arranger.btnSetCovered.text=
 Arranger.btnZoom.text=
@@ -1048,12 +1061,26 @@ Arranger.btnLoadArr.tooltip=
 Arranger.btnExportPNG.tooltip=
 Arranger.btnPinDiagram.tooltip=
 Arranger.btnSetCovered.tooltip=
+Arranger.btnRemoveDiagram.tooltip=
 Arranger.btnZoom.tooltip=
 Arranger.msgConfirmRemoveAll.text=
 Arranger.msgTitleWarning.text=
+Arranger.msgActionDelete.text=
+Arranger.msgActionCut.text=
+Arranger.msgActionCopy.text=
+Arranger.msgConfirmRemove.text=
+Arranger.msgConfirmMultiple.text=
+Arranger.msgReadyToExport.text=
+Arranger.msgCantDoWithMultipleRoots.text=
+Arranger.msgDiagramsSelected.text=
+Arranger.msgBrowseFailed.text=
+Arranger.msgTitleURLError.text=
+
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=
 Surface.msgSavePortable.text=
+Surface.lblSaveAsArrz.text=
+Surface.lblSaveAsArr.text=
 Surface.msgSaveDialogTitle.text=
 Surface.msgSaveError.text=
 Surface.msgLoadDialogTitle.text=
@@ -1142,6 +1169,7 @@ Control.msgTypeMismatch.text=
 Control.msgBadValueList.text=
 Control.msgBadValueListDetails.text=
 Control.msgIndexOutOfBounds.text=
+Control.msgInitializerAsArgument.text=
 Control.msgVarUpdateErrors.text=
 Control.msgVarUpdatesFailed.text=
 Control.msgEndEditing.text=

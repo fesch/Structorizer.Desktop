@@ -1666,7 +1666,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected void arrangerIndexAttributes() {
 		Root selectedRoot = diagramIndex.getSelectedValue();
 		if (selectedRoot != null) {
-			diagram.attributesNSD(selectedRoot);			
+			diagram.inspectAttributes(selectedRoot);			
 			diagramIndex.repaint();			
 		}
 	}

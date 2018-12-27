@@ -87,7 +87,10 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-20      Issue #654: Current directory is now restored from ini file on first launch
  *      Kay Gürtzig     2018-12-21/22   Enh. #655: Zoom and selection notifications to support status bar,
  *                                      multiple selection enabled and established as base for collective operations
- *      Kay Gürtzig     2018-12-22      Bugfix #656: Loading of referred files residing in an arrz file fixed. 
+ *      Kay Gürtzig     2018-12-22      Bugfix #656: Loading of referred files residing in an arrz file fixed.
+ *      Kay Gürtzig     2018-12-23      Bugfix #512: On dropping/pushing diagrams the scrolling had used wrong coordinates
+ *      Kay Gürtzig     2018-12-25      Enh. #655: Dialog revisions
+ *      Kay Gürtzig     2018-12-26      Two cross reference maps introduced (rootMap, nameMap), expandSelectionRecursively() impemented
  *
  ******************************************************************************************************
  *
@@ -156,6 +159,7 @@ import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -180,11 +184,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Scanner;
 import java.util.Set;
@@ -198,11 +205,14 @@ import java.util.zip.ZipOutputStream;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -236,6 +246,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#305 2016-12-16: Code revision
 	private final Vector<IRoutinePoolListener> listeners = new Vector<IRoutinePoolListener>();
 	// END KGU#305 2016-12-16
+	// START KGU#624 2018-12-26: Enh. #655 We need more efficient searching
+	private final HashMap<String, Vector<Diagram>> nameMap = new HashMap<String, Vector<Diagram>>();
+	private final HashMap<Root, Diagram> rootMap = new HashMap<Root, Diagram>();
+	// END KGU#624 2018-12-26
 	/** Default minimum distance between diagrams when allocated */ 
 	private static final int DEFAULT_GAP = 10;
 	/** Default width for a diagram never drawn before */ 
@@ -247,18 +261,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/** Empirical height estimate for an empty diagram */ 
 	private static final int MIN_HEIGHT = 118;
 
-	/** Current actual mouse coordinates (i.e. without regarding the zoom-factor) */
+	/** Current/Last actual mouse coordinates (i.e. without regarding the zoom-factor) */
 	private Point mousePoint = null;
-	/** Last mouse position in diagram coordinates (i.e. regarding zoom factor) */
-	private Point mouseRelativePoint = null;
-	private boolean mousePressed = false;
 	// START KGU#624 2018-12-21: Enh. #655 Diagram -> Set<Diagram>
 	//private Diagram mouseSelected = null;
-	/** The {@link Diagram} most recently hit by a mouseclick */
-	private Diagram mouseHit = null;
 	/** The {@link Diagram}s currently selected via mouse click */
 	private final Set<Diagram> diagramsSelected = new HashSet<Diagram>();
 	// END KGU#624 2018-12-21
+	// START KGU#624 2018-12-23: Enh. #655 Drag a selection area
+	private Rectangle dragArea = null;
+	// END KGU#624 2018-12-23
 	// START KGU#88 2015-11-24: We may often need the pin icon
 	/** Caches the icon used to indicate pinned state in the requested size */
 	public static Image pinIcon = null;
@@ -272,11 +284,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#110 2015-12-21
 	// START KGU#202 2016-07-03
 	public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
-	public final LangTextHolder msgSavePortable = new LangTextHolder("You have selected the following %1 diagrams (from %2):\n\n%3\n\nSave as portable compressed archive (otherwise only the arrangement list)?");
+	public final LangTextHolder msgSavePortable = new LangTextHolder("You may save this arrangement\n- either as portable compressed archive (*.arrz)\n- or as mere arrangement list with file paths (*.arr).");
+	public final LangTextHolder lblSaveAsArrz = new LangTextHolder("As archive (*.arrz)");
+	public final LangTextHolder lblSaveAsArr = new LangTextHolder("As list (*.arr)");
 	public final LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
 	public final LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
 	public final LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
-	public final LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory?");
+	public final LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory (optional)?");
 	public final LangTextHolder msgArrLoadError = new LangTextHolder("Error on loading the arrangement:");
 	public final LangTextHolder msgExportDialogTitle = new LangTextHolder("Export diagram as PNG ...");
 	public final LangTextHolder msgExportError = new LangTextHolder("Error while saving the image!");
@@ -304,21 +318,42 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
 	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	// END KGU#385 2017-04-22
+	// START KGU#626 2018-12-27: Enh. #657
+	public static final LangTextHolder msgTooltipSelectThis = new LangTextHolder("Select this diagram (+shift: add it to the selection) and bring it up to top.");
+	// END KGU#626 2018-12-27
 
 	@Override
 	public void paintComponent(Graphics g)
 	// START KGU#497 2018-03-19: Enh. #512 - The PNG export must compensate the zoom factor
 	{
-		this.paintComponent(g, false);
+		this.paintComponent(g, false, false, 0, 0);
 	}
+	
 	/**
-	 * Specific variant of {@link #paint(Graphics)} with the opportunity to compensate
+	 * Specific variant of {@link #paintComponent(Graphics)} with the opportunity to compensate
 	 * the imposed {@link #zoomFactor} by filling the enlarged canvas with white colour
 	 * and drawing the diagrams in original size.
 	 * @param g - a {@link Graphics2D} object as transformable drawing canvas
 	 * @param compensateZoom - whether the imposed {@link #zoomFactor} is to be compensated
 	 */
 	public void paintComponent(Graphics g, boolean compensateZoom)
+	// START KGU#624 2018-12-24: Enh. #655
+	{
+		this.paintComponent(g, compensateZoom, false, 0, 0);		
+	}
+	
+	/**
+	 * Specific variant of {@link #paintComponent(Graphics)} with the opportunity to compensate
+	 * the imposed {@link #zoomFactor} by filling the enlarged canvas with white colour
+	 * and drawing the diagrams in original size.
+	 * @param g - a {@link Graphics2D} object as transformable drawing canvas
+	 * @param compensateZoom - whether the imposed {@link #zoomFactor} is to be compensated
+	 * @param onlySelected - if true then the drawing will be restricted to selected diagrams
+	 * @param offsetX - a horizontal offset that is to be compensated (subtracted)
+	 * @param offsetY - a vertical offset that is to be compensated (subtracted)
+	 */
+	public void paintComponent(Graphics g, boolean compensateZoom, boolean onlySelected, int offsetX, int offsetY)
+	// END KGU#624 2018-12-24
 	// END KGU#497 2018-03-19
 	{
 		//System.out.println("Surface: " + System.currentTimeMillis());
@@ -332,8 +367,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#572 2018-09-09: Bugfix #508/#512 - ensure all diagrams have shape without rounding defects
 			for(int d=0; d<diagrams.size(); d++)
 			{
-				// If the diagram had already been drawn or prepared this will return immediately
-				diagrams.get(d).root.prepareDraw(g2d);
+				// START KGU#624 2018-12.24: Enh. #655
+				//diagrams.get(d).root.prepareDraw(g2d);
+				Diagram diagr = diagrams.get(d);
+				if ((!onlySelected || this.diagramsSelected.contains(diagr)) && diagr.root != null) {
+					// If the diagram had already been drawn or prepared this will return immediately
+					diagr.root.prepareDraw(g2d);
+				}
+				// END KGU#624 2018-12-24
 			}
 			// END KGU#572 2018-09-09
 			// START KGU#497 2018-03-19: Enh. #512
@@ -344,9 +385,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// is too small (virtually scaled don), therefore we must draw a
 				// white rectangle covering the enlarged image area
 				g2d.setColor(Color.WHITE);
-				g2d.fillRect(0, 0, 
-						Math.round(this.getWidth() * zoomFactor),
-						Math.round(this.getHeight() * zoomFactor));
+				g2d.fillRect(0, 0,
+						// START KGU#624 2018-12-24: Enh. #655
+						//Math.round(this.getWidth() * zoomFactor),
+						//Math.round(this.getHeight() * zoomFactor)
+						Math.round(this.getWidth() * zoomFactor - offsetX),
+						Math.round(this.getHeight() * zoomFactor - offsetY)
+						// END KGU#624 2018-12-24
+						);
 			}
 			else {
 				g2d.scale(1/zoomFactor, 1/zoomFactor);
@@ -356,9 +402,20 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for(int d=0; d<diagrams.size(); d++)
 			{
 				Diagram diagram = diagrams.get(d);
+				// START KGU#624 2018-12-24: Enh. #655
+				if (onlySelected && !this.diagramsSelected.contains(diagram)) {
+					continue;
+				}
+				// END KGU#624 2018-12-24
+				
 				Root root = diagram.root;
 				Point point = diagram.point;
 
+				// START KGU#624 2018-12-24: Enh. #655
+				if (offsetX != 0 || offsetY != 0) {
+					point = new Point(point.x - offsetX, point.y - offsetY);
+				}
+				// END KGU#624 2018-12-24
 				// START KGU#88 2015-11-24
 				//root.draw(g, point, this);
 				Rect rect = root.draw(g2d, point, this, Element.DrawingContext.DC_ARRANGER);
@@ -377,7 +434,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					int x = rect.right - pinIcon.getWidth(null)*3/4;
 					int y = rect.top - pinIcon.getHeight(null)/4;
 
-					((Graphics2D)g).drawImage(pinIcon, x, y, null);
+					g2d.drawImage(pinIcon, x, y, null);
 					//((Graphics2D)g).drawOval(rect.right - 15, rect.top + 5, 10, 10);
 				}
 				// END KGU#88 2015_11-24
@@ -386,6 +443,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				if (rect.bottom > area.height) area.height = rect.bottom;
 				// END KGU#85 2017-10-23
 			}
+			// START KGU#624 2018-12-23: Enh. #655 - draw the dragArea
+			if (dragArea != null) {
+				g2d.drawRect(dragArea.x, dragArea.y, dragArea.width, dragArea.height);
+			}
+			// END KGU#624 2018-12-23
 			// START KGU#497 2018-03-19: Enh. #512
 			if (!compensateZoom) {
 				g2d.scale(zoomFactor, zoomFactor);
@@ -474,6 +536,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		}
 		// END KGU#278 2016-10-11
+		// START KGU#624 2018-12-27: Enh. #655 - Notify about the selection change
+		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+		// END KGU#624 2018-12-27
 		return nLoaded;
 	}
 	
@@ -575,13 +640,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#624 2018-12-22: Enh. #655
 		// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)
 		StringList rootNames = listSelectedRoots(true, false);
-		String saveMessage = msgSavePortable.getText().
-				replace("%1", Integer.toString(rootNames.count())).
+		int nSelected = rootNames.count();
+		if (nSelected > Arranger.ROOT_LIST_LIMIT) {
+			rootNames.remove(Arranger.ROOT_LIST_LIMIT, nSelected);
+			rootNames.add("...");
+		}
+		String saveMessage = Arranger.msgConfirmMultiple.getText().
+				replace("%1", Integer.toString(nSelected)).
 				replace("%2", Integer.toString(this.diagrams.size())).
-				replace("%3", rootNames.getText());
+				replace("%3", rootNames.concatenate("\n- ")).
+				replace("%4", msgSavePortable.getText());
+		Object[] options = {lblSaveAsArrz.getText(), lblSaveAsArr.getText(), Menu.lblCancel.getText()};
 		// END KGU#624 2018-12-22
 		if (this.saveDiagrams() && 
-				(answer = JOptionPane.showConfirmDialog(frame, saveMessage)) != JOptionPane.CANCEL_OPTION)
+				(answer = JOptionPane.showOptionDialog(frame,
+						saveMessage, this.msgSaveDialogTitle.getText(),
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE, null,
+						options, options[0])) != JOptionPane.CANCEL_OPTION)
 		{
 			// Let's select path and name for the list / archive file
 			JFileChooser dlgSave = new JFileChooser(currentDirectory);
@@ -590,13 +666,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//dlgSave.addChoosableFileFilter(new ArrFilter());
 			if (answer == JOptionPane.OK_OPTION)
 			{
-				dlgSave.addChoosableFileFilter(new ArrZipFilter());
+				FileFilter filter = new ArrZipFilter();
+				dlgSave.addChoosableFileFilter(filter);
+				dlgSave.setFileFilter(filter);				
 				portable = true;
 				extension += "z";
 			}
 			else
 			{
-				dlgSave.addChoosableFileFilter(new ArrFilter());
+				FileFilter filter = new ArrFilter();
+				dlgSave.addChoosableFileFilter(filter);
+				dlgSave.setFileFilter(filter);
 			}
 			// END KGU#110 2016-06-29
 			dlgSave.setCurrentDirectory(currentDirectory);
@@ -779,7 +859,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 		out.close();
 	}
-    
+
 	/**
 	 * Compresses the arranged diagrams and the describing arr file (`arrFilename´)
 	 * into file `zipFilename´ (which is essentially an ordinary zip file but named as given).
@@ -1245,7 +1325,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				filename+=".png";
 			}
 
-			// deselect any diagram
+			// temporarily deselect any diagram
 			if (diagrams != null)
 			{
 				for (int d=0; d<diagrams.size(); d++)
@@ -1261,18 +1341,43 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-03-19: Enh. #512 - consider the (new) zoom factor
 			//BufferedImage bi = new BufferedImage(this.getWidth(), this.getHeight(),BufferedImage.TYPE_4BYTE_ABGR);
 			//paint(bi.getGraphics());
-			Rect rect = this.getDrawingRect(null);
+			// START KGU#624 2018-12-24: Enh. #655
+			//Rect rect = this.getDrawingRect(null);
+			int offsetX = 0, offsetY = 0;
+			Rect rect = null;
+			if (this.diagramsSelected.isEmpty()) {
+				rect = this.getDrawingRect(null);
+			}
+			else {
+				rect = new Rect(getSelectionBounds(true));
+				offsetX = rect.left - 10;
+				offsetY = rect.top - 10;
+				rect.left = 10;
+				rect.top = 10;
+				rect.right -= offsetX;
+				rect.bottom -= offsetY;
+			}
+			int width = this.getWidth() - Math.round(offsetX / zoomFactor);
+			int height = this.getHeight() - Math.round(offsetY / zoomFactor);
+			// END KGU#624 2018-12-24
 			if (logger.isLoggable(Level.CONFIG)) {
-				logger.log(Level.CONFIG, "{0} x {1}", new Object[]{this.getWidth(), this.getHeight()});
+				logger.log(Level.CONFIG, "{0} x {1}", new Object[]{width, height});
 				logger.log(Level.CONFIG, "Drawing Rect: {0}", rect);
-				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{this.getWidth()*this.zoomFactor, this.getHeight()*this.zoomFactor});
+				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{width*this.zoomFactor, height*this.zoomFactor});
 			}
 			BufferedImage bi = new BufferedImage(
-					Math.round(this.getWidth() * this.zoomFactor),
-					Math.round(this.getHeight() * this.zoomFactor),
+					Math.round(width * this.zoomFactor),
+					Math.round(height * this.zoomFactor),
 					BufferedImage.TYPE_4BYTE_ABGR);
-			paintComponent(bi.getGraphics(), true);
+			paintComponent(bi.getGraphics(), true, !this.diagramsSelected.isEmpty(), offsetX, offsetY);
 			// END KGU#497 2018-03-19
+			// START KGU#624 2018-12-24: Enh. #655 - support multiole selection / restore selection
+			for (Diagram diagr: this.diagramsSelected) {
+				if (diagr.root != null) {
+					diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+				}
+			}
+			// END KGU624 2018-12-24
 			// save the file
 			try
 			{
@@ -1286,56 +1391,66 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Determines the union of bounds of all diagrams on this Surface and updates
+	 * Determines the union of bounds of all diagrams on this {@link Surface} and updates
 	 * the lower silhouette line if {@code _silhouette} is given.
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
-	 * @return the bounding box als {@link Rect}
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
 	 */
 	public Rect getDrawingRect(LinkedList<Point> _silhouette)
 	{
-		Rect r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+		return getDrawingRect(diagrams, _silhouette);
+	}
 
-		if (diagrams != null)
+	/**
+	 * Determines the union of bounds of the given {@code _diagrams} in true diagram coordinates
+	 * and updates the lower silhouette line if {@code _silhouette} is given.
+	 * @param _diagrams - a collection of {@link Diagram} objects.
+	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
+	 * (where the x coordinate represents a leap position and the y coordinate is the new
+	 * level from x to the next leap eastwards) or null
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
+	 */
+	private Rect getDrawingRect(Collection<? extends Diagram> _diagrams, LinkedList<Point> _silhouette)
+	{
+		Rect r = new Rect(0,0,0,0);
+
+		if (_diagrams != null && !_diagrams.isEmpty())
 		{
+			r = new Rect(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 			//System.out.println("--------getDrawingRect()---------");
-			if (diagrams.size() > 0)
-				for (int d=0; d<diagrams.size(); d++)
-				{
-					Diagram diagram = diagrams.get(d);
-					Root root = diagram.root;
-					// FIXME (KGU 2015-11-18) This does not necessarily return a Rect within this surface!
-					Rect rect = root.getRect();	// 0-bound extension rectangle
-					// START KGU#85 2015-11-18: Didn't work properly, hence
-					//r.left=Math.min(rect.left,r.left);
-					//r.top=Math.min(rect.top,r.top);
-					//r.right=Math.max(rect.right,r.right);
-					//r.bottom=Math.max(rect.bottom,r.bottom);
-					// START KGU#136 2016-03-01: Bugfix #97
-					// empirical minimum width of an empty diagram
-					//int width = Math.max(rect.right - rect.left, 80);
-					int width = Math.max(rect.right, MIN_WIDTH);
-					// empirical minimum height of an empty diagram 
-					//int height = Math.max(rect.bottom - rect.top, 118);
-					int height = Math.max(rect.bottom, MIN_HEIGHT);
-					// END KGU#136 2016-03-01
-					//System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
-					r.left = Math.min(diagram.point.x, r.left);
-					r.top = Math.min(diagram.point.y, r.top);
-					r.right = Math.max(diagram.point.x + width, r.right);
-					r.bottom = Math.max(diagram.point.y + height, r.bottom);
-					//END KGU#85 2015-11-18
-					// START KGU#499 2018-02-20
-					if (_silhouette != null) {
-						this.updateSilhouette(_silhouette, diagram.point.x, width, diagram.point.y + height);
-					}
-					// END KGU#499 2018-02-20
+			for (Diagram diagram: _diagrams)
+			{
+				Root root = diagram.root;
+				// FIXME (KGU 2015-11-18) This does not necessarily return a Rect within this surface!
+				Rect rect = root.getRect();	// 0-bound extension rectangle
+				// START KGU#85 2015-11-18: Didn't work properly, hence
+				//r.left=Math.min(rect.left,r.left);
+				//r.top=Math.min(rect.top,r.top);
+				//r.right=Math.max(rect.right,r.right);
+				//r.bottom=Math.max(rect.bottom,r.bottom);
+				// START KGU#136 2016-03-01: Bugfix #97
+				// empirical minimum width of an empty diagram
+				//int width = Math.max(rect.right - rect.left, 80);
+				int width = Math.max(rect.right, MIN_WIDTH);
+				// empirical minimum height of an empty diagram 
+				//int height = Math.max(rect.bottom - rect.top, 118);
+				int height = Math.max(rect.bottom, MIN_HEIGHT);
+				// END KGU#136 2016-03-01
+				//System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
+				r.left = Math.min(diagram.point.x, r.left);
+				r.top = Math.min(diagram.point.y, r.top);
+				r.right = Math.max(diagram.point.x + width, r.right);
+				r.bottom = Math.max(diagram.point.y + height, r.bottom);
+				//END KGU#85 2015-11-18
+				// START KGU#499 2018-02-20
+				if (_silhouette != null) {
+					this.updateSilhouette(_silhouette, diagram.point.x, width, diagram.point.y + height);
 				}
-			else  r = new Rect(0,0,0,0);
+				// END KGU#499 2018-02-20
+			}
 		}
-		else r = new Rect(0,0,0,0);
-
 		//System.out.println("drawingRect: (" + r.left + ", " + r.top + ", " + r.right + ", " + r.bottom +")");
 
 		return r;
@@ -1525,6 +1640,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void addDiagram(Root root)
 	// START KGU#2 2015-11-19: Needed a possibility to register a related Mainform
 	{
+		// START KGU#624 2018-12-23: Enh. #655
+		// Only the new diagram shall be selected afterwards
+		unselectAll();
+		// END KGU#624 2018-12-23
 		addDiagram(root, null, null);
 	}
 	/**
@@ -1538,6 +1657,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void addDiagram(Root root, Mainform form)
 	// START KGU#110 2015-12-20: Enhancement #62 -we want to be able to use predefined positions
 	{
+		// START KGU#624 2018-12-23: Enh. #655
+		// Only the new diagram shall be selected afterwards
+		unselectAll();
+		// END KGU#624 2018-12-23
 		this.addDiagram(root, form, null);
 	}
 
@@ -1621,26 +1744,34 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU 2016-03-14
 			/*Diagram*/ diagram = new Diagram(root,point);
 			diagrams.add(diagram);
+			// START KGU#624 2018-12-26: Enh. #655 Attempt to make search faster
+			rootMap.put(root, diagram);
+			String rootName = root.getMethodName();
+			addToNameMap(rootName, diagram);
+			// END KGU#624 2018-12-26
 			// START KGU 2015-11-30
 			// START KGU#136 2016-03-01: Bugfix #97 - here we need the actual position
 			//Rectangle rec = root.getRect().getRectangle();
 			//rec.setLocation(left, top);
-			Rectangle rec = root.getRect(point).getRectangle();
+			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
-			if (rec.width == 0)	rec.width = DEFAULT_WIDTH;
-			if (rec.height == 0) rec.height = DEFAULT_HEIGHT;
+			if (rec.right == rec.left) rec.right += DEFAULT_WIDTH;
+			if (rec.bottom == rec.top) rec.bottom += DEFAULT_HEIGHT;
 			// START KGU#499 2018-02-21: Enh. #515 - better area management
 			// Improve the placement if possible (for more compact arrangement)
 			if (!pointGiven) {
-				point = findPreferredLocation(silhouette, rec);
+				point = findPreferredLocation(silhouette, rec.getRectangle());
 				diagram.point = point;
-				rec = root.getRect(point).getRectangle();
+				rec = root.getRect(point);
 			}
 			// END KGU#499 2018-02-21
 			// START KGU#85 2015-11-18
 			adaptLayout();
 			// END KGU#85 2015-11-18
-			this.scrollRectToVisible(rec);
+			// START KGU#497 2018-12-23: Bugfix for enh. #512
+			rec = rec.scale(1/this.zoomFactor);
+			// END KGU#497 2018-12-23
+			this.scrollRectToVisible(rec.getRectangle());
 			// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null
 			if (form != null)
 			{
@@ -1777,7 +1908,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		//{
 		//	removeDiagram(this.mouseSelected);
 		//}
-		// We must produce a copy of all selected element because removeDiagram(Diagram) will update the selection
+		// We must produce a copy of all selected elements because removeDiagram(Diagram) will update the selection
 		Diagram[] selectedDiagrams = new Diagram[this.diagramsSelected.size()];
 		this.diagramsSelected.toArray(selectedDiagrams);
 		for (Diagram diagr: selectedDiagrams) {
@@ -1831,6 +1962,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		//}
 		this.diagramsSelected.remove(diagr);
 		// END KGU#624 2018-12-21
+		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
+		rootMap.remove(diagr.root, diagr);
+		removeFromNameMap(diagr.getName(), diagr);
+		// END KGU#624 2018-12-26
 		diagrams.remove(diagr);
 		adaptLayout();
 		repaint();
@@ -2045,20 +2180,32 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}// </editor-fold>//GEN-END:initComponents
 
 	/**
-	 * @return the diagrams
+	 * @return the vector of {@link Diagram}s
 	 */
-	public Vector<Diagram> getDiagrams()
+	@Deprecated
+	protected Vector<Diagram> getDiagrams()
 	{
 		return diagrams;
 	}
 
 	/**
-	 * @param diagrams the diagrams to set
+	 * @param diagrams - the vector of {@link Diagram}s to set
 	 */
-	public void setDiagrams(Vector<Diagram> diagrams)
+	@Deprecated
+	protected void setDiagrams(Vector<Diagram> diagrams)
 	{
 		this.diagrams = diagrams;
 	}
+	
+	// START KGU#624 2018-12-25: Enh. #655
+	/**
+	 * @return the number of currently held {@link Diagram}s
+	 */
+	public int getDiagramCount()
+	{
+		return this.diagrams.size();
+	}
+	// END KGU#624 2018-12-25
 
 	// START KGU#49 2015-10-18: When the window is going to be closed we have to give the diagrams a chance to store their stuff
 	// FIXME (KGU): Quick-and-dirty version. More convenient should be a list view with all unsaved diagrams for checkbox selection
@@ -2184,6 +2331,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					//}
 					this.diagramsSelected.remove(diagr);
 					// END KGU#624 2018-12-21
+					// START KGU#624 2018-12-26: Enh. #655
+					this.rootMap.remove(diagr.root);
+					this.removeFromNameMap(diagr.root.getMethodName(), diagr);
+					// END KGU#624 2018-12-26
 					diagrams.remove(diagr);
 				}
 			}
@@ -2200,88 +2351,106 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mouseClicked(MouseEvent e)
 	{
-		System.out.println("mouseClicked(" + e.getID() + ") ");
 		Diagram diagr1 = null;
 		if (this.diagramsSelected.size() == 1) {
 			diagr1 = this.diagramsSelected.iterator().next();
 		}
-		if (e.getClickCount()==2)
-		{
-			if (diagr1 == null) {
-				return;
-			}
-			// create editor
-			Mainform form = diagr1.mainform;
-			// This loop is a precaution against stale Mainform (bugfix #132)
-			int nAttempts = 0;
-			do {
-				try
-				{
-					// An attached Mainform might refuse to re-adopt the root
-					if (form==null || !form.setRoot(diagr1.root))
-					{
-						// Start a dependent Mainform not willing to kill us
-						form = new Mainform(false);
-						form.addWindowListener(this);
-						form.setRoot(diagr1.root);
-					}
-
-					// store Mainform reference in diagram
-					diagr1.mainform = form;
-
-					// register this as "updater"
-					diagr1.root.addUpdater(this);
-
-					form.setVisible(true);
-					this.addChangeListener(form);
-				}
-				catch (Exception ex)
-				{
-					// Seems the Mainform was stale (closed without having been cleared)
-					form = null;
-				}
-			} while (form == null && nAttempts++ < 2);
-
-			adaptLayout();
-			this.repaint();
-		}
-		else {
-			boolean ctrlDown = e.isControlDown();
-			if (!ctrlDown) {
-				// Without Control button all previous selection is to be cleared 
-				this.unselectAll();
-			}
-			// With zooming we need the virtual mouse coordinates (Enh. #512)
-			int mouseX = Math.round(e.getX() * this.zoomFactor);
-			int mouseY = Math.round(e.getY() * this.zoomFactor);
-			Diagram diagram = mouseHit(mouseX, mouseY);
-			if (diagram != null)
+		// Don't change selection on right click!
+		if (e.getButton() != 3) {
+			if (e.getClickCount()==2)
 			{
-				Root root = diagram.root;
-				if (ctrlDown && diagramsSelected.contains(diagram)) {
-					root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
-					diagramsSelected.remove(diagram);
+				// Double-click action
+				if (diagr1 == null) {
+					// Don't do anything if no diagram is selected
+					return;
 				}
-				else {
-					root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-					diagramsSelected.add(diagram);
-				}
+				// create editor
+				Mainform form = diagr1.mainform;
+				// This loop is a precaution against stale Mainform (bugfix #132)
+				int nAttempts = 0;
+				do {
+					try
+					{
+						// An attached Mainform might refuse to re-adopt the root
+						if (form==null || !form.setRoot(diagr1.root))
+						{
+							// Start a dependent Mainform not willing to kill us
+							form = new Mainform(false);
+							form.addWindowListener(this);
+							form.setRoot(diagr1.root);
+						}
+
+						// store Mainform reference in diagram
+						diagr1.mainform = form;
+
+						// register this as "updater"
+						diagr1.root.addUpdater(this);
+
+						form.setVisible(true);
+						this.addChangeListener(form);
+					}
+					catch (Exception ex)
+					{
+						// Seems the Mainform was stale (closed without having been cleared)
+						form = null;
+					}
+				} while (form == null && nAttempts++ < 2);
+
+				adaptLayout();
+				this.repaint();
 			}
-			this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
-			repaint();			
+			else {
+				boolean ctrlDown = e.isControlDown();
+				if (!ctrlDown && !e.isShiftDown()) {
+					// Without Control button all previous selection is to be cleared 
+					this.unselectAll();
+				}
+				// With zooming we need the virtual mouse coordinates (Enh. #512)
+				int mouseX = Math.round(e.getX() * this.zoomFactor);
+				int mouseY = Math.round(e.getY() * this.zoomFactor);
+				Diagram diagram = getHitDiagram(mouseX, mouseY);
+				if (diagram != null)
+				{
+					Root root = diagram.root;
+					if (ctrlDown && diagramsSelected.contains(diagram)) {
+						root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
+						diagramsSelected.remove(diagram);
+					}
+					else {
+						root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+						diagramsSelected.add(diagram);
+					}
+				}
+				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+				repaint();			
+			}
 		}
 	}
 
 	public void mousePressed(MouseEvent e)
 	{
-		// Nothing to do here, the interesting things happen in mouseClicked() and
-		// mouseDragged()
+		/* The interesting things happen in mouseClicked() and mouseDragged() */
+		// START KGU#626 2018-12-23: Enh. #657
+		showPopupMenu(e);
+		// END KGU#626 2018-12-23
 	}
 
 	public void mouseReleased(MouseEvent e)
 	{
 		// We must reset the last mousePoint lest mouseDragged() runs havoc
 		mousePoint = null;
+		if (dragArea != null) {
+			// TODO Select all contained diagrams
+			Set<Diagram> foundDiagrams = this.getContainedDiagrams(dragArea);
+			if (! e.isShiftDown()) {
+				this.unselectAll();
+			}
+			this.selectSet(foundDiagrams);
+		}
+		dragArea = null;
+		// START KGU#626 2018-12-23: Enh. #657
+		showPopupMenu(e);
+		// END KGU#626 2018-12-23
 	}
 
 	public void mouseEntered(MouseEvent e)
@@ -2306,43 +2475,100 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			mouseX = Math.round(mouseX * zoomFactor);
 			mouseY = Math.round(mouseY * zoomFactor);
 			
-			Diagram diagram = mouseHit(mouseX, mouseY);
+			Diagram diagram = getHitDiagram(mouseX, mouseY);
+			Point oldMousePoint = this.mousePoint;
 			
-			// Don't drag if the mouse isn't above one of the selected diagrams
-			if (diagram != null && this.diagramsSelected.contains(diagram)) {
-				Point oldMousePoint = this.mousePoint;
+			// Don't drag diagrams if the mouse isn't above one of the selected diagrams
+			if (dragArea == null && (oldMousePoint != null || diagram != null && (this.diagramsSelected.isEmpty() || this.diagramsSelected.contains(diagram)))) {
 				this.mousePoint = new Point(mouseX, mouseY);
+				if (this.diagramsSelected.isEmpty()) {
+					this.diagramsSelected.add(diagram);
+					diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+				}
 				// Don't do anything if there is no former dragging position (cleared by mouseReleased())
 				if (oldMousePoint != null) {
 					int deltaX = mouseX - oldMousePoint.x;
 					int deltaY = mouseY - oldMousePoint.y;
-					// No move all selected diagrams synchronously
-					for (Diagram diagr: this.diagramsSelected) {
-						// No diagram is allowed to be shifted outside the reachable area
-						int newX = Math.max(0, diagr.point.x + deltaX);
-						int newY = Math.max(0, diagr.point.y + deltaY);
-						diagr.point.setLocation(newX, newY);
-					}
-					adaptLayout();
-					repaint();
+					// Now move all selected diagrams synchronously
+					moveSelection(deltaX, deltaY);
 				}
 			}
-
+			else if (this.mousePoint == null) {
+				// Draw a selection area
+				if (dragArea == null) {
+					dragArea = new Rectangle(mouseX, mouseY, 1, 1);
+				}
+				else {
+					dragArea.add(mouseX, mouseY);
+				}
+				repaint();
+			}
 		}
+	}
+	
+	
+	/**
+	 * Moves the selected diagrams by the specified amounts of pixels. Ensures that the
+	 * resulting coordinates of the diagrams won't be negative.
+	 * @param deltaX - pixels to the right (or left if negative)
+	 * @param deltaY - pixels down (or up if negative)
+	 */
+	protected void moveSelection(int deltaX, int deltaY) {
+		for (Diagram diagr: this.diagramsSelected) {
+			// No diagram is allowed to be shifted outside the reachable area
+			int newX = Math.max(0, diagr.point.x + deltaX);
+			int newY = Math.max(0, diagr.point.y + deltaY);
+			diagr.point.setLocation(newX, newY);
+		}
+		adaptLayout();
+		repaint();
 	}
 
 	public void mouseMoved(MouseEvent e)
 	{
 	}
 	
+	// START KGU#626 2018-12-23: Prepared for enh. #657
+	private void showPopupMenu(MouseEvent e) 
+	{
+		if (e.isPopupTrigger()) 
+		{
+			List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+			if (Arranger.popupMenu != null) {
+				Arranger.popupHitList.removeAll();
+				for (Diagram diagr: hitDiagrs) {
+					javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(diagr.root.getSignatureString(false), diagr.root.getIcon());
+					menuItem.setToolTipText(msgTooltipSelectThis.getText());
+					menuItem.addActionListener(new java.awt.event.ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent evt) {
+							if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
+								unselectAll();
+							}
+							diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+							diagramsSelected.add(diagr);
+							if (diagrams.remove(diagr)) {
+								diagrams.add(diagr);
+							}
+							notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+						}});
+					Arranger.popupHitList.add(menuItem);
+				}
+				Arranger.popupMenu.show(e.getComponent(), e.getX(), e.getY());					
+			}
+		}
+	}
+	// END KGU#626 2018-12-23
+	
+	// START KGU#624 2018-12-22: Enh. #655
 	/**
 	 * Identifies the top diagram under the mouse cursor (if any). An eclipsed diagram
 	 * will never be returned here
-	 * @param zoomedX - the virtual X coordinate of the mouse (zooming considered)
-	 * @param zoomedY - the virtual Y coordinate of the mouse (zooming considered)
+	 * @param trueX - the true X coordinate of the diagrams (zooming compensated)
+	 * @param trueY - the true Y coordinate of the diagrams (zooming compensated)
 	 * @return the only diagram not eclipsed at mouse position (if any, otherwise null)
 	 */
-	private Diagram mouseHit(int zoomedX, int zoomedY)
+	private Diagram getHitDiagram(int trueX, int trueY)
 	{
 		Diagram hitDiagram = null;
 		for (int d = diagrams.size()-1; d >= 0 && hitDiagram == null; d--)
@@ -2351,8 +2577,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			Root root = diagram.root;
 
 			Element ele = root.getElementByCoord(
-					zoomedX - diagram.point.x,
-					zoomedY - diagram.point.y);
+					trueX - diagram.point.x,
+					trueY - diagram.point.y);
 			if (ele != null)
 			{
 				hitDiagram = diagram;
@@ -2361,9 +2587,60 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return hitDiagram;
 	}
 
+	/**
+	 * Returns the list of all diagrams under the mouse cursor (also the eclipsed ones)
+	 * from top to bottom.
+	 * @param trueX - the true X coordinate of the diagrams (zoom compensated)
+	 * @param trueY - the true Y coordinate of the diagrams (zoom compensated)
+	 * @return The list of the diagrams enclosing the mouse position.
+	 * @see #getHitDiagram(int, int)
+	 */
+	private List<Diagram> getHitDiagrams(int trueX, int trueY)
+	{
+		List<Diagram> hitDiagrams = new LinkedList<Diagram>();
+		for (int d = diagrams.size()-1; d >= 0; d--)
+		{
+			Diagram diagram = diagrams.get(d);
+			Root root = diagram.root;
+
+			Element ele = root.getElementByCoord(
+					trueX - diagram.point.x,
+					trueY - diagram.point.y);
+			if (ele != null)
+			{
+				hitDiagrams.add(diagram);
+			}
+		}
+		return hitDiagrams;
+	}
+	
+	/**
+	 * Identifies all diagrams that are contained in the given {@code bounds} 
+	 * @param bounds - a {@link Rectangle} in true coordinates (zoom compensated!)
+	 * @return the set of diagrams contained in {@code bounds} 
+	 */
+	private Set<Diagram> getContainedDiagrams(Rectangle bounds)
+	{
+		Set<Diagram> containedDiagrams = new HashSet<Diagram>();
+		
+		for (Diagram diagram: diagrams) {
+			Root root = diagram.root;
+			if (root != null) {
+				Rectangle rect = root.getRect(diagram.point).getRectangle();
+				if (bounds.contains(rect.x, rect.y,
+						(rect.width + 1), (rect.height+1))) {
+					containedDiagrams.add(diagram);
+				}
+			}
+		}
+		
+		return containedDiagrams;
+	}
+	// END KGU#624 2018-12-22
+
 	// START KGU#624 2018-12-21: Enh. #655 - multiple selection opportunity
 	/**
-	 * Unselects all available diagrams
+	 * Unselects all available diagrams and repaints
 	 */
 	public void unselectAll() {
 		this.diagramsSelected.clear();
@@ -2372,15 +2649,31 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagr.root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED); 
 		repaint();
 	}
 	
 	/**
-	 * Selects all available diagrams
+	 * Selects all available diagrams and repaints
 	 */
 	public void selectAll() {
 		this.diagramsSelected.addAll(this.diagrams);
 		for (Diagram diagr: this.diagrams) {
+			if (diagr.root != null) {
+				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+			}
+		}
+		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+		repaint();
+	}
+
+	/**
+	 * Selects all given diagrams and repaints
+	 * @param diagrSet - set of diagram to be added to the selection
+	 */
+	public void selectSet(Set<Diagram> diagrSet) {
+		this.diagramsSelected.addAll(diagrSet);
+		for (Diagram diagr: diagrSet) {
 			if (diagr.root != null) {
 				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
@@ -2401,10 +2694,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#85 2015-11-18
 		this.repaint();
 		// START KGU#330 2017-01-13: We keep redundant information to be able to trigger change notifications
-		Diagram diagr = this.findDiagram(source, 1);
-		if (diagr != null && diagr.checkSignatureChange()) {
-			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
+		//Diagram diagr = this.findDiagram(source, 1);
+		Diagram diagr = rootMap.get(source);
+		// END KGU#624 2018-12-26
+		// START KGU#624 2018-12-26: Enh. #655
+		//if (diagr != null && diagr.checkSignatureChange()) {
+		//	this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		//}
+		if (diagr != null) {
+			String oldRootName = diagr.getName();
+			if (diagr.checkSignatureChange()) {
+				String newRootName = source.getMethodName();
+				if (!oldRootName.equals(newRootName)) {
+					removeFromNameMap(oldRootName, diagr);
+					addToNameMap(newRootName, diagr);
+				}
+				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+			}
 		}
+		// END KGU#624 2018-12-26
 		// END KGU#330 2017-01-13
 	}
 
@@ -2433,19 +2742,50 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	//private Diagram findDiagram(Root root)
 	// START KGU#312 2016-12-29: Enh. #315 - more differentiated equivalence check
 	//private Diagram findDiagram(Root root, boolean identityCheck)
+	/**
+	 * Search among the held {@link Diagram} objects for one the associated {@link Root} of which
+	 * closely enough resembles the given {@link Root} {@code root}.
+	 * @param root - the Nassi-Shneiderman diagram we look for
+	 * @param equalityLevel - the level of resemblance - see {@link Root#compareTo(Root)}
+	 * @return the first {@link Diagram} that holds a matching {@link Root}.
+	 * @see #findDiagram(Root, int, boolean)
+	 * @see #findDiagramsByName(String)
+	 * @see #findIncludesByName(String)
+	 */
 	private Diagram findDiagram(Root root, int equalityLevel)
 	{
 		return findDiagram(root, equalityLevel, false);
 	}
+	/**
+	 * Search among the held {@link Diagram} objects for one the associated {@link Root} of which
+	 * closely enough resembles the given {@link Root} {@code root}.
+	 * @param root - the Nassi-Shneiderman diagram we look for
+	 * @param equalityLevel - the level of resemblance - see {@link Root#compareTo(Root)}
+	 * @param warnLevel2AndAbove - if true then a warning will be raised if the obtained equality level is not 1 
+	 * @return the first {@link Diagram} that holds a matching {@link Root}.
+	 * @see #findDiagram(Root, int)
+	 * @see #findDiagramsByName(String)
+	 * @see #findIncludesByName(String)
+	 */
 	private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
 	// END KGU#312 2016-12-29
 	// END KGU#119 2016-01-02
 	{
 		Diagram owner = null;
-		if (this.diagrams != null) {
-			for(int d = 0; owner == null && d < this.diagrams.size(); d++)
+		Vector<Diagram> diagramList = this.diagrams;
+		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
+		if (equalityLevel == 1) {
+			return this.rootMap.get(root);
+		}
+		else if (equalityLevel == 2 || equalityLevel == 5) {
+			// We try to reduce the number of diagrams to be searched  
+			diagramList = this.nameMap.get(root.getMethodName());
+		}
+		// END KGU#624 2018-12-26
+		if (diagramList != null) {
+			for(int d = 0; owner == null && d < diagramList.size(); d++)
 			{
-				Diagram diagram = this.diagrams.get(d);
+				Diagram diagram = diagramList.get(d);
 				// START KGU#312 2016-12-29: Enh. #315
 				// START KGU#119 2016-01-02: Bugfix #78 When loading diagrams we ought to check for equality only
 				//if (diagram.root == root)
@@ -2534,16 +2874,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public Vector<Root> findDiagramsByName(String rootName)
 	{
 		Vector<Root> functions = new Vector<Root>();
-		if (this.diagrams != null) {
-			for (int d = 0; d < this.diagrams.size(); d++)
-			{
-				Diagram diagram = this.diagrams.get(d);
-				if (rootName.equals(diagram.root.getMethodName()))
-				{
-					functions.add(diagram.root);
-				}
+		// START KGU#624 2018-12-26: Enh. #655 Try to improve search performance
+		//if (this.diagrams != null) {
+		//	for (int d = 0; d < this.diagrams.size(); d++)
+		//	{
+		//		Diagram diagram = this.diagrams.get(d);
+		//		if (rootName.equals(diagram.root.getMethodName()))
+		//		{
+		//			functions.add(diagram.root);
+		//		}
+		//	}
+		//}
+		Vector<Diagram> diagramList = this.nameMap.get(rootName);
+		if (diagramList != null) {
+			for (int d = 0; d < diagramList.size(); d++) {
+				functions.add(diagramList.get(d).root);
 			}
 		}
+		// END KGU#624 2018-12-26
 		return functions;
 	}
 	// END KGU#2 2015-10-17
@@ -2613,7 +2961,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param withPath - Shall the file paths be added to the signature?
 	 * @return the StringList.
 	 */
-	private StringList listSelectedRoots(boolean allIfEmpty, boolean withPath) {
+	protected StringList listSelectedRoots(boolean allIfEmpty, boolean withPath) {
 		Vector<Root> selectedRoots = new Vector<Root>(this.diagramsSelected.size());
 		for (Diagram diagr: this.diagramsSelected) {
 			if (diagr.root != null) {
@@ -2781,6 +3129,37 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	// START KGU#624 2018-12-24: Enh. #655
+	/**
+	 * Scrolls to the current selection.
+	 */
+	public void scrollToSelection()
+	{
+		Rectangle bounds = getSelectionBounds(false);
+		if (bounds != null) {
+			this.scrollRectToVisible(bounds);
+		}
+	}
+
+	/**
+	 * Returns the bounding rectangle for the current selection
+	 * @param unzoomed - if the true coordinates are wanted, otherwise the zoom factor will be applied
+	 * @return the bounding box of the selected diagrams or null if the selection is empty
+	 */
+	private Rectangle getSelectionBounds(boolean unzoomed)
+	{
+		Rectangle bounds = null;
+		Rect rect = this.getDrawingRect(this.diagramsSelected, null);
+		if (!unzoomed) {
+			rect = rect.scale(1/zoomFactor);
+		}
+		if (rect.right > rect.left && rect.bottom > rect.top) {
+			bounds = rect.getRectangle();
+		}
+		return bounds;
+	}
+	// END KGU#624 2018-12-24
+	
 	/**
 	 * @return the set of {@link Root} objects currently selected in Arranger.
 	 */
@@ -2820,6 +3199,69 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return null;
 	}
 	// END KGU#624 2018-12-21
+	
+	// START KGU#624 2018-12-26: Enh. #655
+    protected int expandSelectionRecursively(StringList missingSignatures, StringList duplicateSignatures) {
+    	Set<Root> selectedRoots = getSelected();
+		LinkedList<Root> rootQueue = new LinkedList<Root>(selectedRoots);
+		Set<Diagram> addedDiagrams = new HashSet<Diagram>();
+		while (!rootQueue.isEmpty()) {
+			Root root = rootQueue.removeFirst();
+			// First look for called routines
+			Vector<Call> calls = root.collectCalls();
+			for (Call call: calls) {
+				if (call.isDisabled()) {
+					continue;
+				}
+				Function fct = call.getCalledRoutine();
+				if (fct != null) {
+					// TODO in future: compare group membership
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					// For now we will add all of them to be on the safe side
+					for (Root sub: candidates) {
+						if (selectedRoots.add(sub)) {
+							rootQueue.addLast(sub);
+							addedDiagrams.add(rootMap.get(sub));	// Should of course be in the map
+							sub.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+						}
+					}
+					if (candidates.isEmpty()) {
+						missingSignatures.add(fct.getSignatureString());
+					}
+					else if (candidates.size() > 1) {
+						duplicateSignatures.add(fct.getSignatureString());
+					}
+				}
+			}
+			// Then look for referenced includables
+			if (root.includeList != null) {
+				for (int i = 0; i < root.includeList.count(); i++) {
+					String inclName = root.includeList.get(i);
+					Vector<Root> candidates = this.findIncludesByName(inclName);
+					// For now we will add all of them to be on the safe side
+					for (Root incl: candidates) {
+						if (selectedRoots.add(incl)) {
+							rootQueue.addLast(incl);
+							addedDiagrams.add(rootMap.get(incl));	// Should of course be in the map
+							incl.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+						}
+					}
+					if (candidates.isEmpty()) {
+						missingSignatures.add(inclName);
+					}
+					else if (candidates.size() > 1) {
+						duplicateSignatures.add(inclName);
+					}
+				}
+			}
+		}
+		diagramsSelected.addAll(addedDiagrams);
+		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+		repaint();
+		return addedDiagrams.size();
+	}
+
+	// END KGU#624 2018-12-26
 
 	// START KGU#305 2016-12-16: Code revision
 	@Override
@@ -2889,7 +3331,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
-		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+		if (mwEvt.isControlDown()) {
 			int rotation = mwEvt.getWheelRotation();
 			if (Element.E_WHEEL_REVERSE_ZOOM) {
 				rotation *= -1;
@@ -2905,5 +3347,36 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 	// END KGU#503 2018-03-13
+	
+	// START KGU#624 2018-12-26: Enh. #655
+	private boolean addToNameMap(String name, Diagram diagr)
+	{
+		boolean added = false;
+		Vector<Diagram> diagrs = this.nameMap.get(name);
+		if (diagrs == null) {
+			diagrs = new Vector<Diagram>();
+			diagrs.add(diagr);		
+			this.nameMap.put(name, diagrs);
+			added = true;
+		}
+		else if (!diagrs.contains(diagr)) {
+			added = diagrs.add(diagr);
+		}
+		return added;
+	}
+	
+	private boolean removeFromNameMap(String name, Diagram diagr)
+	{
+		boolean removed = false;
+		Vector<Diagram> diagrs = this.nameMap.get(name);
+		if (diagrs != null) {
+			removed = diagrs.removeElement(diagr);
+			if (diagrs.isEmpty()) {
+				this.nameMap.remove(name);
+			}
+		}
+		return removed;
+	}
+	// END KGU#624 2018-12-26
 
 }

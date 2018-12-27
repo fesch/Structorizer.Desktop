@@ -32,68 +32,69 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.30      First Issue
- *      Bob Fisch       2008.04.12      Adapted for Generator plugin
- *      Kay Gürtzig     2015.11.03      Additions for FOR loop enhancement (KGU#3)
- *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
- *      Kay Gürtzig     2015.11.25      Error labels error13_3 (KGU#78), error15 (KGU#2), and error_16_x added
- *      Kay Gürtzig     2015.11.26      New error label error14_3 (KGU#3) added
- *      Kay Gürtzig     2015.11.28      New error label error17 (KGU#47) added
- *      Kay Gürtzig     2016.01.03/04   Enh. #87: New menu items and buttons for collapsing/expanding 
- *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
- *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
- *      Kay Gürtzig     2016.04.01      Issue #144: Favourite code export menu item, #142 accelerator keys added
- *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for editNSD, moveUpNSD, moveDownNSD
- *      Kay Gürtzig     2016.04.12      Enh. #137: New message error16_7 introduced.
- *      Kay Gürtzig     2016.04.24      Fix #173: Mnemonics for menus Diagram and Help had been compromised
- *      Kay Gürtzig     2016.07.07      Enh. #188: New menu item "wand" for element conversion (KGU#199)
- *      Kay Gürtzig     2016.07.22      Enh. #199: New help menu item "user guide" for element conversion (KGU#208)
- *      Kay Gürtzig     2016.07.28      Enh. #206: New Dialog message text holders
- *      Kay Gürtzig     2016.07.31      Enh. #128: New Diagram menu item "Comments + text"
- *      Kay Gürtzig     2016.08.02      Enh. #215: menuDiagramBreakTrigger added, new message text holders
- *      Kay Gürtzig     2016.08.03      Enh. #222: New possibility to load translations from a text file
- *      Kay Gürtzig     2016.08.04      Most persistent attributes set to final
- *      Bob Fisch       2016.08.08      Redesign of the Language choice mechanisms (#225 fixed by Kay Gürtzig)
- *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
- *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks re-organised to arrays for easier maintenance
+ *      Bob Fisch       2007-12-30      First Issue
+ *      Bob Fisch       2008-04-12      Adapted for Generator plugin
+ *      Kay Gürtzig     2015-11-03      Additions for FOR loop enhancement (KGU#3)
+ *      Kay Gürtzig     2015-11-22      Adaptations for handling selected non-empty Subqueues (KGU#87)
+ *      Kay Gürtzig     2015-11-25      Error labels error13_3 (KGU#78), error15 (KGU#2), and error_16_x added
+ *      Kay Gürtzig     2015-11-26      New error label error14_3 (KGU#3) added
+ *      Kay Gürtzig     2015-11-28      New error label error17 (KGU#47) added
+ *      Kay Gürtzig     2016-01-03/04   Enh. #87: New menu items and buttons for collapsing/expanding 
+ *      Kay Gürtzig     2016-01-21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016-01-22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
+ *      Kay Gürtzig     2016-04-01      Issue #144: Favourite code export menu item, #142 accelerator keys added
+ *      Kay Gürtzig     2016-04-06      Enh. #158: Key bindings for editNSD, moveUpNSD, moveDownNSD
+ *      Kay Gürtzig     2016-04-12      Enh. #137: New message error16_7 introduced.
+ *      Kay Gürtzig     2016-04-24      Fix #173: Mnemonics for menus Diagram and Help had been compromised
+ *      Kay Gürtzig     2016-07-07      Enh. #188: New menu item "wand" for element conversion (KGU#199)
+ *      Kay Gürtzig     2016-07-22      Enh. #199: New help menu item "user guide" for element conversion (KGU#208)
+ *      Kay Gürtzig     2016-07-28      Enh. #206: New Dialog message text holders
+ *      Kay Gürtzig     2016-07-31      Enh. #128: New Diagram menu item "Comments + text"
+ *      Kay Gürtzig     2016-08-02      Enh. #215: menuDiagramBreakTrigger added, new message text holders
+ *      Kay Gürtzig     2016-08-03      Enh. #222: New possibility to load translations from a text file
+ *      Kay Gürtzig     2016-08-04      Most persistent attributes set to final
+ *      Bob Fisch       2016-08-08      Redesign of the Language choice mechanisms (#225 fixed by Kay Gürtzig)
+ *      Kay Gürtzig     2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig     2016-08-12      Enh. #231: Analyser checks re-organised to arrays for easier maintenance
  *                                      two new checks introduced (variable name collisions)
- *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
- *      Kay Gürtzig     2016.09.04      Structural redesign for menuPreferencesLanguage
- *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
- *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser
- *      Kay Gürtzig     2016.09.26/03   Enh. #253: Refactoring support
- *      Kay Gürtzig     2016.10.11      Enh. #267: error15 renamed to error15_1, new error15_2
- *      Kay Gürtzig     2016.10.13      Enh. #270: Menu items for the disabling of elements
- *      Kay Gürtzig     2016.10.16      Enh. #272: Menu items for the replacement of Turtleizer command sets
- *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing during execution revised
- *      Kay Gürtzig     2016.12.02      Enh. #300: New menu entry to enable online update retrieval
- *      Kay Gürtzig     2016.12.14      Enh. #305: New menu entry to enable/disable Arranger index
+ *      Kay Gürtzig     2016-09-01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
+ *      Kay Gürtzig     2016-09-04      Structural redesign for menuPreferencesLanguage
+ *      Kay Gürtzig     2016-09-15      Issue #243: Additional text holders for forgotten message box texts
+ *      Kay Gürtzig     2016-09-22      New text holder / messages for Analyser
+ *      Kay Gürtzig     2016-09-26/03   Enh. #253: Refactoring support
+ *      Kay Gürtzig     2016-10-11      Enh. #267: error15 renamed to error15_1, new error15_2
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Menu items for the disabling of elements
+ *      Kay Gürtzig     2016-10-16      Enh. #272: Menu items for the replacement of Turtleizer command sets
+ *      Kay Gürtzig     2016-11-17      Bugfix #114: Prerequisites for editing during execution revised
+ *      Kay Gürtzig     2016-12-02      Enh. #300: New menu entry to enable online update retrieval
+ *      Kay Gürtzig     2016-12-14      Enh. #305: New menu entry to enable/disable Arranger index
  *                                      KGU#310: New Debug menu
- *      Kay Gürtzig     2016.12.17      Enh. #267: New Analyser error15_3
- *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21
- *      Kay Gürtzig     2017.03.15      Enh. #354: All code import merged to a single menu item
- *      Kay Gürtzig     2017.03.23      Enh. #380: New menu entry to convert a sequence in a subroutine
- *      Kay Gürtzig     2017.03.28      Enh. #387: New menu entry "Save All"
- *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser error for constant definitions (no. 22)
- *      Kay Gürtzig     2017.04.11      Enh. #389: Additional messages for analysis of import calls
- *      Kay Gürtzig     2017.04.20      Enh. #388: Second error (error22_2) for constant analysis
- *      Kay Gürtzig     2017.04.26/28   Enh. KGU#386: Method for plugin menu items, diagram file import
- *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type ("includable") added
- *      Kay Gürtzig     2017.05.21      Enh. #372: New menu entry and accelerator for AttribeInspector
- *      Kay Gürtzig     2017.06.13      Enh. #415: Find&Replace menu item
- *      Kay Gürtzig     2017.11.05      Enh. #452: Preference "simplified toolbars" introduced
- *      Kay Gürtzig     2017.11.09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
- *      Kay Gürtzig     2017.11.20      Enh. #452/#459: Revisions for guided tours, enh. #469: Accelerators for debug menu
- *      Kay Gürtzig     2017.12.06      Enh. #487: New menu items for hiding of declaration sequences
- *      Kay Gürtzig     2017.12.14/15   Enh. #492: Configuration of external element names added
- *      Kay Gürtzig     2018.01.18      Issue #4: Icon association modified
- *      Kay Gürtzig     2018.01.18/19   Enh. #490: New preferences menu item added (DiagramController aliases)
- *      Kay Gürtzig     2018.02.07      Enh. #4, #81: Icon retrieval updated, scaling for plugin icons
- *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
- *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by conv. element icons
- *      Kay Gürtzig     2018.03.14      Enh. #519: New ctrl+wheel preference together with old menuDiagramWheel in Preferences menu
- *      Kay Gürtzig     2018.03.15      Bugfix #522: New messages for subroutine outsourcing 
- *      Kay Gürtzig     2018.10.26      Enh. #619: New menu entries and messages for line breaking
+ *      Kay Gürtzig     2016-12-17      Enh. #267: New Analyser error15_3
+ *      Kay Gürtzig     2017-01-07      Enh. #329: New Analyser error21
+ *      Kay Gürtzig     2017-03-15      Enh. #354: All code import merged to a single menu item
+ *      Kay Gürtzig     2017-03-23      Enh. #380: New menu entry to convert a sequence in a subroutine
+ *      Kay Gürtzig     2017-03-28      Enh. #387: New menu entry "Save All"
+ *      Kay Gürtzig     2017-04-04      Enh. #388: New Analyser error for constant definitions (no. 22)
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Additional messages for analysis of import calls
+ *      Kay Gürtzig     2017-04-20      Enh. #388: Second error (error22_2) for constant analysis
+ *      Kay Gürtzig     2017-04-26/28   Enh. KGU#386: Method for plugin menu items, diagram file import
+ *      Kay Gürtzig     2017-05-16      Enh. #389: Third diagram type ("includable") added
+ *      Kay Gürtzig     2017-05-21      Enh. #372: New menu entry and accelerator for AttribeInspector
+ *      Kay Gürtzig     2017-06-13      Enh. #415: Find&Replace menu item
+ *      Kay Gürtzig     2017-11-05      Enh. #452: Preference "simplified toolbars" introduced
+ *      Kay Gürtzig     2017-11-09      Enh. #415: New accelerator key for menuEditCopyDiagramEMF
+ *      Kay Gürtzig     2017-11-20      Enh. #452/#459: Revisions for guided tours, enh. #469: Accelerators for debug menu
+ *      Kay Gürtzig     2017-12-06      Enh. #487: New menu items for hiding of declaration sequences
+ *      Kay Gürtzig     2017-12-14/15   Enh. #492: Configuration of external element names added
+ *      Kay Gürtzig     2018-01-18      Issue #4: Icon association modified
+ *      Kay Gürtzig     2018-01-18/19   Enh. #490: New preferences menu item added (DiagramController aliases)
+ *      Kay Gürtzig     2018-02-07      Enh. #4, #81: Icon retrieval updated, scaling for plugin icons
+ *      Kay Gürtzig     2018-02-12      Issue #4: Separate icons for FOR loops introduced
+ *      Kay Gürtzig     2018-02-13      Issue #510: All "arrowed" element icons replaced by conv. element icons
+ *      Kay Gürtzig     2018-03-14      Enh. #519: New ctrl+wheel preference together with old menuDiagramWheel in Preferences menu
+ *      Kay Gürtzig     2018-03-15      Bugfix #522: New messages for subroutine outsourcing 
+ *      Kay Gürtzig     2018-10-26      Enh. #619: New menu entries and messages for line breaking
+ *      Kay Gürtzig     2018-12-24      Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() calls concentrated
  *
  ******************************************************************************************************
  *
@@ -675,6 +676,10 @@ public class Menu extends LangMenuBar implements NSDController
 	public void create()
 	{
 		JMenuBar menubar = this;
+		
+		// FIXME: THis method gets deprecated with Java 10!
+		// OS-dependent key mask for menu shortcuts
+		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
 		// START KGU#240 2016-09-01: Bugfix #233 - Configured key binding F10 for CASE insertion wasn't effective
 		menubar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0), "none");
@@ -685,11 +690,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuFile.setMnemonic(KeyEvent.VK_F);
 
 		menuFile.add(menuFileNew);
-		menuFileNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,menuShortcutKeyMask));
 		menuFileNew.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.newNSD(); doButtons(); } } );
 
 		menuFile.add(menuFileSave);
-		menuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,menuShortcutKeyMask));
 		menuFileSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveNSD(false); doButtons(); } } );
 
 		menuFile.add(menuFileSaveAs);
@@ -698,13 +703,12 @@ public class Menu extends LangMenuBar implements NSDController
 
 		// START KGU#373 2017-03-28: Enh. #387
 		menuFile.add(menuFileSaveAll);
-		menuFileSaveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileSaveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.SHIFT_DOWN_MASK | menuShortcutKeyMask)));
 		menuFileSaveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAllNSD(); doButtons(); } } );
 		//  END KGU#373 2017-03-28
 
 		menuFile.add(menuFileOpen);
-		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,menuShortcutKeyMask));
 		menuFileOpen.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(); doButtons(); } } );
 
 		menuFile.add(menuFileOpenRecent);
@@ -726,7 +730,7 @@ public class Menu extends LangMenuBar implements NSDController
 		menuFileImport.setIcon(IconLoader.getIcon(25));
 		// END KGU#486 2018-01-18
 		menuFileImportCode.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(); } });
-		menuFileImportCode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,(java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileImportCode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,(java.awt.event.InputEvent.SHIFT_DOWN_MASK | menuShortcutKeyMask)));
 		// END KGU#354 2017-03-14
 
 		// START KGU#386 2017-04-26
@@ -745,7 +749,7 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#486 2018-01-18
 
 		menuFileExportPicture.add(menuFileExportPicturePNG);
-		menuFileExportPicturePNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileExportPicturePNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E,menuShortcutKeyMask));
 		menuFileExportPicturePNG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPNG(); doButtons(); } } );
 
 		menuFileExportPicture.add(menuFileExportPicturePNGmulti);
@@ -809,7 +813,7 @@ public class Menu extends LangMenuBar implements NSDController
 		
 		// START KGU#171 2016-04-01: Enh. #144 - accelerated export to favourite target language
 		menuFile.add(menuFileExportCodeFavorite);
-		menuFileExportCodeFavorite.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,(java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileExportCodeFavorite.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,(java.awt.event.InputEvent.SHIFT_DOWN_MASK | menuShortcutKeyMask)));
 		menuFileExportCodeFavorite.setToolTipText("You may alter the favourite target language in the export preferences.");
 		menuFileExportCodeFavorite.addActionListener(
 				new ActionListener() {
@@ -833,12 +837,12 @@ public class Menu extends LangMenuBar implements NSDController
 		menuFile.addSeparator();
 
 		menuFile.add(menuFilePrint);
-		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,menuShortcutKeyMask));
 		menuFilePrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
 
 		// START KGU#2 2015-11-19
 		menuFile.add(menuFileArrange);
-		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,menuShortcutKeyMask));
 		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-19
                 
@@ -847,7 +851,7 @@ public class Menu extends LangMenuBar implements NSDController
         // START KGU#363 2017-05-19: Enh. #372
     	menuFile.add(menuFileAttributes);
     	menuFileAttributes.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.attributesNSD(); doButtons(); } } );
-		menuFileAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (java.awt.event.InputEvent.ALT_MASK /*| (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())*/)));
+		menuFileAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (java.awt.event.InputEvent.ALT_DOWN_MASK /*| menuShortcutKeyMask*/)));
 
     	menuFile.addSeparator();
     	// END KGU#363 2017-05-19
@@ -860,7 +864,7 @@ public class Menu extends LangMenuBar implements NSDController
 		menuFile.addSeparator();
 
 		menuFile.add(menuFileQuit);
-		menuFileQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,menuShortcutKeyMask));
 		// START KGU#66 2015-11-05: hard exiting here fails to induce the file save dialog in case of unsaved changes and will kill a related Arranger!
 		//menuFileQuit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { System.exit(0); } } );
 		menuFileQuit.addActionListener(
@@ -878,45 +882,45 @@ public class Menu extends LangMenuBar implements NSDController
 		menuEdit.setMnemonic(KeyEvent.VK_E);
 
 		menuEdit.add(menuEditUndo);
-		menuEditUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,menuShortcutKeyMask));
 		menuEditUndo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.undoNSD(); doButtons(); } } );
 
 		menuEdit.add(menuEditRedo);
-		menuEditRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuEditRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (java.awt.event.InputEvent.SHIFT_DOWN_MASK | menuShortcutKeyMask)));
 		menuEditRedo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); } } );
 
 		menuEdit.addSeparator();
 
 		menuEdit.add(menuEditCut);
-		menuEditCut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditCut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,menuShortcutKeyMask));
 		menuEditCut.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.cutNSD(); doButtons(); } } );
 
 		menuEdit.add(menuEditCopy);
 		//Toolkit.getDefaultToolkit().get
 		//MenuShortcut ms = new MenuShortcut
-		menuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,menuShortcutKeyMask));
 		menuEditCopy.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyNSD(); doButtons(); } } );
 
 		menuEdit.add(menuEditPaste);
-		menuEditPaste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditPaste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,menuShortcutKeyMask));
 		menuEditPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
 
 		menuEdit.addSeparator();
 		
 		// START KGU#324 2017-05-30: Enh. #415
 		menuEdit.add(menuEditFindReplace);
-		menuEditFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,menuShortcutKeyMask));
 		menuEditFindReplace.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.findAndReplaceNSD(); doButtons(); } } );
 		menuEdit.addSeparator();
 		// END KGU#324 2017-05-30
 
 		// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
 		menuEdit.add(menuEditUpgradeTurtle);
-		menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_MASK));
+		menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		menuEditUpgradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(true); doButtons(); } } );
 
 		menuEdit.add(menuEditDowngradeTurtle);
-		menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, menuShortcutKeyMask));
 		menuEditDowngradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(false); doButtons(); } } );
 
 		menuEdit.addSeparator();
@@ -928,15 +932,15 @@ public class Menu extends LangMenuBar implements NSDController
 		menuEdit.addSeparator();
 		
 		menuEdit.add(menuEditCopyDiagramPNG);
-		menuEditCopyDiagramPNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditCopyDiagramPNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,menuShortcutKeyMask));
 		menuEditCopyDiagramPNG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardPNG();; doButtons(); } } );
 
 		if(!System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
 			menuEdit.add(menuEditCopyDiagramEMF);
 			// START KGU#324 2017-11-09: Enh. #415 Ctrl-F now needed for Find & Replace
-			//menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-			menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, (java.awt.event.InputEvent.SHIFT_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+			//menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, menuShortcutKeyMask));
+			menuEditCopyDiagramEMF.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, (java.awt.event.InputEvent.SHIFT_DOWN_MASK | menuShortcutKeyMask)));
 			// END KGU#324 2017-11-09
 			menuEditCopyDiagramEMF.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardEMF(); doButtons(); } } );
 		}
@@ -957,42 +961,42 @@ public class Menu extends LangMenuBar implements NSDController
 		// START KGU#169 2016-04-01: Enh. #142 (accelerator keys added in analogy to the insert after items)
 		menuDiagramAddBefore.add(menuDiagramAddBeforeInst);
 		menuDiagramAddBeforeInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",false); doButtons(); } } );
-		menuDiagramAddBeforeInst.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeInst.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeAlt);
 		menuDiagramAddBeforeAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,false); doButtons(); } } );
-		menuDiagramAddBeforeAlt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeAlt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCase);
 		menuDiagramAddBeforeCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,false); doButtons(); } } );
-		menuDiagramAddBeforeCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeFor);
 		menuDiagramAddBeforeFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,false); doButtons(); } } );
-		menuDiagramAddBeforeFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeWhile);
 		menuDiagramAddBeforeWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,false); doButtons(); } } );
-		menuDiagramAddBeforeWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeRepeat);
 		menuDiagramAddBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
-		menuDiagramAddBeforeRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeForever);
 		menuDiagramAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCall);
 		menuDiagramAddBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
-		menuDiagramAddBeforeCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeJump);
 		menuDiagramAddBeforeJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",false); doButtons(); } } );
-		menuDiagramAddBeforeJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforeJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforePara);
 		menuDiagramAddBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
-		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#169 2016-04-01
 
 		menuDiagramAdd.add(menuDiagramAddAfter);
@@ -1063,7 +1067,7 @@ public class Menu extends LangMenuBar implements NSDController
 
 		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 		menuDiagram.add(menuDiagramTransmute);
-		menuDiagramTransmute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuDiagramTransmute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, menuShortcutKeyMask));
 		menuDiagramTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } );;
 		// END KGU#199 2016-07-06
 		// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
@@ -1086,7 +1090,7 @@ public class Menu extends LangMenuBar implements NSDController
 		// START KGU#310 2016-12-14: Moved to menu Debug
 //		// START KGU#277 2016-10-13: Enh. #270
 //		menuDiagram.add(menuDebugDisable);
-//		menuDebugDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+//		menuDebugDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, menuShortcutKeyMask));
 //		menuDebugDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
 //		// END KGU#277 2016-10-13
 		// END KGU#310 2016-12-14
@@ -1138,7 +1142,7 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagram.add(menuDiagramSwitchComments);
 		menuDiagramSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
 		// START KGU#169 2016-04-01: Enh. #142 (accelerator key added)
-		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
 		// START KGU#169 2016-04-01
 
 		// START KGU#477 2017-12-06: Enh. #487
@@ -1160,7 +1164,7 @@ public class Menu extends LangMenuBar implements NSDController
 		// START KGU#305 2016-12-14: Enh. #305
 		menuDiagram.add(menuDiagramIndex);
 		menuDiagramIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuDiagramIndex.isSelected()); } } );
-		menuDiagramIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_MASK));
+		menuDiagramIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#305 2016-12-14
 
 		// Setting up Menu "Preferences" with all submenus and shortcuts and actions
@@ -1367,13 +1371,13 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDebug.add(menuDebugTurtle);
 		menuDebugTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goTurtle(); } } );
 		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
-		menuDebugTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuDebugTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (java.awt.event.InputEvent.SHIFT_DOWN_MASK | menuShortcutKeyMask)));
 		// START KGU#463 2017-11-2
 
 		menuDebug.add(menuDebugExecute);
 		menuDebugExecute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goRun(); } } );
 		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
-		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, menuShortcutKeyMask));
 		// START KGU#463 2017-11-2
 		
 		// START KGU#448 2018-01-04: Enh. #443 - checkbox menu items prepared for additional diagram controllers
@@ -1394,7 +1398,7 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDebugBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
 
 		menuDebug.add(menuDebugDisable);
-		menuDebugDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuDebugDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, menuShortcutKeyMask));
 		menuDebugDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
 		// END KGU#310 2016-12-14
 
@@ -1420,7 +1424,7 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuHelp.add(menuHelpUpdate);
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );
-		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,menuShortcutKeyMask));
 
         // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
         GUIScaler.rescaleComponents(this);

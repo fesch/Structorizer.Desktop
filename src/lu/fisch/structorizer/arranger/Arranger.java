@@ -63,6 +63,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-10-06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
+ *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision, popup menu
  *
  ******************************************************************************************************
  *
@@ -71,39 +72,56 @@ package lu.fisch.structorizer.arranger;
  ******************************************************************************************************///
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
+import lu.fisch.structorizer.gui.AttributeInspector;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.utils.StringList;
 
 /**
- *
+ * This class graphically arranges several Nassi-Shneiderman diagrams within
+ * one and the same drawing area.
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener {
+public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener {
 
 	// START KGU 2018-03-21
 	public static final Logger logger = Logger.getLogger(Arranger.class.getName());
@@ -116,18 +134,29 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
 	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
-	public static final LangTextHolder btnRemove1Diagram = new LangTextHolder("Drop Diagram");
+	public static final LangTextHolder btnRemoveDiagrams = new LangTextHolder("Drop Diagram");
 	public static final LangTextHolder btnRemoveAllDiagrams = new LangTextHolder("Remove All");
 	// END KGU#534 2018-06-27
-	// START KGU#624 2018-12-21: Enh. #655
-	public static final LangTextHolder msgTitleIllegal = new LangTextHolder("Illegal Operation");
+	// START KGU#624 2018-12-21/24: Enh. #655
+	public static final LangTextHolder msgTitleIllegal = new LangTextHolder("Illegal Operation!");
 	public static final LangTextHolder msgActionDelete = new LangTextHolder("remove");
 	public static final LangTextHolder msgActionCut = new LangTextHolder("cut");
 	public static final LangTextHolder msgActionCopy = new LangTextHolder("copy");
-	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the following %2 diagram(s) from Arranger?\n%3");
-	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n%3");
-	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("% diagrams selected");
-	// END KGU#624 2018-12-21
+	public static final LangTextHolder msgConfirmMultiple = new LangTextHolder("You have selected the following %1 diagram(s) (out of %2):\n- %3\n\n%4");
+	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the above diagram(s) from Arranger?");
+	public static final LangTextHolder msgReadyToExport = new LangTextHolder("Are you ready to export this sub-arrangement to PNG?");
+	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n- %3");
+	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("diagrams: %1, selected: %2");
+	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
+	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
+	public static final LangTextHolder msgSelectionExpanded = new LangTextHolder("% referenced diagram(s) added to selection.");
+	public static final LangTextHolder msgMissingDiagrams = new LangTextHolder("\n\n%1 referenced diagram(s) not found:\n- %2");
+	public static final LangTextHolder msgAmbiguousSignatures = new LangTextHolder("\nAmong the selection, several matching diagrams occur for %1 signature(s):\n- %2");
+	// END KGU#624 2018-12-21/26
+	
+	// START KGU#624 2018-12-26: Enh. #655 - temporary limit for he listing of selected diagrams
+	protected static final int ROOT_LIST_LIMIT = 20;
+	// END KGU#624 2018-12-26
 
     // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
@@ -160,8 +189,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#155 2016-03-08: added for bugfix #97
     /**
      * Allows to find out whether an Arranger instance is created without
-     * creating it
-     *
+     * creating it.
      * @return true iff there is already an Arranger instance
      */
     public static boolean hasInstance() {
@@ -281,6 +309,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#497 2018-02-17: Enh. #512 - zoom function
         btnZoom = new javax.swing.JButton();
         // END KGU#497 2018-02-17
+        // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+        // END KGU#624/KGU#626 2018-12-27
 
         
         surface = new lu.fisch.structorizer.arranger.Surface();
@@ -327,7 +357,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
         btnSaveArr.setIcon(IconLoader.getIconImage("003_Save.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnSaveArr.setText("Save List");
+        btnSaveArr.setText("Save Arr.");
         btnSaveArr.setFocusable(false);
         btnSaveArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSaveArr.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -343,7 +373,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
         btnLoadArr.setIcon(IconLoader.getIconImage("002_Open.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
-        btnLoadArr.setText("Load List");
+        btnLoadArr.setText("Load Arr.");
         btnLoadArr.setFocusable(false);
         btnLoadArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnLoadArr.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -378,7 +408,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         btnPinDiagram.setIcon(IconLoader.getIconImage("099_pin_blue.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnPinDiagram.setText("Pin Diagram");
-        btnPinDiagram.setToolTipText("Pin a diagram to make it immune against replacement.");
+        btnPinDiagram.setToolTipText("Pin the selected diagrams to make them immune against replacement.");
         btnPinDiagram.setFocusable(false);
         btnPinDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnPinDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -397,7 +427,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         btnSetCovered.setIcon(IconLoader.getIconImage("046_covered.png", ICON_FACTOR)); // NOI18N
         // END KGU#287 2016-11-01
         btnSetCovered.setText("Set Covered");
-        btnSetCovered.setToolTipText("Mark the routine diagram as test-covered for subroutine calls to it.");
+        btnSetCovered.setToolTipText("Mark the selected routine diagrams as test-covered for subroutine calls to them.");
         btnSetCovered.setFocusable(false);
         btnSetCovered.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSetCovered.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -421,7 +451,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         btnRemoveDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnRemoveDiagram.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRemoveDiagramActionPerformed(evt);
+                btnRemoveDiagramActionPerformed(evt, true);
             }
         });
         //btnRemoveDiagram.setBorder(raisedBorder);
@@ -482,7 +512,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         statusSize = new javax.swing.JLabel();
         statusViewport = new javax.swing.JLabel();
         statusZoom = new javax.swing.JLabel();
-        statusSelection = new javax.swing.JLabel(msgDiagramsSelected.getText().replace("%", "0"));
+        statusSelection = new javax.swing.JLabel(msgDiagramsSelected.getText().replace("%1", "0").replace("%2", "0"));
         statusSize.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
         		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         statusViewport.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
@@ -553,7 +583,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //        });
         addWindowListener(this); 
         // END KGU#49 2015-10-18
+        
+        // START KGU#624 2018-12-25: Enh. #655
+        msgDiagramsSelected.addLangEventListener(this);
+        // END KGU#624 2018-12-28
 
+        this.initPopupMenu();
+        
         // START KGU#117 2016-03-09: New for Enh. #77
         this.doButtons();
         // END KGU#117 2016-03-09
@@ -561,54 +597,172 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     }// </editor-fold>//GEN-END:initComponents
 
-    // START KGU#624 2018-12-21: Enh. #655 - new status bar
+    // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+    private void initPopupMenu() {
+        popupMenu = new javax.swing.JPopupMenu();
+        
+        popupHitList = new javax.swing.JMenu("Hit diagrams");
+        popupHitList.setIcon(IconLoader.getIcon(90));
+        
+        popupExpandSelection = new javax.swing.JMenuItem("Expand selection", IconLoader.getIcon(79));
+        popupMenu.add(popupExpandSelection);
+        popupExpandSelection.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		expandSelection();
+        	}});
+        popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+        
+        popupAttributes = new javax.swing.JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
+        popupMenu.add(popupAttributes);
+        popupAttributes.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		Root root = surface.getSelected1();
+        		if (root != null) {
+        			inspectAttributes(root);
+        		}
+        	}});
+        popupAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, java.awt.event.InputEvent.ALT_DOWN_MASK));
+
+        popupMenu.add(popupHitList);
+        
+        popupRemove = new javax.swing.JMenuItem("Remove selected diagrams", IconLoader.getIcon(100));
+        popupMenu.add(popupRemove);
+        popupRemove.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		btnRemoveDiagramActionPerformed(e, false);
+        	}});
+        popupRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+        
+        popupMenu.addSeparator();
+        
+        popupRemoveAll = new javax.swing.JMenuItem("Remove all diagrams", IconLoader.getIcon(45));
+        popupMenu.add(popupRemoveAll);
+        popupRemoveAll.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		removeAllDiagrams();
+        	}});
+        popupRemoveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+        
+        popupMenu.addSeparator();
+        
+        popupHelp = new javax.swing.JMenuItem("Arranger help page ...", IconLoader.getIcon(110));
+        popupMenu.add(popupHelp);
+        popupHelp.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		helpArranger(false);
+        	}});
+        popupHelp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
+        
+        popupKeyBindings = new javax.swing.JMenuItem("Show key bindings ...", IconLoader.getIcon(89));
+        popupMenu.add(popupKeyBindings);
+        popupKeyBindings.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		helpArranger(true);
+        	}});
+        popupKeyBindings.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, java.awt.event.InputEvent.ALT_DOWN_MASK));
+        
+	}
+    // END KGU#624/KGU#62 2018-12-27
+
+	// START KGU#624 2018-12-21: Enh. #655 - new status bar
 	protected void updateStatusSize() {
 		scrollarea.getLocation(scrollareaOrigin);
 		java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
+		/* To compute the unzoomed sizes from the vRect looks bad due to rounding jitter.
+		 * Alternatively we would have to ask for the diagram bounds but these don't
+		 * reflect a larger window.
+		 */
 		statusSize.setText(surface.getWidth() + " x " + surface.getHeight());
-		statusViewport.setText(vRect.x + ":" + (vRect.x + vRect.width) + ", " +
-				vRect.y + ":" + (vRect.y + vRect.height));
+		statusViewport.setText(vRect.x + ".." + (vRect.x + vRect.width) + " : " +
+				vRect.y + ".." + (vRect.y + vRect.height));
 		statusZoom.setText(String.format("%.1f %%", 100 / surface.getZoom()));
 	}
 	
 	protected void updateStatusSelection() {
 		Set<Root> sel = surface.getSelected();
 		Root sel1 = surface.getSelected1();
+		String selText = Integer.toString(sel.size());
 		if (sel1 != null) {
-			statusSelection.setText(sel1.getSignatureString(false));
+			selText = sel1.getSignatureString(false);
 		}
-		else {
-			statusSelection.setText(msgDiagramsSelected.getText().replace("%", Integer.toString(sel.size())));
-		}
+		statusSelection.setText(msgDiagramsSelected.getText()
+				.replace("%1", Integer.toString(surface.getDiagramCount()))
+				.replace("%2", selText));
 	}
 	// END KGU#624 2018-12-21
 
-    private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
-    {//GEN-HEADEREND:event_btnExportPNGActionPerformed
-        surface.exportPNG(this);
-    }//GEN-LAST:event_btnExportPNGActionPerformed
+	private void btnExportPNGActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnExportPNGActionPerformed
+	{//GEN-HEADEREND:event_btnExportPNGActionPerformed
+		// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
+		StringList rootList = surface.listSelectedRoots(false, false);
+		int nSelected = rootList.count();
+		if (nSelected > 1 && nSelected < surface.getDiagramCount()) {
+			if (nSelected > ROOT_LIST_LIMIT) {
+				rootList.remove(ROOT_LIST_LIMIT, nSelected);
+				rootList.add("...");
+			}
+			if (JOptionPane.showConfirmDialog(this, 
+					msgConfirmMultiple.getText()
+					.replace("%1", Integer.toString(nSelected))
+					.replace("%2", Integer.toString(surface.getDiagramCount()))
+					.replace("%3", rootList.concatenate("\n- "))
+					.replace("%4", msgReadyToExport.getText()),
+					msgTitleWarning.getText(),
+					JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
+				return;
+			}
+		}
+		// END KGU#624 2018-12-23
+		surface.exportPNG(this);
+	}//GEN-LAST:event_btnExportPNGActionPerformed
 
     private void btnAddDiagramActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnAddDiagramActionPerformed
     {//GEN-HEADEREND:event_btnAddDiagramActionPerformed
         surface.addDiagram(new Root());
     }//GEN-LAST:event_btnAddDiagramActionPerformed
 
-    // START KGU#85 2015-11-17
-    private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt) {
-        // START KGU#534 2018-06-27: Enh.#552    	
-        //surface.removeDiagram();
-        if (this.isShiftPressed) {
-            removeAllDiagrams();
-            // We must make sure that the shift key status is reset - this doesn't work automatically!
-            // Seems that the keyReleased event gets lost...
-            this.setShiftPressed(false);
-        }
-        else {
-            surface.removeDiagram();
-        }
-        // END KGU#534 2018-06-27
-    }
-    // END KGU#85 2015-11-17
+	// START KGU#85 2015-11-17
+	private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt, boolean checkShiftPressed) {
+		// START KGU#534 2018-06-27: Enh.#552    	
+		//surface.removeDiagram();
+		if (checkShiftPressed && this.isShiftPressed) {
+			removeAllDiagrams();
+			// We must make sure that the shift key status is reset - this doesn't work automatically!
+			// Seems that the keyReleased event gets lost...
+			this.setShiftPressed(false);
+		}
+		else {
+			// START KGU#624 2018-12-23: Enh. #655 On multiple selection better warn
+			StringList rootList = surface.listSelectedRoots(false, false);
+			int nSelected = rootList.count();
+			if (rootList.count() > 1) {
+				if (nSelected > ROOT_LIST_LIMIT) {
+					rootList.remove(ROOT_LIST_LIMIT, nSelected);
+					rootList.add("...");
+				}
+				if (JOptionPane.showConfirmDialog(this, 
+						msgConfirmMultiple.getText()
+						.replace("%1", Integer.toString(nSelected))
+						.replace("%2", Integer.toString(surface.getDiagramCount()))
+						.replace("%3", rootList.concatenate("\n- "))
+						.replace("%4", msgConfirmRemove.getText().replace("%1",msgActionDelete.getText())), 
+						msgTitleWarning.getText(),
+						JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
+					return;
+				}
+			}
+			// END KGU#624 2018-12-23
+			surface.removeDiagram();
+		}
+		// END KGU#534 2018-06-27
+	}
+	// END KGU#85 2015-11-17
 
     // START KGU#88 2015-11-24
     private void btnPinDiagramActionPerformed(java.awt.event.ActionEvent evt) {
@@ -698,6 +852,16 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#85 2015-11-18
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18
+    // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+    protected static javax.swing.JPopupMenu popupMenu = null;
+    protected static javax.swing.JMenu popupHitList = null;
+    private javax.swing.JMenuItem popupRemove = null;
+    private javax.swing.JMenuItem popupRemoveAll = null;
+    private javax.swing.JMenuItem popupExpandSelection = null;
+    private javax.swing.JMenuItem popupAttributes = null;
+    private javax.swing.JMenuItem popupHelp = null;
+    private javax.swing.JMenuItem popupKeyBindings = null;
+    // END KGU#624 2018-12-27
     // START KGU#2016-12-16
     private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
     private static final Vector<Root> routines = new Vector<Root>();
@@ -753,9 +917,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     //    surface.removeAllDiagrams();
                     //}
                 {
-                	// START KGU624 2018-12-21: Enh. #655 - Face multiple selection
-                	//Root sel = surface.getSelected1();
-                    Set<Root> sel = surface.getSelected();
+                    // START KGU624 2018-12-21: Enh. #655 - Face multiple selection
+                    //Root sel = surface.getSelected1();
+                    StringList rootList = surface.listSelectedRoots(false, false);
+                    int nSelected = rootList.count();
+                    if (nSelected == 0) {
+                        break;
+                    }
                     boolean shift = ev.isShiftDown();
                     String verb = "";
                     if (shift) {
@@ -764,26 +932,19 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     else {
                         verb = msgActionDelete.getText();
                     }
-                    StringBuilder strbld = new StringBuilder();
-                    for (Root root: sel) {
-                    	strbld.append("\n" + root.getSignatureString(false));
+                	if (nSelected > ROOT_LIST_LIMIT) {
+                		// Avoid to make the option pane so large that the buttons can't be reached
+                		rootList.remove(ROOT_LIST_LIMIT, nSelected);
+                		rootList.add("...");
+                	}
+                    if (shift && checkIllegalMultipleAction(rootList, verb)) {
+                        break;
                     }
-                    if (sel.isEmpty()) {
-                    	break;
-                    }
-                    else if (shift && sel.size() > 1) { 
-                    	JOptionPane.showMessageDialog(this,
-                    			msgCantDoWithMultipleRoots.getText().
-                    			replace("%1", msgActionCut.getText()).
-                    			replace("%2", Integer.toString(sel.size()).replace("%3", strbld.toString())),
-                    			msgTitleIllegal.getText(),
-                    			JOptionPane.ERROR_MESSAGE);
-                    	break;
-                    }
-                    String message = msgConfirmRemove.getText().
-                            replace("%1", verb).
-                            replace("%2", Integer.toString(sel.size())).
-                            replace("%3", strbld.toString());
+                    String message = msgConfirmMultiple.getText().
+                            replace("%1", Integer.toString(nSelected)).
+                            replace("%2", Integer.toString(surface.getDiagramCount())).
+                            replace("%3", rootList.concatenate("\n- ")).
+                            replace("%4", msgConfirmRemove.getText().replace("%1", verb));
                     if (ev.isControlDown() || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
                             JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
                         if (shift) {
@@ -798,26 +959,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
                 case KeyEvent.VK_X:
                     if (ev.isControlDown()) {
-                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
                         //surface.removeDiagram();
-                    	Set<Root> sel = surface.getSelected();
-                    	if (sel.size() > 1) {
-                    		StringBuilder strbld = new StringBuilder();
-                    		for (Root root: sel) {
-                    			strbld.append("\n" + root.getSignatureString(false));
-                    		}
-                        	JOptionPane.showMessageDialog(this,
-                        			msgCantDoWithMultipleRoots.getText().
-                        			replace("%1", msgActionCut.getText()).
-                        			replace("%2", Integer.toString(sel.size())).
-                        			replace("%3", strbld.toString()),
-                        			msgTitleIllegal.getText(),
-                        			JOptionPane.ERROR_MESSAGE);
-                        	break;
+                        StringList rootList = surface.listSelectedRoots(false, false);
+                        if (checkIllegalMultipleAction(rootList, msgActionCut.getText())) {
+                            break;
                         }
                         if (surface.copyDiagram())	// cut means copy first
                         {
-                        	surface.removeDiagram();
+                            surface.removeDiagram();
                         }
                         // END KGU#624 2018-12-21
                     }
@@ -836,23 +986,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     break;
                 case KeyEvent.VK_C:
                     if (ev.isControlDown()) {
-                    	// START KGU#624 2018-12-21: Enh. #655 - face multiple selection
-                    	Set<Root> sel = surface.getSelected();
-                    	if (sel.size() > 1) {
-                    		StringBuilder strbld = new StringBuilder();
-                    		for (Root root: sel) {
-                    			strbld.append("\n" + root.getSignatureString(false));
-                    		}
-                        	JOptionPane.showMessageDialog(this,
-                        			msgCantDoWithMultipleRoots.getText().
-                        			replace("%1", msgActionCopy.getText()).
-                        			replace("%2", Integer.toString(sel.size())).
-                        			replace("%3", strbld.toString()),
-                        			msgTitleIllegal.getText(),
-                        			JOptionPane.ERROR_MESSAGE);
-                        	break;
+                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+                        StringList rootList = surface.listSelectedRoots(false, false);
+                        if (checkIllegalMultipleAction(rootList, msgActionCopy.getText())) {
+                            break;
                         }
-                    	// END KGU#624 2018-12-21
+                        // END KGU#624 2018-12-21
                         surface.copyDiagram();
                     }
                     break;
@@ -882,7 +1021,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                                 scrollarea.getVerticalScrollBar().getValue() - 
                                 scrollarea.getVerticalScrollBar().getBlockIncrement(-1));
                     }
-        		    break;
+                    break;
                 case KeyEvent.VK_PAGE_DOWN:
                     if (ev.isShiftDown()) {
                         scrollarea.getHorizontalScrollBar().setValue(
@@ -894,24 +1033,143 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                                 scrollarea.getVerticalScrollBar().getValue() + 
                                 scrollarea.getVerticalScrollBar().getBlockIncrement(1));
                     }
-        		    break;
+                    break;
                 case KeyEvent.VK_A:
-                	if (ev.isControlDown()) {
-                		surface.selectAll();
-                	}
-                	break;
+                    if (ev.isControlDown()) {
+                        surface.selectAll();
+                    }
+                    break;
                 case KeyEvent.VK_S:
-                	if (ev.isControlDown()) {
-                		surface.saveArrangement(this);
-                	}
-                	break;
+                    if (ev.isControlDown()) {
+                        surface.saveArrangement(this);
+                    }
+                    break;
                 case KeyEvent.VK_O:
-                	if (ev.isControlDown()) {
-                		surface.loadArrangement(this);
-                	}
+                    if (ev.isControlDown()) {
+                        surface.loadArrangement(this);
+                    }
                 // END KGU#624 2018-12-21
+                    // START KGU#624 2018-12-24: Enh. #655
+                case KeyEvent.VK_UP:
+                case KeyEvent.VK_DOWN:
+                {
+                    int direction = ev.getKeyCode() == KeyEvent.VK_UP ? -1 : 1;
+                    int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
+                    if (ev.isShiftDown()) {
+                        vUnits *= 10;
+                    }
+                    int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
+                    if (ev.isControlDown()) {
+                        surface.moveSelection(0, vUnits);
+                        surface.scrollToSelection();
+                    }
+                    else {
+                        scrollarea.getVerticalScrollBar().setValue(newValue);                		
+                    }
+                }
+                break;
+                case KeyEvent.VK_LEFT:
+                case KeyEvent.VK_RIGHT:
+                {
+                    int direction = ev.getKeyCode() == KeyEvent.VK_LEFT ? -1 : 1;
+                    int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
+                    if (ev.isShiftDown()) {
+                        hUnits *= 10;
+                    }
+                    int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
+                    if (ev.isControlDown()) {
+                        surface.moveSelection(hUnits, 0);
+                        surface.scrollToSelection();
+                    }
+                    else {
+                        scrollarea.getHorizontalScrollBar().setValue(newValue);
+                    }
+                }
+                break;
+                case KeyEvent.VK_F1:
+                    this.helpArranger(ev.isAltDown());
+                    break;
+                    // END KGU#624 2018-12-24
+                    // START KGU#624 2018-12-26: Enh. #655
+                case KeyEvent.VK_HOME:
+                case KeyEvent.VK_END:
+                {
+                    javax.swing.JScrollBar scrollbar = scrollarea.getHorizontalScrollBar();
+                    int maxValue = surface.getWidth();
+                    if (ev.isControlDown()) {
+                        scrollbar = scrollarea.getVerticalScrollBar();
+                        maxValue = surface.getHeight();
+                    }
+                    scrollbar.setValue(ev.getKeyCode() == KeyEvent.VK_HOME ? 0 : maxValue);
+                }
+                break;
+                case KeyEvent.VK_F11:
+                {
+                    expandSelection();
+                }
+                    break;
+                case KeyEvent.VK_ENTER:
+                  if (ev.isAltDown()) {
+                      Root selected = surface.getSelected1();
+                      if (selected != null) {
+                          this.inspectAttributes(selected);
+                      }
+                  }
+                	break;
+                    // END KGU#624 2018-12-26
             }
         }
+    }
+
+	/**
+	 * Expands the current selection by all directly orindirectly referenced subroutine
+	 * and includable diagrams that hadn't already been selected.
+	 */
+	protected void expandSelection() {
+		StringList missingRoots = new StringList();
+		StringList duplicateRoots = new StringList();
+		int nAdded = surface.expandSelectionRecursively(missingRoots, duplicateRoots);
+		String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
+		if (duplicateRoots.count() > 0) {
+		    message += msgAmbiguousSignatures.getText()
+		            .replace("%1", Integer.toString(duplicateRoots.count()))
+		            .replace("%2", duplicateRoots.concatenate("\n- "));
+		}
+		if (missingRoots.count() > 0) {
+		    message += msgMissingDiagrams.getText()
+		            .replace("%1", Integer.toString(missingRoots.count()))
+		            .replace("%2", missingRoots.concatenate("\n- "));
+		}
+		JOptionPane.showMessageDialog(this, message);
+	}
+    
+	/**
+     * In case {@code rootList} contains more than one element, raises an error message
+     * that {@code actionName} is not allowed for multiple selection and returns true,
+     * otherwise returns false.
+     * @param rootList - {@link StringList} of selected {@link Root} signatures
+     * @param actionName - designation of the intended action
+     * @return true if illegal multiple selection was detected, false otherwise
+     */
+    private boolean checkIllegalMultipleAction(StringList rootList, String actionName)
+    {
+        int nSelected = rootList.count();
+        if (nSelected > 1) {
+        	if (nSelected > ROOT_LIST_LIMIT) {
+        		// Avoid to make the option pane so large that the buttons can't be reached
+        		rootList.remove(ROOT_LIST_LIMIT, nSelected);
+        		rootList.add("...");
+        	}
+        	JOptionPane.showMessageDialog(this,
+        			msgCantDoWithMultipleRoots.getText().
+        			replace("%1", actionName).
+        			replace("%2", Integer.toString(nSelected)).
+        			replace("%3", rootList.concatenate("\n- ")),
+        			msgTitleIllegal.getText(),
+        			JOptionPane.ERROR_MESSAGE);
+        	return true;
+        }
+        return false;
     }
 
     /**
@@ -935,7 +1193,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
             // START KGU#534 2018-06-27: Enh. #552
             this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR));
-            this.btnRemoveDiagram.setText(btnRemove1Diagram.getText());
+            this.btnRemoveDiagram.setText(btnRemoveDiagrams.getText());
             // END KGU#534 2018-06-27			
         }
     }
@@ -943,12 +1201,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     @Override
     public void keyReleased(KeyEvent ev) {
-    	// START KGU#497 2018-02-17: Change the zoom icon when shift is released
+        // START KGU#497 2018-02-17: Change the zoom icon when shift is released
         if (ev.getSource() == this) {
             switch (ev.getKeyCode()) {
                 case KeyEvent.VK_SHIFT:
-                	setShiftPressed(false);
-                	break;
+                    setShiftPressed(false);
+                    break;
             }
         }
         // END KGU#497 2018-02-17
@@ -959,6 +1217,59 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // Nothing to do here
     }
     // END KGU#2 2015-11-30
+
+	// START KGU#624 2018-12-24: Enh. #655
+	/**
+	 * Tries to open the online User Guide with the Arranger page in the browser
+	 * @param keyBindings TODO
+	 */
+	public void helpArranger(boolean keyBindings)
+	{
+		String query = keyBindings ? "?menu=118&page=#keys_arranger" : "?menu=103";
+		String help = Element.E_HELP_PAGE + query;
+		boolean isLaunched = false;
+		try {
+			isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
+		} catch (URISyntaxException ex) {
+			logger.log(Level.WARNING, "Can't browse Arranger help URL.", ex);
+		}
+		// The isLaunched mechanism above does not signal an unavailable help page.
+		// With the following code we can find out whether the help page was available...
+		// TODO In this case we might offer to download the PDF for offline use,
+		// otherwise we could try to open a possibly previously downloaded PDF ...
+		URL url;
+		HttpsURLConnection con = null;
+		try {
+			isLaunched = false;
+			url = new URL(help);
+			con = (HttpsURLConnection)url.openConnection();
+			if (con != null) {
+				con.connect();
+			}
+			isLaunched = true;
+		} catch (SocketTimeoutException ex) {
+			logger.log(Level.WARNING, "Timeout connecting to " + help, ex);
+		} catch (MalformedURLException e1) {
+			logger.log(Level.SEVERE, "Malformed URL " + help, e1);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Failed Access to " + help, e);
+		}
+		finally {
+			if (con != null) {
+				con.disconnect();
+			}
+		}
+		if (!isLaunched)
+		{
+			String message = msgBrowseFailed.getText().replace("%", help);
+			JOptionPane.showMessageDialog(this,
+			message,
+			msgTitleURLError.getText(),
+			JOptionPane.ERROR_MESSAGE);
+			// TODO We might look for a downloaded PDF version and offer to open this instead...
+		}
+	}
+	// END KGU#624 2018-12-24
 
     // START KGU#2 2015-11-24
     /* (non-Javadoc)
@@ -995,7 +1306,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     @Override
     public Set<Root> getAllRoots()
     {
-    	return surface.getAllRoots();
+        return surface.getAllRoots();
     }
     // END KGU#258 2016-09-26
 
@@ -1003,7 +1314,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // Shares the sorted list of Root elements held by the Surface object 
     public static Vector<Root> getSortedRoots()
     {
-    	return routines;
+        return routines;
     }
     // END KGU#305 2016-12-16
 
@@ -1016,6 +1327,16 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     public void doButtons() {
         btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
+        // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+        if (popupMenu != null && surface != null) {
+        	Set<Root> selectedRoots = surface.getSelected();
+        	boolean anythingSelected = !selectedRoots.isEmpty();
+        	boolean singleSelection = selectedRoots.size() == 1;
+        	this.popupAttributes.setEnabled(singleSelection);
+        	this.popupExpandSelection.setEnabled(anythingSelected);
+        	this.popupRemove.setEnabled(anythingSelected);
+        }
+        // END KGU#624/KGU#626 2018-12-27
     }
     // END KGU#117 2016-03-08
 
@@ -1037,11 +1358,23 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// END KGU#305 2016-12-12
 
 	// START KGU#305 2016-12-16
+	/**
+	 * Statically adds the given {@code _listener} to the set of {@link IRoutinePoolListener}s
+	 * @param _listener - the listener to be registered.
+	 * @see #addChangeListener(IRoutinePoolListener)
+	 * @see #removeFromChangeListeners(IRoutinePoolListener)
+	 */
 	public static void addToChangeListeners(IRoutinePoolListener _listener)
 	{
 		listeners.add(_listener);
 	}
 	
+	/**
+	 * Statically removes the given {@code _listener} from the set of {@link IRoutinePoolListener}s
+	 * @param _listener - the listener to be unregistered.
+	 * @see #removeChangeListener(IRoutinePoolListener)
+	 * @see #addToChangeListeners(IRoutinePoolListener)
+	 */
 	public static void removeFromChangeListeners(IRoutinePoolListener _listener)
 	{
 		listeners.remove(_listener);
@@ -1049,11 +1382,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	
 	@Override
 	public void addChangeListener(IRoutinePoolListener _listener) {
+		// Used just as an adaptor to the own static method
 		addToChangeListeners(_listener);
 	}
 
 	@Override
 	public void removeChangeListener(IRoutinePoolListener _listener) {
+		// Used just as an adaptor to the own static method
 		removeFromChangeListeners(_listener);
 	}
 
@@ -1068,6 +1403,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		// START KGU#624 2018-12-21: Enh. #655
 		}
 		if ((_flags & RPC_SELECTION_CHANGED) != 0) {
+			doButtons();
 			updateStatusSelection();
 		}
 		// END KGU#624 2018-12-21
@@ -1148,5 +1484,34 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		return false;
 	}
 	// END KGU#594 2018-10-06
+
+	// START KGU#624 2018-12-25: Enh. #655
+	@Override
+	public void LangChanged(LangEvent evt) {
+		if (evt.getSource() == msgDiagramsSelected && this.statusbar != null)
+		{
+			this.updateStatusSelection();
+		}
+	}
+	// END KGU#624 2018-12-25
+	
+	// START KGU#363/KGU#624 2018-12-27: Enh. #372, #655
+	/**
+	 * Opens the {@link AttributeInspector} for the specified {@code _root}.
+	 * @param _root - a {@link Root} the attributes of which are to be presented
+	 */
+	public void inspectAttributes(Root _root) {
+		RootAttributes licInfo = new RootAttributes(_root);
+		AttributeInspector attrInsp = new AttributeInspector(
+				this, licInfo);
+		attrInsp.setVisible(true);
+		if (attrInsp.isCommitted()) {
+			_root.addUndo(true);
+			_root.adoptAttributes(attrInsp.licenseInfo);
+			this.routinePoolChanged(surface, RPC_POOL_CHANGED);
+		}
+	}
+	// END KGU#363/KGU#624 2018-12-27
+
 
 }
