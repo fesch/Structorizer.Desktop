@@ -8266,11 +8266,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#363 2017-05-19: Enh. #372
 	/**
 	 * Opens the {@link AttributeInspector} for the current {@link Root}.
-	 * @see #attributesNSD(Root)
+	 * @see #inspectAttributes(Root)
 	 */
 	public void attributesNSD()
 	{
-		attributesNSD(root);
+		inspectAttributes(root);
 	}
 	
 	/**
@@ -8278,7 +8278,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param _root - a {@link Root} the attributes of which are to be presented
 	 * @see #attributesNSD()
 	 */
-	public void attributesNSD(Root _root) {
+	public void inspectAttributes(Root _root) {
 		RootAttributes licInfo = new RootAttributes(_root);
 		AttributeInspector attrInsp = new AttributeInspector(
 				this.NSDControl.getFrame(), licInfo);

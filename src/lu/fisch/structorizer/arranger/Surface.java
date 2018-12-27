@@ -159,6 +159,7 @@ import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -317,6 +318,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
 	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	// END KGU#385 2017-04-22
+	// START KGU#626 2018-12-27: Enh. #657
+	public static final LangTextHolder msgTooltipSelectThis = new LangTextHolder("Select this diagram (+shift: add it to the selection) and bring it up to top.");
+	// END KGU#626 2018-12-27
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -2351,70 +2355,75 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (this.diagramsSelected.size() == 1) {
 			diagr1 = this.diagramsSelected.iterator().next();
 		}
-		if (e.getClickCount()==2)
-		{
-			if (diagr1 == null) {
-				return;
-			}
-			// create editor
-			Mainform form = diagr1.mainform;
-			// This loop is a precaution against stale Mainform (bugfix #132)
-			int nAttempts = 0;
-			do {
-				try
-				{
-					// An attached Mainform might refuse to re-adopt the root
-					if (form==null || !form.setRoot(diagr1.root))
-					{
-						// Start a dependent Mainform not willing to kill us
-						form = new Mainform(false);
-						form.addWindowListener(this);
-						form.setRoot(diagr1.root);
-					}
-
-					// store Mainform reference in diagram
-					diagr1.mainform = form;
-
-					// register this as "updater"
-					diagr1.root.addUpdater(this);
-
-					form.setVisible(true);
-					this.addChangeListener(form);
-				}
-				catch (Exception ex)
-				{
-					// Seems the Mainform was stale (closed without having been cleared)
-					form = null;
-				}
-			} while (form == null && nAttempts++ < 2);
-
-			adaptLayout();
-			this.repaint();
-		}
-		else {
-			boolean ctrlDown = e.isControlDown();
-			if (!ctrlDown && !e.isShiftDown()) {
-				// Without Control button all previous selection is to be cleared 
-				this.unselectAll();
-			}
-			// With zooming we need the virtual mouse coordinates (Enh. #512)
-			int mouseX = Math.round(e.getX() * this.zoomFactor);
-			int mouseY = Math.round(e.getY() * this.zoomFactor);
-			Diagram diagram = getHitDiagram(mouseX, mouseY);
-			if (diagram != null)
+		// Don't change selection on right click!
+		if (e.getButton() != 3) {
+			if (e.getClickCount()==2)
 			{
-				Root root = diagram.root;
-				if (ctrlDown && diagramsSelected.contains(diagram)) {
-					root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
-					diagramsSelected.remove(diagram);
+				// Double-click action
+				if (diagr1 == null) {
+					// Don't do anything if no diagram is selected
+					return;
 				}
-				else {
-					root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-					diagramsSelected.add(diagram);
-				}
+				// create editor
+				Mainform form = diagr1.mainform;
+				// This loop is a precaution against stale Mainform (bugfix #132)
+				int nAttempts = 0;
+				do {
+					try
+					{
+						// An attached Mainform might refuse to re-adopt the root
+						if (form==null || !form.setRoot(diagr1.root))
+						{
+							// Start a dependent Mainform not willing to kill us
+							form = new Mainform(false);
+							form.addWindowListener(this);
+							form.setRoot(diagr1.root);
+						}
+
+						// store Mainform reference in diagram
+						diagr1.mainform = form;
+
+						// register this as "updater"
+						diagr1.root.addUpdater(this);
+
+						form.setVisible(true);
+						this.addChangeListener(form);
+					}
+					catch (Exception ex)
+					{
+						// Seems the Mainform was stale (closed without having been cleared)
+						form = null;
+					}
+				} while (form == null && nAttempts++ < 2);
+
+				adaptLayout();
+				this.repaint();
 			}
-			this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
-			repaint();			
+			else {
+				boolean ctrlDown = e.isControlDown();
+				if (!ctrlDown && !e.isShiftDown()) {
+					// Without Control button all previous selection is to be cleared 
+					this.unselectAll();
+				}
+				// With zooming we need the virtual mouse coordinates (Enh. #512)
+				int mouseX = Math.round(e.getX() * this.zoomFactor);
+				int mouseY = Math.round(e.getY() * this.zoomFactor);
+				Diagram diagram = getHitDiagram(mouseX, mouseY);
+				if (diagram != null)
+				{
+					Root root = diagram.root;
+					if (ctrlDown && diagramsSelected.contains(diagram)) {
+						root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
+						diagramsSelected.remove(diagram);
+					}
+					else {
+						root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+						diagramsSelected.add(diagram);
+					}
+				}
+				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+				repaint();			
+			}
 		}
 	}
 
@@ -2524,12 +2533,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		if (e.isPopupTrigger()) 
 		{
-			Diagram diagr = this.getHitDiagram(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
-			// START KGU#318 2017-01-05: Enh. #319
-			//popup.show(e.getComponent(), e.getX(), e.getY());
-			if (diagr != null) {
-				// TODO
-				//popupMenu.show(e.getComponent(), e.getX(), e.getY());					
+			List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+			if (Arranger.popupMenu != null) {
+				Arranger.popupHitList.removeAll();
+				for (Diagram diagr: hitDiagrs) {
+					javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(diagr.root.getSignatureString(false), diagr.root.getIcon());
+					menuItem.setToolTipText(msgTooltipSelectThis.getText());
+					menuItem.addActionListener(new java.awt.event.ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent evt) {
+							if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
+								unselectAll();
+							}
+							diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+							diagramsSelected.add(diagr);
+							if (diagrams.remove(diagr)) {
+								diagrams.add(diagr);
+							}
+							notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+						}});
+					Arranger.popupHitList.add(menuItem);
+				}
+				Arranger.popupMenu.show(e.getComponent(), e.getX(), e.getY());					
 			}
 		}
 	}
@@ -2624,6 +2649,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagr.root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED); 
 		repaint();
 	}
 	

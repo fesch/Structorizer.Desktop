@@ -1134,6 +1134,17 @@ Arranger.msgTitleURLError.text=URL-Fehler
 Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagrame zurAuswahl hinzugefügt.
 Arranger.msgMissingDiagrams.text=\n\nVerweise auf %1 Diagramme nicht aufgelöst (Diagramme nicht gefunden):\n- %2
 Arranger.msgAmbiguousSignatures.text=\nEs gibt %1 Signaturen, zu denen jeweils mehr als ein Diagramm innerhalb der Auswahl passt:\n- %2
+Arranger.popupHitList.text=Diagramme unter der Maus
+Arranger.popupRemove.text=Gewählte Diagramme entfernen
+Arranger.popupRemoveAll.text=Alle Diagramme entfernen
+Arranger.popupExpandSelection.text=Auswahl vervollständigen
+Arranger.popupExpandSelection.tooltip=Fügt alle direkt oder indirekt aufgerufenen oder einbezogenen Diagramme zur derzeitigen Auswahl hinzu.
+Arranger.popupAttributes.text=Eigenschaften anzeigen ...
+Arranger.popupAttributes.tooltip=Öffnet den Diagrammeigenschaften-Dialog für das ausgewählte Diagramm
+Arranger.popupHelp.text=Arranger-Hilfe ...
+Arranger.popupHelp.tooltip=Zeigt das Arranger-Kapitel des Online-Nutzerhandbuchs im Browser an
+Arranger.popupKeyBindings.text=Tastenkombinationen ...
+Arranger.popupKeyBindings.tooltip=Zeigt die im Arranger gültigen Tastenkombinationen auf der enstprechenden Nutzerhandbuchseite im Browser an
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
@@ -1162,6 +1173,7 @@ Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des 
 Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
 Surface.msgOverwriteFile.text=Bestehende Datei "%" überschreiben?
 Surface.msgConfirmOverwrite.text=Überschreiben bestätigen
+Surface.msgTooltipSelectThis.text=Dieses Diagramm auswählen (+Umschalttaste: zur Auswahl hinzufügen) und nach vorn holen.
 
 -----> Executor
 -----[ Control ]-----

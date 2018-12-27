@@ -63,7 +63,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-10-06  Issue #552: New method hasUnsavedChanges() for smarter serial action handling
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
- *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision
+ *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision, popup menu
  *
  ******************************************************************************************************
  *
@@ -72,6 +72,7 @@ package lu.fisch.structorizer.arranger;
  ******************************************************************************************************///
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -93,14 +94,18 @@ import java.util.logging.Logger;
 import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
+import lu.fisch.structorizer.gui.AttributeInspector;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
@@ -304,6 +309,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#497 2018-02-17: Enh. #512 - zoom function
         btnZoom = new javax.swing.JButton();
         // END KGU#497 2018-02-17
+        // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+        // END KGU#624/KGU#626 2018-12-27
 
         
         surface = new lu.fisch.structorizer.arranger.Surface();
@@ -444,7 +451,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         btnRemoveDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnRemoveDiagram.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRemoveDiagramActionPerformed(evt);
+                btnRemoveDiagramActionPerformed(evt, true);
             }
         });
         //btnRemoveDiagram.setBorder(raisedBorder);
@@ -581,6 +588,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         msgDiagramsSelected.addLangEventListener(this);
         // END KGU#624 2018-12-28
 
+        this.initPopupMenu();
+        
         // START KGU#117 2016-03-09: New for Enh. #77
         this.doButtons();
         // END KGU#117 2016-03-09
@@ -588,7 +597,80 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     }// </editor-fold>//GEN-END:initComponents
 
-    // START KGU#624 2018-12-21: Enh. #655 - new status bar
+    // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+    private void initPopupMenu() {
+        popupMenu = new javax.swing.JPopupMenu();
+        
+        popupHitList = new javax.swing.JMenu("Hit diagrams");
+        popupHitList.setIcon(IconLoader.getIcon(90));
+        
+        popupExpandSelection = new javax.swing.JMenuItem("Expand selection", IconLoader.getIcon(79));
+        popupMenu.add(popupExpandSelection);
+        popupExpandSelection.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		expandSelection();
+        	}});
+        popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+        
+        popupAttributes = new javax.swing.JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
+        popupMenu.add(popupAttributes);
+        popupAttributes.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		Root root = surface.getSelected1();
+        		if (root != null) {
+        			inspectAttributes(root);
+        		}
+        	}});
+        popupAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, java.awt.event.InputEvent.ALT_DOWN_MASK));
+
+        popupMenu.add(popupHitList);
+        
+        popupRemove = new javax.swing.JMenuItem("Remove selected diagrams", IconLoader.getIcon(100));
+        popupMenu.add(popupRemove);
+        popupRemove.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		btnRemoveDiagramActionPerformed(e, false);
+        	}});
+        popupRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+        
+        popupMenu.addSeparator();
+        
+        popupRemoveAll = new javax.swing.JMenuItem("Remove all diagrams", IconLoader.getIcon(45));
+        popupMenu.add(popupRemoveAll);
+        popupRemoveAll.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		removeAllDiagrams();
+        	}});
+        popupRemoveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+        
+        popupMenu.addSeparator();
+        
+        popupHelp = new javax.swing.JMenuItem("Arranger help page ...", IconLoader.getIcon(110));
+        popupMenu.add(popupHelp);
+        popupHelp.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		helpArranger(false);
+        	}});
+        popupHelp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
+        
+        popupKeyBindings = new javax.swing.JMenuItem("Show key bindings ...", IconLoader.getIcon(89));
+        popupMenu.add(popupKeyBindings);
+        popupKeyBindings.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		helpArranger(true);
+        	}});
+        popupKeyBindings.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, java.awt.event.InputEvent.ALT_DOWN_MASK));
+        
+	}
+    // END KGU#624/KGU#62 2018-12-27
+
+	// START KGU#624 2018-12-21: Enh. #655 - new status bar
 	protected void updateStatusSize() {
 		scrollarea.getLocation(scrollareaOrigin);
 		java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
@@ -646,10 +728,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }//GEN-LAST:event_btnAddDiagramActionPerformed
 
 	// START KGU#85 2015-11-17
-	private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt) {
+	private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt, boolean checkShiftPressed) {
 		// START KGU#534 2018-06-27: Enh.#552    	
 		//surface.removeDiagram();
-		if (this.isShiftPressed) {
+		if (checkShiftPressed && this.isShiftPressed) {
 			removeAllDiagrams();
 			// We must make sure that the shift key status is reset - this doesn't work automatically!
 			// Seems that the keyReleased event gets lost...
@@ -770,6 +852,16 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#85 2015-11-18
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18
+    // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+    protected static javax.swing.JPopupMenu popupMenu = null;
+    protected static javax.swing.JMenu popupHitList = null;
+    private javax.swing.JMenuItem popupRemove = null;
+    private javax.swing.JMenuItem popupRemoveAll = null;
+    private javax.swing.JMenuItem popupExpandSelection = null;
+    private javax.swing.JMenuItem popupAttributes = null;
+    private javax.swing.JMenuItem popupHelp = null;
+    private javax.swing.JMenuItem popupKeyBindings = null;
+    // END KGU#624 2018-12-27
     // START KGU#2016-12-16
     private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
     private static final Vector<Root> routines = new Vector<Root>();
@@ -995,7 +1087,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 }
                 break;
                 case KeyEvent.VK_F1:
-                    this.helpArranger();
+                    this.helpArranger(ev.isAltDown());
                     break;
                     // END KGU#624 2018-12-24
                     // START KGU#624 2018-12-26: Enh. #655
@@ -1013,27 +1105,43 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 break;
                 case KeyEvent.VK_F11:
                 {
-                    StringList missingRoots = new StringList();
-                    StringList duplicateRoots = new StringList();
-                    int nAdded = surface.expandSelectionRecursively(missingRoots, duplicateRoots);
-                    String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
-                    if (duplicateRoots.count() > 0) {
-                        message += msgAmbiguousSignatures.getText()
-                                .replace("%1", Integer.toString(duplicateRoots.count()))
-                                .replace("%2", duplicateRoots.concatenate("\n- "));
-                    }
-                    if (missingRoots.count() > 0) {
-                        message += msgMissingDiagrams.getText()
-                                .replace("%1", Integer.toString(missingRoots.count()))
-                                .replace("%2", missingRoots.concatenate("\n- "));
-                    }
-                    JOptionPane.showMessageDialog(this, message);
+                    expandSelection();
                 }
                     break;
+                case KeyEvent.VK_ENTER:
+                  if (ev.isAltDown()) {
+                      Root selected = surface.getSelected1();
+                      if (selected != null) {
+                          this.inspectAttributes(selected);
+                      }
+                  }
+                	break;
                     // END KGU#624 2018-12-26
             }
         }
     }
+
+	/**
+	 * Expands the current selection by all directly orindirectly referenced subroutine
+	 * and includable diagrams that hadn't already been selected.
+	 */
+	protected void expandSelection() {
+		StringList missingRoots = new StringList();
+		StringList duplicateRoots = new StringList();
+		int nAdded = surface.expandSelectionRecursively(missingRoots, duplicateRoots);
+		String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
+		if (duplicateRoots.count() > 0) {
+		    message += msgAmbiguousSignatures.getText()
+		            .replace("%1", Integer.toString(duplicateRoots.count()))
+		            .replace("%2", duplicateRoots.concatenate("\n- "));
+		}
+		if (missingRoots.count() > 0) {
+		    message += msgMissingDiagrams.getText()
+		            .replace("%1", Integer.toString(missingRoots.count()))
+		            .replace("%2", missingRoots.concatenate("\n- "));
+		}
+		JOptionPane.showMessageDialog(this, message);
+	}
     
 	/**
      * In case {@code rootList} contains more than one element, raises an error message
@@ -1113,10 +1221,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#624 2018-12-24: Enh. #655
 	/**
 	 * Tries to open the online User Guide with the Arranger page in the browser
+	 * @param keyBindings TODO
 	 */
-	public void helpArranger()
+	public void helpArranger(boolean keyBindings)
 	{
-		String help = Element.E_HELP_PAGE + "?menu=103";
+		String query = keyBindings ? "?menu=118&page=#keys_arranger" : "?menu=103";
+		String help = Element.E_HELP_PAGE + query;
 		boolean isLaunched = false;
 		try {
 			isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
@@ -1217,6 +1327,16 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     public void doButtons() {
         btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
+        // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+        if (popupMenu != null && surface != null) {
+        	Set<Root> selectedRoots = surface.getSelected();
+        	boolean anythingSelected = !selectedRoots.isEmpty();
+        	boolean singleSelection = selectedRoots.size() == 1;
+        	this.popupAttributes.setEnabled(singleSelection);
+        	this.popupExpandSelection.setEnabled(anythingSelected);
+        	this.popupRemove.setEnabled(anythingSelected);
+        }
+        // END KGU#624/KGU#626 2018-12-27
     }
     // END KGU#117 2016-03-08
 
@@ -1238,11 +1358,23 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// END KGU#305 2016-12-12
 
 	// START KGU#305 2016-12-16
+	/**
+	 * Statically adds the given {@code _listener} to the set of {@link IRoutinePoolListener}s
+	 * @param _listener - the listener to be registered.
+	 * @see #addChangeListener(IRoutinePoolListener)
+	 * @see #removeFromChangeListeners(IRoutinePoolListener)
+	 */
 	public static void addToChangeListeners(IRoutinePoolListener _listener)
 	{
 		listeners.add(_listener);
 	}
 	
+	/**
+	 * Statically removes the given {@code _listener} from the set of {@link IRoutinePoolListener}s
+	 * @param _listener - the listener to be unregistered.
+	 * @see #removeChangeListener(IRoutinePoolListener)
+	 * @see #addToChangeListeners(IRoutinePoolListener)
+	 */
 	public static void removeFromChangeListeners(IRoutinePoolListener _listener)
 	{
 		listeners.remove(_listener);
@@ -1250,11 +1382,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	
 	@Override
 	public void addChangeListener(IRoutinePoolListener _listener) {
+		// Used just as an adaptor to the own static method
 		addToChangeListeners(_listener);
 	}
 
 	@Override
 	public void removeChangeListener(IRoutinePoolListener _listener) {
+		// Used just as an adaptor to the own static method
 		removeFromChangeListeners(_listener);
 	}
 
@@ -1269,6 +1403,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		// START KGU#624 2018-12-21: Enh. #655
 		}
 		if ((_flags & RPC_SELECTION_CHANGED) != 0) {
+			doButtons();
 			updateStatusSelection();
 		}
 		// END KGU#624 2018-12-21
@@ -1359,5 +1494,24 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END KGU#624 2018-12-25
+	
+	// START KGU#363/KGU#624 2018-12-27: Enh. #372, #655
+	/**
+	 * Opens the {@link AttributeInspector} for the specified {@code _root}.
+	 * @param _root - a {@link Root} the attributes of which are to be presented
+	 */
+	public void inspectAttributes(Root _root) {
+		RootAttributes licInfo = new RootAttributes(_root);
+		AttributeInspector attrInsp = new AttributeInspector(
+				this, licInfo);
+		attrInsp.setVisible(true);
+		if (attrInsp.isCommitted()) {
+			_root.addUndo(true);
+			_root.adoptAttributes(attrInsp.licenseInfo);
+			this.routinePoolChanged(surface, RPC_POOL_CHANGED);
+		}
+	}
+	// END KGU#363/KGU#624 2018-12-27
+
 
 }
