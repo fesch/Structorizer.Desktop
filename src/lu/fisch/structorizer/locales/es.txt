@@ -932,8 +932,9 @@ ParserPreferences.lblOutput.tooltip=Palabra clave calificando una instrucción d
 ParserPreferences.chkIgnoreCase.text=Ignorar mayúsc./minúsc.
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
-ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de un texto del Analizador!
-ParserPreferences.lblErrorSign2.text=¡El segundo texto clave para el bucle @f no debe ser igual a ningún otro texto del Analizador!
+ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de una palabra clave!
+ParserPreferences.lblErrorSign2.text=¡Hay conflictos entre las palabras claves en rojo - todos tienen que ser desiguales!
+ParserPreferences.lblInputOutput.text=Entrada/Salida
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Previsualizar impresión

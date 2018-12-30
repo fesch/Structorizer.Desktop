@@ -104,7 +104,7 @@
  *      Kay Gürtzig     2017-09-18      Enh. #423: New messages for record type handling introduced
  *      Kay Gürtzig     2017-10-14/16   Issues #437-#438: New Control messages
  *      Kay Gürtzig     2017-11-05      New texts for issues #448, #452, #454 added.
- *      Kay Gürtzig     2017-12-15      Element name place holders introduced
+ *      Kay Gürtzig     2017-12-15      Enh. #492: Element name place holders introduced
  *      Kay Gürtzig     2018-01-18      DiagramControllerAliases added
  *      Kay Gürtzig     2018-02-17      Arranger captions added (on occasion of enh. #512)
  *      Kay Gürtzig     2018-06-27      Enh. #552: New messages in Menu, Editor, Arranger
@@ -927,7 +927,8 @@ ParserPreferences.chkIgnoreCase.text=Ignore case
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Validate your choice.
 ParserPreferences.lblErrorSign.text=You are not allowed to use the character ':' in any parser string!
-ParserPreferences.lblErrorSign2.text=The second @f loop keystring must differ from any other parser token!
+ParserPreferences.lblErrorSign2.text=There are name conflicts among the key words marked red - they must all differ!
+ParserPreferences.lblInputOutput.text=I/O instructions
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Print Preview

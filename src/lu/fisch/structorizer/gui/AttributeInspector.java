@@ -31,9 +31,10 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.04.28      Created
- *      Kay Gürtzig     2017.05.20      First usable issue
- *      Kay Gürtzig     2018.07.17      Issue #561: Statistics panel refurbished (icon labels now)
+ *      Kay Gürtzig     2017-04-28      Created
+ *      Kay Gürtzig     2017-05-20      First usable issue
+ *      Kay Gürtzig     2018-07-17      Issue #561: Statistics panel refurbished (icon labels now)
+ *      Kay Gürtzig     2018-12-30      Issue #658: Text fields for Jump keywords enabled. 
  *
  ******************************************************************************************************
  *
@@ -648,8 +649,8 @@ public class AttributeInspector extends LangDialog implements WindowListener {
         			this.lblPrefsForIn,	this.txtForInPre,	this.txtForInPost,	null,
         			this.lblPrefsWhile,	this.txtWhilePre,	this.txtWhilePost,	null,
         			this.lblPrefsRepeat,this.txtRepeatPre,	this.txtRepeatPost,	null,
-//        			this.lblPrefsJump, 	this.lblPrefsLeave,	this.lblPrefsReturn,	this.lblPrefsExit,
-//        			null, 				this.txtJumpLeave,	this.txtJumpReturn,	this.txtJumpExit,
+        			this.lblPrefsJump, 	this.lblPrefsLeave,	this.lblPrefsReturn,	this.lblPrefsExit,
+        			null, 				this.txtJumpLeave,	this.txtJumpReturn,	this.txtJumpExit,
         			this.lblPrefsIO,	this.txtInput,		this.txtOutput,		null
         	};
         	
