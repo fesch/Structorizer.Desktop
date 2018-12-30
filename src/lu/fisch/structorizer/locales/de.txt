@@ -932,7 +932,8 @@ ParserPreferences.chkIgnoreCase.text=Ignoriere Gr./Kl.-Schreibung
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
-ParserPreferences.lblErrorSign2.text=Das Nach-Kennwort für @f-Schleifen darf keinem anderen Parser-Kennwort gleichen!
+ParserPreferences.lblErrorSign2.text=Zwischen den rot markierten Kennworten gibt es Namenskonflikte! Sie müssen sich alle unterscheiden.
+ParserPreferences.lblInputOutput.text=E/A-Anweisungen
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht
