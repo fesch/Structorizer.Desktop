@@ -144,6 +144,7 @@ Current development version: 3.28-13 (2018-12-30)
 - 13: Bugfix #512: Wrong Arranger positioning in zoomed display on filesdrop <2>
 - 13: Enh. #655/#657: Arranger now equipped with popup menu (context menu) <2>
 - 13: Issue #658: Parser Preferences now allow to rename exit, return, leave <2>
+- 13: Enh. #158: Key bindings shift-pageUp, shift-pageDown, Home, End <2>
 
 Version 3.28 (2018-02-18)
 - 01: Bugfix #445: Array index out of bounds errors on COBOL import <2>
