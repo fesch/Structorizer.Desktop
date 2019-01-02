@@ -493,7 +493,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             		EventQueue.invokeAndWait(new Runnable() {
             			@Override
             			public void run() {
-            				getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            				// START KGU#626 2019-01-01: Enh. #657
+            				//getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            				getEditor().updateArrangerIndex(Arranger.getSortedGroups());
+            				// END KGU#626 2019-01-01
             			}
             		});
             	} catch (InvocationTargetException e1) {
@@ -509,7 +512,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             	}
             }
             else {
-            	getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            	// START KGU#626 2019-01-01: Enh. #657
+            	//getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            	getEditor().updateArrangerIndex(Arranger.getSortedGroups());
+            	// END KGU#626 2019-01-01
             }
             //System.out.println("* Arranger index done.");
             // END KGU#305 2016-12-16
@@ -1178,7 +1184,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	@Override
 	public void routinePoolChanged(IRoutinePool _source, int _flags) {
 		if (_source instanceof Arranger && this.editor != null && (_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0) {
-			this.editor.updateArrangerIndex(Arranger.getSortedRoots());
+			// START KGU#626 2019-01-01: Enh. #657
+			//this.editor.updateArrangerIndex(Arranger.getSortedRoots());
+			this.editor.updateArrangerIndex(Arranger.getSortedGroups());
+			// END KGU#626 2019-01-01
 		}
 		updateAnalysis();
 	}

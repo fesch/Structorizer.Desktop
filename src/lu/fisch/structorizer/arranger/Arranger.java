@@ -94,7 +94,6 @@ import java.util.logging.Logger;
 import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
@@ -217,6 +216,26 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#305 2016-12-12
 
+    // START KGU#626 2019-01-01: Enh. #657
+    /**
+     * Scrolls to the given Root if found and selects it. If setAtTop is true then the diagram
+     * will be raised to the top drawing level.
+     * @param aRoot - the diagram to be focused
+     * @param setAtTop - whether the diagram is to be drawn on top of all
+     */
+    public static void scrollToGroup(Group selectedGroup, boolean showBounds)
+    {
+    	if (mySelf != null && selectedGroup != null) {
+    		// START KGU#305 2016-12-16: Bugfix #305 - possibly we must wake the instance
+    		if (!mySelf.isVisible()) {
+    			mySelf.setVisible(true);
+    		}
+    		// END KGU#305 2016-12-16
+    		mySelf.surface.scrollToGroup(selectedGroup, showBounds);
+    	}
+    }
+    // END KGU#626 2019-01-01
+
     /**
      * Creates new form Arranger
      *
@@ -251,6 +270,25 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         }
     }
     // END KGU#2 2015-11-19
+
+    // START KGU#626 2018-12-28: Enh. #657 - new group management
+    /**
+     * Places the passed-in root at a free space on the Arranger surface if it
+     * hasn't been placed there already. Relates the given frame to it if it is
+     * a Mainform instance.
+     *
+     * @param root - The diagram root to be added to the Arranger
+     * @param frame - potentially an associable Mainform (Structorizer)
+     * @param groupName - name of the group the file is to belong to
+     */
+    public void addToPool(Root root, JFrame frame, String groupName) {
+        if (frame instanceof Mainform) {
+            surface.addDiagramToGroup(root, (Mainform) frame, null, groupName);
+        } else {
+            surface.addDiagramToGroup(root, null, null, groupName);
+        }
+    }
+    // END KGU#626 2018-12-28
 
     // START KGU#289 2016-11-15: Enh. #290 (Arrangement files oadable from Structorizer)
     /**
@@ -667,7 +705,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	}});
         popupKeyBindings.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, java.awt.event.InputEvent.ALT_DOWN_MASK));
         
-	}
+    }
     // END KGU#624/KGU#62 2018-12-27
 
 	// START KGU#624 2018-12-21: Enh. #655 - new status bar
@@ -862,10 +900,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private javax.swing.JMenuItem popupHelp = null;
     private javax.swing.JMenuItem popupKeyBindings = null;
     // END KGU#624 2018-12-27
-    // START KGU#2016-12-16
+    // START KGU#305 2016-12-16
     private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
     private static final Vector<Root> routines = new Vector<Root>();
-    // END KGU#2016-12-16
+    // END KGU#305 2016-12-16
+    // START KGU#626 2018-12-31: Enh. #657
+    private static final Vector<Group> groups = new Vector<Group>();
+    // END KGU#626 2018-12-31
 
     public void windowOpened(WindowEvent e) {
     }
@@ -932,11 +973,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     else {
                         verb = msgActionDelete.getText();
                     }
-                	if (nSelected > ROOT_LIST_LIMIT) {
-                		// Avoid to make the option pane so large that the buttons can't be reached
-                		rootList.remove(ROOT_LIST_LIMIT, nSelected);
-                		rootList.add("...");
-                	}
+                    if (nSelected > ROOT_LIST_LIMIT) {
+                        // Avoid to make the option pane so large that the buttons can't be reached
+                        rootList.remove(ROOT_LIST_LIMIT, nSelected);
+                        rootList.add("...");
+                    }
                     if (shift && checkIllegalMultipleAction(rootList, verb)) {
                         break;
                     }
@@ -1109,13 +1150,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 }
                     break;
                 case KeyEvent.VK_ENTER:
-                  if (ev.isAltDown()) {
-                      Root selected = surface.getSelected1();
-                      if (selected != null) {
-                          this.inspectAttributes(selected);
-                      }
-                  }
-                	break;
+                    if (ev.isAltDown()) {
+                        Root selected = surface.getSelected1();
+                        if (selected != null) {
+                            this.inspectAttributes(selected);
+                        }
+                    }
+                    break;
                     // END KGU#624 2018-12-26
             }
         }
@@ -1142,8 +1183,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 		JOptionPane.showMessageDialog(this, message);
 	}
-    
-	/**
+
+    /**
      * In case {@code rootList} contains more than one element, raises an error message
      * that {@code actionName} is not allowed for multiple selection and returns true,
      * otherwise returns false.
@@ -1311,12 +1352,31 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // END KGU#258 2016-09-26
 
     // START KGU#305 2016-12-16: Code revision
-    // Shares the sorted list of Root elements held by the Surface object 
+    // Shares the sorted list of Root elements held by the Surface object
+    /**
+     * Returns a sorted list of {@link Root}s held by Arranger.
+     * @return vector of {@link Root}s, sorted by {@link Root#SIGNATURE_ORDER}
+     */
     public static Vector<Root> getSortedRoots()
     {
+        System.out.println("Group list:");
+        for (Group group: groups) {
+            System.out.println("\t" + group);
+        }
         return routines;
     }
     // END KGU#305 2016-12-16
+    
+    // START KGU#626 2018-12-31: Enh. #657
+    /**
+     * Returns a sorted list of {@link Group}s held by Arranger.
+     * @return vector of {@link Group}, sorted by name
+     */
+    public static Vector<Group> getSortedGroups()
+    {
+        return groups;
+    }
+    // END KGU#626 2018-12-31
 
     // START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
     @Override
@@ -1400,6 +1460,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 			routines.clear();
 			routines.addAll(_source.getAllRoots());
 			Collections.sort(routines, Root.SIGNATURE_ORDER);
+			// START KGU#626 2018-12-31: Enh. #657
+			groups.clear();
+			groups.addAll(surface.getGroups());
+			Collections.sort(groups, Group.NAME_ORDER);
+			// END KGU#626 2018-12-31
 		// START KGU#624 2018-12-21: Enh. #655
 		}
 		if ((_flags & RPC_SELECTION_CHANGED) != 0) {
@@ -1437,12 +1502,25 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 					msgConfirmRemoveAll.getText(), 
 					msgTitleWarning.getText(),
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
-			done = surface.removeAllDiagrams();
+				done = surface.removeAllDiagrams();
 			}
 		}
 		return done;
 	}
 	// END KGU#534 2018-06-27
+	
+	// START KGU#626 2018-12-31: Enh. #657
+	/**
+	 * Removes the group with the given {@code name}.
+	 * @param withDiagrams - if true then the member diagrams will also be removed if not held by
+	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
+	 * @return true if the group with given name had existed and has been removed.
+	 */
+	public boolean removeGroup(String name, boolean withDiagrams)
+	{
+		return surface.removeGroup(name, withDiagrams);
+	}
+	// END KGU#626 218-12-31
 
 	// START KGU#373 2017-03-28: Enh. #386
 	/**
@@ -1512,6 +1590,20 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END KGU#363/KGU#624 2018-12-27
+
+	/**
+	 * Stores the group specified by groupName (if existent) as diagram arrangement to either
+	 * the already associated or a new file.<br/>
+	 * Depending on the group type or the choice of the user, this file will either be only a list
+	 * of reference points and filenames (this way not being portable) or be a compressed archive
+	 * containing the list file as well as the referenced NSD files will be produced such that it
+	 * can be ported to a different location and extracted there.
+	 * @param groupName - name of the group to be saved
+	 * @return status flag (true iff the saving succeeded without error)
+	 */
+	public boolean saveGroup(String groupName) {
+		return surface.saveArrangement(this, groupName);
+	}
 
 
 }

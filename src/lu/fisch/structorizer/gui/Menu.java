@@ -1653,24 +1653,9 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// DIN 66261
 			menuDiagramDIN.setSelected(Element.E_DIN);
-			if (Element.E_DIN)
-			{
-				// START KGU#493 2018-02-12: Issues #4, #510
-				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(10));
-				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(15));
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(/*95*/74));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(/*97*/74));
-				// END KGU#493 2018-02-12
-			}
-			else
-			{
-				// START KGU#493 2018-02-12: Issues #4, #510
-				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(9));
-				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(14));
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(/*94*/53));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(/*96*/53));
-				// END KGU#493 2018-02-12
-			}
+			ImageIcon iconFor = IconLoader.getIcon(Element.E_DIN ? 74 : 53);
+			menuDiagramAddBeforeFor.setIcon(iconFor);
+			menuDiagramAddAfterFor.setIcon(iconFor);
 			
 			// START KGU#123 2016-01-04: Enh. #87
 			// control the collapsing by mouse wheel?

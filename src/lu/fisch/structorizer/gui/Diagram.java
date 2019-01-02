@@ -219,6 +219,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.DefaultFormatter;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -234,6 +236,7 @@ import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
@@ -389,7 +392,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // END KGU#2 2015-11-24
 
     private JList<DetectedError> errorlist = null;
-    private JList<Root> diagramIndex = null;
+    // START KGU#626 2019-01-01: Enh. #657
+    //private JList<Root> diagramIndex = null;
+    private JTree arrangerIndex = null;
+    // END KGU#626 2019-01-01
 
     // START KGU#368 2017-03-10: Enh. #376 - Allow copy and paste among Structorizer instances
     //private Element eCopy = null;
@@ -462,7 +468,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         if(_editor!=null)
         {
             errorlist=_editor.errorlist;
-            diagramIndex = _editor.diagramIndex;
+            // START KGU#626 2019-01-01: Enh. #657
+            //diagramIndex = _editor.diagramIndex;
+            arrangerIndex = _editor.arrangerIndex;
+            // END KGU#626 2019-01-01
             NSDControl = _editor;
         }
         create(_string);
@@ -1177,10 +1186,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#565 2018-07-27
 			// START KGU#305 2016-12-12: Enh. #305
-			else if (e.getSource() == diagramIndex)
-			{
-				Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+			// START KGU#626 2019-01-01: Enh. #657
+			//else if (e.getSource() == diagramIndex)
+			//{
+			//	Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+			//}
+			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1) {
+				TreePath[] selectedPaths = arrangerIndex.getSelectionPaths();	// Should have cardinality 1
+				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selectedPaths[0].getLastPathComponent();
+				Object selectedObject = selectedNode.getUserObject();
+				if (selectedObject instanceof Root) {
+					// Should be a Root object
+					Arranger.scrollToDiagram((Root)selectedObject, true);
+				}
+				else if (selectedObject instanceof Group) {
+					Arranger.scrollToGroup((Group)selectedObject, false);
+				}
 			}
+			// END KGU#626 2019-01-01
 			// END KGU#305 2016-12-12
 		}
 		// edit the element
@@ -1236,9 +1259,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			// START KGU#305 2016-12-12: Enh. #305
-			else if (e.getSource() == diagramIndex)
+			// START KGU#626 2019-01-01: Enh. #657
+			//else if (e.getSource() == diagramIndex)
+			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1)
+			// END KGU#626 2019-01-01
 			{
-				Root selectedRoot = diagramIndex.getSelectedValue();
+				// START KGU#626 2019-01-01: Enh. #657
+				//Root selectedRoot = diagramIndex.getSelectedValue();
+				TreePath[] paths = arrangerIndex.getSelectionPaths();
+				Object selectedObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
+				Root selectedRoot = null;
+				if (selected instanceof Root) {
+					selectedRoot = (Root)selectedObject;
+ 				}
+				// END KGU#626 2019-01-01
 				if (selectedRoot != null && selectedRoot != this.root) {
 					this.setRootIfNotRunning(selectedRoot);
 				}
@@ -4378,10 +4412,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * it will be (re-)opened. 
 	 */
 	public void arrangeNSD()
+	// START KGU#626 2018-12-28: Enh. #657
+	{
+		arrangeNSD(null);
+	}
+	/**
+	 * Push the current root to the Arranger and pin it there. If Arranger wasn't visible then
+	 * it will be (re-)opened.
+	 * @param sourceFilename - the base name of a code file the diagram was imported from if so, null otherwise
+	 */
+	public void arrangeNSD(String sourceFilename)
+	// END KGU#626 2018-12-28
 	{
 		//System.out.println("Arranger button pressed!");
 		Arranger arr = Arranger.getInstance();
-		arr.addToPool(root, NSDControl.getFrame());
+		arr.addToPool(root, NSDControl.getFrame(), sourceFilename);
 		arr.setVisible(true);
 		// KGU#280 2016-10-11: Obsolete now
 		//isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
@@ -5488,7 +5533,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// The Root must be marked for saving
 						root.setChanged(false);
 						// ... and be added to the Arranger
-						this.arrangeNSD();
+						// START KGU#626 2018-12-28 Enh. #657 - group management introduced
+						//this.arrangeNSD();
+						this.arrangeNSD(file.getName());
+						// END KGU#626 2018-12-28
 					}
 					if (firstRoot != null)
 					{
@@ -5506,9 +5554,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						root.setChanged(false);
 						// END KGU#192 2016-05-02
 						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
-						if (nRoots > 2 || !root.isProgram()) {
-							this.arrangeNSD();
+						// START KGU#626 2018-12-28: Enh. #657 - with groups, push the main diagram, too, also in case of a program
+						//if (nRoots > 2 || !root.isProgram()) {
+						//	this.arrangeNSD();
+						//}
+						if (nRoots > 2) {
+							this.arrangeNSD(file.getName());
 						}
+						// END KGU#626 2018-12-28
 						// END KGU#354 2017-05-23
 					// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
 					}

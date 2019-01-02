@@ -49,6 +49,7 @@ package lu.fisch.structorizer.arranger;
 import java.awt.Point;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.gui.Mainform;
+import lu.fisch.utils.StringList;
 
 /**
  *
@@ -63,13 +64,17 @@ public class Diagram
     boolean isPinned = false;
     // END KGU#88 2015-11-24
     // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
-    private String signature;
+    private String signature = null;
     // END KGU#330 2017-01-13
+    // START KGU#626 2018-12-28: Enh. #657 - group management
+    private final StringList groupNames = new StringList();
+    boolean wasMoved = false;
+    // END KGU#626 2018-12-28
 
     public Diagram(Root root, Point point)
     {
-        this.root=root;
-        this.point=point;
+        this.root = root;
+        this.point = point;
         // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
         signature = root.getSignatureString(true);
         // END KGU#330 2017-01-13
@@ -128,5 +133,52 @@ public class Diagram
 		return name;
 	}
 	// END KGU#624 2018-12-26
+
+    // START KGU#626 2018-12-28: Enh. #657 - group management
+	/**
+	 * NOTE: This method should not be called directly but from {@link Group#addDiagram(Diagram)}.
+	 * @param _group - the {@link Group} this diagram is being added to
+	 * @return true if the group had not been registered with this diagram before, false otherwise
+	 */
+    protected boolean addToGroup(Group _group)
+    {
+    	if (_group == null) return false;
+    	return this.groupNames.addIfNew(_group.getName());
+    }
+
+    /**
+	 * NOTE: This method should not be called directly but from {@link Group#removeDiagram(Diagram)}.
+	 * @param _group - the {@link Group} this diagram is being added to
+	 * @return true if the group had indeed been registered with this diagram before, false otherwise
+	 */
+    protected boolean removeFromGroup(Group _group)
+    {
+    	if (_group == null) return false;
+    	return this.groupNames.removeAll(_group.getName()) > 0;
+    }
+    // END KGU#626 2018-12-28
+    
+    // START KGU#626 2018-12-30: Enh. #657
+    /**
+     * @return the array of the group names this diagran is member of.
+     * @see #addToGroup(Group)
+     * @see #removeFromGroup(Group)
+     */
+    public String[] getGroupNames()
+    {
+    	return this.groupNames.toArray();
+    }
+    
+    /**
+     * Moves the diagram's reference point to the new coordinates and registers the movement
+     * @param newX
+     * @param newY
+     */
+    public void setLocation(int newX, int newY)
+    {
+    	this.point.setLocation(newX, newY);
+    	this.wasMoved = true;
+    }
+    // END KGU#626 2018-12-30
 	
 }

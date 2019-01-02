@@ -71,6 +71,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-09-18      Issue #601: More safety on icon request (dummy icon, log).
  *      Kay Gürtzig     2018-10-27      Enh. #619: New icon 056_wordwrap for line breaking menu item
  *      Kay Gürtzig     2018-12-27      Enh. #657: New icons 089_keyboard, 090_laxers for Arranger popup menu added
+ *      Kay Gürtzig     2019-01-01      Enh. #657: New icons 094_group, 095_groupList, 096_groupArchive added
  *
  ******************************************************************************************************
  *
@@ -191,9 +192,9 @@ public class IconLoader {
 			"091_elem_para.png",
 			"092_SaveAs.png",
 			"093_picture_export.png",	// for Arranger toolbar
-			null,	//"094_forBefore.png",		// obsolete (#510)
-			null,	//"095_for_dinBefore.png",	// obsolete (#510)
-			null,	//"096_forAfter.png",			// obsolete (#510)
+			"094_group.png",	//ex "094_forBefore.png",		// obsolete (#510)
+			"095_groupList.png",	//ex "095_for_dinBefore.png",	// obsolete (#510)
+			"096_groupArchive.png",	//ex "096_forAfter.png",			// obsolete (#510)
 			null,	//"097_for_dinAfter.png",		// obsolete (#510)
 			null,	// 98
 			"099_pin_blue.png",	// for Arranger toolbar
