@@ -32,39 +32,40 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.28      First Issue
- *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added (KGU#43). 
- *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
- *      Kay Gürtzig     2016.01.04      Enh. #87: New buttons and menu items for collapsing/expanding elements
- *      Kay Gürtzig     2016.01.11      Enh. #103: Save button disabled while Root is unchanged (KGU#137)
- *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution (KGU#143)
- *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
- *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for cursor keys added (KGU#177)
- *      Kay Gürtzig     2016.04.14      Enh. #158: Key bindings for page keys added (KGU#177)
- *      Kay Gürtzig     2016.07.06      Enh. #188: New button and menu item for element conversion (KGU#199)
- *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
- *      Kay Gürtzig     2016.08.02      Enh. #215: popupBreakTrigger added
- *      Kay Gürtzig     2016.10.13      Enh. #277: New toolbar button (+ context menu item) for disabling elements
- *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
- *      Kay Gürtzig     2016.11.22      Enh. #284: Key bindings for font resizing added (KGU#294)
- *      Kay Gürtzig     2016.12.12      Enh. #305: Scrollable list view of Roots in Arranger added
- *      Kay Gürtzig     2016.12.17      Enh. #305: Key binding <del> added to Arranger index list.
- *      Kay Gürtzig     2017.01.05      Enh. #319: Context menu for Arranger index
- *      Kay Gürtzig     2017.01.13      Bugfix #233: F6 and F8 had got kidnapped by the JSplitPanes sp and sp305
- *      Kay Gürtzig     2017.02.09      Enh. #344: Ctrl-Y as additional redo key binding
- *      Kay Gürtzig     2017.03.27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
- *      Kay Gürtzig     2017.03.28      Enh. #387: New "Save All" button
- *      Kay Gürtzig     2017.05.16      Enh. #389: Button for third diagram type (includable)
- *      Kay Gürtzig     2017.06.15      Enh. #415, #199: Toolbar additions for find & replace as well as help
- *      Kay Gürtzig     2017.11.05      Issue #452: Mechanisms for simplified toolbar (beginners' mode)
- *      Kay Gürtzig     2017.11.19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button
- *      Kay Gürtzig     2018.02.12      Issues #4, #510: element toolbars merged, icon numbers modified
- *      Kay Gürtzig     2018.02.13      Issue #510: All "arrowed" element icons replaced by pure element icons
- *      Kay Gürtzig     2018.02.14      Issue #510: btnUnboxed and its solitary toolbar disabled.
- *      Kay Gürtzig     2018.07.02      KGU#245: color buttons converted into an array
- *      Kay Gürtzig     2018.07.27      Bugfix #568: Action name for space key binding in arranger list corrected
- *      Kay Gürtzig     2018.09.13      Enh. #590: New entry "Inspect attributes..." in the Arranger Index popup menu
- *      Kay Gürtzig     2018.10.02      Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins
+ *      Bob Fisch       2007-12-28      First Issue
+ *      Kay Gürtzig     2015-10-12      control elements for breakpoint handling added (KGU#43). 
+ *      Kay Gürtzig     2015-11-22      Adaptations for handling selected non-empty Subqueues (KGU#87)
+ *      Kay Gürtzig     2016-01-04      Enh. #87: New buttons and menu items for collapsing/expanding elements
+ *      Kay Gürtzig     2016-01-11      Enh. #103: Save button disabled while Root is unchanged (KGU#137)
+ *      Kay Gürtzig     2016-01-21      Bugfix #114: Editing restrictions during execution (KGU#143)
+ *      Kay Gürtzig     2016-01-22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
+ *      Kay Gürtzig     2016-04-06      Enh. #158: Key bindings for cursor keys added (KGU#177)
+ *      Kay Gürtzig     2016-04-14      Enh. #158: Key bindings for page keys added (KGU#177)
+ *      Kay Gürtzig     2016-07-06      Enh. #188: New button and menu item for element conversion (KGU#199)
+ *      Kay Gürtzig     2016-07-21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
+ *      Kay Gürtzig     2016-08-02      Enh. #215: popupBreakTrigger added
+ *      Kay Gürtzig     2016-10-13      Enh. #277: New toolbar button (+ context menu item) for disabling elements
+ *      Kay Gürtzig     2016-11-17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
+ *      Kay Gürtzig     2016-11-22      Enh. #284: Key bindings for font resizing added (KGU#294)
+ *      Kay Gürtzig     2016-12-12      Enh. #305: Scrollable list view of Roots in Arranger added
+ *      Kay Gürtzig     2016-12-17      Enh. #305: Key binding <del> added to Arranger index list.
+ *      Kay Gürtzig     2017-01-05      Enh. #319: Context menu for Arranger index
+ *      Kay Gürtzig     2017-01-13      Bugfix #233: F6 and F8 had got kidnapped by the JSplitPanes sp and sp305
+ *      Kay Gürtzig     2017-02-09      Enh. #344: Ctrl-Y as additional redo key binding
+ *      Kay Gürtzig     2017-03-27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
+ *      Kay Gürtzig     2017-03-28      Enh. #387: New "Save All" button
+ *      Kay Gürtzig     2017-05-16      Enh. #389: Button for third diagram type (includable)
+ *      Kay Gürtzig     2017-06-15      Enh. #415, #199: Toolbar additions for find & replace as well as help
+ *      Kay Gürtzig     2017-11-05      Issue #452: Mechanisms for simplified toolbar (beginners' mode)
+ *      Kay Gürtzig     2017-11-19      Bugfix: #468: action helpNSD had been associated to wrong toolbar button
+ *      Kay Gürtzig     2018-02-12      Issues #4, #510: element toolbars merged, icon numbers modified
+ *      Kay Gürtzig     2018-02-13      Issue #510: All "arrowed" element icons replaced by pure element icons
+ *      Kay Gürtzig     2018-02-14      Issue #510: btnUnboxed and its solitary toolbar disabled.
+ *      Kay Gürtzig     2018-07-02      KGU#245: color buttons converted into an array
+ *      Kay Gürtzig     2018-07-27      Bugfix #568: Action name for space key binding in arranger list corrected
+ *      Kay Gürtzig     2018-09-13      Enh. #590: New entry "Inspect attributes..." in the Arranger Index popup menu
+ *      Kay Gürtzig     2018-10-02      Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins
+ *      Kay Gürtzig     2018-12-30      Enh. #158, #655: Key bindings for shift+page keys, home, end
  *
  ******************************************************************************************************
  *
@@ -352,21 +353,21 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // START KGU#177 2016-04-14: Enh. #158
     private class PageScrollAction extends AbstractAction
     {
-    	private JScrollBar vScrollBar;
+    	private JScrollBar scrollBar;
     	private boolean up;
     	
-    	PageScrollAction(JScrollBar vScrBar, boolean pageUp, String key)
+    	PageScrollAction(JScrollBar scrBar, boolean pageUp, String key)
     	{
     		super(key);
-    		vScrollBar = vScrBar;
+    		scrollBar = scrBar;
     		up = pageUp; 		
     	}
 
 		@Override
 		public void actionPerformed(ActionEvent ev) {
-			int value = vScrollBar.getValue();
-			int incr = vScrollBar.getBlockIncrement(up ? -1 : 1);
-			vScrollBar.setValue(value + (up ? -incr : incr));
+			int value = scrollBar.getValue();
+			int incr = scrollBar.getBlockIncrement(up ? -1 : 1);
+			scrollBar.setValue(value + (up ? -incr : incr));
 		}
     	
     }
@@ -983,6 +984,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
 		// END KGU#177 2016-04-16
+		// START KGU#177/KGU#629 2018-12-30: Enh. #158, #655
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, KeyEvent.SHIFT_DOWN_MASK), "PAGE_RIGHT");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, KeyEvent.SHIFT_DOWN_MASK), "PAGE_LEFT");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), "HOME");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), "END");
+		// END KGU#177/KGU#629 2018-12-30
 	    // START KGU#294 2016-11-22: Enh. #284
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), "FONT_UP");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), "FONT_DOWN");
@@ -1008,6 +1015,24 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
 		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));
 		// END KGU#177 2016-04-16
+	    // START KGU#177/KGU#629 2018-12-30: Enh. #158, #655
+		actMap.put("PAGE_RIGHT", new PageScrollAction(scrollarea.getHorizontalScrollBar(), false, "PAGE_RIGHT"));
+		actMap.put("PAGE_LEFT", new PageScrollAction(scrollarea.getHorizontalScrollBar(), true, "PAGE_LEFT"));
+		actMap.put("HOME", new AbstractAction("HOME") {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				scrollarea.getVerticalScrollBar().setValue(0);
+				scrollarea.getHorizontalScrollBar().setValue(0);
+				}
+			});
+		actMap.put("END", new AbstractAction("END") {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				scrollarea.getVerticalScrollBar().setValue(diagram.getHeight());
+				scrollarea.getHorizontalScrollBar().setValue(diagram.getWidth());
+				}
+			});
+		// END KGU#177/KGU#629 2018-12-30
 		// START KGU#294 2016-11-22: Enh. #284
 		actMap.put("FONT_DOWN", new FontResizeAction(diagram, "FONT_DOWN"));
 		actMap.put("FONT_UP", new FontResizeAction(diagram, "FONT_UP"));

@@ -405,7 +405,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
                     @Override
                     public void windowActivated(WindowEvent e)
-                    {  
+                    {
                             //editor.componentResized(null);
                             //editor.revalidate();
                             //repaint();
@@ -413,11 +413,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
                     @Override
                     public void windowGainedFocus(WindowEvent e) 
-                    {  
+                    {
                             //editor.componentResized(null);
                             //editor.revalidate();
                             //repaint();
-                    }  
+                    }
             }); 
 
             /******************************
