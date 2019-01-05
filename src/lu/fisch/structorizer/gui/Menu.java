@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -95,6 +95,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-03-15      Bugfix #522: New messages for subroutine outsourcing 
  *      Kay Gürtzig     2018-10-26      Enh. #619: New menu entries and messages for line breaking
  *      Kay Gürtzig     2018-12-24      Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() calls concentrated
+ *      Kay Gürtzig     2019-01-04      Enh. #657: Key bindings Ctrl-G and Ctrl-Shift-G withdrawn (too rarely used)
  *
  ******************************************************************************************************
  *
@@ -916,11 +917,15 @@ public class Menu extends LangMenuBar implements NSDController
 
 		// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
 		menuEdit.add(menuEditUpgradeTurtle);
-		menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// START KGU#626 2019-01-04: Enh. #657 - Accelerator withdrawn, we need ctrl-g etc. now for the grouping mechanism
+		//menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// END KGU#626 2019-01-04
 		menuEditUpgradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(true); doButtons(); } } );
 
 		menuEdit.add(menuEditDowngradeTurtle);
-		menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, menuShortcutKeyMask));
+		// START KGU#626 2019-01-04: Enh. #657 - Accelerator withdrawn, we need ctrl-g etc. now for the grouping mechanism
+		//menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, menuShortcutKeyMask));
+		// END KGU#626 2019-01-04
 		menuEditDowngradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(false); doButtons(); } } );
 
 		menuEdit.addSeparator();

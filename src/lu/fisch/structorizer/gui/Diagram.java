@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -304,10 +304,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     /** Nesting depth of serial actions */
 	private static short serialActionDepth = 0;
 	public enum SerialDecisionStatus {INDIVIDUAL, YES_TO_ALL, NO_TO_ALL};
-	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE};
+	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE, SERIAL_GROUP_SAVE};
 	private static final SerialDecisionStatus[] serialDecisions = {
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_SAVE
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_OVERWRITE
+			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_GROUP_SAVE
 	}; 
 	/**
 	 * Enters a serial action - thus allowing general decisions to certain aspects
@@ -364,18 +365,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * serial action (INDIVIDUAL if there is no serial action context). 
 	 * @param aspect - one of the supported serial decision aspects
 	 * @return the decision value
+	 * @see #setSerialDecision(SerialDecisionAspect, boolean)
 	 */
-	public SerialDecisionStatus getSerialDecision(SerialDecisionAspect aspect) {
+	public static SerialDecisionStatus getSerialDecision(SerialDecisionAspect aspect) {
 		return serialDecisions[aspect.ordinal()]; 
 	}
 	/**
-	 * Sets a general decision for all remaining files or other subjects fo the given
+	 * Sets a general decision for all remaining files or other subjects for the given
 	 * {@code aspect} of the current serial action (note that there is no way back to
-	 * INDIVIDUAL here). Is ignored if teher is no serial action context. 
+	 * INDIVIDUAL here). Is ignored if there is no serial action context. 
 	 * @param aspect - one of the supported serial decision aspects
 	 * @param statusAll - yes to all (true) or no to all (false)
+	 * @see #getSerialDecision(SerialDecisionAspect)
 	 */
-	private void setSerialDecision(SerialDecisionAspect aspect, boolean statusAll) {
+	public static void setSerialDecision(SerialDecisionAspect aspect, boolean statusAll) {
 		if (serialActionDepth > 0) {
 			serialDecisions[aspect.ordinal()] = (statusAll ? SerialDecisionStatus.YES_TO_ALL : SerialDecisionStatus.NO_TO_ALL);
 		}
@@ -2022,7 +2025,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					newFilename += ".nsd";
 				}
 				if (chkAcceptProposals != null && chkAcceptProposals.isSelected()) {
-					this.setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, true);
+					setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, true);
 				}
 
 				File f = new File(newFilename);
@@ -2150,7 +2153,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						writeNow = 2;
 					}
 					else if (res == 2) {
-						this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
+						setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
 					}
 					if (res == 0 || res == 2) writeNow = 0;
 					}
@@ -2220,65 +2223,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!root.isEmpty() && root.hasChanged())
 		// END KGU#137 2016-01-11
 		{
-			// START KGU#534 2018-06-27: Enh. #552
-			if (_askToSave && isInSerialMode()) {
-				switch (getSerialDecision(SerialDecisionAspect.SERIAL_SAVE)) {
-				case NO_TO_ALL:
-					res = 1;
-					// NO break here!
-				case YES_TO_ALL:
-					_askToSave = false;
-					break;
-				default:;
-				}
-			}
-			// END KGU#534 2018-06-27
-			if (_askToSave)
-			{
-				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous seeing the NSD name
-				//res = JOptionPane.showOptionDialog(this,
-				//		   "Do you want to save the current NSD-File?",
+			String message = null;
+			if (_askToSave) {
 				String filename = root.filename;
 				if (filename == null || filename.isEmpty())
 				{
 					filename = root.proposeFileName();
 				}
-				String[] options = null;
-				if (isInSerialMode()) {
-					options = new String[]{
-							Menu.lblContinue.getText(),
-							Menu.lblSkip.getText(),
-							Menu.lblYesToAll.getText(),
-							Menu.lblNoToAll.getText()	// Well, this is less sensible...
-					};
-				}
-				else {
-					options = new String[] {
-							Menu.lblYes.getText(),
-							Menu.lblNo.getText()
-					};
-				}
-				Object initialValue = options[0];
-				res = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
-												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
-				// END KGU#49 2015-10-18
-												   Menu.msgTitleQuestion.getText(),
-												   JOptionPane.YES_NO_OPTION,
-												   JOptionPane.QUESTION_MESSAGE,
-												   // START KGU#534 2018-06-27: Enh. #552
-												   //null,null,null
-												   null,
-												   options,
-												   initialValue
-												   // END KGU#534 2018-06-27
-												   );
+				message = Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"";
 			}
+			res = requestSaveDecision(message, this.NSDControl.getFrame(), SerialDecisionAspect.SERIAL_SAVE);
 			
 			// START KGU#534 2018-06-27: Enh. #552
 			//if (res==0)
-			if (res >= 2) {
-				this.setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, res == 2);
-			}
 			if (res==0 || res==2)
 			// END KGU#534 2018-06-27
 			{
@@ -2345,6 +2302,68 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		return res != -1; // true if not cancelled
+	}
+	/**
+	 * Service method for a decision about saving a file with the given path {@code filename} in
+	 * a potential serial context.
+	 * @param _messageText - the text of the offered question if an interactive dialog is wanted at all, null otherwise
+	 * @param _initiator - an owning component for the modal message or question boxes
+	 * @return 0 for approval, 1 for disapproval, 2 for "yes to all", 3 for "no to all", -1 for cancel
+	 */
+	public static int requestSaveDecision(String _messageText, Component initiator, SerialDecisionAspect aspect) {
+		int res = 0;
+		// START KGU#534 2018-06-27: Enh. #552
+		if (_messageText != null && isInSerialMode()) {
+			switch (getSerialDecision(aspect)) {
+			case NO_TO_ALL:
+				res = 1;
+				// NO break here!
+			case YES_TO_ALL:
+				_messageText = null;
+				break;
+			default:;
+			}
+		}
+		// END KGU#534 2018-06-27
+		if (_messageText != null)
+		{
+			// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous seeing the NSD name
+			//res = JOptionPane.showOptionDialog(this,
+			//		   "Do you want to save the current NSD-File?",
+			String[] options = null;
+			if (isInSerialMode()) {
+				options = new String[]{
+						Menu.lblContinue.getText(),
+						Menu.lblSkip.getText(),
+						Menu.lblYesToAll.getText(),
+						Menu.lblNoToAll.getText()	// Well, this is less sensible...
+				};
+			}
+			else {
+				options = new String[] {
+						Menu.lblYes.getText(),
+						Menu.lblNo.getText()
+				};
+			}
+			Object initialValue = options[0];
+			res = JOptionPane.showOptionDialog(initiator,
+					_messageText,
+			// END KGU#49 2015-10-18
+					Menu.msgTitleQuestion.getText(),
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					// START KGU#534 2018-06-27: Enh. #552
+					//null,null,null
+					null,
+					options,
+					initialValue
+					// END KGU#534 2018-06-27
+					);
+		}
+		if (res >= 2) {
+			setSerialDecision(aspect, res == 2);
+		}
+		return res;
 	}
 	
 	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
@@ -5497,7 +5516,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 						startSerialMode();
 						try {
-							while (iter.hasNext() && this.getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
+							while (iter.hasNext() && getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
 								Root nextRoot = iter.next();
 								//nextRoot.highlightVars = hil;
 								nextRoot.setChanged(false);

@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -84,6 +84,8 @@ import java.util.HashSet;
 import java.util.Vector;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -120,6 +122,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	//protected final JList<Root> arrangerIndex = new JList<Root>(diagrams);
 	private final DefaultMutableTreeNode arrangerIndexTop = new DefaultMutableTreeNode("Arranger Index");
 	protected final JTree arrangerIndex = new JTree(arrangerIndexTop);
+	private final HashSet<DefaultMutableTreeNode> expandedGroupNodes = new HashSet<DefaultMutableTreeNode>();
+	/** Original (standard) Arranger index background color  - may get wrong with an L&F change! */
+	private Color arrangerIndexBackground = null;
+	private static final Color ARRANGER_INDEX_UNFOCUSSED_BACKGROUND = Color.LIGHT_GRAY;
 	// END KGU#626 2018-12-31
 	// END KGU#305 2016-12-12
 
@@ -324,9 +330,29 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#573 2018-09-13: Enh. #590 - allow to open attribute inspector
 	protected final JMenuItem popupIndexAttributes = new JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
 	// END KGU#573 2018-09-13
+	// START KGU#626 2019-01-03: Enh. #657
+	protected final JMenuItem popupIndexGroup = new JMenuItem("Create group ...", IconLoader.getIcon(94));
+	protected final JMenuItem popupIndexExpandGroup = new JMenuItem("Expand group ...", IconLoader.getIcon(117));
+	protected final JMenuItem popupIndexDissolve = new JMenuItem("Dissolve group", IconLoader.getIcon(97));
+	protected final JMenuItem popupIndexDetach = new JMenuItem("Detach from group", IconLoader.getIcon(98));
+	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
+
+	protected final JLabel lblSelectTargetGroup = new JLabel("Select the target group:");
+	protected final JComboBox<Group> cmbTargetGroup = new JComboBox<Group>();
+	protected final JPanel pnlGroupSelect = new JPanel();
+	// END KGU#626 2019-01-03
 	
 	// START KGU#626 2019-01-01: Enh. #657
-	protected static final LangTextHolder msgDefaultGroupName = new LangTextHolder("(Default Group)");
+	public static final LangTextHolder msgDefaultGroupName = new LangTextHolder("(Default Group)");
+	protected static final LangTextHolder msgGroupsAndRootsSelected = new LangTextHolder("Both groups and diagrams selected. Removing on both levels at a time may have unexpected results.");
+	protected static final LangTextHolder msgDeleteGroupMembers = new LangTextHolder("You are going to delete % groups.\n\nThose member diagrams of them that are shared by other groups will survive.\nWhat about diagrams not shared by other groups: Remove from Arranger?\n(Otherwise they would be moved to the default group.)");
+	protected static final LangTextHolder msgConfirmDeleteRoots = new LangTextHolder("You selected % diagrams to be removed\n\nDo you really intend to remove them from all groups and Arranger?\n(Otherwise they would just be detached from the respective group.)");
+	protected static final LangTextHolder[] msgAttachOptions = new LangTextHolder[] {
+			new LangTextHolder("Add to group"),
+			new LangTextHolder("Move to group"),
+			new LangTextHolder("Cancel")
+	};
+	
 	public static class ArrangerIndexCellRenderer extends DefaultTreeCellRenderer {
 		private final static ImageIcon groupIcon = IconLoader.getIcon(94);
 		private final static ImageIcon groupIconList = IconLoader.getIcon(95);
@@ -337,7 +363,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		private final static ImageIcon mainIconCovered = IconLoader.getIcon(70);
 		private final static ImageIcon inclIcon = IconLoader.getIcon(71);
 		private final static ImageIcon inclIconCovered = IconLoader.getIcon(72);
-		private final static Color selectedBackgroundNimbus = new Color(57,105,138);
+		//private final static Color selectedBackgroundNimbus = new Color(57,105,138);
 
 		@Override
 		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
@@ -515,20 +541,44 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		@Override
 		public void actionPerformed(ActionEvent ev) {
 			// TODO - Find an equivalent for JTree
-//			if (getValue(AbstractAction.NAME).equals("SINGLE_CLICK")) {
-//				Arranger.scrollToDiagram(arrangerIndex.getSelectedValue(), true);
-//			}
-//			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
-//			//else {
-//			else if (getValue(AbstractAction.NAME).equals("DOUBLE_CLICK")) {
-//			// END KGU#305 2016-12-17
-//				arrangerIndexGet();
-//			}
-//			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
-//			else if (getValue(AbstractAction.NAME).equals("DELETE") && Arranger.hasInstance()) {
-//				arrangerIndexRemove();
-//			}
-//			// END KGU#305 2016-12-17
+			Object name = getValue(AbstractAction.NAME);
+			if (name.equals("SINGLE_CLICK")) {
+				// START KGU#626 2019-01-04: Enh. #657 - different handling in JTree than in JList
+				//Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+				TreePath[] paths = arrangerIndex.getSelectionPaths();
+				if (paths != null && paths.length == 1) {
+					Object selectedObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
+					if (selectedObject instanceof Root) {
+						Arranger.scrollToDiagram((Root)selectedObject, true);
+					}
+					else if (selectedObject instanceof Group) {
+						Arranger.scrollToGroup((Group)selectedObject, true);
+					}
+				}
+				// END KGU#626 2019-01-04
+			}
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			//else {
+			else if (name.equals("DOUBLE_CLICK")) {
+			// END KGU#305 2016-12-17
+				arrangerIndexGet();
+			}
+			// START KGU#626 2019-01-04: Enh. #657
+			else if (name.equals("ALT_ENTER")) {
+				arrangerIndexAttributes();
+			}
+			else if (name.equals("MAKE_GROUP")) {
+				arrangerIndexMakeGroup(false);
+			}
+			else if (name.equals("MAKE_COMPLETE_GROUP")) {
+				arrangerIndexMakeGroup(true);
+			}
+			// END KGU#626 2019-01-04
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			else if (name.equals("DELETE") && Arranger.hasInstance()) {
+				arrangerIndexRemove();
+			}
+			// END KGU#305 2016-12-17
 		}
 	}
 	// END KGGU#305 2016-12-15
@@ -1192,6 +1242,22 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupIndex.addSeparator();
 		// END KGU#626 2019-01-01
 		
+		popupIndex.add(popupIndexGroup);
+		popupIndexGroup.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexMakeGroup(false); } });
+
+		popupIndex.add(popupIndexExpandGroup);
+		// FIXME: We should associate a different action here if a group is selected: expand it by missing subdiagrams
+		popupIndexExpandGroup.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexMakeGroup(true); } });
+
+		popupIndex.add(popupIndexDissolve);
+		popupIndexDissolve.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexDissolveGroup(); } });
+
+		popupIndex.add(popupIndexDetach);
+		popupIndexDetach.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexDetachFromGroup(); } });
+
+		popupIndex.add(popupIndexAttach);
+		popupIndexAttach.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexAttachToGroup(); } });
+
 		popupIndex.add(popupIndexSave);
 		popupIndexSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSave(); } });
 
@@ -1207,6 +1273,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupIndex.add(popupIndexRemoveAll);
 		popupIndexRemoveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemoveAll(); } });
 		// END KGU#534 2018-06-27
+		
+		// START KGU#626 2019-01-04: Enh. #657 - a panel that may sporadically be needed for the detach action
+		pnlGroupSelect.setLayout(new FlowLayout());
+		pnlGroupSelect.add(lblSelectTargetGroup);
+		pnlGroupSelect.add(cmbTargetGroup);
+		// END KGU#626 2019-01-04
 	}
 	
 	/**
@@ -1272,27 +1344,61 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		scrollIndex.setDoubleBuffered(true);
 		scrollIndex.setBorder(BorderFactory.createEmptyBorder());
 		scrollIndex.setViewportView(arrangerIndex);
-		//scrollIndex.setPreferredSize(new Dimension(50,0));
 
-		//diagramIndex.setFocusable(false);
-		//arrangerIndex.setCellRenderer(new RootListCellRenderer());
+		arrangerIndexBackground = arrangerIndex.getBackground();
 		arrangerIndex.setRootVisible(false);
 		arrangerIndex.setCellRenderer(new ArrangerIndexCellRenderer());
-		//arrangerIndex.setLayoutOrientation(JList.VERTICAL);
-		//diagramIndex.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);		
 		arrangerIndex.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);		
 		arrangerIndex.addMouseListener(diagram);
 		arrangerIndex.addMouseListener(new PopupListener());
-		// END KGU#305 2016-12-12
+		arrangerIndex.addTreeExpansionListener(new TreeExpansionListener() {
+			@Override
+			public void treeExpanded(TreeExpansionEvent event) {
+				TreePath path = event.getPath();
+				// Make sure it is at group level (just in case...)
+				if (path.getPathCount() == 2) {
+					expandedGroupNodes.add((DefaultMutableTreeNode)path.getLastPathComponent());
+				}
+			}
+			@Override
+			public void treeCollapsed(TreeExpansionEvent event) {
+				TreePath path = event.getPath();
+				// Make sure it is at group level (just in case...)
+				if (path.getPathCount() == 2) {
+					expandedGroupNodes.remove((DefaultMutableTreeNode)path.getLastPathComponent());
+				}
+			}});
+		arrangerIndex.addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent event) {
+				arrangerIndex.setBackground(arrangerIndexBackground);
+			}
+			@Override
+			public void focusLost(FocusEvent event) {
+				arrangerIndex.setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
+			}});
+		arrangerIndex.setShowsRootHandles(true);
 		// START KGU#305 2016-12-15: Enh. #305 - react to space and enter
+		// START KGU#626 2019-01-04: Enh. #657 - didn't work any longer for JTree
 		InputMap inpMap = arrangerIndex.getInputMap(WHEN_FOCUSED);
 		ActionMap actMap = arrangerIndex.getActionMap();
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "SPACE");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK), "ALT_ENTER");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "DELETE");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), "CTRL_G");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), "CTRL_SHIFT_G");
 		actMap.put("SPACE", new ArrangerIndexAction(false));
 		actMap.put("ENTER", new ArrangerIndexAction(true));
-		actMap.put("DELETE",new ArrangerIndexAction("DELETE"));
+		actMap.put("ALT_ENTER", new ArrangerIndexAction("ALT_ENTER"));
+		actMap.put("DELETE", new ArrangerIndexAction("DELETE"));
+		actMap.put("CTRL_G", new ArrangerIndexAction("MAKE_GROUP"));
+		actMap.put("CTR_SHIFT_G", new ArrangerIndexAction("MAKE_COMPLETE_GROUP"));
+		
+		if (!arrangerIndex.isFocusOwner()) {
+			arrangerIndex.setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
+		}
+		// END KGU#305 2016-12-15
 	}
 
 	public void doButtons()
@@ -1303,6 +1409,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		}
 	}	
 	
+	/**
+	 * Checks and updates the visibility / usability of all Editor-specific buttons, menu items
+	 * and other controls
+	 */
 	public void doButtonsLocal()
 	{
 		//scrollarea.setViewportView(diagram);
@@ -1544,6 +1654,27 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#305 2016-12-12: Enh. 305
 		// arranger index
 		
+		doButtonsArrangerIndex();
+
+                // Intends to ensure the original toolbar order after redocking?
+                /*
+                for(int j=0;j<diagram.toolbars.size();j++)
+                {
+                  MyToolbar tb = diagram.toolbars.get(j);
+
+                  this.remove(tb);
+                  if(tb.isVisible()) this.add(tb,AKDockLayout.NORTH);
+                  //else this.remove(tb);
+                }
+                 */
+
+	}
+
+	/**
+	 * Checks and updates the visibility / usability of all Arranger-Index-specific buttons,
+	 * menu items and other controls
+	 */
+	private void doButtonsArrangerIndex() {
 		// START KGU#626 2019-01-01: Enh. #657
 		//if (diagram.showingArrangerIndex() && !diagrams.isEmpty())
 		if (diagram.showingArrangerIndex() && !arrangerIndexTop.isLeaf())
@@ -1581,19 +1712,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		//popupIndexAttributes.setEnabled(indexSelected);
 		popupIndexAttributes.setEnabled(indexSelected && arrangerIndexGetSelectedRoot() != null);
 		// END KGU#573 2018-09-13
-
-                // Intends to ensure the original toolbar order after redocking?
-                /*
-                for(int j=0;j<diagram.toolbars.size();j++)
-                {
-                  MyToolbar tb = diagram.toolbars.get(j);
-
-                  this.remove(tb);
-                  if(tb.isVisible()) this.add(tb,AKDockLayout.NORTH);
-                  //else this.remove(tb);
-                }
-                 */
-
+		// START KGU#626 2019-01-03: Enh. #657
+		popupIndexGroup.setEnabled(this.arrangerIndexGetSelectedRoots(false).size() > 1);
+		popupIndexExpandGroup.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty()
+				|| this.arrangerIndexGetSelectedGroup() != null);
+		popupIndexDissolve.setEnabled(this.arrangerIndexGetSelectedGroup() != null);
+		popupIndexDetach.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty());
+		popupIndexAttach.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty());
+		// END KGU#626 2019-01-03
 	}
 
 
@@ -1783,14 +1909,31 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 //		this.scrollIndex.validate();
 //		this.doButtonsLocal();
 //	}
+	/**
+	 * Rebuilds the Arranger index from scratch according to the group information give
+	 * with {@code _groups}.
+	 * @param _groups - sorted list of all currently held {@link Group} objects
+	 */
 	public void updateArrangerIndex(Vector<Group> _groups)
 	{
 		boolean wasEmpty = arrangerIndexTop.isLeaf();
-		((DefaultTreeModel)arrangerIndex.getModel()).reload();
+		
+		// Attempt to maintain expansions - the nodes will be replaced, so identify the associated groups
+		HashSet<Group> expandedGroups = new HashSet<Group>();
+		for (DefaultMutableTreeNode node: expandedGroupNodes) {
+			expandedGroups.add((Group)node.getUserObject());
+		}
+		expandedGroupNodes.clear();
+		
+		// Now rebuild the tree from scratch 
+		Vector<Integer> rowsToExpand = new Vector<Integer>(expandedGroups.size());
 		arrangerIndexTop.removeAllChildren();
 		if (_groups != null) {
 			for (int i = 0; i < _groups.size(); i++) {
 				Group group = _groups.get(i);
+				if (expandedGroups.contains(group)) {
+					rowsToExpand.add(i);
+				}
 				DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
 				for (Root aRoot: group.getSortedRoots()) {
 					groupNode.add(new DefaultMutableTreeNode(aRoot));
@@ -1802,14 +1945,30 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		if (this.arrangerIndexTop.isLeaf()) {
 			this.scrollIndex.setVisible(false);
 		}
-		else if (wasEmpty) {
-			this.scrollIndex.setVisible(true);
+		else {
+			if (wasEmpty) {
+				this.scrollIndex.setVisible(true);
+			}
+			/* Try to restore the original expansion (in backward direction, otherwise we
+			 * would invalidate the subsequent row numbers) */
+			for (int i = rowsToExpand.size() - 1; i >= 0; i--) {
+				arrangerIndex.expandRow(rowsToExpand.get(i));
+			}
 		}
-		this.scrollIndex.repaint();
-		this.scrollIndex.validate();
-		this.doButtonsLocal();
+		repaintArrangerIndex();
 	}
 	// END KGU#626 2019-01-01
+
+	// START KGU#626 2019-01-04: Enh. #657
+	/**
+	 * Lightweight update of the Arranger Index (just some modified markers to be refreshed)
+	 */
+	public void repaintArrangerIndex() {
+		this.scrollIndex.repaint();
+		this.scrollIndex.validate();
+		this.doButtonsArrangerIndex();
+	}
+	// END KGU#626 2019-01-04
 	// END KGU#305 2016-12-12
 
 	// START KGU#305/KGU#318 2017-01-05: Enh. #305/#319 Arranger index action methods concentrated here
@@ -1826,22 +1985,26 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 
 	private Root arrangerIndexGetSelectedRoot() {
-		TreePath[] paths = arrangerIndex.getSelectionPaths();
-		if (paths.length == 1) {
-			Object userObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
-			if (userObject instanceof Root) {
-				return (Root)userObject;
+		if (arrangerIndex != null) {	// Startup precaution
+			TreePath[] paths = arrangerIndex.getSelectionPaths();
+			if (paths != null && paths.length == 1) {
+				Object userObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
+				if (userObject instanceof Root) {
+					return (Root)userObject;
+				}
 			}
 		}
 		return null;
 	}
 
 	private Group arrangerIndexGetSelectedGroup() {
-		TreePath[] paths = arrangerIndex.getSelectionPaths();
-		if (paths.length == 1) {
-			Object userObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
-			if (userObject instanceof Group) {
-				return (Group)userObject;
+		if (arrangerIndex != null) {	// Startup precaution
+			TreePath[] paths = arrangerIndex.getSelectionPaths();
+			if (paths != null && paths.length == 1) {
+				Object userObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
+				if (userObject instanceof Group) {
+					return (Group)userObject;
+				}
 			}
 		}
 		return null;
@@ -1849,14 +2012,18 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 	private Collection<Root> arrangerIndexGetSelectedRoots(boolean groupMembersToo) {
 		HashSet<Root> roots = new HashSet<Root>();
-		TreePath[] paths = arrangerIndex.getSelectionPaths();
-		for (int i = 0; i < paths.length; i++) {
-			Object userObject = ((DefaultMutableTreeNode)paths[i].getLastPathComponent()).getUserObject();
-			if (userObject instanceof Root) {
-				roots.add((Root)userObject);
-			}
-			else if (userObject instanceof Group && groupMembersToo) {
-				roots.addAll(((Group)userObject).getSortedRoots());
+		if (arrangerIndex != null) {	// Startup precaution
+			TreePath[] paths = arrangerIndex.getSelectionPaths();
+			if (paths != null) {
+				for (int i = 0; i < paths.length; i++) {
+					Object userObject = ((DefaultMutableTreeNode)paths[i].getLastPathComponent()).getUserObject();
+					if (userObject instanceof Root) {
+						roots.add((Root)userObject);
+					}
+					else if (userObject instanceof Group && groupMembersToo) {
+						roots.addAll(((Group)userObject).getSortedRoots());
+					}
+				}
 			}
 		}
 		return roots;
@@ -1864,16 +2031,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 	private Collection<Group> arrangerIndexGetSelectedGroups(boolean partiallySelectedGroupsToo) {
 		HashSet<Group> groups = new HashSet<Group>();
-		TreePath[] paths = arrangerIndex.getSelectionPaths();
-		for (int i = 0; i < paths.length; i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[i].getLastPathComponent();
-			Object userObject = node.getUserObject();
-			if (userObject instanceof Root && partiallySelectedGroupsToo
-					&& (userObject = ((DefaultMutableTreeNode)node.getParent()).getUserObject()) instanceof Group) {
-				groups.add((Group)userObject);
-			}
-			else if (userObject instanceof Group) {
-				groups.add((Group)userObject);
+		if (arrangerIndex != null) {	// Startup precaution
+			TreePath[] paths = arrangerIndex.getSelectionPaths();
+			if (paths != null) {
+				for (int i = 0; i < paths.length; i++) {
+					DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[i].getLastPathComponent();
+					Object userObject = node.getUserObject();
+					if (userObject instanceof Root && partiallySelectedGroupsToo
+							&& (userObject = ((DefaultMutableTreeNode)node.getParent()).getUserObject()) instanceof Group) {
+						groups.add((Group)userObject);
+					}
+					else if (userObject instanceof Group) {
+						groups.add((Group)userObject);
+					}
+				}
 			}
 		}
 		return groups;
@@ -1889,7 +2060,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// First save groups then save further roots
 		for (Group selectedGroup: arrangerIndexGetSelectedGroups(false)) {
 			if (selectedGroup.hasChanged()) {
-				Arranger.getInstance().saveGroup(selectedGroup.getName());
+				Arranger.getInstance().saveGroup(this, selectedGroup);
 			}
 		}
 		for (Root selectedRoot: arrangerIndexGetSelectedRoots(false)) {
@@ -1925,16 +2096,51 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		Collection<Root> doomedRoots = arrangerIndexGetSelectedRoots(false);
 		boolean goAhead = true;
 		if (!doomedGroups.isEmpty() && !doomedRoots.isEmpty()) {
-			goAhead = JOptionPane.showConfirmDialog(this, "Both groups and diagrams selected. Removing on both levels at a time may have unexpected results.") == JOptionPane.OK_OPTION;
+			goAhead = JOptionPane.showConfirmDialog(this,
+					msgGroupsAndRootsSelected.getText(),
+					popupIndexRemove.getText(),
+					JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
 		}
 		if (goAhead) {
-			// First we remove groups then single roots (if still there)
-			// TODO we should clarify whether the member diagrams are to be removed as well or not
-			for (Group group: doomedGroups) {
-				Arranger.getInstance().removeGroup(group.getName(), true);
+			Diagram.startSerialMode();
+			try {
+				// First we remove groups then single roots (if still there)
+				int decision = JOptionPane.OK_OPTION;
+				if (!doomedGroups.isEmpty()) {
+					decision = JOptionPane.showConfirmDialog(this,
+							msgDeleteGroupMembers.getText().replace("%", Integer.toString(doomedGroups.size())),
+							popupIndexRemove.getText(),
+							JOptionPane.YES_NO_CANCEL_OPTION,
+							JOptionPane.QUESTION_MESSAGE);
+					if (decision == JOptionPane.CANCEL_OPTION) {
+						doomedGroups.clear();
+					}
+				}
+				for (Group group: doomedGroups) {
+					Arranger.getInstance().removeGroup(group.getName(), decision == JOptionPane.OK_OPTION, this);
+				}
+				decision = JOptionPane.OK_OPTION;
+				if (!doomedRoots.isEmpty()) {
+					decision = JOptionPane.showConfirmDialog(this,
+							msgConfirmDeleteRoots.getText().replace("%", Integer.toString(doomedRoots.size())),
+							popupIndexRemove.getText(),
+							JOptionPane.YES_NO_CANCEL_OPTION,
+							JOptionPane.QUESTION_MESSAGE);
+					if (decision == JOptionPane.CANCEL_OPTION) {
+						doomedRoots.clear();
+					}
+				}
+				if (decision == JOptionPane.OK_OPTION) {
+					for (Root root: doomedRoots) {
+						Arranger.getInstance().removeDiagram(root);
+					}
+				}
+				else if (!doomedRoots.isEmpty()) {
+					arrangerIndexDetachFromGroup();
+				}
 			}
-			for (Root root: doomedRoots) {
-				Arranger.getInstance().removeDiagram(root);
+			finally {
+				Diagram.endSerialMode();
 			}
 		}
 		// END KGU#626 2019-01-01
@@ -1943,7 +2149,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#534 2018-06-27: Enh. #552
 	public void arrangerIndexRemoveAll()
 	{
-		Arranger.getInstance().removeAllDiagrams();			
+		Arranger.getInstance().removeAllDiagrams(this);			
 	}
 	// END KGU#534 2018-06-27
 	
@@ -1996,4 +2202,101 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 	// END KGU#573 2018-09-13
 
+	// START KGU#626 2019-01-03: Enh #657
+	private boolean arrangerIndexMakeGroup(boolean expand)
+	{
+		// FIXME: Check for single group selection, then expand the group!
+		return Arranger.getInstance().makeGroup(this.arrangerIndexGetSelectedRoots(false), this, expand);
+	}
+
+	/** Dissolves the selected group(s) i.e. detaches all contained diagrams. If a diagram gets
+	 * orphaned then it will be attached to the default group instead. The group may be deleted
+	 * if it hadn't been associated to a file.
+	 */
+	private boolean arrangerIndexDissolveGroup() {
+		Collection<Group> groups = this.arrangerIndexGetSelectedGroups(false);
+		// TODO make a user query (multiple selection)
+		boolean done = true;
+		for (Group group: groups) {
+			done = Arranger.getInstance().dissolveGroup(group.getName(), this) && done;
+		}
+		return done && !groups.isEmpty();
+	}
+
+	/**
+	 * Detaches the selected diagrams from the parent group of their respective selection
+	 * path. If diagram gets orphaned then it will be attached to the default group instead.
+	 * @return true if at least one of the selected detachments worked.
+	 */
+	private boolean arrangerIndexDetachFromGroup()
+	{
+		boolean done = false;
+		TreePath[] paths = arrangerIndex.getSelectionPaths();
+		for (int i = 0; i < paths.length; i++) {
+			TreePath path = paths[i];
+			if (path.getPathCount() >= 3) {
+				Object rootObject = ((DefaultMutableTreeNode)path.getPathComponent(2)).getUserObject();
+				Object groupObject = ((DefaultMutableTreeNode)path.getPathComponent(1)).getUserObject();
+				if (rootObject instanceof Root && groupObject instanceof Group) {
+					done = Arranger.getInstance().detachRootFromGroup((Group)groupObject, (Root)rootObject, this) || done;
+				}
+			}
+		}
+		return done;
+	}
+	
+	/**
+	 * Asks for a target group and attaches the selected diagrams to the chosen group.
+	 * Depending on a user decision the diagrams are simply added to the new group (i.e.
+	 * shared with their current groups) or moved from the group of their selection path. 
+	 * @return true if at least one of the selected attachments worked.
+	 */
+	private boolean arrangerIndexAttachToGroup()
+	{
+		boolean done = false;
+		Collection<Root> roots = this.arrangerIndexGetSelectedRoots(false);
+		if (!roots.isEmpty()) {
+			int nGroups = this.arrangerIndexTop.getChildCount();
+			for (int i = 0; i < nGroups; i++) {
+				Object groupObject = ((DefaultMutableTreeNode)arrangerIndexTop.getChildAt(i)).getUserObject();
+				if (groupObject instanceof Group && !((Group)groupObject).isDefaultGroup()) {	// Should be expected but better check
+					this.cmbTargetGroup.addItem((Group)groupObject);
+				}
+			}
+			String[] options = new String[msgAttachOptions.length];
+			for (int i = 0; i < options.length; i++) {
+				options[i] = msgAttachOptions[i].getText();
+			}
+			int option = JOptionPane.showOptionDialog(this,
+					this.pnlGroupSelect,
+					popupIndexAttach.getText(),
+					JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, IconLoader.getIcon(117), options, options[0]);
+			if (option < options.length-1) {
+				Group targetGroup = (Group)cmbTargetGroup.getSelectedItem();
+				if (option == 0) {
+					// Simply add the roots to the target group
+					for (Root root: roots) {
+						done = Arranger.getInstance().attachRootToGroup(targetGroup, root, null, this) || done;
+					}
+				}
+				else {
+					// We have to move the diagrams, so we must know where they come from
+					TreePath[] paths = arrangerIndex.getSelectionPaths();
+					for (int i = 0; i < paths.length; i++) {
+						TreePath path = paths[i];
+						if (path.getPathCount() >= 3) {
+							Object rootObject = ((DefaultMutableTreeNode)path.getPathComponent(2)).getUserObject();
+							Object groupObject = ((DefaultMutableTreeNode)path.getPathComponent(1)).getUserObject();
+							if (rootObject instanceof Root && groupObject instanceof Group) {
+								done = Arranger.getInstance().attachRootToGroup(targetGroup, (Root)rootObject, (Group)groupObject, this) || done;
+							}
+						}
+					}
+				}
+			}
+		}
+		cmbTargetGroup.removeAllItems();
+		return done;
+	}
+	// END KGU#626 2019-01-03
 }

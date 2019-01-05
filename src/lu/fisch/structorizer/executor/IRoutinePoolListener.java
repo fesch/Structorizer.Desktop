@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -33,6 +33,7 @@ package lu.fisch.structorizer.executor;
  *      ------          ----            -----------
  *      Kay Gürtzig     2016-12-16      First Issue
  *      Kay Gürtzig     2018-12-21      Interface modified (flag values introduced and new method signature)
+ *      Kay Gürtzig     2019-01-04      Enh. #657: new flag for changed positions (to be reflected in groups)
  *
  ******************************************************************************************************
  *
@@ -53,6 +54,9 @@ public interface IRoutinePoolListener {
 	/** Flag for changes of the selection in the pool */
 	public static final int RPC_SELECTION_CHANGED = 0x2;
 	// END KGU#624 2018-12-21
+	// START KGU#626 2019-01-04: Enh. 657 - for a low-impact refresh of arranger indices
+	public static final int RPC_POSITIONS_CHANGED = 0x4;
+	// END KGU#626 2019-01-04
 	
 	/**
 	 * Notification method<br/>

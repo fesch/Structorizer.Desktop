@@ -1,6 +1,6 @@
 /*
     Structorizer :: Arranger
-    A little tool which you can use to arrange Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to arrange Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -92,6 +92,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-25      Enh. #655: Dialog revisions
  *      Kay Gürtzig     2018-12-26      Two cross reference maps introduced (rootMap, nameMap), expandSelectionRecursively() impemented
  *      Kay Gürtzig     2018-12-31      Enh. #657: Group management implemented
+ *      Kay Gürtzig     2019-01-04      Enh. #657: Group management significantly advanced and improved 
  *
  ******************************************************************************************************
  *
@@ -146,6 +147,7 @@ package lu.fisch.structorizer.arranger;
  ******************************************************************************************************///
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -267,8 +269,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/** Empirical height estimate for an empty diagram */ 
 	private static final int MIN_HEIGHT = 118;
 
-	/** Current/Last actual mouse coordinates (i.e. without regarding the zoom-factor) */
-	private Point mousePoint = null;
+	/** Current/Last actual mouse coordinates on dragging diagrams (null while nothing being dragged) */
+	private Point dragPoint = null;
 	// START KGU#624 2018-12-21: Enh. #655 Diagram -> Set<Diagram>
 	//private Diagram mouseSelected = null;
 	/** The {@link Diagram}s currently selected via mouse click */
@@ -330,10 +332,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
 	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	// END KGU#385 2017-04-22
-	// START KGU#626 2018-12-27: Enh. #657
+	// START KGU#626 2018-12-27/2019-01-04: Enh. #657
 	public static final LangTextHolder msgTooltipSelectThis = new LangTextHolder("Select this diagram (+shift: add it to the selection) and bring it up to top.");
-	public static final LangTextHolder msgRemovalError = new LangTextHolder("Error on removing group %");
-	// END KGU#626 2018-12-27
+	public static final LangTextHolder msgGroupRemovalError = new LangTextHolder("Error on removing group «%»");
+	public static final LangTextHolder msgArrangementAlreadyLoaded = new LangTextHolder("The arrangment file \"%1\" has already been loaded to group «%2».\nLoad it again with a modified group name?");
+	public static final LangTextHolder msgArrangementNotLoaded = new LangTextHolder("Arrangement loading cancelled.");
+	public static final LangTextHolder msgSaveAsNewGroup = new LangTextHolder("as new group");
+	public static final LangTextHolder msgSelectGroup = new LangTextHolder("Please decide whether to update the file of an existing group or to create a new arrangement:");
+	public static final LangTextHolder msgConfirmRemoveGroup = new LangTextHolder("Group «%» became empty. Do you want to remove it now?");
+	public static final LangTextHolder msgSaveGroupChanges = new LangTextHolder("Group «%» has pending changes.\nDo you want to save these changes before the group is removed?");
+	// END KGU#626 2018-12-27/2019-01-04
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -641,102 +649,199 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * the list file as well as the referenced NSD files will be produced such that it can be
 	 * ported to a different location and extracted there.
 	 *  
-	 * @param frame - the commanding GUI component
+	 * @param initiator - the commanding GUI component
+	 * @param group TODO
 	 * @return status flag (true iff the saving succeeded without error) 
 	 */
-	public boolean saveArrangement(Frame frame)
+	public boolean saveArrangement(Component initiator, Group group)
 	{
 		boolean done = false;
 		// START KGU#110 2016-06-29: Enh. #62
 		boolean portable = false;
+		String filename = null;
 		String extension = "arr";
 		// END KGU#110 2016-06-29
 		// Ensure the diagrams themselves have been saved
 		int answer = JOptionPane.CANCEL_OPTION;
-		// START KGU#624 2018-12-22: Enh. #655
-		// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)
-		StringList rootNames = listSelectedRoots(true, false);
-		int nSelected = rootNames.count();
-		if (nSelected > Arranger.ROOT_LIST_LIMIT) {
-			rootNames.remove(Arranger.ROOT_LIST_LIMIT, nSelected);
-			rootNames.add("...");
+		// START KGU#626 2019-01-02: Enh. #657
+		Collection<Diagram> toArrange = this.diagramsSelected;
+		if (toArrange.isEmpty()) {
+			toArrange = this.diagrams;	// save all if there is an empty selection
 		}
-		String saveMessage = Arranger.msgConfirmMultiple.getText().
-				replace("%1", Integer.toString(nSelected)).
-				replace("%2", Integer.toString(this.diagrams.size())).
-				replace("%3", rootNames.concatenate("\n- ")).
-				replace("%4", msgSavePortable.getText());
-		Object[] options = {lblSaveAsArrz.getText(), lblSaveAsArr.getText(), Menu.lblCancel.getText()};
-		// END KGU#624 2018-12-22
-		if (this.saveDiagrams() && 
-				(answer = JOptionPane.showOptionDialog(frame,
-						saveMessage, this.msgSaveDialogTitle.getText(),
-						JOptionPane.YES_NO_CANCEL_OPTION,
-						JOptionPane.QUESTION_MESSAGE, null,
-						options, options[0])) != JOptionPane.CANCEL_OPTION)
-		{
-			// Let's select path and name for the list / archive file
-			JFileChooser dlgSave = new JFileChooser(currentDirectory);
-			dlgSave.setDialogTitle(msgSaveDialogTitle.getText());
-			// START KGU#110 2016-06-29: Enh. #62
-			//dlgSave.addChoosableFileFilter(new ArrFilter());
-			if (answer == JOptionPane.OK_OPTION)
-			{
-				FileFilter filter = new ArrZipFilter();
-				dlgSave.addChoosableFileFilter(filter);
-				dlgSave.setFileFilter(filter);				
+		if (group == null) {
+			Collection<Group> exactGroups = this.getGroupsFromCollection(toArrange, true);
+			if (!exactGroups.isEmpty()) {
+				StringList groupDescriptions = new StringList();
+				String[] options = new String[exactGroups.size()+2];
+				int option = 0;
+				for (Group grp: exactGroups) {
+					File grpFile = grp.getFile();
+					String path = "";
+					if (grpFile != null) {
+						path = ": " + grpFile.getAbsolutePath();
+					}
+					groupDescriptions.add(grp.getName() + path);
+					options[option++] = grp.getName();
+				}
+				options[option] = msgSaveAsNewGroup.getText();
+				options[option + 1] = Menu.lblCancel.getText();
+				option = JOptionPane.showOptionDialog(initiator,
+						Arranger.msgCongruentGroups.getText()
+						.replace("%1", Integer.toString(toArrange.size()))
+						.replace("%2", Integer.toString(exactGroups.size()))
+						.replace("%3", groupDescriptions.concatenate("\n- "))
+						.replace("%4", msgSelectGroup.getText()),
+						this.msgSaveDialogTitle.getText(),
+						JOptionPane.DEFAULT_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						null,
+						options,
+						options[option]);
+				if (option == 0) {
+					// Cancelled
+					return false;
+				}
+				else if (option < exactGroups.size()) {
+					group = groups.get(options[option]);
+				}
+			}
+			if (group == null) {
+					group = new Group("", toArrange);
+			}
+		}
+		boolean writeNow = this.saveDiagrams(initiator, toArrange, false, false);
+		if (group.getFile() == null) {
+			// The group has never been loaded from nor saved to file
+		// END KGU#626 2019-01-02
+			// START KGU#624 2018-12-22: Enh. #655
+			// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)?
+			StringList rootNames = listSelectedRoots(true, false);
+			int nSelected = rootNames.count();
+			if (nSelected > Arranger.ROOT_LIST_LIMIT) {
+				rootNames.remove(Arranger.ROOT_LIST_LIMIT, nSelected);
+				rootNames.add("...");
+			}
+			String saveMessage = Arranger.msgConfirmMultiple.getText().
+					replace("%1", Integer.toString(nSelected)).
+					replace("%2", Integer.toString(this.diagrams.size())).
+					replace("%3", rootNames.concatenate("\n- ")).
+					replace("%4", msgSavePortable.getText());
+			Object[] options = {lblSaveAsArrz.getText(), lblSaveAsArr.getText(), Menu.lblCancel.getText()};
+			// END KGU#624 2018-12-22
+			if ((answer = JOptionPane.showOptionDialog(initiator,
+					saveMessage, this.msgSaveDialogTitle.getText(),
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE, null,
+					options, options[0])) != JOptionPane.CANCEL_OPTION) {
+				// Let's select path and name for the list / archive file
+				JFileChooser dlgSave = new JFileChooser(currentDirectory);
+				dlgSave.setDialogTitle(msgSaveDialogTitle.getText());
+				// START KGU#110 2016-06-29: Enh. #62
+				//dlgSave.addChoosableFileFilter(new ArrFilter());
+				FileFilter filter = null;
+				if (answer == JOptionPane.OK_OPTION)
+				{
+					filter = new ArrZipFilter();
+					dlgSave.addChoosableFileFilter(filter);
+					dlgSave.setFileFilter(filter);				
+					portable = true;
+					extension += "z";
+				}
+				else
+				{
+					filter = new ArrFilter();
+					dlgSave.addChoosableFileFilter(filter);
+					dlgSave.setFileFilter(filter);
+				}
+				// END KGU#110 2016-06-29
+				// START KGU#626 2019-01-02: Enh. #657
+				//dlgSave.setCurrentDirectory(currentDirectory);
+				File proposedFile = null;
+				if (!group.getName().isEmpty()) {
+					String proposedName = group.proposeFileName();
+					proposedFile = new File(proposedName);
+					if (!filter.accept(proposedFile)) {
+						proposedFile = new File(proposedName += "." + extension);
+					}
+					dlgSave.setSelectedFile(proposedFile);
+				}
+				if (proposedFile == null || !proposedFile.isAbsolute()) {
+					dlgSave.setCurrentDirectory(currentDirectory);
+				}
+				// END KGU#626 2019-01-02
+				int result = dlgSave.showSaveDialog(initiator);
+				if (result == JFileChooser.APPROVE_OPTION)
+				{
+					currentDirectory = dlgSave.getCurrentDirectory();
+					while (currentDirectory != null && !currentDirectory.isDirectory())
+					{
+						currentDirectory = currentDirectory.getParentFile();
+					}
+					// correct the filename if necessary
+					filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+					// START KGU#110 2016-06-29: Enh. #62
+					//if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".arr"))
+					//{
+					//	filename+=".arr";
+					//}
+					//done = saveArrangement(frame, filename + "");
+					if (filename.substring(filename.length()-extension.length()-1).equalsIgnoreCase("."+extension))
+					{
+						filename = filename.substring(0, filename.length()-extension.length()-1);
+					}
+					// START KGU#385 2017-04-22: Enh. #62
+					//done = saveArrangement(frame, filename, extension, portable);
+					writeNow = true;
+					File f = new File(filename + "." + extension);
+					if (f.exists())
+					{
+						writeNow = false;
+						int res = JOptionPane.showConfirmDialog(
+								initiator,
+								msgOverwriteFile.getText().replace("%", f.getAbsolutePath()),
+								msgConfirmOverwrite.getText(),
+								JOptionPane.YES_NO_OPTION);
+						writeNow = (res == JOptionPane.YES_OPTION);
+					}
+					// START KGU#626 2019-01-02: Enh. #657
+					//if (writeNow) {
+					//	done = saveArrangement(initiator, filename, extension, portable);
+					//}
+					// END KGU#626 2019-01-02
+					// END KGU#385 2017-04-22
+					// END KGU#110 2016-06-29
+				}
+			}
+		// START KGU#626 2019-01-02: Enh. #657
+		}
+		else {
+			// The group originates from or has been saved to a file
+			File file = group.getFile();
+			File arrzFile = group.getArrzFile();
+			if (arrzFile != null) {
 				portable = true;
 				extension += "z";
+				file = arrzFile;
 			}
-			else
+			filename = file.getAbsolutePath();
+			int dotPos = filename.length()-extension.length() - 1;
+			if (filename.substring(dotPos).equalsIgnoreCase("."+extension))
 			{
-				FileFilter filter = new ArrFilter();
-				dlgSave.addChoosableFileFilter(filter);
-				dlgSave.setFileFilter(filter);
-			}
-			// END KGU#110 2016-06-29
-			dlgSave.setCurrentDirectory(currentDirectory);
-			int result = dlgSave.showSaveDialog(frame);
-			if (result == JFileChooser.APPROVE_OPTION)
-			{
-				currentDirectory = dlgSave.getCurrentDirectory();
-				while (currentDirectory != null && !currentDirectory.isDirectory())
-				{
-					currentDirectory = currentDirectory.getParentFile();
-				}
-				// correct the filename if necessary
-				String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-				// START KGU#110 2016-06-29: Enh. #62
-				//if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".arr"))
-				//{
-				//	filename+=".arr";
-				//}
-				//done = saveArrangement(frame, filename + "");
-				if (filename.substring(filename.length()-extension.length()-1).equalsIgnoreCase("."+extension))
-				{
-					filename = filename.substring(0, filename.length()-extension.length()-1);
-				}
-				// START KGU#385 2017-04-22: Enh. #62
-				//done = saveArrangement(frame, filename, extension, portable);
-				boolean writeNow = true;
-				File f = new File(filename + "." + extension);
-				if (f.exists())
-				{
-					writeNow = false;
-					int res = JOptionPane.showConfirmDialog(
-							this,
-							msgOverwriteFile.getText().replace("%", f.getAbsolutePath()),
-							msgConfirmOverwrite.getText(),
-							JOptionPane.YES_NO_OPTION);
-					writeNow = (res == JOptionPane.YES_OPTION);
-				}
-				if (writeNow) {
-					done = saveArrangement(frame, filename, extension, portable);
-				}
-				// END KGU#385 2017-04-22
-				// END KGU#110 2016-06-29
+				filename = filename.substring(0, dotPos);
 			}
 		}
+		if (writeNow) {
+			if (group.hasChanged()) {
+				done = saveArrangement(initiator, filename, extension, portable, group);
+				if (group.getName().isEmpty()) {
+					// Replace the temporary group by a permament group
+					String groupName = (new File(filename + "." + extension)).getName();
+					this.makeGroup(groupName, null, group.getSortedRoots(), false, group.getFile());
+					group = groups.get(groupName);	// Should exist now
+				}
+			}
+		}
+		// END KGU#626 2019-01-02
 		return done;
 	}
 
@@ -747,36 +852,38 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * list of reference points and filenames (this way not being portable) or be a compressed
 	 * archive containing the list file as well as the referenced NSD files will be produced
 	 * such that it can be ported to a different location and extracted there.
-	 * @param frame - the commanding GUI component
 	 * @param groupName - name of the group to be saved.
-	 * @return status flag (true iff the saving succeeded without error) 
+	 * @param initiator - the commanding GUI component
+	 * @return status flag (true iff the group was found and the saving succeeded without error) 
 	 */
-	public boolean saveArrangement(Frame frame, String groupName)
+	public boolean saveArrangement(String groupName, Component initiator)
 	{
+		boolean done = false;
 		Group group = groups.get(groupName);
 		if (group != null) {
-			// TODO Derive the necessary decisions from the selected group
+			done = saveArrangement(initiator, group);
 		}
-		return false;
+		return done;
 	}
 	
 	
 	/**
-	 * Stores the current diagram arrangement to a file.
-	 * If `portable´ is false, this file will only contain a list of points and filenames.
+	 * Stores the currently selected diagram arrangement to a file.
+	 * If {@code portable} is false, this file will only contain a list of points and filenames.
 	 * Otherwise a compressed archive containing the list file as well as the referenced
 	 * NSD files will be produced such that it can be ported to a different location and
 	 * extracted there.
-	 *  
-	 * @param frame - the commanding GUI component
+	 *
+	 * @param initiator - the commanding GUI component
 	 * @param filename - the base path of the selected file (without extension)
 	 * @param extension - the file extension
 	 * @param portable - whether a portable zip file is to be created
+	 * @param group - the group this arrangement is to be associated to
 	 * @return status flag (true iff the saving succeeded without error) 
 	 */
 	// START KGU#110 2016-06-29. Enh. #62
 	//public boolean saveArrangement(Frame frame, String filename)
-	public boolean saveArrangement(Frame frame, String filename, String extension, boolean portable)
+	private boolean saveArrangement(Component initiator, String filename, String extension, boolean portable, Group group)
 	// END KGU#110 2016-06-29
 	{
 		boolean done = false;
@@ -820,7 +927,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				tmpFilename = arrFilename;
 			}
 			// Now actually save the arr file
-			saveArrFile(arrFilename, portable);
+			saveArrFile(group, arrFilename, portable);
 
 			// START KGU#110 2016-06-29: Enh. #62
 			// Now zip all files together if a portable file is requested
@@ -829,7 +936,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// Create a zip file from the nsd files and the arr file
 				// (returns the name of the zip file if it was placed in
 				// a temp directory, otherwise null).
-				tmpFilename = zipAllFiles(outFilename, arrFilename, tempDir);
+				tmpFilename = zipAllFiles(group, outFilename, arrFilename, tempDir);
 			}
 
 
@@ -845,13 +952,29 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				file = new File(outFilename);
 				File tmpFile = new File(tmpFilename);
 				tmpFile.renameTo(file);
+				// START KGU#626 2019-01-02: Enh. #657
+				if (portable) {
+					group.setFile(new File(arrFilename), file);
+				}
+				else {
+					group.setFile(new File(outFilename), null);					
+				}
+				// END KGU#626 2019-01-02
 			}
+			// START KGU#626 2019-01-02: Enh. #657
+			else if (portable) {
+				group.setFile(new File(arrFilename), new File(outFilename));
+			}
+			else {
+				group.setFile(new File(outFilename), null);
+			}
+			// END KGU#626 2019-01-02
 
 			done = true;
 		}
 		catch (Exception ex)
 		{
-			JOptionPane.showMessageDialog(frame, msgSaveError.getText() + " " + ex.getMessage() + "!",
+			JOptionPane.showMessageDialog(initiator, msgSaveError.getText() + " " + ex.getMessage() + "!",
 					"Error", JOptionPane.ERROR_MESSAGE, null);
 		}
 		return done;
@@ -859,27 +982,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 
 	/**
-	 * Creates the Arranger file with path `arrFilename´ from all held diagrams.
+	 * Creates the Arranger file with path {@code arrFilename} for all diagrams held
+	 * by {@code group}. If the Arranger file is used for an arrangement archive then
+	 * the paths are to be shortened to the pure names.
+	 * @param group - the {@link Group} holding the diagrams belonging to the arrangement
 	 * @param arrFilename - target path of the Arranger file
-	 * @param pureNames - determines whether only the pure file names (or the
-	 * entire paths) are to be referred to by the arr file.
+	 * @param pureNames - if true then only the pure file names (instead of the entire
+	 * paths) will be listed in the arr file.
 	 * @throws IOException
 	 */
-	private void saveArrFile(String arrFilename, boolean pureNames) throws IOException
+	private void saveArrFile(Group group, String arrFilename, boolean pureNames) throws IOException
 	{
 		FileOutputStream fos = new FileOutputStream(arrFilename);
 		Writer out = new OutputStreamWriter(fos, "UTF8");
-		for (int d = 0; d < this.diagrams.size(); d++)
+		// We want to preserve the original drawing order, so we must go the long way...
+		Set<Diagram> groupMembers = group.getDiagrams();
+		for (Diagram diagr: this.diagrams)
 		{
-			Diagram diagr = this.diagrams.get(d);
-			// START KGU#624 2018-12-22: Enh. #655 - no only selected diagrams!
-			if (!this.diagramsSelected.isEmpty() && !this.diagramsSelected.contains(diagr)) {
-				continue;
-			}
-			// END KGU#624 2018-12-22
-			String path = diagr.root.getPath();
+			String path = "";
 			// KGU#110 2016-07-01: Bugfix #62 - don't include diagrams without file
-			if (!path.isEmpty())
+			if (groupMembers.contains(diagr) && !(path = diagr.root.getPath()).isEmpty())
 			{
 				out.write(Integer.toString(diagr.point.x) + ",");
 				out.write(Integer.toString(diagr.point.y) + ",");
@@ -898,8 +1020,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Compresses the arranged diagrams and the describing arr file (`arrFilename´)
-	 * into file `zipFilename´ (which is essentially an ordinary zip file but named as given).
+	 * Compresses the diagrams of the given {@link Group} {@code group} and the describing
+	 * arr file ({@code arrFilename}) into file {@code zipFilename} (which is essentially an ordinary
+	 * zip file but named as given).
+	 * @param group - the {@link Group} defining what diagrams are members of the arrangement
 	 * @param zipFilename - path of the arrz file (zip file) to be created
 	 * @param arrFilename - path of the existing arr file holding the positions
 	 * @param tmpPath - path of a temporary directory for the case the target
@@ -907,7 +1031,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the path of the created temporary file if the target file `zipFilename´ had
 	 * existed (otherwise null)
 	 */
-	private String zipAllFiles(String zipFilename, String arrFilename, String tmpPath) throws IOException
+	private String zipAllFiles(Group group, String zipFilename, String arrFilename, String tmpPath) throws IOException
 	{
 		final int BUFSIZE = 2048;
 
@@ -927,14 +1051,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		byte buffer[] = new byte[BUFSIZE];
 		StringList filePaths = new StringList();
 		// Add the diagram file names
-		for (int d = 0; d < this.diagrams.size(); d++)
+		for (Diagram diagr: group.getDiagrams())
 		{
-			Diagram diagr = this.diagrams.get(d);
-			// START KGU#624 2018-12-22: Enh. #655 - no only selected diagrams!
-			if (!this.diagramsSelected.isEmpty() && !this.diagramsSelected.contains(diagr)) {
-				continue;
-			}
-			// END KGU#624 2018-12-22
 			// START KGU#316 2017-04-22: Enh. #318: Files might be zipped
 			//String path = diagr.root.getPath();
 			String path = diagr.root.shadowFilepath;
@@ -989,13 +1107,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Action method for the "Load List" button of the Arranger: Attempts to load the
 	 * specified (portable) arrangement file.
 	 * @param frame - the owning frame object. 
-	 * @return true iff the saving succeeded (will raise an error message else).
+	 * @return true iff the loading succeeded (will raise an error message else).
 	 */
 	public boolean loadArrangement(Frame frame)
 	{
 		boolean done = false;
 		// Ensure the previous diagrams themselves are saved
-		if (this.saveDiagrams())
+		if (this.saveDiagrams(null))
 		{
 			// Let's select path and name for the list / archive file
 			JFileChooser dlgOpen = new JFileChooser(currentDirectory);
@@ -1100,11 +1218,27 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			File arrFile = new File(filename);
 			
 			// START KGU#626 2018-12-28: Enh. #657 - group management
+			File arrzFile = null;
 			String groupName = arrFile.getName();
 			if (unzippedFrom != null) {
-				groupName = (new File(unzippedFrom)).getName();
+				arrzFile = new File(unzippedFrom);
+				groupName = arrzFile.getName();
 			}
 			if (groups.containsKey(groupName)) {
+				Group oldGroup = groups.get(groupName);
+				File oldFile = null;
+				if ((oldFile = oldGroup.getArrzFile()) != null && arrzFile != null && oldFile.compareTo(arrzFile) == 0 ||
+						(oldFile = oldGroup.getFile()) != null && oldFile.compareTo(arrFile) == 0) {
+					if (JOptionPane.showConfirmDialog(frame,
+							msgArrangementAlreadyLoaded.getText()
+							.replace("%1", oldFile.getAbsolutePath()).replace("%2", groupName),
+							this.msgLoadDialogTitle.getText(),
+							JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
+						// User doesn't confirm reloading, so stop it
+						JOptionPane.showMessageDialog(frame, msgArrangementNotLoaded.getText());
+						return true;
+					};
+				}
 				int trial = 1;
 				while (groups.containsKey(groupName + "(" + trial +")")) trial++;
 				groupName = groupName + "(" + trial +")";
@@ -1145,7 +1279,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					if (!trouble.isEmpty() && !nsd.exists() && unzippedFrom == null && nsdFileName.contains(".arrz")) {
 						try {
 							// Might be a path into an arrz file from which the referred diagram had originally been loaded
-							File arrzFile = nsd.getParentFile();
+							arrzFile = nsd.getParentFile();
 							String pureName = nsd.getName();
 							if (arrzFile.exists()) {
 								String extractedArrPath = unzipArrangement(arrzFile.getAbsolutePath(), null);
@@ -1764,6 +1898,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param form - the sender of the diagram if it was pushed here from a Structorizer instance or null otherwise
 	 * @param point - the proposed position, may be null if a location is to be found automatically
 	 * @param groupName - name of an existing group or else a group to be created, which the diagram is to be added to
+	 * @see #addDiagramToGroup(Group, Root)
 	 */
 	protected void addDiagramToGroup(Root root, Mainform form, Point point, String groupName)
 	{
@@ -1934,7 +2069,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				this.groups.put(Group.DEFAULT_GROUP_NAME, owningGroup);
 			}
 		}
-		owningGroup.addDiagram(diagram);
+		if (owningGroup != null) {
+			owningGroup.addDiagram(diagram);
+		}
 		diagramsSelected.add(diagram);
 		diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 		// END KGU 2016-12-12
@@ -2042,6 +2179,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#85 2015-11-17
 
 	// START KGU#305 2016-12-17: Enh. #305 
+	/**
+	 * Removes the given {@link Root} {@code _root} from the Arranger surface and all
+	 * groups it may belong to after having given the user an opportunity to save pending
+	 * changes. 
+	 * @param _root - the {@link Root} to be removed from Arranger.
+	 */
 	public void removeDiagram(Root _root) {
 		// START KGU#312 2016-12-29: Enh. #315: More meticulous equality check
 		//Diagram diagr = findDiagram(_root, true);
@@ -2380,33 +2523,37 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// FIXME (KGU): Quick-and-dirty version. More convenient should be a list view with all unsaved diagrams for checkbox selection
 	/**
 	 * Loops over all administered diagrams and has their respective Mainform (if still alive) saved them in case they are dirty
+	 * @param initiator TODO
 	 * @return Whether saving is complete (or confirmed though being incomplete) 
 	 */
 	// START KGU#177 2016-04-14: Enh. #158 - report all diagram (file) names without saving possibility
 	//public void saveDiagrams()
-	public boolean saveDiagrams()
+	public boolean saveDiagrams(Component initiator)
 	{
-		return saveDiagrams(false, false);
+		return saveDiagrams(initiator, this.diagrams, false, false);
 	}
 
 	/**
-	 * Loops over all administered dirty diagrams and has their respective Mainform (if still alive)
-	 * saved them. Otherwise uses a temporary Mainform.
+	 * Loops over dirty diagrams among {@code diagramsToCheck} or all diagrams (if null) and has their
+	 * respective {@link Mainform} (if still alive) saved them. Otherwise uses a temporary {@link Mainform}.
+	 * @param initiator TODO
+	 * @param diagramsToCheck - collection of the {@link Diagram}s to save if necessary or null (in which
+	 * case all diagrams are saved)
 	 * @param goingToClose - whether the application is going to close
 	 * @param dontAsk - if questions are to be suppressed
-	 * @return
+	 * @return true all was doen or the user has quit the warning message about saving deficiencies.
 	 */
-	public boolean saveDiagrams(boolean goingToClose, boolean dontAsk)
+	protected boolean saveDiagrams(Component initiator, Collection<Diagram> diagramsToCheck, boolean goingToClose, boolean dontAsk)
 	// END KGU#177 2016-04-14
 	{
 		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
 		boolean allDone = true;
 		StringList unsaved = new StringList();
 		// END KGU#177 2016-04-14
-		if (this.diagrams != null)
-		{
-			allDone = saveDiagrams(this.diagrams, goingToClose, dontAsk, unsaved);
+		if (diagramsToCheck == null) {
+			diagramsToCheck = this.diagrams;
 		}
+		allDone = saveDiagrams(diagramsToCheck, goingToClose, dontAsk, unsaved);
 		// START KGU#177 2016-04-14: Enh. #158
 		if (!allDone)
 		{
@@ -2497,12 +2644,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Removes all diagrams from the Arranger surface after having asked for changes to
 	 * be saved.
+	 * @param initiator TODO
 	 * @return whether this action was complete.
 	 */
-	public boolean removeAllDiagrams()
+	public boolean removeAllDiagrams(Component initiator)
 	{
 		boolean allDone = false;
-		if (saveDiagrams()) {
+		if (saveDiagrams(initiator)) {
 			try {
 				while (!diagrams.isEmpty()) {
 					Diagram diagr = diagrams.firstElement();
@@ -2647,16 +2795,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		/* The interesting things happen in mouseClicked() and mouseDragged() */
 		// START KGU#626 2018-12-23: Enh. #657
-		showPopupMenu(e);
+		showPopupMenuIfTriggered(e);
 		// END KGU#626 2018-12-23
 	}
 
 	public void mouseReleased(MouseEvent e)
 	{
-		// We must reset the last mousePoint lest mouseDragged() runs havoc
-		mousePoint = null;
+		// We must reset the last drag information lest mouseDragged() should run havoc
+		if (dragPoint != null) {
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+		}
+		dragPoint = null;
 		if (dragArea != null) {
-			// TODO Select all contained diagrams
+			// Select all contained diagrams
 			Set<Diagram> foundDiagrams = this.getContainedDiagrams(dragArea);
 			if (! e.isShiftDown()) {
 				this.unselectAll();
@@ -2664,8 +2815,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			this.selectSet(foundDiagrams);
 		}
 		dragArea = null;
+		
 		// START KGU#626 2018-12-23: Enh. #657
-		showPopupMenu(e);
+		showPopupMenuIfTriggered(e); 
 		// END KGU#626 2018-12-23
 	}
 
@@ -2681,7 +2833,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		int mouseX = e.getX();
 		int mouseY = e.getY();
-		if (mouseX > 0 && mouseY > 0)	// Don't let drag beyond the scrollable area
+		if (mouseX > 0 && mouseY > 0)	// Don't let something be dragged beyond the scrollable area
 		{
 			// Make sure the viewport moves with the mouse
 			Rectangle rect = new Rectangle(mouseX, mouseY, 1, 1);
@@ -2692,11 +2844,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			mouseY = Math.round(mouseY * zoomFactor);
 			
 			Diagram diagram = getHitDiagram(mouseX, mouseY);
-			Point oldMousePoint = this.mousePoint;
+			Point oldMousePoint = this.dragPoint;
 			
 			// Don't drag diagrams if the mouse isn't above one of the selected diagrams
 			if (dragArea == null && (oldMousePoint != null || diagram != null && (this.diagramsSelected.isEmpty() || this.diagramsSelected.contains(diagram)))) {
-				this.mousePoint = new Point(mouseX, mouseY);
+				this.dragPoint = new Point(mouseX, mouseY);
 				if (this.diagramsSelected.isEmpty()) {
 					this.diagramsSelected.add(diagram);
 					diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
@@ -2709,7 +2861,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					moveSelection(deltaX, deltaY);
 				}
 			}
-			else if (this.mousePoint == null) {
+			else if (this.dragPoint == null) {
 				// Draw a selection area
 				if (dragArea == null) {
 					dragArea = new Rectangle(mouseX, mouseY, 1, 1);
@@ -2746,7 +2898,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	
 	// START KGU#626 2018-12-23: Prepared for enh. #657
-	private void showPopupMenu(MouseEvent e) 
+	private void showPopupMenuIfTriggered(MouseEvent e) 
 	{
 		if (e.isPopupTrigger()) 
 		{
@@ -2896,6 +3048,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		repaint();
 	}
 	// END KGU#624 2018-12-21
@@ -3413,6 +3566,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#624 2018-12-24
 	
 	/**
+	 * @return the number of currently selected diagrams
+	 */
+	public int getSelectionCount()
+	{
+		return diagramsSelected.size();
+	}
+	
+	/**
 	 * @return the set of {@link Root} objects currently selected in Arranger.
 	 */
 	// START KGU#624 2018-12-21: Enh. #655
@@ -3424,7 +3585,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	//	}
 	//	return null;
 	//}
-	Set<Root> getSelected() {
+	public Set<Root> getSelected() {
 		Set<Root> selectedRoots = new HashSet<Root>();
 		for (Diagram diagr: this.diagramsSelected) {
 			if (diagr.root != null) {
@@ -3455,6 +3616,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#624 2018-12-26: Enh. #655
     protected int expandSelectionRecursively(StringList missingSignatures, StringList duplicateSignatures) {
     	Set<Root> selectedRoots = getSelected();
+		Set<Diagram> addedDiagrams = expandRootSet(selectedRoots, missingSignatures, duplicateSignatures);
+		diagramsSelected.addAll(addedDiagrams);
+		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+		repaint();
+		return addedDiagrams.size();
+	}
+
+	/**
+	 * @param selectedRoots
+	 * @param missingSignatures
+	 * @param duplicateSignatures
+	 * @return
+	 */
+	protected Set<Diagram> expandRootSet(Set<Root> selectedRoots, StringList missingSignatures,
+			StringList duplicateSignatures) {
 		LinkedList<Root> rootQueue = new LinkedList<Root>(selectedRoots);
 		Set<Diagram> addedDiagrams = new HashSet<Diagram>();
 		while (!rootQueue.isEmpty()) {
@@ -3507,10 +3683,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 			}
 		}
-		diagramsSelected.addAll(addedDiagrams);
-		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
-		repaint();
-		return addedDiagrams.size();
+		return addedDiagrams;
 	}
 
 	// END KGU#624 2018-12-26
@@ -3601,6 +3774,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#503 2018-03-13
 	
 	// START KGU#624 2018-12-26: Enh. #655
+	/**
+	 * Adds {@code diagr} to the set of diagrams {@code name} maps to.<br/>
+	 * (This is only for internal use!)
+	 * @param name - the assumed diagram name (method name)
+	 * @param diagr - the {@link Diagram} to be associated to {@code name}
+	 * @return true if the mapping has really changed 
+	 */
 	private boolean addToNameMap(String name, Diagram diagr)
 	{
 		boolean added = false;
@@ -3617,6 +3797,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return added;
 	}
 	
+	/**
+	 * Removes the {@link Diagram} {@code diagr} from the diagram set the given {@code name}
+	 * maps to.<br/>
+	 * (This is only for internal use!)
+	 * @param name - a diagram name
+	 * @param diagr - the {@link Diagram} to be disassociated from {@code name} 
+	 * @return true if {@code diagr} had been mapped from {@code name} and isn't any longer
+	 * @see #addToNameMap(String, Diagram)
+	 */
 	private boolean removeFromNameMap(String name, Diagram diagr)
 	{
 		boolean removed = false;
@@ -3630,23 +3819,117 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return removed;
 	}
 	// END KGU#624 2018-12-26
+	
+	// START KGU#626 2019-01-01/03: Enh. #657
+	/**
+	 * Simply checks whether there is a registeres group with name {@code codeName}
+	 * @param groupName - name of the questioned group
+	 * @return true if there is a group with this name
+	 */
+	protected boolean hasGroup(String groupName)
+	{
+		return groups.containsKey(groupName);
+	}
+	
+	/**
+	 * Ensures the existence of a group with name {@code groupName}, fills it either with
+	 * the {@link Diagram}s associated to the given collection {@code roots} of {@link Root}s
+	 * (if not null) or the currently selected diagrams.<br/>
+	 * If for some of the given {@code roots} there hasn't already been a corresponding {@link Diagram}
+	 * object then it will be created.<br/>
+	 * If {@code groupName} is not equal to {@link Group#DEFAULT_GROUP_NAME} then all added diagrams
+	 * that had been member of it will be detached from the default group if 
+	 * @param groupName - the name for the new group
+	 * @param form - possible a commanding {@link Mainform} or null
+	 * @param roots - a collection of {@link Root} objects to be associated to the group or null
+	 * @param replaceIfExisting - if true and the group had already existed then it will be emptied before.
+	 * @param arrFileOrNull - if given, sets the group arranger file path to its absolute path
+	 * @return true if the group could be created and the specified diagrams could be attached to it. 
+	 */
+	protected boolean makeGroup(String groupName, Mainform form, Collection<Root> roots, boolean replaceIfExisting, File arrFileOrNull)
+	{
+		boolean done = false;
+		Vector<Diagram> diagramsToAdd = new Vector<Diagram>();
+		Group group = this.groups.get(groupName);
+		// Create the group if there is something to add
+		if (group == null) {
+			this.groups.put(groupName, (group = new Group(groupName)));
+		}
+		else if (!groupName.equals(Group.DEFAULT_GROUP_NAME) && replaceIfExisting) {
+			group.clear();
+		}
+		if (roots == null) {
+			diagramsToAdd.addAll(diagramsSelected);
+		}
+		else {
+			for (Root root: roots) {
+				Diagram diagr = rootMap.get(root);
+				if (diagr == null) {
+					this.addDiagram(root, form, null, group);
+				}
+				else {
+					diagramsToAdd.add(diagr);
+				}
+			}
+		}
+		done = group.addAllDiagrams(diagramsToAdd);
+		// Now remove the diagram frim the default group as soon as they are memebr of a named group
+		if (done && !groupName.equals(Group.DEFAULT_GROUP_NAME) && (group = groups.get(Group.DEFAULT_GROUP_NAME)) != null) {
+			for (Diagram diagr: diagramsToAdd) {
+				group.removeDiagram(diagr);
+			}
+		}
+		if (arrFileOrNull != null) {
+			group.setFile(arrFileOrNull, null);
+		}
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		return done;
+	}
 
 	/**
 	 * Removes the group with the given {@code name}.
 	 * @param withDiagrams - if true then the member diagrams will also be removed if not held by
 	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
 	 * @return true if the group with given name had existed and has been removed.
+	 * @see #dissolveGroup(String)
 	 */
 	protected boolean removeGroup(String name, boolean withDiagrams) {
+		return clearGroup(name, withDiagrams, true);
+	}
+	
+	/**
+	 * Dissolves (clears) the group with the given {@code name}.
+	 * The member diagrams that are not shared by other groups will be handed over
+	 * to the default group.
+	 * @return true if the group with given name had existed and has been cleared.
+	 * @see #removeGroup(String, boolean)
+	 */
+	protected boolean dissolveGroup(String name) {
+		return clearGroup(name, false, false);
+	}
+	
+	/**
+	 * Clears) the group with the given {@code name}.
+	 * The member diagrams that are not shared by other groups will be handed over
+	 * to the default group.
+	 * @param deleteDiagrams - if true then the member diagrams will also be removed if not held by
+	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
+	 * @param deleteGroup - if the (empty) group is to be deleted in the event.
+	 * @return true if the group with given name had existed and has been cleared.
+	 * @see #removeGroup(String, boolean)
+	 */
+	private boolean clearGroup(String name, boolean deleteDiagrams, boolean deleteGroup) {
 		boolean done = false;
+		boolean anythingChanged = false;
 		Group targetGroup = null;	// Where to add orphaned diagrams
 		Vector<Diagram> doomedDiagrams = null;
-		if (!withDiagrams && !name.equals(Group.DEFAULT_GROUP_NAME)) {
+		if (!deleteDiagrams && !name.equals(Group.DEFAULT_GROUP_NAME)) {
 			targetGroup = groups.get(Group.DEFAULT_GROUP_NAME);
 			if (targetGroup == null) {
 				// Default group is missing, so create it
 				targetGroup = new Group(Group.DEFAULT_GROUP_NAME);
 				groups.put(Group.DEFAULT_GROUP_NAME, targetGroup);
+				anythingChanged = true;
 			}
 		}
 		else {
@@ -3655,30 +3938,206 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		Group group = groups.get(name);
 		if (group != null) {
-			for (Diagram diagram: group.getDiagrams()) {
-				group.removeDiagram(diagram);
-				// Is the diagram orphaned now?
-				if (diagram.getGroupNames().length == 0) {
-					if (targetGroup != null) {
-						targetGroup.addDiagram(diagram);
+			int option = 0;	// means ok to save
+			if (deleteGroup && group.hasChanged()) {
+				// FIXME: consider serial action
+				String question = msgSaveGroupChanges.getText().replace("%", group.getName());
+				option = lu.fisch.structorizer.gui.Diagram.requestSaveDecision(question, this,
+						lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect.SERIAL_GROUP_SAVE);
+				if (option == 0) {
+					this.saveArrangement(null, group);	// FIXME
+				}
+			}
+			if (option != -1) {
+				for (Diagram diagram: group.getDiagrams()) {
+					anythingChanged = group.removeDiagram(diagram) || anythingChanged;
+					// Is the diagram orphaned now?
+					if (diagram.getGroupNames().length == 0) {
+						if (targetGroup != null) {
+							anythingChanged = targetGroup.addDiagram(diagram) || anythingChanged;
+						}
+						else {
+							doomedDiagrams.add(diagram);
+						}
 					}
-					else {
-						doomedDiagrams.add(diagram);
+				}
+				if (doomedDiagrams != null) {
+					StringList unsaved = new StringList();
+					done = saveDiagrams(doomedDiagrams, false, false, unsaved);
+					for (Diagram diagram: doomedDiagrams) {
+						removeDiagram(diagram);
+					}
+					anythingChanged = true;
+				}
+				if (group.isEmpty()) {
+					if (group.getFile() == null || deleteGroup) {
+						anythingChanged = (this.groups.remove(name) != null) || anythingChanged;
+					}
+					done = true;
+				}
+			}
+		}
+		if (anythingChanged) {
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		}
+		return done;
+	}
+	
+	/**
+	 * Identifies all groups (except the default group) that are associated or congruent
+	 * (depending on argument {@code congruent}) with the currently selected subset of diagrams
+	 * (or the entire set of diagrams if nothing is selected).
+	 * @param congruent - if only groups being congruent with the selection are wanted.
+	 * @return a collection (set) of the identified groups
+	 * @see #getGroupsFromRoots(Collection, boolean)
+	 * @see #getGroupsFromCollection(Collection, boolean)
+	 */
+	public Collection<Group> getGroupsFromSelection(boolean congruent)
+	{
+		Collection<Diagram> interestingDiagrams = diagramsSelected.isEmpty() ? diagrams : diagramsSelected;
+		return getGroupsFromCollection(interestingDiagrams,congruent);
+	}
+	
+	/**
+	 * Identifies all groups (except the default group) that are associated or congruent
+	 * (depending on argument {@code congruent}) with the diagrams in {@code interestingDiagrams}
+	 * @param interestingDiagrams - the set of diagrams to scrutinize
+	 * @param congruent - if only groups being congruent with the selection are wanted.
+	 * @return a collection (set) of the identified groups
+	 * @see #getGroupsFromRoots(Collection, boolean)
+	 * @see #getGroupsFromSelection(boolean)
+	 */
+	protected Collection<Group> getGroupsFromCollection(Collection<Diagram> interestingDiagrams, boolean congruent)
+	{
+		Set<Group> foundGroups = new HashSet<Group>();
+		int nInteresting = interestingDiagrams.size();
+		for (Diagram diagr: interestingDiagrams) {
+			Set<Diagram> members = null;
+			for (String groupName: diagr.getGroupNames()) {
+				if (!groupName.equals(Group.DEFAULT_GROUP_NAME)) {
+					Group group = groups.get(groupName);
+					if (group != null && 
+							(!congruent || ((members = group.getDiagrams()).size() == nInteresting && members.containsAll(interestingDiagrams)))) {
+						foundGroups.add(group);
 					}
 				}
 			}
-			if (doomedDiagrams != null) {
-				StringList unsaved = new StringList();
-				done = saveDiagrams(doomedDiagrams, false, false, unsaved);
-				for (Diagram diagram: doomedDiagrams) {
-					removeDiagram(diagram);
+			if (congruent) {
+				// There may not be congruent groups not containing the first diagram... 
+				break;
+			}
+		}
+		return foundGroups;
+	}
+
+	/**
+	 * Identifies all groups (except the default group) that are associated or congruent
+	 * (depending on argument {@code congruent}) with the diagrams in {@code interestingDiagrams}
+	 * @param roots - collection of {@link Root} objects to be grouped
+	 * @param congruent - if only groups being congruent with the selection are wanted.
+	 * @return a collection (set) of the identified groups
+	 * @see #getGroupsFromCollection(Collection, boolean)
+	 * @see #getGroupsFromSelection(boolean)
+	 */
+	public Collection<Group> getGroupsFromRoots(Collection<Root> roots, boolean congruent)
+	{
+		HashSet<Diagram> diagrs = new HashSet<Diagram>();
+		for (Root root: roots) {
+			Diagram diagr = rootMap.get(root);
+			if (diagr != null) {
+				diagrs.add(diagr);
+			}
+		}
+		return getGroupsFromCollection(diagrs, congruent);
+	}
+	
+	/**
+	 * Identifies all groups associated with the diagram given by in {@code interestingDiagrams}
+	 * @param root - the {@link Root} object, the group membership of which is to be returned
+	 * @param supressDefaultGroup - if true then the default group won't be reported
+	 * @return a collection (set) of the identified groups
+	 * @see #getGroupsFromCollection(Collection, boolean)
+	 * @see #getGroupsFromSelection(boolean)
+	 * @see #getGroupsFromRoots(Collection, boolean)
+	 */
+	public Collection<Group> getGroupsFromRoot(Root root, boolean suppressDefaultGroup)
+	{
+		HashSet<Group> owningGroups = new HashSet<Group>();
+		Diagram diagr = rootMap.get(root);
+		if (diagr != null) {
+			String[] groupNames = diagr.getGroupNames();
+			for (int i = 0; i < groupNames.length; i++) {
+				Group group = groups.get(groupNames[i]);
+				if (group != null && (!suppressDefaultGroup || !group.isDefaultGroup())) {
+					owningGroups.add(group);
 				}
 			}
-			if (group.isEmpty()) {
-				this.groups.remove(name);
-				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
-				done = true;
+		}
+		return owningGroups;
+	}
+	
+
+	
+	/**
+	 * Detaches the given {@link Root} {@code root} from the specified {@code group} (if it was a
+	 * member of it).</br>
+	 * The corresponding {@link Diagram} may remain in Arranger if it is also held by other groups.
+	 * If not, however, then {@code removeOrphaned} decides whether the diagram will be eliminated
+	 * or moved to thwe default group.<br/>
+	 * If {@code group} gets empty then the user may interactively decide whether it is to be deleted.
+	 * @param group - the {@link Group} from which {@code root} is to be detached.
+	 * @param root
+	 * @param removeOrphaned
+	 * @param initiator TODO
+	 * @return
+	 */
+	public boolean removeDiagramFromGroup(Group group, Root root, boolean removeOrphaned, Component initiator) {
+		boolean done = false;
+		Diagram diagr = rootMap.get(root);
+		if (diagr != null) {
+			done = group.removeDiagram(diagr);
+			if (done && diagr.getGroupNames().length == 0) {
+				if (removeOrphaned) {
+					this.removeDiagram(diagr);
+				}
+				else {
+					Group defaultGroup = groups.get(Group.DEFAULT_GROUP_NAME);
+					if (defaultGroup == null) {
+						defaultGroup = new Group(Group.DEFAULT_GROUP_NAME);
+						groups.put(Group.DEFAULT_GROUP_NAME, defaultGroup);
+					}
+					defaultGroup.addDiagram(diagr);
+				}
 			}
+		}
+		if (group.isEmpty() && (group.getFile() == null || JOptionPane.showConfirmDialog(
+				initiator == null ? this : initiator,
+						msgConfirmRemoveGroup.getText().replace("%", group.getName())) == JOptionPane.OK_OPTION)) {
+			groups.remove(group.getName());
+		}
+		if (done) {
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		}
+		return done;
+	}
+	
+	/**
+	 * Attaches the given {@link Root} {@code root} (which must be present here) to the specified
+	 * {@code group} (if it hadn't already been a member of it).</br>
+	 * @param group - the {@link Group} to which {@code root} is to be attached (additionally)
+	 * @param root - the diagram to be attached to {@code group} 
+	 * @return true if this resulted in an actual change
+	 * @see #addDiagramToGroup(Root, Mainform, Point, String)
+	 */
+	protected boolean addDiagramToGroup(Group group, Root root)
+	{
+		boolean done = false;
+		Diagram diagr = this.rootMap.get(root);
+		if (diagr != null) {
+			done = group.addDiagram(diagr);
+		}
+		if (done) {
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		}
 		return done;
 	}

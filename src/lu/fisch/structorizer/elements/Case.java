@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -33,33 +33,34 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.12      First Issue
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
- *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
- *      Kay Gürtzig     2015.11.14      Bugfix #39 (= KGU#91) in method draw()
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
- *      Kay Gürtzig     2016.07.25      Issue #87: Icon for collapsed state corrected (KGU#217)
- *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code revised
+ *      Bob Fisch       2007-12-12      First Issue
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-10-11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy
+ *      Kay Gürtzig     2015-11-14      Bugfix #39 (= KGU#91) in method draw()
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016-07-25      Issue #87: Icon for collapsed state corrected (KGU#217)
+ *      Kay Gürtzig     2016-07-31      Enh. #128: New mode "comments plus text" supported, drawing code revised
  *                                      (text placement improved, had sometimes exceeded the bounds)
- *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
- *      Kay Gürtzig     2016.11.22      Bugfix #294: With hidden default branch, a test coverage couldn't be achieved
- *      Kay Gürtzig     2016.11.24/25   Issue #294 refined (now distinguished among deep and shallow test coverage)
- *      Kay Gürtzig     2016.02.08      Issue #198: vertical cursor traversal fixed (failed in nested Calls)
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016-11-22      Bugfix #294: With hidden default branch, a test coverage couldn't be achieved
+ *      Kay Gürtzig     2016-11-24/25   Issue #294 refined (now distinguished among deep and shallow test coverage)
+ *      Kay Gürtzig     2016-02-08      Issue #198: vertical cursor traversal fixed (failed in nested Calls)
  *                                      Inheritance changed to implement o more intuitive horizontal cursor navigation
- *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
- *      Kay Gürtzig     2017.11.01/02   Issue #447: Line continuation (backslash at line end) is to be supported
- *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2017-10-22      Enh. #128: Design for mode "comments plus text" revised to save space
+ *      Kay Gürtzig     2017-11-01/02   Issue #447: Line continuation (backslash at line end) is to be supported
+ *      Kay Gürtzig     2018-01-21      Enh. #490: Replacement of DiagramController aliases on drawing
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *
  ******************************************************************************************************
  *
@@ -1129,4 +1130,22 @@ public class Case extends Element implements IFork
 	}
 	// END KGU 2017-10-21
 
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = super.getMaxLineLength(false);
+		if (_includeSubstructure) {
+			for (Subqueue sq: this.qs) {
+				maxLen = Math.max(maxLen, sq.getMaxLineLength(true));
+			}
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

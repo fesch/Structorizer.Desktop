@@ -1,6 +1,6 @@
 /*
     Structorizer :: Arranger
-    A little tool which you can use to arrange Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to arrange Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 

@@ -1,6 +1,6 @@
 /*
  Structorizer :: Arranger
- A little tool which you can use to arrange Nassi-Schneiderman Diagrams (NSD)
+ A little tool which you can use to arrange Nassi-Shneiderman Diagrams (NSD)
 
  Copyright (C) 2009  Bob Fisch
 
@@ -18,6 +18,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package lu.fisch.structorizer.arranger;
+
+import java.awt.Component;
 
 /******************************************************************************************************
  *
@@ -83,6 +85,7 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -105,6 +108,7 @@ import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.AttributeInspector;
+import lu.fisch.structorizer.gui.Editor;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
@@ -150,8 +154,23 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
 	public static final LangTextHolder msgSelectionExpanded = new LangTextHolder("% referenced diagram(s) added to selection.");
 	public static final LangTextHolder msgMissingDiagrams = new LangTextHolder("\n\n%1 referenced diagram(s) not found:\n- %2");
-	public static final LangTextHolder msgAmbiguousSignatures = new LangTextHolder("\nAmong the selection, several matching diagrams occur for %1 signature(s):\n- %2");
+	public static final LangTextHolder msgAmbiguousSignatures = new LangTextHolder("\n%1 ambiguous signatures among the selection, i.e. with several matching diagrams:\n- %2");
 	// END KGU#624 2018-12-21/26
+	// START KGU#626 2019-01-02: Enh. #657
+	public static final LangTextHolder msgEmptySelection = new LangTextHolder("Can't % diagrams: nothing selected.");
+	public static final LangTextHolder msgActionGroup = new LangTextHolder("group");
+	public static final LangTextHolder msgGroupName = new LangTextHolder("%1Name for the group the %2 selected diagrams are to join:");
+	public static final LangTextHolder msgGroupNameRejected = new LangTextHolder("Group name \"%\" was rejected.");
+	public static final LangTextHolder msgGroupExists = new LangTextHolder("There is already a group with name \"%\". What do want to do?");
+	public static final LangTextHolder[] msgGroupingOptions = new LangTextHolder[] {
+			new LangTextHolder("Add diagrams"),
+			new LangTextHolder("Replace group"),
+			new LangTextHolder("Try other group name"),
+			new LangTextHolder("Cancel")
+	};
+	public static final LangTextHolder msgCongruentGroups = new LangTextHolder("The set of the %1 selected diagrams is congruent with %2 existing group(s):\n- %3\n\n%4");
+	public static final LangTextHolder msgDoCreateGroup = new LangTextHolder("Do you still insist on creating yet another group?");
+	// END KGU#626 2019-01-02
 	
 	// START KGU#624 2018-12-26: Enh. #655 - temporary limit for he listing of selected diagrams
 	protected static final int ROOT_LIST_LIMIT = 20;
@@ -283,7 +302,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      */
     public void addToPool(Root root, JFrame frame, String groupName) {
         if (frame instanceof Mainform) {
-            surface.addDiagramToGroup(root, (Mainform) frame, null, groupName);
+            surface.addDiagramToGroup(root, (Mainform)frame, null, groupName);
         } else {
             surface.addDiagramToGroup(root, null, null, groupName);
         }
@@ -647,9 +666,30 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         popupExpandSelection.addActionListener(new ActionListener() {
         	@Override
         	public void actionPerformed(ActionEvent e) {
-        		expandSelection();
+        		expandSelection(null, null);
         	}});
         popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+        
+        // START KGU#626 2019-01-03: Enh. #657
+        popupGroup = new javax.swing.JMenuItem("Group selected diagrams ...", IconLoader.getIcon(94));
+        popupMenu.add(popupGroup);
+        popupGroup.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		makeGroup(Arranger.this);
+        	}});
+        popupGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        
+        popupExpandGroup = new javax.swing.JMenuItem("Expand and group ...", IconLoader.getIcon(117));
+        popupMenu.add(popupExpandGroup);
+        popupExpandGroup.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		expandSelection(null, null);
+        		makeGroup(Arranger.this);
+        	}});
+        popupExpandGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+        // END KGU#626 201-01-03
         
         popupAttributes = new javax.swing.JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
         popupMenu.add(popupAttributes);
@@ -681,7 +721,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         popupRemoveAll.addActionListener(new ActionListener() {
         	@Override
         	public void actionPerformed(ActionEvent e) {
-        		removeAllDiagrams();
+        		removeAllDiagrams(null);
         	}});
         popupRemoveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
         
@@ -770,7 +810,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		// START KGU#534 2018-06-27: Enh.#552    	
 		//surface.removeDiagram();
 		if (checkShiftPressed && this.isShiftPressed) {
-			removeAllDiagrams();
+			removeAllDiagrams(this);
 			// We must make sure that the shift key status is reset - this doesn't work automatically!
 			// Seems that the keyReleased event gets lost...
 			this.setShiftPressed(false);
@@ -810,7 +850,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#110 2015-12-20: Enh. #62 Possibility to save and load arrangements
     private void btnSaveArrActionPerformed(java.awt.event.ActionEvent evt) {
-        surface.saveArrangement(this);
+        surface.saveArrangement(this, null);
     }
 
     private void btnLoadArrActionPerformed(java.awt.event.ActionEvent evt) {
@@ -900,6 +940,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private javax.swing.JMenuItem popupHelp = null;
     private javax.swing.JMenuItem popupKeyBindings = null;
     // END KGU#624 2018-12-27
+    // START KGU#626 2019-01-03: Enh. #657
+    private javax.swing.JMenuItem popupGroup = null;
+    private javax.swing.JMenuItem popupExpandGroup = null;
+    // END KGU#626 2019-01-03
     // START KGU#305 2016-12-16
     private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
     private static final Vector<Root> routines = new Vector<Root>();
@@ -913,7 +957,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     public void windowClosing(WindowEvent e) {
         // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
-        if (surface.saveDiagrams(true, false))
+        if (surface.saveDiagrams(this, null, true, false))
         {
             if (isStandalone)
             {
@@ -1082,7 +1126,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     break;
                 case KeyEvent.VK_S:
                     if (ev.isControlDown()) {
-                        surface.saveArrangement(this);
+                        surface.saveArrangement(this, null);
                     }
                     break;
                 case KeyEvent.VK_O:
@@ -1103,6 +1147,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     if (ev.isControlDown()) {
                         surface.moveSelection(0, vUnits);
                         surface.scrollToSelection();
+                        this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
                     }
                     else {
                         scrollarea.getVerticalScrollBar().setValue(newValue);                		
@@ -1121,6 +1166,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     if (ev.isControlDown()) {
                         surface.moveSelection(hUnits, 0);
                         surface.scrollToSelection();
+                        this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
                     }
                     else {
                         scrollarea.getHorizontalScrollBar().setValue(newValue);
@@ -1146,7 +1192,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 break;
                 case KeyEvent.VK_F11:
                 {
-                    expandSelection();
+                    expandSelection(null, null);
                 }
                     break;
                 case KeyEvent.VK_ENTER:
@@ -1158,18 +1204,169 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     }
                     break;
                     // END KGU#624 2018-12-26
+                    // START KGU#626 2019-01-02: Enh. #657
+                case KeyEvent.VK_G:
+                    if (ev.isShiftDown()) {
+                        this.expandSelection(null, null);
+                    }
+                    makeGroup(this);
+                    break;
+                    // END KGU#626 2019-01-02
             }
         }
     }
 
+	// START KGU#626 2019-01-02: Enh. #657
+    /**
+     * Make s a new group from currently selected diagrams-
+     * @param originator - some initiating component, used e.g. for message box positioning
+     * @return true if the method was successful.
+     */
+	public boolean makeGroup(Component originator) {
+		boolean done = false;
+		if (surface.getSelectionCount() == 0) {
+			JOptionPane.showMessageDialog(originator, msgEmptySelection.getText().replace("%", msgActionGroup.getText()));
+		}
+		else {
+			done = makeGroup(null, originator, false);
+		}
+		return done;
+	}
+	// END KGU#626 2019-01-02
+
 	/**
-	 * Expands the current selection by all directly orindirectly referenced subroutine
-	 * and includable diagrams that hadn't already been selected.
+	 * Makes a new {@link Group} for the given {@link Root}s. The name will be requested
+	 * interactively.
+	 * @param roots - the {@link Root} objects the associated diagrams of which ought to
+	 * join the new group, if null then the currently selected diagrams are used.
+	 * @param originator - some initiating component, used e.g. for message box positioning
+	 * @param accomplishSet TODO
+	 * @return true if the method was successful
 	 */
-	protected void expandSelection() {
+	public boolean makeGroup(Collection<Root> roots, Component originator, boolean accomplishSet) {
+		boolean done = false;
+		int nSelected = 0;
+		Collection<Group> congrGroups = null;
+		if (roots != null) {
+			if (accomplishSet) {
+				roots = this.accomplishRootSet(new HashSet<Root>(roots), originator);
+			}
+			congrGroups = surface.getGroupsFromRoots(roots, true);
+			nSelected = roots.size();
+		}
+		else {
+			nSelected = surface.getSelectionCount();
+			congrGroups = surface.getGroupsFromSelection(true);
+		}
+		if (!congrGroups.isEmpty()) {
+			StringList groupNames = new StringList();
+			for (Group grp: congrGroups) {
+				// Remark: the default group may not occur here, so we don't have to replace its default name
+				groupNames.add(grp.getName());
+			}
+			if (JOptionPane.showConfirmDialog(originator,
+					msgCongruentGroups.getText()
+					.replace("%1", Integer.toString(nSelected))
+					.replace("%2", Integer.toString(groupNames.count()))
+					.replace("%3", groupNames.concatenate("\n- "))
+					.replace("%4", msgDoCreateGroup.getText()),
+					msgTitleWarning.getText(),
+					JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+				return false;
+			}
+		}
+
+		if (!roots.isEmpty()) {
+			String groupName = this.requestNewGroupName(originator, nSelected);
+			if (groupName != null) { // not cancelled
+				// the prefix character of groupName signals whether to to override an existing group  or not  
+				done = surface.makeGroup(groupName.substring(1), null, roots, groupName.startsWith("!"), null);
+			}
+		}
+		return done;
+	}
+
+	/**
+	 * Request the user to enter a name for the new group. Checks against name conflicts and
+	 * the like.
+	 * @param originator - a component from which the request was initiated
+	 * @param nDiagrams - number of diagrams to form a group of
+	 * @return null if the user cancelled, a prefixed group name otherwise where prefix "!" means
+	 * to override an existing group, prefix " " just to add the diagrasm to the group if already
+	 * existing.
+	 */
+	private String requestNewGroupName(Component originator, int nDiagrams)
+	{
+		String groupName = null;
+		String complaint = "";
+		int option = 0;
+		String[] options = new String[msgGroupingOptions.length];
+		for (int i = 0; i < options.length; i++) {
+			options[i] = msgGroupingOptions[i].getText();
+		}
+		do {
+			do {
+				// On repeated input request, name the previous problem
+				if (groupName != null) {
+					complaint = msgGroupNameRejected.getText().replace("%", groupName) + "\n";
+				}
+				groupName = JOptionPane.showInputDialog(originator, 
+						msgGroupName.getText().replace("%1", complaint).replace("%2", Integer.toString(nDiagrams)));
+				if (groupName == null) {
+					// User has cancelled
+					return null;
+				}
+				groupName = groupName.trim();
+			} while (groupName.isEmpty() || groupName.equals(Group.DEFAULT_GROUP_NAME));
+			// Check against names of existing groups
+			option = 0;
+			if (surface.hasGroup(groupName)) {
+				option = JOptionPane.showOptionDialog(originator,
+						msgGroupExists.getText().replace("%", groupName),
+						msgActionGroup.getText(),
+						JOptionPane.DEFAULT_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						IconLoader.getIcon(94),
+						options, options[option]);
+			}
+		} while (option == 2);	// try with different name
+		if (option == options.length - 1) {	// cancelled
+			return null;
+		}
+		// Insert a marker for overriding or not (to be cut off after identification)
+		return (option == 1 ? "!" : " ") + groupName;
+	}
+	
+	private Collection<Root> accomplishRootSet(Set<Root> initialRootSet, Component initiator)
+	{
+		Collection<Root> neededRoots = new Vector<Root>(initialRootSet);
+		Collection<Diagram> addedDiagrams = expandSelection(initialRootSet, initiator);
+		if (addedDiagrams != null) {
+			for (Diagram diagr: addedDiagrams) {
+				neededRoots.add(diagr.root);
+			}
+		}
+		return neededRoots;
+	}
+	
+	/**
+	 * Expands the current selection by all directly or indirectly referenced subroutine
+	 * and includable diagrams that hadn't already been selected.
+	 * @param initialRoots TODO
+	 * @param initiator TODO
+	 */
+	protected Set<Diagram> expandSelection(Set<Root> initialRoots, Component initiator) {
 		StringList missingRoots = new StringList();
 		StringList duplicateRoots = new StringList();
-		int nAdded = surface.expandSelectionRecursively(missingRoots, duplicateRoots);
+		Set<Diagram> addedDiagrams = null;
+		int nAdded = 0;
+		if (initialRoots == null) {
+			nAdded = surface.expandSelectionRecursively(missingRoots, duplicateRoots);
+		}
+		else {
+			addedDiagrams = surface.expandRootSet(initialRoots, missingRoots, duplicateRoots);
+			nAdded = addedDiagrams.size();
+		}
 		String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
 		if (duplicateRoots.count() > 0) {
 		    message += msgAmbiguousSignatures.getText()
@@ -1181,7 +1378,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		            .replace("%1", Integer.toString(missingRoots.count()))
 		            .replace("%2", missingRoots.concatenate("\n- "));
 		}
-		JOptionPane.showMessageDialog(this, message);
+		JOptionPane.showMessageDialog(initiator == null ? this : initiator, message);
+		return addedDiagrams;
 	}
 
     /**
@@ -1389,12 +1587,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
         // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
         if (popupMenu != null && surface != null) {
-        	Set<Root> selectedRoots = surface.getSelected();
-        	boolean anythingSelected = !selectedRoots.isEmpty();
-        	boolean singleSelection = selectedRoots.size() == 1;
-        	this.popupAttributes.setEnabled(singleSelection);
-        	this.popupExpandSelection.setEnabled(anythingSelected);
-        	this.popupRemove.setEnabled(anythingSelected);
+        	int nSelected = surface.getSelectionCount();
+        	this.popupAttributes.setEnabled(nSelected == 1);
+        	this.popupExpandSelection.setEnabled(nSelected > 0);
+        	this.popupRemove.setEnabled(nSelected > 0);
+        	this.popupGroup.setEnabled(nSelected > 1);
+        	this.popupExpandGroup.setEnabled(nSelected > 0);
         }
         // END KGU#624/KGU#626 2018-12-27
     }
@@ -1472,9 +1670,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 			updateStatusSelection();
 		}
 		// END KGU#624 2018-12-21
-			for (IRoutinePoolListener listener: listeners) {
-				listener.routinePoolChanged(this, _flags);
-			}
+		for (IRoutinePoolListener listener: listeners) {
+			listener.routinePoolChanged(this, _flags);
+		}
 	}
 	// END KGU#305 2016-12-16
 
@@ -1493,16 +1691,28 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#534 2018-06-27: Enh. #552
 	/**
 	 * Removes all diagrams from the Arranger surface.
+	 * @param initiator -the commanding GUI component (for placement of message boxes etc., may be null)
 	 * @return true if this was accomplished
 	 */
-	public boolean removeAllDiagrams() {
+	public boolean removeAllDiagrams(Component initiator) {
 		boolean done = false;
 		if (surface != null && !this.getAllRoots().isEmpty()) {
-			if (JOptionPane.showConfirmDialog(this, 
+			if (JOptionPane.showConfirmDialog(initiator == null ? this : initiator, 
 					msgConfirmRemoveAll.getText(), 
 					msgTitleWarning.getText(),
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
-				done = surface.removeAllDiagrams();
+				// START KGU#626 2019-01-04: Enh. #657 - Make sure modified groups get notified about
+				lu.fisch.structorizer.gui.Diagram.startSerialMode();
+				try {
+					for (Group group: groups) {
+						this.dissolveGroup(group.getName(), initiator);
+					}
+				}
+				finally {
+					lu.fisch.structorizer.gui.Diagram.endSerialMode();
+				}
+				// END KGU#626 2019-01-04
+				done = surface.removeAllDiagrams(initiator);
 			}
 		}
 		return done;
@@ -1512,22 +1722,37 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#626 2018-12-31: Enh. #657
 	/**
 	 * Removes the group with the given {@code name}.
+	 * @param name - name of the {@link Group} to be removed
 	 * @param withDiagrams - if true then the member diagrams will also be removed if not held by
 	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
+	 * @param initiator - the GUI component commanding this action (for association of message boxes etc.)
 	 * @return true if the group with given name had existed and has been removed.
 	 */
-	public boolean removeGroup(String name, boolean withDiagrams)
+	public boolean removeGroup(String name, boolean withDiagrams, Component initiator)
 	{
 		return surface.removeGroup(name, withDiagrams);
 	}
 	// END KGU#626 218-12-31
+	
+	// START KGU#626 2019-01-04: Enh. #657
+	/**
+	 * Removes the group with the given {@code name}.
+	 * @param name - name of the {@link Group} to be dissolved
+	 * @param initiator - the GUI component commanding this action (for association of message boxes etc.)
+	 * @return true if the group with given name had existed and has been removed.
+	 */
+	public boolean dissolveGroup(String name, Component initiator)
+	{
+		return surface.dissolveGroup(name);
+	}
+	// END KGU#626 2019-01-04
 
 	// START KGU#373 2017-03-28: Enh. #386
 	/**
 	 * Saves unsaved changes of all held diagrams 
 	 */
 	public void saveAll() {
-		this.surface.saveDiagrams(false, true);
+		this.surface.saveDiagrams(this, null, false, true);
 	}
 	// END KGU#373 2017-03-28
 	
@@ -1592,18 +1817,61 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// END KGU#363/KGU#624 2018-12-27
 
 	/**
-	 * Stores the group specified by groupName (if existent) as diagram arrangement to either
-	 * the already associated or a new file.<br/>
+	 * Stores the {@link Group} specified by {@code group} or the current selection as diagram
+	 * arrangement to either the already associated or a new file.<br/>
 	 * Depending on the group type or the choice of the user, this file will either be only a list
 	 * of reference points and filenames (this way not being portable) or be a compressed archive
 	 * containing the list file as well as the referenced NSD files will be produced such that it
 	 * can be ported to a different location and extracted there.
-	 * @param groupName - name of the group to be saved
+	 * @param initiator TODO
+	 * @param group - the {@link Group} to be saved
 	 * @return status flag (true iff the saving succeeded without error)
 	 */
-	public boolean saveGroup(String groupName) {
-		return surface.saveArrangement(this, groupName);
+	public boolean saveGroup(Component initiator, Group group) {
+		return surface.saveArrangement(this, group);
 	}
 
+	/**
+	 * Detaches the diagram {@code root} from the given {@code group} (if it
+	 * had been a member of).
+	 * @param group - {@link Group} {@code root} is suposed to be member of
+	 * @param root - the {@link Root} object to be removed from {@code group}
+	 * @param initiator - the {@link Component} commanding the action
+	 * @return true if the detachment worked and {@code group} actually changed
+	 */
+	public boolean detachRootFromGroup(Group group, Root root, Component initiator) {
+		return surface.removeDiagramFromGroup(group, root, false, initiator);
+	}
+
+	/**
+	 * Attaches the diagram {@code root} to the given {@code targetGroup} (if it hadn't
+	 * already been member of it). If {@code sourceGroup} is given, contains the diagram
+	 * represented by {@code root} and differs from {@code targetGroup} then the diagram
+	 * {@code root} will be detached from it. 
+	 * @param targetGroup - the target {@link Group} for 
+	 * @param root - the {@link Root} to be attached to {@code targetGroup}
+	 * @param sourceGroup - if given then the diagrams in {@code }
+	 * @param initiator - the {@link Component} that initiated the action
+	 * @see #detachRootFromGroup(Group, Root, Component)
+	 */
+	public boolean attachRootToGroup(Group targetGroup, Root root, Group sourceGroup, Component initiator) {
+		boolean done = surface.addDiagramToGroup(targetGroup, root);
+		// Remove the diagram from its former owner if sourceGroup is given 
+		if (sourceGroup != null && sourceGroup != targetGroup) {
+			surface.removeDiagramFromGroup(sourceGroup, root, false, initiator);
+		}
+		return done;
+	}
+
+	/**
+	 * Identifies all groups associated with the diagram given by in {@code interestingDiagrams}
+	 * @param root - the {@link Root} object, the group membership of which is to be returned
+	 * @param supressDefaultGroup - if true then the default group won't be reported
+	 * @return a collection (set) of the identified groups
+	 */
+	public Collection<Group> getGroupsFromRoot(Root root, boolean suppressDefaultGroup)
+	{
+		return surface.getGroupsFromRoot(root, suppressDefaultGroup);
+	}
 
 }

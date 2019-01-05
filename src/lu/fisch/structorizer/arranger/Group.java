@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -18,11 +18,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package lu.fisch.structorizer.arranger;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 
 /******************************************************************************************************
  *
@@ -44,6 +39,11 @@ import java.util.Comparator;
  *      
  *
  ******************************************************************************************************///
+
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -122,7 +122,7 @@ public class Group {
 	 * @param _name - group name
 	 * @param _diagrams - the (initial) set of {@link Diagram}s
 	 */
-	public Group(String _name, Set<Diagram> _diagrams) {
+	public Group(String _name, Collection<Diagram> _diagrams) {
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
 		if (!_diagrams.isEmpty()) {
@@ -154,6 +154,14 @@ public class Group {
 	}
 	
 	/**
+	 * @return true if the name this group equals {@link #DEFAULT_GROUP_NAME}.
+	 */
+	public boolean isDefaultGroup()
+	{
+		return this.name.equals(DEFAULT_GROUP_NAME);
+	}
+	
+	/**
 	 * @return a variant of the name that is well suited e.g. as file name
 	 * @see #getName()
 	 */
@@ -172,7 +180,7 @@ public class Group {
 	/**
 	 * @return a {@link File} object with the associated absolute path of the
 	 * Arranger list file this group is associated to (stemming from or last saved to)
-	 * or null if the group had never been associated to a file. 
+	 * or null if the group had never been associated to an arrangement file. 
 	 */
 	public File getFile()
 	{
@@ -198,7 +206,30 @@ public class Group {
 				file = null;
 			}
 		}
+		else {
+			file = null;
+		}
 		return file;
+	}
+	
+	/**
+	 * Overwrites the associated file path with the arr file path derived from
+	 * {@code arrFile} and {@code arrzFile}.<br/>
+	 * If {@code arrzFile} is null the path will be that of {@code arrFile}, otherwise
+	 * a virtual path composed from the {@code arrzFile} path and the last path element
+	 * of the{@code arrFile} path is used.<br/>
+	 * As a side-effect resets the modification flag.
+	 * @param arrFile - {@link File} object referring to the arrangement list file
+	 * @param arrzFile - {@link File} object referring to the arrangement archive or null
+	 */
+	protected void setFile(File arrFile, File arrzFile)
+	{
+		String arrPath = arrFile.getAbsolutePath();
+		if (arrzFile != null) {
+			arrPath = arrzFile.getAbsolutePath() + File.separator + arrFile.getName();
+		}
+		this.filePath = arrPath;
+		this.membersChanged = false;
 	}
 	
 	/**
@@ -245,12 +276,29 @@ public class Group {
 	{
 		boolean added = this.diagrams.addAll(_diagrams);
 		if (added) {
+			for (Diagram diagr: _diagrams) {
+				diagr.addToGroup(this);
+			}
 			this.membersChanged = true;
 			this.updateSortedRoots(true);
 		}
 		return added;
 	}
 
+	/**
+	 * Removes all member {@link Diagram}s without changing the path information etc.
+	 * @return true if all diagrams have been removd. 
+	 */
+	public boolean clear()
+	{
+		boolean done = true;
+		Diagram[] members = this.diagrams.toArray(new Diagram[this.diagrams.size()]);
+		for (int i = 0; i < members.length; i++) {
+			done = removeDiagram(members[i]) && done;
+		}
+		return done;
+	}
+	
 	/**
 	 * Returns true if this group contains the given @{@link Diagram} {@code _diagram}.
 	 * @param _diagram - an interesting {@link Diagram} object
