@@ -79,6 +79,7 @@ import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Vector;
@@ -2060,7 +2061,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// First save groups then save further roots
 		for (Group selectedGroup: arrangerIndexGetSelectedGroups(false)) {
 			if (selectedGroup.hasChanged()) {
-				Arranger.getInstance().saveGroup(this, selectedGroup);
+				Group resultGroup = Arranger.getInstance().saveGroup(this, selectedGroup);
+				// Now update the recent file list in case the saving was successful
+				if (resultGroup != null) {
+					File groupFile = resultGroup.getArrzFile();
+					if (groupFile != null || (groupFile = resultGroup.getFile()) != null) {
+						this.diagram.addRecentFile(groupFile.getAbsolutePath());
+					}
+				}
 			}
 		}
 		for (Root selectedRoot: arrangerIndexGetSelectedRoots(false)) {

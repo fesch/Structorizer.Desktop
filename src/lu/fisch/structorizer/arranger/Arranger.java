@@ -1696,6 +1696,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 */
 	public boolean removeAllDiagrams(Component initiator) {
 		boolean done = false;
+		if (initiator == null) initiator = this;
 		if (surface != null && !this.getAllRoots().isEmpty()) {
 			if (JOptionPane.showConfirmDialog(initiator == null ? this : initiator, 
 					msgConfirmRemoveAll.getText(), 
@@ -1704,8 +1705,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 				// START KGU#626 2019-01-04: Enh. #657 - Make sure modified groups get notified about
 				lu.fisch.structorizer.gui.Diagram.startSerialMode();
 				try {
-					for (Group group: groups) {
-						this.dissolveGroup(group.getName(), initiator);
+					// Field groups might be modified via notifications, so better work on a copy
+					Group[] groupsToCheck = groups.toArray(new Group[groups.size()]);
+					for (int i = 0; i < groupsToCheck.length; i++) {
+						if (!groupsToCheck[i].isDefaultGroup()) {
+							this.dissolveGroup(groupsToCheck[i].getName(), initiator);
+						}
 					}
 				}
 				finally {
@@ -1730,7 +1735,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 */
 	public boolean removeGroup(String name, boolean withDiagrams, Component initiator)
 	{
-		return surface.removeGroup(name, withDiagrams);
+		return surface.removeGroup(name, withDiagrams, initiator);
 	}
 	// END KGU#626 218-12-31
 	
@@ -1743,7 +1748,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 */
 	public boolean dissolveGroup(String name, Component initiator)
 	{
-		return surface.dissolveGroup(name);
+		return surface.dissolveGroup(name, initiator);
 	}
 	// END KGU#626 2019-01-04
 
@@ -1825,10 +1830,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * can be ported to a different location and extracted there.
 	 * @param initiator TODO
 	 * @param group - the {@link Group} to be saved
-	 * @return status flag (true iff the saving succeeded without error)
+	 * @return the eventually associated {@link Group} object if the saving succeeded without error,
+	 * otherwise null.
 	 */
-	public boolean saveGroup(Component initiator, Group group) {
-		return surface.saveArrangement(this, group);
+	public Group saveGroup(Component initiator, Group group) {
+		return surface.saveArrangement(initiator, group);
 	}
 
 	/**

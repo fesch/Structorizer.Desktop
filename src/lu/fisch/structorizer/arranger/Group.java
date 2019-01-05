@@ -32,6 +32,7 @@ package lu.fisch.structorizer.arranger;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2018-12-23      First Issue (on behalf of enh. #657)
+ *      Kay Gürtzig     2019-01-05      Substantial tuning for enh. #657
  *
  ******************************************************************************************************
  *
@@ -83,6 +84,12 @@ public class Group {
 	 * @see #hasChanged()
 	 */
 	public boolean membersChanged = false;
+	/**
+	 * True as soon as a movement of some member diagram is detected. Is to be cleared when
+	 * this group is saved.
+	 * @see #hasChanged()
+	 */
+	public boolean membersMoved = false;
 
 	/**
 	 * Cache for the sorted list of referenced {@link Root}s
@@ -230,6 +237,8 @@ public class Group {
 		}
 		this.filePath = arrPath;
 		this.membersChanged = false;
+		// This is the (only) chance to reset the membersMoved flag
+		this.membersMoved = this.positionsChanged();
 	}
 	
 	/**
@@ -377,14 +386,17 @@ public class Group {
 	 */
 	public boolean hasChanged()
 	{
-		return membersChanged || positionsChanged();
+		if (!this.membersMoved && positionsChanged()) {
+			this.membersMoved = true;
+		}
+		return membersChanged || this.membersMoved;
 	}
 	
 	@Override
 	public String toString()
 	{
 		String prefix = "";
-		if (this.membersChanged || this.positionsChanged()) {
+		if (this.hasChanged()) {
 			prefix = "*";
 		}
 		return prefix + this.getName() + ": " + this.size();

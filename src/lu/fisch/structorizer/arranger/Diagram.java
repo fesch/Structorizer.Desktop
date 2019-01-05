@@ -67,7 +67,13 @@ public class Diagram
     private String signature = null;
     // END KGU#330 2017-01-13
     // START KGU#626 2018-12-28: Enh. #657 - group management
-    private final StringList groupNames = new StringList();
+    private final StringList groupNames = new StringList(); 
+    /**
+     * Indicates that the diagram had been moved. Is to be reset when an arrangement containing this diagram
+     * is saved. Therefore all groups must cache the disjunction of all wasMoved values of all their diagrams
+     * because otherwise they might seem "clean" if all contained diagrams were saved with some totally different
+     * arrangement.
+     */
     boolean wasMoved = false;
     // END KGU#626 2018-12-28
 
@@ -176,8 +182,10 @@ public class Diagram
      */
     public void setLocation(int newX, int newY)
     {
+    	boolean differs = this.point.x != newX || this.point.y != newY;
     	this.point.setLocation(newX, newY);
-    	this.wasMoved = true;
+    	System.out.println(root + ": " + differs);
+    	this.wasMoved = differs;
     }
     // END KGU#626 2018-12-30
 	
