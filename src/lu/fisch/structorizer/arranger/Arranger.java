@@ -666,7 +666,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         popupExpandSelection.addActionListener(new ActionListener() {
         	@Override
         	public void actionPerformed(ActionEvent e) {
-        		expandSelection(null, null);
+        		expandSelection(null, Arranger.this);
         	}});
         popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
         
@@ -850,7 +850,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#110 2015-12-20: Enh. #62 Possibility to save and load arrangements
     private void btnSaveArrActionPerformed(java.awt.event.ActionEvent evt) {
-        surface.saveArrangement(this, null);
+        surface.saveArrangement(this, null, false);
     }
 
     private void btnLoadArrActionPerformed(java.awt.event.ActionEvent evt) {
@@ -957,7 +957,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     public void windowClosing(WindowEvent e) {
         // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
-        if (surface.saveDiagrams(this, null, true, false))
+        // START KGU#626 2019-01-05: Enh. #657
+        //if (surface.saveDiagrams(this, null, true, false))
+        Component initiator = e.getComponent();
+        if (initiator == null) {
+            initiator = this;
+        }
+        if (surface.saveDiagrams(initiator, null, true, false) && surface.saveGroups(initiator, true, new StringList()))
+        // END KGU#626 2019-01-05
         {
             if (isStandalone)
             {
@@ -1126,7 +1133,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     break;
                 case KeyEvent.VK_S:
                     if (ev.isControlDown()) {
-                        surface.saveArrangement(this, null);
+                        surface.saveArrangement(this, null, false);
                     }
                     break;
                 case KeyEvent.VK_O:
@@ -1192,7 +1199,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 break;
                 case KeyEvent.VK_F11:
                 {
-                    expandSelection(null, null);
+                    expandSelection(null, this);
                 }
                     break;
                 case KeyEvent.VK_ENTER:
@@ -1218,9 +1225,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
 	// START KGU#626 2019-01-02: Enh. #657
     /**
-     * Make s a new group from currently selected diagrams-
+     * Makes a new group from currently selected diagrams.
      * @param originator - some initiating component, used e.g. for message box positioning
      * @return true if the method was successful.
+     * @see #makeGroup(Collection, Component, boolean)
      */
 	public boolean makeGroup(Component originator) {
 		boolean done = false;
@@ -1240,12 +1248,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * @param roots - the {@link Root} objects the associated diagrams of which ought to
 	 * join the new group, if null then the currently selected diagrams are used.
 	 * @param originator - some initiating component, used e.g. for message box positioning
-	 * @param accomplishSet TODO
+	 * @param accomplishSet - whether all reachable diagrams from which the given or selected
+	 * {@code roots} depend are to join the group. 
 	 * @return true if the method was successful
+	 * @see #makeGroup(Component)
 	 */
 	public boolean makeGroup(Collection<Root> roots, Component originator, boolean accomplishSet) {
 		boolean done = false;
 		int nSelected = 0;
+		// This collection is to gather the groups coinciding with the (expanded) set of Roots.
 		Collection<Group> congrGroups = null;
 		if (roots != null) {
 			if (accomplishSet) {
@@ -1255,6 +1266,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 			nSelected = roots.size();
 		}
 		else {
+			// Start from current selection in Arranger
 			nSelected = surface.getSelectionCount();
 			congrGroups = surface.getGroupsFromSelection(true);
 		}
@@ -1280,7 +1292,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 			String groupName = this.requestNewGroupName(originator, nSelected);
 			if (groupName != null) { // not cancelled
 				// the prefix character of groupName signals whether to to override an existing group  or not  
-				done = surface.makeGroup(groupName.substring(1), null, roots, groupName.startsWith("!"), null);
+				done = (surface.makeGroup(groupName.substring(1), null, roots, groupName.startsWith("!"), null) != null);
 			}
 		}
 		return done;
@@ -1337,7 +1349,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		return (option == 1 ? "!" : " ") + groupName;
 	}
 	
-	private Collection<Root> accomplishRootSet(Set<Root> initialRootSet, Component initiator)
+	/**
+	 * Enhances the {@code initialRootSet} with all {@code Root} objects that are directly and
+	 * indirectly called or included by some {@link Root} objects from {@code initialRootSet}. 
+	 * @param initialRootSet - a set of {@link Root} objects from where to start.
+	 * @param initiator - a GUI component meant to be made the owner of message boxes etc., if
+	 * being null then the messages won't be raised. 
+	 * @return an accomplished set of {@link Root}s.
+	 */
+	public Collection<Root> accomplishRootSet(Set<Root> initialRootSet, Component initiator)
 	{
 		Collection<Root> neededRoots = new Vector<Root>(initialRootSet);
 		Collection<Diagram> addedDiagrams = expandSelection(initialRootSet, initiator);
@@ -1352,8 +1372,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	/**
 	 * Expands the current selection by all directly or indirectly referenced subroutine
 	 * and includable diagrams that hadn't already been selected.
-	 * @param initialRoots TODO
-	 * @param initiator TODO
+	 * @param initialRoots - set of {@link Root} objects from which the dependencies are to be retrieved
+	 * @param initiator - A responsible GUI component - message boxes will be modal to it, if null
+	 * the no messages will be raised.
+	 * @return the set of added diagrams in case {@link initialRoots} was given 
 	 */
 	protected Set<Diagram> expandSelection(Set<Root> initialRoots, Component initiator) {
 		StringList missingRoots = new StringList();
@@ -1367,18 +1389,20 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 			addedDiagrams = surface.expandRootSet(initialRoots, missingRoots, duplicateRoots);
 			nAdded = addedDiagrams.size();
 		}
-		String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
-		if (duplicateRoots.count() > 0) {
-		    message += msgAmbiguousSignatures.getText()
-		            .replace("%1", Integer.toString(duplicateRoots.count()))
-		            .replace("%2", duplicateRoots.concatenate("\n- "));
+		if (initiator != null) {
+			String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
+			if (duplicateRoots.count() > 0) {
+				message += msgAmbiguousSignatures.getText()
+						.replace("%1", Integer.toString(duplicateRoots.count()))
+						.replace("%2", duplicateRoots.concatenate("\n- "));
+			}
+			if (missingRoots.count() > 0) {
+				message += msgMissingDiagrams.getText()
+						.replace("%1", Integer.toString(missingRoots.count()))
+						.replace("%2", missingRoots.concatenate("\n- "));
+			}
+			JOptionPane.showMessageDialog(initiator, message);
 		}
-		if (missingRoots.count() > 0) {
-		    message += msgMissingDiagrams.getText()
-		            .replace("%1", Integer.toString(missingRoots.count()))
-		            .replace("%2", missingRoots.concatenate("\n- "));
-		}
-		JOptionPane.showMessageDialog(initiator == null ? this : initiator, message);
 		return addedDiagrams;
 	}
 
@@ -1557,10 +1581,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      */
     public static Vector<Root> getSortedRoots()
     {
-        System.out.println("Group list:");
-        for (Group group: groups) {
-            System.out.println("\t" + group);
-        }
+        //System.out.println("Group list:");
+        //for (Group group: groups) {
+        //    System.out.println("\t" + group);
+        //}
         return routines;
     }
     // END KGU#305 2016-12-16
@@ -1789,6 +1813,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 				return true;
 			}
 		}
+		// START KGU#626 2019-01-05: Enh. #657 - there might also be unsaved group changes
+		for (Group group: groups) {
+			if (group.hasChanged()) {
+				return true;
+			}
+		}
+		// END KGU#626 2019-01-05
 		return false;
 	}
 	// END KGU#594 2018-10-06
@@ -1834,7 +1865,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * otherwise null.
 	 */
 	public Group saveGroup(Component initiator, Group group) {
-		return surface.saveArrangement(initiator, group);
+		return surface.saveArrangement(initiator, group, false);
 	}
 
 	/**
@@ -1856,14 +1887,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * {@code root} will be detached from it. 
 	 * @param targetGroup - the target {@link Group} for 
 	 * @param root - the {@link Root} to be attached to {@code targetGroup}
-	 * @param sourceGroup - if given then the diagrams in {@code }
+	 * @param sourceGroup - if given then {@code root} will be detached from that group
+	 * (provided it was a member there)
 	 * @param initiator - the {@link Component} that initiated the action
 	 * @see #detachRootFromGroup(Group, Root, Component)
 	 */
 	public boolean attachRootToGroup(Group targetGroup, Root root, Group sourceGroup, Component initiator) {
 		boolean done = surface.addDiagramToGroup(targetGroup, root);
 		// Remove the diagram from its former owner if sourceGroup is given 
-		if (sourceGroup != null && sourceGroup != targetGroup) {
+		if (done && sourceGroup != null && sourceGroup != targetGroup) {
 			surface.removeDiagramFromGroup(sourceGroup, root, false, initiator);
 		}
 		return done;

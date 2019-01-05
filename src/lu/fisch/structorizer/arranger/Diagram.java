@@ -184,7 +184,6 @@ public class Diagram
     {
     	boolean differs = this.point.x != newX || this.point.y != newY;
     	this.point.setLocation(newX, newY);
-    	System.out.println(root + ": " + differs);
     	this.wasMoved = differs;
     }
     // END KGU#626 2018-12-30

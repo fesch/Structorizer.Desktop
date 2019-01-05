@@ -67,6 +67,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-02      Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins
  *      Kay Gürtzig     2018-12-30      Enh. #158, #655: Key bindings for shift+page keys, home, end
  *      Kay Gürtzig     2019-01-01      Enh. #657: JList diagramIndex replaced by JTree arrangerIndex
+ *      Kay Gürtzig     2019-01-05      Enh. #657: Arranger index popup menu item diagram info added
  *
  ******************************************************************************************************
  *
@@ -337,10 +338,22 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JMenuItem popupIndexDissolve = new JMenuItem("Dissolve group", IconLoader.getIcon(97));
 	protected final JMenuItem popupIndexDetach = new JMenuItem("Detach from group", IconLoader.getIcon(98));
 	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
+	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram info ...", IconLoader.getIcon(118));
 
 	protected final JLabel lblSelectTargetGroup = new JLabel("Select the target group:");
 	protected final JComboBox<Group> cmbTargetGroup = new JComboBox<Group>();
 	protected final JPanel pnlGroupSelect = new JPanel();
+	// JTree user objects
+	
+	protected final DefaultMutableTreeNode nodeIndexInfoTop = new DefaultMutableTreeNode();
+	protected final JTree indexInfoTree = new JTree(nodeIndexInfoTop);
+	protected final JScrollPane scrollInfo = new JScrollPane(indexInfoTree);
+	protected final JLabel lblGroups = new JLabel("Containing groups");
+	protected final JLabel lblSubroutines = new JLabel("Called subroutines");
+	protected final JLabel lblIncludables = new JLabel("Referenced includables");
+	protected final DefaultMutableTreeNode nodeGroups = new DefaultMutableTreeNode(lblGroups);
+	protected final DefaultMutableTreeNode nodeSubroutines = new DefaultMutableTreeNode(lblSubroutines);
+	protected final DefaultMutableTreeNode nodeIncludables = new DefaultMutableTreeNode(lblIncludables);
 	// END KGU#626 2019-01-03
 	
 	// START KGU#626 2019-01-01: Enh. #657
@@ -353,6 +366,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			new LangTextHolder("Move to group"),
 			new LangTextHolder("Cancel")
 	};
+	protected static final LangTextHolder msgGroupMembersChanged = new LangTextHolder("The set of member diagrams was modified.");
+	protected static final LangTextHolder msgGroupMembersMoved = new LangTextHolder("The coordinates of some member diagrams were changed.");
+	
 	
 	public static class ArrangerIndexCellRenderer extends DefaultTreeCellRenderer {
 		private final static ImageIcon groupIcon = IconLoader.getIcon(94);
@@ -400,6 +416,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				}
 				else {
 					setIcon(groupIcon);
+				}
+			}
+			else if (content instanceof JLabel) {
+				setText(((JLabel)content).getText());
+				Icon icon = ((JLabel)content).getIcon();
+				if (icon != null) {
+					setIcon(icon);
 				}
 			}
 
@@ -580,6 +603,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				arrangerIndexRemove();
 			}
 			// END KGU#305 2016-12-17
+			// START KGU#626 2019-01-05: Enh. #657
+			else if (name.equals("SHOW_INFO")) {
+				arrangerIndexInfo();
+			}
+			// END KGU#626 2019-01-05
 		}
 	}
 	// END KGGU#305 2016-12-15
@@ -1096,7 +1124,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 
 	/**
-	 * Sets up the popup-menu with all submenus and shortcuts and actions
+	 * Sets up the pop-up menus with all submenus and shortcuts and actions
 	 */
 	private void createPopupMenu() {
 		popup.add(popupCut);
@@ -1230,6 +1258,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
 		// END KGU#213 2016-08-02
 
+		//===================== popup menu for Arranger index ========================= 
+
 		// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
 		popupIndex.add(popupIndexGet);
 		popupIndexGet.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {	arrangerIndexGet();	} });
@@ -1237,6 +1267,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#573 2018-09-13: Enh. #590  - Attribute inspector for selected index entry
 		popupIndex.add(popupIndexAttributes);
 		popupIndexAttributes.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexAttributes(); } });
+		// END KGU#573 2018-09-13
+		
+		// START KGU#626 2019-01-05: Enh. #657  - Info tree for single selection
+		popupIndex.add(popupIndexInfo);
+		popupIndexInfo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexInfo(); } });
 		// END KGU#573 2018-09-13
 		
 		// START KGU#626 2019-01-01: Enh. #657 items above need single Root selection, below multiple selection is okay
@@ -1280,6 +1315,16 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		pnlGroupSelect.add(lblSelectTargetGroup);
 		pnlGroupSelect.add(cmbTargetGroup);
 		// END KGU#626 2019-01-04
+		
+		// Configure the skeleton for the info tree to be popped up with a JOptionPane
+		lblGroups.setIcon(IconLoader.getIcon(94));
+		lblSubroutines.setIcon(IconLoader.getIcon(21));
+		lblIncludables.setIcon(IconLoader.getIcon(71));
+		
+		indexInfoTree.setCellRenderer(new ArrangerIndexCellRenderer());
+		nodeIndexInfoTop.add(nodeGroups);
+		nodeIndexInfoTop.add(nodeSubroutines);
+		nodeIndexInfoTop.add(nodeIncludables);
 	}
 	
 	/**
@@ -1389,12 +1434,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "DELETE");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), "CTRL_G");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), "CTRL_SHIFT_G");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK), "CTRL_I");
 		actMap.put("SPACE", new ArrangerIndexAction(false));
 		actMap.put("ENTER", new ArrangerIndexAction(true));
 		actMap.put("ALT_ENTER", new ArrangerIndexAction("ALT_ENTER"));
 		actMap.put("DELETE", new ArrangerIndexAction("DELETE"));
 		actMap.put("CTRL_G", new ArrangerIndexAction("MAKE_GROUP"));
-		actMap.put("CTR_SHIFT_G", new ArrangerIndexAction("MAKE_COMPLETE_GROUP"));
+		actMap.put("CTRL_SHIFT_G", new ArrangerIndexAction("MAKE_COMPLETE_GROUP"));
+		actMap.put("CTRL_I", new ArrangerIndexAction("SHOW_INFO"));
 		
 		if (!arrangerIndex.isFocusOwner()) {
 			arrangerIndex.setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
@@ -1714,6 +1761,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupIndexAttributes.setEnabled(indexSelected && arrangerIndexGetSelectedRoot() != null);
 		// END KGU#573 2018-09-13
 		// START KGU#626 2019-01-03: Enh. #657
+		popupIndexInfo.setEnabled(indexSelected &&
+				(arrangerIndexGetSelectedRoot() != null || arrangerIndexGetSelectedGroup() != null));
 		popupIndexGroup.setEnabled(this.arrangerIndexGetSelectedRoots(false).size() > 1);
 		popupIndexExpandGroup.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty()
 				|| this.arrangerIndexGetSelectedGroup() != null);
@@ -2053,13 +2102,19 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 	public void arrangerIndexSave()
 	{
-		// START KGU#626 2019-01-01: Enh. #657
+		// START KGU#626 2019-01-05: Enh. #657
 //		Root selectedRoot = arrangerIndex.getSelectedValue();
 //		if (selectedRoot != null) {
 //			diagram.saveNSD(selectedRoot, false);
 //		}
-		// First save groups then save further roots
-		for (Group selectedGroup: arrangerIndexGetSelectedGroups(false)) {
+
+		// We must in any case cahc the selection because it's likely that arrangerIndex
+		// will be synchronized inbetween, which may wipe all selection.
+		Collection<Group> selectedGroups = arrangerIndexGetSelectedGroups(false);
+		Collection<Root> selectedRoots = arrangerIndexGetSelectedRoots(false);
+
+		// First save groups then save further roots (the latter may have got superfluous then)
+		for (Group selectedGroup: selectedGroups) {
 			if (selectedGroup.hasChanged()) {
 				Group resultGroup = Arranger.getInstance().saveGroup(this, selectedGroup);
 				// Now update the recent file list in case the saving was successful
@@ -2071,12 +2126,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				}
 			}
 		}
-		for (Root selectedRoot: arrangerIndexGetSelectedRoots(false)) {
+
+		for (Root selectedRoot: selectedRoots) {
 			if (selectedRoot.hasChanged()) {
 				diagram.saveNSD(selectedRoot, false);
 			}
 		}
-		// END KGU#626 2019-01-01
+		// END KGU#626 2019-01-05
 	}
 
 	// TODO We must distinguish between removal of Groups and of Roots from one group or from all groups 
@@ -2210,10 +2266,75 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 	// END KGU#573 2018-09-13
 
+	// START KGU#626 2019-01-05: Enh. #657
+	protected void arrangerIndexInfo() {
+		// Let's see what is is
+		Group selectedGroup = arrangerIndexGetSelectedGroup();
+		Root selectedRoot = this.arrangerIndexGetSelectedRoot();
+		Object message = null;
+		if (selectedRoot != null) {
+			this.nodeIndexInfoTop.setUserObject(selectedRoot);
+			nodeGroups.removeAllChildren();
+			Collection<Group> owners = Arranger.getInstance().getGroupsFromRoot(selectedRoot, false);
+			for (Group group: owners) {
+				nodeGroups.add(new DefaultMutableTreeNode(group));
+			}
+			nodeIncludables.removeAllChildren();
+			nodeSubroutines.removeAllChildren();
+			HashSet<Root> roots = new HashSet<Root>();
+			roots.add(selectedRoot);
+			Collection<Root> moreRoots = Arranger.getInstance().accomplishRootSet(roots, null);
+			for (Root root: moreRoots) {
+				if (!root.equals(selectedRoot)) {
+					if (root.isInclude()) {
+						nodeIncludables.add(new DefaultMutableTreeNode(root));
+					}
+					else if (root.isSubroutine()) {
+						nodeSubroutines.add(new DefaultMutableTreeNode(root));
+					}
+				}
+			}
+			message = this.scrollInfo;
+			((DefaultTreeModel)this.indexInfoTree.getModel()).reload();
+		}
+		else if (selectedGroup != null) {
+			// Present the file path and possibly e.g. the "dirty" info (modified positions etc.)
+			message = selectedGroup.getName()
+					.replace(Group.DEFAULT_GROUP_NAME, msgDefaultGroupName.getText()) + ":\n";
+			File arrFile = selectedGroup.getFile();
+			if (arrFile == null) {
+				message = message + "---";
+			}
+			else {
+				message = message + arrFile.getAbsolutePath();
+			}
+			if (selectedGroup.membersChanged) {
+				message = message + "\n* " + msgGroupMembersChanged.getText();
+			}
+			if (selectedGroup.membersMoved) {
+				message = message + "\n* " + msgGroupMembersMoved.getText();
+			}
+		}
+		if (message != null) {
+			JOptionPane.showMessageDialog(this, message,
+					popupIndexInfo.getText(), JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+	// END KGU#626 2019-01-05
+
+
 	// START KGU#626 2019-01-03: Enh #657
 	private boolean arrangerIndexMakeGroup(boolean expand)
 	{
 		// FIXME: Check for single group selection, then expand the group!
+		Group selectedGroup = this.arrangerIndexGetSelectedGroup();
+		if (selectedGroup != null) {
+			Collection<Root> expandedRootSet = Arranger.getInstance().accomplishRootSet(
+					new HashSet<Root>(selectedGroup.getSortedRoots()), this);
+			for (Root root: expandedRootSet) {
+				Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
+			}
+		}
 		return Arranger.getInstance().makeGroup(this.arrangerIndexGetSelectedRoots(false), this, expand);
 	}
 

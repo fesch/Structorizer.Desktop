@@ -216,7 +216,8 @@ public class IconLoader {
 			"114_down.png",	// for Translator Find dialog
 			"115_up.png",	// for Translator Find dialog
 			"116_groupAttach.png",
-			"117_groupExpand.png"
+			"117_groupExpand.png",
+			"118_info.png"
 	};
 	
 	private static final int[] ICON_SIZES = {

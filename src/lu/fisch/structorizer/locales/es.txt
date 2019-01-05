@@ -647,6 +647,7 @@ Editor.popupBreakTrigger.text=Fija la condición de parar ...
 // Arranger index
 Editor.popupIndexGet.text=Coger diagrama
 Editor.popupIndexAttributes.text=Inspiciar propiedades ...
+Editor.popupIndexInfo.text=Informaciones ...
 Editor.popupIndexSave.text=Guardar cambios
 Editor.popupIndexRemove.text=Quitar
 Editor.popupIndexCovered.text=Cambiar cobertura de test
@@ -664,6 +665,8 @@ Editor.msgConfirmDeleteRoots.text=You selected % diagram(s) to be removed\n\nDo 
 Editor.msgAttachOptions.0.text=Añadir al grupo
 Editor.msgAttachOptions.1.text=Mover al grupo
 Editor.msgAttachOptions.2.text=Cancelar
+Editor.msgGroupMembersChanged.text=El conjunto de miembros se ha cambiado.
+Editor.msgGroupMembersMoved.text=Coordenadas de algunos miembros fueron variados.
 
 -----[ InputBox ]-----
 InputBox.title=
@@ -1208,6 +1211,7 @@ Surface.msgSaveAsNewGroup.text=como grupo nuevo
 Surface.msgSelectGroup.text=Decide po favor entre sobrescribir el fichero asociado a uno de los grupos existentes y crear nueva colocación:
 Surface.msgConfirmRemoveGroup.text=Grupo «%» fue vaciado. ¿Eliminarlo?
 Surface.msgSaveGroupChanges.text=Grupo «%» tiene modificaciones no grabados.\nGrabar las modificaciones antes de eliminar el grupo?
+Surface.msgUnsavedGroups.text=No fue posible guardar estos diagramas:
 
 -----> Executor
 -----[ Control ]-----

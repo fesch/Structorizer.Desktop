@@ -643,6 +643,7 @@ Editor.popupBreakTrigger.text=Specify break trigger...
 // Arranger index
 Editor.popupIndexGet.text=Get diagram
 Editor.popupIndexAttributes.text=Inspect attributes ...
+Editor.popupIndexInfo.text=Diagram/group info ...
 Editor.popupIndexSave.text=Save changes
 Editor.popupIndexRemove.text=Remove
 Editor.popupIndexCovered.text=Test-covered on/off
@@ -653,6 +654,9 @@ Editor.popupIndexDissolve.text=Dissolve group
 Editor.popupIndexDetach.text=Detach from group
 Editor.popupIndexAttach.text=Add/move to group ...
 Editor.lblSelectTargetGroup.text=Select the target group:
+Editor.lblGroups.text=Containing groups
+Editor.lblSubroutines.text=Called subroutines
+Editor.lblIncludables.text=Referenced includables
 Editor.msgDefaultGroupName.text=(Default Group)
 Editor.msgGroupsAndRootsSelected.text=Both groups and diagrams selected. Removing on both levels at a time may have unexpected results.
 Editor.msgDeleteGroupMembers.text=You are going to delete % groups.\n\nThose member diagrams of them that are shared by other groups will survive.\nWhat about diagrams not shared by other groups: Remove from Arranger?\n(Otherwise they would be moved to the default group.)
@@ -660,6 +664,9 @@ Editor.msgConfirmDeleteRoots.text=You selected % diagram(s) to be removed\n\nDo 
 Editor.msgAttachOptions.0.text=Add to group
 Editor.msgAttachOptions.1.text=Move to group
 Editor.msgAttachOptions.2.text=Cancel
+Editor.msgGroupMembersChanged.text=The set of member diagrams was modified.
+Editor.msgGroupMembersMoved.text=The coordinates of some member diagrams were changed.
+
 -----[ InputBox ]-----
 InputBox.title=
 InputBox.lblText.text=Please enter a text
@@ -1204,6 +1211,7 @@ Surface.msgSaveAsNewGroup.text=as new group
 Surface.msgSelectGroup.text=Please decide whether to update the file of an existing group or to create a new arrangement:
 Surface.msgConfirmRemoveGroup.text=Group «%» became empty. Do you want to remove it now?
 Surface.msgSaveGroupChanges.text=Group «%» has pending changes.\nDo you want to save these changes before the group is removed?
+Surface.msgUnsavedGroups.text=Couldn't save these groups (arrangements):
 
 -----> Executor
 -----[ Control ]-----

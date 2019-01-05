@@ -341,6 +341,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgSelectGroup = new LangTextHolder("Please decide whether to update the file of an existing group or to create a new arrangement:");
 	public static final LangTextHolder msgConfirmRemoveGroup = new LangTextHolder("Group «%» became empty. Do you want to remove it now?");
 	public static final LangTextHolder msgSaveGroupChanges = new LangTextHolder("Group «%» has pending changes.\nDo you want to save these changes before the group is removed?");
+	public static final LangTextHolder msgUnsavedGroups = new LangTextHolder("Couldn't save these groups (arrangements):");
 	// END KGU#626 2018-12-27/2019-01-04
 
 	@Override
@@ -642,7 +643,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Stores the current diagram arrangement (new with version3.28-13: only selected diagrams)
+	 * Stores the current diagram arrangement (new with version 3.28-13: only selected diagrams)
 	 * to a file.<br/>
 	 * Depending on the choice of the user, this file will either be only a list of reference
 	 * points and filenames (this way not being portable) or be a compressed archive containing
@@ -651,10 +652,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 *  
 	 * @param initiator - the commanding GUI component
 	 * @param group - possibly a group defining the set of diagrams to arrange
+	 * @param goingToClose TODO
 	 * @return the resulting {@link Group} object (may not be {@code group}) if saving of the
 	 * arrangement succeeded, otherwise null.
 	 */
-	public Group saveArrangement(Component initiator, Group group)
+	public Group saveArrangement(Component initiator, Group group, boolean goingToClose)
 	{
 		boolean done = false;
 		// START KGU#110 2016-06-29: Enh. #62
@@ -722,7 +724,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		// Care for the chance to save changes before the arrangement is written. 
-		boolean writeNow = this.saveDiagrams(initiator, toArrange, false, false);
+		boolean writeNow = this.saveDiagrams(initiator, toArrange, goingToClose, false);
 		if (group.getFile() == null) {
 			// The group has never been loaded from nor saved to file
 		// END KGU#626 2019-01-02
@@ -855,8 +857,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					if (group.getFile() != null) {
 						groupFile = group.getFile();
 					}
-					this.makeGroup(groupName, null, group.getSortedRoots(), false, groupFile);
-					group = groups.get(groupName);	// Should exist now
+					group = this.makeGroup(groupName, null, group.getSortedRoots(), false, groupFile);
 				}
 			}
 		}
@@ -880,7 +881,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		boolean done = false;
 		Group group = groups.get(groupName);
 		if (group != null) {
-			done = (saveArrangement(initiator, group) != null);
+			done = (saveArrangement(initiator, group, false) != null);
 		}
 		return done;
 	}
@@ -2558,12 +2559,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Loops over dirty diagrams among {@code diagramsToCheck} or all diagrams (if null) and has their
 	 * respective {@link Mainform} (if still alive) saved them. Otherwise uses a temporary {@link Mainform}.
-	 * @param initiator TODO
+	 * @param initiator - the originating GUI component (where dialogs are to be directed to)
 	 * @param diagramsToCheck - collection of the {@link Diagram}s to save if necessary or null (in which
 	 * case all diagrams are saved)
 	 * @param goingToClose - whether the application is going to close
 	 * @param dontAsk - if questions are to be suppressed
-	 * @return true all was doen or the user has quit the warning message about saving deficiencies.
+	 * @return true if all was done or the user has quit the warning message about saving deficiencies.
 	 */
 	protected boolean saveDiagrams(Component initiator, Collection<Diagram> diagramsToCheck, boolean goingToClose, boolean dontAsk)
 	// END KGU#177 2016-04-14
@@ -2592,11 +2593,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#49 2015-10-18
 
 	/**
-	 * @param goingToClose
-	 * @param dontAsk
-	 * @param allDone
-	 * @param unsaved
-	 * @return
+	 * Saves all dirty diagrams among the collection {@code diagrams}
+	 * @param diagrams - the collection of {@link Diagram}s to be saved - CAUTION: must not be null!
+	 * @param goingToClose - signals whether this method was called because the application is going to shut down 
+	 * @param dontAsk - if true then the user won't be asked whether they want to save or not
+	 * @param unsaved - a {@link StringList} collecting the signatures of diagrams the saving ofwhich failed
+	 * @return true if all affected diagram could be saved or the user accepted the faults
 	 */
 	private boolean saveDiagrams(Collection<Diagram> diagrams, boolean goingToClose, boolean dontAsk, StringList unsaved) {
 		boolean allDone = true;
@@ -3858,7 +3860,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#624 2018-12-26
 	
-	// START KGU#626 2019-01-01/03: Enh. #657
+	// START KGU#626 2019-01-01/05: Enh. #657
 	/**
 	 * Simply checks whether there is a registeres group with name {@code codeName}
 	 * @param groupName - name of the questioned group
@@ -3882,9 +3884,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param roots - a collection of {@link Root} objects to be associated to the group or null
 	 * @param replaceIfExisting - if true and the group had already existed then it will be emptied before.
 	 * @param arrFileOrNull - if given, sets the group arranger file path to its absolute path
-	 * @return true if the group could be created and the specified diagrams could be attached to it. 
+	 * @return the actually resulting group if it could be created and the specified diagrams could be attached to it,
+	 * null otherwise. 
 	 */
-	protected boolean makeGroup(String groupName, Mainform form, Collection<Root> roots, boolean replaceIfExisting, File arrFileOrNull)
+	protected Group makeGroup(String groupName, Mainform form, Collection<Root> roots, boolean replaceIfExisting, File arrFileOrNull)
 	{
 		boolean done = false;
 		Vector<Diagram> diagramsToAdd = new Vector<Diagram>();
@@ -3925,7 +3928,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			group.setFile(arrFileOrNull, null);
 		}
 		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
-		return done;
+		return done ? group : null;
 	}
 
 	/**
@@ -3990,7 +3993,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				option = lu.fisch.structorizer.gui.Diagram.requestSaveDecision(question, initiator,
 						lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect.SERIAL_GROUP_SAVE);
 				if (option == 0) {
-					this.saveArrangement(initiator, group);	// FIXME
+					this.saveArrangement(initiator, group, false);	// FIXME
 				}
 			}
 			if (option != -1) {
@@ -4186,5 +4189,47 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		return done;
 	}
+	
+	/**
+	 * Tries to save all "dirty" groups i.e. those with pending changes as arrangements. The default
+	 * group is skipped here, in particular if {@code goingToClose} is true.
+	 * @param initiator - the initiating GUI component (as owner of possible dialogs etc.)
+	 * @param goingToClose - whether this method was called because the application is going to shut down
+	 * @param unsaved - a {@link SringList} where the names of groups that couldn't be saved will be added 
+	 * @return true if all was done without serious problems.
+	 */
+	protected boolean saveGroups(Component initiator, boolean goingToClose, StringList unsaved)
+	{
+		boolean allDone = true;
+		lu.fisch.structorizer.gui.Diagram.startSerialMode();
+		try {
+			// Trouble is that saving an arrangement may modify the map of groups, so we might miss some of them
+			Vector<Group> groupsToHandle = new Vector<Group>(this.groups.values());
+			for (Group group: groupsToHandle) {
+				/* It doesn't make sense to save the default group on window closing event
+				 * (if it exists then it will always be unsaved and it's usually not a
+				 * conscious arrangement but just a dump of some diagrams e.g. used as subroutines */
+				if (groups.containsValue(group) && group.hasChanged() && (!goingToClose || !group.isDefaultGroup())) {
+					if (this.saveArrangement(initiator, group, goingToClose) == null) {
+						allDone = false;
+						if (unsaved != null) {
+							unsaved.addIfNew(group.getName());
+						}
+					}
+				}
+			}
+		}
+		finally {
+			lu.fisch.structorizer.gui.Diagram.endSerialMode();
+		}
+		if (unsaved != null && unsaved.count() > 1 && initiator != null) {
+			allDone = JOptionPane.showConfirmDialog(initiator,
+					msgUnsavedGroups.getText() + "\n" + unsaved.concatenate(", "), 
+					this.msgSaveDialogTitle.getText(),
+					JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
+		}
+		return allDone;
+	}
+	// END KGU#626 2019-01-01/05
 
 }
