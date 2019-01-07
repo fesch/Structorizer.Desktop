@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -31,20 +31,20 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.05.30      First Issue (#415)
- *      Kay Gürtzig     2017.06.13      Pattern combo boxes with history
- *      Kay Gürtzig     2017.06.17      JTree for multi-Root retrieval
- *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fixed
- *      Kay Gürtzig     2017.06.22      NullPointerException on replacing due to cleared currentNode fixed
- *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in pulldown list and Esc key without pulldown
- *      Kay Gürtzig     2017.10.09      Internal consistency of For elements on replacement ensured (KGU#431)
- *      Kay Gürtzig     2017.11.03      Bugfix #448: endless self-replacement averted, performance improved
+ *      Kay Gürtzig     2017-05-30      First Issue (#415)
+ *      Kay Gürtzig     2017-06-13      Pattern combo boxes with history
+ *      Kay Gürtzig     2017-06-17      JTree for multi-Root retrieval
+ *      Kay Gürtzig     2017-06-19      Preview size problem solved, inner-element navigation, matching flaws fixed
+ *      Kay Gürtzig     2017-06-22      NullPointerException on replacing due to cleared currentNode fixed
+ *      Kay Gürtzig     2017-09-12      Combobox fixes: cursor up/down in pulldown list and Esc key without pulldown
+ *      Kay Gürtzig     2017-10-09      Internal consistency of For elements on replacement ensured (KGU#431)
+ *      Kay Gürtzig     2017-11-03      Bugfix #448: endless self-replacement averted, performance improved
  *                                      (minimum-invasive revision)
- *      Kay Gürtzig     2018.01.22      Enh. #490: The dialog now works on the controller alias texts if enabled
- *      Kay Gürtzig     2018.04.05      Issue #463: Plain console messages replaced by logging mechanism
- *      Kay Gürtzig     2018.07.02      Bugfix KGU#540 - An element filter change didn't reset the result
- *      Kay Gürtzig     2018.11.21      Bugfix #448: Apparently forgotten part of the fix accomplished
- *      Kay Gürtzig     2018.11.22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
+ *      Kay Gürtzig     2018-01-22      Enh. #490: The dialog now works on the controller alias texts if enabled
+ *      Kay Gürtzig     2018-04-05      Issue #463: Plain console messages replaced by logging mechanism
+ *      Kay Gürtzig     2018-07-02      Bugfix KGU#540 - An element filter change didn't reset the result
+ *      Kay Gürtzig     2018-11-21      Bugfix #448: Apparently forgotten part of the fix accomplished
+ *      Kay Gürtzig     2018-11-22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
  *
  ******************************************************************************************************
  *

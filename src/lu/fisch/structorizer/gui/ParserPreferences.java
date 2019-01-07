@@ -32,17 +32,23 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2008.01.03      First Issue
- *      Kay Gürtzig     2015.11.08      Enh. #10: step keyword setting manually added (FOR loop)
- *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loop settings manually added
- *      Kay Gürtzig     2016.03.23      Enh. #23: Settings for JUMP statements prepared (but not enabled)
- *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes
- *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
- *      Kay Gürtzig     2017.01.09      Issue #81 / bugfix #330: Scaling stuff outsourced to class GUIScaler
+ *      Bob Fisch       2008-01-03      First Issue
+ *      Kay Gürtzig     2015-11-08      Enh. #10: step keyword setting manually added (FOR loop)
+ *      Kay Gürtzig     2016-03-21      Enh. #84: FOR-IN loop settings manually added
+ *      Kay Gürtzig     2016-03-23      Enh. #23: Settings for JUMP statements prepared (but not enabled)
+ *      Kay Gürtzig     2016-11-11      Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017-01-07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017-01-09      Issue #81 / bugfix #330: Scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2018-12-29      Issue #658: Configuration of leave, return, and exit keywords enabled
  *
  ******************************************************************************************************
  *
- *      Comment:		I used JFormDesigner to design this window graphically.
+ *      Comment:
+ *      2015-11-08 Kay Gürtzig
+ *          NOTE: Design is no longer JFormDesigner-based
+ *          
+ *      2008-01-03 Bob Fisch
+ *          I used JFormDesigner to design this window graphically.
  *
  ******************************************************************************************************///
 
@@ -51,13 +57,10 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashSet;
 
 import javax.swing.*;
 import javax.swing.border.*;
-/*
- * Created by JFormDesigner on Thu Jan 03 15:19:25 CET 2008
- */
-
 
 
 /**
@@ -68,16 +71,15 @@ public class ParserPreferences extends LangDialog {
     
 	public boolean OK = false;
 
-	
-	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
-	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel dialogPane;
 	protected JPanel contentPanel;
 	protected JLabel lblNothing;
 	protected JLabel lblPre;
 	protected JLabel lblPost;
 	protected JLabel lblNothing2;
-	protected JLabel lblNothing3;
+	// START KGU#628 2018-12-30: Enh. #658 Renamed lblNothing3 -> lblInputOutput 
+	protected JLabel lblInputOutput;	// was lblNothing2;
+	// END KGU#628 2018-12-30
 	protected JLabel lblInput;
 	protected JLabel lblOutput;
 	protected JLabel lblAlt;
@@ -152,13 +154,11 @@ public class ParserPreferences extends LangDialog {
 	}*/
 
 	private void initComponents() {
-		// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
-		// Generated using JFormDesigner Evaluation license - Robert Fisch
 		dialogPane = new JPanel();
 		contentPanel = new JPanel();
 		lblNothing = new JLabel();
 		lblNothing2 = new JLabel();
-		lblNothing3 = new JLabel();
+		lblInputOutput = new JLabel();
 		lblPre = new JLabel();
 		lblPost = new JLabel();
 		lblInput = new JLabel();
@@ -213,8 +213,11 @@ public class ParserPreferences extends LangDialog {
 		lblErrorSign.setText("Your are not allowed to use the character ':' in any parser string!");
 		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
 		//lblErrorSign2 = new JLabel();
-		lblErrorSign2 = new LangTextHolder();
-		lblErrorSign2.setText("The post-FOR-IN loop keyword must not be equal to any other token!");
+		// START KGU#628 2018-12-28: Enh. #658 - Th text had to be generalized
+		//lblErrorSign2 = new LangTextHolder();
+		//lblErrorSign2.setText("The post-FOR-IN loop keyword must not be equal to any other token!");
+		lblErrorSign2 = new LangTextHolder("There are name conflicts among the key words marked red - they must all differ!");
+		// END KGU#628 2018-12-28
 		// END KGU#61 2016-03-21
 
 		//======== this ========
@@ -228,13 +231,6 @@ public class ParserPreferences extends LangDialog {
 		{
 			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-			// JFormDesigner evaluation mark
-			/*dialogPane.setBorder(new javax.swing.border.CompoundBorder(
-				new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
-					"JFormDesigner Evaluation", javax.swing.border.TitledBorder.CENTER,
-					javax.swing.border.TitledBorder.BOTTOM, new java.awt.Font("Dialog", java.awt.Font.BOLD, 12),
-					java.awt.Color.red), dialogPane.getBorder())); dialogPane.addPropertyChangeListener(new java.beans.PropertyChangeListener(){public void propertyChange(java.beans.PropertyChangeEvent e){if("border".equals(e.getPropertyName()))throw new RuntimeException();}});
-*/
 			dialogPane.setLayout(new BorderLayout());
 
 			//======== contentPanel ========
@@ -244,8 +240,8 @@ public class ParserPreferences extends LangDialog {
 				// START KGU#61 2016-03-21: Need still an additional line for For-In
 				//contentPanel.setLayout(new GridLayout(9, 3, 8, 8));
 				// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-				contentPanel.setLayout(new GridLayout(10, 3, 8, 8));
-				//contentPanel.setLayout(new GridLayout(13, 3, 8, 8));
+				//contentPanel.setLayout(new GridLayout(10, 3, 8, 8));
+				contentPanel.setLayout(new GridLayout(13, 3, 8, 8));
 				// END KGU#78 2016-03-25
 				// END KGU#61 2016-03-21
 				// END KGU#3 2015-11-08
@@ -302,20 +298,23 @@ public class ParserPreferences extends LangDialog {
 				contentPanel.add(edtRepeatPost);
 
 				// START KGU#78 2016-03-26: Enh. #23 - still not enabled
-//				//---- lblJump ----
-//				lblJump.setText("JUMP statement");
-//				contentPanel.add(lblJump);
-//				contentPanel.add(edtJumpLeave);
-//				lblJumpLeave.setText("from loop(s)");
-//				contentPanel.add(lblJumpLeave);
-//				contentPanel.add(lblNothing5);
-//				contentPanel.add(edtJumpReturn);
-//				lblJumpReturn.setText("from routine");
-//				contentPanel.add(lblJumpReturn);
-//				contentPanel.add(lblNothing6);
-//				contentPanel.add(edtJumpExit);
-//				lblJumpExit.setText("from program");
-//				contentPanel.add(lblJumpExit);
+				//---- lblJump ----
+				lblJump.setText("JUMP statement");
+				contentPanel.add(lblJump);
+				
+				contentPanel.add(edtJumpLeave);
+				lblJumpLeave.setText("from loop(s)");
+				contentPanel.add(lblJumpLeave);
+				
+				contentPanel.add(lblNothing5);
+				contentPanel.add(edtJumpReturn);
+				lblJumpReturn.setText("from routine");
+				contentPanel.add(lblJumpReturn);
+				
+				contentPanel.add(lblNothing6);
+				contentPanel.add(edtJumpExit);
+				lblJumpExit.setText("from program");
+				contentPanel.add(lblJumpExit);
 				// END KGU#78 2016-03-26
 
 				//---- Input / Output ----
@@ -325,7 +324,7 @@ public class ParserPreferences extends LangDialog {
 				lblOutput.setText("Output");
 				contentPanel.add(lblOutput);
 
-				contentPanel.add(lblNothing3);
+				contentPanel.add(lblInputOutput);
 				contentPanel.add(edtInput);
 				contentPanel.add(edtOutput);
 			}
@@ -357,9 +356,6 @@ public class ParserPreferences extends LangDialog {
 
 		pack();
 		setLocationRelativeTo(getOwner());
-		// JFormDesigner - End of component initialization  //GEN-END:initComponents
-		
-		// BOB thinks
 		
 		// add the LIST-listeners
 		// add the KEY-listeners
@@ -419,7 +415,7 @@ public class ParserPreferences extends LangDialog {
         
         public void done()
         {
-        	JTextField textField = null;	// conflicting text field
+        	HashSet<JTextField> conflictingFields = null;	// conflicting text fields
             if(
                     edtAltPre.getText().contains(":") ||
                     edtAltPost.getText().contains(":") ||
@@ -448,17 +444,22 @@ public class ParserPreferences extends LangDialog {
             ) {
                  JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign.getText(),"Error", JOptionPane.ERROR_MESSAGE);
             }
-        	// START KGU#61 2016-03-21: Enh. #84 - Test ForInPost against duplicates 
-            else if ((textField = this.hasConflicts()) != null)
+        	// START KGU#61/KGU#628 2018-12-29: Enh. #84, #658 - Test against duplicates 
+            else if (!(conflictingFields = this.hasConflicts()).isEmpty())
             {
-            	Color oldColour = textField.getForeground();
-            	textField.setForeground(Color.RED);
-            	edtForInPost.setForeground(Color.RED);
+            	Color oldColour = null;
+            	for (JTextField textField: conflictingFields) {
+            		if (oldColour == null) {
+            			oldColour = textField.getForeground();
+            		}
+            		textField.setForeground(Color.RED);
+            	}
             	JOptionPane.showMessageDialog(null, lblErrorSign2.getText(),"Error", JOptionPane.ERROR_MESSAGE);
-            	textField.setForeground(oldColour);
-            	edtForInPost.setForeground(oldColour);
+            	for (JTextField textField: conflictingFields) {
+            		textField.setForeground(oldColour);
+            	}
             }
-        	// END KGU#61 2016-03-21
+        	// END KGU#61/KGU#628 2018-12-28
             else
             {
                 setVisible(false);
@@ -468,9 +469,14 @@ public class ParserPreferences extends LangDialog {
         }
         
         // START KGU#165 2016-03-25
-        private JTextField hasConflicts()
+        // START KGU#628 2018-12-29: Enh. #658 - we need more independent checks
+        //private JTextField hasConflicts()
+        private HashSet<JTextField> hasConflicts()
+        // END KGU#628 2018-12-29
         {
+        	HashSet<JTextField> conflicts = new HashSet<JTextField>();
         	JTextField conflicting = null;
+        	boolean ignoreCase = chkIgnoreCase.isSelected();
         	JTextField[] fieldsToCheck = {
     				edtAltPre,		edtAltPost,
     				edtCasePre,		edtCasePost,
@@ -482,29 +488,32 @@ public class ParserPreferences extends LangDialog {
     				edtInput,
     				edtOutput
         	};
+        	int indexCheck2 = 12;
         	String forInPost = edtForInPost.getText().trim();
-        	if (chkIgnoreCase.isSelected())
+        	
+        	for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
         	{
-            	for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
-            	{
-            		if (forInPost.equalsIgnoreCase(fieldsToCheck[i].getText().trim()))
-            		{
-            			conflicting = fieldsToCheck[i];
-            		}
-            	}
-        		
-        	}
-        	else
-        	{
-        		for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
+        		if (forInPost.equalsIgnoreCase(fieldsToCheck[i].getText().trim())
+        				&& (ignoreCase || forInPost.equals(fieldsToCheck[i].getText().trim())))
         		{
-        			if (forInPost.equals(fieldsToCheck[i].getText().trim()))
-        			{
-        				conflicting = fieldsToCheck[i];        			
+        			conflicting = fieldsToCheck[i];
+        		}
+        	}
+        	if (conflicting != null) {
+        		conflicts.add(edtForInPost);
+        		conflicts.add(conflicting);
+        	}
+        	for (int i = indexCheck2; i+1 < fieldsToCheck.length; i++) {
+        		String key1 = fieldsToCheck[i].getText().trim();
+        		for (int j = i+1; j < fieldsToCheck.length; j++) {
+        			String key2 = fieldsToCheck[j].getText().trim();
+        			if (key1.equalsIgnoreCase(key2) && (ignoreCase || key1.equals(key2))) {
+        				conflicts.add(fieldsToCheck[i]);
+        				conflicts.add(fieldsToCheck[j]);
         			}
         		}
         	}
-        	return conflicting;
+        	return conflicts;
         }
         // END KGU#165 2016-03-25
 

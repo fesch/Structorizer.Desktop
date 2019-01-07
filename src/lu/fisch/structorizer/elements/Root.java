@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -32,108 +32,112 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Bob Fisch       2008.04.18      Added analyser
- *      Kay Gürtzig     2014.10.18      Var name search unified and false detection of "as" within var names mended
- *      Kay Gürtzig     2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
- *      Kay Gürtzig     2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
- *      Kay Gürtzig     2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
- *      Kay Gürtzig     2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *      Kay Gürtzig     2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
- *      Kay Gürtzig     2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Bob Fisch       2008-04-18      Added analyser
+ *      Kay Gürtzig     2014-10-18      Var name search unified and false detection of "as" within var names mended
+ *      Kay Gürtzig     2015-10-12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *      Kay Gürtzig     2015-10-16      getFullText methods redesigned/replaced, changes in getVarNames()
+ *      Kay Gürtzig     2015-10-17      improved Arranger support by method notifyReplaced (KGU#48)
+ *      Kay Gürtzig     2015-11-03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *      Kay Gürtzig     2015-11-13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
+ *      Kay Gürtzig     2015-11-22/23   Modifications to support selection of Element sequences (KGU#87),
  *                                      Code revision in Analyser (field Subqueue.children now private).
- *      Kay Gürtzig     2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
+ *      Kay Gürtzig     2015-11-28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
  *                                      saveToIni()
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
- *      Bob Fisch       2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
- *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
- *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
- *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
- *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Bob Fisch       2015-12-10      Bugfix #50 -> grep parameter types (Method getParams(...))
+ *      Kay Gürtzig     2015-12-11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
+ *      Kay Gürtzig     2015-12-20      Bugfix #50 (KGU#112) getResultType() slightly revised
+ *      Kay Gürtzig     2016-01-02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
+ *      Kay Gürtzig     2016-01-06      Bugfix #89: References to obsolete operator padding (KGU#126) and
  *                                      faulty index condition for variable detection (KGU#98) fixed 
- *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
- *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
+ *      Kay Gürtzig     2016-01-08      Bugfix #50 (KGU#135) postfix result type was split into lines  
+ *      Kay Gürtzig     2016-01-11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
  *                                      stack, see comments below for details
- *      Kay Gürtzig     2016.01.14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
- *      Kay Gürtzig     2016.01.16      Bugfix #112: Processing of indexed variables mended (KGU#141)
- *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
- *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
- *      Kay Gürtzig     2016.02.25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
+ *      Kay Gürtzig     2016-01-14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
+ *      Kay Gürtzig     2016-01-16      Bugfix #112: Processing of indexed variables mended (KGU#141)
+ *      Kay Gürtzig     2016-01-21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016-01-22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
+ *      Kay Gürtzig     2016-02-25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-03-21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
  *      Kay Gürtzig     2016-03-25      Bugfix #135 (KGU#163) Method analyse(.,.,.,.,.) decomposed and corrected
  *      Kay Gürtzig     2016-03-29      Methods getUsedVarNames() completely rewritten.
  *      Kay Gürtzig     2016-04-05      Bugfix #154 (KGU#176) analyse_17() peeked in a wrong collection (Parallel)
  *      Kay Gürtzig     2016-04-12      Enh. #161 (KGU#179) analyse_13_16() extended (new error16_7)
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
- *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
- *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
- *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
- *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
- *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
+ *      Kay Gürtzig     2016-07-19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
+ *      Kay Gürtzig     2016-07-22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
+ *      Kay Gürtzig     2016-07-25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
+ *      Kay Gürtzig     2016-07-27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
+ *      Kay Gürtzig     2016-07-28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
  *                                      Bugfix KGU#222 in collectParameters()
- *      Kay Gürtzig     2016.08.12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
+ *      Kay Gürtzig     2016-08-12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
  *                                      for easier maintenance
- *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented
- *      Kay Gürtzig     2016.09.25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
+ *      Kay Gürtzig     2016-09-21      Enh. #249: New analyser check 20 (function header syntax) implemented
+ *      Kay Gürtzig     2016-09-25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
  *                                      Enh. #253: CodeParser.keywordMap refactored
- *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
- *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
- *      Kay Gürtzig     2016.10.13      Enh. #270: Analyser checks for disabled elements averted.
- *      Kay Gürtzig     2016.11.22      Bugfix #295: Spurious error11 in return statements with equality comparison
- *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
+ *      Kay Gürtzig     2016-10-11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
+ *      Kay Gürtzig     2016-10-12      Issue #271: user-defined prompt strings in input instructions
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Analyser checks for disabled elements averted.
+ *      Kay Gürtzig     2016-11-22      Bugfix #295: Spurious error11 in return statements with equality comparison
+ *      Kay Gürtzig     2016-12-12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
  *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
- *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
- *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
- *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
- *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
- *      Kay Gürtzig     2017.01.13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
- *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
- *      Kay Gürtzig     2017.01.30      Enh. #335: Type info mechanism established
- *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
- *      Kay Gürtzig     2017.02.01      Enh. #259/#335: Parameters added to typeMap
- *      Kay Gürtzig     2017.02.07      KGU#343: Result analysis mechanism revised
- *      Kay Gürtzig     2017.03.06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
- *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
- *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
- *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine() supports automatic derival of subroutines
- *      Kay Gürtzig     2017.03.30      Enh. #388: const retrieval (method collectParameters() modified)
- *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser check for constant definitions (no. 22),
+ *      Kay Gürtzig     2016-12-16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
+ *      Kay Gürtzig     2016-12-28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
+ *      Kay Gürtzig     2016-12-29      Enh. #315: New comparison method distinguishing different equality levels
+ *      Kay Gürtzig     2017-01-07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
+ *      Kay Gürtzig     2017-01-13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
+ *      Kay Gürtzig     2017-01-17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
+ *      Kay Gürtzig     2017-01-30      Enh. #335: Type info mechanism established
+ *      Kay Gürtzig     2017-01-31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
+ *      Kay Gürtzig     2017-02-01      Enh. #259/#335: Parameters added to typeMap
+ *      Kay Gürtzig     2017-02-07      KGU#343: Result analysis mechanism revised
+ *      Kay Gürtzig     2017-03-06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
+ *      Kay Gürtzig     2017-03-10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
+ *      Kay Gürtzig     2017-03-10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
+ *      Kay Gürtzig     2017-03-14/26   Enh. #380: Method outsourceToSubroutine() supports automatic derival of subroutines
+ *      Kay Gürtzig     2017-03-30      Enh. #388: const retrieval (method collectParameters() modified)
+ *      Kay Gürtzig     2017-04-04      Enh. #388: New Analyser check for constant definitions (no. 22),
  *                                      method getUsedVarNames decomposed, check no. 10 enhanced.
- *      Kay Gürtzig     2017.04.05      Issue #390: Improved initialization check for multi-line instructions
- *      Kay Gürtzig     2017.04.11      Enh. #389: Analyser additions for import calls implemented
- *      Kay Gürtzig     2017.04.13      Enh. #380: Method outsourceToSubroutine() improved
- *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
- *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
- *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
- *      Kay Gürtzig     2017.05.09      Enh. #372: Statistics method supporting the AttributeInspector
- *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
- *      Kay Gürtzig     2017.05.21      Enh. #372: additional attributes included in undo/redo mechanism
- *      Kay Gürtzig     2017.05.22      Enh. #272: New attribute "origin"
- *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList"
- *      Kay Gürtzig     2017.07.02      Enh. #389: Analyser and execution mechanisms adapted to new include design
- *      Kay Gürtzig     2017.09.18      Enh. #423: Type retrieval and Analyser enhancement for record types
- *      Kay Gürtzig     2017.10.09      Enh. #423: Adjustments for Analyser check 24.
- *      Kay Gürtzig     2017.10.26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
- *      Kay Gürtzig     2017.11.04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
- *      Kay Gürtzig     2017.11.05      Issue #454: logic of getMethodName() modified
- *      Kay Gürtzig     2018.03.12      Bugfix #518: Distinction between uninitialized and empty typeMap
- *      Kay Gürtzig     2018.03.15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
+ *      Kay Gürtzig     2017-04-05      Issue #390: Improved initialization check for multi-line instructions
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Analyser additions for import calls implemented
+ *      Kay Gürtzig     2017-04-13      Enh. #380: Method outsourceToSubroutine() improved
+ *      Kay Gürtzig     2017-04-14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
+ *      Kay Gürtzig     2017-04-21      Enh. #389: import checks re-organized to a new check group 23
+ *      Kay Gürtzig     2017-05-06      Bugfix #397: Wrong insertion position with SelectedSequence as target
+ *      Kay Gürtzig     2017-05-09      Enh. #372: Statistics method supporting the AttributeInspector
+ *      Kay Gürtzig     2017-05-16      Enh. #389: Third diagram type introduced.
+ *      Kay Gürtzig     2017-05-21      Enh. #372: additional attributes included in undo/redo mechanism
+ *      Kay Gürtzig     2017-05-22      Enh. #272: New attribute "origin"
+ *      Kay Gürtzig     2017-06-30      Enh. #389: New attribute "includeList"
+ *      Kay Gürtzig     2017-07-02      Enh. #389: Analyser and execution mechanisms adapted to new include design
+ *      Kay Gürtzig     2017-09-18      Enh. #423: Type retrieval and Analyser enhancement for record types
+ *      Kay Gürtzig     2017-10-09      Enh. #423: Adjustments for Analyser check 24.
+ *      Kay Gürtzig     2017-10-26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
+ *      Kay Gürtzig     2017-11-04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
+ *      Kay Gürtzig     2017-11-05      Issue #454: logic of getMethodName() modified
+ *      Kay Gürtzig     2018-03-12      Bugfix #518: Distinction between uninitialized and empty typeMap
+ *      Kay Gürtzig     2018-03-15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
  *                                      Bugfix #523: Defective undo and redo of include_list changes mended
  *                                      KGU#505: Analyser now copes better with lists of record access expressions
- *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
- *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
- *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
- *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
- *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
- *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
- *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
- *      Kay Gürtzig     2018.10.04      Bugfix #618: Function names shouldn't be reported as used variables
- *      Kay Gürtzig     2018.10.25      Enh. #419: New methods breakElementTextLines(...), getMaxLineLength(...)
+ *      Kay Gürtzig     2018-04-03      Bugfix #528: Record component access analysis mended and applied to all elements
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-07-17      Issue #561: getElementCounts() modified for AttributeInspector update
+ *      Kay Gürtzig     2018-07-20      Enh. #563: Analyser accepts simplified record initializers
+ *      Kay Gürtzig     2018-07-25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
+ *      Kay Gürtzig     2018-09-12      Refinement to #372: More file meta data used as workaround for missing author attributes 
+ *      Kay Gürtzig     2018-09-17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018-09-24      Bugfix #605: Defective argument list parsing mended
+ *      Kay Gürtzig     2018-09-28      Issue #613: New methods removeFromIncludeList(...)
+ *      Kay Gürtzig     2018-10-04      Bugfix #618: Function names shouldn't be reported as used variables
+ *      Kay Gürtzig     2018-10-25      Enh. #419: New methods breakElementTextLines(...), getMaxLineLength(...)
+ *      Kay Gürtzig     2018-12-18      Bugfix #649: New method getElementCount(), use of cached variable names on redrawing
+ *      Kay Gürtzig     2018-12-19      Bugfix #652: Drawing preparation and actual drawing were inconsistent
+ *                                      w.r.t. the "Included Diagrams" box, such that ugly discrepancies appeared.
+ *      Kay Gürtzig     2018-12-26      Method collectCalls(Element) moved hitherto from class Generator
  *      
  ******************************************************************************************************
  *
@@ -203,6 +207,7 @@ import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.elements.Element.DrawingContext;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
@@ -270,6 +275,11 @@ public class Root extends Element {
 	// START KGU#376 2017-07-02: Enh. #389 - we want to show execution in inlcudeList
 	public boolean isIncluding = false;
 	// END KGU#376 2017-07-02
+	
+	// START KGU#624 2018-12-22: Enh. #655
+	/** selection flags for different drawing contexts. Index 0 is unused (instead field {@link #selected} is used) */ 
+	private boolean[] contextSelections = new boolean[DrawingContext.values().length];
+	// END KGU#624 2018-12-22
 	
 	public Subqueue children = new Subqueue();
 
@@ -538,9 +548,26 @@ public class Root extends Element {
 	// END KGU#363 2017-05-21
 
 	/**
-	 * Names of variables defined within this diagram
+	 * Names of variables defined within this diagram (may be null after changes!)
+	 * @see #getVariables()
 	 */
-	public StringList variables = new StringList();
+	// START KGU#444/KGU#618 2018-12-18 - Issues #417, #649 We want to distinguish empty from invalid
+	//public StringList variables = new StringList();
+	public StringList variables = null;
+	
+	/**
+	 * @return Cached names of the variables defined within this diagram (may be empty after changes).
+	 * @see #variables
+	 * @see #getVarNames()
+	 */
+	public StringList getVariables()
+	{
+		if (variables != null) {
+			return variables;
+		}
+		return new StringList();
+	}
+	// END KGU#444/KGU#618 2018-12-18
 	// START KGU#375 2017-03-31: Enh. #388
 	/**
 	 * Names and cached value expressions of detected constants among the {@link #variables} 
@@ -746,6 +773,11 @@ public class Root extends Element {
 		// START KGU#363 2017-03-14: Enh. #372 - License fields
 		licenseName = Ini.getInstance().getProperty("licenseName", "");
 		// END KGU#363 2017-03-14
+		// START KGU#624 2018-12-22: Enh. #655 - Independent selection markers for certain contexts
+		for (int i = 0; i < this.contextSelections.length; i++) {
+			this.contextSelections[i] = false;
+		}
+		// END KGU#624 2018-12-22
 		//this(StringList.getNew("???"));
 	}
 
@@ -926,21 +958,12 @@ public class Root extends Element {
 		}
 		// END KGU#227 2016-07-31
 		
-		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
-		if (this.includeList != null) {
-			Rect includesBox = this.writeOutImports(_canvas, 0, 0, rect0.right - 2 * padding, false);
-			rect0.bottom += includesBox.bottom - includesBox.top + E_PADDING/2;
-			rect0.right = Math.max(rect0.right, includesBox.right - includesBox.left + 2 * padding);
-		}
-		// END KGU#376 2017-07-01
-		
 		pt0Sub.y = rect0.bottom;
 		if (isBoxed)	pt0Sub.y -= E_PADDING;
 
 		_canvas.setFont(Element.font);
 
 		subrect0 = children.prepareDraw(_canvas);
-
 		if (isBoxed)
 		{
 			rect0.right = Math.max(rect0.right, subrect0.right + 2*Element.E_PADDING);
@@ -951,9 +974,22 @@ public class Root extends Element {
 		}
 
 		rect0.bottom += subrect0.bottom;
-		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
+		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine or includable
 		if (!isBoxed && !isProgram()) rect0.bottom += E_PADDING/2;
 		// END KGU#221 2016-07-28
+
+		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
+		// KGU#621 2018-12-19: Bugfix #652 - children size exploration has to be done before!
+		if (this.includeList != null) {
+			// KGU#621 2018-12-19: Bugfix #652 - Padding assumptions corrected
+			Rect includesBox = this.writeOutImports(_canvas, 0, 0, rect0.right - padding, false);
+			int inclHeight = includesBox.bottom - includesBox.top + E_PADDING/2;
+			rect0.bottom += inclHeight;
+			rect0.right = Math.max(rect0.right, includesBox.right - includesBox.left + padding);
+			pt0Sub.y += inclHeight;
+		}
+		// END KGU#376 2017-07-01
+		
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
 		
@@ -989,9 +1025,14 @@ public class Root extends Element {
 
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
+		draw(_canvas, _top_left, DrawingContext.DC_STRUCTORIZER);
+	}
+	
+	public void draw(Canvas _canvas, Rect _top_left, DrawingContext _context)
+	{
 		// START KGU 2015-10-13: Encapsulates all fundamental colouring and highlighting strategy
 		//Color drawColor = getColor();
-		Color drawColor = getFillColor();
+		Color drawColor = getFillColor(_context);
 		// END KGU 2015-10-13
 
 		// FIXME: Drawing shouldn't modify the element
@@ -1182,7 +1223,7 @@ public class Root extends Element {
 	 * Draws (or calculates) a box with the names of the diagrams to be included.<br/>
 	 * NOTE: Should only be called if includeList isn't empty.
 	 * @param _canvas - the current drawing surface
-	 * @param _x - left margin cordinate
+	 * @param _x - left margin coordinate
 	 * @param _y - upper margin coordinate
 	 * @param maxWidth - maximum width of the box
 	 * @param _actuallyDraw - draw (true) or only calculate size (false)
@@ -1190,19 +1231,19 @@ public class Root extends Element {
 	 */
 	protected Rect writeOutImports(Canvas _canvas, int _x, int _y, int _maxWidth, boolean _actuallyDraw)
 	{
-		int height = 0;
-		int width = 0;
-		int padding = E_PADDING/2;
+		int height = 0;				// Pure total text height (without padding)
+		int width = 0;				// Pure maximum text width (without padding)
+		int padding = E_PADDING/2;	// Box-internal padding
 		// smaller font
 		int smallFontSize = Element.font.getSize() * 2 / 3;
 		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, smallFontSize);
 		Font smallBoldFont = new Font(Element.font.getName(), Font.BOLD, smallFontSize);
-		FontMetrics fm = _canvas.getFontMetrics(smallFont);
-		int fontHeight = fm.getHeight();
 		// backup the original font
 		Font backupFont = _canvas.getFont();
 		_canvas.setFont(smallFont);
 		_canvas.setColor(Color.BLACK);
+		FontMetrics fm = _canvas.getFontMetrics(smallFont);
+		int fontHeight = fm.getHeight();
 		String caption = Element.preImport.trim();
 		int captionX = _x + padding;
 		int captionY = _y;
@@ -1213,6 +1254,11 @@ public class Root extends Element {
 			if (this.includeList.count() > 0) {
 				height += fontHeight/4 + fontHeight;	// upper padding + string height
 				width = _canvas.stringWidth(caption);
+				// START KGU#621 2018-12-19: Bugfix #652 For the further comparison we may have to enlarge _maxWidth
+				if (!_actuallyDraw) {
+					_maxWidth = Math.max(width + 2 * padding, _maxWidth);
+				}
+				// END KGU#621 2018-12-19
 				captionY = _y + height;
 			}
 		}
@@ -1221,25 +1267,42 @@ public class Root extends Element {
 		_canvas.setFont(smallBoldFont);
 		String line = "";
 		StringList includeLines = new StringList();
+		// START KGU#621 2018-12-19: Bugfix #652
+		// In preparation phase we must ensure a width that corresponds at least to the longest name
+		if (!_actuallyDraw) {
+			for (int i = 0; i < this.includeList.count(); i++) {
+				_maxWidth = Math.max(_maxWidth, _canvas.stringWidth(this.includeList.get(i)) + 2 * padding);
+			}
+		}
+		// END KGU#621 2018-12-19
 		for (int i = 0; i < this.includeList.count(); i++) {
 			String name = this.includeList.get(i);
-			if (line.isEmpty() || padding + _canvas.stringWidth(line + ", " + name) < _maxWidth)
+			// Since the leading ", " will be cut off we don't have to add ", " for the test
+			// In theory 2 * padding would have to be added for comparison but this turned out too large
+			if (line.isEmpty() || 2 * padding + _canvas.stringWidth(line + name) < _maxWidth)
 			{
+				// The space is wide enough to append name, or we have no choice
 				line += ", " + name;
 			}
 			else {
+				// Stash the current line (cannot be extended)
 				height += fontHeight;
+				line = line.substring(2);	// Cut off the leading ", " from the old line
 				width = Math.max(width, _canvas.stringWidth(line));
-				includeLines.add(line.substring(2));
-				line = ", " + name;
+				includeLines.add(line);
+				// Start a new line
+				line = ", " + name;			// Place the name to the new line
 			}
 		}
+		// Is there a begun line? Then stash it
 		if (!line.isEmpty())
 		{
 			height += fontHeight;
+			line = line.substring(2);	// Cut off the leading ", " from the last line
 			width = Math.max(width, _canvas.stringWidth(line));
-			includeLines.add(line.substring(2));
+			includeLines.add(line);
 		}
+		
 		Rect inclBox = new Rect(_x, _y, _x + Math.max(_maxWidth, width + 2 * padding), _y + height);
 		if (height > 0)
 		{
@@ -1503,9 +1566,10 @@ public class Root extends Element {
      * @param _g - the target graphics environment
      * @param _point - the target position
      * @param _prohibitedUpdater - if given an updater not to be informed
+     * @param _drawingContext - the context e.g. for selection highlighting 
      * @return the area occupied by this diagram as {@link Rect}
      */
-    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater)
+    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater, DrawingContext _drawingContext)
     {
         setDrawPoint(_point);
 
@@ -1544,19 +1608,19 @@ public class Root extends Element {
         myrect.top += _point.y;
         myrect.right += _point.x;
         myrect.bottom += _point.y;
-        this.draw(canvas, myrect);
+        this.draw(canvas, myrect, _drawingContext);
 
         return myrect;
     }
 
     public Rect draw(Graphics _g, Point _point)
     {
-        return draw(_g, _point, null);
+        return draw(_g, _point, null, DrawingContext.DC_STRUCTORIZER);
     }
 
     public Rect draw(Graphics _g)
     {
-        return draw(_g, new Point(0,0), null);
+        return draw(_g, new Point(0,0), null, DrawingContext.DC_STRUCTORIZER);
 
         /*
         // inform updaters
@@ -1573,6 +1637,24 @@ public class Root extends Element {
 
         return myrect;/**/
     }
+    
+    public boolean getSelected(DrawingContext _drawingContext)
+    {
+    	if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
+    		return getSelected();
+    	}
+    	return this.contextSelections[_drawingContext.ordinal()];
+    }
+    
+	public Element setSelected(boolean _sel, DrawingContext _drawingContext)
+	{
+		if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
+			return setSelected(_sel);
+		}
+		this.contextSelections[_drawingContext.ordinal()] = _sel;
+		return _sel ? this : null;
+	}
+
 
     public Element copy()
     {
@@ -1733,6 +1815,9 @@ public class Root extends Element {
 			this.undoLevelOfLastSave = -1;
 		}
 		// END KGU#137 2016-01-11
+        // START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+        this.variables = null;
+        // ENDKGU#444/KGU#618 2018-12-18
 		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
 		this.clearRuntimeData();
 		// END KGU#117 2016-03-07
@@ -1896,6 +1981,9 @@ public class Root extends Element {
                 this.includeList = null;
             }
             // END KGU507 2018-03-15
+            // START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+            this.variables = null;
+            // ENDKGU#444/KGU#618 2018-12-18
             // START KGU#136 2016-03-01: Bugfix #97
             this.resetDrawingInfoDown();
             // END KGU#136 2016-03-01
@@ -2455,7 +2543,7 @@ public class Root extends Element {
 			//if((Function.testIdentifier(token, null)
 			//		&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
 			//		|| this.variables.contains(token)))
-			if((Function.testIdentifier(token, null) || this.variables.contains(token))
+			if((Function.testIdentifier(token, null) || this.getVariables().contains(token))
 					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("(")))
 			// END KGU#588 2018-10-04
 			{
@@ -2637,12 +2725,28 @@ public class Root extends Element {
      * Extract all variable names of the entire program and store them in
      * this.variables.
      * @return list of variable names
+     * @see #getCachedVarNames()
      */
     public StringList getVarNames()
     {
+            //System.out.println("getVarNames() called...");
             return getVarNames(this, false, false, true);
     }
 
+    /**
+     * Provides all variable names of the entire program if cached, otherwise extracts and
+     * stores them in this.variables.
+     * @return list of variable names
+     * @see #getVarNames()
+     */
+    public StringList getCachedVarNames() {
+    	//System.out.println("getCachedVarNames() called...");
+    	if (this.variables != null) {
+    		return this.variables;
+    	}
+    	return getVarNames(this, false, false, true);
+    }
+    
     /**
      * Extract the names of all variables assigned or introduced within passed-in element _ele.
      * @return list of variable names
@@ -2676,7 +2780,7 @@ public class Root extends Element {
             // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
             // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
             // !!
-        	// KGU 2015-11-29: Decomposed -> new method collectParameters
+            // KGU 2015-11-29: Decomposed -> new method collectParameters
             if (this.isSubroutine() && _ele==this && !_onlyBody)
             {
             	collectParameters(varNames, argTypes);
@@ -2769,18 +2873,18 @@ public class Root extends Element {
     		// END KGU#388 2017-09-18
     		IElementVisitor collector = new IElementVisitor() {
 
-				@Override
-				public boolean visitPreOrder(Element _ele) {
-					if (!_ele.disabled) {
-						_ele.updateTypeMap(typeMap);
-					}
-					return true;
-				}
+    			@Override
+    			public boolean visitPreOrder(Element _ele) {
+    				if (!_ele.disabled) {
+    					_ele.updateTypeMap(typeMap);
+    				}
+    				return true;
+    			}
 
-				@Override
-				public boolean visitPostOrder(Element _ele) {
-					return true;
-				}
+    			@Override
+    			public boolean visitPostOrder(Element _ele) {
+    				return true;
+    			}
     			
     		};
     		this.traverse(collector);
@@ -2797,7 +2901,7 @@ public class Root extends Element {
     }
     // END KGU#261 2017-01-20
     
-    // START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
+	// START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
 	/**
 	 * Adds all parameter declarations to the given map (varname -> typeinfo).
 	 * @param typeMap
@@ -2829,13 +2933,13 @@ public class Root extends Element {
 
     
     // START BFI 2015-12-10
-	/**
-	 * Obsolete method to get a type description of the result type of this (if being a
-	 * function), or null, if not available.
-	 * Use getResultType() instead!
-	 * @return informal type description or null
-	 */
-	@Deprecated
+    /**
+     * Obsolete method to get a type description of the result type of this (if being a
+     * function), or null, if not available.
+     * Use getResultType() instead!
+     * @return informal type description or null
+     */
+    @Deprecated
     public String getReturnType()
     {
         try 
@@ -2955,8 +3059,6 @@ public class Root extends Element {
      */
     private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, boolean[] _resultFlags, HashMap<String, TypeMapEntry> _types)
     {
-    	//this.getVarNames();
-    	
     	for (int i=0; i<_node.getSize(); i++)
     	{
     		Element ele = _node.getElement(i);
@@ -2995,12 +3097,12 @@ public class Root extends Element {
     		if (eleClassName.equals("Instruction"))
     		{
     			analyse_10_11(ele, _errors);
-				// START KGU#375 2017-04-04: Enh. #388
+    			// START KGU#375 2017-04-04: Enh. #388
     			// START KGU#388 2017-09-16: Enh. #423 record analysis
-				//analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
-				analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
-				// END KGU#388 2017-09-16
-				// END KGU#375 2017-04-04
+    			//analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
+    			analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
+    			// END KGU#388 2017-09-16
+    			// END KGU#375 2017-04-04
     		}
 
     		// CHECK: non-initialised var (except REPEAT)  (#3)
@@ -3015,7 +3117,7 @@ public class Root extends Element {
     		if (eleClassName.equals("Instruction"))
     		{
     			@SuppressWarnings("unchecked")
-				HashMap<String, String> constantDefs = (HashMap<String, String>)_constants.clone();
+    			HashMap<String, String> constantDefs = (HashMap<String, String>)_constants.clone();
     			String[] keywords = CodeParser.getAllProperties();
     			StringList initVars = _vars.copy();
     			// START KGU#423 2017-09-13: Enh. #416 - cope with user-defined line breaks
@@ -3030,17 +3132,17 @@ public class Root extends Element {
     					myUsed = getUsedVarNames(line, keywords);
     					analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, -1);
     					initVars.add(this.getVarNames(StringList.getNew(line), constantDefs));
-       				// START KGU#388 2017-09-13: Enh. #423
+    				// START KGU#388 2017-09-13: Enh. #423
     				}
     				// END KGU#388 2017-09-13
     			}
     		}
     		else {
     			myUsed = getUsedVarNames(ele, true, true);
-        		if (!eleClassName.equals("Repeat"))
-        		{
-        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
-        		}
+    			if (!eleClassName.equals("Repeat"))
+    			{
+    				analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
+    			}
     		}
     		// END KGU#375 2017-04-05
 
@@ -3072,11 +3174,11 @@ public class Root extends Element {
     		}
     		// CHECK: Correct usage of Jump, including return (#16) New!
     		// + CHECK #13: Competetive return mechanisms
-			else if (ele instanceof Jump)
-			{
-				analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
-			}
-			else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
+    		else if (ele instanceof Jump)
+    		{
+    			analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
+    		}
+    		else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
     		{
     		// END KGU#78 2015-11-25
 				analyse_13_16_instr((Instruction)ele, _errors, i == _node.getSize()-1, myVars, _resultFlags);
@@ -3086,7 +3188,7 @@ public class Root extends Element {
 
     		// add detected vars to initialised vars
 //    		// START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-04-20
-			_vars.addIfNew(myVars);
+    		_vars.addIfNew(myVars);
 //    		if (!(ele instanceof Call && ((Call)ele).isImportCall())) {
 //    			_vars.addIfNew(myVars);
 //    		}
@@ -3120,11 +3222,11 @@ public class Root extends Element {
     		{
     			analyse_17((Parallel) ele, _errors);
     		}
-			// START KGU#514 2018-04-03: Bugfix #528 (for Instructions, it has already been done above)
+    		// START KGU#514 2018-04-03: Bugfix #528 (for Instructions, it has already been done above)
     		else if (check(24) && !eleClassName.equals("Instruction")) {
     			analyse_24(ele, _errors, _types);
     		}
-			// END KGU#514 2018-04-03
+    		// END KGU#514 2018-04-03
 
 
     		// continue analysis for subelements
@@ -5134,7 +5236,7 @@ public class Root extends Element {
         // END KGU#78 2015-11-25
 
         // CHECK: var = programname (#9)
-        if (!haveFunction && variables.contains(programName))
+        if (!haveFunction && getVariables().contains(programName))
         {
             //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
             error  = new DetectedError(errorMsg(Menu.error09,programName),this);
@@ -5646,6 +5748,7 @@ public class Root extends Element {
 	 * 8. Jumps<br/>
 	 * 9. Parallel sections<br/>
 	 * @return an integer array with element counts according to the index map above 
+	 * @see #getElementCount()
 	 */
 	public Integer[] getElementCounts()
 	{
@@ -5700,6 +5803,23 @@ public class Root extends Element {
 		return counts;
 	}
 	// END KGU#363 2017-05-08
+	
+	// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 Auxiliary method to get the total element count
+	/**
+	 * @return the total number of elements comprised by this Root including itself
+	 * (and except Subqueues). Uses {@link #getElementCounts()}.
+	 * @see #getElementCounts()
+	 */
+	public int getElementCount()
+	{
+		Integer[] counts = getElementCounts();
+		int nElements = 0;
+		for (Integer count: counts) {
+			nElements += count;
+		}
+		return nElements + 1;
+	}
+	// END KGU#444/KGU#618 2018-12-18
 	
 	// START KGU#324 2017-05-30: Enh. #373, #415
 	/**
@@ -5757,4 +5877,44 @@ public class Root extends Element {
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+	
+	// START KGU#178/KGU#624 2018-12-26: Issues #160, #655; moved hitherto from class Generator
+	/**
+	 * Gathers all {@code Call} elements contained in this Root
+	 * @return the vector of all contained {@code Call} elements
+	 */
+	public Vector<Call> collectCalls()
+	{
+		return collectCalls(this);
+	}
+	
+	/**
+	 * Recursively gathers all {@code Call} elements in {@code _ele} and it's substructure
+	 * @param _ele - an {@link Element}
+	 * @return a vector of found {@code Call} elements
+	 */
+	private Vector<Call> collectCalls(Element _ele)
+	{
+		final class CallCollector implements IElementVisitor
+		{
+			public Vector<Call> calls = new Vector<Call>();
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Call) {
+					calls.add((Call)_ele);
+				}
+				return true;
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+		};
+		CallCollector visitor = new CallCollector();
+		_ele.traverse(visitor);
+		return visitor.calls;
+	}
+	// END KGU#178/KGU#624 2018-12-26
+
 }

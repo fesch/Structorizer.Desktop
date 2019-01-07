@@ -1,6 +1,6 @@
 /*
     Structorizer 
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -637,15 +637,16 @@ ParserPreferences.lblJump.tooltip=Classifica le parole chiave per le istruzioni 
 ParserPreferences.lblJumpLeave.text=Dal ciclo (o i cicli)
 ParserPreferences.lblJumpReturn.text=dalla routine
 ParserPreferences.lblJumpExit.text=dal programma
-ParserPreferences.lblInput.text=Input
+ParserPreferences.lblInput.text=Input (invio)
 ParserPreferences.lblInput.tooltip=Aggiungi la parola chiave prima dell'istruzione di input
-ParserPreferences.lblOutput.text=Output
+ParserPreferences.lblOutput.text=Output (uscita)
 ParserPreferences.lblOutput.tooltip=Aggiungi la parola chiave prima dell'istruzione di output
 ParserPreferences.chkIgnoreCase.text=Ignora parentesi
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Valida la tua scelta.
 ParserPreferences.lblErrorSign.text=Non è possibile usare il carattere ':' in nessuna stringa del parser!
-ParserPreferences.lblErrorSign2.text=La seconda stringa del ciclo @{For.TRAVERSAL} deve essere diversa da ogni altro parser token!
+ParserPreferences.lblErrorSign2.text=Parechhie parole chiave rossi entrano in conflitto! Tutti le parole chiave devono essere diversi!
+ParserPreferences.lblInputOutput.text=Istruzioni I/U
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Anteprima di stampa

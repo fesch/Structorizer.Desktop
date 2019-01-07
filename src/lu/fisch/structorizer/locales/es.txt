@@ -1,6 +1,6 @@
 /*
     Structorizer 
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -119,6 +119,8 @@
  *      Kay Gürtzig     2018-08-03  Enh. #577: OutputConsole keys renamed and new messages added
  *      Kay Gürtzig     2018-10-27  Enh. #619: New messages for word wrapping tool 
  *      Kay Gürtzig     2018-12-16  Issue #644: New Control message msgInitializerAsArgument
+ *      Kay Gürtzig     2018-12-21  Enh. #655: New Arranger messages
+ *      Kay Gürtzig     2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
  *
  ******************************************************************************************************
  *
@@ -496,7 +498,7 @@ Menu.hint25_3.text=¿Tal vez quieres salir resultados, p.ej. usando una instrucc
 Menu.hint25_4.text=Selecciona el centro del diagrama e inserta el primer elemento, p.ej. una instrucción.
 Menu.hint25_5.text=Selecciona el centro del diagrama e inserta p.ej. una instrucción con la definición de un tipo o una constante.
 Menu.hint25_6.text=¿Tal vez quieres insertar una instrucción de procesamiento como «%1» entre entrada y salida? → Menu "%2"
-Menu.hint26.0.text=Selecciona el centro del diagrama, doble-click, toca Enter o F5, y entra el text de instrucción «% \"Hello world!\"»");
+Menu.hint26.0.text=Selecciona el centro del diagrama, doble-click, toca Enter o F5, y entra el text de instrucción «% "Hello world!"»
 Menu.hint26.1.text=Ahora puedes p.ej. probar tu diagrama: → Menú "%1 ► %2"
 Menu.hint26.2.text=Ahora puedes p.ej. grabar tu diagrama: → Menú "%1 ► %2"
 Menu.hint26.3.text=Ahora puedes p.ej. exportar tu diagrama a un código: → Menú "%1 ► %2 ► %3"
@@ -544,7 +546,7 @@ AnalyserPreferences.okButton.text=Aceptar
 Editor.btnNew.tooltip=Crear un nuevo diagrama en blanco.
 Editor.btnOpen.tooltip=Abrir un diagrama existente.
 Editor.btnSave.tooltip=Guardar diagrama actual.
-Editor.btnSaveAll.tooltip=Guardar todos diagramas nuevos o cambiados.
+Editor.btnSaveAll.tooltip=Guardar todos diagramas y grupos nuevos o cambiados.
 // InsertAfter
 Editor.btnAfterInst.tooltip=Insertar nueva @a después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterAlt.tooltip=Insertar nueva ramificación @b después (con tecla de mayúsculas: antes) del elemento seleccionado.
@@ -645,10 +647,32 @@ Editor.popupBreakTrigger.text=Fija la condición de parar ...
 // Arranger index
 Editor.popupIndexGet.text=Coger diagrama
 Editor.popupIndexAttributes.text=Inspiciar propiedades ...
+Editor.popupIndexInfo.text=Informaciones ...
 Editor.popupIndexSave.text=Guardar cambios
 Editor.popupIndexRemove.text=Quitar
 Editor.popupIndexCovered.text=Cambiar cobertura de test
 Editor.popupIndexRemoveAll.text=Quitar todos
+Editor.popupIndexGroup.text=Crear grupo ...
+Editor.popupIndexExpandGroup.text=Expandir grupo ...
+Editor.popupIndexDissolve.text=Descomponer grupo
+Editor.popupIndexDetach.text=Retirar del grupo
+Editor.popupIndexAttach.text=Añadir/mover a un grupo ...
+Editor.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
+Editor.lblGroups.text=Grupos asociados
+Editor.lblSubroutines.text=Subrutinas calladas
+Editor.lblIncludables.text=Incluíbles requeridos
+Editor.lblStaleReferences.text=Referencias no satisfechas
+Editor.msgDefaultGroupName.text=(Grupo de incumplimiento)
+Editor.msgGroupsAndRootsSelected.text=Tanto grupos como diagramas seleccionados. Remover algo de ambos niveles a la vez puede resultar en efectos inesperados.
+Editor.msgDeleteGroupMembers.text=Se van a eliminar % grupos.\n\nAquellos diagramas miembros que pertenecen también a otros grupos se quedarán.\n¿Que hacer con diagramas no compartidos con demás grupos - quitar del Arranger?\n(De otro modo serán movidos al grupo de incumplimiento.)
+Editor.msgConfirmDeleteRoots.text=You selected % diagram(s) to be removed\n\nDo you really intend to remove it/them from all groups and Arranger?\n(Otherwise it/they would just be detached from the respective group.)
+Editor.msgAttachOptions.0.text=Añadir al grupo
+Editor.msgAttachOptions.1.text=Mover al grupo
+Editor.msgAttachOptions.2.text=Cancelar
+Editor.msgNumberOfMembers.text=Diagramas miembros: %1, de ellos %2 compartidos con otros grupos.
+Editor.msgMembersIncomplete.text=Grupo está incompleto:\n%1 requeridos diagramas están presentes pero no son miembros;\nlos siguientes diagramas requeridos ni siquiera están presentes:\n- %2
+Editor.msgGroupMembersChanged.text=El conjunto de miembros se ha cambiado.
+Editor.msgGroupMembersMoved.text=Coordenadas de algunos miembros fueron variados.
 
 -----[ InputBox ]-----
 InputBox.title=
@@ -887,7 +911,8 @@ Colors.lblColors.*.tooltip=¿Su elección de color [#]?
 Colors.colors.*.tooltip=Click para editar ...
 Colors.btnOK.text=Aceptar
 Colors.btnOK.tooltip=Aceptar los cambios.
-
+Colors.btnReset.text=Estándar
+Colors.btnReset.tooltip=Restaurar los colores de estándar.
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Colores
@@ -930,8 +955,9 @@ ParserPreferences.lblOutput.tooltip=Palabra clave calificando una instrucción d
 ParserPreferences.chkIgnoreCase.text=Ignorar mayúsc./minúsc.
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
-ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de un texto del Analizador!
-ParserPreferences.lblErrorSign2.text=¡El segundo texto clave para el bucle @f no debe ser igual a ningún otro texto del Analizador!
+ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de una palabra clave!
+ParserPreferences.lblErrorSign2.text=¡Hay conflictos entre las palabras claves en rojo - todos tienen que ser desiguales!
+ParserPreferences.lblInputOutput.text=Entrada/Salida
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Previsualizar impresión
@@ -1099,32 +1125,72 @@ FindAndReplace.btnClose.text=Cerrar
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Nuevo diagrama
 Arranger.btnRemoveDiagram.text=Quita diagrama
-Arranger.btnRemove1Diagram.text=Quita diagrama
+Arranger.btnRemoveDiagrams.text=Quita diagrama
 Arranger.btnRemoveAllDiagrams.text=Quita todos
 Arranger.btnExportPNG.text=Exporte a PNG
-Arranger.btnSaveArr.text=Graba lista
-Arranger.btnLoadArr.text=Carga lista
+Arranger.btnSaveArr.text=Graba coloc.
+Arranger.btnLoadArr.text=Carga coloc.
 Arranger.btnPinDiagram.text=Grapa diagrama
 Arranger.btnSetCovered.text=Pon cubierto
 Arranger.btnZoom.text=Zoom 
-Arranger.btnSaveArr.tooltip=Graba esta constelación como lista (*.arr) o archivo comprimido (*.arrz).
-Arranger.btnLoadArr.tooltip=Carga una constelación desde lista (*.arr) o archivo comprimido (*.arrz).
+Arranger.btnSaveArr.tooltip=Graba la colocación de los diagramas seleccionados como lista (*.arr) o archivo comprimido (*.arrz).
+Arranger.btnLoadArr.tooltip=Carga una colocación desde lista (*.arr) o archivo comprimido (*.arrz).
 Arranger.btnAddDiagram.tooltip=Inserta un nuevo, vacío diagrama.
-Arranger.btnExportPNG.tooltip=Dibuja esta constelación en un fichero de imagen del formato PNG.
-Arranger.btnPinDiagram.tooltip=Grapa un diagrama para protejerlo de reemplazamiento por Structorizer.
-Arranger.btnSetCovered.tooltip=Marca el diagrama de rutina como completamente probado para llamadas.
-Arranger.btnRemoveDiagram.tooltip=Quitar el diagrama seleccionado - deja presionada la tecla Shift para quitar todos diagramas.
+Arranger.btnExportPNG.tooltip=Dibuja esta colocación en un fichero de imagen del formato PNG.
+Arranger.btnPinDiagram.tooltip=Grapa los diagramas seleccionados para protejerlos de reemplazamiento por Structorizer.
+Arranger.btnSetCovered.tooltip=Marca los diagrama seleccionados de rutina como completamente probado para llamadas.
+Arranger.btnRemoveDiagram.tooltip=Quitar los diagramas seleccionados - deja presionada la tecla Shift para quitar todos diagramas.
 Arranger.btnZoom.tooltip=Deja presionada la tecla Shift para acercarse con el zoom.
+Arranger.popupHitList.text=Diagramas tocados
+Arranger.popupRemove.text=Quitar diagramas seleccionados
+Arranger.popupRemoveAll.text=Quitar todos diagramas
+Arranger.popupExpandSelection.text=Extender selección
+Arranger.popupExpandSelection.tooltip=Añade todos diagramas subrutinas o incluíbles y diréctamente o indiréctamente referenciados a la selección.
+Arranger.popupGroup.text=Hacer grupo de los diagramas ...
+Arranger.popupExpandGroup.text=Expandir y hacer grupo ...
+Arranger.popupAttributes.text=Inspiciar propiedades ...
+Arranger.popupAttributes.tooltip=Abre el diálogo para inspiciar las propiedades del diagrama seleccionado
+Arranger.popupHelp.text=Ayuda para Arranger ...
+Arranger.popupHelp.tooltip=Abres la página "Arranger" del online manual en el browser
+Arranger.popupKeyBindings.text=Atajos de teclado ...
+Arranger.popupKeyBindings.tooltip=Muestras la lista de atajos de teclado en el browser
 Arranger.msgConfirmRemoveAll.text=¿Quieres reálmente quitar todos los diagramas de Arranger?
 Arranger.msgTitleWarning.text=Advertencia
+Arranger.msgTitleIllegal.text=¡Operación ilícita!
+Arranger.msgActionDelete.text=quitar
+Arranger.msgActionCut.text=cortar
+Arranger.msgActionCopy.text=copiar
+Arranger.msgConfirmRemove.text=¿Quieres reálmente %1 el/los diagrama(s) del Arranger?
+Arranger.msgConfirmMultiple.text=Has seleccionado los siguientes %1 diagrama(s) desde %2 en total:\n- %3\n\n%4
+Arranger.msgReadyToExport.text=¿Ahora exportar la imagen de esta colocación parcial a PNG?
+Arranger.msgCantDoWithMultipleRoots.text=No es posible %1 más de un diagrama a la vez. Has seleccionado %2 diagramas:\n- %3
+Arranger.msgDiagramsSelected.text=diagramas: %1, seleccionados: %2
+Arranger.msgBrowseFailed.text=Mostrar % en el browser no logró.
+Arranger.msgTitleURLError.text=Error en URL
+Arranger.msgSelectionExpanded.text=% referenciados diagramas fueron añadidos a la selección.
+Arranger.msgMissingDiagrams.text=\n\n%1 referenciados diagramas faltan:\n- %2
+Arranger.msgAmbiguousSignatures.text=\nHay %1 signaturas con las quales convienen mas de 1 diagrama entre la selección:\n- %2
+Arranger.msgEmptySelection.text=No es posible % los diagramas: ninguno seleccionado.
+Arranger.msgActionGroup.text=agrupar
+Arranger.msgGroupName.text=%1Nombre para el grupo destinatorio de los %2 diagramas seleccionados:
+Arranger.msgGroupNameRejected.text=Nombre "%" para el grupo fue rechazado.
+Arranger.msgGroupExists.text=Ya existe un grupo con nombre "%". ¿Que hacer?
+Arranger.msgGroupingOptions.0.text=Añadir diagramas
+Arranger.msgGroupingOptions.1.text=Sobrescribir grupo
+Arranger.msgGroupingOptions.2.text=Tratar con otro nombre
+Arranger.msgGroupingOptions.3.text=Cancelar
+Arranger.msgCongruentGroups.text=El conjunto de los %1 diagramas seleccionados coincide con %2 grupo(s) existente(s):\n- %3\n\n%4
+Arranger.msgDoCreateGroup.text=¿Crear nuevo grupo a pesar de eso?
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Error abriendo archivo:
-Surface.msgSavePortable.text=¿Guardar como archivo portable y comprimido?
+Surface.msgSavePortable.text=Puedes guardar esta colocación de diagramas\n- o como archivo comprimido y portable (*.arrz)\n- o como pura lista de colocación con rutas de fichero (*.arr).
+Surface.lblSaveAsArrz.text=Como archivo portable (*.arrz)
+Surface.lblSaveAsArr.text=Como fichero de lista (*.arr)
 Surface.msgSaveDialogTitle.text=Guarda colocado conjunto de diagramas ...
 Surface.msgSaveError.text=Error guardando la colocación:
 Surface.msgLoadDialogTitle.text=Restablece guardado conjunto de diagramas ...
-Surface.msgExtractDialogTitle.text=¿Extraer a un directorio?
+Surface.msgExtractDialogTitle.text=¿Extraer a un directorio (solo opcional)?
 Surface.msgArrLoadError.text=Error leyendo la colocación:
 Surface.msgExportDialogTitle.text=Exporta diagrama como PNG ...
 Surface.msgExportError.text=¡Error guardando el imagen!
@@ -1143,6 +1209,15 @@ Surface.msgInsertionConflict.1.text=Ya hay una copia equivalente del diagrama "%
 Surface.msgInsertionConflict.2.text=Ya hay un diagrama diferente con signatura "%1"\ncolocado en fichero "%2".
 Surface.msgOverwriteFile.text=¿Grabar encima del archivo existente ("%")?
 Surface.msgConfirmOverwrite.text=Confirma gravar
+Surface.msgTooltipSelectThis.text=Selecciona este diagrama (+shift: lo añade a la selección) y lo subes al mayor nivel.
+Surface.msgGroupRemovalError.text=Error al quitar group «%»
+Surface.msgArrangementAlreadyLoaded.text=El archivo de colocación "%1" ya esta cargado al grupo %2.\n¿Recargarlo a un grupo con nombre diferente?
+Surface.msgArrangementNotLoaded.text=Cancelado cargar colocación.
+Surface.msgSaveAsNewGroup.text=como grupo nuevo
+Surface.msgSelectGroup.text=Decide po favor entre sobrescribir el fichero asociado a uno de los grupos existentes y crear nueva colocación:
+Surface.msgConfirmRemoveGroup.text=Grupo «%» fue vaciado. ¿Eliminarlo?
+Surface.msgSaveGroupChanges.text=Grupo «%» tiene modificaciones no grabados.\nGrabar las modificaciones antes de eliminar el grupo?
+Surface.msgUnsavedGroups.text=No fue posible guardar estos diagramas:
 
 -----> Executor
 -----[ Control ]-----
