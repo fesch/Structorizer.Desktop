@@ -220,6 +220,7 @@ import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
+import lu.fisch.structorizer.gui.Editor;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.gui.Menu;
@@ -668,9 +669,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		int answer = JOptionPane.CANCEL_OPTION;
 		// START KGU#626 2019-01-02: Enh. #657
 		Collection<Diagram> toArrange = this.diagramsSelected;
-		if (toArrange.isEmpty()) {
-			toArrange = this.diagrams;	// save all if there is an empty selection
-		}
 		// A selected group always overrides the selection in Arranger
 		if (group != null) {
 			toArrange = group.getDiagrams();
@@ -678,6 +676,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (group.isDefaultGroup()) {
 				group = null;
 			}
+		}
+		else if (toArrange.isEmpty()) {
+			toArrange = this.diagrams;	// save all if there is an empty selection
 		}
 		/* If group is null then the diagrams were individually selected, so check
 		 * for coinciding groups and warn in this case */
@@ -723,8 +724,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				group = new Group("", toArrange);
 			}
 		}
-		// Care for the chance to save changes before the arrangement is written. 
-		boolean writeNow = this.saveDiagrams(initiator, toArrange, goingToClose, false);
+		// We will care for the saving of the diagrams after the user has chosen where and how to save
+		//boolean writeNow = this.saveDiagrams(initiator, toArrange, goingToClose, false);
+		boolean writeNow = true;
 		if (group.getFile() == null) {
 			// The group has never been loaded from nor saved to file
 		// END KGU#626 2019-01-02
@@ -847,7 +849,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				filename = filename.substring(0, dotPos);
 			}
 		}
-		if (writeNow) {
+		/* Care for the chance to save diagram changes now (without asking for portable archives
+		 * because otherwise we might copy an obsolete file into the archive). In case of new
+		 * diagrams, the user must be asked, anyway, they will have to commit the proposed file name
+		 * and location. For an arrangement list, it's not so important whether or not the content
+		 * of the file is up to date, so the user will be left the choice.
+		 */
+		if (writeNow && this.saveDiagrams(initiator, toArrange, goingToClose, portable)) {
 			if (group.hasChanged()) {
 				done = saveArrangement(initiator, filename, extension, portable, group);
 				if (done && group.getName().isEmpty()) {
@@ -3664,10 +3672,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * @param selectedRoots
-	 * @param missingSignatures
-	 * @param duplicateSignatures
-	 * @return
+	 * Searches for diagrams referenced by some of {@code selectedRoots} but not being member of them.
+	 * Proceeds recursively for all added diagrams as well.
+	 * @param selectedRoots - the initial set of {@link Root} objects. CAUTION: may be expanded!
+	 * @param missingSignatures - a {@link StringList} to gather signatures of missing diagrams
+	 * @param duplicateSignatures - a {@link StringList} to gather signatures of ambiguous diagrams
+	 * @return the set of added {@link Root} objects
 	 */
 	protected Set<Diagram> expandRootSet(Set<Root> selectedRoots, StringList missingSignatures,
 			StringList duplicateSignatures) {
@@ -3683,22 +3693,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
-					// TODO in future: compare group membership
 					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
-					// For now we will add all of them to be on the safe side
-					for (Root sub: candidates) {
-						if (selectedRoots.add(sub)) {
-							rootQueue.addLast(sub);
-							addedDiagrams.add(rootMap.get(sub));	// Should of course be in the map
-							sub.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-						}
-					}
-					if (candidates.isEmpty()) {
-						missingSignatures.add(fct.getSignatureString());
-					}
-					else if (candidates.size() > 1) {
-						duplicateSignatures.add(fct.getSignatureString());
-					}
+					handleCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
+							fct.getSignatureString(), candidates);
 				}
 			}
 			// Then look for referenced includables
@@ -3706,24 +3703,54 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
 					Vector<Root> candidates = this.findIncludesByName(inclName);
-					// For now we will add all of them to be on the safe side
-					for (Root incl: candidates) {
-						if (selectedRoots.add(incl)) {
-							rootQueue.addLast(incl);
-							addedDiagrams.add(rootMap.get(incl));	// Should of course be in the map
-							incl.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-						}
-					}
-					if (candidates.isEmpty()) {
-						missingSignatures.add(inclName);
-					}
-					else if (candidates.size() > 1) {
-						duplicateSignatures.add(inclName);
-					}
+					handleCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
+							inclName, candidates);
 				}
 			}
 		}
 		return addedDiagrams;
+	}
+
+	/**
+	 * Checks for each {@link Root} object in {@code candidates} whether it is to be added to
+	 * {@code rootSet}, {@code rootQueue}, and {@code addedDiagrams} or if the {@code signature}
+	 * is to be registered with {@code missingSignatures} or {@code duplicateSignatures}.
+	 * @param rootSet - the set of {@link Root}s to be completed
+	 * @param missingSignatures - {@link StringList} gathering signatures of missing diagrams
+	 * @param duplicateSignatures - {@link StringList} gathering ambiguous signatures
+	 * @param rootQueue - the queue of unprocessed taks (i.e. {@link Root}s
+	 * @param addedDiagrams - set of {@link Diagram} objects for the added {@link Root}s
+	 * @param signature - the signature (search pattern)
+	 * @param candidates - the vector of found {@link Root} objects matching the {@code signature}
+	 */
+	private void handleCandidates(Set<Root> rootSet, StringList missingSignatures, StringList duplicateSignatures,
+			LinkedList<Root> rootQueue, Set<Diagram> addedDiagrams, String signature, Vector<Root> candidates) {
+		/* First check if any of the candidates is already member of the set, then we
+		 * can ignore all the others
+		 */
+		boolean isMember = false;
+		for (Root sub: candidates) {
+			if (rootSet.contains(sub)) {
+				isMember = true;
+				break;
+			}
+		}
+		if (!isMember) {
+			// For now we will add all of them to be on the safe side
+			for (Root sub: candidates) {
+				rootSet.add(sub);
+				rootQueue.addLast(sub);
+				addedDiagrams.add(rootMap.get(sub));	// Should of course be in the map
+				// This only an optical selection, does not change the selection set
+				sub.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+			}
+			if (candidates.size() > 1 && duplicateSignatures != null) {
+				duplicateSignatures.add(signature);
+			}
+		}
+		if (candidates.isEmpty() && missingSignatures != null) {
+			missingSignatures.add(signature);
+		}
 	}
 
 	// END KGU#624 2018-12-26
@@ -3998,14 +4025,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			if (option != -1) {
 				for (Diagram diagram: group.getDiagrams()) {
-					anythingChanged = group.removeDiagram(diagram) || anythingChanged;
-					// Is the diagram orphaned now?
-					if (diagram.getGroupNames().length == 0) {
-						if (targetGroup != null) {
-							anythingChanged = targetGroup.addDiagram(diagram) || anythingChanged;
-						}
-						else {
-							doomedDiagrams.add(diagram);
+					int nGroups = diagram.getGroupNames().length;
+					if (deleteGroup || nGroups > 1 || !group.isDefaultGroup()) {
+						anythingChanged = group.removeDiagram(diagram) || anythingChanged;
+						// Is the diagram orphaned now?
+						if (diagram.getGroupNames().length == 0) {
+							if (targetGroup != null) {
+								anythingChanged = targetGroup.addDiagram(diagram) || anythingChanged;
+							}
+							else {
+								doomedDiagrams.add(diagram);
+							}
 						}
 					}
 				}
@@ -4018,7 +4048,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					anythingChanged = true;
 				}
 				if (group.isEmpty()) {
-					if (group.getFile() == null || deleteGroup) {
+					if (group.getFile() == null || deleteGroup
+							|| JOptionPane.showConfirmDialog(initiator == null ? this : initiator,
+									msgConfirmRemoveGroup.getText()
+									.replace("%", name.replace(Group.DEFAULT_GROUP_NAME,
+											Editor.msgDefaultGroupName.getText()))) == JOptionPane.OK_OPTION) {
 						anythingChanged = (this.groups.remove(name) != null) || anythingChanged;
 					}
 					done = true;

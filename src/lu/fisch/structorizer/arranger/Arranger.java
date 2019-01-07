@@ -666,7 +666,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         popupExpandSelection.addActionListener(new ActionListener() {
         	@Override
         	public void actionPerformed(ActionEvent e) {
-        		expandSelection(null, Arranger.this);
+        		expandRootSetOrSelection(null, Arranger.this, null);
         	}});
         popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
         
@@ -685,7 +685,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         popupExpandGroup.addActionListener(new ActionListener() {
         	@Override
         	public void actionPerformed(ActionEvent e) {
-        		expandSelection(null, null);
+        		expandRootSetOrSelection(null, null, null);
         		makeGroup(Arranger.this);
         	}});
         popupExpandGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
@@ -963,7 +963,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         if (initiator == null) {
             initiator = this;
         }
-        if (surface.saveDiagrams(initiator, null, true, false) && surface.saveGroups(initiator, true, new StringList()))
+        if (this.surface.saveDiagrams(initiator, null, true, false) &&
+                this.surface.saveGroups(initiator, true, new StringList()))
         // END KGU#626 2019-01-05
         {
             if (isStandalone)
@@ -1199,7 +1200,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 break;
                 case KeyEvent.VK_F11:
                 {
-                    expandSelection(null, this);
+                    expandRootSetOrSelection(null, this, null);
                 }
                     break;
                 case KeyEvent.VK_ENTER:
@@ -1214,7 +1215,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     // START KGU#626 2019-01-02: Enh. #657
                 case KeyEvent.VK_G:
                     if (ev.isShiftDown()) {
-                        this.expandSelection(null, null);
+                        this.expandRootSetOrSelection(null, null, null);
                     }
                     makeGroup(this);
                     break;
@@ -1260,13 +1261,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		Collection<Group> congrGroups = null;
 		if (roots != null) {
 			if (accomplishSet) {
-				roots = this.accomplishRootSet(new HashSet<Root>(roots), originator);
+				roots = this.accomplishRootSet(new HashSet<Root>(roots), originator, null);
 			}
 			congrGroups = surface.getGroupsFromRoots(roots, true);
 			nSelected = roots.size();
 		}
 		else {
 			// Start from current selection in Arranger
+			roots = surface.getSelected();
 			nSelected = surface.getSelectionCount();
 			congrGroups = surface.getGroupsFromSelection(true);
 		}
@@ -1355,12 +1357,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * @param initialRootSet - a set of {@link Root} objects from where to start.
 	 * @param initiator - a GUI component meant to be made the owner of message boxes etc., if
 	 * being null then the messages won't be raised. 
+	 * @param missingSignatures - optional {@link StringList} to gather signatures of missing referred diagrams
 	 * @return an accomplished set of {@link Root}s.
 	 */
-	public Collection<Root> accomplishRootSet(Set<Root> initialRootSet, Component initiator)
+	public Collection<Root> accomplishRootSet(Set<Root> initialRootSet, Component initiator, StringList missingSignatures)
 	{
 		Collection<Root> neededRoots = new Vector<Root>(initialRootSet);
-		Collection<Diagram> addedDiagrams = expandSelection(initialRootSet, initiator);
+		Collection<Diagram> addedDiagrams = expandRootSetOrSelection(initialRootSet, initiator, missingSignatures);
 		if (addedDiagrams != null) {
 			for (Diagram diagr: addedDiagrams) {
 				neededRoots.add(diagr.root);
@@ -1370,18 +1373,22 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	}
 	
 	/**
-	 * Expands the current selection by all directly or indirectly referenced subroutine
-	 * and includable diagrams that hadn't already been selected.
+	 * Expands the given {@link Root} set {@code initialRoots} or the current selection by all directly
+	 * or indirectly referenced subroutine and includable diagrams that hadn't already been selected.
 	 * @param initialRoots - set of {@link Root} objects from which the dependencies are to be retrieved
-	 * @param initiator - A responsible GUI component - message boxes will be modal to it, if null
-	 * the no messages will be raised.
+	 * @param initiator - A responsible GUI component: message boxes will be modal to it; if null
+	 * then no messages will be raised.
+	 * @param missingSignatures - id a {@link} is given here then it will gather signatures of missing referenced diagrams.
 	 * @return the set of added diagrams in case {@link initialRoots} was given 
 	 */
-	protected Set<Diagram> expandSelection(Set<Root> initialRoots, Component initiator) {
-		StringList missingRoots = new StringList();
+	protected Set<Diagram> expandRootSetOrSelection(Set<Root> initialRoots, Component initiator, StringList missingSignatures) {
+		StringList missingRoots = missingSignatures;
 		StringList duplicateRoots = new StringList();
 		Set<Diagram> addedDiagrams = null;
 		int nAdded = 0;
+		if (initiator != null && missingRoots == null) {
+			missingRoots = new StringList();
+		}
 		if (initialRoots == null) {
 			nAdded = surface.expandSelectionRecursively(missingRoots, duplicateRoots);
 		}
@@ -1599,6 +1606,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         return groups;
     }
     // END KGU#626 2018-12-31
+    
 
     // START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
     @Override
@@ -1615,7 +1623,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	this.popupAttributes.setEnabled(nSelected == 1);
         	this.popupExpandSelection.setEnabled(nSelected > 0);
         	this.popupRemove.setEnabled(nSelected > 0);
-        	this.popupGroup.setEnabled(nSelected > 1);
+        	this.popupGroup.setEnabled(nSelected > 0);
         	this.popupExpandGroup.setEnabled(nSelected > 0);
         }
         // END KGU#624/KGU#626 2018-12-27
@@ -1778,10 +1786,24 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
 	// START KGU#373 2017-03-28: Enh. #386
 	/**
-	 * Saves unsaved changes of all held diagrams 
+	 * Saves unsaved changes of all held diagrams and groups. Will report the names
+	 * of the groups that couldn't be saved if {@code initiator} isn't null.
+	 * If the saving of diagrams was interrupted then the saving of groups won't be
+	 * tried here.
+	 * @param initiator - the originating GUI component
+	 * @return true if the saving attempt had been completed
 	 */
-	public void saveAll() {
-		this.surface.saveDiagrams(this, null, false, true);
+	public boolean saveAll(Component initiator) {
+		// START KGU#626 2019-01-06: Enh. #657
+		//this.surface.saveDiagrams(initiator, null, false, true);
+		StringList namesOfUnsavedGroups = null;
+		if (initiator == null) {
+			initiator = this;
+			namesOfUnsavedGroups = new StringList();
+		}
+		return this.surface.saveDiagrams(initiator, null, false, true) &&
+				this.surface.saveGroups(initiator, false, namesOfUnsavedGroups);
+		// END KGU#626 2019-01-06
 	}
 	// END KGU#373 2017-03-28
 	

@@ -67,7 +67,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-02      Enh. #616: Additional key bindings Ctrl-Ins, Shift-Del, and Shift-Ins
  *      Kay Gürtzig     2018-12-30      Enh. #158, #655: Key bindings for shift+page keys, home, end
  *      Kay Gürtzig     2019-01-01      Enh. #657: JList diagramIndex replaced by JTree arrangerIndex
- *      Kay Gürtzig     2019-01-05      Enh. #657: Arranger index popup menu item diagram info added
+ *      Kay Gürtzig     2019-01-05/06   Enh. #657: Arranger index popup menu item "diagram info" added
  *
  ******************************************************************************************************
  *
@@ -99,6 +99,7 @@ import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.locales.LangPanel;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class Editor extends LangPanel implements NSDController, ComponentListener
@@ -351,9 +352,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JLabel lblGroups = new JLabel("Containing groups");
 	protected final JLabel lblSubroutines = new JLabel("Called subroutines");
 	protected final JLabel lblIncludables = new JLabel("Referenced includables");
+	protected final JLabel lblStaleReferences = new JLabel("Stale diagram references");
 	protected final DefaultMutableTreeNode nodeGroups = new DefaultMutableTreeNode(lblGroups);
 	protected final DefaultMutableTreeNode nodeSubroutines = new DefaultMutableTreeNode(lblSubroutines);
 	protected final DefaultMutableTreeNode nodeIncludables = new DefaultMutableTreeNode(lblIncludables);
+	protected final DefaultMutableTreeNode nodeStaleReferences = new DefaultMutableTreeNode(lblStaleReferences);
 	// END KGU#626 2019-01-03
 	
 	// START KGU#626 2019-01-01: Enh. #657
@@ -366,6 +369,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			new LangTextHolder("Move to group"),
 			new LangTextHolder("Cancel")
 	};
+	protected static final LangTextHolder msgNumberOfMembers = new LangTextHolder("Member diagrams: %1, thereof shared with other groups: %2.");
+	protected static final LangTextHolder msgMembersIncomplete = new LangTextHolder("Group is incomplete: %1 referenced available diagrams are not member;\nThe following referenced diagrams are not even available:\n- %2");
 	protected static final LangTextHolder msgGroupMembersChanged = new LangTextHolder("The set of member diagrams was modified.");
 	protected static final LangTextHolder msgGroupMembersMoved = new LangTextHolder("The coordinates of some member diagrams were changed.");
 	
@@ -606,6 +611,15 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			// START KGU#626 2019-01-05: Enh. #657
 			else if (name.equals("SHOW_INFO")) {
 				arrangerIndexInfo();
+			}
+			else if (name.equals("DETACH")) {
+				arrangerIndexDetachFromGroup();
+			}
+			else if (name.equals("ATTACH")) {
+				arrangerIndexAttachToGroup();
+			}
+			else if (name.equals("DISSOLVE")) {
+				arrangerIndexDissolveGroup();
 			}
 			// END KGU#626 2019-01-05
 		}
@@ -1263,15 +1277,18 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
 		popupIndex.add(popupIndexGet);
 		popupIndexGet.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {	arrangerIndexGet();	} });
+		popupIndexGet.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
 
 		// START KGU#573 2018-09-13: Enh. #590  - Attribute inspector for selected index entry
 		popupIndex.add(popupIndexAttributes);
 		popupIndexAttributes.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexAttributes(); } });
+		popupIndexAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK));
 		// END KGU#573 2018-09-13
 		
 		// START KGU#626 2019-01-05: Enh. #657  - Info tree for single selection
 		popupIndex.add(popupIndexInfo);
 		popupIndexInfo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexInfo(); } });
+		popupIndexInfo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK));
 		// END KGU#573 2018-09-13
 		
 		// START KGU#626 2019-01-01: Enh. #657 items above need single Root selection, below multiple selection is okay
@@ -1280,25 +1297,31 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		popupIndex.add(popupIndexGroup);
 		popupIndexGroup.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexMakeGroup(false); } });
+		popupIndexGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK));
 
 		popupIndex.add(popupIndexExpandGroup);
 		// FIXME: We should associate a different action here if a group is selected: expand it by missing subdiagrams
 		popupIndexExpandGroup.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexMakeGroup(true); } });
+		popupIndexExpandGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
 
 		popupIndex.add(popupIndexDissolve);
 		popupIndexDissolve.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexDissolveGroup(); } });
+		popupIndexDissolve.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_NUMBER_SIGN, KeyEvent.CTRL_DOWN_MASK));
 
 		popupIndex.add(popupIndexDetach);
 		popupIndexDetach.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexDetachFromGroup(); } });
+		popupIndexDetach.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK));
 
 		popupIndex.add(popupIndexAttach);
 		popupIndexAttach.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexAttachToGroup(); } });
+		popupIndexAttach.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, KeyEvent.CTRL_DOWN_MASK));
 
 		popupIndex.add(popupIndexSave);
 		popupIndexSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSave(); } });
 
 		popupIndex.add(popupIndexRemove);
 		popupIndexRemove.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemove(); } });
+		popupIndexRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
 		popupIndex.add(popupIndexCovered);
 		popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
@@ -1320,11 +1343,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		lblGroups.setIcon(IconLoader.getIcon(94));
 		lblSubroutines.setIcon(IconLoader.getIcon(21));
 		lblIncludables.setIcon(IconLoader.getIcon(71));
+		lblStaleReferences.setIcon(IconLoader.getIcon(5));
 		
 		indexInfoTree.setCellRenderer(new ArrangerIndexCellRenderer());
 		nodeIndexInfoTop.add(nodeGroups);
 		nodeIndexInfoTop.add(nodeSubroutines);
 		nodeIndexInfoTop.add(nodeIncludables);
+		nodeIndexInfoTop.add(nodeStaleReferences);
 	}
 	
 	/**
@@ -1435,6 +1460,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), "CTRL_G");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), "CTRL_SHIFT_G");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK), "CTRL_I");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK), "CTRL_MINUS");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, KeyEvent.CTRL_DOWN_MASK), "CTRL_PLUS");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMBER_SIGN, KeyEvent.CTRL_DOWN_MASK), "CTRL_HATCH");
 		actMap.put("SPACE", new ArrangerIndexAction(false));
 		actMap.put("ENTER", new ArrangerIndexAction(true));
 		actMap.put("ALT_ENTER", new ArrangerIndexAction("ALT_ENTER"));
@@ -1442,11 +1470,16 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put("CTRL_G", new ArrangerIndexAction("MAKE_GROUP"));
 		actMap.put("CTRL_SHIFT_G", new ArrangerIndexAction("MAKE_COMPLETE_GROUP"));
 		actMap.put("CTRL_I", new ArrangerIndexAction("SHOW_INFO"));
+		actMap.put("CTRL_MINUS", new ArrangerIndexAction("DETACH"));
+		actMap.put("CTRL_PLUS", new ArrangerIndexAction("ATTACH"));
+		actMap.put("CTRL_HATCH", new ArrangerIndexAction("DISSOLVE"));
 		
 		if (!arrangerIndex.isFocusOwner()) {
 			arrangerIndex.setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
 		}
 		// END KGU#305 2016-12-15
+		
+		scrollInfo.setWheelScrollingEnabled(true);
 	}
 
 	public void doButtons()
@@ -1763,7 +1796,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#626 2019-01-03: Enh. #657
 		popupIndexInfo.setEnabled(indexSelected &&
 				(arrangerIndexGetSelectedRoot() != null || arrangerIndexGetSelectedGroup() != null));
-		popupIndexGroup.setEnabled(this.arrangerIndexGetSelectedRoots(false).size() > 1);
+		popupIndexGroup.setEnabled(this.arrangerIndexGetSelectedRoots(false).size() > 0);
 		popupIndexExpandGroup.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty()
 				|| this.arrangerIndexGetSelectedGroup() != null);
 		popupIndexDissolve.setEnabled(this.arrangerIndexGetSelectedGroup() != null);
@@ -1784,15 +1817,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 	private boolean arrangerIndexSelectsUnsavedChanges() {
 		TreePath[] selectedPaths = arrangerIndex.getSelectionPaths();
-		if (selectedPaths.length == 1) {
-			Object selectedObject = ((DefaultMutableTreeNode)selectedPaths[0].getLastPathComponent()).getUserObject();
-			if (selectedObject instanceof Root) {
-				return ((Root)selectedObject).hasChanged();
+		for (TreePath path: selectedPaths) {
+			Object selectedObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+			if (selectedObject instanceof Root && ((Root)selectedObject).hasChanged()) {
+				return true;
 			}
-			else if (selectedObject instanceof Group) {
-				return ((Group)selectedObject).hasChanged();
+			else if (selectedObject instanceof Group && ((Group)selectedObject).hasChanged()) {
+				return true;
 			}
-			return (selectedObject instanceof Root && selectedObject != diagram.getRoot());
 		}
 		return false;
 	}
@@ -1880,6 +1912,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 					popup.show(e.getComponent(), e.getX(), e.getY());					
 				}
 				else if (e.getComponent() == arrangerIndex) {
+					if (arrangerIndex.isSelectionEmpty()) {
+						TreePath path = arrangerIndex.getClosestPathForLocation(e.getX(), e.getY());
+						if (path != null) {
+							arrangerIndex.addSelectionPath(path);
+						}
+					}
 					doButtonsLocal();
 					arrangerIndex.requestFocusInWindow();
 					popupIndex.show(e.getComponent(), e.getX(), e.getY());
@@ -2108,16 +2146,18 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 //			diagram.saveNSD(selectedRoot, false);
 //		}
 
-		// We must in any case cahc the selection because it's likely that arrangerIndex
-		// will be synchronized inbetween, which may wipe all selection.
+		/*
+		 * We must in any case cache the selection because it's likely that arrangerIndex
+		 * will be synchronized in between, which may wipe all selection.
+		 */
 		Collection<Group> selectedGroups = arrangerIndexGetSelectedGroups(false);
-		Collection<Root> selectedRoots = arrangerIndexGetSelectedRoots(false);
+		Collection<Root> selectedRoots = arrangerIndexGetSelectedRoots(true);
 
 		// First save groups then save further roots (the latter may have got superfluous then)
 		for (Group selectedGroup: selectedGroups) {
 			if (selectedGroup.hasChanged()) {
 				Group resultGroup = Arranger.getInstance().saveGroup(this, selectedGroup);
-				// Now update the recent file list in case the saving was successful
+				// Now update the list of recent files in case the saving was successful
 				if (resultGroup != null) {
 					File groupFile = resultGroup.getArrzFile();
 					if (groupFile != null || (groupFile = resultGroup.getFile()) != null) {
@@ -2176,7 +2216,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 							popupIndexRemove.getText(),
 							JOptionPane.YES_NO_CANCEL_OPTION,
 							JOptionPane.QUESTION_MESSAGE);
-					if (decision == JOptionPane.CANCEL_OPTION) {
+					if (decision == JOptionPane.CANCEL_OPTION || decision == -1) {
 						doomedGroups.clear();
 					}
 				}
@@ -2190,7 +2230,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 							popupIndexRemove.getText(),
 							JOptionPane.YES_NO_CANCEL_OPTION,
 							JOptionPane.QUESTION_MESSAGE);
-					if (decision == JOptionPane.CANCEL_OPTION) {
+					if (decision == JOptionPane.CANCEL_OPTION || decision == -1) {
 						doomedRoots.clear();
 					}
 				}
@@ -2271,7 +2311,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// Let's see what is is
 		Group selectedGroup = arrangerIndexGetSelectedGroup();
 		Root selectedRoot = this.arrangerIndexGetSelectedRoot();
-		Object message = null;
+		Object display = null;
 		if (selectedRoot != null) {
 			this.nodeIndexInfoTop.setUserObject(selectedRoot);
 			nodeGroups.removeAllChildren();
@@ -2282,8 +2322,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			nodeIncludables.removeAllChildren();
 			nodeSubroutines.removeAllChildren();
 			HashSet<Root> roots = new HashSet<Root>();
+			StringList missing = new StringList();
 			roots.add(selectedRoot);
-			Collection<Root> moreRoots = Arranger.getInstance().accomplishRootSet(roots, null);
+			Collection<Root> moreRoots = Arranger.getInstance().accomplishRootSet(roots, null, missing);
 			for (Root root: moreRoots) {
 				if (!root.equals(selectedRoot)) {
 					if (root.isInclude()) {
@@ -2294,29 +2335,59 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 					}
 				}
 			}
-			message = this.scrollInfo;
+			nodeStaleReferences.removeAllChildren();
+			for (int i = 0; i < missing.count(); i++) {
+				nodeStaleReferences.add(new DefaultMutableTreeNode(missing.get(i)));
+			}
+			display = this.scrollInfo;
 			((DefaultTreeModel)this.indexInfoTree.getModel()).reload();
 		}
 		else if (selectedGroup != null) {
-			// Present the file path and possibly e.g. the "dirty" info (modified positions etc.)
-			message = selectedGroup.getName()
+			// Present the name
+			String message = selectedGroup.getName()
 					.replace(Group.DEFAULT_GROUP_NAME, msgDefaultGroupName.getText()) + ":\n";
+			
+			// Present the file path
 			File arrFile = selectedGroup.getFile();
 			if (arrFile == null) {
-				message = message + "---";
+				message += "---";
 			}
 			else {
-				message = message + arrFile.getAbsolutePath();
+				message += arrFile.getAbsolutePath();
 			}
+			
+			// Present numbers of group members and shared members
+			int nShared = 0;
+			for (lu.fisch.structorizer.arranger.Diagram diagr: selectedGroup.getDiagrams()) {
+				if (diagr.getGroupNames().length > 1) {
+					nShared++;
+				}
+			}
+			message += "\n" + msgNumberOfMembers.getText()
+					.replace("%1", Integer.toString(selectedGroup.size()))
+					.replace("%2", Integer.toString(nShared));
+			
+			// Inform about registered modifications
 			if (selectedGroup.membersChanged) {
-				message = message + "\n* " + msgGroupMembersChanged.getText();
+				message += "\n* " + msgGroupMembersChanged.getText();
 			}
 			if (selectedGroup.membersMoved) {
-				message = message + "\n* " + msgGroupMembersMoved.getText();
+				message += "\n* " + msgGroupMembersMoved.getText();
 			}
+
+			// Present information about external and stale references
+			StringList missing = new StringList();
+			int nNeeded = Arranger.getInstance().accomplishRootSet(new HashSet<Root>(selectedGroup.getSortedRoots()), null, missing).size();
+			if (nNeeded > 0 || missing.count() > 0) {
+				message += "\n\n" + msgMembersIncomplete.getText()
+				.replace("%1", Integer.toString(nNeeded - selectedGroup.size()))
+				.replace("%2", missing.concatenate("\n- "));
+			}
+			display = message;
 		}
-		if (message != null) {
-			JOptionPane.showMessageDialog(this, message,
+		
+		if (display != null) {
+			JOptionPane.showMessageDialog(this, display,
 					popupIndexInfo.getText(), JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
@@ -2330,7 +2401,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		Group selectedGroup = this.arrangerIndexGetSelectedGroup();
 		if (selectedGroup != null) {
 			Collection<Root> expandedRootSet = Arranger.getInstance().accomplishRootSet(
-					new HashSet<Root>(selectedGroup.getSortedRoots()), this);
+					new HashSet<Root>(selectedGroup.getSortedRoots()), this, null);
 			for (Root root: expandedRootSet) {
 				Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
 			}
@@ -2383,12 +2454,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	private boolean arrangerIndexAttachToGroup()
 	{
 		boolean done = false;
+		/* For a single selected Root, it makes of course sense not to offer its source
+		 * groups among the targets, but with distributed selection we must face a situation
+		 * that the selected Root objects are members of many different groups - so would cost
+		 * too much efforts for a rather unimportant effect - if the user selects the source
+		 * group as target group then simply nothing will happen. So we don't bother.
+		 * Nevertheless after the target was chosen we will of course take he actual paths
+		 * into consideration.
+		 */ 
 		Collection<Root> roots = this.arrangerIndexGetSelectedRoots(false);
 		if (!roots.isEmpty()) {
 			int nGroups = this.arrangerIndexTop.getChildCount();
 			for (int i = 0; i < nGroups; i++) {
 				Object groupObject = ((DefaultMutableTreeNode)arrangerIndexTop.getChildAt(i)).getUserObject();
-				if (groupObject instanceof Group && !((Group)groupObject).isDefaultGroup()) {	// Should be expected but better check
+				if (groupObject instanceof Group && !((Group)groupObject).isDefaultGroup()) {
 					this.cmbTargetGroup.addItem((Group)groupObject);
 				}
 			}

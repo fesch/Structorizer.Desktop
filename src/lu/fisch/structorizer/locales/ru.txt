@@ -491,7 +491,7 @@ AnalyserPreferences.okButton.text=ОК
 Editor.btnNew.tooltip=Создать новую пустую схему.
 Editor.btnOpen.tooltip=Открыть схему.
 Editor.btnSave.tooltip=Сохранить схему.
-Editor.btnSaveAll.tooltip=
+Editor.btnSaveAll.tooltip=Сохранить все новые или измененные схемы и группы
 // InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Добавить новую инструкцию позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 Editor.btnAfterAlt.tooltip=Добавить разветвление @{Alternative} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).

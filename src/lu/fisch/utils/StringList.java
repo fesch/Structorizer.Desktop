@@ -1000,7 +1000,7 @@ public class StringList {
         }
         catch (IOException ex)
         {
-            System.out.println(ex.getMessage());
+            System.err.println("StringListsaveToFile(): " + ex.getMessage());
         }
     }
 

@@ -163,7 +163,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
  *      Kay Gürtzig     2018-10-26/28   Enh. #419: New import option impMaxLineLength, new method rebreakLines()
  *      Kay Gürtzig     2018-10-29      Enh. #627: Clipboard copy of a code import error will now contain stack trace if available
- *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance 
+ *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance
+ *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
  *
  ******************************************************************************************************
  *
@@ -291,7 +292,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int mouseX = -1;
     private int mouseY = -1;
     private Element selectedDown = null;
-    private Element selectedUp = null;
     private Element selectedMoved = null;
     private int selX = -1;
     private int selY = -1;
@@ -980,7 +980,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// In case someone wants to drag then let it just be done for the single element
 					// (we don't allow dynamically to move a sequence - the user may better cut and paste)
 					selectedDown = ele;
-					selectedUp = ele;
 					redraw();						
 				}
 				else if (ele != selected)
@@ -1003,7 +1002,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						selected.setSelected(true);
 						redraw();
 						selectedDown = ele;
-						selectedUp = ele;
 					}
 					else
 					{
@@ -1019,7 +1017,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 						selected = ele;
 						selectedDown = ele;
-						selectedUp = ele;
 					// START KGU#87 2015-11-23: Original code just part of the else branch
 					}
 					// END KGU#87 2015-11-23
@@ -1075,7 +1072,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//System.out.println("=================== MOUSE RELEASED 1 (" + e.getX()+ ", " +e.getY()+ ")======================");
 					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
-					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					Element selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp != null)
@@ -1138,7 +1135,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//System.out.println("=================== MOUSE RELEASED 2 (" + e.getX()+ ", " +e.getY()+ ")======================");
 					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
-					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					Element selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp!=null) selectedUp.setSelected(false);
@@ -1269,17 +1266,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				// START KGU#626 2019-01-01: Enh. #657
 				//Root selectedRoot = diagramIndex.getSelectedValue();
+				//if (selectedRoot != null && selectedRoot != this.root) {
+				//	this.setRootIfNotRunning(selectedRoot);
+				//}
+				this.getParent().getParent().requestFocusInWindow();
 				TreePath[] paths = arrangerIndex.getSelectionPaths();
 				Object selectedObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
-				Root selectedRoot = null;
-				if (selected instanceof Root) {
-					selectedRoot = (Root)selectedObject;
- 				}
-				// END KGU#626 2019-01-01
-				if (selectedRoot != null && selectedRoot != this.root) {
-					this.setRootIfNotRunning(selectedRoot);
+				if (selectedObject instanceof Root) {
+					Root selectedRoot = (Root)selectedObject;
+					if (selectedRoot != this.root) {
+						this.setRootIfNotRunning(selectedRoot);
+					}
+					/* Ensure the diagram scrollpane gets the focus such that keyboard actions work in
+					 * the diagram area: parent is the viewport, grand parent is the scrollpane */
+					this.getParent().getParent().requestFocusInWindow();
 				}
-				this.getParent().getParent().requestFocusInWindow();
+				else if (selectedObject instanceof Group) {
+					// TODO think about some more sensible action than showing the info here...
+					// (additionally to the expand/collapse action done by the JTree itself)
+					
+					// Grope for the editor instance in the container hierarchy (bad, bad!)
+					Container cont = arrangerIndex.getParent();
+					while (cont != null && !(cont instanceof Editor)) {
+						cont = cont.getParent();
+					}
+					if (cont != null) {
+						((Editor)cont).arrangerIndexInfo();
+					}
+				}
+				// END KGU#626 2019-01-01
 			}
 			// END KGU#305 2016-12-12
 		}
@@ -1536,7 +1551,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			root.selectElementByCoord(-1, -1);
 		}
-		selected = selectedUp = selectedDown = selectedMoved = null;
+		selected = selectedDown = selectedMoved = null;
 		if (refresh) {
 			redraw();
 		}
@@ -1619,7 +1634,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#183 2016-04-23: Bugfix #155, Issue #169
 		// We must not forget to clear a previous selection
 		//this.selected = this.selectedDown = this.selectedUp = null;
-		this.selectedDown = this.selectedUp = null;
+		this.selectedDown = null;
 		this.selected = root;
 		root.setSelected(true);
 		// END KGU#183 2016-04-23
@@ -1934,7 +1949,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							Menu.msgTitleSave.getText(),
 							JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
 					&& Arranger.hasInstance()) {
-				Arranger.getInstance().saveAll();
+				Arranger.getInstance().saveAll(this.NSDControl.getFrame());
 			}
 		}
 		finally {
@@ -2651,7 +2666,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		root.undo();
 		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
-		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
+		selected = this.selectedDown = this.selectedMoved = null;
 		// END KGU#138 2016-01-11
 		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
 		root.setSelected(false);
@@ -2667,7 +2682,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		else
 		{
-			selectedDown = selectedUp = selected;
+			selectedDown = selected;
 		}
 		// END KGU#272 2016-10-06
 		redraw();
@@ -2681,7 +2696,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		root.redo();
 		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
-		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
+		selected = this.selectedDown = this.selectedMoved = null;
 		// END KGU#138 2016-01-11
 		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
 		root.setSelected(false);
@@ -2697,7 +2712,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		else
 		{
-			selectedDown = selectedUp = selected;
+			selectedDown = selected;
 		}
 		// END KGU#272 2016-10-06
 		redraw();
@@ -3487,7 +3502,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				selected = _ele.setSelected(true);
 				// START KGU#272 2016-10-06: Bugfix #262
-				selectedDown = selectedUp = selected;
+				selectedDown = selected;
 				// END KGU#272 2016-10-06
 				redraw();
 				analyse();
@@ -3563,6 +3578,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#506 2018-03-14: issue #522 - we need to check for record types
 				HashMap<String, TypeMapEntry> parentTypes = root.getTypeInfo();
 				// END KGU#506 2018-03-14
+				// START KGU#626 2019-01-06: Enh. #657
+				// Detect all groups root is member of such that we can associate the subroutine to them
+				Collection<Group> groups = null;
+				if (Arranger.hasInstance()) {
+					groups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				}
+				// END KGU#626 2019-01-06
 				// FIXME May we involve the user in argument and result value identification?
 				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
 				if (sub != null) {
@@ -3618,10 +3640,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							((Subqueue)source.parent).removeElement(source);
 							incl.children.addElement(source);
 						}
-						incl.setChanged(false);
+						incl.setChanged(false);	// FIXME: why?
 						if (isNewIncl) {
-							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());;
+							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
 						}
+						// START KGU#626 2019-01-06: Enh. #657
+						// Associate the includable to all groups root is member of
+						if (groups != null) {
+							for (Group group: groups) {
+								Arranger.getInstance().attachRootToGroup(group, incl, null, this.NSDControl.getFrame());
+							}
+						}
+						// END KGU#626 2019-01-06
 						root.addToIncludeList(includableName);
 						sub.addToIncludeList(includableName);
 					}
@@ -3629,6 +3659,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					sub.setChanged(false);
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
+					// START KGU#626 2019-01-06: Enh. #657
+					// Associate the includable to all groups root is member of
+					if (groups != null) {
+						for (Group group: groups) {
+							Arranger.getInstance().attachRootToGroup(group, sub, null, this.NSDControl.getFrame());
+						}
+					}
+					// END KGU#626 2019-01-06
 					arr.setVisible(true);
 				}
 				else {
@@ -3790,7 +3828,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		parent.removeElement(index);
 		selected = new SelectedSequence(parent, index, index+count-1);
-		selectedUp = selectedDown = null;
+		selectedDown = null;
 		selected.setSelected(true);
 	}
 	
@@ -3814,7 +3852,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parent.insertElementAt(elem, index+1);
 		parent.removeElement(index);
 		this.selected = elem;
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	
 	private void transmuteToCompoundInstr(Subqueue parent)
@@ -3897,7 +3935,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		instr.setSelected(true);
 		parent.insertElementAt(instr, index);
 		this.selected = instr;
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	// END KGU#199 2016-07-06
 
@@ -3958,7 +3996,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#229 2016-09-11: selection must be made visible!
 		this.selected.setSelected(true);
 		// END KGU#229 2016-09-11
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	// END KGU#229 2016-08-01
 
@@ -4082,7 +4120,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			this.selected = parent.getElement(index);
 		}
 		this.selected.setSelected(true);
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	// END KGU#267 2016-10-03
 
