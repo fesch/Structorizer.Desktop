@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -30,34 +30,34 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.27      First Issue
- *      Kay Gürtzig     2015.12.16      Bugfix #63 - no open attempt without need
- *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
- *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
- *      Kay Gürtzig     2016.05.08      Issue #185: Capability of multi-routine import per file (KGU#194)
- *      Kay Gürtzig     2016.12.02      Enh. #300: Information about updates on start in interactive mode
+ *      Bob Fisch       2007-12-27      First Issue
+ *      Kay Gürtzig     2015-12-16      Bugfix #63 - no open attempt without need
+ *      Kay Gürtzig     2016-04-28      First draft for enh. #179 - batch generator mode (KGU#187)
+ *      Kay Gürtzig     2016-05-03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
+ *      Kay Gürtzig     2016-05-08      Issue #185: Capability of multi-routine import per file (KGU#194)
+ *      Kay Gürtzig     2016-12-02      Enh. #300: Information about updates on start in interactive mode
  *                                      Modification in command-line concatenation
- *      Kay Gürtzig     2016.12.12      Issue #306: multiple arguments in simple command line are now
+ *      Kay Gürtzig     2016-12-12      Issue #306: multiple arguments in simple command line are now
  *                                      interpreted as several files to be opened in series.
- *      Kay Gürtzig     2017.01.27      Issue #306 + #290: Support for Arranger files in command line
- *      Kay Gürtzig     2017.03.04      Enh. #354: Configurable set of import parsers supported now
- *      Kay Gürtzig     2017.04.27      Enh. #354: Verbose option (-v with log directory) for batch import
- *      Kay Gürtzig     2017.07.02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
- *      Kay Gürtzig     2017.11.06      Issue #455: Loading of argument files put in a sequential thread to overcome races
- *      Kay Gürtzig     2018.03.21      Issue #463: Logging configuration via file logging.properties
- *      Kay Gürtzig     2018.06.07      Issue #463: Logging configuration mechanism revised (to support WebStart)
- *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble
- *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
- *      Kay Gürtzig     2018.06.25      Issue #551: No message informing about version check option on WebStart
- *      Kay Gürtzig     2018.07.01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
- *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
- *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
- *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
- *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
- *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
- *      Kay Gürtzig     2018.09.27      Slight modification to verbose option (-v may also be used without argument)
- *      Kay Gürtzig     2018.10.08      Bugfix #620: Logging path setup revised
- *      Kay Gürtzig     2018.10.25      Enh. #416: New option -l maxlen for command line parsing, signatures of
+ *      Kay Gürtzig     2017-01-27      Issue #306 + #290: Support for Arranger files in command line
+ *      Kay Gürtzig     2017-03-04      Enh. #354: Configurable set of import parsers supported now
+ *      Kay Gürtzig     2017-04-27      Enh. #354: Verbose option (-v with log directory) for batch import
+ *      Kay Gürtzig     2017-07-02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
+ *      Kay Gürtzig     2017-11-06      Issue #455: Loading of argument files put in a sequential thread to overcome races
+ *      Kay Gürtzig     2018-03-21      Issue #463: Logging configuration via file logging.properties
+ *      Kay Gürtzig     2018-06-07      Issue #463: Logging configuration mechanism revised (to support WebStart)
+ *      Kay Gürtzig     2018-06-08      Issue #536: Precaution against command line argument trouble
+ *      Kay Gürtzig     2018-06-12      Issue #536: Experimental workaround for Direct3D trouble
+ *      Kay Gürtzig     2018-06-25      Issue #551: No message informing about version check option on WebStart
+ *      Kay Gürtzig     2018-07-01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
+ *      Kay Gürtzig     2018-07-03      Bugfix #554: Now a specified parser will override the automatic search.
+ *      Kay Gürtzig     2018-08-17      Help text for parser updated (now list is from parsers.xml).
+ *      Kay Gürtzig     2018-08-18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
+ *      Kay Gürtzig     2018-09-14      Issue #537: Apple-specific code revised such that build configuration can handle it
+ *      Kay Gürtzig     2018-09-19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
+ *      Kay Gürtzig     2018-09-27      Slight modification to verbose option (-v may also be used without argument)
+ *      Kay Gürtzig     2018-10-08      Bugfix #620: Logging path setup revised
+ *      Kay Gürtzig     2018-10-25      Enh. #416: New option -l maxlen for command line parsing, signatures of
  *                                      export(...) and parse(...) modified.
  *
  ******************************************************************************************************

@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -70,7 +70,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-07-17      Issue #561: New icon 055_sigma (sum symbol) added
  *      Kay Gürtzig     2018-09-18      Issue #601: More safety on icon request (dummy icon, log).
  *      Kay Gürtzig     2018-10-27      Enh. #619: New icon 056_wordwrap for line breaking menu item
- *      Kay Gürtzig     2018-12-27      Enh. #657: New icons 089_keyboard, 090_laxers for Arranger popup menu added
+ *      Kay Gürtzig     2018-12-27      Enh. #657: New icons 089_keyboard, 090_layers for Arranger popup menu added
+ *      Kay Gürtzig     2019-01-01      Enh. #657: New icons 094_group through 098_groupDetach added
+ *      Kay Gürtzig     2019-01-03      Enh. #657: New icons 116_groupAttach, 117_groupExpand added
  *
  ******************************************************************************************************
  *
@@ -191,11 +193,11 @@ public class IconLoader {
 			"091_elem_para.png",
 			"092_SaveAs.png",
 			"093_picture_export.png",	// for Arranger toolbar
-			null,	//"094_forBefore.png",		// obsolete (#510)
-			null,	//"095_for_dinBefore.png",	// obsolete (#510)
-			null,	//"096_forAfter.png",			// obsolete (#510)
-			null,	//"097_for_dinAfter.png",		// obsolete (#510)
-			null,	// 98
+			"094_group.png",	//ex "094_forBefore.png",		// obsolete (#510)
+			"095_groupList.png",	//ex "095_for_dinBefore.png",	// obsolete (#510)
+			"096_groupArchive.png",	//ex "096_forAfter.png",			// obsolete (#510)
+			"097_groupDissolve.png",	//"097_for_dinAfter.png",		// obsolete (#510)
+			"098_groupDetach.png",	// 98
 			"099_pin_blue.png",	// for Arranger toolbar
 			"100_diagram_drop.png", // for Arranger toolbar
 			"101_diagram_new.png",	// for Arranger toolbar and Arranger index
@@ -213,6 +215,9 @@ public class IconLoader {
 			"113_translator.png",
 			"114_down.png",	// for Translator Find dialog
 			"115_up.png",	// for Translator Find dialog
+			"116_groupAttach.png",
+			"117_groupExpand.png",
+			"118_info.png"
 	};
 	
 	private static final int[] ICON_SIZES = {

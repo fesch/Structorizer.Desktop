@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -32,73 +32,73 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Kay Gürtzig     2014.11.11      Operator highlighting modified (sse comment)
- *      Kay Gürtzig     2015.10.09      Methods selectElementByCoord(x,y) and getElementByCoord() merged
- *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
- *      Kay Gürtzig     2015.10.13      Execution state separated from selected state
- *      Kay Gürtzig     2015.11.01      operator unification and intermediate syntax transformation ready
- *      Kay Gürtzig     2015.11.12      Issue #25 (= KGU#80) fixed in unifyOperators, highlighting corrected
- *      Kay Gürtzig     2015.12.01      Bugfixes #39 (= KGU#91) and #41 (= KGU#92)
- *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): Method splitExpressionList added
- *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (KGU#93): Method transformIntermediate revised
- *      Kay Gürtzig     2015.12.23      Bugfix #74 (KGU#115): Pascal operators accidently disabled
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Kay Gürtzig     2014-11-11      Operator highlighting modified (sse comment)
+ *      Kay Gürtzig     2015-10-09      Methods selectElementByCoord(x,y) and getElementByCoord() merged
+ *      Kay Gürtzig     2015-10-11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015-10-13      Execution state separated from selected state
+ *      Kay Gürtzig     2015-11-01      operator unification and intermediate syntax transformation ready
+ *      Kay Gürtzig     2015-11-12      Issue #25 (= KGU#80) fixed in unifyOperators, highlighting corrected
+ *      Kay Gürtzig     2015-12-01      Bugfixes #39 (= KGU#91) and #41 (= KGU#92)
+ *      Kay Gürtzig     2015-12-11      Enhancement #54 (KGU#101): Method splitExpressionList added
+ *      Kay Gürtzig     2015-12-21      Bugfix #41/#68/#69 (KGU#93): Method transformIntermediate revised
+ *      Kay Gürtzig     2015-12-23      Bugfix #74 (KGU#115): Pascal operators accidently disabled
  *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03/04   Enh. #87 for collapsing/expanding (KGU#122/KGU#123)
- *      Kay Gürtzig     2016.01.12      Bugfix #105: flaw in string literal tokenization (KGU#139)
- *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
- *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
- *      Kay Gürtzig     2016.01.15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
- *      Kay Gürtzig     2016.01.16      Changes having got lost on a Nov. 2014 merge re-inserted
- *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
- *      Kay Gürtzig     2016.03.02      Bugfix #97: steady selection on dragging (see comment, KGU#136),
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03/04   Enh. #87 for collapsing/expanding (KGU#122/KGU#123)
+ *      Kay Gürtzig     2016-01-12      Bugfix #105: flaw in string literal tokenization (KGU#139)
+ *      Kay Gürtzig     2016-01-12      Bugfix #104: transform caused index errors
+ *      Kay Gürtzig     2016-01-14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
+ *      Kay Gürtzig     2016-01-15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
+ *      Kay Gürtzig     2016-01-16      Changes having got lost on a Nov. 2014 merge re-inserted
+ *      Kay Gürtzig     2016-01-22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
+ *      Kay Gürtzig     2016-03-02      Bugfix #97: steady selection on dragging (see comment, KGU#136),
  *                                      Element self-description improved (method toString(), KGU#152)
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
- *      Kay Gürtzig     2016.03.10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
- *      Kay Gürtzig     2016.03.26      KGU#165: New option CodeParser.ignoreCase introduced
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016-03-10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Runtime data collection accomplished
+ *      Kay Gürtzig     2016-03-26      KGU#165: New option CodeParser.ignoreCase introduced
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
  *                                      Enh. #185: new abstract method convertToCalls() for code import
- *      Kay Gürtzig     2016.07.25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
- *      Kay Gürtzig     2016.07.28      Bugfix #210: Execution counting mechanism fundamentally revised
- *      Kay Gürtzig     2016.07.29      Issue #211: Modification in writeOutVariables() for E_TOGGLETC mode.
+ *      Kay Gürtzig     2016-07-25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
+ *      Kay Gürtzig     2016-07-28      Bugfix #210: Execution counting mechanism fundamentally revised
+ *      Kay Gürtzig     2016-07-29      Issue #211: Modification in writeOutVariables() for E_TOGGLETC mode.
  *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
- *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
- *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
- *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactored
- *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
- *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
- *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to CodeParser.keywordMap
- *      Kay Gürtzig     2017.01.06      Issue #327: French default structure preferences replaced by English ones
- *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
- *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
- *      Kay Gürtzig     2017.02.01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
- *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
- *      Kay Gürtzig     2017.03.30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
- *      Kay Gürtzig     2017.04.14      Enh. #380: New highlighting mechanism troubleMakers / E_TROUBLECOLOR
- *      Kay Gürtzig     2017.05.22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals
- *      Kay Gürtzig     2017.06.09      Enh. #416: Methods getUnbrokenText(), getBrokenText() introduced
- *      Kay Gürtzig     2017.07.02      Enh. #389: Signature of addFullText() reverted to two arguments
- *      Kay Gürtzig     2017.09.13      Enh. #423: New methods supporting type definitions
- *      Kay Gürtzig     2017.09.17      Enh. #423: Type name highlighting
- *      Kay Gürtzig     2017.09.18      Enh. #423: Recursive record definitions, splitLexically() improved
- *      Kay Gürtzig     2017.09.29      Enh. #423: splitLexically() debugged, now ellipses are tokens too
- *      Kay Gürtzig     2017.10.02      Enh. #423: Method extractDeclarationsFromList() and regex mechanisms revised
- *      Kay Gürtzig     2017.12.10/11   Enh. #487: Method access modifications to support hiding of declarations
- *      Kay Gürtzig     2018.01.21      Enh. #490: Methods for replacement of DiagramController aliases
- *      Kay Gürtzig     2018.02.02      Bugfix #501: Methods setAliasText() corrected (Case and Parallel elements)
- *      Kay Gürtzig     2018.07.02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
- *      Kay Gürtzig     2018.07.20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
- *      Kay Gürtzig     2018.07.26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
- *      Kay Gürtzig     2018.08.17      Bugfix #579: isConditionedBreakpoint() didn't work properly
- *      Kay Gürtzig     2018.09.10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
- *      Kay Gürtzig     2018.09.17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
- *      Kay Gürtzig     2018.09.19      Structure preference field initialization aligned with ini defaults
- *      Kay Gürtzig     2018.09.24      Bugfix #605: Handling of const modifiers in declaration lists fixed
- *      Kay Gürtzig     2018.10.05      Bugfix #619: Declaration status of function result variable fixed
- *      Kay Gürtzig     2018.10.25      Enh. #419: New method breakTextLines(...)
+ *      Kay Gürtzig     2016-08-02      Enh. #215: Infrastructure for conditional breakpoints added.
+ *      Kay Gürtzig     2016-09-21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
+ *      Kay Gürtzig     2016-09-25      Enh. #253: CodeParser.keywordMap refactored
+ *      Kay Gürtzig     2016-09-28      KGU#264: Font name property renamed from "Name" to "Font".
+ *      Kay Gürtzig     2016-10-13      Issue #270: New field "disabled" for execution and code export
+ *      Kay Gürtzig     2016-11-06      Issue #279: Several modifications to circumvent direct access to CodeParser.keywordMap
+ *      Kay Gürtzig     2017-01-06      Issue #327: French default structure preferences replaced by English ones
+ *      Kay Gürtzig     2017-01-13      Issue #333: Display of compound comparison operators as unicode symbols
+ *      Kay Gürtzig     2017-01-27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
+ *      Kay Gürtzig     2017-02-01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
+ *      Kay Gürtzig     2017-02-07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
+ *      Kay Gürtzig     2017-03-30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
+ *      Kay Gürtzig     2017-04-14      Enh. #380: New highlighting mechanism troubleMakers / E_TROUBLECOLOR
+ *      Kay Gürtzig     2017-05-22      Issue #354: Fixes type detection of binary, octal and hexadecimal literals
+ *      Kay Gürtzig     2017-06-09      Enh. #416: Methods getUnbrokenText(), getBrokenText() introduced
+ *      Kay Gürtzig     2017-07-02      Enh. #389: Signature of addFullText() reverted to two arguments
+ *      Kay Gürtzig     2017-09-13      Enh. #423: New methods supporting type definitions
+ *      Kay Gürtzig     2017-09-17      Enh. #423: Type name highlighting
+ *      Kay Gürtzig     2017-09-18      Enh. #423: Recursive record definitions, splitLexically() improved
+ *      Kay Gürtzig     2017-09-29      Enh. #423: splitLexically() debugged, now ellipses are tokens too
+ *      Kay Gürtzig     2017-10-02      Enh. #423: Method extractDeclarationsFromList() and regex mechanisms revised
+ *      Kay Gürtzig     2017-12-10/11   Enh. #487: Method access modifications to support hiding of declarations
+ *      Kay Gürtzig     2018-01-21      Enh. #490: Methods for replacement of DiagramController aliases
+ *      Kay Gürtzig     2018-02-02      Bugfix #501: Methods setAliasText() corrected (Case and Parallel elements)
+ *      Kay Gürtzig     2018-07-02      KGU#245 Code revision: color0, color1,... fields replaced with colors array
+ *      Kay Gürtzig     2018-07-20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
+ *      Kay Gürtzig     2018-07-26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
+ *      Kay Gürtzig     2018-08-17      Bugfix #579: isConditionedBreakpoint() didn't work properly
+ *      Kay Gürtzig     2018-09-10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
+ *      Kay Gürtzig     2018-09-17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018-09-19      Structure preference field initialization aligned with ini defaults
+ *      Kay Gürtzig     2018-09-24      Bugfix #605: Handling of const modifiers in declaration lists fixed
+ *      Kay Gürtzig     2018-10-05      Bugfix #619: Declaration status of function result variable fixed
+ *      Kay Gürtzig     2018-10-25      Enh. #419: New method breakTextLines(...)
  *
  ******************************************************************************************************
  *
@@ -226,7 +226,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.28-13";
+	public static final String E_VERSION = "3.29";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+

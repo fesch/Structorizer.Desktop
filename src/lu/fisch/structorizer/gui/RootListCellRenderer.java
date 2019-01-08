@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
     Copyright (C) 2016  Kay Gürtzig
@@ -32,14 +32,17 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2016.12.12      First Issue
- *      Kay Gürtzig     2017.01.07      Enh. #319 - "covered" status now shown by the icons instead of the text
- *      Kay Gürtzig     2017.05.16      Enh. #389: new icons for includable roots.
+ *      Kay Gürtzig     2016-12-12      First Issue
+ *      Kay Gürtzig     2017-01-07      Enh. #319 - "covered" status now shown by the icons instead of the text
+ *      Kay Gürtzig     2017-05-16      Enh. #389: new icons for includable roots.
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      Introduced for a first implementation of enhancement #305
+ *
+ *      2019-01-02 Kay Gürtzig
+ *      Now replaced by Editor.ArrangerIndexCellRenderer
  *
  ******************************************************************************************************///
 

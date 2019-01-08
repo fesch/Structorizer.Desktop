@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -163,7 +163,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-01      Bugfix #367: After IF branch swapping the drawing invalidation had wrong direction
  *      Kay Gürtzig     2018-10-26/28   Enh. #419: New import option impMaxLineLength, new method rebreakLines()
  *      Kay Gürtzig     2018-10-29      Enh. #627: Clipboard copy of a code import error will now contain stack trace if available
- *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance 
+ *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance
+ *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
  *
  ******************************************************************************************************
  *
@@ -219,6 +220,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.DefaultFormatter;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -234,6 +237,7 @@ import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
@@ -288,7 +292,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int mouseX = -1;
     private int mouseY = -1;
     private Element selectedDown = null;
-    private Element selectedUp = null;
     private Element selectedMoved = null;
     private int selX = -1;
     private int selY = -1;
@@ -301,10 +304,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     /** Nesting depth of serial actions */
 	private static short serialActionDepth = 0;
 	public enum SerialDecisionStatus {INDIVIDUAL, YES_TO_ALL, NO_TO_ALL};
-	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE};
+	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE, SERIAL_GROUP_SAVE};
 	private static final SerialDecisionStatus[] serialDecisions = {
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_SAVE
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_OVERWRITE
+			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_GROUP_SAVE
 	}; 
 	/**
 	 * Enters a serial action - thus allowing general decisions to certain aspects
@@ -361,18 +365,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * serial action (INDIVIDUAL if there is no serial action context). 
 	 * @param aspect - one of the supported serial decision aspects
 	 * @return the decision value
+	 * @see #setSerialDecision(SerialDecisionAspect, boolean)
 	 */
-	public SerialDecisionStatus getSerialDecision(SerialDecisionAspect aspect) {
+	public static SerialDecisionStatus getSerialDecision(SerialDecisionAspect aspect) {
 		return serialDecisions[aspect.ordinal()]; 
 	}
 	/**
-	 * Sets a general decision for all remaining files or other subjects fo the given
+	 * Sets a general decision for all remaining files or other subjects for the given
 	 * {@code aspect} of the current serial action (note that there is no way back to
-	 * INDIVIDUAL here). Is ignored if teher is no serial action context. 
+	 * INDIVIDUAL here). Is ignored if there is no serial action context. 
 	 * @param aspect - one of the supported serial decision aspects
 	 * @param statusAll - yes to all (true) or no to all (false)
+	 * @see #getSerialDecision(SerialDecisionAspect)
 	 */
-	private void setSerialDecision(SerialDecisionAspect aspect, boolean statusAll) {
+	public static void setSerialDecision(SerialDecisionAspect aspect, boolean statusAll) {
 		if (serialActionDepth > 0) {
 			serialDecisions[aspect.ordinal()] = (statusAll ? SerialDecisionStatus.YES_TO_ALL : SerialDecisionStatus.NO_TO_ALL);
 		}
@@ -389,7 +395,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // END KGU#2 2015-11-24
 
     private JList<DetectedError> errorlist = null;
-    private JList<Root> diagramIndex = null;
+    // START KGU#626 2019-01-01: Enh. #657
+    //private JList<Root> diagramIndex = null;
+    private JTree arrangerIndex = null;
+    // END KGU#626 2019-01-01
 
     // START KGU#368 2017-03-10: Enh. #376 - Allow copy and paste among Structorizer instances
     //private Element eCopy = null;
@@ -462,7 +471,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         if(_editor!=null)
         {
             errorlist=_editor.errorlist;
-            diagramIndex = _editor.diagramIndex;
+            // START KGU#626 2019-01-01: Enh. #657
+            //diagramIndex = _editor.diagramIndex;
+            arrangerIndex = _editor.arrangerIndex;
+            // END KGU#626 2019-01-01
             NSDControl = _editor;
         }
         create(_string);
@@ -968,7 +980,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// In case someone wants to drag then let it just be done for the single element
 					// (we don't allow dynamically to move a sequence - the user may better cut and paste)
 					selectedDown = ele;
-					selectedUp = ele;
 					redraw();						
 				}
 				else if (ele != selected)
@@ -991,7 +1002,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						selected.setSelected(true);
 						redraw();
 						selectedDown = ele;
-						selectedUp = ele;
 					}
 					else
 					{
@@ -1007,7 +1017,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 						selected = ele;
 						selectedDown = ele;
-						selectedUp = ele;
 					// START KGU#87 2015-11-23: Original code just part of the else branch
 					}
 					// END KGU#87 2015-11-23
@@ -1063,7 +1072,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//System.out.println("=================== MOUSE RELEASED 1 (" + e.getX()+ ", " +e.getY()+ ")======================");
 					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
-					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					Element selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp != null)
@@ -1126,7 +1135,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//System.out.println("=================== MOUSE RELEASED 2 (" + e.getX()+ ", " +e.getY()+ ")======================");
 					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
-					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					Element selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp!=null) selectedUp.setSelected(false);
@@ -1177,10 +1186,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#565 2018-07-27
 			// START KGU#305 2016-12-12: Enh. #305
-			else if (e.getSource() == diagramIndex)
-			{
-				Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+			// START KGU#626 2019-01-01: Enh. #657
+			//else if (e.getSource() == diagramIndex)
+			//{
+			//	Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+			//}
+			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1) {
+				TreePath[] selectedPaths = arrangerIndex.getSelectionPaths();	// Should have cardinality 1
+				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selectedPaths[0].getLastPathComponent();
+				Object selectedObject = selectedNode.getUserObject();
+				if (selectedObject instanceof Root) {
+					// Should be a Root object
+					Arranger.scrollToDiagram((Root)selectedObject, true);
+				}
+				else if (selectedObject instanceof Group) {
+					Arranger.scrollToGroup((Group)selectedObject, false);
+				}
 			}
+			// END KGU#626 2019-01-01
 			// END KGU#305 2016-12-12
 		}
 		// edit the element
@@ -1236,13 +1259,42 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			// START KGU#305 2016-12-12: Enh. #305
-			else if (e.getSource() == diagramIndex)
+			// START KGU#626 2019-01-01: Enh. #657
+			//else if (e.getSource() == diagramIndex)
+			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1)
+			// END KGU#626 2019-01-01
 			{
-				Root selectedRoot = diagramIndex.getSelectedValue();
-				if (selectedRoot != null && selectedRoot != this.root) {
-					this.setRootIfNotRunning(selectedRoot);
-				}
+				// START KGU#626 2019-01-01: Enh. #657
+				//Root selectedRoot = diagramIndex.getSelectedValue();
+				//if (selectedRoot != null && selectedRoot != this.root) {
+				//	this.setRootIfNotRunning(selectedRoot);
+				//}
 				this.getParent().getParent().requestFocusInWindow();
+				TreePath[] paths = arrangerIndex.getSelectionPaths();
+				Object selectedObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
+				if (selectedObject instanceof Root) {
+					Root selectedRoot = (Root)selectedObject;
+					if (selectedRoot != this.root) {
+						this.setRootIfNotRunning(selectedRoot);
+					}
+					/* Ensure the diagram scrollpane gets the focus such that keyboard actions work in
+					 * the diagram area: parent is the viewport, grand parent is the scrollpane */
+					this.getParent().getParent().requestFocusInWindow();
+				}
+				else if (selectedObject instanceof Group) {
+					// TODO think about some more sensible action than showing the info here...
+					// (additionally to the expand/collapse action done by the JTree itself)
+					
+					// Grope for the editor instance in the container hierarchy (bad, bad!)
+					Container cont = arrangerIndex.getParent();
+					while (cont != null && !(cont instanceof Editor)) {
+						cont = cont.getParent();
+					}
+					if (cont != null) {
+						((Editor)cont).arrangerIndexInfo();
+					}
+				}
+				// END KGU#626 2019-01-01
 			}
 			// END KGU#305 2016-12-12
 		}
@@ -1499,7 +1551,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			root.selectElementByCoord(-1, -1);
 		}
-		selected = selectedUp = selectedDown = selectedMoved = null;
+		selected = selectedDown = selectedMoved = null;
 		if (refresh) {
 			redraw();
 		}
@@ -1582,7 +1634,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#183 2016-04-23: Bugfix #155, Issue #169
 		// We must not forget to clear a previous selection
 		//this.selected = this.selectedDown = this.selectedUp = null;
-		this.selectedDown = this.selectedUp = null;
+		this.selectedDown = null;
 		this.selected = root;
 		root.setSelected(true);
 		// END KGU#183 2016-04-23
@@ -1897,7 +1949,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							Menu.msgTitleSave.getText(),
 							JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
 					&& Arranger.hasInstance()) {
-				Arranger.getInstance().saveAll();
+				Arranger.getInstance().saveAll(this.NSDControl.getFrame());
 			}
 		}
 		finally {
@@ -1988,7 +2040,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					newFilename += ".nsd";
 				}
 				if (chkAcceptProposals != null && chkAcceptProposals.isSelected()) {
-					this.setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, true);
+					setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, true);
 				}
 
 				File f = new File(newFilename);
@@ -2116,7 +2168,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						writeNow = 2;
 					}
 					else if (res == 2) {
-						this.setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
+						setSerialDecision(SerialDecisionAspect.SERIAL_OVERWRITE, true);
 					}
 					if (res == 0 || res == 2) writeNow = 0;
 					}
@@ -2186,65 +2238,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!root.isEmpty() && root.hasChanged())
 		// END KGU#137 2016-01-11
 		{
-			// START KGU#534 2018-06-27: Enh. #552
-			if (_askToSave && isInSerialMode()) {
-				switch (getSerialDecision(SerialDecisionAspect.SERIAL_SAVE)) {
-				case NO_TO_ALL:
-					res = 1;
-					// NO break here!
-				case YES_TO_ALL:
-					_askToSave = false;
-					break;
-				default:;
-				}
-			}
-			// END KGU#534 2018-06-27
-			if (_askToSave)
-			{
-				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous seeing the NSD name
-				//res = JOptionPane.showOptionDialog(this,
-				//		   "Do you want to save the current NSD-File?",
+			String message = null;
+			if (_askToSave) {
 				String filename = root.filename;
 				if (filename == null || filename.isEmpty())
 				{
 					filename = root.proposeFileName();
 				}
-				String[] options = null;
-				if (isInSerialMode()) {
-					options = new String[]{
-							Menu.lblContinue.getText(),
-							Menu.lblSkip.getText(),
-							Menu.lblYesToAll.getText(),
-							Menu.lblNoToAll.getText()	// Well, this is less sensible...
-					};
-				}
-				else {
-					options = new String[] {
-							Menu.lblYes.getText(),
-							Menu.lblNo.getText()
-					};
-				}
-				Object initialValue = options[0];
-				res = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
-												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
-				// END KGU#49 2015-10-18
-												   Menu.msgTitleQuestion.getText(),
-												   JOptionPane.YES_NO_OPTION,
-												   JOptionPane.QUESTION_MESSAGE,
-												   // START KGU#534 2018-06-27: Enh. #552
-												   //null,null,null
-												   null,
-												   options,
-												   initialValue
-												   // END KGU#534 2018-06-27
-												   );
+				message = Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"";
 			}
+			res = requestSaveDecision(message, this.NSDControl.getFrame(), SerialDecisionAspect.SERIAL_SAVE);
 			
 			// START KGU#534 2018-06-27: Enh. #552
 			//if (res==0)
-			if (res >= 2) {
-				this.setSerialDecision(SerialDecisionAspect.SERIAL_SAVE, res == 2);
-			}
 			if (res==0 || res==2)
 			// END KGU#534 2018-06-27
 			{
@@ -2311,6 +2317,68 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		return res != -1; // true if not cancelled
+	}
+	/**
+	 * Service method for a decision about saving a file with the given path {@code filename} in
+	 * a potential serial context.
+	 * @param _messageText - the text of the offered question if an interactive dialog is wanted at all, null otherwise
+	 * @param _initiator - an owning component for the modal message or question boxes
+	 * @return 0 for approval, 1 for disapproval, 2 for "yes to all", 3 for "no to all", -1 for cancel
+	 */
+	public static int requestSaveDecision(String _messageText, Component initiator, SerialDecisionAspect aspect) {
+		int res = 0;
+		// START KGU#534 2018-06-27: Enh. #552
+		if (_messageText != null && isInSerialMode()) {
+			switch (getSerialDecision(aspect)) {
+			case NO_TO_ALL:
+				res = 1;
+				// NO break here!
+			case YES_TO_ALL:
+				_messageText = null;
+				break;
+			default:;
+			}
+		}
+		// END KGU#534 2018-06-27
+		if (_messageText != null)
+		{
+			// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous seeing the NSD name
+			//res = JOptionPane.showOptionDialog(this,
+			//		   "Do you want to save the current NSD-File?",
+			String[] options = null;
+			if (isInSerialMode()) {
+				options = new String[]{
+						Menu.lblContinue.getText(),
+						Menu.lblSkip.getText(),
+						Menu.lblYesToAll.getText(),
+						Menu.lblNoToAll.getText()	// Well, this is less sensible...
+				};
+			}
+			else {
+				options = new String[] {
+						Menu.lblYes.getText(),
+						Menu.lblNo.getText()
+				};
+			}
+			Object initialValue = options[0];
+			res = JOptionPane.showOptionDialog(initiator,
+					_messageText,
+			// END KGU#49 2015-10-18
+					Menu.msgTitleQuestion.getText(),
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					// START KGU#534 2018-06-27: Enh. #552
+					//null,null,null
+					null,
+					options,
+					initialValue
+					// END KGU#534 2018-06-27
+					);
+		}
+		if (res >= 2) {
+			setSerialDecision(aspect, res == 2);
+		}
+		return res;
 	}
 	
 	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
@@ -2598,7 +2666,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		root.undo();
 		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
-		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
+		selected = this.selectedDown = this.selectedMoved = null;
 		// END KGU#138 2016-01-11
 		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
 		root.setSelected(false);
@@ -2614,7 +2682,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		else
 		{
-			selectedDown = selectedUp = selected;
+			selectedDown = selected;
 		}
 		// END KGU#272 2016-10-06
 		redraw();
@@ -2628,7 +2696,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		root.redo();
 		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
-		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
+		selected = this.selectedDown = this.selectedMoved = null;
 		// END KGU#138 2016-01-11
 		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
 		root.setSelected(false);
@@ -2644,7 +2712,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		else
 		{
-			selectedDown = selectedUp = selected;
+			selectedDown = selected;
 		}
 		// END KGU#272 2016-10-06
 		redraw();
@@ -3434,7 +3502,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				selected = _ele.setSelected(true);
 				// START KGU#272 2016-10-06: Bugfix #262
-				selectedDown = selectedUp = selected;
+				selectedDown = selected;
 				// END KGU#272 2016-10-06
 				redraw();
 				analyse();
@@ -3510,6 +3578,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#506 2018-03-14: issue #522 - we need to check for record types
 				HashMap<String, TypeMapEntry> parentTypes = root.getTypeInfo();
 				// END KGU#506 2018-03-14
+				// START KGU#626 2019-01-06: Enh. #657
+				// Detect all groups root is member of such that we can associate the subroutine to them
+				Collection<Group> groups = null;
+				if (Arranger.hasInstance()) {
+					groups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				}
+				// END KGU#626 2019-01-06
 				// FIXME May we involve the user in argument and result value identification?
 				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
 				if (sub != null) {
@@ -3565,10 +3640,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							((Subqueue)source.parent).removeElement(source);
 							incl.children.addElement(source);
 						}
-						incl.setChanged(false);
+						incl.setChanged(false);	// FIXME: why?
 						if (isNewIncl) {
-							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());;
+							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
 						}
+						// START KGU#626 2019-01-06: Enh. #657
+						// Associate the includable to all groups root is member of
+						if (groups != null) {
+							for (Group group: groups) {
+								Arranger.getInstance().attachRootToGroup(group, incl, null, this.NSDControl.getFrame());
+							}
+						}
+						// END KGU#626 2019-01-06
 						root.addToIncludeList(includableName);
 						sub.addToIncludeList(includableName);
 					}
@@ -3576,6 +3659,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					sub.setChanged(false);
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
+					// START KGU#626 2019-01-06: Enh. #657
+					// Associate the includable to all groups root is member of
+					if (groups != null) {
+						for (Group group: groups) {
+							Arranger.getInstance().attachRootToGroup(group, sub, null, this.NSDControl.getFrame());
+						}
+					}
+					// END KGU#626 2019-01-06
 					arr.setVisible(true);
 				}
 				else {
@@ -3737,7 +3828,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		parent.removeElement(index);
 		selected = new SelectedSequence(parent, index, index+count-1);
-		selectedUp = selectedDown = null;
+		selectedDown = null;
 		selected.setSelected(true);
 	}
 	
@@ -3761,7 +3852,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parent.insertElementAt(elem, index+1);
 		parent.removeElement(index);
 		this.selected = elem;
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	
 	private void transmuteToCompoundInstr(Subqueue parent)
@@ -3844,7 +3935,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		instr.setSelected(true);
 		parent.insertElementAt(instr, index);
 		this.selected = instr;
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	// END KGU#199 2016-07-06
 
@@ -3905,7 +3996,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#229 2016-09-11: selection must be made visible!
 		this.selected.setSelected(true);
 		// END KGU#229 2016-09-11
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	// END KGU#229 2016-08-01
 
@@ -4029,7 +4120,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			this.selected = parent.getElement(index);
 		}
 		this.selected.setSelected(true);
-		this.selectedUp = this.selectedDown = this.selected;
+		this.selectedDown = this.selected;
 	}
 	// END KGU#267 2016-10-03
 
@@ -4378,10 +4469,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * it will be (re-)opened. 
 	 */
 	public void arrangeNSD()
+	// START KGU#626 2018-12-28: Enh. #657
+	{
+		arrangeNSD(null);
+	}
+	/**
+	 * Push the current root to the Arranger and pin it there. If Arranger wasn't visible then
+	 * it will be (re-)opened.
+	 * @param sourceFilename - the base name of a code file the diagram was imported from if so, null otherwise
+	 */
+	public void arrangeNSD(String sourceFilename)
+	// END KGU#626 2018-12-28
 	{
 		//System.out.println("Arranger button pressed!");
 		Arranger arr = Arranger.getInstance();
-		arr.addToPool(root, NSDControl.getFrame());
+		arr.addToPool(root, NSDControl.getFrame(), sourceFilename);
 		arr.setVisible(true);
 		// KGU#280 2016-10-11: Obsolete now
 		//isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
@@ -5452,7 +5554,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 						startSerialMode();
 						try {
-							while (iter.hasNext() && this.getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
+							while (iter.hasNext() && getSerialDecision(SerialDecisionAspect.SERIAL_SAVE) != SerialDecisionStatus.NO_TO_ALL) {
 								Root nextRoot = iter.next();
 								//nextRoot.highlightVars = hil;
 								nextRoot.setChanged(false);
@@ -5488,7 +5590,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// The Root must be marked for saving
 						root.setChanged(false);
 						// ... and be added to the Arranger
-						this.arrangeNSD();
+						// START KGU#626 2018-12-28 Enh. #657 - group management introduced
+						//this.arrangeNSD();
+						this.arrangeNSD(file.getName());
+						// END KGU#626 2018-12-28
 					}
 					if (firstRoot != null)
 					{
@@ -5506,9 +5611,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						root.setChanged(false);
 						// END KGU#192 2016-05-02
 						// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
-						if (nRoots > 2 || !root.isProgram()) {
-							this.arrangeNSD();
+						// START KGU#626 2018-12-28: Enh. #657 - with groups, push the main diagram, too, also in case of a program
+						//if (nRoots > 2 || !root.isProgram()) {
+						//	this.arrangeNSD();
+						//}
+						if (nRoots > 2) {
+							this.arrangeNSD(file.getName());
 						}
+						// END KGU#626 2018-12-28
 						// END KGU#354 2017-05-23
 					// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
 					}

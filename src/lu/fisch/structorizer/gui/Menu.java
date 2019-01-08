@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -95,6 +95,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-03-15      Bugfix #522: New messages for subroutine outsourcing 
  *      Kay Gürtzig     2018-10-26      Enh. #619: New menu entries and messages for line breaking
  *      Kay Gürtzig     2018-12-24      Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() calls concentrated
+ *      Kay Gürtzig     2019-01-04      Enh. #657: Key bindings Ctrl-G and Ctrl-Shift-G withdrawn (too rarely used)
  *
  ******************************************************************************************************
  *
@@ -916,11 +917,15 @@ public class Menu extends LangMenuBar implements NSDController
 
 		// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
 		menuEdit.add(menuEditUpgradeTurtle);
-		menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// START KGU#626 2019-01-04: Enh. #657 - Accelerator withdrawn, we need ctrl-g etc. now for the grouping mechanism
+		//menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// END KGU#626 2019-01-04
 		menuEditUpgradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(true); doButtons(); } } );
 
 		menuEdit.add(menuEditDowngradeTurtle);
-		menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, menuShortcutKeyMask));
+		// START KGU#626 2019-01-04: Enh. #657 - Accelerator withdrawn, we need ctrl-g etc. now for the grouping mechanism
+		//menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, menuShortcutKeyMask));
+		// END KGU#626 2019-01-04
 		menuEditDowngradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(false); doButtons(); } } );
 
 		menuEdit.addSeparator();
@@ -1653,24 +1658,9 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// DIN 66261
 			menuDiagramDIN.setSelected(Element.E_DIN);
-			if (Element.E_DIN)
-			{
-				// START KGU#493 2018-02-12: Issues #4, #510
-				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(10));
-				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(15));
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(/*95*/74));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(/*97*/74));
-				// END KGU#493 2018-02-12
-			}
-			else
-			{
-				// START KGU#493 2018-02-12: Issues #4, #510
-				//menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(9));
-				//menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(14));
-				menuDiagramAddBeforeFor.setIcon(IconLoader.getIcon(/*94*/53));
-				menuDiagramAddAfterFor.setIcon(IconLoader.getIcon(/*96*/53));
-				// END KGU#493 2018-02-12
-			}
+			ImageIcon iconFor = IconLoader.getIcon(Element.E_DIN ? 74 : 53);
+			menuDiagramAddBeforeFor.setIcon(iconFor);
+			menuDiagramAddAfterFor.setIcon(iconFor);
 			
 			// START KGU#123 2016-01-04: Enh. #87
 			// control the collapsing by mouse wheel?

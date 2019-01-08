@@ -1970,7 +1970,7 @@ public class C99Parser extends CPreParser
 							_typeSpecs.add(getContent_R(prefix.asReduction(), "").trim());
 						}
 						else {
-							System.out.println("getDeclSpecifiers() default - Type specifier: " + prefix.asReduction().getParent().getTableIndex());
+							System.out.println("C99Parser.getDeclSpecifiers() default - Type specifier: " + prefix.asReduction().getParent().getTableIndex());
 						}
 					}
 				}

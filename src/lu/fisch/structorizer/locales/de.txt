@@ -1,6 +1,6 @@
 /*
     Structorizer 
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -120,6 +120,7 @@
  *      Kay Gürtzig         2018-10-27  Enh. #619: New messages for word wrapping tool 
  *      Kay Gürtzig         2018-12-16  Issue #644: New Control message msgInitializerAsArgument
  *      Kay Gürtzig         2018-12-21  Enh. #655: New Arranger messages
+ *      Kay Gürtzig         2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
  *
  ******************************************************************************************************
  *
@@ -496,7 +497,7 @@ Menu.hint25_3.text=Sie könnten Resultate ausgeben wollen, z.B. mit einer Anweis
 Menu.hint25_4.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine Anweisung.
 Menu.hint25_5.text=Wählem Sie die Mitte des Diagramms aus fügen Sie z.B. ein Anweisungselement mit einer Typ- oder Konstantendefinition ein.
 Menu.hint25_6.text=Sie könnten eine Verarbeitungsanweisung wie «%» zwischen Eingabe und Ausgabe platzieren.
-Menu.hint26.0.text=Wählen Sie die Mitte des Diagramms aus, dann doppelklicken, Enter oder F5 drücken und den Enweisungstext «% \"Hallo Welt!\"» eingeben.");
+Menu.hint26.0.text=Wählen Sie die Mitte des Diagramms aus, dann doppelklicken, Enter oder F5 drücken und den Anweisungstext «% "Hallo Welt!"» eingeben.
 Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 ► %2".
 Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 ► %2"
 Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 ► %2 ► %3"
@@ -544,7 +545,7 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagramms.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagramms.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagramms.
-Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme sichern.
+Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme und Gruppen sichern.
 // InsertAfter
 Editor.btnAfterInst.tooltip=Einfügen einer neuen @a nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterAlt.tooltip=Einfügen einer neuen @b-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
@@ -645,10 +646,32 @@ Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
 // Arranger index
 Editor.popupIndexGet.text=Diagram holen
 Editor.popupIndexAttributes.text=Eigenschaften anzeigen ...
+Editor.popupIndexInfo.text=Diagramm-/Gruppen-Info ...
 Editor.popupIndexSave.text=Änderungen sichern
 Editor.popupIndexRemove.text=Entfernen
 Editor.popupIndexCovered.text=Testabdeckung an/aus
 Editor.popupIndexRemoveAll.text=Alle entfernen
+Editor.popupIndexGroup.text=Gruppe erzeugen ...
+Editor.popupIndexExpandGroup.text=Gruppe erweitern ...
+Editor.popupIndexDissolve.text=Gruppe auflösen
+Editor.popupIndexDetach.text=Aus Gruppe entfernen
+Editor.popupIndexAttach.text=In Gruppe einfügen/verschieben ...
+Editor.lblSelectTargetGroup.text=Zielgruppe auswählen:
+Editor.lblGroups.text=Grupos asociados
+Editor.lblSubroutines.text=Aufgerufene Unterprogramme
+Editor.lblIncludables.text=Einbezogene Diagramme
+Editor.lblStaleReferences.text=Unaufgelöste Diagrammverweise
+Editor.msgDefaultGroupName.text=(Auffanggruppe)
+Editor.msgGroupsAndRootsSelected.text=Sowohl Gruppen als auch Diagramme ausgewählt. Gleichzeitiges Löschen auf beiden Ebenen könnte unerwartete Ergebnisse haben.
+Editor.msgDeleteGroupMembers.text=% Gruppen werden entfernt.\n\nDarin enthaltene Diagramme bleiben erhalten, soweit sie in weieteren Gruppen vorkommen.\n\nWas soll mit Diagrammen geschehen, die nicht in weiteren Gruppen enthalten sind: Aus Arranger entfernen?\n(Anderenfalls werden sie in die Auffanggruppe übernommen.)
+Editor.msgConfirmDeleteRoots.text=Sie haben % Diagramm(e) zum Löschen ausgewählt\n\nSollen sie ggf. auch aus allen anderen Gruppen insgesamt entfernt werden?\n(Anderenfalls werden sie einfach nur aus der jeweiligen Gruppe gelöscht.)
+Editor.msgAttachOptions.0.text=Zur Gruppe hinzufügen
+Editor.msgAttachOptions.1.text=In die Gruppe verschieben
+Editor.msgAttachOptions.2.text=Abbrechen
+Editor.msgNumberOfMembers.text=Enthaltene Diagramme: %1, davon gemeinsam mit anderen Gruppen: %2.
+Editor.msgMembersIncomplete.text=Gruppe ist unvollständig:\n%1 verwiesene vorhandene Diagramme sind nicht enthalten;\nfolgende verwiesene Diagramme sind nicht einmal vorhanden:\n- %2
+Editor.msgGroupMembersChanged.text=Die Menge der enthaltenen Diagramme hat sich geändert.
+Editor.msgGroupMembersMoved.text=Die Koordinaten einiger enthaltener Diagramme wurden verändert.
 
 -----[ InputBox ]-----
 InputBox.title=Element bearbeiten
@@ -1119,6 +1142,19 @@ Arranger.btnPinDiagram.tooltip=Ausgewählte Diagramme anheften, um sie gegen Ers
 Arranger.btnSetCovered.tooltip=Unterprogrammdiagrame der Auswahl für Routinenaufrufe als testabgedeckt markieren.
 Arranger.btnRemoveDiagram.tooltip=Entfernt die ausgewählten Diagramme - Umschalttaste gedrückt halten, um alle Diagramme zu entfernen.
 Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
+Arranger.popupHitList.text=Diagramme unter der Maus
+Arranger.popupRemove.text=Gewählte Diagramme entfernen
+Arranger.popupRemoveAll.text=Alle Diagramme entfernen
+Arranger.popupExpandSelection.text=Auswahl vervollständigen
+Arranger.popupExpandSelection.tooltip=Fügt alle direkt oder indirekt aufgerufenen oder einbezogenen Diagramme zur derzeitigen Auswahl hinzu.
+Arranger.popupGroup.text=Ausgewählte Diagramme gruppieren ...
+Arranger.popupExpandGroup.text=Vervollständigen und gruppieren ...
+Arranger.popupAttributes.text=Eigenschaften anzeigen ...
+Arranger.popupAttributes.tooltip=Öffnet den Diagrammeigenschaften-Dialog für das ausgewählte Diagramm
+Arranger.popupHelp.text=Arranger-Hilfe ...
+Arranger.popupHelp.tooltip=Zeigt das Arranger-Kapitel des Online-Nutzerhandbuchs im Browser an
+Arranger.popupKeyBindings.text=Tastenkombinationen ...
+Arranger.popupKeyBindings.tooltip=Zeigt die im Arranger gültigen Tastenkombinationen auf der enstprechenden Nutzerhandbuchseite im Browser an
 Arranger.msgConfirmRemoveAll.text=Wollen Sie wirklich alle Diagramme aus Arranger entfernen?
 Arranger.msgTitleWarning.text=Warnung
 Arranger.msgTitleIllegal.text=Unzulässige Operation!
@@ -1134,18 +1170,18 @@ Arranger.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
 Arranger.msgTitleURLError.text=URL-Fehler
 Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagrame zurAuswahl hinzugefügt.
 Arranger.msgMissingDiagrams.text=\n\nVerweise auf %1 Diagramme nicht aufgelöst (Diagramme nicht gefunden):\n- %2
-Arranger.msgAmbiguousSignatures.text=\nEs gibt %1 Signaturen, zu denen jeweils mehr als ein Diagramm innerhalb der Auswahl passt:\n- %2
-Arranger.popupHitList.text=Diagramme unter der Maus
-Arranger.popupRemove.text=Gewählte Diagramme entfernen
-Arranger.popupRemoveAll.text=Alle Diagramme entfernen
-Arranger.popupExpandSelection.text=Auswahl vervollständigen
-Arranger.popupExpandSelection.tooltip=Fügt alle direkt oder indirekt aufgerufenen oder einbezogenen Diagramme zur derzeitigen Auswahl hinzu.
-Arranger.popupAttributes.text=Eigenschaften anzeigen ...
-Arranger.popupAttributes.tooltip=Öffnet den Diagrammeigenschaften-Dialog für das ausgewählte Diagramm
-Arranger.popupHelp.text=Arranger-Hilfe ...
-Arranger.popupHelp.tooltip=Zeigt das Arranger-Kapitel des Online-Nutzerhandbuchs im Browser an
-Arranger.popupKeyBindings.text=Tastenkombinationen ...
-Arranger.popupKeyBindings.tooltip=Zeigt die im Arranger gültigen Tastenkombinationen auf der enstprechenden Nutzerhandbuchseite im Browser an
+Arranger.msgAmbiguousSignatures.text=\nEs gibt %1 mehrdeutige Signaturen in der Auswahl, zu denen also jeweils mehr als ein Diagramm passt:\n- %2
+Arranger.msgEmptySelection.text=Kann keine Diagramme %: nichts ausgewählt.
+Arranger.msgActionGroup.text=gruppieren
+Arranger.msgGroupName.text=%1Name der Gruppe, der die %2 ausgewählten Diagramme angehören sollen:
+Arranger.msgGroupNameRejected.text=Gruppenname "%" nicht akzeptiert.
+Arranger.msgGroupExists.text=Es gibt bereits eine Gruppen mit dem Namen "%". Was wollen Sie tun?
+Arranger.msgGroupingOptions.0.text=Diagramme hinzufügen
+Arranger.msgGroupingOptions.1.text=Gruppe überschreiben
+Arranger.msgGroupingOptions.2.text=Gruppennamen neu eingeben
+Arranger.msgGroupingOptions.3.text=Abbrechen
+Arranger.msgCongruentGroups.text=Der Satz der %1 ausgewählten Diagramme ist kongruent mit %2 existierenden Grouppe(n):\n- %3\n\n%4
+Arranger.msgDoCreateGroup.text=Möchten Sie dennoch eine weitere Gruppe hinzufügen?
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
@@ -1175,6 +1211,14 @@ Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mi
 Surface.msgOverwriteFile.text=Bestehende Datei "%" überschreiben?
 Surface.msgConfirmOverwrite.text=Überschreiben bestätigen
 Surface.msgTooltipSelectThis.text=Dieses Diagramm auswählen (+Umschalttaste: zur Auswahl hinzufügen) und nach vorn holen.
+Surface.msgGroupRemovalError.text=Fehler beim Entfernen von Gruppe «%»
+Surface.msgArrangementAlreadyLoaded.text=Die Anordnungsdatei "%1" ist bereits in die Gruppe «%2» geladen worden.\nSoll sie mit modifiziertem Gruppennamen erneut geladen werden?
+Surface.msgArrangementNotLoaded.text=Laden der Anordnungsdatei abgebrochen.
+Surface.msgSaveAsNewGroup.text=als neue Gruppe
+Surface.msgSelectGroup.text=Bitte festlegen, ob die Datei einer der bestehenden Gruppen aktualisiert oder eine neue Anordnung gespeichert werden soll:
+Surface.msgConfirmRemoveGroup.text=Gruppe «%» ist geleert worden. Soll sie jetzt gelöscht werden?
+Surface.msgSaveGroupChanges.text=Gruppe «%» hat ungesicherte Änderungen.\nSollen diese Änderungen gespeichert werden, bevor die Gruppe entfernt wird?
+Surface.msgUnsavedGroups.text=Folgende Gruppen konnten nicht gesichert werden:
 
 -----> Executor
 -----[ Control ]-----

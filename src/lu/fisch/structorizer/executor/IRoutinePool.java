@@ -1,6 +1,6 @@
 /*
 Structorizer
-A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
 Copyright (C) 2009  Bob Fisch
 
@@ -33,12 +33,12 @@ package lu.fisch.structorizer.executor;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2015.11.25      First issue
- *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus added (for Enhancement #77)
- *      Kay Gürtzig     2016.09.26:     Enh. #253: New public method getAllRoots() added.
- *      Kay Gürtzig     2016.04.11      Enh. #389: Method signature change: findRoutinesByName -> findDiagramsByName,
+ *      Kay Gürtzig     2015-11-25      First issue
+ *      Kay Gürtzig     2016-03-08      Method clearExecutionStatus added (for Enhancement #77)
+ *      Kay Gürtzig     2016-09-26:     Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016-04-11      Enh. #389: Method signature change: findRoutinesByName -> findDiagramsByName,
  *                                      new method findProgramsByName
- *      Kay Gürtzig     2016.05.16      Enh. #389: Method signature change: findProgramsByName -> findIncludesByName,
+ *      Kay Gürtzig     2016-05-16      Enh. #389: Method signature change: findProgramsByName -> findIncludesByName,
  *
  ******************************************************************************************************
  *

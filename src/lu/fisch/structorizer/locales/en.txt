@@ -1,6 +1,6 @@
 /*
     Structorizer 
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -115,6 +115,7 @@
  *      Kay Gürtzig     2018-10-27      Enh. #619: New messages for word wrapping tool
  *      Kay Gürtzig     2018-12-16      Issue #644: New Control message msgInitializerAsArgument
  *      Kay Gürtzig     2018-12-21      Enh. #655: New Arranger messages
+ *      Kay Gürtzig     2019-01-04      Enh. #657: Many new messages for Editor, Arranger, Surface
  *
  ******************************************************************************************************
  *
@@ -395,7 +396,7 @@ Menu.lblCopyToClipBoard.text=OK + Copy to Clipboard
 Menu.lblReduced.text=Yes, reduced mode
 Menu.lblNormal.text=No, normal mode
 Menu.ttlCodeImport.text=Source code import
-Menu.msgSelectParser.text=The source file type of \"%\" is ambiguous.\nPlease select an import language/parser:
+Menu.msgSelectParser.text=The source file type of "%" is ambiguous.\nPlease select an import language/parser:
 Menu.msgImportCancelled.text=Code import for file "%" cancelled.
 Menu.msgSubroutineName.text=Name of the new subroutine
 Menu.msgIncludableName.text=Name of a (new) includable diagram to move shared types to
@@ -541,7 +542,7 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Create a new blank diagram.
 Editor.btnOpen.tooltip=Open an existing diagram.
 Editor.btnSave.tooltip=Save the current diagram.
-Editor.btnSaveAll.tooltip=Save all diagrams with unsaved changes.
+Editor.btnSaveAll.tooltip=Save all diagrams and groups with unsaved changes.
 // InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Insert a new @a after (+shift: before) the selected element.
 Editor.btnAfterAlt.tooltip=Insert a new @b statement after (+shift: before) the selected element.
@@ -642,10 +643,33 @@ Editor.popupBreakTrigger.text=Specify break trigger...
 // Arranger index
 Editor.popupIndexGet.text=Get diagram
 Editor.popupIndexAttributes.text=Inspect attributes ...
+Editor.popupIndexInfo.text=Diagram/group info ...
 Editor.popupIndexSave.text=Save changes
 Editor.popupIndexRemove.text=Remove
 Editor.popupIndexCovered.text=Test-covered on/off
 Editor.popupIndexRemoveAll.text=Remove All
+Editor.popupIndexGroup.text=Create group ...
+Editor.popupIndexExpandGroup.text=Expand group ...
+Editor.popupIndexDissolve.text=Dissolve group
+Editor.popupIndexDetach.text=Detach from group
+Editor.popupIndexAttach.text=Add/move to group ...
+Editor.lblSelectTargetGroup.text=Select the target group:
+Editor.lblGroups.text=Containing groups
+Editor.lblSubroutines.text=Called subroutines
+Editor.lblIncludables.text=Referenced includables
+Editor.lblStaleReferences.text=Stale diagram references
+Editor.msgDefaultGroupName.text=(Default Group)
+Editor.msgGroupsAndRootsSelected.text=Both groups and diagrams selected. Removing on both levels at a time may have unexpected results.
+Editor.msgDeleteGroupMembers.text=You are going to delete % groups.\n\nThose member diagrams of them that are shared by other groups will survive.\nWhat about diagrams not shared by other groups: Remove from Arranger?\n(Otherwise they would be moved to the default group.)
+Editor.msgConfirmDeleteRoots.text=You selected % diagram(s) to be removed\n\nDo you really intend to remove it/them from all groups and Arranger?\n(Otherwise it/they would just be detached from the respective group.)
+Editor.msgAttachOptions.0.text=Add to group
+Editor.msgAttachOptions.1.text=Move to group
+Editor.msgAttachOptions.2.text=Cancel
+Editor.msgNumberOfMembers.text=Member diagrams: %1, thereof shared with other groups: %2.
+Editor.msgMembersIncomplete.text=Group is incomplete:\n%1 referenced available diagrams are not member;\nthe following referenced diagrams are not even available:\n- %2
+Editor.msgGroupMembersChanged.text=The set of member diagrams was modified.
+Editor.msgGroupMembersMoved.text=The coordinates of some member diagrams were changed.
+
 -----[ InputBox ]-----
 InputBox.title=
 InputBox.lblText.text=Please enter a text
@@ -1114,6 +1138,19 @@ Arranger.btnPinDiagram.tooltip=Pin the selected diagrams to make them immune aga
 Arranger.btnSetCovered.tooltip=Mark the selected routine diagrams as test-covered for subroutine calls to them.
 Arranger.btnRemoveDiagram.tooltip=Removes the selected diagrams - hold Shift key pressed to remove all diagrams.
 Arranger.btnZoom.tooltip=Hold Shift key pressed to zoom in.
+Arranger.popupHitList.text=Hit diagrams
+Arranger.popupRemove.text=Remove selected diagrams
+Arranger.popupRemoveAll.text=Remove all diagrams
+Arranger.popupExpandSelection.text=Expand selection
+Arranger.popupExpandSelection.tooltip=Add all directly or indirectly referenced subroutine/includable diagrams to the current selection.
+Arranger.popupGroup.text=Group selected diagrams ...
+Arranger.popupExpandGroup.text=Expand and group ...
+Arranger.popupAttributes.text=Inspect attributes ...
+Arranger.popupAttributes.tooltip=Opens the Attribute Inspector dialog for the selected diagram
+Arranger.popupHelp.text=Arranger help ...
+Arranger.popupHelp.tooltip=Show the Arranger page of the Online User Guide in the browser
+Arranger.popupKeyBindings.text=Show key bindings ...
+Arranger.popupKeyBindings.tooltip=Show the Arranger key bindings page of the Online User Guide in the browser
 Arranger.msgConfirmRemoveAll.text=Do you really want to remove all diagrams from Arranger?
 Arranger.msgTitleWarning.text=Warning
 Arranger.msgTitleIllegal.text=Illegal Operation!
@@ -1129,18 +1166,18 @@ Arranger.msgBrowseFailed.text=Failed to show % in browser
 Arranger.msgTitleURLError.text=URL Error
 Arranger.msgSelectionExpanded.text=% referenced diagram(s) added to selection.
 Arranger.msgMissingDiagrams.text=\n\n%1 referenced diagram(s) not found:\n- %2
-Arranger.msgAmbiguousSignatures.text=\nThere are %1 signature(s) with more than one matching diagrams among the selection:\n- %2
-Arranger.popupHitList.text=Hit diagrams
-Arranger.popupRemove.text=Remove selected diagrams
-Arranger.popupRemoveAll.text=Remove all diagrams
-Arranger.popupExpandSelection.text=Expand selection
-Arranger.popupExpandSelection.tooltip=Add all directly or indirectly referenced subroutine/includable diagrams to the current selection.
-Arranger.popupAttributes.text=Inspect attributes ...
-Arranger.popupAttributes.tooltip=Opens the Attribute Inspector dialog for the selected diagram
-Arranger.popupHelp.text=Arranger help ...
-Arranger.popupHelp.tooltip=Show the Arranger page of the Online User Guide in the browser
-Arranger.popupKeyBindings.text=Show key bindings ...
-Arranger.popupKeyBindings.tooltip=Show the Arranger key bindings page of the Online User Guide in the browser
+Arranger.msgAmbiguousSignatures.text=\n%1 ambiguous signatures among the selection, i.e. with several matching diagrams:\n- %2
+Arranger.msgEmptySelection.text=Can't % diagrams: nothing selected.
+Arranger.msgActionGroup.text=group
+Arranger.msgGroupName.text=%1Name for the group the %2 selected diagrams are to join:
+Arranger.msgGroupNameRejected.text=Group name "%" was rejected.
+Arranger.msgGroupExists.text=There is already a group with name "%". What do you want to do?
+Arranger.msgGroupingOptions.0.text=Add diagrams
+Arranger.msgGroupingOptions.1.text=Override group
+Arranger.msgGroupingOptions.2.text=Try other group name
+Arranger.msgGroupingOptions.3.text=Cancel
+Arranger.msgCongruentGroups.text=The set of the %1 selected diagrams is congruent with %2 existing group(s):\n- %3\n\n%4
+Arranger.msgDoCreateGroup.text=Do you still insist on creating yet another group?
 
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=File Load Error:
@@ -1170,6 +1207,14 @@ Surface.msgInsertionConflict.2.text=There is a differing diagram with signature 
 Surface.msgOverwriteFile.text=Overwrite existing file "%"?
 Surface.msgConfirmOverwrite.text=Confirm Overwrite
 Surface.msgTooltipSelectThis.text=Select this diagram (+shift: add it to the selection) and bring it up to top.
+Surface.msgGroupRemovalError.text=Error on removing group «%»
+Surface.msgArrangementAlreadyLoaded.text=The arrangement file "%1" has already been loaded to group %2.\nLoad it again with a modified group name?
+Surface.msgArrangementNotLoaded.text=Arrangement loading cancelled.
+Surface.msgSaveAsNewGroup.text=as new group
+Surface.msgSelectGroup.text=Please decide whether to update the file of an existing group or to create a new arrangement:
+Surface.msgConfirmRemoveGroup.text=Group «%» became empty. Do you want to remove it now?
+Surface.msgSaveGroupChanges.text=Group «%» has pending changes.\nDo you want to save these changes before the group is removed?
+Surface.msgUnsavedGroups.text=Couldn't save these groups (arrangements):
 
 -----> Executor
 -----[ Control ]-----

@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -493,7 +493,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             		EventQueue.invokeAndWait(new Runnable() {
             			@Override
             			public void run() {
-            				getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            				// START KGU#626 2019-01-01: Enh. #657
+            				//getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            				getEditor().updateArrangerIndex(Arranger.getSortedGroups());
+            				// END KGU#626 2019-01-01
             			}
             		});
             	} catch (InvocationTargetException e1) {
@@ -509,7 +512,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             	}
             }
             else {
-            	getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            	// START KGU#626 2019-01-01: Enh. #657
+            	//getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            	getEditor().updateArrangerIndex(Arranger.getSortedGroups());
+            	// END KGU#626 2019-01-01
             }
             //System.out.println("* Arranger index done.");
             // END KGU#305 2016-12-16
@@ -1177,8 +1183,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     // START KGU#305 2016-12-16: Code revision
 	@Override
 	public void routinePoolChanged(IRoutinePool _source, int _flags) {
-		if (_source instanceof Arranger && this.editor != null && (_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0) {
-			this.editor.updateArrangerIndex(Arranger.getSortedRoots());
+		if (_source instanceof Arranger && this.editor != null) {
+			if ((_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0) {
+				// START KGU#626 2019-01-01: Enh. #657
+				//this.editor.updateArrangerIndex(Arranger.getSortedRoots());
+				this.editor.updateArrangerIndex(Arranger.getSortedGroups());
+				// END KGU#626 2019-01-01
+			} else if ((_flags & IRoutinePoolListener.RPC_POSITIONS_CHANGED) != 0) {
+				this.editor.repaintArrangerIndex();
+			}
 		}
 		updateAnalysis();
 	}
