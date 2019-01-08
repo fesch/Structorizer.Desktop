@@ -68,6 +68,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-30      Enh. #158, #655: Key bindings for shift+page keys, home, end
  *      Kay Gürtzig     2019-01-01      Enh. #657: JList diagramIndex replaced by JTree arrangerIndex
  *      Kay Gürtzig     2019-01-05/06   Enh. #657: Arranger index popup menu item "diagram info" added
+ *      Kay Gürtzig     2019-01-07/08   Enh. #622: Group info box redesigned
  *
  ******************************************************************************************************
  *
@@ -358,6 +359,25 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final DefaultMutableTreeNode nodeIncludables = new DefaultMutableTreeNode(lblIncludables);
 	protected final DefaultMutableTreeNode nodeStaleReferences = new DefaultMutableTreeNode(lblStaleReferences);
 	// END KGU#626 2019-01-03
+	// START KGU#630 2019-01-07: Enh. #622
+	protected final DefaultMutableTreeNode nodeIndexGroupInfoTop = new DefaultMutableTreeNode();
+	protected final JTree indexGroupInfoTree = new JTree(nodeIndexGroupInfoTop);
+	protected final JScrollPane scrollGroupInfo = new JScrollPane(indexGroupInfoTree);
+	protected final JLabel lblArrangementPath = new JLabel();
+	protected final JLabel lblModifications = new JLabel("Modifications");
+	protected final JLabel lblCompleteness = new JLabel();
+	protected final JLabel lblExternSubroutines = new JLabel("Referenced external subroutines");
+	protected final JLabel lblExternIncludables = new JLabel("Referenced external includables");
+	protected final DefaultMutableTreeNode nodeArrangementPath = new DefaultMutableTreeNode(lblArrangementPath);
+	protected final DefaultMutableTreeNode nodeElementNumbers = new DefaultMutableTreeNode();
+	protected final DefaultMutableTreeNode nodeModifications = new DefaultMutableTreeNode(lblModifications);
+	protected final DefaultMutableTreeNode nodeCompleteness = new DefaultMutableTreeNode(lblCompleteness);
+	protected final DefaultMutableTreeNode nodeExternSubroutines = new DefaultMutableTreeNode(lblExternSubroutines);
+	protected final DefaultMutableTreeNode nodeExternIncludables = new DefaultMutableTreeNode(lblExternIncludables);
+	protected final DefaultMutableTreeNode nodeDeafReferences = new DefaultMutableTreeNode(lblStaleReferences);
+	private static final ImageIcon greenIcon = IconLoader.generateIcon(Color.GREEN);
+	private static final ImageIcon redIcon = IconLoader.generateIcon(Color.RED);
+	// END KGU#630 2019-01-07
 	
 	// START KGU#626 2019-01-01: Enh. #657
 	public static final LangTextHolder msgDefaultGroupName = new LangTextHolder("(Default Group)");
@@ -369,8 +389,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			new LangTextHolder("Move to group"),
 			new LangTextHolder("Cancel")
 	};
-	protected static final LangTextHolder msgNumberOfMembers = new LangTextHolder("Member diagrams: %1, thereof shared with other groups: %2.");
-	protected static final LangTextHolder msgMembersIncomplete = new LangTextHolder("Group is incomplete: %1 referenced available diagrams are not member;\nThe following referenced diagrams are not even available:\n- %2");
+	protected static final LangTextHolder msgNumberOfSharedMembers = new LangTextHolder("% members shared with other groups");
+	protected static final LangTextHolder msgMembersIncomplete = new LangTextHolder("Group is incomplete: %1 referenced diagrams outside group, %2 stale references");
+	protected static final LangTextHolder msgMembersComplete = new LangTextHolder("Group is complete: No outward references");
 	protected static final LangTextHolder msgGroupMembersChanged = new LangTextHolder("The set of member diagrams was modified.");
 	protected static final LangTextHolder msgGroupMembersMoved = new LangTextHolder("The coordinates of some member diagrams were changed.");
 	
@@ -1339,17 +1360,29 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		pnlGroupSelect.add(cmbTargetGroup);
 		// END KGU#626 2019-01-04
 		
-		// Configure the skeleton for the info tree to be popped up with a JOptionPane
+		// Configure the skeleton for the info tree for diagrams to be popped up with a JOptionPane
 		lblGroups.setIcon(IconLoader.getIcon(94));
 		lblSubroutines.setIcon(IconLoader.getIcon(21));
 		lblIncludables.setIcon(IconLoader.getIcon(71));
 		lblStaleReferences.setIcon(IconLoader.getIcon(5));
 		
 		indexInfoTree.setCellRenderer(new ArrangerIndexCellRenderer());
+		// Permanent tree nodes for diagram info
 		nodeIndexInfoTop.add(nodeGroups);
 		nodeIndexInfoTop.add(nodeSubroutines);
 		nodeIndexInfoTop.add(nodeIncludables);
 		nodeIndexInfoTop.add(nodeStaleReferences);
+
+		// START KGU#630 2019-01-07: Enh. #662 - now the equivalents for group info
+		lblExternSubroutines.setIcon(IconLoader.getIcon(21));
+		lblExternIncludables.setIcon(IconLoader.getIcon(71));
+		lblArrangementPath.setIcon(IconLoader.getIcon(3));
+		indexGroupInfoTree.setCellRenderer(new ArrangerIndexCellRenderer());
+		nodeIndexGroupInfoTop.add(nodeArrangementPath);
+		nodeIndexGroupInfoTop.add(nodeElementNumbers);
+		nodeIndexGroupInfoTop.add(nodeModifications);
+		nodeIndexGroupInfoTop.add(nodeCompleteness);
+		// END KGU#630 2019-01-07
 	}
 	
 	/**
@@ -2343,47 +2376,91 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			((DefaultTreeModel)this.indexInfoTree.getModel()).reload();
 		}
 		else if (selectedGroup != null) {
-			// Present the name
-			String message = selectedGroup.getName()
-					.replace(Group.DEFAULT_GROUP_NAME, msgDefaultGroupName.getText()) + ":\n";
+			// START KGU#630 2019-01-08: Enh. #662 - redesigned into a tree view
+			// Show the group itself
+			this.nodeIndexGroupInfoTop.setUserObject(selectedGroup);
 			
-			// Present the file path
+			// Inform about the file path (if any)
 			File arrFile = selectedGroup.getFile();
 			if (arrFile == null) {
-				message += "---";
+				this.lblArrangementPath.setText("---");
 			}
 			else {
-				message += arrFile.getAbsolutePath();
+				this.lblArrangementPath.setText(arrFile.getAbsolutePath());
 			}
-			
+
 			// Present numbers of group members and shared members
+			this.nodeElementNumbers.removeAllChildren();
 			int nShared = 0;
-			for (lu.fisch.structorizer.arranger.Diagram diagr: selectedGroup.getDiagrams()) {
-				if (diagr.getGroupNames().length > 1) {
+			for (Root root: selectedGroup.getSortedRoots()) {
+				Collection<Group> groups = Arranger.getInstance().getGroupsFromRoot(root, false); 
+				if (groups.size() > 1) {
+					DefaultMutableTreeNode memberNode = new DefaultMutableTreeNode(root);
+					for (Group group: groups) {
+						if (group != selectedGroup) {
+							memberNode.add(new DefaultMutableTreeNode(group));
+						}
+					}
+					this.nodeElementNumbers.add(memberNode);
 					nShared++;
 				}
 			}
-			message += "\n" + msgNumberOfMembers.getText()
-					.replace("%1", Integer.toString(selectedGroup.size()))
-					.replace("%2", Integer.toString(nShared));
-			
+			this.nodeElementNumbers.setUserObject(msgNumberOfSharedMembers.getText()
+					.replace("%", Integer.toString(nShared)));
+
 			// Inform about registered modifications
+			this.nodeModifications.removeAllChildren();
 			if (selectedGroup.membersChanged) {
-				message += "\n* " + msgGroupMembersChanged.getText();
+				this.nodeModifications.add(new DefaultMutableTreeNode(msgGroupMembersChanged.getText()));
 			}
 			if (selectedGroup.membersMoved) {
-				message += "\n* " + msgGroupMembersMoved.getText();
+				this.nodeModifications.add(new DefaultMutableTreeNode(msgGroupMembersMoved.getText()));
 			}
+			this.lblModifications.setIcon(selectedGroup.hasChanged() ? redIcon : greenIcon);
 
 			// Present information about external and stale references
+			this.nodeCompleteness.removeAllChildren();
+			this.nodeExternSubroutines.removeAllChildren();
+			this.nodeExternIncludables.removeAllChildren();
+			this.nodeDeafReferences.removeAllChildren();
 			StringList missing = new StringList();
-			int nNeeded = Arranger.getInstance().accomplishRootSet(new HashSet<Root>(selectedGroup.getSortedRoots()), null, missing).size();
-			if (nNeeded > 0 || missing.count() > 0) {
-				message += "\n\n" + msgMembersIncomplete.getText()
-				.replace("%1", Integer.toString(nNeeded - selectedGroup.size()))
-				.replace("%2", missing.concatenate("\n- "));
+			HashSet<Root> members = new HashSet<Root>(selectedGroup.getSortedRoots());
+			Collection<Root> expandedSet = Arranger.getInstance().accomplishRootSet(members, null, missing);
+			for (Root root: expandedSet) {
+				if (!members.contains(root)) {
+					if (root.isSubroutine()) {
+						this.nodeExternSubroutines.add(new DefaultMutableTreeNode(root));
+					}
+					else if (root.isInclude()) {
+						this.nodeExternIncludables.add(new DefaultMutableTreeNode(root));
+					}
+				}
 			}
-			display = message;
+			for (int i = 0; i < missing.count(); i++) {
+				this.nodeDeafReferences.add(new DefaultMutableTreeNode(missing.get(i)));				
+			}
+			if (!this.nodeExternSubroutines.isLeaf()) {
+				this.nodeCompleteness.add(this.nodeExternSubroutines);
+			}
+			if (!this.nodeExternIncludables.isLeaf()) {
+				this.nodeCompleteness.add(this.nodeExternIncludables);
+			}
+			if (!this.nodeDeafReferences.isLeaf()) {
+				this.nodeCompleteness.add(this.nodeDeafReferences);
+			}
+			if (!this.nodeCompleteness.isLeaf()) {
+				this.lblCompleteness.setText(msgMembersIncomplete.getText()
+				.replace("%1", Integer.toString(expandedSet.size() - members.size()))
+				.replace("%2", Integer.toString(missing.count())));
+				this.lblCompleteness.setIcon(redIcon);
+			}
+			else {
+				this.lblCompleteness.setText(msgMembersComplete.getText());
+				this.lblCompleteness.setIcon(greenIcon);
+			}
+			display = this.scrollGroupInfo;
+			((DefaultTreeModel)this.indexGroupInfoTree.getModel()).reload();
+			// END KGU#63ß 2019-01-08
 		}
 		
 		if (display != null) {

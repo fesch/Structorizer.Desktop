@@ -9,7 +9,11 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29 (2019-01-07)
+Current development version: 3.29-01 (2019-01-08)
+- 01: Issue #657: Spanish message in German locale replaced <2>
+- 01: Enh. #662/1: Group info box redesigned into a tree view <2>
+
+Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
