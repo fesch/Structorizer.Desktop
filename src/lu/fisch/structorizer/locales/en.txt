@@ -1219,6 +1219,7 @@ Surface.msgSelectGroup.text=Please decide whether to update the file of an exist
 Surface.msgConfirmRemoveGroup.text=Group «%» became empty. Do you want to remove it now?
 Surface.msgSaveGroupChanges.text=Group «%» has pending changes.\nDo you want to save these changes before the group is removed?
 Surface.msgUnsavedGroups.text=Couldn't save these groups (arrangements):
+Surface.msgGroup.text=group «%»
 
 -----> Executor
 -----[ Control ]-----

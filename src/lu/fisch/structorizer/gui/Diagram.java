@@ -1200,7 +1200,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Arranger.scrollToDiagram((Root)selectedObject, true);
 				}
 				else if (selectedObject instanceof Group) {
-					Arranger.scrollToGroup((Group)selectedObject, false);
+					Arranger.scrollToGroup((Group)selectedObject);
 				}
 			}
 			// END KGU#626 2019-01-01
@@ -2319,8 +2319,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return res != -1; // true if not cancelled
 	}
 	/**
-	 * Service method for a decision about saving a file with the given path {@code filename} in
-	 * a potential serial context.
+	 * Service method for a decision about saving a file in a potential serial context.
 	 * @param _messageText - the text of the offered question if an interactive dialog is wanted at all, null otherwise
 	 * @param _initiator - an owning component for the modal message or question boxes
 	 * @return 0 for approval, 1 for disapproval, 2 for "yes to all", 3 for "no to all", -1 for cancel

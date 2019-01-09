@@ -336,63 +336,47 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                                     // Since the executor is a concurrent thread and we don't know the decision of
                                     // the user, we can neither wait nor proceed here. So we just leave.
                             }
-                            else
+                            else {
                             // END KGU#157 2016-03-16
-                            // START KGU#534 2018-07-16: Enh. #552
-                            {
-                            	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
-                        		//Diagram.startSerialMode();
-                            	boolean serialModeEntered = false;
-                            	if (Arranger.hasInstance() && Arranger.getInstance().hasUnsavedChanges(diagram.getRoot())) {
-                            		Diagram.startSerialMode();
-                            		serialModeEntered = true;
-                            	}
-                            	// END KGU#594 2018-10-06
-                            	try {
-                            // END KGU#534 2018-07-16
-                            		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
-                            		{
-                            			// START KGU#287 2017-01-11: Issue #81/#330
-                            			if (isStandalone) {
-                            				if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
-                            					Element.E_NEXT_SCALE_FACTOR = 1.0;
-                            				}
-                            				preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                            	if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
+                            	{
+                            		// START KGU#287 2017-01-11: Issue #81/#330
+                            		if (isStandalone) {
+                            			if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
+                            				Element.E_NEXT_SCALE_FACTOR = 1.0;
                             			}
-                            			// END KGU#287 2017-01-11
-                            			saveToINI();
-                            			// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-                            			if (isStandalone) {
-                            				// START KGU#49 2017-01-04 Care for potential Arranger dependants
-                            				if (Arranger.hasInstance()) {
-                            					Arranger.getInstance().windowClosing(e);
-                            				}
-                            				// END KGU#49 2017-01-04
+                            			preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                            		}
+                            		// END KGU#287 2017-01-11
+                            		saveToINI();
+                            		// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
+                            		if (isStandalone) {
+                            			boolean vetoed = false;
+                            			// START KGU#49 2017-01-04 Care for potential Arranger dependents
+                            			if (Arranger.hasInstance()) {
+                            				Diagram.startSerialMode();
+                            				vetoed = !Arranger.getInstance().windowClosingVetoable(e);
+                            				Diagram.endSerialMode();
+                            			}
+                            			// END KGU#49 2017-01-04
+                            			if (!vetoed) {
                             				// START KGU#484 2018-03-22: Issue #463
                             				logger.info("Structorizer " + instanceNo + " shutting down.");
                             				// END KGU#484 2018-03-22
                             				System.exit(0);	// This kills all related frames and threads as well!
                             			}
-                            			else {
-                            				// START KGU#484 2018-03-22: Issue #463
-                            				logger.info("Structorizer " + instanceNo + " going to dispose.");
-                            				// END KGU#484 2018-03-22
-                            				dispose();
-                            			}
-                            			// END KGU#49/KGU#66 (#6/#16) 2015-11-14
                             		}
-                            // START KGU#534 2018-07-16: Enh. #552
+                            		else {
+                            			// START KGU#484 2018-03-22: Issue #463
+                            			logger.info("Structorizer " + instanceNo + " going to dispose.");
+                            			// END KGU#484 2018-03-22
+                            			dispose();
+                            		}
+                            		// END KGU#49/KGU#66 (#6/#16) 2015-11-14
                             	}
-                            	finally {
-                                	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
-                            		//Diagram.endSerialMode();
-                                	if (serialModeEntered) {
-                                		Diagram.endSerialMode();
-                                	}
-                                	// END KGU#594 2018-10-06
-                            	}
+                            // START KGU#157 2016-03-16: Bugfix #131 part 2
                             }
-                            // END KGU#534 2018-07-16
+                            // END KGU#157 2016-03-16
                     }
 
                     @Override
@@ -1196,5 +1180,18 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		updateAnalysis();
 	}
 	// END KGU#305 2016-12-16
+
+	// START KGU#631 2019-01-08: We need a handy way to decide whther he application is closing
+	/**
+	 * Checks whether this Mainform represents the main class (and thread) of the application
+	 * i.e. if it was started as a stand-alone object.<br/>
+	 * Relevant for the {@link WindowListener#windowClosing()} event.
+	 * @return true if this object represents the running application.
+	 */
+	public boolean isApplicationMain()
+	{
+		return isStandalone;
+	}
+	// END KGU#631 2019-01-08
 
 }

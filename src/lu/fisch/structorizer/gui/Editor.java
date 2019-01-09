@@ -602,7 +602,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 						Arranger.scrollToDiagram((Root)selectedObject, true);
 					}
 					else if (selectedObject instanceof Group) {
-						Arranger.scrollToGroup((Group)selectedObject, true);
+						Arranger.scrollToGroup((Group)selectedObject);
 					}
 				}
 				// END KGU#626 2019-01-04

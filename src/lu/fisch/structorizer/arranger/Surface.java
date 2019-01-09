@@ -92,7 +92,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-25      Enh. #655: Dialog revisions
  *      Kay Gürtzig     2018-12-26      Two cross reference maps introduced (rootMap, nameMap), expandSelectionRecursively() impemented
  *      Kay Gürtzig     2018-12-31      Enh. #657: Group management implemented
- *      Kay Gürtzig     2019-01-04      Enh. #657: Group management significantly advanced and improved 
+ *      Kay Gürtzig     2019-01-04      Enh. #657: Group management significantly advanced and improved
+ *      Kay Gürtzig     2019-01-09      Bugfix #515: updateSilhouette() revised (KGU#633)
  *
  ******************************************************************************************************
  *
@@ -220,6 +221,8 @@ import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
+import lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect;
+import lu.fisch.structorizer.gui.Diagram.SerialDecisionStatus;
 import lu.fisch.structorizer.gui.Editor;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
@@ -292,11 +295,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public File currentDirectory = new File(System.getProperty("user.home"));
 	// END KGU#110 2015-12-21
 	
-	// START KGU#626 2019-01-01: Enh. #657
-	/** Bounding box of the most recently highlighted group or null */
-	private Rectangle groupBounds = null;
-	// END KGU#626 2019-01-01
-	
 	// START KGU#202 2016-07-03
 	public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
 	public final LangTextHolder msgSavePortable = new LangTextHolder("You may save this arrangement\n- either as portable compressed archive (*.arrz)\n- or as mere arrangement list with file paths (*.arr).");
@@ -344,6 +342,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgSaveGroupChanges = new LangTextHolder("Group «%» has pending changes.\nDo you want to save these changes before the group is removed?");
 	public static final LangTextHolder msgUnsavedGroups = new LangTextHolder("Couldn't save these groups (arrangements):");
 	// END KGU#626 2018-12-27/2019-01-04
+	// START KGU#631 2019-01-08: Issue #663
+	public static final LangTextHolder msgGroup = new LangTextHolder("group «%»");
+	// END KGU#631 2019-01-08
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -666,12 +667,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		String extension = "arr";
 		// END KGU#110 2016-06-29
 		// Ensure the diagrams themselves have been saved
-		int answer = JOptionPane.CANCEL_OPTION;
 		// START KGU#626 2019-01-02: Enh. #657
 		Collection<Diagram> toArrange = this.diagramsSelected;
+		String sourceDescription = Integer.toString(this.diagrams.size());
 		// A selected group always overrides the selection in Arranger
 		if (group != null) {
 			toArrange = group.getDiagrams();
+			// START KGU#631 2019-01-08: More sensible message content on saving a group
+			sourceDescription = msgGroup.getText().replace("%", group.getName().replace(Group.DEFAULT_GROUP_NAME,Editor.msgDefaultGroupName.getText()));
+			// END KGU#631 2019-01-08
 			// If the group was the default group then we will anonymize it
 			if (group.isDefaultGroup()) {
 				group = null;
@@ -728,6 +732,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		//boolean writeNow = this.saveDiagrams(initiator, toArrange, goingToClose, false);
 		boolean writeNow = true;
 		if (group.getFile() == null) {
+			int answer = JOptionPane.CANCEL_OPTION;
 			// The group has never been loaded from nor saved to file
 		// END KGU#626 2019-01-02
 			// START KGU#624 2018-12-22: Enh. #655
@@ -740,7 +745,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			String saveMessage = Arranger.msgConfirmMultiple.getText().
 					replace("%1", Integer.toString(nSelected)).
-					replace("%2", Integer.toString(this.diagrams.size())).
+					replace("%2", sourceDescription).
 					replace("%3", rootNames.concatenate("\n- ")).
 					replace("%4", msgSavePortable.getText());
 			Object[] options = {lblSaveAsArrz.getText(), lblSaveAsArr.getText(), Menu.lblCancel.getText()};
@@ -847,6 +852,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (filename.substring(dotPos).equalsIgnoreCase("."+extension))
 			{
 				filename = filename.substring(0, dotPos);
+			}
+			if (group.hasChanged() && writeNow) {
+				if (!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE)){
+					int answer =lu.fisch.structorizer.gui.Diagram.requestSaveDecision(
+							msgSaveGroupChanges.getText().replace("%", group.getName()),
+							initiator, SerialDecisionAspect.SERIAL_GROUP_SAVE);
+					writeNow = answer == 0 || answer == 2;
+				}
 			}
 		}
 		/* Care for the chance to save diagram changes now (without asking for portable archives
@@ -1670,7 +1683,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//int height = Math.max(rect.bottom - rect.top, 118);
 				int height = Math.max(rect.bottom, MIN_HEIGHT);
 				// END KGU#136 2016-03-01
-				//System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
+				// DEBUG: disable this output for releases
+				//System.out.println(root.getMethodName() + ": (" + (diagram.point.x + rect.left) + ", " + (diagram.point.y + rect.top) + ", " + (diagram.point.x + rect.right) + ", " + (diagram.point.y + rect.bottom) +")");
 				r.left = Math.min(diagram.point.x, r.left);
 				r.top = Math.min(diagram.point.y, r.top);
 				r.right = Math.max(diagram.point.x + width, r.right);
@@ -1678,7 +1692,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//END KGU#85 2015-11-18
 				// START KGU#499 2018-02-20
 				if (_silhouette != null) {
-					this.updateSilhouette(_silhouette, diagram.point.x, width, diagram.point.y + height);
+					this.updateSilhouette(_silhouette, diagram.point.x, diagram.point.x + width, diagram.point.y + height);
 				}
 				// END KGU#499 2018-02-20
 			}
@@ -1695,11 +1709,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * lower silhouette of the diagrams.<br/>
 	 * At the moment, this method tends to consume O(N) time with N diagrams already processed.
 	 * @param _silhouette - List of leap points in the silhouette line from left to right
-	 * @param left - the left edge x  coordinate of the considered diagram
-	 * @param width - the widh of the considered diagram
-	 * @param bottom - the bottom value of the considered diagram
+	 * @param left - the left edge x coordinate of the considered diagram
+	 * @param right - the right edge x coordinate of the considered diagram
+	 * @param bottom - the bottom y coordinate of the considered diagram
 	 */
-	private void updateSilhouette(LinkedList<Point> _silhouette, int left, int width, int bottom) {
+	private void updateSilhouette(LinkedList<Point> _silhouette, int left, int right, int bottom) {
 		ListIterator<Point> iter = _silhouette.listIterator();
 		Point lastLeap = new Point(0, 0);	// previous leap data
 		Point leap = null;			// current leap data
@@ -1712,58 +1726,87 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			lastLeap = iter.next();
 		}
 		// Search for an overlapping between diagram and silhouette
-		while (iter.hasNext() && ((leap = iter.next()).x < left || lastLeap.y >= bottom)) {
+		while (iter.hasNext() && ((leap = iter.next()).x < left || leap.x < right && lastLeap.y >= bottom && leap.y >= bottom)) {
 			lastLeap = leap;
 		}
 		// Now if we haven't found any leap at all, then just add the two leaps for this diagram
-		Point nextLeap = new Point(left + width, lastLeap.y);
-		if (leap == null) {
-			Point leap1 = new Point(left, bottom);
+		Point leap1 = new Point(left, bottom);
+		Point nextLeap = new Point(right, lastLeap.y);
+		if (leap == null || leap.x < left) {
 			_silhouette.add(leap1);
 			_silhouette.add(nextLeap);
+			leap = null;
 		}
-		// There is nothing to do if the last leap is already beyond the diagram
-		else if (lastLeap.x < left + width) {
-			// otherwise there are two fundamental cases:
-			if (lastLeap.y >= bottom && lastLeap.x >= left) {
-				// 1. The diagram had already started but the silhouette is receding (at lastLeap)
-				//    --> update lastLeap to level bottom
-				lastLeap.y = bottom;
+		// Otherwise there are three fundamental cases:
+		else if (leap.x >= right && lastLeap.x <= left && lastLeap.y < bottom) {
+			// 1. The current leap is already beyond the diagram, the diagram had protruded the
+			// level between lastLeap and leap
+			nextLeap.y = lastLeap.y;
+			iter.previous();
+			if (lastLeap.x < left - DEFAULT_GAP) {
+				iter.add(leap1);
 			}
 			else {
-				// 2. The diagram starts here and protrudes over the silhouette
-				//    --> insert a new leap at position left (or just raise the level at lastLeap)
-				Point leap1 = new Point(left, bottom);
-				// Was there another leap beyond the last leap (or had the list been exhausted)?
-				if (leap.x != lastLeap.x) {
-					// There is another leap farther right
-					// If the distance between silhouette leap and diagram edge is small then avoid
-					// an additional leap and just move the existing leap to left
-					if (leap.x - left <= DEFAULT_GAP && leap.y > bottom && left > lastLeap.x) {
-						leap.x = left;		// Just move the leap left
+				lastLeap.y = bottom;
+			}
+			if (leap.x > right + DEFAULT_GAP) {
+				iter.add(nextLeap);
+			}
+		}
+		else if (leap.x < right) {
+			// We have a leap transition inside the stretch of the diagram. In case this is the last leap
+			// ever, we must restore the former leap (in theory, a silhouette as either none or at least two nodes...)
+			if (lastLeap == leap && iter.hasPrevious()) {
+				lastLeap = iter.previous();
+				iter.next();
+			}
+			if (lastLeap.y >= bottom) {
+				// 2. The silhouette had exceeded the diagram but is now receding --> update leap to level bottom
+				lastLeap = leap;
+				leap.y = bottom;
+			}
+			else {
+				// 3. The silhouette had not exceeded the diagram, so it's the first leap
+				// inside the diagram bounds, the level may now protrude or not
+				//    --> insert a new leap at position left (or just raise the level of leap)
+				if (leap.x > left) {
+					if (lastLeap.x == leap1.x) {
+						lastLeap.y = leap1.y;
 					}
 					else {
-						iter.previous();	// go back before current leap
-						iter.add(leap1);	// insert the new leap before it
-						iter.next();		// and go beyond the already read leap again
+						iter.previous();
+						iter.add(leap1);
+						iter.next();
 					}
+					lastLeap = leap;
+				}
+				else if (leap.y < bottom) {
+					lastLeap = leap;
+					leap.y = bottom;
 				}
 				else {
-					// List had been exhausted
-					leap = null;
-					iter.add(leap1);	// insert the new leap at end
+					lastLeap = leap;
 				}
+				nextLeap.y = lastLeap.y;
 			}
-			// Now wipe all leaps eclipsed exceeded by the diagram
-			while (leap != null && leap.x <= left+width) {
-				if (leap.y <= bottom) {
-					if (nextLeap.y <= bottom) {
-						nextLeap.y = leap.y;
-						iter.remove();
-					}
-					else {
-						nextLeap.y = leap.y;
-						leap.y = bottom;
+			// Now wipe all leaps eclipsed or exceeded by the diagram
+			boolean first = true;
+			while (leap != null && leap.x < right) {
+				if (!first) {
+					lastLeap = leap;
+				}
+				else {
+					first = false;
+				}
+				if (leap.x > left) {
+					if (leap.y <= bottom) {
+						if (nextLeap.y <= bottom) {
+							iter.previous();
+							iter.remove();
+						}
+						else if (nextLeap.y > bottom) {
+							leap.y = bottom;
+						}
 					}
 				}
 				if (iter.hasNext()) {
@@ -1772,20 +1815,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				else {
 					leap = null;
 				}
+				nextLeap.y = lastLeap.y;
 			}
-			// If there no further leap or the next leap is far, insert the prepared end leap
-			if (leap == null || (leap.x - (left+width) > DEFAULT_GAP)) {
-				if (leap != null && iter.hasPrevious()) {
-					iter.previous();
+			// If there is no further leap or the next leap is far, insert the prepared end leap
+			// START KGU#633 2019-01-08: Bugfix #515
+			if (leap == null || (leap.x > right + DEFAULT_GAP) && (nextLeap.y < bottom)) {
+			// END KGU#633 2019-01-08
+				if (leap != null && leap.y == nextLeap.y) {
+					leap.x = right;
 				}
-				iter.add(nextLeap);    			
+				else {
+					if (leap != null && iter.hasPrevious()) {
+						iter.previous();
+					}
+					iter.add(nextLeap);
+				}
 			}
 		}
 		// DEBUG: Disable this list printing after debugging
 //		iter = _silhouette.listIterator();
 //		System.out.println("Current silhouette:");
 //		while (iter.hasNext()) {
-//			Point leap1 = iter.next();
+//			leap1 = iter.next();
 //			System.out.println(leap1.x + " --> " + leap1.y);
 //		}
 	}
@@ -2914,7 +2965,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param deltaY - pixels down (or up if negative)
 	 */
 	protected void moveSelection(int deltaX, int deltaY) {
-		groupBounds = null;
 		for (Diagram diagr: this.diagramsSelected) {
 			// No diagram is allowed to be shifted outside the reachable area
 			int newX = Math.max(0, diagr.point.x + deltaX);
@@ -3044,7 +3094,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Unselects all available diagrams and repaints
 	 */
 	public void unselectAll() {
-		groupBounds = null;
 		this.diagramsSelected.clear();
 		for (Diagram diagr: this.diagrams) {
 			if (diagr.root != null) {
@@ -3092,9 +3141,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public void update(Root source)
 	{
-		// START KGU#626 2019-01-01: Enh. #657
-		groupBounds = null;
-		// END KGU#626 2019-01-01
 		// START KGU#85 2015-11-18
 		adaptLayout();
 		// END KGU#85 2015-11-18
@@ -3526,9 +3572,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param setAtTop - whether the diagram is to be drawn on top of all
 	 */
 	public void scrollToDiagram(Root aRoot, boolean setAtTop) {
-		// START KGU#626 2019-01-01: Enh. #657
-		groupBounds = null;
-		// END KGU#626 2019-01-01
 		// START KGU#312 2016-12-29: Enh. #315 - adaptation to modified signature 
 		//Diagram diagr = this.findDiagram(aRoot, true);
 		Diagram diagr = this.findDiagram(aRoot, 1);	// Check for identity here
@@ -3567,15 +3610,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * If {@code showBounds} is true then the bounding box of the group will
 	 * be drawn.
 	 * @param aGroup - the {@link Group} to be focused
-	 * @param showBounds - whether the bounding box of the group is to be drawn
 	 */
-	public void scrollToGroup(Group aGroup, boolean showBounds) {
-		groupBounds = null;
+	public void scrollToGroup(Group aGroup) {
 		Collection<Diagram> members = aGroup.getDiagrams();
 		Rect rect = this.getDrawingRect(members, null);
-		if (showBounds) {
-			groupBounds = rect.getRectangle();
-		}
 		rect = rect.scale(1/this.zoomFactor);
 		unselectAll();
 		this.selectSet(members);
@@ -3677,7 +3715,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param selectedRoots - the initial set of {@link Root} objects. CAUTION: may be expanded!
 	 * @param missingSignatures - a {@link StringList} to gather signatures of missing diagrams
 	 * @param duplicateSignatures - a {@link StringList} to gather signatures of ambiguous diagrams
-	 * @return the set of added {@link Root} objects
+	 * @return the set of added {@link Diagram} objects
 	 */
 	protected Set<Diagram> expandRootSet(Set<Root> selectedRoots, StringList missingSignatures,
 			StringList duplicateSignatures) {
@@ -3688,13 +3726,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// First look for called routines
 			Vector<Call> calls = root.collectCalls();
 			for (Call call: calls) {
-				if (call.isDisabled()) {
-					continue;
-				}
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
 					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
-					handleCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
+					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							fct.getSignatureString(), candidates);
 				}
 			}
@@ -3703,7 +3738,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
 					Vector<Root> candidates = this.findIncludesByName(inclName);
-					handleCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
+					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							inclName, candidates);
 				}
 			}
@@ -3723,7 +3758,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param signature - the signature (search pattern)
 	 * @param candidates - the vector of found {@link Root} objects matching the {@code signature}
 	 */
-	private void handleCandidates(Set<Root> rootSet, StringList missingSignatures, StringList duplicateSignatures,
+	private void handleReferenceCandidates(Set<Root> rootSet, StringList missingSignatures, StringList duplicateSignatures,
 			LinkedList<Root> rootQueue, Set<Diagram> addedDiagrams, String signature, Vector<Root> candidates) {
 		/* First check if any of the candidates is already member of the set, then we
 		 * can ignore all the others
@@ -4232,23 +4267,23 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param unsaved - a {@link SringList} where the names of groups that couldn't be saved will be added 
 	 * @return true if all was done without serious problems.
 	 */
-	protected boolean saveGroups(Component initiator, boolean goingToClose, StringList unsaved)
+	protected boolean saveGroups(Component initiator, boolean goingToClose)
 	{
 		boolean allDone = true;
+		StringList unsaved = new StringList();
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
 		try {
-			// Trouble is that saving an arrangement may modify the map of groups, so we might miss some of them
+			// Saving an arrangement may modify the map of groups, so we get a copy first
 			Vector<Group> groupsToHandle = new Vector<Group>(this.groups.values());
 			for (Group group: groupsToHandle) {
 				/* It doesn't make sense to save the default group on window closing event
+				 * unless it contains some interdependent diagrams not shared anywhere.
 				 * (if it exists then it will always be unsaved and it's usually not a
 				 * conscious arrangement but just a dump of some diagrams e.g. used as subroutines */
-				if (groups.containsValue(group) && group.hasChanged() && (!goingToClose || !group.isDefaultGroup())) {
+				if (groups.containsValue(group) && group.hasChanged() && (!goingToClose || !(group.isDefaultGroup() && !uniquelyHoldsDependents(group)))) {
 					if (this.saveArrangement(initiator, group, goingToClose) == null) {
 						allDone = false;
-						if (unsaved != null) {
-							unsaved.addIfNew(group.getName());
-						}
+						unsaved.addIfNew(group.getName());
 					}
 				}
 			}
@@ -4256,7 +4291,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		finally {
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
-		if (unsaved != null && unsaved.count() > 1 && initiator != null) {
+		if (unsaved.count() > 0 && initiator != null) {
 			allDone = JOptionPane.showConfirmDialog(initiator,
 					msgUnsavedGroups.getText() + "\n" + unsaved.concatenate(", "), 
 					this.msgSaveDialogTitle.getText(),
@@ -4265,5 +4300,71 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return allDone;
 	}
 	// END KGU#626 2019-01-01/05
+
+	// START KGU#631 2019-01-08: Bugfix #623
+	/**
+	 * Checks whether the given group is the only common group of a set of diagrams with
+	 * (mutual or not) dependencies.
+	 * @param group - some {@link Group}
+	 * @return true if there is at least one pair of contained 
+	 */
+	private boolean uniquelyHoldsDependents(Group group) {
+		Set<Diagram> members = group.getDiagrams();
+		for (Diagram diagr: members) {
+			StringList groupNames = new StringList(diagr.getGroupNames());
+			Vector<Call> containedCalls = diagr.root.collectCalls();
+			for (Call call: containedCalls) {
+				Function fct = call.getCalledRoutine();
+				if (fct != null && fct.isFunction()) {
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
+						return true;
+					}
+				}
+			}
+			StringList includeNames = diagr.root.includeList;
+			if (includeNames != null) {
+				for (int i = 0; i < includeNames.count(); i++) {
+					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i));
+					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	// END KGU#631 2019-01-08
+
+	/**
+	 * Checks if a diagram among {@code candidates}, which is not represented by {@code diagr}
+	 * but element of {@code members} is member of any group with name contained {@code groupNames}
+	 * but not equal to {@code groupName}.
+	 * @param candidates - a set of {@link Root} objects to check
+	 * @param diagr - a @{@link Diagram} representing a {@code candidates} member to be ignored  
+	 * @param members - set of member diagrams of group {@code groupName}
+	 * @param groupName - name of the owning group not counting as match
+	 * @param groupNames - names of interesting groups
+	 */
+	private boolean containsUnsharedPartner(Vector<Root> candidates, Diagram diagr, Set<Diagram> members, String groupName,
+			StringList groupNames) {
+		for (Root cand: candidates) {
+			Diagram called = this.rootMap.get(cand);
+			if (called != diagr && members.contains(called)) {
+				boolean shared = false;
+				for (String gName: called.getGroupNames()) {
+					if (groupNames.contains(gName) && !gName.equals(groupName)) {
+						shared = true;
+						break;
+					}
+				}
+				if (!shared) {
+					// So there is at least one pair uniquely residing here
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 }

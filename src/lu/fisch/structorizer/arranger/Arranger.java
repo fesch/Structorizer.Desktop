@@ -240,7 +240,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      * @param aRoot - the diagram to be focused
      * @param setAtTop - whether the diagram is to be drawn on top of all
      */
-    public static void scrollToGroup(Group selectedGroup, boolean showBounds)
+    public static void scrollToGroup(Group selectedGroup)
     {
     	if (mySelf != null && selectedGroup != null) {
     		// START KGU#305 2016-12-16: Bugfix #305 - possibly we must wake the instance
@@ -248,7 +248,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     			mySelf.setVisible(true);
     		}
     		// END KGU#305 2016-12-16
-    		mySelf.surface.scrollToGroup(selectedGroup, showBounds);
+    		mySelf.surface.scrollToGroup(selectedGroup);
     	}
     }
     // END KGU#626 2019-01-01
@@ -596,46 +596,6 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         /******************************
          * Set onClose event
          ******************************/
-//        addWindowListener(new WindowAdapter() 
-//        {  
-//        	@Override
-//        	public void windowClosing(WindowEvent e) 
-//        	{
-//        		System.out.println("WindowAdapter.windowClosing()...");
-//        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
-////        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
-////        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
-////        		// END KGU#2 2015-11-19
-////        			surface.saveDiagrams();	// Allow user to save dirty diagrams
-//        		if (surface.saveDiagrams(true))
-//        		{
-//        			if (isStandalone)
-//        			{
-//        				System.exit(0);
-//        			}
-//        			else
-//        			{
-//        				dispose();
-//        			}
-//        		}
-//        		// END KGU#177 2016-04-14
-//        	}  
-//
-//        	@Override
-//        	public void windowOpened(WindowEvent e) 
-//        	{  
-//        	}  
-//
-//        	@Override
-//        	public void windowActivated(WindowEvent e)
-//        	{  
-//        	}
-//
-//        	@Override
-//        	public void windowGainedFocus(WindowEvent e) 
-//        	{  
-//        	}  
-//        });
         addWindowListener(this); 
         // END KGU#49 2015-10-18
         
@@ -950,19 +910,50 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private static final Vector<Group> groups = new Vector<Group>();
     // END KGU#626 2018-12-31
 
+    // START KGU#631 2019-01-08: We need a handy way to decide whther he application is closing
+    /**
+     * Checks whether this Mainform represents the main class (and thread) of the application
+     * i.e. if it was started as a stand-alone object.<br/>
+     * Relevant for the {@link WindowListener#windowClosing()} event.
+     * @return true if this object represents the running application.
+     */
+    public boolean isApplicationMain()
+    {
+        return isStandalone;
+    }
+    // END KGU#631 2019-01-08
+
+    @Override
     public void windowOpened(WindowEvent e) {
     }
 
-    public void windowClosing(WindowEvent e) {
+    // START KGU#631 2019-01-08: Bugfix #663
+    @Override
+    public void windowClosing(WindowEvent e)
+    {
+        windowClosingVetoable(e);
+    }
+    
+    /**
+     * Like {@link WindowListener#windowClosing(WindowEvent)} but may return
+     * whether the listener had vetoed.
+     * @param e - the current {@link WindowEvent}
+     * @return true if confirmed, false if vetoed
+     */
+    public boolean windowClosingVetoable(WindowEvent e) {
+    // END KGU#631 2019-01-08
         // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
+        // START KGU#631 2019-01-08: Decide more precisely if the application is going down
+        Object source = e.getSource();
+        boolean applicationClosing = (!(source instanceof LangFrame) || ((LangFrame)source).isApplicationMain());
+        // END KGU#631 2019-01-08
         // START KGU#626 2019-01-05: Enh. #657
         //if (surface.saveDiagrams(this, null, true, false))
         Component initiator = e.getComponent();
         if (initiator == null) {
             initiator = this;
         }
-        if (this.surface.saveDiagrams(initiator, null, true, false) &&
-                this.surface.saveGroups(initiator, true, new StringList()))
+        if (this.saveAll(initiator, applicationClosing))
         // END KGU#626 2019-01-05
         {
             if (isStandalone)
@@ -973,8 +964,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             {
                 dispose();
             }
+            // START KGU#631 2019-01-08: Bugfix #663
+            return true;
+            // END KGU#631 2019-01-08
         }
         // END KGU#49 2017-01-04
+        // START KGU#631 2019-01-08: Bugfix #663 - allow a veto
+        return false;
+        // END KGU#631 2019-01-08
     }
 
     public void windowClosed(WindowEvent e) {
@@ -1036,7 +1033,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                             replace("%2", Integer.toString(surface.getDiagramCount())).
                             replace("%3", rootList.concatenate("\n- ")).
                             replace("%4", msgConfirmRemove.getText().replace("%1", verb));
-                    if (ev.isControlDown() || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
+                    if (ev.isControlDown() || nSelected == 1 || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
                             JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
                         if (shift) {
                             surface.copyDiagram();
@@ -1789,18 +1786,31 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * If the saving of diagrams was interrupted then the saving of groups won't be
 	 * tried here.
 	 * @param initiator - the originating GUI component
-	 * @return true if the saving attempt had been completed
+	 * @return true if the saving attempt had been completed, false if vetoed
 	 */
 	public boolean saveAll(Component initiator) {
+		return saveAll(initiator, false);
+	}
+	// END KGU#373 2017-03-28
+
+	// START KGU#373 2017-03-28: Enh. #386
+	/**
+	 * Saves unsaved changes of all held diagrams and groups. Will report the names
+	 * of the groups that couldn't be saved if {@code initiator} isn't null.
+	 * If the saving of diagrams was interrupted then the saving of groups won't be
+	 * tried here.
+	 * @param initiator - the originating GUI component
+	 * @param goingToClose TODO
+	 * @return true if the saving attempt had been completed, false if vetoed
+	 */
+	public boolean saveAll(Component initiator, boolean goingToClose) {
 		// START KGU#626 2019-01-06: Enh. #657
 		//this.surface.saveDiagrams(initiator, null, false, true);
-		StringList namesOfUnsavedGroups = null;
 		if (initiator == null) {
 			initiator = this;
-			namesOfUnsavedGroups = new StringList();
 		}
-		return this.surface.saveDiagrams(initiator, null, false, true) &&
-				this.surface.saveGroups(initiator, false, namesOfUnsavedGroups);
+		return this.surface.saveDiagrams(initiator, null, goingToClose, goingToClose && Element.E_AUTO_SAVE_ON_CLOSE) &&
+				this.surface.saveGroups(initiator, goingToClose);
 		// END KGU#626 2019-01-06
 	}
 	// END KGU#373 2017-03-28

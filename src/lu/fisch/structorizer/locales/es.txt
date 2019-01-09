@@ -1222,6 +1222,7 @@ Surface.msgSelectGroup.text=Decide po favor entre sobrescribir el fichero asocia
 Surface.msgConfirmRemoveGroup.text=Grupo «%» fue vaciado. ¿Eliminarlo?
 Surface.msgSaveGroupChanges.text=Grupo «%» tiene modificaciones no grabados.\nGrabar las modificaciones antes de eliminar el grupo?
 Surface.msgUnsavedGroups.text=No fue posible guardar estos diagramas:
+Surface.msgGroup.text=grupo «%»
 
 -----> Executor
 -----[ Control ]-----

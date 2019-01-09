@@ -5880,7 +5880,7 @@ public class Root extends Element {
 	
 	// START KGU#178/KGU#624 2018-12-26: Issues #160, #655; moved hitherto from class Generator
 	/**
-	 * Gathers all {@code Call} elements contained in this Root
+	 * Gathers all {@code Call} elements contained in this Root and not being disabled
 	 * @return the vector of all contained {@code Call} elements
 	 */
 	public Vector<Call> collectCalls()
@@ -5890,6 +5890,7 @@ public class Root extends Element {
 	
 	/**
 	 * Recursively gathers all {@code Call} elements in {@code _ele} and it's substructure
+	 * unless they are disabled.
 	 * @param _ele - an {@link Element}
 	 * @return a vector of found {@code Call} elements
 	 */
@@ -5901,7 +5902,10 @@ public class Root extends Element {
 			
 			@Override
 			public boolean visitPreOrder(Element _ele) {
-				if (_ele instanceof Call) {
+				// START KGU#632 2019-01-08: Nobody needs a disabled Call ...
+				//if (_ele instanceof Call) {
+				if (_ele instanceof Call && !_ele.isDisabled()) {
+				// END KGU#632 2019-01-08
 					calls.add((Call)_ele);
 				}
 				return true;
