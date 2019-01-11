@@ -75,6 +75,8 @@ import java.awt.Component;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -131,7 +133,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
 	private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
-
+	
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
 	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
@@ -576,10 +578,28 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
                 new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+        // START KGU#630 2019-01-09: Enh. #622/2
+        chkDrawGroups = new javax.swing.JCheckBox("Draw groups");
+        chkSelectGroups = new javax.swing.JCheckBox("Select groups");
+        chkSelectGroups.setEnabled(false);
+        ItemListener groupItemListener = new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent evt) {
+                statusGroupsChanged(evt);
+            }};
+            
+        chkDrawGroups.addItemListener(groupItemListener);
+        chkSelectGroups.addItemListener(groupItemListener);
+        // END KGU#630 2019-01-09
+        
         statusbar.add(statusSize);
         statusbar.add(statusViewport);
         statusbar.add(statusZoom);
         statusbar.add(statusSelection);
+        // START KGU#630 2019-01-09: Enh. #622/2
+        statusbar.add(chkDrawGroups);
+        statusbar.add(chkSelectGroups);
+        // END KGU#630 2019-01-09
 
         getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
         scrollarea.getViewport().addChangeListener(new javax.swing.event.ChangeListener() {
@@ -591,6 +611,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#624 2018-12-21
         
         this.addKeyListener(this);
+        this.addWindowFocusListener(surface);
 
         // START KGU#49 2015-10-18: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
         /******************************
@@ -612,11 +633,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     }// </editor-fold>//GEN-END:initComponents
 
-    // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+	// START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
     private void initPopupMenu() {
         popupMenu = new javax.swing.JPopupMenu();
         
-        popupHitList = new javax.swing.JMenu("Hit diagrams");
+        popupHitList = new javax.swing.JMenu("Hit diagrams / groups");
         popupHitList.setIcon(IconLoader.getIcon(90));
         
         popupExpandSelection = new javax.swing.JMenuItem("Expand selection", IconLoader.getIcon(79));
@@ -831,6 +852,25 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#497 2018-02-17
 
+    // START KGU#630 2019-01-09: Enh. #622/2
+    protected void statusGroupsChanged(ItemEvent evt) {
+        if (evt.getSource() == chkDrawGroups) {
+        	boolean drawingEnabled = chkDrawGroups.isSelected();
+            surface.enableGroupDrawing(drawingEnabled);
+            chkSelectGroups.setEnabled(drawingEnabled);
+            if (!drawingEnabled) {
+                surface.enableGroupSelection(false);
+            }
+            else {
+                surface.enableGroupSelection(chkSelectGroups.isSelected());
+            }
+        }
+        else if (evt.getSource() == chkSelectGroups) {
+        	surface.enableGroupSelection(chkSelectGroups.isSelected());
+        }
+    }
+    // END KGU#630 2019-01-09
+
     /**
      * Starts the Arranger as application
      *
@@ -885,6 +925,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     protected javax.swing.JLabel statusSelection;
     protected java.awt.Point scrollareaOrigin = new java.awt.Point();
     // END KGU#624 2018-12-21
+    // START KGU#630 2019-01-09: Enh. #662/2
+    protected javax.swing.JCheckBox chkDrawGroups;
+    protected javax.swing.JCheckBox chkSelectGroups;
+    // END KGU#630 2019-01-09
     // START KGU#85 2015-11-18
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18

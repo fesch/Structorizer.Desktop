@@ -722,9 +722,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									}
 								}
 								redraw();
-						        // START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
-						        doButtons();
-						        // END KGU#354 2017-05-02
+								// START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
+								doButtons();
+								// END KGU#354 2017-05-02
 
 								Container cont = getParent();
 								while (cont != null && !(cont instanceof JFrame)) {
@@ -757,11 +757,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		root.setText(StringList.getNew(_string));
 
-        // START KGU#123 2016-01-04: Issue #65
-        this.setAutoscrolls(true);
-        // END KGU#123 2016--01-04
+		// START KGU#123 2016-01-04: Issue #65
+		this.setAutoscrolls(true);
+		// END KGU#123 2016--01-04
 
-        // popup for comment
+		// popup for comment
 		JPanel jp = new JPanel();
 		jp.setOpaque(true);
 		lblPop.setPreferredSize(new Dimension(30,12));
@@ -776,11 +776,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
 	}
-    
+
 	// START KGU#354 2017-03-08: go over all the parser plugins
-    private CodeParser findParserForFileExtension(File file)
-    {
-    	CodeParser parser = null;
+	private CodeParser findParserForFileExtension(File file)
+	{
+		CodeParser parser = null;
 		this.retrieveParsers();
 		for (int i=0; i < parsers.size() && parser == null; i++)
 		{
@@ -790,7 +790,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 		return parser;
-    }
+	}
 	// END KGU#354 2017-03-08
 
 	public void hideComments()

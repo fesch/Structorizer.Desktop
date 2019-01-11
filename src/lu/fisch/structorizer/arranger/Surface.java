@@ -171,6 +171,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
@@ -208,8 +209,13 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
@@ -222,7 +228,6 @@ import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect;
-import lu.fisch.structorizer.gui.Diagram.SerialDecisionStatus;
 import lu.fisch.structorizer.gui.Editor;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
@@ -244,7 +249,7 @@ import net.iharder.dnd.FileDrop;
  * @author robertfisch, codemanyak
  */
 @SuppressWarnings("serial")
-public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener {
+public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener, WindowFocusListener {
 
 	// START#484 KGU 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(Surface.class.getName());
@@ -280,6 +285,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/** The {@link Diagram}s currently selected via mouse click */
 	private final Set<Diagram> diagramsSelected = new HashSet<Diagram>();
 	// END KGU#624 2018-12-21
+	// START KGU#630 2019-01-09: Enh. #662/2
+	/** The {@link Group}s currently selected via mouse click */
+	private final Set<Group> groupsSelected = new HashSet<Group>();
+	// END KGU#630 2019-01-09
 	// START KGU#624 2018-12-23: Enh. #655 Drag a selection area
 	private Rectangle dragArea = null;
 	// END KGU#624 2018-12-23
@@ -294,6 +303,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#110 2015-12-21: Enh. #62, also supports PNG export
 	public File currentDirectory = new File(System.getProperty("user.home"));
 	// END KGU#110 2015-12-21
+	// START KGU#630 2019-01-09: Enh. #662/2 central setting to enable/disable drawing of groups
+	protected boolean drawGroups = false;
+	private boolean selectGroups = false;	// To be ignored while drawGroups == false
+	private JPopupMenu pop = new JPopupMenu();
+	private JLabel lblPop = new JLabel("",SwingConstants.CENTER);
+	// END KGU#630 2019-01-09
 	
 	// START KGU#202 2016-07-03
 	public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
@@ -326,13 +341,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
 			new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
 	};
+
 	// END KGU#312 2016-12-29
 	// START KGU#385 2017-04-22: Enh. #62
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
 	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	// END KGU#385 2017-04-22
 	// START KGU#626 2018-12-27/2019-01-04: Enh. #657
-	public static final LangTextHolder msgTooltipSelectThis = new LangTextHolder("Select this diagram (+shift: add it to the selection) and bring it up to top.");
+	public static final LangTextHolder msgTooltipSelectThis = new LangTextHolder("Select %1 (+shift: add it to the selection)%2 and bring it up to top.");
 	public static final LangTextHolder msgGroupRemovalError = new LangTextHolder("Error on removing group «%»");
 	public static final LangTextHolder msgArrangementAlreadyLoaded = new LangTextHolder("The arrangment file \"%1\" has already been loaded to group «%2».\nLoad it again with a modified group name?");
 	public static final LangTextHolder msgArrangementNotLoaded = new LangTextHolder("Arrangement loading cancelled.");
@@ -343,6 +359,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgUnsavedGroups = new LangTextHolder("Couldn't save these groups (arrangements):");
 	// END KGU#626 2018-12-27/2019-01-04
 	// START KGU#631 2019-01-08: Issue #663
+	public static final LangTextHolder msgDiagram = new LangTextHolder("diagram «%»");
 	public static final LangTextHolder msgGroup = new LangTextHolder("group «%»");
 	// END KGU#631 2019-01-08
 
@@ -422,6 +439,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				g2d.scale(1/zoomFactor, 1/zoomFactor);
 			}
 			// END KGU#497 2018-03-19
+			// START KGU#630 2019-01-09: Enh. #662/2 - preparations for group drawing
+			if (drawGroups) {
+				for (Group group: groups.values()) {
+					group.draw(g2d);
+				}
+			}
+			// END KGU#630 2019-01-19
+				
 //			System.out.println("Surface.paintComponent()");
 			for(int d=0; d<diagrams.size(); d++)
 			{
@@ -492,7 +517,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	private void create()
 	{
-		new  FileDrop(this, new FileDrop.Listener()
+		new FileDrop(this, new FileDrop.Listener()
 		{
 			public void  filesDropped( java.io.File[] files )
 			{
@@ -2535,6 +2560,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
 //				.add(0, 300, Short.MAX_VALUE)
 //		);
+		// popup for comment
+		JPanel jp = new JPanel();
+		jp.setOpaque(true);
+		lblPop.setPreferredSize(new Dimension(30,12));
+		jp.add(lblPop);
+		pop.add(jp);
+
 		this.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
 		this.setPreferredSize(new Dimension(400, 300));
 		// START KGU#497 2018-02-17: Enh. #512
@@ -2855,17 +2887,39 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// With zooming we need the virtual mouse coordinates (Enh. #512)
 				int mouseX = Math.round(e.getX() * this.zoomFactor);
 				int mouseY = Math.round(e.getY() * this.zoomFactor);
-				Diagram diagram = getHitDiagram(mouseX, mouseY);
-				if (diagram != null)
-				{
-					Root root = diagram.root;
-					if (ctrlDown && diagramsSelected.contains(diagram)) {
-						root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
-						diagramsSelected.remove(diagram);
+				// START KGU#633 2019-01-09: Enh. #662/2
+				if (!(drawGroups && selectGroups)) {
+					Diagram diagram = getHitDiagram(mouseX, mouseY);
+					if (diagram != null)
+					{
+						Root root = diagram.root;
+						if (ctrlDown && diagramsSelected.contains(diagram)) {
+							root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
+							diagramsSelected.remove(diagram);
+						}
+						else {
+							root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+							diagramsSelected.add(diagram);
+						}
+					}
+				}
+				else {
+					Set<Group> hitGroups = this.getHitGroups(mouseX, mouseY);
+					if (ctrlDown) {
+						HashSet<Group> groupsToSelect = new HashSet<Group>(groupsSelected);
+						for (Group group: hitGroups) {
+							if (groupsSelected.contains(group)) {
+								groupsToSelect.remove(group);
+							}
+							else {
+								groupsToSelect.add(group);
+							}
+						}
+						this.unselectAll();
+						this.selectGroups(groupsToSelect);
 					}
 					else {
-						root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-						diagramsSelected.add(diagram);
+						this.selectGroups(hitGroups);
 					}
 				}
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
@@ -2977,6 +3031,32 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mouseMoved(MouseEvent e)
 	{
+		if (this.drawGroups) {
+			pop.setVisible(false);
+			int x = (int)(e.getX() * this.zoomFactor);
+			int y = (int)(e.getY() * this.zoomFactor);
+			Set<Group> hitGroups = this.getHitGroups(x, y);
+			if (!hitGroups.isEmpty()) {
+				StringList groupNames = new StringList();
+				for (Group group: hitGroups) {
+					groupNames.add(group.getName().replaceAll(Group.DEFAULT_GROUP_NAME, Editor.msgDefaultGroupName.getText()));
+				}
+				lblPop.setText(groupNames.concatenate(", "));
+				lblPop.setPreferredSize(
+						new Dimension(
+								8 + lblPop.getFontMetrics(lblPop.getFont()).
+								stringWidth(lblPop.getText()),
+								16
+								)
+						);
+				x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
+				y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
+				pop.setLocation(x+e.getX(),
+						y+e.getY()+16);
+				pop.setVisible(true);
+			}
+			
+		}
 	}
 	
 	// START KGU#626 2018-12-23: Prepared for enh. #657
@@ -2984,27 +3064,66 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		if (e.isPopupTrigger()) 
 		{
-			List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
 			if (Arranger.popupMenu != null) {
 				Arranger.popupHitList.removeAll();
-				for (Diagram diagr: hitDiagrs) {
-					javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(diagr.root.getSignatureString(false), diagr.root.getIcon());
-					menuItem.setToolTipText(msgTooltipSelectThis.getText());
-					menuItem.addActionListener(new java.awt.event.ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent evt) {
-							if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
-								unselectAll();
-							}
-							diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-							diagramsSelected.add(diagr);
-							if (diagrams.remove(diagr)) {
-								diagrams.add(diagr);
-							}
-							notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
-						}});
-					Arranger.popupHitList.add(menuItem);
+				// START KGU#630 2019-01-09: Enh #662/2
+				if (!(drawGroups && selectGroups)) {
+				// END KGU#630 2019-01-09
+					List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+					for (Diagram diagr: hitDiagrs) {
+						String description = diagr.root.getSignatureString(false);
+						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, diagr.root.getIcon());
+						menuItem.setToolTipText(msgTooltipSelectThis.getText()
+								.replace("%1", msgDiagram.getText().replace("%", description))
+								.replace("%2", ""));
+						menuItem.addActionListener(new java.awt.event.ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent evt) {
+								if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
+									unselectAll();
+								}
+								diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+								diagramsSelected.add(diagr);
+								if (diagrams.remove(diagr)) {
+									diagrams.add(diagr);
+								}
+								notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+							}});
+						Arranger.popupHitList.add(menuItem);
+					}
+				// START KGU#630 2019-01-09: Enh #662/2
 				}
+				if (drawGroups) {
+					Set<Group> hitGroups = this.getHitGroups(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+					String tooltipText = msgTooltipSelectThis.getText();
+					int pos2 = tooltipText.indexOf("%2");
+					if (pos2 > 0) {
+						tooltipText = tooltipText.substring(0, pos2);
+					}
+					for (Group group: hitGroups) {
+						String description = group.getName().replace(Group.DEFAULT_GROUP_NAME, Editor.msgDefaultGroupName.getText());
+						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, group.getIcon(true));
+						menuItem.setToolTipText(tooltipText.replace("%1", msgGroup.getText().replace("%", description)));
+						menuItem.addActionListener(new java.awt.event.ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent evt) {
+								if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
+									unselectAll();
+								}
+								for (Diagram diagr: group.getDiagrams()) {
+									diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+									diagramsSelected.add(diagr);
+									if (diagrams.remove(diagr)) {
+										diagrams.add(diagr);
+									}
+								}
+								notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+							}});
+						Arranger.popupHitList.add(menuItem);
+					}
+				}
+				// END KGU#630 2019-01-09
+				pop.setVisible(false);
 				Arranger.popupMenu.show(e.getComponent(), e.getX(), e.getY());					
 			}
 		}
@@ -3045,6 +3164,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param trueY - the true Y coordinate of the diagrams (zoom compensated)
 	 * @return The list of the diagrams enclosing the mouse position.
 	 * @see #getHitDiagram(int, int)
+	 * @see #getHitGroups(int, int)
 	 */
 	private List<Diagram> getHitDiagrams(int trueX, int trueY)
 	{
@@ -3063,6 +3183,27 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		return hitDiagrams;
+	}
+	
+	/**
+	 * Returns the set of all groups under the mouse cursor.
+	 * @param trueX - the true X coordinate (zoom compensated)
+	 * @param trueY - the true Y coordinate (zoom compensated)
+	 * @return The set of the groups enclosing the mouse position.
+	 * @see #getHitDiagram(int, int)
+	 * @see #getHitDiagrams(int, int)
+	 */
+	private Set<Group> getHitGroups(int trueX, int trueY)
+	{
+		Set<Group> hitGroups = new HashSet<Group>();
+		for (Group group: this.groups.values())
+		{
+			if (group.bounds.contains(trueX, trueY))
+			{
+				hitGroups.add(group);
+			}
+		}
+		return hitGroups;
 	}
 	
 	/**
@@ -3094,6 +3235,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Unselects all available diagrams and repaints
 	 */
 	public void unselectAll() {
+		// START KGU#630 2019-01-09: Enh. #622/2
+		this.groupsSelected.clear();
+		// END KGU#630 2019-01-09
 		this.diagramsSelected.clear();
 		for (Diagram diagr: this.diagrams) {
 			if (diagr.root != null) {
@@ -3105,9 +3249,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	
 	/**
-	 * Selects all available diagrams and repaints
+	 * Selects all available groups or diagrams and repaints
 	 */
 	public void selectAll() {
+		// START KGU#630 2019-01-9: Enh. #622/2
+		if (this.drawGroups && this.selectGroups) {
+			this.groupsSelected.addAll(this.groups.values());
+		}
+		// END KGU#630 2019-01-09
 		this.diagramsSelected.addAll(this.diagrams);
 		for (Diagram diagr: this.diagrams) {
 			if (diagr.root != null) {
@@ -3120,7 +3269,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Selects all given diagrams and repaints
-	 * @param diagrSet - set of diagram to be added to the selection
+	 * @param diagrSet - set of diagrams to be added to the selection
 	 */
 	public void selectSet(Collection<Diagram> diagrSet) {
 		this.diagramsSelected.addAll(diagrSet);
@@ -3133,6 +3282,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		repaint();
 	}
 	// END KGU#624 2018-12-21
+	
+	// START KGU#630 2019-01-09: Enh. #662/2
+	/**
+	 * Adds all given groups as well as their member diagrams to the respective
+	 * selection sets and repaints
+	 * @param groupSet
+	 */
+	public void selectGroups(Collection<Group> groupSet)
+	{
+		this.groupsSelected.addAll(groupSet);
+		for (Group group: groupSet) {
+			selectSet(group.getDiagrams());
+		}
+	}
+	// END KGU#630 2019-01-09
 
 	/**
 	 * Repaints the given {@link Root} (which reported to have been subject to changes).
@@ -4111,6 +4275,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public Collection<Group> getGroupsFromSelection(boolean congruent)
 	{
+		// START KGU#630 2019-01-09: Enh. #662/2
+		if (selectGroups) {
+			return groupsSelected;
+		}
+		// END KGU#630 2019-01-09
 		Collection<Diagram> interestingDiagrams = diagramsSelected.isEmpty() ? diagrams : diagramsSelected;
 		return getGroupsFromCollection(interestingDiagrams,congruent);
 	}
@@ -4365,6 +4534,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		return false;
+	}
+
+	protected void enableGroupDrawing(boolean selected) {
+		this.drawGroups = selected;
+		this.pop.setVisible(selected);
+		repaint();
+	}
+
+	public void enableGroupSelection(boolean selected) {
+		this.selectGroups = selected;
+	}
+
+	@Override
+	public void windowGainedFocus(WindowEvent e) {
+	}
+
+	@Override
+	public void windowLostFocus(WindowEvent e) {
+		pop.setVisible(false);
 	}
 
 }

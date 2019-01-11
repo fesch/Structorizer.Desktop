@@ -359,7 +359,6 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final DefaultMutableTreeNode nodeIncludables = new DefaultMutableTreeNode(lblIncludables);
 	protected final DefaultMutableTreeNode nodeStaleReferences = new DefaultMutableTreeNode(lblStaleReferences);
 	// END KGU#626 2019-01-03
-	// START KGU#630 2019-01-07: Enh. #622
 	protected final DefaultMutableTreeNode nodeIndexGroupInfoTop = new DefaultMutableTreeNode();
 	protected final JTree indexGroupInfoTree = new JTree(nodeIndexGroupInfoTop);
 	protected final JScrollPane scrollGroupInfo = new JScrollPane(indexGroupInfoTree);
@@ -368,6 +367,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JLabel lblCompleteness = new JLabel();
 	protected final JLabel lblExternSubroutines = new JLabel("Referenced external subroutines");
 	protected final JLabel lblExternIncludables = new JLabel("Referenced external includables");
+	protected final JButton[] btnGroupColors = new JButton[Group.groupColors.length];
+	protected final JToggleButton btnShowGroup = new JToggleButton(IconLoader.getIcon(17));
+	protected final JPanel pnlGroupInfo = new JPanel();
 	protected final DefaultMutableTreeNode nodeArrangementPath = new DefaultMutableTreeNode(lblArrangementPath);
 	protected final DefaultMutableTreeNode nodeElementNumbers = new DefaultMutableTreeNode();
 	protected final DefaultMutableTreeNode nodeModifications = new DefaultMutableTreeNode(lblModifications);
@@ -375,8 +377,19 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final DefaultMutableTreeNode nodeExternSubroutines = new DefaultMutableTreeNode(lblExternSubroutines);
 	protected final DefaultMutableTreeNode nodeExternIncludables = new DefaultMutableTreeNode(lblExternIncludables);
 	protected final DefaultMutableTreeNode nodeDeafReferences = new DefaultMutableTreeNode(lblStaleReferences);
-	private static final ImageIcon greenIcon = IconLoader.generateIcon(Color.GREEN);
-	private static final ImageIcon redIcon = IconLoader.generateIcon(Color.RED);
+	private static final ImageIcon greenIcon = IconLoader.generateIcon(Color.GREEN, 2);
+	private static final ImageIcon redIcon = IconLoader.generateIcon(Color.RED, 2);
+	protected final ActionListener colorGroupButtonListener = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+			Object button = evt.getSource();
+			Object group = nodeIndexGroupInfoTop.getUserObject();
+			if (button instanceof ColorButton && group instanceof Group) {
+				((Group)group).setColor(((ColorButton)button).getColor());
+				indexGroupInfoTree.repaint();
+			}
+		}
+	};
 	// END KGU#630 2019-01-07
 	
 	// START KGU#626 2019-01-01: Enh. #657
@@ -397,9 +410,6 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	
 	
 	public static class ArrangerIndexCellRenderer extends DefaultTreeCellRenderer {
-		private final static ImageIcon groupIcon = IconLoader.getIcon(94);
-		private final static ImageIcon groupIconList = IconLoader.getIcon(95);
-		private final static ImageIcon groupIconArchive = IconLoader.getIcon(96);
 		private final static ImageIcon mainIcon = IconLoader.getIcon(22);
 		private final static ImageIcon subIcon = IconLoader.getIcon(21);
 		private final static ImageIcon subIconCovered = IconLoader.getIcon(30);
@@ -434,15 +444,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			{
 				Group group = (Group)content;
 				setText(group.toString().replace(Group.DEFAULT_GROUP_NAME, msgDefaultGroupName.getText()));
-				if (group.getArrzFile() != null) {
-					setIcon(groupIconArchive);
-				}
-				else if (group.getFile() != null) {
-					setIcon(groupIconList);
-				}
-				else {
-					setIcon(groupIcon);
-				}
+				setIcon(group.getIcon(true));
 			}
 			else if (content instanceof JLabel) {
 				setText(((JLabel)content).getText());
@@ -1076,18 +1078,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 //		btnColor7.setFocusable(false);
 //		btnColor8.setFocusable(false);
 //		btnColor9.setFocusable(false);
+		ActionListener colorButtonListener = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Object button = e.getSource(); 
+				if (button instanceof ColorButton) {
+					diagram.setColor(((ColorButton)button).getColor());
+					doButtons();
+				}
+			}
+		};
 		for (int i = 0; i < Element.colors.length; i++) {
 			toolbar.add(btnColors[i]);
 			{
-				final ColorButton btnColor = btnColors[i];            	
-				btnColors[i].addActionListener(new ActionListener() {
-					private ColorButton btn = btnColor;
-					public void actionPerformed(ActionEvent event) {
-						diagram.setColor(btn.getColor());
-						doButtons();
-					}
-				}
-						);
+				btnColors[i].addActionListener(colorButtonListener);
 			}
 			btnColors[i].setFocusable(false);
 		}
@@ -1444,6 +1448,30 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	 * Sets up the Arranger index in fields {@link #scrollIndex}, {@link #arrangerIndex}.
 	 */
 	private void createArrangerIndex() {
+		for (int i = 0; i < Group.groupColors.length; i++) {
+			btnGroupColors[i] = new ColorButton(Group.groupColors[i]);
+			btnGroupColors[i].addActionListener(colorGroupButtonListener);
+		}
+		btnShowGroup.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				Object group = nodeIndexGroupInfoTop.getUserObject();
+				if (evt.getSource() == btnShowGroup && group instanceof Group) {
+					((Group)group).setVisible(btnShowGroup.isSelected());
+					indexGroupInfoTree.repaint();
+				}
+			}
+		});
+		pnlGroupInfo.setLayout(new BorderLayout());
+		pnlGroupInfo.add(this.scrollGroupInfo, BorderLayout.CENTER);
+		JPanel buttonBar = new JPanel();
+		buttonBar.setLayout(new BoxLayout(buttonBar, BoxLayout.X_AXIS));
+		buttonBar.add(this.btnShowGroup);
+		for (int i = 0; i < btnGroupColors.length; i++) {
+			buttonBar.add(btnGroupColors[i]);
+		}
+		pnlGroupInfo.add(buttonBar, BorderLayout.SOUTH);
+		
 		scrollIndex.setWheelScrollingEnabled(true);
 		scrollIndex.setDoubleBuffered(true);
 		scrollIndex.setBorder(BorderFactory.createEmptyBorder());
@@ -2458,7 +2486,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				this.lblCompleteness.setText(msgMembersComplete.getText());
 				this.lblCompleteness.setIcon(greenIcon);
 			}
-			display = this.scrollGroupInfo;
+			
+			// Set visibility button status
+			btnShowGroup.setSelected(selectedGroup.isVisible());
+			
+			display = this.pnlGroupInfo;
 			((DefaultTreeModel)this.indexGroupInfoTree.getModel()).reload();
 			// END KGU#63ß 2019-01-08
 		}

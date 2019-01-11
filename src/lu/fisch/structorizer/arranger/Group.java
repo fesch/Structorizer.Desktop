@@ -19,6 +19,8 @@
  */
 package lu.fisch.structorizer.arranger;
 
+import java.awt.AlphaComposite;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -33,6 +35,7 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----            -----------
  *      Kay Gürtzig     2018-12-23      First Issue (on behalf of enh. #657)
  *      Kay Gürtzig     2019-01-05      Substantial tuning for enh. #657
+ *      Kay Gürtzig     2019-01-09      Enhancements for issue #662/2 (drawing capability prepared)
  *
  ******************************************************************************************************
  *
@@ -41,6 +44,11 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +58,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.swing.ImageIcon;
+
+import lu.fisch.graphics.Canvas;
+import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.gui.IconLoader;
 
 /**
  * Group of Diagram objects in Arranger
@@ -59,7 +72,20 @@ import lu.fisch.structorizer.elements.Root;
 public class Group {
 
 	public static final String DEFAULT_GROUP_NAME = "%%%";
+	private static final int BUFFER = 3;
 	
+	// START KGU#630 2019-01-07: Enh. #622
+	public static final Color[] groupColors = {
+			Color.BLUE,
+			Color.RED,
+			Color.decode("0x008000"),	// dark green
+			Color.ORANGE,
+			Color.decode("0x8000FF"),	// violett
+			Color.DARK_GRAY
+	};
+	/** Is used in a modulo way to assign every new group another color */
+	private static int nextColor = 0;
+
 	/**
 	 * The Name of the group
 	 */
@@ -94,9 +120,39 @@ public class Group {
 	/**
 	 * Cache for the sorted list of referenced {@link Root}s
 	 */
-	// This redundant w.r.t. diagrams but improves performance of the Arranger index
+	// This is redundant w.r.t. diagrams but improves performance of the Arranger index
 	private final Vector<Root> routines = new Vector<Root>();
 
+	/**
+	 * Flag for drawing the {@link #bounds} according to enh. #662/2
+	 * @see #color
+	 * @see #draw(Canvas)
+	 */
+	private boolean visible = true;
+	
+	/**
+	 * The drawing color for the {@link #bounds} according to enh. #662/2
+	 * @see #visible
+	 * @see #draw(Canvas)
+	 * 
+	 */
+	private Color color = Color.BLUE;
+	
+	/**
+	 * Contains the expanded icon (with color), lazy initialization.
+	 */
+	private ImageIcon iconColor = null;
+	
+	/**
+	 * The cached bounding box for easier localisation
+	 * @see #visible
+	 * @see #color
+	 */
+	protected Rectangle bounds = null;
+	
+	/**
+	 * Comparator method for case-ignorant lexicographic sorting
+	 */
 	public static final Comparator<Group> NAME_ORDER =
 			new Comparator<Group>() {
 		public int compare(Group group1, Group group2)
@@ -110,6 +166,10 @@ public class Group {
 	 * @param _name - group name
 	 */
 	public Group(String _name) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 	}
 	
@@ -119,6 +179,10 @@ public class Group {
 	 * @param _arrPath - path to the .arr file of the source arrangement (if loaded with arrangement)
 	 */
 	public Group(String _name, String _arrPath) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 		this.filePath = _arrPath;
 	}
@@ -130,6 +194,10 @@ public class Group {
 	 * @param _diagrams - the (initial) set of {@link Diagram}s
 	 */
 	public Group(String _name, Collection<Diagram> _diagrams) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
 		if (!_diagrams.isEmpty()) {
@@ -146,6 +214,10 @@ public class Group {
 	 * (may be an .arr or an .arrz file)
 	 */
 	public Group(String _name, Set<Diagram> _diagrams, File _provenance) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
 		this.filePath = _provenance.getAbsolutePath();
@@ -239,6 +311,29 @@ public class Group {
 		this.membersChanged = false;
 		// This is the (only) chance to reset the membersMoved flag
 		this.membersMoved = this.positionsChanged();
+		this.iconColor = null;
+	}
+	
+	public Color getColor()
+	{
+		return this.color;
+	}
+	
+	public void setColor(Color _color)
+	{
+		this.color = _color;
+		this.iconColor = null;
+	}
+	
+	public boolean isVisible()
+	{
+		return this.visible;
+	}
+	
+	public void setVisible(boolean show)
+	{
+		this.visible = show;
+		this.iconColor = null;
 	}
 	
 	/**
@@ -356,7 +451,10 @@ public class Group {
 	}
 
 	/**
-	 * 
+	 * Updates the sorted list of {@link Root}s that can be retrieved with
+	 * {@link #getSortedRoots()}.
+	 * @param completely - if true then {@link #routines} will be computed from scratch,
+	 * othewise it is only re-sorted.
 	 */
 	protected void updateSortedRoots(boolean completely) {
 		if (completely) {
@@ -367,7 +465,12 @@ public class Group {
 		}
 		Collections.sort(routines, Root.SIGNATURE_ORDER);
 	}
-	
+
+	/**
+	 * Checks whether some of the associated {@link Diagram}s has changed its position
+	 * (e.g. since last saving or loading}
+	 * @return true if any position modification had been detected.
+	 */
 	private boolean positionsChanged()
 	{
 		for (Diagram diagr: this.diagrams) {
@@ -392,6 +495,81 @@ public class Group {
 		return membersChanged || this.membersMoved;
 	}
 	
+	// START KGU#6390 2019
+	public void draw(Graphics _g)
+	{
+		draw(_g, 0, 0);
+	}
+	
+	protected void draw(Graphics _g, int _offsetX, int _offsetY)
+	{
+		Canvas canvas = new Canvas((Graphics2D) _g);
+		if (this.visible) {
+			bounds = null;
+			for (Diagram diagr: this.diagrams) {
+				Rectangle rect = diagr.root.getRect(diagr.point).getRectangle();
+				if (bounds == null) {
+					bounds = rect;
+				}
+				else {
+					bounds = bounds.union(rect);
+				}
+			}
+			if (bounds != null) {
+				if (_offsetX != 0 || _offsetY != 0) {
+					bounds.translate(-_offsetX, -_offsetY);
+				}
+				Rect outer = new Rect(bounds.x - BUFFER, bounds.y - BUFFER,
+						bounds.x + bounds.width + BUFFER, bounds.y + bounds.height + BUFFER);
+				Rect inner = new Rect(bounds);
+				canvas.setColor(color);
+				canvas.drawRect(outer);
+				canvas.drawRect(inner);
+				((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
+				canvas.fillRect(inner);
+				((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+			}
+		}
+	}
+	
+	public ImageIcon getIcon(boolean withColor)
+	{
+		int iconNo = 94;
+		if (getArrzFile() != null) {
+			iconNo = 96;
+		}
+		else if (getFile() != null) {
+			iconNo = 95;
+		}
+		ImageIcon icon = IconLoader.getIcon(iconNo);
+		if (withColor && visible) {
+			if (iconColor == null) {
+				int size = icon.getIconHeight();
+				BufferedImage image = new BufferedImage(2 * size, size, BufferedImage.TYPE_INT_ARGB);
+				Graphics2D graphics = (Graphics2D) image.getGraphics();
+				graphics.drawImage(icon.getImage(), 0, 0, size, size, null);
+				int margin = 1 * size / 16;
+				int offset = 4 * size / 16;
+				graphics.setColor(color);
+				graphics.fillRect(size + offset + margin , margin, size - offset - 2*margin, size - 2*margin);
+				graphics.setColor(Color.WHITE);
+				graphics.fillRect(size + offset + 3 * margin, 3 * margin, size - offset - 6*margin, size - 6*margin);
+				graphics.setColor(color);
+				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
+				graphics.fillRect(size + offset + 3 * margin, 3 * margin, size - offset - 6*margin, size - 6*margin);
+				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+				graphics.dispose();
+				iconColor = new ImageIcon(image);
+			}
+			icon = iconColor;
+		}
+		return icon;
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString()
 	{

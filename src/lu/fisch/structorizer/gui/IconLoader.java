@@ -73,6 +73,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-27      Enh. #657: New icons 089_keyboard, 090_layers for Arranger popup menu added
  *      Kay Gürtzig     2019-01-01      Enh. #657: New icons 094_group through 098_groupDetach added
  *      Kay Gürtzig     2019-01-03      Enh. #657: New icons 116_groupAttach, 117_groupExpand added
+ *      Kay Gürtzig     2019-01-10      Enh. #657, #662/2: variant of generateIcon(Color) with insets 
  *
  ******************************************************************************************************
  *
@@ -899,6 +900,11 @@ public class IconLoader {
 	
 	public static ImageIcon generateIcon(Color _color)
 	{
+		return generateIcon(_color, 0);
+	}
+	
+	public static ImageIcon generateIcon(Color _color, int _insets)
+	{
 		int size = (int) (16*scaleFactor);
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
@@ -908,12 +914,12 @@ public class IconLoader {
 		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
 		graphics.setColor(Color.BLACK);
-		graphics.fillOval(0, 0, size, size);
+		graphics.fillOval(_insets, _insets, size - 2 * _insets, size - 2 * _insets);
 		// END KGU#493 2018-02-14
 		graphics.setColor(_color);
 		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
 		//graphics.fillRect(1,1,size-2,size-2);
-		graphics.fillOval(1, 1, size-2, size-2);
+		graphics.fillOval(_insets+1, _insets+1, size-2*(_insets+1), size-2*(_insets+1));
 		// END KGU#493 2018-02-14
 		// START KGU 2018-09-17 free resources no longer needed
 		graphics.dispose();
