@@ -580,7 +580,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
                 new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
         // START KGU#630 2019-01-09: Enh. #622/2
-        chkDrawGroups = new javax.swing.JCheckBox("Draw groups");
+        chkDrawGroups = new javax.swing.JCheckBox("Show groups");
         chkSelectGroups = new javax.swing.JCheckBox("Select groups");
         chkSelectGroups.setEnabled(false);
         ItemListener groupItemListener = new ItemListener() {
@@ -1766,6 +1766,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		if ((_flags & RPC_SELECTION_CHANGED) != 0) {
 			doButtons();
 			updateStatusSelection();
+		}
+		if ((_flags & RPC_GROUP_COLOR_CHANGED) != 0) {
+			surface.repaint();
 		}
 		// END KGU#624 2018-12-21
 		for (IRoutinePoolListener listener: listeners) {

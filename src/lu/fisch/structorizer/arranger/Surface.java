@@ -356,7 +356,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgSaveAsNewGroup = new LangTextHolder("as new group");
 	public static final LangTextHolder msgSelectGroup = new LangTextHolder("Please decide whether to update the file of an existing group or to create a new arrangement:");
 	public static final LangTextHolder msgConfirmRemoveGroup = new LangTextHolder("Group «%» became empty. Do you want to remove it now?");
-	public static final LangTextHolder msgSaveGroupChanges = new LangTextHolder("Group «%» has pending changes.\nDo you want to save these changes before the group is removed?");
+	public static final LangTextHolder msgSaveGroupChanges = new LangTextHolder("Group «%» has pending changes.\nDo you want to save these changes now?");
 	public static final LangTextHolder msgUnsavedGroups = new LangTextHolder("Couldn't save these groups (arrangements):");
 	// END KGU#626 2018-12-27/2019-01-04
 	// START KGU#631 2019-01-08: Issue #663
@@ -700,7 +700,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (group != null) {
 			toArrange = group.getDiagrams();
 			// START KGU#631 2019-01-08: More sensible message content on saving a group
-			sourceDescription = msgGroup.getText().replace("%", group.getName().replace(Group.DEFAULT_GROUP_NAME,Editor.msgDefaultGroupName.getText()));
+			sourceDescription = msgGroup.getText().replace("%", group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 			// END KGU#631 2019-01-08
 			// If the group was the default group then we will anonymize it
 			if (group.isDefaultGroup()) {
@@ -846,7 +846,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				File f = new File(filename + "." + extension);
 				if (f.exists())
 				{
-					writeNow = false;
 					int res = JOptionPane.showConfirmDialog(
 							initiator,
 							msgOverwriteFile.getText().replace("%", f.getAbsolutePath()),
@@ -879,7 +878,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				filename = filename.substring(0, dotPos);
 			}
-			if (group.hasChanged() && writeNow) {
+			if (group.hasChanged() && writeNow && lu.fisch.structorizer.gui.Diagram.isInSerialMode()) {
 				if (!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE)){
 					int answer =lu.fisch.structorizer.gui.Diagram.requestSaveDecision(
 							msgSaveGroupChanges.getText().replace("%", group.getName()),
@@ -2828,6 +2827,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		this.adaptLayout();
 		this.repaint();
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_POSITIONS_CHANGED);
 	}
 	// END KGU#630 2019-01-12
 
@@ -2852,7 +2852,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			silhouette.add(new Point(Integer.MAX_VALUE, 0));
 			this.getDrawingRect(silhouette);
 			Rect rec = diagr.root.getRect();
-			diagr.point = this.findPreferredLocation(silhouette, rec.getRectangle());
+			Point newPoint = this.findPreferredLocation(silhouette, rec.getRectangle());
+			diagr.setLocation(newPoint.x, newPoint.y);
 			diagrams.add(diagr);
 			rearrangedDiagrams.add(diagr);
 		}
@@ -2996,6 +2997,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mouseExited(MouseEvent e)
 	{
+		pop.setVisible(false);
 	}
 
 	public void mouseDragged(MouseEvent e)
@@ -3071,7 +3073,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (!hitGroups.isEmpty()) {
 				StringList groupNames = new StringList();
 				for (Group group: hitGroups) {
-					groupNames.add(group.getName().replaceAll(Group.DEFAULT_GROUP_NAME, Editor.msgDefaultGroupName.getText()));
+					groupNames.add(group.getName().replaceAll(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 				}
 				lblPop.setText(groupNames.concatenate(", "));
 				lblPop.setPreferredSize(
@@ -3133,7 +3135,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						tooltipText = tooltipText.substring(0, pos2);
 					}
 					for (Group group: hitGroups) {
-						String description = group.getName().replace(Group.DEFAULT_GROUP_NAME, Editor.msgDefaultGroupName.getText());
+						String description = group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText());
 						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, group.getIcon(true));
 						menuItem.setToolTipText(tooltipText.replace("%1", msgGroup.getText().replace("%", description)));
 						menuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -4214,7 +4216,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	
 	/**
-	 * Clears) the group with the given {@code name}.
+	 * Clears the group with the given {@code name}.
 	 * The member diagrams that are not shared by other groups will be handed over
 	 * to the default group.
 	 * @param deleteDiagrams - if true then the member diagrams will also be removed if not held by
@@ -4283,7 +4285,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							|| JOptionPane.showConfirmDialog(initiator == null ? this : initiator,
 									msgConfirmRemoveGroup.getText()
 									.replace("%", name.replace(Group.DEFAULT_GROUP_NAME,
-											Editor.msgDefaultGroupName.getText()))) == JOptionPane.OK_OPTION) {
+											ArrangerIndex.msgDefaultGroupName.getText()))) == JOptionPane.OK_OPTION) {
 						anythingChanged = (this.groups.remove(name) != null) || anythingChanged;
 					}
 					done = true;
@@ -4485,7 +4487,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					if (this.saveArrangement(initiator, group, goingToClose) == null) {
 						allDone = false;
 						if (group.isDefaultGroup()) {
-							unsaved.addIfNew(Editor.msgDefaultGroupName.getText());
+							unsaved.addIfNew(ArrangerIndex.msgDefaultGroupName.getText());
 						}
 						else {
 							unsaved.addIfNew(group.getName());

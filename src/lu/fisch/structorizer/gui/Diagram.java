@@ -1193,16 +1193,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//	Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
 			//}
 			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1) {
-				TreePath[] selectedPaths = arrangerIndex.getSelectionPaths();	// Should have cardinality 1
-				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selectedPaths[0].getLastPathComponent();
-				Object selectedObject = selectedNode.getUserObject();
-				if (selectedObject instanceof Root) {
-					// Should be a Root object
-					Arranger.scrollToDiagram((Root)selectedObject, true);
-				}
-				else if (selectedObject instanceof Group) {
-					Arranger.scrollToGroup((Group)selectedObject);
-				}
 			}
 			// END KGU#626 2019-01-01
 			// END KGU#305 2016-12-12
@@ -1260,44 +1250,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			// START KGU#305 2016-12-12: Enh. #305
-			// START KGU#626 2019-01-01: Enh. #657
-			//else if (e.getSource() == diagramIndex)
-			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1)
-			// END KGU#626 2019-01-01
-			{
-				// START KGU#626 2019-01-01: Enh. #657
-				//Root selectedRoot = diagramIndex.getSelectedValue();
-				//if (selectedRoot != null && selectedRoot != this.root) {
-				//	this.setRootIfNotRunning(selectedRoot);
-				//}
-				this.getParent().getParent().requestFocusInWindow();
-				TreePath[] paths = arrangerIndex.getSelectionPaths();
-				Object selectedObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
-				if (selectedObject instanceof Root) {
-					Root selectedRoot = (Root)selectedObject;
-					if (selectedRoot != this.root) {
-						this.setRootIfNotRunning(selectedRoot);
-					}
-					/* Ensure the diagram scrollpane gets the focus such that keyboard actions work in
-					 * the diagram area: parent is the viewport, grand parent is the scrollpane */
-					this.getParent().getParent().requestFocusInWindow();
-				}
-				else if (selectedObject instanceof Group) {
-					// TODO think about some more sensible action than showing the info here...
-					// (additionally to the expand/collapse action done by the JTree itself)
-					
-					// Grope for the editor instance in the container hierarchy (bad, bad!)
-					Container cont = arrangerIndex.getParent();
-					while (cont != null && !(cont instanceof Editor)) {
-						cont = cont.getParent();
-					}
-					if (cont != null) {
-						((Editor)cont).arrangerIndexInfo();
-					}
-				}
-				// END KGU#626 2019-01-01
-			}
-			// END KGU#305 2016-12-12
 		}
 	}
 

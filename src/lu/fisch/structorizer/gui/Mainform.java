@@ -1173,7 +1173,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				//this.editor.updateArrangerIndex(Arranger.getSortedRoots());
 				this.editor.updateArrangerIndex(Arranger.getSortedGroups());
 				// END KGU#626 2019-01-01
-			} else if ((_flags & IRoutinePoolListener.RPC_POSITIONS_CHANGED) != 0) {
+			} else if ((_flags & (IRoutinePoolListener.RPC_POSITIONS_CHANGED | IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED)) != 0) {
 				this.editor.repaintArrangerIndex();
 			}
 		}
