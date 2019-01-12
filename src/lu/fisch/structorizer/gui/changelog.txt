@@ -9,10 +9,11 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-01 (2019-01-11)
+Current development version: 3.29-01 (2019-01-12)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
+- 01: Enh. #662/3: Arranger popup menu item to rearrange diagrams by groups <2>
 - 01: Bugfix #663: Incorrect handling of modified diagrams on closing Arranger <2>
 - 01: Bugfix #515: Wrong diagram positioning in Arranger <2>
 

@@ -2129,7 +2129,6 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#626 2019-01-01
 		if (selectedRoot != null && selectedRoot != diagram.getRoot()) {
 			diagram.setRootIfNotRunning(selectedRoot);
-			scrollarea.requestFocusInWindow();
 		}		
 	}
 

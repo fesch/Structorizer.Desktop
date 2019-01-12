@@ -498,6 +498,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!this.checkRunning()) return false;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
 
+		this.getParent().getParent().requestFocusInWindow();	// It's the JScrollPane (Editor.scrollaraea)
 		return setRoot(root, true, true);
 	}
 	
@@ -842,7 +843,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							new Dimension(
 									8 + lblPop.getFontMetrics(lblPop.getFont()).
 									stringWidth(comment.get(si)),
-									comment.count()*16
+									comment.count()*lblPop.getFontMetrics(lblPop.getFont()).getHeight()
 									)
 							);
 

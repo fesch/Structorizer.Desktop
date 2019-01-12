@@ -1157,6 +1157,7 @@ Arranger.popupHelp.text=Arranger help ...
 Arranger.popupHelp.tooltip=Show the Arranger page of the Online User Guide in the browser
 Arranger.popupKeyBindings.text=Show key bindings ...
 Arranger.popupKeyBindings.tooltip=Show the Arranger key bindings page of the Online User Guide in the browser
+Arranger.popupRearrange.text=Rearrange by groups
 Arranger.msgConfirmRemoveAll.text=Do you really want to remove all diagrams from Arranger?
 Arranger.msgTitleWarning.text=Warning
 Arranger.msgTitleIllegal.text=Illegal Operation!

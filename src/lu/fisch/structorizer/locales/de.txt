@@ -1161,6 +1161,7 @@ Arranger.popupHelp.text=Arranger-Hilfe ...
 Arranger.popupHelp.tooltip=Zeigt das Arranger-Kapitel des Online-Nutzerhandbuchs im Browser an
 Arranger.popupKeyBindings.text=Tastenkombinationen ...
 Arranger.popupKeyBindings.tooltip=Zeigt die im Arranger gültigen Tastenkombinationen auf der enstprechenden Nutzerhandbuchseite im Browser an
+Arranger.popupRearrange.text=Neu anordnen nach Gruppen
 Arranger.msgConfirmRemoveAll.text=Wollen Sie wirklich alle Diagramme aus Arranger entfernen?
 Arranger.msgTitleWarning.text=Warnung
 Arranger.msgTitleIllegal.text=Unzulässige Operation!

@@ -71,7 +71,7 @@ import lu.fisch.structorizer.gui.IconLoader;
  */
 public class Group {
 
-	public static final String DEFAULT_GROUP_NAME = "%%%";
+	public static final String DEFAULT_GROUP_NAME = "!!!";
 	private static final int BUFFER = 3;
 	
 	// START KGU#630 2019-01-07: Enh. #622
@@ -391,7 +391,7 @@ public class Group {
 
 	/**
 	 * Removes all member {@link Diagram}s without changing the path information etc.
-	 * @return true if all diagrams have been removd. 
+	 * @return true if all diagrams have been removed. 
 	 */
 	public boolean clear()
 	{

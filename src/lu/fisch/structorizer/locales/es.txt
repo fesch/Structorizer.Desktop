@@ -1160,6 +1160,7 @@ Arranger.popupHelp.text=Ayuda para Arranger ...
 Arranger.popupHelp.tooltip=Abres la página "Arranger" del online manual en el browser
 Arranger.popupKeyBindings.text=Atajos de teclado ...
 Arranger.popupKeyBindings.tooltip=Muestras la lista de atajos de teclado en el browser
+Arranger.popupRearrange.text=Recolocar por grupos
 Arranger.msgConfirmRemoveAll.text=¿Quieres reálmente quitar todos los diagramas de Arranger?
 Arranger.msgTitleWarning.text=Advertencia
 Arranger.msgTitleIllegal.text=¡Operación ilícita!

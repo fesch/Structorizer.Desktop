@@ -94,6 +94,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-31      Enh. #657: Group management implemented
  *      Kay Gürtzig     2019-01-04      Enh. #657: Group management significantly advanced and improved
  *      Kay Gürtzig     2019-01-09      Bugfix #515: updateSilhouette() revised (KGU#633)
+ *      Kay Gürtzig     2019-01-12      Enh. #662/3: Ne method to rearrange all diagrams by groups
  *
  ******************************************************************************************************
  *
@@ -1661,8 +1662,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Determines the union of bounds of all diagrams on this {@link Surface} and updates
-	 * the lower silhouette line if {@code _silhouette} is given.
+	 * Determines the union of bounds of all diagrams on this {@link Surface} (in true diagram
+	 * coordinates) and updates the lower silhouette line of {@code _silhouette} if it is given.
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
@@ -1869,25 +1870,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	private Rect adaptLayout()
 	{
 		Rect rect = getDrawingRect(null);
-		// START KGU#85 2017-10-23: Enh. #35 - without this superfluous group layout it's all pretty simple
-		// Didn't find anything else to effectively inform the scrollbars about current extension
-//		org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-//		this.setLayout(layout);
-//		layout.setHorizontalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				// START KGU#411 2017-05-26: With huge diagrams the bounding box could exceed the Short value range
-//				//.add(0, rect.right, Short.MAX_VALUE)
-//				.add(0, Math.min(rect.right, Short.MAX_VALUE), Short.MAX_VALUE)
-//				// END KGU#411 2017-05-26
-//				);
-//		layout.setVerticalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				// START KGU#411 2017-05-26: With huge diagrams the bounding box could exceed the Short value range
-//				//.add(0, rect.bottom, Short.MAX_VALUE)
-//				.add(0, Math.min(rect.bottom, Short.MAX_VALUE), Short.MAX_VALUE)
-//				// END KGU#411 2017-05-26
-//				);
-		//System.out.println(rect);
+		// START KGU#85 2017-10-23: Enh. #35 - Add scrollbars
 		Dimension oldDim = this.getPreferredSize();
 		// START KGU#524 2018-06-18: Bugfix #544 for #512 (forgotten zoom consideration)
 //		if (rect.right != oldDim.width || rect.bottom != oldDim.height) {
@@ -2043,6 +2026,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#1119 2016-01-02
 		if (diagram == null) {
 		// END KGU#2 2015-11-19
+			boolean pointGiven = point != null;
 			// START KGU#499 2018-02-22: New packing strategy (silhouette approach)
 			//Rect rect = getDrawingRect();
 			LinkedList<Point> silhouette = new LinkedList<Point>();
@@ -2066,7 +2050,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// START KGU#110 2015-12-20
 			//Point point = new Point(left,top);
-			boolean pointGiven = point != null;
 			if (!pointGiven)
 			{
 				point = new Point(left,top);
@@ -2550,17 +2533,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
 	private void initComponents() {
 
-//		org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-//		this.setLayout(layout);
-//		layout.setHorizontalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				.add(0, 400, Short.MAX_VALUE)
-//			);
-//		layout.setVerticalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				.add(0, 300, Short.MAX_VALUE)
-//		);
-		// popup for comment
+		// popup for group names
 		JPanel jp = new JPanel();
 		jp.setOpaque(true);
 		lblPop.setPreferredSize(new Dimension(30,12));
@@ -2827,6 +2800,65 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 	// END KGU#626 2018-12-31
+	
+	// START KGU#630 2019-01-12: Enh. #662/3
+	/**
+	 * Re-arranges all diagrams group by group.
+	 */
+	protected void rearrange()
+	{
+		// Keep track of all diagrams already re-arranged (diagram my be shared among groups)
+		Set<Diagram> rearrangedDiagrams = new HashSet<Diagram>();
+
+		// First remove all diagrams from the vector (they should all be held by the groups as well)
+		diagrams.clear();
+
+		// Now traverse the groups and start a new level for every group
+		int groupOffsetY = 0;	// height offset of the current group
+		Group defaultGroup = null;	// Place the default group last
+		for (Group group: groups.values()) {
+			if (group.isDefaultGroup()) {
+				defaultGroup = group;
+				continue;
+			}
+			groupOffsetY = rearrangeGroup(group, rearrangedDiagrams, groupOffsetY);
+		}
+		if (defaultGroup != null) {
+			rearrangeGroup(defaultGroup, rearrangedDiagrams, groupOffsetY);
+		}
+		this.adaptLayout();
+		this.repaint();
+	}
+	// END KGU#630 2019-01-12
+
+	/**
+	 * Rearranges the diagrams of the given {@code group} not contained in set {@code rearrangedDiagrams}
+	 * below {@code groupOffsetY}, thereby adds these member diagrams both to field {@link #diagrams} again
+	 * (they must have been removed from the vector before or - if shared with an already rearranged group -
+	 * have been added to {@code rearrangedDiagrams}) and set {@code rearrangedDiagrams}.
+	 * @param group - the {@link Group} to be rearranged
+	 * @param rearrangedDiagrams - the set of already rearranged {@link Diagram}s - should contain exactly
+	 * the same diagrams as {@link #diagrams} but is more efficient to be searched.
+	 * @param groupOffsetY - the y coordinate beneath which the diagrams for this group are to be placed
+	 * @return  the bottom coordinate of the group bounds after rearrangement.
+	 */
+	private int rearrangeGroup(Group group, Set<Diagram> rearrangedDiagrams, int groupOffsetY) {
+		for (Diagram diagr: group.getDiagrams()) {
+			if (rearrangedDiagrams.contains(diagr)) {
+				continue;
+			}
+			LinkedList<Point> silhouette = new LinkedList<Point>();
+			silhouette.add(new Point(0, groupOffsetY));
+			silhouette.add(new Point(Integer.MAX_VALUE, 0));
+			this.getDrawingRect(silhouette);
+			Rect rec = diagr.root.getRect();
+			diagr.point = this.findPreferredLocation(silhouette, rec.getRectangle());
+			diagrams.add(diagr);
+			rearrangedDiagrams.add(diagr);
+		}
+		groupOffsetY = getDrawingRect(null).bottom;
+		return groupOffsetY;
+	}
 
 	public void mouseClicked(MouseEvent e)
 	{
@@ -3046,7 +3078,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						new Dimension(
 								8 + lblPop.getFontMetrics(lblPop.getFont()).
 								stringWidth(lblPop.getText()),
-								16
+								lblPop.getFontMetrics(lblPop.getFont()).getHeight()
 								)
 						);
 				x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
@@ -4452,7 +4484,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				if (groups.containsValue(group) && group.hasChanged() && (!goingToClose || !(group.isDefaultGroup() && !uniquelyHoldsDependents(group)))) {
 					if (this.saveArrangement(initiator, group, goingToClose) == null) {
 						allDone = false;
-						unsaved.addIfNew(group.getName());
+						if (group.isDefaultGroup()) {
+							unsaved.addIfNew(Editor.msgDefaultGroupName.getText());
+						}
+						else {
+							unsaved.addIfNew(group.getName());
+						}
 					}
 				}
 			}

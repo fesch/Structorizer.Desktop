@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.arranger;
 
-import java.awt.Component;
-
 /******************************************************************************************************
  *
  *      Author: Bob Fisch
@@ -66,12 +64,15 @@ import java.awt.Component;
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
  *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision, popup menu
+ *      Kay Gürtzig     2019-01-12  Enh. #662/3: 
  *
  ******************************************************************************************************
  *
  * Comment:	/
  *
  ******************************************************************************************************///
+
+import java.awt.Component;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -692,9 +693,22 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		btnRemoveDiagramActionPerformed(e, false);
         	}});
         popupRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-        
+
         popupMenu.addSeparator();
-        
+
+        // START KGU#630 2019-01-12: Enh. #662/3
+        popupRearrange = new javax.swing.JMenuItem("Rearrange by groups", IconLoader.getIcon(119));
+        popupMenu.add(popupRearrange);
+        popupRearrange.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		rearrange();
+        	}
+        });
+
+        popupMenu.addSeparator();
+        // END KGU#630 2019-01-12
+
         popupRemoveAll = new javax.swing.JMenuItem("Remove all diagrams", IconLoader.getIcon(45));
         popupMenu.add(popupRemoveAll);
         popupRemoveAll.addActionListener(new ActionListener() {
@@ -725,7 +739,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         popupKeyBindings.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, java.awt.event.InputEvent.ALT_DOWN_MASK));
         
     }
-    // END KGU#624/KGU#62 2018-12-27
+    // END KGU#624/KGU#626 2018-12-27
 
 	// START KGU#624 2018-12-21: Enh. #655 - new status bar
 	protected void updateStatusSize() {
@@ -852,6 +866,16 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#497 2018-02-17
 
+	// START KGU#630 2019-01-12: Enh. #662/3
+    /**
+     * This is the btnPopupRearrangePerformed action
+     * Rearranges all diagrams by groups
+     */
+    public void rearrange() {
+    	surface.rearrange();
+    }
+    // END KGU#630 2019-01-12
+
     // START KGU#630 2019-01-09: Enh. #622/2
     protected void statusGroupsChanged(ItemEvent evt) {
         if (evt.getSource() == chkDrawGroups) {
@@ -946,6 +970,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private javax.swing.JMenuItem popupGroup = null;
     private javax.swing.JMenuItem popupExpandGroup = null;
     // END KGU#626 2019-01-03
+    // START KGU#630 2019-01-12: Enh. #622/3
+    private javax.swing.JMenuItem popupRearrange = null;
+    // END KGU#630 2019-01-12
     // START KGU#305 2016-12-16
     private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
     private static final Vector<Root> routines = new Vector<Root>();

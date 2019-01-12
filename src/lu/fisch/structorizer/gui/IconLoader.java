@@ -73,7 +73,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-27      Enh. #657: New icons 089_keyboard, 090_layers for Arranger popup menu added
  *      Kay Gürtzig     2019-01-01      Enh. #657: New icons 094_group through 098_groupDetach added
  *      Kay Gürtzig     2019-01-03      Enh. #657: New icons 116_groupAttach, 117_groupExpand added
- *      Kay Gürtzig     2019-01-10      Enh. #657, #662/2: variant of generateIcon(Color) with insets 
+ *      Kay Gürtzig     2019-01-10      Enh. #657, #662/2: variant of generateIcon(Color) with insets
+ *      Kay Gürtzig     2019-01-12      Enh. #622/3: 119_rearrange added
  *
  ******************************************************************************************************
  *
@@ -218,7 +219,8 @@ public class IconLoader {
 			"115_up.png",	// for Translator Find dialog
 			"116_groupAttach.png",
 			"117_groupExpand.png",
-			"118_info.png"
+			"118_info.png",
+			"119_rearrange.png"
 	};
 	
 	private static final int[] ICON_SIZES = {
@@ -472,7 +474,7 @@ public class IconLoader {
 				throw new Exception("Invalid icon number " + iconNo);
 			}
 			catch (Exception ex) {
-				Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsitent", ex);
+				Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent", ex);
 			}
 		}
 		if (icon == null) {
