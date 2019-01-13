@@ -505,23 +505,15 @@ public class Group {
 	{
 		Canvas canvas = new Canvas((Graphics2D) _g);
 		if (this.visible) {
-			bounds = null;
-			for (Diagram diagr: this.diagrams) {
-				Rectangle rect = diagr.root.getRect(diagr.point).getRectangle();
-				if (bounds == null) {
-					bounds = rect;
-				}
-				else {
-					bounds = bounds.union(rect);
-				}
-			}
+			getBounds(true);
 			if (bounds != null) {
+				Rectangle drawBounds = new Rectangle(bounds);
 				if (_offsetX != 0 || _offsetY != 0) {
-					bounds.translate(-_offsetX, -_offsetY);
+					drawBounds.translate(-_offsetX, -_offsetY);
 				}
-				Rect outer = new Rect(bounds.x - BUFFER, bounds.y - BUFFER,
-						bounds.x + bounds.width + BUFFER, bounds.y + bounds.height + BUFFER);
-				Rect inner = new Rect(bounds);
+				Rect outer = new Rect(drawBounds.x - BUFFER, drawBounds.y - BUFFER,
+						drawBounds.x + drawBounds.width + BUFFER, drawBounds.y + drawBounds.height + BUFFER);
+				Rect inner = new Rect(drawBounds);
 				canvas.setColor(color);
 				canvas.drawRect(outer);
 				canvas.drawRect(inner);
@@ -532,7 +524,37 @@ public class Group {
 			}
 		}
 	}
+
+	/**
+	 * Returns the bounds rectangle of this group. If there hadn't been a cached bounds rectangle or {@code forceUpdate}
+	 * is true then composes the group bounds from the member diagrams and caches the result. 
+	 * @param forceUpdate - if true then a cached bound rectangle is ignored and overwritten
+	 * @return a bounding box {@link Rectangle} in true (unzoomed) diagram coordinates
+	 */
+	protected Rectangle getBounds(boolean forceUpdate) {
+		if (forceUpdate) {
+			this.bounds = null;
+		}
+		if (this.bounds == null) {
+			for (Diagram diagr: this.diagrams) {
+				Rectangle rect = diagr.root.getRect(diagr.point).getRectangle();
+				if (bounds == null) {
+					bounds = rect;
+				}
+				else {
+					bounds = bounds.union(rect);
+				}
+			}
+		}
+		return this.bounds;
+	}
 	
+	/**
+	 * Returns a group icon reflecting the file relation (none/list/archive). If {@code withColor} is true
+	 * then the icon will be augmented with a symbolic bounding box icon in the group color.
+	 * @param withColor - whether the icon is to contain a color-indicating extra symbol
+	 * @return - the {@link ImageIcon} of the group
+	 */
 	public ImageIcon getIcon(boolean withColor)
 	{
 		int iconNo = 94;

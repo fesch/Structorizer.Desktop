@@ -165,6 +165,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-29      Enh. #627: Clipboard copy of a code import error will now contain stack trace if available
  *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance
  *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
+ *      Kay Gürtzig     2019-01-13      Enh. #662/4: Support for new saving option to store relative coordinates in arr files
  *
  ******************************************************************************************************
  *
@@ -196,7 +197,6 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -220,8 +220,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.DefaultFormatter;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -6965,6 +6963,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
     		sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
     		// END KGU#363 2017-03-12
+    		// START KGU#630 2019-01-13: Enh. #662/4
+    		sod.chkRelativeCoordinates.setSelected(Arranger.A_STORE_RELATIVE_COORDS);
+    		// END KGU#630 2019-01-13
     		sod.setVisible(true);
 
     		if(sod.goOn==true)
@@ -6972,6 +6973,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
     			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
     			Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    			// START KGU#630 2019-01-13: Enh. #662/4
+    			Arranger.A_STORE_RELATIVE_COORDS = sod.chkRelativeCoordinates.isSelected();
+    			// END KGU#630 2019-01-13
     			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
     			ini.setProperty("authorName", sod.txtAuthorName.getText());
     			String licName = (String)sod.cbLicenseFile.getSelectedItem();

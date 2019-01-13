@@ -743,12 +743,16 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
 			// END KGU#331 2017-01-15
 			
+			// START KGU#630 2019-01-13: Enh. #662/4
+			Arranger.A_STORE_RELATIVE_COORDS = ini.getProperty("arrangerRelCoords", "0").equals("1");
+			// END KGU#630 2019-01-13
+			
 			// START KGU#428 2017-10-06: Enh. #430
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
 			
 			// KGU#602 2018-10-28: Fetching of recent file paths outsourced to Diagram.fetchIniProperties()
-						
+			
 			// Analyser (see also Root.saveToIni())
 			// START KGU#239 2016-08-12: Code redesign
 			for (int i = 1; i <= Root.numberOfChecks(); i++)
@@ -839,20 +843,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
 			// END KGU#494 2018-09-10
 			
-		    // START KGU#309 2016-12-15: Enh. #310 new saving options
-		    ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
-		    ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
-		    ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
-		    // END KGU#309 20161-12-15
+			// START KGU#309 2016-12-15: Enh. #310 new saving options
+			ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
+			ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
+			ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
+			// END KGU#309 20161-12-15
 
-		    // START KGU#456 2017-11-05: Issue #452
-		    ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));
-		    // END KGU#456 2017-11-05
-		    
+			// START KGU#456 2017-11-05: Issue #452
+			ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));
+			// END KGU#456 2017-11-05
+
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
-		    ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
 			// END KGU#331 2017-01-15
-		    
+
 			// look and feel
 			if (laf != null)
 			{

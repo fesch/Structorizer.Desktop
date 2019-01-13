@@ -94,13 +94,14 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-31      Enh. #657: Group management implemented
  *      Kay Gürtzig     2019-01-04      Enh. #657: Group management significantly advanced and improved
  *      Kay Gürtzig     2019-01-09      Bugfix #515: updateSilhouette() revised (KGU#633)
- *      Kay Gürtzig     2019-01-12      Enh. #662/3: Ne method to rearrange all diagrams by groups
+ *      Kay Gürtzig     2019-01-12      Enh. #662/3: New method to rearrange all diagrams by groups
+ *      Kay Gürtzig     2019-01-13      Enh. #662/4: enabled to save arrangements with relative coordinates
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      2018-06-10 (Kay Gürtzig)
- *      - The change was made to comply with the Oracle Swing debugging guidelines
+ *      - The change (paint() -> paintComponent()) was made to comply with the Oracle Swing debugging guidelines
  *        (https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/swing002.html#BABHEADA),
  *        in particular section 13.2.8 Custom Painting and Double Buffering:
  *        "Although you can override paint and do custom painting in the override, you should instead
@@ -229,7 +230,6 @@ import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect;
-import lu.fisch.structorizer.gui.Editor;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.gui.Menu;
@@ -1061,6 +1061,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		FileOutputStream fos = new FileOutputStream(arrFilename);
 		Writer out = new OutputStreamWriter(fos, "UTF8");
+		int offsetX = 0, offsetY = 0;
+		// START KGU#630 2019-01-13: Enh. #662/4
+		if (Arranger.A_STORE_RELATIVE_COORDS) {
+			Rectangle bounds = group.getBounds(true);
+			if (bounds != null) {	// Could happen if the group is empty
+				offsetX = DEFAULT_GAP - bounds.x;	// Will usually be negative
+				offsetY = DEFAULT_GAP - bounds.y;	// Will usually be negative
+			}
+		}
+		// END KGU#630 2019-01-13
 		// We want to preserve the original drawing order, so we must go the long way...
 		Set<Diagram> groupMembers = group.getDiagrams();
 		for (Diagram diagr: this.diagrams)
@@ -1069,8 +1079,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// KGU#110 2016-07-01: Bugfix #62 - don't include diagrams without file
 			if (groupMembers.contains(diagr) && !(path = diagr.root.getPath()).isEmpty())
 			{
-				out.write(Integer.toString(diagr.point.x) + ",");
-				out.write(Integer.toString(diagr.point.y) + ",");
+				// START KGU#630 2019-01-13: Enh. #662/4
+				out.write(Integer.toString(diagr.point.x + offsetX) + ",");
+				out.write(Integer.toString(diagr.point.y + offsetY) + ",");
+				// END KGU#630 2019-01-13
 				StringList entry = new StringList();
 				if (pureNames)
 				{
@@ -1269,7 +1281,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		int nLoaded = 0;
 		// END KGU#278 2016-10-11
 		
-		// START KGU#624 2018-12-22: Enh. #655 clear the selection such that only the loaded files wil be selected
+		// START KGU#624 2018-12-22: Enh. #655 clear the selection such that only the loaded files will be selected
 		this.unselectAll();
 		// END KGU#624 2018-12-22
 		
@@ -3232,7 +3244,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		Set<Group> hitGroups = new HashSet<Group>();
 		for (Group group: this.groups.values())
 		{
-			if (group.bounds.contains(trueX, trueY))
+			if (group.bounds != null && group.bounds.contains(trueX, trueY))
 			{
 				hitGroups.add(group);
 			}

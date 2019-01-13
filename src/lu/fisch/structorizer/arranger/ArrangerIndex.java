@@ -68,6 +68,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -132,7 +133,8 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	protected final JMenuItem popupIndexDissolve = new JMenuItem("Dissolve group", IconLoader.getIcon(97));
 	protected final JMenuItem popupIndexDetach = new JMenuItem("Detach from group", IconLoader.getIcon(98));
 	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
-	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram info ...", IconLoader.getIcon(118));
+	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getIcon(118));
+	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group bounds", IconLoader.getIcon(17));
 
 	protected final JLabel lblSelectTargetGroup = new JLabel("Select the target group:");
 	protected final JComboBox<Group> cmbTargetGroup = new JComboBox<Group>();
@@ -321,6 +323,11 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 				arrangerIndexDissolveGroup();
 			}
 			// END KGU#626 2019-01-05
+			// START KGU#630 2019-01-13: Enh. #662/2
+			else if (name.equals("TOGGLE_GROUP_VISIBILITY")) {
+				arrangerIndexToggleGroupVis();
+			}
+			// END KGU#630 2019-01-13
 		}
 	}
 	// END KGGU#305 2016-12-15
@@ -446,6 +453,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "DELETE");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), "CTRL_G");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), "CTRL_SHIFT_G");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK), "CTRL_ALT_G");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK), "CTRL_I");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK), "CTRL_MINUS");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, KeyEvent.CTRL_DOWN_MASK), "CTRL_PLUS");
@@ -456,6 +464,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		actMap.put("DELETE", new ArrangerIndexAction("DELETE"));
 		actMap.put("CTRL_G", new ArrangerIndexAction("MAKE_GROUP"));
 		actMap.put("CTRL_SHIFT_G", new ArrangerIndexAction("MAKE_COMPLETE_GROUP"));
+		actMap.put("CTRL_ALT_G", new ArrangerIndexAction("TOGGLE_GROUP_VISIBILITY"));
 		actMap.put("CTRL_I", new ArrangerIndexAction("SHOW_INFO"));
 		actMap.put("CTRL_MINUS", new ArrangerIndexAction("DETACH"));
 		actMap.put("CTRL_PLUS", new ArrangerIndexAction("ATTACH"));
@@ -492,6 +501,17 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		popupIndexInfo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK));
 		// END KGU#573 2018-09-13
 		
+		popupIndex.add(popupIndexSave);
+		popupIndexSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSave(); } });
+
+		popupIndex.add(popupIndexRemove);
+		popupIndexRemove.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemove(); } });
+		popupIndexRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+
+		popupIndex.add(popupIndexCovered);
+		popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
+		// END KGU#318 2017-01-05
+
 		// START KGU#626 2019-01-01: Enh. #657 items above need single Root selection, below multiple selection is okay
 		popupIndex.addSeparator();
 		// END KGU#626 2019-01-01
@@ -517,16 +537,12 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		popupIndexAttach.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexAttachToGroup(); } });
 		popupIndexAttach.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, KeyEvent.CTRL_DOWN_MASK));
 
-		popupIndex.add(popupIndexSave);
-		popupIndexSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSave(); } });
-
-		popupIndex.add(popupIndexRemove);
-		popupIndexRemove.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemove(); } });
-		popupIndexRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-
-		popupIndex.add(popupIndexCovered);
-		popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
-		// END KGU#318 2017-01-05
+		// START KGU#630 2019-01-13: Enh. #662/2  - Control group visibility
+		popupIndex.add(popupIndexDrawGroup);
+		popupIndexDrawGroup.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSetGroupVis(((JCheckBoxMenuItem)event.getSource()).isSelected()); } });
+		popupIndexDrawGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
+		// END KGU#630 2019-01-13
+		
 
 		// START KGU#534 2018-06-27: Enh. #552
 		popupIndex.addSeparator();
@@ -616,6 +632,10 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	{
 		// START KGU#318 2017-01-05: Enh. #319
 		boolean indexSelected = !this.isEmpty() && !this.isSelectionEmpty();
+		Group selectedGroup = null;
+		if (indexSelected) {
+			selectedGroup = arrangerIndexGetSelectedGroup();
+		}
 		//popupIndexGet.setEnabled(indexSelected && diagramIndex.getSelectedValue() != diagram.getRoot());
 		//popupIndexSave.setEnabled(indexSelected && diagramIndex.getSelectedValue().hasChanged());
 		popupIndexGet.setEnabled(indexSelected && arrangerIndexSelectsOtherRoot());
@@ -630,14 +650,18 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		// END KGU#573 2018-09-13
 		// START KGU#626 2019-01-03: Enh. #657
 		popupIndexInfo.setEnabled(indexSelected &&
-				(arrangerIndexGetSelectedRoot() != null || arrangerIndexGetSelectedGroup() != null));
+				(arrangerIndexGetSelectedRoot() != null || selectedGroup != null));
 		popupIndexGroup.setEnabled(this.arrangerIndexGetSelectedRoots(false).size() > 0);
 		popupIndexExpandGroup.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty()
-				|| this.arrangerIndexGetSelectedGroup() != null);
-		popupIndexDissolve.setEnabled(this.arrangerIndexGetSelectedGroup() != null);
+				|| selectedGroup != null);
+		popupIndexDissolve.setEnabled(selectedGroup != null);
 		popupIndexDetach.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty());
 		popupIndexAttach.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty());
 		// END KGU#626 2019-01-03
+		// START KGU#630 2019-01-13: Enh. #662/2
+		popupIndexDrawGroup.setEnabled(selectedGroup != null);
+		popupIndexDrawGroup.setSelected(selectedGroup != null && selectedGroup.isVisible());
+		// END KGU#630 2019-01-13
 
 	}
 
@@ -1132,6 +1156,26 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		return done;
 	}
 	// END KGU#626 2019-01-03
+	
+	// START KGU#630 3019-01-13: Enh. #662/2
+	private void arrangerIndexToggleGroupVis()
+	{
+		Group group = this.arrangerIndexGetSelectedGroup();
+		if (group != null) {
+			group.setVisible(!group.isVisible());
+			Arranger.getInstance().routinePoolChanged(null, IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED);
+			this.requestFocusInWindow();
+		}
+	}
+	private void arrangerIndexSetGroupVis(boolean show)
+	{
+		Group group = this.arrangerIndexGetSelectedGroup();
+		if (group != null) {
+			group.setVisible(show);
+			Arranger.getInstance().routinePoolChanged(null, IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED);
+		}
+	}
+	// END KGU#630 2019-01-13
 	
 	/**
 	 * @return true if the index tree is empty i.e. if nor group node is present

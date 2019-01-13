@@ -64,7 +64,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
  *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision, popup menu
- *      Kay Gürtzig     2019-01-12  Enh. #662/3: 
+ *      Kay Gürtzig     2019-01-12  Enh. #662/3: Rearrangement by groups
+ *      Kay Gürtzig     2019-01-13  Enh. #662/4: Save option to use relative coordinates
  *
  ******************************************************************************************************
  *
@@ -127,6 +128,11 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener {
 
+	// START KGU#630 2019-01-13: Enh.#662/4
+	/** Preference specifying whether group-relative coordinaes are to be stored in an arrangement file (default: absolute coordinates) */
+	public static boolean A_STORE_RELATIVE_COORDS = false;
+	// END KGU#630 2019-01-13
+	
 	// START KGU 2018-03-21
 	public static final Logger logger = Logger.getLogger(Arranger.class.getName());
 	// END KGU 2018-03-21
@@ -173,7 +179,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgDoCreateGroup = new LangTextHolder("Do you still insist on creating yet another group?");
 	// END KGU#626 2019-01-02
 	
-	// START KGU#624 2018-12-26: Enh. #655 - temporary limit for he listing of selected diagrams
+	// START KGU#624 2018-12-26: Enh. #655 - (temporary) limit for the listing of selected diagrams in a message box
 	protected static final int ROOT_LIST_LIMIT = 20;
 	// END KGU#624 2018-12-26
 
@@ -1024,7 +1030,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         if (initiator == null) {
             initiator = this;
         }
-        if (this.saveAll(initiator, applicationClosing))
+        if (!applicationClosing || this.saveAll(initiator, applicationClosing))
         // END KGU#626 2019-01-05
         {
             if (isStandalone)
@@ -1033,6 +1039,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             }
             else
             {
+                /* While the singleton reference is still held, a dispose() call won't have any garbage
+                 * collection effect, but if there are no diagrams then we may actually induce disposal. */
+                if (surface.getDiagramCount() == 0) {
+                    mySelf = null;
+                }
                 dispose();
             }
             // START KGU#631 2019-01-08: Bugfix #663
@@ -1901,6 +1912,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		// START KGU#623 2018-12-20: Enh. #654
 		ini.setProperty("arrangerDirectory", surface.currentDirectory.getAbsolutePath());
 		// END KGU#623 2018-12-20
+		// START KGU#630 2019-01-13: Enh. #662/4
+		ini.setProperty("arrangerRelCoords", (A_STORE_RELATIVE_COORDS ? "1" : "0"));
+		// END KGU#630 2019-01-13
+
 	}
 	// END KGU#497 2018-02-17
 
