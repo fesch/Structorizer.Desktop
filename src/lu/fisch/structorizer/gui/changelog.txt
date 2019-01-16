@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-01 (2019-01-14)
+Current development version: 3.29-01 (2019-01-16)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -17,6 +17,7 @@ Current development version: 3.29-01 (2019-01-14)
 - 01: Enh. #662/4: Option to save arrangements with relative coordinates <2>
 - 01: Bugfix #663: Incorrect handling of modified diagrams on closing Arranger <2>
 - 01: Bugfix #515: Defective diagram positioning in Arranger mended <2>
+- 01: Bugfix #665: Import of INSPECT statements from COBOL had failed <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

@@ -96,6 +96,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-09      Bugfix #515: updateSilhouette() revised (KGU#633)
  *      Kay Gürtzig     2019-01-12      Enh. #662/3: New method to rearrange all diagrams by groups
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: enabled to save arrangements with relative coordinates
+ *      Kay Gürtzig     2019-01-16      Enh. #662/2: Coloured group name popup
  *
  ******************************************************************************************************
  *
@@ -240,6 +241,7 @@ import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.locales.LangPanel;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.NSDParser;
+import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 import net.iharder.dnd.FileDrop;
 
@@ -2172,6 +2174,22 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		if (owningGroup != null) {
 			owningGroup.addDiagram(diagram);
+			/* 
+			 * Keep the former selection only if the owningGroup is among the selected groups
+			 * or if all selected diagrams are members of the owningGroup, otherwise clear the
+			 * selection and start with a new selection set.
+			 */
+			if (!groupsSelected.isEmpty() && !groupsSelected.contains(owningGroup)) {
+				this.unselectAll();
+			}
+			else if (!diagramsSelected.isEmpty() && owningGroup != null) {
+				for (Diagram diagr: diagramsSelected) {
+					if (!this.getGroups(diagr).contains(owningGroup)) {
+						this.unselectAll();
+						break;
+					}
+				}
+			}
 		}
 		diagramsSelected.add(diagram);
 		diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
@@ -3084,14 +3102,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			Set<Group> hitGroups = this.getHitGroups(x, y);
 			if (!hitGroups.isEmpty()) {
 				StringList groupNames = new StringList();
+				StringList htmlContent = new StringList();
 				for (Group group: hitGroups) {
-					groupNames.add(group.getName().replaceAll(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
+					String groupName = group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText());
+					groupNames.add(groupName);
+					htmlContent.add("<span style=\"color: #" + Integer.toHexString(group.getColor().getRGB()).substring(2) + ";\">"
+							+ BString.encodeToHtml(groupName)
+							+ "</span>");
 				}
-				lblPop.setText(groupNames.concatenate(", "));
+				lblPop.setText("<html>" + htmlContent.concatenate(", ") + "</html>");
 				lblPop.setPreferredSize(
 						new Dimension(
 								8 + lblPop.getFontMetrics(lblPop.getFont()).
-								stringWidth(lblPop.getText()),
+								stringWidth(groupNames.concatenate(", ")),
 								lblPop.getFontMetrics(lblPop.getFont()).getHeight()
 								)
 						);

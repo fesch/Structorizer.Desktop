@@ -885,7 +885,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#630 2019-01-09: Enh. #622/2
     protected void statusGroupsChanged(ItemEvent evt) {
         if (evt.getSource() == chkDrawGroups) {
-        	boolean drawingEnabled = chkDrawGroups.isSelected();
+            boolean drawingEnabled = chkDrawGroups.isSelected();
             surface.enableGroupDrawing(drawingEnabled);
             chkSelectGroups.setEnabled(drawingEnabled);
             if (!drawingEnabled) {
@@ -896,7 +896,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             }
         }
         else if (evt.getSource() == chkSelectGroups) {
-        	surface.enableGroupSelection(chkSelectGroups.isSelected());
+            surface.enableGroupSelection(chkSelectGroups.isSelected());
         }
     }
     // END KGU#630 2019-01-09

@@ -30,6 +30,7 @@ set -e
 #                                                  changed script output
 #      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
 #      Kay Gürtzig                    2018.09.27   Added missing *.cgt and *.egt resources
+#      Kay Gürtzig                    2019-01-16   Added missing *.nsd resources in parsers
 #
 ################################################################################
 
@@ -133,6 +134,7 @@ cp lu/fisch/structorizer/parsers/*.cgt ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.egt ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.grm ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.xsd ../bin/lu/fisch/structorizer/parsers/
+cp lu/fisch/structorizer/parsers/*.nsd ../bin/lu/fisch/structorizer/parsers/
 echo "Done"
 
 # changing into binary directory

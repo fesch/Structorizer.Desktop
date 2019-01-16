@@ -2024,9 +2024,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					doSaveNSD(root);
 					// END KGU#320 2017-01-04
 					// END KGU#94 2015-12-04
-		        	// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
-		        	this.currentDirectory = f;
-		        	// END KGU#273 2016-10-07
+					// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
+					this.currentDirectory = f;
+					// END KGU#273 2016-10-07
 				}
 			}
 		// START KGU#248 2016-09-15: Bugfix #244 - allow to leave the new loop
