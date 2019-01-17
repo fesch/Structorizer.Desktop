@@ -30,7 +30,7 @@ set -e
 #                                                  changed script output
 #      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
 #      Kay Gürtzig                    2018.09.27   Added missing *.cgt and *.egt resources
-#      Kay Gürtzig                    2019-01-16   Added missing *.nsd resources in parsers
+#      Kay Gürtzig                    2019-01-16   Added missing *.nsd resources in parsers (#665)
 #
 ################################################################################
 

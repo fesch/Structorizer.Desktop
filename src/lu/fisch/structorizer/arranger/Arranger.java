@@ -66,6 +66,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision, popup menu
  *      Kay Gürtzig     2019-01-12  Enh. #662/3: Rearrangement by groups
  *      Kay Gürtzig     2019-01-13  Enh. #662/4: Save option to use relative coordinates
+ *      Kay Gürtzig     2019-01-16  Enh. #655: keyPressed()/keyReleased() had to be replaced by Keybinding
  *
  ******************************************************************************************************
  *
@@ -98,7 +99,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -126,7 +131,7 @@ import lu.fisch.utils.StringList;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener {
+public class Arranger extends LangFrame implements WindowListener, /*KeyListener,*/ IRoutinePool, IRoutinePoolListener, LangEventListener {
 
 	// START KGU#630 2019-01-13: Enh.#662/4
 	/** Preference specifying whether group-relative coordinaes are to be stored in an arrangement file (default: absolute coordinates) */
@@ -141,6 +146,47 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
 	
+	private static final String KEY_SHIFT = "KEY_SHIFT";
+	private static final String KEY_DELETE = "KEY_DELETE";
+	private static final String KEY_CTRL_DELETE = "KEY_CTRL_DELETE";
+	private static final String KEY_COPY = "KEY_COPY";
+	private static final String KEY_PASTE = "KEY_PASTE";
+	private static final String KEY_CUT = "KEY_CUT";
+	private static final String KEY_ALL = "KEY_ALL";
+	private static final String KEY_MAKE_GROUP = "KEY_MAKE_GROUP";
+	private static final String KEY_EXPAND_GROUP = "KEY_EXPAND_GROUP";
+	private static final String KEY_OPEN = "KEY_OPEN";
+	private static final String KEY_SAVE = "KEY_SAVE";
+	private static final String KEY_HELP = "KEY_HELP";
+	private static final String KEY_KEYS = "KEY_KEYS";
+	private static final String KEY_ZOOM_IN = "KEY_ZOOM_IN";
+	private static final String KEY_ZOOM_OUT = "KEY_ZOOM_OUT";
+	private static final String KEY_LEFT = "KEY_LEFT";
+	private static final String KEY_LEFT10 = "KEY_LEFT10";
+	private static final String KEY_RIGHT = "KEY_RIGHT";
+	private static final String KEY_RIGHT10 = "KEY_RIGHT10";
+	private static final String MOVE_LEFT = "MOVE_LEFT";
+	private static final String MOVE_LEFT10 = "MOVE_LEFT10";
+	private static final String MOVE_RIGHT = "MOVE_RIGHT";
+	private static final String MOVE_RIGHT10 = "MOVE_RIGHT10";
+	private static final String KEY_UP = "KEY_UP";
+	private static final String KEY_UP10 = "KEY_UP10";
+	private static final String KEY_DOWN = "KEY_DOWN";
+	private static final String KEY_DOWN10 = "KEY_DOWN10";
+	private static final String MOVE_UP = "MOVE_UP";
+	private static final String MOVE_UP10 = "MOVE_UP10";
+	private static final String MOVE_DOWN = "MOVE_DOWN";
+	private static final String MOVE_DOWN10 = "MOVE_DOWN10";
+	private static final String KEY_PAGE_UP = "KEY_PAGE_UP";
+	private static final String KEY_PAGE_DOWN = "KEY_PAGE_DOWN";
+	private static final String KEY_PAGE_LEFT = "KEY_PAGE_LEFT";
+	private static final String KEY_PAGE_RIGHT = "KEY_PAGE_RIGHT";
+	private static final String KEY_HOME_V = "KEY_HOME_V";
+	private static final String KEY_END_V = "KEY_END_V";
+	private static final String KEY_HOME_H = "KEY_HOME_H";
+	private static final String KEY_END_H = "KEY_END_H";
+	private static final String KEY_ALT_ENTER = "KEY_ALT_ENTER";
+
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
 	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
@@ -604,8 +650,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         statusbar.add(statusZoom);
         statusbar.add(statusSelection);
         // START KGU#630 2019-01-09: Enh. #622/2
+        // FIXME: These checkboxes in the statusbar spoil the key listener on Arranger 
         statusbar.add(chkDrawGroups);
         statusbar.add(chkSelectGroups);
+        statusbar.setFocusable(false);
         // END KGU#630 2019-01-09
 
         getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
@@ -617,7 +665,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         });
         // END KGU#624 2018-12-21
         
-        this.addKeyListener(this);
+        //this.addKeyListener(this);
+        setKeyBindings();
         this.addWindowFocusListener(surface);
 
         // START KGU#49 2015-10-18: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
@@ -1004,7 +1053,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public void windowOpened(WindowEvent e) {
     }
 
-    // START KGU#631 2019-01-08: Bugfix #663
+    // START KGU#631 2019-01-08: Bugfix #664
     @Override
     public void windowClosing(WindowEvent e)
     {
@@ -1046,12 +1095,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                 }
                 dispose();
             }
-            // START KGU#631 2019-01-08: Bugfix #663
+            // START KGU#631 2019-01-08: Bugfix #664
             return true;
             // END KGU#631 2019-01-08
         }
         // END KGU#49 2017-01-04
-        // START KGU#631 2019-01-08: Bugfix #663 - allow a veto
+        // START KGU#631 2019-01-08: Bugfix #664 - allow a veto
         return false;
         // END KGU#631 2019-01-08
     }
@@ -1072,234 +1121,522 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public void windowDeactivated(WindowEvent e) {
     }
 
-    // START KGU#85 2015-11-30: For convenience, the delete button may also be used to drop a diagram now
-    @Override
-    public void keyPressed(KeyEvent ev) {
-        if (ev.getSource() == this) {
-            switch (ev.getKeyCode()) {
-                case KeyEvent.VK_DELETE:
-                    // START KGU#534 2018-06-27: Enh. #552
-                    // START KGU#624 2018-12-21: Enh. #655 recent ky binding wasn't intuitive
-                    //surface.removeDiagram();
-                    //if (ev.isShiftDown()) {
-                    //    surface.removeDiagram();
-                    //} else if (ev.isControlDown()) {
-                    //    surface.removeAllDiagrams();
-                    //}
-                {
-                    // START KGU624 2018-12-21: Enh. #655 - Face multiple selection
-                    //Root sel = surface.getSelected1();
-                    StringList rootList = surface.listSelectedRoots(false, false);
-                    int nSelected = rootList.count();
-                    if (nSelected == 0) {
-                        break;
-                    }
-                    boolean shift = ev.isShiftDown();
-                    String verb = "";
-                    if (shift) {
-                        verb = msgActionCut.getText();
-                    }
-                    else {
-                        verb = msgActionDelete.getText();
-                    }
-                    if (nSelected > ROOT_LIST_LIMIT) {
-                        // Avoid to make the option pane so large that the buttons can't be reached
-                        rootList.remove(ROOT_LIST_LIMIT, nSelected);
-                        rootList.add("...");
-                    }
-                    if (shift && checkIllegalMultipleAction(rootList, verb)) {
-                        break;
-                    }
-                    String message = msgConfirmMultiple.getText().
-                            replace("%1", Integer.toString(nSelected)).
-                            replace("%2", Integer.toString(surface.getDiagramCount())).
-                            replace("%3", rootList.concatenate("\n- ")).
-                            replace("%4", msgConfirmRemove.getText().replace("%1", verb));
-                    if (ev.isControlDown() || nSelected == 1 || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
-                            JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
-                        if (shift) {
-                            surface.copyDiagram();
-                        }
-                        surface.removeDiagram();
-                    }
-                }
-                    // END KGU#624 2018-12-21
-                    // END KGU#534 2018-06-27
-                    break;
-                // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
-                case KeyEvent.VK_X:
-                    if (ev.isControlDown()) {
-                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
-                        //surface.removeDiagram();
-                        StringList rootList = surface.listSelectedRoots(false, false);
-                        if (checkIllegalMultipleAction(rootList, msgActionCut.getText())) {
-                            break;
-                        }
-                        if (surface.copyDiagram())	// cut means copy first
-                        {
-                            surface.removeDiagram();
-                        }
-                        // END KGU#624 2018-12-21
-                    }
-                    break;
-                case KeyEvent.VK_V:
-                    if (ev.isControlDown()) {
-                        surface.pasteDiagram();
-                    }
-                    break;
-                case KeyEvent.VK_INSERT:
-                    if (ev.isShiftDown()) {
-                        surface.pasteDiagram();
-                    } else if (ev.isControlDown()) {
-                        surface.copyDiagram();
-                    }
-                    break;
-                case KeyEvent.VK_C:
-                    if (ev.isControlDown()) {
-                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
-                        StringList rootList = surface.listSelectedRoots(false, false);
-                        if (checkIllegalMultipleAction(rootList, msgActionCopy.getText())) {
-                            break;
-                        }
-                        // END KGU#624 2018-12-21
-                        surface.copyDiagram();
-                    }
-                    break;
-                // END KGU#177 2016-04-14
-                // START KGU#497 2018-02-17: Enh. #512 - zooming introduced
-                case KeyEvent.VK_SHIFT:
-                    if (!this.isShiftPressed) {
-                        setShiftPressed(true);
-                    }
-                    break;
-                case KeyEvent.VK_ADD:
-                    surface.zoom(true);
-                    break;
-                case KeyEvent.VK_SUBTRACT:
-                    surface.zoom(false);
-                    break;
-                // END KGU#497 2018-02-17
-                // START KGU#624 2018-12-21: Enh. #655
-                case KeyEvent.VK_PAGE_UP:
-                    if (ev.isShiftDown()) {
-                        scrollarea.getHorizontalScrollBar().setValue(
-                                scrollarea.getHorizontalScrollBar().getValue() - 
-                                scrollarea.getHorizontalScrollBar().getBlockIncrement(-1));
-                    }
-                    else {
-                        scrollarea.getVerticalScrollBar().setValue(
-                                scrollarea.getVerticalScrollBar().getValue() - 
-                                scrollarea.getVerticalScrollBar().getBlockIncrement(-1));
-                    }
-                    break;
-                case KeyEvent.VK_PAGE_DOWN:
-                    if (ev.isShiftDown()) {
-                        scrollarea.getHorizontalScrollBar().setValue(
-                                scrollarea.getHorizontalScrollBar().getValue() + 
-                                scrollarea.getHorizontalScrollBar().getBlockIncrement(1));
-                    }
-                    else {
-                        scrollarea.getVerticalScrollBar().setValue(
-                                scrollarea.getVerticalScrollBar().getValue() + 
-                                scrollarea.getVerticalScrollBar().getBlockIncrement(1));
-                    }
-                    break;
-                case KeyEvent.VK_A:
-                    if (ev.isControlDown()) {
-                        surface.selectAll();
-                    }
-                    break;
-                case KeyEvent.VK_S:
-                    if (ev.isControlDown()) {
-                        surface.saveArrangement(this, null, false);
-                    }
-                    break;
-                case KeyEvent.VK_O:
-                    if (ev.isControlDown()) {
-                        surface.loadArrangement(this);
-                    }
-                // END KGU#624 2018-12-21
-                    // START KGU#624 2018-12-24: Enh. #655
-                case KeyEvent.VK_UP:
-                case KeyEvent.VK_DOWN:
-                {
-                    int direction = ev.getKeyCode() == KeyEvent.VK_UP ? -1 : 1;
-                    int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
-                    if (ev.isShiftDown()) {
-                        vUnits *= 10;
-                    }
-                    int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
-                    if (ev.isControlDown()) {
-                        surface.moveSelection(0, vUnits);
-                        surface.scrollToSelection();
-                        this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
-                    }
-                    else {
-                        scrollarea.getVerticalScrollBar().setValue(newValue);                		
-                    }
-                }
-                break;
-                case KeyEvent.VK_LEFT:
-                case KeyEvent.VK_RIGHT:
-                {
-                    int direction = ev.getKeyCode() == KeyEvent.VK_LEFT ? -1 : 1;
-                    int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
-                    if (ev.isShiftDown()) {
-                        hUnits *= 10;
-                    }
-                    int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
-                    if (ev.isControlDown()) {
-                        surface.moveSelection(hUnits, 0);
-                        surface.scrollToSelection();
-                        this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
-                    }
-                    else {
-                        scrollarea.getHorizontalScrollBar().setValue(newValue);
-                    }
-                }
-                break;
-                case KeyEvent.VK_F1:
-                    this.helpArranger(ev.isAltDown());
-                    break;
-                    // END KGU#624 2018-12-24
-                    // START KGU#624 2018-12-26: Enh. #655
-                case KeyEvent.VK_HOME:
-                case KeyEvent.VK_END:
-                {
-                    javax.swing.JScrollBar scrollbar = scrollarea.getHorizontalScrollBar();
-                    int maxValue = surface.getWidth();
-                    if (ev.isControlDown()) {
-                        scrollbar = scrollarea.getVerticalScrollBar();
-                        maxValue = surface.getHeight();
-                    }
-                    scrollbar.setValue(ev.getKeyCode() == KeyEvent.VK_HOME ? 0 : maxValue);
-                }
-                break;
-                case KeyEvent.VK_F11:
-                {
-                    expandRootSetOrSelection(null, this, null);
-                }
-                    break;
-                case KeyEvent.VK_ENTER:
-                    if (ev.isAltDown()) {
-                        Root selected = surface.getSelected1();
-                        if (selected != null) {
-                            this.inspectAttributes(selected);
-                        }
-                    }
-                    break;
-                    // END KGU#624 2018-12-26
-                    // START KGU#626 2019-01-02: Enh. #657
-                case KeyEvent.VK_G:
-                    if (ev.isShiftDown()) {
-                        this.expandRootSetOrSelection(null, null, null);
-                    }
-                    makeGroup(this);
-                    break;
-                    // END KGU#626 2019-01-02
-            }
-        }
-    }
+	// START KGU#85/KGU#177/KGU#497/KGU#534/KGU#624/KGU#626 2019-01-16: Issues #35, #158, #512, #552, #655, #657
+	/**
+	 * This class had to replace the KeyListener method {@link Arranger#keyPressed(KeyEvent)} since the two JCheckBoxes
+	 * on the {@link Arranger#statusbar} had been introduced and spoiled the key notification mechanism such that we
+	 * were forced to use Keybinding rather than the leaner key listening.
+	 */
+	private class KeyAction extends AbstractAction {
+
+		private boolean shiftDown = false, ctrlDown = false, altDown = false;
+		public KeyAction(String actionName)
+		{
+			putValue(ACTION_COMMAND_KEY, actionName);
+		}
+		public KeyAction(String actionName, boolean isShiftDown, boolean isCtrlDown, boolean isAltDown)
+		{
+			putValue(ACTION_COMMAND_KEY, actionName);
+			shiftDown = isShiftDown; ctrlDown = isCtrlDown; altDown = isAltDown;
+		}
+		@Override
+		public void actionPerformed(ActionEvent actionEvt) {
+			String command = actionEvt.getActionCommand();
+			if (command.equals(KEY_DELETE)) {
+				StringList rootList = surface.listSelectedRoots(false, false);
+				int nSelected = rootList.count();
+				if (nSelected == 0) {
+					return;
+				}
+				String verb = msgActionDelete.getText();
+				if (nSelected > ROOT_LIST_LIMIT) {
+					// Avoid to make the option pane so large that the buttons can't be reached
+					rootList.remove(ROOT_LIST_LIMIT, nSelected);
+					rootList.add("...");
+				}
+				String message = msgConfirmMultiple.getText().
+						replace("%1", Integer.toString(nSelected)).
+						replace("%2", Integer.toString(surface.getDiagramCount())).
+						replace("%3", rootList.concatenate("\n- ")).
+						replace("%4", msgConfirmRemove.getText().replace("%1", verb));
+				if (this.ctrlDown || nSelected == 1 || JOptionPane.showConfirmDialog(Arranger.this, message, msgTitleWarning.getText(),
+						JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
+					surface.removeDiagram();
+				}
+			}
+			else if (command.equals(KEY_CUT)) {
+				StringList rootList = surface.listSelectedRoots(false, false);
+				if (checkIllegalMultipleAction(rootList, msgActionCut.getText())) {
+					return;
+				}
+				if (surface.copyDiagram())	// cut means copy first
+				{
+					surface.removeDiagram();
+				}
+			}
+			else if (command.equals(KEY_PASTE)) {
+				surface.pasteDiagram();
+			}
+			else if (command.equals(KEY_COPY)) {
+				StringList rootList = surface.listSelectedRoots(false, false);
+				if (checkIllegalMultipleAction(rootList, msgActionCopy.getText())) {
+					return;
+				}
+				surface.copyDiagram();
+			}
+			else if (command.equals(KEY_SHIFT)) {
+				/* The former mechanism to switch toolbar buttons while shift is being held down doesn't work
+				 * with keybindings. So we had to use another key (now F2) to toggle the button functins */
+				setShiftPressed(!isShiftPressed);
+			}
+			else if (command.equals(KEY_ZOOM_OUT)) {
+				surface.zoom(shiftDown);
+			}
+			else if (command.equals(KEY_PAGE_DOWN)) {
+				int dir = altDown ? -1 : 1;
+				if (shiftDown) {
+					scrollarea.getHorizontalScrollBar().setValue(
+							scrollarea.getHorizontalScrollBar().getValue() + 
+							dir * scrollarea.getHorizontalScrollBar().getBlockIncrement(dir));
+				}
+				else {
+					scrollarea.getVerticalScrollBar().setValue(
+							scrollarea.getVerticalScrollBar().getValue() + 
+							dir * scrollarea.getVerticalScrollBar().getBlockIncrement(dir));
+				}
+			}
+			else if (command.equals(KEY_ALL)) {
+				surface.selectAll();
+			}
+			else if (command.equals(KEY_SAVE)) {
+				surface.saveArrangement(Arranger.this, null, false);
+			}
+			else if (command.equals(KEY_OPEN)) {
+				surface.loadArrangement(Arranger.this);
+			}
+			else if (command.equals(KEY_DOWN) || command.equals(KEY_UP)) {
+				int direction = command.equals(KEY_UP) ? -1 : 1;
+				int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
+				if (this.shiftDown) {
+					vUnits *= 10;
+				}
+				int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
+				if (this.ctrlDown) {
+					surface.moveSelection(0, vUnits);
+					surface.scrollToSelection();
+					routinePoolChanged(Arranger.this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+				}
+				else {
+					scrollarea.getVerticalScrollBar().setValue(newValue);                		
+				}
+			}
+			else if (command.equals(KEY_LEFT) || command.equals(KEY_RIGHT)) {
+				int direction = command.equals(KEY_LEFT) ? -1 : 1;
+				int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
+				if (this.shiftDown) {
+					hUnits *= 10;
+				}
+				int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
+				if (this.ctrlDown) {
+					surface.moveSelection(hUnits, 0);
+					surface.scrollToSelection();
+					routinePoolChanged(Arranger.this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+				}
+				else {
+					scrollarea.getHorizontalScrollBar().setValue(newValue);
+				}
+			}
+			else if (command.equals(KEY_HELP)) {
+				helpArranger(false);
+			}
+			else if (command.equals(KEY_KEYS)) {
+				helpArranger(true);
+			}
+			else if (command.equals(KEY_HOME_H)) {
+				scrollarea.getHorizontalScrollBar().setValue(0);
+			}
+			else if (command.equals(KEY_END_H)) {
+				scrollarea.getHorizontalScrollBar().setValue(surface.getWidth());
+			}
+			else if (command.equals(KEY_HOME_V)) {
+				scrollarea.getVerticalScrollBar().setValue(0);
+			}
+			else if (command.equals(KEY_END_V)) {
+				scrollarea.getVerticalScrollBar().setValue(surface.getHeight());
+			}
+			else if (command.equals(KEY_ALT_ENTER)) {
+				Root selected = surface.getSelected1();
+				if (selected != null) {
+					inspectAttributes(selected);
+				}
+			}
+			else if (command.equals(KEY_MAKE_GROUP)) {
+				makeGroup(Arranger.this);
+			}
+			else if (command.equals(KEY_EXPAND_GROUP)) {
+				expandRootSetOrSelection(null, Arranger.this, null);
+			}
+		}
+	}
+	
+	private void setKeyBindings()
+	{
+		ActionMap actionMap = surface.getActionMap();
+		InputMap inputMap = surface.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), KEY_DELETE);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, KeyEvent.CTRL_DOWN_MASK), KEY_CTRL_DELETE);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, KeyEvent.SHIFT_DOWN_MASK), KEY_CUT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_DOWN_MASK), KEY_CUT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, KeyEvent.CTRL_DOWN_MASK), KEY_PASTE);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, KeyEvent.SHIFT_DOWN_MASK), KEY_PASTE);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, KeyEvent.CTRL_DOWN_MASK), KEY_COPY);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.CTRL_DOWN_MASK), KEY_COPY);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), KEY_SHIFT);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), KEY_LEFT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), KEY_RIGHT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.SHIFT_DOWN_MASK), KEY_LEFT10);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.SHIFT_DOWN_MASK), KEY_RIGHT10);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.CTRL_DOWN_MASK), MOVE_LEFT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.CTRL_DOWN_MASK), MOVE_RIGHT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_LEFT10);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_RIGHT10);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), KEY_UP);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), KEY_DOWN);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.SHIFT_DOWN_MASK), KEY_UP10);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.SHIFT_DOWN_MASK), KEY_DOWN10);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK), MOVE_UP);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK), MOVE_DOWN);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_UP10);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_DOWN10);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0), KEY_ZOOM_IN);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0), KEY_ZOOM_OUT);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), KEY_PAGE_UP);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), KEY_PAGE_DOWN);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, KeyEvent.SHIFT_DOWN_MASK), KEY_PAGE_LEFT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, KeyEvent.SHIFT_DOWN_MASK), KEY_PAGE_RIGHT);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), KEY_HOME_H);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), KEY_END_H);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.CTRL_DOWN_MASK), KEY_HOME_V);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.CTRL_DOWN_MASK), KEY_END_V);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK), KEY_ALL);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK), KEY_OPEN);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK), KEY_SAVE);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), KEY_HELP);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.ALT_DOWN_MASK), KEY_KEYS);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), KEY_MAKE_GROUP);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), KEY_EXPAND_GROUP);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0), KEY_EXPAND_GROUP);
+
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK), KEY_ALT_ENTER);
+
+		actionMap.put(KEY_DELETE, new KeyAction(KEY_DELETE));
+		actionMap.put(KEY_CTRL_DELETE, new KeyAction(KEY_DELETE, false, true, false));
+		actionMap.put(KEY_CUT, new KeyAction(KEY_CUT));
+		actionMap.put(KEY_COPY, new KeyAction(KEY_COPY));
+		actionMap.put(KEY_PASTE, new KeyAction(KEY_PASTE));
+
+		actionMap.put(KEY_SHIFT, new KeyAction(KEY_SHIFT));
+
+		actionMap.put(KEY_ZOOM_IN, new KeyAction(KEY_ZOOM_OUT, true, false, false));
+		actionMap.put(KEY_ZOOM_OUT, new KeyAction(KEY_ZOOM_OUT));
+
+		actionMap.put(KEY_LEFT, new KeyAction(KEY_LEFT));
+		actionMap.put(KEY_LEFT10, new KeyAction(KEY_LEFT, true, false, false));
+		actionMap.put(KEY_RIGHT, new KeyAction(KEY_RIGHT));
+		actionMap.put(KEY_RIGHT10, new KeyAction(KEY_RIGHT, true, false, false));
+		actionMap.put(MOVE_LEFT, new KeyAction(KEY_LEFT, false, true, false));
+		actionMap.put(MOVE_LEFT10, new KeyAction(KEY_LEFT, true, true, false));
+		actionMap.put(MOVE_RIGHT, new KeyAction(KEY_RIGHT, false, true, false));
+		actionMap.put(MOVE_RIGHT10, new KeyAction(KEY_RIGHT, true, true, false));
+
+		actionMap.put(KEY_UP, new KeyAction(KEY_UP));
+		actionMap.put(KEY_UP10, new KeyAction(KEY_UP, true, false, false));
+		actionMap.put(KEY_DOWN, new KeyAction(KEY_DOWN));
+		actionMap.put(KEY_DOWN10, new KeyAction(KEY_DOWN, true, false, false));
+		actionMap.put(MOVE_UP, new KeyAction(KEY_UP, false, true, false));
+		actionMap.put(MOVE_UP10, new KeyAction(KEY_UP, true, true, false));
+		actionMap.put(MOVE_DOWN, new KeyAction(KEY_DOWN, false, true, false));
+		actionMap.put(MOVE_DOWN10, new KeyAction(KEY_DOWN, true, true, false));
+
+		actionMap.put(KEY_PAGE_DOWN, new KeyAction(KEY_PAGE_DOWN));
+		actionMap.put(KEY_PAGE_UP, new KeyAction(KEY_PAGE_DOWN, false, false, true));
+		actionMap.put(KEY_PAGE_RIGHT, new KeyAction(KEY_PAGE_DOWN, true, false, false));
+		actionMap.put(KEY_PAGE_LEFT, new KeyAction(KEY_PAGE_DOWN, true, false, true));
+
+		actionMap.put(KEY_HOME_H, new KeyAction(KEY_HOME_H));
+		actionMap.put(KEY_END_H, new KeyAction(KEY_END_H));
+		actionMap.put(KEY_HOME_V, new KeyAction(KEY_HOME_V));
+		actionMap.put(KEY_END_V, new KeyAction(KEY_END_V));
+		
+		actionMap.put(KEY_ALL, new KeyAction(KEY_ALL));
+		
+		actionMap.put(KEY_OPEN, new KeyAction(KEY_OPEN));
+		actionMap.put(KEY_SAVE, new KeyAction(KEY_SAVE));
+
+		actionMap.put(KEY_HELP, new KeyAction(KEY_HELP));
+		actionMap.put(KEY_KEYS, new KeyAction(KEY_KEYS));
+		
+		actionMap.put(KEY_MAKE_GROUP, new KeyAction(KEY_MAKE_GROUP));
+		actionMap.put(KEY_EXPAND_GROUP, new KeyAction(KEY_EXPAND_GROUP));
+
+		actionMap.put(KEY_ALT_ENTER, new KeyAction(KEY_ALT_ENTER));
+	}
+
+    // START KGU#85 2015-11-30: Enh. #35 - For convenience, the delete button may also be used to drop a diagram now
+//    @Override
+//    public void keyPressed(KeyEvent ev) {
+//        if (ev.getSource() == this) {
+//            switch (ev.getKeyCode()) {
+//                case KeyEvent.VK_DELETE:
+//                    // START KGU#534 2018-06-27: Enh. #552
+//                    // START KGU#624 2018-12-21: Enh. #655 recent ky binding wasn't intuitive
+//                    //surface.removeDiagram();
+//                    //if (ev.isShiftDown()) {
+//                    //    surface.removeDiagram();
+//                    //} else if (ev.isControlDown()) {
+//                    //    surface.removeAllDiagrams();
+//                    //}
+//                {
+//                    // START KGU624 2018-12-21: Enh. #655 - Face multiple selection
+//                    //Root sel = surface.getSelected1();
+//                    StringList rootList = surface.listSelectedRoots(false, false);
+//                    int nSelected = rootList.count();
+//                    if (nSelected == 0) {
+//                        break;
+//                    }
+//                    boolean shift = ev.isShiftDown();
+//                    String verb = "";
+//                    if (shift) {
+//                        verb = msgActionCut.getText();
+//                    }
+//                    else {
+//                        verb = msgActionDelete.getText();
+//                    }
+//                    if (nSelected > ROOT_LIST_LIMIT) {
+//                        // Avoid to make the option pane so large that the buttons can't be reached
+//                        rootList.remove(ROOT_LIST_LIMIT, nSelected);
+//                        rootList.add("...");
+//                    }
+//                    if (shift && checkIllegalMultipleAction(rootList, verb)) {
+//                        break;
+//                    }
+//                    String message = msgConfirmMultiple.getText().
+//                            replace("%1", Integer.toString(nSelected)).
+//                            replace("%2", Integer.toString(surface.getDiagramCount())).
+//                            replace("%3", rootList.concatenate("\n- ")).
+//                            replace("%4", msgConfirmRemove.getText().replace("%1", verb));
+//                    if (ev.isControlDown() || nSelected == 1 || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
+//                            JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
+//                        if (shift) {
+//                            surface.copyDiagram();
+//                        }
+//                        surface.removeDiagram();
+//                    }
+//                }
+//                    // END KGU#624 2018-12-21
+//                    // END KGU#534 2018-06-27
+//                    break;
+//                // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
+//                case KeyEvent.VK_X:
+//                    if (ev.isControlDown()) {
+//                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+//                        //surface.removeDiagram();
+//                        StringList rootList = surface.listSelectedRoots(false, false);
+//                        if (checkIllegalMultipleAction(rootList, msgActionCut.getText())) {
+//                            break;
+//                        }
+//                        if (surface.copyDiagram())	// cut means copy first
+//                        {
+//                            surface.removeDiagram();
+//                        }
+//                        // END KGU#624 2018-12-21
+//                    }
+//                    break;
+//                case KeyEvent.VK_V:
+//                    if (ev.isControlDown()) {
+//                        surface.pasteDiagram();
+//                    }
+//                    break;
+//                case KeyEvent.VK_INSERT:
+//                    if (ev.isShiftDown()) {
+//                        surface.pasteDiagram();
+//                    } else if (ev.isControlDown()) {
+//                        surface.copyDiagram();
+//                    }
+//                    break;
+//                case KeyEvent.VK_C:
+//                    if (ev.isControlDown()) {
+//                        // START KGU#624 2018-12-21: Enh. #655 - face multiple selection
+//                        StringList rootList = surface.listSelectedRoots(false, false);
+//                        if (checkIllegalMultipleAction(rootList, msgActionCopy.getText())) {
+//                            break;
+//                        }
+//                        // END KGU#624 2018-12-21
+//                        surface.copyDiagram();
+//                    }
+//                    break;
+//                // END KGU#177 2016-04-14
+//                // START KGU#497 2018-02-17: Enh. #512 - zooming introduced
+//                case KeyEvent.VK_SHIFT:
+//                    if (!this.isShiftPressed) {
+//                        setShiftPressed(true);
+//                    }
+//                    break;
+//                case KeyEvent.VK_ADD:
+//                    surface.zoom(true);
+//                    break;
+//                case KeyEvent.VK_SUBTRACT:
+//                    surface.zoom(false);
+//                    break;
+//                // END KGU#497 2018-02-17
+//                // START KGU#624 2018-12-21: Enh. #655
+//                case KeyEvent.VK_PAGE_UP:
+//                    if (ev.isShiftDown()) {
+//                        scrollarea.getHorizontalScrollBar().setValue(
+//                                scrollarea.getHorizontalScrollBar().getValue() - 
+//                                scrollarea.getHorizontalScrollBar().getBlockIncrement(-1));
+//                    }
+//                    else {
+//                        scrollarea.getVerticalScrollBar().setValue(
+//                                scrollarea.getVerticalScrollBar().getValue() - 
+//                                scrollarea.getVerticalScrollBar().getBlockIncrement(-1));
+//                    }
+//                    break;
+//                case KeyEvent.VK_PAGE_DOWN:
+//                    if (ev.isShiftDown()) {
+//                        scrollarea.getHorizontalScrollBar().setValue(
+//                                scrollarea.getHorizontalScrollBar().getValue() + 
+//                                scrollarea.getHorizontalScrollBar().getBlockIncrement(1));
+//                    }
+//                    else {
+//                        scrollarea.getVerticalScrollBar().setValue(
+//                                scrollarea.getVerticalScrollBar().getValue() + 
+//                                scrollarea.getVerticalScrollBar().getBlockIncrement(1));
+//                    }
+//                    break;
+//                case KeyEvent.VK_A:
+//                    if (ev.isControlDown()) {
+//                        surface.selectAll();
+//                    }
+//                    break;
+//                case KeyEvent.VK_S:
+//                    if (ev.isControlDown()) {
+//                        surface.saveArrangement(this, null, false);
+//                    }
+//                    break;
+//                case KeyEvent.VK_O:
+//                    if (ev.isControlDown()) {
+//                        surface.loadArrangement(this);
+//                    }
+//                // END KGU#624 2018-12-21
+//                    // START KGU#624 2018-12-24: Enh. #655
+//                case KeyEvent.VK_UP:
+//                case KeyEvent.VK_DOWN:
+//                {
+//                    int direction = ev.getKeyCode() == KeyEvent.VK_UP ? -1 : 1;
+//                    int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
+//                    if (ev.isShiftDown()) {
+//                        vUnits *= 10;
+//                    }
+//                    int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
+//                    if (ev.isControlDown()) {
+//                        surface.moveSelection(0, vUnits);
+//                        surface.scrollToSelection();
+//                        this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+//                    }
+//                    else {
+//                        scrollarea.getVerticalScrollBar().setValue(newValue);                		
+//                    }
+//                }
+//                break;
+//                case KeyEvent.VK_LEFT:
+//                case KeyEvent.VK_RIGHT:
+//                {
+//                    int direction = ev.getKeyCode() == KeyEvent.VK_LEFT ? -1 : 1;
+//                    int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
+//                    if (ev.isShiftDown()) {
+//                        hUnits *= 10;
+//                    }
+//                    int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
+//                    if (ev.isControlDown()) {
+//                        surface.moveSelection(hUnits, 0);
+//                        surface.scrollToSelection();
+//                        this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+//                    }
+//                    else {
+//                        scrollarea.getHorizontalScrollBar().setValue(newValue);
+//                    }
+//                }
+//                break;
+//                case KeyEvent.VK_F1:
+//                    this.helpArranger(ev.isAltDown());
+//                    break;
+//                    // END KGU#624 2018-12-24
+//                    // START KGU#624 2018-12-26: Enh. #655
+//                case KeyEvent.VK_HOME:
+//                case KeyEvent.VK_END:
+//                {
+//                    javax.swing.JScrollBar scrollbar = scrollarea.getHorizontalScrollBar();
+//                    int maxValue = surface.getWidth();
+//                    if (ev.isControlDown()) {
+//                        scrollbar = scrollarea.getVerticalScrollBar();
+//                        maxValue = surface.getHeight();
+//                    }
+//                    scrollbar.setValue(ev.getKeyCode() == KeyEvent.VK_HOME ? 0 : maxValue);
+//                }
+//                break;
+//                case KeyEvent.VK_F11:
+//                {
+//                    expandRootSetOrSelection(null, this, null);
+//                }
+//                    break;
+//                case KeyEvent.VK_ENTER:
+//                    if (ev.isAltDown()) {
+//                        Root selected = surface.getSelected1();
+//                        if (selected != null) {
+//                            this.inspectAttributes(selected);
+//                        }
+//                    }
+//                    break;
+//                    // END KGU#624 2018-12-26
+//                    // START KGU#626 2019-01-02: Enh. #657
+//                case KeyEvent.VK_G:
+//                    if (ev.isShiftDown()) {
+//                        this.expandRootSetOrSelection(null, null, null);
+//                    }
+//                    makeGroup(this);
+//                    break;
+//                    // END KGU#626 2019-01-02
+//            }
+//        }
+//    }
+//
+//  @Override
+//  public void keyReleased(KeyEvent ev) {
+//      // START KGU#497 2018-02-17: Change the zoom icon when shift is released
+//      if (ev.getSource() == this) {
+//          switch (ev.getKeyCode()) {
+//              case KeyEvent.VK_SHIFT:
+//                  setShiftPressed(false);
+//                  break;
+//          }
+//      }
+//      // END KGU#497 2018-02-17
+//  }
+//
+//  @Override
+//  public void keyTyped(KeyEvent ev) {
+//      // Nothing to do here
+//  }
+//  // END KGU#2 2015-11-30
 
 	// START KGU#626 2019-01-02: Enh. #657
     /**
@@ -1455,7 +1792,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * @param initialRoots - set of {@link Root} objects from which the dependencies are to be retrieved
 	 * @param initiator - A responsible GUI component: message boxes will be modal to it; if null
 	 * then no messages will be raised.
-	 * @param missingSignatures - id a {@link} is given here then it will gather signatures of missing referenced diagrams.
+	 * @param missingSignatures - id a {@link StringList} is given here then it will gather signatures of missing referenced diagrams.
 	 * @return the set of added diagrams in case {@link initialRoots} was given 
 	 */
 	protected Set<Diagram> expandRootSetOrSelection(Set<Root> initialRoots, Component initiator, StringList missingSignatures) {
@@ -1545,25 +1882,6 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         }
     }
     // END KGU#85 2015-11-30
-
-    @Override
-    public void keyReleased(KeyEvent ev) {
-        // START KGU#497 2018-02-17: Change the zoom icon when shift is released
-        if (ev.getSource() == this) {
-            switch (ev.getKeyCode()) {
-                case KeyEvent.VK_SHIFT:
-                    setShiftPressed(false);
-                    break;
-            }
-        }
-        // END KGU#497 2018-02-17
-    }
-
-    @Override
-    public void keyTyped(KeyEvent ev) {
-        // Nothing to do here
-    }
-    // END KGU#2 2015-11-30
 
 	// START KGU#624 2018-12-24: Enh. #655
 	/**

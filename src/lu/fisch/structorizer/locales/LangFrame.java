@@ -32,7 +32,7 @@ package lu.fisch.structorizer.locales;
 *      Author          Date            Description
 *      ------          ----            -----------
 *      Bob Fisch       2016-08-08      First Issue for the new Locale system (issue #220)
-*      Kay Gürtzig     2019-01-08      Method isApplicationMain() introduced (KGU#631).
+*      Kay Gürtzig     2019-01-08      Issue #664: Method isApplicationMain() introduced (KGU#631).
 *
 ******************************************************************************************************
 *
@@ -93,7 +93,7 @@ public class LangFrame extends JFrame {
         Locales.getInstance().setLocale(LangFrame.this);
     }
     
-    // START KGU#631 2019-01-08: We need a handy way to decide whther he application is closing
+    // START KGU#631 2019-01-08: Issue #664 We need a handy way to decide whther he application is closing
     /**
      * Subclasses that can represent the main class (and thread) of an application should
      * override (re-implement) this method to return true.<br/>
