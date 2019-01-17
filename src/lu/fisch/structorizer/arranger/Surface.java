@@ -4013,11 +4013,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				sub.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
 			if (candidates.size() > 1 && duplicateSignatures != null) {
-				duplicateSignatures.add(signature);
+				duplicateSignatures.addIfNew(signature);
 			}
 		}
 		if (candidates.isEmpty() && missingSignatures != null) {
-			missingSignatures.add(signature);
+			missingSignatures.addIfNew(signature);
 		}
 	}
 

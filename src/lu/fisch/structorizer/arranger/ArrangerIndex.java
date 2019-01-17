@@ -33,6 +33,7 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-01-11      First Issue
  *      Kay Gürtzig     2019-01-12      Group colour update notification
+ *      Kay Gürtzig     2019-01-17      Enhancements (group node for external references) and corrections
  *
  ******************************************************************************************************
  *
@@ -993,14 +994,15 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 			this.nodeDeafReferences.removeAllChildren();
 			StringList missing = new StringList();
 			HashSet<Root> members = new HashSet<Root>(selectedGroup.getSortedRoots());
-			Collection<Root> expandedSet = Arranger.getInstance().accomplishRootSet(members, null, missing);
+			Collection<Root> expandedSet = Arranger.getInstance().accomplishRootSet(new HashSet<Root>(members), null, missing);
 			for (Root root: expandedSet) {
 				if (!members.contains(root)) {
+					DefaultMutableTreeNode node = makeNodeWithGroups(root, selectedGroup);
 					if (root.isSubroutine()) {
-						this.nodeExternSubroutines.add(new DefaultMutableTreeNode(root));
+						this.nodeExternSubroutines.add(node);
 					}
 					else if (root.isInclude()) {
-						this.nodeExternIncludables.add(new DefaultMutableTreeNode(root));
+						this.nodeExternIncludables.add(node);
 					}
 				}
 			}
@@ -1042,6 +1044,17 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	}
 	// END KGU#626 2019-01-05
 
+	/** @return a new node for {@code root} with subnodes for every group {@code root} is member of except {@code selectedGroup} */
+	private DefaultMutableTreeNode makeNodeWithGroups(Root root, Group selectedGroup) {
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(root);
+		Collection<Group> groups = Arranger.getInstance().getGroupsFromRoot(root, false);
+		for (Group group: groups) {
+			if (group != selectedGroup) {
+				node.add(new DefaultMutableTreeNode(group));
+			}
+		}
+		return node;
+	}
 
 	// START KGU#626 2019-01-03: Enh #657
 	private boolean arrangerIndexMakeGroup(boolean expand)

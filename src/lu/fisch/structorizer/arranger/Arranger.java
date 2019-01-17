@@ -66,7 +66,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision, popup menu
  *      Kay Gürtzig     2019-01-12  Enh. #662/3: Rearrangement by groups
  *      Kay Gürtzig     2019-01-13  Enh. #662/4: Save option to use relative coordinates
- *      Kay Gürtzig     2019-01-16  Enh. #655: keyPressed()/keyReleased() had to be replaced by Keybinding
+ *      Kay Gürtzig     2019-01-16  Enh. #655: Workaround for key listener (using keybinding) created (not needed)
+ *      Kay Gürtzig     2019-01-17  Enh. #657: Accelerator key (^R) for rearrange function added
  *
  ******************************************************************************************************
  *
@@ -146,46 +147,48 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
 	
-	private static final String KEY_SHIFT = "KEY_SHIFT";
-	private static final String KEY_DELETE = "KEY_DELETE";
-	private static final String KEY_CTRL_DELETE = "KEY_CTRL_DELETE";
-	private static final String KEY_COPY = "KEY_COPY";
-	private static final String KEY_PASTE = "KEY_PASTE";
-	private static final String KEY_CUT = "KEY_CUT";
-	private static final String KEY_ALL = "KEY_ALL";
-	private static final String KEY_MAKE_GROUP = "KEY_MAKE_GROUP";
-	private static final String KEY_EXPAND_GROUP = "KEY_EXPAND_GROUP";
-	private static final String KEY_OPEN = "KEY_OPEN";
-	private static final String KEY_SAVE = "KEY_SAVE";
-	private static final String KEY_HELP = "KEY_HELP";
-	private static final String KEY_KEYS = "KEY_KEYS";
-	private static final String KEY_ZOOM_IN = "KEY_ZOOM_IN";
-	private static final String KEY_ZOOM_OUT = "KEY_ZOOM_OUT";
-	private static final String KEY_LEFT = "KEY_LEFT";
-	private static final String KEY_LEFT10 = "KEY_LEFT10";
-	private static final String KEY_RIGHT = "KEY_RIGHT";
-	private static final String KEY_RIGHT10 = "KEY_RIGHT10";
-	private static final String MOVE_LEFT = "MOVE_LEFT";
-	private static final String MOVE_LEFT10 = "MOVE_LEFT10";
-	private static final String MOVE_RIGHT = "MOVE_RIGHT";
-	private static final String MOVE_RIGHT10 = "MOVE_RIGHT10";
-	private static final String KEY_UP = "KEY_UP";
-	private static final String KEY_UP10 = "KEY_UP10";
-	private static final String KEY_DOWN = "KEY_DOWN";
-	private static final String KEY_DOWN10 = "KEY_DOWN10";
-	private static final String MOVE_UP = "MOVE_UP";
-	private static final String MOVE_UP10 = "MOVE_UP10";
-	private static final String MOVE_DOWN = "MOVE_DOWN";
-	private static final String MOVE_DOWN10 = "MOVE_DOWN10";
-	private static final String KEY_PAGE_UP = "KEY_PAGE_UP";
-	private static final String KEY_PAGE_DOWN = "KEY_PAGE_DOWN";
-	private static final String KEY_PAGE_LEFT = "KEY_PAGE_LEFT";
-	private static final String KEY_PAGE_RIGHT = "KEY_PAGE_RIGHT";
-	private static final String KEY_HOME_V = "KEY_HOME_V";
-	private static final String KEY_END_V = "KEY_END_V";
-	private static final String KEY_HOME_H = "KEY_HOME_H";
-	private static final String KEY_END_H = "KEY_END_H";
-	private static final String KEY_ALT_ENTER = "KEY_ALT_ENTER";
+//	private static final String KEY_SHIFT = "KEY_SHIFT";
+//	private static final String KEY_DELETE = "KEY_DELETE";
+//	private static final String KEY_CTRL_DELETE = "KEY_CTRL_DELETE";
+//	private static final String KEY_COPY = "KEY_COPY";
+//	private static final String KEY_PASTE = "KEY_PASTE";
+//	private static final String KEY_CUT = "KEY_CUT";
+//	private static final String KEY_ALL = "KEY_ALL";
+//	private static final String KEY_MAKE_GROUP = "KEY_MAKE_GROUP";
+//	private static final String KEY_EXPAND_GROUP = "KEY_EXPAND_GROUP";
+//	private static final String KEY_EXPAND_SELECTION = "KEY_EXPAND_SELECTION";
+//	private static final String KEY_OPEN = "KEY_OPEN";
+//	private static final String KEY_SAVE = "KEY_SAVE";
+//	private static final String KEY_HELP = "KEY_HELP";
+//	private static final String KEY_KEYS = "KEY_KEYS";
+//	private static final String KEY_ZOOM_IN = "KEY_ZOOM_IN";
+//	private static final String KEY_ZOOM_OUT = "KEY_ZOOM_OUT";
+//	private static final String KEY_LEFT = "KEY_LEFT";
+//	private static final String KEY_LEFT10 = "KEY_LEFT10";
+//	private static final String KEY_RIGHT = "KEY_RIGHT";
+//	private static final String KEY_RIGHT10 = "KEY_RIGHT10";
+//	private static final String MOVE_LEFT = "MOVE_LEFT";
+//	private static final String MOVE_LEFT10 = "MOVE_LEFT10";
+//	private static final String MOVE_RIGHT = "MOVE_RIGHT";
+//	private static final String MOVE_RIGHT10 = "MOVE_RIGHT10";
+//	private static final String KEY_UP = "KEY_UP";
+//	private static final String KEY_UP10 = "KEY_UP10";
+//	private static final String KEY_DOWN = "KEY_DOWN";
+//	private static final String KEY_DOWN10 = "KEY_DOWN10";
+//	private static final String MOVE_UP = "MOVE_UP";
+//	private static final String MOVE_UP10 = "MOVE_UP10";
+//	private static final String MOVE_DOWN = "MOVE_DOWN";
+//	private static final String MOVE_DOWN10 = "MOVE_DOWN10";
+//	private static final String KEY_PAGE_UP = "KEY_PAGE_UP";
+//	private static final String KEY_PAGE_DOWN = "KEY_PAGE_DOWN";
+//	private static final String KEY_PAGE_LEFT = "KEY_PAGE_LEFT";
+//	private static final String KEY_PAGE_RIGHT = "KEY_PAGE_RIGHT";
+//	private static final String KEY_HOME_V = "KEY_HOME_V";
+//	private static final String KEY_END_V = "KEY_END_V";
+//	private static final String KEY_HOME_H = "KEY_HOME_H";
+//	private static final String KEY_END_H = "KEY_END_H";
+//	private static final String KEY_ALT_ENTER = "KEY_ALT_ENTER";
+//	private static final String KEY_REARRANGE = "KEY_REARRANGE";
 
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
@@ -1273,11 +1276,18 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //					inspectAttributes(selected);
 //				}
 //			}
+//			else if (command.equals(KEY_EXPAND_SELECTION)) {
+//				expandRootSetOrSelection(null, Arranger.this, null);
+//			}
 //			else if (command.equals(KEY_MAKE_GROUP)) {
 //				makeGroup(Arranger.this);
 //			}
 //			else if (command.equals(KEY_EXPAND_GROUP)) {
-//				expandRootSetOrSelection(null, Arranger.this, null);
+//				expandRootSetOrSelection(null, null, null);		// not interested in messages here
+//				makeGroup(Arranger.this);
+//			}
+//			else if (command.equals(KEY_REARRANGE)) {
+//				rearrange();
 //			}
 //		}
 //	}
@@ -1332,12 +1342,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK), KEY_ALL);
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK), KEY_OPEN);
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK), KEY_SAVE);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK), KEY_REARRANGE);
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), KEY_HELP);
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.ALT_DOWN_MASK), KEY_KEYS);
 //
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), KEY_MAKE_GROUP);
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), KEY_EXPAND_GROUP);
-//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0), KEY_EXPAND_GROUP);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0), KEY_EXPAND_SELECTION);
 //
 //		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK), KEY_ALT_ENTER);
 //
@@ -1384,10 +1395,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //		
 //		actionMap.put(KEY_OPEN, new KeyAction(KEY_OPEN));
 //		actionMap.put(KEY_SAVE, new KeyAction(KEY_SAVE));
+//		actionMap.put(KEY_REARRANGE, new KeyAction(KEY_REARRANGE));
 //
 //		actionMap.put(KEY_HELP, new KeyAction(KEY_HELP));
 //		actionMap.put(KEY_KEYS, new KeyAction(KEY_KEYS));
 //		
+//		actionMap.put(KEY_EXPAND_SELECTION, new KeyAction(KEY_EXPAND_SELECTION));
+//
 //		actionMap.put(KEY_MAKE_GROUP, new KeyAction(KEY_MAKE_GROUP));
 //		actionMap.put(KEY_EXPAND_GROUP, new KeyAction(KEY_EXPAND_GROUP));
 //
@@ -1611,14 +1625,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     }
                     break;
                     // END KGU#624 2018-12-26
-                    // START KGU#626 2019-01-02: Enh. #657
+                    // START KGU#626 2019-01-02/17: Enh. #657
                 case KeyEvent.VK_G:
-                    if (ev.isShiftDown()) {
-                        this.expandRootSetOrSelection(null, null, null);
+                    if (ev.isControlDown()) {
+                        if (ev.isShiftDown()) {
+                            this.expandRootSetOrSelection(null, null, null);
+                        }
+                        makeGroup(this);
                     }
-                    makeGroup(this);
                     break;
-                    // END KGU#626 2019-01-02
+                case KeyEvent.VK_R:
+                    if (ev.isControlDown()) {
+                        this.rearrange();
+                    }
+                    break;
+                    // END KGU#626 2019-01-02/17
             }
         }
     }
@@ -1772,7 +1793,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	/**
 	 * Enhances the {@code initialRootSet} with all {@code Root} objects that are directly and
 	 * indirectly called or included by some {@link Root} objects from {@code initialRootSet}. 
-	 * @param initialRootSet - a set of {@link Root} objects from where to start.
+	 * @param initialRootSet - a set of {@link Root} objects from where to start, MAY BE MODIFIED!
 	 * @param initiator - a GUI component meant to be made the owner of message boxes etc., if
 	 * being null then the messages won't be raised. 
 	 * @param missingSignatures - optional {@link StringList} to gather signatures of missing referred diagrams
