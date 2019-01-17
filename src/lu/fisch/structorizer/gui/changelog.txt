@@ -16,9 +16,9 @@ Current development version: 3.29-01 (2019-01-17)
 - 01: Enh. #662/3: Arranger popup menu item to rearrange diagrams by groups <2>
 - 01: Enh. #662/4: Option to save arrangements with relative coordinates <2>
 - 01: Bugfix #664: Incorrect handling of modified diagrams on closing Arranger <2>
+- 01: Bugfix #664: Disambiguated canceling in AUTO_SAVE_ON_CLOSE mode <2>
 - 01: Bugfix #515: Defective diagram positioning in Arranger mended <2>
 - 01: Bugfix #665: Import of INSPECT statements from COBOL works now <2>
-- 01: Issue #655: Arranger button toggling now via F2 instead of shift <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

@@ -76,6 +76,7 @@ package lu.fisch.structorizer.gui;
  *                                      doesn't hold dirty diagrams
  *      Kay Gürtzig     2018-10-28      Enh. #419: loadFromIni() decomposed (diagram-related parts delegated)
  *      Kay Gürtzig     2018-12-21      Enh. #655 signature and semantics of method routinePoolChanged adapted 
+ *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *
  ******************************************************************************************************
  *
@@ -338,42 +339,52 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             }
                             else {
                             // END KGU#157 2016-03-16
-                            	if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
-                            	{
-                            		// START KGU#287 2017-01-11: Issue #81/#330
-                            		if (isStandalone) {
-                            			if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
-                            				Element.E_NEXT_SCALE_FACTOR = 1.0;
+                            	// START KGU#634 2019-01-17: Issue #664 - diagram and user must be able to decide whether it's crucial
+                            	try {
+                            		diagram.isGoingToClose = true;
+                            	// END KGU#634 2019-01-17
+                            		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
+                            		{
+                            			// START KGU#287 2017-01-11: Issue #81/#330
+                            			if (isStandalone) {
+                            				if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
+                            					Element.E_NEXT_SCALE_FACTOR = 1.0;
+                            				}
+                            				preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
                             			}
-                            			preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
-                            		}
-                            		// END KGU#287 2017-01-11
-                            		saveToINI();
-                            		// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-                            		if (isStandalone) {
-                            			boolean vetoed = false;
-                            			// START KGU#49 2017-01-04 Care for potential Arranger dependents
-                            			if (Arranger.hasInstance()) {
-                            				Diagram.startSerialMode();
-                            				vetoed = !Arranger.getInstance().windowClosingVetoable(e);
-                            				Diagram.endSerialMode();
+                            			// END KGU#287 2017-01-11
+                            			saveToINI();
+                            			// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
+                            			if (isStandalone) {
+                            				boolean vetoed = false;
+                            				// START KGU#49 2017-01-04 Care for potential Arranger dependents
+                            				if (Arranger.hasInstance()) {
+                            					Diagram.startSerialMode();
+                            					vetoed = !Arranger.getInstance().windowClosingVetoable(e);
+                            					Diagram.endSerialMode();
+                            				}
+                            				// END KGU#49 2017-01-04
+                            				if (!vetoed) {
+                            					// START KGU#484 2018-03-22: Issue #463
+                            					logger.info("Structorizer " + instanceNo + " shutting down.");
+                            					// END KGU#484 2018-03-22
+                            					System.exit(0);	// This kills all related frames and threads as well!
+                            				}
                             			}
-                            			// END KGU#49 2017-01-04
-                            			if (!vetoed) {
+                            			else {
                             				// START KGU#484 2018-03-22: Issue #463
-                            				logger.info("Structorizer " + instanceNo + " shutting down.");
+                            				logger.info("Structorizer " + instanceNo + " going to dispose.");
                             				// END KGU#484 2018-03-22
-                            				System.exit(0);	// This kills all related frames and threads as well!
+                            				dispose();
                             			}
+                            			// END KGU#49/KGU#66 (#6/#16) 2015-11-14
                             		}
-                            		else {
-                            			// START KGU#484 2018-03-22: Issue #463
-                            			logger.info("Structorizer " + instanceNo + " going to dispose.");
-                            			// END KGU#484 2018-03-22
-                            			dispose();
-                            		}
-                            		// END KGU#49/KGU#66 (#6/#16) 2015-11-14
+                            	// START KGU#634 2019-01-17
                             	}
+                            	finally {
+                            		diagram.isGoingToClose = false;
+                            	}
+                            	// END KGU#634 2019-01-17
                             // START KGU#157 2016-03-16: Bugfix #131 part 2
                             }
                             // END KGU#157 2016-03-16

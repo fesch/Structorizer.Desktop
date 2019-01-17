@@ -166,6 +166,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance
  *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: Support for new saving option to store relative coordinates in arr files
+ *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *
  ******************************************************************************************************
  *
@@ -455,6 +456,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#440 2017-11-06: Bugfix #455 - allow to suppress drawing on initialisation
 	private boolean isInitialized = false;
 	// END KGU#440 2017-11-06
+
+	// START KGU#634 2019-01-17: Issue #664 - we need this distinction for saveAsNSD() in mode AUTO_SAVE_ON_CLOSE
+	/** Flag allowing the saving methods to decide whether the application is going to close */
+	protected boolean isGoingToClose;
+	// END KGU#634 2019-01-17
     
 	/*****************************************
 	 * CONSTRUCTOR
@@ -1911,12 +1917,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * SaveAs method
 	 *****************************************/
+	
+	/**
+	 * Tries to save the current {@link Root} under a new path. Opens a FileChooser for this purpose
+	 * @return true if the diagram was saved, false otherwise
+	 */
 	public boolean saveAsNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
 		return saveAsNSD(this.root);
 	}
 	
+	/**
+	 * Tries to save the {@link Root} given as {@code root} under a new path. Opens a FileChooser for
+	 * this purpose.
+	 * @return true if the diagram was saved, false otherwise
+	 */
 	private boolean saveAsNSD(Root root)
 	// END KGU#320 2017-01-04
 	{
@@ -2251,7 +2267,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#320 2017-01-04: Bugfix (#321)
 					//saveAsNSD();
 					if (!saveAsNSD(root)){
-						res = -1;	// Cancel all
+						// START KGU#634 2019-01-17: Issue #664 - in mode AUTO_SAVE_ON_CLOSE, this answer my be ambiguous
+						//res = -1;	// Cancel all
+						if (!Element.E_AUTO_SAVE_ON_CLOSE
+								|| !isGoingToClose
+								|| JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+										Menu.msgVetoClose.getText(),
+										Menu.msgTitleWarning.getText(),
+										JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+							res = -1;
+						}
+						else {
+							res = 1;
+						}
+						// END KGU#634 2019-01-17
 					}
 					// END KGU#320 2017-01-04
 				}
