@@ -187,5 +187,13 @@ public class Diagram
     	this.wasMoved = differs;
     }
     // END KGU#626 2018-12-30
-	
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString()
+    {
+    	return this.getClass().getSimpleName() + "(" + this.point + ", " + this.root + ")";
+    }
 }

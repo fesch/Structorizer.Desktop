@@ -568,6 +568,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
 	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
 	// END KGU#247 2016-09-15
+	// START KGU#634 2019-01-17: Issue #664
+	public static final LangTextHolder msgVetoClose = new LangTextHolder("Structorizer is going to close. Veto?");
+	// END KGU#634 2019-01-17
 	// START KGU#354 2017-03-04
 	public static final LangTextHolder msgErrorUsingParser = new LangTextHolder("Error while using % parser");
 	// END KGU#354 2017-03-04
@@ -678,7 +681,7 @@ public class Menu extends LangMenuBar implements NSDController
 	{
 		JMenuBar menubar = this;
 		
-		// FIXME: THis method gets deprecated with Java 10!
+		// FIXME: This method becomes deprecated with Java 10! Use getMenuShortcutKeyMaskEx() instead in future.
 		// OS-dependent key mask for menu shortcuts
 		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 

@@ -165,6 +165,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-29      Enh. #627: Clipboard copy of a code import error will now contain stack trace if available
  *      Kay Gürtzig     2018-12-18      Bugfix #648, #649 - safe import from Struktogrammeditor, scrolling performance
  *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
+ *      Kay Gürtzig     2019-01-13      Enh. #662/4: Support for new saving option to store relative coordinates in arr files
+ *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *
  ******************************************************************************************************
  *
@@ -196,7 +198,6 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -220,8 +221,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.DefaultFormatter;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -457,6 +456,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#440 2017-11-06: Bugfix #455 - allow to suppress drawing on initialisation
 	private boolean isInitialized = false;
 	// END KGU#440 2017-11-06
+
+	// START KGU#634 2019-01-17: Issue #664 - we need this distinction for saveAsNSD() in mode AUTO_SAVE_ON_CLOSE
+	/** Flag allowing the saving methods to decide whether the application is going to close */
+	protected boolean isGoingToClose;
+	// END KGU#634 2019-01-17
     
 	/*****************************************
 	 * CONSTRUCTOR
@@ -498,6 +502,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!this.checkRunning()) return false;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
 
+		this.getParent().getParent().requestFocusInWindow();	// It's the JScrollPane (Editor.scrollaraea)
 		return setRoot(root, true, true);
 	}
 	
@@ -722,9 +727,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									}
 								}
 								redraw();
-						        // START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
-						        doButtons();
-						        // END KGU#354 2017-05-02
+								// START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
+								doButtons();
+								// END KGU#354 2017-05-02
 
 								Container cont = getParent();
 								while (cont != null && !(cont instanceof JFrame)) {
@@ -757,11 +762,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		root.setText(StringList.getNew(_string));
 
-        // START KGU#123 2016-01-04: Issue #65
-        this.setAutoscrolls(true);
-        // END KGU#123 2016--01-04
+		// START KGU#123 2016-01-04: Issue #65
+		this.setAutoscrolls(true);
+		// END KGU#123 2016--01-04
 
-        // popup for comment
+		// popup for comment
 		JPanel jp = new JPanel();
 		jp.setOpaque(true);
 		lblPop.setPreferredSize(new Dimension(30,12));
@@ -776,11 +781,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
 	}
-    
+
 	// START KGU#354 2017-03-08: go over all the parser plugins
-    private CodeParser findParserForFileExtension(File file)
-    {
-    	CodeParser parser = null;
+	private CodeParser findParserForFileExtension(File file)
+	{
+		CodeParser parser = null;
 		this.retrieveParsers();
 		for (int i=0; i < parsers.size() && parser == null; i++)
 		{
@@ -790,7 +795,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 		return parser;
-    }
+	}
 	// END KGU#354 2017-03-08
 
 	public void hideComments()
@@ -842,7 +847,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							new Dimension(
 									8 + lblPop.getFontMetrics(lblPop.getFont()).
 									stringWidth(comment.get(si)),
-									comment.count()*16
+									comment.count()*lblPop.getFontMetrics(lblPop.getFont()).getHeight()
 									)
 							);
 
@@ -1192,16 +1197,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//	Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
 			//}
 			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1) {
-				TreePath[] selectedPaths = arrangerIndex.getSelectionPaths();	// Should have cardinality 1
-				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selectedPaths[0].getLastPathComponent();
-				Object selectedObject = selectedNode.getUserObject();
-				if (selectedObject instanceof Root) {
-					// Should be a Root object
-					Arranger.scrollToDiagram((Root)selectedObject, true);
-				}
-				else if (selectedObject instanceof Group) {
-					Arranger.scrollToGroup((Group)selectedObject, false);
-				}
 			}
 			// END KGU#626 2019-01-01
 			// END KGU#305 2016-12-12
@@ -1259,44 +1254,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			// START KGU#305 2016-12-12: Enh. #305
-			// START KGU#626 2019-01-01: Enh. #657
-			//else if (e.getSource() == diagramIndex)
-			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1)
-			// END KGU#626 2019-01-01
-			{
-				// START KGU#626 2019-01-01: Enh. #657
-				//Root selectedRoot = diagramIndex.getSelectedValue();
-				//if (selectedRoot != null && selectedRoot != this.root) {
-				//	this.setRootIfNotRunning(selectedRoot);
-				//}
-				this.getParent().getParent().requestFocusInWindow();
-				TreePath[] paths = arrangerIndex.getSelectionPaths();
-				Object selectedObject = ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject();
-				if (selectedObject instanceof Root) {
-					Root selectedRoot = (Root)selectedObject;
-					if (selectedRoot != this.root) {
-						this.setRootIfNotRunning(selectedRoot);
-					}
-					/* Ensure the diagram scrollpane gets the focus such that keyboard actions work in
-					 * the diagram area: parent is the viewport, grand parent is the scrollpane */
-					this.getParent().getParent().requestFocusInWindow();
-				}
-				else if (selectedObject instanceof Group) {
-					// TODO think about some more sensible action than showing the info here...
-					// (additionally to the expand/collapse action done by the JTree itself)
-					
-					// Grope for the editor instance in the container hierarchy (bad, bad!)
-					Container cont = arrangerIndex.getParent();
-					while (cont != null && !(cont instanceof Editor)) {
-						cont = cont.getParent();
-					}
-					if (cont != null) {
-						((Editor)cont).arrangerIndexInfo();
-					}
-				}
-				// END KGU#626 2019-01-01
-			}
-			// END KGU#305 2016-12-12
 		}
 	}
 
@@ -1960,12 +1917,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * SaveAs method
 	 *****************************************/
+	
+	/**
+	 * Tries to save the current {@link Root} under a new path. Opens a FileChooser for this purpose
+	 * @return true if the diagram was saved, false otherwise
+	 */
 	public boolean saveAsNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
 		return saveAsNSD(this.root);
 	}
 	
+	/**
+	 * Tries to save the {@link Root} given as {@code root} under a new path. Opens a FileChooser for
+	 * this purpose.
+	 * @return true if the diagram was saved, false otherwise
+	 */
 	private boolean saveAsNSD(Root root)
 	// END KGU#320 2017-01-04
 	{
@@ -2073,9 +2040,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					doSaveNSD(root);
 					// END KGU#320 2017-01-04
 					// END KGU#94 2015-12-04
-		        	// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
-		        	this.currentDirectory = f;
-		        	// END KGU#273 2016-10-07
+					// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
+					this.currentDirectory = f;
+					// END KGU#273 2016-10-07
 				}
 			}
 		// START KGU#248 2016-09-15: Bugfix #244 - allow to leave the new loop
@@ -2300,7 +2267,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#320 2017-01-04: Bugfix (#321)
 					//saveAsNSD();
 					if (!saveAsNSD(root)){
-						res = -1;	// Cancel all
+						// START KGU#634 2019-01-17: Issue #664 - in mode AUTO_SAVE_ON_CLOSE, this answer my be ambiguous
+						//res = -1;	// Cancel all
+						if (!Element.E_AUTO_SAVE_ON_CLOSE
+								|| !isGoingToClose
+								|| JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+										Menu.msgVetoClose.getText(),
+										Menu.msgTitleWarning.getText(),
+										JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+							res = -1;
+						}
+						else {
+							res = 1;
+						}
+						// END KGU#634 2019-01-17
 					}
 					// END KGU#320 2017-01-04
 				}
@@ -2319,8 +2299,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return res != -1; // true if not cancelled
 	}
 	/**
-	 * Service method for a decision about saving a file with the given path {@code filename} in
-	 * a potential serial context.
+	 * Service method for a decision about saving a file in a potential serial context.
 	 * @param _messageText - the text of the offered question if an interactive dialog is wanted at all, null otherwise
 	 * @param _initiator - an owning component for the modal message or question boxes
 	 * @return 0 for approval, 1 for disapproval, 2 for "yes to all", 3 for "no to all", -1 for cancel
@@ -7013,6 +6992,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
     		sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
     		// END KGU#363 2017-03-12
+    		// START KGU#630 2019-01-13: Enh. #662/4
+    		sod.chkRelativeCoordinates.setSelected(Arranger.A_STORE_RELATIVE_COORDS);
+    		// END KGU#630 2019-01-13
     		sod.setVisible(true);
 
     		if(sod.goOn==true)
@@ -7020,6 +7002,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
     			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
     			Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    			// START KGU#630 2019-01-13: Enh. #662/4
+    			Arranger.A_STORE_RELATIVE_COORDS = sod.chkRelativeCoordinates.isSelected();
+    			// END KGU#630 2019-01-13
     			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
     			ini.setProperty("authorName", sod.txtAuthorName.getText());
     			String licName = (String)sod.cbLicenseFile.getSelectedItem();

@@ -49,23 +49,23 @@
  *      Author          Date        Description
  *      ------          ----		-----------
  *      Yura Lebedev    ?           Initial release
- *      Kay Gürtzig     2014.12.02  ExportOptionDialoge and further messages added
- *      Kay Gürtzig     2015.10.06  altPadRight added to Preferences dialog
- *      Kay Gürtzig     2015.10.14  InputBox-specific part enhanced
- *      Kay Gürtzig     2016.03.22  Enh. #84: messages related to FOR-IN loops added, several
+ *      Kay Gürtzig     2014-12-02  ExportOptionDialoge and further messages added
+ *      Kay Gürtzig     2015-10-06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig     2015-10-14  InputBox-specific part enhanced
+ *      Kay Gürtzig     2016-03-22  Enh. #84: messages related to FOR-IN loops added, several
  *                                  missing messages inserted
- *      Kay Gürtzig     2016.04.24  Issue #173: New mnemonic configurations added
- *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 renamed into Menu.error15_1
- *      Kay Gürtzig     2016.10.18  Enh. #267: Analyser check 15 reformulated.
- *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2017.12.17  Still incomplete first replacements to support #492 
- *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys
- *      Kay Gürtzig     2018.07.27  Several missing messages added.
- *      Kay Gürtzig     2018.08.03  Enh. #577: OutputConsole keys renamed
+ *      Kay Gürtzig     2016-04-24  Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-10-11  Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig     2016-10-18  Enh. #267: Analyser check 15 reformulated.
+ *      Kay Gürtzig     2016-12-14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017-12-17  Still incomplete first replacements to support #492 
+ *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig     2018-07-27  Several missing messages added.
+ *      Kay Gürtzig     2018-08-03  Enh. #577: OutputConsole keys renamed
  *
  ******************************************************************************************************
  *

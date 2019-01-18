@@ -76,6 +76,7 @@ package lu.fisch.structorizer.gui;
  *                                      doesn't hold dirty diagrams
  *      Kay Gürtzig     2018-10-28      Enh. #419: loadFromIni() decomposed (diagram-related parts delegated)
  *      Kay Gürtzig     2018-12-21      Enh. #655 signature and semantics of method routinePoolChanged adapted 
+ *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *
  ******************************************************************************************************
  *
@@ -336,20 +337,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                                     // Since the executor is a concurrent thread and we don't know the decision of
                                     // the user, we can neither wait nor proceed here. So we just leave.
                             }
-                            else
+                            else {
                             // END KGU#157 2016-03-16
-                            // START KGU#534 2018-07-16: Enh. #552
-                            {
-                            	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
-                        		//Diagram.startSerialMode();
-                            	boolean serialModeEntered = false;
-                            	if (Arranger.hasInstance() && Arranger.getInstance().hasUnsavedChanges(diagram.getRoot())) {
-                            		Diagram.startSerialMode();
-                            		serialModeEntered = true;
-                            	}
-                            	// END KGU#594 2018-10-06
+                            	// START KGU#634 2019-01-17: Issue #664 - diagram and user must be able to decide whether it's crucial
                             	try {
-                            // END KGU#534 2018-07-16
+                            		diagram.isGoingToClose = true;
+                            	// END KGU#634 2019-01-17
                             		if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
                             		{
                             			// START KGU#287 2017-01-11: Issue #81/#330
@@ -363,15 +356,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             			saveToINI();
                             			// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
                             			if (isStandalone) {
-                            				// START KGU#49 2017-01-04 Care for potential Arranger dependants
+                            				boolean vetoed = false;
+                            				// START KGU#49 2017-01-04 Care for potential Arranger dependents
                             				if (Arranger.hasInstance()) {
-                            					Arranger.getInstance().windowClosing(e);
+                            					Diagram.startSerialMode();
+                            					vetoed = !Arranger.getInstance().windowClosingVetoable(e);
+                            					Diagram.endSerialMode();
                             				}
                             				// END KGU#49 2017-01-04
-                            				// START KGU#484 2018-03-22: Issue #463
-                            				logger.info("Structorizer " + instanceNo + " shutting down.");
-                            				// END KGU#484 2018-03-22
-                            				System.exit(0);	// This kills all related frames and threads as well!
+                            				if (!vetoed) {
+                            					// START KGU#484 2018-03-22: Issue #463
+                            					logger.info("Structorizer " + instanceNo + " shutting down.");
+                            					// END KGU#484 2018-03-22
+                            					System.exit(0);	// This kills all related frames and threads as well!
+                            				}
                             			}
                             			else {
                             				// START KGU#484 2018-03-22: Issue #463
@@ -381,18 +379,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             			}
                             			// END KGU#49/KGU#66 (#6/#16) 2015-11-14
                             		}
-                            // START KGU#534 2018-07-16: Enh. #552
+                            	// START KGU#634 2019-01-17
                             	}
                             	finally {
-                                	// START KGU#594 2018-10-06 - No need to pester the user if Arranger hasn't been opened
-                            		//Diagram.endSerialMode();
-                                	if (serialModeEntered) {
-                                		Diagram.endSerialMode();
-                                	}
-                                	// END KGU#594 2018-10-06
+                            		diagram.isGoingToClose = false;
                             	}
+                            	// END KGU#634 2019-01-17
+                            // START KGU#157 2016-03-16: Bugfix #131 part 2
                             }
-                            // END KGU#534 2018-07-16
+                            // END KGU#157 2016-03-16
                     }
 
                     @Override
@@ -759,12 +754,16 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
 			// END KGU#331 2017-01-15
 			
+			// START KGU#630 2019-01-13: Enh. #662/4
+			Arranger.A_STORE_RELATIVE_COORDS = ini.getProperty("arrangerRelCoords", "0").equals("1");
+			// END KGU#630 2019-01-13
+			
 			// START KGU#428 2017-10-06: Enh. #430
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
 			
 			// KGU#602 2018-10-28: Fetching of recent file paths outsourced to Diagram.fetchIniProperties()
-						
+			
 			// Analyser (see also Root.saveToIni())
 			// START KGU#239 2016-08-12: Code redesign
 			for (int i = 1; i <= Root.numberOfChecks(); i++)
@@ -855,20 +854,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
 			// END KGU#494 2018-09-10
 			
-		    // START KGU#309 2016-12-15: Enh. #310 new saving options
-		    ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
-		    ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
-		    ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
-		    // END KGU#309 20161-12-15
+			// START KGU#309 2016-12-15: Enh. #310 new saving options
+			ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
+			ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
+			ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
+			// END KGU#309 20161-12-15
 
-		    // START KGU#456 2017-11-05: Issue #452
-		    ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));
-		    // END KGU#456 2017-11-05
-		    
+			// START KGU#456 2017-11-05: Issue #452
+			ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));
+			// END KGU#456 2017-11-05
+
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
-		    ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
 			// END KGU#331 2017-01-15
-		    
+
 			// look and feel
 			if (laf != null)
 			{
@@ -1189,12 +1188,25 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				//this.editor.updateArrangerIndex(Arranger.getSortedRoots());
 				this.editor.updateArrangerIndex(Arranger.getSortedGroups());
 				// END KGU#626 2019-01-01
-			} else if ((_flags & IRoutinePoolListener.RPC_POSITIONS_CHANGED) != 0) {
+			} else if ((_flags & (IRoutinePoolListener.RPC_POSITIONS_CHANGED | IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED)) != 0) {
 				this.editor.repaintArrangerIndex();
 			}
 		}
 		updateAnalysis();
 	}
 	// END KGU#305 2016-12-16
+
+	// START KGU#631 2019-01-08: We need a handy way to decide whther he application is closing
+	/**
+	 * Checks whether this Mainform represents the main class (and thread) of the application
+	 * i.e. if it was started as a stand-alone object.<br/>
+	 * Relevant for the {@link WindowListener#windowClosing()} event.
+	 * @return true if this object represents the running application.
+	 */
+	public boolean isApplicationMain()
+	{
+		return isStandalone;
+	}
+	// END KGU#631 2019-01-08
 
 }

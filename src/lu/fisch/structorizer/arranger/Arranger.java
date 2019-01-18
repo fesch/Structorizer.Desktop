@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.arranger;
 
-import java.awt.Component;
-
 /******************************************************************************************************
  *
  *      Author: Bob Fisch
@@ -66,6 +64,10 @@ import java.awt.Component;
  *      Kay Gürtzig     2018-12-20  Issue #654: Current directory is now passed to the ini file
  *      Kay Gürtzig     2018-12-21  Enh. #655: Status bar introduced, key bindings revised
  *      Kay Gürtzig     2018-12-27  Enh. #655: Set of key bindings accomplished, dialog revision, popup menu
+ *      Kay Gürtzig     2019-01-12  Enh. #662/3: Rearrangement by groups
+ *      Kay Gürtzig     2019-01-13  Enh. #662/4: Save option to use relative coordinates
+ *      Kay Gürtzig     2019-01-16  Enh. #655: Workaround for key listener (using keybinding) created (not needed)
+ *      Kay Gürtzig     2019-01-17  Enh. #657: Accelerator key (^R) for rearrange function added
  *
  ******************************************************************************************************
  *
@@ -73,8 +75,12 @@ import java.awt.Component;
  *
  ******************************************************************************************************///
 
+import java.awt.Component;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -88,14 +94,17 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -108,7 +117,6 @@ import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.AttributeInspector;
-import lu.fisch.structorizer.gui.Editor;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
@@ -126,6 +134,11 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener {
 
+	// START KGU#630 2019-01-13: Enh.#662/4
+	/** Preference specifying whether group-relative coordinaes are to be stored in an arrangement file (default: absolute coordinates) */
+	public static boolean A_STORE_RELATIVE_COORDS = false;
+	// END KGU#630 2019-01-13
+	
 	// START KGU 2018-03-21
 	public static final Logger logger = Logger.getLogger(Arranger.class.getName());
 	// END KGU 2018-03-21
@@ -133,6 +146,49 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
 	private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
+	
+//	private static final String KEY_SHIFT = "KEY_SHIFT";
+//	private static final String KEY_DELETE = "KEY_DELETE";
+//	private static final String KEY_CTRL_DELETE = "KEY_CTRL_DELETE";
+//	private static final String KEY_COPY = "KEY_COPY";
+//	private static final String KEY_PASTE = "KEY_PASTE";
+//	private static final String KEY_CUT = "KEY_CUT";
+//	private static final String KEY_ALL = "KEY_ALL";
+//	private static final String KEY_MAKE_GROUP = "KEY_MAKE_GROUP";
+//	private static final String KEY_EXPAND_GROUP = "KEY_EXPAND_GROUP";
+//	private static final String KEY_EXPAND_SELECTION = "KEY_EXPAND_SELECTION";
+//	private static final String KEY_OPEN = "KEY_OPEN";
+//	private static final String KEY_SAVE = "KEY_SAVE";
+//	private static final String KEY_HELP = "KEY_HELP";
+//	private static final String KEY_KEYS = "KEY_KEYS";
+//	private static final String KEY_ZOOM_IN = "KEY_ZOOM_IN";
+//	private static final String KEY_ZOOM_OUT = "KEY_ZOOM_OUT";
+//	private static final String KEY_LEFT = "KEY_LEFT";
+//	private static final String KEY_LEFT10 = "KEY_LEFT10";
+//	private static final String KEY_RIGHT = "KEY_RIGHT";
+//	private static final String KEY_RIGHT10 = "KEY_RIGHT10";
+//	private static final String MOVE_LEFT = "MOVE_LEFT";
+//	private static final String MOVE_LEFT10 = "MOVE_LEFT10";
+//	private static final String MOVE_RIGHT = "MOVE_RIGHT";
+//	private static final String MOVE_RIGHT10 = "MOVE_RIGHT10";
+//	private static final String KEY_UP = "KEY_UP";
+//	private static final String KEY_UP10 = "KEY_UP10";
+//	private static final String KEY_DOWN = "KEY_DOWN";
+//	private static final String KEY_DOWN10 = "KEY_DOWN10";
+//	private static final String MOVE_UP = "MOVE_UP";
+//	private static final String MOVE_UP10 = "MOVE_UP10";
+//	private static final String MOVE_DOWN = "MOVE_DOWN";
+//	private static final String MOVE_DOWN10 = "MOVE_DOWN10";
+//	private static final String KEY_PAGE_UP = "KEY_PAGE_UP";
+//	private static final String KEY_PAGE_DOWN = "KEY_PAGE_DOWN";
+//	private static final String KEY_PAGE_LEFT = "KEY_PAGE_LEFT";
+//	private static final String KEY_PAGE_RIGHT = "KEY_PAGE_RIGHT";
+//	private static final String KEY_HOME_V = "KEY_HOME_V";
+//	private static final String KEY_END_V = "KEY_END_V";
+//	private static final String KEY_HOME_H = "KEY_HOME_H";
+//	private static final String KEY_END_H = "KEY_END_H";
+//	private static final String KEY_ALT_ENTER = "KEY_ALT_ENTER";
+//	private static final String KEY_REARRANGE = "KEY_REARRANGE";
 
 	// START KGU#534 2018-06-27: Enh. #552
 	public static final LangTextHolder msgConfirmRemoveAll = new LangTextHolder("Do you really want to remove all diagrams from Arranger?");
@@ -172,7 +228,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgDoCreateGroup = new LangTextHolder("Do you still insist on creating yet another group?");
 	// END KGU#626 2019-01-02
 	
-	// START KGU#624 2018-12-26: Enh. #655 - temporary limit for he listing of selected diagrams
+	// START KGU#624 2018-12-26: Enh. #655 - (temporary) limit for the listing of selected diagrams in a message box
 	protected static final int ROOT_LIST_LIMIT = 20;
 	// END KGU#624 2018-12-26
 
@@ -242,7 +298,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      * @param aRoot - the diagram to be focused
      * @param setAtTop - whether the diagram is to be drawn on top of all
      */
-    public static void scrollToGroup(Group selectedGroup, boolean showBounds)
+    public static void scrollToGroup(Group selectedGroup)
     {
     	if (mySelf != null && selectedGroup != null) {
     		// START KGU#305 2016-12-16: Bugfix #305 - possibly we must wake the instance
@@ -250,7 +306,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     			mySelf.setVisible(true);
     		}
     		// END KGU#305 2016-12-16
-    		mySelf.surface.scrollToGroup(selectedGroup, showBounds);
+    		mySelf.surface.scrollToGroup(selectedGroup);
     	}
     }
     // END KGU#626 2019-01-01
@@ -578,10 +634,32 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
                 new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+        // START KGU#630 2019-01-09: Enh. #622/2
+        chkDrawGroups = new javax.swing.JCheckBox("Show groups");
+        chkSelectGroups = new javax.swing.JCheckBox("Select groups");
+        chkSelectGroups.setEnabled(false);
+        ItemListener groupItemListener = new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent evt) {
+                statusGroupsChanged(evt);
+            }};
+            
+        chkDrawGroups.addItemListener(groupItemListener);
+        chkSelectGroups.addItemListener(groupItemListener);
+        // END KGU#630 2019-01-09
+        
         statusbar.add(statusSize);
         statusbar.add(statusViewport);
         statusbar.add(statusZoom);
         statusbar.add(statusSelection);
+        // START KGU#630 2019-01-09: Enh. #622/2
+        // FIXME: These checkboxes in the statusbar spoil the key listener on Arranger 
+        statusbar.add(chkDrawGroups);
+        statusbar.add(chkSelectGroups);
+        chkDrawGroups.setFocusable(false);
+        chkSelectGroups.setFocusable(false);
+        statusbar.setFocusable(false);
+        // END KGU#630 2019-01-09
 
         getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
         scrollarea.getViewport().addChangeListener(new javax.swing.event.ChangeListener() {
@@ -593,51 +671,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#624 2018-12-21
         
         this.addKeyListener(this);
+        //setKeyBindings();
+        this.addWindowFocusListener(surface);
 
         // START KGU#49 2015-10-18: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
         /******************************
-         * Set onClose event
+         * Care for onClose event
          ******************************/
-//        addWindowListener(new WindowAdapter() 
-//        {  
-//        	@Override
-//        	public void windowClosing(WindowEvent e) 
-//        	{
-//        		System.out.println("WindowAdapter.windowClosing()...");
-//        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
-////        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
-////        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
-////        		// END KGU#2 2015-11-19
-////        			surface.saveDiagrams();	// Allow user to save dirty diagrams
-//        		if (surface.saveDiagrams(true))
-//        		{
-//        			if (isStandalone)
-//        			{
-//        				System.exit(0);
-//        			}
-//        			else
-//        			{
-//        				dispose();
-//        			}
-//        		}
-//        		// END KGU#177 2016-04-14
-//        	}  
-//
-//        	@Override
-//        	public void windowOpened(WindowEvent e) 
-//        	{  
-//        	}  
-//
-//        	@Override
-//        	public void windowActivated(WindowEvent e)
-//        	{  
-//        	}
-//
-//        	@Override
-//        	public void windowGainedFocus(WindowEvent e) 
-//        	{  
-//        	}  
-//        });
         addWindowListener(this); 
         // END KGU#49 2015-10-18
         
@@ -654,11 +694,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     }// </editor-fold>//GEN-END:initComponents
 
-    // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
+	// START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
     private void initPopupMenu() {
         popupMenu = new javax.swing.JPopupMenu();
         
-        popupHitList = new javax.swing.JMenu("Hit diagrams");
+        popupHitList = new javax.swing.JMenu("Hit diagrams / groups");
         popupHitList.setIcon(IconLoader.getIcon(90));
         
         popupExpandSelection = new javax.swing.JMenuItem("Expand selection", IconLoader.getIcon(79));
@@ -713,9 +753,22 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		btnRemoveDiagramActionPerformed(e, false);
         	}});
         popupRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-        
+
         popupMenu.addSeparator();
-        
+
+        // START KGU#630 2019-01-12: Enh. #662/3
+        popupRearrange = new javax.swing.JMenuItem("Rearrange by groups", IconLoader.getIcon(119));
+        popupMenu.add(popupRearrange);
+        popupRearrange.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		rearrange();
+        	}
+        });
+
+        popupMenu.addSeparator();
+        // END KGU#630 2019-01-12
+
         popupRemoveAll = new javax.swing.JMenuItem("Remove all diagrams", IconLoader.getIcon(45));
         popupMenu.add(popupRemoveAll);
         popupRemoveAll.addActionListener(new ActionListener() {
@@ -746,7 +799,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         popupKeyBindings.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, java.awt.event.InputEvent.ALT_DOWN_MASK));
         
     }
-    // END KGU#624/KGU#62 2018-12-27
+    // END KGU#624/KGU#626 2018-12-27
 
 	// START KGU#624 2018-12-21: Enh. #655 - new status bar
 	protected void updateStatusSize() {
@@ -873,6 +926,35 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#497 2018-02-17
 
+	// START KGU#630 2019-01-12: Enh. #662/3
+    /**
+     * This is the btnPopupRearrangePerformed action
+     * Rearranges all diagrams by groups
+     */
+    public void rearrange() {
+    	surface.rearrange();
+    }
+    // END KGU#630 2019-01-12
+
+    // START KGU#630 2019-01-09: Enh. #622/2
+    protected void statusGroupsChanged(ItemEvent evt) {
+        if (evt.getSource() == chkDrawGroups) {
+            boolean drawingEnabled = chkDrawGroups.isSelected();
+            surface.enableGroupDrawing(drawingEnabled);
+            chkSelectGroups.setEnabled(drawingEnabled);
+            if (!drawingEnabled) {
+                surface.enableGroupSelection(false);
+            }
+            else {
+                surface.enableGroupSelection(chkSelectGroups.isSelected());
+            }
+        }
+        else if (evt.getSource() == chkSelectGroups) {
+            surface.enableGroupSelection(chkSelectGroups.isSelected());
+        }
+    }
+    // END KGU#630 2019-01-09
+
     /**
      * Starts the Arranger as application
      *
@@ -927,6 +1009,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     protected javax.swing.JLabel statusSelection;
     protected java.awt.Point scrollareaOrigin = new java.awt.Point();
     // END KGU#624 2018-12-21
+    // START KGU#630 2019-01-09: Enh. #662/2
+    protected javax.swing.JCheckBox chkDrawGroups;
+    protected javax.swing.JCheckBox chkSelectGroups;
+    // END KGU#630 2019-01-09
     // START KGU#85 2015-11-18
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18
@@ -944,6 +1030,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private javax.swing.JMenuItem popupGroup = null;
     private javax.swing.JMenuItem popupExpandGroup = null;
     // END KGU#626 2019-01-03
+    // START KGU#630 2019-01-12: Enh. #622/3
+    private javax.swing.JMenuItem popupRearrange = null;
+    // END KGU#630 2019-01-12
     // START KGU#305 2016-12-16
     private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
     private static final Vector<Root> routines = new Vector<Root>();
@@ -952,19 +1041,50 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     private static final Vector<Group> groups = new Vector<Group>();
     // END KGU#626 2018-12-31
 
+    // START KGU#631 2019-01-08: We need a handy way to decide whther he application is closing
+    /**
+     * Checks whether this Mainform represents the main class (and thread) of the application
+     * i.e. if it was started as a stand-alone object.<br/>
+     * Relevant for the {@link WindowListener#windowClosing()} event.
+     * @return true if this object represents the running application.
+     */
+    public boolean isApplicationMain()
+    {
+        return isStandalone;
+    }
+    // END KGU#631 2019-01-08
+
+    @Override
     public void windowOpened(WindowEvent e) {
     }
 
-    public void windowClosing(WindowEvent e) {
+    // START KGU#631 2019-01-08: Bugfix #664
+    @Override
+    public void windowClosing(WindowEvent e)
+    {
+        windowClosingVetoable(e);
+    }
+    
+    /**
+     * Like {@link WindowListener#windowClosing(WindowEvent)} but may return
+     * whether the listener had vetoed.
+     * @param e - the current {@link WindowEvent}
+     * @return true if confirmed, false if vetoed
+     */
+    public boolean windowClosingVetoable(WindowEvent e) {
+    // END KGU#631 2019-01-08
         // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
+        // START KGU#631 2019-01-08: Decide more precisely if the application is going down
+        Object source = e.getSource();
+        boolean applicationClosing = (!(source instanceof LangFrame) || ((LangFrame)source).isApplicationMain());
+        // END KGU#631 2019-01-08
         // START KGU#626 2019-01-05: Enh. #657
         //if (surface.saveDiagrams(this, null, true, false))
         Component initiator = e.getComponent();
         if (initiator == null) {
             initiator = this;
         }
-        if (this.surface.saveDiagrams(initiator, null, true, false) &&
-                this.surface.saveGroups(initiator, true, new StringList()))
+        if (!applicationClosing || this.saveAll(initiator, applicationClosing))
         // END KGU#626 2019-01-05
         {
             if (isStandalone)
@@ -973,10 +1093,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             }
             else
             {
+                /* While the singleton reference is still held, a dispose() call won't have any garbage
+                 * collection effect, but if there are no diagrams then we may actually induce disposal. */
+                if (surface.getDiagramCount() == 0) {
+                    mySelf = null;
+                }
                 dispose();
             }
+            // START KGU#631 2019-01-08: Bugfix #664
+            return true;
+            // END KGU#631 2019-01-08
         }
         // END KGU#49 2017-01-04
+        // START KGU#631 2019-01-08: Bugfix #664 - allow a veto
+        return false;
+        // END KGU#631 2019-01-08
     }
 
     public void windowClosed(WindowEvent e) {
@@ -995,7 +1126,289 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public void windowDeactivated(WindowEvent e) {
     }
 
-    // START KGU#85 2015-11-30: For convenience, the delete button may also be used to drop a diagram now
+//	// START KGU#85/KGU#177/KGU#497/KGU#534/KGU#624/KGU#626 2019-01-16: Issues #35, #158, #512, #552, #655, #657
+//	/**
+//	 * This class was set up to replace the KeyListener method {@link Arranger#keyPressed(KeyEvent)} since the two
+//	 * JCheckBoxes on the {@link Arranger#statusbar} had been introduced and spoiled the key notification mechanism
+//   * such that we seemed to be forced to use Keybinding rather than the leaner key listening.
+//   * Then it turned out that it was sufficient to make the the JCheckBoxes non-focusable.
+//	 */
+//	private class KeyAction extends AbstractAction {
+//
+//		private boolean shiftDown = false, ctrlDown = false, altDown = false;
+//		public KeyAction(String actionName)
+//		{
+//			putValue(ACTION_COMMAND_KEY, actionName);
+//		}
+//		public KeyAction(String actionName, boolean isShiftDown, boolean isCtrlDown, boolean isAltDown)
+//		{
+//			putValue(ACTION_COMMAND_KEY, actionName);
+//			shiftDown = isShiftDown; ctrlDown = isCtrlDown; altDown = isAltDown;
+//		}
+//		@Override
+//		public void actionPerformed(ActionEvent actionEvt) {
+//			String command = actionEvt.getActionCommand();
+//			if (command.equals(KEY_DELETE)) {
+//				StringList rootList = surface.listSelectedRoots(false, false);
+//				int nSelected = rootList.count();
+//				if (nSelected == 0) {
+//					return;
+//				}
+//				String verb = msgActionDelete.getText();
+//				if (nSelected > ROOT_LIST_LIMIT) {
+//					// Avoid to make the option pane so large that the buttons can't be reached
+//					rootList.remove(ROOT_LIST_LIMIT, nSelected);
+//					rootList.add("...");
+//				}
+//				String message = msgConfirmMultiple.getText().
+//						replace("%1", Integer.toString(nSelected)).
+//						replace("%2", Integer.toString(surface.getDiagramCount())).
+//						replace("%3", rootList.concatenate("\n- ")).
+//						replace("%4", msgConfirmRemove.getText().replace("%1", verb));
+//				if (this.ctrlDown || nSelected == 1 || JOptionPane.showConfirmDialog(Arranger.this, message, msgTitleWarning.getText(),
+//						JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
+//					surface.removeDiagram();
+//				}
+//			}
+//			else if (command.equals(KEY_CUT)) {
+//				StringList rootList = surface.listSelectedRoots(false, false);
+//				if (checkIllegalMultipleAction(rootList, msgActionCut.getText())) {
+//					return;
+//				}
+//				if (surface.copyDiagram())	// cut means copy first
+//				{
+//					surface.removeDiagram();
+//				}
+//			}
+//			else if (command.equals(KEY_PASTE)) {
+//				surface.pasteDiagram();
+//			}
+//			else if (command.equals(KEY_COPY)) {
+//				StringList rootList = surface.listSelectedRoots(false, false);
+//				if (checkIllegalMultipleAction(rootList, msgActionCopy.getText())) {
+//					return;
+//				}
+//				surface.copyDiagram();
+//			}
+//			else if (command.equals(KEY_SHIFT)) {
+//				/* The former mechanism to switch toolbar buttons while shift is being held down doesn't work
+//				 * with keybindings. So we had to use another key (now F2) to toggle the button functins */
+//				setShiftPressed(!isShiftPressed);
+//			}
+//			else if (command.equals(KEY_ZOOM_OUT)) {
+//				surface.zoom(shiftDown);
+//			}
+//			else if (command.equals(KEY_PAGE_DOWN)) {
+//				int dir = altDown ? -1 : 1;
+//				if (shiftDown) {
+//					scrollarea.getHorizontalScrollBar().setValue(
+//							scrollarea.getHorizontalScrollBar().getValue() + 
+//							dir * scrollarea.getHorizontalScrollBar().getBlockIncrement(dir));
+//				}
+//				else {
+//					scrollarea.getVerticalScrollBar().setValue(
+//							scrollarea.getVerticalScrollBar().getValue() + 
+//							dir * scrollarea.getVerticalScrollBar().getBlockIncrement(dir));
+//				}
+//			}
+//			else if (command.equals(KEY_ALL)) {
+//				surface.selectAll();
+//			}
+//			else if (command.equals(KEY_SAVE)) {
+//				surface.saveArrangement(Arranger.this, null, false);
+//			}
+//			else if (command.equals(KEY_OPEN)) {
+//				surface.loadArrangement(Arranger.this);
+//			}
+//			else if (command.equals(KEY_DOWN) || command.equals(KEY_UP)) {
+//				int direction = command.equals(KEY_UP) ? -1 : 1;
+//				int vUnits = scrollarea.getVerticalScrollBar().getUnitIncrement(direction) * direction;
+//				if (this.shiftDown) {
+//					vUnits *= 10;
+//				}
+//				int newValue = Math.max(scrollarea.getVerticalScrollBar().getValue() + vUnits, 0);
+//				if (this.ctrlDown) {
+//					surface.moveSelection(0, vUnits);
+//					surface.scrollToSelection();
+//					routinePoolChanged(Arranger.this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+//				}
+//				else {
+//					scrollarea.getVerticalScrollBar().setValue(newValue);                		
+//				}
+//			}
+//			else if (command.equals(KEY_LEFT) || command.equals(KEY_RIGHT)) {
+//				int direction = command.equals(KEY_LEFT) ? -1 : 1;
+//				int hUnits = scrollarea.getHorizontalScrollBar().getUnitIncrement(direction) * direction;
+//				if (this.shiftDown) {
+//					hUnits *= 10;
+//				}
+//				int newValue = Math.max(scrollarea.getHorizontalScrollBar().getValue() + hUnits, 0);
+//				if (this.ctrlDown) {
+//					surface.moveSelection(hUnits, 0);
+//					surface.scrollToSelection();
+//					routinePoolChanged(Arranger.this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+//				}
+//				else {
+//					scrollarea.getHorizontalScrollBar().setValue(newValue);
+//				}
+//			}
+//			else if (command.equals(KEY_HELP)) {
+//				helpArranger(false);
+//			}
+//			else if (command.equals(KEY_KEYS)) {
+//				helpArranger(true);
+//			}
+//			else if (command.equals(KEY_HOME_H)) {
+//				scrollarea.getHorizontalScrollBar().setValue(0);
+//			}
+//			else if (command.equals(KEY_END_H)) {
+//				scrollarea.getHorizontalScrollBar().setValue(surface.getWidth());
+//			}
+//			else if (command.equals(KEY_HOME_V)) {
+//				scrollarea.getVerticalScrollBar().setValue(0);
+//			}
+//			else if (command.equals(KEY_END_V)) {
+//				scrollarea.getVerticalScrollBar().setValue(surface.getHeight());
+//			}
+//			else if (command.equals(KEY_ALT_ENTER)) {
+//				Root selected = surface.getSelected1();
+//				if (selected != null) {
+//					inspectAttributes(selected);
+//				}
+//			}
+//			else if (command.equals(KEY_EXPAND_SELECTION)) {
+//				expandRootSetOrSelection(null, Arranger.this, null);
+//			}
+//			else if (command.equals(KEY_MAKE_GROUP)) {
+//				makeGroup(Arranger.this);
+//			}
+//			else if (command.equals(KEY_EXPAND_GROUP)) {
+//				expandRootSetOrSelection(null, null, null);		// not interested in messages here
+//				makeGroup(Arranger.this);
+//			}
+//			else if (command.equals(KEY_REARRANGE)) {
+//				rearrange();
+//			}
+//		}
+//	}
+//	
+//	/** Sets up key bindings instead of key listening as workaround (turned out to be unnecessary later) */
+//	private void setKeyBindings()
+//	{
+//		ActionMap actionMap = surface.getActionMap();
+//		InputMap inputMap = surface.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), KEY_DELETE);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, KeyEvent.CTRL_DOWN_MASK), KEY_CTRL_DELETE);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, KeyEvent.SHIFT_DOWN_MASK), KEY_CUT);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_DOWN_MASK), KEY_CUT);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, KeyEvent.CTRL_DOWN_MASK), KEY_PASTE);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, KeyEvent.SHIFT_DOWN_MASK), KEY_PASTE);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, KeyEvent.CTRL_DOWN_MASK), KEY_COPY);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.CTRL_DOWN_MASK), KEY_COPY);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), KEY_SHIFT);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), KEY_LEFT);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), KEY_RIGHT);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.SHIFT_DOWN_MASK), KEY_LEFT10);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.SHIFT_DOWN_MASK), KEY_RIGHT10);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.CTRL_DOWN_MASK), MOVE_LEFT);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.CTRL_DOWN_MASK), MOVE_RIGHT);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_LEFT10);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_RIGHT10);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), KEY_UP);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), KEY_DOWN);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.SHIFT_DOWN_MASK), KEY_UP10);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.SHIFT_DOWN_MASK), KEY_DOWN10);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK), MOVE_UP);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK), MOVE_DOWN);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_UP10);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), MOVE_DOWN10);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0), KEY_ZOOM_IN);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0), KEY_ZOOM_OUT);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), KEY_PAGE_UP);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), KEY_PAGE_DOWN);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, KeyEvent.SHIFT_DOWN_MASK), KEY_PAGE_LEFT);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, KeyEvent.SHIFT_DOWN_MASK), KEY_PAGE_RIGHT);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), KEY_HOME_H);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), KEY_END_H);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.CTRL_DOWN_MASK), KEY_HOME_V);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.CTRL_DOWN_MASK), KEY_END_V);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK), KEY_ALL);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK), KEY_OPEN);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK), KEY_SAVE);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK), KEY_REARRANGE);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), KEY_HELP);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.ALT_DOWN_MASK), KEY_KEYS);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), KEY_MAKE_GROUP);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), KEY_EXPAND_GROUP);
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0), KEY_EXPAND_SELECTION);
+//
+//		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK), KEY_ALT_ENTER);
+//
+//		actionMap.put(KEY_DELETE, new KeyAction(KEY_DELETE));
+//		actionMap.put(KEY_CTRL_DELETE, new KeyAction(KEY_DELETE, false, true, false));
+//		actionMap.put(KEY_CUT, new KeyAction(KEY_CUT));
+//		actionMap.put(KEY_COPY, new KeyAction(KEY_COPY));
+//		actionMap.put(KEY_PASTE, new KeyAction(KEY_PASTE));
+//
+//		actionMap.put(KEY_SHIFT, new KeyAction(KEY_SHIFT));
+//
+//		actionMap.put(KEY_ZOOM_IN, new KeyAction(KEY_ZOOM_OUT, true, false, false));
+//		actionMap.put(KEY_ZOOM_OUT, new KeyAction(KEY_ZOOM_OUT));
+//
+//		actionMap.put(KEY_LEFT, new KeyAction(KEY_LEFT));
+//		actionMap.put(KEY_LEFT10, new KeyAction(KEY_LEFT, true, false, false));
+//		actionMap.put(KEY_RIGHT, new KeyAction(KEY_RIGHT));
+//		actionMap.put(KEY_RIGHT10, new KeyAction(KEY_RIGHT, true, false, false));
+//		actionMap.put(MOVE_LEFT, new KeyAction(KEY_LEFT, false, true, false));
+//		actionMap.put(MOVE_LEFT10, new KeyAction(KEY_LEFT, true, true, false));
+//		actionMap.put(MOVE_RIGHT, new KeyAction(KEY_RIGHT, false, true, false));
+//		actionMap.put(MOVE_RIGHT10, new KeyAction(KEY_RIGHT, true, true, false));
+//
+//		actionMap.put(KEY_UP, new KeyAction(KEY_UP));
+//		actionMap.put(KEY_UP10, new KeyAction(KEY_UP, true, false, false));
+//		actionMap.put(KEY_DOWN, new KeyAction(KEY_DOWN));
+//		actionMap.put(KEY_DOWN10, new KeyAction(KEY_DOWN, true, false, false));
+//		actionMap.put(MOVE_UP, new KeyAction(KEY_UP, false, true, false));
+//		actionMap.put(MOVE_UP10, new KeyAction(KEY_UP, true, true, false));
+//		actionMap.put(MOVE_DOWN, new KeyAction(KEY_DOWN, false, true, false));
+//		actionMap.put(MOVE_DOWN10, new KeyAction(KEY_DOWN, true, true, false));
+//
+//		actionMap.put(KEY_PAGE_DOWN, new KeyAction(KEY_PAGE_DOWN));
+//		actionMap.put(KEY_PAGE_UP, new KeyAction(KEY_PAGE_DOWN, false, false, true));
+//		actionMap.put(KEY_PAGE_RIGHT, new KeyAction(KEY_PAGE_DOWN, true, false, false));
+//		actionMap.put(KEY_PAGE_LEFT, new KeyAction(KEY_PAGE_DOWN, true, false, true));
+//
+//		actionMap.put(KEY_HOME_H, new KeyAction(KEY_HOME_H));
+//		actionMap.put(KEY_END_H, new KeyAction(KEY_END_H));
+//		actionMap.put(KEY_HOME_V, new KeyAction(KEY_HOME_V));
+//		actionMap.put(KEY_END_V, new KeyAction(KEY_END_V));
+//		
+//		actionMap.put(KEY_ALL, new KeyAction(KEY_ALL));
+//		
+//		actionMap.put(KEY_OPEN, new KeyAction(KEY_OPEN));
+//		actionMap.put(KEY_SAVE, new KeyAction(KEY_SAVE));
+//		actionMap.put(KEY_REARRANGE, new KeyAction(KEY_REARRANGE));
+//
+//		actionMap.put(KEY_HELP, new KeyAction(KEY_HELP));
+//		actionMap.put(KEY_KEYS, new KeyAction(KEY_KEYS));
+//		
+//		actionMap.put(KEY_EXPAND_SELECTION, new KeyAction(KEY_EXPAND_SELECTION));
+//
+//		actionMap.put(KEY_MAKE_GROUP, new KeyAction(KEY_MAKE_GROUP));
+//		actionMap.put(KEY_EXPAND_GROUP, new KeyAction(KEY_EXPAND_GROUP));
+//
+//		actionMap.put(KEY_ALT_ENTER, new KeyAction(KEY_ALT_ENTER));
+//	}
+
+    // START KGU#85 2015-11-30: Enh. #35 - For convenience, the delete button may also be used to drop a diagram now
     @Override
     public void keyPressed(KeyEvent ev) {
         if (ev.getSource() == this) {
@@ -1038,7 +1451,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                             replace("%2", Integer.toString(surface.getDiagramCount())).
                             replace("%3", rootList.concatenate("\n- ")).
                             replace("%4", msgConfirmRemove.getText().replace("%1", verb));
-                    if (ev.isControlDown() || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
+                    if (ev.isControlDown() || nSelected == 1 || JOptionPane.showConfirmDialog(this, message, msgTitleWarning.getText(),
                             JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
                         if (shift) {
                             surface.copyDiagram();
@@ -1212,17 +1625,43 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                     }
                     break;
                     // END KGU#624 2018-12-26
-                    // START KGU#626 2019-01-02: Enh. #657
+                    // START KGU#626 2019-01-02/17: Enh. #657
                 case KeyEvent.VK_G:
-                    if (ev.isShiftDown()) {
-                        this.expandRootSetOrSelection(null, null, null);
+                    if (ev.isControlDown()) {
+                        if (ev.isShiftDown()) {
+                            this.expandRootSetOrSelection(null, null, null);
+                        }
+                        makeGroup(this);
                     }
-                    makeGroup(this);
                     break;
-                    // END KGU#626 2019-01-02
+                case KeyEvent.VK_R:
+                    if (ev.isControlDown()) {
+                        this.rearrange();
+                    }
+                    break;
+                    // END KGU#626 2019-01-02/17
             }
         }
     }
+
+  @Override
+  public void keyReleased(KeyEvent ev) {
+      // START KGU#497 2018-02-17: Change the zoom icon when shift is released
+      if (ev.getSource() == this) {
+          switch (ev.getKeyCode()) {
+              case KeyEvent.VK_SHIFT:
+                  setShiftPressed(false);
+                  break;
+          }
+      }
+      // END KGU#497 2018-02-17
+  }
+
+  @Override
+  public void keyTyped(KeyEvent ev) {
+      // Nothing to do here
+  }
+  // END KGU#2 2015-11-30
 
 	// START KGU#626 2019-01-02: Enh. #657
     /**
@@ -1354,7 +1793,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	/**
 	 * Enhances the {@code initialRootSet} with all {@code Root} objects that are directly and
 	 * indirectly called or included by some {@link Root} objects from {@code initialRootSet}. 
-	 * @param initialRootSet - a set of {@link Root} objects from where to start.
+	 * @param initialRootSet - a set of {@link Root} objects from where to start, MAY BE MODIFIED!
 	 * @param initiator - a GUI component meant to be made the owner of message boxes etc., if
 	 * being null then the messages won't be raised. 
 	 * @param missingSignatures - optional {@link StringList} to gather signatures of missing referred diagrams
@@ -1378,7 +1817,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * @param initialRoots - set of {@link Root} objects from which the dependencies are to be retrieved
 	 * @param initiator - A responsible GUI component: message boxes will be modal to it; if null
 	 * then no messages will be raised.
-	 * @param missingSignatures - id a {@link} is given here then it will gather signatures of missing referenced diagrams.
+	 * @param missingSignatures - id a {@link StringList} is given here then it will gather signatures of missing referenced diagrams.
 	 * @return the set of added diagrams in case {@link initialRoots} was given 
 	 */
 	protected Set<Diagram> expandRootSetOrSelection(Set<Root> initialRoots, Component initiator, StringList missingSignatures) {
@@ -1468,25 +1907,6 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         }
     }
     // END KGU#85 2015-11-30
-
-    @Override
-    public void keyReleased(KeyEvent ev) {
-        // START KGU#497 2018-02-17: Change the zoom icon when shift is released
-        if (ev.getSource() == this) {
-            switch (ev.getKeyCode()) {
-                case KeyEvent.VK_SHIFT:
-                    setShiftPressed(false);
-                    break;
-            }
-        }
-        // END KGU#497 2018-02-17
-    }
-
-    @Override
-    public void keyTyped(KeyEvent ev) {
-        // Nothing to do here
-    }
-    // END KGU#2 2015-11-30
 
 	// START KGU#624 2018-12-24: Enh. #655
 	/**
@@ -1701,6 +2121,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 			doButtons();
 			updateStatusSelection();
 		}
+		if ((_flags & RPC_GROUP_COLOR_CHANGED) != 0) {
+			surface.repaint();
+		}
 		// END KGU#624 2018-12-21
 		for (IRoutinePoolListener listener: listeners) {
 			listener.routinePoolChanged(this, _flags);
@@ -1791,18 +2214,31 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 * If the saving of diagrams was interrupted then the saving of groups won't be
 	 * tried here.
 	 * @param initiator - the originating GUI component
-	 * @return true if the saving attempt had been completed
+	 * @return true if the saving attempt had been completed, false if vetoed
 	 */
 	public boolean saveAll(Component initiator) {
+		return saveAll(initiator, false);
+	}
+	// END KGU#373 2017-03-28
+
+	// START KGU#373 2017-03-28: Enh. #386
+	/**
+	 * Saves unsaved changes of all held diagrams and groups. Will report the names
+	 * of the groups that couldn't be saved if {@code initiator} isn't null.
+	 * If the saving of diagrams was interrupted then the saving of groups won't be
+	 * tried here.
+	 * @param initiator - the originating GUI component
+	 * @param goingToClose TODO
+	 * @return true if the saving attempt had been completed, false if vetoed
+	 */
+	public boolean saveAll(Component initiator, boolean goingToClose) {
 		// START KGU#626 2019-01-06: Enh. #657
 		//this.surface.saveDiagrams(initiator, null, false, true);
-		StringList namesOfUnsavedGroups = null;
 		if (initiator == null) {
 			initiator = this;
-			namesOfUnsavedGroups = new StringList();
 		}
-		return this.surface.saveDiagrams(initiator, null, false, true) &&
-				this.surface.saveGroups(initiator, false, namesOfUnsavedGroups);
+		return this.surface.saveDiagrams(initiator, null, goingToClose, goingToClose && Element.E_AUTO_SAVE_ON_CLOSE) &&
+				this.surface.saveGroups(initiator, goingToClose);
 		// END KGU#626 2019-01-06
 	}
 	// END KGU#373 2017-03-28
@@ -1819,6 +2255,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		// START KGU#623 2018-12-20: Enh. #654
 		ini.setProperty("arrangerDirectory", surface.currentDirectory.getAbsolutePath());
 		// END KGU#623 2018-12-20
+		// START KGU#630 2019-01-13: Enh. #662/4
+		ini.setProperty("arrangerRelCoords", (A_STORE_RELATIVE_COORDS ? "1" : "0"));
+		// END KGU#630 2019-01-13
+
 	}
 	// END KGU#497 2018-02-17
 

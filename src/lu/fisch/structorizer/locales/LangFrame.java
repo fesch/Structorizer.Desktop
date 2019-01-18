@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -19,14 +19,38 @@
 */
 package lu.fisch.structorizer.locales;
 
+/*******************************************************************************************************
+*
+*      Author:         Bob Fisch
+*
+*      Description:    A Locale-aware JFrame subclass.
+*
+******************************************************************************************************
+*
+*      Revision List
+*
+*      Author          Date            Description
+*      ------          ----            -----------
+*      Bob Fisch       2016-08-08      First Issue for the new Locale system (issue #220)
+*      Kay Gürtzig     2019-01-08      Issue #664: Method isApplicationMain() introduced (KGU#631).
+*
+******************************************************************************************************
+*
+*      Comment:
+*
+******************************************************************************************************///
+
 import java.awt.GraphicsConfiguration;
 import java.awt.HeadlessException;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+
 import javax.swing.JFrame;
 
 /**
- *
+ * A Locale-aware JFrame subclass registering as windowOpened listener with the {@link Locales}
+ * instance and translating all components on being set visible. 
  * @author robertfisch
  */
 @SuppressWarnings("serial")
@@ -68,5 +92,18 @@ public class LangFrame extends JFrame {
         super.setVisible(b); 
         Locales.getInstance().setLocale(LangFrame.this);
     }
+    
+    // START KGU#631 2019-01-08: Issue #664 We need a handy way to decide whther he application is closing
+    /**
+     * Subclasses that can represent the main class (and thread) of an application should
+     * override (re-implement) this method to return true.<br/>
+     * Relevant for the {@link WindowListener#windowClosing()} event.
+     * @return true if this object represents the running application. Default is false.
+     */
+    public boolean isApplicationMain()
+    {
+        return false;
+    }
+    // END KGU#631 2019-01-08
     
 }
