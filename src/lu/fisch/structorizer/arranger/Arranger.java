@@ -68,6 +68,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-13  Enh. #662/4: Save option to use relative coordinates
  *      Kay Gürtzig     2019-01-16  Enh. #655: Workaround for key listener (using keybinding) created (not needed)
  *      Kay Gürtzig     2019-01-17  Enh. #657: Accelerator key (^R) for rearrange function added
+ *      Kay Gürtzig     2019-01-18  Enh. #657: Order of popup menu items modified
  *
  ******************************************************************************************************
  *
@@ -100,11 +101,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
-import javax.swing.InputMap;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -700,6 +697,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         
         popupHitList = new javax.swing.JMenu("Hit diagrams / groups");
         popupHitList.setIcon(IconLoader.getIcon(90));
+        popupMenu.add(popupHitList);
         
         popupExpandSelection = new javax.swing.JMenuItem("Expand selection", IconLoader.getIcon(79));
         popupMenu.add(popupExpandSelection);
@@ -743,8 +741,6 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	}});
         popupAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, java.awt.event.InputEvent.ALT_DOWN_MASK));
 
-        popupMenu.add(popupHitList);
-        
         popupRemove = new javax.swing.JMenuItem("Remove selected diagrams", IconLoader.getIcon(100));
         popupMenu.add(popupRemove);
         popupRemove.addActionListener(new ActionListener() {
@@ -765,6 +761,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		rearrange();
         	}
         });
+        popupRearrange.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
         popupMenu.addSeparator();
         // END KGU#630 2019-01-12
@@ -776,7 +773,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		removeAllDiagrams(null);
         	}});
-        popupRemoveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+        //popupRemoveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
         
         popupMenu.addSeparator();
         
