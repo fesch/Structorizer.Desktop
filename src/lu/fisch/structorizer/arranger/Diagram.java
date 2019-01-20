@@ -38,6 +38,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-03-08  Bugfix #97: Method resetDrawingInfo added (KGU#155)
  *      Kay Gürtzig     2017-01-13  Issue #305 (KGU#330) additional information added to trigger notification
  *      Kay Gürtzig     2018-12-26  Enh. #655 method getName() introduced
+ *      Kay Gürtzig     2019-01-20  Bugfix #667 in method getName().
  *
  ******************************************************************************************************
  *
@@ -111,7 +112,7 @@ public class Diagram
 	
     // START KGU#330 2017-01-13: Enh. #305
 	/**
-	 * Identifies notification-relevant changes (and updates the cached info)
+	 * Identifies notification-relevant changes (and updates the cached info). This includes
 	 * @return true iff the signature string for the Arranger index has changed
 	 */
 	public boolean checkSignatureChange()
@@ -135,6 +136,12 @@ public class Diagram
 			if ((pos1 = name.indexOf('(')) > 0) {
 				name = name.substring(0, pos1);
 			}
+	        // START KGU#639 2019-01-20: Bugfix #667 - we must not return a name with leading asterisk
+	        if (name.startsWith("*")) {
+	            // Remove the change marker!
+	            name = name.substring(1);
+	        }
+	        // END KGU#639 2019-01-20
 		}
 		return name;
 	}

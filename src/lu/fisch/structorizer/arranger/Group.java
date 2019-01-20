@@ -80,7 +80,7 @@ public class Group {
 			Color.RED,
 			Color.decode("0x008000"),	// dark green
 			Color.ORANGE,
-			Color.decode("0x8000FF"),	// violett
+			Color.decode("0x8000FF"),	// violet
 			Color.DARK_GRAY
 	};
 	/** Is used in a modulo way to assign every new group another color */

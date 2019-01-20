@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-02 (2019-01-18)
+Current development version: 3.29-02 (2019-01-20)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -21,6 +21,8 @@ Current development version: 3.29-02 (2019-01-18)
 - 01: Bugfix #665: Import of INSPECT statements from COBOL works now <2>
 - 02: Bugfix #665: INSPECT import still hadn't worked, wrong resource access <2>
 - 02: Bugfix #655: Arranger popup menu revised (item order, accelerator info) <2>
+- 02: Bugfix #667: Removal of diagrams from Arranger could leave remnants <2>
+- 02: Issue #668: Group association behaviour on outsourcing further improved <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
