@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
  *      Kay Gürtzig             2018.07.20      Enh. #563: support for simplified record initializers
  *      Kay Gürtzig             2018.07.21/22   Bugfix #564: array initializer trouble mended
+ *      Kay Gürtzig             2019-01-22      Bugfix #669: FOR-In loop was incorrect for traversing strings 
  *
  ******************************************************************************************************
  *
@@ -768,6 +769,12 @@ public class JavaGenerator extends CGenerator
 			{
 				itemType = this.transformType(itemType.substring(1), "Object");	
 			}
+			// START KGU#640 2019-01-22: Bugfix #669 - we need more specific handling of strings as value list
+			else if (listType != null && listType.getCanonicalType(true, true).equalsIgnoreCase("String")) {
+				itemType = "char";
+				valueList += ".toCharArray()";
+			}
+			// END KGU#640 2019-01-22
 			else {
 				itemType = "Object";
 				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);

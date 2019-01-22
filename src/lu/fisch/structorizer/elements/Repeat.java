@@ -390,6 +390,10 @@ public class Repeat extends Element implements ILoop {
 		return this.q;
 	}
 	// END KGU 2015-11-30
+	@Override
+	public Element getLoop() {
+		return this;
+	}
 
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)

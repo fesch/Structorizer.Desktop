@@ -1121,6 +1121,11 @@ public class For extends Element implements ILoop {
 		return this.q;
 	}
 	// END KGU 2015-11-30
+	@Override
+	public Element getLoop() {
+		return this;
+	}
+
 	
 //    public static void main(String[] args)
 //	{
