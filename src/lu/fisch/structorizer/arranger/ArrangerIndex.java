@@ -33,7 +33,8 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-01-11      First Issue
  *      Kay Gürtzig     2019-01-12      Group colour update notification
- *      Kay Gürtzig     2019-01-17      Enhancements (group node for external references) and corrections
+ *      Kay Gürtzig     2019-01-17      Enhancements (group nodes for external references) and corrections
+ *      Kay Gürtzig     2019-01-25      Bugfix #670: Attempt to fix the scaling deficiency w.r.t. to the info trees
  *
  ******************************************************************************************************
  *
@@ -93,6 +94,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.ColorButton;
 import lu.fisch.structorizer.gui.Diagram;
+import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.LangTree;
@@ -580,6 +582,10 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		nodeIndexGroupInfoTop.add(nodeModifications);
 		nodeIndexGroupInfoTop.add(nodeCompleteness);
 		// END KGU#630 2019-01-07
+		// START KGU#642 2019-01-25: Bugfix #670
+		GUIScaler.rescaleComponents(scrollInfo);
+		GUIScaler.rescaleComponents(scrollGroupInfo);
+		// END KGU#642 2019-01-25
 	}
 	
 	/**
