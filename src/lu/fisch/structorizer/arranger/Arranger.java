@@ -198,7 +198,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgActionDelete = new LangTextHolder("remove");
 	public static final LangTextHolder msgActionCut = new LangTextHolder("cut");
 	public static final LangTextHolder msgActionCopy = new LangTextHolder("copy");
-	public static final LangTextHolder msgConfirmMultiple = new LangTextHolder("You have selected the following %1 diagram(s) (out of %2):\n- %3\n\n%4");
+	public static final LangTextHolder msgConfirmMultiple = new LangTextHolder("The following %1 diagram(s) (out of %2) are selected:\n- %3\n\n%4");
 	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the above diagram(s) from Arranger?");
 	public static final LangTextHolder msgReadyToExport = new LangTextHolder("Are you ready to export this sub-arrangement to PNG?");
 	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n- %3");
