@@ -207,7 +207,6 @@ import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.arranger.Arranger;
-import lu.fisch.structorizer.elements.Element.DrawingContext;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
@@ -5058,12 +5057,12 @@ public class Root extends Element {
     
     public Vector<DetectedError> analyse()
     {
-    	structorizerKeywords.clear();
-    	structorizerKeywords.add("global");
-    	for (String keyword: CodeParser.getAllProperties()) {
-    		structorizerKeywords.add(keyword);
-    	}
-    	
+        structorizerKeywords.clear();
+        structorizerKeywords.add("global");
+        for (String keyword: CodeParser.getAllProperties()) {
+            structorizerKeywords.add(keyword);
+        }
+
         this.getVarNames();	// also fills this.constants if not already done
         //System.out.println(this.variables);
 
@@ -5095,8 +5094,8 @@ public class Root extends Element {
         // Warn in case of switched text/comments as first report
         if (this.isSwitchTextAndComments())
         {
-        	String[] menuPath = {"menuDiagram", "menuDiagramSwitchComments"};
-        	String[] defaultNames = {"Diagram", "Switch text/comments?"};
+            String[] menuPath = {"menuDiagram", "menuDiagramSwitchComments"};
+            String[] defaultNames = {"Diagram", "Switch text/comments?"};
             // This is a general warning without associated element - put at top
             error = new DetectedError(errorMsg(Menu.warning_1, Menu.getLocalizedMenuPath(menuPath, defaultNames)), null);
             // Category 0 is not restricted to configuration (cannot be switched off)
@@ -5104,8 +5103,8 @@ public class Root extends Element {
         }
         // END KGU#220 2016-07-27
         
-		// START KGU#376 2017-04-20: Enh. #389 - alternative implementation approach
-//        for (String rootName: this.importedRoots) {
+        // START KGU#376 2017-04-20: Enh. #389 - alternative implementation approach
+//		for (String rootName: this.importedRoots) {
 //			// Get all lines of the imported root
 //			if (Arranger.hasInstance()) {
 //				Vector<Root> roots = Arranger.getInstance().findProgramsByName(rootName);
@@ -5116,25 +5115,25 @@ public class Root extends Element {
 //				}
 //				else {
 //					// The diagram «%» to be imported is currently not available.
-//		            addError(errors, new DetectedError(errorMsg(Menu.error15_4, rootName), this), 15);					
+//					addError(errors, new DetectedError(errorMsg(Menu.error15_4, rootName), this), 15);					
 //				}
 //			}		
-//        }
-		// END KGU#376 2017-04-11
+//		}
+        // END KGU#376 2017-04-11
 
-        
-    	// START KGU#376 2017-07-01: Enh. #389 - Now includes are a Root property (again)
+
+        // START KGU#376 2017-07-01: Enh. #389 - Now includes are a Root property (again)
         LinkedHashMap<String, String> importedConstants = new LinkedHashMap<String, String>();
-    	this.analyse_23(errors, vars, uncertainVars, importedConstants, new StringList(), new HashMap<String,StringList>(), typeDefinitions);
-    	// END KGU#376 2017-07-01
-    	
-    	vars.add(rootVars);
+        this.analyse_23(errors, vars, uncertainVars, importedConstants, new StringList(), new HashMap<String,StringList>(), typeDefinitions);
+        // END KGU#376 2017-07-01
+
+        vars.add(rootVars);
         HashMap<String, String> definedConsts = new LinkedHashMap<String, String>();
         for (int v = 0; v < vars.count(); v++) {
-        	String para = vars.get(v);
-        	if (this.constants.containsKey(para)) {
-        		definedConsts.put(para, this.constants.get(para));
-        	}
+            String para = vars.get(v);
+            if (this.constants.containsKey(para)) {
+                definedConsts.put(para, this.constants.get(para));
+            }
         }
 
         // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check

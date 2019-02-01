@@ -32,56 +32,57 @@ package lu.fisch.structorizer.generators;
  *
  *      Author                  Date            Description
  *      ------                  ----            -----------
- *      Bob Fisch               2008.11.17      First Issue
- *      Gunter Schillebeeckx    2009.08.10      Bugfixes (see comment)
- *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Bob Fisch               2008-11-17      First Issue
+ *      Gunter Schillebeeckx    2009-08-10      Bugfixes (see comment)
+ *      Bob Fisch               2009-08-17      Bugfixes (see comment)
  *      Bob Fisch               2010.08-30      Different fixes asked by Kay Gürtzig
  *                                              and Peter Ehrlich
- *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.06      Support for logical Pascal operators added
- *      Kay Gürtzig             2014.11.16      Bugfixes in operator conversion
- *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig             2015.10.21      New generator now supports multiple-case branches
- *      Kay Gürtzig             2015.11.01      Language transforming reorganised, FOR loop revision
- *      Kay Gürtzig             2015.11.10      Bugfixes KGU#71 (switch default), KGU#72 (div operators)
- *      Kay Gürtzig             2015.11.10      Code style option optionBlockBraceNextLine() added,
+ *      Kay Gürtzig             2010-09-10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014-11-06      Support for logical Pascal operators added
+ *      Kay Gürtzig             2014-11-16      Bugfixes in operator conversion
+ *      Kay Gürtzig             2015-10-18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015-10-21      New generator now supports multiple-case branches
+ *      Kay Gürtzig             2015-11-01      Language transforming reorganised, FOR loop revision
+ *      Kay Gürtzig             2015-11-10      Bugfixes KGU#71 (switch default), KGU#72 (div operators)
+ *      Kay Gürtzig             2015-11-10      Code style option optionBlockBraceNextLine() added,
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
- *      Kay Gürtzig             2015.12.13      Bugfix #51 (=KGU#108): Cope with empty input and output
- *      Kay Gürtzig             2015.12.21      Adaptations for Bugfix #41/#68/#69 (=KGU#93)
- *      Kay Gürtzig             2016.01.15      Bugfix #64 (exit instruction was exported without ';')
- *      Kay Gürtzig             2016.01.15      Issue #61/#107: improved handling of typed variables 
- *      Kay Gürtzig             2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
- *      Kay Gürtzig             2016.04.01      Enh. #144: Export option to suppress content conversion 
- *      Kay Gürtzig             2016.04.03      Enh. KGU#150: ord and chr functions converted (raw approach)
- *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
- *      Kay Gürtzig             2016.08.10      Issue #227: <stdio.h> and TODOs only included if needed 
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactored 
- *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. 271: Support for input instructions with prompt
- *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig             2016.12.01      Bugfix #301: More sophisticated test for condition enclosing by parentheses
- *      Kay Gürtzig             2016.12.22      Enh. #314: Support for File API
- *      Kay Gürtzig             2017.01.26      Enh. #259/#335: Type retrieval and improved declaration support 
- *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
- *      Kay Gürtzig             2017.02.06      Minor corrections in generateJump(), String delimiter conversion (#343)
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.03.05      Bugfix #365: Fundamental revision of generateForInCode(), see comment.
- *      Kay Gürtzig             2017.03.15      Bugfix #181/#382: String delimiter transformation didn't work 
- *      Kay Gürtzig             2017.03.15      Issue #346: Insertion mechanism was misplaced (depended on others)
- *      Kay Gürtzig             2017.03.30      Issue #365: FOR-IN loop code generation revised again
- *      Kay Gürtzig             2017.04.12      Enh. #388: Handling of constants
- *      Kay Gürtzig             2017.04.13      Enh. #389: Preparation for subclass-dependent handling of import CALLs
- *      Kay Gürtzig             2017.04.14      Bugfix #394: Export of Jump elements (esp. leave) revised
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.09.26      Enh. #389/#423: Export with includable diagrams (as global definitions)
- *      Kay Gürtzig             2017.09.30      Enh. #423: struct export fixed.
- *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
- *      Kay Gürtzig             2017.11.06      Issue #453: Modifications for string type and input and output instructions
- *      Kay Gürtzig             2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
- *      Kay Gürtzig             2018.07.21      Enh. #563, Bugfix #564: Smarter record initializers / array initializer defects
- *      Kay Gürtzig             2018.10.30      bool type no longer converted to int, instead #include <stdbool.h> generated 
+ *      Kay Gürtzig             2015-12-13      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig             2015-12-21      Adaptations for Bugfix #41/#68/#69 (=KGU#93)
+ *      Kay Gürtzig             2016-01-15      Bugfix #64 (exit instruction was exported without ';')
+ *      Kay Gürtzig             2016-01-15      Issue #61/#107: improved handling of typed variables 
+ *      Kay Gürtzig             2016-03-16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016-04-01      Enh. #144: Export option to suppress content conversion 
+ *      Kay Gürtzig             2016-04-03      Enh. KGU#150: ord and chr functions converted (raw approach)
+ *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
+ *      Kay Gürtzig             2016-08-10      Issue #227: <stdio.h> and TODOs only included if needed 
+ *      Kay Gürtzig             2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016-09-25      Enh. #253: CodeParser.keywordMap refactored 
+ *      Kay Gürtzig             2016-10-14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. 271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016-12-01      Bugfix #301: More sophisticated test for condition enclosing by parentheses
+ *      Kay Gürtzig             2016-12-22      Enh. #314: Support for File API
+ *      Kay Gürtzig             2017-01-26      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017-01-31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017-02-06      Minor corrections in generateJump(), String delimiter conversion (#343)
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-03-05      Bugfix #365: Fundamental revision of generateForInCode(), see comment.
+ *      Kay Gürtzig             2017-03-15      Bugfix #181/#382: String delimiter transformation didn't work 
+ *      Kay Gürtzig             2017-03-15      Issue #346: Insertion mechanism was misplaced (depended on others)
+ *      Kay Gürtzig             2017-03-30      Issue #365: FOR-IN loop code generation revised again
+ *      Kay Gürtzig             2017-04-12      Enh. #388: Handling of constants
+ *      Kay Gürtzig             2017-04-13      Enh. #389: Preparation for subclass-dependent handling of import CALLs
+ *      Kay Gürtzig             2017-04-14      Bugfix #394: Export of Jump elements (esp. leave) revised
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-09-26      Enh. #389/#423: Export with includable diagrams (as global definitions)
+ *      Kay Gürtzig             2017-09-30      Enh. #423: struct export fixed.
+ *      Kay Gürtzig             2017-11-02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig             2017-11-06      Issue #453: Modifications for string type and input and output instructions
+ *      Kay Gürtzig             2018-03-13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
+ *      Kay Gürtzig             2018-07-21      Enh. #563, Bugfix #564: Smarter record initializers / array initializer defects
+ *      Kay Gürtzig             2018-10-30      bool type no longer converted to int, instead #include <stdbool.h> generated
+ *      Kay Gürtzig             2019-01-21      Bugfix #669: Export of some FOR-In loops produced structurally defective code
  *
  ******************************************************************************************************
  *
@@ -1152,10 +1153,13 @@ public class CGenerator extends Generator {
 		String startValStr = "0";
 		String endValStr = "???";
 		boolean isDisabled = _for.isDisabled();
+		// START KGU#640 2019-01-21: Bugfix #669
+		boolean isLoopConverted = false;
+		// END KGU#640 2019-01-21
 		if (items != null)
 		{
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will make use of the typeMap and
+			// do if items are heterogeneous? We will make use of the typeMap and
 			// hope to get sensible information. Otherwise we add a TODO comment.
 			int nItems = items.count();
 			boolean allInt = true;
@@ -1225,6 +1229,9 @@ public class CGenerator extends Generator {
 					+ transform(arrayLiteral, false) + ";", indent, isDisabled);
 			
 			endValStr = Integer.toString(nItems);
+			// START KGU#640 2019-01-21: Bugfix #669
+			isLoopConverted = true;
+			// END KGU#640 2019-01-21
 		}
 		else if (typeInfo != null && typeInfo.isArray()) {
 			String limitName = "count" + nameSuffix;
@@ -1255,11 +1262,26 @@ public class CGenerator extends Generator {
 			addCode("int " + limitName + " = " + endValStr +";", indent, isDisabled);
 
 			endValStr = limitName;
+			// START KGU#640 2019-01-21: Bugfix #669
+			isLoopConverted = true;
+			// END KGU#640 2019-01-21
 		}
+		// START KGU#640 2019-01-21: Bugfix #669 - There could as well be a string as type but no items
+		else if (typeInfo != null && typeInfo.getCanonicalType(true, true).equalsIgnoreCase("string")) {
+			// Just a dummy block to be compatible with other branches
+			addCode("{", _indent, isDisabled);
+			endValStr = "strlen(" + valueList + ")";
+			arrayName = valueList;
+			isLoopConverted = true;
+		}
+		// END KGU#640 2019-01-21
 		
-		if (items != null || typeInfo != null) {
+		// START KGU#640 2019-01-21: Bugfix #669
+		//if (items != null || typeInfo != null) {
+		if (isLoopConverted) {
+		// END KGU#640 2019-01-21
 			
-			// Definition of he loop index variable
+			// Definition of the loop index variable
 			addCode("int " + indexName + ";", indent, isDisabled);
 
 			// Creation of the loop header
@@ -1272,8 +1294,8 @@ public class CGenerator extends Generator {
 			if (itemType.startsWith("union ")) {
 				this.insertComment("TODO: Extract the value from the appropriate component here and care for type conversion!", _indent);
 			}
-			addCode(this.getIndent() + itemType + " " + itemVar + " = " +
-					arrayName + "[" + indexName + "];", indent, isDisabled);
+			addCode(this.getIndent() + (itemType + " " + itemVar + " = " +
+					arrayName + "[" + indexName + "];").trim(), indent, isDisabled);
 
 			// Add the loop body as is
 			generateCode(_for.q, indent + this.getIndent());

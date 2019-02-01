@@ -93,6 +93,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-10-29      Issue #630 (exit attempt on REPLACE/COPY), bugfix #635: commas in expression lists
  *      Kay Gürtzig     2018-12-14      Issue #631 - removal of ';' and ',', first preparations for INSPECT import
  *      Kay Gürtzig     2018-12-17      Issue #631 - Implementation for all three flavours of INSPECT statement
+ *      Kay Gürtzig     2019-01-18      Bugfix #665 (related to #631) parsing of the resource diagrams had failed.
  *
  ******************************************************************************************************
  *
@@ -125,6 +126,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
@@ -5933,22 +5935,30 @@ public class COBOLParser extends CodeParser
 	private boolean importInspectTallying(String _target, Reduction _redBody, Reduction _redInspect, Subqueue _parentNode) throws ParserCancelled {
 		boolean isDone = false;
 		if (!isLoadedInspectTallying) {
-			try {
-				URL diagrURL = this.getClass().getResource("INSPECT_TALLYING-6.nsd");
-				if (diagrURL != null) {
-					File f = new File(diagrURL.getPath());
-					NSDParser parser = new NSDParser();
-					Root sub = parser.parse(f);
-					sub.origin = f.getPath();
-					this.addRoot(sub);
-					isLoadedInspectTallying = true;
-				}
+			// START KGU#636 2019-01-18: Bugfix #665
+			//try {
+			//	URL diagrURL = this.getClass().getResource("INSPECT_TALLYING-6.nsd");
+			//	if (diagrURL != null) {
+			//		File f = new File(diagrURL.getPath());
+			//		NSDParser parser = new NSDParser();
+			//		Root sub = parser.parse(f);
+			//		sub.origin = f.getPath();
+			//		this.addRoot(sub);
+			//		isLoadedInspectTallying = true;
+			//	}
+			//}
+			//catch (Exception ex) {
+			//	this.log(ex.toString(), true);
+			//	this.getLogger().warning(ex.toString());
+			//	return false;
+			//}
+			if (parseResourceDiagram("INSPECT_TALLYING-6.nsd")) {
+				isLoadedInspectTallying = true;
 			}
-			catch (Exception ex) {
-				this.log(ex.toString(), true);
-				this.getLogger().warning(ex.toString());
+			else {
 				return false;
 			}
+			// END KGU#636 2019-01-18
 		}
 		StringList counters = new StringList();
 		StringList modes = new StringList();
@@ -6037,22 +6047,30 @@ public class COBOLParser extends CodeParser
 	private boolean importInspectReplacing(String _target, Reduction _redBody, Reduction _redInspect, Subqueue _parentNode) throws ParserCancelled {
 		boolean isDone = false;
 		if (!isLoadedInspectReplacing) {
-			try {
-				URL diagrURL = this.getClass().getResource("INSPECT_REPLACING-6.nsd");
-				if (diagrURL != null) {
-					File f = new File(diagrURL.getPath());
-					NSDParser parser = new NSDParser();
-					Root sub = parser.parse(f);
-					sub.origin = f.getPath();
-					this.addRoot(sub);
-					isLoadedInspectReplacing = true;
-				}
+			// START KGU#636 2019-01-18: Bugfix #665
+			//try {
+			//	URL diagrURL = this.getClass().getResource("INSPECT_REPLACING-6.nsd");
+			//	if (diagrURL != null) {
+			//		File f = new File(diagrURL.getPath());
+			//		NSDParser parser = new NSDParser();
+			//		Root sub = parser.parse(f);
+			//		sub.origin = f.getPath();
+			//		this.addRoot(sub);
+			//		isLoadedInspectReplacing = true;
+			//	}
+			//}
+			//catch (Exception ex) {
+			//	this.log(ex.toString(), true);
+			//	this.getLogger().warning(ex.toString());
+			//	return false;
+			//}
+			if (parseResourceDiagram("INSPECT_REPLACING-6.nsd")) {
+				isLoadedInspectReplacing = true;
 			}
-			catch (Exception ex) {
-				this.log(ex.toString(), true);
-				this.getLogger().warning(ex.toString());
+			else {
 				return false;
 			}
+			// END KGU#636 2019-01-18
 		}
 		StringList modes = new StringList();
 		StringList subjects = new StringList();
@@ -6124,22 +6142,30 @@ public class COBOLParser extends CodeParser
 	private boolean importInspectConverting(String _target, Reduction _redBody, Reduction _redInspect, Subqueue _parentNode) throws ParserCancelled {
 		boolean isDone = false;
 		if (!isLoadedInspectConverting) {
-			try {
-				URL diagrURL = this.getClass().getResource("INSPECT_CONVERTING-5.nsd");
-				if (diagrURL != null) {
-					File f = new File(diagrURL.getPath());
-					NSDParser parser = new NSDParser();
-					Root sub = parser.parse(f);
-					sub.origin = f.getPath();
-					this.addRoot(sub);
-					isLoadedInspectConverting = true;
-				}
+			// START KGU#636 2019-01-18: Bugfix #665
+			//try {
+			//	URL diagrURL = this.getClass().getResource("INSPECT_CONVERTING-5.nsd");
+			//	if (diagrURL != null) {
+			//		File f = new File(diagrURL.getPath());
+			//		NSDParser parser = new NSDParser();
+			//		Root sub = parser.parse(f);
+			//		sub.origin = f.getPath();
+			//		this.addRoot(sub);
+			//		isLoadedInspectConverting = true;
+			//	}
+			//}
+			//catch (Exception ex) {
+			//	this.log(ex.toString(), true);
+			//	this.getLogger().warning(ex.toString());
+			//	return false;
+			//}
+			if (parseResourceDiagram("INSPECT_CONVERTING-5.nsd")) {
+				isLoadedInspectConverting = true;
 			}
-			catch (Exception ex) {
-				this.log(ex.toString(), true);
-				this.getLogger().warning(ex.toString());
+			else {
 				return false;
 			}
+			// END KGU#636 2019-01-18
 		}
 		String subjects = getContent_R(_redBody.get(1).asReduction(), "");
 		String replacers = getContent_R(_redBody.get(3).asReduction(), "");
@@ -6157,6 +6183,35 @@ public class COBOLParser extends CodeParser
 		_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 		isDone = true;
 		return isDone;
+	}
+
+	// START KGU#636 2019-01-18: Bugfix #665
+	/**
+	 * Tries to parse the diagram resource specified by {@code filename} (which should be
+	 * a flat name bound to the class resource location).
+	 * @param filename - the file name of an NSD file in the resource envirmonment of this class.
+	 * @return true if the parsing succeeded, false otherwise
+	 */
+	private boolean parseResourceDiagram(String filename)
+	{
+		boolean done = false;
+		try {
+			URL diagrURL = this.getClass().getResource(filename);
+			if (diagrURL != null) {
+				InputStream is = this.getClass().getResourceAsStream(filename);
+				NSDParser parser = new NSDParser();
+				Root sub = parser.parse(is);
+				sub.origin = diagrURL.toString();
+				this.addRoot(sub);
+				is.close();
+				done = true;
+			}
+		}
+		catch (Exception ex) {
+			this.log(ex.toString(), true);
+			this.getLogger().warning(ex.toString());
+		}
+		return done;
 	}
 
 	private void addInspectRegions(Reduction redRegion, StringList afters, StringList befores) throws ParserCancelled {

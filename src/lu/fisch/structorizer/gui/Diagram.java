@@ -167,6 +167,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: Support for new saving option to store relative coordinates in arr files
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
+ *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved. 
  *
  ******************************************************************************************************
  *
@@ -3506,7 +3507,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			else {
 				elements = (IElementSequence)this.selected;
 			}
-			// START KGU#365 2017-04-14: We must at least warn if return or unmatched leave instructins are contained
+			// START KGU#365 2017-04-14: We must at least warn if return or unmatched leave instructions are contained
 			List<Jump> jumps = findUnsatisfiedJumps(elements);
 			if (!jumps.isEmpty()) {
 				String jumpTexts = "";
@@ -3564,6 +3565,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					groups = Arranger.getInstance().getGroupsFromRoot(root, true);
 				}
 				// END KGU#626 2019-01-06
+				// START KGU#638 2019-01-20: Issue #668 - If root is not member of a group then push it to Arranger
+				String targetGroupName = null;
+				if (groups == null || groups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
+					// If the diagram is a program then create an exclusive group named after the main diagram 
+					if (root.isProgram()) {
+						targetGroupName = root.getMethodName(true);
+						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame(), targetGroupName);
+						groups = Arranger.getInstance().getGroupsFromRoot(root, true);
+					}
+					else {
+						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame());
+					}
+				}
+				else if (Arranger.getInstance().getGroupsFromRoot(root, false).size() == groups.size()) {
+					// Parent diagram is arranged but not member of the default group - then its children shouldn't be either
+					targetGroupName = groups.iterator().next().getName();
+				}
+				// END KGU#638 2019-01-20
 				// FIXME May we involve the user in argument and result value identification?
 				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
 				if (sub != null) {
@@ -3619,9 +3638,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							((Subqueue)source.parent).removeElement(source);
 							incl.children.addElement(source);
 						}
-						incl.setChanged(false);	// FIXME: why?
+						incl.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
 						if (isNewIncl) {
-							Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
+							// START KGU#638 2019-01-20: Issue #668 - Improved group association behaviour
+							//Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
+							Arranger.getInstance().addToPool(incl, NSDControl.getFrame(), targetGroupName);
+							// END KGU#638 3019-01-20
 						}
 						// START KGU#626 2019-01-06: Enh. #657
 						// Associate the includable to all groups root is member of
@@ -3635,11 +3657,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						sub.addToIncludeList(includableName);
 					}
 					// END KGU#506 2018-03-14
-					sub.setChanged(false);
+					sub.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
 					Arranger arr = Arranger.getInstance();
-					arr.addToPool(sub, NSDControl.getFrame());
+					// START KGU#638 2019-01-20: Issue #668 - Improved group association behaviour
+					//arr.addToPool(sub, NSDControl.getFrame());
+					arr.addToPool(sub, NSDControl.getFrame(), targetGroupName);
+					// END KGU#638 3019-01-20
 					// START KGU#626 2019-01-06: Enh. #657
-					// Associate the includable to all groups root is member of
+					// Associate the subroutine to all groups root is member of
 					if (groups != null) {
 						for (Group group: groups) {
 							Arranger.getInstance().attachRootToGroup(group, sub, null, this.NSDControl.getFrame());

@@ -33,7 +33,9 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-01-11      First Issue
  *      Kay Gürtzig     2019-01-12      Group colour update notification
- *      Kay Gürtzig     2019-01-17      Enhancements (group node for external references) and corrections
+ *      Kay Gürtzig     2019-01-17      Enhancements (group nodes for external references) and corrections
+ *      Kay Gürtzig     2019-01-25      Bugfix #670: Attempt to fix the scaling deficiency w.r.t. to the info trees
+ *      Kay Gürtzig     2019-01-28      Issue #670: Update of the info box components on look & feel change
  *
  ******************************************************************************************************
  *
@@ -93,6 +95,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.ColorButton;
 import lu.fisch.structorizer.gui.Diagram;
+import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.LangTree;
@@ -580,6 +583,10 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		nodeIndexGroupInfoTop.add(nodeModifications);
 		nodeIndexGroupInfoTop.add(nodeCompleteness);
 		// END KGU#630 2019-01-07
+		// START KGU#642 2019-01-25: Bugfix #670
+		GUIScaler.rescaleComponents(scrollInfo);
+		GUIScaler.rescaleComponents(scrollGroupInfo);
+		// END KGU#642 2019-01-25
 	}
 	
 	/**
@@ -1263,5 +1270,23 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	public void mouseExited(MouseEvent e) {
 	}
 
+	// START KGU#643 2019-01-28: Issue #670 - Update info box L&F (aren't members of the component tree)
+	@Override
+	public void updateUI()
+	{
+		super.updateUI();
+		// Cater for the look and feel update of the info boxes.
+		for (Component comp: new Component[] {this.scrollInfo, this.pnlGroupInfo}) {
+			if (comp != null) {
+				try {
+					javax.swing.SwingUtilities.updateComponentTreeUI(comp);
+				}
+				catch (Exception ex) {
+					System.out.println("L&F problem with " + comp);
+				}
+			}
+		}
+	}
+	// END KGU#643 2019-01-28
 
 }

@@ -627,8 +627,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
 			@Override
             public void keyPressed(KeyEvent evt) {
-            	int keyCode = evt.getKeyCode();
-            	int modifiers = evt.getModifiers();
+                int keyCode = evt.getKeyCode();
                 switch (keyCode) {
                 case KeyEvent.VK_ESCAPE:
                 {
@@ -636,16 +635,14 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 }
                 break;
                 case KeyEvent.VK_ENTER:
-                case KeyEvent.VK_ENTER | KeyEvent.SHIFT_DOWN_MASK:
                 {
-                	boolean shiftDown = (keyCode & KeyEvent.SHIFT_DOWN_MASK) != 0 || modifiers == KeyEvent.SHIFT_MASK;
                     Object source = evt.getSource();
                     if (source instanceof JButton) {
                         JButton button = (JButton)source;
                         ActionListener[] actLsnrs = button.getActionListeners();
                         int actionCode = ActionEvent.ACTION_PERFORMED;
-                        if (shiftDown) {
-                        	actionCode |= ActionEvent.SHIFT_MASK;
+                        if (evt.isShiftDown()) {
+                            actionCode |= ActionEvent.SHIFT_MASK;
                         }
                         for (ActionListener al: actLsnrs) {
                             al.actionPerformed(new ActionEvent(button, actionCode, loadedLocaleName));;
@@ -653,15 +650,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     }
                 }
                 case KeyEvent.VK_F:
-                case (KeyEvent.VK_F | KeyEvent.CTRL_DOWN_MASK):
                 {
-                	boolean ctrlDown = (keyCode & KeyEvent.CTRL_DOWN_MASK) != 0 || (modifiers == KeyEvent.CTRL_MASK);
-                	if (ctrlDown) {
-                		if (searchDialog == null) {
-                			searchDialog = new TranslatorFindDialog(Translator.this);
-                		}
-                		searchDialog.setVisible(true);
-                	}
+                    if (evt.isControlDown()) {
+                        if (searchDialog == null) {
+                            searchDialog = new TranslatorFindDialog(Translator.this);
+                        }
+                        searchDialog.setVisible(true);
+                    }
                 }
                 break;
                 }

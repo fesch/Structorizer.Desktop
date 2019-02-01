@@ -33,18 +33,19 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Bob Fisch       2016.08.02  First Issue
- *      Kay Gürtzig     2016.08.12  Mechanism to translate arrays of controls (initially for AnalyserPreferences)
- *      Kay Gürtzig     2016.09.05  Mechanism to translate Hashtables of controls (initially for language preferences)
- *      Kay Gürtzig     2016.09.09  Fix in getSectionNames(), Javadoc accomplished
- *      Kay Gürtzig     2016.09.13  Bugfix #241 in checkConditions() (KGU#246)
- *      Kay Gürtzig     2016.09.22  Issue #248: Workaround for Linux systems with Java 1.7
- *      Kay Gürtzig     2016.09.28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
- *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
- *      Kay Gürtzig     2016.02.03  Issue #340: registration without immediate update launch
- *      Kay Gürtzig     2017.02.27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
- *      Kay Gürtzig     2017.10.02  Enh. #415: The title localization wasn't done for JFrame offsprings
- *      Kay Gürtzig     2018.07.02  KGU#245: Substrings "[#]" may be replaced by the actual index in an array target 
+ *      Bob Fisch       2016-08-02  First Issue
+ *      Kay Gürtzig     2016-08-12  Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *      Kay Gürtzig     2016-09-05  Mechanism to translate Hashtables of controls (initially for language preferences)
+ *      Kay Gürtzig     2016-09-09  Fix in getSectionNames(), Javadoc accomplished
+ *      Kay Gürtzig     2016-09-13  Bugfix #241 in checkConditions() (KGU#246)
+ *      Kay Gürtzig     2016-09-22  Issue #248: Workaround for Linux systems with Java 1.7
+ *      Kay Gürtzig     2016-09-28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
+ *      Kay Gürtzig     2016-12-07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
+ *      Kay Gürtzig     2016-02-03  Issue #340: registration without immediate update launch
+ *      Kay Gürtzig     2017-02-27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
+ *      Kay Gürtzig     2017-10-02  Enh. #415: The title localization wasn't done for JFrame offsprings
+ *      Kay Gürtzig     2018-07-02  KGU#245: Substrings "[#]" may be replaced by the actual index in an array target
+ *      Kay Gürtzig     2019-01-18  Issue #346: Precaution against uninitialized arrays in setLocale()
  *
  ******************************************************************************************************
  *
@@ -637,55 +638,59 @@ public class Locales {
                                 // START KGU#239 2016-08-12: Opportunity to localize an array of controls
                                 if (fieldClass.isArray() && pieces.count() > 3)
                                 {
-                                    int length = Array.getLength(target);
-                                    // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
-                                    //int index = Integer.parseUnsignedInt(piece2);
-                                    //if (index < length) {
-                                    // START KGU#351 2017-02-26
-                                    //int index = Integer.parseInt(piece2);
-                                    //if (index >= 0 && index < length) {
-                                	//// END KGU#252 2016-09-22
-                                    //    target = Array.get(target, index);
-                                    //    fieldClass = target.getClass();
-                                    //    pieces.remove(2);	// Index no longer needed
-                                    //    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
-                                    //    piece2 = pieces.get(2).toLowerCase();
-                                    //}
-                                    int ixStart = 0, ixEnd = 0;
-                                    if (piece2.equals("*")) {
-                                    	// All indices!
-                                    	ixEnd = length;
+                                    // On startup we might be faster here than the initialization of the components, such
+                                    // that we must face nasty NullPointerExceptions if we don't prevent
+                                    if (target != null) {
+                                        int length = Array.getLength(target);
+                                        // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
+                                        //int index = Integer.parseUnsignedInt(piece2);
+                                        //if (index < length) {
+                                        // START KGU#351 2017-02-26
+                                        //int index = Integer.parseInt(piece2);
+                                        //if (index >= 0 && index < length) {
+                                        //// END KGU#252 2016-09-22
+                                        //    target = Array.get(target, index);
+                                        //    fieldClass = target.getClass();
+                                        //    pieces.remove(2);	// Index no longer needed
+                                        //    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                                        //    piece2 = pieces.get(2).toLowerCase();
+                                        //}
+                                        int ixStart = 0, ixEnd = 0;
+                                        if (piece2.equals("*")) {
+                                        	// All indices!
+                                        	ixEnd = length;
+                                        }
+                                        else {
+                                        	ixStart = Integer.parseInt(piece2);
+                                        	ixEnd = ixStart + 1;
+                                        }
+                                        pieces.remove(2);	// Index no longer needed
+                                        pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                                        piece2 = pieces.get(2).toLowerCase();
+                                        if (ixStart >= 0 && ixEnd <= length) {
+                                        	String piece3 = (pieces.count()>3) ? pieces.get(3) : "0";
+                                        	for (int index = ixStart; index < ixEnd; index++) {
+                                        		Object tgt = Array.get(target, index);
+                                        		// START KGU#245 2018-07-02: New mechanism to insert the index into the text
+                                        		//this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, parts.get(1));
+                                        		this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, 
+                                        				parts.get(1).replace("[#]", Integer.toString(index)));
+                                        		// END KGU#245 2018-07-02
+                                        	}
+                                        	// Target exhausted
+                                        	target = null;
+                                        }
+                                        // END KGU#351 2017-02-26
+                                        // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
+                                        else
+                                        {
+                                        	logger.log(Level.WARNING,
+                                        			"LANG: Error while setting property <{0}> for element <{1}.{2}.{3}>!\n"
+                                        					+ "Index out of range (0...{4})!",
+                                        					new Object[]{pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1});
+                                        }
+                                        // END KGU#252 2016-09-22
                                     }
-                                    else {
-                                    	ixStart = Integer.parseInt(piece2);
-                                    	ixEnd = ixStart + 1;
-                                    }
-                                    pieces.remove(2);	// Index no longer needed
-                                    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
-                                    piece2 = pieces.get(2).toLowerCase();
-                                    if (ixStart >= 0 && ixEnd <= length) {
-                                    	String piece3 = (pieces.count()>3) ? pieces.get(3) : "0";
-                                    	for (int index = ixStart; index < ixEnd; index++) {
-                                    		Object tgt = Array.get(target, index);
-                                    		// START KGU#245 2018-07-02: New mechanism to insert the index into the text
-                                    		//this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, parts.get(1));
-                                    		this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, 
-                                    				parts.get(1).replace("[#]", Integer.toString(index)));
-                                    		// END KGU#245 2018-07-02
-                                    	}
-                                    	// Target exhausted
-                                    	target = null;
-                                    }
-                                    // END KGU#351 2017-02-26
-                                    // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
-                                    else
-                                    {
-                                        logger.log(Level.WARNING,
-                                        		"LANG: Error while setting property <{0}> for element <{1}.{2}.{3}>!\n"
-                                        		+ "Index out of range (0...{4})!",
-                                        		new Object[]{pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1});
-                                    }
-                                	// END KGU#252 2016-09-22
                                 }
                                 // END KGU#239 2016-08-12
                                 // START KGU#242 2016-09-04

@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.arranger;
 
-import java.awt.AlphaComposite;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -36,6 +34,7 @@ import java.awt.AlphaComposite;
  *      Kay Gürtzig     2018-12-23      First Issue (on behalf of enh. #657)
  *      Kay Gürtzig     2019-01-05      Substantial tuning for enh. #657
  *      Kay Gürtzig     2019-01-09      Enhancements for issue #662/2 (drawing capability prepared)
+ *      Kay Gürtzig     2019-01-25      Issue #668: More intelligent file name proposal for default group
  *
  ******************************************************************************************************
  *
@@ -43,6 +42,8 @@ import java.awt.AlphaComposite;
  *      
  *
  ******************************************************************************************************///
+
+import java.awt.AlphaComposite;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -80,7 +81,7 @@ public class Group {
 			Color.RED,
 			Color.decode("0x008000"),	// dark green
 			Color.ORANGE,
-			Color.decode("0x8000FF"),	// violett
+			Color.decode("0x8000FF"),	// violet
 			Color.DARK_GRAY
 	};
 	/** Is used in a modulo way to assign every new group another color */
@@ -247,6 +248,26 @@ public class Group {
 	public String proposeFileName()
 	{
 		char[] canonical = this.name.toCharArray();
+		// For the default group, if it contains a unique main diagram, provide its name 
+		if (this.isDefaultGroup()) {
+			String progName = null;
+			for (Diagram diagr: this.diagrams) {
+				if (diagr.root.isProgram()) {
+					if (progName == null) {
+						// The first program diagram, retain the name for the case it remains the only one
+						progName = diagr.root.getMethodName();
+					}
+					else {
+						// There are more than one program diagrams, so give up
+						progName = null;
+						break;
+					}
+				}
+			}
+			if (progName != null) {
+				canonical = progName.toCharArray();
+			}
+		}
 		for (int i = 0; i <- canonical.length; i++) {
 			char ch = canonical[i];
 			if (!Character.isAlphabetic(ch) && !Character.isDigit(ch) && ch != '.') {
