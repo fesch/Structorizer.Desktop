@@ -97,6 +97,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-12      Enh. #662/3: New method to rearrange all diagrams by groups
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: enabled to save arrangements with relative coordinates
  *      Kay Gürtzig     2019-01-16      Enh. #662/2: Coloured group name popup
+ *      Kay Gürtzig     2019-02-02      Bugfix #672: If the saving was cancelled in FileChooser, the group must not be renamed
+ *      Kay Gürtzig     2019-02-03      Issue #673: The dimensions were to be enlarged by a DEFAULT_GAP size
  *
  ******************************************************************************************************
  *
@@ -506,6 +508,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#497 2018-03-19
 		}
+		// START KGU#645 2019-02-03: Issue #673 - drawing area should exceed the group bounds a little
+		area.width += DEFAULT_GAP;
+		area.height += DEFAULT_GAP;
+		// END KGU#645 2019-02-03S
 		// START KGU#85 2017-10-23: Enh. #35 - now make sure the scrolling area is up to date
 		area.width = Math.round(Math.min(area.width, Short.MAX_VALUE) / this.zoomFactor);
 		area.height = Math.round(Math.min(area.height, Short.MAX_VALUE) / this.zoomFactor);
@@ -863,6 +869,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#385 2017-04-22
 				// END KGU#110 2016-06-29
 			}
+			// START KGU#644 2019-02-02: Bugfix #672: We must not gon on if the FileChooser was cancelled
+			else {
+				writeNow = false;
+			}
+			// END KGU#644 2019-02-02
 		// START KGU#626 2019-01-02: Enh. #657
 		}
 		else {
@@ -1634,10 +1645,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			else {
 				rect = new Rect(getSelectionBounds(true));
-				offsetX = rect.left - 10;
-				offsetY = rect.top - 10;
-				rect.left = 10;
-				rect.top = 10;
+				offsetX = rect.left - DEFAULT_GAP;
+				offsetY = rect.top - DEFAULT_GAP;
+				rect.left = DEFAULT_GAP;
+				rect.top = DEFAULT_GAP;
 				rect.right -= offsetX;
 				rect.bottom -= offsetY;
 			}
@@ -1689,12 +1700,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Determines the union of bounds of the given {@code _diagrams} in true diagram coordinates
-	 * and updates the lower silhouette line if {@code _silhouette} is given.
+	 * and updates the lower silhouette line if {@code _silhouette} is given.<br/>
+	 * At the right-hand and bottom side, a buffer of {@link #DEFAULT_GAP} is added, if the
+	 * bounds are not empty (Issue #673).
 	 * @param _diagrams - a collection of {@link Diagram} objects.
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
-	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diagrams)
 	 */
 	private Rect getDrawingRect(Collection<? extends Diagram> _diagrams, LinkedList<Point> _silhouette)
 	{
@@ -1735,6 +1748,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				// END KGU#499 2018-02-20
 			}
+			// START KGU#645 2019-02-03: Issue #673 - drawing area should exceed the group bounds a little
+			r.right += DEFAULT_GAP;
+			r.bottom += DEFAULT_GAP;
+			// END KGU#645 2019-02-03S
 		}
 		//System.out.println("drawingRect: (" + r.left + ", " + r.top + ", " + r.right + ", " + r.bottom +")");
 

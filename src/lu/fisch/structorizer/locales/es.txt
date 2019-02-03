@@ -208,7 +208,7 @@ Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión 
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
 Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión fina en los elementos seleccionados por aquellos con precisión discreta.
 Menu.menuEditBreakLines.text=(Re-)ajustar renglones ...
-Menu.menuEditBreakLines.tooltip=Permite reajustar las líneas de los elementos seleccionados (y opcionálmente sus subestructuras) a un nuevo limite de longitud.  
+Menu.menuEditBreakLines.tooltip=Permite reajustar las líneas de los elementos seleccionados (y opcionálmente de sus subestructuras) a un nuevo limite de longitud.  
 Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
 // Menu "Diagram"
