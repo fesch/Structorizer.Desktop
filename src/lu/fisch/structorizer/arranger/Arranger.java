@@ -69,6 +69,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-16  Enh. #655: Workaround for key listener (using keybinding) created (not needed)
  *      Kay Gürtzig     2019-01-17  Enh. #657: Accelerator key (^R) for rearrange function added
  *      Kay Gürtzig     2019-01-18  Enh. #657: Order of popup menu items modified
+ *      Kay Gürtzig     2019-02-05  Bugfix #674: L&F update of popup menu ensured
  *
  ******************************************************************************************************
  *
@@ -106,6 +107,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.structorizer.elements.Element;
@@ -2374,4 +2376,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		return surface.getGroupsFromRoot(root, suppressDefaultGroup);
 	}
 
+	// START KGU#646 2019-02-05: Bugfix #674 - Update popup menu L&F (isn't member of the component tree)
+	public static void updateLookAndFeel()
+	{
+		if (mySelf != null)
+		{
+			SwingUtilities.updateComponentTreeUI(mySelf);
+			// Cater for the look and feel update of the popup menu.
+			if (popupMenu != null) {
+				try {
+					javax.swing.SwingUtilities.updateComponentTreeUI(popupMenu);
+				}
+				catch (Exception ex) {
+				}
+			}
+		}
+	}
+	// END KGU#646 2019-02-05
 }

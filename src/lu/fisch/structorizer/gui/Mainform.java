@@ -951,7 +951,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	
 	public void setLookAndFeel(String _laf)
 	{
-		if(_laf!=null)
+		if (_laf!=null)
 		{
 			//System.out.println("Setting: "+_laf);
 			laf=_laf;
@@ -973,12 +973,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 //						}
 //						// END KGU#287 2017-01-09
 						SwingUtilities.updateComponentTreeUI(this);
-						// START KGU#211 2016-07-25: Issue #202 - Propagation to Arranger
-						if (Arranger.hasInstance())
-						{
-							SwingUtilities.updateComponentTreeUI(Arranger.getInstance());
-						}
-						// END KGU#211 2016-07-25
+						// START KGU#211/KGU#646 2016-07-25/2019-02-05: Issue #202, #674 - Propagation to Arranger
+						Arranger.updateLookAndFeel();
+						// END KGU#211/KGU#646 2016-07-25/2019-02-05
 						// START KGU#210 2016-08-08: Issue #201 - Propagation to Executor Control
 						Executor.updateLookAndFeel();
 						// END KGU#210 2016-08-08
