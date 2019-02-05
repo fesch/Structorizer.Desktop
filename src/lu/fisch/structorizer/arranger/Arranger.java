@@ -114,6 +114,7 @@ import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.AttributeInspector;
+import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
@@ -683,6 +684,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#624 2018-12-28
 
         this.initPopupMenu();
+        
+        GUIScaler.rescaleComponents(this.statusbar);
         
         // START KGU#117 2016-03-09: New for Enh. #77
         this.doButtons();

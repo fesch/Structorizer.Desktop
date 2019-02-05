@@ -35,6 +35,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-05      Substantial tuning for enh. #657
  *      Kay Gürtzig     2019-01-09      Enhancements for issue #662/2 (drawing capability prepared)
  *      Kay Gürtzig     2019-01-25      Issue #668: More intelligent file name proposal for default group
+ *      Kay Gürtzig     2019-02-04      Colour icon revised (now double thin border like in Arranger).
  *
  ******************************************************************************************************
  *
@@ -597,11 +598,12 @@ public class Group {
 				graphics.setColor(color);
 				graphics.fillRect(size + offset + margin , margin, size - offset - 2*margin, size - 2*margin);
 				graphics.setColor(Color.WHITE);
-				graphics.fillRect(size + offset + 3 * margin, 3 * margin, size - offset - 6*margin, size - 6*margin);
+				graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
 				graphics.setColor(color);
 				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
-				graphics.fillRect(size + offset + 3 * margin, 3 * margin, size - offset - 6*margin, size - 6*margin);
+				graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
 				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+				graphics.drawRect(size + offset + 2 + margin, 2 + margin, size - offset - 5 - 2*margin, size - 5 - 2*margin);
 				graphics.dispose();
 				iconColor = new ImageIcon(image);
 			}
