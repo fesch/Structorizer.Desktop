@@ -31,9 +31,10 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.01.09      First Issue
- *      Kay Gürtzig     2017.10.15      Scaling for JTree rows added
- *      Kay Gürtzig     2018.03.21      Console output replaced with logging mechanism
+ *      Kay Gürtzig     2017-01-09      First Issue
+ *      Kay Gürtzig     2017-10-15      Scaling for JTree rows added
+ *      Kay Gürtzig     2018-03-21      Console output replaced with logging mechanism
+ *      Kay Gürtzig     2019-02-06      Issue #670: JTree row height fix for sizeVariant
  *
  ******************************************************************************************************
  *
@@ -144,8 +145,17 @@ public class GUIScaler {
 					rescaleComponents((Container)((JMenu)cont).getItem(i), sizeVariant);
 				}
 			}
-			for (Component comp: ((Container) cont).getComponents()) {
-				rescaleComponents((Container)comp, sizeVariant);
+			// START KGU#324/KGU#642 2019-02-06: Issues #415, #670/2
+			else if (cont instanceof JTree && IconLoader.getIcon(0) != null) {
+				((JTree)cont).setRowHeight(IconLoader.getIcon(0).getIconHeight());
+			}
+			// END KGU#324/KGU#642 2019-02-06
+		}
+		if (cont != null) {
+			for (Component comp: cont.getComponents()) {
+				if (comp instanceof Container) {
+					rescaleComponents((Container)comp, sizeVariant);
+				}
 			}
 		}
 	}
@@ -235,8 +245,9 @@ public class GUIScaler {
 
     // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
     /**
-     * Returns a scaled checkbox icon for JCheckbox/JRadioButton/JTogleButton
-     * toggleButton in mode given by selected (checked or unchecked)
+     * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
+     * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
+     * {@code selected} (checked or unchecked)
      * @param toggleButton - the toggle button the icon is requested for
      * @param selected - the kind of icon (true = selected, false = unselected)
      * @return an ImageIcon scaled to the font size of the checkbox or the scale factor
@@ -249,8 +260,9 @@ public class GUIScaler {
     
     // START KGU#287 2017-01-11: Issue #81 (DPI-awareness workaround)
     /**
-     * Returns a scaled checkbox icon for JCheckbox/JRadioButton/JTogleButton
-     * toggleButton in mode given by selected (checked or unchecked)
+     * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
+     * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
+     * {@code selected} (checked or unchecked)
      * @param toggleButton - the toggle button the icon is requested for
      * @param selected - the kind of icon (true = selected, false = unselected)
      * @param useCache - whether an internal toggleIcon cache is to be used or not

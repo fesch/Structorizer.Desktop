@@ -31,8 +31,8 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018.01.08      First Issue (on behalf of enhancement request #490)
- *      Kay Gürtzig     2018.01.22      Accomplished.
+ *      Kay Gürtzig     2018-01-08      First Issue (on behalf of enhancement request #490)
+ *      Kay Gürtzig     2018-01-22      Accomplished.
  *
  ******************************************************************************************************
  *
@@ -291,10 +291,10 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 				final String className = plugin.className;
 				try {
 					Class<?> ctrClass = Class.forName(className);
-					DiagramController ctrl = (DiagramController)ctrClass.newInstance();
+					DiagramController ctrl = (DiagramController)ctrClass.getDeclaredConstructor().newInstance();
 					HashMap<String, Method> routineMap = ctrl.getProcedureMap();
 					extractSignatures(className, routineList, routineMap, ini, false);
-					routineMap = ((DiagramController)ctrClass.newInstance()).getFunctionMap();
+					routineMap = ((DiagramController)ctrClass.getDeclaredConstructor().newInstance()).getFunctionMap();
 					extractSignatures(className, routineList, routineMap, ini, true);
 					Collections.sort(routineList, SIGNATURE_ORDER);
 					routineMaps.add(routineList);

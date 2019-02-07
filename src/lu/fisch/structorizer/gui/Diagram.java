@@ -656,7 +656,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								try {
 								// END KGU#354 2017-05-03
 									// START KGU#354 2017-05-12: Enh. #354 - we better use a new instance instead of statically sharing it
-									parser = parser.getClass().newInstance();
+									parser = parser.getClass().getDeclaredConstructor().newInstance();
 									// END KGU#354 2017-05-12
 									// START KGU#395 2017-07-02: Enh. #357
 									String parserClassName = parser.getClass().getSimpleName();
@@ -5222,7 +5222,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			// FIXME: For future Java versions we may need a factory here
 			Class<?> impClass = Class.forName(_className);
-			parser = (INSDImporter) impClass.newInstance();
+			parser = (INSDImporter) impClass.getDeclaredConstructor().newInstance();
 
 			dlgOpen.setDialogTitle(Menu.msgTitleNSDImport.getText().replace("%", parser.getDialogTitle()));
 			// set directory
@@ -5507,7 +5507,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// END KGU#354 2017-04-27
 				// START KGU#354 2017-05-11: Enh. #354 - we better use a new instance instead of statically sharing it
-				parser = parser.getClass().newInstance();
+				parser = parser.getClass().getDeclaredConstructor().newInstance();
 				// END KGU#354 2017-05-11
 				// START KGU#395 2017-07-02: Enh. #357
 				String parserClassName = parser.getClass().getSimpleName();
@@ -5770,7 +5770,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			final String className = plugin.className;
 			try {
 				Class<?> genClass = Class.forName(className);
-				parsers.add((CodeParser) genClass.newInstance());
+				parsers.add((CodeParser) genClass.getDeclaredConstructor().newInstance());
 			} catch (Exception ex) {
 				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 			}
@@ -5805,7 +5805,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try
 		{
 			Class<?> genClass = Class.forName(_generatorClassName);
-			Generator gen = (Generator) genClass.newInstance();
+			Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
 			// START KGU#170 2016-04-01: Issue #143
 			pop.setVisible(false);	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
@@ -8063,7 +8063,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (!className.equals("TurtleBox")) {
 				try {
 					Class<?> genClass = Class.forName(className);
-					diagramControllers.add((DiagramController) genClass.newInstance());
+					diagramControllers.add((DiagramController) genClass.getDeclaredConstructor().newInstance());
 				} catch (Exception ex) {
 					errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 				}

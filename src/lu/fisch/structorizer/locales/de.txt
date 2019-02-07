@@ -1296,6 +1296,7 @@ Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!
 Control.msgUseStopButton.text=Ein Debugging ist in Ausführung oder pausierend!\nZum Abbrechen und Schließen bitte STOP-Taste verwenden.
 Control.msgConstantRedefinition.text=Unzulässiger Versuch, Konstante «%» neu zu setzen oder zu ändern!
 Control.msgConstantArrayElement.text=Ein Array-Element «%» kann nicht per Zuweisung zur Konstanten gemacht werden!
+Control.msgInvalidRecord.text=«%1» ist kein gültiger Verbund (%2)!
 Control.msgInvalidComponent.text=Es gibt keine Komponente «%1» in Verbundtyp oder -Variable «%2»!
 Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht mittels Zuweisung konstant gemacht werden!
 Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!

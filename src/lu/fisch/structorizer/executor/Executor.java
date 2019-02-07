@@ -327,6 +327,7 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
+//import lu.fisch.structorizer.syntax.ExprParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 import bsh.EvalError;
@@ -1540,7 +1541,7 @@ public class Executor implements Runnable
 		while (iter.hasNext())
 		{
 			Updater pool = iter.next();
-			if (pool instanceof IRoutinePool && !this.routinePools.contains(pool))
+			if (pool instanceof IRoutinePool && !this.routinePools.contains((IRoutinePool)pool))
 			{
 				this.routinePools.addElement((IRoutinePool)pool);
 			}
@@ -3549,9 +3550,9 @@ public class Executor implements Runnable
 				}
 				// START KGU#568 2018-08-01: Avoid a dull NullPointerException
 				else if (record == null || !(record instanceof HashMap)) {
-					throw new EvalError(control.msgInvalidRecord.getText().replace("%1", recordName).replaceAll("%2", String.valueOf(record)), null, null);
+					throw new EvalError(control.msgInvalidRecord.getText().replace("%1", recordName).replace("%2", String.valueOf(record)), null, null);
 				}
-				// END KGU#568 2018-08-01 
+				// END KGU#568 2018-08-01
 				Object comp = record;
 				for (int i = 1; i < path.count()-1; i++) {
 					Object subComp = ((HashMap<?, ?>)comp).get(path.get(i));
@@ -4723,6 +4724,9 @@ public class Executor implements Runnable
 		tokens.remove(0, posAsgnOpr+1);
 		// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition#
 		// FIXME: this repeated tokenization is pretty ugly - we need a syntax tree...
+		// DEBUG
+		StringBuilder problems = new StringBuilder();
+		//ExprParser.getInstance().parse(tokens.concatenate(), problems);
 		tokens = Element.splitLexically(this.convertStringComparison(tokens.concatenate().trim()), true);
 		// END KGU#490 2018-02-08
 		// START KGU#388 2017-09-13: Enh. #423 support records

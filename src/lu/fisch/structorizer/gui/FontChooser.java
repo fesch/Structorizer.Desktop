@@ -62,7 +62,6 @@ import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
