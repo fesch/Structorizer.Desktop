@@ -495,7 +495,7 @@ public class Colors extends LangDialog {
 
 	// START KGU#622 2018-12-20: Enh. #653
 	protected void resetColors() {
-		for (int i = 0; i < this.defaultColors.length; i++) {
+		for (int i = 0; i < defaultColors.length; i++) {
 			colors[i].setBackground(defaultColors[i]);
 		}
 	}

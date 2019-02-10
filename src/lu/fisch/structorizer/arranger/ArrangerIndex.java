@@ -140,6 +140,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
 	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getIcon(118));
 	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group bounds", IconLoader.getIcon(17));
+	// START KGU#646 2019-02-10: Issue #674 - The L&F adaptataion from Windows to others was defective if it hadn't been open before
+	private boolean wasPopupOpen = false;
+	// END KGU#646 2019-02-10
 
 	protected final JLabel lblSelectTargetGroup = new JLabel("Select the target group:");
 	protected final JComboBox<Group> cmbTargetGroup = new JComboBox<Group>();
@@ -367,6 +370,12 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 					}
 					doButtonsLocal();
 					requestFocusInWindow();
+					// START KGU#646 2019-02-10: workaround for issue #674
+					if (!wasPopupOpen) {
+						javax.swing.SwingUtilities.updateComponentTreeUI(popupIndex);
+						wasPopupOpen = true;
+					}
+					// END KGU#646 4019-02-10
 					popupIndex.show(e.getComponent(), e.getX(), e.getY());
 				}
 				// END KGU#318 2017-01-05

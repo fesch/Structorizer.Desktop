@@ -96,7 +96,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
@@ -329,7 +328,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	{
 		// FIXME: There should rather be buttons FindAll, FindNext, FindPrev, ReplaceNext, ReplaceAll
 
-		this.setIconImage(IconLoader.getIcon(0).getImage());
+		this.setIconImage(IconLoader.getIcon(73).getImage());
 		Ini ini = Ini.getInstance();
 		try {
 			ini.load();
@@ -761,26 +760,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			pnlPreview.setLayout(new GridLayout(0, 1));
 			pnlPreview.setBorder(BorderFactory.createTitledBorder("Contents"));
 
-			// This is no good way to enforce maximum height because the layout continues
-			// to try to enlarge this on and on...
-//			ComponentAdapter textScrollListener = new ComponentAdapter() {
-//				@Override
-//				public void componentResized(ComponentEvent evt) {
-//					Component comp = evt.getComponent();
-//					int w = comp.getSize().width;
-//					int h = comp.getSize().height;
-//					int maxHeight = comp.getMaximumSize().height;
-//					System.out.println(comp + " w = " + w + ", h = " + h + ", maxh = " + maxHeight);
-//					if (h > maxHeight) {
-//						comp.setSize(new Dimension(w, maxHeight));
-//						comp.repaint();
-//						comp.revalidate();
-//					}
-//					
-//					super.componentResized(evt);
-//				}
-//			};
-			
 			txtText = new JTextPane();
 			txtText.setBorder(BorderFactory.createTitledBorder("Text"));
 			txtText.setEditable(false);
@@ -1099,28 +1078,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 		}
 		else {
-			// START KGU#454 2017-11-03: Bugfix #448
-//			StringList matches = new StringList();
-//			String[] parts = splitText(text0, pattern, matches);
-//			nParts = parts.length;
-//			int emphPos = -1;
-//			for (int i = 0; i < nParts; i++) {
-//				try {
-//					doc.insertString(doc.getLength(), parts[i], doc.getStyle("default"));
-//					if (i < nParts-1) {
-//						if (i == currPos) {
-//							emphPos = doc.getLength();
-//							doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("emphasis"));
-//						}
-//						else {
-//							if (emphPos < 0) emphPos = doc.getLength();
-//							doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("highlight"));
-//						}
-//					}
-//				} catch (BadLocationException e) {
-//					e.printStackTrace();
-//				}
-//			}
+			// START KGU#454 2017-11-03: Bugfix #448 (obsolete code removed 2019-02-07)
 			// Once having the split parts it's extremely simple: Show the text parts
 			// alternatingly in normal and highlighted style.
 			try {
