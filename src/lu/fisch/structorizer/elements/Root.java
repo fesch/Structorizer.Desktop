@@ -2165,9 +2165,9 @@ public class Root extends Element {
     /**
      * Returns a File object representing the existing file this diagram is stored within
      * or proceeding from. In case this is an extracted file, it will represent the path
-     * of the containing archive. If this is not associatd to a file (e.g. never saved) or
+     * of the containing archive. If this is not associated to a file (e.g. never saved) or
      * the origin file cannot be located anymore then the result will be null.
-     * @return a File object reprsenting th existing source or archive file or null
+     * @return a File object representing the existing source or archive file or null
      */
     public File getFile()
     {
@@ -2188,12 +2188,30 @@ public class Root extends Element {
     	}
     }
 
+    /**
+     * Returns the absolute file path as string if this diagram is associated to a file or an empty string
+     * otherwise.
+     * If the file resides within an arrz archive, the path will be a symbolic path into the arrz archive.
+     * @return the absolute path of the nsd file (may be symbolic)
+     * @see #getPath(boolean)
+     * @see #getFile()
+     */
     public String getPath()
     // START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     {
     	return getPath(false);
     }
     
+    /**
+     * Returns the absolute file path as string if this diagram is associated to a file or an empty string
+     * otherwise.
+     * If the file resides within an arrz archive, the path may be a symbolic path into the arrz archive
+     * unless {@code pathOfrigin} is true, in which case it will be the archive path itself instead.
+     * @param pathOfOrigin - if true and the diagram resides within an arrz archive the path of the mere archive
+     * will be returned.
+     * @return the absolute path of the nsd file (may be symbolic) or of the housing arrz file.
+     * @see #getFile()
+     */
     public String getPath(boolean pathOfOrigin)
     // END KGU#316 2016-12-28
     {

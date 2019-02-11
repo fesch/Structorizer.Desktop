@@ -476,7 +476,7 @@ public class Group {
 	 * Updates the sorted list of {@link Root}s that can be retrieved with
 	 * {@link #getSortedRoots()}.
 	 * @param completely - if true then {@link #routines} will be computed from scratch,
-	 * othewise it is only re-sorted.
+	 * otherwise it is only re-sorted.
 	 */
 	protected void updateSortedRoots(boolean completely) {
 		if (completely) {

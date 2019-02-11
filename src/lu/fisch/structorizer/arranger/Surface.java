@@ -636,7 +636,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		{
 			// open an existing file
 			NSDParser parser = new NSDParser();
-			File f = new File(filename);	// FIXME (KGU) Why don't we just use files[i]?
+			File f = new File(filename);
 			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			try {
 				// END KGU#111 2015-12-17
@@ -1592,7 +1592,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				File tempFile = File.createTempFile("arr", null);
 				tempFile.delete();	// We don't need the file itself
 				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
-				tmpDirCreated = (new File(targetDir)).mkdirs();
+				if (targetDir.endsWith(".arrz")) {
+					targetDir = targetDir.substring(0, targetDir.length()-4) + "unzip";
+				}
+				File fDir = new File(targetDir);
+				if (fDir.isDirectory()) {
+					tmpDirCreated = true;
+				}
+				else {
+					tmpDirCreated = (new File(targetDir)).mkdirs();
+				}
 			} catch (IOException ex) {
 				logger.log(Level.WARNING, "Failed to unzip the arrangement archive: {0}", ex.getLocalizedMessage());
 			}
@@ -3515,6 +3524,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#626 2018-12-31
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 			}
+			// START KGU#650 2019-02-11: Issue #677 Keep track of changed archive members residing outside
+			if (source.hasChanged()) {
+				for (String groupName: diagr.getGroupNames()) {
+					Group group = this.groups.get(groupName);
+					File arrzFile = null;
+					if (group != null && !group.membersChanged && (arrzFile = group.getArrzFile()) != null) {
+						if (!source.getPath(true).equals(arrzFile.getAbsolutePath())) {
+							group.membersChanged = true;
+						}
+					}
+				}
+			}
+			// END KGU#650 2019-02-11
 		}
 		// END KGU#624 2018-12-26
 		// END KGU#330 2017-01-13
