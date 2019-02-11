@@ -2239,7 +2239,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		if (initiator == null) {
 			initiator = this;
 		}
-		return this.surface.saveDiagrams(initiator, null, goingToClose, goingToClose && Element.E_AUTO_SAVE_ON_CLOSE) &&
+		return this.surface.saveDiagrams(initiator, null, goingToClose, goingToClose && Element.E_AUTO_SAVE_ON_CLOSE, false) &&
 				this.surface.saveGroups(initiator, goingToClose);
 		// END KGU#626 2019-01-06
 	}
