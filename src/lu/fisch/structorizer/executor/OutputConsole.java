@@ -496,7 +496,7 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 	// START KGU#503 2018-03-13: Enh. #519 - "zooming" via font size control with ctrl + mouse wheel
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
-		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+		if (mwEvt.isControlDown()) {
 			int rotation = mwEvt.getWheelRotation();
         	if (Element.E_WHEEL_REVERSE_ZOOM) {
         		rotation *= -1;

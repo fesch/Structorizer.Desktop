@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-03 (2019-02-11)
+Current development version: 3.29-03 (2019-02-14)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -31,6 +31,9 @@ Current development version: 3.29-03 (2019-02-11)
 - 03: Bugfix #674: Live look & feel switch hadn't worked for context menus <2>
 - 03: Issue #675: Workaround for truncated result tree lines in Find&Replace <2>
 - 03: Issue #677: Inconveniences on saving arrangement archives mended <2>
+- 03: Bugfix #678: Import of array declarations from C code didn't work. <2> 
+- 03: Bugfix #679: C import produced defective INPUT instructions <2>
+- 03: Enh. #680: INPUT instructions with multiple input items executable <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

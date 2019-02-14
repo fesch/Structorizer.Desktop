@@ -33,14 +33,15 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018.06.19      First Issue (derived from the common parts of CParser and C99Parser)
- *      Kay Gürtzig     2018.06.23      Further common (i.e. C + C99) stuff placed here
- *      Kay Gürtzig     2018.07.01      Enh. #553: Checks for parser thread cancellation inserted
- *      Kay Gürtzig     2018.07.04      Bugfix #554: StreamTokenizer lineno() lag workaround in prepareTypeDefs
- *      Kay Gürtzig     2018.07.09      KGU#546/KGU#547: Further StreamTokenizer workaround, include guard surrogate
+ *      Kay Gürtzig     2018-06-19      First Issue (derived from the common parts of CParser and C99Parser)
+ *      Kay Gürtzig     2018-06-23      Further common (i.e. C + C99) stuff placed here
+ *      Kay Gürtzig     2018-07-01      Enh. #553: Checks for parser thread cancellation inserted
+ *      Kay Gürtzig     2018-07-04      Bugfix #554: StreamTokenizer lineno() lag workaround in prepareTypeDefs
+ *      Kay Gürtzig     2018-07-09      KGU#546/KGU#547: Further StreamTokenizer workaround, include guard surrogate
  *                                      typedef collection now recursive in included header files.
  *                                      KGU#550 through KGU#552: Macro replacement refined, new options use_XXX_defines
- *      Kay Gürtzig     2018.09.25      Bugfix #608 Makeshift fix for a broken comment block issue in preproc. lines
+ *      Kay Gürtzig     2018-09-25      Bugfix #608 Makeshift fix for a broken comment block issue in preproc. lines
+ *      Kay Gürtzig     2019-02-13      Issue #679: importInput() was defective, support for more input an output functions
  *
  ******************************************************************************************************
  *
@@ -71,7 +72,6 @@ import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
-import lu.fisch.structorizer.parsers.CodeParser.FilePreparationException;
 import lu.fisch.utils.StringList;
 
 /**
@@ -1374,9 +1374,35 @@ public abstract class CPreParser extends CodeParser
 		//content = content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+" $2");
 		String content = getKeyword("input");
 		if (_args != null) {
-			if (_name.equals("scanf")) {
+			// START KGU#652 2019-02-13: Issue #679: Some support for C11 (Microsoft-specific routines)
+			//if (_name.equals("scanf")) {
+			boolean isScanf_s =  _name.equals("scanf_s");
+			if (_name.equals("scanf") || isScanf_s) {
+			// END KGU#652 2019-02-13
 				// Forget the format string
 				if (_args.count() > 0) {
+					// START KGU#652 2019-02-13: Issue #679 - drop the length arguments after string variables
+					if (isScanf_s && _args.count() > 1 && _args.get(0).matches("^[\"].*[\"]$")) {
+						String formatStr = _args.get(0);
+						int posPerc = -1;
+						formatStr = formatStr.substring(1, formatStr.length()-1);
+						int i = 0;
+						while ((posPerc = formatStr.indexOf('%')) >= 0 && ++i < _args.count()) {
+							formatStr = formatStr.substring(posPerc+1);
+							if (!formatStr.startsWith("%")) {
+								if (i+1 < _args.count() && formatStr.matches("[^idxucsefg]*?[cs](.*)")) {
+									_args.remove(i+1);
+								}
+								formatStr = formatStr.replaceFirst(".*?[idxucsefg](.*)", "$1");
+							}
+							else {
+								formatStr = formatStr.substring(1);
+							}
+							i++;
+						}
+						
+					}
+					// END KGU#652 2019-02-13
 					_args.remove(0);
 				}
 				for (int i = 0; i < _args.count(); i++) {
@@ -1386,7 +1412,10 @@ public abstract class CPreParser extends CodeParser
 					}
 				}
 			}
-			content += _args.concatenate(", ");
+			// START KGU#652 2019-02-13: Bugfix #679 - the gap between keyword and first variable had been missing
+			//content += _args.concatenate(", ");
+			content = content.trim() + " " + _args.concatenate(", ");
+			// END KGU#652 2019-02-03
 		}
 		// START KGU#407 2017-06-20: Enh. #420 - comments already here
 		//_parentNode.addElement(new Instruction(content.trim()));
@@ -1409,7 +1438,7 @@ public abstract class CPreParser extends CodeParser
 		if (_args != null) {
 			int nExpr = _args.count();
 			// Find the format mask
-			if (nExpr > 1 && _name.equals("printf") && _args.get(0).matches("^[\"].*[\"]$")) {
+			if (nExpr > 1 && (_name.equals("printf") || _name.equals("printf_s")) && _args.get(0).matches("^[\"].*[\"]$")) {
 				// We try to split the string by the "%" signs which is of course dirty
 				// Unfortunately, we can't use split because it eats empty chunks
 				StringList newExprList = new StringList();
