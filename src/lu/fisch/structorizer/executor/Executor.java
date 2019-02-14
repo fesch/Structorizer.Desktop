@@ -4914,49 +4914,38 @@ public class Executor implements Runnable
 	private String tryInput(String cmd) throws EvalError
 	{
 		String trouble = "";
-		String in = cmd.substring(CodeParser.getKeyword("input").trim().length()).trim();
-		// START KGU#281: Enh. #271: Input prompt handling
-		String prompt = null;
-		if (in.startsWith("\"") || in.startsWith("\'")) {
-			StringList tokens = Element.splitLexically(in, true);
-			String delim = tokens.get(0).substring(0,1);
-			if (tokens.get(0).endsWith(delim))
-			{
-				prompt = tokens.get(0).substring(1, tokens.get(0).length()-1);
-				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
-				try {
-					String dummyVar = "prompt" + this.hashCode();
-					this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false, false);
-					Object res = context.interpreter.get(dummyVar);
-					if (res != null) {
-						prompt = res.toString();
-					}
-					context.interpreter.unset(dummyVar);
+		// START KGU#653 2019-02-14: Enh. #680 - revision
+		StringList inputItems = Instruction.getInputItems(cmd);
+		String prompt = inputItems.get(0);
+		if (!prompt.isEmpty()) {
+			// Wipe off delimiters
+			prompt = prompt.substring(1, prompt.length()-1);
+			// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
+			try {
+				String dummyVar = "prompt" + this.hashCode();
+				this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false, false);
+				Object res = context.interpreter.get(dummyVar);
+				if (res != null) {
+					prompt = res.toString();
 				}
-				catch (EvalError ex) {}
-				// END KGU#285 2016-10-16
-    			// START KGU#281 2016-12-23: Enh. #271 - ignore comma between prompt and variable name
-				if (tokens.count() > 1 && tokens.get(1).equals(",")) {
-					tokens.remove(1);
-				}
-				// END KGU#281 2016-12-23
-				in = tokens.concatenate("", 1).trim();
+				context.interpreter.unset(dummyVar);
 			}
+			catch (EvalError ex) {}
+			// END KGU#285 2016-10-16
 		}
-		// END KGU#281 2016-10-12
-		// START KGU#490 2018-02-07: Bugfix #503 
-		in = this.evaluateDiagramControllerFunctions(convert(in).trim());
-		// END KGU#490 2018-02-07
-
-		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
-		if (in.isEmpty())
+		// Empty input instruction?
+		if (inputItems.count() == 1)
+		// END KGU#653 219-02-14
 		{
 			// In run mode, give the user a chance to intervene
 			Object[] options = {
 					Control.lbOk.getText(),
 					Control.lbPause.getText()
 			};
-			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), control.lbAcknowledge.getText(), control.lbInput.getText(),
+			if (prompt.isEmpty()) {
+				prompt = control.lbAcknowledge.getText();
+			}
+			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), prompt, control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
 			{
@@ -4974,18 +4963,18 @@ public class Executor implements Runnable
 		else
 		{
 		// END KGU#107 2015-12-13
-			// START KGU#141 2016-01-16: Bugfix #112 - setVar won't eliminate enclosing parantheses anymore
-			while (in.startsWith("(") && in.endsWith(")"))
-			{
-				in = in.substring(1, in.length()-1).trim();
-			}
-			// END KGU#141 2016-01-16
-			StringList targets = StringList.explode(in, ",");
-			for (int i = 0; i < targets.count() && trouble.equals("") && (stop == false); i++) {
-				String var = targets.get(i).trim();
+			inputItems.remove(0);
+			for (int i = 0; i < inputItems.count() && trouble.equals("") && (stop == false); i++) {
+				String var = inputItems.get(i).trim();
+				// START KGU#141 2016-01-16: Bugfix #112 - setVar won't eliminate enclosing parantheses anymore
+				while (var.startsWith("(") && var.endsWith(")"))
+				{
+					var = var.substring(1, var.length()-1).trim();
+				}
+				// END KGU#141 2016-01-16
 				// START KGU#33 2014-12-05: We ought to show the index value
 				// if the variable is indeed an array element
-				if (var.contains("[") && in.contains("]")) {
+				if (var.contains("[") && var.contains("]")) {
 					try {
 						// Try to replace the index expression by its current value
 						int index = getIndexValue(var);
@@ -5012,7 +5001,7 @@ public class Executor implements Runnable
 					return trouble;
 				}
 				// END KGU#141 2016-01-16
-				targets.set(i, var);
+				inputItems.set(i, var);
 			}
 			// START KGU#89 2016-03-18: More language support 
 			//String str = JOptionPane.showInputDialog(null,
@@ -5020,9 +5009,9 @@ public class Executor implements Runnable
 			// START KGU#281 2016-10-12: Enh. #271
 			//String msg = control.lbInputValue.getText();
 			//msg = msg.replace("%", in);
-			if (prompt == null) {
+			if (prompt.isEmpty()) {
 				prompt = control.lbInputValue.getText();				
-				prompt = prompt.replace("%", in);
+				prompt = prompt.replace("%", inputItems.concatenate(", "));
 			}
 			// END KGU#281 2016-10-12
 			// START KGU#160 2016-04-12: Enh. #137 - text window output
@@ -5034,14 +5023,14 @@ public class Executor implements Runnable
 			// END KGU#160 2016-04-12
 			//String str = JOptionPane.showInputDialog(diagram.getParent(), prompt, null);
 			// END KGU#89 2016-03-18
-			String[] values = new String[targets.count()];
+			String[] values = new String[inputItems.count()];
 			boolean goOn = true;
 			if (values.length == 1) {
 				values[0] = JOptionPane.showInputDialog(diagram.getParent(), prompt, null);
 				goOn = values[0] != null;
 			}
 			else {
-				goOn = showMultipleInputDialog(diagram.getParent(), prompt, targets, values);
+				goOn = showMultipleInputDialog(diagram.getParent(), prompt, inputItems, values);
 			}
 
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
@@ -5065,8 +5054,8 @@ public class Executor implements Runnable
 				//control.setButtonsForPause();
 				control.setButtonsForPause(false);	// This avoids interference with the pause button
 				// END KGU#379 2017-04-12
-				for (int i = 0; i < targets.count(); i++) {
-					String var = targets.get(i);
+				for (int i = 0; i < inputItems.count(); i++) {
+					String var = inputItems.get(i);
 					if (!context.variables.contains(var))
 					{
 						// If the variable hasn't been used before, we must create it now
@@ -5084,8 +5073,8 @@ public class Executor implements Runnable
 				}
 				// END KGU#160 2016-04-12
 				// START KGU#69 2015-11-08: Use specific method for raw input
-				for (int i = 0; i < targets.count(); i++) {
-					setVarRaw(targets.get(i), values[i]);
+				for (int i = 0; i < inputItems.count(); i++) {
+					setVarRaw(inputItems.get(i), values[i]);
 				}
 				// END KGU#69 2015-11-08
 			}
@@ -5098,6 +5087,16 @@ public class Executor implements Runnable
 
 	}
 	
+	// START KGU#653 2019-02-13: Enh. #653 - Comfortable handling of multi-variable input
+	/**
+	 * Opens a dialog with input fields for all input items given as {@code targets} and gathers the
+	 * values in array {@code values}.
+	 * @param parent - the {@link Container} this modal dialog is placed relatively to
+	 * @param prompt - the common input prompt string 
+	 * @param targets - the descriptions of the variables to be filled
+	 * @param values - array for the raw input strings per variable 
+	 * @return true if the results were committed, false otherwise (meaning to pause execution)
+	 */
 	private boolean showMultipleInputDialog(Container parent, String prompt, StringList targets, String[] values) {
 		javax.swing.JPanel pnl = new javax.swing.JPanel();
 		pnl.setLayout(new java.awt.GridBagLayout());
@@ -5141,6 +5140,7 @@ public class Executor implements Runnable
 		
 		return committed;
 	}
+	// END KGU#653 2019-02-14
 
 	// Submethod of stepInstruction(Instruction element), handling an output instruction
 	private String tryOutput(String cmd) throws EvalError

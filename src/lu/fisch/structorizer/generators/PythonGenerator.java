@@ -31,41 +31,42 @@ package lu.fisch.structorizer.generators;
  *      Revision List
  *
  *      Author                  Date            Description
- *      ------					----			-----------
- *      Daniel Spittank         2014.02.01      Starting from Java Generator
- *      Kay Gürtzig             2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
- *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig             2015.12.12      bugfix #59 (KGU#104) with respect to ER #10
- *      Kay Gürtzig             2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
+ *      ------                  ----            -----------
+ *      Daniel Spittank         2014-02-01      Starting from Java Generator
+ *      Kay Gürtzig             2014-11-16      Conversion of C-like logical operators and arcus functions (see comment)
+ *      Kay Gürtzig             2014-12-02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015-10-18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015-12-12      bugfix #59 (KGU#104) with respect to ER #10
+ *      Kay Gürtzig             2015-12-17      Enh. #23 (KGU#78) jump generation revised; Root generation
  *                                              decomposed according to Generator.generateCode(Root, String);
  *                                              Enh. KGU#47: Dummy implementation for Parallel element
- *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig             2015.12.22      Bugfix #51/#54 (= KGU#108) empty input and output expression lists
- *      Kay Gürtzig             2016.01.14      Enh. #84 (= KGU#100) Array init. expr. support
- *      Kay Gürtzig             2016.01.17      Bugfix #61 (= KGU#109) Type names removed from assignments
- *      Kay Gürtzig             2016.03.16      Enh. #84: Support for FOREACH loops (KGU#61) 
- *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
+ *      Kay Gürtzig             2015-12-21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig             2015-12-22      Bugfix #51/#54 (= KGU#108) empty input and output expression lists
+ *      Kay Gürtzig             2016-01-14      Enh. #84 (= KGU#100) Array init. expr. support
+ *      Kay Gürtzig             2016-01-17      Bugfix #61 (= KGU#109) Type names removed from assignments
+ *      Kay Gürtzig             2016-03-16      Enh. #84: Support for FOREACH loops (KGU#61) 
+ *      Kay Gürtzig             2016-04-01      Enh. #144: Care for new option to suppress content conversion 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              bugfix for routine calls (superfluous parentheses dropped)
- *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
- *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
- *      Kay Gürtzig             2016.12.27      Enh. #314: Support for Structorizer File API
- *      Kay Gürtzig             2017.02.19      Enh. #348: Parallel sections translated with threading module
- *      Kay Gürtzig             2017.02.23      Issue #350: getOutputReplacer() and Parallel export revised again
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.03.10      Bugfix #378, #379: charset annotation / wrong inequality operator
- *      Kay Gürtzig             2017.05.16      Bugfix #51: an empty output instruction produced "print(, sep='')"
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.05.24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
- *      Kay Gürtzig             2017.10.02/03   Enh. #389, #423: Export of globals and mutable record types implemented
- *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation and Case elements supported
- *      Kay Gürtzig             2018.07.20      Enh. #563 - support for simplified record initializers
- *      Kay Gürtzig             2018.10.17      Issue #623: Turtleizer support was defective (moves, color, new routines),
+ *      Kay Gürtzig             2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done
+ *      Kay Gürtzig             2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016-12-01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig             2016-12-27      Enh. #314: Support for Structorizer File API
+ *      Kay Gürtzig             2017-02-19      Enh. #348: Parallel sections translated with threading module
+ *      Kay Gürtzig             2017-02-23      Issue #350: getOutputReplacer() and Parallel export revised again
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-03-10      Bugfix #378, #379: charset annotation / wrong inequality operator
+ *      Kay Gürtzig             2017-05-16      Bugfix #51: an empty output instruction produced "print(, sep='')"
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-05-24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
+ *      Kay Gürtzig             2017-10-02/03   Enh. #389, #423: Export of globals and mutable record types implemented
+ *      Kay Gürtzig             2017-11-02      Issue #447: Line continuation and Case elements supported
+ *      Kay Gürtzig             2018-07-20      Enh. #563 - support for simplified record initializers
+ *      Kay Gürtzig             2018-10-17      Issue #623: Turtleizer support was defective (moves, color, new routines),
  *                                              bugfix #624 - FOR loop translation into range() fixed
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -525,7 +526,22 @@ public class PythonGenerator extends Generator
 				String line = lines.get(i);
 				String codeLine = transform(line);
 				boolean done = false;
-				if (Instruction.isTurtleizerMove(line)) {
+
+				// START KGU#653 2019-02-14: Enh. #680 - face input instructions with multiple variables
+				StringList inputItems = Instruction.getInputItems(line);
+				if (inputItems != null && inputItems.count() > 2) {
+					String prompt = inputItems.get(0);
+					if (!prompt.isEmpty()) {
+						prompt += " ";
+					}
+					for (int j = 1; j < inputItems.count(); j++) {
+						String subLine = CodeParser.getKeyword("input") + " " + prompt + inputItems.get(j);
+						addCode(transform(subLine), _indent, isDisabled);
+					}
+					done = true;
+				}
+				// END KGU#653 2019-02-14
+				else if (Instruction.isTurtleizerMove(line)) {
 					// START KGU#599 2018-10-17: Bugfix #623 (turtle moves hadn't been exported)
 					//codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 					//done = true;

@@ -36,40 +36,41 @@ package lu.fisch.structorizer.generators;
  *
  *      Author                  Date            Description
  *      ------                  ----            -----------
- *      Klaus-Peter Reimers     2008.01.08      First Issue
- *      Bob Fisch				2008.01.08      Modified "private String transform(String _input)"
- *      Bob Fisch				2008.04.12      Added "Fields" section for generator to be used as plugin
- *      Bob Fisch				2008.08.14      Added declaration output. A comment line in the root element
+ *      Klaus-Peter Reimers     2008-01-08      First Issue
+ *      Bob Fisch				2008-01-08      Modified "private String transform(String _input)"
+ *      Bob Fisch				2008-04-12      Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch				2008-08-14      Added declaration output. A comment line in the root element
  *                                              with a "#" is ignored. All other lines are written to the code.
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.10      Operator conversion modified (see comment)
- *      Kay Gürtzig             2014.11.16      Operator conversion corrected (see comment)
- *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig             2015.10.18      Indentation issue fixed and comment generation revised
- *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig             2016.01.16      KGU#109: Bugfix #61 - handling of type names in assignments
+ *      Bob Fisch               2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014-11-10      Operator conversion modified (see comment)
+ *      Kay Gürtzig             2014-11-16      Operator conversion corrected (see comment)
+ *      Kay Gürtzig             2014-12-02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015-10-18      Indentation issue fixed and comment generation revised
+ *      Kay Gürtzig             2015-12-21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig             2016-01-16      KGU#109: Bugfix #61 - handling of type names in assignments
  *                                              Enh. #84 + Bugfix #112 (KGU#141): Assignment export revised
- *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
+ *      Kay Gürtzig             2016-03-23      Enh. #84: Support for FOR-IN loops (KGU#61)
  *      Kay Gürtzig             2016-04-03      KGU#150 Support for CHR and ORD and other built-in functions
- *      Kay Gürtzig             2016.04.29      Bugfix #144 suppressTransformation mode didn't fully work
- *      Kay Gürtzig             2016.07.20      Enh. #160 (subroutines involved) implemented
- *      Kay Gürtzig             2016.08.10      Bugfix #227 (Modules = main programs have to end with full stop)
- *      Kay Gürtzig             2016.08.12      Two tiny embellishments
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
- *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt string,
+ *      Kay Gürtzig             2016-04-29      Bugfix #144 suppressTransformation mode didn't fully work
+ *      Kay Gürtzig             2016-07-20      Enh. #160 (subroutines involved) implemented
+ *      Kay Gürtzig             2016-08-10      Bugfix #227 (Modules = main programs have to end with full stop)
+ *      Kay Gürtzig             2016-08-12      Two tiny embellishments
+ *      Kay Gürtzig             2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. #271: Support for input instructions with prompt string,
  *                                              Issue #227: In obvious cases (literals) output procedure names inserted.
- *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig             2016.12.22      Issue #227: input and output usage more routine-specific
- *      Kay Gürtzig             2016.01.30      Enh. #335, bugfix #337: More sophisticated type treatment
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.10.24      Enh. #389, #423: Export strategy for includables and records
- *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
- *      Kay Gürtzig             2018.03.13      Bugfix #259,#335,#520,#521: Mode suppressTransform enforced for declarations
- *      Kay Gürtzig             2018.07.22      Enh. #563 (simplified record initializers), bugfix #564 (array initializers)
+ *      Kay Gürtzig             2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016-12-22      Issue #227: input and output usage more routine-specific
+ *      Kay Gürtzig             2016-01-30      Enh. #335, bugfix #337: More sophisticated type treatment
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-03-15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-10-24      Enh. #389, #423: Export strategy for includables and records
+ *      Kay Gürtzig             2017-11-02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig             2018-03-13      Bugfix #259,#335,#520,#521: Mode suppressTransform enforced for declarations
+ *      Kay Gürtzig             2018-07-22      Enh. #563 (simplified record initializers), bugfix #564 (array initializers)
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -482,11 +483,32 @@ public class OberonGenerator extends Generator {
 					//	insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
 					//	addCode(transform(line) + ";", _indent, isDisabled);
 					//}
-					String transf = transform(line).replace("In.TYPE()", "In.Char(dummyInputChar)") + ";";
-					if (transf.contains("In.TYPE(")) {
-						insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+					// START KGU#653 2019-02-14: Enh. #680 - there may be several variables in an input instruction since 3.29-03
+					//String transf = transform(line).replace("In.TYPE()", "In.Char(dummyInputChar)") + ";";
+					//if (transf.contains("In.TYPE(")) {
+					//	insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+					//}
+					//addCode(transf, _indent, isDisabled);
+					StringList inputItems = Instruction.getInputItems(line);
+					if (inputItems.count() > 2) {
+						String prompt = inputItems.get(0);
+						if (!prompt.isEmpty()) {
+							prompt += "";
+						}
+						insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for the respective type!", _indent);
+						for (int j = 1; j < inputItems.count(); j++) {
+							String subline = CodeParser.getKeyword("input") + " " + prompt + inputItems.get(j);
+							addCode(transform(subline), _indent, isDisabled);
+						}
 					}
-					addCode(transf, _indent, isDisabled);
+					else {
+						String transf = transform(line).replace("In.TYPE()", "In.Char(dummyInputChar)") + ";";
+						if (transf.contains("In.TYPE(")) {
+							insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+						}
+						addCode(transf, _indent, isDisabled);
+					}
+					// END KGU#653 2019-02-14
 					// END KGU#281 2016-10-15
 				}
 				else if (Instruction.isOutput(line))

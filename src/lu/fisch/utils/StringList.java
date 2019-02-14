@@ -31,8 +31,8 @@ package lu.fisch.utils;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.11.04      Methods indexOf added.
  *      Kay Gürtzig     2015.11.24      Method clear added.
@@ -461,7 +461,7 @@ public class StringList {
 
 	/**
 	 * Appends a copy of each element of {@code _stringList} to this StringList
-	 * no matter whether ther might already be an equal string element in this.
+	 * no matter whether there might already be an equal string element in this.
 	 * @param _string - The string to be added
 	 * @see #add(String)
 	 * @see #addIfNew(String)
@@ -1281,7 +1281,8 @@ public class StringList {
     // START KGU 2017-10-29
     /**
      * Removes all elements at front and rear that contain only whitespace, such that
-     * this.concatenate().trim() and this.trim().concatenate() produce the same result.
+     * this.concatenate().trim() and this.trim().concatenate() produce the same result.<br/>
+     * Note that the StringList itself is bound to be modified, not a copy of this!
      * @return this StringList after having been trimmed.
      * @see #removeAll(String)
      * @see #removeAll(String, boolean)

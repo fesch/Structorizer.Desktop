@@ -83,6 +83,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-07-21      Enh. #563, Bugfix #564: Smarter record initializers / array initializer defects
  *      Kay Gürtzig             2018-10-30      bool type no longer converted to int, instead #include <stdbool.h> generated
  *      Kay Gürtzig             2019-01-21      Bugfix #669: Export of some FOR-In loops produced structurally defective code
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -772,9 +773,9 @@ public class CGenerator extends Generator {
 				// Things will get easier and more precise with tokenization
 				// (which must be done based on the original line)
 				StringList tokens = Element.splitLexically(line.trim(), true);
-				StringList pureTokens = tokens.copy();
-				StringList exprTokens = null;
-				StringList pureExprTokens = null;
+				StringList pureTokens = tokens.copy();	// will not contain separating space
+				StringList exprTokens = null;	// Tokens of the expression in case of an assignment
+				StringList pureExprTokens = null;	// as before, will not contain separating space
 				pureTokens.removeAll(" ");
 				String expr = null;	// Original expression
 				int posAsgn = tokens.indexOf("<-");
@@ -973,14 +974,23 @@ public class CGenerator extends Generator {
 				// END KGU#388 2017-09-25
 				else {
 					// All other cases (e.g. input, output)
-					codeLine = transform(line);
+					// START KGU#653 2019-02-14: Enh. #680 - care for multi-variable input lines
+					//codeLine = transform(line);
+					StringList inputItems = Instruction.getInputItems(line);
+					if (inputItems == null || !generateMultipleInput(inputItems, _indent, isDisabled, commentInserted ? null : _inst.getComment())) {
+						codeLine = transform(line);
+					}
+					else {
+						codeLine = null;
+					}
+					// END KGU#653 2019-02-14
 				}
 				// Now append the codeLine in case it was composed and not already appended
 				if (codeLine != null) {
 					String lineEnd = ";";
 					if (Instruction.isTurtleizerMove(line)) {
 						codeLine = this.enhanceWithColor(codeLine, _inst);
-						lineEnd = "";
+						lineEnd = "";	// codeLine already contains a line end in this case
 					}
 					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
 					if (!commentInserted) {
@@ -997,6 +1007,50 @@ public class CGenerator extends Generator {
 		}
 		
 	}
+
+	// START KGU#653 2019-02-14: Enh. #680
+	private boolean generateMultipleInput(StringList _inputItems, String _indent, boolean _isDisabled, StringList _comment) {
+		boolean done = false;
+		if (_inputItems.count() > 2) {
+			String prompt = _inputItems.get(0);
+			if (!prompt.isEmpty()) {
+				prompt += " ";
+			}
+			_inputItems.remove(0);
+			String targetList = composeInputItems(_inputItems);
+			if (targetList != null) {
+				// Multiple-item conversion available, so create a single line
+				_inputItems.clear();
+				_inputItems.add(targetList);
+			}
+			if (_comment != null) {
+				this.insertComment(_comment, _indent);
+			}
+			for (int i = 0; i < _inputItems.count(); i++) {
+				String codeLine = transform(CodeParser.getKeyword("input") + " " + prompt + _inputItems.get(i));
+				addCode(codeLine + ";", _indent, _isDisabled);
+			}
+			done = true;
+		}
+		return done;
+	}
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance concatenates all elements with commas and address symbols (as needed for scanf).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		//for (int i = 0; i < _inputVarItems.count(); i++) {
+		//	_inputVarItems.set(i, this.transform(_inputVarItems.get(i), false));
+		//}
+		return _inputVarItems.concatenate(", &");
+	}
+	// END KGU#653 2019-02-14
 
 	protected String enhanceWithColor(String _codeLine, Instruction _inst) {
 		return _codeLine + "; " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();

@@ -33,7 +33,7 @@ Current development version: 3.29-03 (2019-02-14)
 - 03: Issue #677: Inconveniences on saving arrangement archives mended <2>
 - 03: Bugfix #678: Import of array declarations from C code didn't work. <2> 
 - 03: Bugfix #679: C import produced defective INPUT instructions <2>
-- 03: Enh. #680: INPUT instructions with multiple input items executable <2>
+- 03: Enh. #680: INPUT instructions with multiple input items supported <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

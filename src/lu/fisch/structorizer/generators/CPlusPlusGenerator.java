@@ -32,29 +32,30 @@ package lu.fisch.structorizer.generators;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2010.08.31      First Issue
- *      Kay Gürtzig     2015.11.01      Adaptations to new decomposed preprocessing
- *      Kay Gürtzig     2015.11.30      Jump mechanisms (KGU#78) and root export revised 
- *      Kay Gürtzig     2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
- *      Kay Gürtzig     2015.12.13      Bugfix #51 (=KGU#108): Cope with empty input and output
- *      Kay Gürtzig     2016.01.14      Type conversion of C overridden (KGU#16)
- *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
- *      Kay Gürtzig     2016.08.10      Issue #227: <iostream> only included if needed 
- *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
- *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig     2016.11.08      Collateral damage of #271 to getOutputReplacer() mended
- *      Kay Gürtzig     2016.12.25      Enh. #314: Support for File API added.
- *      Kay Gürtzig     2017.01.05      Enh. #314: File API intervention in transformTokens modified
- *      Kay Gürtzig     2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
- *      Kay Gürtzig     2017.01.31      Enh. #113: Array parameter transformation
- *      Kay Gürtzig     2017.02.21      Enh. #348: Parallel sections translated with <thread> library
- *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig     2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
- *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig     2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
- *      Kay Gürtzig     2017.09.27      Enh. #423: Handling of struct definitions and access
- *      Kay Gürtzig     2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
+ *      Kay Gürtzig     2010-08-31      First Issue
+ *      Kay Gürtzig     2015-11-01      Adaptations to new decomposed preprocessing
+ *      Kay Gürtzig     2015-11-30      Jump mechanisms (KGU#78) and root export revised 
+ *      Kay Gürtzig     2015-12-11      Enh. #54 (KGU#101): Support for output expression lists
+ *      Kay Gürtzig     2015-12-13      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig     2016-01-14      Type conversion of C overridden (KGU#16)
+ *      Kay Gürtzig     2016-03-23      Enh. #84: Support for FOR-IN loops (KGU#61)
+ *      Kay Gürtzig     2016-08-10      Issue #227: <iostream> only included if needed 
+ *      Kay Gürtzig     2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig     2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done 
+ *      Kay Gürtzig     2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig     2016-11-08      Collateral damage of #271 to getOutputReplacer() mended
+ *      Kay Gürtzig     2016-12-25      Enh. #314: Support for File API added.
+ *      Kay Gürtzig     2017-01-05      Enh. #314: File API intervention in transformTokens modified
+ *      Kay Gürtzig     2017-01-30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig     2017-01-31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig     2017-02-21      Enh. #348: Parallel sections translated with <thread> library
+ *      Kay Gürtzig     2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig     2017-04-12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
+ *      Kay Gürtzig     2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig     2017-05-24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
+ *      Kay Gürtzig     2017-09-27      Enh. #423: Handling of struct definitions and access
+ *      Kay Gürtzig     2018-02-22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
+ *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -243,6 +244,22 @@ public class CPlusPlusGenerator extends CGenerator {
 		// END KGU#501 2018-02-22
 	}
 	// END KGU#332 2017-04-12
+
+	// START KGU#653 2019-02-14: Enh. #680
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance concatenates all elements with ">>" operators (as needed for std:::cin).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return _inputVarItems.concatenate(" >> ");
+	}
+	// END KGU#653 2019-02-14
 
 	// START KGU#388 2017-09-27: Enh.#423
 	/**
